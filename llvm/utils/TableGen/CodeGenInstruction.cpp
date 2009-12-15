@@ -23,31 +23,31 @@ static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
   assert(pos != std::string::npos && "Unrecognized constraint");
   std::string::size_type start = CStr.find_first_not_of(" \t");
   std::string Name = CStr.substr(start, pos - start);
-  
+
   // TIED_TO: $src1 = $dst
   std::string::size_type wpos = Name.find_first_of(" \t");
   if (wpos == std::string::npos)
     throw "Illegal format for tied-to constraint: '" + CStr + "'";
   std::string DestOpName = Name.substr(0, wpos);
   std::pair<unsigned,unsigned> DestOp = I->ParseOperandName(DestOpName, false);
-  
+
   Name = CStr.substr(pos+1);
   wpos = Name.find_first_not_of(" \t");
   if (wpos == std::string::npos)
     throw "Illegal format for tied-to constraint: '" + CStr + "'";
-  
+
   std::pair<unsigned,unsigned> SrcOp =
   I->ParseOperandName(Name.substr(wpos), false);
   if (SrcOp > DestOp)
     throw "Illegal tied-to operand constraint '" + CStr + "'";
-  
-  
+
+
   unsigned FlatOpNo = I->getFlattenedOperandNumber(SrcOp);
   // Build the string for the operand.
   std::string OpConstraint =
   "((" + utostr(FlatOpNo) + " << 16) | (1 << TOI::TIED_TO))";
-  
-  
+
+
   if (!I->OperandList[DestOp.first].Constraints[DestOp.second].empty())
     throw "Operand '" + DestOpName + "' cannot have multiple constraints!";
   I->OperandList[DestOp.first].Constraints[DestOp.second] = OpConstraint;
@@ -56,20 +56,20 @@ static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
 static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
   // Make sure the constraints list for each operand is large enough to hold
   // constraint info, even if none is present.
-  for (unsigned i = 0, e = I->OperandList.size(); i != e; ++i) 
+  for (unsigned i = 0, e = I->OperandList.size(); i != e; ++i)
     I->OperandList[i].Constraints.resize(I->OperandList[i].MINumOperands);
-  
+
   if (CStr.empty()) return;
-  
+
   const std::string delims(",");
   std::string::size_type bidx, eidx;
-  
+
   bidx = CStr.find_first_not_of(delims);
   while (bidx != std::string::npos) {
     eidx = CStr.find_first_of(delims, bidx);
     if (eidx == std::string::npos)
       eidx = CStr.length();
-    
+
     ParseConstraint(CStr.substr(bidx, eidx - bidx), I);
     bidx = CStr.find_first_not_of(delims, eidx);
   }
@@ -145,7 +145,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
-      
+
       // Verify that MIOpInfo has an 'ops' root value.
       if (!dynamic_cast<DefInit*>(MIOpInfo->getOperator()) ||
           dynamic_cast<DefInit*>(MIOpInfo->getOperator())
@@ -165,7 +165,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     } else if (Rec->getName() == "variable_ops") {
       isVariadic = true;
       continue;
-    } else if (!Rec->isSubClassOf("RegisterClass") && 
+    } else if (!Rec->isSubClassOf("RegisterClass") &&
                Rec->getName() != "ptr_rc" && Rec->getName() != "unknown")
       throw "Unknown operand class '" + Rec->getName() +
             "' in '" + R->getName() + "' instruction!";
@@ -177,15 +177,15 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     if (!OperandNames.insert(DI->getArgName(i)).second)
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has the same name as a previous operand!";
-    
-    OperandList.push_back(OperandInfo(Rec, DI->getArgName(i), PrintMethod, 
+
+    OperandList.push_back(OperandInfo(Rec, DI->getArgName(i), PrintMethod,
                                       MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
 
   // Parse Constraints.
   ParseConstraints(R->getValueAsString("Constraints"), this);
-  
+
   // For backward compatibility: isTwoAddress means operand 1 is tied to
   // operand 0.
   if (isTwoAddress) {
@@ -194,13 +194,13 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
             "already has constraint set!";
     OperandList[1].Constraints[0] = "((0 << 16) | (1 << TOI::TIED_TO))";
   }
-  
+
   // Any operands with unset constraints get 0 as their constraint.
   for (unsigned op = 0, e = OperandList.size(); op != e; ++op)
     for (unsigned j = 0, e = OperandList[op].MINumOperands; j != e; ++j)
       if (OperandList[op].Constraints[j].empty())
         OperandList[op].Constraints[j] = "0";
-  
+
   // Parse the DisableEncoding field.
   std::string DisableEncoding = R->getValueAsString("DisableEncoding");
   while (1) {
@@ -229,15 +229,15 @@ unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
         "' does not have an operand named '$" + Name + "'!";
 }
 
-std::pair<unsigned,unsigned> 
+std::pair<unsigned,unsigned>
 CodeGenInstruction::ParseOperandName(const std::string &Op,
                                      bool AllowWholeOp) {
   if (Op.empty() || Op[0] != '$')
     throw TheDef->getName() + ": Illegal operand name: '" + Op + "'";
-  
+
   std::string OpName = Op.substr(1);
   std::string SubOpName;
-  
+
   // Check to see if this is $foo.bar.
   std::string::size_type DotIdx = OpName.find_first_of(".");
   if (DotIdx != std::string::npos) {
@@ -246,7 +246,7 @@ CodeGenInstruction::ParseOperandName(const std::string &Op,
       throw TheDef->getName() + ": illegal empty suboperand name in '" +Op +"'";
     OpName = OpName.substr(0, DotIdx);
   }
-  
+
   unsigned OpIdx = getOperandNamed(OpName);
 
   if (SubOpName.empty()) {  // If no suboperand name was specified:
@@ -255,16 +255,16 @@ CodeGenInstruction::ParseOperandName(const std::string &Op,
         SubOpName.empty())
       throw TheDef->getName() + ": Illegal to refer to"
             " whole operand part of complex operand '" + Op + "'";
-  
+
     // Otherwise, return the operand.
     return std::make_pair(OpIdx, 0U);
   }
-  
+
   // Find the suboperand number involved.
   DagInit *MIOpInfo = OperandList[OpIdx].MIOperandInfo;
   if (MIOpInfo == 0)
     throw TheDef->getName() + ": unknown suboperand name in '" + Op + "'";
-  
+
   // Find the operand with the right name.
   for (unsigned i = 0, e = MIOpInfo->getNumArgs(); i != e; ++i)
     if (MIOpInfo->getArgName(i) == SubOpName)
