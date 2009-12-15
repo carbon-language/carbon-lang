@@ -26,8 +26,6 @@ static void test() {
     f = vec2.x; // legal, shorten
     f = vec4.xy.x; // legal, shorten
 
-    vec2 = vec3.hi; // expected-error {{vector component access invalid for odd-sized type 'float3'}}
-    
     vec4_2.xyzx = vec4.xyzw; // expected-error {{vector is not assignable (contains duplicate components)}}
     vec4_2.xyzz = vec4.xyzw; // expected-error {{vector is not assignable (contains duplicate components)}}
     vec4_2.xyyw = vec4.xyzw; // expected-error {{vector is not assignable (contains duplicate components)}}
@@ -42,3 +40,8 @@ static void test() {
   
     vec4p->yz = vec4p->xy;
 }
+
+float2 lo(float3 x) { return x.lo; }
+float2 hi(float3 x) { return x.hi; }
+float2 ev(float3 x) { return x.even; }
+float2 od(float3 x) { return x.odd; }

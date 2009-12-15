@@ -639,8 +639,6 @@ def err_unsupported_vector_size : Error<
   "unsupported type %0 for vector_size attribute, please use on typedef">;
 def err_ext_vector_component_exceeds_length : Error<
   "vector component access exceeds type %0">;
-def err_ext_vector_component_requires_even : Error<
-  "vector component access invalid for odd-sized type %0">;
 def err_ext_vector_component_name_illegal : Error<
   "illegal vector component name '%0'">;
 def err_attribute_address_space_not_int : Error<

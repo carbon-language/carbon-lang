@@ -2053,20 +2053,12 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
     }
   }
 
-  // If this is a halving swizzle, verify that the base type has an even
-  // number of elements.
-  if (HalvingSwizzle && (vecType->getNumElements() & 1U)) {
-    Diag(OpLoc, diag::err_ext_vector_component_requires_even)
-      << baseType << SourceRange(CompLoc);
-    return QualType();
-  }
-
   // The component accessor looks fine - now we need to compute the actual type.
   // The vector type is implied by the component accessor. For example,
   // vec4.b is a float, vec4.xy is a vec2, vec4.rgb is a vec3, etc.
   // vec4.s0 is a float, vec4.s23 is a vec3, etc.
   // vec4.hi, vec4.lo, vec4.e, and vec4.o all return vec2.
-  unsigned CompSize = HalvingSwizzle ? vecType->getNumElements() / 2
+  unsigned CompSize = HalvingSwizzle ? (vecType->getNumElements() + 1) / 2
                                      : CompName->getLength();
   if (HexSwizzle)
     CompSize--;
