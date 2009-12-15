@@ -337,7 +337,7 @@ namespace {
                                           std::string ImplTag,
                                           int i, const char *funcName,
                                           unsigned hasCopy);
-    Stmt *SynthesizeBlockCall(CallExpr *Exp);
+    Stmt *SynthesizeBlockCall(CallExpr *Exp, const Expr* BlockExp);
     void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                    const char *FunName);
     void RewriteRecordBody(RecordDecl *RD);
@@ -4030,20 +4030,36 @@ void RewriteObjC::GetBlockCallExprs(Stmt *S) {
   return;
 }
 
-Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
+Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   // Navigate to relevant type information.
-  const char *closureName = 0;
   const BlockPointerType *CPT = 0;
 
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
-    closureName = DRE->getDecl()->getNameAsCString();
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BlockExp)) {
     CPT = DRE->getType()->getAs<BlockPointerType>();
-  } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
-    closureName = CDRE->getDecl()->getNameAsCString();
+  } else if (const BlockDeclRefExpr *CDRE = 
+              dyn_cast<BlockDeclRefExpr>(BlockExp)) {
     CPT = CDRE->getType()->getAs<BlockPointerType>();
-  } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
-    closureName = MExpr->getMemberDecl()->getNameAsCString();
+  } else if (const MemberExpr *MExpr = dyn_cast<MemberExpr>(BlockExp)) {
     CPT = MExpr->getType()->getAs<BlockPointerType>();
+  } 
+  else if (const ParenExpr *PRE = dyn_cast<ParenExpr>(BlockExp)) {
+    return SynthesizeBlockCall(Exp, PRE->getSubExpr());
+  }
+  else if (const ImplicitCastExpr *IEXPR = dyn_cast<ImplicitCastExpr>(BlockExp)) 
+    CPT = IEXPR->getType()->getAs<BlockPointerType>();
+  else if (const ConditionalOperator *CEXPR = 
+            dyn_cast<ConditionalOperator>(BlockExp)) {
+    Expr *LHSExp = CEXPR->getLHS();
+    Stmt *LHSStmt = SynthesizeBlockCall(Exp, LHSExp);
+    Expr *RHSExp = CEXPR->getRHS();
+    Stmt *RHSStmt = SynthesizeBlockCall(Exp, RHSExp);
+    Expr *CONDExp = CEXPR->getCond();
+    ConditionalOperator *CondExpr =
+      new (Context) ConditionalOperator(CONDExp,
+                                      SourceLocation(), cast<Expr>(LHSStmt),
+                                      SourceLocation(), cast<Expr>(RHSStmt), 
+                                      Exp->getType());
+    return CondExpr;
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
   }
@@ -4083,7 +4099,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
 
   CastExpr *BlkCast = new (Context) CStyleCastExpr(PtrBlock,
                                                    CastExpr::CK_Unknown,
-                                                   Exp->getCallee(),
+                                                   const_cast<Expr*>(BlockExp),
                                                    PtrBlock, SourceLocation(),
                                                    SourceLocation());
   // Don't forget the parens to enforce the proper binding.
@@ -4119,7 +4135,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
 }
 
 void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
-  Stmt *BlockCall = SynthesizeBlockCall(Exp);
+  Stmt *BlockCall = SynthesizeBlockCall(Exp, Exp->getCallee());
   ReplaceStmt(Exp, BlockCall);
 }
 
@@ -4668,7 +4684,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   }
   if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
     if (CE->getCallee()->getType()->isBlockPointerType()) {
-      Stmt *BlockCall = SynthesizeBlockCall(CE);
+      Stmt *BlockCall = SynthesizeBlockCall(CE, CE->getCallee());
       ReplaceStmt(S, BlockCall);
       return BlockCall;
     }
