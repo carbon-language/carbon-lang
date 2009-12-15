@@ -1053,7 +1053,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
           << RetValExp->getSourceRange();
       }
 
-      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
+      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
     }
     return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
   }
@@ -1098,7 +1098,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     // FIXME: Leaks RetValExp on error.
     if (PerformCopyInitialization(RetValExp, FnRetType, "returning", Elidable)){
       // We should still clean up our temporaries, even when we're failing!
-      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
+      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
       return StmtError();
     }
     
@@ -1106,7 +1106,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   }
 
   if (RetValExp)
-    RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
+    RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
   return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
 }
 

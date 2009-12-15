@@ -2089,8 +2089,7 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
 
-Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
-                                              bool ShouldDestroyTemps) {
+Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   assert(SubExpr && "sub expression can't be null!");
 
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
@@ -2100,8 +2099,7 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
 
   Expr *E = CXXExprWithTemporaries::Create(Context, SubExpr,
                                            &ExprTemporaries[FirstTemporary],
-                                    ExprTemporaries.size() - FirstTemporary,
-                                           ShouldDestroyTemps);
+                                       ExprTemporaries.size() - FirstTemporary);
   ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
                         ExprTemporaries.end());
 
@@ -2243,9 +2241,7 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();
   if (FullExpr)
-    FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr,
-                                                 /*ShouldDestroyTemps=*/true);
-
+    FullExpr = MaybeCreateCXXExprWithTemporaries(FullExpr);
 
   return Owned(FullExpr);
 }

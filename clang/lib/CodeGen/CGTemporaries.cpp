@@ -92,12 +92,6 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                             llvm::Value *AggLoc,
                                             bool IsAggLocVolatile,
                                             bool IsInitializer) {
-  // If we shouldn't destroy the temporaries, just emit the
-  // child expression.
-  if (!E->shouldDestroyTemporaries())
-    return EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
-                       /*IgnoreResult=*/false, IsInitializer);
-
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
   (void) CleanupStackDepth;
@@ -119,11 +113,6 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
 
 LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(
                                               const CXXExprWithTemporaries *E) {
-  // If we shouldn't destroy the temporaries, just emit the
-  // child expression.
-  if (!E->shouldDestroyTemporaries())
-    return EmitLValue(E->getSubExpr());
-  
   // Keep track of the current cleanup stack depth.
   size_t CleanupStackDepth = CleanupEntries.size();
   (void) CleanupStackDepth;

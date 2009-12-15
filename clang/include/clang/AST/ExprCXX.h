@@ -1264,10 +1264,8 @@ class CXXExprWithTemporaries : public Expr {
   CXXTemporary **Temps;
   unsigned NumTemps;
 
-  bool ShouldDestroyTemps;
-
   CXXExprWithTemporaries(Expr *SubExpr, CXXTemporary **Temps,
-                         unsigned NumTemps, bool ShouldDestroyTemps);
+                         unsigned NumTemps);
   ~CXXExprWithTemporaries();
 
 protected:
@@ -1275,8 +1273,8 @@ protected:
 
 public:
   static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
-                                        CXXTemporary **Temps, unsigned NumTemps,
-                                        bool ShouldDestroyTemporaries);
+                                        CXXTemporary **Temps, 
+                                        unsigned NumTemps);
 
   unsigned getNumTemporaries() const { return NumTemps; }
   CXXTemporary *getTemporary(unsigned i) {
@@ -1284,13 +1282,8 @@ public:
     return Temps[i];
   }
   const CXXTemporary *getTemporary(unsigned i) const {
-    assert(i < NumTemps && "Index out of range");
-    return Temps[i];
+    return const_cast<CXXExprWithTemporaries*>(this)->getTemporary(i);
   }
-
-  bool shouldDestroyTemporaries() const { return ShouldDestroyTemps; }
-
-  void removeLastTemporary() { NumTemps--; }
 
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }

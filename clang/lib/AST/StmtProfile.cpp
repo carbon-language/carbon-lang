@@ -540,7 +540,6 @@ StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
 
 void StmtProfiler::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *S) {
   VisitExpr(S);
-  ID.AddBoolean(S->shouldDestroyTemporaries());
   for (unsigned I = 0, N = S->getNumTemporaries(); I != N; ++I)
     VisitDecl(
       const_cast<CXXDestructorDecl *>(S->getTemporary(I)->getDestructor()));

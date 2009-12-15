@@ -4755,8 +4755,7 @@ TreeTransform<Derived>::TransformCXXExprWithTemporaries(
     return SemaRef.ExprError();
 
   return SemaRef.Owned(
-           SemaRef.MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>(),
-                                               E->shouldDestroyTemporaries()));
+           SemaRef.MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>()));
 }
 
 template<typename Derived>

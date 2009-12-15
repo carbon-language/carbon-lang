@@ -129,7 +129,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
                             Param->getDeclName(), /*DirectInit=*/false))
     return true;
 
-  Arg = MaybeCreateCXXExprWithTemporaries(Arg, /*DestroyTemps=*/false);
+  Arg = MaybeCreateCXXExprWithTemporaries(Arg);
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(Arg);
@@ -3806,7 +3806,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
 
   Expr *Temp = TempResult.takeAs<Expr>();
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
-  Temp = MaybeCreateCXXExprWithTemporaries(Temp, /*DestroyTemps=*/true);
+  Temp = MaybeCreateCXXExprWithTemporaries(Temp);
   VD->setInit(Context, Temp);
 
   return false;

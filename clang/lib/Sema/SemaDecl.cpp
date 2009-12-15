@@ -3622,8 +3622,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     Init->setType(DclT);
   }
 
-  Init = MaybeCreateCXXExprWithTemporaries(Init,
-                                           /*ShouldDestroyTemporaries=*/true);
+  Init = MaybeCreateCXXExprWithTemporaries(Init);
   // Attach the initializer to the decl.
   VDecl->setInit(Context, Init);
 

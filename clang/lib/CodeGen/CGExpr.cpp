@@ -99,11 +99,10 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
   unsigned OldNumLiveTemporaries = 0;
   
   if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
-    ShouldDestroyTemporaries = TE->shouldDestroyTemporaries();
-
+    ShouldDestroyTemporaries = true;
+    
     // Keep track of the current cleanup stack depth.
-    if (ShouldDestroyTemporaries)
-      OldNumLiveTemporaries = LiveTemporaries.size();
+    OldNumLiveTemporaries = LiveTemporaries.size();
     
     E = TE->getSubExpr();
   }

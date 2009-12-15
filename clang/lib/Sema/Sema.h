@@ -2003,8 +2003,7 @@ public:
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is
   /// non-empty, will create a new CXXExprWithTemporaries expression.
   /// Otherwise, just returs the passed in expression.
-  Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr,
-                                          bool ShouldDestroyTemporaries);
+  Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr);
 
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
