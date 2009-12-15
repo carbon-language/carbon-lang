@@ -153,9 +153,10 @@ def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
   "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro">;
 def ext_pp_macro_redef : ExtWarn<"%0 macro redefined">;
-def ext_variadic_macro : Extension<"variadic macros were introduced in C99">;
+def ext_variadic_macro : Extension<"variadic macros were introduced in C99">,
+  InGroup<VariadicMacros>;
 def ext_named_variadic_macro : Extension<
-  "named variadic macros are a GNU extension">;
+  "named variadic macros are a GNU extension">, InGroup<VariadicMacros>;
 def ext_embedded_directive : Extension<
   "embedding a directive within macro arguments is not portable">;
 def ext_missing_varargs_arg : Extension<

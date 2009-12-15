@@ -113,6 +113,7 @@ def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
 def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;
 def : DiagGroup<"variadic-macros">;
+def VariadicMacros : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
