@@ -369,7 +369,7 @@ def init : Separate<"-init">;
 def install__name : Separate<"-install_name">;
 def iprefix : JoinedOrSeparate<"-iprefix">, Group<clang_i_Group>;
 def iquote : JoinedOrSeparate<"-iquote">, Group<clang_i_Group>;
-def isysroot : JoinedOrSeparate<"-isysroot">, Group<i_Group>;
+def isysroot : JoinedOrSeparate<"-isysroot">, Group<clang_i_Group>;
 def isystem : JoinedOrSeparate<"-isystem">, Group<clang_i_Group>;
 def iwithprefixbefore : JoinedOrSeparate<"-iwithprefixbefore">, Group<clang_i_Group>;
 def iwithprefix : JoinedOrSeparate<"-iwithprefix">, Group<clang_i_Group>;
