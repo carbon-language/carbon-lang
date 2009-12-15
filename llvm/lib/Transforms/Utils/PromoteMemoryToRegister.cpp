@@ -55,7 +55,6 @@ struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
   static bool isEqual(const EltTy &LHS, const EltTy &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() { return true; }
 };
 }
 

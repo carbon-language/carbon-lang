@@ -413,7 +413,7 @@ uintptr_t Deserializer::ReadInternalRefPtr() {
   return GetFinalPtr(E);
 }
 
-void Deserializer::BPEntry::SetPtr(BPNode*& FreeList, void* P) {
+void BPEntry::SetPtr(BPNode*& FreeList, void* P) {
   BPNode* Last = NULL;
   
   for (BPNode* N = Head; N != NULL; N=N->Next) {

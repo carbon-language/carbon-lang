@@ -254,14 +254,17 @@ struct DenseMapInfo<AssertingVH<T> > {
   static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() {
-#ifdef NDEBUG
-    return true;
-#else
-    return false;
-#endif
-  }
 };
+  
+template <typename T>
+struct isPodLike<AssertingVH<T> > {
+#ifdef NDEBUG
+  static const bool value = true;
+#else
+  static const bool value = false;
+#endif
+};
+
 
 /// TrackingVH - This is a value handle that tracks a Value (or Value subclass),
 /// even across RAUW operations.

@@ -66,7 +66,7 @@ namespace llvm {
   };
 
   // Specialize DenseMapInfo for DebugLocTuple.
-  template<>  struct DenseMapInfo<DebugLocTuple> {
+  template<> struct DenseMapInfo<DebugLocTuple> {
     static inline DebugLocTuple getEmptyKey() {
       return DebugLocTuple(0, 0, ~0U, ~0U);
     }
@@ -85,9 +85,9 @@ namespace llvm {
              LHS.Line         == RHS.Line &&
              LHS.Col          == RHS.Col;
     }
-
-    static bool isPod() { return true; }
   };
+  template <> struct isPodLike<DebugLocTuple> {static const bool value = true;};
+
 
   /// DebugLocTracker - This class tracks debug location information.
   ///

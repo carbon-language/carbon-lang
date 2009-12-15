@@ -259,11 +259,9 @@ class AliasSetTracker {
     ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
     ASTCallbackVH &operator=(Value *V);
   };
-  /// ASTCallbackVHDenseMapInfo - Traits to tell DenseMap that ASTCallbackVH
-  /// is not a POD (it needs its destructor called).
-  struct ASTCallbackVHDenseMapInfo : public DenseMapInfo<Value *> {
-    static bool isPod() { return false; }
-  };
+  /// ASTCallbackVHDenseMapInfo - Traits to tell DenseMap that tell us how to
+  /// compare and hash the value handle.
+  struct ASTCallbackVHDenseMapInfo : public DenseMapInfo<Value *> {};
 
   AliasAnalysis &AA;
   ilist<AliasSet> AliasSets;

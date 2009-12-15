@@ -891,8 +891,9 @@ template<> struct DenseMapInfo<SDValue> {
   static bool isEqual(const SDValue &LHS, const SDValue &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() { return true; }
 };
+template <> struct isPodLike<SDValue> { static const bool value = true; };
+
 
 /// simplify_type specializations - Allow casting operators to work directly on
 /// SDValues as if they were SDNode*'s.

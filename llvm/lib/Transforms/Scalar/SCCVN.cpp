@@ -154,8 +154,10 @@ template <> struct DenseMapInfo<Expression> {
   static bool isEqual(const Expression &LHS, const Expression &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() { return true; }
 };
+template <>
+struct isPodLike<Expression> { static const bool value = true; };
+
 }
 
 //===----------------------------------------------------------------------===//

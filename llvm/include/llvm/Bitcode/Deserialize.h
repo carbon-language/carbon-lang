@@ -25,53 +25,52 @@
 
 namespace llvm {
 
+struct BPNode {
+  BPNode* Next;
+  uintptr_t& PtrRef;
+  
+  BPNode(BPNode* n, uintptr_t& pref)
+  : Next(n), PtrRef(pref) {
+    PtrRef = 0;
+  }
+};
+
+struct BPEntry {
+  union { BPNode* Head; void* Ptr; };
+  BPEntry() : Head(NULL) {}
+  void SetPtr(BPNode*& FreeList, void* P);
+};
+
+class BPKey {
+  unsigned Raw;
+public:
+  BPKey(SerializedPtrID PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
+  BPKey(unsigned code, unsigned) : Raw(code) {}
+  
+  void MarkFinal() { Raw |= 0x1; }
+  bool hasFinalPtr() const { return Raw & 0x1 ? true : false; }
+  SerializedPtrID getID() const { return Raw >> 1; }
+  
+  static inline BPKey getEmptyKey() { return BPKey(0,0); }
+  static inline BPKey getTombstoneKey() { return BPKey(1,0); }
+  static inline unsigned getHashValue(const BPKey& K) { return K.Raw & ~0x1; }
+  
+  static bool isEqual(const BPKey& K1, const BPKey& K2) {
+    return (K1.Raw ^ K2.Raw) & ~0x1 ? false : true;
+  }
+};
+  
+template <>
+struct isPodLike<BPKey> { static const bool value = true; };
+template <>
+struct isPodLike<BPEntry> { static const bool value = true; };
+  
 class Deserializer {
 
   //===----------------------------------------------------------===//
   // Internal type definitions.
   //===----------------------------------------------------------===//
 
-  struct BPNode {
-    BPNode* Next;
-    uintptr_t& PtrRef;
-
-    BPNode(BPNode* n, uintptr_t& pref)
-      : Next(n), PtrRef(pref) {
-        PtrRef = 0;
-      }
-  };
-
-  struct BPEntry {
-    union { BPNode* Head; void* Ptr; };
-
-    BPEntry() : Head(NULL) {}
-
-    static inline bool isPod() { return true; }
-
-    void SetPtr(BPNode*& FreeList, void* P);
-  };
-
-  class BPKey {
-    unsigned Raw;
-
-  public:
-    BPKey(SerializedPtrID PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
-    BPKey(unsigned code, unsigned) : Raw(code) {}
-
-    void MarkFinal() { Raw |= 0x1; }
-    bool hasFinalPtr() const { return Raw & 0x1 ? true : false; }
-    SerializedPtrID getID() const { return Raw >> 1; }
-
-    static inline BPKey getEmptyKey() { return BPKey(0,0); }
-    static inline BPKey getTombstoneKey() { return BPKey(1,0); }
-    static inline unsigned getHashValue(const BPKey& K) { return K.Raw & ~0x1; }
-
-    static bool isEqual(const BPKey& K1, const BPKey& K2) {
-      return (K1.Raw ^ K2.Raw) & ~0x1 ? false : true;
-    }
-
-    static bool isPod() { return true; }
-  };
 
   typedef llvm::DenseMap<BPKey,BPEntry,BPKey,BPEntry> MapTy;
 

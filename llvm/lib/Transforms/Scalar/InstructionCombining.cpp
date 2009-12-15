@@ -11200,8 +11200,9 @@ namespace llvm {
       return LHS.PN == RHS.PN && LHS.Shift == RHS.Shift &&
              LHS.Width == RHS.Width;
     }
-    static bool isPod() { return true; }
   };
+  template <>
+  struct isPodLike<LoweredPHIRecord> { static const bool value = true; };
 }
 
 

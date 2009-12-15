@@ -121,8 +121,6 @@ namespace {
 
       return *LHS == *RHS;
     }
-
-    static bool isPod() { return true; }
   };
 
   class Andersens : public ModulePass, public AliasAnalysis,

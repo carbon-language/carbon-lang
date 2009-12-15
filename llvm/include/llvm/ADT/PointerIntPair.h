@@ -106,6 +106,12 @@ public:
   bool operator>=(const PointerIntPair &RHS) const {return Value >= RHS.Value;}
 };
 
+template <typename T> struct isPodLike;
+template<typename PointerTy, unsigned IntBits, typename IntType>
+struct isPodLike<PointerIntPair<PointerTy, IntBits, IntType> > {
+   static const bool value = true;
+};
+  
 // Provide specialization of DenseMapInfo for PointerIntPair.
 template<typename PointerTy, unsigned IntBits, typename IntType>
 struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
@@ -125,7 +131,6 @@ struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
     return unsigned(IV) ^ unsigned(IV >> 9);
   }
   static bool isEqual(const Ty &LHS, const Ty &RHS) { return LHS == RHS; }
-  static bool isPod() { return true; }
 };
 
 // Teach SmallPtrSet that PointerIntPair is "basically a pointer".

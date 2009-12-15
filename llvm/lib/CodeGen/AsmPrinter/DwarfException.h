@@ -119,7 +119,6 @@ class DwarfException : public Dwarf {
     static inline unsigned getTombstoneKey() { return -2U; }
     static unsigned getHashValue(const unsigned &Key) { return Key; }
     static bool isEqual(unsigned LHS, unsigned RHS) { return LHS == RHS; }
-    static bool isPod() { return true; }
   };
 
   /// PadRange - Structure holding a try-range and the associated landing pad.

@@ -62,7 +62,6 @@ struct DenseMapAPIntKeyInfo {
   static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() { return false; }
 };
 
 struct DenseMapAPFloatKeyInfo {
@@ -89,7 +88,6 @@ struct DenseMapAPFloatKeyInfo {
   static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
     return LHS == RHS;
   }
-  static bool isPod() { return false; }
 };
 
 class LLVMContextImpl {

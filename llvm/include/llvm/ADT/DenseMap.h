@@ -217,7 +217,8 @@ public:
 
 private:
   void CopyFrom(const DenseMap& other) {
-    if (NumBuckets != 0 && (!KeyInfoT::isPod() || !ValueInfoT::isPod())) {
+    if (NumBuckets != 0 &&
+        (!isPodLike<KeyInfoT>::value || !isPodLike<ValueInfoT>::value)) {
       const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
       for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
         if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
@@ -239,7 +240,7 @@ private:
     Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) *
                                                  other.NumBuckets));
 
-    if (KeyInfoT::isPod() && ValueInfoT::isPod())
+    if (isPodLike<KeyInfoT>::value && isPodLike<ValueInfoT>::value)
       memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
     else
       for (size_t i = 0; i < other.NumBuckets; ++i) {

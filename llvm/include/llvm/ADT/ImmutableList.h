@@ -211,8 +211,11 @@ template<typename T> struct DenseMapInfo<ImmutableList<T> > {
   static bool isEqual(ImmutableList<T> X1, ImmutableList<T> X2) {
     return X1 == X2;
   }
-  static bool isPod() { return true; }
 };
+
+template <typename T> struct isPodLike;
+template <typename T>
+struct isPodLike<ImmutableList<T> > { static const bool value = true; };
 
 } // end llvm namespace
 
