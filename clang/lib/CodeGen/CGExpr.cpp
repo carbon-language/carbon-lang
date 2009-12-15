@@ -17,6 +17,7 @@
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -1012,34 +1013,27 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   }
 }
 
-static llvm::Constant *getAbortFn(CodeGenFunction &CGF) {
-  // void abort();
-
-  const llvm::FunctionType *FTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), false);
-
-  return CGF.CGM.CreateRuntimeFunction(FTy, "abort");
-}
-
-llvm::BasicBlock*CodeGenFunction::getAbortBB() {
-  if (AbortBB)
-    return AbortBB;
+llvm::BasicBlock*CodeGenFunction::getTrapBB() {
+  if (TrapBB)
+    return TrapBB;
 
   llvm::BasicBlock *Cont = 0;
   if (HaveInsertPoint()) {
     Cont = createBasicBlock("cont");
     EmitBranch(Cont);
   }
-  AbortBB = createBasicBlock("abort");
-  EmitBlock(AbortBB);
-  llvm::CallInst *AbortCall = Builder.CreateCall(getAbortFn(*this));
-  AbortCall->setDoesNotReturn();
-  AbortCall->setDoesNotThrow();
+  TrapBB = createBasicBlock("trap");
+  EmitBlock(TrapBB);
+
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap, 0, 0);
+  llvm::CallInst *TrapCall = Builder.CreateCall(F);
+  TrapCall->setDoesNotReturn();
+  TrapCall->setDoesNotThrow();
   Builder.CreateUnreachable();
 
   if (Cont)
     EmitBlock(Cont);
-  return AbortBB;
+  return TrapBB;
 }
 
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
@@ -1080,7 +1074,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
             llvm::BasicBlock *Cont = createBasicBlock("cont");
             Builder.CreateCondBr(Builder.CreateICmpULE(Idx,
                                   llvm::ConstantInt::get(Idx->getType(), Size)),
-                                 Cont, getAbortBB());
+                                 Cont, getTrapBB());
             EmitBlock(Cont);
           }
         }

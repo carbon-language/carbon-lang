@@ -1532,7 +1532,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
     CGF.Builder.CreateCondBr(Builder.CreateICmpULT(RHS,
                                  llvm::ConstantInt::get(RHS->getType(), Width)),
-                             Cont, CGF.getAbortBB());
+                             Cont, CGF.getTrapBB());
     CGF.EmitBlock(Cont);
   }
 
@@ -1552,7 +1552,7 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
     llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
     CGF.Builder.CreateCondBr(Builder.CreateICmpULT(RHS,
                                  llvm::ConstantInt::get(RHS->getType(), Width)),
-                             Cont, CGF.getAbortBB());
+                             Cont, CGF.getTrapBB());
     CGF.EmitBlock(Cont);
   }
 

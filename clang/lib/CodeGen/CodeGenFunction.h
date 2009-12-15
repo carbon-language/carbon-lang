@@ -425,7 +425,7 @@ private:
   unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
 
   llvm::BasicBlock *TerminateHandler;
-  llvm::BasicBlock *AbortBB;
+  llvm::BasicBlock *TrapBB;
 
   int UniqueAggrDestructorCount;
 public:
@@ -1196,9 +1196,9 @@ public:
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock);
 
-  /// getAbortBB - Create a basic block that will call abort.  We'll generate
-  /// a branch around the created basic block as necessary.
-  llvm::BasicBlock* getAbortBB();
+  /// getTrapBB - Create a basic block that will call the trap intrinsic.  We'll
+  /// generate a branch around the created basic block as necessary.
+  llvm::BasicBlock* getTrapBB();
 private:
 
   void EmitReturnOfRValue(RValue RV, QualType Ty);
