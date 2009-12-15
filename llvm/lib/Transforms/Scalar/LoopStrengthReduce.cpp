@@ -232,44 +232,6 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
   }
 }
 
-/// containsAddRecFromDifferentLoop - Determine whether expression S involves a
-/// subexpression that is an AddRec from a loop other than L.  An outer loop
-/// of L is OK, but not an inner loop nor a disjoint loop.
-static bool containsAddRecFromDifferentLoop(const SCEV *S, Loop *L) {
-  // This is very common, put it first.
-  if (isa<SCEVConstant>(S))
-    return false;
-  if (const SCEVCommutativeExpr *AE = dyn_cast<SCEVCommutativeExpr>(S)) {
-    for (unsigned int i=0; i< AE->getNumOperands(); i++)
-      if (containsAddRecFromDifferentLoop(AE->getOperand(i), L))
-        return true;
-    return false;
-  }
-  if (const SCEVAddRecExpr *AE = dyn_cast<SCEVAddRecExpr>(S)) {
-    if (const Loop *newLoop = AE->getLoop()) {
-      if (newLoop == L)
-        return false;
-      // if newLoop is an outer loop of L, this is OK.
-      if (newLoop->contains(L->getHeader()))
-        return false;
-    }
-    return true;
-  }
-  if (const SCEVUDivExpr *DE = dyn_cast<SCEVUDivExpr>(S))
-    return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
-           containsAddRecFromDifferentLoop(DE->getRHS(), L);
-#if 0
-  // SCEVSDivExpr has been backed out temporarily, but will be back; we'll
-  // need this when it is.
-  if (const SCEVSDivExpr *DE = dyn_cast<SCEVSDivExpr>(S))
-    return containsAddRecFromDifferentLoop(DE->getLHS(), L) ||
-           containsAddRecFromDifferentLoop(DE->getRHS(), L);
-#endif
-  if (const SCEVCastExpr *CE = dyn_cast<SCEVCastExpr>(S))
-    return containsAddRecFromDifferentLoop(CE->getOperand(), L);
-  return false;
-}
-
 /// isAddressUse - Returns true if the specified instruction is using the
 /// specified value as an address.
 static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
