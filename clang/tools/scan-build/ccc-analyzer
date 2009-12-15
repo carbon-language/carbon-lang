@@ -14,14 +14,38 @@
 
 use strict;
 use warnings;
+use FindBin;
 use Cwd qw/ getcwd abs_path /;
 use File::Temp qw/ tempfile /;
 use File::Path qw / mkpath /;
 use File::Basename;
 use Text::ParseWords;
 
-my $CC = $ENV{'CCC_CC'};
-if (!defined $CC) { $CC = "gcc"; }
+##===----------------------------------------------------------------------===##
+# Compiler command setup.
+##===----------------------------------------------------------------------===##
+
+my $Compiler;
+my $Clang;
+
+if ($FindBin::Script =~ /c\+\+-analyzer/) {
+  $Compiler = $ENV{'CCC_CXX'};
+  if (!defined $Compiler) { $Compiler = "g++"; }
+  
+  $Clang = $ENV{'CLANG_CXX'};
+  if (!defined $Clang) { $Clang = 'clang++'; }
+}
+else {
+  $Compiler = $ENV{'CCC_CC'};
+  if (!defined $Compiler) { $Compiler = "gcc"; }
+
+  $Clang = $ENV{'CLANG'};
+  if (!defined $Clang) { $Clang = 'clang'; }
+}
+
+##===----------------------------------------------------------------------===##
+# Cleanup.
+##===----------------------------------------------------------------------===##
 
 my $ReportFailures = $ENV{'CCC_REPORT_FAILURES'};
 if (!defined $ReportFailures) { $ReportFailures = 1; }
@@ -79,7 +103,7 @@ sub ProcessClangFailure {
   print OUT "@$Args\n";
   close OUT;
   `uname -a >> $PPFile.info.txt 2>&1`;
-  `$CC -v >> $PPFile.info.txt 2>&1`;
+  `$Compiler -v >> $PPFile.info.txt 2>&1`;
   system 'mv',$ofile,"$PPFile.stderr.txt";
   return (basename $PPFile);
 }
@@ -87,10 +111,6 @@ sub ProcessClangFailure {
 ##----------------------------------------------------------------------------##
 #  Running the analyzer.
 ##----------------------------------------------------------------------------##
-
-# Determine what clang executable to use.
-my $Clang = $ENV{'CLANG'};
-if (!defined $Clang) { $Clang = 'clang'; }
 
 sub GetCCArgs {
   my $Args = shift;
@@ -133,9 +153,6 @@ sub Analyze {
       $file, $Analyses) = @_;
   
   $Args = GetCCArgs($Args);
-
-  # Skip anything related to C++.
-  return if ($Lang =~ /c[+][+]/);
 
   my $RunAnalyzer = 0;
   my $Cmd;
@@ -361,7 +378,9 @@ my %UniqueOptions = (
 
 my %LangsAccepted = (
   "objective-c" => 1,
-  "c" => 1
+  "c" => 1,
+  "c++" => 1,
+  "objective-c++" => 1
 );
 
 ##----------------------------------------------------------------------------##
@@ -377,7 +396,7 @@ my $Output;
 my %Uniqued;
 
 # Forward arguments to gcc.
-my $Status = system($CC,@ARGV);
+my $Status = system($Compiler,@ARGV);
 if ($Status) { exit($Status >> 8); }
 
 # Get the analysis options.

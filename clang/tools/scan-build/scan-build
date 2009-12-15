@@ -26,7 +26,6 @@ my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
-my $CXX;  # Leave undefined initially.
 
 my $TERM = $ENV{'TERM'};
 my $UseColor = (defined $TERM and $TERM eq 'xterm-color' and -t STDOUT
@@ -83,13 +82,17 @@ sub DieDiag {
 
 # Find 'clang'
 my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
+my $ClangCXXSB;
 if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang");
+  if (defined $ClangSB) { $ClangCXXSB = $ClangSB . "++"; }
 }
 my $Clang = $ClangSB;
+my $ClangCXX = $ClangCXXSB;
 # Default to looking for 'clang' in the path.
 if (!defined $Clang || ! -x $Clang) {
   $Clang = "clang";
+  $ClangCXX = "clang++";
 }
 
 my %AvailableAnalyses;
@@ -799,9 +802,19 @@ sub RunBuildCommand {
       $Cmd =~ /(.*\/?ccc-analyzer[^\/]*$)/) {
 
     if (!($Cmd =~ /ccc-analyzer/) and !defined $ENV{"CCC_CC"}) {
-      $ENV{"CCC_CC"} = $1;
+      $ENV{"CCC_CC"} = $1;      
     }
         
+    shift @$Args;
+    unshift @$Args, $CCAnalyzer;
+  }
+  elsif ($Cmd =~ /(.*\/?g\+\+[^\/]*$)/ or 
+        $Cmd =~ /(.*\/?c\+\+[^\/]*$)/ or
+        $Cmd =~ /(.*\/?llvm-g\+\+[^\/]*$)/ or
+        $Cmd =~ /(.*\/?c\+\+-analyzer[^\/]*$)/) {
+    if (!($Cmd =~ /c\+\+-analyzer/) and !defined $ENV{"CCC_CXX"}) {
+      $ENV{"CCC_CXX"} = $1;      
+    }        
     shift @$Args;
     unshift @$Args, $CCAnalyzer;
   }
@@ -825,6 +838,7 @@ sub RunBuildCommand {
         if ($Args->[$i] eq "-sdk" && $i + 1 < scalar(@$Args)) {
           if (@$Args[$i+1] =~ /^iphonesimulator3/) {
             $ENV{"CCC_CC"} = "gcc-4.2";
+            $ENV{"CCC_CXX"} = "g++-4.2";            
           }
         }
       }
@@ -839,10 +853,10 @@ sub RunBuildCommand {
     # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
     # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
     # when linking such files.
-    die if (!defined $CXX);
-    my $LDPLUSPLUS = `which $CXX`;
-    $LDPLUSPLUS =~ s/\015?\012//;  # strip newlines
-    $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
+    if (!defined $ENV{'CCC_CXX'}) {
+      $ENV{'CCC_CXX'} = 'g++';      
+    }
+    $ENV{'LDPLUSPLUS'} = $ENV{'CCC_CXX'};
   }
   
   return (system(@$Args) >> 8);
@@ -1090,16 +1104,19 @@ while (@ARGV) {
   
   if ($arg =~ /^--use-c\+\+(=(.+))?$/) {
     shift @ARGV;
+    my $cxx;    
     
     if (!defined $2 || $2 eq "") {
       if (!@ARGV) {
         DieDiag("'--use-c++' option requires a compiler executable name.\n");
       }
-      $CXX = shift @ARGV;
+      $cxx = shift @ARGV;
     }
     else {
-      $CXX = $2;
+      $cxx = $2;
     }
+    
+    $ENV{"CCC_CXX"} = $cxx;
     next;
   }
   
@@ -1171,10 +1188,17 @@ $HtmlDir = GetHTMLRunDir($HtmlDir);
 # Set the appropriate environment variables.
 SetHtmlEnv(\@ARGV, $HtmlDir);
 
-my $Cmd = Cwd::realpath("$RealBin/libexec/ccc-analyzer");
+my $AbsRealBin = Cwd::realpath($RealBin);
+my $Cmd = "$AbsRealBin/libexec/ccc-analyzer";
+my $CmdCXX = "$AbsRealBin/libexec/c++-analyzer";
+
 if (!defined $Cmd || ! -x $Cmd) {
-  $Cmd = Cwd::realpath("$RealBin/ccc-analyzer");
+  $Cmd = "$AbsRealBin/ccc-analyzer";
   DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n") if(! -x $Cmd);
+}
+if (!defined $CmdCXX || ! -x $CmdCXX) {
+  $CmdCXX = "$AbsRealBin/c++-analyzer";
+  DieDiag("Executable 'c++-analyzer' does not exist at '$CmdCXX'\n") if(! -x $CmdCXX);
 }
 
 if (!defined $ClangSB || ! -x $ClangSB) {
@@ -1182,16 +1206,10 @@ if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("Using 'clang' from path.\n");
 }
 
-if (defined $CXX) {
-  $ENV{'CXX'} = $CXX;
-}
-else {
-  $CXX = 'g++';  # This variable is used by other parts of scan-build
-                 # that need to know a default C++ compiler to fall back to.
-}
-  
 $ENV{'CC'} = $Cmd;
+$ENV{'CXX'} = $CmdCXX;
 $ENV{'CLANG'} = $Clang;
+$ENV{'CLANG_CXX'} = $ClangCXX;
 
 if ($Verbose >= 2) {
   $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
