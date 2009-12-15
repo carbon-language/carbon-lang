@@ -22,7 +22,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -75,18 +74,16 @@ void PrintDbgInfo::printVariableDeclaration(const Value *V) {
 }
 
 void PrintDbgInfo::printStopPoint(const DbgStopPointInst *DSI) {
-  if (PrintDirectory) {
-    std::string dir;
-    GetConstantStringInfo(DSI->getDirectory(), dir);
-    Out << dir << "/";
-  }
+  if (PrintDirectory)
+    if (MDString *Str = dyn_cast<MDString>(DSI->getDirectory()))
+      Out << Str->getString() << '/';
 
-  std::string file;
-  GetConstantStringInfo(DSI->getFileName(), file);
-  Out << file << ":" << DSI->getLine();
+  if (MDString *Str = dyn_cast<MDString>(DSI->getFileName()))
+    Out << Str->getString();
+  Out << ':' << DSI->getLine();
 
   if (unsigned Col = DSI->getColumn())
-    Out << ":" << Col;
+    Out << ':' << Col;
 }
 
 void PrintDbgInfo::printFuncStart(const DbgFuncStartInst *FS) {
