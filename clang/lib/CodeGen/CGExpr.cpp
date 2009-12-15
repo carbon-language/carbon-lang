@@ -1014,7 +1014,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   }
 }
 
-llvm::BasicBlock*CodeGenFunction::getTrapBB() {
+llvm::BasicBlock *CodeGenFunction::getTrapBB() {
   const CodeGenOptions &GCO = CGM.getCodeGenOpts();
 
   // If we are not optimzing, don't collapse all calls to trap in the function
