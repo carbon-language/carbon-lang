@@ -112,7 +112,12 @@ public:
 
   /// getDIEEntry - Returns the debug information entry for the speciefied
   /// debug variable.
-  DIEEntry *getDIEEntry(MDNode *N) { return GVToDIEEntryMap.lookup(N); }
+  DIEEntry *getDIEEntry(MDNode *N) { 
+    ValueMap<MDNode *, DIEEntry *>::iterator I = GVToDIEEntryMap.find(N);
+    if (I == GVToDIEEntryMap.end())
+      return NULL;
+    return I->second;
+  }
 
   /// insertDIEEntry - Insert debug information entry into the map.
   void insertDIEEntry(MDNode *N, DIEEntry *E) {
@@ -446,6 +451,23 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
+/// addSourceLine - Add location information to specified debug information
+/// entry.
+void DwarfDebug::addSourceLine(DIE *Die, const DINameSpace *NS) {
+  // If there is no compile unit specified, don't add a line #.
+  if (NS->getCompileUnit().isNull())
+    return;
+
+  unsigned Line = NS->getLineNumber();
+  StringRef FN = NS->getFilename();
+  StringRef Dir = NS->getDirectory();
+
+  unsigned FileID = GetOrCreateSourceID(Dir, FN);
+  assert(FileID && "Invalid file id");
+  addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
+  addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
+}
+
 /* Byref variables, in Blocks, are declared by the programmer as
    "SomeType VarName;", but the compiler creates a
    __Block_byref_x_VarName struct, and gives the variable VarName
@@ -745,6 +767,9 @@ void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   else if (Context.isType()) {
     DIE *ContextDIE = getOrCreateTypeDIE(DIType(Context.getNode()));
     ContextDIE->addChild(Die);
+  } else if (Context.isNameSpace()) {
+    DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context.getNode()));
+    ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = ModuleCU->getDIE(Context.getNode()))
     ContextDIE->addChild(Die);
   else 
@@ -781,7 +806,6 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
 
   // Check for pre-existence.
   DIEEntry *Entry = ModuleCU->getDIEEntry(Ty.getNode());
-
   // If it exists then use the existing value.
   if (Entry) {
     Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
@@ -1029,13 +1053,6 @@ DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
   if (!GV.isLocalToUnit())
     addUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
   addSourceLine(GVDie, &GV);
-
-  // Add address.
-  DIEBlock *Block = new DIEBlock();
-  addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-  addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                 Asm->Mang->getMangledName(GV.getGlobal()));
-  addBlock(GVDie, dwarf::DW_AT_location, 0, Block);
 
   return GVDie;
 }
@@ -1285,7 +1302,6 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
    SPDie = new DIE(dwarf::DW_TAG_subprogram);
    addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4, 
                SPDeclDie);
-   
    ModuleCU->addDie(SPDie);
  }
    
@@ -1559,6 +1575,20 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef DirName, StringRef FileName) 
   return SrcId;
 }
 
+/// getOrCreateNameSpace - Create a DIE for DINameSpace.
+DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace NS) {
+  DIE *NDie = ModuleCU->getDIE(NS.getNode());
+  if (NDie)
+    return NDie;
+  NDie = new DIE(dwarf::DW_TAG_namespace);
+  ModuleCU->insertDIE(NS.getNode(), NDie);
+  if (!NS.getName().empty())
+    addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
+  addSourceLine(NDie, &NS);
+  addToContextOwner(NDie, NS.getContext());
+  return NDie;
+}
+
 CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
@@ -1620,6 +1650,25 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   ModuleCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
+  if (DI_GV.isDefinition() 
+      && !DI_GV.getContext().isCompileUnit()) {
+    // Create specification DIE.
+    DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
+    addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
+                dwarf::DW_FORM_ref4, VariableDie);
+    DIEBlock *Block = new DIEBlock();
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+    addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
+                   Asm->Mang->getMangledName(DI_GV.getGlobal()));
+    addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
+    ModuleCU->addDie(VariableSpecDIE);
+  } else {
+    DIEBlock *Block = new DIEBlock();
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+    addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
+                   Asm->Mang->getMangledName(DI_GV.getGlobal()));
+    addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
+  }
   addToContextOwner(VariableDie, DI_GV.getContext());
   
   // Expose as global. FIXME - need to check external flag.
@@ -1652,9 +1701,7 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
   ModuleCU->insertDIE(N, SubprogramDie);
 
   // Add to context owner.
-  if (SP.getContext().getNode() == SP.getCompileUnit().getNode())
-    if (TopLevelDIEs.insert(SubprogramDie))
-      TopLevelDIEsVector.push_back(SubprogramDie);
+  addToContextOwner(SubprogramDie, SP.getContext());
 
   // Expose as global.
   ModuleCU->addGlobal(SP.getName(), SubprogramDie);
@@ -2365,7 +2412,6 @@ void DwarfDebug::emitDebugInfo() {
   EmitLabel("info_end", ModuleCU->getID());
 
   Asm->EOL();
-
 }
 
 /// emitAbbreviations - Emit the abbreviation section.

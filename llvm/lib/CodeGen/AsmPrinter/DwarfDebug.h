@@ -285,6 +285,7 @@ class DwarfDebug : public Dwarf {
   void addSourceLine(DIE *Die, const DIGlobal *G);
   void addSourceLine(DIE *Die, const DISubprogram *SP);
   void addSourceLine(DIE *Die, const DIType *Ty);
+  void addSourceLine(DIE *Die, const DINameSpace *NS);
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
@@ -314,6 +315,10 @@ class DwarfDebug : public Dwarf {
 
   /// addType - Add a new type attribute to the specified entity.
   void addType(DIE *Entity, DIType Ty);
+
+ 
+  /// getOrCreateNameSpace - Create a DIE for DINameSpace.
+  DIE *getOrCreateNameSpace(DINameSpace NS);
 
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.

@@ -68,6 +68,7 @@ namespace llvm {
     /// Data - Raw data bytes for abbreviation.
     ///
     SmallVector<DIEAbbrevData, 8> Data;
+
   public:
     DIEAbbrev(unsigned T, unsigned C) : Tag(T), ChildrenFlag(C), Data() {}
     virtual ~DIEAbbrev() {}
@@ -131,19 +132,18 @@ namespace llvm {
     ///
     std::vector<DIE *> Children;
 
+    DIE *Parent;
+
     /// Attributes values.
     ///
     SmallVector<DIEValue*, 32> Values;
 
-    /// Abstract compile unit.
-    CompileUnit *AbstractCU;
-    
     // Private data for print()
     mutable unsigned IndentCount;
   public:
     explicit DIE(unsigned Tag)
       : Abbrev(Tag, dwarf::DW_CHILDREN_no), Offset(0),
-        Size(0), IndentCount(0) {}
+        Size(0), Parent (0), IndentCount(0) {}
     virtual ~DIE();
 
     // Accessors.
@@ -154,13 +154,12 @@ namespace llvm {
     unsigned getSize() const { return Size; }
     const std::vector<DIE *> &getChildren() const { return Children; }
     SmallVector<DIEValue*, 32> &getValues() { return Values; }
-    CompileUnit *getAbstractCompileUnit() const { return AbstractCU; }
-
+    DIE *getParent() const { return Parent; }
     void setTag(unsigned Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }
-    void setAbstractCompileUnit(CompileUnit *CU) { AbstractCU = CU; }
-
+    void setParent(DIE *P) { Parent = P; }
+    
     /// addValue - Add a value and attributes to a DIE.
     ///
     void addValue(unsigned Attribute, unsigned Form, DIEValue *Value) {
@@ -179,8 +178,13 @@ namespace llvm {
     /// addChild - Add a child to the DIE.
     ///
     void addChild(DIE *Child) {
+      if (Child->getParent()) {
+        assert (Child->getParent() == this && "Unexpected DIE Parent!");
+        return;
+      }
       Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
       Children.push_back(Child);
+      Child->setParent(this);
     }
 
 #ifndef NDEBUG
