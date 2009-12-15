@@ -329,7 +329,6 @@ namespace llvm {
   };
 
   /// DenseMapInfo specialization for SlotIndex.
-  /// TODO: Not a POD?
   template <>
   struct DenseMapInfo<SlotIndex> {
     static inline SlotIndex getEmptyKey() {
@@ -345,6 +344,9 @@ namespace llvm {
       return (LHS == RHS);
     }
   };
+  
+  template <> struct isPodLike<SlotIndex> { static const bool value = true; };
+
 
   inline raw_ostream& operator<<(raw_ostream &os, SlotIndex li) {
     li.print(os);
