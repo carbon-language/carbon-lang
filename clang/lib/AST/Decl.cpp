@@ -19,6 +19,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -89,6 +90,34 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  QualType T, TypeSourceInfo *TInfo,
                                  StorageClass S, Expr *DefArg) {
   return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo, S, DefArg);
+}
+
+Expr *ParmVarDecl::getDefaultArg() {
+  assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+  assert(!hasUninstantiatedDefaultArg() &&
+         "Default argument is not yet instantiated!");
+  
+  Expr *Arg = getInit();
+  if (CXXExprWithTemporaries *E = dyn_cast_or_null<CXXExprWithTemporaries>(Arg))
+    return E->getSubExpr();
+  
+  return Arg;
+}
+
+unsigned ParmVarDecl::getNumDefaultArgTemporaries() const {
+  if (const CXXExprWithTemporaries *E = 
+        dyn_cast<CXXExprWithTemporaries>(getInit()))
+    return E->getNumTemporaries();
+
+  return 0;
+}
+
+CXXTemporary *ParmVarDecl::getDefaultArgTemporary(unsigned i) {
+  assert(getNumDefaultArgTemporaries() && 
+         "Default arguments does not have any temporaries!");
+
+  CXXExprWithTemporaries *E = cast<CXXExprWithTemporaries>(getInit());
+  return E->getTemporary(i);
 }
 
 SourceRange ParmVarDecl::getDefaultArgRange() const {

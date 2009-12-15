@@ -3056,18 +3056,11 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
         return ExprError();
     }
 
-    Expr *DefaultExpr = Param->getDefaultArg();
-
     // If the default expression creates temporaries, we need to
     // push them to the current stack of expression temporaries so they'll
     // be properly destroyed.
-    if (CXXExprWithTemporaries *E
-          = dyn_cast_or_null<CXXExprWithTemporaries>(DefaultExpr)) {
-      assert(!E->shouldDestroyTemporaries() &&
-             "Can't destroy temporaries in a default argument expr!");
-      for (unsigned I = 0, N = E->getNumTemporaries(); I != N; ++I)
-        ExprTemporaries.push_back(E->getTemporary(I));
-    }
+    for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i)
+      ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
   }
 
   // We already type-checked the argument, so we know it works.

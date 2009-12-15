@@ -21,6 +21,7 @@
 #include "clang/AST/ExternalASTSource.h"
 
 namespace clang {
+class CXXTemporary;
 class Expr;
 class FunctionTemplateDecl;
 class Stmt;
@@ -769,14 +770,6 @@ class ParmVarDecl : public VarDecl {
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
 
-  /// \brief Retrieves the fake "value" of an unparsed
-  static Expr *getUnparsedDefaultArgValue() {
-    uintptr_t Value = (uintptr_t)-1;
-    // Mask off the low bits
-    Value &= ~(uintptr_t)0x07;
-    return reinterpret_cast<Expr*> (Value);
-  }
-
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
@@ -798,22 +791,21 @@ public:
     objcDeclQualifier = QTVal;
   }
 
+  Expr *getDefaultArg();
   const Expr *getDefaultArg() const {
-    assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
-    assert(!hasUninstantiatedDefaultArg() &&
-           "Default argument is not yet instantiated!");
-    return getInit();
+    return const_cast<ParmVarDecl *>(this)->getDefaultArg();
   }
-  Expr *getDefaultArg() {
-    assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
-    assert(!hasUninstantiatedDefaultArg() &&
-           "Default argument is not yet instantiated!");
-    return getInit();
-  }
+  
   void setDefaultArg(Expr *defarg) {
     Init = reinterpret_cast<Stmt *>(defarg);
   }
 
+  unsigned getNumDefaultArgTemporaries() const;
+  CXXTemporary *getDefaultArgTemporary(unsigned i);
+  const CXXTemporary *getDefaultArgTemporary(unsigned i) const {
+    return const_cast<ParmVarDecl *>(this)->getDefaultArgTemporary(i);
+  }
+  
   /// \brief Retrieve the source range that covers the entire default
   /// argument.
   SourceRange getDefaultArgRange() const;  
