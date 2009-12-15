@@ -20,9 +20,15 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+cl::opt<bool>
+DisableInstScheduling("disable-inst-scheduling",
+                      cl::init(false),
+                      cl::desc("Disable instruction scheduling"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
   : ScheduleDAG(mf) {
