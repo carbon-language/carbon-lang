@@ -156,7 +156,8 @@ public:
     LV_IncompleteVoidType,
     LV_DuplicateVectorComponents,
     LV_InvalidExpression,
-    LV_MemberFunction
+    LV_MemberFunction,
+    LV_SubObjCPropertySetting
   };
   isLvalueResult isLvalue(ASTContext &Ctx) const;
 
@@ -185,7 +186,8 @@ public:
     MLV_NotBlockQualified,
     MLV_ReadonlyProperty,
     MLV_NoSetterProperty,
-    MLV_MemberFunction
+    MLV_MemberFunction,
+    MLV_SubObjCPropertySetting
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
                                               SourceLocation *Loc = 0) const;

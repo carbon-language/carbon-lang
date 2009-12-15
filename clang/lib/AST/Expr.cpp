@@ -1047,8 +1047,13 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
 
       //   -- If E2 is a non-static data member [...]. If E1 is an
       //      lvalue, then E1.E2 is an lvalue.
-      if (isa<FieldDecl>(Member))
-        return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
+      if (isa<FieldDecl>(Member)) {
+        if (m->isArrow())
+          return LV_Valid;
+        Expr *BaseExp = m->getBase();
+        return (BaseExp->getStmtClass() == ObjCPropertyRefExprClass) ?
+                 LV_SubObjCPropertySetting : BaseExp->isLvalue(Ctx);        
+      }
 
       //   -- If it refers to a static member function [...], then
       //      E1.E2 is an lvalue.
@@ -1065,9 +1070,13 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
         // Not an lvalue.
       return LV_InvalidExpression;
     }
-
+    
     // C99 6.5.2.3p4
-    return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
+    if (m->isArrow())
+      return LV_Valid;
+    Expr *BaseExp = m->getBase();
+    return (BaseExp->getStmtClass() == ObjCPropertyRefExprClass) ?
+             LV_SubObjCPropertySetting : BaseExp->isLvalue(Ctx);
   }
   case UnaryOperatorClass:
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
@@ -1244,6 +1253,7 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
     }
     return MLV_InvalidExpression;
   case LV_MemberFunction: return MLV_MemberFunction;
+    case LV_SubObjCPropertySetting: return MLV_SubObjCPropertySetting;
   }
 
   // The following is illegal:
