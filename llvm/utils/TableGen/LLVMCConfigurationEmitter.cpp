@@ -1537,62 +1537,99 @@ void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
   }
 }
 
-/// SubstituteSpecialCommands - Perform string substitution for $CALL
-/// and $ENV. Helper function used by EmitCmdLineVecFill().
-StrVector::const_iterator SubstituteSpecialCommands
-(StrVector::const_iterator Pos, StrVector::const_iterator End, raw_ostream& O)
+/// SubstituteCall - Given "$CALL(HookName, [Arg1 [, Arg2 [...]]])", output
+/// "hooks::HookName([Arg1 [, Arg2 [, ...]]])". Helper function used by
+/// SubstituteSpecialCommands().
+StrVector::const_iterator
+SubstituteCall (StrVector::const_iterator Pos,
+                StrVector::const_iterator End,
+                bool IsJoin, raw_ostream& O)
+{
+  const char* errorMessage = "Syntax error in $CALL invocation!";
+  checkedIncrement(Pos, End, errorMessage);
+  const std::string& CmdName = *Pos;
+
+  if (CmdName == ")")
+    throw "$CALL invocation: empty argument list!";
+
+  O << "hooks::";
+  O << CmdName << "(";
+
+
+  bool firstIteration = true;
+  while (true) {
+    checkedIncrement(Pos, End, errorMessage);
+    const std::string& Arg = *Pos;
+    assert(Arg.size() != 0);
+
+    if (Arg[0] == ')')
+      break;
+
+    if (firstIteration)
+      firstIteration = false;
+    else
+      O << ", ";
+
+    if (Arg == "$INFILE") {
+      if (IsJoin)
+        throw "$CALL(Hook, $INFILE) can't be used with a Join tool!";
+      else
+        O << "inFile.c_str()";
+    }
+    else {
+      O << '"' << Arg << '"';
+    }
+  }
+
+  O << ')';
+
+  return Pos;
+}
+
+/// SubstituteEnv - Given '$ENV(VAR_NAME)', output 'getenv("VAR_NAME")'. Helper
+/// function used by SubstituteSpecialCommands().
+StrVector::const_iterator
+SubstituteEnv (StrVector::const_iterator Pos,
+               StrVector::const_iterator End, raw_ostream& O)
+{
+  const char* errorMessage = "Syntax error in $ENV invocation!";
+  checkedIncrement(Pos, End, errorMessage);
+  const std::string& EnvName = *Pos;
+
+  if (EnvName == ")")
+    throw "$ENV invocation: empty argument list!";
+
+  O << "checkCString(std::getenv(\"";
+  O << EnvName;
+  O << "\"))";
+
+  checkedIncrement(Pos, End, errorMessage);
+
+  return Pos;
+}
+
+/// SubstituteSpecialCommands - Given an invocation of $CALL or $ENV, output
+/// handler code. Helper function used by EmitCmdLineVecFill().
+StrVector::const_iterator
+SubstituteSpecialCommands (StrVector::const_iterator Pos,
+                           StrVector::const_iterator End,
+                           bool IsJoin, raw_ostream& O)
 {
 
   const std::string& cmd = *Pos;
 
+  // Perform substitution.
   if (cmd == "$CALL") {
-    checkedIncrement(Pos, End, "Syntax error in $CALL invocation!");
-    const std::string& CmdName = *Pos;
-
-    if (CmdName == ")")
-      throw "$CALL invocation: empty argument list!";
-
-    O << "hooks::";
-    O << CmdName << "(";
-
-
-    bool firstIteration = true;
-    while (true) {
-      checkedIncrement(Pos, End, "Syntax error in $CALL invocation!");
-      const std::string& Arg = *Pos;
-      assert(Arg.size() != 0);
-
-      if (Arg[0] == ')')
-        break;
-
-      if (firstIteration)
-        firstIteration = false;
-      else
-        O << ", ";
-
-      O << '"' << Arg << '"';
-    }
-
-    O << ')';
-
+    Pos = SubstituteCall(Pos, End, IsJoin, O);
   }
   else if (cmd == "$ENV") {
-    checkedIncrement(Pos, End, "Syntax error in $ENV invocation!");
-    const std::string& EnvName = *Pos;
-
-    if (EnvName == ")")
-      throw "$ENV invocation: empty argument list!";
-
-    O << "checkCString(std::getenv(\"";
-    O << EnvName;
-    O << "\"))";
-
-    checkedIncrement(Pos, End, "Syntax error in $ENV invocation!");
+    Pos = SubstituteEnv(Pos, End, O);
   }
   else {
     throw "Unknown special command: " + cmd;
   }
 
+  // Handle '$CMD(ARG)/additional/text'.
   const std::string& Leftover = *Pos;
   assert(Leftover.at(0) == ')');
   if (Leftover.size() != 1)
@@ -1652,7 +1689,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
       }
       else {
         O << "vec.push_back(";
-        I = SubstituteSpecialCommands(I, E, O);
+        I = SubstituteSpecialCommands(I, E, IsJoin, O);
         O << ");\n";
       }
     }
@@ -1665,7 +1702,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
 
   O.indent(IndentLevel) << "cmd = ";
   if (StrVec[0][0] == '$')
-    SubstituteSpecialCommands(StrVec.begin(), StrVec.end(), O);
+    SubstituteSpecialCommands(StrVec.begin(), StrVec.end(), IsJoin, O);
   else
     O << '"' << StrVec[0] << '"';
   O << ";\n";
