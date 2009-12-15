@@ -3190,9 +3190,15 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //   fallthrough --> exitMBB
   BB = loopMBB;
   AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr));
-  if (BinOpcode)
-    AddDefaultPred(BuildMI(BB, dl, TII->get(BinOpcode), scratch2).
-                   addReg(dest).addReg(incr)).addReg(0);
+  if (BinOpcode) {
+    // operand order needs to go the other way for NAND
+    if (BinOpcode == ARM::BICrr || BinOpcode == ARM::t2BICrr)
+      AddDefaultPred(BuildMI(BB, dl, TII->get(BinOpcode), scratch2).
+                     addReg(incr).addReg(dest)).addReg(0);
+    else
+      AddDefaultPred(BuildMI(BB, dl, TII->get(BinOpcode), scratch2).
+                     addReg(dest).addReg(incr)).addReg(0);
+  }
 
   AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2)
                  .addReg(ptr));
