@@ -3291,10 +3291,20 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     if (SCC.getNode()) return SCC;
   }
 
-  // (zext (shl (zext x), y)) -> (shl (zext x), (zext y))
+  // (zext (shl (zext x), cst)) -> (shl (zext x), cst)
   if ((N0.getOpcode() == ISD::SHL || N0.getOpcode() == ISD::SRL) &&
+      isa<ConstantSDNode>(N0.getOperand(1)) &&
       N0.getOperand(0).getOpcode() == ISD::ZERO_EXTEND &&
       N0.hasOneUse()) {
+    if (N0.getOpcode() == ISD::SHL) {
+      // If the original shl may be shifting out bits, do not perform this
+      // transformation.
+      unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+      unsigned KnownZeroBits = N0.getOperand(0).getValueType().getSizeInBits() -
+        N0.getOperand(0).getOperand(0).getValueType().getSizeInBits();
+      if (ShAmt > KnownZeroBits)
+        return SDValue();
+    }
     DebugLoc dl = N->getDebugLoc();
     return DAG.getNode(N0.getOpcode(), dl, VT,
                        DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(0)),
