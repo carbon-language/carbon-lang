@@ -146,11 +146,9 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
 // ARM Instruction templates.
 //
 
-class InstARM<AddrMode am, SizeFlagVal sz, IndexMode im,
-              Format f, Domain d, string cstr, InstrItinClass itin>
+class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
+                   Format f, Domain d, string cstr, InstrItinClass itin>
   : Instruction {
-  field bits<32> Inst;
-
   let Namespace = "ARM";
 
   // TSFlagsFields
@@ -178,6 +176,20 @@ class InstARM<AddrMode am, SizeFlagVal sz, IndexMode im,
   let Constraints = cstr;
   let Itinerary = itin;
 }
+
+class Encoding {
+  field bits<32> Inst;
+}
+
+class InstARM<AddrMode am, SizeFlagVal sz, IndexMode im,
+              Format f, Domain d, string cstr, InstrItinClass itin>
+  : InstTemplate<am, sz, im, f, d, cstr, itin>, Encoding;
+
+// This Encoding-less class is used by Thumb1 to specify the encoding bits later
+// on by adding flavors to specific instructions.
+class InstThumb<AddrMode am, SizeFlagVal sz, IndexMode im,
+                Format f, Domain d, string cstr, InstrItinClass itin>
+  : InstTemplate<am, sz, im, f, d, cstr, itin>;
 
 class PseudoInst<dag oops, dag iops, InstrItinClass itin, 
                  string asm, list<dag> pattern>
@@ -861,7 +873,7 @@ class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
 
 class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
              InstrItinClass itin, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
   let AsmString   = asm;
@@ -876,9 +888,14 @@ class TI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
 class TIt<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size2Bytes, itin, asm, "$lhs = $dst", pattern>;
 
-// tBL, tBX instructions
-class TIx2<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
-  : ThumbI<oops, iops, AddrModeNone, Size4Bytes, itin, asm, "", pattern>;
+// tBL, tBX 32-bit instructions
+class TIx2<bits<5> opcod1, bits<2> opcod2, bit opcod3,
+    dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
+    : ThumbI<oops, iops, AddrModeNone, Size4Bytes, itin, asm, "", pattern>, Encoding {
+  let Inst{31-27} = opcod1;
+  let Inst{15-14} = opcod2;
+  let Inst{12} = opcod3;
+}
 
 // BR_JT instructions
 class TJTI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
@@ -887,7 +904,7 @@ class TJTI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> patter
 // Thumb1 only
 class Thumb1I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
               InstrItinClass itin, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = iops;
   let AsmString   = asm;
@@ -903,7 +920,8 @@ class T1Ix2<dag oops, dag iops, InstrItinClass itin,
   : Thumb1I<oops, iops, AddrModeNone, Size4Bytes, itin, asm, "", pattern>;
 class T1JTI<dag oops, dag iops, InstrItinClass itin,
             string asm, list<dag> pattern>
-  : Thumb1I<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>;
+  : Thumb1I<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>,
+    Encoding;
 
 // Two-address instructions
 class T1It<dag oops, dag iops, InstrItinClass itin,
@@ -915,7 +933,7 @@ class T1It<dag oops, dag iops, InstrItinClass itin,
 class Thumb1sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                InstrItinClass itin,
                string opc, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = !con(oops, (ops s_cc_out:$s));
   let InOperandList = !con(iops, (ops pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${s}${p}", asm));
@@ -937,7 +955,7 @@ class T1sIt<dag oops, dag iops, InstrItinClass itin,
 class Thumb1pI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                InstrItinClass itin,
                string opc, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ops pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
@@ -967,6 +985,46 @@ class T1pI4<dag oops, dag iops, InstrItinClass itin,
 class T1pIs<dag oops, dag iops, 
             InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeT1_s, Size2Bytes, itin, opc, asm, "", pattern>;
+
+// A6.2 16-bit Thumb instruction encoding
+class T1Encoding<bits<6> opcode> : Encoding {
+  let Inst{15-10} = opcode;
+}
+
+// A6.2.1 Shift (immediate), add, subtract, move, and compare encoding.
+class T1General<bits<5> opcode> : Encoding {
+  let Inst{15-14} = 0b00;
+  let Inst{13-9} = opcode;
+}
+
+// A6.2.2 Data-processing encoding.
+class T1DataProcessing<bits<4> opcode> : Encoding {
+  let Inst{15-10} = 0b010000;
+  let Inst{9-6} = opcode;
+}
+
+// A6.2.3 Special data instructions and branch and exchange encoding.
+class T1Special<bits<4> opcode> : Encoding {
+  let Inst{15-10} = 0b010001;
+  let Inst{9-6} = opcode;
+}
+
+// A6.2.4 Load/store single data item encoding.
+class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding {
+  let Inst{15-12} = opA;
+  let Inst{11-9} = opB;
+}
+class T1LdSt<bits<3> opB> : T1LoadStore<0b0101, opB>;
+class T1LdSt4Imm<bits<3> opB> : T1LoadStore<0b0110, opB>; // Immediate, 4 bytes
+class T1LdSt1Imm<bits<3> opB> : T1LoadStore<0b0111, opB>; // Immediate, 1 byte
+class T1LdSt2Imm<bits<3> opB> : T1LoadStore<0b1000, opB>; // Immediate, 2 bytes
+class T1LdStSP<bits<3> opB> : T1LoadStore<0b1001, opB>;   // SP relative
+
+// A6.2.5 Miscellaneous 16-bit instructions encoding.
+class T1Misc<bits<7> opcode> : Encoding {
+  let Inst{15-12} = 0b1011;
+  let Inst{11-5} = opcode;
+}
 
 // Thumb2I - Thumb2 instruction. Almost all Thumb2 instructions are predicable.
 class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
@@ -1034,9 +1092,18 @@ class T2Iso<dag oops, dag iops, InstrItinClass itin,
 class T2Ipc<dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeT2_pc, Size4Bytes, itin, opc, asm, "", pattern>;
-class T2Ii8s4<dag oops, dag iops, InstrItinClass itin,
+class T2Ii8s4<bit P, bit W, bit load, dag oops, dag iops, InstrItinClass itin,
               string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeT2_i8s4, Size4Bytes, itin, opc, asm, "", pattern>;
+  : Thumb2I<oops, iops, AddrModeT2_i8s4, Size4Bytes, itin, opc, asm, "",
+            pattern> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-25} = 0b00;
+  let Inst{24} = P;
+  let Inst{23} = ?; // The U bit.
+  let Inst{22} = 1;
+  let Inst{21} = W;
+  let Inst{20} = load;
+}
 
 class T2sI<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
@@ -1055,8 +1122,9 @@ class T2Ix2<dag oops, dag iops, InstrItinClass itin,
 
 
 // T2Iidxldst - Thumb2 indexed load / store instructions.
-class T2Iidxldst<dag oops, dag iops, AddrMode am, IndexMode im,
-                 InstrItinClass itin,
+class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
+                 dag oops, dag iops,
+                 AddrMode am, IndexMode im, InstrItinClass itin,
                  string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
@@ -1064,6 +1132,16 @@ class T2Iidxldst<dag oops, dag iops, AddrMode am, IndexMode im,
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
+  let Inst{31-27} = 0b11111;
+  let Inst{26-25} = 0b00;
+  let Inst{24} = signed;
+  let Inst{23} = 0;
+  let Inst{22-21} = opcod;
+  let Inst{20} = load;
+  let Inst{11} = 1;
+  // (P, W) = (1, 1) Pre-indexed or (0, 1) Post-indexed
+  let Inst{10} = pre; // The P bit.
+  let Inst{8} = 1; // The W bit.
 }
 
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
