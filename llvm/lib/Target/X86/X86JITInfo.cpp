@@ -426,16 +426,19 @@ X86JITInfo::X86JITInfo(X86TargetMachine &tm) : TM(tm) {
 
 void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
                                              JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
 #if defined (X86_64_JIT)
-  JCE.startGVStub(BS, GV, 8, 8);
-  JCE.emitWordLE((unsigned)(intptr_t)ptr);
-  JCE.emitWordLE((unsigned)(((intptr_t)ptr) >> 32));
+  const unsigned Alignment = 8;
+  uint8_t Buffer[8];
+  uint8_t *Cur = Buffer;
+  MachineCodeEmitter::emitWordLEInto(Cur, (unsigned)(intptr_t)ptr);
+  MachineCodeEmitter::emitWordLEInto(Cur, (unsigned)(((intptr_t)ptr) >> 32));
 #else
-  JCE.startGVStub(BS, GV, 4, 4);
-  JCE.emitWordLE((intptr_t)ptr);
+  const unsigned Alignment = 4;
+  uint8_t Buffer[4];
+  uint8_t *Cur = Buffer;
+  MachineCodeEmitter::emitWordLEInto(Cur, (intptr_t)ptr);
 #endif
-  return JCE.finishGVStub(BS);
+  return JCE.allocIndirectGV(GV, Buffer, sizeof(Buffer), Alignment);
 }
 
 TargetJITInfo::StubLayout X86JITInfo::getStubLayout() {
@@ -451,7 +454,6 @@ TargetJITInfo::StubLayout X86JITInfo::getStubLayout() {
 
 void *X86JITInfo::emitFunctionStub(const Function* F, void *Target,
                                    JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
 #if defined (X86_32_JIT) && !defined (_MSC_VER)

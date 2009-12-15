@@ -68,29 +68,11 @@ public:
   ///
   virtual bool finishFunction(MachineFunction &F) = 0;
   
-  /// startGVStub - This callback is invoked when the JIT needs the address of a
-  /// GV (e.g. function) that has not been code generated yet.  The StubSize
-  /// specifies the total size required by the stub.  The BufferState must be
-  /// passed to finishGVStub, and start/finish pairs with the same BufferState
-  /// must be properly nested.
-  ///
-  virtual void startGVStub(BufferState &BS, const GlobalValue* GV,
-                           unsigned StubSize, unsigned Alignment = 1) = 0;
-
-  /// startGVStub - This callback is invoked when the JIT needs the address of a
-  /// GV (e.g. function) that has not been code generated yet.  Buffer points to
-  /// memory already allocated for this stub.  The BufferState must be passed to
-  /// finishGVStub, and start/finish pairs with the same BufferState must be
-  /// properly nested.
-  ///
-  virtual void startGVStub(BufferState &BS, void *Buffer,
-                           unsigned StubSize) = 0;
-
-  /// finishGVStub - This callback is invoked to terminate a GV stub and returns
-  /// the start address of the stub.  The BufferState must first have been
-  /// passed to startGVStub.
-  ///
-  virtual void *finishGVStub(BufferState &BS) = 0;
+  /// allocIndirectGV - Allocates and fills storage for an indirect
+  /// GlobalValue, and returns the address.
+  virtual void *allocIndirectGV(const GlobalValue *GV,
+                                const uint8_t *Buffer, size_t Size,
+                                unsigned Alignment) = 0;
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.

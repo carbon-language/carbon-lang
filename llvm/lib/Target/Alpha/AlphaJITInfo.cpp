@@ -202,7 +202,6 @@ TargetJITInfo::StubLayout AlphaJITInfo::getStubLayout() {
 
 void *AlphaJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                      JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
   //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
   //Do things in a stupid slow way!
   void* Addr = (void*)(intptr_t)JCE.getCurrentPCValue();

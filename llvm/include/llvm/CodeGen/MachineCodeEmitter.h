@@ -48,41 +48,16 @@ class Function;
 /// occurred, more memory is allocated, and we reemit the code into it.
 /// 
 class MachineCodeEmitter {
-public:
-  class BufferState {
-    friend class MachineCodeEmitter;
-    /// BufferBegin/BufferEnd - Pointers to the start and end of the memory
-    /// allocated for this code buffer.
-    uint8_t *BufferBegin, *BufferEnd;
-
-    /// CurBufferPtr - Pointer to the next byte of memory to fill when emitting
-    /// code.  This is guranteed to be in the range [BufferBegin,BufferEnd].  If
-    /// this pointer is at BufferEnd, it will never move due to code emission,
-    /// and all code emission requests will be ignored (this is the buffer
-    /// overflow condition).
-    uint8_t *CurBufferPtr;
-  public:
-    BufferState() : BufferBegin(NULL), BufferEnd(NULL), CurBufferPtr(NULL) {}
-  };
-
 protected:
-  /// These have the same meanings as the fields in BufferState
-  uint8_t *BufferBegin, *BufferEnd, *CurBufferPtr;
-
-  /// Save or restore the current buffer state.  The BufferState objects must be
-  /// used as a stack.
-  void SaveStateTo(BufferState &BS) {
-    assert(BS.BufferBegin == NULL &&
-           "Can't save state into the same BufferState twice.");
-    BS.BufferBegin = BufferBegin;
-    BS.BufferEnd = BufferEnd;
-    BS.CurBufferPtr = CurBufferPtr;
-  }
-  void RestoreStateFrom(BufferState &BS) {
-    BufferBegin = BS.BufferBegin;
-    BufferEnd = BS.BufferEnd;
-    CurBufferPtr = BS.CurBufferPtr;
-  }
+  /// BufferBegin/BufferEnd - Pointers to the start and end of the memory
+  /// allocated for this code buffer.
+  uint8_t *BufferBegin, *BufferEnd;
+  /// CurBufferPtr - Pointer to the next byte of memory to fill when emitting
+  /// code.  This is guranteed to be in the range [BufferBegin,BufferEnd].  If
+  /// this pointer is at BufferEnd, it will never move due to code emission, and
+  /// all code emission requests will be ignored (this is the buffer overflow
+  /// condition).
+  uint8_t *CurBufferPtr;
 
 public:
   virtual ~MachineCodeEmitter() {}
@@ -113,15 +88,23 @@ public:
   ///
   void emitWordLE(uint32_t W) {
     if (4 <= BufferEnd-CurBufferPtr) {
-      *CurBufferPtr++ = (uint8_t)(W >>  0);
-      *CurBufferPtr++ = (uint8_t)(W >>  8);
-      *CurBufferPtr++ = (uint8_t)(W >> 16);
-      *CurBufferPtr++ = (uint8_t)(W >> 24);
+      emitWordLEInto(CurBufferPtr, W);
     } else {
       CurBufferPtr = BufferEnd;
     }
   }
-  
+
+  /// emitWordLEInto - This callback is invoked when a 32-bit word needs to be
+  /// written to an arbitrary buffer in little-endian format.  Buf must have at
+  /// least 4 bytes of available space.
+  ///
+  static void emitWordLEInto(uint8_t *&Buf, uint32_t W) {
+    *Buf++ = (uint8_t)(W >>  0);
+    *Buf++ = (uint8_t)(W >>  8);
+    *Buf++ = (uint8_t)(W >> 16);
+    *Buf++ = (uint8_t)(W >> 24);
+  }
+
   /// emitWordBE - This callback is invoked when a 32-bit word needs to be
   /// written to the output stream in big-endian format.
   ///

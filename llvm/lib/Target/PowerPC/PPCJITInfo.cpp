@@ -339,7 +339,6 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 
 void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    JITCodeEmitter &JCE) {
-  MachineCodeEmitter::BufferState BS;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)PPC32CompilationCallback && 
