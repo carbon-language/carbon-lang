@@ -1170,8 +1170,27 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     ExplicitSpecializationsInSpecifier;
   for (NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
        NNS; NNS = NNS->getPrefix()) {
+    const Type *T = NNS->getAsType();
+    if (!T) break;
+
+    // C++0x [temp.expl.spec]p17:
+    //   A member or a member template may be nested within many
+    //   enclosing class templates. In an explicit specialization for
+    //   such a member, the member declaration shall be preceded by a
+    //   template<> for each enclosing class template that is
+    //   explicitly specialized.
+    // We interpret this as forbidding typedefs of template
+    // specializations in the scope specifiers of out-of-line decls.
+    if (const TypedefType *TT = dyn_cast<TypedefType>(T)) {
+      const Type *UnderlyingT = TT->LookThroughTypedefs().getTypePtr();
+      if (isa<TemplateSpecializationType>(UnderlyingT))
+        // FIXME: better source location information.
+        Diag(DeclStartLoc, diag::err_typedef_in_def_scope) << QualType(T,0);
+      T = UnderlyingT;
+    }
+
     if (const TemplateSpecializationType *SpecType
-          = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
+          = dyn_cast<TemplateSpecializationType>(T)) {
       TemplateDecl *Template = SpecType->getTemplateName().getAsTemplateDecl();
       if (!Template)
         continue; // FIXME: should this be an error? probably...

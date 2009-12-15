@@ -971,6 +971,9 @@ def err_template_tag_noparams : Error<
 def err_template_decl_ref : Error<
   "cannot refer to class template %0 without a template argument list">;
 
+def err_typedef_in_def_scope : Error<
+  "cannot use typedef %0 in scope specifier for out-of-line declaration">;
+
 // C++ Template Argument Lists
 def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "
