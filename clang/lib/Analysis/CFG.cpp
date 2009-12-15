@@ -94,7 +94,9 @@ private:
   CFGBlock *VisitCompoundStmt(CompoundStmt *C);
   CFGBlock *VisitConditionalOperator(ConditionalOperator *C);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
+  CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S) { return NYS(); }
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
+  CFGBlock *VisitCXXTryStmt(CXXTryStmt *S) { return NYS(); }  
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
   CFGBlock *VisitDeclSubExpr(Decl* D);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);

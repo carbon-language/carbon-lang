@@ -493,6 +493,41 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   }
 
   switch (S->getStmtClass()) {
+    // C++ stuff we don't support yet.
+    case Stmt::CXXMemberCallExprClass:
+    case Stmt::CXXNamedCastExprClass:
+    case Stmt::CXXStaticCastExprClass:
+    case Stmt::CXXDynamicCastExprClass:
+    case Stmt::CXXReinterpretCastExprClass:
+    case Stmt::CXXConstCastExprClass:
+    case Stmt::CXXFunctionalCastExprClass:
+    case Stmt::CXXTypeidExprClass:
+    case Stmt::CXXBoolLiteralExprClass:
+    case Stmt::CXXNullPtrLiteralExprClass:
+    case Stmt::CXXThisExprClass:
+    case Stmt::CXXThrowExprClass:
+    case Stmt::CXXDefaultArgExprClass:
+    case Stmt::CXXZeroInitValueExprClass:
+    case Stmt::CXXNewExprClass:
+    case Stmt::CXXDeleteExprClass:
+    case Stmt::CXXPseudoDestructorExprClass:
+    case Stmt::UnresolvedLookupExprClass:
+    case Stmt::UnaryTypeTraitExprClass:
+    case Stmt::DependentScopeDeclRefExprClass:
+    case Stmt::CXXConstructExprClass:
+    case Stmt::CXXBindTemporaryExprClass:
+    case Stmt::CXXExprWithTemporariesClass:
+    case Stmt::CXXTemporaryObjectExprClass:
+    case Stmt::CXXUnresolvedConstructExprClass:
+    case Stmt::CXXDependentScopeMemberExprClass:
+    case Stmt::UnresolvedMemberExprClass:
+    case Stmt::CXXCatchStmtClass:
+    case Stmt::CXXTryStmtClass: {
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      Builder->BuildSinks = true;
+      MakeNode(Dst, S, Pred, GetState(Pred));
+      break;
+    }
 
     default:
       // Cases we intentionally have "default" handle:
