@@ -36,3 +36,17 @@ void test_instantiation(X<double>::C *x,
 X<void>::C *c3; // okay
 X<void>::D::E *e1; // okay
 X<void>::D::E e2; // expected-note{{in instantiation of member class 'struct X<void>::D::E' requested here}}
+
+// Redeclarations.
+namespace test1 {
+  template <typename T> struct Registry {
+    class node;
+    static node *Head;
+    class node {
+      node(int v) { Head = this; }
+    };
+  };
+  void test() {
+    Registry<int>::node node(0);
+  }
+}

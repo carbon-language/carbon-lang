@@ -645,6 +645,12 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   CXXRecordDecl *PrevDecl = 0;
   if (D->isInjectedClassName())
     PrevDecl = cast<CXXRecordDecl>(Owner);
+  else if (D->getPreviousDeclaration()) {
+    NamedDecl *Prev = SemaRef.FindInstantiatedDecl(D->getPreviousDeclaration(),
+                                                   TemplateArgs);
+    if (!Prev) return 0;
+    PrevDecl = cast<CXXRecordDecl>(Prev);
+  }
 
   CXXRecordDecl *Record
     = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner,
