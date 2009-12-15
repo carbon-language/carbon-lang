@@ -268,7 +268,8 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   // Explicitly destroy the PathDiagnosticClient.  This will flush its output.
   // FIXME: This should be replaced with something that doesn't rely on
-  // side-effects in PathDiagnosticClient's destructor.
+  // side-effects in PathDiagnosticClient's destructor. This is required when
+  // used with option -disable-free.
   Mgr.reset(NULL);
 }
 
