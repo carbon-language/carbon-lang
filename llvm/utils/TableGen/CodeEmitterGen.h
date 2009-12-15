@@ -23,7 +23,6 @@ namespace llvm {
 
 class RecordVal;
 class BitsInit;
-struct Init;
 
 class CodeEmitterGen : public TableGenBackend {
   RecordKeeper &Records;
@@ -36,7 +35,7 @@ private:
   void emitMachineOpEmitter(raw_ostream &o, const std::string &Namespace);
   void emitGetValueBit(raw_ostream &o, const std::string &Namespace);
   void reverseBits(std::vector<Record*> &Insts);
-  int getVariableBit(const Init *VarVal, BitsInit *BI, int bit);
+  int getVariableBit(const std::string &VarName, BitsInit *BI, int bit);
 };
 
 } // End llvm namespace
