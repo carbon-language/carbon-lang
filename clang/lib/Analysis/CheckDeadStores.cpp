@@ -186,6 +186,10 @@ public:
 
         if (V->hasLocalStorage())
           if (Expr* E = V->getInit()) {
+            // Don't warn on C++ objects (yet) until we can show that their
+            // constructors/destructors don't have side effects.
+            if (isa<CXXConstructExpr>(E))
+              return;
             // A dead initialization is a variable that is dead after it
             // is initialized.  We don't flag warnings for those variables
             // marked 'unused'.
