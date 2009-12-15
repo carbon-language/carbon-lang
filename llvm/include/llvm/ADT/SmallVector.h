@@ -402,11 +402,7 @@ public:
 
   bool operator==(const SmallVectorImpl &RHS) const {
     if (size() != RHS.size()) return false;
-    for (const T *This = begin(), *That = RHS.begin(), *E = end();
-         This != E; ++This, ++That)
-      if (*This != *That)
-        return false;
-    return true;
+    return std::equal(begin(), end(), RHS.begin());
   }
   bool operator!=(const SmallVectorImpl &RHS) const { return !(*this == RHS); }
 
@@ -440,7 +436,9 @@ private:
   }
 
   void destroy_range(T *S, T *E) {
-    // TODO: POD
+    // No need to do a destroy loop for POD's.
+    if (isPodLike<T>::value) return;
+    
     while (S != E) {
       --E;
       E->~T();
@@ -459,11 +457,11 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
 
   // Copy the elements over.
-  if (is_class<T>::value)
-    std::uninitialized_copy(begin(), end(), NewElts);
-  else
-    // Use memcpy for PODs (std::uninitialized_copy optimizes to memmove).
+  if (isPodLike<T>::value)
+    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove.
     memcpy(NewElts, begin(), CurSize * sizeof(T));
+  else
+    std::uninitialized_copy(begin(), end(), NewElts);
 
   // Destroy the original elements.
   destroy_range(begin(), end());
