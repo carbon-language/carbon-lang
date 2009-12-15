@@ -94,7 +94,7 @@ public:
   /// compiler path.
   /// \param MainAddr - The address of main (or some other function in the main
   /// executable), for finding the builtin compiler path.
-  static std::string GetBuiltinIncludePath(const char *Argv0, void *MainAddr);
+  static std::string GetResourcesPath(const char *Argv0, void *MainAddr);
 
   /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
   /// passing to CreateFromArgs.

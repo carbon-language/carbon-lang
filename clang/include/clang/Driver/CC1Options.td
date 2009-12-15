@@ -223,6 +223,8 @@ def load : Separate<"-load">, MetaVarName<"<dsopath>">,
   HelpText<"Load the named plugin (dynamic shared object)">;
 def plugin : Separate<"-plugin">,
   HelpText<"Use the named plugin action (use \"help\" to list available options)">;
+def resource_dir : Separate<"-resource-dir">,
+  HelpText<"The directory which holds the compiler resource files">;
 def version : Flag<"-version">,
   HelpText<"Print the compiler version">;
 def _version : Flag<"--version">, Alias<version>;

@@ -327,10 +327,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                      (const char**) CCArgs.data()+CCArgs.size(),
                                      Diags);
 
-  // Set the builtin include path.
-  llvm::sys::Path P(ResourceFilesPath);
-  P.appendComponent("include");
-  CI.getHeaderSearchOpts().BuiltinIncludePath = P.str();
+  // Override the resources path.
+  CI.getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
   CI.getFrontendOpts().DisableFree = UseBumpAllocator;
   return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls);

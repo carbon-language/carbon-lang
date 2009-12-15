@@ -733,8 +733,9 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   if (HSOpts.UseBuiltinIncludes) {
     // Ignore the sys root, we *always* look for clang headers relative to
     // supplied path.
-    Init.AddPath(HSOpts.BuiltinIncludePath, System,
-                 false, false, false, /*IgnoreSysRoot=*/ true);
+    llvm::sys::Path P(HSOpts.ResourceDir);
+    P.appendComponent("include");
+    Init.AddPath(P.str(), System, false, false, false, /*IgnoreSysRoot=*/ true);
   }
 
   if (HSOpts.UseStandardIncludes)

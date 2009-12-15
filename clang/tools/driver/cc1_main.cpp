@@ -211,9 +211,9 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Infer the builtin include path if unspecified.
   if (Clang.getInvocation().getHeaderSearchOpts().UseBuiltinIncludes &&
-      Clang.getInvocation().getHeaderSearchOpts().BuiltinIncludePath.empty())
-    Clang.getInvocation().getHeaderSearchOpts().BuiltinIncludePath =
-      CompilerInvocation::GetBuiltinIncludePath(Argv0, MainAddr);
+      Clang.getInvocation().getHeaderSearchOpts().ResourceDir.empty())
+    Clang.getInvocation().getHeaderSearchOpts().ResourceDir =
+      CompilerInvocation::GetResourcesPath(Argv0, MainAddr);
 
   // Honor -help.
   if (Clang.getInvocation().getFrontendOpts().ShowHelp) {

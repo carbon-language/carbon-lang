@@ -409,8 +409,9 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     // FIXME: Provide an option for this, and move env detection to driver.
     llvm::llvm_report_error("Not yet implemented!");
   }
-  if (!Opts.BuiltinIncludePath.empty()) {
-    // FIXME: Provide an option for this, and move to driver.
+  if (!Opts.ResourceDir.empty()) {
+    Res.push_back("-resource-dir");
+    Res.push_back(Opts.ResourceDir);
   }
   if (!Opts.UseStandardIncludes)
     Res.push_back("-nostdinc");
@@ -951,8 +952,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   return DashX;
 }
 
-std::string CompilerInvocation::GetBuiltinIncludePath(const char *Argv0,
-                                                      void *MainAddr) {
+std::string CompilerInvocation::GetResourcesPath(const char *Argv0,
+                                                 void *MainAddr) {
   llvm::sys::Path P = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
 
   if (!P.isEmpty()) {
@@ -963,7 +964,6 @@ std::string CompilerInvocation::GetBuiltinIncludePath(const char *Argv0,
     P.appendComponent("lib");
     P.appendComponent("clang");
     P.appendComponent(CLANG_VERSION_STRING);
-    P.appendComponent("include");
   }
 
   return P.str();
@@ -975,10 +975,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.Verbose = Args.hasArg(OPT_v);
   Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
-  // Filled in by clients.
-  //
-  // FIXME: Elimate this.
-  Opts.BuiltinIncludePath = "";
+  Opts.ResourceDir = getLastArgValue(Args, OPT_resource_dir);
 
   // Add -I... and -F... options in order.
   for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
