@@ -26,6 +26,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "MacroArgs.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Pragma.h"
@@ -51,7 +52,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
     BuiltinInfo(Target), CodeCompletionFile(0), CurPPLexer(0), CurDirLookup(0),
-    Callbacks(0) {
+    Callbacks(0), MacroArgCache(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -111,6 +112,10 @@ Preprocessor::~Preprocessor() {
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
     delete TokenLexerCache[i];
+  
+  // Free any cached MacroArgs.
+  for (MacroArgs *ArgList = MacroArgCache; ArgList; )
+    ArgList = ArgList->deallocate();
 
   // Release pragma information.
   delete PragmaHandlers;

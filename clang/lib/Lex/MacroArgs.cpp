@@ -48,6 +48,19 @@ void MacroArgs::destroy(Preprocessor &PP) {
   free(this);
 }
 
+/// deallocate - This should only be called by the Preprocessor when managing
+/// its freelist.
+MacroArgs *MacroArgs::deallocate() {
+  MacroArgs *Next = ArgCache;
+  
+  // Run the dtor to deallocate the vectors.
+  this->~MacroArgs();
+  // Release the memory for the object.
+  free(this);
+  
+  return Next;
+}
+
 
 /// getArgLength - Given a pointer to an expanded or unexpanded argument,
 /// return the number of tokens, not counting the EOF, that make up the

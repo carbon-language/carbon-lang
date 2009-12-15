@@ -46,8 +46,12 @@ class MacroArgs {
   /// stringified form of an argument has not yet been computed, this is empty.
   std::vector<Token> StringifiedArgs;
 
+  /// ArgCache - This is a linked list of MacroArgs objects that the
+  /// Preprocessor owns which we use to avoid thrashing malloc/free.
+  MacroArgs *ArgCache;
+  
   MacroArgs(unsigned NumToks, bool varargsElided)
-    : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided) {}
+    : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided), ArgCache(0) {}
   ~MacroArgs() {}
 public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
@@ -103,6 +107,11 @@ public:
   ///
   static Token StringifyArgument(const Token *ArgToks,
                                  Preprocessor &PP, bool Charify = false);
+  
+  
+  /// deallocate - This should only be called by the Preprocessor when managing
+  /// its freelist.
+  MacroArgs *deallocate();
 };
 
 }  // end namespace clang

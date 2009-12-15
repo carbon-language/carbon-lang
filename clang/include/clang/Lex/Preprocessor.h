@@ -139,7 +139,7 @@ class Preprocessor {
   /// CurPPLexer - This is the current top of the stack what we're lexing from
   ///  if not expanding a macro.  This is an alias for either CurLexer or
   ///  CurPTHLexer.
-  PreprocessorLexer* CurPPLexer;
+  PreprocessorLexer *CurPPLexer;
 
   /// CurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
@@ -176,8 +176,14 @@ class Preprocessor {
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
 
   /// MICache - A "freelist" of MacroInfo objects that can be reused for quick
-  ///  allocation.
+  /// allocation.
+  /// FIXME: why not use a singly linked list?
   std::vector<MacroInfo*> MICache;
+  
+  /// MacroArgCache - This is a "freelist" of MacroArg objects that can be
+  /// reused for quick allocation.
+  MacroArgs *MacroArgCache;
+  friend class MacroArgs;
 
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
