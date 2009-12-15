@@ -1427,7 +1427,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   if (!VD) {
     Diag(Loc, diag::err_ref_non_value) 
       << D << SS.getRange();
-    Diag(D->getLocation(), diag::note_previous_decl);
+    Diag(D->getLocation(), diag::note_previous_declaration);
     return ExprError();
   }
 
