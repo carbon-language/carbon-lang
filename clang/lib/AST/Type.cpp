@@ -725,6 +725,7 @@ bool Type::isSpecifierType() const {
   case Typename:
   case ObjCInterface:
   case ObjCObjectPointer:
+  case Elaborated:
     return true;
   default:
     return false;
