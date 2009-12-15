@@ -118,6 +118,10 @@ namespace llvm {
       /// operand produced by a CMP instruction.
       SETCC,
 
+      // Same as SETCC except it's materialized with a sbb and the value is all
+      // one's or all zero's.
+      SETCC_CARRY,
+
       /// X86 conditional moves. Operand 0 and operand 1 are the two values
       /// to select from. Operand 2 is the condition code, and operand 3 is the
       /// flag operand produced by a CMP or TEST instruction. It also writes a

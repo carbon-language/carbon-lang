@@ -87,6 +87,7 @@ def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov>;
 def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
                         [SDNPHasChain]>;
 def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
+def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
@@ -3059,6 +3060,21 @@ let Defs = [AH], Uses = [EFLAGS], neverHasSideEffects = 1 in
 def LAHF     : I<0x9F, RawFrm, (outs),  (ins), "lahf", []>;  // AH = flags
 
 let Uses = [EFLAGS] in {
+// Use sbb to materialize carry bit.
+
+let Defs = [EFLAGS], isCodeGenOnly = 1 in {
+def SETB_C8r : I<0x18, MRMInitReg, (outs GR8:$dst), (ins),
+                 "sbb{b}\t$dst, $dst",
+                 [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
+def SETB_C16r : I<0x19, MRMInitReg, (outs GR16:$dst), (ins),
+                  "sbb{w}\t$dst, $dst",
+                 [(set GR16:$dst, (zext (X86setcc_c X86_COND_B, EFLAGS)))]>,
+                OpSize;
+def SETB_C32r : I<0x19, MRMInitReg, (outs GR32:$dst), (ins),
+                  "sbb{l}\t$dst, $dst",
+                 [(set GR32:$dst, (zext (X86setcc_c X86_COND_B, EFLAGS)))]>;
+} // isCodeGenOnly
+
 def SETEr    : I<0x94, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "sete\t$dst",
@@ -4168,6 +4184,12 @@ def : Pat<(shld GR16:$src1, (i8 imm:$amt1), GR16:$src2, (i8 imm:$amt2)),
 def : Pat<(store (shld (loadi16 addr:$dst), (i8 imm:$amt1),
                        GR16:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHLD16mri8 addr:$dst, GR16:$src2, (i8 imm:$amt1))>;
+
+// (anyext (setcc_carry)) -> (zext (setcc_carry))
+def : Pat<(i16 (anyext (X86setcc_c X86_COND_B, EFLAGS))),
+          (SETB_C16r)>;
+def : Pat<(i32 (anyext (X86setcc_c X86_COND_B, EFLAGS))),
+          (SETB_C32r)>;
 
 //===----------------------------------------------------------------------===//
 // EFLAGS-defining Patterns

@@ -1333,6 +1333,15 @@ def CMOVNO64rm : RI<0x41, MRMSrcMem,       // if !overflow, GR64 = [mem64]
                                      X86_COND_NO, EFLAGS))]>, TB;
 } // isTwoAddress
 
+// Use sbb to materialize carry flag into a GPR.
+let Defs = [EFLAGS], Uses = [EFLAGS], isCodeGenOnly = 1 in
+def SETB_C64r : RI<0x19, MRMDestReg, (outs GR64:$dst), (ins),
+                  "sbb{q}\t$dst, $dst",
+                 [(set GR64:$dst, (zext (X86setcc_c X86_COND_B, EFLAGS)))]>;
+
+def : Pat<(i64 (anyext (X86setcc_c X86_COND_B, EFLAGS))),
+          (SETB_C64r)>;
+
 //===----------------------------------------------------------------------===//
 //  Conversion Instructions...
 //
