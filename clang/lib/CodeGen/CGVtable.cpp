@@ -952,7 +952,15 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
     // we need to start counting at the end of the primary base's vtable.
     CurrentIndex = getNumVirtualFunctionPointers(PrimaryBase);
   }
-  
+
+  // Collect all the primary bases, so we can check whether methods override
+  // a method from the base.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 5> PrimaryBases;
+  for (ASTRecordLayout::primary_base_info_iterator
+       I = Layout.primary_base_begin(), E = Layout.primary_base_end();
+       I != E; ++I)
+    PrimaryBases.insert((*I).getBase());
+
   const CXXDestructorDecl *ImplicitVirtualDtor = 0;
   
   for (CXXRecordDecl::method_iterator i = RD->method_begin(),
@@ -973,7 +981,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
       assert(OverriddenMD->isCanonicalDecl() &&
              "Should have the canonical decl of the overridden RD!");
       
-      if (OverriddenRD == PrimaryBase) {
+      if (PrimaryBases.count(OverriddenRD)) {
         // Check if converting from the return type of the method to the 
         // return type of the overridden method requires conversion.
         QualType ReturnType = 
