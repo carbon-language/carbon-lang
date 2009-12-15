@@ -1,5 +1,5 @@
 // Basic compilation for various types of files.
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c %s -x objective-c %s -x c++ %s -x objective-c++ -x assembler %s -x assembler-with-cpp %s -x none %s 2>&1 | FileCheck -check-prefix=BASIC %s
+// RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c %s -x objective-c %s -x c++ %s -x objective-c++ -x assembler %s -x assembler-with-cpp %s -x none %s 2>&1 | FileCheck -check-prefix=BASIC %s
 // BASIC: 0: input, "{{.*}}phases.c", c
 // BASIC: 1: preprocessor, {0}, cpp-output
 // BASIC: 2: compiler, {1}, assembler
@@ -24,7 +24,7 @@
 // BASIC: 21: linker, {3, 7, 11, 13, 16, 20}, image
 
 // Universal linked image.
-// RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -x c %s -arch ppc -arch i386 2>&1 | FileCheck -check-prefix=ULI %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -x c %s -arch ppc -arch i386 2>&1 | FileCheck -check-prefix=ULI %s
 // ULI: 0: input, "{{.*}}phases.c", c
 // ULI: 1: preprocessor, {0}, cpp-output
 // ULI: 2: compiler, {1}, assembler
@@ -35,7 +35,7 @@
 // ULI: 7: lipo, {5, 6}, image
 
 // Universal object file.
-// RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x c %s -arch ppc -arch i386 2>&1 | FileCheck -check-prefix=UOF %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x c %s -arch ppc -arch i386 2>&1 | FileCheck -check-prefix=UOF %s
 // UOF: 0: input, "{{.*}}phases.c", c
 // UOF: 1: preprocessor, {0}, cpp-output
 // UOF: 2: compiler, {1}, assembler
@@ -45,33 +45,33 @@
 // UOF: 6: lipo, {4, 5}, object
 
 // Arch defaulting
-// RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s 2>&1 | FileCheck -check-prefix=ARCH1 %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s 2>&1 | FileCheck -check-prefix=ARCH1 %s
 // ARCH1: 2: bind-arch, "i386", {1}, object
-// RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s -m32 -m64 2>&1 | FileCheck -check-prefix=ARCH2 %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c -x assembler %s -m32 -m64 2>&1 | FileCheck -check-prefix=ARCH2 %s
 // ARCH2: 2: bind-arch, "x86_64", {1}, object
-// RUN: clang -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s 2>&1 | FileCheck -check-prefix=ARCH3 %s
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s 2>&1 | FileCheck -check-prefix=ARCH3 %s
 // ARCH3: 2: bind-arch, "x86_64", {1}, object
-// RUN: clang -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 2>&1 | FileCheck -check-prefix=ARCH4 %s
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin9 -ccc-print-phases -c -x assembler %s -m64 -m32 2>&1 | FileCheck -check-prefix=ARCH4 %s
 // ARCH4: 2: bind-arch, "i386", {1}, object
 
 // Analyzer
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases --analyze %s 2>&1 | FileCheck -check-prefix=ANALYZE %s
+// RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases --analyze %s 2>&1 | FileCheck -check-prefix=ANALYZE %s
 // ANALYZE: 0: input, "{{.*}}phases.c", c
 // ANALYZE: 1: preprocessor, {0}, cpp-output
 // ANALYZE: 2: analyzer, {1}, plist
 
 // Precompiler
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s 2>&1 | FileCheck -check-prefix=PCH %s
+// RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -x c-header %s 2>&1 | FileCheck -check-prefix=PCH %s
 // PCH: 0: input, "{{.*}}phases.c", c-header
 // PCH: 1: preprocessor, {0}, c-header-cpp-output
 // PCH: 2: precompiler, {1}, precompiled-header
 
 // Darwin overrides the handling for .s
 // RUN: touch %t.s
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.s 2>&1 | FileCheck -check-prefix=DARWIN1 %s
+// RUN: %clang -ccc-host-triple i386-unknown-unknown -ccc-print-phases -c %t.s 2>&1 | FileCheck -check-prefix=DARWIN1 %s
 // DARWIN1: 0: input, "{{.*}}.s", assembler
 // DARWIN1: 1: assembler, {0}, object
-// RUN: clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c %t.s 2>&1 | FileCheck -check-prefix=DARWIN2 %s
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -ccc-print-phases -c %t.s 2>&1 | FileCheck -check-prefix=DARWIN2 %s
 // DARWIN2: 0: input, "{{.*}}.s", assembler-with-cpp
 // DARWIN2: 1: preprocessor, {0}, assembler
 // DARWIN2: 2: assembler, {1}, object

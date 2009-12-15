@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: %clang -fsyntax-only -verify %s
 
 namespace test0 {
   namespace ns0 {

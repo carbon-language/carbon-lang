@@ -18,5 +18,5 @@
 // RUN: %clang_cc1 -g -triple x86_64-unknown-unknown -emit-llvm -o %t %s
 
 // <rdar://problem/7181838> clang 1.0 fails to compile Python 2.6
-// RUN: clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -mmacosx-version-min=10.4
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -mmacosx-version-min=10.4
 

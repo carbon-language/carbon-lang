@@ -1,4 +1,4 @@
-// RUN: clang -O3 -emit-llvm -S -o %t %s
+// RUN: %clang -O3 -emit-llvm -S -o %t %s
 // RUN: grep 'ret i64 4294967292' %t | count 2
 // RUN: grep 'ret i64 -4' %t | count 1
 

@@ -1,4 +1,4 @@
-// RUN: clang -Wmissing-prototypes -fsyntax-only -Xclang -verify %s
+// RUN: %clang -Wmissing-prototypes -fsyntax-only -Xclang -verify %s
 
 int f();
 

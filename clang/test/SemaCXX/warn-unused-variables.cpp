@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -Wunused-variable -verify %s
+// RUN: %clang -fsyntax-only -Wunused-variable -verify %s
 
 template<typename T> void f() {
 	T t;

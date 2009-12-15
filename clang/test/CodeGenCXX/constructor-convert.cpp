@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -S -o - %s
+// RUN: %clang -emit-llvm -S -o - %s
 
 // PR5775
 class Twine {

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -Xclang -verify %s
+// RUN: %clang -fsyntax-only -Xclang -verify %s
 typedef union {
   int *ip;
   float *fp;

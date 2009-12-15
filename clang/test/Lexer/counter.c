@@ -1,5 +1,5 @@
 // __COUNTER__ support: rdar://4329310
-// RUN: clang -E %s > %t
+// RUN: %clang -E %s > %t
 
 #define PASTE2(x,y) x##y
 #define PASTE1(x,y) PASTE2(x,y)
