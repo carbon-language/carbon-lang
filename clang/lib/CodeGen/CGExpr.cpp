@@ -18,6 +18,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Intrinsics.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
@@ -1014,7 +1015,14 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 }
 
 llvm::BasicBlock*CodeGenFunction::getTrapBB() {
-  if (TrapBB)
+  const CodeGenOptions &GCO = CGM.getCodeGenOpts();
+
+  // If we are not optimzing, don't collapse all calls to trap in the function
+  // to the same call, that way, in the debugger they can see which operation
+  // did in fact fail.  If we are optimizing, we collpase all call to trap down
+  // to just one per function to save on codesize.
+  if (GCO.OptimizationLevel
+      && TrapBB)
     return TrapBB;
 
   llvm::BasicBlock *Cont = 0;
