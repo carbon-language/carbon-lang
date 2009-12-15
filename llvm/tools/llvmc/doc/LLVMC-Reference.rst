@@ -360,10 +360,11 @@ separate option groups syntactically.
      and ``required`` properties.
 
    - ``init`` - this option has a default value, either a string (if it is a
-     parameter), or a boolean (if it is a switch; boolean constants are called
-     ``true`` and ``false``). List options can't have this attribute. Usage
-     examples: ``(switch_option "foo", (init true))``; ``(prefix_option "bar",
-     (init "baz"))``.
+     parameter), or a boolean (if it is a switch; as in C++, boolean constants
+     are called ``true`` and ``false``). List options can't have ``init``
+     attribute.
+     Usage examples: ``(switch_option "foo", (init true))``; ``(prefix_option
+     "bar", (init "baz"))``.
 
    - ``extern`` - this option is defined in some other plugin, see `below`__.
 
