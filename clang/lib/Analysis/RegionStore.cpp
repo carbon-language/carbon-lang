@@ -987,12 +987,12 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
-
+  
   // FIXME: Is this even possible?  Shouldn't this be treated as a null
   //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
     return SValuator::CastResult(state, UndefinedVal());
-
+  
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
   // FIXME: return symbolic value for these cases.
@@ -1090,8 +1090,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   }
 
   // All other values are symbolic.
-  return SValuator::CastResult(state,
-                               ValMgr.getRegionValueSymbolValOrUnknown(R, RTy));
+  return SValuator::CastResult(state, ValMgr.getRegionValueSymbolVal(R, RTy));
 }
 
 std::pair<const GRState*, const MemRegion*>
@@ -1256,7 +1255,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(const GRState *state,
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
+  return ValMgr.getRegionValueSymbolVal(R, Ty);
 }
 
 SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
@@ -1296,7 +1295,7 @@ SVal RegionStoreManager::RetrieveVar(const GRState *state,
 
   if (R->hasGlobalsOrParametersStorage() ||
       isa<UnknownSpaceRegion>(R->getMemorySpace()))
-    return ValMgr.getRegionValueSymbolValOrUnknown(R, VD->getType());
+    return ValMgr.getRegionValueSymbolVal(R, VD->getType());
 
   return UndefinedVal();
 }
@@ -1307,7 +1306,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
   QualType valTy = R->getValueType(getContext());
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolValOrUnknown(R, valTy);
+  return ValMgr.getRegionValueSymbolVal(R, valTy);
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState *state,
