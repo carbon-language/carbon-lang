@@ -578,9 +578,9 @@ adds runtime checks for undefined runtime behavior.  If the check fails,
 <tt>__builtin_trap()</tt> is used to indicate failure.
 The checks are:
 <p>
-<li>Subscripting where the static type of one operand is decayed from an
-    array type and the other operand is greater than the size of the array or
-    less than zero.</li>
+<li>Subscripting where the static type of one operand is variable
+    which is decayed from an array type and the other operand is
+    greater than the size of the array or less than zero.</li>
 <li>Shift operators where the amount shifted is greater or equal to the
     promoted bit-width of the left-hand-side or less than zero.</li>
 <li>If control flow reaches __builtin_unreachable.
