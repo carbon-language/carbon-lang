@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -std=c++98 -verify %s
 
 enum E {
   Val1,
@@ -42,26 +42,26 @@ namespace test1 {
   template <class A> struct is_same<A,A> { static const int value = 1; };
 
   enum enum0 { v0 };
-  int test0[is_same<typeof(+v0), int>::value];
+  int test0[is_same<__typeof(+v0), int>::value];
 
   enum enum1 { v1 = __INT_MAX__ };
-  int test1[is_same<typeof(+v1), int>::value];
+  int test1[is_same<__typeof(+v1), int>::value];
 
   enum enum2 { v2 = __INT_MAX__ * 2U };
-  int test2[is_same<typeof(+v2), unsigned int>::value];
+  int test2[is_same<__typeof(+v2), unsigned int>::value];
 
   // This kindof assumes that 'int' is smaller than 'long long'.
 #if defined(__LP64__)
-  enum enum3 { v3 = __LONG_LONG_MAX__ };
-  int test3[is_same<typeof(+v3), long>::value];
+  enum enum3 { v3 = __LONG_MAX__ };
+  int test3[is_same<__typeof(+v3), long>::value];
 
-  enum enum4 { v4 = __LONG_LONG_MAX__ * 2ULL };
-  int test4[is_same<typeof(+v4), unsigned long>::value];
+  enum enum4 { v4 = __LONG_MAX__ * 2UL };
+  int test4[is_same<__typeof(+v4), unsigned long>::value];
 #else
   enum enum3 { v3 = __LONG_LONG_MAX__ };
-  int test3[is_same<typeof(+v3), long long>::value];
+  int test3[is_same<__typeof(+v3), long long>::value];          // expected-warning {{'long long' is an extension}}
 
-  enum enum4 { v4 = __LONG_LONG_MAX__ * 2ULL };
-  int test4[is_same<typeof(+v4), unsigned long long>::value];  
+  enum enum4 { v4 = __LONG_LONG_MAX__ * 2ULL };                 // expected-warning {{'long long' is an extension}}
+  int test4[is_same<__typeof(+v4), unsigned long long>::value]; // expected-warning {{'long long' is an extension}}
 #endif
 }

@@ -5812,7 +5812,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     const llvm::APSInt &InitVal = ECD->getInitVal();
     assert(InitVal.getBitWidth() >= IntWidth &&
            "Should have promoted value to int");
-    if (InitVal.getBitWidth() > IntWidth) {
+    if (!getLangOptions().CPlusPlus && InitVal.getBitWidth() > IntWidth) {
       llvm::APSInt V(InitVal);
       V.trunc(IntWidth);
       V.extend(InitVal.getBitWidth());
