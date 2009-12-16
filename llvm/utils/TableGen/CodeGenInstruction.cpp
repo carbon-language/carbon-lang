@@ -18,14 +18,35 @@
 using namespace llvm;
 
 static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
-  // FIXME: Only supports TIED_TO for now.
+  // EARLY_CLOBBER: @early $reg
+  std::string::size_type wpos = CStr.find_first_of(" \t");
+  std::string::size_type start = CStr.find_first_not_of(" \t");
+  std::string Tok = CStr.substr(start, wpos - start);
+  if (Tok == "@earlyclobber") {
+    std::string Name = CStr.substr(wpos+1);
+    wpos = Name.find_first_not_of(" \t");
+    if (wpos == std::string::npos)
+      throw "Illegal format for @earlyclobber constraint: '" + CStr + "'";
+    Name = Name.substr(wpos);
+    std::pair<unsigned,unsigned> Op =
+      I->ParseOperandName(Name, false);
+
+    // Build the string for the operand
+    std::string OpConstraint = "(1 << TOI::EARLY_CLOBBER)";
+    if (!I->OperandList[Op.first].Constraints[Op.second].empty())
+      throw "Operand '" + Name + "' cannot have multiple constraints!";
+    I->OperandList[Op.first].Constraints[Op.second] = OpConstraint;
+    return;
+  }
+
+  // Only other constraint is "TIED_TO" for now.
   std::string::size_type pos = CStr.find_first_of('=');
   assert(pos != std::string::npos && "Unrecognized constraint");
-  std::string::size_type start = CStr.find_first_not_of(" \t");
+  start = CStr.find_first_not_of(" \t");
   std::string Name = CStr.substr(start, pos - start);
 
   // TIED_TO: $src1 = $dst
-  std::string::size_type wpos = Name.find_first_of(" \t");
+  wpos = Name.find_first_of(" \t");
   if (wpos == std::string::npos)
     throw "Illegal format for tied-to constraint: '" + CStr + "'";
   std::string DestOpName = Name.substr(0, wpos);
@@ -46,7 +67,6 @@ static void ParseConstraint(const std::string &CStr, CodeGenInstruction *I) {
   // Build the string for the operand.
   std::string OpConstraint =
   "((" + utostr(FlatOpNo) + " << 16) | (1 << TOI::TIED_TO))";
-
 
   if (!I->OperandList[DestOp.first].Constraints[DestOp.second].empty())
     throw "Operand '" + DestOpName + "' cannot have multiple constraints!";

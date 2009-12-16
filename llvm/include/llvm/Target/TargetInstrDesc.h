@@ -25,9 +25,10 @@ class TargetRegisterInfo;
 //===----------------------------------------------------------------------===//
   
 namespace TOI {
-  // Operand constraints: only "tied_to" for now.
+  // Operand constraints
   enum OperandConstraint {
-    TIED_TO = 0  // Must be allocated the same register as.
+    TIED_TO = 0,    // Must be allocated the same register as.
+    EARLY_CLOBBER   // Operand is an early clobber register operand
   };
   
   /// OperandFlags - These are flags set on operands, but should be considered
