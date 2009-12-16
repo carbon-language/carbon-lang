@@ -746,6 +746,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::ObjCObjectRegionKind:
     case MemRegion::SymbolicRegionKind:
+    case MemRegion::CXXObjectRegionKind:
       return UnknownVal();
 
     case MemRegion::StringRegionKind: {
@@ -869,6 +870,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCObjectRegionKind:
     case MemRegion::ObjCIvarRegionKind:
+    case MemRegion::CXXObjectRegionKind:
       return UnknownVal();
 
     case MemRegion::FunctionTextRegionKind:

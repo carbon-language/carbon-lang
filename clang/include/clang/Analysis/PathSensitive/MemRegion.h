@@ -73,7 +73,8 @@ public:
     FieldRegionKind,
     ObjCIvarRegionKind,
     ObjCObjectRegionKind,
-    END_DECL_REGIONS = ObjCObjectRegionKind,
+    CXXObjectRegionKind,
+    END_DECL_REGIONS = CXXObjectRegionKind,
     END_TYPED_REGIONS = END_DECL_REGIONS
   };
     
@@ -752,6 +753,30 @@ public:
   }
 };
 
+class CXXObjectRegion : public TypedRegion {
+  friend class MemRegionManager;
+
+  // T - The object type.
+  QualType T;
+
+  CXXObjectRegion(QualType t, const MemRegion *sReg) 
+    : TypedRegion(sReg, CXXObjectRegionKind), T(t) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID &ID,
+                            QualType T, const MemRegion *sReg);
+  
+public:
+  QualType getValueType(ASTContext& C) const {
+    return T;
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const;
+
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == CXXObjectRegionKind;
+  }
+};
+
 template<typename RegionTy>
 const RegionTy* MemRegion::getAs() const {
   if (const RegionTy* RT = dyn_cast<RegionTy>(this))
@@ -876,6 +901,8 @@ public:
   ///   object).
   const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                           const MemRegion* superRegion);
+
+  const CXXObjectRegion *getCXXObjectRegion(QualType T);
 
   const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,

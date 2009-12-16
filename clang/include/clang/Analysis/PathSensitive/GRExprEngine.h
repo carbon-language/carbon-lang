@@ -25,6 +25,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprCXX.h"
 
 namespace clang {
 
@@ -203,9 +204,10 @@ protected:
   }
 
 public:
-  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred, const GRState* St,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                   const void *tag = 0);
+  ExplodedNode* MakeNode(ExplodedNodeSet& Dst, Stmt* S, ExplodedNode* Pred, 
+                         const GRState* St,
+                         ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                         const void *tag = 0);
 protected:
   /// CheckerVisit - Dispatcher for performing checker-specific logic
   ///  at specific statements.
@@ -315,18 +317,21 @@ protected:
   void VisitObjCForCollectionStmt(ObjCForCollectionStmt* S, ExplodedNode* Pred,
                                   ExplodedNodeSet& Dst);
 
-  void VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S, ExplodedNode* Pred,
+  void VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S, 
+                                     ExplodedNode* Pred,
                                      ExplodedNodeSet& Dst, SVal ElementV);
 
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
-  void VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred, ExplodedNodeSet& Dst);
+  void VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred, 
+                            ExplodedNodeSet& Dst);
 
   void VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
                                      ObjCMessageExpr::arg_iterator I,
                                      ObjCMessageExpr::arg_iterator E,
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
-  void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, ExplodedNode* Pred,
+  void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, 
+                                          ExplodedNode* Pred,
                                           ExplodedNodeSet& Dst);
 
   /// VisitReturnStmt - Transfer function logic for return statements.
@@ -337,8 +342,11 @@ protected:
                               ExplodedNodeSet& Dst);
 
   /// VisitUnaryOperator - Transfer function logic for unary operators.
-  void VisitUnaryOperator(UnaryOperator* B, ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                          bool asLValue);
+  void VisitUnaryOperator(UnaryOperator* B, ExplodedNode* Pred, 
+                          ExplodedNodeSet& Dst, bool asLValue);
+
+  void VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred, 
+                        ExplodedNodeSet & Dst);
 
   /// EvalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)
@@ -362,7 +370,7 @@ public:
 
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,
                  NonLoc L, SVal R, QualType T) {
-    return R.isValid() ? SVator.EvalBinOpNN(state, op, L, cast<NonLoc>(R), T) : R;
+    return R.isValid() ? SVator.EvalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
   }
 
   SVal EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,

@@ -506,7 +506,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
-    case Stmt::CXXThisExprClass:
     case Stmt::CXXThrowExprClass:
     case Stmt::CXXDefaultArgExprClass:
     case Stmt::CXXZeroInitValueExprClass:
@@ -567,7 +566,8 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
         break;
       }
 
-      if (AMgr.shouldEagerlyAssume() && (B->isRelationalOp() || B->isEqualityOp())) {
+      if (AMgr.shouldEagerlyAssume() && 
+          (B->isRelationalOp() || B->isEqualityOp())) {
         ExplodedNodeSet Tmp;
         VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Tmp, false);
         EvalEagerlyAssume(Dst, Tmp, cast<Expr>(S));
@@ -607,6 +607,10 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
       break;
     }
+
+    case Stmt::CXXThisExprClass:
+      VisitCXXThisExpr(cast<CXXThisExpr>(S), Pred, Dst);
+      break;
 
     case Stmt::DeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst, false);
@@ -692,7 +696,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
     case Stmt::UnaryOperatorClass: {
       UnaryOperator *U = cast<UnaryOperator>(S);
-      if (AMgr.shouldEagerlyAssume() && (U->getOpcode() == UnaryOperator::LNot)) {
+      if (AMgr.shouldEagerlyAssume()&&(U->getOpcode() == UnaryOperator::LNot)) {
         ExplodedNodeSet Tmp;
         VisitUnaryOperator(U, Pred, Tmp, false);
         EvalEagerlyAssume(Dst, Tmp, U);
@@ -709,7 +713,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
   Ex = Ex->IgnoreParens();
 
-  if (Ex != CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex)) {
+  if (Ex != CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex)){
     Dst.Add(Pred);
     return;
   }
@@ -1025,7 +1029,8 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
 void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
-  assert (Ex == CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex));
+  assert(Ex == CurrentStmt && 
+         Pred->getLocationContext()->getCFG()->isBlkExpr(Ex));
 
   const GRState* state = GetState(Pred);
   SVal X = state->getSVal(Ex);
@@ -1149,7 +1154,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, ExplodedNode* Pred,
   assert(B->getOpcode() == BinaryOperator::LAnd ||
          B->getOpcode() == BinaryOperator::LOr);
 
-  assert(B == CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(B));
+  assert(B==CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(B));
 
   const GRState* state = GetState(Pred);
   SVal X = state->getSVal(B);
@@ -2067,7 +2072,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
       }
       
       EvalBind(Dst, DS, DS, *I, state,
-               loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);                                                     
+               loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);   
     }
     else {
       state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
@@ -2129,7 +2134,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
 
       InitListExpr::reverse_iterator NewItr = X.Itr + 1;
 
-      for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
+      for (ExplodedNodeSet::iterator NI=Tmp.begin(),NE=Tmp.end();NI!=NE;++NI) {
         // Get the last initializer value.
         state = GetState(*NI);
         SVal InitV = state->getSVal(cast<Expr>(*X.Itr));
@@ -2161,7 +2166,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     ExplodedNodeSet Tmp;
     Expr* Init = E->getInit(0);
     Visit(Init, Pred, Tmp);
-    for (ExplodedNodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I != EI; ++I) {
+    for (ExplodedNodeSet::iterator I=Tmp.begin(), EI=Tmp.end(); I != EI; ++I) {
       state = GetState(*I);
       MakeNode(Dst, E, *I, state->BindExpr(E, state->getSVal(Init)));
     }
@@ -2429,7 +2434,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
     ExplodedNodeSet Tmp2;
     EvalLoad(Tmp2, Ex, *I, state, V1);
 
-    for (ExplodedNodeSet::iterator I2 = Tmp2.begin(), E2 = Tmp2.end(); I2!=E2; ++I2) {
+    for (ExplodedNodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end();I2!=E2;++I2) {
 
       state = GetState(*I2);
       SVal V2_untested = state->getSVal(Ex);
@@ -2492,14 +2497,23 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
   }
 }
 
-void GRExprEngine::VisitAsmStmt(AsmStmt* A, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+
+void GRExprEngine::VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred, 
+                                    ExplodedNodeSet & Dst) {
+  // Get the this object region from StoreManager.
+  Loc V = getStoreManager().getThisObject(TE->getType()->getPointeeType());
+  MakeNode(Dst, TE, Pred, GetState(Pred)->BindExpr(TE, V));
+}
+
+void GRExprEngine::VisitAsmStmt(AsmStmt* A, ExplodedNode* Pred, 
+                                ExplodedNodeSet& Dst) {
   VisitAsmStmtHelperOutputs(A, A->begin_outputs(), A->end_outputs(), Pred, Dst);
 }
 
 void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
                                              AsmStmt::outputs_iterator I,
                                              AsmStmt::outputs_iterator E,
-                                             ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   if (I == E) {
     VisitAsmStmtHelperInputs(A, A->begin_inputs(), A->end_inputs(), Pred, Dst);
     return;
@@ -2510,14 +2524,15 @@ void GRExprEngine::VisitAsmStmtHelperOutputs(AsmStmt* A,
 
   ++I;
 
-  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end();NI != NE;++NI)
     VisitAsmStmtHelperOutputs(A, I, E, *NI, Dst);
 }
 
 void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
                                             AsmStmt::inputs_iterator I,
                                             AsmStmt::inputs_iterator E,
-                                            ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+                                            ExplodedNode* Pred, 
+                                            ExplodedNodeSet& Dst) {
   if (I == E) {
 
     // We have processed both the inputs and the outputs.  All of the outputs
@@ -2645,7 +2660,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
         // Simulate the effects of a "store":  bind the value of the RHS
         // to the L-Value represented by the LHS.
-        EvalStore(Tmp3, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV, RightV);
+        EvalStore(Tmp3, B, LHS, *I2, state->BindExpr(B, ExprVal), LeftV,RightV);
         continue;
       }
       

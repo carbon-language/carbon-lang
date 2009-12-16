@@ -106,6 +106,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::VarRegionKind:
+    case MemRegion::CXXObjectRegionKind:
       return MakeElementRegion(R, PointeeTy);
 
     case MemRegion::ElementRegionKind: {
@@ -239,4 +240,9 @@ const GRState *StoreManager::InvalidateRegions(const GRState *state,
 SVal StoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL,
                                             const LocationContext *LC) {
   return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
+}
+
+Loc StoreManager::getThisObject(QualType T) {
+  const CXXObjectRegion *R = MRMgr.getCXXObjectRegion(T);
+  return loc::MemRegionVal(R);
 }
