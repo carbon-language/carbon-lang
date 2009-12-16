@@ -50,14 +50,14 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
 // MDNode implementation.
 //
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-               Function *LocalFunction)
+               Function *LocalFunc)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NodeSize = NumVals;
   Node = new ElementVH[NodeSize];
   ElementVH *Ptr = Node;
   for (unsigned i = 0; i != NumVals; ++i) 
     *Ptr++ = ElementVH(Vals[i], this);
-  LocalFunction = LocalFunction;
+  LocalFunction = LocalFunc;
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {

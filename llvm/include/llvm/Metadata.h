@@ -115,7 +115,7 @@ class MDNode : public MetadataBase, public FoldingSetNode {
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-                  Function *LocalFunction = NULL);
+                  Function *LocalFunc = NULL);
 public:
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, 
