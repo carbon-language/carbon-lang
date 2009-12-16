@@ -106,6 +106,7 @@ public:
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitChooseExpr(const ChooseExpr *CE);
   void VisitInitListExpr(InitListExpr *E);
+  void VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
@@ -465,8 +466,13 @@ void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 }
 
 void AggExprEmitter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
-  LValue lvalue = LValue::MakeAddr(DestPtr, Qualifiers());
-  EmitNullInitializationToLValue(lvalue, E->getType());
+  LValue LV = LValue::MakeAddr(DestPtr, Qualifiers());
+  EmitNullInitializationToLValue(LV, E->getType());
+}
+
+void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
+  LValue LV = LValue::MakeAddr(DestPtr, Qualifiers());
+  EmitNullInitializationToLValue(LV, E->getType());
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {

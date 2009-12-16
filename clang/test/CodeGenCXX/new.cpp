@@ -90,3 +90,9 @@ A* t10() {
   return new(1, 2, 3.45, 100) A;
 }
 
+struct B { };
+void t11() {
+  // CHECK: call i8* @_Znwm
+  // CHECK: call void @llvm.memset.i64(
+  B* b = new B();
+}
