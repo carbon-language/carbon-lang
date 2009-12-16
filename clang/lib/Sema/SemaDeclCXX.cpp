@@ -3759,7 +3759,8 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 Sema::OwningExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
-                            MultiExprArg ExprArgs) {
+                            MultiExprArg ExprArgs,
+                            bool RequiresZeroInit) {
   bool Elidable = false;
 
   // C++ [class.copy]p15:
@@ -3785,7 +3786,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   }
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
-                               Elidable, move(ExprArgs));
+                               Elidable, move(ExprArgs), RequiresZeroInit);
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -3793,14 +3794,15 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 Sema::OwningExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
-                            MultiExprArg ExprArgs) {
+                            MultiExprArg ExprArgs,
+                            bool RequiresZeroInit) {
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
   MarkDeclarationReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
-                                        Constructor,
-                                        Elidable, Exprs, NumExprs));
+                                        Constructor, Elidable, Exprs, NumExprs, 
+                                        RequiresZeroInit));
 }
 
 Sema::OwningExprResult

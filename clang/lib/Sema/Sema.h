@@ -1816,7 +1816,8 @@ public:
   OwningExprResult BuildCXXConstructExpr(SourceLocation ConstructLoc,
                                          QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
-                                         MultiExprArg Exprs);
+                                         MultiExprArg Exprs,
+                                         bool RequiresZeroInit = false);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
@@ -1824,7 +1825,8 @@ public:
                                          QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
                                          bool Elidable,
-                                         MultiExprArg Exprs);
+                                         MultiExprArg Exprs,
+                                         bool RequiresZeroInit = false);
 
   OwningExprResult BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
                                                QualType writtenTy,

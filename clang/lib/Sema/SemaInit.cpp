@@ -444,6 +444,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       if (Field->isUnnamedBitfield())
         continue;
 
+      if (hadError)
+        return;
+
       InitializedEntity MemberEntity 
         = InitializedEntity::InitializeMember(*Field, &Entity);
       if (Init >= NumInits || !ILE->getInit(Init)) {
@@ -477,7 +480,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
           = InitSeq.Perform(SemaRef, MemberEntity, Kind, 
                             Sema::MultiExprArg(SemaRef, 0, 0));
         if (MemberInit.isInvalid()) {
-          hadError = 0;
+          hadError = true;
           return;
         }
 
@@ -529,6 +532,9 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
 
   
   for (unsigned Init = 0; Init != NumElements; ++Init) {
+    if (hadError)
+      return;
+
     if (ElementEntity.getKind() == InitializedEntity::EK_ArrayOrVectorElement)
       ElementEntity.setElementIndex(Init);
 
@@ -546,7 +552,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         = InitSeq.Perform(SemaRef, ElementEntity, Kind, 
                           Sema::MultiExprArg(SemaRef, 0, 0));
       if (ElementInit.isInvalid()) {
-        hadError = 0;
+        hadError = true;
         return;
       }
 
@@ -585,7 +591,7 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
   if (!hadError) {
     bool RequiresSecondPass = false;
     FillInValueInitializations(Entity, FullyStructuredList, RequiresSecondPass);
-    if (RequiresSecondPass)
+    if (RequiresSecondPass && !hadError)
       FillInValueInitializations(Entity, FullyStructuredList, 
                                  RequiresSecondPass);
   }
@@ -2619,8 +2625,16 @@ static void TryValueInitialization(Sema &S,
       if (ClassDecl->hasUserDeclaredConstructor())
         return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);
       
-      // FIXME: non-union class type w/ non-trivial default constructor gets
-      // zero-initialized, then constructor gets called.
+      // -- if T is a (possibly cv-qualified) non-union class type
+      //    without a user-provided constructor, then the object is
+      //    zero-initialized and, if T’s implicitly-declared default
+      //    constructor is non-trivial, that constructor is called.
+      if ((ClassDecl->getTagKind() == TagDecl::TK_class ||
+           ClassDecl->getTagKind() == TagDecl::TK_struct) &&
+          !ClassDecl->hasTrivialConstructor()) {
+        Sequence.AddZeroInitializationStep(Entity.getType().getType());
+        return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);        
+      }
     }
   }
 
@@ -3050,6 +3064,7 @@ InitializationSequence::Perform(Sema &S,
     
   // Walk through the computed steps for the initialization sequence, 
   // performing the specified conversions along the way.
+  bool ConstructorInitRequiresZeroInit = false;
   for (step_iterator Step = step_begin(), StepEnd = step_end();
        Step != StepEnd; ++Step) {
     if (CurInit.isInvalid())
@@ -3216,7 +3231,8 @@ InitializationSequence::Perform(Sema &S,
           
       // Build the an expression that constructs a temporary.
       CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
-                                        move_arg(ConstructorArgs));
+                                        move_arg(ConstructorArgs),
+                                        ConstructorInitRequiresZeroInit);
       if (CurInit.isInvalid())
         return S.ExprError();
           
@@ -3224,14 +3240,22 @@ InitializationSequence::Perform(Sema &S,
     }
         
     case SK_ZeroInitialization: {
-      if (Kind.getKind() == InitializationKind::IK_Value &&
-          S.getLangOptions().CPlusPlus &&
-          !Kind.isImplicitValueInit())
+      step_iterator NextStep = Step;
+      ++NextStep;
+      if (NextStep != StepEnd && 
+          NextStep->Kind == SK_ConstructorInitialization) {
+        // The need for zero-initialization is recorded directly into
+        // the call to the object's constructor within the next step.
+        ConstructorInitRequiresZeroInit = true;
+      } else if (Kind.getKind() == InitializationKind::IK_Value &&
+                 S.getLangOptions().CPlusPlus &&
+                 !Kind.isImplicitValueInit()) {
         CurInit = S.Owned(new (S.Context) CXXZeroInitValueExpr(Step->Type,
                                                    Kind.getRange().getBegin(),
                                                     Kind.getRange().getEnd()));
-      else
+      } else {
         CurInit = S.Owned(new (S.Context) ImplicitValueInitExpr(Step->Type));
+      }
       break;
     }
     }

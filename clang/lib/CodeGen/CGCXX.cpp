@@ -571,7 +571,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     const CXXRecordDecl *RD =
       cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
     if (RD->hasTrivialConstructor())
-    return;
+      return;
   }
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead.
@@ -591,6 +591,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     BasePtr = llvm::PointerType::getUnqual(BasePtr);
     llvm::Value *BaseAddrPtr =
       Builder.CreateBitCast(Dest, BasePtr);
+
     EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
                                E->arg_begin(), E->arg_end());
   }

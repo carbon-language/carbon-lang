@@ -860,6 +860,7 @@ unsigned PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   E->setConstructor(cast<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
   E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setElidable(Record[Idx++]);  
+  E->setRequiresZeroInitialization(Record[Idx++]);
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
   return E->getNumArgs();

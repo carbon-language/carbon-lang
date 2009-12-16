@@ -787,6 +787,7 @@ void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Writer.AddDeclRef(E->getConstructor(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Record.push_back(E->isElidable());
+  Record.push_back(E->requiresZeroInitialization());
   Record.push_back(E->getNumArgs());
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     Writer.WriteSubStmt(E->getArg(I));

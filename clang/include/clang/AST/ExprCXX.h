@@ -490,8 +490,8 @@ class CXXConstructExpr : public Expr {
   CXXConstructorDecl *Constructor;
 
   SourceLocation Loc;
-  bool Elidable;
-
+  bool Elidable : 1;
+  bool ZeroInitialization : 1;
   Stmt **Args;
   unsigned NumArgs;
 
@@ -499,7 +499,8 @@ protected:
   CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                    SourceLocation Loc,
                    CXXConstructorDecl *d, bool elidable,
-                   Expr **args, unsigned numargs);
+                   Expr **args, unsigned numargs,
+                   bool ZeroInitialization = false);
   ~CXXConstructExpr() { }
 
   virtual void DoDestroy(ASTContext &C);
@@ -512,7 +513,8 @@ public:
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   SourceLocation Loc,
                                   CXXConstructorDecl *D, bool Elidable,
-                                  Expr **Args, unsigned NumArgs);
+                                  Expr **Args, unsigned NumArgs,
+                                  bool ZeroInitialization = false);
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
@@ -524,6 +526,13 @@ public:
   /// \brief Whether this construction is elidable.
   bool isElidable() const { return Elidable; }
   void setElidable(bool E) { Elidable = E; }
+  
+  /// \brief Whether this construction first requires
+  /// zero-initialization before the initializer is called.
+  bool requiresZeroInitialization() const { return ZeroInitialization; }
+  void setRequiresZeroInitialization(bool ZeroInit) {
+    ZeroInitialization = ZeroInit;
+  }
   
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;

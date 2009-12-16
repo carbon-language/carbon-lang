@@ -458,6 +458,11 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
     Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
   }
 
+  if (E->requiresZeroInitialization())
+    EmitNullInitializationToLValue(LValue::MakeAddr(Val, 
+                                                 E->getType().getQualifiers()),
+                                   E->getType());
+
   CGF.EmitCXXConstructExpr(Val, E);
 }
 

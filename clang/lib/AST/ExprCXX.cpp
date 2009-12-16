@@ -380,28 +380,32 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
                                            SourceLocation Loc,
                                            CXXConstructorDecl *D, bool Elidable,
-                                           Expr **Args, unsigned NumArgs) {
+                                           Expr **Args, unsigned NumArgs,
+                                           bool ZeroInitialization) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
-                                  Elidable, Args, NumArgs);
+                                  Elidable, Args, NumArgs, ZeroInitialization);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    SourceLocation Loc,
                                    CXXConstructorDecl *D, bool elidable,
-                                   Expr **args, unsigned numargs)
+                                   Expr **args, unsigned numargs,
+                                   bool ZeroInitialization)
 : Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
-  Constructor(D), Loc(Loc), Elidable(elidable), Args(0), NumArgs(numargs) {
-    if (NumArgs) {
-      Args = new (C) Stmt*[NumArgs];
-
-      for (unsigned i = 0; i != NumArgs; ++i) {
-        assert(args[i] && "NULL argument in CXXConstructExpr");
-        Args[i] = args[i];
-      }
+  Constructor(D), Loc(Loc), Elidable(elidable), 
+  ZeroInitialization(ZeroInitialization), Args(0), NumArgs(numargs) 
+{
+  if (NumArgs) {
+    Args = new (C) Stmt*[NumArgs];
+    
+    for (unsigned i = 0; i != NumArgs; ++i) {
+      assert(args[i] && "NULL argument in CXXConstructExpr");
+      Args[i] = args[i];
     }
+  }
 }
 
 CXXConstructExpr::CXXConstructExpr(EmptyShell Empty, ASTContext &C, 
