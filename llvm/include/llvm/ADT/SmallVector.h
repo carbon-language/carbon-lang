@@ -80,9 +80,42 @@ protected:
     return BeginX == static_cast<const void*>(&FirstEl);
   }
   
+  /// size_in_bytes - This returns size()*sizeof(T).
+  size_t size_in_bytes() const {
+    return size_t((char*)EndX - (char*)BeginX);
+  }
+  
+  /// capacity_in_bytes - This returns capacity()*sizeof(T).
+  size_t capacity_in_bytes() const {
+    return size_t((char*)CapacityX - (char*)BeginX);
+  }
+  
+  inline void grow_pod(size_t MinSizeInBytes, size_t TSize);
+  
 public:
   bool empty() const { return BeginX == EndX; }
 };
+  
+inline void SmallVectorBase::grow_pod(size_t MinSizeInBytes, size_t TSize) {
+  size_t CurSizeBytes = size_in_bytes();
+  size_t NewCapacityInBytes = 2 * capacity_in_bytes();
+  if (NewCapacityInBytes < MinSizeInBytes)
+    NewCapacityInBytes = MinSizeInBytes;
+  void *NewElts = operator new(NewCapacityInBytes);
+  
+  // Copy the elements over.
+  memcpy(NewElts, this->BeginX, CurSizeBytes);
+  
+  // If this wasn't grown from the inline copy, deallocate the old space.
+  if (!this->isSmall())
+    operator delete(this->BeginX);
+  
+  this->EndX = (char*)NewElts+CurSizeBytes;
+  this->BeginX = NewElts;
+  this->CapacityX = (char*)this->BeginX + NewCapacityInBytes;
+}
+
+  
 
 template <typename T>
 class SmallVectorTemplateCommon : public SmallVectorBase {
@@ -178,8 +211,37 @@ public:
     std::uninitialized_copy(I, E, Dest);
   }
   
+  /// grow - double the size of the allocated memory, guaranteeing space for at
+  /// least one more element or MinSize if specified.
+  void grow(size_t MinSize = 0);
 };
 
+// Define this out-of-line to dissuade the C++ compiler from inlining it.
+template <typename T, bool isPodLike>
+void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
+  size_t CurCapacity = this->capacity();
+  size_t CurSize = this->size();
+  size_t NewCapacity = 2*CurCapacity;
+  if (NewCapacity < MinSize)
+    NewCapacity = MinSize;
+  T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
+  
+  // Copy the elements over.
+  uninitialized_copy(this->begin(), this->end(), NewElts);
+  
+  // Destroy the original elements.
+  destroy_range(this->begin(), this->end());
+  
+  // If this wasn't grown from the inline copy, deallocate the old space.
+  if (!this->isSmall())
+    operator delete(this->begin());
+  
+  setEnd(NewElts+CurSize);
+  this->BeginX = NewElts;
+  this->CapacityX = this->begin()+NewCapacity;
+}
+  
+  
 /// SmallVectorTemplateBase<isPodLike = true> - This is where we put method
 /// implementations that are designed to work with POD-like T's.
 template <typename T>
@@ -197,6 +259,12 @@ public:
     // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove, memcpy
     // is better.
     memcpy(&*Dest, &*I, (E-I)*sizeof(T));
+  }
+  
+  /// grow - double the size of the allocated memory, guaranteeing space for at
+  /// least one more element or MinSize if specified.
+  void grow(size_t MinSize = 0) {
+    this->grow_pod(MinSize*sizeof(T), sizeof(T));
   }
 };
   
@@ -237,7 +305,7 @@ public:
       this->setEnd(this->begin()+N);
     } else if (N > this->size()) {
       if (this->capacity() < N)
-        grow(N);
+        this->grow(N);
       this->construct_range(this->end(), this->begin()+N, T());
       this->setEnd(this->begin()+N);
     }
@@ -249,7 +317,7 @@ public:
       setEnd(this->begin()+N);
     } else if (N > this->size()) {
       if (this->capacity() < N)
-        grow(N);
+        this->grow(N);
       construct_range(this->end(), this->begin()+N, NV);
       setEnd(this->begin()+N);
     }
@@ -257,7 +325,7 @@ public:
 
   void reserve(unsigned N) {
     if (this->capacity() < N)
-      grow(N);
+      this->grow(N);
   }
   
   void push_back(const T &Elt) {
@@ -292,7 +360,7 @@ public:
     size_type NumInputs = std::distance(in_start, in_end);
     // Grow allocated space if needed.
     if (NumInputs > size_type(this->capacity_ptr()-this->end()))
-      grow(this->size()+NumInputs);
+      this->grow(this->size()+NumInputs);
     
     // Copy the new elements over.
     // TODO: NEED To compile time dispatch on whether in_iter is a random access
@@ -306,7 +374,7 @@ public:
   void append(size_type NumInputs, const T &Elt) {
     // Grow allocated space if needed.
     if (NumInputs > size_type(this->capacity_ptr()-this->end()))
-      grow(this->size()+NumInputs);
+      this->grow(this->size()+NumInputs);
     
     // Copy the new elements over.
     std::uninitialized_fill_n(this->end(), NumInputs, Elt);
@@ -316,7 +384,7 @@ public:
   void assign(unsigned NumElts, const T &Elt) {
     clear();
     if (this->capacity() < NumElts)
-      grow(NumElts);
+      this->grow(NumElts);
     setEnd(this->begin()+NumElts);
     construct_range(this->begin(), this->end(), Elt);
   }
@@ -488,41 +556,12 @@ public:
   }
   
 private:
-  /// grow - double the size of the allocated memory, guaranteeing space for at
-  /// least one more element or MinSize if specified.
-  void grow(size_t MinSize = 0);
-  
   static void construct_range(T *S, T *E, const T &Elt) {
     for (; S != E; ++S)
       new (S) T(Elt);
   }
 };
   
-
-// Define this out-of-line to dissuade the C++ compiler from inlining it.
-template <typename T>
-void SmallVectorImpl<T>::grow(size_t MinSize) {
-  size_t CurCapacity = this->capacity();
-  size_t CurSize = this->size();
-  size_t NewCapacity = 2*CurCapacity;
-  if (NewCapacity < MinSize)
-    NewCapacity = MinSize;
-  T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
-
-  // Copy the elements over.
-  uninitialized_copy(this->begin(), this->end(), NewElts);
-
-  // Destroy the original elements.
-  destroy_range(this->begin(), this->end());
-
-  // If this wasn't grown from the inline copy, deallocate the old space.
-  if (!this->isSmall())
-    operator delete(this->begin());
-
-  setEnd(NewElts+CurSize);
-  this->BeginX = NewElts;
-  this->CapacityX = this->begin()+NewCapacity;
-}
 
 template <typename T>
 void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
@@ -536,7 +575,7 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
     return;
   }
   if (RHS.size() > this->capacity())
-    grow(RHS.size());
+    this->grow(RHS.size());
   if (this->size() > RHS.capacity())
     RHS.grow(this->size());
 
@@ -595,7 +634,7 @@ const SmallVectorImpl<T> &SmallVectorImpl<T>::
     destroy_range(this->begin(), this->end());
     setEnd(this->begin());
     CurSize = 0;
-    grow(RHSSize);
+    this->grow(RHSSize);
   } else if (CurSize) {
     // Otherwise, use assignment for the already-constructed elements.
     std::copy(RHS.begin(), RHS.begin()+CurSize, this->begin());
