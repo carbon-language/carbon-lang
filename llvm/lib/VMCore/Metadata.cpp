@@ -49,13 +49,15 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
 //===----------------------------------------------------------------------===//
 // MDNode implementation.
 //
-MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals)
+MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
+               Function *LocalFunction)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NodeSize = NumVals;
   Node = new ElementVH[NodeSize];
   ElementVH *Ptr = Node;
   for (unsigned i = 0; i != NumVals; ++i) 
     *Ptr++ = ElementVH(Vals[i], this);
+  LocalFunction = LocalFunction;
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
@@ -63,17 +65,20 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(getElement(i));
 }
 
-MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
+MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
+                    Function *LocalFunction) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
+  if (LocalFunction)
+    ID.AddPointer(LocalFunction);
 
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
-    N = new MDNode(Context, Vals, NumVals);
+    N = new MDNode(Context, Vals, NumVals, LocalFunction);
     pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
   return N;

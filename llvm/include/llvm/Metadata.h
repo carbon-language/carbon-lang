@@ -111,13 +111,16 @@ class MDNode : public MetadataBase, public FoldingSetNode {
 
   ElementVH *Node;
   unsigned NodeSize;
+  Function *LocalFunction;
 
 protected:
-  explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals);
+  explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
+                  Function *LocalFunction = NULL);
 public:
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, 
-                     Value *const *Vals, unsigned NumVals);
+                     Value *const *Vals, unsigned NumVals,
+                     Function *LocalFunction = NULL);
 
   /// ~MDNode - Destroy MDNode.
   ~MDNode();
@@ -130,6 +133,9 @@ public:
 
   /// getNumElements - Return number of MDNode elements.
   unsigned getNumElements() const { return NodeSize; }
+  
+  /// isFunctionLocal - Return whether MDNode is local to a function.
+  bool isFunctionLocal() const { return LocalFunction; }
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates
