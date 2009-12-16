@@ -218,7 +218,7 @@ void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   if (!this->isSmall())
     operator delete(this->begin());
   
-  setEnd(NewElts+CurSize);
+  this->setEnd(NewElts+CurSize);
   this->BeginX = NewElts;
   this->CapacityX = this->begin()+NewCapacity;
 }
