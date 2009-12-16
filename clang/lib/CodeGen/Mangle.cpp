@@ -1078,6 +1078,16 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::CXXOperatorCallExprClass: {
+    const CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(E);
+    unsigned NumArgs = CE->getNumArgs();
+    mangleOperatorName(CE->getOperator(), /*Arity=*/NumArgs);
+    // Mangle the arguments.
+    for (unsigned i = 0; i != NumArgs; ++i)
+      mangleExpression(CE->getArg(i));
+    break;
+  }
+      
   case Expr::ParenExprClass:
     mangleExpression(cast<ParenExpr>(E)->getSubExpr());
     break;

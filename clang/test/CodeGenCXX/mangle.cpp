@@ -229,6 +229,22 @@ template void ft8<int>();
 // CHECK: @_Z3ft8IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
 template void ft8<void*>();
 
+// PR5796
+namespace PR5796 {
+template<typename> struct __is_scalar {
+  enum { __value = 0 };
+};
+
+template<bool, typename> struct __enable_if {};
+template<typename T> struct __enable_if<true, T> { typedef T __type; };
+template<typename T>
+
+// CHECK: define linkonce_odr void @_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_11__is_scalarIT_EE7__valueEvE6__typeEv
+typename __enable_if<!__is_scalar<T>::__value, void>::__type __fill_a() { };
+
+void f() { __fill_a<int>(); }
+}
+
 namespace Expressions {
 // Unary operators.
 
