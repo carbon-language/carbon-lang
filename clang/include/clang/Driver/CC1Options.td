@@ -304,6 +304,8 @@ def faltivec : Flag<"-faltivec">,
   HelpText<"Enable AltiVec vector initializer syntax">;
 def faccess_control : Flag<"-faccess-control">,
   HelpText<"Enable C++ access control">;
+def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">,
+  HelpText<"Don't assume that C++'s new operator is sane">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
   HelpText<"Allow '$' in identifiers">;
 def femit_all_decls : Flag<"-femit-all-decls">,

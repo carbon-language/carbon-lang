@@ -92,7 +92,7 @@ A* t10() {
 
 struct B { };
 void t11() {
-  // CHECK: call i8* @_Znwm
+  // CHECK: call noalias i8* @_Znwm
   // CHECK: call void @llvm.memset.i64(
   B* b = new B();
 }

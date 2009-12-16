@@ -1976,7 +1976,8 @@ public:
                               bool AllowMissing, FunctionDecl *&Operator);
   void DeclareGlobalNewDelete();
   void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
-                                       QualType Argument);
+                                       QualType Argument,
+                                       bool addMallocAttr = false);
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD, 
                                 DeclarationName Name, FunctionDecl* &Operator);

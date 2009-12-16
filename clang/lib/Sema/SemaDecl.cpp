@@ -2799,6 +2799,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                   D.getIdentifierLoc(), Name, R, TInfo,
                                   isStatic, isInline);
 
+    if ((Name.getCXXOverloadedOperator() == OO_New ||
+	 Name.getCXXOverloadedOperator() == OO_Array_New) &&
+	getLangOptions().AssumeSaneOperatorNew)
+      NewFD->addAttr(::new (Context) MallocAttr());
+
     isVirtualOkay = !isStatic;
   } else {
     // Determine whether the function was written with a

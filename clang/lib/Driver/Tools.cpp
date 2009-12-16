@@ -945,6 +945,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
     CmdArgs.push_back("-fno-builtin");
 
+  if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
+                    options::OPT_fno_assume_sane_operator_new))
+    CmdArgs.push_back("-fno-assume-sane-operator-new");
+
   // -fblocks=0 is default.
   if (Args.hasFlag(options::OPT_fblocks, options::OPT_fno_blocks,
                    getToolChain().IsBlocksDefault())) {

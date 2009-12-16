@@ -715,13 +715,14 @@ void Sema::DeclareGlobalNewDelete() {
 
   QualType VoidPtr = Context.getPointerType(Context.VoidTy);
   QualType SizeT = Context.getSizeType();
+  bool AssumeSaneOperatorNew = getLangOptions().AssumeSaneOperatorNew;
 
   DeclareGlobalAllocationFunction(
       Context.DeclarationNames.getCXXOperatorName(OO_New),
-      VoidPtr, SizeT);
+      VoidPtr, SizeT, AssumeSaneOperatorNew);
   DeclareGlobalAllocationFunction(
       Context.DeclarationNames.getCXXOperatorName(OO_Array_New),
-      VoidPtr, SizeT);
+      VoidPtr, SizeT, AssumeSaneOperatorNew);
   DeclareGlobalAllocationFunction(
       Context.DeclarationNames.getCXXOperatorName(OO_Delete),
       Context.VoidTy, VoidPtr);
@@ -733,7 +734,8 @@ void Sema::DeclareGlobalNewDelete() {
 /// DeclareGlobalAllocationFunction - Declares a single implicit global
 /// allocation function if it doesn't already exist.
 void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
-                                           QualType Return, QualType Argument) {
+                                           QualType Return, QualType Argument,
+                                           bool AddMallocAttr) {
   DeclContext *GlobalCtx = Context.getTranslationUnitDecl();
 
   // Check if this function is already declared.
@@ -766,6 +768,10 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
                          FnType, /*TInfo=*/0, FunctionDecl::None, false, true);
   Alloc->setImplicit();
+  
+  if (AddMallocAttr)
+    Alloc->addAttr(::new (Context) MallocAttr());
+  
   ParmVarDecl *Param = ParmVarDecl::Create(Context, Alloc, SourceLocation(),
                                            0, Argument, /*TInfo=*/0,
                                            VarDecl::None, 0);

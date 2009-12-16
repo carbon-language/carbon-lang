@@ -466,6 +466,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-ffreestanding");
   if (Opts.NoBuiltin)
     Res.push_back("-fno-builtin");
+  if (!Opts.AssumeSaneOperatorNew)
+    Res.push_back("-fno-assume-sane-operator-new");
   if (Opts.ThreadsafeStatics)
     llvm::llvm_report_error("FIXME: Not yet implemented!");
   if (Opts.POSIXThreads)
@@ -1140,6 +1142,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.ShortWChar = Args.hasArg(OPT_fshort_wchar);
   Opts.Freestanding = Args.hasArg(OPT_ffreestanding);
   Opts.NoBuiltin = Args.hasArg(OPT_fno_builtin) || Opts.Freestanding;
+  Opts.AssumeSaneOperatorNew = !Args.hasArg(OPT_fno_assume_sane_operator_new);
   Opts.HeinousExtensions = Args.hasArg(OPT_fheinous_gnu_extensions);
   Opts.AccessControl = Args.hasArg(OPT_faccess_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);

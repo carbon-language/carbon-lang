@@ -89,7 +89,10 @@ public:
   unsigned ShortWChar        : 1; // Force wchar_t to be unsigned short int.
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
-
+  
+  unsigned AssumeSaneOperatorNew : 1; // Whether to add __attribute__((malloc))
+                                      // to the declaration of C++'s new
+                                      // operators
   unsigned ElideConstructors : 1; // Whether C++ copy constructors should be
                                   // elided if possible.
   unsigned CatchUndefined     :1; // Generate code to check for undefined ops.
@@ -140,6 +143,8 @@ public:
     BlockIntrospection = 0;
     EmitAllDecls = 0;
     MathErrno = 1;
+
+    AssumeSaneOperatorNew = 1;
 
     // FIXME: The default should be 1.
     AccessControl = 0;
