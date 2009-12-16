@@ -44,11 +44,15 @@ bool OSAtomicChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE) {
   if (!FD)
     return false;
 
-  const char *FName = FD->getNameAsCString();
+  const IdentifierInfo *II = FD->getIdentifier();
+  if (!II)
+    return false;
+  
+  llvm::StringRef FName(II->getName());
 
   // Check for compare and swap.
-  if (strncmp(FName, "OSAtomicCompareAndSwap", 22) == 0 ||
-      strncmp(FName, "objc_atomicCompareAndSwap", 25) == 0)
+  if (FName.startswith("OSAtomicCompareAndSwap") ||
+      FName.startswith("objc_atomicCompareAndSwap"))
     return EvalOSAtomicCompareAndSwap(C, CE);
 
   // FIXME: Other atomics.
