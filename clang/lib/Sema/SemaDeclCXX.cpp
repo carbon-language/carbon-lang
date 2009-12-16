@@ -1979,6 +1979,12 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   if (!Record || Record->isInvalidDecl())
     return;
 
+  if (!Record->isDependentType())
+    AddImplicitlyDeclaredMembersToClass(Record);
+
+  if (Record->isInvalidDecl())
+    return;
+
   if (!Record->isAbstract()) {
     // Collect all the pure virtual methods and see if this is an abstract
     // class after all.
@@ -1989,9 +1995,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 
   if (Record->isAbstract())
     (void)AbstractClassUsageDiagnoser(*this, Record);
-
-  if (!Record->isDependentType() && !Record->isInvalidDecl())
-    AddImplicitlyDeclaredMembersToClass(Record);
 }
 
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

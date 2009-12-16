@@ -155,3 +155,17 @@ namespace PR5550 {
   }; 
   C x;
 }
+
+namespace PureImplicit {
+  // A pure virtual destructor should be implicitly overridden.
+  struct A { virtual ~A() = 0; };
+  struct B : A {};
+  B x;
+
+  // A pure virtual assignment operator should be implicitly overridden.
+  struct D;
+  struct C { virtual D& operator=(const D&) = 0; };
+  struct D : C {};
+  D y;
+}
+
