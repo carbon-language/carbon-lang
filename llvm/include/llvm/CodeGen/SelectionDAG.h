@@ -110,46 +110,6 @@ class SelectionDAG {
   /// SelectionDAG.
   BumpPtrAllocator Allocator;
 
-  /// NodeOrdering - Assigns a "line number" value to each SDNode that
-  /// corresponds to the "line number" of the original LLVM instruction. This
-  /// used for turning off scheduling, because we'll forgo the normal scheduling
-  /// algorithm and output the instructions according to this ordering.
-  class NodeOrdering {
-    /// LineNo - The line of the instruction the node corresponds to. A value of
-    /// `0' means it's not assigned.
-    unsigned LineNo;
-    std::map<const SDNode*, unsigned> Order;
-
-    void operator=(const NodeOrdering&); // Do not implement.
-    NodeOrdering(const NodeOrdering&);   // Do not implement.
-  public:
-    NodeOrdering() : LineNo(0) {}
-
-    void add(const SDNode *Node) {
-      assert(LineNo && "Invalid line number!");
-      Order[Node] = LineNo;
-    }
-    void remove(const SDNode *Node) {
-      std::map<const SDNode*, unsigned>::iterator Itr = Order.find(Node);
-      if (Itr != Order.end())
-        Order.erase(Itr);
-    }
-    void clear() {
-      Order.clear();
-      LineNo = 1;
-    }
-    unsigned getLineNo(const SDNode *Node) {
-      unsigned LN = Order[Node];
-      assert(LN && "Node isn't in ordering map!");
-      return LN;
-    }
-    void newInst() {
-      ++LineNo;
-    }
-
-    void dump() const;
-  } *Ordering;
-
   /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
   void VerifyNode(SDNode *N);
 
@@ -159,9 +119,6 @@ class SelectionDAG {
   bool setSubgraphColorHelper(SDNode *N, const char *Color,
                               DenseSet<SDNode *> &visited,
                               int level, bool &printed);
-
-  void operator=(const SelectionDAG&); // Do not implement.
-  SelectionDAG(const SelectionDAG&);   // Do not implement.
 
 public:
   SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli);
@@ -240,13 +197,6 @@ public:
     assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
     return Root = N;
-  }
-
-  /// NewInst - Tell the ordering object that we're processing a new
-  /// instruction.
-  void NewInst() {
-    if (Ordering)
-      Ordering->newInst();
   }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding

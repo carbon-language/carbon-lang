@@ -583,9 +583,6 @@ void SelectionDAGBuilder::visit(Instruction &I) {
 }
 
 void SelectionDAGBuilder::visit(unsigned Opcode, User &I) {
-  // Tell the DAG that we're processing a new instruction.
-  DAG.NewInst();
-
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
   switch (Opcode) {
