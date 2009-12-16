@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -pedantic -std=c++98 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -pedantic -std=c++98 -verify -triple x86_64-apple-darwin %s
 
 enum E {
   Val1,
@@ -50,18 +50,9 @@ namespace test1 {
   enum enum2 { v2 = __INT_MAX__ * 2U };
   int test2[is_same<__typeof(+v2), unsigned int>::value];
 
-  // This kindof assumes that 'int' is smaller than 'long long'.
-#if defined(__LP64__)
   enum enum3 { v3 = __LONG_MAX__ };
   int test3[is_same<__typeof(+v3), long>::value];
 
   enum enum4 { v4 = __LONG_MAX__ * 2UL };
   int test4[is_same<__typeof(+v4), unsigned long>::value];
-#else
-  enum enum3 { v3 = __LONG_LONG_MAX__ };
-  int test3[is_same<__typeof(+v3), long long>::value];          // expected-warning {{'long long' is an extension}}
-
-  enum enum4 { v4 = __LONG_LONG_MAX__ * 2ULL };                 // expected-warning {{'long long' is an extension}}
-  int test4[is_same<__typeof(+v4), unsigned long long>::value]; // expected-warning {{'long long' is an extension}}
-#endif
 }
