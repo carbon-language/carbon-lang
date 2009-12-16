@@ -1,5 +1,5 @@
 ; RUN: llc < %s | grep "func_end1:" | count 1
-
+; XFAIL: powerpc-apple-darwin
 declare void @foo()
 
 define void @bar(i32 %i) nounwind ssp {
