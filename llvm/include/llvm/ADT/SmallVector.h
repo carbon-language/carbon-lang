@@ -157,19 +157,47 @@ public:
   }
 };
   
-  
+/// SmallVectorTemplateBase<isPodLike = false> - This is where we put method
+/// implementations that are designed to work with non-POD-like T's.
 template <typename T, bool isPodLike>
 class SmallVectorTemplateBase : public SmallVectorTemplateCommon<T> {
 public:
   SmallVectorTemplateBase(size_t Size) : SmallVectorTemplateCommon<T>(Size) {}
 
+  static void destroy_range(T *S, T *E) {
+    while (S != E) {
+      --E;
+      E->~T();
+    }
+  }
+  
+  /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
+  /// starting with "Dest", constructing elements into it as needed.
+  template<typename It1, typename It2>
+  static void uninitialized_copy(It1 I, It1 E, It2 Dest) {
+    std::uninitialized_copy(I, E, Dest);
+  }
+  
 };
 
+/// SmallVectorTemplateBase<isPodLike = true> - This is where we put method
+/// implementations that are designed to work with POD-like T's.
 template <typename T>
 class SmallVectorTemplateBase<T, true> : public SmallVectorTemplateCommon<T> {
 public:
   SmallVectorTemplateBase(size_t Size) : SmallVectorTemplateCommon<T>(Size) {}
   
+  // No need to do a destroy loop for POD's.
+  static void destroy_range(T *S, T *E) {}
+  
+  /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
+  /// starting with "Dest", constructing elements into it as needed.
+  template<typename It1, typename It2>
+  static void uninitialized_copy(It1 I, It1 E, It2 Dest) {
+    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove, memcpy
+    // is better.
+    memcpy(&*Dest, &*I, (E-I)*sizeof(T));
+  }
 };
   
   
@@ -178,11 +206,10 @@ public:
 /// template parameter.
 template <typename T>
 class SmallVectorImpl : public SmallVectorTemplateBase<T, isPodLike<T>::value> {
+  typedef SmallVectorTemplateBase<T, isPodLike<T>::value > SuperClass;
 public:
-  typedef typename SmallVectorTemplateBase<T, isPodLike<T>::value >::iterator
-    iterator;
-  typedef typename SmallVectorTemplateBase<T, isPodLike<T>::value >::size_type
-    size_type;
+  typedef typename SuperClass::iterator iterator;
+  typedef typename SuperClass::size_type size_type;
   
   // Default ctor - Initialize to empty.
   explicit SmallVectorImpl(unsigned N)
@@ -468,27 +495,6 @@ private:
   static void construct_range(T *S, T *E, const T &Elt) {
     for (; S != E; ++S)
       new (S) T(Elt);
-  }
-  
-  static void destroy_range(T *S, T *E) {
-    // No need to do a destroy loop for POD's.
-    if (isPodLike<T>::value) return;
-    
-    while (S != E) {
-      --E;
-      E->~T();
-    }
-  }
-  
-  /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
-  /// starting with "Dest", constructing elements into it as needed.
-  template<typename It1, typename It2>
-  static void uninitialized_copy(It1 I, It1 E, It2 Dest) {
-    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove.
-    if (isPodLike<T>::value)
-      memcpy(&*Dest, &*I, (E-I)*sizeof(T));
-    else
-      std::uninitialized_copy(I, E, Dest);
   }
 };
   
