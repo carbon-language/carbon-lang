@@ -14,6 +14,7 @@
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
@@ -225,6 +226,19 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 
       Stmt* Body = MD->getBody();
       if (Body) HandleCode(MD, Body, ObjCMethodActions);
+      break;
+    }
+
+    case Decl::CXXMethod: {
+      CXXMethodDecl *CXXMD = cast<CXXMethodDecl>(D);
+
+      if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+          Opts.AnalyzeSpecificFunction != CXXMD->getName())
+        return;
+
+      Stmt *Body = CXXMD->getBody();
+      if (Body)
+        HandleCode(CXXMD, Body, FunctionActions);
       break;
     }
 
