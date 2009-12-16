@@ -149,7 +149,7 @@ public:
 
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.
-  void ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder);
+  void ProcessStmt(CFGElement E, GRStmtNodeBuilder& builder);
 
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
@@ -399,15 +399,19 @@ public:
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
-  void EvalLocation(ExplodedNodeSet &Dst, Stmt *S, ExplodedNode* Pred,
-                       const GRState* St, SVal location,
-                       const void *tag, bool isLoad);
-
-  // FIXME: 'tag' should be removed, and a LocationContext should be used
-  // instead.
   void EvalStore(ExplodedNodeSet& Dst, Expr* AssignE, Expr* StoreE,
                  ExplodedNode* Pred, const GRState* St, SVal TargetLV, SVal Val,
                  const void *tag = 0);
+private:  
+  void EvalLoadCommon(ExplodedNodeSet& Dst, Expr* Ex, ExplodedNode* Pred,
+                      const GRState* St, SVal location, const void *tag,
+                      QualType LoadTy);
+
+  // FIXME: 'tag' should be removed, and a LocationContext should be used
+  // instead.
+  void EvalLocation(ExplodedNodeSet &Dst, Stmt *S, ExplodedNode* Pred,
+                    const GRState* St, SVal location,
+                    const void *tag, bool isLoad);
 };
 
 } // end clang namespace

@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 int j;
-void f1() {
+void test1() {
   int x = 4;
 
   ++x; // expected-warning{{never read}}
@@ -26,14 +26,43 @@ void f1() {
 // Dead store checking involving constructors.
 //===----------------------------------------------------------------------===//
 
-class Test1 {
+class Test2 {
   int &x;
 public:
-  Test1(int &y) : x(y) {}
-  ~Test1() { ++x; }
+  Test2(int &y) : x(y) {}
+  ~Test2() { ++x; }
 };
 
-int test_ctor_1(int x) {
-  { Test1 a(x); } // no-warning
+int test2(int x) {
+  { Test2 a(x); } // no-warning
   return x;
 }
+
+//===----------------------------------------------------------------------===//
+// Test references.
+//===----------------------------------------------------------------------===//
+
+void test3_a(int x) {
+  ++x; // expected-warning{{never read}}
+}
+
+void test3_b(int &x) {
+  ++x; // no-warninge
+}
+
+void test3_c(int x) {
+  int &y = x;
+  // Shows the limitation of dead stores tracking.  The write is really
+  // dead since the value cannot escape the function.
+  ++y; // no-warning
+}
+
+void test3_d(int &x) {
+  int &y = x;
+  ++y; // no-warning
+}
+
+void test3_e(int &x) {
+  int &y = x;
+}
+

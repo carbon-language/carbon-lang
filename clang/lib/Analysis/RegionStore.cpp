@@ -1424,7 +1424,13 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
     // Binding directly to a symbolic region should be treated as binding
     // to element 0.
     QualType T = SR->getSymbol()->getType(getContext());
-    T = T->getAs<PointerType>()->getPointeeType();
+    
+    // FIXME: Is this the right way to handle symbols that are references?
+    if (const PointerType *PT = T->getAs<PointerType>())
+      T = PT->getPointeeType();
+    else
+      T = T->getAs<ReferenceType>()->getPointeeType();
+
     R = GetElementZeroRegion(SR, T);
   }
 

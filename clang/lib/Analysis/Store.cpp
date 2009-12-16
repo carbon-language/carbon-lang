@@ -198,11 +198,21 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 ///  as another region.
 SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
                                      QualType castTy) {
+  
+#ifndef NDEBUG
   if (castTy.isNull())
     return V;
+  
+  ASTContext &Ctx = ValMgr.getContext();
+  QualType T = R->getValueType(Ctx);
 
-  assert(ValMgr.getContext().hasSameUnqualifiedType(castTy,
-                                         R->getValueType(ValMgr.getContext())));
+  // Automatically translate references to pointers.
+  if (const ReferenceType *RT = T->getAs<ReferenceType>())
+    T = Ctx.getPointerType(RT->getPointeeType());
+
+  assert(ValMgr.getContext().hasSameUnqualifiedType(castTy, T));
+#endif
+
   return V;
 }
 

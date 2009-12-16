@@ -244,7 +244,8 @@ public:
   }
 
   static inline bool IsLocType(QualType T) {
-    return T->isAnyPointerType() || T->isBlockPointerType();
+    return T->isAnyPointerType() || T->isBlockPointerType() || 
+           T->isReferenceType();
   }
 };
 

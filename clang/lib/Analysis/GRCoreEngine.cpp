@@ -122,8 +122,8 @@ void GRCoreEngine::ProcessEndPath(GREndPathNodeBuilder& Builder) {
   SubEngine.ProcessEndPath(Builder);
 }
 
-void GRCoreEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& Builder) {
-  SubEngine.ProcessStmt(S, Builder);
+void GRCoreEngine::ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder) {
+  SubEngine.ProcessStmt(E, Builder);
 }
 
 bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
@@ -241,10 +241,10 @@ void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
   WList->setBlockCounter(Counter);
 
   // Process the entrance of the block.
-  if (Stmt* S = L.getFirstStmt()) {
+  if (CFGElement E = L.getFirstElement()) {
     GRStmtNodeBuilder Builder(L.getBlock(), 0, Pred, this,
                               SubEngine.getStateManager());
-    ProcessStmt(S, Builder);
+    ProcessStmt(E, Builder);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);

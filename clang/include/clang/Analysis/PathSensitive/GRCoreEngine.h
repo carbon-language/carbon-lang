@@ -75,8 +75,7 @@ class GRCoreEngine {
 
   void ProcessEndPath(GREndPathNodeBuilder& Builder);
 
-  void ProcessStmt(Stmt* S, GRStmtNodeBuilder& Builder);
-
+  void ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder);
 
   bool ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
                             GRBlockCounter BC);

@@ -108,9 +108,13 @@ public:
     return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
   }
 
-  Stmt* getFirstStmt() const {
+  CFGElement getFirstElement() const {
     const CFGBlock* B = getBlock();
-    return B->empty() ? NULL : B->front();
+    return B->empty() ? CFGElement() : B->front();
+  }
+  
+  Stmt *getFirstStmt() const {
+    return getFirstElement().getStmt();
   }
 
   static bool classof(const ProgramPoint* Location) {
@@ -129,7 +133,7 @@ public:
 
   Stmt* getLastStmt() const {
     const CFGBlock* B = getBlock();
-    return B->empty() ? NULL : B->back();
+    return B->empty() ? CFGElement() : B->back();
   }
 
   Stmt* getTerminator() const {

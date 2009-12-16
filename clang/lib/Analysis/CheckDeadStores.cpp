@@ -84,7 +84,14 @@ public:
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
 
-    if (VD->hasLocalStorage() && !Live(VD, AD) && 
+    if (!VD->hasLocalStorage())
+      return;
+    // Reference types confuse the dead stores checker.  Skip them
+    // for now.
+    if (VD->getType()->getAs<ReferenceType>())
+      return;
+
+    if (!Live(VD, AD) && 
         !(VD->getAttr<UnusedAttr>() || VD->getAttr<BlocksAttr>()))
       Report(VD, dsk, Ex->getSourceRange().getBegin(),
              Val->getSourceRange());
@@ -93,7 +100,6 @@ public:
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val, DeadStoreKind dsk,
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
-
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
       CheckVarDecl(VD, DR, Val, dsk, AD, Live);
   }
@@ -183,8 +189,13 @@ public:
 
         if (!V)
           continue;
-
-        if (V->hasLocalStorage())
+          
+        if (V->hasLocalStorage()) {          
+          // Reference types confuse the dead stores checker.  Skip them
+          // for now.
+          if (V->getType()->getAs<ReferenceType>())
+            return;
+            
           if (Expr* E = V->getInit()) {
             // Don't warn on C++ objects (yet) until we can show that their
             // constructors/destructors don't have side effects.
@@ -218,6 +229,7 @@ public:
               Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
           }
+        }
       }
   }
 };
