@@ -18,7 +18,7 @@ class B : public BASE , public BASE1
 
 extern B f();
 
-const int& ri = (void)0; // expected-error {{invalid initialization of reference of type 'int const &' from expression of type 'void'}}
+const int& ri = (void)0; // expected-error {{reference to type 'int const' could not bind to an rvalue of type 'void'}}
 
 int main() {
         const A& rca = f(); // expected-error {{conversion from 'class B' to 'struct A const' is ambiguous}}

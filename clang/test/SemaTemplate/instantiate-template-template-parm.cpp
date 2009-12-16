@@ -17,7 +17,7 @@ struct add_reference {
 int i;
 apply<add_pointer, int>::type ip = &i;
 apply<add_reference, int>::type ir = i;
-apply<add_reference, float>::type fr = i; // expected-error{{non-const lvalue reference to type 'float' cannot be initialized with a value of type 'int'}}
+apply<add_reference, float>::type fr = i; // expected-error{{non-const lvalue reference to type 'float' cannot bind to a value of unrelated type 'int'}}
 
 // Template template parameters
 template<int> struct B; // expected-note{{has a different type 'int'}}

@@ -192,11 +192,17 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   //   A variable declared to be a T& or T&&, that is "reference to type T"
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
-  if (DeclType->isReferenceType())
-    return CheckReferenceInit(Init, DeclType, InitLoc,
-                              /*SuppressUserConversions=*/false,
-                              /*AllowExplicit=*/DirectInit,
-                              /*ForceRValue=*/false);
+  if (DeclType->isReferenceType()) {
+    InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+    OwningExprResult CurInit = InitSeq.Perform(*this, Entity, Kind,
+                                         MultiExprArg(*this, (void**)&Init, 1),
+                                               &DeclType);
+    if (CurInit.isInvalid())
+      return true;
+
+    Init = CurInit.takeAs<Expr>();
+    return false;
+  }
 
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.

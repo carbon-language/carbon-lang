@@ -29,7 +29,7 @@ struct apply1 {
 int i;
 apply1<add_pointer, int>::type ip = &i;
 apply1<add_reference, int>::type ir = i;
-apply1<add_reference, float>::type fr = i; // expected-error{{non-const lvalue reference to type 'float' cannot be initialized with a value of type 'int'}}
+apply1<add_reference, float>::type fr = i; // expected-error{{non-const lvalue reference to type 'float' cannot bind to a value of unrelated type 'int'}}
 
 void test() {
   apply1<add_reference, void>::type t; // expected-note{{in instantiation of template class 'struct apply1<struct add_reference, void>' requested here}} \
