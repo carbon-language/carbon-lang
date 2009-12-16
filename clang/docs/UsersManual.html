@@ -583,6 +583,10 @@ The checks are:
     less than zero.</li>
 <li>Shift operators where the amount shifted is greater or equal to the
     promoted bit-width of the left-hand-side or less than zero.</li>
+<li>If control flow reaches __builtin_unreachable.
+<li>When llvm implements more __builtin_object_size support, reads and
+    writes for objects that __builtin_object_size indicates we aren't
+    accessing valid memory.  Bit-fields and vectors are not yet checked.
 </p>
 </dd>
 
