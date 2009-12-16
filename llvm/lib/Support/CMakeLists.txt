@@ -23,6 +23,7 @@ add_llvm_library(LLVMSupport
   Regex.cpp
   SlowOperationInformer.cpp
   SmallPtrSet.cpp
+  SmallVector.cpp
   SourceMgr.cpp
   Statistic.cpp
   StringExtras.cpp
