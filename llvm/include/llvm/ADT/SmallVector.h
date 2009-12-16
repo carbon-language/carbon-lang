@@ -80,55 +80,49 @@ protected:
     return BeginX == static_cast<const void*>(&FirstEl);
   }
   
-  
 public:
   bool empty() const { return BeginX == EndX; }
 };
-  
-/// SmallVectorImpl - This class consists of common code factored out of the
-/// SmallVector class to reduce code duplication based on the SmallVector 'N'
-/// template parameter.
-template <typename T>
-class SmallVectorImpl : public SmallVectorBase {
-  void setEnd(T *P) { EndX = P; }
-public:
-  // Default ctor - Initialize to empty.
-  explicit SmallVectorImpl(unsigned N) : SmallVectorBase(N*sizeof(T)) {
-  }
 
-  ~SmallVectorImpl() {
+template <typename T>
+class SmallVectorTemplateCommon : public SmallVectorBase {
+  void setEnd(T *P) { this->EndX = P; }
+public:
+  SmallVectorTemplateCommon(size_t Size) : SmallVectorBase(Size) {}
+  
+  ~SmallVectorTemplateCommon() {
     // Destroy the constructed elements in the vector.
     destroy_range(begin(), end());
-
+    
     // If this wasn't grown from the inline copy, deallocate the old space.
-    if (!isSmall())
+    if (!this->isSmall())
       operator delete(begin());
   }
-
+  
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
   typedef T value_type;
   typedef T *iterator;
   typedef const T *const_iterator;
-
+  
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator> reverse_iterator;
-
+  
   typedef T &reference;
   typedef const T &const_reference;
   typedef T *pointer;
   typedef const T *const_pointer;
-
+  
   // forward iterator creation methods.
-  iterator begin() { return (iterator)BeginX; }
-  const_iterator begin() const { return (const_iterator)BeginX; }
-  iterator end() { return (iterator)EndX; }
-  const_iterator end() const { return (const_iterator)EndX; }
+  iterator begin() { return (iterator)this->BeginX; }
+  const_iterator begin() const { return (const_iterator)this->BeginX; }
+  iterator end() { return (iterator)this->EndX; }
+  const_iterator end() const { return (const_iterator)this->EndX; }
 private:
-  iterator capacity_ptr() { return (iterator)CapacityX; }
-  const_iterator capacity_ptr() const { return (const_iterator)CapacityX; }
+  iterator capacity_ptr() { return (iterator)this->CapacityX; }
+  const_iterator capacity_ptr() const { return (const_iterator)this->CapacityX;}
 public:
-
+  
   // reverse iterator creation methods.
   reverse_iterator rbegin()            { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
@@ -171,7 +165,7 @@ public:
   }
 
   void push_back(const_reference Elt) {
-    if (EndX < CapacityX) {
+    if (this->EndX < this->CapacityX) {
   Retry:
       new (end()) T(Elt);
       setEnd(end()+1);
@@ -194,7 +188,7 @@ public:
 
   void clear() {
     destroy_range(begin(), end());
-    EndX = BeginX;
+    this->EndX = this->BeginX;
   }
 
   void resize(unsigned N) {
@@ -226,7 +220,7 @@ public:
       grow(N);
   }
 
-  void swap(SmallVectorImpl &RHS);
+  void swap(SmallVectorTemplateCommon &RHS);
 
   /// append - Add the specified range to the end of the SmallVector.
   ///
@@ -238,6 +232,8 @@ public:
       grow(size()+NumInputs);
 
     // Copy the new elements over.
+    // TODO: NEED To compile time dispatch on whether in_iter is a random access
+    // iterator to use the fast uninitialized_copy.
     std::uninitialized_copy(in_start, in_end, end());
     setEnd(end() + NumInputs);
   }
@@ -287,7 +283,7 @@ public:
       return end()-1;
     }
 
-    if (EndX < CapacityX) {
+    if (this->EndX < this->CapacityX) {
   Retry:
       new (end()) T(back());
       setEnd(end()+1);
@@ -339,7 +335,7 @@ public:
     T *OldEnd = end();
     setEnd(end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    std::uninitialized_copy(I, OldEnd, end()-NumOverwritten);
+    uninitialized_copy(I, OldEnd, end()-NumOverwritten);
 
     // Replace the overwritten part.
     std::fill_n(I, NumOverwritten, Elt);
@@ -388,25 +384,28 @@ public:
     T *OldEnd = end();
     setEnd(end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    std::uninitialized_copy(I, OldEnd, end()-NumOverwritten);
+    uninitialized_copy(I, OldEnd, end()-NumOverwritten);
 
     // Replace the overwritten part.
     std::copy(From, From+NumOverwritten, I);
 
     // Insert the non-overwritten middle part.
-    std::uninitialized_copy(From+NumOverwritten, To, OldEnd);
+    uninitialized_copy(From+NumOverwritten, To, OldEnd);
     return I;
   }
 
-  const SmallVectorImpl &operator=(const SmallVectorImpl &RHS);
+  const SmallVectorTemplateCommon
+    &operator=(const SmallVectorTemplateCommon &RHS);
 
-  bool operator==(const SmallVectorImpl &RHS) const {
+  bool operator==(const SmallVectorTemplateCommon &RHS) const {
     if (size() != RHS.size()) return false;
     return std::equal(begin(), end(), RHS.begin());
   }
-  bool operator!=(const SmallVectorImpl &RHS) const { return !(*this == RHS); }
+  bool operator!=(const SmallVectorTemplateCommon &RHS) const {
+    return !(*this == RHS);
+  }
 
-  bool operator<(const SmallVectorImpl &RHS) const {
+  bool operator<(const SmallVectorTemplateCommon &RHS) const {
     return std::lexicographical_compare(begin(), end(),
                                         RHS.begin(), RHS.end());
   }
@@ -430,12 +429,12 @@ private:
   /// least one more element or MinSize if specified.
   void grow(size_type MinSize = 0);
 
-  void construct_range(T *S, T *E, const T &Elt) {
+  static void construct_range(T *S, T *E, const T &Elt) {
     for (; S != E; ++S)
       new (S) T(Elt);
   }
 
-  void destroy_range(T *S, T *E) {
+  static void destroy_range(T *S, T *E) {
     // No need to do a destroy loop for POD's.
     if (isPodLike<T>::value) return;
     
@@ -444,11 +443,23 @@ private:
       E->~T();
     }
   }
+  
+  /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
+  /// starting with "Dest", constructing elements into it as needed.
+  template<typename It1, typename It2>
+  static void uninitialized_copy(It1 I, It1 E, It2 Dest) {
+    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove.
+    if (isPodLike<T>::value)
+      memcpy(&*Dest, &*I, (E-I)*sizeof(T));
+    else
+      std::uninitialized_copy(I, E, Dest);
+  }
 };
+  
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
 template <typename T>
-void SmallVectorImpl<T>::grow(size_t MinSize) {
+void SmallVectorTemplateCommon<T>::grow(size_t MinSize) {
   size_t CurCapacity = capacity();
   size_t CurSize = size();
   size_t NewCapacity = 2*CurCapacity;
@@ -457,33 +468,29 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
 
   // Copy the elements over.
-  if (isPodLike<T>::value)
-    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove.
-    memcpy(NewElts, begin(), CurSize * sizeof(T));
-  else
-    std::uninitialized_copy(begin(), end(), NewElts);
+  uninitialized_copy(begin(), end(), NewElts);
 
   // Destroy the original elements.
   destroy_range(begin(), end());
 
   // If this wasn't grown from the inline copy, deallocate the old space.
-  if (!isSmall())
+  if (!this->isSmall())
     operator delete(begin());
 
   setEnd(NewElts+CurSize);
-  BeginX = NewElts;
-  CapacityX = begin()+NewCapacity;
+  this->BeginX = NewElts;
+  this->CapacityX = begin()+NewCapacity;
 }
 
 template <typename T>
-void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
+void SmallVectorTemplateCommon<T>::swap(SmallVectorTemplateCommon<T> &RHS) {
   if (this == &RHS) return;
 
   // We can only avoid copying elements if neither vector is small.
-  if (!isSmall() && !RHS.isSmall()) {
-    std::swap(BeginX, RHS.BeginX);
-    std::swap(EndX, RHS.EndX);
-    std::swap(CapacityX, RHS.CapacityX);
+  if (!this->isSmall() && !RHS.isSmall()) {
+    std::swap(this->BeginX, RHS.BeginX);
+    std::swap(this->EndX, RHS.EndX);
+    std::swap(this->CapacityX, RHS.CapacityX);
     return;
   }
   if (RHS.size() > capacity())
@@ -500,13 +507,13 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
   // Copy over the extra elts.
   if (size() > RHS.size()) {
     size_t EltDiff = size() - RHS.size();
-    std::uninitialized_copy(begin()+NumShared, end(), RHS.end());
+    uninitialized_copy(begin()+NumShared, end(), RHS.end());
     RHS.setEnd(RHS.end()+EltDiff);
     destroy_range(begin()+NumShared, end());
     setEnd(begin()+NumShared);
   } else if (RHS.size() > size()) {
     size_t EltDiff = RHS.size() - size();
-    std::uninitialized_copy(RHS.begin()+NumShared, RHS.end(), end());
+    uninitialized_copy(RHS.begin()+NumShared, RHS.end(), end());
     setEnd(end() + EltDiff);
     destroy_range(RHS.begin()+NumShared, RHS.end());
     RHS.setEnd(RHS.begin()+NumShared);
@@ -514,8 +521,9 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
 }
 
 template <typename T>
-const SmallVectorImpl<T> &
-SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
+const SmallVectorTemplateCommon<T> &
+SmallVectorTemplateCommon<T>::
+  operator=(const SmallVectorTemplateCommon<T> &RHS) {
   // Avoid self-assignment.
   if (this == &RHS) return *this;
 
@@ -553,12 +561,40 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   }
 
   // Copy construct the new elements in place.
-  std::uninitialized_copy(RHS.begin()+CurSize, RHS.end(), begin()+CurSize);
+  uninitialized_copy(RHS.begin()+CurSize, RHS.end(), begin()+CurSize);
 
   // Set end.
   setEnd(begin()+RHSSize);
   return *this;
 }
+
+  
+template <typename T, bool isPodLike>
+class SmallVectorTemplateBase : public SmallVectorTemplateCommon<T> {
+public:
+  SmallVectorTemplateBase(size_t Size) : SmallVectorTemplateCommon<T>(Size) {}
+
+};
+
+template <typename T>
+class SmallVectorTemplateBase<T, true> : public SmallVectorTemplateCommon<T> {
+public:
+  SmallVectorTemplateBase(size_t Size) : SmallVectorTemplateCommon<T>(Size) {}
+  
+};
+  
+  
+/// SmallVectorImpl - This class consists of common code factored out of the
+/// SmallVector class to reduce code duplication based on the SmallVector 'N'
+/// template parameter.
+template <typename T>
+class SmallVectorImpl : public SmallVectorTemplateBase<T, isPodLike<T>::value> {
+public:
+  // Default ctor - Initialize to empty.
+  explicit SmallVectorImpl(unsigned N)
+    : SmallVectorTemplateBase<T, isPodLike<T>::value>(N*sizeof(T)) {
+  }
+};
 
 /// SmallVector - This is a 'vector' (really, a variable-sized array), optimized
 /// for the case when the array is small.  It contains some number of elements
