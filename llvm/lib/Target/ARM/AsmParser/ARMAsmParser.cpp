@@ -98,10 +98,6 @@ public:
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
   
-} // end anonymous namespace
-
-namespace {
-
 /// ARMOperand - Instances of this class represent a parsed ARM machine
 /// instruction.
 struct ARMOperand {
