@@ -306,7 +306,11 @@ let isBranch = 1, isTerminator = 1 in {
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
                       IIC_Br, "mov\tpc, $target\n\t.align\t2\n$jt",
-                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
+                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>,
+                Encoding16 {
+    let Inst{15-7} = 0b010001101;
+    let Inst{2-0} = 0b111;
+  }
   }
 }
 
@@ -596,7 +600,7 @@ def tMOVr       : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
                   T1Special<0b1000>;
 let Defs = [CPSR] in
 def tMOVSr      : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
-                       "movs\t$dst, $src", []>, Encoding {
+                       "movs\t$dst, $src", []>, Encoding16 {
   let Inst{15-6} = 0b0000000000;
 }
 

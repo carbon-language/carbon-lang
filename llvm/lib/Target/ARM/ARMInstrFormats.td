@@ -920,8 +920,7 @@ class T1Ix2<dag oops, dag iops, InstrItinClass itin,
   : Thumb1I<oops, iops, AddrModeNone, Size4Bytes, itin, asm, "", pattern>;
 class T1JTI<dag oops, dag iops, InstrItinClass itin,
             string asm, list<dag> pattern>
-  : Thumb1I<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>,
-    Encoding;
+  : Thumb1I<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>;
 
 // Two-address instructions
 class T1It<dag oops, dag iops, InstrItinClass itin,
@@ -986,31 +985,35 @@ class T1pIs<dag oops, dag iops,
             InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeT1_s, Size2Bytes, itin, opc, asm, "", pattern>;
 
+class Encoding16 : Encoding {
+  let Inst{31-16} = 0x0000;
+}
+
 // A6.2 16-bit Thumb instruction encoding
-class T1Encoding<bits<6> opcode> : Encoding {
+class T1Encoding<bits<6> opcode> : Encoding16 {
   let Inst{15-10} = opcode;
 }
 
 // A6.2.1 Shift (immediate), add, subtract, move, and compare encoding.
-class T1General<bits<5> opcode> : Encoding {
+class T1General<bits<5> opcode> : Encoding16 {
   let Inst{15-14} = 0b00;
   let Inst{13-9} = opcode;
 }
 
 // A6.2.2 Data-processing encoding.
-class T1DataProcessing<bits<4> opcode> : Encoding {
+class T1DataProcessing<bits<4> opcode> : Encoding16 {
   let Inst{15-10} = 0b010000;
   let Inst{9-6} = opcode;
 }
 
 // A6.2.3 Special data instructions and branch and exchange encoding.
-class T1Special<bits<4> opcode> : Encoding {
+class T1Special<bits<4> opcode> : Encoding16 {
   let Inst{15-10} = 0b010001;
   let Inst{9-6} = opcode;
 }
 
 // A6.2.4 Load/store single data item encoding.
-class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding {
+class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding16 {
   let Inst{15-12} = opA;
   let Inst{11-9} = opB;
 }
@@ -1021,7 +1024,7 @@ class T1LdSt2Imm<bits<3> opB> : T1LoadStore<0b1000, opB>; // Immediate, 2 bytes
 class T1LdStSP<bits<3> opB> : T1LoadStore<0b1001, opB>;   // SP relative
 
 // A6.2.5 Miscellaneous 16-bit instructions encoding.
-class T1Misc<bits<7> opcode> : Encoding {
+class T1Misc<bits<7> opcode> : Encoding16 {
   let Inst{15-12} = 0b1011;
   let Inst{11-5} = opcode;
 }

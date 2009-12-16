@@ -1911,6 +1911,7 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
                     AddrModeNone, Size2Bytes,  IIC_iALUx,
                     "it$mask\t$cc", "", []> {
   // 16-bit instruction.
+  let Inst{31-16} = 0x0000;
   let Inst{15-8} = 0b10111111;
 }
 
