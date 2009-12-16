@@ -20,6 +20,7 @@
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 
 #define DISPATCH_CASE(CASE,CLASS) \
 case Decl::CASE: \
@@ -55,6 +56,7 @@ public:
   void VisitDecl(Decl* D) {
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
+        DISPATCH_CASE(CXXMethod,CXXMethodDecl)
         DISPATCH_CASE(Var,VarDecl)
         DISPATCH_CASE(ParmVar,ParmVarDecl)       // FIXME: (same)
         DISPATCH_CASE(ImplicitParam,ImplicitParamDecl)
@@ -69,6 +71,7 @@ public:
 
   DEFAULT_DISPATCH(VarDecl)
   DEFAULT_DISPATCH(FunctionDecl)
+  DEFAULT_DISPATCH(CXXMethodDecl)
   DEFAULT_DISPATCH_VARDECL(ParmVarDecl)
   DEFAULT_DISPATCH(ImplicitParamDecl)
   DEFAULT_DISPATCH(EnumConstantDecl)
