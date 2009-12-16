@@ -917,6 +917,68 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
   SemaRef.Diag(Loc, diag::err_member_call_without_object) << Range;
 }
 
+/// Diagnose an empty lookup.
+///
+/// \return false if new lookup candidates were found
+bool Sema::DiagnoseEmptyLookup(const CXXScopeSpec &SS,
+                               LookupResult &R) {
+  DeclarationName Name = R.getLookupName();
+
+  // We don't know how to recover from bad qualified lookups.
+  if (!SS.isEmpty()) {
+    Diag(R.getNameLoc(), diag::err_no_member)
+      << Name << computeDeclContext(SS, false)
+      << SS.getRange();
+    return true;
+  }
+
+  unsigned diagnostic = diag::err_undeclared_var_use;
+  if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
+      Name.getNameKind() == DeclarationName::CXXLiteralOperatorName ||
+      Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
+    diagnostic = diag::err_undeclared_use;
+
+  // Fake an unqualified lookup.  This is useful when (for example)
+  // the original lookup would not have found something because it was
+  // a dependent name.
+  for (DeclContext *DC = CurContext; DC; DC = DC->getParent()) {
+    if (isa<CXXRecordDecl>(DC)) {
+      LookupQualifiedName(R, DC);
+
+      if (!R.empty()) {
+        // Don't give errors about ambiguities in this lookup.
+        R.suppressDiagnostics();
+
+        CXXMethodDecl *CurMethod = dyn_cast<CXXMethodDecl>(CurContext);
+        bool isInstance = CurMethod &&
+                          CurMethod->isInstance() &&
+                          DC == CurMethod->getParent();
+
+        // Give a code modification hint to insert 'this->'.
+        // TODO: fixit for inserting 'Base<T>::' in the other cases.
+        // Actually quite difficult!
+        if (isInstance)
+          Diag(R.getNameLoc(), diagnostic) << Name
+            << CodeModificationHint::CreateInsertion(R.getNameLoc(),
+                                                     "this->");
+        else
+          Diag(R.getNameLoc(), diagnostic) << Name;
+
+        // Do we really want to note all of these?
+        for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+          Diag((*I)->getLocation(), diag::note_dependent_var_use);
+
+        // Tell the callee to try to recover.
+        return false;
+      }
+    }
+  }
+
+  // Give up, we can't recover.
+  Diag(R.getNameLoc(), diagnostic) << Name;
+  return true;
+}
+
 Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
                                                const CXXScopeSpec &SS,
                                                UnqualifiedId &Id,
@@ -989,17 +1051,11 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // If this name wasn't predeclared and if this is not a function
     // call, diagnose the problem.
     if (R.empty()) {
-      if (!SS.isEmpty())
-        return ExprError(Diag(NameLoc, diag::err_no_member)
-                           << Name << computeDeclContext(SS, false)
-                           << SS.getRange());
-      else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
-               Name.getNameKind() == DeclarationName::CXXLiteralOperatorName ||
-               Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
-        return ExprError(Diag(NameLoc, diag::err_undeclared_use)
-                           << Name);
-      else
-        return ExprError(Diag(NameLoc, diag::err_undeclared_var_use) << Name);
+      if (DiagnoseEmptyLookup(SS, R))
+        return ExprError();
+
+      assert(!R.empty() &&
+             "DiagnoseEmptyLookup returned false but added no results");
     }
   }
 

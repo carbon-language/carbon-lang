@@ -2622,7 +2622,14 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                   Args, NumArgs, Specialization, Info)) {
     // FIXME: Record what happened with template argument deduction, so
     // that we can give the user a beautiful diagnostic.
-    (void)Result;
+    (void) Result;
+
+    CandidateSet.push_back(OverloadCandidate());
+    OverloadCandidate &Candidate = CandidateSet.back();
+    Candidate.Function = FunctionTemplate->getTemplatedDecl();
+    Candidate.Viable = false;
+    Candidate.IsSurrogate = false;
+    Candidate.IgnoreObjectArgument = false;
     return;
   }
 
@@ -4637,6 +4644,34 @@ void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
                                          CandidateSet,
                                          PartialOverloading);  
 }
+
+/// Attempts to recover from a call where no functions were found.
+///
+/// Returns true if new candidates were found.
+static bool AddRecoveryCallCandidates(Sema &SemaRef, Expr *Fn,
+                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                                      Expr **Args, unsigned NumArgs,
+                                      OverloadCandidateSet &CandidateSet) {
+  UnresolvedLookupExpr *ULE
+    = cast<UnresolvedLookupExpr>(Fn->IgnoreParenCasts());
+
+  CXXScopeSpec SS;
+  if (ULE->getQualifier()) {
+    SS.setScopeRep(ULE->getQualifier());
+    SS.setRange(ULE->getQualifierRange());
+  }
+
+  LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
+                 Sema::LookupOrdinaryName);
+  if (SemaRef.DiagnoseEmptyLookup(SS, R))
+    return false;
+
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+    AddOverloadedCallCandidate(SemaRef, *I, ExplicitTemplateArgs,
+                               Args, NumArgs, CandidateSet, false);
+  }
+  return true;
+}
   
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
 /// (which eventually refers to the declaration Func) and the call
@@ -4661,6 +4696,19 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
   AddOverloadedCallCandidates(Fns, UnqualifiedName, ArgumentDependentLookup,
                               ExplicitTemplateArgs, Args, NumArgs, 
                               CandidateSet);
+
+  // If we found nothing, try to recover.
+  // AddRecoveryCallCandidates diagnoses the error itself, so we just
+  // bailout out if it fails.
+  if (CandidateSet.empty() &&
+      !AddRecoveryCallCandidates(*this, Fn, ExplicitTemplateArgs,
+                                 Args, NumArgs, CandidateSet)) {
+    Fn->Destroy(Context);
+    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+      Args[Arg]->Destroy(Context);
+    return 0;
+  }
+
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
   case OR_Success:

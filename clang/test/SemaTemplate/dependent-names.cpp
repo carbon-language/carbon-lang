@@ -84,3 +84,18 @@ namespace test0 {
     d2.test3(); // expected-note {{in instantiation of member function}}
   }
 }
+
+namespace test1 {
+  template <class T> struct Base {
+    void foo(T); // expected-note {{must qualify identifier to find this declaration in dependent base class}}
+  };
+
+  template <class T> struct Derived : Base<T> {
+    void doFoo(T v) {
+      // FIXME: the second error here is from a broken recovery attempt
+      foo(v); // expected-error {{use of undeclared identifier}} expected-error {{call to non-static member function without an object}}
+    }
+  };
+
+  template struct Derived<int>; // expected-note {{requested here}}
+}

@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-template<class X, class Y, class Z> X f(Y,Z); 
+template<class X, class Y, class Z> X f(Y,Z); // expected-note {{candidate function}}
 
 void g() {
   f<int,char*,double>("aa",3.0); 

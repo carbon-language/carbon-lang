@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 struct X0 { // expected-note{{candidate}}
   X0(int); // expected-note{{candidate}}
-  template<typename T> X0(T);
-  template<typename T, typename U> X0(T*, U*);
+  template<typename T> X0(T); // expected-note {{candidate}}
+  template<typename T, typename U> X0(T*, U*); // expected-note {{candidate}}
   
   // PR4761
-  template<typename T> X0() : f0(T::foo) {}
+  template<typename T> X0() : f0(T::foo) {} // expected-note {{candidate}}
   int f0;
 };
 

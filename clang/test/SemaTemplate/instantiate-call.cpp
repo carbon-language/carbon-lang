@@ -24,7 +24,7 @@ namespace N3 {
   template<typename T, typename Result>
   struct call_f0 {
     void test_f0(T t) {
-      Result &result = f0(t); // expected-error 2{{no matching}}
+      Result &result = f0(t); // expected-error 2{{undeclared identifier}}
     }
   };
 }

@@ -1279,7 +1279,9 @@ def err_unexpected_typedef : Error<
 def err_unexpected_namespace : Error<
   "unexpected namespace name %0: expected expression">;
 def err_undeclared_var_use : Error<"use of undeclared identifier %0">;
-def err_undeclared_use : Error<"use of undeclared '%0'">;
+def note_dependent_var_use : Note<"must qualify identifier to find this "
+    "declaration in dependent base class">;
+def err_undeclared_use : Error<"use of undeclared %0">;
 def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DiagGroup<"deprecated-declarations">>;
 def warn_unavailable : Warning<"%0 is unavailable">,

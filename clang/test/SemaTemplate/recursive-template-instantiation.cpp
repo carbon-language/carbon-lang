@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-template<typename T> void f(T* t) {
+template<typename T> void f(T* t) { // expected-note{{candidate function}}
   f(*t); // expected-error{{no matching function}}\
          // expected-note 3{{requested here}}
 }

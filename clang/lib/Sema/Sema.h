@@ -1479,6 +1479,8 @@ public:
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand);
 
+  bool DiagnoseEmptyLookup(const CXXScopeSpec &SS, LookupResult &R);
+
   OwningExprResult LookupInObjCMethod(LookupResult &R,
                                       Scope *S,
                                       IdentifierInfo *II);

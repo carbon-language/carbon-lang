@@ -19,6 +19,6 @@ T f(T x) {
   return g(x);
   h(x); // h is a dependent name
   g(1, 1); // expected-error{{no matching function for call}}
-  h(1); // expected-error{{no matching function for call to 'h'}}
+  h(1); // expected-error{{use of undeclared identifier 'h'}}
   return 0;
 }
