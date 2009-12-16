@@ -206,6 +206,20 @@ public:
   /// \brief Determine whether this declaration has linkage.
   bool hasLinkage() const;
 
+  /// \brief Determine whether this declaration is a C++ class member.
+  bool isCXXClassMember() const {
+    const DeclContext *DC = getDeclContext();
+
+    // C++0x [class.mem]p1:
+    //   The enumerators of an unscoped enumeration defined in
+    //   the class are members of the class.
+    // FIXME: support C++0x scoped enumerations.
+    if (isa<EnumDecl>(DC))
+      DC = DC->getParent();
+
+    return DC->isRecord();
+  }
+
   /// \brief Describes the different kinds of linkage 
   /// (C++ [basic.link], C99 6.2.2) that an entity may have.
   enum Linkage {

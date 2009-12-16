@@ -1706,33 +1706,24 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
     CodeCompleteOrdinaryName(S);
     return;
   }
-  
-  llvm::SmallVector<NamedDecl*,8> Fns;
-  DeclarationName UnqualifiedName;
-  NestedNameSpecifier *Qualifier;
-  SourceRange QualifierRange;
-  bool ArgumentDependentLookup;
-  bool Overloaded;
-  bool HasExplicitTemplateArgs;
-  TemplateArgumentListInfo ExplicitTemplateArgs;
-  
-  DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
-                          ArgumentDependentLookup, Overloaded,
-                          HasExplicitTemplateArgs, ExplicitTemplateArgs);
 
-  
+  // Build an overload candidate set based on the functions we find.
+  OverloadCandidateSet CandidateSet;
+
   // FIXME: What if we're calling something that isn't a function declaration?
   // FIXME: What if we're calling a pseudo-destructor?
   // FIXME: What if we're calling a member function?
   
-  // Build an overload candidate set based on the functions we find.
-  OverloadCandidateSet CandidateSet;
-  AddOverloadedCallCandidates(Fns, UnqualifiedName, 
-                              ArgumentDependentLookup,
-                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
-                              Args, NumArgs,
-                              CandidateSet,
-                              /*PartialOverloading=*/true);
+  Expr *NakedFn = Fn->IgnoreParenCasts();
+  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
+    AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet,
+                                /*PartialOverloading=*/ true);
+  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(NakedFn)) {
+    FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
+    if (FDecl)
+      AddOverloadCandidate(FDecl, Args, NumArgs, CandidateSet,
+                           false, false, /*PartialOverloading*/ true);
+  }
   
   // Sort the overload candidate set by placing the best overloads first.
   std::stable_sort(CandidateSet.begin(), CandidateSet.end(),

@@ -762,23 +762,9 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
   return true;
 }
                                   
-/// Determines if this a C++ class member.
-static bool IsClassMember(NamedDecl *D) {
-  DeclContext *DC = D->getDeclContext();
-
-  // C++0x [class.mem]p1:
-  //   The enumerators of an unscoped enumeration defined in
-  //   the class are members of the class.
-  // FIXME: support C++0x scoped enumerations.
-  if (isa<EnumDecl>(DC))
-    DC = DC->getParent();
-
-  return DC->isRecord();
-}
-
 /// Determines if this is an instance member of a class.
 static bool IsInstanceMember(NamedDecl *D) {
-  assert(IsClassMember(D) &&
+  assert(D->isCXXClassMember() &&
          "checking whether non-member is instance member");
 
   if (isa<FieldDecl>(D)) return true;
@@ -840,7 +826,7 @@ enum IMAKind {
 /// not be caught until template-instantiation.
 static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
                                             const LookupResult &R) {
-  assert(!R.empty() && IsClassMember(*R.begin()));
+  assert(!R.empty() && (*R.begin())->isCXXClassMember());
 
   bool isStaticContext =
     (!isa<CXXMethodDecl>(SemaRef.CurContext) ||
@@ -1108,41 +1094,52 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
   //   class member access expression.
   // But note that &SomeClass::foo is grammatically distinct, even
   // though we don't parse it that way.
-  if (!R.empty() && IsClassMember(*R.begin())) {
+  if (!R.empty() && (*R.begin())->isCXXClassMember()) {
     bool isAbstractMemberPointer = (isAddressOfOperand && !SS.isEmpty());
-
-    if (!isAbstractMemberPointer) {
-      switch (ClassifyImplicitMemberAccess(*this, R)) {
-      case IMA_Instance:
-        return BuildImplicitMemberExpr(SS, R, TemplateArgs, true);
-
-      case IMA_AnonymousMember:
-        assert(R.isSingleResult());
-        return BuildAnonymousStructUnionMemberReference(R.getNameLoc(),
-                                                 R.getAsSingle<FieldDecl>());
-
-      case IMA_Mixed:
-      case IMA_Mixed_Unrelated:
-      case IMA_Unresolved:
-        return BuildImplicitMemberExpr(SS, R, TemplateArgs, false);
-
-      case IMA_Static:
-      case IMA_Mixed_StaticContext:
-      case IMA_Unresolved_StaticContext:
-        break;
-
-      case IMA_Error_StaticContext:
-      case IMA_Error_Unrelated:
-        DiagnoseInstanceReference(*this, SS, R);
-        return ExprError();
-      }
-    }
+    if (!isAbstractMemberPointer)
+      return BuildPossibleImplicitMemberExpr(SS, R, TemplateArgs);
   }
 
   if (TemplateArgs)
     return BuildTemplateIdExpr(SS, R, ADL, *TemplateArgs);
 
   return BuildDeclarationNameExpr(SS, R, ADL);
+}
+
+/// Builds an expression which might be an implicit member expression.
+Sema::OwningExprResult
+Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
+                                      LookupResult &R,
+                                const TemplateArgumentListInfo *TemplateArgs) {
+  switch (ClassifyImplicitMemberAccess(*this, R)) {
+  case IMA_Instance:
+    return BuildImplicitMemberExpr(SS, R, TemplateArgs, true);
+
+  case IMA_AnonymousMember:
+    assert(R.isSingleResult());
+    return BuildAnonymousStructUnionMemberReference(R.getNameLoc(),
+                                                    R.getAsSingle<FieldDecl>());
+
+  case IMA_Mixed:
+  case IMA_Mixed_Unrelated:
+  case IMA_Unresolved:
+    return BuildImplicitMemberExpr(SS, R, TemplateArgs, false);
+
+  case IMA_Static:
+  case IMA_Mixed_StaticContext:
+  case IMA_Unresolved_StaticContext:
+    if (TemplateArgs)
+      return BuildTemplateIdExpr(SS, R, false, *TemplateArgs);
+    return BuildDeclarationNameExpr(SS, R, false);
+
+  case IMA_Error_StaticContext:
+  case IMA_Error_Unrelated:
+    DiagnoseInstanceReference(*this, SS, R);
+    return ExprError();
+  }
+
+  llvm_unreachable("unexpected instance member access kind");
+  return ExprError();
 }
 
 /// BuildQualifiedDeclarationNameExpr - Build a C++ qualified
@@ -1372,7 +1369,7 @@ bool Sema::UseArgumentDependentLookup(const CXXScopeSpec &SS,
     //     -- a declaration of a class member
     // Since using decls preserve this property, we check this on the
     // original decl.
-    if (IsClassMember(D))
+    if (D->isCXXClassMember())
       return false;
 
     // C++0x [basic.lookup.argdep]p3:
@@ -3241,64 +3238,6 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
   return Invalid;
 }
 
-/// \brief "Deconstruct" the function argument of a call expression to find 
-/// the underlying declaration (if any), the name of the called function, 
-/// whether argument-dependent lookup is available, whether it has explicit
-/// template arguments, etc.
-void Sema::DeconstructCallFunction(Expr *FnExpr,
-                                   llvm::SmallVectorImpl<NamedDecl*> &Fns,
-                                   DeclarationName &Name,
-                                   NestedNameSpecifier *&Qualifier,
-                                   SourceRange &QualifierRange,
-                                   bool &ArgumentDependentLookup,
-                                   bool &Overloaded,
-                                   bool &HasExplicitTemplateArguments,
-                           TemplateArgumentListInfo &ExplicitTemplateArgs) {
-  // Set defaults for all of the output parameters.
-  Name = DeclarationName();
-  Qualifier = 0;
-  QualifierRange = SourceRange();
-  ArgumentDependentLookup = false;
-  Overloaded = false;
-  HasExplicitTemplateArguments = false;
-
-  // If we're directly calling a function, get the appropriate declaration.
-  // Also, in C++, keep track of whether we should perform argument-dependent
-  // lookup and whether there were any explicitly-specified template arguments.
-  while (true) {
-    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
-      FnExpr = IcExpr->getSubExpr();
-    else if (ParenExpr *PExpr = dyn_cast<ParenExpr>(FnExpr)) {
-      FnExpr = PExpr->getSubExpr();
-    } else if (isa<UnaryOperator>(FnExpr) &&
-               cast<UnaryOperator>(FnExpr)->getOpcode()
-               == UnaryOperator::AddrOf) {
-      FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
-    } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
-      Fns.push_back(cast<NamedDecl>(DRExpr->getDecl()));
-      ArgumentDependentLookup = false;
-      if ((Qualifier = DRExpr->getQualifier()))
-        QualifierRange = DRExpr->getQualifierRange();
-      break;
-    } else if (UnresolvedLookupExpr *UnresLookup
-               = dyn_cast<UnresolvedLookupExpr>(FnExpr)) {
-      Name = UnresLookup->getName();
-      Fns.append(UnresLookup->decls_begin(), UnresLookup->decls_end());
-      ArgumentDependentLookup = UnresLookup->requiresADL();
-      Overloaded = UnresLookup->isOverloaded();
-      if ((Qualifier = UnresLookup->getQualifier()))
-        QualifierRange = UnresLookup->getQualifierRange();
-      if (UnresLookup->hasExplicitTemplateArgs()) {
-        HasExplicitTemplateArguments = true;
-        UnresLookup->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-      }
-      break;
-    } else {
-      break;
-    }
-  }
-}
-
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
@@ -3413,72 +3352,23 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // If we're directly calling a function, get the appropriate declaration.
   // Also, in C++, keep track of whether we should perform argument-dependent
   // lookup and whether there were any explicitly-specified template arguments.
-  llvm::SmallVector<NamedDecl*,8> Fns;
-  DeclarationName UnqualifiedName;
-  bool Overloaded;
-  bool ADL;
-  bool HasExplicitTemplateArgs = 0;
-  TemplateArgumentListInfo ExplicitTemplateArgs;
-  NestedNameSpecifier *Qualifier = 0;
-  SourceRange QualifierRange;
-  DeconstructCallFunction(Fn, Fns, UnqualifiedName, Qualifier, QualifierRange,
-                          ADL, Overloaded, HasExplicitTemplateArgs,
-                          ExplicitTemplateArgs);
 
-  NamedDecl *NDecl;    // the specific declaration we're calling, if applicable
-  FunctionDecl *FDecl; // same, if it's known to be a function
-
-  if (Overloaded || ADL) {
-#ifndef NDEBUG
-    if (ADL) {
-      // To do ADL, we must have found an unqualified name.
-      assert(UnqualifiedName && "found no unqualified name for ADL");
-
-      // We don't perform ADL for implicit declarations of builtins.
-      // Verify that this was correctly set up.
-      if (Fns.size() == 1 && (FDecl = dyn_cast<FunctionDecl>(Fns[0])) &&
-          FDecl->getBuiltinID() && FDecl->isImplicit())
-        assert(0 && "performing ADL for builtin");
-
-      // We don't perform ADL in C.
-      assert(getLangOptions().CPlusPlus && "ADL enabled in C");
-    }
-
-    if (Overloaded) {
-      // To be overloaded, we must either have multiple functions or
-      // at least one function template (which is effectively an
-      // infinite set of functions).
-      assert((Fns.size() > 1 ||
-              (Fns.size() == 1 &&
-               isa<FunctionTemplateDecl>(Fns[0]->getUnderlyingDecl())))
-             && "unrecognized overload situation");
-    }
-#endif
-
-    FDecl = ResolveOverloadedCallFn(Fn, Fns, UnqualifiedName,
-                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
-                                    LParenLoc, Args, NumArgs, CommaLocs,
-                                    RParenLoc, ADL);
-    if (!FDecl)
-      return ExprError();
-
-    Fn = FixOverloadedFunctionReference(Fn, FDecl);
-
-    NDecl = FDecl;
-  } else {
-    assert(Fns.size() <= 1 && "overloaded without Overloaded flag");
-    if (Fns.empty())
-      NDecl = 0;
-    else {
-      NDecl = Fns[0];
-    }
+  Expr *NakedFn = Fn->IgnoreParenCasts();
+  if (isa<UnresolvedLookupExpr>(NakedFn)) {
+    UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(NakedFn);
+    return BuildOverloadedCallExpr(Fn, ULE, LParenLoc, Args, NumArgs,
+                                   CommaLocs, RParenLoc);
   }
+
+  NamedDecl *NDecl = 0;
+  if (isa<DeclRefExpr>(NakedFn))
+    NDecl = cast<DeclRefExpr>(NakedFn)->getDecl();
 
   return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, Args, NumArgs, RParenLoc);
 }
 
-/// BuildCallExpr - Build a call to a resolved expression, i.e. an
-/// expression not of \p OverloadTy.  The expression should
+/// BuildResolvedCallExpr - Build a call to a resolved expression,
+/// i.e. an expression not of \p OverloadTy.  The expression should
 /// unary-convert to an expression of function-pointer or
 /// block-pointer type.
 ///

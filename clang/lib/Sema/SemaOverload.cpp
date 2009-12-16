@@ -4596,10 +4596,7 @@ static void AddOverloadedCallCandidate(Sema &S,
   
 /// \brief Add the overload candidates named by callee and/or found by argument
 /// dependent lookup to the given overload set.
-void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
-                                       DeclarationName &UnqualifiedName,
-                                       bool ArgumentDependentLookup,
-                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
+void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                        Expr **Args, unsigned NumArgs,
                                        OverloadCandidateSet &CandidateSet,
                                        bool PartialOverloading) {
@@ -4622,38 +4619,56 @@ void Sema::AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*> &Fns,
   //
   //   then Y is empty.
 
-  if (ArgumentDependentLookup) {
-    for (unsigned I = 0; I < Fns.size(); ++I) {
-      assert(!Fns[I]->getDeclContext()->isRecord());
-      assert(isa<UsingShadowDecl>(Fns[I]) ||
-             !Fns[I]->getDeclContext()->isFunctionOrMethod());
-      assert(Fns[I]->getUnderlyingDecl()->isFunctionOrFunctionTemplate());
+  if (ULE->requiresADL()) {
+    for (UnresolvedLookupExpr::decls_iterator I = ULE->decls_begin(),
+           E = ULE->decls_end(); I != E; ++I) {
+      assert(!(*I)->getDeclContext()->isRecord());
+      assert(isa<UsingShadowDecl>(*I) ||
+             !(*I)->getDeclContext()->isFunctionOrMethod());
+      assert((*I)->getUnderlyingDecl()->isFunctionOrFunctionTemplate());
     }
   }
 #endif
 
-  for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
-         E = Fns.end(); I != E; ++I)
+  // It would be nice to avoid this copy.
+  TemplateArgumentListInfo TABuffer;
+  const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
+  if (ULE->hasExplicitTemplateArgs()) {
+    ULE->copyTemplateArgumentsInto(TABuffer);
+    ExplicitTemplateArgs = &TABuffer;
+  }
+
+  for (UnresolvedLookupExpr::decls_iterator I = ULE->decls_begin(),
+         E = ULE->decls_end(); I != E; ++I)
     AddOverloadedCallCandidate(*this, *I, ExplicitTemplateArgs,
                                Args, NumArgs, CandidateSet, 
                                PartialOverloading);
 
-  if (ArgumentDependentLookup)
-    AddArgumentDependentLookupCandidates(UnqualifiedName, Args, NumArgs,
+  if (ULE->requiresADL())
+    AddArgumentDependentLookupCandidates(ULE->getName(), Args, NumArgs,
                                          ExplicitTemplateArgs,
                                          CandidateSet,
                                          PartialOverloading);  
 }
 
+static Sema::OwningExprResult Destroy(Sema &SemaRef, Expr *Fn,
+                                      Expr **Args, unsigned NumArgs) {
+  Fn->Destroy(SemaRef.Context);
+  for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
+    Args[Arg]->Destroy(SemaRef.Context);
+  return SemaRef.ExprError();
+}
+
 /// Attempts to recover from a call where no functions were found.
 ///
 /// Returns true if new candidates were found.
-static bool AddRecoveryCallCandidates(Sema &SemaRef, Expr *Fn,
-                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                      Expr **Args, unsigned NumArgs,
-                                      OverloadCandidateSet &CandidateSet) {
-  UnresolvedLookupExpr *ULE
-    = cast<UnresolvedLookupExpr>(Fn->IgnoreParenCasts());
+static Sema::OwningExprResult
+BuildRecoveryCallExpr(Sema &SemaRef, Expr *Fn,
+                      UnresolvedLookupExpr *ULE,
+                      SourceLocation LParenLoc,
+                      Expr **Args, unsigned NumArgs,
+                      SourceLocation *CommaLocs,
+                      SourceLocation RParenLoc) {
 
   CXXScopeSpec SS;
   if (ULE->getQualifier()) {
@@ -4661,16 +4676,41 @@ static bool AddRecoveryCallCandidates(Sema &SemaRef, Expr *Fn,
     SS.setRange(ULE->getQualifierRange());
   }
 
+  TemplateArgumentListInfo TABuffer;
+  const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
+  if (ULE->hasExplicitTemplateArgs()) {
+    ULE->copyTemplateArgumentsInto(TABuffer);
+    ExplicitTemplateArgs = &TABuffer;
+  }
+
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
   if (SemaRef.DiagnoseEmptyLookup(SS, R))
-    return false;
+    return Destroy(SemaRef, Fn, Args, NumArgs);
 
-  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-    AddOverloadedCallCandidate(SemaRef, *I, ExplicitTemplateArgs,
-                               Args, NumArgs, CandidateSet, false);
-  }
-  return true;
+  assert(!R.empty() && "lookup results empty despite recovery");
+
+  // Build an implicit member call if appropriate.  Just drop the
+  // casts and such from the call, we don't really care.
+  Sema::OwningExprResult NewFn = SemaRef.ExprError();
+  if ((*R.begin())->isCXXClassMember())
+    NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, R, ExplicitTemplateArgs);
+  else if (ExplicitTemplateArgs)
+    NewFn = SemaRef.BuildTemplateIdExpr(SS, R, false, *ExplicitTemplateArgs);
+  else
+    NewFn = SemaRef.BuildDeclarationNameExpr(SS, R, false);
+
+  if (NewFn.isInvalid())
+    return Destroy(SemaRef, Fn, Args, NumArgs);
+
+  Fn->Destroy(SemaRef.Context);
+
+  // This shouldn't cause an infinite loop because we're giving it
+  // an expression with non-empty lookup results, which should never
+  // end up here.
+  return SemaRef.ActOnCallExpr(/*Scope*/ 0, move(NewFn), LParenLoc,
+                         Sema::MultiExprArg(SemaRef, (void**) Args, NumArgs),
+                               CommaLocs, RParenLoc);
 }
   
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
@@ -4680,57 +4720,68 @@ static bool AddRecoveryCallCandidates(Sema &SemaRef, Expr *Fn,
 /// the function declaration produced by overload
 /// resolution. Otherwise, emits diagnostics, deletes all of the
 /// arguments and Fn, and returns NULL.
-FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
-                                     llvm::SmallVectorImpl<NamedDecl*> &Fns,
-                                            DeclarationName UnqualifiedName,
-                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                            SourceLocation LParenLoc,
-                                            Expr **Args, unsigned NumArgs,
-                                            SourceLocation *CommaLocs,
-                                            SourceLocation RParenLoc,
-                                            bool ArgumentDependentLookup) {
+Sema::OwningExprResult
+Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
+                              SourceLocation LParenLoc,
+                              Expr **Args, unsigned NumArgs,
+                              SourceLocation *CommaLocs,
+                              SourceLocation RParenLoc) {
+#ifndef NDEBUG
+  if (ULE->requiresADL()) {
+    // To do ADL, we must have found an unqualified name.
+    assert(!ULE->getQualifier() && "qualified name with ADL");
+
+    // We don't perform ADL for implicit declarations of builtins.
+    // Verify that this was correctly set up.
+    FunctionDecl *F;
+    if (ULE->decls_begin() + 1 == ULE->decls_end() &&
+        (F = dyn_cast<FunctionDecl>(*ULE->decls_begin())) &&
+        F->getBuiltinID() && F->isImplicit())
+      assert(0 && "performing ADL for builtin");
+      
+    // We don't perform ADL in C.
+    assert(getLangOptions().CPlusPlus && "ADL enabled in C");
+  }
+#endif
+
   OverloadCandidateSet CandidateSet;
 
-  // Add the functions denoted by Callee to the set of candidate
-  // functions. 
-  AddOverloadedCallCandidates(Fns, UnqualifiedName, ArgumentDependentLookup,
-                              ExplicitTemplateArgs, Args, NumArgs, 
-                              CandidateSet);
+  // Add the functions denoted by the callee to the set of candidate
+  // functions, including those from argument-dependent lookup.
+  AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet);
 
   // If we found nothing, try to recover.
   // AddRecoveryCallCandidates diagnoses the error itself, so we just
   // bailout out if it fails.
-  if (CandidateSet.empty() &&
-      !AddRecoveryCallCandidates(*this, Fn, ExplicitTemplateArgs,
-                                 Args, NumArgs, CandidateSet)) {
-    Fn->Destroy(Context);
-    for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
-      Args[Arg]->Destroy(Context);
-    return 0;
-  }
+  if (CandidateSet.empty())
+    return BuildRecoveryCallExpr(*this, Fn, ULE, LParenLoc, Args, NumArgs,
+                                 CommaLocs, RParenLoc);
 
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
-  case OR_Success:
-    return Best->Function;
+  case OR_Success: {
+    FunctionDecl *FDecl = Best->Function;
+    Fn = FixOverloadedFunctionReference(Fn, FDecl);
+    return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc);
+  }
 
   case OR_No_Viable_Function:
     Diag(Fn->getSourceRange().getBegin(),
          diag::err_ovl_no_viable_function_in_call)
-      << UnqualifiedName << Fn->getSourceRange();
+      << ULE->getName() << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 
   case OR_Ambiguous:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
-      << UnqualifiedName << Fn->getSourceRange();
+      << ULE->getName() << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
 
   case OR_Deleted:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
       << Best->Function->isDeleted()
-      << UnqualifiedName
+      << ULE->getName()
       << Fn->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     break;
@@ -4741,7 +4792,7 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn,
   Fn->Destroy(Context);
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg)
     Args[Arg]->Destroy(Context);
-  return 0;
+  return ExprError();
 }
 
 static bool IsOverloaded(const Sema::FunctionSet &Functions) {

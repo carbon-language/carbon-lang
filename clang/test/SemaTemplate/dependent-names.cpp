@@ -92,8 +92,7 @@ namespace test1 {
 
   template <class T> struct Derived : Base<T> {
     void doFoo(T v) {
-      // FIXME: the second error here is from a broken recovery attempt
-      foo(v); // expected-error {{use of undeclared identifier}} expected-error {{call to non-static member function without an object}}
+      foo(v); // expected-error {{use of undeclared identifier}}
     }
   };
 

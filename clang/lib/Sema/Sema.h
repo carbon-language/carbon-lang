@@ -58,6 +58,7 @@ namespace clang {
   class DesignatedInitExpr;
   class CallExpr;
   class DeclRefExpr;
+  class UnresolvedLookupExpr;
   class VarDecl;
   class ParmVarDecl;
   class TypedefDecl;
@@ -1038,23 +1039,17 @@ public:
   OwningExprResult FixOverloadedFunctionReference(OwningExprResult, 
                                                   FunctionDecl *Fn);
 
-  void AddOverloadedCallCandidates(llvm::SmallVectorImpl<NamedDecl*>& Callees,
-                                   DeclarationName &UnqualifiedName,
-                                   bool ArgumentDependentLookup,
-                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
+  void AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet &CandidateSet,
                                    bool PartialOverloading = false);
     
-  FunctionDecl *ResolveOverloadedCallFn(Expr *Fn,
-                                        llvm::SmallVectorImpl<NamedDecl*> &Fns,
-                                        DeclarationName UnqualifiedName,
-                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                        SourceLocation LParenLoc,
-                                        Expr **Args, unsigned NumArgs,
-                                        SourceLocation *CommaLocs,
-                                        SourceLocation RParenLoc,
-                                        bool ArgumentDependentLookup);
+  OwningExprResult BuildOverloadedCallExpr(Expr *Fn,
+                                           UnresolvedLookupExpr *Fn,
+                                           SourceLocation LParenLoc,
+                                           Expr **Args, unsigned NumArgs,
+                                           SourceLocation *CommaLocs,
+                                           SourceLocation RParenLoc);
 
   OwningExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                            unsigned Opc,
@@ -1501,6 +1496,9 @@ public:
                                            FieldDecl *Field,
                                            Expr *BaseObjectExpr = 0,
                                       SourceLocation OpLoc = SourceLocation());
+  OwningExprResult BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
+                                                   LookupResult &R,
+                                const TemplateArgumentListInfo *TemplateArgs);
   OwningExprResult BuildImplicitMemberExpr(const CXXScopeSpec &SS,
                                            LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs,
@@ -1627,16 +1625,6 @@ public:
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
 
-  void DeconstructCallFunction(Expr *FnExpr,
-                               llvm::SmallVectorImpl<NamedDecl*>& Fns,
-                               DeclarationName &Name,
-                               NestedNameSpecifier *&Qualifier,
-                               SourceRange &QualifierRange,
-                               bool &ArgumentDependentLookup,
-                               bool &Overloaded,
-                               bool &HasExplicitTemplateArgs,
-                               TemplateArgumentListInfo &ExplicitTemplateArgs);
-    
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
