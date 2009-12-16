@@ -1045,7 +1045,7 @@ public:
                                    bool PartialOverloading = false);
     
   OwningExprResult BuildOverloadedCallExpr(Expr *Fn,
-                                           UnresolvedLookupExpr *Fn,
+                                           UnresolvedLookupExpr *ULE,
                                            SourceLocation LParenLoc,
                                            Expr **Args, unsigned NumArgs,
                                            SourceLocation *CommaLocs,
