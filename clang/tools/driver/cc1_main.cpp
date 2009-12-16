@@ -187,8 +187,6 @@ static int cc1_test(Diagnostic &Diags,
 
 int cc1_main(const char **ArgBegin, const char **ArgEnd,
              const char *Argv0, void *MainAddr) {
-  llvm::sys::PrintStackTraceOnErrorSignal();
-  llvm::PrettyStackTraceProgram X(ArgBegin - ArgEnd, ArgBegin);
   CompilerInstance Clang(&llvm::getGlobalContext(), false);
 
   // Run clang -cc1 test.
