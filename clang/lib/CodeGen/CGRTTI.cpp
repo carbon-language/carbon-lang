@@ -485,21 +485,3 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTI(QualType Ty) {
   
   return RTTIBuilder(*this).BuildType(Ty);
 }
-
-llvm::Constant *CodeGenModule::GenerateRTTIRef(const CXXRecordDecl *RD) {
-  RTTIBuilder b(*this);
-
-  return b.Buildclass_type_infoRef(RD);
-}
-
-llvm::Constant *CodeGenModule::GenerateRTTI(const CXXRecordDecl *RD) {
-  RTTIBuilder b(*this);
-
-  return b.Buildclass_type_info(RD, llvm::GlobalValue::ExternalLinkage);
-}
-
-llvm::Constant *CodeGenModule::GenerateRTTI(QualType Ty) {
-  RTTIBuilder b(*this);
-
-  return b.BuildType(Ty);
-}

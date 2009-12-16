@@ -219,17 +219,6 @@ public:
   /// decl.
   llvm::Constant *GetAddrOfRTTI(const CXXRecordDecl *RD);
 
-  /// GenerateRTTI - Generate the rtti information for the given type.
-  llvm::Constant *GenerateRTTI(const CXXRecordDecl *RD);
-  
-  /// GenerateRTTIRef - Generate a reference to the rtti information for the
-  /// given type.
-  llvm::Constant *GenerateRTTIRef(const CXXRecordDecl *RD);
-  
-  /// GenerateRTTI - Generate the rtti information for the given
-  /// non-class type.
-  llvm::Constant *GenerateRTTI(QualType Ty);
-  
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD,
                                  const ThunkAdjustment &ThisAdjustment);
   llvm::Constant *GetAddrOfCovariantThunk(GlobalDecl GD,

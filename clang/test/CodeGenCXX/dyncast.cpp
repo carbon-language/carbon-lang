@@ -97,7 +97,7 @@ void test1() {
 // CHECK-LL-NEXT:  br i1 %4, label %5, label %9
 // CHECK-LL:       ; <label>:5
 // CHECK-LL-NEXT:  %6 = bitcast %class.test1_A* %tmp to i8*
-// CHECK-LL-NEXT:  %7 = call i8* @__dynamic_cast(i8* %6, i8* bitcast ({{.*}} @_ZTI7test1_B to i8*), i8* bitcast (i8** @_ZTI7test1_D to i8*), i64 -1)
+// CHECK-LL-NEXT:  %7 = call i8* @__dynamic_cast(i8* %6, i8* bitcast (%0* @_ZTI7test1_B to i8*), i8* bitcast (%1* @_ZTI7test1_D to i8*), i64 -1) ; <i8*> [#uses=1]
 // CHECK-LL-NEXT:  %8 = bitcast i8* %7 to %class.test1_D*
 // CHECK-LL-NEXT:  br label %10
 // CHECK-LL:       ; <label>:9

@@ -469,9 +469,9 @@ llvm::Value * CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
       V = Builder.CreateLoad(V);
       return V;
     }      
-    return Builder.CreateBitCast(CGM.GenerateRTTI(RD), LTy);
+    return Builder.CreateBitCast(CGM.GetAddrOfRTTI(RD), LTy);
   }
-  return Builder.CreateBitCast(CGM.GenerateRTTI(Ty), LTy);
+  return Builder.CreateBitCast(CGM.GetAddrOfRTTI(Ty), LTy);
 }
 
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
@@ -550,8 +550,8 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
 
     // FIXME: Calculate better hint.
     llvm::Value *hint = llvm::ConstantInt::get(PtrDiffTy, -1ULL);
-    llvm::Value *SrcArg = CGM.GenerateRTTIRef(SrcTy);
-    llvm::Value *DstArg = CGM.GenerateRTTIRef(DstTy);
+    llvm::Value *SrcArg = CGM.GetAddrOfRTTI(SrcTy);
+    llvm::Value *DstArg = CGM.GetAddrOfRTTI(DstTy);
     V = Builder.CreateBitCast(V, PtrToInt8Ty);
     V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),
                             V, SrcArg, DstArg, hint);
