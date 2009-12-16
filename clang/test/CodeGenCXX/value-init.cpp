@@ -19,7 +19,7 @@ void test_value_init() {
 
   // CHECK: store i32 17
   // CHECK: call void @llvm.memset.i64
-  // CHECK: call void @_ZN1BC1Ev(%struct.A* %tmp1)
+  // CHECK: call void @_ZN1BC1Ev
   C c = { 17 } ;
-  // CHECK: call void @_ZN1CD1Ev(%struct.C* %c)
+  // CHECK: call void @_ZN1CD1Ev
 }
