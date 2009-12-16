@@ -915,6 +915,25 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
                                   Quals));
 }
 
+/// BuildSimilarlyQualifiedObjCObjectPointerType - In a pointer conversion from
+/// the FromType, which is an objective-c pointer, to ToType, which may or may
+/// not have the right set of qualifiers.
+static QualType
+BuildSimilarlyQualifiedObjCObjectPointerType(QualType FromType,
+                                             QualType ToType,
+                                             ASTContext &Context) {
+  QualType CanonFromType = Context.getCanonicalType(FromType);
+  QualType CanonToType = Context.getCanonicalType(ToType);
+  Qualifiers Quals = CanonFromType.getQualifiers();
+    
+  // Exact qualifier match -> return the pointer type we're converting to.
+  if (CanonToType.getLocalQualifiers() == Quals)
+    return ToType;
+  
+  // Just build a canonical type that has the right qualifiers.
+  return Context.getQualifiedType(CanonToType.getLocalUnqualifiedType(), Quals);
+}
+  
 static bool isNullPointerConstantForConversion(Expr *Expr,
                                                bool InOverloadResolution,
                                                ASTContext &Context) {
@@ -992,13 +1011,20 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
-  // Beyond this point, both types need to be pointers.
+  // Beyond this point, both types need to be pointers 
+  // , including objective-c pointers.
+  QualType ToPointeeType = ToTypePtr->getPointeeType();
+  if (FromType->isObjCObjectPointerType() && ToPointeeType->isVoidType()) {
+    ConvertedType = BuildSimilarlyQualifiedObjCObjectPointerType(FromType,
+                                                       ToType, Context);
+    return true;
+    
+  }
   const PointerType *FromTypePtr = FromType->getAs<PointerType>();
   if (!FromTypePtr)
     return false;
 
   QualType FromPointeeType = FromTypePtr->getPointeeType();
-  QualType ToPointeeType = ToTypePtr->getPointeeType();
 
   // An rvalue of type "pointer to cv T," where T is an object type,
   // can be converted to an rvalue of type "pointer to cv void" (C++
