@@ -314,7 +314,7 @@ public:
     if (this->EndX < this->CapacityX) {
     Retry:
       new (this->end()) T(Elt);
-      setEnd(this->end()+1);
+      this->setEnd(this->end()+1);
       return;
     }
     this->grow();
