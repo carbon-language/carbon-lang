@@ -563,12 +563,6 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
   return getSubRegion<ObjCIvarRegion>(d, superRegion);
 }
 
-const ObjCObjectRegion*
-MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
-                                      const MemRegion* superRegion) {
-  return getSubRegion<ObjCObjectRegion>(d, superRegion);
-}
-
 const CXXObjectRegion *
 MemRegionManager::getCXXObjectRegion(QualType T) {
   return getSubRegion<CXXObjectRegion>(T, getUnknownRegion());

@@ -98,7 +98,6 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
     }
 
     case MemRegion::StringRegionKind:
-    case MemRegion::ObjCObjectRegionKind:
       // FIXME: Need to handle arbitrary downcasts.
     case MemRegion::SymbolicRegionKind:
     case MemRegion::AllocaRegionKind:

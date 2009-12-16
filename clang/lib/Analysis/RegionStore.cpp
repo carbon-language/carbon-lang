@@ -539,8 +539,7 @@ const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
     }
 
     // Handle the region itself.
-    if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) ||
-        isa<ObjCObjectRegion>(R)) {
+    if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R)) {
       // Invalidate the region by setting its default value to
       // conjured symbol. The type of the symbol is irrelavant.
       DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
@@ -744,7 +743,6 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     case MemRegion::ElementRegionKind:
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
-    case MemRegion::ObjCObjectRegionKind:
     case MemRegion::SymbolicRegionKind:
     case MemRegion::CXXObjectRegionKind:
       return UnknownVal();
@@ -868,7 +866,6 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     // Fall-through.
     case MemRegion::CompoundLiteralRegionKind:
     case MemRegion::FieldRegionKind:
-    case MemRegion::ObjCObjectRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::CXXObjectRegionKind:
       return UnknownVal();
