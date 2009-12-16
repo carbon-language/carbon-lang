@@ -46,6 +46,7 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1A986AB710D0746D00A8EA9E /* CGDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A986AB610D0746D00A8EA9E /* CGDeclCXX.cpp */; };
 		1AA1D91810125DE30078DEBC /* RecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */; };
+		1AA963C410D85A7300786C86 /* FullExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA963C310D85A7300786C86 /* FullExpr.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		1ADD795410A90C6100741BBA /* TypePrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795110A90C6100741BBA /* TypePrinter.cpp */; };
 		1ADD795510A90C6100741BBA /* TypeLoc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795210A90C6100741BBA /* TypeLoc.cpp */; };
@@ -400,6 +401,8 @@
 		1A986AB610D0746D00A8EA9E /* CGDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDeclCXX.cpp; path = lib/CodeGen/CGDeclCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RecordLayoutBuilder.cpp; path = lib/AST/RecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AA1D91710125DE30078DEBC /* RecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = RecordLayoutBuilder.h; path = lib/AST/RecordLayoutBuilder.h; sourceTree = "<group>"; tabWidth = 2; };
+		1AA963AB10D8576800786C86 /* FullExpr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = FullExpr.h; path = clang/AST/FullExpr.h; sourceTree = "<group>"; tabWidth = 2; };
+		1AA963C310D85A7300786C86 /* FullExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FullExpr.cpp; path = lib/AST/FullExpr.cpp; sourceTree = "<group>"; };
 		1AB290021045858B00FE33D8 /* PartialDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = PartialDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1ADD795110A90C6100741BBA /* TypePrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypePrinter.cpp; path = lib/AST/TypePrinter.cpp; sourceTree = "<group>"; };
@@ -1348,6 +1351,7 @@
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
+				1AA963AB10D8576800786C86 /* FullExpr.h */,
 				DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */,
 				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
 				3547129D0C88881300B3E1D5 /* PrettyPrinter.h */,
@@ -1385,6 +1389,7 @@
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
 				1A32C17E0E1C87AD00A6B483 /* ExprConstant.cpp */,
 				35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */,
+				1AA963C310D85A7300786C86 /* FullExpr.cpp */,
 				3557D1A80EB136B100C59739 /* InheritViz.cpp */,
 				DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */,
 				35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */,
@@ -1929,6 +1934,7 @@
 				1ADD795610A90C6100741BBA /* TemplateBase.cpp in Sources */,
 				1A986AB710D0746D00A8EA9E /* CGDeclCXX.cpp in Sources */,
 				E16B523510D30B2400430AC9 /* cc1_main.cpp in Sources */,
+				1AA963C410D85A7300786C86 /* FullExpr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -131,7 +131,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
     // Otherwise, eat the semicolon.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-    return Actions.ActOnExprStmt(Actions.FullExpr(Expr));
+    return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr));
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -494,7 +494,7 @@ Parser::OwningStmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-        R = Actions.ActOnExprStmt(Actions.FullExpr(Res));
+        R = Actions.ActOnExprStmt(Actions.MakeFullExpr(Res));
       }
     }
 
@@ -593,7 +593,7 @@ Parser::OwningStmtResult Parser::ParseIfStatement(AttributeList *Attr) {
   if (ParseParenExprOrCondition(CondExp, CondVar))
     return StmtError();
 
-  FullExprArg FullCondExp(Actions.FullExpr(CondExp));
+  FullExprArg FullCondExp(Actions.MakeFullExpr(CondExp));
 
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -720,7 +720,7 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   if (ParseParenExprOrCondition(Cond, CondVar))
     return StmtError();
 
-  FullExprArg FullCond(Actions.FullExpr(Cond));
+  FullExprArg FullCond(Actions.MakeFullExpr(Cond));
   
   OwningStmtResult Switch = Actions.ActOnStartOfSwitchStmt(FullCond, CondVar);
 
@@ -801,7 +801,7 @@ Parser::OwningStmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
   if (ParseParenExprOrCondition(Cond, CondVar))
     return StmtError();
 
-  FullExprArg FullCond(Actions.FullExpr(Cond));
+  FullExprArg FullCond(Actions.MakeFullExpr(Cond));
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -993,7 +993,7 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
 
     // Turn the expression into a stmt.
     if (!Value.isInvalid())
-      FirstPart = Actions.ActOnExprStmt(Actions.FullExpr(Value));
+      FirstPart = Actions.ActOnExprStmt(Actions.MakeFullExpr(Value));
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
@@ -1060,8 +1060,8 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
 
   if (!ForEach)
     return Actions.ActOnForStmt(ForLoc, LParenLoc, move(FirstPart),
-                                Actions.FullExpr(SecondPart), SecondVar,
-                                Actions.FullExpr(ThirdPart), RParenLoc, 
+                                Actions.MakeFullExpr(SecondPart), SecondVar,
+                                Actions.MakeFullExpr(ThirdPart), RParenLoc, 
                                 move(Body));
 
   return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,

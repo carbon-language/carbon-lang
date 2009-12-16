@@ -1655,7 +1655,7 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
       if (E.isInvalid())
         return getSema().StmtError();
 
-      return getSema().ActOnExprStmt(getSema().FullExpr(E));
+      return getSema().ActOnExprStmt(getSema().MakeFullExpr(E));
     }
   }
 
@@ -3067,7 +3067,7 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
       return SemaRef.StmtError();
   }
   
-  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
 
   // Transform the "then" branch.
   OwningStmtResult Then = getDerived().TransformStmt(S->getThen());
@@ -3110,7 +3110,7 @@ TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
       return SemaRef.StmtError();
   }
 
-  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
   
   // Rebuild the switch statement.
   OwningStmtResult Switch = getDerived().RebuildSwitchStmtStart(FullCond,
@@ -3147,7 +3147,7 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
       return SemaRef.StmtError();
   }
 
-  Sema::FullExprArg FullCond(getSema().FullExpr(Cond));
+  Sema::FullExprArg FullCond(getSema().MakeFullExpr(Cond));
 
   // Transform the body
   OwningStmtResult Body = getDerived().TransformStmt(S->getBody());
@@ -3229,9 +3229,9 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
     return SemaRef.Owned(S->Retain());
 
   return getDerived().RebuildForStmt(S->getForLoc(), S->getLParenLoc(),
-                                     move(Init), getSema().FullExpr(Cond),
+                                     move(Init), getSema().MakeFullExpr(Cond),
                                      ConditionVar,
-                                     getSema().FullExpr(Inc),
+                                     getSema().MakeFullExpr(Inc),
                                      S->getRParenLoc(), move(Body));
 }
 

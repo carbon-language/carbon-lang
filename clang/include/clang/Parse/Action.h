@@ -131,7 +131,7 @@ public:
   };
 
   template<typename T>
-  FullExprArg FullExpr(T &Arg) {
+  FullExprArg MakeFullExpr(T &Arg) {
       return FullExprArg(ActOnFinishFullExpr(move(Arg)));
   }
 

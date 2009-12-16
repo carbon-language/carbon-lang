@@ -24,6 +24,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/FullExpr.h"
 #include "clang/Parse/Action.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
@@ -2005,6 +2006,8 @@ public:
   /// Otherwise, just returs the passed in expression.
   Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr);
 
+  FullExpr CreateFullExpr(Expr *SubExpr);
+  
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);

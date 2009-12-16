@@ -2102,6 +2102,22 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   return E;
 }
 
+FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
+  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
+  assert(ExprTemporaries.size() >= FirstTemporary);
+  
+  unsigned NumTemporaries = ExprTemporaries.size() - FirstTemporary;
+  CXXTemporary **Temporaries = 
+    NumTemporaries == 0 ? 0 : &ExprTemporaries[FirstTemporary];
+  
+  FullExpr E = FullExpr::Create(Context, SubExpr, Temporaries, NumTemporaries);
+
+  ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
+                        ExprTemporaries.end());
+
+  return E;
+}
+
 Sema::OwningExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                    tok::TokenKind OpKind, TypeTy *&ObjectType) {

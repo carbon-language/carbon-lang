@@ -20,6 +20,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/FullExpr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
