@@ -1740,7 +1740,7 @@ def LDREXD : AIldrex<0b01, (outs GPR:$dest, GPR:$dest2), (ins GPR:$ptr),
                     []>;
 }
 
-let mayStore = 1 in {
+let mayStore = 1, Constraints = "@earlyclobber $success" in {
 def STREXB : AIstrex<0b10, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
                     NoItinerary,
                     "strexb", "\t$success, $src, [$ptr]",

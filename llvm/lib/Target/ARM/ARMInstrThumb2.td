@@ -1752,7 +1752,7 @@ def t2LDREXD : T2I_ldrex<0b11, (outs GPR:$dest, GPR:$dest2), (ins GPR:$ptr),
                          [], {?, ?, ?, ?}>;
 }
 
-let mayStore = 1 in {
+let mayStore = 1, Constraints = "@earlyclobber $success" in {
 def t2STREXB : T2I_strex<0b00, (outs GPR:$success), (ins GPR:$src, GPR:$ptr),
                          AddrModeNone, Size4Bytes, NoItinerary,
                          "strexb", "\t$success, $src, [$ptr]", "", []>;
