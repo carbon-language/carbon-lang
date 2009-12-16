@@ -360,6 +360,8 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       Info.setAllowsRegister();
       break;
     case 'm': // memory operand.
+    case 'o': // offsettable memory operand
+    case 'V': // non-offsettable memory operand
       Info.setAllowsMemory();
       break;
     case 'g': // general register, memory operand or immediate integer.
