@@ -450,14 +450,29 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
 
 /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
 /// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
-/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
-/// be null.
+/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can be
+/// null.
+/// 
 /// Besides DestA and DestB, retain other edges leading to LandingPads
 /// (currently there can be only one; we don't check or require that here).
 /// Note it is possible that DestA and/or DestB are LandingPads.
 bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
                                              MachineBasicBlock *DestB,
                                              bool isCond) {
+  // The values of DestA and DestB frequently come from a call to the
+  // 'TargetInstrInfo::AnalyzeBranch' method. We take our meaning of the initial
+  // values from there.
+  //
+  // 1. If both DestA and DestB are null, then the block ends with no branches
+  //    (it falls through to its successor).
+  // 2. If DestA is set, DestB is null, and isCond is false, then the block ends
+  //    with only an unconditional branch.
+  // 3. If DestA is set, DestB is null, and isCond is true, then the block ends
+  //    with a conditional branch that falls through to a successor (DestB).
+  // 4. If DestA and DestB is set and isCond is true, then the block ends with a
+  //    conditional branch followed by an unconditional branch. DestA is the
+  //    'true' destination and DestB is the 'false' destination.
+
   bool MadeChange = false;
   bool AddedFallThrough = false;
 
@@ -483,14 +498,15 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   MachineBasicBlock::succ_iterator SI = succ_begin();
   MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
   while (SI != succ_end()) {
-    if (*SI == DestA) {
+    const MachineBasicBlock *MBB = *SI;
+    if (MBB == DestA) {
       DestA = 0;
       ++SI;
-    } else if (*SI == DestB) {
+    } else if (MBB == DestB) {
       DestB = 0;
       ++SI;
-    } else if ((*SI)->isLandingPad() && 
-               *SI!=OrigDestA && *SI!=OrigDestB) {
+    } else if (MBB->isLandingPad() && 
+               MBB != OrigDestA && MBB != OrigDestB) {
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
@@ -498,12 +514,12 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
       MadeChange = true;
     }
   }
-  if (!AddedFallThrough) {
-    assert(DestA == 0 && DestB == 0 &&
-           "MachineCFG is missing edges!");
-  } else if (isCond) {
+
+  if (!AddedFallThrough)
+    assert(DestA == 0 && DestB == 0 && "MachineCFG is missing edges!");
+  else if (isCond)
     assert(DestA == 0 && "MachineCFG is missing edges!");
-  }
+
   return MadeChange;
 }
 
