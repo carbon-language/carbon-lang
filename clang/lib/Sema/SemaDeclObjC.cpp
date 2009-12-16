@@ -1950,6 +1950,10 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                     !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
   QualType T = GetTypeForDeclarator(FD.D, S);
+  if (T->isReferenceType()) {
+    Diag(AtLoc, diag::error_reference_property);
+    return DeclPtrTy();
+  }
   Decl *ClassDecl = ClassCategory.getAs<Decl>();
   ObjCInterfaceDecl *CCPrimary = 0; // continuation class's primary class
   // May modify Attributes.

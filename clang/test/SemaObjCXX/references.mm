@@ -1,7 +1,4 @@
-// FIXME: This crashes, disable it until fixed.
-// RN: %clang_cc1 -verify -emit-llvm -o - %s
-// RUN: false
-// XFAIL: *
+// RUN: %clang_cc1 -verify -emit-llvm -o - %s
 
 // Test reference binding.
 
@@ -12,7 +9,7 @@ typedef struct {
 
 @interface A
 @property (assign) T p0;
-@property (assign) T& p1;
+@property (assign) T& p1; // expected-error {{property of reference type is not supported}}
 @end
 
 int f0(const T& t) {
@@ -24,6 +21,6 @@ int f1(A *a) {
 }
 
 int f2(A *a) {
-  return f0(a.p1);
+  return f0(a.p1);	// expected-error {{property 'p1' not found on object of type 'A *'}}
 }
 

@@ -305,6 +305,8 @@ def note_property_declare : Note<
   "property declared here">;
 def error_synthesize_category_decl : Error<
   "@synthesize not allowed in a category's implementation">;
+def error_reference_property : Error<
+  "property of reference type is not supported">;
 def error_missing_property_interface : Error<
   "property implementation in a category with no category declaration">;
 def error_bad_category_property_decl : Error<
