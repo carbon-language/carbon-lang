@@ -899,7 +899,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // The conversion is possible, so commit to it.
   Kind = CastExpr::CK_NoOp;
   msg = 0;
-  return Self.PerformImplicitConversion(SrcExpr, DestType, ICS, "casting",
+  return Self.PerformImplicitConversion(SrcExpr, DestType, ICS, Sema::AA_Casting,
                                         /*IgnoreBaseAccess*/CStyle) ?
       TC_Failed : TC_Success;
 }

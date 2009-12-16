@@ -3155,7 +3155,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         return true;
       
       // Pass the argument.
-      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+      if (PerformCopyInitialization(Arg, ProtoArgType, AA_Passing))
         return true;
       
       if (!ProtoArgType->isReferenceType())
@@ -4629,7 +4629,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
       // expression is implicitly converted (C++ 4) to the
       // cv-unqualified type of the left operand.
       if (PerformImplicitConversion(rExpr, lhsType.getUnqualifiedType(),
-                                    "assigning"))
+                                    AA_Assigning))
         return Incompatible;
       return Compatible;
     }
@@ -5500,7 +5500,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     return InvalidOperands(Loc, lex, rex);
 
   if (PerformImplicitConversion(lex, Context.BoolTy, LHS,
-                                "passing", /*IgnoreBaseAccess=*/false))
+                                AA_Passing, /*IgnoreBaseAccess=*/false))
     return InvalidOperands(Loc, lex, rex);
   
   StandardConversionSequence RHS;
@@ -5509,7 +5509,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     return InvalidOperands(Loc, lex, rex);
   
   if (PerformImplicitConversion(rex, Context.BoolTy, RHS,
-                                "passing", /*IgnoreBaseAccess=*/false))
+                                AA_Passing, /*IgnoreBaseAccess=*/false))
     return InvalidOperands(Loc, lex, rex);
   
   // C++ [expr.log.and]p2
@@ -5651,7 +5651,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   }
 
   if (DiagnoseAssignmentResult(ConvTy, Loc, LHSType, RHSType,
-                               RHS, "assigning"))
+                               RHS, AA_Assigning))
     return QualType();
 
   // C99 6.5.16p3: The type of an assignment expression is the type of the
@@ -6847,7 +6847,7 @@ MakeObjCStringLiteralCodeModificationHint(Sema& SemaRef,
 bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                     SourceLocation Loc,
                                     QualType DstType, QualType SrcType,
-                                    Expr *SrcExpr, const char *Flavor) {
+                                    Expr *SrcExpr, AssignmentAction Action) {
   // Decode the result (notice that AST's are still created for extensions).
   bool isInvalid = false;
   unsigned DiagKind;
@@ -6910,7 +6910,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   }
 
-  Diag(Loc, DiagKind) << DstType << SrcType << Flavor
+  Diag(Loc, DiagKind) << DstType << SrcType << Action
     << SrcExpr->getSourceRange() << Hint;
   return isInvalid;
 }

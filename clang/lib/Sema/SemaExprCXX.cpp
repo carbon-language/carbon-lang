@@ -627,10 +627,9 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // Whatch out for variadic allocator function.
     unsigned NumArgsInFnDecl = FnDecl->getNumParams();
     for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
-      // FIXME: Passing word to diagnostic.
       if (PerformCopyInitialization(Args[i],
                                     FnDecl->getParamDecl(i)->getType(),
-                                    "passing"))
+                                    AA_Passing))
         return true;
     }
     Operator = FnDecl;
@@ -872,7 +871,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         Operand.release();
         if (!PerformImplicitConversion(Ex, 
                             ObjectPtrConversions.front()->getConversionType(), 
-                                      "converting")) {
+                                      AA_Converting)) {
           Operand = Owned(Ex);
           Type = Ex->getType();
         }
@@ -1023,16 +1022,16 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
 /// resolution works differently in that case.
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                const char *Flavor, bool AllowExplicit,
+                                AssignmentAction Action, bool AllowExplicit,
                                 bool Elidable) {
   ImplicitConversionSequence ICS;
-  return PerformImplicitConversion(From, ToType, Flavor, AllowExplicit, 
+  return PerformImplicitConversion(From, ToType, Action, AllowExplicit, 
                                    Elidable, ICS);
 }
 
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
-                                const char *Flavor, bool AllowExplicit,
+                                AssignmentAction Action, bool AllowExplicit,
                                 bool Elidable,
                                 ImplicitConversionSequence& ICS) {
   ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
@@ -1050,7 +1049,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
   }
-  return PerformImplicitConversion(From, ToType, ICS, Flavor);
+  return PerformImplicitConversion(From, ToType, ICS, Action);
 }
 
 /// BuildCXXDerivedToBaseExpr - This routine generates the suitable AST
@@ -1058,8 +1057,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 /// necessary information is passed in ICS.
 bool 
 Sema::BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
-                                     const ImplicitConversionSequence& ICS,
-                                     const char *Flavor) {
+                                     const ImplicitConversionSequence& ICS) {
   QualType  BaseType = 
     QualType::getFromOpaquePtr(ICS.UserDefined.After.ToTypePtr);
   // Must do additional defined to base conversion.
@@ -1091,15 +1089,15 @@ Sema::BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
 /// expression From to the type ToType using the pre-computed implicit
 /// conversion sequence ICS. Returns true if there was an error, false
 /// otherwise. The expression From is replaced with the converted
-/// expression. Flavor is the kind of conversion we're performing,
+/// expression. Action is the kind of conversion we're performing,
 /// used in the error message.
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const ImplicitConversionSequence &ICS,
-                                const char* Flavor, bool IgnoreBaseAccess) {
+                                AssignmentAction Action, bool IgnoreBaseAccess) {
   switch (ICS.ConversionKind) {
   case ImplicitConversionSequence::StandardConversion:
-    if (PerformImplicitConversion(From, ToType, ICS.Standard, Flavor,
+    if (PerformImplicitConversion(From, ToType, ICS.Standard, Action,
                                   IgnoreBaseAccess))
       return true;
     break;
@@ -1132,7 +1130,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       // Whatch out for elipsis conversion.
       if (!ICS.UserDefined.EllipsisConversion) {
         if (PerformImplicitConversion(From, BeforeToType, 
-                                      ICS.UserDefined.Before, "converting",
+                                      ICS.UserDefined.Before, AA_Converting,
                                       IgnoreBaseAccess))
           return true;
       }
@@ -1152,7 +1150,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       // there's some nasty stuff involving MaybeBindToTemporary going on here.
       if (ICS.UserDefined.After.Second == ICK_Derived_To_Base &&
           ICS.UserDefined.After.CopyConstructor) {
-        return BuildCXXDerivedToBaseExpr(From, CastKind, ICS, Flavor);
+        return BuildCXXDerivedToBaseExpr(From, CastKind, ICS);
       }
 
       if (ICS.UserDefined.After.CopyConstructor) {
@@ -1163,7 +1161,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       }
 
       return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
-                                       "converting", IgnoreBaseAccess);
+                                       AA_Converting, IgnoreBaseAccess);
   }
       
   case ImplicitConversionSequence::EllipsisConversion:
@@ -1187,7 +1185,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const StandardConversionSequence& SCS,
-                                const char *Flavor, bool IgnoreBaseAccess) {
+                                AssignmentAction Action, bool IgnoreBaseAccess) {
   // Overall FIXME: we are recomputing too many types here and doing far too
   // much extra work. What this means is that we need to keep track of more
   // information that is computed when we try the implicit conversion initially,
@@ -1319,7 +1317,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       // Diagnose incompatible Objective-C conversions
       Diag(From->getSourceRange().getBegin(),
            diag::ext_typecheck_convert_incompatible_pointer)
-        << From->getType() << ToType << Flavor
+        << From->getType() << ToType << Action
         << From->getSourceRange();
     }
 
@@ -1591,9 +1589,9 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
     case OR_Success:
       // We found a match. Perform the conversions on the arguments and move on.
       if (Self.PerformImplicitConversion(LHS, Best->BuiltinTypes.ParamTypes[0],
-                                         Best->Conversions[0], "converting") ||
+                                         Best->Conversions[0], Sema::AA_Converting) ||
           Self.PerformImplicitConversion(RHS, Best->BuiltinTypes.ParamTypes[1],
-                                         Best->Conversions[1], "converting"))
+                                         Best->Conversions[1], Sema::AA_Converting))
         break;
       return false;
 
@@ -1651,7 +1649,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false);
   }
-  if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, "converting"))
+  if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, Sema::AA_Converting))
     return true;
   return false;
 }
@@ -1875,9 +1873,9 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
           LPointee = Context.getQualifiedType(LPointee, MergedQuals);
           QualType Common
             = Context.getMemberPointerType(LPointee, MoreDerived.getTypePtr());
-          if (PerformImplicitConversion(LHS, Common, "converting"))
+          if (PerformImplicitConversion(LHS, Common, Sema::AA_Converting))
             return QualType();
-          if (PerformImplicitConversion(RHS, Common, "converting"))
+          if (PerformImplicitConversion(RHS, Common, Sema::AA_Converting))
             return QualType();
           return Common;
         }
@@ -2042,13 +2040,13 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
                  && E2ToC2.ConversionKind !=
                       ImplicitConversionSequence::BadConversion;
   if (ToC1Viable && !ToC2Viable) {
-    if (!PerformImplicitConversion(E1, Composite1, E1ToC1, "converting") &&
-        !PerformImplicitConversion(E2, Composite1, E2ToC1, "converting"))
+    if (!PerformImplicitConversion(E1, Composite1, E1ToC1, Sema::AA_Converting) &&
+        !PerformImplicitConversion(E2, Composite1, E2ToC1, Sema::AA_Converting))
       return Composite1;
   }
   if (ToC2Viable && !ToC1Viable) {
-    if (!PerformImplicitConversion(E1, Composite2, E1ToC2, "converting") &&
-        !PerformImplicitConversion(E2, Composite2, E2ToC2, "converting"))
+    if (!PerformImplicitConversion(E1, Composite2, E1ToC2, Sema::AA_Converting) &&
+        !PerformImplicitConversion(E2, Composite2, E2ToC2, Sema::AA_Converting))
       return Composite2;
   }
   return QualType();

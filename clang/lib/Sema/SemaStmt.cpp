@@ -902,7 +902,7 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
     AssignConvertType ConvTy =
       CheckSingleAssignmentConstraints(Context.VoidPtrTy, E);
     if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
-                                 E, "passing"))
+                                 E, AA_Passing))
       return StmtError();
   }
   return Owned(new (Context) IndirectGotoStmt(GotoLoc, StarLoc, E));
@@ -986,7 +986,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
     // FIXME: Leaks RetValExp.
-    if (PerformCopyInitialization(RetValExp, FnRetType, "returning"))
+    if (PerformCopyInitialization(RetValExp, FnRetType, AA_Returning))
       return StmtError();
 
     if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
@@ -1096,7 +1096,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
     // FIXME: Leaks RetValExp on error.
-    if (PerformCopyInitialization(RetValExp, FnRetType, "returning", Elidable)){
+    if (PerformCopyInitialization(RetValExp, FnRetType, AA_Returning, Elidable)){
       // We should still clean up our temporaries, even when we're failing!
       RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
       return StmtError();

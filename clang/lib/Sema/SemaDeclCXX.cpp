@@ -1139,7 +1139,7 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
     }
     else
       NewExp = (Expr*)Args[0];
-    if (PerformCopyInitialization(NewExp, FieldType, "passing"))
+    if (PerformCopyInitialization(NewExp, FieldType, AA_Passing))
       return true;
     Args[0] = NewExp;
   }
@@ -4566,7 +4566,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       (T1->isRecordType() || T2->isRecordType())) {
     if (!ICS)
       Diag(DeclLoc, diag::err_typecheck_convert_incompatible)
-        << DeclType << Init->getType() << "initializing" << Init->getSourceRange();
+        << DeclType << Init->getType() << AA_Initializing << Init->getSourceRange();
     return true;
   }
 
@@ -4600,7 +4600,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
   } else {
     ImplicitConversionSequence Conversions;
-    bool badConversion = PerformImplicitConversion(Init, T1, "initializing", 
+    bool badConversion = PerformImplicitConversion(Init, T1, AA_Initializing, 
                                                    false, false, 
                                                    Conversions);
     if (badConversion) {

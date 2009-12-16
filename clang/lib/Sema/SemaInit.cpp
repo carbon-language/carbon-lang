@@ -73,7 +73,7 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
   if (S.getLangOptions().CPlusPlus) {
     // FIXME: I dislike this error message. A lot.
     if (S.PerformImplicitConversion(Init, DeclType, 
-                                    "initializing", DirectInit)) {
+                                    Sema::AA_Initializing, DirectInit)) {
       ImplicitConversionSequence ICS;
       OverloadCandidateSet CandidateSet;
       if (S.IsUserDefinedConversion(Init, DeclType, ICS.UserDefined,
@@ -81,7 +81,7 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
                               true, false, false) != OR_Ambiguous)
         return S.Diag(Init->getSourceRange().getBegin(),
                       diag::err_typecheck_convert_incompatible)
-                      << DeclType << Init->getType() << "initializing"
+                      << DeclType << Init->getType() << Sema::AA_Initializing
                       << Init->getSourceRange();
       S.Diag(Init->getSourceRange().getBegin(),
              diag::err_typecheck_convert_ambiguous)
@@ -95,7 +95,7 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
   Sema::AssignConvertType ConvTy =
     S.CheckSingleAssignmentConstraints(DeclType, Init);
   return S.DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
-                                  InitType, Init, "initializing");
+                                    InitType, Init, Sema::AA_Initializing);
 }
 
 static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
@@ -279,7 +279,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       //      destination type.
       // FIXME: We're pretending to do copy elision here; return to this when we
       // have ASTs for such things.
-      if (!PerformImplicitConversion(Init, DeclType, "initializing"))
+      if (!PerformImplicitConversion(Init, DeclType, Sema::AA_Initializing))
         return false;
 
       if (InitEntity)
@@ -747,7 +747,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
 
       if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
         if (SemaRef.PerformImplicitConversion(expr, ElemType, ICS,
-                                               "initializing"))
+                                              Sema::AA_Initializing))
           hadError = true;
         UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
         ++Index;
@@ -787,7 +787,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
     } else {
       // We cannot initialize this element, so let
       // PerformCopyInitialization produce the appropriate diagnostic.
-      SemaRef.PerformCopyInitialization(expr, ElemType, "initializing");
+      SemaRef.PerformCopyInitialization(expr, ElemType, Sema::AA_Initializing);
       hadError = true;
       ++Index;
       ++StructuredIndex;
@@ -3150,7 +3150,7 @@ InitializationSequence::Perform(Sema &S,
       break;
         
     case SK_ConversionSequence:
-      if (S.PerformImplicitConversion(CurInitExpr, Step->Type, "converting", 
+        if (S.PerformImplicitConversion(CurInitExpr, Step->Type, Sema::AA_Converting, 
                                       false, false, *Step->ICS))
         return S.ExprError();
         

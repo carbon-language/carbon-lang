@@ -205,7 +205,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 
     IsError |=
       DiagnoseAssignmentResult(Result, argExpr->getLocStart(), lhsType, rhsType,
-                               argExpr, "sending");
+                               argExpr, AA_Sending);
   }
 
   // Promote additional arguments to variadic methods.

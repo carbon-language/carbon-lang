@@ -842,6 +842,18 @@ public:
   void MergeVarDecl(VarDecl *New, LookupResult &OldDecls);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 
+  // AssignmentAction - This is used by all the assignment diagnostic functions
+  // to represent what is actually causing the operation
+  enum AssignmentAction {
+    AA_Assigning,
+    AA_Passing,
+    AA_Returning,
+    AA_Converting,
+    AA_Initializing,
+    AA_Sending,
+    AA_Casting
+  };
+  
   /// C++ Overloading.
   enum OverloadKind {
     /// This is a legitimate overload: the existing declarations are
@@ -918,8 +930,9 @@ public:
   TryCopyInitialization(Expr* From, QualType ToType,
                         bool SuppressUserConversions, bool ForceRValue,
                         bool InOverloadResolution);
+  
   bool PerformCopyInitialization(Expr *&From, QualType ToType,
-                                 const char *Flavor, bool Elidable = false);
+                                 AssignmentAction Action, bool Elidable = false);
 
   ImplicitConversionSequence
   TryObjectArgumentInitialization(QualType FromType, CXXMethodDecl *Method,
@@ -3557,14 +3570,14 @@ public:
     /// represent it in the AST.
     Incompatible
   };
-
+  
   /// DiagnoseAssignmentResult - Emit a diagnostic, if required, for the
   /// assignment conversion type specified by ConvTy.  This returns true if the
   /// conversion was invalid or false if the conversion was accepted.
   bool DiagnoseAssignmentResult(AssignConvertType ConvTy,
                                 SourceLocation Loc,
                                 QualType DstType, QualType SrcType,
-                                Expr *SrcExpr, const char *Flavor);
+                                Expr *SrcExpr, AssignmentAction Action);
 
   /// CheckAssignmentConstraints - Perform type checking for assignment,
   /// argument passing, variable initialization, and function return values.
@@ -3599,25 +3612,24 @@ public:
   bool CheckExceptionSpecCompatibility(Expr *From, QualType ToType);
 
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 const char *Flavor,
+                                 AssignmentAction Action,
                                  bool AllowExplicit = false,
                                  bool Elidable = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 const char *Flavor,
+                                 AssignmentAction Action,
                                  bool AllowExplicit,
                                  bool Elidable,
                                  ImplicitConversionSequence& ICS);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const ImplicitConversionSequence& ICS,
-                                 const char *Flavor,
+                                 AssignmentAction Action,
                                  bool IgnoreBaseAccess = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
-                                 const char *Flavor, bool IgnoreBaseAccess);
+                                 AssignmentAction Action, bool IgnoreBaseAccess);
   
   bool BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
-                                 const ImplicitConversionSequence& ICS,
-                                 const char *Flavor);
+                                 const ImplicitConversionSequence& ICS);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

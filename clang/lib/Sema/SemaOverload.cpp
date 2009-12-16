@@ -2080,7 +2080,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
 /// be true when the copy may be elided (C++ 12.8p15). Overload resolution works
 /// differently in C++0x for this case.
 bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
-                                     const char* Flavor, bool Elidable) {
+                                     AssignmentAction Action, bool Elidable) {
   if (!getLangOptions().CPlusPlus) {
     // In C, argument passing is the same as performing an assignment.
     QualType FromType = From->getType();
@@ -2092,7 +2092,7 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
       ConvTy = Compatible;
 
     return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
-                                    FromType, From, Flavor);
+                                    FromType, From, Action);
   }
 
   if (ToType->isReferenceType())
@@ -2102,13 +2102,13 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
                               /*AllowExplicit=*/false,
                               /*ForceRValue=*/false);
 
-  if (!PerformImplicitConversion(From, ToType, Flavor,
+  if (!PerformImplicitConversion(From, ToType, Action,
                                  /*AllowExplicit=*/false, Elidable))
     return false;
   if (!DiagnoseMultipleUserDefinedConversion(From, ToType))
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_typecheck_convert_incompatible)
-      << ToType << From->getType() << Flavor << From->getSourceRange();
+      << ToType << From->getType() << Action << From->getSourceRange();
   return true;
 }
 
@@ -2229,7 +2229,7 @@ ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
 /// of the expression From to bool (C++0x [conv]p3).
 bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
   ImplicitConversionSequence ICS = TryContextuallyConvertToBool(From);
-  if (!PerformImplicitConversion(From, Context.BoolTy, ICS, "converting"))
+  if (!PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting))
     return false;
   
   if (!DiagnoseMultipleUserDefinedConversion(From, Context.BoolTy))
@@ -4789,7 +4789,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
         // Convert the arguments.
         if (PerformCopyInitialization(Input,
                                       FnDecl->getParamDecl(0)->getType(),
-                                      "passing"))
+                                      AA_Passing))
           return ExprError();
       }
 
@@ -4817,7 +4817,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       // break out so that we will build the appropriate built-in
       // operator node.
         if (PerformImplicitConversion(Input, Best->BuiltinTypes.ParamTypes[0],
-                                      Best->Conversions[0], "passing"))
+                                      Best->Conversions[0], AA_Passing))
           return ExprError();
 
         break;
@@ -4956,14 +4956,14 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
           if (PerformObjectArgumentInitialization(Args[0], Method) ||
               PerformCopyInitialization(Args[1], FnDecl->getParamDecl(0)->getType(),
-                                        "passing"))
+                                        AA_Passing))
             return ExprError();
         } else {
           // Convert the arguments.
           if (PerformCopyInitialization(Args[0], FnDecl->getParamDecl(0)->getType(),
-                                        "passing") ||
+                                        AA_Passing) ||
               PerformCopyInitialization(Args[1], FnDecl->getParamDecl(1)->getType(),
-                                        "passing"))
+                                        AA_Passing))
             return ExprError();
         }
 
@@ -4992,9 +4992,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         // break out so that we will build the appropriate built-in
         // operator node.
         if (PerformImplicitConversion(Args[0], Best->BuiltinTypes.ParamTypes[0],
-                                      Best->Conversions[0], "passing") ||
+                                      Best->Conversions[0], AA_Passing) ||
             PerformImplicitConversion(Args[1], Best->BuiltinTypes.ParamTypes[1],
-                                      Best->Conversions[1], "passing"))
+                                      Best->Conversions[1], AA_Passing))
           return ExprError();
 
         break;
@@ -5106,7 +5106,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         if (PerformObjectArgumentInitialization(Args[0], Method) ||
             PerformCopyInitialization(Args[1],
                                       FnDecl->getParamDecl(0)->getType(),
-                                      "passing"))
+                                      AA_Passing))
           return ExprError();
 
         // Determine the result type
@@ -5136,9 +5136,9 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // break out so that we will build the appropriate built-in
         // operator node.
         if (PerformImplicitConversion(Args[0], Best->BuiltinTypes.ParamTypes[0],
-                                      Best->Conversions[0], "passing") ||
+                                      Best->Conversions[0], AA_Passing) ||
             PerformImplicitConversion(Args[1], Best->BuiltinTypes.ParamTypes[1],
-                                      Best->Conversions[1], "passing"))
+                                      Best->Conversions[1], AA_Passing))
           return ExprError();
 
         break;
@@ -5522,7 +5522,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 
       // Pass the argument.
       QualType ProtoArgType = Proto->getArgType(i);
-      IsError |= PerformCopyInitialization(Arg, ProtoArgType, "passing");
+      IsError |= PerformCopyInitialization(Arg, ProtoArgType, AA_Passing);
     } else {
       OwningExprResult DefArg
         = BuildCXXDefaultArgExpr(LParenLoc, Method, Method->getParamDecl(i));

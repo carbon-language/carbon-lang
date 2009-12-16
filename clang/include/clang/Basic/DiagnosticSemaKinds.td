@@ -1922,9 +1922,11 @@ def warn_value_always_zero : Warning<
   "%0 is always %select{zero|false|NULL}1 in this context">;
 
 // assignment related diagnostics (also for argument passing, returning, etc).
-// FIXME: %2 is an english string here.
+// In most of these diagnostics the %2 is a value from the
+// Sema::AssignmentAction enumeration
 def err_typecheck_convert_incompatible : Error<
-  "incompatible type %2 %1, expected %0">;
+  "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " %1, expected %0">;
 def err_typecheck_convert_ambiguous : Error<
   "ambiguity in initializing value of type %0 with initializer of type %1">;
 def err_cannot_initialize_decl_noname : Error<
@@ -1933,31 +1935,43 @@ def err_cannot_initialize_decl_noname : Error<
 def err_cannot_initialize_decl : Error<
   "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2">;
 def warn_incompatible_qualified_id : Warning<
-  "incompatible type %2 %1, expected %0">;
+  "incompatible type %select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " %1, expected %0">;
 def ext_typecheck_convert_pointer_int : ExtWarn<
-  "incompatible pointer to integer conversion %2 %1, expected %0">;
+  "incompatible pointer to integer conversion "
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
 def ext_typecheck_convert_int_pointer : ExtWarn<
-  "incompatible integer to pointer conversion %2 %1, expected %0">;
+  "incompatible integer to pointer conversion "
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
 def ext_typecheck_convert_pointer_void_func : Extension<
-  "%2 %1 converts between void* and function pointer, expected %0">;
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " %1 converts between void* and function pointer, expected %0">;
 def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
- "pointer types point to integer types with different sign %2 %1, expected %0">,
+ "pointer types point to integer types with different sign "
+ "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">,
   InGroup<DiagGroup<"pointer-sign">>;
 def ext_typecheck_convert_incompatible_pointer : ExtWarn<
-  "incompatible pointer types %2 %1, expected %0">;
+  "incompatible pointer types "
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
-  "%2 %1 discards qualifiers, expected %0">;
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " %1 discards qualifiers, expected %0">;
 def ext_nested_pointer_qualifier_mismatch : ExtWarn<
-  "%2, %0 and %1 have different qualifiers in nested pointer types">;
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2,"
+  " %0 and %1 have different qualifiers in nested pointer types">;
 def warn_incompatible_vectors : Warning<
-  "incompatible vector types %2 %1, expected %0">,
+  "incompatible vector types %select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " %1, expected %0">,
   InGroup<VectorConversions>, DefaultIgnore;
 def err_int_to_block_pointer : Error<
-  "invalid conversion %2 integer %1, expected block pointer %0">;
+  "invalid conversion "
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2"
+  " integer %1, expected block pointer %0">;
 def err_typecheck_comparison_of_distinct_blocks : Error<
   "comparison of distinct block types (%0 and %1)">;
 def err_typecheck_convert_incompatible_block_pointer : Error<
-  "incompatible block pointer types %2 %1, expected %0">;
+  "incompatible block pointer types "
+  "%select{assigning|passing|returning|converting|initializing|sending|casting}2 %1, expected %0">;
 
 def err_typecheck_array_not_modifiable_lvalue : Error<
   "array type %0 is not assignable">;
