@@ -17,6 +17,7 @@ namespace clang {
 
 class Stmt;
 class CFGBlock;
+class CFGElement;
 class GRState;
 class GRStateManager;
 class GRBlockCounter;
