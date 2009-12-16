@@ -268,7 +268,7 @@ public:
   
   ~SmallVectorImpl() {
     // Destroy the constructed elements in the vector.
-    destroy_range(this->begin(), this->end());
+    this->destroy_range(this->begin(), this->end());
     
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!this->isSmall())
@@ -277,7 +277,7 @@ public:
   
   
   void clear() {
-    destroy_range(this->begin(), this->end());
+    this->destroy_range(this->begin(), this->end());
     this->EndX = this->BeginX;
   }
 
@@ -295,13 +295,13 @@ public:
 
   void resize(unsigned N, const T &NV) {
     if (N < this->size()) {
-      destroy_range(this->begin()+N, this->end());
-      setEnd(this->begin()+N);
+      this->destroy_range(this->begin()+N, this->end());
+      this->setEnd(this->begin()+N);
     } else if (N > this->size()) {
       if (this->capacity() < N)
         this->grow(N);
       construct_range(this->end(), this->begin()+N, NV);
-      setEnd(this->begin()+N);
+      this->setEnd(this->begin()+N);
     }
   }
 
@@ -322,7 +322,7 @@ public:
   }
   
   void pop_back() {
-    setEnd(this->end()-1);
+    this->setEnd(this->end()-1);
     this->end()->~T();
   }
   
@@ -348,7 +348,7 @@ public:
     // TODO: NEED To compile time dispatch on whether in_iter is a random access
     // iterator to use the fast uninitialized_copy.
     std::uninitialized_copy(in_start, in_end, this->end());
-    setEnd(this->end() + NumInputs);
+    this->setEnd(this->end() + NumInputs);
   }
   
   /// append - Add the specified range to the end of the SmallVector.
@@ -360,14 +360,14 @@ public:
     
     // Copy the new elements over.
     std::uninitialized_fill_n(this->end(), NumInputs, Elt);
-    setEnd(this->end() + NumInputs);
+    this->setEnd(this->end() + NumInputs);
   }
   
   void assign(unsigned NumElts, const T &Elt) {
     clear();
     if (this->capacity() < NumElts)
       this->grow(NumElts);
-    setEnd(this->begin()+NumElts);
+    this->setEnd(this->begin()+NumElts);
     construct_range(this->begin(), this->end(), Elt);
   }
   
@@ -385,8 +385,8 @@ public:
     // Shift all elts down.
     iterator I = std::copy(E, this->end(), S);
     // Drop the last elts.
-    destroy_range(I, this->end());
-    setEnd(I);
+    this->destroy_range(I, this->end());
+    this->setEnd(I);
     return(N);
   }
   
@@ -446,9 +446,9 @@ public:
     
     // Copy over the elements that we're about to overwrite.
     T *OldEnd = this->end();
-    setEnd(this->end() + NumToInsert);
+    this->setEnd(this->end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
+    this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
     
     // Replace the overwritten part.
     std::fill_n(I, NumOverwritten, Elt);
@@ -534,7 +534,7 @@ public:
   /// which will only be overwritten.
   void set_size(unsigned N) {
     assert(N <= this->capacity());
-    setEnd(this->begin() + N);
+    this->setEnd(this->begin() + N);
   }
   
 private:
@@ -570,15 +570,15 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
   // Copy over the extra elts.
   if (this->size() > RHS.size()) {
     size_t EltDiff = this->size() - RHS.size();
-    uninitialized_copy(this->begin()+NumShared, this->end(), RHS.end());
+    this->uninitialized_copy(this->begin()+NumShared, this->end(), RHS.end());
     RHS.setEnd(RHS.end()+EltDiff);
-    destroy_range(this->begin()+NumShared, this->end());
-    setEnd(this->begin()+NumShared);
+    this->destroy_range(this->begin()+NumShared, this->end());
+    this->setEnd(this->begin()+NumShared);
   } else if (RHS.size() > this->size()) {
     size_t EltDiff = RHS.size() - this->size();
-    uninitialized_copy(RHS.begin()+NumShared, RHS.end(), this->end());
-    setEnd(this->end() + EltDiff);
-    destroy_range(RHS.begin()+NumShared, RHS.end());
+    this->uninitialized_copy(RHS.begin()+NumShared, RHS.end(), this->end());
+    this->setEnd(this->end() + EltDiff);
+    this->destroy_range(RHS.begin()+NumShared, RHS.end());
     RHS.setEnd(RHS.begin()+NumShared);
   }
 }
@@ -602,10 +602,10 @@ const SmallVectorImpl<T> &SmallVectorImpl<T>::
       NewEnd = this->begin();
 
     // Destroy excess elements.
-    destroy_range(NewEnd, this->end());
+    this->destroy_range(NewEnd, this->end());
 
     // Trim.
-    setEnd(NewEnd);
+    this->setEnd(NewEnd);
     return *this;
   }
 
@@ -613,8 +613,8 @@ const SmallVectorImpl<T> &SmallVectorImpl<T>::
   // This allows us to avoid copying them during the grow.
   if (this->capacity() < RHSSize) {
     // Destroy current elements.
-    destroy_range(this->begin(), this->end());
-    setEnd(this->begin());
+    this->destroy_range(this->begin(), this->end());
+    this->setEnd(this->begin());
     CurSize = 0;
     this->grow(RHSSize);
   } else if (CurSize) {
@@ -623,10 +623,11 @@ const SmallVectorImpl<T> &SmallVectorImpl<T>::
   }
 
   // Copy construct the new elements in place.
-  uninitialized_copy(RHS.begin()+CurSize, RHS.end(), this->begin()+CurSize);
+  this->uninitialized_copy(RHS.begin()+CurSize, RHS.end(),
+                           this->begin()+CurSize);
 
   // Set end.
-  setEnd(this->begin()+RHSSize);
+  this->setEnd(this->begin()+RHSSize);
   return *this;
 }
 
