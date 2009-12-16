@@ -180,7 +180,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   AddDefaultPred(MIB);
   MIB.addReg(0); // No write back.
 
-  bool NumRegs = 0;
+  bool NumRegs = false;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (Reg == ARM::LR) {
@@ -192,7 +192,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
       MI = MBB.erase(MI);
     }
     MIB.addReg(Reg, getDefRegState(true));
-    ++NumRegs;
+    NumRegs = true;
   }
 
   // It's illegal to emit pop instruction without operands.
