@@ -233,14 +233,17 @@ namespace {
     /// in one of several ways: if the register is available in a physical
     /// register already, it uses that physical register.  If the value is not
     /// in a physical register, and if there are physical registers available,
-    /// it loads it into a register.  If register pressure is high, and it is
-    /// possible, it tries to fold the load of the virtual register into the
-    /// instruction itself.  It avoids doing this if register pressure is low to
-    /// improve the chance that subsequent instructions can use the reloaded
-    /// value.  This method returns the modified instruction.
+    /// it loads it into a register: PhysReg if that is an available physical
+    /// register, otherwise any physical register of the right class.
+    /// If register pressure is high, and it is possible, it tries to fold the
+    /// load of the virtual register into the instruction itself.  It avoids
+    /// doing this if register pressure is low to improve the chance that
+    /// subsequent instructions can use the reloaded value.  This method
+    /// returns the modified instruction.
     ///
     MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
-                                unsigned OpNum, SmallSet<unsigned, 4> &RRegs);
+                                unsigned OpNum, SmallSet<unsigned, 4> &RRegs,
+                                unsigned PhysReg);
 
     /// ComputeLocalLiveness - Computes liveness of registers within a basic
     /// block, setting the killed/dead flags as appropriate.
@@ -471,15 +474,17 @@ unsigned RALocal::getReg(MachineBasicBlock &MBB, MachineInstr *I,
 /// one of several ways: if the register is available in a physical register
 /// already, it uses that physical register.  If the value is not in a physical
 /// register, and if there are physical registers available, it loads it into a
+/// register: PhysReg if that is an available physical register, otherwise any
 /// register.  If register pressure is high, and it is possible, it tries to
 /// fold the load of the virtual register into the instruction itself.  It
 /// avoids doing this if register pressure is low to improve the chance that
-/// subsequent instructions can use the reloaded value.  This method returns the
-/// modified instruction.
+/// subsequent instructions can use the reloaded value.  This method returns
+/// the modified instruction.
 ///
 MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                      unsigned OpNum,
-                                     SmallSet<unsigned, 4> &ReloadedRegs) {
+                                     SmallSet<unsigned, 4> &ReloadedRegs,
+                                     unsigned PhysReg) {
   unsigned VirtReg = MI->getOperand(OpNum).getReg();
 
   // If the virtual register is already available, just update the instruction
@@ -494,7 +499,11 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // Otherwise, we need to fold it into the current instruction, or reload it.
   // If we have registers available to hold the value, use them.
   const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
-  unsigned PhysReg = getFreeReg(RC);
+  // If we already have a PhysReg (this happens when the instruction is a
+  // reg-to-reg copy with a PhysReg destination) use that.
+  if (!PhysReg || !TargetRegisterInfo::isPhysicalRegister(PhysReg) ||
+      !isPhysRegAvailable(PhysReg))
+    PhysReg = getFreeReg(RC);
   int FrameIndex = getStackSpaceFor(VirtReg, RC);
 
   if (PhysReg) {   // Register is available, allocate it!
@@ -752,6 +761,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         errs() << '\n';
       });
 
+    // Determine whether this is a copy instruction.  The cases where the
+    // source or destination are phys regs are handled specially.
+    unsigned SrcCopyReg, DstCopyReg, SrcCopySubReg, DstCopySubReg;
+    bool isCopy = TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg, 
+                                   SrcCopySubReg, DstCopySubReg);
+
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
     if (TID.ImplicitUses) {
@@ -835,7 +850,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       // here we are looking for only used operands (never def&use)
       if (MO.isReg() && !MO.isDef() && MO.getReg() && !MO.isImplicit() &&
           TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-        MI = reloadVirtReg(MBB, MI, i, ReloadedRegs);
+        MI = reloadVirtReg(MBB, MI, i, ReloadedRegs,
+                           isCopy ? DstCopyReg : 0);
     }
 
     // If this instruction is the last user of this register, kill the
@@ -948,8 +964,17 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         unsigned DestPhysReg;
 
         // If DestVirtReg already has a value, use it.
-        if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
-          DestPhysReg = getReg(MBB, MI, DestVirtReg);
+        if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg))) {
+          // If this is a copy, the source reg is a phys reg, and
+          // that reg is available, use that phys reg for DestPhysReg.
+          if (isCopy &&
+              TargetRegisterInfo::isPhysicalRegister(SrcCopyReg) &&
+              isPhysRegAvailable(SrcCopyReg)) {
+            DestPhysReg = SrcCopyReg;
+            assignVirtToPhysReg(DestVirtReg, DestPhysReg);
+          } else
+            DestPhysReg = getReg(MBB, MI, DestVirtReg);
+        }
         MF->getRegInfo().setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
         getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
@@ -995,9 +1020,9 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Finally, if this is a noop copy instruction, zap it.  (Except that if
     // the copy is dead, it must be kept to avoid messing up liveness info for
     // the register scavenger.  See pr4100.)
-    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
-        SrcReg == DstReg && DeadDefs.empty())
+    if (TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg,
+                         SrcCopySubReg, DstCopySubReg) &&
+        SrcCopyReg == DstCopyReg && DeadDefs.empty())
       MBB.erase(MI);
   }
 
