@@ -1274,7 +1274,7 @@ ReoptimizeBlock:
       // Okay, there is no really great place to put this block.  If, however,
       // the block before this one would be a fall-through if this block were
       // removed, move this block to the end of the function.
-      MachineBasicBlock *PrevTBB, *PrevFBB;
+      MachineBasicBlock *PrevTBB = 0, *PrevFBB = 0;
       SmallVector<MachineOperand, 4> PrevCond;
       if (FallThrough != MF.end() &&
           !TII->AnalyzeBranch(PrevBB, PrevTBB, PrevFBB, PrevCond, true) &&
