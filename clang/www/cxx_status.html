@@ -28,7 +28,7 @@
 
 <p>
 This page tracks the status of C++ support in Clang.<br>
-Currently most of the C++ features are missing; here you can find features that are at least partially supported in Clang. If you are looking to <a href="get_involved.html">get involved with Clang development</a> to help work on support for C++, please also look at our <a href="OpenProjects.html">Open Projects</a> page for some specific ideas.</p>
+Clang implements the majority of C++ features, although there are many bugs  remaining and Clang is not yet generally useful as a C++ compiler. If you are looking to <a href="get_involved.html">get involved with Clang development</a> to help work on support for C++, please also look at our <a href="OpenProjects.html">Open Projects</a> page and the <a href="http://llvm.org/bugs/">LLVM bug tracker</a> for some specific ideas.</p>
 
 
 <!-- Within this table: The colors we're using to color-code our level
@@ -1114,10 +1114,10 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;7.3.3 [namespace.udecl]</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td></td>
+  <td class="complete" align="center"></td>
+  <td class="complete" align="center"></td>
+  <td class="complete" align="center"></td>
+  <td class="na">N/A</td>
   <td></td>
 </tr>
 <tr>
@@ -1139,8 +1139,8 @@ welcome!</p>
 <tr>
   <td>&nbsp;&nbsp;7.5 [dcl.link]</td>
   <td class="complete" align="center"></td>
-  <td class="basic"></td>
-  <td class="basic"></td>
+  <td class="medium"></td>
+  <td class="medium"></td>
   <td></td>
   <td></td>
 </tr>
@@ -1278,10 +1278,10 @@ welcome!</p>
 <tr>
   <td>&nbsp;&nbsp;9.2 [class.mem]</td>
   <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td>Basic parser support for using declarations.</td>
+  <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;9.3 [class.mfct]</td>
@@ -1376,15 +1376,15 @@ welcome!</p>
   <td class="advanced" align="center"></td>  
   <td class="advanced" align="center"></td>  
   <td class="advanced" align="center"></td>  
-  <td class="broken" align="center"></td>
+  <td class="medium" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;10.1 [class.mi]</td>
   <td class="advanced" align="center"></td>  
   <td class="advanced" align="center"></td>  
-  <td class="medium" align="center"></td>  
-  <td class="basic" align="center"></td>
+  <td class="advanced" align="center"></td>  
+  <td class="medium" align="center"></td>
   <td></td>
 </tr>
 <tr>
@@ -1398,10 +1398,10 @@ welcome!</p>
 <tr>
   <td>&nbsp;&nbsp;10.3 [class.virtual]</td>
   <td class="advanced" align="center"></td>  
-  <td class="medium" align="center"></td>  
-  <td class="medium" align="center"></td>  
-  <td class="basic" align="center"></td>
-  <td>Basic layout of classes with virtual functions.</td>
+  <td class="advanced" align="center"></td>  
+  <td class="advanced" align="center"></td>  
+  <td class="medium" align="center"></td>
+  <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;10.4 [class.abstract]</td>
@@ -1487,18 +1487,18 @@ welcome!</p>
 <tr>
   <td>&nbsp;&nbsp;12.1 [class.ctor]</td>
   <td class="advanced" align="center"></td>
-  <td class="medium" align="center"></td>
   <td class="advanced" align="center"></td>
   <td class="advanced" align="center"></td>
-  <td>Most of the semantics of constructors are implemented.</td>
+  <td class="advanced" align="center"></td>
+  <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;12.2 [class.temporary]</td>
   <td class="na" align="center">N/A</td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td>Implementation of temporary objects is in its initial stages.</td>
+  <td class="medium" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;12.3 [class.conv]</td>
@@ -1530,7 +1530,7 @@ welcome!</p>
   <td class="medium" align="center"></td>
   <td class="medium" align="center"></td>
   <td class="medium" align="center"></td>
-  <td>Most of the semantics of destructors are implemented.</td>
+  <td></td>
 </tr>
 <tr><td>&nbsp;&nbsp;12.5 [class.free]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>&nbsp;&nbsp;12.6 [class.init]</td><td></td><td></td><td></td><td></td><td></td></tr>
@@ -1967,57 +1967,57 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;14.6 [temp.res]</td>
-  <td class="medium" align="center"></td>  
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>  
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;14.6.1 [temp.local]</td>
-  <td class="medium" align="center"></td>  
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>  
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;14.6.2 [temp.dep]</td>
   <td class="na" align="center">N/A</td>  
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.2.1 [temp.dep.type]</td>
   <td class="na" align="center">N/A</td>  
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.2.2 [temp.dep.expr]</td>
   <td class="na" align="center">N/A</td>  
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.2.3 [temp.dep.constexpr]</td>
   <td class="na" align="center">N/A</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.2.4 [temp.dep.temp]</td>
   <td class="na" align="center">N/A</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
@@ -2032,24 +2032,24 @@ welcome!</p>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;14.6.4 [temp.dep.res]</td>
   <td class="na" align="center">N/A</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.4.1 [temp.point]</td>
   <td class="na" align="center">N/A</td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td class="medium" align="center"></td>
   <td></td>  
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;14.6.4.2 [temp.dep.candidate]</td>
   <td class="na" align="center">N/A</td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td class="na" align="center"></td>
   <td>Not restricted to functions with external linkage</td>  
 </tr>
@@ -2063,18 +2063,18 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;14.7 [temp.spec]</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="broken" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td></td>  
 </tr>
 <tr>
   <td>&nbsp;&nbsp;&nbsp;&nbsp;14.7.1 [temp.inst]</td>
   <td class="na" align="center">N/A</td>
   <td class="na" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="basic" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td></td>  
 </tr>
 <tr>
@@ -2096,10 +2096,10 @@ welcome!</p>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;14.8 [temp.fct.spec]</td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="broken" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="advanced" align="center"></td>
   <td></td>
 </tr>
 <tr>
@@ -2172,7 +2172,7 @@ welcome!</p>
   <td class="na" align="center">N/A</td>
   <td class="advanced" align="center"></td>
   <td></td>
-  <td>Does not check for existence of copy constructor and destructor, and some other details</td>
+  <td></td>
 </tr>
 <tr>
   <td>&nbsp;&nbsp;15.2 [except.ctor]</td>
