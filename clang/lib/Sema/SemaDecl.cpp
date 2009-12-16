@@ -3504,6 +3504,18 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   Expr *Init = init.takeAs<Expr>();
   assert(Init && "missing initializer");
 
+  // Capture the variable that is being initialized and the style of
+  // initialization.
+  InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
+  
+  // FIXME: Poor source location information.
+  InitializationKind Kind
+    = DirectInit? InitializationKind::CreateDirect(VDecl->getLocation(),
+                                                   Init->getLocStart(),
+                                                   Init->getLocEnd())
+                : InitializationKind::CreateCopy(VDecl->getLocation(),
+                                                 Init->getLocStart());
+  
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
@@ -3514,16 +3526,6 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     } else if (!VDecl->isInvalidDecl()) {
       if (VDecl->getType()->isReferenceType()
           || isa<InitListExpr>(Init)) {
-        InitializedEntity Entity
-          = InitializedEntity::InitializeVariable(VDecl);
-
-        // FIXME: Poor source location information.
-        InitializationKind Kind
-          = DirectInit? InitializationKind::CreateDirect(VDecl->getLocation(),
-                                                         SourceLocation(),
-                                                         SourceLocation())
-                      : InitializationKind::CreateCopy(VDecl->getLocation(),
-                                                       SourceLocation());
         InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
         if (InitSeq) {
           OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
@@ -3540,8 +3542,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
           VDecl->setInvalidDecl();
           return;
         }    
-      } else if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                       VDecl->getDeclName(), DirectInit))
+      } else if (CheckInitializerTypes(Init, DclT, Entity, Kind))
         VDecl->setInvalidDecl();
 
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
@@ -3602,8 +3603,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     if (VDecl->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!VDecl->isInvalidDecl())
-      if (CheckInitializerTypes(Init, DclT, VDecl->getLocation(),
-                                VDecl->getDeclName(), DirectInit))
+      if (CheckInitializerTypes(Init, DclT, Entity, Kind))
         VDecl->setInvalidDecl();
 
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.

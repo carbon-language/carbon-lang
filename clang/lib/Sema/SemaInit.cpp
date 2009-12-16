@@ -135,8 +135,12 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
 }
 
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
-                                 SourceLocation InitLoc,
-                                 DeclarationName InitEntity, bool DirectInit) {
+                                 const InitializedEntity &Entity,
+                                 const InitializationKind &Kind) {
+  SourceLocation InitLoc = Kind.getLocation();
+  DeclarationName InitEntity = Entity.getName();
+  bool DirectInit = (Kind.getKind() == InitializationKind::IK_Direct);
+  
   if (DeclType->isDependentType() ||
       Init->isTypeDependent() || Init->isValueDependent()) {
     // We have either a dependent type or a type- or value-dependent
@@ -1954,6 +1958,24 @@ InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context,
   return Result;
 }
 
+DeclarationName InitializedEntity::getName() const {
+  switch (getKind()) {
+  case EK_Variable:
+  case EK_Parameter:
+  case EK_Member:
+    return VariableOrMember->getDeclName();
+
+  case EK_Result:
+  case EK_Exception:
+  case EK_Temporary:
+  case EK_Base:
+    return DeclarationName();
+  }
+  
+  // Silence GCC warning
+  return DeclarationName();
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization sequence
 //===----------------------------------------------------------------------===//
@@ -2512,7 +2534,7 @@ static void TryConstructorInitialization(Sema &S,
       Constructor = cast<CXXConstructorDecl>(*Con);
     
     if (!Constructor->isInvalidDecl() &&
-        Constructor->isConvertingConstructor(AllowExplicit)) {
+        (AllowExplicit || !Constructor->isExplicit())) {
       if (ConstructorTmpl)
         S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
                                        Args, NumArgs, CandidateSet);
@@ -2573,6 +2595,41 @@ static void TryValueInitialization(Sema &S,
 
   Sequence.AddZeroInitializationStep(Entity.getType().getType());
   Sequence.setSequenceKind(InitializationSequence::ZeroInitialization);
+}
+
+/// \brief Attempt default initialization (C++ [dcl.init]p6).
+static void TryDefaultInitialization(Sema &S,
+                                     const InitializedEntity &Entity,
+                                     const InitializationKind &Kind,
+                                     InitializationSequence &Sequence) {
+  assert(Kind.getKind() == InitializationKind::IK_Default);
+  
+  // C++ [dcl.init]p6:
+  //   To default-initialize an object of type T means:
+  //     - if T is an array type, each element is default-initialized;
+  QualType DestType = Entity.getType().getType();
+  while (const ArrayType *Array = S.Context.getAsArrayType(DestType))
+    DestType = Array->getElementType();
+         
+  //     - if T is a (possibly cv-qualified) class type (Clause 9), the default
+  //       constructor for T is called (and the initialization is ill-formed if
+  //       T has no accessible default constructor);
+  if (DestType->isRecordType()) {
+    // FIXME: If a program calls for the default initialization of an object of
+    // a const-qualified type T, T shall be a class type with a user-provided 
+    // default constructor.
+    return TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType,
+                                        Sequence);
+  }
+  
+  //     - otherwise, no initialization is performed.
+  Sequence.setSequenceKind(InitializationSequence::NoInitialization);
+  
+  //   If a program calls for the default initialization of an object of
+  //   a const-qualified type T, T shall be a class type with a user-provided 
+  //   default constructor.
+  if (DestType.isConstQualified())
+    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
 }
 
 /// \brief Attempt a user-defined conversion between two types (C++ [dcl.init]),
@@ -2749,7 +2806,7 @@ InitializationSequence::InitializationSequence(Sema &S,
 
   QualType SourceType;
   Expr *Initializer = 0;
-  if (Kind.getKind() == InitializationKind::IK_Copy) {
+  if (NumArgs == 1) {
     Initializer = Args[0];
     if (!isa<InitListExpr>(Initializer))
       SourceType = Initializer->getType();
@@ -2785,8 +2842,15 @@ InitializationSequence::InitializationSequence(Sema &S,
   }
   
   //     - If the initializer is (), the object is value-initialized.
-  if (Kind.getKind() == InitializationKind::IK_Value) {
+  if (Kind.getKind() == InitializationKind::IK_Value ||
+      (Kind.getKind() == InitializationKind::IK_Direct && NumArgs == 0)) {
     TryValueInitialization(S, Entity, Kind, *this);
+    return;
+  }
+  
+  // Handle default initialization.
+  if (Kind.getKind() == InitializationKind::IK_Default){
+    TryDefaultInitialization(S, Entity, Kind, *this);
     return;
   }
   
@@ -2824,9 +2888,15 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
   
+  if (NumArgs > 1) {
+    SetFailed(FK_TooManyInitsForScalar);
+    return;
+  }
+  assert(NumArgs == 1 && "Zero-argument case handled above");
+  
   //    - Otherwise, if the source type is a (possibly cv-qualified) class 
   //      type, conversion functions are considered.
-  if (SourceType->isRecordType()) {
+  if (!SourceType.isNull() && SourceType->isRecordType()) {
     TryUserDefinedConversion(S, Entity, Kind, Initializer, *this);
     return;
   }
@@ -2836,6 +2906,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   //      conversions (Clause 4) will be used, if necessary, to convert the
   //      initializer expression to the cv-unqualified version of the 
   //      destination type; no user-defined conversions are considered.
+  setSequenceKind(StandardConversion);
   TryImplicitConversion(S, Entity, Kind, Initializer, *this);
 }
 
@@ -2909,23 +2980,41 @@ InitializationSequence::Perform(Sema &S,
                                                  SourceLocation()));
   }
 
+  if (SequenceKind == NoInitialization)
+    return S.Owned((Expr *)0);
+  
   QualType DestType = Entity.getType().getType().getNonReferenceType();
   if (ResultType)
     *ResultType = Entity.getType().getType();
 
-  Sema::OwningExprResult CurInit(S);
-  // For copy initialization and any other initialization forms that
-  // only have a single initializer, we start with the (only)
-  // initializer we have.
-  // FIXME: DPG is not happy about this. There's confusion regarding whether
-  // we're supposed to start the conversion from the solitary initializer or
-  // from the set of arguments.
-  if (Kind.getKind() == InitializationKind::IK_Copy ||
-      SequenceKind != ConstructorInitialization) {
-    assert(Args.size() == 1);
-    CurInit = Sema::OwningExprResult(S, Args.release()[0]);
-    if (CurInit.isInvalid())
-      return S.ExprError();
+  Sema::OwningExprResult CurInit = S.Owned((Expr *)0);
+  
+  assert(!Steps.empty() && "Cannot have an empty initialization sequence");
+  
+  // For initialization steps that start with a single initializer, 
+  // grab the only argument out the Args and place it into the "current"
+  // initializer.
+  switch (Steps.front().Kind) {
+    case SK_ResolveAddressOfOverloadedFunction:
+    case SK_CastDerivedToBaseRValue:
+    case SK_CastDerivedToBaseLValue:
+    case SK_BindReference:
+    case SK_BindReferenceToTemporary:
+    case SK_UserConversion:
+    case SK_QualificationConversionLValue:
+    case SK_QualificationConversionRValue:
+    case SK_ConversionSequence:
+    case SK_ListInitialization:
+      assert(Args.size() == 1);
+      CurInit = Sema::OwningExprResult(S, 
+                                       ((Expr **)(Args.get()))[0]->Retain());
+      if (CurInit.isInvalid())
+        return S.ExprError();
+      break;
+      
+    case SK_ConstructorInitialization:
+    case SK_ZeroInitialization:
+      break;
   }
     
   // Walk through the computed steps for the initialization sequence, 
@@ -2936,7 +3025,7 @@ InitializationSequence::Perform(Sema &S,
       return S.ExprError();
     
     Expr *CurInitExpr = (Expr *)CurInit.get();
-    QualType SourceType = CurInitExpr->getType();
+    QualType SourceType = CurInitExpr? CurInitExpr->getType() : QualType();
     
     switch (Step->Kind) {
     case SK_ResolveAddressOfOverloadedFunction:
@@ -3100,7 +3189,6 @@ InitializationSequence::Perform(Sema &S,
       if (CurInit.isInvalid())
         return S.ExprError();
           
-      CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
       break;
     }
         
@@ -3228,12 +3316,16 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
 
   case FK_TooManyInitsForScalar: {
-    InitListExpr *InitList = cast<InitListExpr>(Args[0]);
+    SourceRange R;
+
+    if (InitListExpr *InitList = dyn_cast<InitListExpr>(Args[0]))
+      R = SourceRange(InitList->getInit(1)->getLocStart(),
+                      InitList->getLocEnd());
+    else
+      R = SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
 
     S.Diag(Kind.getLocation(), diag::err_excess_initializers)
-      << /*scalar=*/2 
-      << SourceRange(InitList->getInit(1)->getLocStart(),
-                     InitList->getLocEnd());
+      << /*scalar=*/2 << R;
     break;
   }
 
@@ -3290,6 +3382,11 @@ bool InitializationSequence::Diagnose(Sema &S,
     }
     break;
   }
+      
+  case FK_DefaultInitOfConst:
+    S.Diag(Kind.getLocation(), diag::err_default_init_const)
+      << DestType;
+    break;
   }
   
   return true;

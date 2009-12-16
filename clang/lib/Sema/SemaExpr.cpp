@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInit.h"
 #include "Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -3531,8 +3532,12 @@ Action::OwningExprResult
 Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc, ExprArg InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
-  //FIXME: Preserve type source info.
-  QualType literalType = GetTypeFromParser(Ty);
+  
+  TypeSourceInfo *TInfo = 0;
+  QualType literalType = GetTypeFromParser(Ty, &TInfo);  
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(literalType, LParenLoc);
+  
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr.get());
@@ -3548,8 +3553,12 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                                        literalExpr->getSourceRange().getEnd())))
     return ExprError();
 
-  if (CheckInitializerTypes(literalExpr, literalType, LParenLoc,
-                            DeclarationName(), /*FIXME:DirectInit=*/false))
+  InitializedEntity Entity
+    = InitializedEntity::InitializeTemporary(TInfo->getTypeLoc());
+  InitializationKind Kind
+    = InitializationKind::CreateCast(SourceRange(LParenLoc, RParenLoc), 
+                                     /*IsCStyleCast=*/true);
+  if (CheckInitializerTypes(literalExpr, literalType, Entity, Kind))
     return ExprError();
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
@@ -3558,6 +3567,8 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
       return ExprError();
   }
   InitExpr.release();
+  
+  // FIXME: Store the TInfo to preserve type information better.
   return Owned(new (Context) CompoundLiteralExpr(LParenLoc, literalType,
                                                  literalExpr, isFileScope));
 }

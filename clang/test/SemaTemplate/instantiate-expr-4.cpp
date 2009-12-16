@@ -21,8 +21,8 @@ struct FunctionalCast0 {
 
 template struct FunctionalCast0<5>;
 
-struct X { // expected-note 2 {{candidate function}}
-  X(int, int); // expected-note 2 {{candidate function}}
+struct X { // expected-note 3 {{candidate function}}
+  X(int, int); // expected-note 3 {{candidate function}}
 };
 
 template<int N, int M>

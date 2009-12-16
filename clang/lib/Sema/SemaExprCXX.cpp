@@ -425,74 +425,70 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   
   bool Init = ConstructorLParen.isValid();
   // --- Choosing a constructor ---
-  // C++ 5.3.4p15
-  // 1) If T is a POD and there's no initializer (ConstructorLParen is invalid)
-  //   the object is not initialized. If the object, or any part of it, is
-  //   const-qualified, it's an error.
-  // 2) If T is a POD and there's an empty initializer, the object is value-
-  //   initialized.
-  // 3) If T is a POD and there's one initializer argument, the object is copy-
-  //   constructed.
-  // 4) If T is a POD and there's more initializer arguments, it's an error.
-  // 5) If T is not a POD, the initializer arguments are used as constructor
-  //   arguments.
-  //
-  // Or by the C++0x formulation:
-  // 1) If there's no initializer, the object is default-initialized according
-  //    to C++0x rules.
-  // 2) Otherwise, the object is direct-initialized.
   CXXConstructorDecl *Constructor = 0;
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
-  const RecordType *RT;
   unsigned NumConsArgs = ConstructorArgs.size();
   ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
 
-  if (AllocType->isDependentType() || 
-      Expr::hasAnyTypeDependentArguments(ConsArgs, NumConsArgs)) {
-    // Skip all the checks.
-  } else if ((RT = AllocType->getAs<RecordType>()) &&
-             !AllocType->isAggregateType()) {
-    InitializationKind InitKind = InitializationKind::CreateDefault(TypeLoc);
-    if (NumConsArgs > 0)
-      InitKind = InitializationKind::CreateDirect(TypeLoc,
-                                                  PlacementLParen, 
-                                                  PlacementRParen);
-    Constructor = PerformInitializationByConstructor(
-                      AllocType, move(ConstructorArgs),
-                      TypeLoc,
-                      SourceRange(TypeLoc, ConstructorRParen),
-                      RT->getDecl()->getDeclName(),
-                      InitKind,
-                      ConvertedConstructorArgs);
-    if (!Constructor)
+  if (!AllocType->isDependentType() &&
+      !Expr::hasAnyTypeDependentArguments(ConsArgs, NumConsArgs)) {
+    // C++0x [expr.new]p15:
+    //   A new-expression that creates an object of type T initializes that
+    //   object as follows:
+    InitializationKind Kind
+    //     - If the new-initializer is omitted, the object is default-
+    //       initialized (8.5); if no initialization is performed,
+    //       the object has indeterminate value
+      = !Init? InitializationKind::CreateDefault(TypeLoc)
+    //     - Otherwise, the new-initializer is interpreted according to the 
+    //       initialization rules of 8.5 for direct-initialization.
+             : InitializationKind::CreateDirect(TypeLoc,
+                                                ConstructorLParen, 
+                                                ConstructorRParen);
+    
+    // FIXME: We shouldn't have to fake this.
+    TypeSourceInfo *TInfo
+      = Context.getTrivialTypeSourceInfo(AllocType, TypeLoc);
+    InitializedEntity Entity
+      = InitializedEntity::InitializeTemporary(TInfo->getTypeLoc());
+    InitializationSequence InitSeq(*this, Entity, Kind, ConsArgs, NumConsArgs);
+    
+    if (!InitSeq) {
+      InitSeq.Diagnose(*this, Entity, Kind, ConsArgs, NumConsArgs);
       return ExprError();
+    }
 
-    // Take the converted constructor arguments and use them for the new 
-    // expression.
+    OwningExprResult FullInit = InitSeq.Perform(*this, Entity, Kind, 
+                                                move(ConstructorArgs));
+    if (FullInit.isInvalid())
+      return ExprError();
+    
+    // FullInit is our initializer; walk through it to determine if it's a 
+    // constructor call, which CXXNewExpr handles directly.
+    if (Expr *FullInitExpr = (Expr *)FullInit.get()) {
+      if (CXXBindTemporaryExpr *Binder
+            = dyn_cast<CXXBindTemporaryExpr>(FullInitExpr))
+        FullInitExpr = Binder->getSubExpr();
+      if (CXXConstructExpr *Construct
+                    = dyn_cast<CXXConstructExpr>(FullInitExpr)) {
+        Constructor = Construct->getConstructor();
+        for (CXXConstructExpr::arg_iterator A = Construct->arg_begin(),
+                                         AEnd = Construct->arg_end();
+             A != AEnd; ++A)
+          ConvertedConstructorArgs.push_back(A->Retain());
+      } else {
+        // Take the converted initializer.
+        ConvertedConstructorArgs.push_back(FullInit.release());
+      }
+    } else {
+      // No initialization required.
+    }
+    
+    // Take the converted arguments and use them for the new expression.
     NumConsArgs = ConvertedConstructorArgs.size();
     ConsArgs = (Expr **)ConvertedConstructorArgs.take();
-  } else {
-    if (!Init) {
-      // FIXME: Check that no subpart is const.
-      if (AllocType.isConstQualified())
-        return ExprError(Diag(StartLoc, diag::err_new_uninitialized_const)
-                           << TypeRange);
-    } else if (NumConsArgs == 0) {
-      // Object is value-initialized. Do nothing.
-    } else if (NumConsArgs == 1) {
-      // Object is direct-initialized.
-      // FIXME: What DeclarationName do we pass in here?
-      if (CheckInitializerTypes(ConsArgs[0], AllocType, StartLoc,
-                                DeclarationName() /*AllocType.getAsString()*/,
-                                /*DirectInit=*/true))
-        return ExprError();
-    } else {
-      return ExprError(Diag(StartLoc,
-                            diag::err_builtin_direct_init_more_than_one_arg)
-        << SourceRange(ConstructorLParen, ConstructorRParen));
-    }
   }
-
+  
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
   
   PlacementArgs.release();

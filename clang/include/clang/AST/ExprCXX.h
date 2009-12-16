@@ -489,6 +489,7 @@ public:
 class CXXConstructExpr : public Expr {
   CXXConstructorDecl *Constructor;
 
+  SourceLocation Loc;
   bool Elidable;
 
   Stmt **Args;
@@ -496,6 +497,7 @@ class CXXConstructExpr : public Expr {
 
 protected:
   CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
+                   SourceLocation Loc,
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs);
   ~CXXConstructExpr() { }
@@ -508,12 +510,16 @@ public:
   CXXConstructExpr(EmptyShell Empty, ASTContext &C, unsigned numargs);
   
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
+                                  SourceLocation Loc,
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs);
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
   void setConstructor(CXXConstructorDecl *C) { Constructor = C; }
+  
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation Loc) { this->Loc = Loc; }
   
   /// \brief Whether this construction is elidable.
   bool isElidable() const { return Elidable; }
@@ -549,9 +555,9 @@ public:
   virtual SourceRange getSourceRange() const { 
     // FIXME: Should we know where the parentheses are, if there are any?
     if (NumArgs == 0)
-      return SourceRange(); 
+      return SourceRange(Loc); 
     
-    return SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
+    return SourceRange(Loc, Args[NumArgs - 1]->getLocEnd());
   }
 
   static bool classof(const Stmt *T) {

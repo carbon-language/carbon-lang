@@ -59,12 +59,12 @@ void bad_news(int *ip)
   (void)new int[1][i]; // expected-error {{only the first dimension}}
   (void)new (int[1][i]); // expected-error {{only the first dimension}}
   (void)new (int[i]); // expected-error {{when type is in parentheses}}
-  (void)new int(*(S*)0); // expected-error {{incompatible type initializing}}
-  (void)new int(1, 2); // expected-error {{initializer of a builtin type can only take one argument}}
+  (void)new int(*(S*)0); // expected-error {{no viable conversion from 'struct S' to 'int'}}
+  (void)new int(1, 2); // expected-error {{excess elements in scalar initializer}}
   (void)new S(1); // expected-error {{no matching constructor}}
-  (void)new S(1, 1); // expected-error {{call to constructor of 'S' is ambiguous}}
-  (void)new const int; // expected-error {{must provide an initializer}}
-  (void)new float*(ip); // expected-error {{incompatible type initializing 'int *', expected 'float *'}}
+  (void)new S(1, 1); // expected-error {{call to constructor of 'struct S' is ambiguous}}
+  (void)new const int; // expected-error {{default initialization of an object of const type 'int const'}}
+  (void)new float*(ip); // expected-error {{cannot initialize a value of type 'float *' with an lvalue of type 'int *'}}
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}

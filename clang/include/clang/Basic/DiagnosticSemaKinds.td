@@ -1818,8 +1818,8 @@ def err_new_paren_array_nonconst : Error<
   "when type is in parentheses, array cannot have dynamic size">;
 def err_array_size_not_integral : Error<
   "array size expression must have integral or enumerated type, not %0">;
-def err_new_uninitialized_const : Error<
-  "must provide an initializer if the allocated object is 'const'">;
+def err_default_init_const : Error<
+  "default initialization of an object of const type %0">;  
 def err_delete_operand : Error<"cannot delete expression of type %0">;
 def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;

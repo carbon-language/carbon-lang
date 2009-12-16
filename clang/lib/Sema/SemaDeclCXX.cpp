@@ -125,8 +125,10 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
   //   the same semantic constraints as the initializer expression in
   //   a declaration of a variable of the parameter type, using the
   //   copy-initialization semantics (8.5).
-  if (CheckInitializerTypes(Arg, ParamType, EqualLoc,
-                            Param->getDeclName(), /*DirectInit=*/false))
+  InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
+  InitializationKind Kind = InitializationKind::CreateCopy(Param->getLocation(),
+                                                           EqualLoc);
+  if (CheckInitializerTypes(Arg, ParamType, Entity, Kind))
     return true;
 
   Arg = MaybeCreateCXXExprWithTemporaries(Arg);
@@ -3775,7 +3777,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   Expr **Exprs = (Expr **)ExprArgs.release();
 
   MarkDeclarationReferenced(ConstructLoc, Constructor);
-  return Owned(CXXConstructExpr::Create(Context, DeclInitType, Constructor,
+  return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
+                                        Constructor,
                                         Elidable, Exprs, NumExprs));
 }
 

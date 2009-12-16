@@ -137,8 +137,8 @@ public:
   }
   
   /// \brief Create the initialization entity for a temporary.
-  static InitializedEntity InitializeTemporary(EntityKind Kind, TypeLoc TL) {
-    return InitializedEntity(Kind, SourceLocation(), TL);
+  static InitializedEntity InitializeTemporary(TypeLoc TL) {
+    return InitializedEntity(EK_Temporary, SourceLocation(), TL);
   }
   
   /// \brief Create the initialization entity for a base class subobject.
@@ -155,6 +155,9 @@ public:
   
   /// \brief Retrieve type being initialized.
   TypeLoc getType() const { return TL; }
+  
+  /// \brief Retrieve the name of the entity being initialized.
+  DeclarationName getName() const;
   
   /// \brief Determine the location of the 'return' keyword when initializing
   /// the result of a function call.
@@ -319,7 +322,13 @@ public:
     ListInitialization,
     
     /// \brief Zero-initialization.
-    ZeroInitialization
+    ZeroInitialization,
+    
+    /// \brief No initialization required.
+    NoInitialization,
+    
+    /// \brief Standard conversion sequence.
+    StandardConversion
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -420,7 +429,9 @@ public:
     /// \brief Overloading for a user-defined conversion failed.
     FK_UserConversionOverloadFailed,
     /// \brief Overloaded for initialization by constructor failed.
-    FK_ConstructorOverloadFailed
+    FK_ConstructorOverloadFailed,
+    /// \brief Default-initialization of a 'const' object.
+    FK_DefaultInitOfConst
   };
   
 private:

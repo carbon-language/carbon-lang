@@ -372,26 +372,28 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                Expr **Args,
                                                unsigned NumArgs,
                                                SourceLocation rParenLoc)
-  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, writtenTy, Cons,
-                     false, Args, NumArgs),
+  : CXXConstructExpr(C, CXXTemporaryObjectExprClass, writtenTy, tyBeginLoc,
+                     Cons, false, Args, NumArgs),
   TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
+                                           SourceLocation Loc,
                                            CXXConstructorDecl *D, bool Elidable,
                                            Expr **Args, unsigned NumArgs) {
-  return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, D, Elidable,
-                                  Args, NumArgs);
+  return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
+                                  Elidable, Args, NumArgs);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
+                                   SourceLocation Loc,
                                    CXXConstructorDecl *D, bool elidable,
                                    Expr **args, unsigned numargs)
 : Expr(SC, T,
        T->isDependentType(),
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
-  Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
+  Constructor(D), Loc(Loc), Elidable(elidable), Args(0), NumArgs(numargs) {
     if (NumArgs) {
       Args = new (C) Stmt*[NumArgs];
 
