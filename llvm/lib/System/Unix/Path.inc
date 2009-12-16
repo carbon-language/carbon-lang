@@ -16,7 +16,6 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/SmallVector.h"
 #include "Unix.h"
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -859,18 +858,15 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
 
   // Append an XXXXXX pattern to the end of the file for use with mkstemp,
   // mktemp or our own implementation.
-  SmallVector<char, 128> Buf;
-  Buf.resize(path.size()+8);
-  char *FNBuffer = Buf.data();
-    path.copy(FNBuffer,path.size());
+  std::string Buf(path);
   if (isDirectory())
-    strcpy(FNBuffer+path.size(), "/XXXXXX");
+    Buf += "/XXXXXX";
   else
-    strcpy(FNBuffer+path.size(), "-XXXXXX");
+    Buf += "-XXXXXX";
 
 #if defined(HAVE_MKSTEMP)
   int TempFD;
-  if ((TempFD = mkstemp(FNBuffer)) == -1)
+  if ((TempFD = mkstemp((char*)Buf.c_str())) == -1)
     return MakeErrMsg(ErrMsg, path + ": can't make unique filename");
 
   // We don't need to hold the temp file descriptor... we will trust that no one
@@ -878,21 +874,21 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   close(TempFD);
 
   // Save the name
-  path = FNBuffer;
+  path = Buf;
 #elif defined(HAVE_MKTEMP)
   // If we don't have mkstemp, use the old and obsolete mktemp function.
-  if (mktemp(FNBuffer) == 0)
+  if (mktemp(Buf.c_str()) == 0)
     return MakeErrMsg(ErrMsg, path + ": can't make unique filename");
 
   // Save the name
-  path = FNBuffer;
+  path = Buf;
 #else
   // Okay, looks like we have to do it all by our lonesome.
   static unsigned FCounter = 0;
   unsigned offset = path.size() + 1;
-  while ( FCounter < 999999 && exists()) {
-    sprintf(FNBuffer+offset,"%06u",++FCounter);
-    path = FNBuffer;
+  while (FCounter < 999999 && exists()) {
+    sprintf(Buf.data()+offset, "%06u", ++FCounter);
+    path = Buf;
   }
   if (FCounter > 999999)
     return MakeErrMsg(ErrMsg,
