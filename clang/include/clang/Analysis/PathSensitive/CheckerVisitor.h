@@ -53,20 +53,20 @@ public:
                                          static_cast<const BinaryOperator*>(S));
         break;
 
-#define PREVISIT(NAME) \
+#define PREVISIT(NAME, FALLBACK) \
 case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->PreVisit ## NAME(C,static_cast<const NAME*>(S));\
 break;
 #include "clang/Analysis/PathSensitive/CheckerVisitor.def"
     }
   }
-    
+  
   void PostVisit(CheckerContext &C, const Stmt *S) {
     switch (S->getStmtClass()) {
       default:
         assert(false && "Unsupport statement.");
         return;
-#define POSTVISIT(NAME) \
+#define POSTVISIT(NAME, FALLBACK) \
 case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->\
 PostVisit ## NAME(C,static_cast<const NAME*>(S));\
@@ -75,12 +75,19 @@ break;
     }
   }
 
-#define PREVISIT(NAME) \
-void PreVisit ## NAME(CheckerContext &C, const NAME* S) {}
+  void PreVisitStmt(CheckerContext &C, const Stmt *S) {}
+  void PostVisitStmt(CheckerContext &C, const Stmt *S) {}
+  
+#define PREVISIT(NAME, FALLBACK) \
+void PreVisit ## NAME(CheckerContext &C, const NAME* S) {\
+  PreVisit ## FALLBACK(C, S);\
+}
 #include "clang/Analysis/PathSensitive/CheckerVisitor.def"
       
-#define POSTVISIT(NAME) \
-void PostVisit ## NAME(CheckerContext &C, const NAME* S) {}
+#define POSTVISIT(NAME, FALLBACK) \
+void PostVisit ## NAME(CheckerContext &C, const NAME* S) {\
+  PostVisit ## FALLBACK(C, S);\
+}
 #include "clang/Analysis/PathSensitive/CheckerVisitor.def"
 };
 

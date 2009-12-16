@@ -12,24 +12,26 @@
 //===---------------------------------------------------------------------===//
 
 #ifndef PREVISIT
-#define PREVISIT(NODE)
+#define PREVISIT(NODE, FALLBACK)
 #endif
 
 #ifndef POSTVISIT
-#define POSTVISIT(NODE)
+#define POSTVISIT(NODE, FALLBACK)
 #endif
 
-PREVISIT(ArraySubscriptExpr)
-PREVISIT(BinaryOperator)
-PREVISIT(CallExpr)
-PREVISIT(CastExpr)
-PREVISIT(DeclStmt)
-PREVISIT(ObjCMessageExpr)
-PREVISIT(ReturnStmt)
+PREVISIT(ArraySubscriptExpr, Stmt)
+PREVISIT(BinaryOperator, Stmt)
+PREVISIT(CallExpr, Stmt)
+PREVISIT(CastExpr, Stmt)
+PREVISIT(CXXOperatorCallExpr, CallExpr)
+PREVISIT(DeclStmt, Stmt)
+PREVISIT(ObjCMessageExpr, Stmt)
+PREVISIT(ReturnStmt, Stmt)
 
-POSTVISIT(CallExpr)
-POSTVISIT(BlockExpr)
-POSTVISIT(BinaryOperator)
+POSTVISIT(CallExpr, Stmt)
+POSTVISIT(CXXOperatorCallExpr, CallExpr)
+POSTVISIT(BlockExpr, Stmt)
+POSTVISIT(BinaryOperator, Stmt)
 
 #undef PREVISIT
 #undef POSTVISIT
