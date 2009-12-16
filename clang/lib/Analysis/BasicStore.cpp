@@ -479,15 +479,11 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
       const Decl& CD = *InitLoc->getDecl();
       if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(&CD)) {
         if (MD->getSelfDecl() == PD) {
-          // FIXME: Just use a symbolic region, and remove ObjCObjectRegion
-          // entirely.
-          const ObjCObjectRegion *SelfRegion =
-            MRMgr.getObjCObjectRegion(MD->getClassInterface(),
-                                      MRMgr.getHeapRegion());
-
-          St = BindInternal(St, ValMgr.makeLoc(MRMgr.getVarRegion(PD, InitLoc)),
-                            ValMgr.makeLoc(SelfRegion));
-
+          // FIXME: Add type constraints (when they become available) to
+          // SelfRegion?  (i.e., it implements MD->getClassInterface()).
+          const MemRegion *SelfRegion = MRMgr.getVarRegion(PD, InitLoc);
+          St = BindInternal(St, ValMgr.makeLoc(SelfRegion),
+                            ValMgr.getRegionValueSymbolVal(SelfRegion));
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
           St = scanForIvars(MD->getBody(), PD, SelfRegion, St);
