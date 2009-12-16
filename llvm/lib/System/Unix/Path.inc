@@ -414,21 +414,19 @@ Path::getSuffix() const {
     return path.substr(dot + 1);
 }
 
-bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
+bool Path::getMagicNumber(std::string &Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
-  SmallVector<char, 128> Buf;
-  Buf.resize(1 + len);
-  char* buf = Buf.data();
+  char Buf[1025];
   int fd = ::open(path.c_str(), O_RDONLY);
   if (fd < 0)
     return false;
-  ssize_t bytes_read = ::read(fd, buf, len);
+  ssize_t bytes_read = ::read(fd, Buf, len);
   ::close(fd);
   if (ssize_t(len) != bytes_read) {
     Magic.clear();
     return false;
   }
-  Magic.assign(buf,len);
+  Magic.assign(Buf, len);
   return true;
 }
 
