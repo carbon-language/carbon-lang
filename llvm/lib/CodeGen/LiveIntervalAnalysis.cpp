@@ -415,36 +415,35 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // first redefinition of the vreg that we have seen, go back and change
       // the live range in the PHI block to be a different value number.
       if (interval.containsOneValue()) {
-        // Remove the old range that we now know has an incorrect number.
+
         VNInfo *VNI = interval.getValNumInfo(0);
-        MachineInstr *Killer = vi.Kills[0];
-        SlotIndex Start = getMBBStartIdx(Killer->getParent());
-        SlotIndex End = getInstructionIndex(Killer).getDefIndex();
-        DEBUG({
-            errs() << " Removing [" << Start << "," << End << "] from: ";
-            interval.print(errs(), tri_);
-            errs() << "\n";
-          });
-        interval.removeRange(Start, End);        
-        assert(interval.ranges.size() == 1 &&
-               "Newly discovered PHI interval has >1 ranges.");
+        // Phi elimination may have reused the register for multiple identical
+        // phi nodes. There will be a kill per phi. Remove the old ranges that
+        // we now know have an incorrect number.
+        for (unsigned ki=0, ke=vi.Kills.size(); ki != ke; ++ki) {
+          MachineInstr *Killer = vi.Kills[ki];
+          SlotIndex Start = getMBBStartIdx(Killer->getParent());
+          SlotIndex End = getInstructionIndex(Killer).getDefIndex();
+          DEBUG({
+              errs() << "\n\t\trenaming [" << Start << "," << End << "] in: ";
+              interval.print(errs(), tri_);
+            });
+          interval.removeRange(Start, End);
+
+          // Replace the interval with one of a NEW value number.  Note that
+          // this value number isn't actually defined by an instruction, weird
+          // huh? :)
+          LiveRange LR(Start, End,
+                       interval.getNextValue(SlotIndex(Start, true),
+                                             0, false, VNInfoAllocator));
+          LR.valno->setIsPHIDef(true);
+          interval.addRange(LR);
+          LR.valno->addKill(End);
+        }
+
         MachineBasicBlock *killMBB = getMBBFromIndex(VNI->def);
         VNI->addKill(indexes_->getTerminatorGap(killMBB));
         VNI->setHasPHIKill(true);
-        DEBUG({
-            errs() << " RESULT: ";
-            interval.print(errs(), tri_);
-          });
-
-        // Replace the interval with one of a NEW value number.  Note that this
-        // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End,
-                     interval.getNextValue(SlotIndex(getMBBStartIdx(Killer->getParent()), true),
-                       0, false, VNInfoAllocator));
-        LR.valno->setIsPHIDef(true);
-        DEBUG(errs() << " replace range with " << LR);
-        interval.addRange(LR);
-        LR.valno->addKill(End);
         DEBUG({
             errs() << " RESULT: ";
             interval.print(errs(), tri_);
