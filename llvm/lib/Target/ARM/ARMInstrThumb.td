@@ -515,7 +515,7 @@ def tCMN : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
                 "cmn", "\t$lhs, $rhs",
                 [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>,
            T1DataProcessing<0b1011>;
-def tCMNZ : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
+def tCMNz : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
                  "cmn", "\t$lhs, $rhs",
                  [(ARMcmpZ tGPR:$lhs, (ineg tGPR:$rhs))]>,
             T1DataProcessing<0b1011>;
