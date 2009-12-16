@@ -807,6 +807,8 @@ public:
   llvm::Value* EmitCXXTypeidExpr(const CXXTypeidExpr *E);
   llvm::Value *EmitDynamicCast(llvm::Value *V, const CXXDynamicCastExpr *DCE);
 
+  void EmitCheck(llvm::Value *, unsigned Size);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -920,6 +922,12 @@ public:
   /// variable length type, this is not possible.
   ///
   LValue EmitLValue(const Expr *E);
+
+  /// EmitCheckedLValue - Same as EmitLValue but additionally we generate
+  /// checking code to guard against undefined behavior.  This is only
+  /// suitable when we know that the address will be used to access the
+  /// object.
+  LValue EmitCheckedLValue(const Expr *E);
 
   /// EmitLoadOfScalar - Load a scalar value from an address, taking
   /// care to appropriately convert from the memory representation to

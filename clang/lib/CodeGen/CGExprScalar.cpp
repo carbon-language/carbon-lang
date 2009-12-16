@@ -69,6 +69,7 @@ public:
 
   const llvm::Type *ConvertType(QualType T) { return CGF.ConvertType(T); }
   LValue EmitLValue(const Expr *E) { return CGF.EmitLValue(E); }
+  LValue EmitCheckedLValue(const Expr *E) { return CGF.EmitCheckedLValue(E); }
 
   Value *EmitLoadOfLValue(LValue LV, QualType T) {
     return CGF.EmitLoadOfLValue(LV, T).getScalarVal();
@@ -78,7 +79,7 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   Value *EmitLoadOfLValue(const Expr *E) {
-    return EmitLoadOfLValue(EmitLValue(E), E->getType());
+    return EmitLoadOfLValue(EmitCheckedLValue(E), E->getType());
   }
 
   /// EmitConversionToBool - Convert the specified expression value to a
@@ -1217,7 +1218,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   OpInfo.Ty = E->getComputationResultType();
   OpInfo.E = E;
   // Load/convert the LHS.
-  LValue LHSLV = EmitLValue(E->getLHS());
+  LValue LHSLV = EmitCheckedLValue(E->getLHS());
   OpInfo.LHS = EmitLoadOfLValue(LHSLV, LHSTy);
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy,
                                     E->getComputationLHSType());
@@ -1654,7 +1655,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // __block variables need to have the rhs evaluated first, plus this should
   // improve codegen just a little.
   Value *RHS = Visit(E->getRHS());
-  LValue LHS = EmitLValue(E->getLHS());
+  LValue LHS = EmitCheckedLValue(E->getLHS());
 
   // Store the value into the LHS.  Bit-fields are handled specially
   // because the result is altered by the store, i.e., [C99 6.5.16p1]

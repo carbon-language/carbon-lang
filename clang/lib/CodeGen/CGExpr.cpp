@@ -208,6 +208,34 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
   return cast<llvm::ConstantInt>(Elts->getOperand(Idx))->getZExtValue();
 }
 
+void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
+  if (!CatchUndefined)
+    return;
+
+  const llvm::IntegerType *Size_tTy
+    = llvm::IntegerType::get(VMContext, LLVMPointerWidth);
+  Address = Builder.CreateBitCast(Address, PtrToInt8Ty);
+
+  const llvm::Type *ResType[] = {
+    Size_tTy
+  };
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, ResType, 1);
+  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
+    CGM.getTypes().ConvertType(CGM.getContext().IntTy));
+  // In time, people may want to control this and use a 1 here.
+  llvm::Value *Arg = llvm::ConstantInt::get(IntTy, 0);
+  llvm::Value *C = Builder.CreateCall2(F, Address, Arg);
+  llvm::BasicBlock *Cont = createBasicBlock();
+  llvm::BasicBlock *Check = createBasicBlock();
+  llvm::Value *NegativeOne = llvm::ConstantInt::get(Size_tTy, -1ULL);
+  Builder.CreateCondBr(Builder.CreateICmpEQ(C, NegativeOne), Cont, Check);
+    
+  EmitBlock(Check);
+  Builder.CreateCondBr(Builder.CreateICmpUGE(C,
+                                        llvm::ConstantInt::get(Size_tTy, Size)),
+                       Cont, getTrapBB());
+  EmitBlock(Cont);
+}
 
 //===----------------------------------------------------------------------===//
 //                         LValue Expression Emission
@@ -243,6 +271,13 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
   llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
   return LValue::MakeAddr(llvm::UndefValue::get(Ty),
                           MakeQualifiers(E->getType()));
+}
+
+LValue CodeGenFunction::EmitCheckedLValue(const Expr *E) {
+  LValue LV = EmitLValue(E);
+  if (!isa<DeclRefExpr>(E) && !LV.isBitfield() && LV.isSimple())
+    EmitCheck(LV.getAddress(), getContext().getTypeSize(E->getType()) / 8);
+  return LV;
 }
 
 /// EmitLValue - Emit code to compute a designator that specifies the location
@@ -1071,8 +1106,9 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                             llvm::IntegerType::get(VMContext, LLVMPointerWidth),
                                 IdxSigned, "idxprom");
 
+  // FIXME: As llvm implements the object size checking, this can come out.
   if (CatchUndefined) {
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E->getBase())) {
+    if (const ImplicitCastExpr *ICE=dyn_cast<ImplicitCastExpr>(E->getBase())) {
       if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
         if (ICE->getCastKind() == CastExpr::CK_ArrayToPointerDecay) {
           if (const ConstantArrayType *CAT
