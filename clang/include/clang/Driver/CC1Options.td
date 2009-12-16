@@ -308,6 +308,8 @@ def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">,
   HelpText<"Don't assume that C++'s new operator is sane">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
   HelpText<"Allow '$' in identifiers">;
+def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">,
+  HelpText<"Disallow '$' in identifiers">;
 def femit_all_decls : Flag<"-femit-all-decls">,
   HelpText<"Emit all declarations, even if unused">;
 def fblocks : Flag<"-fblocks">,

@@ -440,7 +440,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.DollarIdents)
     Res.push_back("-fdollars-in-identifiers");
   if (Opts.Microsoft)
-    Res.push_back("-fms-extensions=1");
+    Res.push_back("-fms-extensions");
   if (Opts.ObjCNonFragileABI)
     Res.push_back("-fobjc-nonfragile-abi");
   // NoInline is implicit.
@@ -1126,10 +1126,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   if (Args.hasArg(OPT_trigraphs))
     Opts.Trigraphs = 1;
 
-  Opts.DollarIdents = !Opts.AsmPreprocessor;
-  if (Args.hasArg(OPT_fdollars_in_identifiers))
-    Opts.DollarIdents = 1;
-
+  Opts.DollarIdents = Args.hasFlag(OPT_fdollars_in_identifiers,
+                                   OPT_fno_dollars_in_identifiers,
+                                   !Opts.AsmPreprocessor);
   Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
   Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);

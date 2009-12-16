@@ -1043,9 +1043,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_fdollars_in_identifiers,
                                options::OPT_fno_dollars_in_identifiers)) {
     if (A->getOption().matches(options::OPT_fdollars_in_identifiers))
-      CmdArgs.push_back("-fdollars-in-identifiers=1");
+      CmdArgs.push_back("-fdollars-in-identifiers");
     else
-      CmdArgs.push_back("-fdollars-in-identifiers=0");
+      CmdArgs.push_back("-fno-dollars-in-identifiers");
   }
 
   // -funit-at-a-time is default, and we don't support -fno-unit-at-a-time for
