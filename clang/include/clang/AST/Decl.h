@@ -85,12 +85,19 @@ public:
 class TranslationUnitDecl : public Decl, public DeclContext {
   ASTContext &Ctx;
 
+  /// The (most recently entered) anonymous namespace for this
+  /// translation unit, if one has been created.
+  NamespaceDecl *AnonymousNamespace;
+
   explicit TranslationUnitDecl(ASTContext &ctx)
     : Decl(TranslationUnit, 0, SourceLocation()),
       DeclContext(TranslationUnit),
-      Ctx(ctx) {}
+      Ctx(ctx), AnonymousNamespace(0) {}
 public:
   ASTContext &getASTContext() const { return Ctx; }
+
+  NamespaceDecl *getAnonymousNamespace() const { return AnonymousNamespace; }
+  void setAnonymousNamespace(NamespaceDecl *D) { AnonymousNamespace = D; }
 
   static TranslationUnitDecl *Create(ASTContext &C);
   // Implement isa/cast/dyncast/etc.
@@ -247,10 +254,15 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   // OrigNamespace of the first namespace decl points to itself.
   NamespaceDecl *OrigNamespace, *NextNamespace;
 
+  // The (most recently entered) anonymous namespace inside this
+  // namespace.
+  NamespaceDecl *AnonymousNamespace;
+
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace) {
     OrigNamespace = this;
     NextNamespace = 0;
+    AnonymousNamespace = 0;
   }
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
@@ -277,6 +289,16 @@ public:
     return OrigNamespace;
   }
   void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
+
+  NamespaceDecl *getAnonymousNamespace() const {
+    return AnonymousNamespace;
+  }
+
+  void setAnonymousNamespace(NamespaceDecl *D) {
+    assert(D->isAnonymousNamespace());
+    assert(D->getParent() == this);
+    AnonymousNamespace = D;
+  }
 
   virtual NamespaceDecl *getCanonicalDecl() { return OrigNamespace; }
   const NamespaceDecl *getCanonicalDecl() const { return OrigNamespace; }

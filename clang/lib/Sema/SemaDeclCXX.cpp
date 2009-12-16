@@ -2748,6 +2748,28 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     PushOnScopeChains(Namespc, DeclRegionScope);
   } else {
     // Anonymous namespaces.
+    assert(Namespc->isAnonymousNamespace());
+    CurContext->addDecl(Namespc);
+
+    // Link the anonymous namespace into its parent.
+    NamespaceDecl *PrevDecl;
+    DeclContext *Parent = CurContext->getLookupContext();
+    if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(Parent)) {
+      PrevDecl = TU->getAnonymousNamespace();
+      TU->setAnonymousNamespace(Namespc);
+    } else {
+      NamespaceDecl *ND = cast<NamespaceDecl>(Parent);
+      PrevDecl = ND->getAnonymousNamespace();
+      ND->setAnonymousNamespace(Namespc);
+    }
+
+    // Link the anonymous namespace with its previous declaration.
+    if (PrevDecl) {
+      assert(PrevDecl->isAnonymousNamespace());
+      assert(!PrevDecl->getNextNamespace());
+      Namespc->setOriginalNamespace(PrevDecl->getOriginalNamespace());
+      PrevDecl->setNextNamespace(Namespc);
+    }
 
     // C++ [namespace.unnamed]p1.  An unnamed-namespace-definition
     //   behaves as if it were replaced by
@@ -2765,20 +2787,19 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // declarations semantically contained within an anonymous
     // namespace internal linkage.
 
-    assert(Namespc->isAnonymousNamespace());
-    CurContext->addDecl(Namespc);
-
-    UsingDirectiveDecl* UD
-      = UsingDirectiveDecl::Create(Context, CurContext,
-                                   /* 'using' */ LBrace,
-                                   /* 'namespace' */ SourceLocation(),
-                                   /* qualifier */ SourceRange(),
-                                   /* NNS */ NULL,
-                                   /* identifier */ SourceLocation(),
-                                   Namespc,
-                                   /* Ancestor */ CurContext);
-    UD->setImplicit();
-    CurContext->addDecl(UD);
+    if (!PrevDecl) {
+      UsingDirectiveDecl* UD
+        = UsingDirectiveDecl::Create(Context, CurContext,
+                                     /* 'using' */ LBrace,
+                                     /* 'namespace' */ SourceLocation(),
+                                     /* qualifier */ SourceRange(),
+                                     /* NNS */ NULL,
+                                     /* identifier */ SourceLocation(),
+                                     Namespc,
+                                     /* Ancestor */ CurContext);
+      UD->setImplicit();
+      CurContext->addDecl(UD);
+    }
   }
 
   // Although we could have an invalid decl (i.e. the namespace name is a
