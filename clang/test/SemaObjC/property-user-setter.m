@@ -80,6 +80,7 @@ static int g_val;
 }
 @end
 
+void abort(void);
 int main (void) {
     Subclass *x = [[Subclass alloc] init];
 

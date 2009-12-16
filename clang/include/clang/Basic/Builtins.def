@@ -475,6 +475,7 @@ BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
 
 // C99 library functions
 // C99 stdlib.h
+LIBBUILTIN(abort, "v",            "fr",    "stdlib.h")
 LIBBUILTIN(calloc, "v*zz",        "f",     "stdlib.h")
 LIBBUILTIN(exit, "vi",            "fr",    "stdlib.h")
 LIBBUILTIN(_Exit, "vi",           "fr",    "stdlib.h")

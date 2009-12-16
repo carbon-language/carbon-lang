@@ -48,6 +48,7 @@ int setuid(uid_t);
 int setregid(gid_t, gid_t);
 int setreuid(uid_t, uid_t);
 extern void check(int);
+void abort(void);
 
 void test_setuid() 
 {

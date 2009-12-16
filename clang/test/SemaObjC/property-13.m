@@ -44,6 +44,7 @@
 - (void) setOptional_getter_attr:(int)value { ivar = value; }
 @end
 
+void abort(void);
 int main ()
 {
 	Test *x = [[Test alloc] init];
