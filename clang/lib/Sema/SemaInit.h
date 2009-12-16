@@ -53,12 +53,19 @@ public:
     EK_Base,
     /// \brief The entity being initialized is a non-static data member 
     /// subobject.
-    EK_Member
+    EK_Member,
+    /// \brief The entity being initialized is an element of an array
+    /// or vector.
+    EK_ArrayOrVectorElement
   };
   
 private:
   /// \brief The kind of entity being initialized.
   EntityKind Kind;
+
+  /// \brief If non-NULL, the parent entity in which this
+  /// initialization occurs.
+  const InitializedEntity *Parent;
 
   /// \brief The type of the object or reference being initialized along with 
   /// its location information.
@@ -77,13 +84,17 @@ private:
     /// \brief When Kind == EK_Base, the base specifier that provides the 
     /// base class.
     CXXBaseSpecifier *Base;
+
+    /// \brief When Kind = EK_ArrayOrVectorElement, the index of the
+    /// array or vector element being initialized.
+    unsigned Index;
   };
 
   InitializedEntity() { }
 
   /// \brief Create the initialization entity for a variable.
   InitializedEntity(VarDecl *Var)
-    : Kind(EK_Variable), 
+    : Kind(EK_Variable), Parent(0),
       VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Var)) 
   {
     InitDeclLoc();
@@ -91,7 +102,7 @@ private:
   
   /// \brief Create the initialization entity for a parameter.
   InitializedEntity(ParmVarDecl *Parm)
-    : Kind(EK_Parameter), 
+    : Kind(EK_Parameter), Parent(0),
       VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) 
   { 
     InitDeclLoc();
@@ -100,16 +111,20 @@ private:
   /// \brief Create the initialization entity for the result of a function,
   /// throwing an object, or performing an explicit cast.
   InitializedEntity(EntityKind Kind, SourceLocation Loc, TypeLoc TL)
-    : Kind(Kind), TL(TL), Location(Loc.getRawEncoding()) { }
+    : Kind(Kind), Parent(0), TL(TL), Location(Loc.getRawEncoding()) { }
   
   /// \brief Create the initialization entity for a member subobject.
-  InitializedEntity(FieldDecl *Member) 
-    : Kind(EK_Member), 
+  InitializedEntity(FieldDecl *Member, const InitializedEntity *Parent) 
+    : Kind(EK_Member), Parent(Parent),
       VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Member))
   { 
     InitDeclLoc();
   }
   
+  /// \brief Create the initialization entity for an array element.
+  InitializedEntity(ASTContext &Context, unsigned Index, 
+                    const InitializedEntity &Parent);
+
   /// \brief Initialize type-location information from a declaration.
   void InitDeclLoc();
   
@@ -145,14 +160,27 @@ public:
   static InitializedEntity InitializeBase(ASTContext &Context,
                                           CXXBaseSpecifier *Base);
   
-  /// \brief Create the initialize entity for a member subobject.
-  static InitializedEntity InitializeMember(FieldDecl *Member) {
-    return InitializedEntity(Member);
+  /// \brief Create the initialization entity for a member subobject.
+  static InitializedEntity InitializeMember(FieldDecl *Member,
+                                          const InitializedEntity *Parent = 0) {
+    return InitializedEntity(Member, Parent);
   }
   
+  /// \brief Create the initialization entity for an array element.
+  static InitializedEntity InitializeElement(ASTContext &Context, 
+                                             unsigned Index, 
+                                             const InitializedEntity &Parent) {
+    return InitializedEntity(Context, Index, Parent);
+  }
+
   /// \brief Determine the kind of initialization.
   EntityKind getKind() const { return Kind; }
   
+  /// \brief Retrieve the parent of the entity being initialized, when
+  /// the initialization itself is occuring within the context of a
+  /// larger initialization.
+  const InitializedEntity *getParent() const { return Parent; }
+
   /// \brief Retrieve type being initialized.
   TypeLoc getType() const { return TL; }
   
@@ -171,6 +199,13 @@ public:
   SourceLocation getThrowLoc() const {
     assert(getKind() == EK_Exception && "No 'throw' location!");
     return SourceLocation::getFromRawEncoding(Location);
+  }
+
+  /// \brief If this is already the initializer for an array or vector
+  /// element, sets the element index.
+  void setElementIndex(unsigned Index) {
+    assert(getKind() == EK_ArrayOrVectorElement);
+    this->Index = Index;
   }
 };
   
@@ -194,6 +229,7 @@ private:
     SIK_Copy = IK_Copy,       ///< Copy initialization
     SIK_Default = IK_Default, ///< Default initialization
     SIK_Value = IK_Value,     ///< Value initialization
+    SIK_ImplicitValue,        ///< Implicit value initialization
     SIK_DirectCast,  ///< Direct initialization due to a cast
     /// \brief Direct initialization due to a C-style or functional cast.
     SIK_DirectCStyleOrFunctionalCast
@@ -245,15 +281,19 @@ public:
   /// \brief Create a value initialization.
   static InitializationKind CreateValue(SourceLocation InitLoc,
                                         SourceLocation LParenLoc,
-                                        SourceLocation RParenLoc) {
-    return InitializationKind(SIK_Value, InitLoc, LParenLoc, RParenLoc);
+                                        SourceLocation RParenLoc,
+                                        bool isImplicit = false) {
+    return InitializationKind(isImplicit? SIK_ImplicitValue : SIK_Value, 
+                              InitLoc, LParenLoc, RParenLoc);
   }
   
   /// \brief Determine the initialization kind.
   InitKind getKind() const {
-    if (Kind > SIK_Value)
+    if (Kind > SIK_ImplicitValue)
       return IK_Direct;
-    
+    if (Kind == SIK_ImplicitValue)
+      return IK_Value;
+
     return (InitKind)Kind;
   }
   
@@ -266,7 +306,12 @@ public:
   bool isCStyleOrFunctionalCast() const { 
     return Kind == SIK_DirectCStyleOrFunctionalCast; 
   }
-  
+
+  /// \brief Determine whether this initialization is an implicit
+  /// value-initialization, e.g., as occurs during aggregate
+  /// initialization.
+  bool isImplicitValueInit() const { return Kind == SIK_ImplicitValue; }
+
   /// \brief Retrieve the location at which initialization is occurring.
   SourceLocation getLocation() const { return Locations[0]; }
   

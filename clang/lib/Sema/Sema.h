@@ -3693,10 +3693,9 @@ public:
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
                              const InitializedEntity &Entity,
                              const InitializationKind &Kind);
-  bool CheckInitList(InitListExpr *&InitList, QualType &DeclType);
+  bool CheckInitList(const InitializedEntity &Entity,
+                     InitListExpr *&InitList, QualType &DeclType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
-
-  bool CheckValueInitialization(QualType Type, SourceLocation Loc);
 
   // type checking C++ declaration initializers (C++ [dcl.init]).
 
