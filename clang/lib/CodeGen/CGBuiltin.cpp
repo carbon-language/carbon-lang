@@ -229,6 +229,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F));
   }
   case Builtin::BI__builtin_unreachable: {
+    if (CatchUndefined && HaveInsertPoint())
+      EmitBranch(getTrapBB());
     Value *V = Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
     return RValue::get(V);
