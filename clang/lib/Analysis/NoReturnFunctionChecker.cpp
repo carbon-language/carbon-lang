@@ -45,13 +45,12 @@ bool NoReturnFunctionChecker::EvalCallExpr(CheckerContext &C,
 
   if (FD->getAttr<NoReturnAttr>() || FD->getAttr<AnalyzerNoReturnAttr>())
     BuildSinks = true;
-  else {
+  else if (const IdentifierInfo *II = FD->getIdentifier()) {
     // HACK: Some functions are not marked noreturn, and don't return.
     //  Here are a few hardwired ones.  If this takes too long, we can
     //  potentially cache these results.
-    using llvm::StringRef;
     BuildSinks 
-      = llvm::StringSwitch<bool>(StringRef(FD->getIdentifier()->getName()))
+      = llvm::StringSwitch<bool>(llvm::StringRef(II->getName()))
           .Case("exit", true)
           .Case("panic", true)
           .Case("error", true)
