@@ -216,12 +216,28 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     AppendPadding(Layout.getSize() / 8, Align);
 }
 
+void CGRecordLayoutBuilder::LayoutBases(const CXXRecordDecl *RD,
+                                        const ASTRecordLayout &Layout) {
+  // Check if we need to add a vtable pointer.
+  if (RD->isDynamicClass() && !Layout.getPrimaryBase()) {
+    const llvm::Type *Int8PtrTy = 
+      llvm::Type::getInt8PtrTy(Types.getLLVMContext());
+    
+    assert(NextFieldOffsetInBytes == 0 &&
+           "Vtable pointer must come first!");
+    AppendField(NextFieldOffsetInBytes, Int8PtrTy->getPointerTo());
+  }
+}
+
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   assert(!D->isUnion() && "Can't call LayoutFields on a union!");
   assert(Alignment && "Did not set alignment!");
 
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
 
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
+    LayoutBases(RD, Layout);
+  
   unsigned FieldNo = 0;
 
   for (RecordDecl::field_iterator Field = D->field_begin(),

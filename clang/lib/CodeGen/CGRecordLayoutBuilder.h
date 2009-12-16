@@ -23,6 +23,8 @@ namespace llvm {
 }
 
 namespace clang {
+  class ASTRecordLayout;
+  class CXXRecordDecl;
   class FieldDecl;
   class RecordDecl;
 
@@ -90,6 +92,9 @@ class CGRecordLayoutBuilder {
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);
 
+  /// LayoutBases - layout the bases and vtable pointer of a record decl.
+  void LayoutBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout);
+  
   /// LayoutField - layout a single field. Returns false if the operation failed
   /// because the current struct is not packed.
   bool LayoutField(const FieldDecl *D, uint64_t FieldOffset);

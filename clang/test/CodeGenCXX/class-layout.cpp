@@ -7,3 +7,7 @@ struct A { } a;
 // No need to add tail padding here.
 // CHECK: %struct.B = type { i8*, i32 }
 struct B { void *a; int b; } b;
+
+// C should have a vtable pointer.
+// CHECK: %struct.C = type { i8**, i32 }
+struct C { virtual void f(); int a; } *c;
