@@ -41,6 +41,9 @@ def SDTX86BrCond  : SDTypeProfile<0, 3,
 def SDTX86SetCC   : SDTypeProfile<1, 2,
                                   [SDTCisVT<0, i8>,
                                    SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
+def SDTX86SetCC_C : SDTypeProfile<1, 2,
+                                  [SDTCisInt<0>,
+                                   SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
 
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>, 
                                      SDTCisVT<2, i8>]>;
@@ -87,7 +90,7 @@ def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov>;
 def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
                         [SDNPHasChain]>;
 def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
-def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC>;
+def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
@@ -3068,11 +3071,11 @@ def SETB_C8r : I<0x18, MRMInitReg, (outs GR8:$dst), (ins),
                  [(set GR8:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 def SETB_C16r : I<0x19, MRMInitReg, (outs GR16:$dst), (ins),
                   "sbb{w}\t$dst, $dst",
-                 [(set GR16:$dst, (zext (X86setcc_c X86_COND_B, EFLAGS)))]>,
+                 [(set GR16:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>,
                 OpSize;
 def SETB_C32r : I<0x19, MRMInitReg, (outs GR32:$dst), (ins),
                   "sbb{l}\t$dst, $dst",
-                 [(set GR32:$dst, (zext (X86setcc_c X86_COND_B, EFLAGS)))]>;
+                 [(set GR32:$dst, (X86setcc_c X86_COND_B, EFLAGS))]>;
 } // isCodeGenOnly
 
 def SETEr    : I<0x94, MRM0r, 
@@ -4185,10 +4188,10 @@ def : Pat<(store (shld (loadi16 addr:$dst), (i8 imm:$amt1),
                        GR16:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHLD16mri8 addr:$dst, GR16:$src2, (i8 imm:$amt1))>;
 
-// (anyext (setcc_carry)) -> (zext (setcc_carry))
-def : Pat<(i16 (anyext (X86setcc_c X86_COND_B, EFLAGS))),
+// (anyext (setcc_carry)) -> (setcc_carry)
+def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C16r)>;
-def : Pat<(i32 (anyext (X86setcc_c X86_COND_B, EFLAGS))),
+def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C32r)>;
 
 //===----------------------------------------------------------------------===//
