@@ -305,7 +305,7 @@ def faltivec : Flag<"-faltivec">,
 def faccess_control : Flag<"-faccess-control">,
   HelpText<"Enable C++ access control">;
 def fno_assume_sane_operator_new : Flag<"-fno-assume-sane-operator-new">,
-  HelpText<"Don't assume that C++'s new operator is sane">;
+  HelpText<"Don't assume that C++'s global operator new can't alias any pointer">;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">,
   HelpText<"Allow '$' in identifiers">;
 def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">,
