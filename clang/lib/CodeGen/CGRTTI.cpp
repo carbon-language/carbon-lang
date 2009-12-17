@@ -188,12 +188,12 @@ public:
     return true;
   }
 
-  llvm::Constant *finish(llvm::Constant *const *Values, unsigned NumValues,
-                         llvm::GlobalVariable *GV,
+  llvm::Constant *finish(llvm::GlobalVariable *GV,
                          llvm::StringRef Name, bool Hidden, 
                          llvm::GlobalVariable::LinkageTypes Linkage) {
     llvm::Constant *C = 
-      llvm::ConstantStruct::get(VMContext, Values, NumValues, /*Packed=*/false);
+      llvm::ConstantStruct::get(VMContext, &Info[0], Info.size(), 
+                                /*Packed=*/false);
 
     llvm::GlobalVariable *OGV = GV;
     GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, Linkage,
@@ -277,7 +277,7 @@ public:
       }
     }
 
-    return finish(&Info[0], Info.size(), GV, Name, Hidden, Linkage);
+    return finish(GV, Name, Hidden, Linkage);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -371,8 +371,7 @@ public:
                                             QualType(PtrMemTy->getClass(), 0)));
 
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(&Info[0], Info.size(), GV, Name, /*Hidden=*/true, 
-                  GetLinkageFromExternFlag(Extern));
+    return finish(GV, Name, /*Hidden=*/true, GetLinkageFromExternFlag(Extern));
   }
 
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
@@ -388,13 +387,12 @@ public:
     bool Extern = DecideExtern(Ty);
     bool Hidden = DecideHidden(Ty);
 
-    llvm::Constant *Info[] = {
-      BuildVtableRef(vtbl), BuildName(Ty, Hidden, Extern)
-    };
+    Info.push_back(BuildVtableRef(vtbl));
+    Info.push_back(BuildName(Ty, Hidden, Extern));
     
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(&Info[0], llvm::array_lengthof(Info), GV, Name, 
-                  /*Hidden=*/true, GetLinkageFromExternFlag(Extern));
+    return finish(GV, Name, /*Hidden=*/true, 
+                  GetLinkageFromExternFlag(Extern));
   }
 
   /// BuildType - Builds the type info for the given type.
