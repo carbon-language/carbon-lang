@@ -176,7 +176,7 @@ Path::FindLibrary(std::string& name) {
   return sys::Path();
 }
 
-std::string Path::GetDLLSuffix() {
+StringRef Path::GetDLLSuffix() {
   return LTDL_SHLIB_EXT;
 }
 
@@ -191,7 +191,7 @@ Path::isBitcodeFile() const {
   return FT == Bitcode_FileType;
 }
 
-bool Path::hasMagicNumber(const std::string &Magic) const {
+bool Path::hasMagicNumber(StringRef Magic) const {
   std::string actualMagic;
   if (getMagicNumber(actualMagic, static_cast<unsigned>(Magic.size())))
     return Magic == actualMagic;
@@ -217,8 +217,9 @@ static void getPathList(const char*path, std::vector<Path>& Paths) {
         Paths.push_back(tmpPath);
 }
 
-static std::string getDirnameCharSep(const std::string& path, char Sep) {
-  
+static StringRef getDirnameCharSep(StringRef path, const char *Sep) {
+  assert(Sep[0] != '\0' && Sep[1] == '\0' &&
+         "Sep must be a 1-character string literal.");
   if (path.empty())
     return ".";
   
@@ -227,31 +228,31 @@ static std::string getDirnameCharSep(const std::string& path, char Sep) {
   
   signed pos = static_cast<signed>(path.size()) - 1;
   
-  while (pos >= 0 && path[pos] == Sep)
+  while (pos >= 0 && path[pos] == Sep[0])
     --pos;
   
   if (pos < 0)
-    return path[0] == Sep ? std::string(1, Sep) : std::string(".");
+    return path[0] == Sep[0] ? Sep : ".";
   
   // Any slashes left?
   signed i = 0;
   
-  while (i < pos && path[i] != Sep)
+  while (i < pos && path[i] != Sep[0])
     ++i;
   
   if (i == pos) // No slashes?  Return "."
     return ".";
   
   // There is at least one slash left.  Remove all trailing non-slashes.  
-  while (pos >= 0 && path[pos] != Sep)
+  while (pos >= 0 && path[pos] != Sep[0])
     --pos;
   
   // Remove any trailing slashes.
-  while (pos >= 0 && path[pos] == Sep)
+  while (pos >= 0 && path[pos] == Sep[0])
     --pos;
   
   if (pos < 0)
-    return path[0] == Sep ? std::string(1, Sep) : std::string(".");
+    return path[0] == Sep[0] ? Sep : ".";
   
   return path.substr(0, pos+1);
 }

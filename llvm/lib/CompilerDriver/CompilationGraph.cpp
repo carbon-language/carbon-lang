@@ -35,7 +35,7 @@ namespace llvmc {
   const std::string& LanguageMap::GetLanguage(const sys::Path& File) const {
     LanguageMap::const_iterator Lang = this->find(File.getSuffix());
     if (Lang == this->end())
-      throw std::runtime_error("Unknown suffix: " + File.getSuffix());
+      throw std::runtime_error(("Unknown suffix: " + File.getSuffix()).str());
     return Lang->second;
   }
 }

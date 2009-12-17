@@ -78,15 +78,15 @@ using namespace sys;
 
 const char sys::PathSeparator = ':';
 
-Path::Path(const std::string& p)
+Path::Path(StringRef p)
   : path(p) {}
 
 Path::Path(const char *StrStart, unsigned StrLen)
   : path(StrStart, StrLen) {}
 
 Path&
-Path::operator=(const std::string &that) {
-  path = that;
+Path::operator=(StringRef that) {
+  path.assign(that.data(), that.size());
   return *this;
 }
 
@@ -377,11 +377,11 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 }
 
 
-std::string Path::getDirname() const {
-  return getDirnameCharSep(path, '/');
+StringRef Path::getDirname() const {
+  return getDirnameCharSep(path, "/");
 }
 
-std::string
+StringRef
 Path::getBasename() const {
   // Find the last slash
   std::string::size_type slash = path.rfind('/');
@@ -392,12 +392,12 @@ Path::getBasename() const {
 
   std::string::size_type dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return path.substr(slash);
+    return StringRef(path).substr(slash);
   else
-    return path.substr(slash, dot - slash);
+    return StringRef(path).substr(slash, dot - slash);
 }
 
-std::string
+StringRef
 Path::getSuffix() const {
   // Find the last slash
   std::string::size_type slash = path.rfind('/');
@@ -408,9 +408,9 @@ Path::getSuffix() const {
 
   std::string::size_type dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return std::string();
+    return StringRef("");
   else
-    return path.substr(dot + 1);
+    return StringRef(path).substr(dot + 1);
 }
 
 bool Path::getMagicNumber(std::string &Magic, unsigned len) const {
@@ -478,7 +478,7 @@ Path::canExecute() const {
   return true;
 }
 
-std::string
+StringRef
 Path::getLast() const {
   // Find the last slash
   size_t pos = path.rfind('/');
@@ -492,12 +492,12 @@ Path::getLast() const {
     // Find the second to last slash
     size_t pos2 = path.rfind('/', pos-1);
     if (pos2 == std::string::npos)
-      return path.substr(0,pos);
+      return StringRef(path).substr(0,pos);
     else
-      return path.substr(pos2+1,pos-pos2-1);
+      return StringRef(path).substr(pos2+1,pos-pos2-1);
   }
   // Return everything after the last slash
-  return path.substr(pos+1);
+  return StringRef(path).substr(pos+1);
 }
 
 const FileStatus *
@@ -589,7 +589,7 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
 }
 
 bool
-Path::set(const std::string& a_path) {
+Path::set(StringRef a_path) {
   if (a_path.empty())
     return false;
   std::string save(path);
@@ -602,7 +602,7 @@ Path::set(const std::string& a_path) {
 }
 
 bool
-Path::appendComponent(const std::string& name) {
+Path::appendComponent(StringRef name) {
   if (name.empty())
     return false;
   std::string save(path);
@@ -634,7 +634,7 @@ Path::eraseComponent() {
 }
 
 bool
-Path::appendSuffix(const std::string& suffix) {
+Path::appendSuffix(StringRef suffix) {
   std::string save(path);
   path.append(".");
   path.append(suffix);

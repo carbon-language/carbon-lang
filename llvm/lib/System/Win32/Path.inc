@@ -58,8 +58,8 @@ Path::Path(const char *StrStart, unsigned StrLen)
 }
 
 Path&
-Path::operator=(const std::string &that) {
-  path = that;
+Path::operator=(StringRef that) {
+  path.assign(that.data(), that.size());
   FlipBackSlashes(path);
   return *this;
 }
@@ -287,11 +287,11 @@ Path::isRootDirectory() const {
   return len > 0 && path[len-1] == '/';
 }
 
-std::string Path::getDirname() const {
-  return getDirnameCharSep(path, '/');
+StringRef Path::getDirname() const {
+  return getDirnameCharSep(path, "/");
 }
 
-std::string
+StringRef
 Path::getBasename() const {
   // Find the last slash
   size_t slash = path.rfind('/');
@@ -302,12 +302,12 @@ Path::getBasename() const {
 
   size_t dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return path.substr(slash);
+    return StringRef(path).substr(slash);
   else
-    return path.substr(slash, dot - slash);
+    return StringRef(path).substr(slash, dot - slash);
 }
 
-std::string
+StringRef
 Path::getSuffix() const {
   // Find the last slash
   size_t slash = path.rfind('/');
@@ -318,9 +318,9 @@ Path::getSuffix() const {
 
   size_t dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return std::string();
+    return StringRef("");
   else
-    return path.substr(dot + 1);
+    return StringRef(path).substr(dot + 1);
 }
 
 bool
@@ -364,7 +364,7 @@ Path::isRegularFile() const {
   return true;
 }
 
-std::string
+StringRef
 Path::getLast() const {
   // Find the last slash
   size_t pos = path.rfind('/');
@@ -378,7 +378,7 @@ Path::getLast() const {
     return path;
 
   // Return everything after the last slash
-  return path.substr(pos+1);
+  return StringRef(path).substr(pos+1);
 }
 
 const FileStatus *
@@ -490,7 +490,7 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
 }
 
 bool
-Path::set(const std::string& a_path) {
+Path::set(StringRef a_path) {
   if (a_path.empty())
     return false;
   std::string save(path);
@@ -504,7 +504,7 @@ Path::set(const std::string& a_path) {
 }
 
 bool
-Path::appendComponent(const std::string& name) {
+Path::appendComponent(StringRef name) {
   if (name.empty())
     return false;
   std::string save(path);
@@ -536,7 +536,7 @@ Path::eraseComponent() {
 }
 
 bool
-Path::appendSuffix(const std::string& suffix) {
+Path::appendSuffix(StringRef suffix) {
   std::string save(path);
   path.append(".");
   path.append(suffix);

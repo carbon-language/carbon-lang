@@ -14,6 +14,7 @@
 #ifndef LLVM_SYSTEM_PATH_H
 #define LLVM_SYSTEM_PATH_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/System/TimeValue.h"
 #include <set>
 #include <string>
@@ -159,7 +160,7 @@ namespace sys {
       /// between processes.
       /// @returns The dynamic link library suffix for the current platform.
       /// @brief Return the dynamic link library suffix.
-      static std::string GetDLLSuffix();
+      static StringRef GetDLLSuffix();
 
       /// GetMainExecutable - Return the path to the main executable, given the
       /// value of argv[0] from program startup and the address of main itself.
@@ -174,12 +175,12 @@ namespace sys {
       Path() : path() {}
       Path(const Path &that) : path(that.path) {}
 
-      /// This constructor will accept a std::string as a path. No checking is
-      /// done on this path to determine if it is valid. To determine validity
-      /// of the path, use the isValid method.
+      /// This constructor will accept a char* or std::string as a path. No
+      /// checking is done on this path to determine if it is valid. To
+      /// determine validity of the path, use the isValid method.
       /// @param p The path to assign.
       /// @brief Construct a Path from a string.
-      explicit Path(const std::string& p);
+      explicit Path(StringRef p);
 
       /// This constructor will accept a character range as a path.  No checking
       /// is done on this path to determine if it is valid.  To determine
@@ -202,10 +203,10 @@ namespace sys {
       }
 
       /// Makes a copy of \p that to \p this.
-      /// @param \p that A std::string denoting the path
+      /// @param \p that A StringRef denoting the path
       /// @returns \p this
       /// @brief Assignment Operator
-      Path &operator=(const std::string &that);
+      Path &operator=(StringRef that);
 
       /// Compares \p this Path with \p that Path for equality.
       /// @returns true if \p this and \p that refer to the same thing.
@@ -251,28 +252,28 @@ namespace sys {
       /// component is the file or directory name occuring after the last
       /// directory separator. If no directory separator is present, the entire
       /// path name is returned (i.e. same as toString).
-      /// @returns std::string containing the last component of the path name.
+      /// @returns StringRef containing the last component of the path name.
       /// @brief Returns the last component of the path name.
-      std::string getLast() const;
+      StringRef getLast() const;
 
       /// This function strips off the path and suffix of the file or directory
       /// name and returns just the basename. For example /a/foo.bar would cause
       /// this function to return "foo".
-      /// @returns std::string containing the basename of the path
+      /// @returns StringRef containing the basename of the path
       /// @brief Get the base name of the path
-      std::string getBasename() const;
+      StringRef getBasename() const;
 
       /// This function strips off the suffix of the path beginning with the
       /// path separator ('/' on Unix, '\' on Windows) and returns the result.
-      std::string getDirname() const;
+      StringRef getDirname() const;
 
       /// This function strips off the path and basename(up to and
       /// including the last dot) of the file or directory name and
       /// returns just the suffix. For example /a/foo.bar would cause
       /// this function to return "bar".
-      /// @returns std::string containing the suffix of the path
+      /// @returns StringRef containing the suffix of the path
       /// @brief Get the suffix of the path
-      std::string getSuffix() const;
+      StringRef getSuffix() const;
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
@@ -315,7 +316,7 @@ namespace sys {
       /// cases (file not found, file not accessible, etc.) it returns false.
       /// @returns true if the magic number of the file matches \p magic.
       /// @brief Determine if file has a specific magic number
-      bool hasMagicNumber(const std::string& magic) const;
+      bool hasMagicNumber(StringRef magic) const;
 
       /// This function retrieves the first \p len bytes of the file associated
       /// with \p this. These bytes are returned as the "magic number" in the
@@ -422,8 +423,8 @@ namespace sys {
       /// Path object takes on the path value of \p unverified_path
       /// @returns true if the path was set, false otherwise.
       /// @param unverified_path The path to be set in Path object.
-      /// @brief Set a full path from a std::string
-      bool set(const std::string& unverified_path);
+      /// @brief Set a full path from a StringRef
+      bool set(StringRef unverified_path);
 
       /// One path component is removed from the Path. If only one component is
       /// present in the path, the Path object becomes empty. If the Path object
@@ -437,7 +438,7 @@ namespace sys {
       /// needed.
       /// @returns false if the path component could not be added.
       /// @brief Appends one path component to the Path.
-      bool appendComponent( const std::string& component );
+      bool appendComponent(StringRef component);
 
       /// A period and the \p suffix are appended to the end of the pathname.
       /// The precondition for this function is that the Path reference a file
@@ -446,7 +447,7 @@ namespace sys {
       /// become invalid for the host operating system, false is returned.
       /// @returns false if the suffix could not be added, true if it was.
       /// @brief Adds a period and the \p suffix to the end of the pathname.
-      bool appendSuffix(const std::string& suffix);
+      bool appendSuffix(StringRef suffix);
 
       /// The suffix of the filename is erased. The suffix begins with and
       /// includes the last . character in the filename after the last directory
@@ -620,12 +621,12 @@ namespace sys {
       PathWithStatus(const Path &other)
         : Path(other), status(), fsIsValid(false) {}
 
-      /// This constructor will accept a std::string as a path. No checking is
-      /// done on this path to determine if it is valid. To determine validity
-      /// of the path, use the isValid method.
+      /// This constructor will accept a char* or std::string as a path. No
+      /// checking is done on this path to determine if it is valid. To
+      /// determine validity of the path, use the isValid method.
       /// @brief Construct a Path from a string.
       explicit PathWithStatus(
-        const std::string& p ///< The path to assign.
+        StringRef p ///< The path to assign.
       ) : Path(p), status(), fsIsValid(false) {}
 
       /// This constructor will accept a character range as a path.  No checking
