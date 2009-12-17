@@ -495,15 +495,15 @@ public:
     
     // Copy over the elements that we're about to overwrite.
     T *OldEnd = this->end();
-	this->setEnd(this->end() + NumToInsert);
+    this->setEnd(this->end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-	this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
+    this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
     
     // Replace the overwritten part.
     std::copy(From, From+NumOverwritten, I);
     
     // Insert the non-overwritten middle part.
-	this->uninitialized_copy(From+NumOverwritten, To, OldEnd);
+    this->uninitialized_copy(From+NumOverwritten, To, OldEnd);
     return I;
   }
   
