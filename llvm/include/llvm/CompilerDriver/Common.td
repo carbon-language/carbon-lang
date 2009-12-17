@@ -84,6 +84,7 @@ def stop_compilation;
 def unpack_values;
 def warning;
 def error;
+def set_option;
 def unset_option;
 
 // Increase/decrease the edge weight.

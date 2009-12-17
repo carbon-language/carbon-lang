@@ -91,7 +91,9 @@ def OptList : OptionList<[
 // Option preprocessor.
 
 def Preprocess : OptionPreprocessor<
-(case (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
+(case (not (any_switch_on ["O0", "O1", "O2", "O3"])),
+           (set_option "O2"),
+      (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
            (unset_option ["O0", "O1", "O2"]),
       (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
            (unset_option ["O0", "O1"]),

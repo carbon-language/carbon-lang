@@ -2303,11 +2303,32 @@ class EmitPreprocessOptionsCallback :
   public HandlerTable<EmitPreprocessOptionsCallbackHandler>
 {
   typedef EmitPreprocessOptionsCallbackHandler Handler;
+  typedef void
+  (EmitPreprocessOptionsCallback::* HandlerImpl)
+  (const Init*, unsigned, raw_ostream&) const;
 
   const OptionDescriptions& OptDescs_;
 
-  void onUnsetOptionStr(const Init* I,
-                        unsigned IndentLevel, raw_ostream& O) const
+  void onListOrDag(HandlerImpl h,
+                   const DagInit& d, unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(d, 1);
+    const Init* I = d.getArg(0);
+
+    // If I is a list, apply h to each element.
+    if (typeid(*I) == typeid(ListInit)) {
+      const ListInit& L = *static_cast<const ListInit*>(I);
+      for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B)
+        ((this)->*(h))(*B, IndentLevel, O);
+    }
+    // Otherwise, apply h to I.
+    else {
+      ((this)->*(h))(I, IndentLevel, O);
+    }
+  }
+
+  void onUnsetOptionImpl(const Init* I,
+                         unsigned IndentLevel, raw_ostream& O) const
   {
     const std::string& OptName = InitPtrToString(I);
     const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
@@ -2326,26 +2347,52 @@ class EmitPreprocessOptionsCallback :
     }
   }
 
-  void onUnsetOptionList(const ListInit& L,
-                         unsigned IndentLevel, raw_ostream& O) const
-  {
-    for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B)
-      this->onUnsetOptionStr(*B, IndentLevel, O);
-  }
-
   void onUnsetOption(const DagInit& d,
                      unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(d, 1);
-    Init* I = d.getArg(0);
+    this->onListOrDag(&EmitPreprocessOptionsCallback::onUnsetOptionImpl,
+                      d, IndentLevel, O);
+  }
 
-    if (typeid(*I) == typeid(ListInit)) {
-      const ListInit& L = *static_cast<const ListInit*>(I);
-      this->onUnsetOptionList(L, IndentLevel, O);
-    }
-    else {
-      this->onUnsetOptionStr(I, IndentLevel, O);
-    }
+  void onSetParameter(const DagInit& d,
+                      unsigned IndentLevel, raw_ostream& O) const {
+    checkNumberOfArguments(d, 2);
+    const std::string& OptName = InitPtrToString(d.getArg(0));
+    const std::string& Value = InitPtrToString(d.getArg(1));
+    const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
+
+    if (OptDesc.isParameter())
+      O.indent(IndentLevel) << OptDesc.GenVariableName()
+                            << " = \"" << Value << "\";\n";
+    else
+      throw "Two-argument 'set_option' "
+        "can be only applied to parameter options!";
+  }
+
+  void onSetSwitch(const Init* I,
+                   unsigned IndentLevel, raw_ostream& O) const {
+    const std::string& OptName = InitPtrToString(I);
+    const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
+
+    if (OptDesc.isSwitch())
+      O.indent(IndentLevel) << OptDesc.GenVariableName() << " = true;\n";
+    else
+      throw "One-argument 'set_option' can be only applied to switch options!";
+  }
+
+  void onSetOption(const DagInit& d,
+                   unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(d, 1);
+
+    // Two arguments: (set_option "parameter", "value")
+    if (d.getNumArgs() > 1)
+      this->onSetParameter(d, IndentLevel, O);
+    // One argument: (set_option "switch")
+    // or (set_option ["switch1", "switch2", ...])
+    else
+      this->onListOrDag(&EmitPreprocessOptionsCallback::onSetSwitch,
+                        d, IndentLevel, O);
   }
 
 public:
@@ -2357,6 +2404,7 @@ public:
       AddHandler("error", &EmitPreprocessOptionsCallback::onErrorDag);
       AddHandler("warning", &EmitPreprocessOptionsCallback::onWarningDag);
       AddHandler("unset_option", &EmitPreprocessOptionsCallback::onUnsetOption);
+      AddHandler("set_option", &EmitPreprocessOptionsCallback::onSetOption);
 
       staticMembersInitialized_ = true;
     }

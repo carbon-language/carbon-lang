@@ -656,10 +656,10 @@ For example, without those definitions the following command wouldn't work::
     $ llvmc hello.cpp
     llvmc: Unknown suffix: cpp
 
-The language map entries should be added only for tools that are
-linked with the root node. Since tools are not allowed to have
-multiple output languages, for nodes "inside" the graph the input and
-output languages should match. This is enforced at compile-time.
+The language map entries are needed only for the tools that are linked from the
+root node. Since a tool can't have multiple output languages, for inner nodes of
+the graph the input and output languages should match. This is enforced at
+compile-time.
 
 Option preprocessor
 ===================
@@ -672,24 +672,31 @@ the driver with both of these options enabled.
 The ``OptionPreprocessor`` feature is reserved specially for these
 occasions. Example (adapted from the built-in Base plugin)::
 
-   def Preprocess : OptionPreprocessor<
-   (case (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
-              [(unset_option ["O0", "O1", "O2"]),
-               (warning "Multiple -O options specified, defaulted to -O3.")],
-         (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
-              (unset_option ["O0", "O1"]),
-         (and (switch_on "O1"), (switch_on "O0")),
-              (unset_option "O0"))
-   >;
 
-Here, ``OptionPreprocessor`` is used to unset all spurious optimization options
-(so that they are not forwarded to the compiler).
+    def Preprocess : OptionPreprocessor<
+    (case (not (any_switch_on ["O0", "O1", "O2", "O3"])),
+               (set_option "O2"),
+          (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
+               (unset_option ["O0", "O1", "O2"]),
+          (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
+               (unset_option ["O0", "O1"]),
+          (and (switch_on "O1"), (switch_on "O0")),
+               (unset_option "O0"))
+    >;
+
+Here, ``OptionPreprocessor`` is used to unset all spurious ``-O`` options so
+that they are not forwarded to the compiler. If no optimization options are
+specified, ``-O2`` is enabled.
 
 ``OptionPreprocessor`` is basically a single big ``case`` expression, which is
 evaluated only once right after the plugin is loaded. The only allowed actions
-in ``OptionPreprocessor`` are ``error``, ``warning`` and a special action
-``unset_option``, which, as the name suggests, unsets a given option. For
-convenience, ``unset_option`` also works on lists.
+in ``OptionPreprocessor`` are ``error``, ``warning`` and two special actions:
+``unset_option`` and ``set_option``. As their names suggest, they can be used to
+set or unset a given option. To set a parameter option with ``set_option``, use
+the two-argument form: ``(set_option "parameter", "value")``. For convenience,
+``set_option`` and ``unset_option`` also work on lists (that is, instead of
+``[(unset_option "A"), (unset_option "B")]`` you can use ``(unset_option ["A",
+"B"])``).
 
 
 More advanced topics
