@@ -1445,7 +1445,6 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // FIXME: Error on auto/register at file scope
   // FIXME: Error on inline/virtual/explicit
-  // FIXME: Error on invalid restrict
   // FIXME: Warn on useless __thread
   // FIXME: Warn on useless const/volatile
   // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
@@ -1465,6 +1464,15 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     // type rep is a Decl, whereas in many of the others
     // it's a Type.
     Tag = dyn_cast<TagDecl>(TagD);
+  }
+
+  if (unsigned TypeQuals = DS.getTypeQualifiers()) {
+    // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
+    // or incomplete types shall not be restrict-qualified."
+    if (TypeQuals & DeclSpec::TQ_restrict)
+      Diag(DS.getRestrictSpecLoc(),
+           diag::err_typecheck_invalid_restrict_not_pointer_noarg)
+           << DS.getSourceRange();
   }
 
   if (DS.isFriendSpecified()) {

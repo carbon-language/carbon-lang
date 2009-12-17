@@ -1365,6 +1365,8 @@ def warn_typecheck_function_qualifiers : Warning<
   "qualifier on function type %0 has unspecified behavior">;
 def err_typecheck_invalid_restrict_not_pointer : Error<
   "restrict requires a pointer or reference (%0 is invalid)">;
+def err_typecheck_invalid_restrict_not_pointer_noarg : Error<
+  "restrict requires a pointer or reference">;
 def err_typecheck_invalid_restrict_invalid_pointee : Error<
   "pointer to function type %0 may not be 'restrict' qualified">;
 def ext_typecheck_zero_array_size : Extension<

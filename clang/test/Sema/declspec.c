@@ -21,3 +21,4 @@ __restrict__ f* v2;  // expected-error {{restrict requires a pointer or referenc
 __restrict__ fptr v3; // expected-error {{pointer to function type 'f' (aka 'int (void)') may not be 'restrict' qualified}}
 f *__restrict__ v4;   // expected-error {{pointer to function type 'f' (aka 'int (void)') may not be 'restrict' qualified}}
 
+restrict struct hallo; // expected-error {{restrict requires a pointer or reference}}
