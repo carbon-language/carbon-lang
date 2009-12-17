@@ -461,7 +461,15 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
     
     /* Read the contents of the file we're remapping to. */
     contents = (char *)malloc(unsaved->Length + 1);
-    fread(contents, 1, unsaved->Length, to_file);
+    if (fread(contents, 1, unsaved->Length, to_file) != unsaved->Length) {
+      fprintf(stderr, "error: unexpected %s reading 'to' file %s\n",
+              (feof(to_file) ? "EOF" : "error"), semi + 1);
+      fclose(to_file);
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
     contents[unsaved->Length] = 0;
     unsaved->Contents = contents;
 
