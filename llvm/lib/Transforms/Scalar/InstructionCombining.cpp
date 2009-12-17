@@ -9896,9 +9896,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
                         Intrinsic::getDeclaration(M, MemCpyID, Tys, 1));
           Changed = true;
         }
+    }
 
+    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) {
       // memmove(x,x,size) -> noop.
-      if (MMI->getSource() == MMI->getDest())
+      if (MTI->getSource() == MTI->getDest())
         return EraseInstFromFunction(CI);
     }
 
