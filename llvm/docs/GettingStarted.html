@@ -114,13 +114,15 @@ and performance.
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Install the llvm-gcc-4.2 front end if you intend to compile C or C++:
+  <li>Install the llvm-gcc-4.2 front end if you intend to compile C or C++
+      (see <a href="#installcf">Install the GCC Front End</a> for details):</li>
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
-      <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf -</tt>
-      </li>
-      <li>Note: If the binary extension is ".bz" use bunzip2 instead of gunzip.</li>
-      <li>Add llvm-gcc's "bin" directory to your PATH variable.</li>
+      <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf -</tt></li>
+	  <li><tt><i>install-binutils-binary-from-MinGW</i></tt> (Windows only)</li>
+	  <li>Note: If the binary extension is "<tt>.bz</tt>" use <tt>bunzip2</tt> instead of <tt>gunzip</tt>.</li>
+	  <li>Note: On Windows, use <a href="http://www.7-zip.org">7-Zip</a> or a similar archiving tool.</li>
+	  <li>Add <tt>llvm-gcc</tt>'s "<tt>bin</tt>" directory to your <tt>PATH</tt> environment variable.</li>
     </ol></li>
 
   <li>Get the LLVM Source Code
@@ -774,13 +776,14 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 
 <div class="doc_text">
 
-<p>Before configuring and compiling the LLVM suite, you can optionally extract the 
-LLVM GCC front end from the binary distribution.  It is used for running the 
-llvm-test testsuite and for compiling C/C++ programs.  Note that you can optionally
-<a href="GCCFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
+<p>Before configuring and compiling the LLVM suite (or if you want to use just the LLVM
+GCC front end) you can optionally extract the front end from the binary distribution.
+It is used for running the llvm-test testsuite and for compiling C/C++ programs.  Note that
+you can optionally <a href="GCCFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
 main LLVM repository.</p>
 
-<p>To install the GCC front end, do the following:</p>
+<p>To install the GCC front end, do the following (on Windows, use an archival tool
+like <a href="http://www.7-zip.org">7-zip</a> that understands gzipped tars):</p>
 
 <ol>
   <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt></li>
@@ -788,22 +791,51 @@ main LLVM repository.</p>
       -</tt></li>
 </ol>
 
-<p>Once the binary is uncompressed, you should add a symlink for llvm-gcc and 
-llvm-g++ to some directory in your path.  When you configure LLVM, it will 
-automatically detect llvm-gcc's presence (if it is in your path) enabling its
-use in llvm-test.  Note that you can always build or install llvm-gcc at any
-pointer after building the main LLVM repository: just reconfigure llvm and 
+<p>Once the binary is uncompressed, if you're using a *nix-based system, add a symlink for
+<tt>llvm-gcc</tt> and <tt>llvm-g++</tt> to some directory in your path.  If you're using a
+Windows-based system, add the <tt>bin</tt> subdirectory of your front end installation directory
+to your <tt>PATH</tt> environment variable.  For example, if you uncompressed the binary to
+<tt>c:\llvm-gcc</tt>, add <tt>c:\llvm-gcc\bin</tt> to your <tt>PATH</tt>.</p>
+
+<p>If you now want to build LLVM from source, when you configure LLVM, it will 
+automatically detect <tt>llvm-gcc</tt>'s presence (if it is in your path) enabling its
+use in llvm-test.  Note that you can always build or install <tt>llvm-gcc</tt> at any
+point after building the main LLVM repository: just reconfigure llvm and 
 llvm-test will pick it up.
 </p>
 
-<p>The binary versions of the GCC front end may not suit all of your needs.  For
-example, the binary distribution may include an old version of a system header
-file, not "fix" a header file that needs to be fixed for GCC, or it may be
-linked with libraries not available on your system.</p>
+<p>As a convenience for Windows users, the front end binaries for MinGW/x86 include
+versions of the required w32api and mingw-runtime binaries.  The last remaining step for
+Windows users is to simply uncompress the binary binutils package from
+<a href="http://mingw.org/">MinGW</a> into your front end installation directory.  While the
+front end installation steps are not quite the same as a typical manual MinGW installation,
+they should be similar enough to those who have previously installed MinGW on Windows systems.</p>
 
-<p>In cases like these, you may want to try <a
-href="GCCFEBuildInstrs.html">building the GCC front end from source.</a> This is
-much easier now than it was in the past.</p>
+<p>To install binutils on Windows:</p>
+
+<ol>
+  <li><tt><i>download GNU Binutils from <a href="http://sourceforge.net/projects/mingw/files/">MinGW Downloads</a></i></tt></li>
+  <li><tt>cd <i>where-you-uncompressed-the-front-end</i></tt></li>
+  <li><tt><i>uncompress archived binutils directories (not the tar file) into the current directory</i></tt></li>
+</ol>
+
+<p>The binary versions of the LLVM GCC front end may not suit all of your needs.  For
+example, the binary distribution may include an old version of a system header
+file, not "fix" a header file that needs to be fixed for GCC, or it may be linked with
+libraries not available on your system.  In cases like these, you may want to try
+<a href="GCCFEBuildInstrs.html">building the GCC front end from source</a>.  Thankfully,
+this is much easier now than it was in the past.</p>
+
+<p>We also do not currently support updating of the GCC front end by manually overlaying
+newer versions of the w32api and mingw-runtime binary packages that may become available
+from MinGW.  At this time, it's best to think of the MinGW LLVM GCC front end binary as
+a self-contained convenience package that requires Windows users to simply download and
+uncompress the GNU Binutils binary package from the MinGW project.</p>
+
+<p>Regardless of your platform, if you discover that installing the LLVM GCC front end
+binaries is not as easy as previously described, or you would like to suggest improvements,
+please let us know how you would like to see things improved by dropping us a note on our
+<a href="http://llvm.org/docs/#maillist">mailing list</a>.</p>
 
 </div>
 
@@ -1170,7 +1202,6 @@ Cummings for pointing this out!
 </p>
 
 </div>
-
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
