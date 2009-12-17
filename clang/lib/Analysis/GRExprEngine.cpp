@@ -339,23 +339,24 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // Precondition: the first argument of 'main' is an integer guaranteed
     //  to be > 0.
-    if (FD->getIdentifier()->getName() == "main" &&
-        FD->getNumParams() > 0) {
-      const ParmVarDecl *PD = FD->getParamDecl(0);
-      QualType T = PD->getType();
-      if (T->isIntegerType())
-        if (const MemRegion *R = state->getRegion(PD, InitLoc)) {
-          SVal V = state->getSVal(loc::MemRegionVal(R));
-          SVal Constraint_untested = EvalBinOp(state, BinaryOperator::GT, V,
-                                               ValMgr.makeZeroVal(T),
-                                               getContext().IntTy);
+    if (const IdentifierInfo *II = FD->getIdentifier()) {
+      if (II->getName() == "main" && FD->getNumParams() > 0) {
+        const ParmVarDecl *PD = FD->getParamDecl(0);
+        QualType T = PD->getType();
+        if (T->isIntegerType())
+          if (const MemRegion *R = state->getRegion(PD, InitLoc)) {
+            SVal V = state->getSVal(loc::MemRegionVal(R));
+            SVal Constraint_untested = EvalBinOp(state, BinaryOperator::GT, V,
+                                                 ValMgr.makeZeroVal(T),
+                                                 getContext().IntTy);
 
-          if (DefinedOrUnknownSVal *Constraint =
-              dyn_cast<DefinedOrUnknownSVal>(&Constraint_untested)) {
-            if (const GRState *newState = state->Assume(*Constraint, true))
-              state = newState;
+            if (DefinedOrUnknownSVal *Constraint =
+                dyn_cast<DefinedOrUnknownSVal>(&Constraint_untested)) {
+              if (const GRState *newState = state->Assume(*Constraint, true))
+                state = newState;
+            }
           }
-        }
+      }
     }
   }
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {    
