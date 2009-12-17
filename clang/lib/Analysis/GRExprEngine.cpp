@@ -1607,17 +1607,15 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
       WorkList.push_back(CallExprWLItem(Item.I, *NI));
   }
 
-  // Now process the call itself.  First evaluate the callee.
+  // Now process the call itself.
   ExplodedNodeSet DstTmp;
   Expr* Callee = CE->getCallee()->IgnoreParens();
   
   for (ExplodedNodeSet::iterator NI=ArgsEvaluated.begin(),
-                                 NE=ArgsEvaluated.end();
-       NI != NE; ++NI) {
-
+                                 NE=ArgsEvaluated.end(); NI != NE; ++NI) {
+    // Evaluate the callee.
     ExplodedNodeSet DstTmp2;
-    Visit(Callee, *NI, DstTmp2);
-    
+    Visit(Callee, *NI, DstTmp2);    
     // Perform the previsit of the CallExpr, storing the results in DstTmp.
     CheckerVisit(CE, DstTmp, DstTmp2, true);
   }
