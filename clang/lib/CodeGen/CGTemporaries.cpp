@@ -41,6 +41,33 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
                                                  CondPtr));
 
   PushCleanupBlock(DtorBlock);
+
+  if (Exceptions) {
+    const CXXLiveTemporaryInfo& Info = LiveTemporaries.back();
+    llvm::BasicBlock *CondEnd = 0;
+    
+    EHCleanupBlock Cleanup(*this);
+
+    // If this is a conditional temporary, we need to check the condition
+    // boolean and only call the destructor if it's true.
+    if (Info.CondPtr) {
+      llvm::BasicBlock *CondBlock = createBasicBlock("cond.dtor.call");
+      CondEnd = createBasicBlock("cond.dtor.end");
+
+      llvm::Value *Cond = Builder.CreateLoad(Info.CondPtr);
+      Builder.CreateCondBr(Cond, CondBlock, CondEnd);
+      EmitBlock(CondBlock);
+    }
+
+    EmitCXXDestructorCall(Info.Temporary->getDestructor(),
+                          Dtor_Complete, Info.ThisPtr);
+
+    if (CondEnd) {
+      // Reset the condition. to false.
+      Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext), Info.CondPtr);
+      EmitBlock(CondEnd);
+    }
+  }
 }
 
 void CodeGenFunction::PopCXXTemporary() {

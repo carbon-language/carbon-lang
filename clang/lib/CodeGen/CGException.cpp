@@ -150,17 +150,37 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
     } else if (CXXConstructorDecl *CopyCtor
                = RD->getCopyConstructor(CGF.getContext(), 0)) {
       llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
+      llvm::Value *CondPtr = 0;
       if (CGF.Exceptions) {
         CodeGenFunction::EHCleanupBlock Cleanup(CGF);
         llvm::Constant *FreeExceptionFn = getFreeExceptionFn(CGF);
         
+        llvm::BasicBlock *CondBlock = CGF.createBasicBlock("cond.free");
+        llvm::BasicBlock *Cont = CGF.createBasicBlock("cont");
+        CondPtr = CGF.CreateTempAlloca(llvm::Type::getInt1Ty(CGF.getLLVMContext()),
+                                       "doEHfree");
+
+        CGF.Builder.CreateCondBr(CGF.Builder.CreateLoad(CondPtr),
+                                 CondBlock, Cont);
+        CGF.EmitBlock(CondBlock);
+
         // Load the exception pointer.
         llvm::Value *ExceptionPtr = CGF.Builder.CreateLoad(ExceptionPtrPtr);
         CGF.Builder.CreateCall(FreeExceptionFn, ExceptionPtr);
+
+        CGF.EmitBlock(Cont);
       }
 
+      if (CondPtr)
+        CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(CGF.getLLVMContext()),
+                                CondPtr);
+
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
-      CGF.setInvokeDest(PrevLandingPad);
+        
+      //CGF.setInvokeDest(PrevLandingPad);
+      if (CondPtr)
+        CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
+                                CondPtr);
 
       llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
       PrevLandingPad = CGF.getInvokeDest();
