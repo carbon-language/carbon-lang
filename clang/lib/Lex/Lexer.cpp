@@ -33,7 +33,7 @@
 #include <cctype>
 using namespace clang;
 
-static void InitCharacterInfo(LangOptions);
+static void InitCharacterInfo();
 
 //===----------------------------------------------------------------------===//
 // Token Class Implementation
@@ -59,7 +59,7 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 
 void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
                       const char *BufEnd) {
-  InitCharacterInfo(Features);
+  InitCharacterInfo();
 
   BufferStart = BufStart;
   BufferPtr = BufPtr;
@@ -254,7 +254,7 @@ enum {
 
 // Statically initialize CharInfo table based on ASCII character set
 // Reference: FreeBSD 7.2 /usr/share/misc/ascii
-static unsigned char CharInfo[256] =
+static const unsigned char CharInfo[256] =
 {
 // 0 NUL         1 SOH         2 STX         3 ETX
 // 4 EOT         5 ENQ         6 ACK         7 BEL
@@ -322,7 +322,7 @@ static unsigned char CharInfo[256] =
    0           , 0           , 0           , 0
 };
 
-static void InitCharacterInfo(LangOptions Features) {
+static void InitCharacterInfo() {
   static bool isInited = false;
   if (isInited) return;
   // check the statically-initialized CharInfo table
@@ -341,10 +341,6 @@ static void InitCharacterInfo(LangOptions Features) {
   for (unsigned i = '0'; i <= '9'; ++i)
     assert(CHAR_NUMBER == CharInfo[i]);
     
-  if (Features.Microsoft)
-    // Hack to treat DOS & CP/M EOF (^Z) as horizontal whitespace.
-    CharInfo[26/*sub*/] = CHAR_HORZ_WS;  
-
   isInited = true;
 }
 
@@ -1549,6 +1545,22 @@ LexNextToken:
       return; // KeepWhitespaceMode
 
     goto LexNextToken;   // GCC isn't tail call eliminating.
+      
+  case 26:  // DOS & CP/M EOF: "^Z".
+    // If we're in Microsoft extensions mode, treat this as end of file.
+    if (Features.Microsoft) {
+      // Read the PP instance variable into an automatic variable, because
+      // LexEndOfFile will often delete 'this'.
+      Preprocessor *PPCache = PP;
+      if (LexEndOfFile(Result, CurPtr-1))  // Retreat back into the file.
+        return;   // Got a token to return.
+      assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
+      return PPCache->Lex(Result);
+    }
+    // If Microsoft extensions are disabled, this is just random garbage.
+    Kind = tok::unknown;
+    break;
+      
   case '\n':
   case '\r':
     // If we are inside a preprocessor directive and we see the end of line,
@@ -1599,7 +1611,7 @@ LexNextToken:
       goto SkipHorizontalWhitespace;
     }
     goto LexNextToken;   // GCC isn't tail call eliminating.
-
+      
   // C99 6.4.4.1: Integer Constants.
   // C99 6.4.4.2: Floating Constants.
   case '0': case '1': case '2': case '3': case '4':
