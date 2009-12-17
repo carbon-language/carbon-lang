@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -O3 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -O3 -o - | FileCheck %s
 #include <typeinfo>
 
 class __pbase_type_info : public std::type_info {
