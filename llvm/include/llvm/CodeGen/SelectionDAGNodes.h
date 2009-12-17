@@ -414,12 +414,13 @@ namespace ISD {
     /// X = FP_EXTEND(Y) - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
 
-    // BIT_CONVERT - Theis operator converts between integer and FP values, as
-    // if one was stored to memory as integer and the other was loaded from the
-    // same address (or equivalently for vector format conversions, etc).  The
-    // source and result are required to have the same bit size (e.g.
-    // f32 <-> i32).  This can also be used for int-to-int or fp-to-fp
-    // conversions, but that is a noop, deleted by getNode().
+    // BIT_CONVERT - This operator converts between integer, vector and FP
+    // values, as if the value was stored to memory with one type and loaded
+    // from the same address with the other type (or equivalently for vector
+    // format conversions, etc).  The source and result are required to have
+    // the same bit size (e.g.  f32 <-> i32).  This can also be used for
+    // int-to-int or fp-to-fp conversions, but that is a noop, deleted by
+    // getNode().
     BIT_CONVERT,
 
     // CONVERT_RNDSAT - This operator is used to support various conversions
