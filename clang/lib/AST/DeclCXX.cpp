@@ -874,7 +874,11 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
            isa<CXXRecordDecl>(D) ||
            isa<FunctionTemplateDecl>(D) ||
            isa<ClassTemplateDecl>(D));
-    assert(D->getFriendObjectKind());
+
+    // As a temporary hack, we permit template instantiation to point
+    // to the original declaration when instantiating members.
+    assert(D->getFriendObjectKind() ||
+           (cast<CXXRecordDecl>(DC)->getTemplateSpecializationKind()));
   }
 #endif
 

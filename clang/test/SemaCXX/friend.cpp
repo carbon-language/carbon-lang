@@ -15,3 +15,17 @@ namespace test0 {
     friend void ns::f(int a);
   };
 }
+
+// Test derived from LLVM's Registry.h
+namespace test1 {
+  template <class T> struct Outer {
+    void foo(T);
+    struct Inner {
+      friend void Outer::foo(T);
+    };
+  };
+
+  void test() {
+    (void) Outer<int>::Inner();
+  }
+}

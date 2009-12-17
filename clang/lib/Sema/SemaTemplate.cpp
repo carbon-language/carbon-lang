@@ -691,37 +691,6 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (Previous.begin() != Previous.end())
     PrevDecl = *Previous.begin();
 
-  if (PrevDecl && TUK == TUK_Friend) {
-    // C++ [namespace.memdef]p3:
-    //   [...] When looking for a prior declaration of a class or a function 
-    //   declared as a friend, and when the name of the friend class or 
-    //   function is neither a qualified name nor a template-id, scopes outside
-    //   the innermost enclosing namespace scope are not considered.
-    DeclContext *OutermostContext = CurContext;
-    while (!OutermostContext->isFileContext())
-      OutermostContext = OutermostContext->getLookupParent();
-    
-    if (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
-        OutermostContext->Encloses(PrevDecl->getDeclContext())) {
-      SemanticContext = PrevDecl->getDeclContext();
-    } else {
-      // Declarations in outer scopes don't matter. However, the outermost
-      // context we computed is the semantic context for our new 
-      // declaration.
-      PrevDecl = 0;
-      SemanticContext = OutermostContext;
-    }
-    
-    if (CurContext->isDependentContext()) {
-      // If this is a dependent context, we don't want to link the friend
-      // class template to the template in scope, because that would perform
-      // checking of the template parameter lists that can't be performed
-      // until the outer context is instantiated.
-      PrevDecl = 0;
-    }
-  } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
-    PrevDecl = 0;
-
   // If there is a previous declaration with the same name, check
   // whether this is a valid redeclaration.
   ClassTemplateDecl *PrevClassTemplate
@@ -741,6 +710,37 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
             ->getSpecializedTemplate();
     }
   }
+
+  if (PrevDecl && TUK == TUK_Friend) {
+    // C++ [namespace.memdef]p3:
+    //   [...] When looking for a prior declaration of a class or a function 
+    //   declared as a friend, and when the name of the friend class or 
+    //   function is neither a qualified name nor a template-id, scopes outside
+    //   the innermost enclosing namespace scope are not considered.
+    DeclContext *OutermostContext = CurContext;
+    while (!OutermostContext->isFileContext())
+      OutermostContext = OutermostContext->getLookupParent();
+    
+    if (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
+        OutermostContext->Encloses(PrevDecl->getDeclContext())) {
+      SemanticContext = PrevDecl->getDeclContext();
+    } else {
+      // Declarations in outer scopes don't matter. However, the outermost
+      // context we computed is the semantic context for our new 
+      // declaration.
+      PrevDecl = PrevClassTemplate = 0;
+      SemanticContext = OutermostContext;
+    }
+    
+    if (CurContext->isDependentContext()) {
+      // If this is a dependent context, we don't want to link the friend
+      // class template to the template in scope, because that would perform
+      // checking of the template parameter lists that can't be performed
+      // until the outer context is instantiated.
+      PrevDecl = PrevClassTemplate = 0;
+    }
+  } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
+    PrevDecl = PrevClassTemplate = 0;
 
   if (PrevClassTemplate) {
     // Ensure that the template parameter lists are compatible.

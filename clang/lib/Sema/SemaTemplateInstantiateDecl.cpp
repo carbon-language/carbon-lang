@@ -396,7 +396,13 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     // FIXME: We have a problem here, because the nested call to Visit(ND)
     // will inject the thing that the friend references into the current
     // owner, which is wrong.
-    Decl *NewND = Visit(ND);
+    Decl *NewND;
+
+    // Hack to make this work almost well pending a rewrite.
+    if (ND->getDeclContext()->isRecord())
+      NewND = SemaRef.FindInstantiatedDecl(ND, TemplateArgs);
+    else
+      NewND = Visit(ND);
     if (!NewND) return 0;
 
     FU = cast<NamedDecl>(NewND);
