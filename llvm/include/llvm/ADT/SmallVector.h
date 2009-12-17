@@ -232,7 +232,7 @@ public:
   SmallVectorTemplateBase(size_t Size) : SmallVectorTemplateCommon<T>(Size) {}
   
   // No need to do a destroy loop for POD's.
-  static void destroy_range(T *S, T *E) {}
+  static void destroy_range(T *, T *) {}
   
   /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
   /// starting with "Dest", constructing elements into it as needed.
