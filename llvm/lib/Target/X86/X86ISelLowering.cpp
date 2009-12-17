@@ -4584,7 +4584,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
                                                  MVT::v4i32, Vec),
                                      Op.getOperand(1)));
     // Transform it so it match pextrw which produces a 32-bit result.
-    EVT EltVT = (MVT::SimpleValueType)(VT.getSimpleVT().SimpleTy+1);
+    EVT EltVT = MVT::i32;
     SDValue Extract = DAG.getNode(X86ISD::PEXTRW, dl, EltVT,
                                     Op.getOperand(0), Op.getOperand(1));
     SDValue Assert  = DAG.getNode(ISD::AssertZext, dl, EltVT, Extract,
