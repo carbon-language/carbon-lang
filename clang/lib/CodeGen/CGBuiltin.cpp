@@ -302,6 +302,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                         llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 1));
     return RValue::get(Address);
   }
+  case Builtin::BImemcpy:
   case Builtin::BI__builtin_memcpy: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Builder.CreateCall4(CGM.getMemCpyFn(), Address,
@@ -310,6 +311,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                         llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 1));
     return RValue::get(Address);
   }
+  case Builtin::BImemmove:
   case Builtin::BI__builtin_memmove: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Builder.CreateCall4(CGM.getMemMoveFn(), Address,
@@ -318,6 +320,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                         llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 1));
     return RValue::get(Address);
   }
+  case Builtin::BImemset:
   case Builtin::BI__builtin_memset: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Builder.CreateCall4(CGM.getMemSetFn(), Address,
