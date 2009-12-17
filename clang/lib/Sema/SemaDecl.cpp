@@ -1253,11 +1253,6 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
       HasFakeEdge = true;
       continue;
     }
-    if (isa<AsmStmt>(S)) {
-      HasFakeEdge = true;
-      HasLiveReturn = true;
-      continue;
-    }
     bool NoReturnEdge = false;
     if (CallExpr *C = dyn_cast<CallExpr>(S)) {
       Expr *CEE = C->getCallee()->IgnoreParenCasts();

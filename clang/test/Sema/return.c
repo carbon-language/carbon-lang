@@ -222,7 +222,3 @@ void test32() {
 void test33() {
   if (j) while (1) { }
 }
-
-int test34() {
-  asm("nop");
-}
