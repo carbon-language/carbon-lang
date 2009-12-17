@@ -1839,14 +1839,16 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       }
     }
 
-    if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
+    if ((!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) ||
+        (C1->isNullValue() && !C2->isNullValue())) {
       // If C2 is a constant expr and C1 isn't, flip them around and fold the
       // other way if possible.
+      // Also, if C1 is null and C2 isn't, flip them around.
       switch (pred) {
       case ICmpInst::ICMP_EQ:
       case ICmpInst::ICMP_NE:
         // No change of predicate required.
-        return ConstantFoldCompareInstruction(Context, pred, C2, C1);
+        return ConstantExpr::getICmp(pred, C2, C1);
 
       case ICmpInst::ICMP_ULT:
       case ICmpInst::ICMP_SLT:
@@ -1858,7 +1860,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       case ICmpInst::ICMP_SGE:
         // Change the predicate as necessary to swap the operands.
         pred = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)pred);
-        return ConstantFoldCompareInstruction(Context, pred, C2, C1);
+        return ConstantExpr::getICmp(pred, C2, C1);
 
       default:  // These predicates cannot be flopped around.
         break;
