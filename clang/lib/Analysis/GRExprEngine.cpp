@@ -1549,94 +1549,112 @@ void GRExprEngine::EvalLocation(ExplodedNodeSet &Dst, Stmt *S,
 // Transfer function: Function calls.
 //===----------------------------------------------------------------------===//
 
+namespace {
+class CallExprWLItem {
+public:
+  CallExpr::arg_iterator I;
+  ExplodedNode *N;
+
+  CallExprWLItem(const CallExpr::arg_iterator &i, ExplodedNode *n)
+    : I(i), N(n) {}
+};  
+} // end anonymous namespace
+
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
                              ExplodedNodeSet& Dst) {
+
   // Determine the type of function we're calling (if available).
   const FunctionProtoType *Proto = NULL;
   QualType FnType = CE->getCallee()->IgnoreParens()->getType();
   if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
     Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
 
-  VisitCallRec(CE, Pred, AI, AE, Dst, Proto, /*ParamIdx=*/0);
-}
-
-void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
-                                CallExpr::arg_iterator AI,
-                                CallExpr::arg_iterator AE,
-                                ExplodedNodeSet& Dst,
-                                const FunctionProtoType *Proto,
-                                unsigned ParamIdx) {
-
-  // Process the arguments.
-  if (AI != AE) {
-    // If the call argument is being bound to a reference parameter,
-    // visit it as an lvalue, not an rvalue.
+  // Create a worklist to process the arguments.
+  llvm::SmallVector<CallExprWLItem, 20> WorkList;
+  WorkList.reserve(AE - AI);
+  WorkList.push_back(CallExprWLItem(AI, Pred));
+  
+  ExplodedNodeSet ArgsEvaluated;
+  
+  while (!WorkList.empty()) {
+    CallExprWLItem Item = WorkList.back();
+    WorkList.pop_back();
+    
+    if (Item.I == AE) {
+      ArgsEvaluated.insert(Item.N);
+      continue;
+    }
+    
+    // Evaluate the argument.
+    ExplodedNodeSet Tmp;
+    const unsigned ParamIdx = Item.I - AI;
+    
     bool VisitAsLvalue = false;
     if (Proto && ParamIdx < Proto->getNumArgs())
       VisitAsLvalue = Proto->getArgType(ParamIdx)->isReferenceType();
-
-    ExplodedNodeSet DstTmp;
+    
     if (VisitAsLvalue)
-      VisitLValue(*AI, Pred, DstTmp);
+      VisitLValue(*Item.I, Item.N, Tmp);
     else
-      Visit(*AI, Pred, DstTmp);
-    ++AI;
+      Visit(*Item.I, Item.N, Tmp);
+   
+    // Enqueue evaluating the next argument on the worklist.
+    ++(Item.I);
 
-    for (ExplodedNodeSet::iterator DI=DstTmp.begin(), DE=DstTmp.end(); DI != DE;
-         ++DI)
-      VisitCallRec(CE, *DI, AI, AE, Dst, Proto, ParamIdx + 1);
-
-    return;
+    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
+      WorkList.push_back(CallExprWLItem(Item.I, *NI));
   }
 
-  // If we reach here we have processed all of the arguments.  Evaluate
-  // the callee expression.
+  // Now process the call itself.  First evaluate the callee.
   ExplodedNodeSet DstTmp;
   Expr* Callee = CE->getCallee()->IgnoreParens();
+  
+  for (ExplodedNodeSet::iterator NI=ArgsEvaluated.begin(),
+                                 NE=ArgsEvaluated.end();
+       NI != NE; ++NI) {
 
-  { // Enter new scope to make the lifetime of 'DstTmp2' bounded.
     ExplodedNodeSet DstTmp2;
-    Visit(Callee, Pred, DstTmp2);
-
+    Visit(Callee, *NI, DstTmp2);
+    
     // Perform the previsit of the CallExpr, storing the results in DstTmp.
     CheckerVisit(CE, DstTmp, DstTmp2, true);
   }
-
-  // Finally, evaluate the function call.
+  
+  // Finally, evaluate the function call.  We try each of the checkers
+  // to see if the can evaluate the function call.
   ExplodedNodeSet DstTmp3;
   
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI != DE; ++DI) {
-
+    
     const GRState* state = GetState(*DI);
     SVal L = state->getSVal(Callee);
-
+    
     // FIXME: Add support for symbolic function calls (calls involving
     //  function pointer values that are symbolic).
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     ExplodedNodeSet DstChecker;
-
+    
     // If the callee is processed by a checker, skip the rest logic.
     if (CheckerEvalCall(CE, DstChecker, *DI))
       DstTmp3.insert(DstChecker);
     else {
       for (ExplodedNodeSet::iterator DI_Checker = DstChecker.begin(),
-            DE_Checker = DstChecker.end();
-            DI_Checker != DE_Checker; ++DI_Checker) {
-
-          // Dispatch to the plug-in transfer function.
+           DE_Checker = DstChecker.end();
+           DI_Checker != DE_Checker; ++DI_Checker) {
+        
+        // Dispatch to the plug-in transfer function.
         unsigned OldSize = DstTmp3.size();
         SaveOr OldHasGen(Builder->HasGeneratedNode);
         Pred = *DI_Checker;
-
+        
         // Dispatch to transfer function logic to handle the call itself.
         // FIXME: Allow us to chain together transfer functions.
-        assert(Builder && "GRStmtNodeBuilder must be defined.");
-    
+        assert(Builder && "GRStmtNodeBuilder must be defined.");        
         getTF().EvalCall(DstTmp3, *this, *Builder, CE, L, Pred);
-
+        
         // Handle the case where no nodes where generated.  Auto-generate that
         // contains the updated state if we aren't generating sinks.
         if (!Builder->BuildSinks && DstTmp3.size() == OldSize &&
@@ -1645,9 +1663,10 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
       }
     }
   }
-
-  // Perform the post-condition check of the CallExpr.
-  CheckerVisit(CE, Dst, DstTmp3, false);
+  
+  // Finally, perform the post-condition check of the CallExpr and store
+  // the created nodes in 'Dst'.
+  CheckerVisit(CE, Dst, DstTmp3, false);  
 }
 
 //===----------------------------------------------------------------------===//
