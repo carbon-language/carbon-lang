@@ -7299,19 +7299,17 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
   // If the re-extended constant didn't change...
   if (Res2 == CI) {
-    // Make sure that sign of the Cmp and the sign of the Cast are the same.
-    // For example, we might have:
-    //    %A = sext i16 %X to i32
-    //    %B = icmp ugt i32 %A, 1330
-    // It is incorrect to transform this into 
-    //    %B = icmp ugt i16 %X, 1330
-    // because %A may have negative value. 
-    //
-    // However, we allow this when the compare is EQ/NE, because they are
-    // signless.
-    if (isSignedExt == isSignedCmp || ICI.isEquality())
+    // Deal with equality cases early.
+    if (ICI.isEquality())
       return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
-    return 0;
+
+    // A signed comparison of sign extended values simplifies into a
+    // signed comparison.
+    if (isSignedExt && isSignedCmp)
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
+
+    // The other three cases all fold into an unsigned comparison.
+    return new ICmpInst(ICI.getUnsignedPredicate(), LHSCIOp, Res1);
   }
 
   // The re-extended constant changed so the constant cannot be represented 
