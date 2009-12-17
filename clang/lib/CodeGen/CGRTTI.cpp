@@ -46,6 +46,10 @@ class RTTIBuilder {
     TI_ContainingClassIncomplete = 0x10
   };
   
+  /// GetAddrOfExternalRTTIDescriptor - Returns the constant for the RTTI 
+  /// descriptor of the given type.
+  llvm::Constant *GetAddrOfExternalRTTIDescriptor(QualType Ty);
+  
 public:
   RTTIBuilder(CodeGenModule &cgm)
     : CGM(cgm), VMContext(cgm.getModule().getContext()),
@@ -122,29 +126,6 @@ public:
   /// __vmi_class_type_info.
   llvm::Constant *BuildBaseCount(unsigned c) {
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), c);
-  }
-
-  llvm::Constant *BuildTypeRef(QualType Ty) {
-    llvm::Constant *C;
-
-    llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
-    llvm::StringRef Name = OutName.str();
-
-    C = CGM.getModule().getGlobalVariable(Name);
-    if (C)
-      return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
-
-    llvm::GlobalVariable::LinkageTypes linktype;
-    linktype = llvm::GlobalValue::ExternalLinkage;;
-
-    C = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy, true, linktype,
-                                 0, Name);
-    return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
-  }
-
-  llvm::Constant *Buildclass_type_infoRef(const CXXRecordDecl *RD) {
-    return BuildTypeRef(CGM.getContext().getTagDeclType(RD));
   }
 
   /// CalculateFlags - Calculate the flags for the __vmi_class_type_info
@@ -256,9 +237,10 @@ public:
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
              e = RD->bases_end(); i != e; ++i) {
+        QualType BaseType = i->getType();
         const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        Info.push_back(CGM.GetAddrOfRTTI(Base));
+          cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
+        Info.push_back(CGM.GetAddrOfRTTIDescriptor(BaseType));
         if (simple)
           break;
         int64_t offset;
@@ -412,7 +394,7 @@ public:
 
     case Type::Builtin: {
       // We expect all type_info objects for builtin types to be in the library.
-      return BuildTypeRef(Ty);
+      return GetAddrOfExternalRTTIDescriptor(Ty);
     }
 
     case Type::Pointer: {
@@ -421,7 +403,7 @@ public:
       Q.removeConst();
       // T* and const T* for all builtin types T are expected in the library.
       if (isa<BuiltinType>(PTy) && Q.empty())
-        return BuildTypeRef(Ty);
+        return GetAddrOfExternalRTTIDescriptor(Ty);
 
       return BuildPointerType(Ty);
     }
@@ -456,7 +438,8 @@ public:
         return Buildclass_type_info(RD, llvm::GlobalValue::ExternalLinkage);
       
       // Otherwise, we just want a reference to the type info.
-      return Buildclass_type_infoRef(RD);
+      QualType Ty = CGM.getContext().getTagDeclType(RD);
+      return GetAddrOfExternalRTTIDescriptor(Ty);
     }
     
     // If there is no key function (or if the record doesn't have any virtual
@@ -467,16 +450,25 @@ public:
 };
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfRTTI(const CXXRecordDecl *RD) {
-  if (!getContext().getLangOptions().RTTI) {
-    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-    return llvm::Constant::getNullValue(Int8PtrTy);
+llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
+  // Mangle the RTTI name.
+  llvm::SmallString<256> OutName;
+  CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
+  llvm::StringRef Name = OutName.str();
+
+  // Look for an existing global variable.
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  
+  if (!GV) {
+    // Create a new global variable.
+    GV = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy, /*Constant=*/true,
+                                  llvm::GlobalValue::ExternalLinkage, 0, Name);
   }
   
-  return RTTIBuilder(*this).BuildClassTypeInfo(RD);
+  return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfRTTI(QualType Ty) {
+llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty) {
   if (!getContext().getLangOptions().RTTI) {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
     return llvm::Constant::getNullValue(Int8PtrTy);

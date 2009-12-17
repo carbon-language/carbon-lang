@@ -212,12 +212,9 @@ public:
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
                                     const llvm::Type *Ty = 0);
 
-  /// GetAddrOfRTTI - Get the address of the RTTI structure for the given type.
-  llvm::Constant *GetAddrOfRTTI(QualType Ty);
-
-  /// GetAddrOfRTTI - Get the address of the RTTI structure for the given record
-  /// decl.
-  llvm::Constant *GetAddrOfRTTI(const CXXRecordDecl *RD);
+  /// GetAddrOfRTTIDescriptor - Get the address of the RTTI descriptor 
+  /// for the given type.
+  llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty);
 
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD,
                                  const ThunkAdjustment &ThisAdjustment);

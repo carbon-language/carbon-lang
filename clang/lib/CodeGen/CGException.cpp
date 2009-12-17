@@ -284,7 +284,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 
   // Now throw the exception.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
-  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTI(ThrowType);
+  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType);
   llvm::Constant *Dtor = llvm::Constant::getNullValue(Int8PtrTy);
 
   if (getInvokeDest()) {
@@ -367,7 +367,7 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 
   for (unsigned i = 0; i < Proto->getNumExceptions(); ++i) {
     QualType Ty = Proto->getExceptionType(i);
-    llvm::Value *EHType = CGM.GetAddrOfRTTI(Ty.getNonReferenceType());
+    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(Ty.getNonReferenceType());
     SelectorArgs.push_back(EHType);
   }
   if (Proto->getNumExceptions())
@@ -506,9 +506,9 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     const CXXCatchStmt *C = S.getHandler(i);
     VarDecl *CatchParam = C->getExceptionDecl();
     if (CatchParam) {
-      llvm::Value *EHType 
-        = CGM.GetAddrOfRTTI(C->getCaughtType().getNonReferenceType());
-      SelectorArgs.push_back(EHType);
+      llvm::Value *EHTypeInfo
+        = CGM.GetAddrOfRTTIDescriptor(C->getCaughtType().getNonReferenceType());
+      SelectorArgs.push_back(EHTypeInfo);
     } else {
       // null indicates catch all
       SelectorArgs.push_back(Null);

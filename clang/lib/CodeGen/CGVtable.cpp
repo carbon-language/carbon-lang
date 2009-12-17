@@ -202,8 +202,10 @@ public:
       Extern(!l->isInAnonymousNamespace()),
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
-    if (BuildVtable)
-      rtti = CGM.GetAddrOfRTTI(MostDerivedClass);
+    if (BuildVtable) {
+      QualType ClassType = CGM.getContext().getTagDeclType(MostDerivedClass);
+      rtti = CGM.GetAddrOfRTTIDescriptor(ClassType);
+    }
   }
 
   // getVtableComponents - Returns a reference to the vtable components.
