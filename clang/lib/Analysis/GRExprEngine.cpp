@@ -725,28 +725,29 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
       return;
 
+    case Stmt::BinaryOperatorClass:
+    case Stmt::CompoundAssignOperatorClass:
+      VisitBinaryOperator(cast<BinaryOperator>(Ex), Pred, Dst, true);
+      return;
+      
     case Stmt::BlockDeclRefExprClass:
       VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(Ex), Pred, Dst, true);
       return;
+      
+    case Stmt::CompoundLiteralExprClass:
+      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst, true);
+      return;      
 
     case Stmt::DeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(Ex), Pred, Dst, true);
       return;
-
-    case Stmt::ObjCIvarRefExprClass:
-      VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(Ex), Pred, Dst, true);
-      return;
-
-    case Stmt::UnaryOperatorClass:
-      VisitUnaryOperator(cast<UnaryOperator>(Ex), Pred, Dst, true);
-      return;
-
+      
     case Stmt::MemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
       return;
 
-    case Stmt::CompoundLiteralExprClass:
-      VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst, true);
+    case Stmt::ObjCIvarRefExprClass:
+      VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(Ex), Pred, Dst, true);
       return;
 
     case Stmt::ObjCPropertyRefExprClass:
@@ -772,11 +773,10 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
     }
 
-    case Stmt::BinaryOperatorClass:
-    case Stmt::CompoundAssignOperatorClass:
-      VisitBinaryOperator(cast<BinaryOperator>(Ex), Pred, Dst, true);
+    case Stmt::UnaryOperatorClass:
+      VisitUnaryOperator(cast<UnaryOperator>(Ex), Pred, Dst, true);
       return;
-
+      
     default:
       // Arbitrary subexpressions can return aggregate temporaries that
       // can be used in a lvalue context.  We need to enhance our support
