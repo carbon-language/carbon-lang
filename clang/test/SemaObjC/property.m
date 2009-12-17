@@ -53,3 +53,12 @@ typedef id BYObjectIdentifier;
 @property(copy) BYObjectIdentifier identifier;
 @end
 
+@interface Foo2 
+{
+  int ivar;
+}
+@property int treeController;  // expected-note {{property declared here}}
+@property int ivar;	// OK
+@property int treeController;  // expected-error {{property has a previous declaration}}
+@end
+

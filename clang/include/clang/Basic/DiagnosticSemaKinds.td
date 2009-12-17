@@ -1695,6 +1695,8 @@ def err_unexpected_interface : Error<
 def err_ref_non_value : Error<"%0 does not refer to a value">;
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
+def err_duplicate_property : Error<
+  "property has a previous declaration">;
 def ext_gnu_void_ptr : Extension<
   "use of GNU void* extension">, InGroup<PointerArith>;
 def ext_gnu_ptr_func_arith : Extension<
