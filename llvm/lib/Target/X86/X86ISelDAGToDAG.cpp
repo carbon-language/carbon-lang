@@ -50,9 +50,6 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-#include "llvm/Support/CommandLine.h"
-static cl::opt<bool> AvoidDupAddrCompute("x86-avoid-dup-address", cl::Hidden);
-
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
 //===----------------------------------------------------------------------===//
@@ -1276,7 +1273,7 @@ bool X86DAGToDAGISel::SelectAddr(SDValue Op, SDValue N, SDValue &Base,
                                  SDValue &Disp, SDValue &Segment) {
   X86ISelAddressMode AM;
   bool Done = false;
-  if (AvoidDupAddrCompute && !N.hasOneUse()) {
+  if (!N.hasOneUse()) {
     unsigned Opcode = N.getOpcode();
     if (Opcode != ISD::Constant && Opcode != ISD::FrameIndex &&
         Opcode != X86ISD::Wrapper && Opcode != X86ISD::WrapperRIP) {
