@@ -502,9 +502,7 @@ class OpaqueType : public DerivedType {
 public:
   /// OpaqueType::get - Static factory method for the OpaqueType class...
   ///
-  static OpaqueType *get(LLVMContext &C) {
-    return new OpaqueType(C);           // All opaque types are distinct
-  }
+  static OpaqueType *get(LLVMContext &C);
 
   // Implement support for type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const OpaqueType *) { return true; }

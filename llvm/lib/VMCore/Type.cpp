@@ -79,6 +79,9 @@ void Type::destroy() const {
     operator delete(const_cast<Type *>(this));
 
     return;
+  } else if (const OpaqueType *opaque_this = dyn_cast<OpaqueType>(this)) {
+    LLVMContextImpl *pImpl = this->getContext().pImpl;
+    pImpl->OpaqueTypes.erase(opaque_this);
   }
 
   // For all the other type subclasses, there is either no contained types or 
@@ -952,6 +955,20 @@ bool PointerType::isValidElementType(const Type *ElemTy) {
          ElemTy->getTypeID() != LabelTyID &&
          ElemTy->getTypeID() != MetadataTyID;
 }
+
+
+//===----------------------------------------------------------------------===//
+// Opaque Type Factory...
+//
+
+OpaqueType *OpaqueType::get(LLVMContext &C) {
+  OpaqueType *OT = new OpaqueType(C);           // All opaque types are distinct
+  
+  LLVMContextImpl *pImpl = C.pImpl;
+  pImpl->OpaqueTypes.insert(OT);
+  return OT;
+}
+
 
 
 //===----------------------------------------------------------------------===//

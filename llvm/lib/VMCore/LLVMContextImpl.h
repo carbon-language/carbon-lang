@@ -27,6 +27,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include <vector>
 
@@ -159,6 +160,11 @@ public:
   TypeMap<StructValType, StructType> StructTypes;
   TypeMap<IntegerValType, IntegerType> IntegerTypes;
 
+  // Opaque types are not structurally uniqued, so don't use TypeMap.
+  typedef SmallPtrSet<const OpaqueType*, 8> OpaqueTypesTy;
+  OpaqueTypesTy OpaqueTypes;
+  
+
   /// ValueHandles - This map keeps track of all of the value handles that are
   /// watching a Value*.  The Value::HasValueHandle bit is used to know
   // whether or not a value has an entry in this map.
@@ -201,6 +207,11 @@ public:
         delete I->second;
     }
     MDNodeSet.clear();
+    for (OpaqueTypesTy::iterator I = OpaqueTypes.begin(), E = OpaqueTypes.end();
+        I != E; ++I) {
+      (*I)->AbstractTypeUsers.clear();
+      delete *I;
+    }
   }
 };
 
