@@ -1,9 +1,9 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
-; RUN: grep and    %t1.s | count 230
+; RUN: grep and    %t1.s | count 234
 ; RUN: grep andc   %t1.s | count 85
-; RUN: grep andi   %t1.s | count 39
-; RUN: grep andhi  %t1.s | count 28
-; RUN: grep andbi  %t1.s | count 2
+; RUN: grep andi   %t1.s | count 37
+; RUN: grep andhi  %t1.s | count 30
+; RUN: grep andbi  %t1.s | count 4
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
