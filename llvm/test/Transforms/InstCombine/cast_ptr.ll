@@ -27,3 +27,12 @@ define i1 @test2(i8* %a, i8* %b) {
         ret i1 %r
 }
 
+; These casts should also be folded away.
+; CHECK: @test3
+; CHECK: icmp eq i8* %a, @global
+@global = global i8 0
+define i1 @test3(i8* %a) {
+        %tmpa = ptrtoint i8* %a to i32
+        %r = icmp eq i32 %tmpa, ptrtoint (i8* @global to i32)
+        ret i1 %r
+}

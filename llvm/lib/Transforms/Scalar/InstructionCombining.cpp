@@ -6452,7 +6452,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     //   if (X) ...
     // For generality, we handle any zero-extension of any operand comparison
     // with a constant or another cast from the same type.
-    if (isa<ConstantInt>(Op1) || isa<CastInst>(Op1))
+    if (isa<Constant>(Op1) || isa<CastInst>(Op1))
       if (Instruction *R = visitICmpInstWithCastAndCast(I))
         return R;
   }
