@@ -17,6 +17,7 @@
 #define CLANG_C_INDEX_H
 
 #include <sys/stat.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
