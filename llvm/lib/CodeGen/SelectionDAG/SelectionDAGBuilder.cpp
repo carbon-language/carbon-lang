@@ -4663,8 +4663,8 @@ private:
 
 /// GetRegistersForValue - Assign registers (virtual or physical) for the
 /// specified operand.  We prefer to assign virtual registers, to allow the
-/// register allocator handle the assignment process.  However, if the asm uses
-/// features that we can't model on machineinstrs, we have SDISel do the
+/// register allocator to handle the assignment process.  However, if the asm
+/// uses features that we can't model on machineinstrs, we have SDISel do the
 /// allocation.  This produces generally horrible, but correct, code.
 ///
 ///   OpInfo describes the operand.
