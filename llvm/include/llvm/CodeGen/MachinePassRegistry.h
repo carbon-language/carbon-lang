@@ -129,9 +129,9 @@ public:
     // Add existing passes to option.
     for (RegistryClass *Node = RegistryClass::getList();
          Node; Node = Node->getNext()) {
-      addLiteralOption(Node->getName(),
+      this->addLiteralOption(Node->getName(),
                       (typename RegistryClass::FunctionPassCtor)Node->getCtor(),
-                      Node->getDescription());
+                             Node->getDescription());
     }
     
     // Make sure we listen for list changes.

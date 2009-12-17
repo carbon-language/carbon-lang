@@ -132,19 +132,19 @@ public:
   }
 
   NodeData& getNodeData(const NodeIterator &nodeItr) {
-    return getNodeEntry(nodeItr).getNodeData();
+    return PGraph::getNodeEntry(nodeItr).getNodeData();
   }
 
   const NodeData& getNodeData(const NodeIterator &nodeItr) const {
-    return getNodeEntry(nodeItr).getNodeData();
+    return PGraph::getNodeEntry(nodeItr).getNodeData();
   }
 
   EdgeData& getEdgeData(const EdgeIterator &edgeItr) {
-    return getEdgeEntry(edgeItr).getEdgeData();
+    return PGraph::getEdgeEntry(edgeItr).getEdgeData();
   }
 
   const EdgeEntry& getEdgeData(const EdgeIterator &edgeItr) const {
-    return getEdgeEntry(edgeItr).getEdgeData();
+    return PGraph::getEdgeEntry(edgeItr).getEdgeData();
   }
 
   SimpleGraph toSimpleGraph() const {
