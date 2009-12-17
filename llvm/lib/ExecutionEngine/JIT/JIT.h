@@ -104,6 +104,12 @@ public:
   /// the underlying module.
   virtual void deleteModuleProvider(ModuleProvider *P,std::string *ErrInfo = 0);
 
+  /// materializeFunction - make sure the given function is fully read.  If the
+  /// module is corrupt, this returns true and fills in the optional string with
+  /// information about the problem.  If successful, this returns false.
+  ///
+  bool materializeFunction(Function *F, std::string *ErrInfo = 0);
+
   /// runFunction - Start execution with the specified function and arguments.
   ///
   virtual GenericValue runFunction(Function *F,

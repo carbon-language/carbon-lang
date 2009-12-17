@@ -366,6 +366,32 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
   }    
 }
 
+/// materializeFunction - make sure the given function is fully read.  If the
+/// module is corrupt, this returns true and fills in the optional string with
+/// information about the problem.  If successful, this returns false.
+bool JIT::materializeFunction(Function *F, std::string *ErrInfo) {
+  // Read in the function if it exists in this Module.
+  if (F->hasNotBeenReadFromBitcode()) {
+    // Determine the module provider this function is provided by.
+    Module *M = F->getParent();
+    ModuleProvider *MP = 0;
+    for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
+      if (Modules[i]->getModule() == M) {
+        MP = Modules[i];
+        break;
+      }
+    }
+    if (MP)
+      return MP->materializeFunction(F, ErrInfo);
+
+    if (ErrInfo)
+      *ErrInfo = "Function isn't in a module we know about!";
+    return true;
+  }
+  // Succeed if the function is already read.
+  return false;
+}
+
 /// run - Start execution with the specified function and arguments.
 ///
 GenericValue JIT::runFunction(Function *F,
@@ -607,6 +633,9 @@ void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
     Function *PF = jitstate->getPendingFunctions(locked).back();
     jitstate->getPendingFunctions(locked).pop_back();
 
+    assert(!PF->hasAvailableExternallyLinkage() &&
+           "Externally-defined function should not be in pending list.");
+
     // JIT the function
     isAlreadyCodeGenerating = true;
     jitstate->getPM(locked).run(*PF);
@@ -627,35 +656,18 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;   // Check if function already code gen'd
 
   MutexGuard locked(lock);
-  
-  // Now that this thread owns the lock, check if another thread has already
-  // code gen'd the function.
-  if (void *Addr = getPointerToGlobalIfAvailable(F))
-    return Addr;  
 
-  // Make sure we read in the function if it exists in this Module.
-  if (F->hasNotBeenReadFromBitcode()) {
-    // Determine the module provider this function is provided by.
-    Module *M = F->getParent();
-    ModuleProvider *MP = 0;
-    for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
-      if (Modules[i]->getModule() == M) {
-        MP = Modules[i];
-        break;
-      }
-    }
-    assert(MP && "Function isn't in a module we know about!");
-    
-    std::string ErrorMsg;
-    if (MP->materializeFunction(F, &ErrorMsg)) {
-      llvm_report_error("Error reading function '" + F->getName()+
-                        "' from bitcode file: " + ErrorMsg);
-    }
-
-    // Now retry to get the address.
-    if (void *Addr = getPointerToGlobalIfAvailable(F))
-      return Addr;
+  // Now that this thread owns the lock, make sure we read in the function if it
+  // exists in this Module.
+  std::string ErrorMsg;
+  if (materializeFunction(F, &ErrorMsg)) {
+    llvm_report_error("Error reading function '" + F->getName()+
+                      "' from bitcode file: " + ErrorMsg);
   }
+
+  // ... and check if another thread has already code gen'd the function.
+  if (void *Addr = getPointerToGlobalIfAvailable(F))
+    return Addr;
 
   if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure = !F->hasExternalWeakLinkage();

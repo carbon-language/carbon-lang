@@ -559,6 +559,35 @@ TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
                           << " not 7 from the IR version.";
 }
 
+}  // anonymous namespace
+// This function is intentionally defined differently in the statically-compiled
+// program from the IR input to the JIT to assert that the JIT doesn't use its
+// definition.
+extern "C" int32_t JITTest_AvailableExternallyFunction() {
+  return 42;
+}
+namespace {
+
+TEST_F(JITTest, AvailableExternallyFunctionIsntCompiled) {
+  TheJIT->DisableLazyCompilation(true);
+  LoadAssembly("define available_externally i32 "
+               "    @JITTest_AvailableExternallyFunction() { "
+               "  ret i32 7 "
+               "} "
+               " "
+               "define i32 @func() { "
+               "  %result = tail call i32 "
+               "    @JITTest_AvailableExternallyFunction() "
+               "  ret i32 %result "
+               "} ");
+  Function *funcIR = M->getFunction("func");
+
+  int32_t (*func)() = reinterpret_cast<int32_t(*)()>(
+    (intptr_t)TheJIT->getPointerToFunction(funcIR));
+  EXPECT_EQ(42, func()) << "func should return 42 from the static version,"
+                        << " not 7 from the IR version.";
+}
+
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange
 // behavior.
