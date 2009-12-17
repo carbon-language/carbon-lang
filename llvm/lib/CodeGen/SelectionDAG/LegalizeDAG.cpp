@@ -461,8 +461,7 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
          !ST->getMemoryVT().isVector() &&
          "Unaligned store of unknown type.");
   // Get the half-size VT
-  EVT NewStoredVT =
-    (MVT::SimpleValueType)(ST->getMemoryVT().getSimpleVT().SimpleTy - 1);
+  EVT NewStoredVT = ST->getMemoryVT().getHalfSizedIntegerVT(*DAG.getContext());
   int NumBits = NewStoredVT.getSizeInBits();
   int IncrementSize = NumBits / 8;
 
@@ -1170,8 +1169,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         Tmp2 = LegalizeOp(Ch);
       } else if (SrcWidth & (SrcWidth - 1)) {
         // If not loading a power-of-2 number of bits, expand as two loads.
-        assert(SrcVT.isExtended() && !SrcVT.isVector() &&
-               "Unsupported extload!");
+        assert(!SrcVT.isVector() && "Unsupported extload!");
         unsigned RoundWidth = 1 << Log2_32(SrcWidth);
         assert(RoundWidth < SrcWidth);
         unsigned ExtraWidth = SrcWidth - RoundWidth;
@@ -1384,8 +1382,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                    SVOffset, NVT, isVolatile, Alignment);
       } else if (StWidth & (StWidth - 1)) {
         // If not storing a power-of-2 number of bits, expand as two stores.
-        assert(StVT.isExtended() && !StVT.isVector() &&
-               "Unsupported truncstore!");
+        assert(!StVT.isVector() && "Unsupported truncstore!");
         unsigned RoundWidth = 1 << Log2_32(StWidth);
         assert(RoundWidth < StWidth);
         unsigned ExtraWidth = StWidth - RoundWidth;

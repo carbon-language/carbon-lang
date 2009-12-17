@@ -589,7 +589,25 @@ namespace llvm {
         return getIntegerVT(Context, 1 << Log2_32_Ceil(BitWidth));
     }
 
-    /// isPow2VectorType - Retuns true if the given vector is a power of 2.
+    /// getHalfSizedIntegerVT - Finds the smallest simple value type that is
+    /// greater than or equal to half the width of this EVT. If no simple
+    /// value type can be found, an extended integer value type of half the
+    /// size (rounded up) is returned.
+    EVT getHalfSizedIntegerVT(LLVMContext &Context) const {
+      assert(isInteger() && !isVector() && "Invalid integer type!");
+      unsigned EVTSize = getSizeInBits();
+      for (unsigned IntVT = MVT::FIRST_INTEGER_VALUETYPE;
+          IntVT <= MVT::LAST_INTEGER_VALUETYPE;
+          ++IntVT) {
+        EVT HalfVT = EVT((MVT::SimpleValueType)IntVT);
+        if(HalfVT.getSizeInBits() * 2 >= EVTSize) { 
+          return HalfVT;
+        }
+      }
+      return getIntegerVT(Context, (EVTSize + 1) / 2);
+    }
+
+    /// isPow2VectorType - Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();
       return !(NElts & (NElts - 1));
