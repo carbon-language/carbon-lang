@@ -334,44 +334,55 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 
   // FIXME: It would be nice if we had a more general mechanism to add
   // such preconditions.  Some day.
-  const Decl *D = InitLoc->getDecl();
-  
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    // Precondition: the first argument of 'main' is an integer guaranteed
-    //  to be > 0.
-    if (const IdentifierInfo *II = FD->getIdentifier()) {
-      if (II->getName() == "main" && FD->getNumParams() > 0) {
-        const ParmVarDecl *PD = FD->getParamDecl(0);
-        QualType T = PD->getType();
-        if (T->isIntegerType())
-          if (const MemRegion *R = state->getRegion(PD, InitLoc)) {
-            SVal V = state->getSVal(loc::MemRegionVal(R));
-            SVal Constraint_untested = EvalBinOp(state, BinaryOperator::GT, V,
-                                                 ValMgr.makeZeroVal(T),
-                                                 getContext().IntTy);
+  do {
+    const Decl *D = InitLoc->getDecl();  
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      // Precondition: the first argument of 'main' is an integer guaranteed
+      //  to be > 0.
+      const IdentifierInfo *II = FD->getIdentifier();
+      if (!II || !(II->getName() == "main" && FD->getNumParams() > 0))
+        break;
 
-            if (DefinedOrUnknownSVal *Constraint =
-                dyn_cast<DefinedOrUnknownSVal>(&Constraint_untested)) {
-              if (const GRState *newState = state->Assume(*Constraint, true))
-                state = newState;
-            }
-          }
+      const ParmVarDecl *PD = FD->getParamDecl(0);
+      QualType T = PD->getType();
+      if (!T->isIntegerType())
+        break;
+    
+      const MemRegion *R = state->getRegion(PD, InitLoc);
+      if (!R)
+        break;
+    
+      SVal V = state->getSVal(loc::MemRegionVal(R));
+      SVal Constraint_untested = EvalBinOp(state, BinaryOperator::GT, V,
+                                           ValMgr.makeZeroVal(T),
+                                           getContext().IntTy);
+
+      DefinedOrUnknownSVal *Constraint =
+        dyn_cast<DefinedOrUnknownSVal>(&Constraint_untested);
+      
+      if (!Constraint)
+        break;
+      
+      if (const GRState *newState = state->Assume(*Constraint, true))
+        state = newState;
+      
+      break;
+    }
+
+    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {    
+      // Precondition: 'self' is always non-null upon entry to an Objective-C
+      // method.
+      const ImplicitParamDecl *SelfD = MD->getSelfDecl();
+      const MemRegion *R = state->getRegion(SelfD, InitLoc);
+      SVal V = state->getSVal(loc::MemRegionVal(R));
+    
+      if (const Loc *LV = dyn_cast<Loc>(&V)) {
+        // Assume that the pointer value in 'self' is non-null.
+        state = state->Assume(*LV, true);
+        assert(state && "'self' cannot be null");
       }
     }
-  }
-  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {    
-    // Precondition: 'self' is always non-null upon entry to an Objective-C
-    // method.
-    const ImplicitParamDecl *SelfD = MD->getSelfDecl();
-    const MemRegion *R = state->getRegion(SelfD, InitLoc);
-    SVal V = state->getSVal(loc::MemRegionVal(R));
-    
-    if (const Loc *LV = dyn_cast<Loc>(&V)) {
-      // Assume that the pointer value in 'self' is non-null.
-      state = state->Assume(*LV, true);
-      assert(state && "'self' cannot be null");
-    }
-  }
+  } while (0);
   
   return state;
 }
