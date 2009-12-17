@@ -71,7 +71,7 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     Changed |= EliminatePHINodes(Fn, *I);
 
   // Remove dead IMPLICIT_DEF instructions.
-  for (SmallPtrSet<MachineInstr*,4>::iterator I = ImpDefs.begin(),
+  for (SmallPtrSet<MachineInstr*, 4>::iterator I = ImpDefs.begin(),
          E = ImpDefs.end(); I != E; ++I) {
     MachineInstr *DefMI = *I;
     unsigned DefReg = DefMI->getOperand(0).getReg();
@@ -83,8 +83,8 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   for (LoweredPHIMap::iterator I = LoweredPHIs.begin(), E = LoweredPHIs.end();
        I != E; ++I)
     Fn.DeleteMachineInstr(I->first);
-  LoweredPHIs.clear();
 
+  LoweredPHIs.clear();
   ImpDefs.clear();
   VRegPHIUseCount.clear();
   return Changed;
@@ -384,7 +384,8 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
 bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
                                          MachineBasicBlock &MBB,
                                          LiveVariables &LV) {
-  if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI)
+  if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI ||
+      MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
   for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
