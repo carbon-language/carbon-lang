@@ -907,7 +907,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   
   // Determine which phi node operands need copies
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    if (!I->empty() && !I->isLandingPad() &&
+    if (!I->empty() &&
         I->begin()->getOpcode() == TargetInstrInfo::PHI)
       processBlock(I);
   
