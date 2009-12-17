@@ -209,7 +209,7 @@ void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
   
   // Copy the elements over.
-  uninitialized_copy(this->begin(), this->end(), NewElts);
+  this->uninitialized_copy(this->begin(), this->end(), NewElts);
   
   // Destroy the original elements.
   destroy_range(this->begin(), this->end());
@@ -495,15 +495,15 @@ public:
     
     // Copy over the elements that we're about to overwrite.
     T *OldEnd = this->end();
-    setEnd(this->end() + NumToInsert);
+	this->setEnd(this->end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
+	this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
     
     // Replace the overwritten part.
     std::copy(From, From+NumOverwritten, I);
     
     // Insert the non-overwritten middle part.
-    uninitialized_copy(From+NumOverwritten, To, OldEnd);
+	this->uninitialized_copy(From+NumOverwritten, To, OldEnd);
     return I;
   }
   
