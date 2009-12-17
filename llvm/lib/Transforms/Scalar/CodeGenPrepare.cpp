@@ -48,7 +48,7 @@ namespace {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
     const TargetLowering *TLI;
-    ProfileInfo *PI;
+    ProfileInfo *PFI;
 
     /// BackEdges - Keep a set of all the loop back edges.
     ///
@@ -99,7 +99,7 @@ void CodeGenPrepare::findLoopBackEdges(const Function &F) {
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
-  PI = getAnalysisIfAvailable<ProfileInfo>();
+  PFI = getAnalysisIfAvailable<ProfileInfo>();
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
@@ -288,9 +288,9 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
-  if (PI) {
-    PI->replaceAllUses(BB, DestBB);
-    PI->removeEdge(ProfileInfo::getEdge(BB, DestBB));
+  if (PFI) {
+    PFI->replaceAllUses(BB, DestBB);
+    PFI->removeEdge(ProfileInfo::getEdge(BB, DestBB));
   }
   BB->eraseFromParent();
 
@@ -368,9 +368,9 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
 
       // If we found a workable predecessor, change TI to branch to Succ.
       if (FoundMatch) {
-        ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>();
-        if (PI)
-          PI->splitEdge(TIBB, Dest, Pred);
+        ProfileInfo *PFI = P->getAnalysisIfAvailable<ProfileInfo>();
+        if (PFI)
+          PFI->splitEdge(TIBB, Dest, Pred);
         Dest->removePredecessor(TIBB);
         TI->setSuccessor(SuccNum, Pred);
         return;

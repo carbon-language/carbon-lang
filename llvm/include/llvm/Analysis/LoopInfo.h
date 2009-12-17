@@ -976,6 +976,13 @@ public:
   void removeBlock(BasicBlock *BB) {
     LI.removeBlock(BB);
   }
+
+  static bool isNotAlreadyContainedIn(const Loop *SubLoop,
+                                      const Loop *ParentLoop) {
+    return
+      LoopInfoBase<BasicBlock, Loop>::isNotAlreadyContainedIn(SubLoop,
+                                                              ParentLoop);
+  }
 };
 
 

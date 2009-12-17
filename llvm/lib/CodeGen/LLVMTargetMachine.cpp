@@ -31,6 +31,10 @@ namespace llvm {
   bool EnableFastISel;
 }
 
+static cl::opt<bool> X1("x1");
+static cl::opt<bool> X2("x2");
+static cl::opt<bool> X3("x3");
+static cl::opt<bool> X4("x4");
 static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
@@ -239,12 +243,22 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createGVNPass(/*NoPRE=*/false, /*NoLoads=*/true));
   }
 
+  if (X1)
+    PM.add(createPrintFunctionPass("\n\n"
+                                   "*** Before LSR ***\n",
+                                   &errs()));
+
   // Run loop strength reduction before anything else.
   if (OptLevel != CodeGenOpt::None && !DisableLSR) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
       PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &errs()));
   }
+
+  if (X2)
+    PM.add(createPrintFunctionPass("\n\n"
+                                   "*** After LSR ***\n",
+                                   &errs()));
 
   // Turn exception handling constructs into something the code generators can
   // handle.
@@ -268,8 +282,18 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
+  if (X3)
+    PM.add(createPrintFunctionPass("\n\n"
+                                   "*** Before CGP ***\n",
+                                   &errs()));
+
   if (OptLevel != CodeGenOpt::None && !DisableCGP)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
+
+  if (X4)
+    PM.add(createPrintFunctionPass("\n\n"
+                                   "*** After CGP ***\n",
+                                   &errs()));
 
   PM.add(createStackProtectorPass(getTargetLowering()));
 
