@@ -7,15 +7,10 @@
 class teste {
   int A;
   teste() : A(2) {}
-  void* operator new(unsigned) {return ::new teste();}
 };
 
 void f1() {
+  // CHECK-SANE: declare noalias i8* @_Znwj(
+  // CHECK-SANENOT: declare i8* @_Znwj(
   new teste();
 }
-
-// CHECK-SANE: define linkonce_odr noalias i8* @_ZN5testenwEj(
-// CHECK-SANE: declare noalias i8* @_Znwj(
-
-// CHECK-SANENOT: define linkonce_odr i8* @_ZN5testenwEj(
-// CHECK-SANENOT: declare i8* @_Znwj(
