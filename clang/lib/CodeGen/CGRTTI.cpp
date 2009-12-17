@@ -25,6 +25,8 @@ class RTTIBuilder {
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
 
+  std::vector<llvm::Constant *> Info;
+  
   // Type info flags.
   enum {
     /// TI_Const - Type has const qualifier.
@@ -212,8 +214,7 @@ public:
   llvm::Constant *
   Buildclass_type_info(const CXXRecordDecl *RD,
                        llvm::GlobalVariable::LinkageTypes Linkage) {
-    std::vector<llvm::Constant *> info;
-    assert(info.empty() && "Info vector must be empty!");
+    assert(Info.empty() && "Info vector must be empty!");
     
     llvm::Constant *C;
 
@@ -241,15 +242,15 @@ public:
       C = BuildVtableRef("_ZTVN10__cxxabiv120__si_class_type_infoE");
     } else
       C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
-    info.push_back(C);
-    info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden,
+    Info.push_back(C);
+    Info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden,
                              Linkage));
 
     // If we have no bases, there are no more fields.
     if (RD->getNumBases()) {
       if (!simple) {
-        info.push_back(BuildFlags(CalculateFlags(RD)));
-        info.push_back(BuildBaseCount(RD->getNumBases()));
+        Info.push_back(BuildFlags(CalculateFlags(RD)));
+        Info.push_back(BuildBaseCount(RD->getNumBases()));
       }
 
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
@@ -257,7 +258,7 @@ public:
              e = RD->bases_end(); i != e; ++i) {
         const CXXRecordDecl *Base =
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        info.push_back(CGM.GetAddrOfRTTI(Base));
+        Info.push_back(CGM.GetAddrOfRTTI(Base));
         if (simple)
           break;
         int64_t offset;
@@ -272,11 +273,11 @@ public:
         const llvm::Type *LongTy =
           CGM.getTypes().ConvertType(CGM.getContext().LongTy);
         C = llvm::ConstantInt::get(LongTy, offset);
-        info.push_back(C);
+        Info.push_back(C);
       }
     }
 
-    return finish(&info[0], info.size(), GV, Name, Hidden, Linkage);
+    return finish(&Info[0], Info.size(), GV, Name, Hidden, Linkage);
   }
 
   /// - BuildFlags - Build a __flags value for __pbase_type_info.
@@ -311,8 +312,7 @@ public:
   }
 
   llvm::Constant *BuildPointerType(QualType Ty) {
-    std::vector<llvm::Constant *> info;
-    assert(info.empty() && "Info vector must be empty!");
+    assert(Info.empty() && "Info vector must be empty!");
     
     llvm::Constant *C;
 
@@ -341,8 +341,8 @@ public:
     else
       C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
     
-    info.push_back(C);
-    info.push_back(BuildName(Ty, Hidden, Extern));
+    Info.push_back(C);
+    Info.push_back(BuildName(Ty, Hidden, Extern));
     Qualifiers Q = PointeeTy.getQualifiers();
     
     PointeeTy = 
@@ -362,15 +362,16 @@ public:
     if (PtrMemTy && PtrMemTy->getClass()->isIncompleteType())
       Flags |= TI_ContainingClassIncomplete;
     
-    info.push_back(BuildInt(Flags));
-    info.push_back(BuildInt(0));
-    info.push_back(BuildType(PointeeTy));
+    Info.push_back(BuildInt(Flags));
+    Info.push_back(BuildInt(0));
+    Info.push_back(RTTIBuilder(CGM).BuildType(PointeeTy));
 
     if (PtrMemTy)
-      info.push_back(BuildType(QualType(PtrMemTy->getClass(), 0)));
+      Info.push_back(RTTIBuilder(CGM).BuildType(
+                                            QualType(PtrMemTy->getClass(), 0)));
 
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(&info[0], info.size(), GV, Name, /*Hidden=*/true, 
+    return finish(&Info[0], Info.size(), GV, Name, /*Hidden=*/true, 
                   GetLinkageFromExternFlag(Extern));
   }
 
