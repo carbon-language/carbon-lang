@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "AsmParser.h"
+#include "HexDisassembler.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -76,7 +77,8 @@ TripleName("triple", cl::desc("Target triple to assemble for, "
 
 enum ActionType {
   AC_AsLex,
-  AC_Assemble
+  AC_Assemble,
+  AC_Disassemble
 };
 
 static cl::opt<ActionType>
@@ -86,6 +88,8 @@ Action(cl::desc("Action to perform:"),
                              "Lex tokens from a .s file"),
                   clEnumValN(AC_Assemble, "assemble",
                              "Assemble a .s file (default)"),
+                  clEnumValN(AC_Disassemble, "disassemble",
+                             "Disassemble strings of hex bytes"),
                   clEnumValEnd));
 
 static const Target *GetTarget(const char *ProgName) {
@@ -281,7 +285,33 @@ static int AssembleInput(const char *ProgName) {
     delete Out;
 
   return Res;
-}  
+}
+
+static int DisassembleInput(const char *ProgName) {
+  std::string Error;
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
+  if (TheTarget == 0) {
+    errs() << ProgName << ": error: unable to get target for '" << TripleName
+    << "', see --version and --triple.\n";
+    return 0;
+  }
+  
+  std::string ErrorMessage;
+  
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
+                                                      &ErrorMessage);
+
+  if (Buffer == 0) {
+    errs() << ProgName << ": ";
+    if (ErrorMessage.size())
+      errs() << ErrorMessage << "\n";
+    else
+      errs() << "input file didn't read correctly.\n";
+    return 1;
+  }
+  
+  return HexDisassembler::disassemble(*TheTarget, TripleName, *Buffer);
+}
 
 
 int main(int argc, char **argv) {
@@ -296,6 +326,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllDisassemblers();
   
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
 
@@ -305,6 +336,8 @@ int main(int argc, char **argv) {
     return AsLexInput(argv[0]);
   case AC_Assemble:
     return AssembleInput(argv[0]);
+  case AC_Disassemble:
+    return DisassembleInput(argv[0]);
   }
   
   return 0;
