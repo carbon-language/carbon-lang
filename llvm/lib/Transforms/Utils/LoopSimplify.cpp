@@ -109,7 +109,7 @@ X("loopsimplify", "Canonicalize natural loops", true);
 const PassInfo *const llvm::LoopSimplifyID = &X;
 Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
-/// runOnFunction - Run down all loops in the CFG (recursively, but we could do
+/// runOnLoop - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...
 ///
 bool LoopSimplify::runOnLoop(Loop *l, LPPassManager &LPM) {
