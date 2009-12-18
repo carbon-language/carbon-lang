@@ -15,8 +15,8 @@
 #define LLVM_CLANG_AST_CHARUNITS_H
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/System/DataTypes.h"
 
-#include <stdint.h>
 #include <string>
 
 namespace clang {
