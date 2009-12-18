@@ -4060,6 +4060,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
                                       SourceLocation(), cast<Expr>(RHSStmt), 
                                       Exp->getType());
     return CondExpr;
+  } else if (const ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(BlockExp)) {
+    CPT = IRE->getType()->getAs<BlockPointerType>();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
   }
