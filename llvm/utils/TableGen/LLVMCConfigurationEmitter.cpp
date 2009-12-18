@@ -2354,19 +2354,31 @@ class EmitPreprocessOptionsCallback :
                       d, IndentLevel, O);
   }
 
-  void onSetParameter(const DagInit& d,
+  void onSetListOrParameter(const DagInit& d,
                       unsigned IndentLevel, raw_ostream& O) const {
     checkNumberOfArguments(d, 2);
     const std::string& OptName = InitPtrToString(d.getArg(0));
-    const std::string& Value = InitPtrToString(d.getArg(1));
+    const Init* Value = d.getArg(1);
     const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
 
-    if (OptDesc.isParameter())
+    if (OptDesc.isList()) {
+      const ListInit& List = InitPtrToList(Value);
+
+      O.indent(IndentLevel) << OptDesc.GenVariableName() << ".clear();\n";
+      for (ListInit::const_iterator B = List.begin(), E = List.end();
+           B != E; ++B) {
+        O.indent(IndentLevel) << OptDesc.GenVariableName() << ".push_back(\""
+                              << InitPtrToString(*B) << "\");\n";
+      }
+    }
+    else if (OptDesc.isParameter()) {
+      const std::string& Str = InitPtrToString(Value);
       O.indent(IndentLevel) << OptDesc.GenVariableName()
-                            << " = \"" << Value << "\";\n";
-    else
-      throw "Two-argument 'set_option' "
-        "can be only applied to parameter options!";
+                            << " = \"" << Str << "\";\n";
+    }
+    else {
+      throw "set_option: -" + OptName + ": is not a list or parameter option!";
+    }
   }
 
   void onSetSwitch(const Init* I,
@@ -2377,7 +2389,7 @@ class EmitPreprocessOptionsCallback :
     if (OptDesc.isSwitch())
       O.indent(IndentLevel) << OptDesc.GenVariableName() << " = true;\n";
     else
-      throw "One-argument 'set_option' can be only applied to switch options!";
+      throw "set_option: -" + OptName + " is not a switch option!";
   }
 
   void onSetOption(const DagInit& d,
@@ -2385,9 +2397,10 @@ class EmitPreprocessOptionsCallback :
   {
     checkNumberOfArguments(d, 1);
 
-    // Two arguments: (set_option "parameter", "value")
+    // Two arguments: (set_option "parameter", VALUE), where VALUE is either a
+    // string or a string list.
     if (d.getNumArgs() > 1)
-      this->onSetParameter(d, IndentLevel, O);
+      this->onSetListOrParameter(d, IndentLevel, O);
     // One argument: (set_option "switch")
     // or (set_option ["switch1", "switch2", ...])
     else

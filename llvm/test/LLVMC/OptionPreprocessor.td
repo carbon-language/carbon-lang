@@ -27,8 +27,13 @@ def Preprocess : OptionPreprocessor<
       // CHECK: W2
       // CHECK: foo = true;
       // CHECK: foo_p = "asdf";
+      // CHECK: foo_l.clear();
+      // CHECK: foo_l.push_back("qwert");
+      // CHECK: foo_l.push_back("yuiop");
+      // CHECK: foo_l.push_back("asdf");
       (and (switch_on ["foo", "bar"]), (any_empty ["foo_p", "bar_p"])),
-           [(warning "W2"), (set_option "foo"), (set_option "foo_p", "asdf")],
+           [(warning "W2"), (set_option "foo"), (set_option "foo_p", "asdf"),
+                            (set_option "foo_l", ["qwert", "yuiop", "asdf"])],
       // CHECK: W3
       // CHECK: foo = true;
       // CHECK: bar = true;
