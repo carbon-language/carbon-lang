@@ -1194,13 +1194,11 @@ public:
   ARMTargetInfo(const std::string &TripleStr)
     : TargetInfo(TripleStr), ABI("aapcs-linux"), CPU("arm1136j-s")
   {
-    llvm::Triple Triple(TripleStr);
-
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
 
     // FIXME: Should we just treat this as a feature?
-    IsThumb = Triple.getArchName().startswith("thumb");
+    IsThumb = getTriple().getArchName().startswith("thumb");
     if (IsThumb) {
       DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                            "i64:64:64-f32:32:32-f64:64:64-"
@@ -1308,7 +1306,7 @@ public:
     if (IsThumb) {
       Define(Defs, "__THUMBEL__");
       Define(Defs, "__thumb__");
-      if (CPUArch.startswith("7"))
+      if (CPUArch == "6T2" || CPUArch.startswith("7"))
         Define(Defs, "__thumb2__");
     }
 
@@ -1317,7 +1315,8 @@ public:
     // FIXME: This should be conditional on VFP instruction support.
     Define(Defs, "__VFP_FP__");
 
-    Define(Defs, "__USING_SJLJ_EXCEPTIONS__");
+    if (getTriple().getOS() == llvm::Triple::Darwin)
+      Define(Defs, "__USING_SJLJ_EXCEPTIONS__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
