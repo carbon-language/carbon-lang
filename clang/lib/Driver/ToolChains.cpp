@@ -526,6 +526,12 @@ bool Darwin::IsUnwindTablesDefault() const {
   return getArchName() == "x86_64";
 }
 
+bool Darwin::UseDwarfDebugFlags() const {
+  if (const char *S = ::getenv("RC_DEBUG_OPTIONS"))
+    return S[0] != '\0';
+  return false;
+}
+
 const char *Darwin::GetDefaultRelocationModel() const {
   return "pic";
 }

@@ -58,6 +58,10 @@ public:
   /// Enable additional debugging information.
   std::string DebugPass;
 
+  /// The string to embed in the debug information for the compile unit, if
+  /// non-empty.
+  std::string DwarfDebugFlags;
+
   /// The ABI to use for passing floating point arguments.
   std::string FloatABI;
 

@@ -1109,6 +1109,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, "clang"));
+
+  // Optionally embed the -cc1 level arguments into the debug info, for build
+  // analysis.
+  if (getToolChain().UseDwarfDebugFlags()) {
+    llvm::SmallString<256> Flags;
+    Flags += Exec;
+    for (unsigned i = 0, e = CmdArgs.size(); i != e; ++i) {
+      Flags += " ";
+      Flags += CmdArgs[i];
+    }
+    CmdArgs.push_back("-dwarf-debug-flags");
+    CmdArgs.push_back(Args.MakeArgString(Flags.str()));
+  }
+
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 
   // Explicitly warn that these options are unsupported, even though

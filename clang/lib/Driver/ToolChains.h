@@ -154,6 +154,8 @@ public:
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
 
+  virtual bool UseDwarfDebugFlags() const;
+
   /// }
 };
 

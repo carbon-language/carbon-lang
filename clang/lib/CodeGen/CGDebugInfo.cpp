@@ -123,8 +123,6 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     CLANG_VENDOR
 #endif
     "clang " CLANG_VERSION_STRING;
-  bool isOptimized = LO.Optimize;
-  const char *Flags = "";   // FIXME: Encode command line options.
 
   // Figure out which version of the ObjC runtime we have.
   unsigned RuntimeVers = 0;
@@ -132,11 +130,9 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
 
   // Create new compile unit.
-  return Unit = DebugFactory.CreateCompileUnit(LangTag, 
-                                               AbsFileName.getLast(),
-                                               AbsFileName.getDirname(),
-                                               Producer, isMain,
-                                               isOptimized, Flags, RuntimeVers);
+  return Unit = DebugFactory.CreateCompileUnit(
+    LangTag, AbsFileName.getLast(), AbsFileName.getDirname(), Producer, isMain,
+    LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new

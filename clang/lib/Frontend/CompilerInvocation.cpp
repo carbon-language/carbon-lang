@@ -122,6 +122,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-disable-llvm-optzns");
   if (Opts.DisableRedZone)
     Res.push_back("-disable-red-zone");
+  if (!Opts.DwarfDebugFlags.empty()) {
+    Res.push_back("-dwarf-debug-flags");
+    Res.push_back(Opts.DwarfDebugFlags);
+  }
   if (!Opts.MergeAllConstants)
     Res.push_back("-fno-merge-all-constants");
   if (Opts.NoCommon)
@@ -749,6 +753,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.DebugInfo = Args.hasArg(OPT_g);
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);
+  Opts.DwarfDebugFlags = getLastArgValue(Args, OPT_dwarf_debug_flags);
   Opts.MergeAllConstants = !Args.hasArg(OPT_fno_merge_all_constants);
   Opts.NoCommon = Args.hasArg(OPT_fno_common);
   Opts.NoImplicitFloat = Args.hasArg(OPT_no_implicit_float);
