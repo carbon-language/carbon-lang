@@ -265,7 +265,7 @@ protected:
   /// VisitCall - Transfer function for function calls.
   void VisitCall(CallExpr* CE, ExplodedNode* Pred,
                  CallExpr::arg_iterator AI, CallExpr::arg_iterator AE,
-                 ExplodedNodeSet& Dst);
+                 ExplodedNodeSet& Dst, bool asLValue);
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,

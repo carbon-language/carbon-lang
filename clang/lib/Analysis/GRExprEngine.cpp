@@ -46,6 +46,23 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
   return Ctx.Selectors.getSelector(0, &II);
 }
 
+static bool CalleeReturnsReference(const CallExpr *CE) { 
+  const Expr *Callee = CE->getCallee();
+  QualType T = Callee->getType();
+  
+  
+  if (const PointerType *PT = T->getAs<PointerType>()) {
+    const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>();
+    T = FT->getResultType();
+  }
+  else {
+    const BlockPointerType *BT = T->getAs<BlockPointerType>();
+    T = BT->getPointeeType()->getAs<FunctionType>()->getResultType();
+  }
+  
+  return T->isReferenceType();
+}
+
 //===----------------------------------------------------------------------===//
 // Batch auditor.  DEPRECATED.
 //===----------------------------------------------------------------------===//
@@ -228,7 +245,7 @@ void GRExprEngine::CheckerVisitBind(const Stmt *AssignE, const Stmt *StoreE,
       CurrSet = (PrevSet == &Tmp) ? &Src : &Tmp;
       CurrSet->clear();
     }
-    
+
     void *tag = I->first;
     Checker *checker = I->second;
     
@@ -593,7 +610,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
       CallExpr* C = cast<CallExpr>(S);
-      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
+      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
       break;
     }
 
@@ -744,6 +761,14 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::BlockDeclRefExprClass:
       VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(Ex), Pred, Dst, true);
       return;
+      
+    case Stmt::CallExprClass:
+    case Stmt::CXXOperatorCallExprClass: {
+      CallExpr* C = cast<CallExpr>(Ex);
+      assert(CalleeReturnsReference(C));
+      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, true);      
+      break;
+    }
       
     case Stmt::CompoundLiteralExprClass:
       VisitCompoundLiteralExpr(cast<CompoundLiteralExpr>(Ex), Pred, Dst, true);
@@ -1563,7 +1588,7 @@ public:
 void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::arg_iterator AI,
                              CallExpr::arg_iterator AE,
-                             ExplodedNodeSet& Dst) {
+                             ExplodedNodeSet& Dst, bool asLValue) {
 
   // Determine the type of function we're calling (if available).
   const FunctionProtoType *Proto = NULL;
@@ -1577,7 +1602,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
   WorkList.push_back(CallExprWLItem(AI, Pred));
   
   ExplodedNodeSet ArgsEvaluated;
-  
+
   while (!WorkList.empty()) {
     CallExprWLItem Item = WorkList.back();
     WorkList.pop_back();
@@ -1623,6 +1648,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
   // Finally, evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
   ExplodedNodeSet DstTmp3;
+
   
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI != DE; ++DI) {
@@ -1664,7 +1690,28 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
   
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
-  CheckerVisit(CE, Dst, DstTmp3, false);  
+  
+  if (!(!asLValue && CalleeReturnsReference(CE))) {
+    CheckerVisit(CE, Dst, DstTmp3, false);
+    return;
+  }
+  
+  // Handle the case where the called function returns a reference but
+  // we expect an rvalue.  For such cases, convert the reference to
+  // an rvalue.  
+  // FIXME: This conversion doesn't actually happen unless the result
+  //  of CallExpr is consumed by another expression.
+  ExplodedNodeSet DstTmp4;
+  CheckerVisit(CE, DstTmp4, DstTmp3, false);
+  QualType LoadTy = CE->getType();
+  
+  static int *ConvertToRvalueTag = 0;
+  for (ExplodedNodeSet::iterator NI = DstTmp4.begin(), NE = DstTmp4.end();
+       NI!=NE; ++NI) {
+    const GRState *state = GetState(*NI);
+    EvalLoad(Dst, CE, *NI, state, state->getSVal(CE),
+             &ConvertToRvalueTag, LoadTy);
+  }
 }
 
 //===----------------------------------------------------------------------===//
