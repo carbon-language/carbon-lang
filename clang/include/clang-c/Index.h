@@ -556,7 +556,15 @@ enum CXCompletionChunkKind {
   /**
    * \brief A comma separator (',').
    */
-  CXCompletionChunk_Comma
+  CXCompletionChunk_Comma,
+  /**
+   * \brief Text that specifies the result type of a given result. 
+   *
+   * This special kind of informative chunk is not meant to be inserted into
+   * the text buffer. Rather, it is meant to illustrate the type that an 
+   * expression using the given completion string would have.
+   */
+  CXCompletionChunk_ResultType
 };
   
 /**

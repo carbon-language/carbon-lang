@@ -106,38 +106,38 @@ void test_overload(Overload *ovl) {
 // CHECK-CC2: {TypedText instanceMethod1}
 // CHECK-CC2: {TypedText protocolInstanceMethod:}{Placeholder (int)value}
 // RUN: c-index-test -code-completion-at=%s:61:16 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: ObjCClassMethodDecl:{TypedText MyClassMethod:}{Placeholder (id)obj}
-// CHECK-CC3: ObjCClassMethodDecl:{TypedText MyPrivateMethod}
+// CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyClassMethod:}{Placeholder (id)obj}
+// CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyPrivateMethod}
 // RUN: c-index-test -code-completion-at=%s:65:16 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: ObjCInstanceMethodDecl:{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
-// CHECK-CC4: ObjCInstanceMethodDecl:{TypedText MyPrivateInstMethod}
+// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyPrivateInstMethod}
 // RUN: c-index-test -code-completion-at=%s:74:9 %s | FileCheck -check-prefix=CHECK-CC5 %s
-// CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
-// CHECK-CC5: ObjCInstanceMethodDecl:{TypedText MySubInstMethod}
+// CHECK-CC5: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+// CHECK-CC5: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod}
 // RUN: c-index-test -code-completion-at=%s:82:8 %s | FileCheck -check-prefix=CHECK-CC6 %s
-// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText protocolInstanceMethod:}{Placeholder (int)value}
-// CHECK-CC6: ObjCInstanceMethodDecl:{TypedText secondProtocolInstanceMethod}
+// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText protocolInstanceMethod:}{Placeholder (int)value}
+// CHECK-CC6: ObjCInstanceMethodDecl:{ResultType int}{TypedText secondProtocolInstanceMethod}
 // RUN: c-index-test -code-completion-at=%s:95:8 %s | FileCheck -check-prefix=CHECK-CC7 %s
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText Method}
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText Method:}{Placeholder (int)i}
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText Method:}{Placeholder (float)f}{Text  SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC7: ObjCInstanceMethodDecl:{TypedText OtherMethod:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
 // RUN: c-index-test -code-completion-at=%s:95:17 %s | FileCheck -check-prefix=CHECK-CC8 %s
-// CHECK-CC8: ObjCInstanceMethodDecl:{Informative Method:}{TypedText }
-// CHECK-CC8: ObjCInstanceMethodDecl:{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
-// CHECK-CC8: ObjCInstanceMethodDecl:{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC8: ObjCInstanceMethodDecl:{Informative Method:}{TypedText SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText }
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:95:24 %s | FileCheck -check-prefix=CHECK-CC9 %s
-// CHECK-CC9: ObjCInstanceMethodDecl:{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
-// CHECK-CC9: ObjCInstanceMethodDecl:{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
+// CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
+// CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCA %s
-// CHECK-CCA: {TypedText _cmd}
-// CHECK-CCA: {TypedText self}
+// CHECK-CCA: {ResultType SEL}{TypedText _cmd}
+// CHECK-CCA: {ResultType Class}{TypedText self}
 // CHECK-CCA: TypedefDecl:{TypedText Class}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText Foo}
-// CHECK-CCA: FunctionDecl:{TypedText func}{LeftParen (}{RightParen )}
+// CHECK-CCA: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
 // CHECK-CCA: TypedefDecl:{TypedText id}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}

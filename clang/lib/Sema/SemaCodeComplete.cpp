@@ -829,6 +829,39 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
   }
 }
 
+/// \brief If the given declaration has an associated type, add it as a result 
+/// type chunk.
+static void AddResultTypeChunk(ASTContext &Context,
+                               NamedDecl *ND,
+                               CodeCompletionString *Result) {
+  if (!ND)
+    return;
+  
+  // Determine the type of the declaration (if it has a type).
+  QualType T;
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND))
+    T = Function->getResultType();
+  else if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
+    T = Method->getResultType();
+  else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND))
+    T = FunTmpl->getTemplatedDecl()->getResultType();
+  else if (EnumConstantDecl *Enumerator = dyn_cast<EnumConstantDecl>(ND))
+    T = Context.getTypeDeclType(cast<TypeDecl>(Enumerator->getDeclContext()));
+  else if (isa<UnresolvedUsingValueDecl>(ND)) {
+    /* Do nothing: ignore unresolved using declarations*/
+  } else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND))
+    T = Value->getType();
+  else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
+    T = Property->getType();
+  
+  if (T.isNull() || Context.hasSameType(T, Context.DependentTy))
+    return;
+  
+  std::string TypeStr;
+  T.getAsStringInternal(TypeStr, Context.PrintingPolicy);
+  Result->AddResultTypeChunk(TypeStr);
+}
+
 /// \brief Add function parameter chunks to the given code completion string.
 static void AddFunctionParameterChunks(ASTContext &Context,
                                        FunctionDecl *Function,
@@ -1042,6 +1075,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     return Result;
   }
   
+  AddResultTypeChunk(S.Context, ND, Result);
+  
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
@@ -1189,6 +1224,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
   
   CodeCompletionString *Result = new CodeCompletionString;
   FunctionDecl *FDecl = getFunction();
+  AddResultTypeChunk(S.Context, FDecl, Result);
   const FunctionProtoType *Proto 
     = dyn_cast<FunctionProtoType>(getFunctionType());
   if (!FDecl && !Proto) {

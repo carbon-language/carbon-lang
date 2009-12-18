@@ -61,6 +61,9 @@ public:
     /// \brief A piece of text that describes something about the result but
     /// should not be inserted into the buffer.
     CK_Informative,
+    /// \brief A piece of text that describes the type of an entity or, for
+    /// functions and methods, the return type.
+    CK_ResultType,
     /// \brief A piece of text that describes the parameter that corresponds
     /// to the code-completion location within a function call, message send,
     /// macro invocation, etc.
@@ -119,6 +122,9 @@ public:
 
     /// \brief Create a new informative chunk.
     static Chunk CreateInformative(llvm::StringRef Informative);
+
+    /// \brief Create a new result type chunk.
+    static Chunk CreateResultType(llvm::StringRef ResultType);
 
     /// \brief Create a new current-parameter chunk.
     static Chunk CreateCurrentParameter(llvm::StringRef CurrentParameter);
@@ -186,6 +192,12 @@ public:
     Chunks.push_back(Chunk::CreateInformative(Text));
   }
 
+  /// \brief Add a new result-type chunk.
+  /// The text will be copied.
+  void AddResultTypeChunk(llvm::StringRef ResultType) {
+    Chunks.push_back(Chunk::CreateResultType(ResultType));
+  }
+  
   /// \brief Add a new current-parameter chunk.
   /// The text will be copied.
   void AddCurrentParameterChunk(llvm::StringRef CurrentParameter) {

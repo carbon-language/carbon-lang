@@ -355,6 +355,7 @@ clang_getCompletionChunkKindSpelling(enum CXCompletionChunkKind Kind) {
   case CXCompletionChunk_LeftAngle: return "LeftAngle";
   case CXCompletionChunk_RightAngle: return "RightAngle";
   case CXCompletionChunk_Comma: return "Comma";
+  case CXCompletionChunk_ResultType: return "ResultType";
   }
   
   return "Unknown";

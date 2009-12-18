@@ -1114,6 +1114,8 @@ clang_getCompletionChunkKind(CXCompletionString completion_string,
     return CXCompletionChunk_Placeholder;
   case CodeCompletionString::CK_Informative:
     return CXCompletionChunk_Informative;
+  case CodeCompletionString::CK_ResultType:
+    return CXCompletionChunk_ResultType;
   case CodeCompletionString::CK_CurrentParameter:
     return CXCompletionChunk_CurrentParameter;
   case CodeCompletionString::CK_LeftParen:
@@ -1161,6 +1163,7 @@ const char *clang_getCompletionChunkText(CXCompletionString completion_string,
   case CodeCompletionString::CK_LeftAngle:
   case CodeCompletionString::CK_RightAngle:
   case CodeCompletionString::CK_Comma:
+  case CodeCompletionString::CK_ResultType:
     return (*CCStr)[chunk_number].Text;
 
   case CodeCompletionString::CK_Optional:
@@ -1194,6 +1197,7 @@ clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
   case CodeCompletionString::CK_LeftAngle:
   case CodeCompletionString::CK_RightAngle:
   case CodeCompletionString::CK_Comma:
+  case CodeCompletionString::CK_ResultType:
     return 0;
 
   case CodeCompletionString::CK_Optional:

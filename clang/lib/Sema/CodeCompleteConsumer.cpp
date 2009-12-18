@@ -37,6 +37,7 @@ CodeCompletionString::Chunk::Chunk(ChunkKind Kind, llvm::StringRef Text)
   case CK_Text:
   case CK_Placeholder:
   case CK_Informative:
+  case CK_ResultType:
   case CK_CurrentParameter: {
     char *New = new char [Text.size() + 1];
     std::memcpy(New, Text.data(), Text.size());
@@ -112,6 +113,11 @@ CodeCompletionString::Chunk::CreateInformative(StringRef Informative) {
 }
 
 CodeCompletionString::Chunk 
+CodeCompletionString::Chunk::CreateResultType(StringRef ResultType) {
+  return Chunk(CK_ResultType, ResultType);
+}
+
+CodeCompletionString::Chunk 
 CodeCompletionString::Chunk::CreateCurrentParameter(
                                                 StringRef CurrentParameter) {
   return Chunk(CK_CurrentParameter, CurrentParameter);
@@ -123,6 +129,7 @@ CodeCompletionString::Chunk CodeCompletionString::Chunk::Clone() const {
   case CK_Text:
   case CK_Placeholder:
   case CK_Informative:
+  case CK_ResultType:
   case CK_CurrentParameter:
   case CK_LeftParen:
   case CK_RightParen:
@@ -156,6 +163,7 @@ CodeCompletionString::Chunk::Destroy() {
   case CK_Text: 
   case CK_Placeholder:
   case CK_Informative:
+  case CK_ResultType:
   case CK_CurrentParameter:
     delete [] Text;
     break;
@@ -186,7 +194,12 @@ std::string CodeCompletionString::getAsString() const {
     switch (C->Kind) {
     case CK_Optional: OS << "{#" << C->Optional->getAsString() << "#}"; break;
     case CK_Placeholder: OS << "<#" << C->Text << "#>"; break;
-    case CK_Informative: OS << "[#" << C->Text << "#]"; break;
+        
+    case CK_Informative: 
+    case CK_ResultType:
+      OS << "[#" << C->Text << "#]"; 
+      break;
+        
     case CK_CurrentParameter: OS << "<#" << C->Text << "#>"; break;
     default: OS << C->Text; break;
     }
@@ -236,6 +249,7 @@ void CodeCompletionString::Serialize(llvm::raw_ostream &OS) const {
     case CK_Text:
     case CK_Placeholder:
     case CK_Informative:
+    case CK_ResultType:
     case CK_CurrentParameter: {
       const char *Text = C->Text;
       unsigned StrLen = strlen(Text);
@@ -286,6 +300,7 @@ CodeCompletionString *CodeCompletionString::Deserialize(const char *&Str,
     case CK_Text:
     case CK_Placeholder:
     case CK_Informative:
+    case CK_ResultType:
     case CK_CurrentParameter: {
       unsigned StrLen;
       if (ReadUnsigned(Str, StrEnd, StrLen) || (Str + StrLen > StrEnd))
