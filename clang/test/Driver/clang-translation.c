@@ -10,9 +10,9 @@
 // RUN: grep '"-masm-verbose"' %t.log
 // RUN: grep '"-fvisibility" "hidden"' %t.log
 // RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"-mcpu" "yonah"' %t.log
+// RUN: grep '"-target-cpu" "yonah"' %t.log
 // RUN: %clang -ccc-host-triple x86_64-apple-darwin9 -### -S %s -o %t.s 2> %t.log
-// RUN: grep '"-mcpu" "core2"' %t.log
+// RUN: grep '"-target-cpu" "core2"' %t.log
 
 // RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### -S %s 2> %t.log \
 // RUN:   -arch armv7

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -mcpu pentium4 -g -emit-llvm %s -o -
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -target-cpu pentium4 -g -emit-llvm %s -o -
 typedef short __v4hi __attribute__ ((__vector_size__ (8)));
 
 void test1() {

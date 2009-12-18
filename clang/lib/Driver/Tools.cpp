@@ -367,7 +367,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   // Set the CPU based on -march= and -mcpu=.
-  CmdArgs.push_back("-mcpu");
+  CmdArgs.push_back("-target-cpu");
   CmdArgs.push_back(getARMTargetCPU(Args));
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
@@ -480,7 +480,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 
   if (CPUName) {
-    CmdArgs.push_back("-mcpu");
+    CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(CPUName);
   }
 

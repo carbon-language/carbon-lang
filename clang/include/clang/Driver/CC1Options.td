@@ -20,8 +20,8 @@ include "OptParser.td"
 
 def target_abi : Separate<"-target-abi">,
   HelpText<"Target a particular ABI type">;
-def mcpu : Separate<"-mcpu">,
-  HelpText<"Target a specific cpu type ('-mcpu help' for details)">;
+def target_cpu : Separate<"-target-cpu">,
+  HelpText<"Target a specific cpu type">;
 def target_feature : Separate<"-target-feature">,
   HelpText<"Target specific attributes">;
 def triple : Separate<"-triple">,
