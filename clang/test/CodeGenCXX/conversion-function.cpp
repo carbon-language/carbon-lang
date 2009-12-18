@@ -12,6 +12,9 @@ S::operator int() {
   return 10;
 }
 
+int f(S s) {
+  return s;
+}
 
 class X { // ...
   public: operator int() { printf("operator int()\n"); return iX; }
@@ -94,6 +97,9 @@ void f(Yb& a) {
   char ch = a;  // OK. calls Yb::operator char();
 }
 
+struct A {
+  operator int() const;
+};
 
 // CHECK-LP64: .globl __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:

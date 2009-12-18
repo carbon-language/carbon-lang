@@ -816,6 +816,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Builder.CreateBitCast(Src, ConvertType(DestTy));
   }
   case CastExpr::CK_NoOp:
+  case CastExpr::CK_UserDefinedConversion:
     return Visit(const_cast<Expr*>(E));
 
   case CastExpr::CK_BaseToDerived: {
@@ -903,7 +904,6 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Src;
   }
 
-  case CastExpr::CK_UserDefinedConversion:
   case CastExpr::CK_ConstructorConversion:
     assert(0 && "Should be unreachable!");
     break;
