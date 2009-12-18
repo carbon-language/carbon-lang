@@ -46,8 +46,9 @@ struct LeakDetectorImpl {
   // immediately, it is added to the CachedValue Value.  If it is
   // immediately removed, no set search need be performed.
   void addGarbage(const T* o) {
+    assert(Ts.count(o) == 0 && "Object already in set!");
     if (Cache) {
-      assert(Ts.count(Cache) == 0 && "Object already in set!");
+      assert(Cache != o && "Object already in set!");
       Ts.insert(Cache);
     }
     Cache = o;
