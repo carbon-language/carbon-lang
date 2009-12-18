@@ -8356,13 +8356,13 @@ entry:
 
 define void @lcallee() nounwind {
 entry:
-	tail call void @x() nounwind
-	tail call void @x() nounwind
-	tail call void @x() nounwind
-	tail call void @x() nounwind
-	tail call void @x() nounwind
-	tail call void @x() nounwind
-	tail call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
 	ret void
 ; LINUX-64-STATIC: lcallee:
 ; LINUX-64-STATIC: callq   x
@@ -8487,13 +8487,13 @@ declare void @x()
 
 define internal void @dcallee() nounwind {
 entry:
-	tail call void @y() nounwind
-	tail call void @y() nounwind
-	tail call void @y() nounwind
-	tail call void @y() nounwind
-	tail call void @y() nounwind
-	tail call void @y() nounwind
-	tail call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
 	ret void
 ; LINUX-64-STATIC: dcallee:
 ; LINUX-64-STATIC: callq   y
@@ -8761,8 +8761,8 @@ entry:
 
 define void @caller() nounwind {
 entry:
-	tail call void @callee() nounwind
-	tail call void @callee() nounwind
+	call void @callee() nounwind
+	call void @callee() nounwind
 	ret void
 ; LINUX-64-STATIC: caller:
 ; LINUX-64-STATIC: callq   callee
@@ -8835,8 +8835,8 @@ entry:
 
 define void @dcaller() nounwind {
 entry:
-	tail call void @dcallee() nounwind
-	tail call void @dcallee() nounwind
+	call void @dcallee() nounwind
+	call void @dcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: dcaller:
 ; LINUX-64-STATIC: callq   dcallee
@@ -8909,8 +8909,8 @@ entry:
 
 define void @lcaller() nounwind {
 entry:
-	tail call void @lcallee() nounwind
-	tail call void @lcallee() nounwind
+	call void @lcallee() nounwind
+	call void @lcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: lcaller:
 ; LINUX-64-STATIC: callq   lcallee
@@ -8983,7 +8983,7 @@ entry:
 
 define void @tailcaller() nounwind {
 entry:
-	tail call void @callee() nounwind
+	call void @callee() nounwind
 	ret void
 ; LINUX-64-STATIC: tailcaller:
 ; LINUX-64-STATIC: callq   callee
@@ -9046,7 +9046,7 @@ entry:
 
 define void @dtailcaller() nounwind {
 entry:
-	tail call void @dcallee() nounwind
+	call void @dcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: dtailcaller:
 ; LINUX-64-STATIC: callq   dcallee
@@ -9109,7 +9109,7 @@ entry:
 
 define void @ltailcaller() nounwind {
 entry:
-	tail call void @lcallee() nounwind
+	call void @lcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: ltailcaller:
 ; LINUX-64-STATIC: callq   lcallee
@@ -9173,9 +9173,9 @@ entry:
 define void @icaller() nounwind {
 entry:
 	%0 = load void ()** @ifunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	%1 = load void ()** @ifunc, align 8
-	tail call void %1() nounwind
+	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: icaller:
 ; LINUX-64-STATIC: callq   *ifunc
@@ -9262,9 +9262,9 @@ entry:
 define void @dicaller() nounwind {
 entry:
 	%0 = load void ()** @difunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	%1 = load void ()** @difunc, align 8
-	tail call void %1() nounwind
+	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: dicaller:
 ; LINUX-64-STATIC: callq   *difunc
@@ -9344,9 +9344,9 @@ entry:
 define void @licaller() nounwind {
 entry:
 	%0 = load void ()** @lifunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	%1 = load void ()** @lifunc, align 8
-	tail call void %1() nounwind
+	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: licaller:
 ; LINUX-64-STATIC: callq   *lifunc
@@ -9425,9 +9425,9 @@ entry:
 define void @itailcaller() nounwind {
 entry:
 	%0 = load void ()** @ifunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	%1 = load void ()** @ifunc, align 8
-	tail call void %1() nounwind
+	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: itailcaller:
 ; LINUX-64-STATIC: callq   *ifunc
@@ -9514,7 +9514,7 @@ entry:
 define void @ditailcaller() nounwind {
 entry:
 	%0 = load void ()** @difunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC: ditailcaller:
 ; LINUX-64-STATIC: callq   *difunc
@@ -9581,7 +9581,7 @@ entry:
 define void @litailcaller() nounwind {
 entry:
 	%0 = load void ()** @lifunc, align 8
-	tail call void %0() nounwind
+	call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC: litailcaller:
 ; LINUX-64-STATIC: callq   *lifunc
