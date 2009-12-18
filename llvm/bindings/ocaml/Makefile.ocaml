@@ -163,6 +163,7 @@ clean-deplibs:
 	$(Verb) rm -f $(OutputLibs)
 
 install-deplibs:
+	$(Verb) $(MKDIR) $(PROJ_libocamldir)
 	$(Verb) for i in $(DestLibs:$(PROJ_libocamldir)/%=%); do \
 	  ln -sf "$(PROJ_libdir)/$$i" "$(PROJ_libocamldir)/$$i"; \
 	done
