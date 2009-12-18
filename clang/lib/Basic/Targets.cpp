@@ -323,11 +323,14 @@ protected:
     Define(Defs, "__PPU__", "1");
     Define(Defs, "__CELLOS_LV2__", "1");
     Define(Defs, "__ELF__", "1");
+    Define(Defs, "__LP32__", "1");
   }
 public:
   PS3PPUTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
+    this->LongWidth = this->LongAlign = this->PointerWidth = this->PointerAlign = 32;
+    this->SizeType = TargetInfo::UnsignedInt;
   }
 };
 
