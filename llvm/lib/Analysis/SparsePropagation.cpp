@@ -17,7 +17,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -155,7 +154,7 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
     }
 
     // Constant condition variables mean the branch can only go a single way
-    Succs[C == ConstantInt::getFalse(*Context)] = true;
+    Succs[C->isNullValue()] = true;
     return;
   }
   

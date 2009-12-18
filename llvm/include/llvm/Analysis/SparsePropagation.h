@@ -30,7 +30,6 @@ namespace llvm {
   class BasicBlock;
   class Function;
   class SparseSolver;
-  class LLVMContext;
   class raw_ostream;
 
   template<typename T> class SmallVectorImpl;
@@ -120,8 +119,6 @@ class SparseSolver {
   /// compute transfer functions.
   AbstractLatticeFunction *LatticeFunc;
   
-  LLVMContext *Context;
-  
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
   SmallPtrSet<BasicBlock*, 16> BBExecutable;   // The bbs that are executable.
   
@@ -137,8 +134,8 @@ class SparseSolver {
   SparseSolver(const SparseSolver&);    // DO NOT IMPLEMENT
   void operator=(const SparseSolver&);  // DO NOT IMPLEMENT
 public:
-  explicit SparseSolver(AbstractLatticeFunction *Lattice, LLVMContext *C)
-    : LatticeFunc(Lattice), Context(C) {}
+  explicit SparseSolver(AbstractLatticeFunction *Lattice)
+    : LatticeFunc(Lattice) {}
   ~SparseSolver() {
     delete LatticeFunc;
   }

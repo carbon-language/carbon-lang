@@ -38,7 +38,6 @@ class CallGraph;
 class TargetData;
 class Loop;
 class LoopInfo;
-class LLVMContext;
 class AllocaInst;
 template <typename T> class SmallVectorImpl;
 

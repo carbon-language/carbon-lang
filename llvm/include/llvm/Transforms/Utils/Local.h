@@ -27,7 +27,6 @@ class PHINode;
 class AllocaInst;
 class ConstantExpr;
 class TargetData;
-class LLVMContext;
 struct DbgInfoIntrinsic;
 
 template<typename T> class SmallVectorImpl;
