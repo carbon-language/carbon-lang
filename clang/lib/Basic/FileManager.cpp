@@ -219,6 +219,11 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
 ///
 const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
                                                 const char *NameEnd) {
+  // stat doesn't like trailing separators (at least on Windows).
+  if (((NameEnd - NameStart) > 1) &&
+      ((*(NameEnd - 1) == '/') || (*(NameEnd - 1) == '\\')))
+    NameEnd--;
+
   ++NumDirLookups;
   llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
     DirEntries.GetOrCreateValue(NameStart, NameEnd);
