@@ -2370,6 +2370,23 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // Check switch flag 
   if (NoFusing) return NULL;
 
+  if (TM.getSubtarget<X86Subtarget>().shouldBreakSSEDep())
+    switch (MI->getOpcode()) {
+    case X86::CVTSD2SSrr:
+    case X86::Int_CVTSD2SSrr:
+    case X86::CVTSS2SDrr:
+    case X86::Int_CVTSS2SDrr:
+    case X86::RCPSSr:
+    case X86::RCPSSr_Int:
+    case X86::ROUNDSDr_Int:
+    case X86::ROUNDSSr_Int:
+    case X86::RSQRTSSr:
+    case X86::RSQRTSSr_Int:
+    case X86::SQRTSSr:
+    case X86::SQRTSSr_Int:
+      return 0;
+    }
+
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Size = MFI->getObjectSize(FrameIndex);
   unsigned Alignment = MFI->getObjectAlignment(FrameIndex);
@@ -2404,6 +2421,23 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                                   MachineInstr *LoadMI) const {
   // Check switch flag 
   if (NoFusing) return NULL;
+
+  if (TM.getSubtarget<X86Subtarget>().shouldBreakSSEDep())
+    switch (MI->getOpcode()) {
+    case X86::CVTSD2SSrr:
+    case X86::Int_CVTSD2SSrr:
+    case X86::CVTSS2SDrr:
+    case X86::Int_CVTSS2SDrr:
+    case X86::RCPSSr:
+    case X86::RCPSSr_Int:
+    case X86::ROUNDSDr_Int:
+    case X86::ROUNDSSr_Int:
+    case X86::RSQRTSSr:
+    case X86::RSQRTSSr_Int:
+    case X86::SQRTSSr:
+    case X86::SQRTSSr_Int:
+      return 0;
+    }
 
   // Determine the alignment of the load.
   unsigned Alignment = 0;

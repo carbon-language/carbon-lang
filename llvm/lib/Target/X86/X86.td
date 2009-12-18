@@ -57,6 +57,8 @@ def Feature64Bit   : SubtargetFeature<"64bit", "HasX86_64", "true",
                                       "Support 64-bit instructions">;
 def FeatureSlowBTMem : SubtargetFeature<"slow-bt-mem", "IsBTMemSlow", "true",
                                        "Bit testing of memory is slow">;
+def FeatureBreakSSEDep : SubtargetFeature<"break-sse-dep", "BreakSSEDep","true",
+                       "Should break SSE partial update dep with load / xorps">;
 def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
                                       "Support SSE 4a instructions">;
 
@@ -86,17 +88,27 @@ def : Proc<"pentium2",        [FeatureMMX, FeatureCMOV]>;
 def : Proc<"pentium3",        [FeatureSSE1]>;
 def : Proc<"pentium-m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"pentium4",        [FeatureSSE2]>;
-def : Proc<"x86-64",          [FeatureSSE2,   Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"yonah",           [FeatureSSE3, FeatureSlowBTMem]>;
-def : Proc<"prescott",        [FeatureSSE3, FeatureSlowBTMem]>;
-def : Proc<"nocona",          [FeatureSSE3,   Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"core2",           [FeatureSSSE3,  Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"penryn",          [FeatureSSE41,  Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"atom",            [FeatureSSE3,   Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"corei7",          [FeatureSSE42,  Feature64Bit, FeatureSlowBTMem]>;
-def : Proc<"nehalem",         [FeatureSSE42,  Feature64Bit, FeatureSlowBTMem]>;
+def : Proc<"x86-64",          [FeatureSSE2,   Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"yonah",           [FeatureSSE3, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"prescott",        [FeatureSSE3, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"nocona",          [FeatureSSE3,   Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"core2",           [FeatureSSSE3,  Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"penryn",          [FeatureSSE41,  Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"atom",            [FeatureSSE3,   Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"corei7",          [FeatureSSE42,  Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
+def : Proc<"nehalem",         [FeatureSSE42,  Feature64Bit, FeatureSlowBTMem,
+                               FeatureBreakSSEDep]>;
 // Sandy Bridge does not have FMA
-def : Proc<"sandybridge",     [FeatureSSE42,  FeatureAVX,   Feature64Bit]>;
+def : Proc<"sandybridge",     [FeatureSSE42,  FeatureAVX,   Feature64Bit,
+                               FeatureBreakSSEDep]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX,    Feature3DNow]>;

@@ -824,9 +824,10 @@ multiclass sse1_fp_unop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Scalar operation, mem.
-  def SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
+  def SSm : I<opc, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                 !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
-                [(set FR32:$dst, (OpNode (load addr:$src)))]>;
+                [(set FR32:$dst, (OpNode (load addr:$src)))]>, XS,
+            Requires<[HasSSE1, NoSSEBreakDep]>;
 
   // Vector operation, reg.
   def PSr : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -1116,9 +1117,10 @@ def CVTTSD2SIrm : SDI<0x2C, MRMSrcMem, (outs GR32:$dst), (ins f64mem:$src),
 def CVTSD2SSrr  : SDI<0x5A, MRMSrcReg, (outs FR32:$dst), (ins FR64:$src),
                       "cvtsd2ss\t{$src, $dst|$dst, $src}",
                       [(set FR32:$dst, (fround FR64:$src))]>;
-def CVTSD2SSrm  : SDI<0x5A, MRMSrcMem, (outs FR32:$dst), (ins f64mem:$src),
+def CVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst), (ins f64mem:$src),
                       "cvtsd2ss\t{$src, $dst|$dst, $src}",
-                      [(set FR32:$dst, (fround (loadf64 addr:$src)))]>;
+                      [(set FR32:$dst, (fround (loadf64 addr:$src)))]>, XD,
+                      Requires<[HasSSE2, NoSSEBreakDep]>;
 def CVTSI2SDrr  : SDI<0x2A, MRMSrcReg, (outs FR64:$dst), (ins GR32:$src),
                       "cvtsi2sd\t{$src, $dst|$dst, $src}",
                       [(set FR64:$dst, (sint_to_fp GR32:$src))]>;
@@ -1155,7 +1157,10 @@ def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
 def CVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst), (ins f32mem:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
                    [(set FR64:$dst, (extloadf32 addr:$src))]>, XS,
-                 Requires<[HasSSE2]>;
+                 Requires<[HasSSE2, NoSSEBreakDep]>;
+
+def : Pat<(extloadf32 addr:$src),
+          (CVTSS2SDrr (MOVSSrm addr:$src))>, Requires<[SSEBreakDep]>;
 
 // Match intrinsics which expect XMM operand(s).
 def Int_CVTSD2SIrr : SDI<0x2D, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
@@ -3220,13 +3225,14 @@ multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd,
                     OpSize;
 
   // Vector intrinsic operation, mem
-  def PSm_Int : SS4AIi8<opcps, MRMSrcMem,
+  def PSm_Int : Ii8<opcps, MRMSrcMem,
                     (outs VR128:$dst), (ins f128mem:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set VR128:$dst,
                           (V4F32Int (memopv4f32 addr:$src1),imm:$src2))]>,
-                    OpSize;
+                    TA, OpSize,
+                Requires<[HasSSE41, NoSSEBreakDep]>;
 
   // Vector intrinsic operation, reg
   def PDr_Int : SS4AIi8<opcpd, MRMSrcReg,

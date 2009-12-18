@@ -301,6 +301,8 @@ def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
+def SSEBreakDep  : Predicate<"Subtarget->shouldBreakSSEDep() && !OptForSize">;
+def NoSSEBreakDep: Predicate<"!Subtarget->shouldBreakSSEDep() || OptForSize">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.

@@ -77,6 +77,14 @@ protected:
 
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
+
+  /// BreakSSEDep - True if codegen should unfold load or insert xorps / pxor
+  /// to break register dependency for a partial register update SSE
+  /// instruction. This is needed for instructions such as CVTSS2SD which
+  /// only update the lower part of the register, and the result of the updated
+  /// part does not depend on the contents of the destination before the
+  /// instruction, and the non-updated portion of the register is not used.
+  bool BreakSSEDep;
   
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
@@ -142,6 +150,7 @@ public:
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
+  bool shouldBreakSSEDep() const { return BreakSSEDep; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
