@@ -155,7 +155,6 @@ INSTANTIATE_TEST_CASE_P(AnotherInstantiationName, FooTest, ValuesIn(pets));
 
 #include <gtest/internal/gtest-internal.h>
 #include <gtest/internal/gtest-param-util.h>
-#include <gtest/internal/gtest-param-util-generated.h>
 
 namespace testing {
 
@@ -288,6 +287,12 @@ internal::ParamGenerator<typename Container::value_type> ValuesIn(
     const Container& container) {
   return ValuesIn(container.begin(), container.end());
 }
+
+} // namespace testing
+
+#include <gtest/internal/gtest-param-util-generated.h>
+
+namespace testing {
 
 // Values() allows generating tests from explicitly specified list of
 // parameters.
