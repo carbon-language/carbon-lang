@@ -1126,17 +1126,17 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
 
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
-    rex = PerformCopyInitialization(
-                            InitializedEntity::InitializeResult(ReturnLoc, 
-                                                                FnRetTypeLoc),
-                            SourceLocation(),
-                            Owned(RetValExp));
-    if (rex.isInvalid()) {
+    OwningExprResult Res = PerformCopyInitialization(
+                             InitializedEntity::InitializeResult(ReturnLoc, 
+                                                                 FnRetTypeLoc),
+                             SourceLocation(),
+                             Owned(RetValExp));
+    if (Res.isInvalid()) {
       // FIXME: Cleanup temporaries here, anyway?
       return StmtError();
     }
 
-    RetValExp = rex.takeAs<Expr>();
+    RetValExp = Res.takeAs<Expr>();
     if (RetValExp) 
       CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
