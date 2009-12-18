@@ -5,7 +5,7 @@
 
 ; CHECK: movq    compl+128(%rip), %xmm0
 ; CHECK: movaps  %xmm0, (%rsp)
-; CHECK: call    killcommon
+; CHECK: callq   killcommon
 
 @compl = linkonce global [20 x i64] zeroinitializer, align 64 ; <[20 x i64]*> [#uses=1]
 

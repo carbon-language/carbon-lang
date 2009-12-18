@@ -10,7 +10,7 @@ define void @unxlate_dev_mem_ptr(i64 %phis, i8* %addr) nounwind {
 ; CHECK: movq    $bm_pte, %rdi
 ; CHECK-NEXT: xorl    %esi, %esi
 ; CHECK-NEXT: movl    $4096, %edx
-; CHECK-NEXT: call    memset
+; CHECK-NEXT: callq   memset
   ret void
 }
 @bm_pte = internal global [512 x %struct.kmem_cache_order_objects] zeroinitializer, section ".bss.page_aligned", align 4096

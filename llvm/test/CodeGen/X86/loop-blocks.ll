@@ -10,9 +10,9 @@
 ;      CHECK:   jmp   .LBB1_1
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB1_2:
-; CHECK-NEXT:   call loop_latch
+; CHECK-NEXT:   callq loop_latch
 ; CHECK-NEXT: .LBB1_1:
-; CHECK-NEXT:   call loop_header
+; CHECK-NEXT:   callq loop_header
 
 define void @simple() nounwind {
 entry:
@@ -40,9 +40,9 @@ done:
 ;      CHECK:   jmp .LBB2_1
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB2_4:
-; CHECK-NEXT:   call bar99
+; CHECK-NEXT:   callq bar99
 ; CHECK-NEXT: .LBB2_1:
-; CHECK-NEXT:   call body
+; CHECK-NEXT:   callq body
 
 define void @slightly_more_involved() nounwind {
 entry:
@@ -75,18 +75,18 @@ exit:
 ;      CHECK:   jmp .LBB3_1
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB3_4:
-; CHECK-NEXT:   call bar99
-; CHECK-NEXT:   call get
+; CHECK-NEXT:   callq bar99
+; CHECK-NEXT:   callq get
 ; CHECK-NEXT:   cmpl $2999, %eax
 ; CHECK-NEXT:   jg .LBB3_6
-; CHECK-NEXT:   call block_a_true_func
+; CHECK-NEXT:   callq block_a_true_func
 ; CHECK-NEXT:   jmp .LBB3_7
 ; CHECK-NEXT: .LBB3_6:
-; CHECK-NEXT:   call block_a_false_func
+; CHECK-NEXT:   callq block_a_false_func
 ; CHECK-NEXT: .LBB3_7:
-; CHECK-NEXT:   call block_a_merge_func
+; CHECK-NEXT:   callq block_a_merge_func
 ; CHECK-NEXT: .LBB3_1:
-; CHECK-NEXT:   call body
+; CHECK-NEXT:   callq body
 
 define void @yet_more_involved() nounwind {
 entry:
@@ -134,18 +134,18 @@ exit:
 ;      CHECK:   jmp     .LBB4_1
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: .LBB4_7:
-; CHECK-NEXT:   call    bar100
+; CHECK-NEXT:   callq   bar100
 ; CHECK-NEXT:   jmp     .LBB4_1
 ; CHECK-NEXT: .LBB4_8:
-; CHECK-NEXT:   call    bar101
+; CHECK-NEXT:   callq   bar101
 ; CHECK-NEXT:   jmp     .LBB4_1
 ; CHECK-NEXT: .LBB4_9:
-; CHECK-NEXT:   call    bar102
+; CHECK-NEXT:   callq   bar102
 ; CHECK-NEXT:   jmp     .LBB4_1
 ; CHECK-NEXT: .LBB4_5:
-; CHECK-NEXT:   call    loop_latch
+; CHECK-NEXT:   callq   loop_latch
 ; CHECK-NEXT: .LBB4_1:
-; CHECK-NEXT:   call    loop_header
+; CHECK-NEXT:   callq   loop_header
 
 define void @cfg_islands() nounwind {
 entry:

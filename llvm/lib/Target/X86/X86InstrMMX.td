@@ -72,13 +72,13 @@ let Constraints = "$src1 = $dst" in {
   multiclass MMXI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            ValueType OpVT, bit Commutable = 0> {
     def rr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
-				  (ins VR64:$src1, VR64:$src2),
+                  (ins VR64:$src1, VR64:$src2),
                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                   [(set VR64:$dst, (OpVT (OpNode VR64:$src1, VR64:$src2)))]> {
       let isCommutable = Commutable;
     }
     def rm : MMXI<opc, MRMSrcMem, (outs VR64:$dst),
-				  (ins VR64:$src1, i64mem:$src2),
+                  (ins VR64:$src1, i64mem:$src2),
                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                   [(set VR64:$dst, (OpVT (OpNode VR64:$src1,
                                          (bitconvert
@@ -88,13 +88,13 @@ let Constraints = "$src1 = $dst" in {
   multiclass MMXI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                                bit Commutable = 0> {
     def rr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
-				  (ins VR64:$src1, VR64:$src2),
+                 (ins VR64:$src1, VR64:$src2),
                  !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                  [(set VR64:$dst, (IntId VR64:$src1, VR64:$src2))]> {
       let isCommutable = Commutable;
     }
     def rm : MMXI<opc, MRMSrcMem, (outs VR64:$dst),
-				  (ins VR64:$src1, i64mem:$src2),
+                 (ins VR64:$src1, i64mem:$src2),
                  !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                  [(set VR64:$dst, (IntId VR64:$src1,
                                    (bitconvert (load_mmx addr:$src2))))]>;
@@ -144,9 +144,9 @@ let Constraints = "$src1 = $dst" in {
 //===----------------------------------------------------------------------===//
 
 def MMX_EMMS  : MMXI<0x77, RawFrm, (outs), (ins), "emms",
-						  [(int_x86_mmx_emms)]>;
+                     [(int_x86_mmx_emms)]>;
 def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms",
-						  [(int_x86_mmx_femms)]>;
+                     [(int_x86_mmx_femms)]>;
 
 //===----------------------------------------------------------------------===//
 // MMX Scalar Instructions
@@ -155,16 +155,21 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms",
 // Data Transfer Instructions
 def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                         "movd\t{$src, $dst|$dst, $src}",
-                        [(set VR64:$dst,
-		   	  (v2i32 (scalar_to_vector GR32:$src)))]>;
+                        [(set VR64:$dst, 
+                         (v2i32 (scalar_to_vector GR32:$src)))]>;
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         "movd\t{$src, $dst|$dst, $src}",
               [(set VR64:$dst,
-		(v2i32 (scalar_to_vector (loadi32 addr:$src))))]>;
+               (v2i32 (scalar_to_vector (loadi32 addr:$src))))]>;
 let mayStore = 1 in
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs), (ins GR32:$dst, VR64:$src),
+                        "movd\t{$src, $dst|$dst, $src}", []>;
+def MMX_MOVQ64gmr : MMXRI<0x7E, MRMDestMem, (outs), 
+                         (ins i64mem:$dst, VR64:$src),
+                         "movq\t{$src, $dst|$dst, $src}", []>;
 
 let neverHasSideEffects = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
@@ -181,7 +186,7 @@ def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
 def MMX_MOVD64rrv164 : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                             "movd\t{$src, $dst|$dst, $src}",
                             [(set VR64:$dst,
-			      (v1i64 (scalar_to_vector GR64:$src)))]>;
+                             (v1i64 (scalar_to_vector GR64:$src)))]>;
 
 let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
@@ -223,7 +228,7 @@ def MMX_MOVZDI2PDIrr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                     (v2i32 (X86vzmovl (v2i32 (scalar_to_vector GR32:$src)))))]>;
 let AddedComplexity = 20 in
 def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst),
-					     (ins i32mem:$src),
+                           (ins i32mem:$src),
                              "movd\t{$src, $dst|$dst, $src}",
           [(set VR64:$dst,
                 (v2i32 (X86vzmovl (v2i32
@@ -432,21 +437,21 @@ def MMX_CVTPD2PIrr  : MMX2I<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                             "cvtpd2pi\t{$src, $dst|$dst, $src}", []>;
 let mayLoad = 1 in
 def MMX_CVTPD2PIrm  : MMX2I<0x2D, MRMSrcMem, (outs VR64:$dst),
-					     (ins f128mem:$src),
+                            (ins f128mem:$src),
                             "cvtpd2pi\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPI2PDrr  : MMX2I<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
                             "cvtpi2pd\t{$src, $dst|$dst, $src}", []>;
 let mayLoad = 1 in
 def MMX_CVTPI2PDrm  : MMX2I<0x2A, MRMSrcMem, (outs VR128:$dst),
-	  				     (ins i64mem:$src),
+                            (ins i64mem:$src),
                             "cvtpi2pd\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPI2PSrr  : MMXI<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
                            "cvtpi2ps\t{$src, $dst|$dst, $src}", []>;
 let mayLoad = 1 in
 def MMX_CVTPI2PSrm  : MMXI<0x2A, MRMSrcMem, (outs VR128:$dst),
-					    (ins i64mem:$src),
+                           (ins i64mem:$src),
                            "cvtpi2ps\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTPS2PIrr  : MMXI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
@@ -459,7 +464,7 @@ def MMX_CVTTPD2PIrr : MMX2I<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                             "cvttpd2pi\t{$src, $dst|$dst, $src}", []>;
 let mayLoad = 1 in
 def MMX_CVTTPD2PIrm : MMX2I<0x2C, MRMSrcMem, (outs VR64:$dst),
-					     (ins f128mem:$src),
+                            (ins f128mem:$src),
                             "cvttpd2pi\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_CVTTPS2PIrr : MMXI<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
@@ -481,14 +486,14 @@ def MMX_PEXTRWri  : MMXIi8<0xC5, MRMSrcReg,
                                              (iPTR imm:$src2)))]>;
 let Constraints = "$src1 = $dst" in {
   def MMX_PINSRWrri : MMXIi8<0xC4, MRMSrcReg,
-                      (outs VR64:$dst), (ins VR64:$src1, GR32:$src2,
-					     i16i8imm:$src3),
+                      (outs VR64:$dst), 
+                      (ins VR64:$src1, GR32:$src2,i16i8imm:$src3),
                       "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                       [(set VR64:$dst, (v4i16 (MMX_X86pinsrw (v4i16 VR64:$src1),
                                                GR32:$src2,(iPTR imm:$src3))))]>;
   def MMX_PINSRWrmi : MMXIi8<0xC4, MRMSrcMem,
-                     (outs VR64:$dst), (ins VR64:$src1, i16mem:$src2,
-					    i16i8imm:$src3),
+                     (outs VR64:$dst),
+                     (ins VR64:$src1, i16mem:$src2, i16i8imm:$src3),
                      "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR64:$dst,
                        (v4i16 (MMX_X86pinsrw (v4i16 VR64:$src1),

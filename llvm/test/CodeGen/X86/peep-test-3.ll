@@ -65,7 +65,7 @@ return:                                           ; preds = %entry
   ret void
 }
 
-; Just like @and, but without the trunc+store. This should use a testl
+; Just like @and, but without the trunc+store. This should use a testb
 ; instead of an andl.
 ; CHECK: test:
 define void @test(float* %A, i32 %IA, i32 %N, i8* %p) nounwind {

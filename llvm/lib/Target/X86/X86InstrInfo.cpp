@@ -1880,7 +1880,7 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     if (SrcReg != X86::EFLAGS)
       return false;
     if (DestRC == &X86::GR64RegClass || DestRC == &X86::GR64_NOSPRegClass) {
-      BuildMI(MBB, MI, DL, get(X86::PUSHFQ));
+      BuildMI(MBB, MI, DL, get(X86::PUSHFQ64));
       BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
       return true;
     } else if (DestRC == &X86::GR32RegClass ||

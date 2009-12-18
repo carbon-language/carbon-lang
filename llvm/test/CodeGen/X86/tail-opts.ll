@@ -274,7 +274,7 @@ declare fastcc %union.tree_node* @default_conversion(%union.tree_node*) nounwind
 ; one ret instruction.
 
 ; CHECK: foo:
-; CHECK:        call func
+; CHECK:        callq func
 ; CHECK-NEXT: .LBB5_2:
 ; CHECK-NEXT:   addq $8, %rsp
 ; CHECK-NEXT:   ret

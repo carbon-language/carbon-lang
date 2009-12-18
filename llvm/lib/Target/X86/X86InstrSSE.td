@@ -70,7 +70,7 @@ def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
 def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 
 def SDTX86CmpPTest : SDTypeProfile<0, 2, [SDTCisVT<0, v4f32>,
-					  SDTCisVT<1, v4f32>]>;
+                                          SDTCisVT<1, v4f32>]>;
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
 
 //===----------------------------------------------------------------------===//
@@ -116,12 +116,18 @@ def alignedload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return cast<LoadSDNode>(N)->getAlignment() >= 16;
 }]>;
 
-def alignedloadfsf32 : PatFrag<(ops node:$ptr), (f32   (alignedload node:$ptr))>;
-def alignedloadfsf64 : PatFrag<(ops node:$ptr), (f64   (alignedload node:$ptr))>;
-def alignedloadv4f32 : PatFrag<(ops node:$ptr), (v4f32 (alignedload node:$ptr))>;
-def alignedloadv2f64 : PatFrag<(ops node:$ptr), (v2f64 (alignedload node:$ptr))>;
-def alignedloadv4i32 : PatFrag<(ops node:$ptr), (v4i32 (alignedload node:$ptr))>;
-def alignedloadv2i64 : PatFrag<(ops node:$ptr), (v2i64 (alignedload node:$ptr))>;
+def alignedloadfsf32 : PatFrag<(ops node:$ptr), 
+                               (f32 (alignedload node:$ptr))>;
+def alignedloadfsf64 : PatFrag<(ops node:$ptr), 
+                               (f64 (alignedload node:$ptr))>;
+def alignedloadv4f32 : PatFrag<(ops node:$ptr), 
+                               (v4f32 (alignedload node:$ptr))>;
+def alignedloadv2f64 : PatFrag<(ops node:$ptr), 
+                               (v2f64 (alignedload node:$ptr))>;
+def alignedloadv4i32 : PatFrag<(ops node:$ptr), 
+                               (v4i32 (alignedload node:$ptr))>;
+def alignedloadv2i64 : PatFrag<(ops node:$ptr), 
+                               (v2i64 (alignedload node:$ptr))>;
 
 // Like 'load', but uses special alignment checks suitable for use in
 // memory operands in most SSE instructions, which are required to
@@ -363,6 +369,11 @@ def CVTSI2SSrm  : SSI<0x2A, MRMSrcMem, (outs FR32:$dst), (ins i32mem:$src),
                       [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
 
 // Match intrinsics which expect XMM operand(s).
+def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (outs GR32:$dst), (ins FR32:$src),
+                    "cvtss2si{l}\t{$src, $dst|$dst, $src}", []>;
+def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (outs GR32:$dst), (ins f32mem:$src),
+                    "cvtss2si{l}\t{$src, $dst|$dst, $src}", []>;
+
 def Int_CVTSS2SIrr : SSI<0x2D, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                          "cvtss2si\t{$src, $dst|$dst, $src}",
                          [(set GR32:$dst, (int_x86_sse_cvtss2si VR128:$src))]>;
@@ -441,19 +452,26 @@ def UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
                    "ucomiss\t{$src2, $src1|$src1, $src2}",
                    [(X86cmp FR32:$src1, (loadf32 addr:$src2)),
                     (implicit EFLAGS)]>;
+                    
+def COMISSrr: PSI<0x2F, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
+                  "comiss\t{$src2, $src1|$src1, $src2}", []>;
+def COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
+                  "comiss\t{$src2, $src1|$src1, $src2}", []>;
+                  
 } // Defs = [EFLAGS]
 
 // Aliases to match intrinsics which expect XMM operand(s).
 let Constraints = "$src1 = $dst" in {
   def Int_CMPSSrr : SSIi8<0xC2, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src,
-					        SSECC:$cc),
+                        (outs VR128:$dst), 
+                        (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}ss\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
-                                           	VR128:$src, imm:$cc))]>;
+                        [(set VR128:$dst, (int_x86_sse_cmp_ss 
+                                             VR128:$src1,
+                                             VR128:$src, imm:$cc))]>;
   def Int_CMPSSrm : SSIi8<0xC2, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, f32mem:$src,
-						SSECC:$cc),
+                        (outs VR128:$dst), 
+                        (ins VR128:$src1, f32mem:$src, SSECC:$cc),
                         "cmp${cc}ss\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
                                            (load addr:$src), imm:$cc))]>;
@@ -1205,14 +1223,14 @@ def UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins FR64:$src1, f64mem:$src2),
 // Aliases to match intrinsics which expect XMM operand(s).
 let Constraints = "$src1 = $dst" in {
   def Int_CMPSDrr : SDIi8<0xC2, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src,
-						SSECC:$cc),
+                        (outs VR128:$dst), 
+                        (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}sd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
                                            VR128:$src, imm:$cc))]>;
   def Int_CMPSDrm : SDIi8<0xC2, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src,
-						SSECC:$cc),
+                        (outs VR128:$dst), 
+                        (ins VR128:$src1, f64mem:$src, SSECC:$cc),
                         "cmp${cc}sd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
                                            (load addr:$src), imm:$cc))]>;
@@ -1542,9 +1560,15 @@ def Int_CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                          [(set VR128:$dst, (int_x86_sse2_cvtps2dq
                                             (memop addr:$src)))]>;
 // SSE2 packed instructions with XS prefix
+def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
+def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                      "cvttps2dq\t{$src, $dst|$dst, $src}", []>;
+
 def Int_CVTTPS2DQrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         "cvttps2dq\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvttps2dq VR128:$src))]>,
+                        [(set VR128:$dst, 
+                              (int_x86_sse2_cvttps2dq VR128:$src))]>,
                       XS, Requires<[HasSSE2]>;
 def Int_CVTTPS2DQrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                         "cvttps2dq\t{$src, $dst|$dst, $src}",
@@ -1572,6 +1596,11 @@ def Int_CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
                                              (memop addr:$src)))]>;
 
 // SSE2 instructions without OpSize prefix
+def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
+def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                       "cvtps2pd\t{$src, $dst|$dst, $src}", []>, TB;
+
 def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))]>,
@@ -1581,6 +1610,12 @@ def Int_CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                        [(set VR128:$dst, (int_x86_sse2_cvtps2pd
                                           (load addr:$src)))]>,
                      TB, Requires<[HasSSE2]>;
+
+def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
+def CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                     "cvtpd2ps\t{$src, $dst|$dst, $src}", []>;
+
 
 def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                          "cvtpd2ps\t{$src, $dst|$dst, $src}",
@@ -1856,31 +1891,34 @@ let Constraints = "$src1 = $dst" in {
 
 multiclass PDI_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
                             bit Commutable = 0> {
-  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), 
+                               (ins VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
-  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), 
+                               (ins VR128:$src1, i128mem:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1,
-                                        (bitconvert (memopv2i64 addr:$src2))))]>;
+                                        (bitconvert (memopv2i64 
+                                                     addr:$src2))))]>;
 }
 
 multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
                              string OpcodeStr,
                              Intrinsic IntId, Intrinsic IntId2> {
-  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1,
-						       VR128:$src2),
+  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), 
+                               (ins VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1,
-						       i128mem:$src2),
+  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst),
+                               (ins VR128:$src1, i128mem:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId VR128:$src1,
                                       (bitconvert (memopv2i64 addr:$src2))))]>;
-  def ri : PDIi8<opc2, ImmForm, (outs VR128:$dst), (ins VR128:$src1,
-							i32i8imm:$src2),
+  def ri : PDIi8<opc2, ImmForm, (outs VR128:$dst), 
+                                (ins VR128:$src1, i32i8imm:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (IntId2 VR128:$src1, (i32 imm:$src2)))]>;
 }
@@ -1888,14 +1926,14 @@ multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
 /// PDI_binop_rm - Simple SSE2 binary operator.
 multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                         ValueType OpVT, bit Commutable = 0> {
-  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1,
-						       VR128:$src2),
+  def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst), 
+                               (ins VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpVT (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
-  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1,
-						       i128mem:$src2),
+  def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst), 
+                               (ins VR128:$src1, i128mem:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpVT (OpNode VR128:$src1,
                                      (bitconvert (memopv2i64 addr:$src2)))))]>;
@@ -1909,16 +1947,16 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
                               bit Commutable = 0> {
   def rr : PDI<opc, MRMSrcReg, (outs VR128:$dst),
-			       (ins VR128:$src1, VR128:$src2),
+               (ins VR128:$src1, VR128:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))]> {
     let isCommutable = Commutable;
   }
   def rm : PDI<opc, MRMSrcMem, (outs VR128:$dst),
-			       (ins VR128:$src1, i128mem:$src2),
+               (ins VR128:$src1, i128mem:$src2),
                !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                [(set VR128:$dst, (OpNode VR128:$src1,
-					 (memopv2i64 addr:$src2)))]>;
+               (memopv2i64 addr:$src2)))]>;
 }
 
 } // Constraints = "$src1 = $dst"
@@ -2454,6 +2492,13 @@ def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
 def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
             (MOVZPQILo2PQIrm addr:$src)>;
 }
+
+// Instructions for the disassembler
+// xr = XMM register
+// xm = mem64
+
+def MOVQxrxr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                 "movq\t{$src, $dst|$dst, $src}", []>, XS;
 
 //===---------------------------------------------------------------------===//
 // SSE3 Instructions
@@ -3661,7 +3706,7 @@ let Constraints = "$src1 = $dst" in {
                     "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR128:$dst,
                      (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))]>,
-		OpSize;
+      OpSize;
     def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
                    (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
                    !strconcat(OpcodeStr,
@@ -3786,76 +3831,63 @@ let Constraints = "$src1 = $dst" in {
 // String/text processing instructions.
 let Defs = [EFLAGS], usesCustomInserter = 1 in {
 def PCMPISTRM128REG : SS42AI<0, Pseudo, (outs VR128:$dst),
-			(ins VR128:$src1, VR128:$src2, i8imm:$src3),
-		    "#PCMPISTRM128rr PSEUDO!",
-		    [(set VR128:$dst,
-			(int_x86_sse42_pcmpistrm128 VR128:$src1, VR128:$src2,
-						    imm:$src3))]>, OpSize;
+  (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+  "#PCMPISTRM128rr PSEUDO!",
+  [(set VR128:$dst, (int_x86_sse42_pcmpistrm128 VR128:$src1, VR128:$src2,
+                                                imm:$src3))]>, OpSize;
 def PCMPISTRM128MEM : SS42AI<0, Pseudo, (outs VR128:$dst),
-			(ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-		    "#PCMPISTRM128rm PSEUDO!",
-		    [(set VR128:$dst,
-			(int_x86_sse42_pcmpistrm128 VR128:$src1,
-						    (load addr:$src2),
-						    imm:$src3))]>, OpSize;
+  (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+  "#PCMPISTRM128rm PSEUDO!",
+  [(set VR128:$dst, (int_x86_sse42_pcmpistrm128 VR128:$src1, (load addr:$src2),
+                                                imm:$src3))]>, OpSize;
 }
 
 let Defs = [XMM0, EFLAGS] in {
 def PCMPISTRM128rr : SS42AI<0x62, MRMSrcReg, (outs),
-			    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-		     "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}",
-		     []>, OpSize;
+  (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+   "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
 def PCMPISTRM128rm : SS42AI<0x62, MRMSrcMem, (outs),
-			    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-		     "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}",
-		     []>, OpSize;
+  (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+  "pcmpistrm\t{$src3, $src2, $src1|$src1, $src2, $src3}", []>, OpSize;
 }
 
-let Defs = [EFLAGS], Uses = [EAX, EDX],
-	usesCustomInserter = 1 in {
+let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
 def PCMPESTRM128REG : SS42AI<0, Pseudo, (outs VR128:$dst),
-			(ins VR128:$src1, VR128:$src3, i8imm:$src5),
-		    "#PCMPESTRM128rr PSEUDO!",
-		    [(set VR128:$dst,
-			(int_x86_sse42_pcmpestrm128 VR128:$src1, EAX,
-						    VR128:$src3,
-						    EDX, imm:$src5))]>, OpSize;
+  (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+  "#PCMPESTRM128rr PSEUDO!",
+  [(set VR128:$dst, 
+        (int_x86_sse42_pcmpestrm128 
+         VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5))]>, OpSize;
+
 def PCMPESTRM128MEM : SS42AI<0, Pseudo, (outs VR128:$dst),
-			(ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-		    "#PCMPESTRM128rm PSEUDO!",
-		    [(set VR128:$dst,
-			(int_x86_sse42_pcmpestrm128 VR128:$src1, EAX,
-						    (load addr:$src3),
-						    EDX, imm:$src5))]>, OpSize;
+  (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+  "#PCMPESTRM128rm PSEUDO!",
+  [(set VR128:$dst, (int_x86_sse42_pcmpestrm128 
+                     VR128:$src1, EAX, (load addr:$src3), EDX, imm:$src5))]>, 
+  OpSize;
 }
 
 let Defs = [XMM0, EFLAGS], Uses = [EAX, EDX] in {
 def PCMPESTRM128rr : SS42AI<0x60, MRMSrcReg, (outs),
-			    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
-		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
-		     []>, OpSize;
+  (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+  "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
 def PCMPESTRM128rm : SS42AI<0x60, MRMSrcMem, (outs),
-			    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-		     "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}",
-		     []>, OpSize;
+  (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+  "pcmpestrm\t{$src5, $src3, $src1|$src1, $src3, $src5}", []>, OpSize;
 }
 
 let Defs = [ECX, EFLAGS] in {
   multiclass SS42AI_pcmpistri<Intrinsic IntId128> {
-    def rr : SS42AI<0x63, MRMSrcReg, (outs),
-		(ins VR128:$src1, VR128:$src2, i8imm:$src3),
-		"pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
-		[(set ECX,
-		   (IntId128 VR128:$src1, VR128:$src2, imm:$src3)),
-	         (implicit EFLAGS)]>,
-		OpSize;
+    def rr : SS42AI<0x63, MRMSrcReg, (outs), 
+      (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+      "pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+      [(set ECX, (IntId128 VR128:$src1, VR128:$src2, imm:$src3)),
+       (implicit EFLAGS)]>, OpSize;
     def rm : SS42AI<0x63, MRMSrcMem, (outs),
-		(ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-		"pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
-		[(set ECX,
-		  (IntId128 VR128:$src1, (load addr:$src2), imm:$src3)),
-		 (implicit EFLAGS)]>,
-		OpSize;
+      (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+      "pcmpistri\t{$src3, $src2, $src1|$src1, $src2, $src3}",
+      [(set ECX, (IntId128 VR128:$src1, (load addr:$src2), imm:$src3)),
+       (implicit EFLAGS)]>, OpSize;
   }
 }
 
@@ -3870,20 +3902,16 @@ let Defs = [ECX, EFLAGS] in {
 let Uses = [EAX, EDX] in {
   multiclass SS42AI_pcmpestri<Intrinsic IntId128> {
     def rr : SS42AI<0x61, MRMSrcReg, (outs),
-		(ins VR128:$src1, VR128:$src3, i8imm:$src5),
-		"pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
-		[(set ECX,
-		   (IntId128 VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5)),
-	         (implicit EFLAGS)]>,
-		OpSize;
+      (ins VR128:$src1, VR128:$src3, i8imm:$src5),
+      "pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+      [(set ECX, (IntId128 VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5)),
+       (implicit EFLAGS)]>, OpSize;
     def rm : SS42AI<0x61, MRMSrcMem, (outs),
-		(ins VR128:$src1, i128mem:$src3, i8imm:$src5),
-		"pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
-		[(set ECX,
-		  (IntId128 VR128:$src1, EAX, (load addr:$src3),
-		    EDX, imm:$src5)),
-		 (implicit EFLAGS)]>,
-		OpSize;
+      (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
+       "pcmpestri\t{$src5, $src3, $src1|$src1, $src3, $src5}",
+       [(set ECX, 
+             (IntId128 VR128:$src1, EAX, (load addr:$src3), EDX, imm:$src5)),
+        (implicit EFLAGS)]>, OpSize;
   }
 }
 }

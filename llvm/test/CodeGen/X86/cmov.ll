@@ -6,7 +6,7 @@ entry:
 ; CHECK: test1:
 ; CHECK: btl
 ; CHECK-NEXT: movl	$12, %eax
-; CHECK-NEXT: cmovae	(%rcx), %eax
+; CHECK-NEXT: cmovael	(%rcx), %eax
 ; CHECK-NEXT: ret
 
 	%0 = lshr i32 %x, %n		; <i32> [#uses=1]
@@ -21,7 +21,7 @@ entry:
 ; CHECK: test2:
 ; CHECK: btl
 ; CHECK-NEXT: movl	$12, %eax
-; CHECK-NEXT: cmovb	(%rcx), %eax
+; CHECK-NEXT: cmovbl	(%rcx), %eax
 ; CHECK-NEXT: ret
 
 	%0 = lshr i32 %x, %n		; <i32> [#uses=1]
@@ -41,7 +41,7 @@ declare void @bar(i64) nounwind
 
 define void @test3(i64 %a, i64 %b, i1 %p) nounwind {
 ; CHECK: test3:
-; CHECK:      cmovne  %edi, %esi
+; CHECK:      cmovnel %edi, %esi
 ; CHECK-NEXT: movl    %esi, %edi
 
   %c = trunc i64 %a to i32

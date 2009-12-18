@@ -63,7 +63,7 @@ def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
 def FeatureAVX     : SubtargetFeature<"avx", "HasAVX", "true",
                                       "Enable AVX instructions">;
 def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
-                                      "Enable three-operand fused multiple-add">;
+                                     "Enable three-operand fused multiple-add">;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add">;
 

@@ -8365,13 +8365,13 @@ entry:
 	tail call void @x() nounwind
 	ret void
 ; LINUX-64-STATIC: lcallee:
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
-; LINUX-64-STATIC: call    x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
+; LINUX-64-STATIC: callq   x
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: lcallee:
@@ -8400,13 +8400,13 @@ entry:
 
 ; LINUX-64-PIC: lcallee:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
-; LINUX-64-PIC-NEXT: 	call	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
+; LINUX-64-PIC-NEXT: 	callq	x@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8448,37 +8448,37 @@ entry:
 
 ; DARWIN-64-STATIC: _lcallee:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
-; DARWIN-64-STATIC-NEXT: 	call	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
+; DARWIN-64-STATIC-NEXT: 	callq	_x
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _lcallee:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
-; DARWIN-64-DYNAMIC-NEXT: 	call	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_x
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _lcallee:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
-; DARWIN-64-PIC-NEXT: 	call	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
+; DARWIN-64-PIC-NEXT: 	callq	_x
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -8496,13 +8496,13 @@ entry:
 	tail call void @y() nounwind
 	ret void
 ; LINUX-64-STATIC: dcallee:
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
-; LINUX-64-STATIC: call    y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
+; LINUX-64-STATIC: callq   y
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dcallee:
@@ -8531,13 +8531,13 @@ entry:
 
 ; LINUX-64-PIC: dcallee:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
-; LINUX-64-PIC-NEXT: 	call	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
+; LINUX-64-PIC-NEXT: 	callq	y@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8579,37 +8579,37 @@ entry:
 
 ; DARWIN-64-STATIC: _dcallee:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
-; DARWIN-64-STATIC-NEXT: 	call	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
+; DARWIN-64-STATIC-NEXT: 	callq	_y
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _dcallee:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
-; DARWIN-64-DYNAMIC-NEXT: 	call	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_y
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _dcallee:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
-; DARWIN-64-PIC-NEXT: 	call	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
+; DARWIN-64-PIC-NEXT: 	callq	_y
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -8765,8 +8765,8 @@ entry:
 	tail call void @callee() nounwind
 	ret void
 ; LINUX-64-STATIC: caller:
-; LINUX-64-STATIC: call    callee
-; LINUX-64-STATIC: call    callee
+; LINUX-64-STATIC: callq   callee
+; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: caller:
@@ -8785,8 +8785,8 @@ entry:
 
 ; LINUX-64-PIC: caller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	callee@PLT
-; LINUX-64-PIC-NEXT: 	call	callee@PLT
+; LINUX-64-PIC-NEXT: 	callq	callee@PLT
+; LINUX-64-PIC-NEXT: 	callq	callee@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8813,22 +8813,22 @@ entry:
 
 ; DARWIN-64-STATIC: _caller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_callee
-; DARWIN-64-STATIC-NEXT: 	call	_callee
+; DARWIN-64-STATIC-NEXT: 	callq	_callee
+; DARWIN-64-STATIC-NEXT: 	callq	_callee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _caller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_callee
-; DARWIN-64-DYNAMIC-NEXT: 	call	_callee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_callee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_callee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _caller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_callee
-; DARWIN-64-PIC-NEXT: 	call	_callee
+; DARWIN-64-PIC-NEXT: 	callq	_callee
+; DARWIN-64-PIC-NEXT: 	callq	_callee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -8839,8 +8839,8 @@ entry:
 	tail call void @dcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: dcaller:
-; LINUX-64-STATIC: call    dcallee
-; LINUX-64-STATIC: call    dcallee
+; LINUX-64-STATIC: callq   dcallee
+; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dcaller:
@@ -8859,8 +8859,8 @@ entry:
 
 ; LINUX-64-PIC: dcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	dcallee
-; LINUX-64-PIC-NEXT: 	call	dcallee
+; LINUX-64-PIC-NEXT: 	callq	dcallee
+; LINUX-64-PIC-NEXT: 	callq	dcallee
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8887,22 +8887,22 @@ entry:
 
 ; DARWIN-64-STATIC: _dcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_dcallee
-; DARWIN-64-STATIC-NEXT: 	call	_dcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_dcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _dcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_dcallee
-; DARWIN-64-DYNAMIC-NEXT: 	call	_dcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_dcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _dcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_dcallee
-; DARWIN-64-PIC-NEXT: 	call	_dcallee
+; DARWIN-64-PIC-NEXT: 	callq	_dcallee
+; DARWIN-64-PIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -8913,8 +8913,8 @@ entry:
 	tail call void @lcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: lcaller:
-; LINUX-64-STATIC: call    lcallee
-; LINUX-64-STATIC: call    lcallee
+; LINUX-64-STATIC: callq   lcallee
+; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: lcaller:
@@ -8933,8 +8933,8 @@ entry:
 
 ; LINUX-64-PIC: lcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	lcallee@PLT
-; LINUX-64-PIC-NEXT: 	call	lcallee@PLT
+; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
+; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8961,22 +8961,22 @@ entry:
 
 ; DARWIN-64-STATIC: _lcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_lcallee
-; DARWIN-64-STATIC-NEXT: 	call	_lcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_lcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _lcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_lcallee
-; DARWIN-64-DYNAMIC-NEXT: 	call	_lcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_lcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _lcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_lcallee
-; DARWIN-64-PIC-NEXT: 	call	_lcallee
+; DARWIN-64-PIC-NEXT: 	callq	_lcallee
+; DARWIN-64-PIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -8986,7 +8986,7 @@ entry:
 	tail call void @callee() nounwind
 	ret void
 ; LINUX-64-STATIC: tailcaller:
-; LINUX-64-STATIC: call    callee
+; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: tailcaller:
@@ -9003,7 +9003,7 @@ entry:
 
 ; LINUX-64-PIC: tailcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	callee@PLT
+; LINUX-64-PIC-NEXT: 	callq	callee@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9027,19 +9027,19 @@ entry:
 
 ; DARWIN-64-STATIC: _tailcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_callee
+; DARWIN-64-STATIC-NEXT: 	callq	_callee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _tailcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_callee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_callee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _tailcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_callee
+; DARWIN-64-PIC-NEXT: 	callq	_callee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9049,7 +9049,7 @@ entry:
 	tail call void @dcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: dtailcaller:
-; LINUX-64-STATIC: call    dcallee
+; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dtailcaller:
@@ -9066,7 +9066,7 @@ entry:
 
 ; LINUX-64-PIC: dtailcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	dcallee
+; LINUX-64-PIC-NEXT: 	callq	dcallee
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9090,19 +9090,19 @@ entry:
 
 ; DARWIN-64-STATIC: _dtailcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_dcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _dtailcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_dcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _dtailcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_dcallee
+; DARWIN-64-PIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9112,7 +9112,7 @@ entry:
 	tail call void @lcallee() nounwind
 	ret void
 ; LINUX-64-STATIC: ltailcaller:
-; LINUX-64-STATIC: call    lcallee
+; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ltailcaller:
@@ -9129,7 +9129,7 @@ entry:
 
 ; LINUX-64-PIC: ltailcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	lcallee@PLT
+; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9153,19 +9153,19 @@ entry:
 
 ; DARWIN-64-STATIC: _ltailcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	_lcallee
+; DARWIN-64-STATIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ltailcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	_lcallee
+; DARWIN-64-DYNAMIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ltailcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	_lcallee
+; DARWIN-64-PIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9178,8 +9178,8 @@ entry:
 	tail call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: icaller:
-; LINUX-64-STATIC: call    *ifunc
-; LINUX-64-STATIC: call    *ifunc
+; LINUX-64-STATIC: callq   *ifunc
+; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: icaller:
@@ -9199,8 +9199,8 @@ entry:
 ; LINUX-64-PIC: icaller:
 ; LINUX-64-PIC: 	pushq	%rbx
 ; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
 ; LINUX-64-PIC-NEXT: 	popq	%rbx
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9237,24 +9237,24 @@ entry:
 ; DARWIN-64-STATIC: _icaller:
 ; DARWIN-64-STATIC: 	pushq	%rbx
 ; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-STATIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-STATIC-NEXT: 	popq	%rbx
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _icaller:
 ; DARWIN-64-DYNAMIC: 	pushq	%rbx
 ; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-DYNAMIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-DYNAMIC-NEXT: 	popq	%rbx
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _icaller:
 ; DARWIN-64-PIC: 	pushq	%rbx
 ; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-PIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-PIC-NEXT: 	popq	%rbx
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9267,8 +9267,8 @@ entry:
 	tail call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: dicaller:
-; LINUX-64-STATIC: call    *difunc
-; LINUX-64-STATIC: call    *difunc
+; LINUX-64-STATIC: callq   *difunc
+; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dicaller:
@@ -9288,8 +9288,8 @@ entry:
 ; LINUX-64-PIC: dicaller:
 ; LINUX-64-PIC: 	pushq	%rbx
 ; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
 ; LINUX-64-PIC-NEXT: 	popq	%rbx
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9321,22 +9321,22 @@ entry:
 
 ; DARWIN-64-STATIC: _dicaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	*_difunc(%rip)
-; DARWIN-64-STATIC-NEXT: 	call	*_difunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_difunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _dicaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_difunc(%rip)
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_difunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_difunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _dicaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	*_difunc(%rip)
-; DARWIN-64-PIC-NEXT: 	call	*_difunc(%rip)
+; DARWIN-64-PIC-NEXT: 	callq	*_difunc(%rip)
+; DARWIN-64-PIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9349,8 +9349,8 @@ entry:
 	tail call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: licaller:
-; LINUX-64-STATIC: call    *lifunc
-; LINUX-64-STATIC: call    *lifunc
+; LINUX-64-STATIC: callq   *lifunc
+; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: licaller:
@@ -9369,8 +9369,8 @@ entry:
 
 ; LINUX-64-PIC: licaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	*lifunc(%rip)
-; LINUX-64-PIC-NEXT: 	call	*lifunc(%rip)
+; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
+; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9402,22 +9402,22 @@ entry:
 
 ; DARWIN-64-STATIC: _licaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	*_lifunc(%rip)
-; DARWIN-64-STATIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_lifunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _licaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_lifunc(%rip)
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_lifunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _licaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	*_lifunc(%rip)
-; DARWIN-64-PIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-PIC-NEXT: 	callq	*_lifunc(%rip)
+; DARWIN-64-PIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9430,8 +9430,8 @@ entry:
 	tail call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC: itailcaller:
-; LINUX-64-STATIC: call    *ifunc
-; LINUX-64-STATIC: call    *ifunc
+; LINUX-64-STATIC: callq   *ifunc
+; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: itailcaller:
@@ -9451,8 +9451,8 @@ entry:
 ; LINUX-64-PIC: itailcaller:
 ; LINUX-64-PIC: 	pushq	%rbx
 ; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
-; LINUX-64-PIC-NEXT: 	call	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
+; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
 ; LINUX-64-PIC-NEXT: 	popq	%rbx
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9489,24 +9489,24 @@ entry:
 ; DARWIN-64-STATIC: _itailcaller:
 ; DARWIN-64-STATIC: 	pushq	%rbx
 ; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-STATIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-STATIC-NEXT: 	popq	%rbx
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _itailcaller:
 ; DARWIN-64-DYNAMIC: 	pushq	%rbx
 ; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-DYNAMIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-DYNAMIC-NEXT: 	popq	%rbx
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _itailcaller:
 ; DARWIN-64-PIC: 	pushq	%rbx
 ; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-PIC-NEXT: 	call	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	call	*(%rbx)
+; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
+; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
 ; DARWIN-64-PIC-NEXT: 	popq	%rbx
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9517,7 +9517,7 @@ entry:
 	tail call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC: ditailcaller:
-; LINUX-64-STATIC: call    *difunc
+; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ditailcaller:
@@ -9535,7 +9535,7 @@ entry:
 ; LINUX-64-PIC: ditailcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	call	*(%rax)
+; LINUX-64-PIC-NEXT: 	callq	*(%rax)
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9562,18 +9562,18 @@ entry:
 
 ; DARWIN-64-STATIC: _ditailcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	*_difunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ditailcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_difunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ditailcaller:
-; DARWIN-64-PIC: 	call	*_difunc(%rip)
+; DARWIN-64-PIC: 	callq	*_difunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -9584,7 +9584,7 @@ entry:
 	tail call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC: litailcaller:
-; LINUX-64-STATIC: call    *lifunc
+; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: litailcaller:
@@ -9601,7 +9601,7 @@ entry:
 
 ; LINUX-64-PIC: litailcaller:
 ; LINUX-64-PIC: 	subq	$8, %rsp
-; LINUX-64-PIC-NEXT: 	call	*lifunc(%rip)
+; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
 ; LINUX-64-PIC-NEXT: 	addq	$8, %rsp
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9628,19 +9628,19 @@ entry:
 
 ; DARWIN-64-STATIC: _litailcaller:
 ; DARWIN-64-STATIC: 	subq	$8, %rsp
-; DARWIN-64-STATIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-STATIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-STATIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _litailcaller:
 ; DARWIN-64-DYNAMIC: 	subq	$8, %rsp
-; DARWIN-64-DYNAMIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _litailcaller:
 ; DARWIN-64-PIC: 	subq	$8, %rsp
-; DARWIN-64-PIC-NEXT: 	call	*_lifunc(%rip)
+; DARWIN-64-PIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	addq	$8, %rsp
 ; DARWIN-64-PIC-NEXT: 	ret
 }

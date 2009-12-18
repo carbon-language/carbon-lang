@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; PR5757
 
-; CHECK: cmovne %rdi, %rsi
+; CHECK: cmovneq %rdi, %rsi
 ; CHECK: movl (%rsi), %eax
 
 %0 = type { i64, i32 }
