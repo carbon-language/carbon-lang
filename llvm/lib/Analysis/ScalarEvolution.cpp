@@ -1457,12 +1457,10 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       LIOps.push_back(AddRec->getStart());
 
       SmallVector<const SCEV *, 4> AddRecOps(AddRec->op_begin(),
-                                           AddRec->op_end());
+                                             AddRec->op_end());
       AddRecOps[0] = getAddExpr(LIOps);
 
-      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop(),
-                                         AddRec->hasNoUnsignedWrap() && HasNUW,
-                                         AddRec->hasNoSignedWrap() && HasNSW);
+      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop());
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
