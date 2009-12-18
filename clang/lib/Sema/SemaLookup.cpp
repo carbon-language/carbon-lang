@@ -192,23 +192,71 @@ namespace {
   };
 }
 
+static bool IsAcceptableIDNS(NamedDecl *D, unsigned IDNS) {
+  return D->isInIdentifierNamespace(IDNS);
+}
+
+static bool IsAcceptableOperatorName(NamedDecl *D, unsigned IDNS) {
+  return D->isInIdentifierNamespace(IDNS) &&
+    !D->getDeclContext()->isRecord();
+}
+
+static bool IsAcceptableNestedNameSpecifierName(NamedDecl *D, unsigned IDNS) {
+  return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
+}
+
+static bool IsAcceptableNamespaceName(NamedDecl *D, unsigned IDNS) {
+  return isa<NamespaceDecl>(D) || isa<NamespaceAliasDecl>(D);
+}
+
+/// Gets the default result filter for the given lookup.
+static inline
+LookupResult::ResultFilter getResultFilter(Sema::LookupNameKind NameKind) {
+  switch (NameKind) {
+  case Sema::LookupOrdinaryName:
+  case Sema::LookupTagName:
+  case Sema::LookupMemberName:
+  case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
+  case Sema::LookupUsingDeclName:
+  case Sema::LookupObjCProtocolName:
+  case Sema::LookupObjCImplementationName:
+    return &IsAcceptableIDNS;
+
+  case Sema::LookupOperatorName:
+    return &IsAcceptableOperatorName;
+
+  case Sema::LookupNestedNameSpecifierName:
+    return &IsAcceptableNestedNameSpecifierName;
+
+  case Sema::LookupNamespaceName:
+    return &IsAcceptableNamespaceName;
+  }
+
+  llvm_unreachable("unkknown lookup kind");
+  return 0;
+}
+
 // Retrieve the set of identifier namespaces that correspond to a
 // specific kind of name lookup.
-inline unsigned
-getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
-                                          bool CPlusPlus) {
+static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
+                               bool CPlusPlus,
+                               bool Redeclaration) {
   unsigned IDNS = 0;
   switch (NameKind) {
   case Sema::LookupOrdinaryName:
   case Sema::LookupOperatorName:
   case Sema::LookupRedeclarationWithLinkage:
     IDNS = Decl::IDNS_Ordinary;
-    if (CPlusPlus)
+    if (CPlusPlus) {
       IDNS |= Decl::IDNS_Tag | Decl::IDNS_Member;
+      if (Redeclaration) IDNS |= Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend;
+    }
     break;
 
   case Sema::LookupTagName:
     IDNS = Decl::IDNS_Tag;
+    if (CPlusPlus && Redeclaration)
+      IDNS |= Decl::IDNS_TagFriend;
     break;
 
   case Sema::LookupMemberName:
@@ -236,6 +284,13 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
     break;
   }
   return IDNS;
+}
+
+void LookupResult::configure() {
+  IDNS = getIDNS(LookupKind,
+                 SemaRef.getLangOptions().CPlusPlus,
+                 isForRedeclaration());
+  IsAcceptableFn = getResultFilter(LookupKind);
 }
 
 // Necessary because CXXBasePaths is not complete in Sema.h
@@ -377,8 +432,7 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
 
   DeclContext::lookup_const_iterator I, E;
   for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I)
-    if (Sema::isAcceptableLookupResult(*I, R.getLookupKind(),
-                                       R.getIdentifierNamespace()))
+    if (R.isAcceptableDecl(*I))
       R.addDecl(*I), Found = true;
 
   return Found;
@@ -424,19 +478,7 @@ static DeclContext *findOuterContext(Scope *S) {
 }
 
 bool Sema::CppLookupName(LookupResult &R, Scope *S) {
-  assert(getLangOptions().CPlusPlus &&
-         "Can perform only C++ lookup");
-  LookupNameKind NameKind = R.getLookupKind();
-  unsigned IDNS
-    = getIdentifierNamespacesFromLookupNameKind(NameKind, /*CPlusPlus*/ true);
-
-  // If we're testing for redeclarations, also look in the friend namespaces.
-  if (R.isForRedeclaration()) {
-    if (IDNS & Decl::IDNS_Tag) IDNS |= Decl::IDNS_TagFriend;
-    if (IDNS & Decl::IDNS_Ordinary) IDNS |= Decl::IDNS_OrdinaryFriend;
-  }
-
-  R.setIdentifierNamespace(IDNS);
+  assert(getLangOptions().CPlusPlus && "Can perform only C++ lookup");
 
   DeclarationName Name = R.getLookupName();
 
@@ -467,7 +509,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
-      if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
+      if (R.isAcceptableDecl(*I)) {
         Found = true;
         R.addDecl(*I);
       }
@@ -531,7 +573,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
-      if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
+      if (R.isAcceptableDecl(*I)) {
         // We found something.  Look for anything else in our scope
         // with this same name and in an acceptable identifier
         // namespace, so that we can construct an overload set if we
@@ -597,46 +639,17 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
   if (!getLangOptions().CPlusPlus) {
     // Unqualified name lookup in C/Objective-C is purely lexical, so
     // search in the declarations attached to the name.
-    unsigned IDNS = 0;
-    switch (NameKind) {
-    case Sema::LookupOrdinaryName:
-      IDNS = Decl::IDNS_Ordinary;
-      break;
 
-    case Sema::LookupTagName:
-      IDNS = Decl::IDNS_Tag;
-      break;
-
-    case Sema::LookupMemberName:
-      IDNS = Decl::IDNS_Member;
-      break;
-
-    case Sema::LookupOperatorName:
-    case Sema::LookupNestedNameSpecifierName:
-    case Sema::LookupNamespaceName:
-    case Sema::LookupUsingDeclName:
-      assert(false && "C does not perform these kinds of name lookup");
-      break;
-
-    case Sema::LookupRedeclarationWithLinkage:
+    if (NameKind == Sema::LookupRedeclarationWithLinkage) {
       // Find the nearest non-transparent declaration scope.
       while (!(S->getFlags() & Scope::DeclScope) ||
              (S->getEntity() &&
               static_cast<DeclContext *>(S->getEntity())
                 ->isTransparentContext()))
         S = S->getParent();
-      IDNS = Decl::IDNS_Ordinary;
-      break;
-
-    case Sema::LookupObjCProtocolName:
-      IDNS = Decl::IDNS_ObjCProtocol;
-      break;
-
-    case Sema::LookupObjCImplementationName:
-      IDNS = Decl::IDNS_ObjCImplementation;
-      break;
-
     }
+
+    unsigned IDNS = R.getIdentifierNamespace();
 
     // Scan up the scope chain looking for a decl that matches this
     // identifier that is in the appropriate namespace.  This search
@@ -863,17 +876,6 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx) {
 
   if (!R.getLookupName())
     return false;
-
-  // If we're performing qualified name lookup (e.g., lookup into a
-  // struct), find fields as part of ordinary name lookup.
-  LookupNameKind NameKind = R.getLookupKind();
-  unsigned IDNS
-    = getIdentifierNamespacesFromLookupNameKind(NameKind,
-                                                getLangOptions().CPlusPlus);
-  if (NameKind == LookupOrdinaryName)
-    IDNS |= Decl::IDNS_Member;
-
-  R.setIdentifierNamespace(IDNS);
 
   // Make sure that the declaration context is complete.
   assert((!isa<TagDecl>(LookupCtx) ||

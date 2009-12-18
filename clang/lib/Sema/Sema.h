@@ -613,10 +613,6 @@ public:
                                         const LookupResult &Previous,
                                         Scope *S);
   void DiagnoseFunctionSpecifiers(Declarator& D);
-  bool CheckRedeclaration(DeclContext *DC,
-                          DeclarationName Name,
-                          SourceLocation NameLoc,
-                          unsigned Diagnostic);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, TypeSourceInfo *TInfo,
                                     LookupResult &Previous, bool &Redeclaration);
@@ -1176,36 +1172,6 @@ private:
   bool CppLookupName(LookupResult &R, Scope *S);
 
 public:
-  /// Determines whether D is a suitable lookup result according to the
-  /// lookup criteria.
-  static bool isAcceptableLookupResult(NamedDecl *D, LookupNameKind NameKind,
-                                       unsigned IDNS) {
-    switch (NameKind) {
-    case Sema::LookupOrdinaryName:
-    case Sema::LookupTagName:
-    case Sema::LookupMemberName:
-    case Sema::LookupRedeclarationWithLinkage: // FIXME: check linkage, scoping
-    case Sema::LookupUsingDeclName:
-    case Sema::LookupObjCProtocolName:
-    case Sema::LookupObjCImplementationName:
-      return D->isInIdentifierNamespace(IDNS);
-
-    case Sema::LookupOperatorName:
-      return D->isInIdentifierNamespace(IDNS) &&
-             !D->getDeclContext()->isRecord();
-
-    case Sema::LookupNestedNameSpecifierName:
-      return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
-
-    case Sema::LookupNamespaceName:
-      return isa<NamespaceDecl>(D) || isa<NamespaceAliasDecl>(D);
-    }
-
-    assert(false &&
-           "isAcceptableLookupResult always returns before this point");
-    return false;
-  }
-
   /// \brief Look up a name, looking for a single declaration.  Return
   /// null if the results were absent, ambiguous, or overloaded.
   ///

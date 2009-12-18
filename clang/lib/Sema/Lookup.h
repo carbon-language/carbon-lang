@@ -121,6 +121,8 @@ public:
   typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
   typedef DeclsTy::const_iterator iterator;
 
+  typedef bool (*ResultFilter)(NamedDecl*, unsigned IDNS);
+
   LookupResult(Sema &SemaRef, DeclarationName Name, SourceLocation NameLoc,
                Sema::LookupNameKind LookupKind,
                Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
@@ -130,11 +132,14 @@ public:
       Name(Name),
       NameLoc(NameLoc),
       LookupKind(LookupKind),
+      IsAcceptableFn(0),
       IDNS(0),
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
       Diagnose(Redecl == Sema::NotForRedeclaration)
-  {}
+  {
+    configure();
+  }
 
   /// Creates a temporary lookup result, initializing its core data
   /// using the information from another result.  Diagnostics are always
@@ -146,6 +151,7 @@ public:
       Name(Other.Name),
       NameLoc(Other.NameLoc),
       LookupKind(Other.LookupKind),
+      IsAcceptableFn(Other.IsAcceptableFn),
       IDNS(Other.IDNS),
       Redecl(Other.Redecl),
       HideTags(Other.HideTags),
@@ -176,17 +182,6 @@ public:
   /// declarations during resolution.  The default is true.
   void setHideTags(bool Hide) {
     HideTags = Hide;
-  }
-
-  /// The identifier namespace of this lookup.  This information is
-  /// private to the lookup routines.
-  unsigned getIdentifierNamespace() const {
-    assert(IDNS);
-    return IDNS;
-  }
-
-  void setIdentifierNamespace(unsigned NS) {
-    IDNS = NS;
   }
 
   bool isAmbiguous() const {
@@ -231,7 +226,19 @@ public:
     return Paths;
   }
 
-  /// \brief Add a declaration to these results.
+  /// \brief Tests whether the given declaration is acceptable.
+  bool isAcceptableDecl(NamedDecl *D) const {
+    assert(IsAcceptableFn);
+    return IsAcceptableFn(D, IDNS);
+  }
+
+  /// \brief Returns the identifier namespace mask for this lookup.
+  unsigned getIdentifierNamespace() const {
+    return IDNS;
+  }
+
+  /// \brief Add a declaration to these results.  Does not test the
+  /// acceptance criteria.
   void addDecl(NamedDecl *D) {
     Decls.push_back(D);
     ResultKind = Found;
@@ -334,6 +341,7 @@ public:
   void clear(Sema::LookupNameKind Kind) {
     clear();
     LookupKind = Kind;
+    configure();
   }
 
   void print(llvm::raw_ostream &);
@@ -438,6 +446,7 @@ private:
   }
 
   void addDeclsFromBasePaths(const CXXBasePaths &P);
+  void configure();
 
   // Sanity checks.
   void sanity() const {
@@ -476,7 +485,9 @@ private:
   SourceLocation NameLoc;
   SourceRange NameContextRange;
   Sema::LookupNameKind LookupKind;
-  unsigned IDNS; // ill-defined until set by lookup
+  ResultFilter IsAcceptableFn; // set by configure()
+  unsigned IDNS; // set by configure()
+
   bool Redecl;
 
   /// \brief True if tag declarations should be hidden if non-tags

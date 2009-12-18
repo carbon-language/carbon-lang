@@ -191,6 +191,19 @@ foo<somens:a> a2;  // expected-error {{unexpected ':' in nested name specifier}}
 
 somens::a a3 = a2; // expected-error {{cannot initialize 'a3' with an lvalue of type 'foo<somens::a>'}}
 
+// typedefs and using declarations.
+namespace test1 {
+  namespace ns {
+    class Counter { static int count; };
+    typedef Counter counter;
+  }
+  using ns::counter;
 
-
-
+  class Test {
+    void test1() {
+      counter c;
+      c.count++;
+      counter::count++;
+    }
+  };
+}

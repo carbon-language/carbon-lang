@@ -1519,29 +1519,27 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return DeclPtrTy::make(Tag);
 }
 
-/// We are trying to introduce the given name into the given context;
+/// We are trying to inject an anonymous member into the given scope;
 /// check if there's an existing declaration that can't be overloaded.
 ///
 /// \return true if this is a forbidden redeclaration
-bool Sema::CheckRedeclaration(DeclContext *DC,
-                              DeclarationName Name,
-                              SourceLocation NameLoc,
-                              unsigned diagnostic) {
-  LookupResult R(*this, Name, NameLoc, LookupOrdinaryName,
-                 ForRedeclaration);
-  LookupQualifiedName(R, DC);
+static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
+                                         Scope *S,
+                                         DeclarationName Name,
+                                         SourceLocation NameLoc,
+                                         unsigned diagnostic) {
+  LookupResult R(SemaRef, Name, NameLoc, Sema::LookupMemberName,
+                 Sema::ForRedeclaration);
+  if (!SemaRef.LookupName(R, S)) return false;
 
-  if (R.empty()) return false;
-
-  if (R.getResultKind() == LookupResult::Found &&
-      isa<TagDecl>(R.getFoundDecl()))
+  if (R.getAsSingle<TagDecl>())
     return false;
 
   // Pick a representative declaration.
-  NamedDecl *PrevDecl = (*R.begin())->getUnderlyingDecl();
+  NamedDecl *PrevDecl = R.getRepresentativeDecl()->getUnderlyingDecl();
 
-  Diag(NameLoc, diagnostic) << Name;
-  Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
+  SemaRef.Diag(NameLoc, diagnostic) << Name;
+  SemaRef.Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
 
   return true;
 }
@@ -1573,8 +1571,8 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      if (CheckRedeclaration(Owner, (*F)->getDeclName(),
-                             (*F)->getLocation(), diagKind)) {
+      if (CheckAnonMemberRedeclaration(*this, S, (*F)->getDeclName(),
+                                       (*F)->getLocation(), diagKind)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
         //   distinct from the names of any other entity in the
