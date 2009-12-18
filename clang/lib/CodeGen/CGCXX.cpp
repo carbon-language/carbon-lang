@@ -580,7 +580,8 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 
     if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
       assert((ICE->getCastKind() == CastExpr::CK_NoOp ||
-              ICE->getCastKind() == CastExpr::CK_ConstructorConversion) &&
+              ICE->getCastKind() == CastExpr::CK_ConstructorConversion ||
+              ICE->getCastKind() == CastExpr::CK_UserDefinedConversion) &&
              "Unknown implicit cast kind in constructor elision");
       Arg = ICE->getSubExpr();
     }
