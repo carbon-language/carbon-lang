@@ -360,6 +360,15 @@ public:
     return "";
   }
 
+  /// setCPU - Target the specific CPU.
+  ///
+  /// \return - False on error (invalid CPU name).
+  //
+  // FIXME: Remove this.
+  virtual bool setCPU(const std::string &Name) {
+    return true;
+  }
+
   /// setABI - Use the specific ABI.
   ///
   /// \return - False on error (invalid ABI name).

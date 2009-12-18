@@ -118,7 +118,7 @@
 //
 // ARM:#define __APCS_32__ 1
 // ARM:#define __ARMEL__ 1
-// ARM:#define __ARM_ARCH_6K__ 1
+// ARM:#define __ARM_ARCH_6J__ 1
 // ARM:#define __CHAR_BIT__ 8
 // ARM:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
 // ARM:#define __DBL_DIG__ 15
@@ -180,6 +180,7 @@
 // ARM:#define __POINTER_WIDTH__ 32
 // ARM:#define __PTRDIFF_TYPE__ int
 // ARM:#define __PTRDIFF_WIDTH__ 32
+// ARM:#define __REGISTER_PREFIX__
 // ARM:#define __SCHAR_MAX__ 127
 // ARM:#define __SHRT_MAX__ 32767
 // ARM:#define __SIG_ATOMIC_WIDTH__ 32
@@ -836,7 +837,7 @@
 // SPARC:#define __POINTER_WIDTH__ 32
 // SPARC:#define __PTRDIFF_TYPE__ long int
 // SPARC:#define __PTRDIFF_WIDTH__ 32
-// SPARC:#define __REGISTER_PREFIX__ 
+// SPARC:#define __REGISTER_PREFIX__
 // SPARC:#define __SCHAR_MAX__ 127
 // SPARC:#define __SHRT_MAX__ 32767
 // SPARC:#define __SIG_ATOMIC_WIDTH__ 32

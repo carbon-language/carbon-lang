@@ -56,6 +56,7 @@ def note_invalid_subexpr_in_ice : Note<
 
 def err_target_unknown_triple : Error<
   "unknown target triple '%0', please use -triple or -arch">;
+def err_target_unknown_cpu : Error<"unknown target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
 def err_target_invalid_feature : Error<"invalid target feature '%0'">;
 

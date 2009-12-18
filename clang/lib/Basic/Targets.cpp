@@ -1184,52 +1184,23 @@ public:
 
 namespace {
 class ARMTargetInfo : public TargetInfo {
-  enum {
-    Armv4t,
-    Armv5,
-    Armv6,
-    Armv7a,
-    XScale
-  } ArmArch;
-
    static const TargetInfo::GCCRegAlias GCCRegAliases[];
    static const char * const GCCRegNames[];
 
-  std::string ABI;
+  std::string ABI, CPU;
   bool IsThumb;
 
 public:
   ARMTargetInfo(const std::string &TripleStr)
-    : TargetInfo(TripleStr), ABI("aapcs-linux"), IsThumb(false)
+    : TargetInfo(TripleStr), ABI("aapcs-linux"), CPU("arm1136j-s")
   {
     llvm::Triple Triple(TripleStr);
 
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
 
-    // FIXME: This shouldn't be done this way, we should use features to
-    // indicate the arch. See lib/Driver/Tools.cpp.
-    llvm::StringRef Version(""), Arch = Triple.getArchName();
-    if (Arch.startswith("arm"))
-      Version = Arch.substr(3);
-    else if (Arch.startswith("thumb"))
-      Version = Arch.substr(5);
-    if (Version == "v7")
-      ArmArch = Armv7a;
-    else if (Version.empty() || Version == "v6" || Version == "v6t2")
-      ArmArch = Armv6;
-    else if (Version == "v5")
-      ArmArch = Armv5;
-    else if (Version == "v4t")
-      ArmArch = Armv4t;
-    else if (Arch == "xscale" || Arch == "thumbv5e")
-      ArmArch = XScale;
-    else
-      ArmArch = Armv6;
-
-    if (Arch.startswith("thumb"))
-      IsThumb = true;
-
+    // FIXME: Should we just treat this as a feature?
+    IsThumb = Triple.getArchName().startswith("thumb");
     if (IsThumb) {
       DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                            "i64:64:64-f32:32:32-f64:64:64-"
@@ -1272,6 +1243,32 @@ public:
 
     return true;
   }
+  static const char *getCPUDefineSuffix(llvm::StringRef Name) {
+    return llvm::StringSwitch<const char*>(Name)
+      .Cases("arm8", "arm810", "4")
+      .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110", "4")
+      .Cases("arm7tdmi", "arm7tdmi-s", "arm710t", "arm720t", "arm9", "4T")
+      .Cases("arm9tdmi", "arm920", "arm920t", "arm922t", "arm940t", "4T")
+      .Case("ep9312", "4T")
+      .Cases("arm10tdmi", "arm1020t", "5T")
+      .Cases("arm9e", "arm946e-s", "arm966e-s", "arm968e-s", "5TE")
+      .Case("arm926ej-s", "5TEJ")
+      .Cases("arm10e", "arm1020e", "arm1022e", "5TE")
+      .Cases("xscale", "iwmmxt", "5TE")
+      .Cases("arm1136j-s", "arm1136jf-s", "6J")
+      .Cases("arm1176jz-s", "arm1176jzf-s", "6ZK")
+      .Cases("mpcorenovfp", "mpcore", "6K")
+      .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
+      .Cases("cortex-a8", "cortex-a9", "7A")
+      .Default(0);
+  }
+  virtual bool setCPU(const std::string &Name) {
+    if (!getCPUDefineSuffix(Name))
+      return false;
+
+    CPU = Name;
+    return true;
+  }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defs) const {
     // Target identification.
@@ -1279,37 +1276,39 @@ public:
     Define(Defs, "__arm__");
 
     // Target properties.
+    Define(Defs, "__ARMEL__");
     Define(Defs, "__LITTLE_ENDIAN__");
+    Define(Defs, "__REGISTER_PREFIX__", "");
+
+    llvm::StringRef CPUArch = getCPUDefineSuffix(CPU);
+    std::string ArchName = "__ARM_ARCH_";
+    ArchName += CPUArch;
+    ArchName += "__";
+    Define(Defs, ArchName);
 
     // Subtarget options.
-    //
-    // FIXME: Neither THUMB_INTERWORK nor SOFTFP is not being set correctly
-    // here.
-    if (ArmArch == Armv7a) {
-      Define(Defs, "__ARM_ARCH_7A__");
-      Define(Defs, "__THUMB_INTERWORK__");
-    } else if (ArmArch == Armv6) {
-      Define(Defs, "__ARM_ARCH_6K__");
-      Define(Defs, "__THUMB_INTERWORK__");
-    } else if (ArmArch == Armv5) {
-      Define(Defs, "__ARM_ARCH_5TEJ__");
-      Define(Defs, "__THUMB_INTERWORK__");
-      Define(Defs, "__SOFTFP__");
-    } else if (ArmArch == Armv4t) {
-      Define(Defs, "__ARM_ARCH_4T__");
-      Define(Defs, "__SOFTFP__");
-    } else if (ArmArch == XScale) {
-      Define(Defs, "__ARM_ARCH_5TE__");
-      Define(Defs, "__XSCALE__");
-      Define(Defs, "__SOFTFP__");
-    }
 
-    Define(Defs, "__ARMEL__");
+    // FIXME: It's more complicated than this and we don't really support
+    // interworking.
+    if ('5' <= CPUArch[0] && CPUArch[0] <= '7')
+      Define(Defs, "__THUMB_INTERWORK__");
+
+    // FIXME: It's more complicated than this.
+    if (ABI == "aapcs" || ABI == "aapcs-linux")
+      Define(Defs, "__ARM_EABI__");
+
+    // FIXME: This isn't correct, this should be set based on the various float
+    // options.
+    if (CPUArch[0] <= '5')
+      Define(Defs, "__SOFTFP__");
+
+    if (CPU == "xscale")
+      Define(Defs, "__XSCALE__");
 
     if (IsThumb) {
       Define(Defs, "__THUMBEL__");
       Define(Defs, "__thumb__");
-      if (ArmArch == Armv7a)
+      if (CPUArch.startswith("7"))
         Define(Defs, "__thumb2__");
     }
 
@@ -2121,6 +2120,12 @@ TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
   llvm::OwningPtr<TargetInfo> Target(AllocateTarget(Triple.str()));
   if (!Target) {
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
+    return 0;
+  }
+
+  // Set the target CPU if specified.
+  if (!Opts.CPU.empty() && !Target->setCPU(Opts.CPU)) {
+    Diags.Report(diag::err_target_unknown_cpu) << Opts.CPU;
     return 0;
   }
 
