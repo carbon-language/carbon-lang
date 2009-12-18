@@ -47,7 +47,7 @@ namespace llvm {
 namespace sys {
 const char PathSeparator = ';';
 
-Path::Path(const std::string& p)
+Path::Path(llvm::StringRef p)
   : path(p) {
   FlipBackSlashes(path);
 }
