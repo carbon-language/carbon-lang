@@ -1460,7 +1460,9 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
                                            AddRec->op_end());
       AddRecOps[0] = getAddExpr(LIOps);
 
-      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop());
+      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRec->getLoop(),
+                                         AddRec->hasNoUnsignedWrap() && HasNUW,
+                                         AddRec->hasNoSignedWrap() && HasNSW);
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
 
@@ -1636,7 +1638,9 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         }
       }
 
-      const SCEV *NewRec = getAddRecExpr(NewOps, AddRec->getLoop());
+      const SCEV *NewRec = getAddRecExpr(NewOps, AddRec->getLoop(),
+                                         AddRec->hasNoUnsignedWrap() && HasNUW,
+                                         AddRec->hasNoSignedWrap() && HasNSW);
 
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
@@ -2592,8 +2596,9 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 /// createNodeForGEP - Expand GEP instructions into add and multiply
 /// operations. This allows them to be analyzed by regular SCEV code.
 ///
-const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
+const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
 
+  bool InBounds = GEP->isInBounds();
   const Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
@@ -2610,18 +2615,24 @@ const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
       // For a struct, add the member offset.
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       TotalOffset = getAddExpr(TotalOffset,
-                               getFieldOffsetExpr(STy, FieldNo));
+                               getFieldOffsetExpr(STy, FieldNo),
+                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
       if (!isa<PointerType>(LocalOffset->getType()))
         // Getelementptr indicies are signed.
         LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
-      LocalOffset = getMulExpr(LocalOffset, getAllocSizeExpr(*GTI));
-      TotalOffset = getAddExpr(TotalOffset, LocalOffset);
+      // Lower "inbounds" GEPs to NSW arithmetic.
+      bool HasNSW = GEP->isInBounds();
+      LocalOffset = getMulExpr(LocalOffset, getAllocSizeExpr(*GTI),
+                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
+      TotalOffset = getAddExpr(TotalOffset, LocalOffset,
+                               /*HasNUW=*/false, /*HasNSW=*/InBounds);
     }
   }
-  return getAddExpr(getSCEV(Base), TotalOffset);
+  return getAddExpr(getSCEV(Base), TotalOffset,
+                    /*HasNUW=*/false, /*HasNSW=*/InBounds);
 }
 
 /// GetMinTrailingZeros - Determine the minimum number of zero bits that S is
@@ -3130,7 +3141,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // expressions we handle are GEPs and address literals.
 
   case Instruction::GetElementPtr:
-    return createNodeForGEP(U);
+    return createNodeForGEP(cast<GEPOperator>(U));
 
   case Instruction::PHI:
     return createNodeForPHI(cast<PHINode>(U));

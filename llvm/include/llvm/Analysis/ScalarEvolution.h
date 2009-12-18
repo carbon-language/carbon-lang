@@ -243,7 +243,7 @@ namespace llvm {
 
     /// createNodeForGEP - Provide the special handling we need to analyze GEP
     /// SCEVs.
-    const SCEV *createNodeForGEP(Operator *GEP);
+    const SCEV *createNodeForGEP(GEPOperator *GEP);
 
     /// computeSCEVAtScope - Implementation code for getSCEVAtScope; called
     /// at most once for each SCEV+Loop pair.
