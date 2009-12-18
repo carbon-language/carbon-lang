@@ -853,7 +853,5 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
 Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  switch (BuiltinID) {
-  default: return 0;
-  }
+  return 0;
 }

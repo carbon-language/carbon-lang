@@ -1645,10 +1645,10 @@ public:
       II->hasMacroDefinition() &&
       !PP.getMacroInfo(const_cast<IdentifierInfo *>(II))->isBuiltinMacro();
     Bits = (uint32_t)II->getObjCOrBuiltinID();
-    Bits = (Bits << 1) | hasMacroDefinition;
-    Bits = (Bits << 1) | II->isExtensionToken();
-    Bits = (Bits << 1) | II->isPoisoned();
-    Bits = (Bits << 1) | II->isCPlusPlusOperatorKeyword();
+    Bits = (Bits << 1) | unsigned(hasMacroDefinition);
+    Bits = (Bits << 1) | unsigned(II->isExtensionToken());
+    Bits = (Bits << 1) | unsigned(II->isPoisoned());
+    Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
     clang::io::Emit16(Out, Bits);
 
     if (hasMacroDefinition)
