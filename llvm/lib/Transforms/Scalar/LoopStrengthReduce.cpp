@@ -212,8 +212,6 @@ Pass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
-  if (DeadInsts.empty()) return;
-
   while (!DeadInsts.empty()) {
     Instruction *I = dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val());
 
@@ -2720,8 +2718,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     IVsByStride.clear();
 
     // Clean up after ourselves
-    if (!DeadInsts.empty())
-      DeleteTriviallyDeadInstructions();
+    DeleteTriviallyDeadInstructions();
   }
 
   // At this point, it is worth checking to see if any recurrence PHIs are also
