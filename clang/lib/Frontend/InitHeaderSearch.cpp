@@ -478,6 +478,11 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
                                 "i686-apple-darwin8", "", "", triple);
     break;
   case llvm::Triple::Linux:
+    // Exherbo (2009-10-26)
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
+                                "x86_64-pc-linux-gnu", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
+                                "i686-pc-linux-gnu", "", "", triple);
     // Ubuntu 7.10 - Gutsy Gibbon
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.3",
                                 "i486-linux-gnu", "", "", triple);
@@ -543,11 +548,6 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
         "i686-pc-linux-gnu", "", "", triple);
-    // Exherbo (2009-10-26)
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
-                                "x86_64-pc-linux-gnu", "32", "", triple);
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
-                                "i686-pc-linux-gnu", "", "", triple);
     break;
   case llvm::Triple::FreeBSD:
     // DragonFly
