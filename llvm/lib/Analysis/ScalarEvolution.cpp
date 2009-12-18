@@ -2624,7 +2624,6 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
         // Getelementptr indicies are signed.
         LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
       // Lower "inbounds" GEPs to NSW arithmetic.
-      bool HasNSW = GEP->isInBounds();
       LocalOffset = getMulExpr(LocalOffset, getAllocSizeExpr(*GTI),
                                /*HasNUW=*/false, /*HasNSW=*/InBounds);
       TotalOffset = getAddExpr(TotalOffset, LocalOffset,
