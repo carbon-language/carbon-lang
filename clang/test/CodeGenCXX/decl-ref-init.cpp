@@ -23,8 +23,8 @@ int main() {
 	const A& rca2 = d();
 }
 
-// CHECK-LP64: call     __ZN1BcvR1AEv
-// CHECK-LP64: call     __ZN1BcvR1AEv
+// CHECK-LP64: callq    __ZN1BcvR1AEv
+// CHECK-LP64: callq    __ZN1BcvR1AEv
 
 // CHECK-LP32: call     L__ZN1BcvR1AEv
 // CHECK-LP32: call     L__ZN1BcvR1AEv

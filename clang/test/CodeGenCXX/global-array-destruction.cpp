@@ -23,11 +23,11 @@ static S sarr1[4];
 S s2;
 S arr3[3];
 
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
-// CHECK-LP64: call     ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit
+// CHECK-LP64: callq    ___cxa_atexit

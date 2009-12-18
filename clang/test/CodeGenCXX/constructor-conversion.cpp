@@ -45,9 +45,9 @@ int main() {
   g(3);           // g(X(3))
 }
 
-// CHECK-LP64: call     __ZN1XC1Ei
-// CHECK-LP64: call     __ZN1XC1EPKci
-// CHECK-LP64: call     __ZN1XC1Ev
+// CHECK-LP64: callq    __ZN1XC1Ei
+// CHECK-LP64: callq    __ZN1XC1EPKci
+// CHECK-LP64: callq    __ZN1XC1Ev
 
 // CHECK-LP32: call     L__ZN1XC1Ei
 // CHECK-LP32: call     L__ZN1XC1EPKci

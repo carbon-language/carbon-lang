@@ -38,8 +38,8 @@ int main()
  return 0;
 }
 
-// CHECK-LP64: call __ZN1AcvPFiiEEv
-// CHECK-LP64: call __ZN1BcvRFiiEEv
+// CHECK-LP64: callq __ZN1AcvPFiiEEv
+// CHECK-LP64: callq __ZN1BcvRFiiEEv
 
 // CHECK-LP32: call L__ZN1AcvPFiiEEv
 // CHECK-LP32: call L__ZN1BcvRFiiEEv

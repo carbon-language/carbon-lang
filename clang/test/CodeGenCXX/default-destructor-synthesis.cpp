@@ -45,8 +45,8 @@ M gm;
 
 int main() {M m1;}
 
-// CHECK-LP64: call __ZN1MC1Ev
-// CHECK-LP64: call __ZN1MD1Ev
+// CHECK-LP64: callq __ZN1MC1Ev
+// CHECK-LP64: callq __ZN1MD1Ev
 // CHECK-LP64: .globl __ZN1MD1Ev
 // CHECK-LP64-NEXT: .weak_definition __ZN1MD1Ev
 // CHECK-LP64-NEXT: __ZN1MD1Ev:

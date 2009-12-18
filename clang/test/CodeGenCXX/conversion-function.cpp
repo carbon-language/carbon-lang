@@ -97,12 +97,12 @@ void f(Yb& a) {
 
 // CHECK-LP64: .globl __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:
-// CHECK-LP64: call __ZN1Ycv1ZEv
-// CHECK-LP64: call __ZN1Zcv1XEv
-// CHECK-LP64: call __ZN1XcviEv
-// CHECK-LP64: call __ZN1XcvfEv
-// CHECK-LP64: call __ZN2XBcviEv
-// CHECK-LP64: call __ZN2YbcvcEv
+// CHECK-LP64: callq __ZN1Ycv1ZEv
+// CHECK-LP64: callq __ZN1Zcv1XEv
+// CHECK-LP64: callq __ZN1XcviEv
+// CHECK-LP64: callq __ZN1XcvfEv
+// CHECK-LP64: callq __ZN2XBcviEv
+// CHECK-LP64: callq __ZN2YbcvcEv
 
 // CHECK-LP32: .globl  __ZN1ScviEv
 // CHECK-LP32-NEXT: __ZN1ScviEv:

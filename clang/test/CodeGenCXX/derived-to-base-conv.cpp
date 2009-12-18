@@ -65,12 +65,12 @@ void foo(Base) {}
 
 void test(Derived bb)
 {
-	// CHECK-LP64-NOT: call     __ZN4BasecvR7DerivedEv
-	// CHECK-LP32-NOT: call     L__ZN4BasecvR7DerivedEv
+	// CHECK-LP64-NOT: callq    __ZN4BasecvR7DerivedEv
+	// CHECK-LP32-NOT: callq    L__ZN4BasecvR7DerivedEv
         foo(bb);
 }
-// CHECK-LP64: call     __ZN1XcvR1BEv
-// CHECK-LP64: call     __ZN1AC1ERKS_
+// CHECK-LP64: callq    __ZN1XcvR1BEv
+// CHECK-LP64: callq    __ZN1AC1ERKS_
 
 // CHECK-LP32: call     L__ZN1XcvR1BEv
 // CHECK-LP32: call     L__ZN1AC1ERKS_

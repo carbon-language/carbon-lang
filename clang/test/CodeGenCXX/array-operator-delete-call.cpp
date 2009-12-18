@@ -57,7 +57,7 @@ int main()
 }
 COST c2;
 
-// CHECK-LP64: call     __ZdaPv
+// CHECK-LP64: callq    __ZdaPv
 
 // CHECK-LP32: call     L__ZdaPv
 

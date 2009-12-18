@@ -18,8 +18,8 @@ int main() {
     return 0;
 }
 
-// CHECK-LP64: call     _objc_read_weak
-// CHECK-LP64: call     _objc_read_weak
+// CHECK-LP64: callq    _objc_read_weak
+// CHECK-LP64: callq    _objc_read_weak
 
 // CHECK-LP32: call     L_objc_read_weak
 // CHECK-LP32: call     L_objc_read_weak

@@ -11,7 +11,7 @@ A f(const B &b) {
   return b;
 }
 
-// CHECK-LP64: call     __ZN1AC1ERKS_i
+// CHECK-LP64: callq    __ZN1AC1ERKS_i
 
 // CHECK-LP32: call     L__ZN1AC1ERKS_i
 

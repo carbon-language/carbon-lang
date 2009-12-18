@@ -63,8 +63,8 @@ int main()
   	B1 c = B1(2);
 }
 
-// CHECK-LP64: call	__ZN1XcvM1BFvvEEv
-// CHECK-LP64: call	__Z1gM1CFvvE
+// CHECK-LP64: callq	__ZN1XcvM1BFvvEEv
+// CHECK-LP64: callq	__Z1gM1CFvvE
 
 // CHECK-LP32: call	L__ZN1XcvM1BFvvEEv
 // CHECK-LP32: call	__Z1gM1CFvvE

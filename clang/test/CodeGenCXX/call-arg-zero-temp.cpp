@@ -17,6 +17,6 @@ int main() {
   foo(obj());
 }
 
-// CHECK-LP64: call     __Z3foo3obj
+// CHECK-LP64: callq    __Z3foo3obj
 
 // CHECK-LP32: call     __Z3foo3obj

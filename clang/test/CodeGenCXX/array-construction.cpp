@@ -30,7 +30,7 @@ int main() {
               h, i, j, array[h][i][j].i, array[h][i][j].f);
 }
 
-// CHECK-LP64: call     __ZN4xptoC1Ev
+// CHECK-LP64: callq    __ZN4xptoC1Ev
 
 // CHECK-LP32: call     L__ZN4xptoC1Ev
 

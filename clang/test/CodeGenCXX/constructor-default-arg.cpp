@@ -30,9 +30,9 @@ int main() {
   X d(a, 5, 6);
 }
 
-// CHECK-LP64: call __ZN1XC1ERKS_iii
-// CHECK-LP64: call __ZN1XC1ERKS_iii
-// CHECK-LP64: call __ZN1XC1ERKS_iii
+// CHECK-LP64: callq __ZN1XC1ERKS_iii
+// CHECK-LP64: callq __ZN1XC1ERKS_iii
+// CHECK-LP64: callq __ZN1XC1ERKS_iii
 
 // CHECK-LP32: call L__ZN1XC1ERKS_iii
 // CHECK-LP32: call L__ZN1XC1ERKS_iii

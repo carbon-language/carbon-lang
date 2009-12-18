@@ -17,12 +17,12 @@ int main () {
   static_cast<B>(10);
 }
 
-// CHECK-LP64: call     __ZN1AC1Ei
-// CHECK-LP64: call     __ZN1BC1E1A
-// CHECK-LP64: call     __ZN1AC1Ei
-// CHECK-LP64: call     __ZN1BC1E1A
-// CHECK-LP64: call     __ZN1AC1Ei
-// CHECK-LP64: call     __ZN1BC1E1A
+// CHECK-LP64: callq    __ZN1AC1Ei
+// CHECK-LP64: callq    __ZN1BC1E1A
+// CHECK-LP64: callq    __ZN1AC1Ei
+// CHECK-LP64: callq    __ZN1BC1E1A
+// CHECK-LP64: callq    __ZN1AC1Ei
+// CHECK-LP64: callq    __ZN1BC1E1A
 
 // CHECK-LP32: call     L__ZN1AC1Ei
 // CHECK-LP32: call     L__ZN1BC1E1A
