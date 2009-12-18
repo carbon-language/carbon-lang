@@ -60,6 +60,9 @@ public:
   Value *CreateMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateMul(LHS, RHS);
   }
+  Value *CreateNSWMul(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNSWMul(LHS, RHS);
+  }
   Value *CreateFMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFMul(LHS, RHS);
   }

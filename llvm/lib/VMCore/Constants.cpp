@@ -643,6 +643,11 @@ Constant* ConstantExpr::getNSWSub(Constant* C1, Constant* C2) {
                OverflowingBinaryOperator::NoSignedWrap);
 }
 
+Constant* ConstantExpr::getNSWMul(Constant* C1, Constant* C2) {
+  return getTy(C1->getType(), Instruction::Mul, C1, C2,
+               OverflowingBinaryOperator::NoSignedWrap);
+}
+
 Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {
   return getTy(C1->getType(), Instruction::SDiv, C1, C2,
                SDivOperator::IsExact);

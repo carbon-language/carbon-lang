@@ -277,6 +277,27 @@ public:
     return BO;
   }
 
+  /// CreateNSWMul - Create a Mul operator with the NSW flag set.
+  ///
+  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
+                                      const Twine &Name = "") {
+    BinaryOperator *BO = CreateMul(V1, V2, Name);
+    BO->setHasNoSignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
+                                      const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateMul(V1, V2, Name, BB);
+    BO->setHasNoSignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNSWMul(Value *V1, Value *V2,
+                                      const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateMul(V1, V2, Name, I);
+    BO->setHasNoSignedWrap(true);
+    return BO;
+  }
+
   /// CreateExactSDiv - Create an SDiv operator with the exact flag set.
   ///
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,

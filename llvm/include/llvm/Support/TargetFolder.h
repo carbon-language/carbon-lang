@@ -67,6 +67,9 @@ public:
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getMul(LHS, RHS));
   }
+  Constant *CreateNSWMul(Constant *LHS, Constant *RHS) const {
+    return Fold(ConstantExpr::getNSWMul(LHS, RHS));
+  }
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
     return Fold(ConstantExpr::getFMul(LHS, RHS));
   }

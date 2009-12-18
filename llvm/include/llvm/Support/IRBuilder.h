@@ -353,6 +353,12 @@ public:
         return Folder.CreateMul(LC, RC);
     return Insert(BinaryOperator::CreateMul(LHS, RHS), Name);
   }
+  Value *CreateNSWMul(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNSWMul(LC, RC);
+    return Insert(BinaryOperator::CreateNSWMul(LHS, RHS), Name);
+  }
   Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))

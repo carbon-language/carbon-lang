@@ -54,6 +54,9 @@ public:
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getMul(LHS, RHS);
   }
+  Constant *CreateNSWMul(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getNSWMul(LHS, RHS);
+  }
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFMul(LHS, RHS);
   }
