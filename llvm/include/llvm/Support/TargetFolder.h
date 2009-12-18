@@ -122,6 +122,9 @@ public:
   Constant *CreateNeg(Constant *C) const {
     return Fold(ConstantExpr::getNeg(C));
   }
+  Constant *CreateNSWNeg(Constant *C) const {
+    return Fold(ConstantExpr::getNSWNeg(C));
+  }
   Constant *CreateFNeg(Constant *C) const {
     return Fold(ConstantExpr::getFNeg(C));
   }

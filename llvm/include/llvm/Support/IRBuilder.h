@@ -478,6 +478,11 @@ public:
       return Folder.CreateNeg(VC);
     return Insert(BinaryOperator::CreateNeg(V), Name);
   }
+  Value *CreateNSWNeg(Value *V, const Twine &Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateNSWNeg(VC);
+    return Insert(BinaryOperator::CreateNSWNeg(V), Name);
+  }
   Value *CreateFNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateFNeg(VC);

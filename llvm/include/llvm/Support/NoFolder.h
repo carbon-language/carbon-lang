@@ -115,6 +115,9 @@ public:
   Value *CreateNeg(Constant *C) const {
     return BinaryOperator::CreateNeg(C);
   }
+  Value *CreateNSWNeg(Constant *C) const {
+    return BinaryOperator::CreateNSWNeg(C);
+  }
   Value *CreateNot(Constant *C) const {
     return BinaryOperator::CreateNot(C);
   }

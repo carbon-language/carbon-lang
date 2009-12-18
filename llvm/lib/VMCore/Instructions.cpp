@@ -1772,6 +1772,18 @@ BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const Twine &Name,
                             Op->getType(), Name, InsertAtEnd);
 }
 
+BinaryOperator *BinaryOperator::CreateNSWNeg(Value *Op, const Twine &Name,
+                                             Instruction *InsertBefore) {
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
+  return BinaryOperator::CreateNSWSub(zero, Op, Name, InsertBefore);
+}
+
+BinaryOperator *BinaryOperator::CreateNSWNeg(Value *Op, const Twine &Name,
+                                             BasicBlock *InsertAtEnd) {
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
+  return BinaryOperator::CreateNSWSub(zero, Op, Name, InsertAtEnd);
+}
+
 BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
                                            Instruction *InsertBefore) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());

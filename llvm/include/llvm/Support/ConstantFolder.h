@@ -109,6 +109,9 @@ public:
   Constant *CreateNeg(Constant *C) const {
     return ConstantExpr::getNeg(C);
   }
+  Constant *CreateNSWNeg(Constant *C) const {
+    return ConstantExpr::getNSWNeg(C);
+  }
   Constant *CreateFNeg(Constant *C) const {
     return ConstantExpr::getFNeg(C);
   }

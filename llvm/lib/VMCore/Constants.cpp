@@ -627,6 +627,12 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
   return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
+Constant* ConstantExpr::getNSWNeg(Constant* C) {
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NEG a nonintegral value!");
+  return getNSWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
+}
+
 Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
   return getTy(C1->getType(), Instruction::Add, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);

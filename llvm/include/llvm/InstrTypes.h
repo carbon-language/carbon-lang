@@ -308,6 +308,10 @@ public:
                                    Instruction *InsertBefore = 0);
   static BinaryOperator *CreateNeg(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
+  static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name = "",
+                                      Instruction *InsertBefore = 0);
+  static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name,
+                                      BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name = "",
                                     Instruction *InsertBefore = 0);
   static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name,
