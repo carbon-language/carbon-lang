@@ -1838,10 +1838,10 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
 
   // Canonicalize nested AddRecs in by nesting them in order of loop depth.
   if (const SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
-    const Loop* NestedLoop = NestedAR->getLoop();
+    const Loop *NestedLoop = NestedAR->getLoop();
     if (L->getLoopDepth() < NestedLoop->getLoopDepth()) {
       SmallVector<const SCEV *, 4> NestedOperands(NestedAR->op_begin(),
-                                                NestedAR->op_end());
+                                                  NestedAR->op_end());
       Operands[0] = NestedAR->getStart();
       // AddRecs require their operands be loop-invariant with respect to their
       // loops. Don't perform this transformation if it would break this
@@ -2441,7 +2441,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
     Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
       Scalars.find(static_cast<Value *>(I));
     if (It != Scalars.end()) {
       // Short-circuit the def-use traversal if the symbolic name
@@ -3241,7 +3241,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // update the value. The temporary CouldNotCompute value tells SCEV
   // code elsewhere that it shouldn't attempt to request a new
   // backedge-taken count, which could result in infinite recursion.
-  std::pair<std::map<const Loop*, BackedgeTakenInfo>::iterator, bool> Pair =
+  std::pair<std::map<const Loop *, BackedgeTakenInfo>::iterator, bool> Pair =
     BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
   if (Pair.second) {
     BackedgeTakenInfo ItCount = ComputeBackedgeTakenCount(L);
@@ -3276,7 +3276,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
         Instruction *I = Worklist.pop_back_val();
         if (!Visited.insert(I)) continue;
 
-        std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+        std::map<SCEVCallbackVH, const SCEV *>::iterator It =
           Scalars.find(static_cast<Value *>(I));
         if (It != Scalars.end()) {
           // SCEVUnknown for a PHI either means that it has an unrecognized
@@ -3316,7 +3316,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
     Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
       Scalars.find(static_cast<Value *>(I));
     if (It != Scalars.end()) {
       ValuesAtScopes.erase(It->second);
@@ -3333,7 +3333,7 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
 /// of the specified loop will execute.
 ScalarEvolution::BackedgeTakenInfo
 ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
-  SmallVector<BasicBlock*, 8> ExitingBlocks;
+  SmallVector<BasicBlock *, 8> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
   // Examine all exits and pick the most conservative values.
@@ -3839,7 +3839,7 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal,
 /// involving constants, fold it.
 Constant *
 ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
-                                                   const APInt& BEs,
+                                                   const APInt &BEs,
                                                    const Loop *L) {
   std::map<PHINode*, Constant*>::iterator I =
     ConstantEvolutionLoopExitValue.find(PN);
@@ -4008,7 +4008,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
             if (!isSCEVable(Op->getType()))
               return V;
 
-            const SCEV* OpV = getSCEVAtScope(Op, L);
+            const SCEV *OpV = getSCEVAtScope(Op, L);
             if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV)) {
               Constant *C = SC->getValue();
               if (C->getType() != Op->getType())
@@ -5183,7 +5183,7 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
 
   OS << "Loop " << L->getHeader()->getName() << ": ";
 
-  SmallVector<BasicBlock*, 8> ExitBlocks;
+  SmallVector<BasicBlock *, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1)
     OS << "<multiple exits> ";
@@ -5206,14 +5206,14 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
   OS << "\n";
 }
 
-void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
+void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
   // ScalarEvolution's implementaiton of the print method is to print
   // out SCEV values of all instructions that are interesting. Doing
   // this potentially causes it to create new SCEV objects though,
   // which technically conflicts with the const qualifier. This isn't
   // observable from outside the class though, so casting away the
   // const isn't dangerous.
-  ScalarEvolution &SE = *const_cast<ScalarEvolution*>(this);
+  ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
   OS << "Classifying expressions for: " << F->getName() << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
