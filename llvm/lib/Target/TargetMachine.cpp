@@ -46,6 +46,7 @@ namespace llvm {
   bool DisableJumpTables;
   bool StrongPHIElim;
   bool AsmVerbosityDefault(false);
+  bool DisableScheduling;
 }
 
 static cl::opt<bool, true>
@@ -196,6 +197,11 @@ static cl::opt<bool, true>
 EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
   cl::desc("Use strong PHI elimination."),
   cl::location(StrongPHIElim),
+  cl::init(false));
+static cl::opt<bool, true>
+DisableInstScheduling("disable-scheduling",
+  cl::desc("Disable instruction scheduling"),
+  cl::location(DisableScheduling),
   cl::init(false));
 
 //---------------------------------------------------------------------------

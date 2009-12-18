@@ -104,6 +104,10 @@ class SelectionDAGBuilder {
   /// instructions.
   SmallVector<SDValue, 8> PendingExports;
 
+  /// SDNodeOrder - A unique monotonically increasing number used to order the
+  /// SDNodes we create.
+  unsigned SDNodeOrder;
+
   /// Case - A struct to record the Value for a switch case, and the
   /// case's target basic block.
   struct Case {
@@ -300,7 +304,7 @@ public:
   SelectionDAGBuilder(SelectionDAG &dag, TargetLowering &tli,
                       FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : CurDebugLoc(DebugLoc::getUnknownLoc()), 
+    : CurDebugLoc(DebugLoc::getUnknownLoc()), SDNodeOrder(0),
       TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false),
       Context(dag.getContext()) {

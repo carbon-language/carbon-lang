@@ -583,8 +583,10 @@ void SelectionDAGBuilder::visit(Instruction &I) {
 }
 
 void SelectionDAGBuilder::visit(unsigned Opcode, User &I) {
-  // Tell the DAG that we're processing a new instruction.
-  DAG.NewInst();
+  // We're processing a new instruction.
+  ++SDNodeOrder;
+
+  SDNode *PrevNode = DAG.getRoot().getNode();
 
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
@@ -592,9 +594,12 @@ void SelectionDAGBuilder::visit(unsigned Opcode, User &I) {
   default: llvm_unreachable("Unknown instruction type encountered!");
     // Build the switch statement using the Instruction.def file.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-  case Instruction::OPCODE:return visit##OPCODE((CLASS&)I);
+  case Instruction::OPCODE: visit##OPCODE((CLASS&)I); break;
 #include "llvm/Instruction.def"
   }
+
+  if (DisableScheduling && DAG.getRoot().getNode() != PrevNode)
+    DAG.AssignOrdering(DAG.getRoot().getNode(), SDNodeOrder);
 }
 
 SDValue SelectionDAGBuilder::getValue(const Value *V) {

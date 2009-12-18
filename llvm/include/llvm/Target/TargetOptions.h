@@ -141,6 +141,11 @@ namespace llvm {
   /// wth earlier copy coalescing.
   extern bool StrongPHIElim;
 
+  /// DisableScheduling - This flag disables instruction scheduling. In
+  /// particular, it assigns an ordering to the SDNodes, which the scheduler
+  /// uses instead of its normal heuristics to perform scheduling.
+  extern bool DisableScheduling;
+
 } // End llvm namespace
 
 #endif

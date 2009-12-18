@@ -29,12 +29,13 @@
 namespace llvm {
 
 class AliasAnalysis;
-class TargetLowering;
-class MachineModuleInfo;
 class DwarfWriter;
-class MachineFunction;
-class MachineConstantPoolValue;
 class FunctionLoweringInfo;
+class MachineConstantPoolValue;
+class MachineFunction;
+class MachineModuleInfo;
+class SDNodeOrdering;
+class TargetLowering;
 
 template<> struct ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
 private:
@@ -110,45 +111,9 @@ class SelectionDAG {
   /// SelectionDAG.
   BumpPtrAllocator Allocator;
 
-  /// NodeOrdering - Assigns a "line number" value to each SDNode that
-  /// corresponds to the "line number" of the original LLVM instruction. This
-  /// used for turning off scheduling, because we'll forgo the normal scheduling
-  /// algorithm and output the instructions according to this ordering.
-  class NodeOrdering {
-    /// LineNo - The line of the instruction the node corresponds to. A value of
-    /// `0' means it's not assigned.
-    unsigned LineNo;
-    std::map<const SDNode*, unsigned> Order;
-
-    void operator=(const NodeOrdering&); // Do not implement.
-    NodeOrdering(const NodeOrdering&);   // Do not implement.
-  public:
-    NodeOrdering() : LineNo(0) {}
-
-    void add(const SDNode *Node) {
-      assert(LineNo && "Invalid line number!");
-      Order[Node] = LineNo;
-    }
-    void remove(const SDNode *Node) {
-      std::map<const SDNode*, unsigned>::iterator Itr = Order.find(Node);
-      if (Itr != Order.end())
-        Order.erase(Itr);
-    }
-    void clear() {
-      Order.clear();
-      LineNo = 1;
-    }
-    unsigned getLineNo(const SDNode *Node) {
-      unsigned LN = Order[Node];
-      assert(LN && "Node isn't in ordering map!");
-      return LN;
-    }
-    void newInst() {
-      ++LineNo;
-    }
-
-    void dump() const;
-  } *Ordering;
+  /// SDNodeOrdering - The ordering of the SDNodes. It roughly corresponds to
+  /// the ordering of the original LLVM instructions.
+  SDNodeOrdering *Ordering;
 
   /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
   void VerifyNode(SDNode *N);
@@ -240,13 +205,6 @@ public:
     assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
     return Root = N;
-  }
-
-  /// NewInst - Tell the ordering object that we're processing a new
-  /// instruction.
-  void NewInst() {
-    if (Ordering)
-      Ordering->newInst();
   }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding
@@ -872,6 +830,9 @@ public:
     default: return false;
     }
   }
+
+  /// AssignOrdering - Assign an order to the SDNode.
+  void AssignOrdering(SDNode *SD, unsigned Order);
 
   void dump() const;
 
