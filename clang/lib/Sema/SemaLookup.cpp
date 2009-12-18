@@ -202,10 +202,22 @@ static bool IsAcceptableOperatorName(NamedDecl *D, unsigned IDNS) {
 }
 
 static bool IsAcceptableNestedNameSpecifierName(NamedDecl *D, unsigned IDNS) {
-  return isa<TypedefDecl>(D) || D->isInIdentifierNamespace(Decl::IDNS_Tag);
+  // This lookup ignores everything that isn't a type.
+
+  // This is a fast check for the far most common case.
+  if (D->isInIdentifierNamespace(Decl::IDNS_Tag))
+    return true;
+
+  if (isa<UsingShadowDecl>(D))
+    D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
+  return isa<TypeDecl>(D);
 }
 
 static bool IsAcceptableNamespaceName(NamedDecl *D, unsigned IDNS) {
+  // We don't need to look through using decls here because
+  // using decls aren't allowed to name namespaces.
+
   return isa<NamespaceDecl>(D) || isa<NamespaceAliasDecl>(D);
 }
 
