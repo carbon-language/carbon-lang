@@ -34,7 +34,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
-#include <cstdio>
 using namespace llvm;
 
 STATISTIC(NumSCCVNInstr,  "Number of instructions deleted by SCCVN");

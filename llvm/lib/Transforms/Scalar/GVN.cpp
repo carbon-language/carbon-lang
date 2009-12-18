@@ -48,7 +48,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
-#include <cstdio>
 using namespace llvm;
 
 STATISTIC(NumGVNInstr,  "Number of instructions deleted");
@@ -733,13 +732,13 @@ static RegisterPass<GVN> X("gvn",
                            "Global Value Numbering");
 
 void GVN::dump(DenseMap<uint32_t, Value*>& d) {
-  printf("{\n");
+  errs() << "{\n";
   for (DenseMap<uint32_t, Value*>::iterator I = d.begin(),
        E = d.end(); I != E; ++I) {
-      printf("%d\n", I->first);
+      errs() << I->first << "\n";
       I->second->dump();
   }
-  printf("}\n");
+  errs() << "}\n";
 }
 
 static bool isSafeReplacement(PHINode* p, Instruction *inst) {
