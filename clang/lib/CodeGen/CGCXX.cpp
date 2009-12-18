@@ -1535,9 +1535,42 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   const Type *BaseType = BaseInit->getBaseClass();
   CXXRecordDecl *BaseClassDecl =
     cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-  llvm::Value *V = CGF.GetAddressOfBaseClass(ThisPtr, ClassDecl,
-                                             BaseClassDecl,
-                                             /*NullCheckValue=*/false);
+
+  // FIXME: This method of determining whether a base is virtual is ridiculous;
+  // it should be part of BaseInit.
+  bool isBaseVirtual = false;
+  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); I != E; ++I)
+    if (I->getType()->getAs<RecordType>()->getDecl() == BaseClassDecl) {
+      isBaseVirtual = true;
+      break;
+    }
+
+  // The base constructor doesn't construct virtual bases.
+  if (CtorType == Ctor_Base && isBaseVirtual)
+    return;
+
+  // Compute the offset to the base; we do this directly instead of using
+  // GetAddressOfBaseClass because the class doesn't have a vtable pointer
+  // at this point.
+  // FIXME: This could be refactored back into GetAddressOfBaseClass if it took
+  // an extra parameter for whether the derived class is the complete object
+  // class.
+  const ASTRecordLayout &Layout =
+      CGF.getContext().getASTRecordLayout(ClassDecl);
+  uint64_t Offset;
+  if (isBaseVirtual)
+    Offset = Layout.getVBaseClassOffset(BaseClassDecl);
+  else
+    Offset = Layout.getBaseClassOffset(BaseClassDecl);
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  const llvm::Type *BaseClassType = CGF.ConvertType(QualType(BaseType, 0));
+  llvm::Value *V = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
+  V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset/8);
+  V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
+
+  // FIXME: This should always use Ctor_Base as the ctor type!  (But that
+  // causes crashes in tests.)
   CGF.EmitCXXConstructorCall(BaseInit->getConstructor(),
                              CtorType, V,
                              BaseInit->const_arg_begin(),
