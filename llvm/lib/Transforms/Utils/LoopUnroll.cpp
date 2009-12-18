@@ -194,7 +194,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
     OrigPHINode.push_back(PN);
     if (Instruction *I = 
                 dyn_cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)))
-      if (L->contains(I->getParent()))
+      if (L->contains(I))
         LastValueMap[I] = I;
   }
 
@@ -222,7 +222,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
           PHINode *NewPHI = cast<PHINode>(ValueMap[OrigPHINode[i]]);
           Value *InVal = NewPHI->getIncomingValueForBlock(LatchBlock);
           if (Instruction *InValI = dyn_cast<Instruction>(InVal))
-            if (It > 1 && L->contains(InValI->getParent()))
+            if (It > 1 && L->contains(InValI))
               InVal = LastValueMap[InValI];
           ValueMap[OrigPHINode[i]] = InVal;
           New->getInstList().erase(NewPHI);
@@ -244,7 +244,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
              UI != UE;) {
           Instruction *UseInst = cast<Instruction>(*UI);
           ++UI;
-          if (isa<PHINode>(UseInst) && !L->contains(UseInst->getParent())) {
+          if (isa<PHINode>(UseInst) && !L->contains(UseInst)) {
             PHINode *phi = cast<PHINode>(UseInst);
             Value *Incoming = phi->getIncomingValueForBlock(*BB);
             phi->addIncoming(Incoming, New);
@@ -295,7 +295,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
       // If this value was defined in the loop, take the value defined by the
       // last iteration of the loop.
       if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
-        if (L->contains(InValI->getParent()))
+        if (L->contains(InValI))
           InVal = LastValueMap[InVal];
       }
       PN->addIncoming(InVal, LastIterationBB);

@@ -93,10 +93,26 @@ public:
   BlockT *getHeader() const { return Blocks.front(); }
   LoopT *getParentLoop() const { return ParentLoop; }
 
-  /// contains - Return true if the specified basic block is in this loop
+  /// contains - Return true if the specified loop is contained within in
+  /// this loop.
+  ///
+  bool contains(const LoopT *L) const {
+    if (L == this) return true;
+    if (L == 0)    return false;
+    return contains(L->getParentLoop());
+  }
+    
+  /// contains - Return true if the specified basic block is in this loop.
   ///
   bool contains(const BlockT *BB) const {
     return std::find(block_begin(), block_end(), BB) != block_end();
+  }
+
+  /// contains - Return true if the specified instruction is in this loop.
+  ///
+  template<class InstT>
+  bool contains(const InstT *Inst) const {
+    return contains(Inst->getParent());
   }
 
   /// iterator/begin/end - Return the loops contained entirely within this loop.

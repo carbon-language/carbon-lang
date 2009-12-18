@@ -322,7 +322,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 
     // If the loop contains the definition of an operand, then the instruction
     // isn't loop invariant.
-    if (CurLoop->contains(RegInfo->getVRegDef(Reg)->getParent()))
+    if (CurLoop->contains(RegInfo->getVRegDef(Reg)))
       return false;
   }
 

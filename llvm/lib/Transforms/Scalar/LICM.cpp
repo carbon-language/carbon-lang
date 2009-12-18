@@ -433,7 +433,7 @@ bool LICM::isNotUsedInLoop(Instruction &I) {
         if (PN->getIncomingValue(i) == &I)
           if (CurLoop->contains(PN->getIncomingBlock(i)))
             return false;
-    } else if (CurLoop->contains(User->getParent())) {
+    } else if (CurLoop->contains(User)) {
       return false;
     }
   }
@@ -831,7 +831,7 @@ void LICM::FindPromotableValuesInLoop(
          UI != UE; ++UI) {
       // Ignore instructions not in this loop.
       Instruction *Use = dyn_cast<Instruction>(*UI);
-      if (!Use || !CurLoop->contains(Use->getParent()))
+      if (!Use || !CurLoop->contains(Use))
         continue;
 
       if (!isa<LoadInst>(Use) && !isa<StoreInst>(Use)) {

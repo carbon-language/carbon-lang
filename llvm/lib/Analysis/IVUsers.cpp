@@ -53,7 +53,7 @@ static bool containsAddRecFromDifferentLoop(const SCEV *S, Loop *L) {
       if (newLoop == L)
         return false;
       // if newLoop is an outer loop of L, this is OK.
-      if (newLoop->contains(L->getHeader()))
+      if (newLoop->contains(L))
         return false;
     }
     return true;
@@ -148,7 +148,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
                                        Loop *L, LoopInfo *LI, DominatorTree *DT,
                                        Pass *P) {
   // If the user is in the loop, use the preinc value.
-  if (L->contains(User->getParent())) return false;
+  if (L->contains(User)) return false;
 
   BasicBlock *LatchBlock = L->getLoopLatch();
   if (!LatchBlock)
@@ -209,7 +209,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     return false;  // Non-reducible symbolic expression, bail out.
 
   // Keep things simple. Don't touch loop-variant strides.
-  if (!Stride->isLoopInvariant(L) && L->contains(I->getParent()))
+  if (!Stride->isLoopInvariant(L) && L->contains(I))
     return false;
 
   SmallPtrSet<Instruction *, 4> UniqueUsers;
@@ -324,7 +324,7 @@ const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &U) const {
   if (U.isUseOfPostIncrementedValue())
     RetVal = SE->getAddExpr(RetVal, U.getParent()->Stride);
   // Evaluate the expression out of the loop, if possible.
-  if (!L->contains(U.getUser()->getParent())) {
+  if (!L->contains(U.getUser())) {
     const SCEV *ExitVal = SE->getSCEVAtScope(RetVal, L->getParentLoop());
     if (ExitVal->isLoopInvariant(L))
       RetVal = ExitVal;

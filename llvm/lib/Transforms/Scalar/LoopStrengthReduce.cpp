@@ -388,7 +388,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
     // If this is a use outside the loop (which means after, since it is based
     // on a loop indvar) we use the post-incremented value, so that we don't
     // artificially make the preinc value live out the bottom of the loop.
-    if (!isUseOfPostIncrementedValue && L->contains(Inst->getParent())) {
+    if (!isUseOfPostIncrementedValue && L->contains(Inst)) {
       if (NewBasePt && isa<PHINode>(OperandValToReplace)) {
         InsertPt = NewBasePt;
         ++InsertPt;
@@ -429,7 +429,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
       // that case(?).
       Instruction *OldLoc = dyn_cast<Instruction>(OperandValToReplace);
       BasicBlock *PHIPred = PN->getIncomingBlock(i);
-      if (L->contains(OldLoc->getParent())) {
+      if (L->contains(OldLoc)) {
         // If this is a critical edge, split the edge so that we do not insert
         // the code on all predecessor/successor paths.  We do this unless this
         // is the canonical backedge for this loop, as this can make some
@@ -446,7 +446,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
           // is outside of the loop, and PredTI is in the loop, we want to
           // move the block to be immediately before the PHI block, not
           // immediately after PredTI.
-          if (L->contains(PHIPred) && !L->contains(PN->getParent()))
+          if (L->contains(PHIPred) && !L->contains(PN))
             NewBB->moveBefore(PN->getParent());
 
           // Splitting the edge can reduce the number of PHI entries we have.
@@ -458,7 +458,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
       Value *&Code = InsertedCode[PHIPred];
       if (!Code) {
         // Insert the code into the end of the predecessor block.
-        Instruction *InsertPt = (L->contains(OldLoc->getParent())) ?
+        Instruction *InsertPt = (L->contains(OldLoc)) ?
                                 PHIPred->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
@@ -697,7 +697,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // it is clearly shared across all the IV's.  If the use is outside the loop
     // (which means after it) we don't want to factor anything *into* the loop,
     // so just use 0 as the base.
-    if (L->contains(Uses[0].Inst->getParent()))
+    if (L->contains(Uses[0].Inst))
       std::swap(Result, Uses[0].Base);
     return Result;
   }
@@ -722,7 +722,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // after the loop to affect base computation of values *inside* the loop,
     // because we can always add their offsets to the result IV after the loop
     // is done, ensuring we get good code inside the loop.
-    if (!L->contains(Uses[i].Inst->getParent()))
+    if (!L->contains(Uses[i].Inst))
       continue;
     NumUsesInsideLoop++;
 
@@ -778,7 +778,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // and a Result in the same instruction (for example because it would
     // require too many registers).  Check this.
     for (unsigned i=0; i<NumUses; ++i) {
-      if (!L->contains(Uses[i].Inst->getParent()))
+      if (!L->contains(Uses[i].Inst))
         continue;
       // We know this is an addressing mode use; if there are any uses that
       // are not, FreeResult would be Zero.
@@ -814,7 +814,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
     // the final IV value coming into those uses does.  Instead of trying to
     // remove the pieces of the common base, which might not be there,
     // subtract off the base to compensate for this.
-    if (!L->contains(Uses[i].Inst->getParent())) {
+    if (!L->contains(Uses[i].Inst)) {
       Uses[i].Base = SE->getMinusSCEV(Uses[i].Base, Result);
       continue;
     }
@@ -1109,7 +1109,7 @@ const SCEV *LoopStrengthReduce::CollectIVUsers(const SCEV *Stride,
     // If the user is not in the current loop, this means it is using the exit
     // value of the IV.  Do not put anything in the base, make sure it's all in
     // the immediate field to allow as much factoring as possible.
-    if (!L->contains(UsersToProcess[i].Inst->getParent())) {
+    if (!L->contains(UsersToProcess[i].Inst)) {
       UsersToProcess[i].Imm = SE->getAddExpr(UsersToProcess[i].Imm,
                                              UsersToProcess[i].Base);
       UsersToProcess[i].Base =
@@ -1353,7 +1353,7 @@ static Instruction *FindIVIncInsertPt(std::vector<BasedUser> &UsersToProcess,
                                       const Loop *L) {
   if (UsersToProcess.size() == 1 &&
       UsersToProcess[0].isUseOfPostIncrementedValue &&
-      L->contains(UsersToProcess[0].Inst->getParent()))
+      L->contains(UsersToProcess[0].Inst))
     return UsersToProcess[0].Inst;
   return L->getLoopLatch()->getTerminator();
 }
@@ -1626,7 +1626,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
         // loop to ensure it is dominated by the increment. In case it's the
         // only use of the iv, the increment instruction is already before the
         // use.
-        if (L->contains(User.Inst->getParent()) && User.Inst != IVIncInsertPt)
+        if (L->contains(User.Inst) && User.Inst != IVIncInsertPt)
           User.Inst->moveBefore(IVIncInsertPt);
       }
 
@@ -1688,7 +1688,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
         // common base, and are adding it back here.  Use the same expression
         // as before, rather than CommonBaseV, so DAGCombiner will zap it.
         if (!CommonExprs->isZero()) {
-          if (L->contains(User.Inst->getParent()))
+          if (L->contains(User.Inst))
             RewriteExpr = SE->getAddExpr(RewriteExpr,
                                        SE->getUnknown(CommonBaseV));
           else
@@ -2363,7 +2363,7 @@ static bool isUsedByExitBranch(ICmpInst *Cond, Loop *L) {
 static bool ShouldCountToZero(ICmpInst *Cond, IVStrideUse* &CondUse,
                               ScalarEvolution *SE, Loop *L,
                               const TargetLowering *TLI = 0) {
-  if (!L->contains(Cond->getParent()))
+  if (!L->contains(Cond))
     return false;
 
   if (!isa<SCEVConstant>(CondUse->getOffset()))

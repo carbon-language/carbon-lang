@@ -877,7 +877,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
       if (Instruction *U = cast<Instruction>(Users[i])) {
-        if (!L->contains(U->getParent()))
+        if (!L->contains(U))
           continue;
         U->replaceUsesOfWith(LIC, Replacement);
         Worklist.push_back(U);
@@ -888,7 +888,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     // can.  This case occurs when we unswitch switch statements.
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
       if (Instruction *U = cast<Instruction>(Users[i])) {
-        if (!L->contains(U->getParent()))
+        if (!L->contains(U))
           continue;
 
         Worklist.push_back(U);

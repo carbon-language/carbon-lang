@@ -56,7 +56,7 @@ bool Loop::isLoopInvariant(Value *V) const {
 /// loop-invariant.
 ///
 bool Loop::isLoopInvariant(Instruction *I) const {
-  return !contains(I->getParent());
+  return !contains(I);
 }
 
 /// makeLoopInvariant - If the given value is an instruciton inside of the

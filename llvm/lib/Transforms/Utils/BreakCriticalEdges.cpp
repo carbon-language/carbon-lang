@@ -309,10 +309,10 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
         if (TIL == DestLoop) {
           // Both in the same loop, the NewBB joins loop.
           DestLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-        } else if (TIL->contains(DestLoop->getHeader())) {
+        } else if (TIL->contains(DestLoop)) {
           // Edge from an outer loop to an inner loop.  Add to the outer loop.
           TIL->addBasicBlockToLoop(NewBB, LI->getBase());
-        } else if (DestLoop->contains(TIL->getHeader())) {
+        } else if (DestLoop->contains(TIL)) {
           // Edge from an inner loop to an outer loop.  Add to the outer loop.
           DestLoop->addBasicBlockToLoop(NewBB, LI->getBase());
         } else {

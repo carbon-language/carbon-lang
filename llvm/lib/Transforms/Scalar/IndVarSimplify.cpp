@@ -258,7 +258,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
 
         // Check that InVal is defined in the loop.
         Instruction *Inst = cast<Instruction>(InVal);
-        if (!L->contains(Inst->getParent()))
+        if (!L->contains(Inst))
           continue;
 
         // Okay, this instruction has a user outside of the current loop

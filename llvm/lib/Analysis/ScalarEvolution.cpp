@@ -298,7 +298,7 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
     return false;
 
   // This recurrence is variant w.r.t. QueryLoop if QueryLoop contains L.
-  if (QueryLoop->contains(L->getHeader()))
+  if (QueryLoop->contains(L))
     return false;
 
   // This recurrence is variant w.r.t. QueryLoop if any of its operands
@@ -333,7 +333,7 @@ bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // Instructions are never considered invariant in the function body
   // (null loop) because they are defined within the "loop".
   if (Instruction *I = dyn_cast<Instruction>(V))
-    return L && !L->contains(I->getParent());
+    return L && !L->contains(I);
   return true;
 }
 
@@ -3774,7 +3774,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   // If this is not an instruction, or if this is an instruction outside of the
   // loop, it can't be derived from a loop PHI.
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || !L->contains(I->getParent())) return 0;
+  if (I == 0 || !L->contains(I)) return 0;
 
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (L->getHeader() == I->getParent())
@@ -4091,7 +4091,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   // If this is a loop recurrence for a loop that does not contain L, then we
   // are dealing with the final value computed by the loop.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(V)) {
-    if (!L || !AddRec->getLoop()->contains(L->getHeader())) {
+    if (!L || !AddRec->getLoop()->contains(L)) {
       // To evaluate this recurrence, we need to know how many times the AddRec
       // loop iterates.  Compute this now.
       const SCEV *BackedgeTakenCount = getBackedgeTakenCount(AddRec->getLoop());
