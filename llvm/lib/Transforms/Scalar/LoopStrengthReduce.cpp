@@ -144,7 +144,7 @@ namespace {
     /// StrengthReduceIVUsersOfStride - Strength reduce all of the users of a
     /// single stride of IV.  All of the users may have different starting
     /// values, and this may not be the only stride.
-    void StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
+    void StrengthReduceIVUsersOfStride(const SCEV *Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L);
     void StrengthReduceIVUsers(Loop *L);
@@ -157,14 +157,14 @@ namespace {
     bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse,
                            const SCEV* &CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
-    const SCEV *CheckForIVReuse(bool, bool, bool, const SCEV *const&,
+    const SCEV *CheckForIVReuse(bool, bool, bool, const SCEV *,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
     bool ValidScale(bool, int64_t,
                     const std::vector<BasedUser>& UsersToProcess);
     bool ValidOffset(bool, int64_t, int64_t,
                      const std::vector<BasedUser>& UsersToProcess);
-    const SCEV *CollectIVUsers(const SCEV *const &Stride,
+    const SCEV *CollectIVUsers(const SCEV *Stride,
                               IVUsersOfOneStride &Uses,
                               Loop *L,
                               bool &AllUsesAreAddresses,
@@ -324,13 +324,13 @@ namespace {
     // Once we rewrite the code to insert the new IVs we want, update the
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
-    void RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
+    void RewriteInstructionToUseNewBase(const SCEV *NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
                                         SmallVectorImpl<WeakVH> &DeadInsts,
                                         ScalarEvolution *SE);
 
-    Value *InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
+    Value *InsertCodeForBaseAtPosition(const SCEV *NewBase,
                                        const Type *Ty,
                                        SCEVExpander &Rewriter,
                                        Instruction *IP,
@@ -345,7 +345,7 @@ void BasedUser::dump() const {
   errs() << "   Inst: " << *Inst;
 }
 
-Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
+Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *NewBase,
                                               const Type *Ty,
                                               SCEVExpander &Rewriter,
                                               Instruction *IP,
@@ -369,7 +369,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
 // value of NewBase in the case that it's a diffferent instruction from
 // the PHI that NewBase is computed from, or null otherwise.
 //
-void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
+void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
                                       SmallVectorImpl<WeakVH> &DeadInsts,
@@ -485,7 +485,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
 
 /// fitsInAddressMode - Return true if V can be subsumed within an addressing
 /// mode, and does not need to be put in a register first.
-static bool fitsInAddressMode(const SCEV *const &V, const Type *AccessTy,
+static bool fitsInAddressMode(const SCEV *V, const Type *AccessTy,
                              const TargetLowering *TLI, bool HasBaseReg) {
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     int64_t VC = SC->getValue()->getSExtValue();
@@ -937,7 +937,7 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
 const SCEV *LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 bool AllUsesAreAddresses,
                                 bool AllUsesAreOutsideLoop,
-                                const SCEV *const &Stride,
+                                const SCEV *Stride,
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
@@ -1050,7 +1050,7 @@ static bool PartitionByIsUseOfPostIncrementedValue(const BasedUser &Val) {
 
 /// isNonConstantNegative - Return true if the specified scev is negated, but
 /// not a constant.
-static bool isNonConstantNegative(const SCEV *const &Expr) {
+static bool isNonConstantNegative(const SCEV *Expr) {
   const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Expr);
   if (!Mul) return false;
 
@@ -1067,7 +1067,7 @@ static bool isNonConstantNegative(const SCEV *const &Expr) {
 /// base of the strided accesses, as well as the old information from Uses. We
 /// progressively move information from the Base field to the Imm field, until
 /// we eventually have the full access expression to rewrite the use.
-const SCEV *LoopStrengthReduce::CollectIVUsers(const SCEV *const &Stride,
+const SCEV *LoopStrengthReduce::CollectIVUsers(const SCEV *Stride,
                                               IVUsersOfOneStride &Uses,
                                               Loop *L,
                                               bool &AllUsesAreAddresses,
@@ -1444,7 +1444,7 @@ static bool IsImmFoldedIntoAddrMode(GlobalValue *GV, int64_t Offset,
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride.
 void
-LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
+LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
                                                   IVUsersOfOneStride &Uses,
                                                   Loop *L) {
   // If all the users are moved to another stride, then there is nothing to do.
@@ -1777,7 +1777,7 @@ namespace {
     const ScalarEvolution *SE;
     explicit StrideCompare(const ScalarEvolution *se) : SE(se) {}
 
-    bool operator()(const SCEV *const &LHS, const SCEV *const &RHS) {
+    bool operator()(const SCEV *LHS, const SCEV *RHS) {
       const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
       const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
       if (LHSC && RHSC) {
