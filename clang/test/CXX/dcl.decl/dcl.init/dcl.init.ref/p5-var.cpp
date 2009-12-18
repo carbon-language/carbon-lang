@@ -91,7 +91,7 @@ void bind_lvalue_to_conv_lvalue() {
 
 void bind_lvalue_to_conv_lvalue_ambig(ConvertibleToBothDerivedRef both) {
   Derived &dr1 = both;
-  Base &br1 = both; // expected-error{{error: conversion from 'struct ConvertibleToBothDerivedRef' to 'struct Base' is ambiguous}}
+  Base &br1 = both; // expected-error{{reference initialization of type 'struct Base &' with initializer of type 'struct ConvertibleToBothDerivedRef' is ambiguous}}
 }
 
 struct IntBitfield {
@@ -125,5 +125,5 @@ void bind_const_lvalue_to_class_conv_temporary() {
 }
 void bind_lvalue_to_conv_rvalue_ambig(ConvertibleToBothDerived both) {
   const Derived &dr1 = both;
-  const Base &br1 = both; // expected-error{{error: conversion from 'struct ConvertibleToBothDerived' to 'struct Base const' is ambiguous}}
+  const Base &br1 = both; // expected-error{{reference initialization of type 'struct Base const &' with initializer of type 'struct ConvertibleToBothDerived' is ambiguous}}
 }

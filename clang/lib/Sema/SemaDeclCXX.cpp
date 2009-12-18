@@ -3776,6 +3776,9 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   // FIXME: Is this enough?
   if (Constructor->isCopyConstructor(Context)) {
     Expr *E = ((Expr **)ExprArgs.get())[0];
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+      if (ICE->getCastKind() == CastExpr::CK_NoOp)
+        E = ICE->getSubExpr();
     while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
       E = BE->getSubExpr();
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))

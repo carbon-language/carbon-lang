@@ -450,7 +450,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     TypeSourceInfo *TInfo
       = Context.getTrivialTypeSourceInfo(AllocType, TypeLoc);
     InitializedEntity Entity
-      = InitializedEntity::InitializeTemporary(TInfo->getTypeLoc());
+      = InitializedEntity::InitializeNew(StartLoc, TInfo->getTypeLoc());
     InitializationSequence InitSeq(*this, Entity, Kind, ConsArgs, NumConsArgs);
     
     if (!InitSeq) {

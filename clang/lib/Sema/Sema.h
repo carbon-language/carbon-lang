@@ -935,6 +935,9 @@ public:
   bool PerformCopyInitialization(Expr *&From, QualType ToType,
                                  AssignmentAction Action, bool Elidable = false);
 
+  OwningExprResult PerformCopyInitialization(const InitializedEntity &Entity,
+                                             SourceLocation EqualLoc,
+                                             OwningExprResult Init);
   ImplicitConversionSequence
   TryObjectArgumentInitialization(QualType FromType, CXXMethodDecl *Method,
                                   CXXRecordDecl *ActingContext);

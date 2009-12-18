@@ -293,7 +293,7 @@ template struct NonDepMemberCall0<float&>; // expected-note{{instantiation}}
 template<typename T>
 struct QualifiedDeclRef0 {
   T f() {
-    return is_pod<X>::value; // expected-error{{initialized}}
+    return is_pod<X>::value; // expected-error{{non-const lvalue reference to type 'int' cannot bind to a value of unrelated type 'bool const'}}
   }
 };
 

@@ -50,7 +50,7 @@ struct X1 {
     
     template<typename V>
     V f1(T t, U u, V) {
-      return t + u; // expected-error{{incompatible type}}
+      return t + u; // expected-error{{cannot initialize return object}}
     }
   };
   
@@ -75,7 +75,7 @@ template<typename T>
 template<typename U>
 template<typename V>
 V X1<T>::Inner4<U>::f2(T t, U u, V) {
-  return t + u; // expected-error{{incompatible type}}
+  return t + u; // expected-error{{cannot initialize return object}}
 }
 
 void test_X1(int *ip, int i, double *dp) {

@@ -47,6 +47,9 @@ public:
     /// \brief The entity being initialized is an exception object that
     /// is being thrown.
     EK_Exception,
+    /// \brief The entity being initialized is an object (or array of
+    /// objects) allocated via new.
+    EK_New,
     /// \brief The entity being initialized is a temporary object.
     EK_Temporary,
     /// \brief The entity being initialized is a base member subobject.
@@ -76,9 +79,10 @@ private:
     /// the VarDecl, ParmVarDecl, or FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
     
-    /// \brief When Kind == EK_Result or EK_Exception, the location of the 
-    /// 'return' or 'throw' keyword, respectively. When Kind == EK_Temporary,
-    /// the location where the temporary is being created.
+    /// \brief When Kind == EK_Result, EK_Exception, or EK_New, the
+    /// location of the 'return', 'throw', or 'new' keyword,
+    /// respectively. When Kind == EK_Temporary, the location where
+    /// the temporary is being created.
     unsigned Location;
     
     /// \brief When Kind == EK_Base, the base specifier that provides the 
@@ -149,6 +153,11 @@ public:
   static InitializedEntity InitializeException(SourceLocation ThrowLoc,
                                                TypeLoc TL) {
     return InitializedEntity(EK_Exception, ThrowLoc, TL);
+  }
+
+  /// \brief Create the initialization entity for an object allocated via new.
+  static InitializedEntity InitializeNew(SourceLocation NewLoc, TypeLoc TL) {
+    return InitializedEntity(EK_New, NewLoc, TL);
   }
   
   /// \brief Create the initialization entity for a temporary.
@@ -373,7 +382,10 @@ public:
     NoInitialization,
     
     /// \brief Standard conversion sequence.
-    StandardConversion
+    StandardConversion,
+
+    /// \brief C conversion sequence.
+    CAssignment
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -404,7 +416,9 @@ public:
     /// \brief Perform initialization via a constructor.
     SK_ConstructorInitialization,
     /// \brief Zero-initialize the object
-    SK_ZeroInitialization
+    SK_ZeroInitialization,
+    /// \brief C assignment
+    SK_CAssignment
   };
   
   /// \brief A single step in the initialization sequence.
@@ -607,6 +621,13 @@ public:
   /// \brief Add a zero-initialization step.
   void AddZeroInitializationStep(QualType T);
   
+  /// \brief Add a C assignment step.
+  //
+  // FIXME: It isn't clear whether this should ever be needed;
+  // ideally, we would handle everything needed in C in the common
+  // path. However, that isn't the case yet.
+  void AddCAssignmentStep(QualType T);
+
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {
     SequenceKind = FailedSequence;

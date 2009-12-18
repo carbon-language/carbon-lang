@@ -99,7 +99,7 @@ class AutoPtrRef { };
 class AutoPtr {
   // FIXME: Using 'unavailable' since we do not have access control yet.
   // FIXME: The error message isn't so good.
-  AutoPtr(AutoPtr &) __attribute__((unavailable));
+  AutoPtr(AutoPtr &) __attribute__((unavailable)); // expected-note{{explicitly marked}}
   
 public:
   AutoPtr();
@@ -115,9 +115,19 @@ AutoPtr test_auto_ptr(bool Cond) {
   
   AutoPtr p;
   if (Cond)
-    return p; // expected-error{{incompatible type returning}}
+    return p; // expected-error{{call to deleted constructor}}
   
   return AutoPtr();
 }
 
+struct A1 {
+  A1(const char *);
+  ~A1();
 
+private:
+  A1(const A1&) __attribute__((unavailable)); // expected-note{{here}}
+};
+
+A1 f() {
+  return "Hello"; // expected-error{{invokes deleted copy constructor}}
+}

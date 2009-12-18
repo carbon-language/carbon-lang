@@ -9,9 +9,9 @@ A<int, FLOAT> *foo(A<int> *ptr, A<int> const *ptr2, A<int, double> *ptr3) {
   if (ptr)
     return ptr; // okay
   else if (ptr2)
-    return ptr2; // expected-error{{incompatible type returning 'A<int> const *', expected 'A<int, FLOAT> *'}}
+    return ptr2; // expected-error{{cannot initialize return object of type 'A<int, FLOAT> *' with an lvalue of type 'A<int> const *'}}
   else {
-    return ptr3; // expected-error{{incompatible type returning 'A<int, double> *', expected 'A<int, FLOAT> *'}}
+    return ptr3; // expected-error{{cannot initialize return object of type 'A<int, FLOAT> *' with an lvalue of type 'A<int, double> *'}}
   }
 }
 
@@ -24,7 +24,7 @@ B<17 + 2> *bar(B<(19)> *ptr1, B< (::value + 7) > *ptr2, B<19 - 3> *ptr3) {
   else if (ptr2)
     return ptr2;
   else
-    return ptr3; // expected-error{{incompatible type returning 'B<19 - 3> *', expected 'B<17 + 2> *'}}
+    return ptr3; // expected-error{{cannot initialize return object of type 'B<17 + 2> *' with an lvalue of type 'B<19 - 3>}}
 }
 
 typedef B<5> B5;

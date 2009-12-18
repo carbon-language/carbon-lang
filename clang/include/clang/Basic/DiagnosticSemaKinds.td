@@ -527,6 +527,11 @@ def err_destructor_name : Error<
   "expected the class name after '~' to name the enclosing class">;
 
 // C++ initialization
+def err_init_conversion_failed : Error<
+  "cannot initialize %select{a variable|a parameter|return object|an "
+  "exception object|a value|a base class|a member subobject|an array element}0"
+  " of type %1 with an %select{rvalue|lvalue}2 of type %3">;
+
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
 def err_invalid_initialization : Error<
 "invalid initialization of reference of type %0 from expression of type %1">;
@@ -572,6 +577,16 @@ def note_uninit_reference_member : Note<
 def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<DiagGroup<"uninitialized">>;
 
+def err_temp_copy_no_viable : Error<
+  "no viable copy constructor %select{throwing|returning}0 object of type %1">;
+def err_temp_copy_ambiguous : Error<
+  "ambiguous copy constructor call when %select{throwing|returning}0 object of "
+  "type %1">;
+def err_temp_copy_deleted : Error<
+  "%select{throwing|returning}0 object of type %1 invokes deleted copy "
+  "constructor">;
+  
+  
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
     "can't determine the declared type of an overloaded function">;

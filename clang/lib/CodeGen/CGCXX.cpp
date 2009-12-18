@@ -577,9 +577,12 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   // its first argument instead.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
     const Expr *Arg = E->getArg(0);
-    
-    if (const CXXBindTemporaryExpr *BindExpr = 
-          dyn_cast<CXXBindTemporaryExpr>(Arg))
+
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+      if (isa<CXXBindTemporaryExpr>(ICE->getSubExpr()))
+        Arg = cast<CXXBindTemporaryExpr>(ICE->getSubExpr())->getSubExpr();
+    } else if (const CXXBindTemporaryExpr *BindExpr = 
+                  dyn_cast<CXXBindTemporaryExpr>(Arg))
       Arg = BindExpr->getSubExpr();
 
     EmitAggExpr(Arg, Dest, false);

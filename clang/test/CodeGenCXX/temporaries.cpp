@@ -202,3 +202,17 @@ void f11(H h) {
   // CHECK: ret void
   f10(h);
 }
+
+// PR5808
+struct I {
+  I(const char *);
+  ~I();
+};
+
+// CHECK: _Z3f12v
+I f12() {
+  // CHECK: call void @_ZN1IC1EPKc
+  // CHECK-NOT: call void @_ZN1ID1Ev
+  // CHECK: ret void
+  return "Hello";
+}
