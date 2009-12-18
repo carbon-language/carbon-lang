@@ -501,7 +501,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     SrcTy = SrcTy->getPointeeType();
   SrcTy = SrcTy.getUnqualifiedType();
 
-  if (DestTy->isPointerType())
+  if (DestTy->isPointerType() || DestTy->isReferenceType())
     DestTy = DestTy->getPointeeType();
   DestTy = DestTy.getUnqualifiedType();
 
