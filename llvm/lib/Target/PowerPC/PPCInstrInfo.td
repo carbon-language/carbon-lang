@@ -115,6 +115,12 @@ def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
 def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInFlag, SDNPOutFlag]>;
+def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
+                       [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCload_toc : SDNode<"PPCISD::LOAD_TOC", SDTypeProfile<0, 1, []>,
+                          [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+def PPCtoc_restore : SDNode<"PPCISD::TOC_RESTORE", SDTypeProfile<0, 0, []>,
+                            [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
