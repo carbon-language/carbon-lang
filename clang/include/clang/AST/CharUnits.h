@@ -14,13 +14,28 @@
 #ifndef LLVM_CLANG_AST_CHARUNITS_H
 #define LLVM_CLANG_AST_CHARUNITS_H
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/System/DataTypes.h"
 
 #include <string>
 
 namespace clang {
-  // An opaque type for sizes expressed in character units 
+  
+  /// CharUnits - This is an opaque type for sizes expressed in character units.
+  /// Instances of this type represent a quantity as a multiple of the size 
+  /// of the standard C type, char, on the target architecture. As an opaque
+  /// type, CharUnits protects you from accidentally combining operations on
+  /// quantities in bit units and character units. 
+  ///
+  /// It should be noted that characters and bytes are distinct concepts. Bytes
+  /// refer to addressable units of data storage on the target machine, and
+  /// characters are members of a set of elements used for the organization,
+  /// control, or representation of data. According to C99, bytes are allowed
+  /// to exceed characters in size, although currently, clang only supports
+  /// architectures where the two are the same size.
+  /// 
+  /// For portability, never assume that a target character is 8 bits wide. Use 
+  /// CharUnit values whereever you calculate sizes, offsets, or alignments
+  /// in character units.
   class CharUnits {
     public:
       typedef int64_t RawType;
@@ -32,15 +47,15 @@ namespace clang {
 
     public:
 
-      /// A default constructor
+      /// CharUnits - A default constructor.
       CharUnits() : Quantity(0) {}
 
-      /// Zero - Construct a CharUnits quantity of zero
+      /// Zero - Construct a CharUnits quantity of zero.
       static CharUnits Zero() {
         return CharUnits(0);
       }
 
-      /// One - Construct a CharUnits quantity of one
+      /// One - Construct a CharUnits quantity of one.
       static CharUnits One() {
         return CharUnits(1);
       }
@@ -50,7 +65,7 @@ namespace clang {
         return CharUnits(Quantity); 
       }
 
-      // compound assignment
+      // Compound assignment.
       CharUnits& operator+= (const CharUnits &Other) {
         Quantity += Other.Quantity;
         return *this;
@@ -60,7 +75,7 @@ namespace clang {
         return *this;
       }
        
-      // comparison operators
+      // Comparison operators.
       bool operator== (const CharUnits &Other) const {
         return Quantity == Other.Quantity;
       }
@@ -68,7 +83,7 @@ namespace clang {
         return Quantity != Other.Quantity;
       }
 
-      // relational operators
+      // Relational operators.
       bool operator<  (const CharUnits &Other) const { 
         return Quantity <  Other.Quantity; 
       }
@@ -82,7 +97,7 @@ namespace clang {
         return Quantity >= Other.Quantity; 
       }
 
-      // other predicates
+      // Other predicates.
       
       /// isZero - Test whether the quantity equals zero.
       bool isZero() const     { return Quantity == 0; }
@@ -96,7 +111,7 @@ namespace clang {
       /// isNegative - Test whether the quantity is less than zero.
       bool isNegative() const { return Quantity  < 0; }
 
-      // arithmetic operators
+      // Arithmetic operators.
       CharUnits operator* (RawType N) const {
         return CharUnits(Quantity * N);
       }
@@ -119,12 +134,10 @@ namespace clang {
         return CharUnits(Quantity - Other.Quantity);
       }
       
-      // conversions
+      // Conversions.
 
       /// toString - Convert to a string.
-      std::string toString() const {
-        return llvm::itostr(Quantity);
-      }
+      std::string toString() const;
 
       /// getRaw - Get the raw integer representation of this quantity.
       RawType getRaw() const { return Quantity; }
