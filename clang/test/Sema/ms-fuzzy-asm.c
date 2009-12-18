@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -verify -fms-extensions
+// XFAIL: *
 
 #define M __asm int 0x2c
 #define M2 int
