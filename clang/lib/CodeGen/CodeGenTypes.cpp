@@ -199,7 +199,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
   case Type::Builtin: {
     switch (cast<BuiltinType>(Ty).getKind()) {
-    default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:
@@ -245,7 +244,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::UInt128:
     case BuiltinType::Int128:
       return llvm::IntegerType::get(getLLVMContext(), 128);
+    
+    case BuiltinType::Overload:
+    case BuiltinType::Dependent:
+    case BuiltinType::UndeducedAuto:
+      assert(0 && "Unexpected builtin type!");
+      break;
     }
+    assert(0 && "Unknown builtin type!");
     break;
   }
   case Type::FixedWidthInt:
