@@ -50,7 +50,7 @@ public:
       return isPPC64 ? -8U : -4U;
     
     // SVR4 ABI: First slot in the general register save area.
-    return -4U;
+    return isPPC64 ? -8U : -4U;
   }
   
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
