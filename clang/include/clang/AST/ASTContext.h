@@ -18,6 +18,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -819,11 +820,11 @@ public:
   
   /// getTypeSizeInChars - Return the size of the specified type, in characters.
   /// This method does not work on incomplete types.
-  uint64_t getTypeSizeInChars(QualType T) {
-    return getTypeSize(T) / getCharWidth();
+  CharUnits getTypeSizeInChars(QualType T) {
+    return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
   }
-  uint64_t getTypeSizeInChars(const Type *T) {
-    return getTypeSize(T) / getCharWidth();
+  CharUnits getTypeSizeInChars(const Type *T) {
+    return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
   }
 
   /// getTypeAlign - Return the ABI-specified alignment of a type, in bits.
