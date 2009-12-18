@@ -711,7 +711,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     }
   }
 
-  if (PrevDecl && TUK == TUK_Friend) {
+  if (TUK == TUK_Friend) {
     // C++ [namespace.memdef]p3:
     //   [...] When looking for a prior declaration of a class or a function 
     //   declared as a friend, and when the name of the friend class or 
@@ -720,9 +720,10 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     DeclContext *OutermostContext = CurContext;
     while (!OutermostContext->isFileContext())
       OutermostContext = OutermostContext->getLookupParent();
-    
-    if (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
-        OutermostContext->Encloses(PrevDecl->getDeclContext())) {
+
+    if (PrevDecl &&
+        (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
+         OutermostContext->Encloses(PrevDecl->getDeclContext()))) {
       SemanticContext = PrevDecl->getDeclContext();
     } else {
       // Declarations in outer scopes don't matter. However, the outermost

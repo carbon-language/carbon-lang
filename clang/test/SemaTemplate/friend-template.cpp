@@ -97,3 +97,13 @@ namespace test4 {
     f(A<int>()); // expected-note {{in instantiation of function template specialization}}
   }
 }
+
+namespace test5 {
+  class outer {
+    class foo;
+    template <typename T> friend struct cache;
+  };
+  class outer::foo {
+    template <typename T> friend struct cache;
+  };
+}
