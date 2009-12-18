@@ -443,7 +443,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
   // Vector ValueVT.
   if (NumParts == 1) {
     if (PartVT != ValueVT) {
-      if (PartVT.isVector()) {
+      if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
         Val = DAG.getNode(ISD::BIT_CONVERT, dl, PartVT, Val);
       } else {
         assert(ValueVT.getVectorElementType() == PartVT &&
