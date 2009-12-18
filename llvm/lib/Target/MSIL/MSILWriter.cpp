@@ -1696,7 +1696,7 @@ bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM,
   if (FileType != TargetMachine::AssemblyFile) return true;
   MSILWriter* Writer = new MSILWriter(o);
   PM.add(createGCLoweringPass());
-  // FIXME: Handle switch trougth native IL instruction "switch"
+  // FIXME: Handle switch through native IL instruction "switch"
   PM.add(createLowerSwitchPass());
   PM.add(createCFGSimplificationPass());
   PM.add(new MSILModule(Writer->UsedTypes,Writer->TD));
