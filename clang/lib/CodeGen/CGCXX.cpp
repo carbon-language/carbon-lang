@@ -1700,21 +1700,65 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
 void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->isDynamicClass())
     return;
-  
-  // Initialize the vtable pointer.
-  // FIXME: This needs to initialize secondary vtable pointers too.
-  llvm::Value *ThisPtr = LoadCXXThis();
 
   llvm::Constant *Vtable = CGM.getVtableInfo().getVtable(ClassDecl);
-  uint64_t AddressPoint = CGM.getVtableInfo().getVtableAddressPoint(ClassDecl);
+  CodeGenModule::AddrSubMap_t& AddressPoints =
+      *(*CGM.AddressPoints[ClassDecl])[ClassDecl];
+  llvm::Value *ThisPtr = LoadCXXThis();
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
 
+  // Store address points for virtual bases
+  for (CXXRecordDecl::base_class_const_iterator I = 
+       ClassDecl->vbases_begin(), E = ClassDecl->vbases_end(); I != E; ++I) {
+    const CXXBaseSpecifier &Base = *I;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+    uint64_t Offset = Layout.getVBaseClassOffset(BaseClassDecl);
+    InitializeVtablePtrsRecursive(BaseClassDecl, Vtable, AddressPoints,
+                                  ThisPtr, Offset);
+  }
+
+  // Store address points for non-virtual bases and current class
+  InitializeVtablePtrsRecursive(ClassDecl, Vtable, AddressPoints, ThisPtr, 0);
+}
+
+void CodeGenFunction::InitializeVtablePtrsRecursive(
+        const CXXRecordDecl *ClassDecl,
+        llvm::Constant *Vtable,
+        CodeGenModule::AddrSubMap_t& AddressPoints,
+        llvm::Value *ThisPtr,
+        uint64_t Offset) {
+  if (!ClassDecl->isDynamicClass())
+    return;
+
+  // Store address points for non-virtual bases
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
+  for (CXXRecordDecl::base_class_const_iterator I = 
+       ClassDecl->bases_begin(), E = ClassDecl->bases_end(); I != E; ++I) {
+    const CXXBaseSpecifier &Base = *I;
+    if (Base.isVirtual())
+      continue;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+    uint64_t NewOffset = Offset + Layout.getBaseClassOffset(BaseClassDecl);
+    InitializeVtablePtrsRecursive(BaseClassDecl, Vtable, AddressPoints,
+                                  ThisPtr, NewOffset);
+  }
+
+  // Compute the address point
+  uint64_t AddressPoint = AddressPoints[std::make_pair(ClassDecl, Offset)];
   llvm::Value *VtableAddressPoint =
-    Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
-  
-  llvm::Value *VtableField = 
-    Builder.CreateBitCast(ThisPtr, 
-                          VtableAddressPoint->getType()->getPointerTo());
-  
+      Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
+
+  // Compute the address to store the address point
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Value *VtableField = Builder.CreateBitCast(ThisPtr, Int8PtrTy);
+  VtableField = Builder.CreateConstInBoundsGEP1_64(VtableField, Offset/8);
+  const llvm::Type *AddressPointPtrTy =
+      VtableAddressPoint->getType()->getPointerTo();
+  VtableField = Builder.CreateBitCast(ThisPtr, AddressPointPtrTy);
+
+  // Store address point
   Builder.CreateStore(VtableAddressPoint, VtableField);
 }
 

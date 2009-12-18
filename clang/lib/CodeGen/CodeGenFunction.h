@@ -515,6 +515,12 @@ public:
 
   void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);
 
+  void InitializeVtablePtrsRecursive(const CXXRecordDecl *ClassDecl,
+                                     llvm::Constant *Vtable,
+                                     CodeGenModule::AddrSubMap_t& AddressPoints,
+                                     llvm::Value *ThisPtr,
+                                     uint64_t Offset);
+
   void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
                                     CXXCtorType Type,
                                     llvm::Function *Fn,

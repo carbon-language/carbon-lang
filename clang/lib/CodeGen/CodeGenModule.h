@@ -233,8 +233,8 @@ public:
                       const CovariantThunkAdjustment &Adjustment);
 
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
-  typedef llvm::DenseMap<const CXXRecordDecl *,
-                         llvm::DenseMap<CtorVtable_t, int64_t>*> AddrMap_t;
+  typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
+  typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
   llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
 
   /// GetCXXBaseClassOffset - Returns the offset from a derived class to its
