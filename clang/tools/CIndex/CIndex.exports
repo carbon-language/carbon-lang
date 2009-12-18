@@ -2,6 +2,7 @@ _clang_codeComplete
 _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
+_clang_disposeCodeCompleteResults
 _clang_disposeIndex
 _clang_disposeString
 _clang_disposeTranslationUnit

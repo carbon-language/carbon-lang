@@ -496,6 +496,7 @@ int perform_code_completion(int argc, const char **argv) {
   int errorCode;
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
+  CXCodeCompleteResults *results = 0;
 
   input += strlen("-code-completion-at=");
   if ((errorCode = parse_file_line_column(input, &filename, &line, &column)))
@@ -505,10 +506,18 @@ int perform_code_completion(int argc, const char **argv) {
     return -1;
 
   CIdx = clang_createIndex(0, 0);
-  clang_codeComplete(CIdx, argv[argc - 1], argc - num_unsaved_files - 3, 
-                     argv + num_unsaved_files + 2, 
-                     num_unsaved_files, unsaved_files,
-                     filename, line, column, &print_completion_result, stdout);
+  results = clang_codeComplete(CIdx, 
+                               argv[argc - 1], argc - num_unsaved_files - 3, 
+                               argv + num_unsaved_files + 2, 
+                               num_unsaved_files, unsaved_files,
+                               filename, line, column);
+  if (results) {
+    unsigned i, n = results->NumResults;
+    for (i = 0; i != n; ++i)
+      print_completion_result(results->Results + i, stdout);
+    clang_disposeCodeCompleteResults(results);
+  }
+
   clang_disposeIndex(CIdx);
   free(filename);
   
