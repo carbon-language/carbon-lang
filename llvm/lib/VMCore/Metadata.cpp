@@ -173,12 +173,13 @@ bool MDNode::getLocalFunction(Function *LocalFunction,
         // different function.
         return false;
 
-    if (LocalFunctionTemp)
+    if (LocalFunctionTemp) {
       if (!LocalFunction)
         LocalFunction = LocalFunctionTemp;
       else if (LocalFunction != LocalFunctionTemp)
         // This MDNode contains operands that are local to different functions.
         return false;
+    }
   }
     
   return true;
