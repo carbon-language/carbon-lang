@@ -19,6 +19,7 @@
 #include "llvm/Value.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/ValueHandle.h"
@@ -106,21 +107,22 @@ class MDNode : public MetadataBase, public FoldingSetNode {
       Parent->replaceElement(this->operator Value*(), NV);
     }
   };
+  
+  static const unsigned short FunctionLocalBit = 1;
+  
   // Replace each instance of F from the element list of this node with T.
   void replaceElement(Value *F, Value *T);
 
   ElementVH *Node;
   unsigned NodeSize;
-  Function *LocalFunction;
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-                  Function *LocalFunc = NULL);
+                  bool isFunctionLocal);
 public:
   // Constructors and destructors.
-  static MDNode *get(LLVMContext &Context, 
-                     Value *const *Vals, unsigned NumVals,
-                     Function *LocalFunction = NULL);
+  static MDNode *get(LLVMContext &Context, Value *const *Vals, unsigned NumVals,
+                     bool isFunctionLocal = false);
 
   /// ~MDNode - Destroy MDNode.
   ~MDNode();
@@ -135,7 +137,17 @@ public:
   unsigned getNumElements() const { return NodeSize; }
   
   /// isFunctionLocal - Return whether MDNode is local to a function.
-  bool isFunctionLocal() const { return LocalFunction; }
+  /// Note: MDNodes are designated as function-local when created, and keep
+  ///       that designation even if their operands are modified to no longer
+  ///       refer to function-local IR.
+  bool isFunctionLocal() const { return SubclassData & FunctionLocalBit; }
+
+  /// getLocalFunction - Return false if MDNode's recursive function-localness
+  /// is invalid (local to more than one function).  Return true otherwise.
+  /// If MDNode has one function to which it is local, set LocalFunction to that
+  /// function.
+  bool getLocalFunction(Function *LocalFunction,
+                        SmallPtrSet<MDNode *, 32> *VisitedMDNodes = NULL);
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates

@@ -50,14 +50,15 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
 // MDNode implementation.
 //
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-               Function *LocalFunc)
+               bool isFunctionLocal)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NodeSize = NumVals;
   Node = new ElementVH[NodeSize];
   ElementVH *Ptr = Node;
   for (unsigned i = 0; i != NumVals; ++i) 
     *Ptr++ = ElementVH(Vals[i], this);
-  LocalFunction = LocalFunc;
+  if (isFunctionLocal)
+    SubclassData |= FunctionLocalBit;
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
@@ -66,19 +67,17 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
 }
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
-                    Function *LocalFunction) {
+                    bool isFunctionLocal) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
-  if (LocalFunction)
-    ID.AddPointer(LocalFunction);
 
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
-    N = new MDNode(Context, Vals, NumVals, LocalFunction);
+    N = new MDNode(Context, Vals, NumVals, isFunctionLocal);
     pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
   return N;
@@ -144,6 +143,45 @@ void MDNode::replaceElement(Value *From, Value *To) {
     N = this;
     pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
+}
+
+// getLocalFunction - Return false if MDNode's recursive function-localness is
+// invalid (local to more than one function).  Return true otherwise. If MDNode
+// has one function to which it is local, set LocalFunction to that function.
+bool MDNode::getLocalFunction(Function *LocalFunction,
+                              SmallPtrSet<MDNode *, 32> *VisitedMDNodes) {
+  if (!isFunctionLocal())
+    return true;
+    
+  if (!VisitedMDNodes)
+    VisitedMDNodes = new SmallPtrSet<MDNode *, 32>();
+    
+  if (!VisitedMDNodes->insert(this))
+    // MDNode has already been visited, nothing to do.
+    return true;
+
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
+    Value *V = getElement(i);
+    if (!V) continue;
+
+    Function *LocalFunctionTemp = NULL;
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      LocalFunctionTemp = I->getParent()->getParent();
+    else if (MDNode *MD = dyn_cast<MDNode>(V))
+      if (!MD->getLocalFunction(LocalFunctionTemp, VisitedMDNodes))
+        // This MDNode's operand is function-locally invalid or local to a
+        // different function.
+        return false;
+
+    if (LocalFunctionTemp)
+      if (!LocalFunction)
+        LocalFunction = LocalFunctionTemp;
+      else if (LocalFunction != LocalFunctionTemp)
+        // This MDNode contains operands that are local to different functions.
+        return false;
+  }
+    
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

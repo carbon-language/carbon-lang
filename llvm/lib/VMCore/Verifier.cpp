@@ -1542,6 +1542,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_VERIFIER
 
+  for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
+    if (MDNode *MD = dyn_cast<MDNode>(CI.getOperand(i))) {
+      Function* LocalFunction = NULL;
+      Assert1(MD && MD->getLocalFunction(LocalFunction),
+              "invalid function-local metadata", &CI);
+      if (LocalFunction)
+        Assert1(LocalFunction == CI.getParent()->getParent(),
+                "function-local metadata used in wrong function", &CI);
+    }
+
   switch (ID) {
   default:
     break;
