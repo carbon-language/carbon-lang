@@ -1639,7 +1639,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
         }
       }
 
-      // It's tempting to propogate NUW/NSW flags here, but nuw/nsw multiplication
+      // It's tempting to propogate the NSW flag here, but nsw multiplication
       // is not associative so this isn't necessarily safe.
       const SCEV *NewRec = getAddRecExpr(NewOps, AddRec->getLoop());
 
