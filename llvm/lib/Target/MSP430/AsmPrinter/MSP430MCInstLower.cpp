@@ -34,7 +34,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   Mang.getNameWithPrefix(Name, GV, false);
 
   switch (MO.getTargetFlags()) {
-  default: llvm_unreachable(0 && "Unknown target flag on GV operand");
+  default: llvm_unreachable("Unknown target flag on GV operand");
   case 0: break;
   }
 
