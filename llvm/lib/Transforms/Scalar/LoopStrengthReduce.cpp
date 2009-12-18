@@ -24,18 +24,14 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IVUsers.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ValueHandle.h"
@@ -85,18 +81,12 @@ namespace {
 
   class LoopStrengthReduce : public LoopPass {
     IVUsers *IU;
-    LoopInfo *LI;
-    DominatorTree *DT;
     ScalarEvolution *SE;
     bool Changed;
 
     /// IVsByStride - Keep track of all IVs that have been inserted for a
     /// particular stride.
     std::map<const SCEV *, IVsOfOneStride> IVsByStride;
-
-    /// StrideNoReuse - Keep track of all the strides whose ivs cannot be
-    /// reused (nor should they be rewritten to reuse other strides).
-    SmallSet<const SCEV *, 4> StrideNoReuse;
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
@@ -109,8 +99,7 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopStrengthReduce(const TargetLowering *tli = NULL) :
-      LoopPass(&ID), TLI(tli) {
-    }
+      LoopPass(&ID), TLI(tli) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -118,13 +107,11 @@ namespace {
       // We split critical edges, so we change the CFG.  However, we do update
       // many analyses if they are around.
       AU.addPreservedID(LoopSimplifyID);
-      AU.addPreserved<LoopInfo>();
-      AU.addPreserved<DominanceFrontier>();
-      AU.addPreserved<DominatorTree>();
+      AU.addPreserved("loops");
+      AU.addPreserved("domfrontier");
+      AU.addPreserved("domtree");
 
       AU.addRequiredID(LoopSimplifyID);
-      AU.addRequired<LoopInfo>();
-      AU.addRequired<DominatorTree>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addRequired<IVUsers>();
@@ -228,19 +215,17 @@ void LoopStrengthReduce::DeleteTriviallyDeadInstructions() {
   if (DeadInsts.empty()) return;
 
   while (!DeadInsts.empty()) {
-    Instruction *I = dyn_cast_or_null<Instruction>(DeadInsts.back());
-    DeadInsts.pop_back();
+    Instruction *I = dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val());
 
     if (I == 0 || !isInstructionTriviallyDead(I))
       continue;
 
-    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI) {
+    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI)
       if (Instruction *U = dyn_cast<Instruction>(*OI)) {
         *OI = 0;
         if (U->use_empty())
           DeadInsts.push_back(U);
       }
-    }
 
     I->eraseFromParent();
     Changed = true;
@@ -300,9 +285,6 @@ namespace {
   /// BasedUser - For a particular base value, keep information about how we've
   /// partitioned the expression so far.
   struct BasedUser {
-    /// SE - The current ScalarEvolution object.
-    ScalarEvolution *SE;
-
     /// Base - The Base value for the PHI node that needs to be inserted for
     /// this use.  As the use is processed, information gets moved from this
     /// field to the Imm field (below).  BasedUser values are sorted by this
@@ -334,9 +316,9 @@ namespace {
     bool isUseOfPostIncrementedValue;
 
     BasedUser(IVStrideUse &IVSU, ScalarEvolution *se)
-      : SE(se), Base(IVSU.getOffset()), Inst(IVSU.getUser()),
+      : Base(IVSU.getOffset()), Inst(IVSU.getUser()),
         OperandValToReplace(IVSU.getOperandValToReplace()),
-        Imm(SE->getIntegerSCEV(0, Base->getType())),
+        Imm(se->getIntegerSCEV(0, Base->getType())),
         isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue()) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
@@ -345,14 +327,14 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                        LoopInfo &LI,
-                                        SmallVectorImpl<WeakVH> &DeadInsts);
+                                        SmallVectorImpl<WeakVH> &DeadInsts,
+                                        ScalarEvolution *SE);
 
     Value *InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                        const Type *Ty,
                                        SCEVExpander &Rewriter,
-                                       Instruction *IP, Loop *L,
-                                       LoopInfo &LI);
+                                       Instruction *IP,
+                                       ScalarEvolution *SE);
     void dump() const;
   };
 }
@@ -366,27 +348,12 @@ void BasedUser::dump() const {
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
                                               const Type *Ty,
                                               SCEVExpander &Rewriter,
-                                              Instruction *IP, Loop *L,
-                                              LoopInfo &LI) {
-  // Figure out where we *really* want to insert this code.  In particular, if
-  // the user is inside of a loop that is nested inside of L, we really don't
-  // want to insert this expression before the user, we'd rather pull it out as
-  // many loops as possible.
-  Instruction *BaseInsertPt = IP;
+                                              Instruction *IP,
+                                              ScalarEvolution *SE) {
+  Value *Base = Rewriter.expandCodeFor(NewBase, 0, IP);
 
-  // Figure out the most-nested loop that IP is in.
-  Loop *InsertLoop = LI.getLoopFor(IP->getParent());
-
-  // If InsertLoop is not L, and InsertLoop is nested inside of L, figure out
-  // the preheader of the outer-most loop where NewBase is not loop invariant.
-  if (L->contains(IP->getParent()))
-    while (InsertLoop && NewBase->isLoopInvariant(InsertLoop)) {
-      BaseInsertPt = InsertLoop->getLoopPreheader()->getTerminator();
-      InsertLoop = InsertLoop->getParentLoop();
-    }
-
-  Value *Base = Rewriter.expandCodeFor(NewBase, 0, BaseInsertPt);
-
+  // Wrap the base in a SCEVUnknown so that ScalarEvolution doesn't try to
+  // re-analyze it.
   const SCEV *NewValSCEV = SE->getUnknown(Base);
 
   // Always emit the immediate into the same block as the user.
@@ -405,8 +372,8 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *const &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      LoopInfo &LI,
-                                      SmallVectorImpl<WeakVH> &DeadInsts) {
+                                      SmallVectorImpl<WeakVH> &DeadInsts,
+                                      ScalarEvolution *SE) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
@@ -435,7 +402,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
     }
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase,
                                                 OperandValToReplace->getType(),
-                                                Rewriter, InsertPt, L, LI);
+                                                Rewriter, InsertPt, SE);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
@@ -497,7 +464,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *const &NewBase,
                                 PHIPred->getTerminator() :
                                 OldLoc->getParent()->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
-                                           Rewriter, InsertPt, L, LI);
+                                           Rewriter, InsertPt, SE);
 
         DEBUG(errs() << "      Changing PHI use to ");
         DEBUG(WriteAsOperand(errs(), Code, /*PrintType=*/false));
@@ -973,17 +940,13 @@ const SCEV *LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 const SCEV *const &Stride,
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
-  if (StrideNoReuse.count(Stride))
-    return SE->getIntegerSCEV(0, Stride->getType());
-
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
     for (unsigned NewStride = 0, e = IU->StrideOrder.size();
          NewStride != e; ++NewStride) {
       std::map<const SCEV *, IVsOfOneStride>::iterator SI =
                 IVsByStride.find(IU->StrideOrder[NewStride]);
-      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first) ||
-          StrideNoReuse.count(SI->first))
+      if (SI == IVsByStride.end() || !isa<SCEVConstant>(SI->first))
         continue;
       // The other stride has no uses, don't reuse it.
       std::map<const SCEV *, IVUsersOfOneStride *>::iterator UI =
@@ -1742,8 +1705,8 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *const &Stride,
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
-                                          Rewriter, L, this, *LI,
-                                          DeadInsts);
+                                          Rewriter, L, this,
+                                          DeadInsts, SE);
 
       // Mark old value we replaced as possibly dead, so that it is eliminated
       // if we just replaced the last use of that value.
@@ -2707,8 +2670,6 @@ bool LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   IU = &getAnalysis<IVUsers>();
-  LI = &getAnalysis<LoopInfo>();
-  DT = &getAnalysis<DominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
   Changed = false;
 
@@ -2754,15 +2715,14 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     // After all sharing is done, see if we can adjust the loop to test against
     // zero instead of counting up to a maximum.  This is usually faster.
     OptimizeLoopCountIV(L);
+
+    // We're done analyzing this loop; release all the state we built up for it.
+    IVsByStride.clear();
+
+    // Clean up after ourselves
+    if (!DeadInsts.empty())
+      DeleteTriviallyDeadInstructions();
   }
-
-  // We're done analyzing this loop; release all the state we built up for it.
-  IVsByStride.clear();
-  StrideNoReuse.clear();
-
-  // Clean up after ourselves
-  if (!DeadInsts.empty())
-    DeleteTriviallyDeadInstructions();
 
   // At this point, it is worth checking to see if any recurrence PHIs are also
   // dead, so that we can remove them as well.
