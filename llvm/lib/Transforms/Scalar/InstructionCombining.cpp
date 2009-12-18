@@ -6356,24 +6356,26 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // comparison into the select arms, which will cause one to be
         // constant folded and the select turned into a bitwise or.
         Value *Op1 = 0, *Op2 = 0;
-        if (LHSI->hasOneUse()) {
-          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
-            // Fold the known value into the constant operand.
-            Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
-            // Insert a new ICmp of the other select operand.
-            Op2 = Builder->CreateICmp(I.getPredicate(), LHSI->getOperand(2),
-                                      RHSC, I.getName());
-          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
-            // Fold the known value into the constant operand.
-            Op2 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
-            // Insert a new ICmp of the other select operand.
+        if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1)))
+          Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
+        if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2)))
+          Op2 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
+
+        // We only want to perform this transformation if it will not lead to
+        // additional code. This is true if either both sides of the select
+        // fold to a constant (in which case the icmp is replaced with a select
+        // which will usually simplify) or this is the only user of the
+        // select (in which case we are trading a select+icmp for a simpler
+        // select+icmp).
+        if ((Op1 && Op2) || (LHSI->hasOneUse() && (Op1 || Op2))) {
+          if (!Op1)
             Op1 = Builder->CreateICmp(I.getPredicate(), LHSI->getOperand(1),
                                       RHSC, I.getName());
-          }
-        }
-
-        if (Op1)
+          if (!Op2)
+            Op2 = Builder->CreateICmp(I.getPredicate(), LHSI->getOperand(2),
+                                      RHSC, I.getName());
           return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
+        }
         break;
       }
       case Instruction::Call:
