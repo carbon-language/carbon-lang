@@ -2942,6 +2942,16 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
       QualType T = Ex->getType();
 
+      // For CallExpr, use the result type to know if it returns a reference.
+      if (const CallExpr *CE = dyn_cast<CallExpr>(Ex)) {
+        const Expr *Callee = CE->getCallee();
+        SVal L = state->getSVal(Callee);
+        
+        const FunctionDecl *FD = L.getAsFunctionDecl();
+        if (FD)
+          T = FD->getResultType();
+      }
+
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         ValueManager &ValMgr = Eng.getValueManager();
