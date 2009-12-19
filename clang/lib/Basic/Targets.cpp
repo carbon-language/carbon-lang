@@ -688,7 +688,7 @@ public:
                                  bool Enabled) const;
   virtual void getDefaultFeatures(const std::string &CPU,
                                   llvm::StringMap<bool> &Features) const;
-  virtual void HandleTargetFeatures(const std::vector<std::string> &Features);
+  virtual void HandleTargetFeatures(std::vector<std::string> &Features);
 };
 
 void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
@@ -805,8 +805,7 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
 
 /// HandleTargetOptions - Perform initialization based on the user
 /// configured set of features.
-void
-X86TargetInfo::HandleTargetFeatures(const std::vector<std::string> &Features) {
+void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
   // Remember the maximum enabled sselevel.
   for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
     // Ignore disabled features.
@@ -2112,7 +2111,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
 TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
-                                         const TargetOptions &Opts) {
+                                         TargetOptions &Opts) {
   llvm::Triple Triple(Opts.Triple);
 
   // Construct the target
@@ -2156,11 +2155,11 @@ TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
   //
   // FIXME: If we are completely confident that we have the right set, we only
   // need to pass the minuses.
-  std::vector<std::string> StrFeatures;
+  Opts.Features.clear();
   for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it)
-    StrFeatures.push_back(std::string(it->second ? "+" : "-") + it->first());
-  Target->HandleTargetFeatures(StrFeatures);
+    Opts.Features.push_back(std::string(it->second ? "+" : "-") + it->first());
+  Target->HandleTargetFeatures(Opts.Features);
 
   return Target.take();
 }

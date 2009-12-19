@@ -61,8 +61,11 @@ protected:
 
 public:
   /// CreateTargetInfo - Construct a target for the given options.
-  static TargetInfo* CreateTargetInfo(Diagnostic &Diags,
-                                      const TargetOptions &Opts);
+  ///
+  /// \param Opts - The options to use to initialize the target. The target may
+  /// modify the options to canonicalize the target feature information to match
+  /// what the backend expects.
+  static TargetInfo* CreateTargetInfo(Diagnostic &Diags, TargetOptions &Opts);
 
   virtual ~TargetInfo();
 
@@ -389,7 +392,10 @@ public:
   /// HandleTargetOptions - Perform initialization based on the user configured
   /// set of features (e.g., +sse4). The list is guaranteed to have at most one
   /// entry per feature.
-  virtual void HandleTargetFeatures(const std::vector<std::string> &Features) {
+  ///
+  /// The target may modify the features list, to change which options are
+  /// passed onwards to the backend.
+  virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
   }
 
   // getRegParmMax - Returns maximal number of args passed in registers.
