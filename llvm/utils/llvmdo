@@ -112,7 +112,6 @@ files_to_match="\
   -o -name *.intro \
   -o -name *.l \
   -o -name *.ll \
-  -o -name *.llx \
   -o -name *.lst \
   -o -name *.m4 \
   -o -name *.pod \
