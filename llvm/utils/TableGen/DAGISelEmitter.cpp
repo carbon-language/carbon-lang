@@ -1292,8 +1292,8 @@ public:
       // possible and it avoids CSE map recalculation for the node's
       // users, however it's tricky to use in a non-root context.
       //
-      // We also don't use if the pattern replacement is being used to
-      // jettison a chain result, since morphing the node in place
+      // We also don't use SelectNodeTo if the pattern replacement is being
+      // used to jettison a chain result, since morphing the node in place
       // would leave users of the chain dangling.
       //
       if (!isRoot || (InputHasChain && !NodeHasChain)) {
