@@ -14,6 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if 0
+
 #include "X86Disassembler.h"
 #include "X86DisassemblerDecoder.h"
 #include "X86InstrInfo.h"
@@ -458,4 +460,9 @@ extern "C" void LLVMInitializeX86Disassembler() {
                                          createX86_32Disassembler);
   TargetRegistry::RegisterMCDisassembler(TheX86_64Target,
                                          createX86_64Disassembler);
+}
+
+#endif
+
+extern "C" void LLVMInitializeX86Disassembler() { 
 }

@@ -13,6 +13,8 @@
  *
  *===----------------------------------------------------------------------===*/
 
+#if 0
+
 #include <assert.h>   /* for assert()     */
 #include <stdarg.h>   /* for va_*()       */
 #include <stdio.h>    /* for vsnprintf()  */
@@ -1359,3 +1361,7 @@ int decodeInstruction(struct InternalInstruction* insn,
   
   return 0;
 }
+
+#endif
+
+int X86DissemblerDecoder_dummy = 0;
