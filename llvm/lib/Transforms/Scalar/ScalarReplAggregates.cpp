@@ -114,7 +114,8 @@ namespace {
                          uint64_t MemSize, const Type *MemOpType, bool isStore,
                          AllocaInfo &Info);
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
-    unsigned FindElementAndOffset(const Type *&T, uint64_t &Offset);
+    uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
+                                  const Type *&IdxTy);
     
     void DoScalarReplacement(AllocaInst *AI, 
                              std::vector<AllocaInst*> &WorkList);
@@ -488,22 +489,21 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
   // If the first index is a non-constant index into an array, see if we can
   // handle it as a special case.
   const Type *ArrayEltTy = 0;
-  if (ArrayOffset == 0 && Offset == 0) {
+  if (!isa<ConstantInt>(GEPIt.getOperand()) &&
+      ArrayOffset == 0 && Offset == 0) {
     if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
-      if (!isa<ConstantInt>(GEPIt.getOperand())) {
-        uint64_t NumElements = AT->getNumElements();
+      uint64_t NumElements = AT->getNumElements();
 
-        // If this is an array index and the index is not constant, we cannot
-        // promote... that is unless the array has exactly one or two elements
-        // in it, in which case we CAN promote it, but we have to canonicalize
-        // this out if this is the only problem.
-        if ((NumElements != 1 && NumElements != 2) || !AllUsersAreLoads(GEPI))
-          return MarkUnsafe(Info);
-        Info.needsCleanup = true;
-        ArrayOffset = TD->getTypeAllocSizeInBits(AT->getElementType());
-        ArrayEltTy = AT->getElementType();
-        ++GEPIt;
-      }
+      // If this is an array index and the index is not constant, we cannot
+      // promote... that is unless the array has exactly one or two elements
+      // in it, in which case we CAN promote it, but we have to canonicalize
+      // this out if this is the only problem.
+      if ((NumElements != 1 && NumElements != 2) || !AllUsersAreLoads(GEPI))
+        return MarkUnsafe(Info);
+      Info.needsCleanup = true;
+      ArrayOffset = TD->getTypeAllocSizeInBits(AT->getElementType());
+      ArrayEltTy = AT->getElementType();
+      ++GEPIt;
     }
   }
 
@@ -527,8 +527,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
       if (IdxVal->getZExtValue() >= AT->getNumElements())
         return MarkUnsafe(Info);
     } else {
-      const VectorType *VT = dyn_cast<VectorType>(*GEPIt);
-      assert(VT && "unexpected type in GEP type iterator");
+      const VectorType *VT = cast<VectorType>(*GEPIt);
       if (IdxVal->getZExtValue() >= VT->getNumElements())
         return MarkUnsafe(Info);
     }
@@ -633,6 +632,8 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       if (Offset == 0 &&
           MemSize == TD->getTypeAllocSize(AI->getAllocatedType()))
         RewriteMemIntrinUserOfAlloca(MI, I, AI, NewElts);
+      // Otherwise the intrinsic can only touch a single element and the
+      // address operand will be updated, so nothing else needs to be done.
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       const Type *LIType = LI->getType();
       if (LIType == AI->getAllocatedType()) {
@@ -706,22 +707,25 @@ void SROA::RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
 /// FindElementAndOffset - Return the index of the element containing Offset
 /// within the specified type, which must be either a struct or an array.
 /// Sets T to the type of the element and Offset to the offset within that
-/// element.
-unsigned SROA::FindElementAndOffset(const Type *&T, uint64_t &Offset) {
-  unsigned Idx = 0;
+/// element.  IdxTy is set to the type of the index result to be used in a
+/// GEP instruction.
+uint64_t SROA::FindElementAndOffset(const Type *&T, uint64_t &Offset,
+                                    const Type *&IdxTy) {
+  uint64_t Idx = 0;
   if (const StructType *ST = dyn_cast<StructType>(T)) {
     const StructLayout *Layout = TD->getStructLayout(ST);
     Idx = Layout->getElementContainingOffset(Offset);
     T = ST->getContainedType(Idx);
     Offset -= Layout->getElementOffset(Idx);
-  } else {
-    const ArrayType *AT = dyn_cast<ArrayType>(T);
-    assert(AT && "unexpected type for scalar replacement");
-    T = AT->getElementType();
-    uint64_t EltSize = TD->getTypeAllocSize(T);
-    Idx = (unsigned)(Offset / EltSize);
-    Offset -= Idx * EltSize;
+    IdxTy = Type::getInt32Ty(T->getContext());
+    return Idx;
   }
+  const ArrayType *AT = cast<ArrayType>(T);
+  T = AT->getElementType();
+  uint64_t EltSize = TD->getTypeAllocSize(T);
+  Idx = Offset / EltSize;
+  Offset -= Idx * EltSize;
+  IdxTy = Type::getInt64Ty(T->getContext());
   return Idx;
 }
 
@@ -738,13 +742,14 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
   RewriteForScalarRepl(GEPI, AI, Offset, NewElts);
 
   const Type *T = AI->getAllocatedType();
-  unsigned OldIdx = FindElementAndOffset(T, OldOffset);
+  const Type *IdxTy;
+  uint64_t OldIdx = FindElementAndOffset(T, OldOffset, IdxTy);
   if (GEPI->getOperand(0) == AI)
-    OldIdx = ~0U; // Force the GEP to be rewritten.
+    OldIdx = ~0ULL; // Force the GEP to be rewritten.
 
   T = AI->getAllocatedType();
   uint64_t EltOffset = Offset;
-  unsigned Idx = FindElementAndOffset(T, EltOffset);
+  uint64_t Idx = FindElementAndOffset(T, EltOffset, IdxTy);
 
   // If this GEP does not move the pointer across elements of the alloca
   // being split, then it does not needs to be rewritten.
@@ -755,8 +760,8 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
   SmallVector<Value*, 8> NewArgs;
   NewArgs.push_back(Constant::getNullValue(i32Ty));
   while (EltOffset != 0) {
-    unsigned EltIdx = FindElementAndOffset(T, EltOffset);
-    NewArgs.push_back(ConstantInt::get(i32Ty, EltIdx));
+    uint64_t EltIdx = FindElementAndOffset(T, EltOffset, IdxTy);
+    NewArgs.push_back(ConstantInt::get(IdxTy, EltIdx));
   }
   Instruction *Val = NewElts[Idx];
   if (NewArgs.size() > 1) {
