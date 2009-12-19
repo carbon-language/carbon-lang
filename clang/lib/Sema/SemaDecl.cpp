@@ -1890,9 +1890,12 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     if (DeclContext *DC = computeDeclContext(D.getCXXScopeSpec(), true)) {
       // FIXME: Preserve type source info.
       QualType T = GetTypeFromParser(DS.getTypeRep());
-      EnterDeclaratorContext(S, DC);
+
+      DeclContext *SavedContext = CurContext;
+      CurContext = DC;
       T = RebuildTypeInCurrentInstantiation(T, D.getIdentifierLoc(), Name);
-      ExitDeclaratorContext(S);
+      CurContext = SavedContext;
+
       if (T.isNull())
         return DeclPtrTy();
       DS.UpdateTypeRep(T.getAsOpaquePtr());
