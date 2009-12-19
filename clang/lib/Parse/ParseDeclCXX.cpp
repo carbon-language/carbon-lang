@@ -852,20 +852,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                              SS, Name, StartLoc, NameLoc);      
   }
 
-  // Parse the optional base clause (C++ only).
-  if (getLang().CPlusPlus && Tok.is(tok::colon))
-    ParseBaseClause(TagOrTempResult.get());
-
   // If there is a body, parse it and inform the actions module.
-  if (Tok.is(tok::l_brace))
+  if (TUK == Action::TUK_Definition) {
+    assert(Tok.is(tok::l_brace) ||
+           (getLang().CPlusPlus && Tok.is(tok::colon)));
     if (getLang().CPlusPlus)
       ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
     else
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
-  else if (TUK == Action::TUK_Definition) {
-    // FIXME: Complain that we have a base-specifier list but no
-    // definition.
-    Diag(Tok, diag::err_expected_lbrace);
   }
 
   void *Result;
@@ -1364,8 +1358,6 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                         PP.getSourceManager(),
                                         "parsing struct/union/class body");
 
-  SourceLocation LBraceLoc = ConsumeBrace();
-
   // Determine whether this is a top-level (non-nested) class.
   bool TopLevelClass = ClassStack.empty() ||
     CurScope->isInCXXInlineMethodScope();
@@ -1378,7 +1370,21 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   if (TagDecl)
     Actions.ActOnTagStartDefinition(CurScope, TagDecl);
-  else {
+
+  if (Tok.is(tok::colon)) {
+    ParseBaseClause(TagDecl);
+
+    if (!Tok.is(tok::l_brace)) {
+      Diag(Tok, diag::err_expected_lbrace_after_base_specifiers);
+      return;
+    }
+  }
+
+  assert(Tok.is(tok::l_brace));
+
+  SourceLocation LBraceLoc = ConsumeBrace();
+
+  if (!TagDecl) {
     SkipUntil(tok::r_brace, false, false);
     return;
   }
