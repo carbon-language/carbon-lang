@@ -605,15 +605,18 @@ bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
 bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  if (DeclContext *DC = computeDeclContext(SS, true)) {
-    // Before we enter a declarator's context, we need to make sure that
-    // it is a complete declaration context.
-    if (!DC->isDependentContext() && RequireCompleteDeclContext(SS))
-      return true;
-      
-    EnterDeclaratorContext(S, DC);
-  }
-  
+
+  if (SS.isInvalid()) return true;
+
+  DeclContext *DC = computeDeclContext(SS, true);
+  if (!DC) return true;
+
+  // Before we enter a declarator's context, we need to make sure that
+  // it is a complete declaration context.
+  if (!DC->isDependentContext() && RequireCompleteDeclContext(SS))
+    return true;
+    
+  EnterDeclaratorContext(S, DC);
   return false;
 }
 
@@ -626,6 +629,7 @@ void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
   if (SS.isInvalid())
     return;
-  if (computeDeclContext(SS, true))
-    ExitDeclaratorContext(S);
+  assert(!SS.isInvalid() && computeDeclContext(SS, true) &&
+         "exiting declarator scope we never really entered");
+  ExitDeclaratorContext(S);
 }

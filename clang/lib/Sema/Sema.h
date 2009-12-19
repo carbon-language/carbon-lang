@@ -2193,11 +2193,15 @@ public:
                                                  SourceLocation RBrac);
 
   virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template);
+  virtual void ActOnStartDelayedMemberDeclarations(Scope *S,
+                                                   DeclPtrTy Record);
   virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
                                                      DeclPtrTy Method);
   virtual void ActOnDelayedCXXMethodParameter(Scope *S, DeclPtrTy Param);
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
                                                       DeclPtrTy Method);
+  virtual void ActOnFinishDelayedMemberDeclarations(Scope *S,
+                                                    DeclPtrTy Record);
 
   virtual DeclPtrTy ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
                                                  ExprArg AssertExpr,

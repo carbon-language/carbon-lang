@@ -1351,6 +1351,14 @@ public:
   virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template) {
   }
 
+  /// ActOnStartDelayedMemberDeclarations - We have completed parsing
+  /// a C++ class, and we are about to start parsing any parts of
+  /// member declarations that could not be parsed earlier.  Enter
+  /// the appropriate record scope.
+  virtual void ActOnStartDelayedMemberDeclarations(Scope *S,
+                                                   DeclPtrTy Record) {
+  }
+
   /// ActOnStartDelayedCXXMethodDeclaration - We have completed
   /// parsing a top-level (non-nested) C++ class, and we are now
   /// parsing those parts of the given Method declaration that could
@@ -1379,6 +1387,14 @@ public:
   /// class body.
   virtual void ActOnFinishDelayedCXXMethodDeclaration(Scope *S,
                                                       DeclPtrTy Method) {
+  }
+
+  /// ActOnFinishDelayedMemberDeclarations - We have finished parsing
+  /// a C++ class, and we are about to start parsing any parts of
+  /// member declarations that could not be parsed earlier.  Enter the
+  /// appropriate record scope.
+  virtual void ActOnFinishDelayedMemberDeclarations(Scope *S,
+                                                    DeclPtrTy Record) {
   }
 
   /// ActOnStaticAssertDeclaration - Parse a C++0x static_assert declaration.

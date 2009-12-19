@@ -2266,6 +2266,18 @@ void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
   }
 }
 
+void Sema::ActOnStartDelayedMemberDeclarations(Scope *S, DeclPtrTy RecordD) {
+  if (!RecordD) return;
+  AdjustDeclIfTemplate(RecordD);
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordD.getAs<Decl>());
+  PushDeclContext(S, Record);
+}
+
+void Sema::ActOnFinishDelayedMemberDeclarations(Scope *S, DeclPtrTy RecordD) {
+  if (!RecordD) return;
+  PopDeclContext();
+}
+
 /// ActOnStartDelayedCXXMethodDeclaration - We have completed
 /// parsing a top-level (non-nested) C++ class, and we are now
 /// parsing those parts of the given Method declaration that could
@@ -2275,18 +2287,6 @@ void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
 /// name. However, it should not bring the parameters into scope;
 /// that will be performed by ActOnDelayedCXXMethodParameter.
 void Sema::ActOnStartDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
-  if (!MethodD)
-    return;
-
-  AdjustDeclIfTemplate(MethodD);
-
-  CXXScopeSpec SS;
-  FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
-  QualType ClassTy
-    = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
-  SS.setScopeRep(
-    NestedNameSpecifier::Create(Context, 0, false, ClassTy.getTypePtr()));
-  ActOnCXXEnterDeclaratorScope(S, SS);
 }
 
 /// ActOnDelayedCXXMethodParameter - We've already started a delayed
@@ -2323,12 +2323,6 @@ void Sema::ActOnFinishDelayedCXXMethodDeclaration(Scope *S, DeclPtrTy MethodD) {
   AdjustDeclIfTemplate(MethodD);
 
   FunctionDecl *Method = cast<FunctionDecl>(MethodD.getAs<Decl>());
-  CXXScopeSpec SS;
-  QualType ClassTy
-    = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
-  SS.setScopeRep(
-    NestedNameSpecifier::Create(Context, 0, false, ClassTy.getTypePtr()));
-  ActOnCXXExitDeclaratorScope(S, SS);
 
   // Now that we have our default arguments, check the constructor
   // again. It could produce additional diagnostics or affect whether
@@ -5544,31 +5538,7 @@ void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
   // We should only get called for declarations with scope specifiers, like:
   //   int foo::bar;
   assert(D->isOutOfLine());
-
-  // C++0x [basic.lookup.unqual]p13:
-  //   A name used in the definition of a static data member of class
-  //   X (after the qualified-id of the static member) is looked up as
-  //   if the name was used in a member function of X.
-  // C++0x [basic.lookup.unqual]p14:
-  //   If a variable member of a namespace is defined outside of the
-  //   scope of its namespace then any name used in the definition of
-  //   the variable member (after the declarator-id) is looked up as
-  //   if the definition of the variable member occurred in its
-  //   namespace.
-  // Both of these imply that we should push a scope whose context
-  // is the semantic context of the declaration.  We can't use
-  // PushDeclContext here because that context is not necessarily
-  // lexically contained in the current context.  Fortunately,
-  // scopes should work.
-
-#ifndef NDEBUG
-  Scope *Ancestor = S->getParent();
-  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
-  assert(Ancestor->getEntity() == CurContext && "ancestor context mismatch");
-#endif
-
-  CurContext = D->getDeclContext();
-  S->setEntity(CurContext);
+  EnterDeclaratorContext(S, D->getDeclContext());
 }
 
 /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
@@ -5579,11 +5549,7 @@ void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
   if (D == 0) return;
 
   assert(D->isOutOfLine());
-  assert(S->getEntity() == D->getDeclContext() && "Context imbalance!");
-  
-  Scope *Ancestor = S->getParent();
-  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
-  CurContext = (DeclContext*) Ancestor->getEntity();
+  ExitDeclaratorContext(S);
 }
 
 /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a

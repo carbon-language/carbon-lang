@@ -8,14 +8,12 @@ template void f0(int); // okay
 // A definition of the class or class template containing a member function 
 // template shall be in scope at the point of the explicit instantiation of 
 // the member function template.
-struct X0; // expected-note 2{{forward declaration}}
-template<typename> struct X1; // expected-note 5{{declared here}}
+struct X0; // expected-note 3{{forward declaration}}
+template<typename> struct X1; // expected-note 8{{declared here}}
 
 // FIXME: Repeated diagnostics here!
-template void X0::f0<int>(int); // expected-error 2{{incomplete type}} \
-  // expected-error{{does not refer}}
-template void X1<int>::f0<int>(int); // expected-error 2{{implicit instantiation of undefined template}} \
-  // expected-error{{does not refer}}
+template void X0::f0<int>(int); // expected-error 3{{incomplete type}} // expected-error{{invalid token after top level declarator}}
+template void X1<int>::f0<int>(int); // expected-error 3{{implicit instantiation of undefined template}} // expected-error{{invalid token after top level declarator}}
 
 // A definition of a class template or class member template shall be in scope 
 // at the point of the explicit instantiation of the class template or class 
@@ -35,10 +33,10 @@ template struct X2<int>::Inner<float>; // expected-error{{explicit instantiation
 // A definition of a class template shall be in scope at the point of an 
 // explicit instantiation of a member function or a static data member of the
 // class template.
-template void X1<int>::f1(int); // expected-error{{undefined template}} \
+template void X1<int>::f1(int); // expected-error 2{{undefined template}} \
                                 // expected-error{{does not refer}}
 
-template int X1<int>::member; // expected-error{{undefined template}} \
+template int X1<int>::member; // expected-error 2{{undefined template}} \
                               // expected-error{{does not refer}}
 
 // A definition of a member class of a class template shall be in scope at the 

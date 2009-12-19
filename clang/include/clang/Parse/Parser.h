@@ -1243,10 +1243,7 @@ private:
       CreatedScope = true;
       P.EnterScope(0); // Not a decl scope.
 
-      if (P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS))
-        SS.setScopeRep(0);
-      
-      if (!SS.isInvalid())
+      if (!P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS))
         EnteredScope = true;
     }
 

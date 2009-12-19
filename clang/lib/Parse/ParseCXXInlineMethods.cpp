@@ -95,9 +95,12 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(CurScope, Class.TagOrTemplate);
 
+  // The current scope is still active if we're the top-level class.
+  // Otherwise we'll need to push and enter a new scope.
   bool HasClassScope = !Class.TopLevelClass;
-  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope,
-                        HasClassScope);
+  ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope, HasClassScope);
+  if (HasClassScope)
+    Actions.ActOnStartDelayedMemberDeclarations(CurScope, Class.TagOrTemplate);
 
   for (; !Class.MethodDecls.empty(); Class.MethodDecls.pop_front()) {
     LateParsedMethodDeclaration &LM = Class.MethodDecls.front();
@@ -148,6 +151,9 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
 
   for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
     ParseLexedMethodDeclarations(*Class.NestedClasses[I]);
+
+  if (HasClassScope)
+    Actions.ActOnFinishDelayedMemberDeclarations(CurScope, Class.TagOrTemplate);
 }
 
 /// ParseLexedMethodDefs - We finished parsing the member specification of a top

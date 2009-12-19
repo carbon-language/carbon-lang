@@ -321,23 +321,47 @@ void Sema::PopDeclContext() {
 
 /// EnterDeclaratorContext - Used when we must lookup names in the context
 /// of a declarator's nested name specifier.
+///
 void Sema::EnterDeclaratorContext(Scope *S, DeclContext *DC) {
-  assert(PreDeclaratorDC == 0 && "Previous declarator context not popped?");
-  PreDeclaratorDC = static_cast<DeclContext*>(S->getEntity());
+  // C++0x [basic.lookup.unqual]p13:
+  //   A name used in the definition of a static data member of class
+  //   X (after the qualified-id of the static member) is looked up as
+  //   if the name was used in a member function of X.
+  // C++0x [basic.lookup.unqual]p14:
+  //   If a variable member of a namespace is defined outside of the
+  //   scope of its namespace then any name used in the definition of
+  //   the variable member (after the declarator-id) is looked up as
+  //   if the definition of the variable member occurred in its
+  //   namespace.
+  // Both of these imply that we should push a scope whose context
+  // is the semantic context of the declaration.  We can't use
+  // PushDeclContext here because that context is not necessarily
+  // lexically contained in the current context.  Fortunately,
+  // the containing scope should have the appropriate information.
+
+  assert(!S->getEntity() && "scope already has entity");
+
+#ifndef NDEBUG
+  Scope *Ancestor = S->getParent();
+  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
+  assert(Ancestor->getEntity() == CurContext && "ancestor context mismatch");
+#endif
+
   CurContext = DC;
-  assert(CurContext && "No context?");
-  S->setEntity(CurContext);
+  S->setEntity(DC);
 }
 
 void Sema::ExitDeclaratorContext(Scope *S) {
-  S->setEntity(PreDeclaratorDC);
-  PreDeclaratorDC = 0;
+  assert(S->getEntity() == CurContext && "Context imbalance!");
 
-  // Reset CurContext to the nearest enclosing context.
-  while (!S->getEntity() && S->getParent())
-    S = S->getParent();
-  CurContext = static_cast<DeclContext*>(S->getEntity());
-  assert(CurContext && "No context?");
+  // Switch back to the lexical context.  The safety of this is
+  // enforced by an assert in EnterDeclaratorContext.
+  Scope *Ancestor = S->getParent();
+  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
+  CurContext = (DeclContext*) Ancestor->getEntity();
+
+  // We don't need to do anything with the scope, which is going to
+  // disappear.
 }
 
 /// \brief Determine whether we allow overloading of the function
