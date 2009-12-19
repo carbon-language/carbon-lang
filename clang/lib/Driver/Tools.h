@@ -137,7 +137,7 @@ namespace darwin {
     }
 
   public:
-    DarwinTool(const char *Name, const ToolChain &TC) : Tool(Name, TC) {};
+    DarwinTool(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
   };
 
   class VISIBILITY_HIDDEN CC1 : public DarwinTool  {

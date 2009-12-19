@@ -37,7 +37,7 @@ class PathDiagnosticClient : public DiagnosticClient  {
 public:
   PathDiagnosticClient() {}
 
-  virtual ~PathDiagnosticClient() {};
+  virtual ~PathDiagnosticClient() {}
   
   virtual void
   FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade = 0) = 0;

@@ -221,7 +221,7 @@ public:
     assert(Kind == Integral &&
            "Cannot set the integral type of a non-integral template argument");
     Integer.Type = T.getAsOpaquePtr();
-  };
+  }
 
   /// \brief Retrieve the template argument as an expression.
   Expr *getAsExpr() const {

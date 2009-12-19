@@ -527,7 +527,7 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
   void setClassLoc(SourceLocation Loc) { ClassLoc = Loc; }
   SourceLocation getClassLoc() const { return ClassLoc; }
@@ -707,7 +707,7 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); } // '@'protocol
   SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCProtocol; }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
@@ -871,7 +871,7 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
   static bool classof(const ObjCCategoryDecl *D) { return true; }

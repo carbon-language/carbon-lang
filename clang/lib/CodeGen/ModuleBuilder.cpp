@@ -81,7 +81,7 @@ namespace {
 
       if (Builder)
         Builder->Release();
-    };
+    }
 
     virtual void CompleteTentativeDefinition(VarDecl *D) {
       if (Diags.hasErrorOccurred())

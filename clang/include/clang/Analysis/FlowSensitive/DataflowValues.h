@@ -79,7 +79,7 @@ public:
 
   /// InitializeValues - Invoked by the solver to initialize state needed for
   ///  dataflow analysis.  This method is usually specialized by subclasses.
-  void InitializeValues(const CFG& cfg) {};
+  void InitializeValues(const CFG& cfg) {}
 
 
   /// getEdgeData - Retrieves the dataflow values associated with a

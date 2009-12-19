@@ -115,7 +115,7 @@ public:
     if (Hidden)
       GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
     return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-  };
+  }
 
   /// - BuildFlags - Build a psABI __flags value for __vmi_class_type_info.
   llvm::Constant *BuildFlags(int f) {

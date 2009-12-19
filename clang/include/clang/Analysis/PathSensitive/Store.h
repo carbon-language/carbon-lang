@@ -204,7 +204,7 @@ public:
 
   class Visitor {
   public:
-    virtual ~Visitor() {};
+    virtual ~Visitor() {}
     virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) = 0;
   };
 

@@ -73,7 +73,7 @@ public:
 
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;
-  };
+  }
 
   ConstraintManagerCreator getConstraintManagerCreator() {
     return CreateConstraintMgr;

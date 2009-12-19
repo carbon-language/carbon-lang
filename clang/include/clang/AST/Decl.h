@@ -1180,7 +1180,7 @@ public:
   /// represents an C++ overloaded operator, e.g., "operator+".
   bool isOverloadedOperator() const {
     return getOverloadedOperator() != OO_None;
-  };
+  }
 
   OverloadedOperatorKind getOverloadedOperator() const;
 

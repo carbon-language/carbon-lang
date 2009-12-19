@@ -328,16 +328,16 @@ public:
   Value *VisitBin ## OP ## Assign(const CompoundAssignOperator *E) {       \
     return EmitCompoundAssign(E, &ScalarExprEmitter::Emit ## OP);          \
   }
-  HANDLEBINOP(Mul);
-  HANDLEBINOP(Div);
-  HANDLEBINOP(Rem);
-  HANDLEBINOP(Add);
-  HANDLEBINOP(Sub);
-  HANDLEBINOP(Shl);
-  HANDLEBINOP(Shr);
-  HANDLEBINOP(And);
-  HANDLEBINOP(Xor);
-  HANDLEBINOP(Or);
+  HANDLEBINOP(Mul)
+  HANDLEBINOP(Div)
+  HANDLEBINOP(Rem)
+  HANDLEBINOP(Add)
+  HANDLEBINOP(Sub)
+  HANDLEBINOP(Shl)
+  HANDLEBINOP(Shr)
+  HANDLEBINOP(And)
+  HANDLEBINOP(Xor)
+  HANDLEBINOP(Or)
 #undef HANDLEBINOP
 
   // Comparisons.
@@ -347,12 +347,12 @@ public:
     Value *VisitBin##CODE(const BinaryOperator *E) { \
       return EmitCompare(E, llvm::ICmpInst::UI, llvm::ICmpInst::SI, \
                          llvm::FCmpInst::FP); }
-  VISITCOMP(LT, ICMP_ULT, ICMP_SLT, FCMP_OLT);
-  VISITCOMP(GT, ICMP_UGT, ICMP_SGT, FCMP_OGT);
-  VISITCOMP(LE, ICMP_ULE, ICMP_SLE, FCMP_OLE);
-  VISITCOMP(GE, ICMP_UGE, ICMP_SGE, FCMP_OGE);
-  VISITCOMP(EQ, ICMP_EQ , ICMP_EQ , FCMP_OEQ);
-  VISITCOMP(NE, ICMP_NE , ICMP_NE , FCMP_UNE);
+  VISITCOMP(LT, ICMP_ULT, ICMP_SLT, FCMP_OLT)
+  VISITCOMP(GT, ICMP_UGT, ICMP_SGT, FCMP_OGT)
+  VISITCOMP(LE, ICMP_ULE, ICMP_SLE, FCMP_OLE)
+  VISITCOMP(GE, ICMP_UGE, ICMP_SGE, FCMP_OGE)
+  VISITCOMP(EQ, ICMP_EQ , ICMP_EQ , FCMP_OEQ)
+  VISITCOMP(NE, ICMP_NE , ICMP_NE , FCMP_UNE)
 #undef VISITCOMP
 
   Value *VisitBinAssign     (const BinaryOperator *E);

@@ -134,7 +134,7 @@ public:
   explicit CFGBlock(unsigned blockid, BumpVectorContext &C)
     : Stmts(C), Label(NULL), Terminator(NULL), LoopTarget(NULL),
       BlockID(blockid), Preds(C, 1), Succs(C, 1) {}
-  ~CFGBlock() {};
+  ~CFGBlock() {}
 
   // Statement iterators
   typedef StatementList::iterator                      iterator;
@@ -345,7 +345,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0),
-          BlkExprMap(NULL), Blocks(BlkBVC, 10) {};
+          BlkExprMap(NULL), Blocks(BlkBVC, 10) {}
 
   ~CFG();
 

@@ -207,7 +207,7 @@ class InterExplodedGraphMap {
 public:
   ExplodedNode* getMappedNode(const ExplodedNode* N) const;
 
-  InterExplodedGraphMap() {};
+  InterExplodedGraphMap() {}
   virtual ~InterExplodedGraphMap() {}
 };
 

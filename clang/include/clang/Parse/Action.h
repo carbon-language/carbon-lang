@@ -1750,7 +1750,7 @@ public:
                                          ASTTemplateArgsPtr TemplateArgs,
                                          SourceLocation RAngleLoc) {
     return TypeResult();
-  };
+  }
 
   /// \brief Note that a template ID was used with a tag.
   ///
