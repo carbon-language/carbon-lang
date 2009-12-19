@@ -105,3 +105,17 @@ void test_X5(X5<X4> x5, X5<const X4> x5c, X4 *xp, const X4 *cxp) {
   x5.f(xp);
   x5c.g(cxp);
 }
+
+// In theory we can do overload resolution at template-definition time on this.
+// We should at least not assert.
+namespace test4 {
+  struct Base {
+    template <class T> void foo() {}
+  };
+
+  template <class T> struct Foo : Base {
+    void test() {
+      foo<int>();
+    }
+  };
+}

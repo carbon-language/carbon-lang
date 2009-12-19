@@ -2417,6 +2417,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   // result.
   if (R.isOverloadedResult() || R.isUnresolvableResult()) {
     bool Dependent =
+      BaseExprType->isDependentType() ||
       R.isUnresolvableResult() ||
       UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(), TemplateArgs);
 
