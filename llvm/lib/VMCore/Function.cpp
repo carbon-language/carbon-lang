@@ -29,8 +29,8 @@ using namespace llvm;
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template class SymbolTableListTraits<Argument, Function>;
-template class SymbolTableListTraits<BasicBlock, Function>;
+template class llvm::SymbolTableListTraits<Argument, Function>;
+template class llvm::SymbolTableListTraits<BasicBlock, Function>;
 
 //===----------------------------------------------------------------------===//
 // Argument Implementation

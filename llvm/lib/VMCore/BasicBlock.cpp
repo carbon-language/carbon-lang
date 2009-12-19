@@ -35,7 +35,7 @@ LLVMContext &BasicBlock::getContext() const {
 
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
-template class SymbolTableListTraits<Instruction, BasicBlock>;
+template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
 
 
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,

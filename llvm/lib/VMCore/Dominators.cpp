@@ -47,8 +47,8 @@ VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
 //
 //===----------------------------------------------------------------------===//
 
-TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
-TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
+TEMPLATE_INSTANTIATION(class llvm::DomTreeNodeBase<BasicBlock>);
+TEMPLATE_INSTANTIATION(class llvm::DominatorTreeBase<BasicBlock>);
 
 char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
