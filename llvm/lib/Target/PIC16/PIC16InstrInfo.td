@@ -151,7 +151,7 @@ let mayStore = 1 in
 class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
   ByteFormat<OpCode, (outs),
              (ins GPR:$src, i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
-              !strconcat(OpcStr, " $ptrlo + $offset"),
+              !strconcat(OpcStr, " $ptrlo + $offset, F"),
              [(PIC16Store (OpNode GPR:$src, (PIC16Load diraddr:$ptrlo,
                                              (i8 imm:$ptrhi),
                                              (i8 imm:$offset))),
