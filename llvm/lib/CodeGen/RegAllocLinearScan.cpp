@@ -891,7 +891,7 @@ namespace {
     const RALinScan &Allocator;
 
   public:
-    WeightCompare(const RALinScan &Alloc) : Allocator(Alloc) {};
+    WeightCompare(const RALinScan &Alloc) : Allocator(Alloc) {}
 
     typedef std::pair<unsigned, float> RegWeightPair;
     bool operator()(const RegWeightPair &LHS, const RegWeightPair &RHS) const {

@@ -236,7 +236,7 @@ namespace {
     const MCSection *S;
     unsigned Alignment;
     SmallVector<unsigned, 4> CPEs;
-    SectionCPs(const MCSection *s, unsigned a) : S(s), Alignment(a) {};
+    SectionCPs(const MCSection *s, unsigned a) : S(s), Alignment(a) {}
   };
 }
 

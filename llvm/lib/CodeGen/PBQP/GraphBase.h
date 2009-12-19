@@ -298,7 +298,7 @@ public:
 
     for (ConstAdjEdgeIterator adjEdgeItr = adjEdgesBegin(node1Itr),
          adjEdgeEnd = adjEdgesEnd(node1Itr);
-         adjEdgeItr != adjEdgesEnd; ++adjEdgeItr) {
+         adjEdgeItr != adjEdgeEnd; ++adjEdgeItr) {
       if ((getEdgeNode1Itr(*adjEdgeItr) == node2Itr) ||
           (getEdgeNode2Itr(*adjEdgeItr) == node2Itr)) {
         return *adjEdgeItr;

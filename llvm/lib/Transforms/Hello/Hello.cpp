@@ -56,7 +56,7 @@ namespace {
     // We don't modify the program, so we preserve all analyses
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-    };
+    }
   };
 }
 

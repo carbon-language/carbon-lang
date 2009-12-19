@@ -536,7 +536,7 @@ private:
       else reductionFinished = true;
     }
       
-  };
+  }
 
   void processR1() {
 

@@ -33,7 +33,7 @@ namespace llvm {
     MachineInstr *MI;
     unsigned LoopDepth;
     CopyRec(MachineInstr *mi, unsigned depth)
-      : MI(mi), LoopDepth(depth) {};
+      : MI(mi), LoopDepth(depth) {}
   };
 
   class SimpleRegisterCoalescing : public MachineFunctionPass,
@@ -85,7 +85,7 @@ namespace llvm {
     bool coalesceFunction(MachineFunction &mf, RegallocQuery &) {
       // This runs as an independent pass, so don't do anything.
       return false;
-    };
+    }
 
     /// print - Implement the dump method.
     virtual void print(raw_ostream &O, const Module* = 0) const;

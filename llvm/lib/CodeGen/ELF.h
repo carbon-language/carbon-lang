@@ -82,14 +82,14 @@ namespace llvm {
     const GlobalValue *getGlobalValue() const {
       assert(SourceType == isGV && "This is not a global value");
       return Source.GV;
-    };
+    }
 
     // getExternalSym - If this is an external symbol which originated the
     // elf symbol, return a reference to it.
     const char *getExternalSymbol() const {
       assert(SourceType == isExtSym && "This is not an external symbol");
       return Source.Ext;
-    };
+    }
 
     // getGV - From a global value return a elf symbol to represent it
     static ELFSym *getGV(const GlobalValue *GV, unsigned Bind,

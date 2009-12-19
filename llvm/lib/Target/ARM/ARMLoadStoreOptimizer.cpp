@@ -78,7 +78,7 @@ namespace {
       MachineBasicBlock::iterator MBBI;
       bool Merged;
       MemOpQueueEntry(int o, int p, MachineBasicBlock::iterator i)
-        : Offset(o), Position(p), MBBI(i), Merged(false) {};
+        : Offset(o), Position(p), MBBI(i), Merged(false) {}
     };
     typedef SmallVector<MemOpQueueEntry,8> MemOpQueue;
     typedef MemOpQueue::iterator MemOpQueueIter;

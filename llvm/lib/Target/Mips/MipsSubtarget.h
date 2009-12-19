@@ -102,21 +102,21 @@ public:
   bool isMips1() const { return MipsArchVersion == Mips1; }
 
   bool isLittle() const { return IsLittle; }
-  bool isFP64bit() const { return IsFP64bit; };
-  bool isGP64bit() const { return IsGP64bit; };
-  bool isGP32bit() const { return !IsGP64bit; };
-  bool isSingleFloat() const { return IsSingleFloat; };
-  bool isNotSingleFloat() const { return !IsSingleFloat; };
-  bool hasVFPU() const { return HasVFPU; };
-  bool isLinux() const { return IsLinux; };
+  bool isFP64bit() const { return IsFP64bit; }
+  bool isGP64bit() const { return IsGP64bit; }
+  bool isGP32bit() const { return !IsGP64bit; }
+  bool isSingleFloat() const { return IsSingleFloat; }
+  bool isNotSingleFloat() const { return !IsSingleFloat; }
+  bool hasVFPU() const { return HasVFPU; }
+  bool isLinux() const { return IsLinux; }
 
   /// Features related to the presence of specific instructions.
-  bool hasSEInReg()   const { return HasSEInReg; };
-  bool hasCondMov()   const { return HasCondMov; };
-  bool hasMulDivAdd() const { return HasMulDivAdd; };
-  bool hasMinMax()    const { return HasMinMax; };
-  bool hasSwap()      const { return HasSwap; };
-  bool hasBitCount()  const { return HasBitCount; };
+  bool hasSEInReg()   const { return HasSEInReg; }
+  bool hasCondMov()   const { return HasCondMov; }
+  bool hasMulDivAdd() const { return HasMulDivAdd; }
+  bool hasMinMax()    const { return HasMinMax; }
+  bool hasSwap()      const { return HasSwap; }
+  bool hasBitCount()  const { return HasBitCount; }
 };
 } // End llvm namespace
 
