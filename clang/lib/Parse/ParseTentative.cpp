@@ -680,9 +680,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     // Otherwise, not a typename.
     return TPResult::False();
 
-  case tok::coloncolon:     // ::foo::bar
-    if (NextToken().is(tok::kw_new) ||    // ::new
-        NextToken().is(tok::kw_delete))   // ::delete
+  case tok::coloncolon: {    // ::foo::bar
+    const Token &Next = NextToken();
+    if (Next.is(tok::kw_new) ||    // ::new
+        Next.is(tok::kw_delete))   // ::delete
       return TPResult::False();
 
     // Annotate typenames and C++ scope specifiers.  If we get one, just
@@ -691,7 +692,8 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
       return isCXXDeclarationSpecifier();
     // Otherwise, not a typename.
     return TPResult::False();
-
+  }
+      
     // decl-specifier:
     //   storage-class-specifier
     //   type-specifier
@@ -699,7 +701,6 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     //   'friend'
     //   'typedef'
     //   'constexpr'
-
   case tok::kw_friend:
   case tok::kw_typedef:
   case tok::kw_constexpr:
