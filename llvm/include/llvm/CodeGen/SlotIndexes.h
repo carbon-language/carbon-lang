@@ -176,7 +176,7 @@ namespace llvm {
     // Construct a new slot index from the given one, set the phi flag on the
     // new index to the value of the phi parameter.
     SlotIndex(const SlotIndex &li, bool phi)
-      : lie(&li.entry(), phi ? PHI_BIT & li.getSlot() : (unsigned)li.getSlot()){
+      : lie(&li.entry(), phi ? PHI_BIT | li.getSlot() : (unsigned)li.getSlot()){
       assert(lie.getPointer() != 0 &&
              "Attempt to construct index with 0 pointer.");
     }
@@ -184,7 +184,7 @@ namespace llvm {
     // Construct a new slot index from the given one, set the phi flag on the
     // new index to the value of the phi parameter, and the slot to the new slot.
     SlotIndex(const SlotIndex &li, bool phi, Slot s)
-      : lie(&li.entry(), phi ? PHI_BIT & s : (unsigned)s) {
+      : lie(&li.entry(), phi ? PHI_BIT | s : (unsigned)s) {
       assert(lie.getPointer() != 0 &&
              "Attempt to construct index with 0 pointer.");
     }
