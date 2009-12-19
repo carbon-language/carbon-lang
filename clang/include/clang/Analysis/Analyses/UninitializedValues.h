@@ -35,7 +35,7 @@ public:
 
   struct AnalysisDataTy : public StmtDeclBitVector_Types::AnalysisDataTy {
     AnalysisDataTy() : Observer(NULL), FullUninitTaint(true) {}
-    virtual ~AnalysisDataTy() {};
+    virtual ~AnalysisDataTy() {}
 
     ObserverTy* Observer;
     bool FullUninitTaint;
