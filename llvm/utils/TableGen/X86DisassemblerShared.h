@@ -12,18 +12,18 @@
 
 #include <string>
 
-#define INSTRUCTION_SPECIFIER_FIELDS    \
-  bool                    filtered;     \
-  InstructionContext      insnContext;  \
-  std::string             name;         \
-                                        \
-  InstructionSpecifier() {              \
-    filtered = false;                   \
-    insnContext = IC;                   \
-    name = "";                          \
-    modifierType = MODIFIER_NONE;       \
-    modifierBase = 0;                   \
-    bzero(operands, sizeof(operands));  \
+#define INSTRUCTION_SPECIFIER_FIELDS       \
+  bool                    filtered;        \
+  InstructionContext      insnContext;     \
+  std::string             name;            \
+                                           \
+  InstructionSpecifier() {                 \
+    filtered = false;                      \
+    insnContext = IC;                      \
+    name = "";                             \
+    modifierType = MODIFIER_NONE;          \
+    modifierBase = 0;                      \
+    memset(operands, 0, sizeof(operands)); \
   }
 
 #define INSTRUCTION_IDS           \

@@ -238,7 +238,7 @@ DisassemblerTables::DisassemblerTables() {
   
   for (i = 0; i < 4; i++) {
     Tables[i] = new ContextDecision;
-    bzero(Tables[i], sizeof(ContextDecision));
+    memset(Tables[i], 0, sizeof(ContextDecision));
   }
   
   HasConflicts = false;
