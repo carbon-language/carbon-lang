@@ -1622,7 +1622,7 @@ def err_typecheck_incomplete_array_needs_initializer : Error<
   "definition of variable with array type needs an explicit size "
   "or an initializer">;
 def err_array_init_not_init_list : Error<
-  "array initializater must be an initializer "
+  "array initializer must be an initializer "
   "list%select{| or string literal}0">;
 
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
