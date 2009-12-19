@@ -15,7 +15,7 @@ template<template<class T> class Y> struct X1 {
 // could be interpreted as either a non-type template-parameter or a
 // type-parameter (because its identifier is the name of an already
 // existing class) is taken as a type-parameter. For example, 
-class T { /* ... */ }; 
+class T { /* ... */ };  // expected-note{{candidate function}}
 int i; 
 
 template<class T, T i> struct X2 {
@@ -23,6 +23,6 @@ template<class T, T i> struct X2 {
   { 
     T t1 = i; //template-parameters T and i 
     ::T t2 = ::i; // global namespace members T and i  \
-    // expected-error{{cannot initialize}}
+    // expected-error{{no viable conversion}}
   } 
 };

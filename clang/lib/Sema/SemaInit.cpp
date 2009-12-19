@@ -222,79 +222,15 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
     //   -- If the destination type is a (possibly cv-qualified) class
     //      type:
     if (getLangOptions().CPlusPlus && DeclType->isRecordType()) {
-      QualType DeclTypeC = Context.getCanonicalType(DeclType);
-      QualType InitTypeC = Context.getCanonicalType(Init->getType());
+      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+      OwningExprResult CurInit = InitSeq.Perform(*this, Entity, Kind,
+                                          MultiExprArg(*this, (void**)&Init, 1),
+                                                 &DeclType);
+      if (CurInit.isInvalid())
+        return true;
 
-      //   -- If the initialization is direct-initialization, or if it is
-      //      copy-initialization where the cv-unqualified version of the
-      //      source type is the same class as, or a derived class of, the
-      //      class of the destination, constructors are considered.
-      if ((DeclTypeC.getLocalUnqualifiedType() 
-                                     == InitTypeC.getLocalUnqualifiedType()) ||
-          IsDerivedFrom(InitTypeC, DeclTypeC)) {
-        const CXXRecordDecl *RD =
-          cast<CXXRecordDecl>(DeclType->getAs<RecordType>()->getDecl());
-
-        // No need to make a CXXConstructExpr if both the ctor and dtor are
-        // trivial.
-        if (RD->hasTrivialConstructor() && RD->hasTrivialDestructor())
-          return false;
-
-        ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-
-        // FIXME: Poor location information
-        InitializationKind InitKind
-          = InitializationKind::CreateCopy(Init->getLocStart(), 
-                                           SourceLocation());
-        if (DirectInit)
-          InitKind = InitializationKind::CreateDirect(Init->getLocStart(),
-                                                      SourceLocation(), 
-                                                      SourceLocation());
-        CXXConstructorDecl *Constructor
-          = PerformInitializationByConstructor(DeclType, 
-                                               MultiExprArg(*this, 
-                                                            (void **)&Init, 1),
-                                               InitLoc, Init->getSourceRange(),
-                                               InitEntity, InitKind,
-                                               ConstructorArgs);
-        if (!Constructor)
-          return true;
-
-        OwningExprResult InitResult =
-          BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                DeclType, Constructor,
-                                move_arg(ConstructorArgs));
-        if (InitResult.isInvalid())
-          return true;
-
-        Init = InitResult.takeAs<Expr>();
-        return false;
-      }
-
-      //   -- Otherwise (i.e., for the remaining copy-initialization
-      //      cases), user-defined conversion sequences that can
-      //      convert from the source type to the destination type or
-      //      (when a conversion function is used) to a derived class
-      //      thereof are enumerated as described in 13.3.1.4, and the
-      //      best one is chosen through overload resolution
-      //      (13.3). If the conversion cannot be done or is
-      //      ambiguous, the initialization is ill-formed. The
-      //      function selected is called with the initializer
-      //      expression as its argument; if the function is a
-      //      constructor, the call initializes a temporary of the
-      //      destination type.
-      // FIXME: We're pretending to do copy elision here; return to this when we
-      // have ASTs for such things.
-      if (!PerformImplicitConversion(Init, DeclType, Sema::AA_Initializing))
-        return false;
-
-      if (InitEntity)
-        return Diag(InitLoc, diag::err_cannot_initialize_decl)
-          << InitEntity << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
-          << Init->getType() << Init->getSourceRange();
-      return Diag(InitLoc, diag::err_cannot_initialize_decl_noname)
-        << DeclType << (int)(Init->isLvalue(Context) == Expr::LV_Valid)
-        << Init->getType() << Init->getSourceRange();
+      Init = CurInit.takeAs<Expr>();
+      return false;
     }
 
     // C99 6.7.8p16.
@@ -2014,6 +1950,26 @@ DeclarationName InitializedEntity::getName() const {
   return DeclarationName();
 }
 
+DeclaratorDecl *InitializedEntity::getDecl() const {
+  switch (getKind()) {
+  case EK_Variable:
+  case EK_Parameter:
+  case EK_Member:
+    return VariableOrMember;
+
+  case EK_Result:
+  case EK_Exception:
+  case EK_New:
+  case EK_Temporary:
+  case EK_Base:
+  case EK_ArrayOrVectorElement:
+    return 0;
+  }
+  
+  // Silence GCC warning
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization sequence
 //===----------------------------------------------------------------------===//
@@ -3051,25 +3007,32 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
 /// thrown), make the copy. 
 static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
                                             const InitializedEntity &Entity,
+                                             const InitializationKind &Kind,
                                              Sema::OwningExprResult CurInit) {
   SourceLocation Loc;
-  bool isReturn = false;
   
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
     if (Entity.getType().getType()->isReferenceType())
       return move(CurInit);
-    isReturn = true;
     Loc = Entity.getReturnLoc();
     break;
       
   case InitializedEntity::EK_Exception:
-    isReturn = false;
     Loc = Entity.getThrowLoc();
     break;
     
   case InitializedEntity::EK_Variable:
+    if (Entity.getType().getType()->isReferenceType() ||
+        Kind.getKind() != InitializationKind::IK_Copy)
+      return move(CurInit);
+    Loc = Entity.getDecl()->getLocation();
+    break;
+
   case InitializedEntity::EK_Parameter:
+    // FIXME: Do we need this initialization for a parameter?
+    return move(CurInit);
+
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_Base:
@@ -3110,21 +3073,21 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
       
   case OR_No_Viable_Function:
     S.Diag(Loc, diag::err_temp_copy_no_viable)
-      << isReturn << CurInitExpr->getType()
+      << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
     S.PrintOverloadCandidates(CandidateSet, false);
     return S.ExprError();
       
   case OR_Ambiguous:
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
-      << isReturn << CurInitExpr->getType()
+      << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
     S.PrintOverloadCandidates(CandidateSet, true);
     return S.ExprError();
     
   case OR_Deleted:
     S.Diag(Loc, diag::err_temp_copy_deleted)
-      << isReturn << CurInitExpr->getType()
+      << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
     S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
       << Best->Function->isDeleted();
@@ -3364,7 +3327,7 @@ InitializationSequence::Perform(Sema &S,
                                                          false));
       
       if (!IsCopy)
-        CurInit = CopyIfRequiredForEntity(S, Entity, move(CurInit));
+        CurInit = CopyIfRequiredForEntity(S, Entity, Kind, move(CurInit));
       break;
     }
         
@@ -3425,7 +3388,7 @@ InitializationSequence::Perform(Sema &S,
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
       
       if (!Elidable)
-        CurInit = CopyIfRequiredForEntity(S, Entity, move(CurInit));
+        CurInit = CopyIfRequiredForEntity(S, Entity, Kind, move(CurInit));
       break;
     }
         

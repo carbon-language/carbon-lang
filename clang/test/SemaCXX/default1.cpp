@@ -22,10 +22,10 @@ struct X {
 
 void j(X x = 17);
 
-struct Y {
+struct Y { // expected-note 2{{candidate}}
   explicit Y(int);
 };
 
-void k(Y y = 17); // expected-error{{cannot initialize 'y' with an rvalue of type 'int'}}
+void k(Y y = 17); // expected-error{{no viable conversion}}
 
-void kk(Y = 17); // expected-error{{cannot initialize a value of type 'struct Y' with an rvalue of type 'int'}}
+void kk(Y = 17); // expected-error{{no viable conversion}}

@@ -178,7 +178,7 @@ bool (foo_S::value);
 
 
 namespace somens {
-  struct a { };
+  struct a { }; // expected-note{{candidate function}}
 }
 
 template <typename T>
@@ -189,7 +189,7 @@ class foo {
 // PR4452 / PR4451
 foo<somens:a> a2;  // expected-error {{unexpected ':' in nested name specifier}}
 
-somens::a a3 = a2; // expected-error {{cannot initialize 'a3' with an lvalue of type 'foo<somens::a>'}}
+somens::a a3 = a2; // expected-error {{no viable conversion}}
 
 // typedefs and using declarations.
 namespace test1 {

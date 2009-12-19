@@ -578,14 +578,14 @@ def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<DiagGroup<"uninitialized">>;
 
 def err_temp_copy_no_viable : Error<
-  "no viable copy constructor %select{throwing|returning}0 object of type %1">;
+  "no viable copy constructor %select{copying variable|copying parameter|"
+  "returning object|throwing object}0 of type %1">;
 def err_temp_copy_ambiguous : Error<
-  "ambiguous copy constructor call when %select{throwing|returning}0 object of "
-  "type %1">;
+  "ambiguous copy constructor call when %select{copying variable|copying "
+  "parameter|returning object|throwing object}0 of type %1">;
 def err_temp_copy_deleted : Error<
-  "%select{throwing|returning}0 object of type %1 invokes deleted copy "
-  "constructor">;
-  
+  "%select{copying variable|copying parameter|returning object|throwing "
+  "object}0 of type %1 invokes deleted copy constructor">;
   
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<

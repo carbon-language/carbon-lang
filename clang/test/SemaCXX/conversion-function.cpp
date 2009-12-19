@@ -56,14 +56,14 @@ public:
 
 // This used to crash Clang.
 struct Flip;
-struct Flop {
+struct Flop { // expected-note{{candidate function}}
   Flop();
-  Flop(const Flip&);
+  Flop(const Flip&); // expected-note{{candidate function}}
 };
 struct Flip {
-  operator Flop() const;
+  operator Flop() const; // expected-note{{candidate function}}
 };
-Flop flop = Flip(); // expected-error {{cannot initialize 'flop' with an rvalue of type 'struct Flip'}}
+Flop flop = Flip(); // expected-error {{conversion from 'struct Flip' to 'struct Flop' is ambiguous}}
 
 // This tests that we don't add the second conversion declaration to the list of user conversions
 struct C {

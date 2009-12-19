@@ -27,7 +27,7 @@ public:
   FromShort(short s);
 };
 
-class FromShortExplicitly {
+class FromShortExplicitly { // expected-note{{candidate function}}
 public:
   explicit FromShortExplicitly(short s);
 };
@@ -36,7 +36,7 @@ void explicit_constructor(short s) {
   FromShort fs1(s);
   FromShort fs2 = s;
   FromShortExplicitly fse1(s);
-  FromShortExplicitly fse2 = s; // expected-error{{error: cannot initialize 'fse2' with an lvalue of type 'short'}}
+  FromShortExplicitly fse2 = s; // expected-error{{no viable conversion}}
 }
 
 // PR5519

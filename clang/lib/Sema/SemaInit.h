@@ -195,7 +195,11 @@ public:
   
   /// \brief Retrieve the name of the entity being initialized.
   DeclarationName getName() const;
-  
+
+  /// \brief Retrieve the variable, parameter, or field being
+  /// initialized.
+  DeclaratorDecl *getDecl() const;
+
   /// \brief Determine the location of the 'return' keyword when initializing
   /// the result of a function call.
   SourceLocation getReturnLoc() const {

@@ -6,13 +6,13 @@ struct X0 {
 };
 
 template<typename T>
-T X0<T>::value = 0; // expected-error{{initialize}}
+T X0<T>::value = 0; // expected-error{{no viable conversion}}
 
 struct X1 { 
   X1(int);
 };
 
-struct X2 { };
+struct X2 { }; // expected-note{{candidate function}}
 
 int& get_int() { return X0<int>::value; }
 X1& get_X1() { return X0<X1>::value; }

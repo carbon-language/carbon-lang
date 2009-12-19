@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o %t
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 %s -emit-llvm -o - | FileCheck %s
 
 extern "C" int printf(...);
 
@@ -59,3 +59,24 @@ int main() {
   n1.PR();
 }
 
+// PR5826
+template <class T> struct A {
+  A() {}
+  A(int) {}
+  A(const A&) {}
+  ~A() {}
+  operator int() {return 0;}
+};
+
+// CHECK: define void @_Z1fv()
+void f() {
+  // CHECK: call void @_ZN1AIsEC1Ei
+  A<short> a4 = 97;
+
+  // CHECK-NEXT: store i32 17
+  int i = 17;
+
+  // CHECK-NEXT: call void @_ZN1AIsED1Ev
+  // CHECK-NOT: call void @_ZN1AIsED1Ev
+  // CHECK: ret void
+}

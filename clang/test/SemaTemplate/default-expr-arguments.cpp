@@ -6,9 +6,9 @@ class C { C(int a0 = 0); };
 template<>
 C<char>::C(int a0);
 
-struct S { };
+struct S { }; // expected-note 3 {{candidate function}}
 
-template<typename T> void f1(T a, T b = 10) { } // expected-error{{cannot initialize 'b' with an rvalue of type 'int'}}
+template<typename T> void f1(T a, T b = 10) { } // expected-error{{no viable conversion}}
 
 template<typename T> void f2(T a, T b = T()) { }
 
@@ -26,8 +26,8 @@ void g() {
 }
 
 template<typename T> struct F {
-  F(T t = 10); // expected-error{{cannot initialize 't' with an rvalue of type 'int'}}
-  void f(T t = 10); // expected-error{{cannot initialize 't' with an rvalue of type 'int'}}
+  F(T t = 10); // expected-error{{no viable conversion}}
+  void f(T t = 10); // expected-error{{no viable conversion}}
 };
 
 struct FD : F<int> { };

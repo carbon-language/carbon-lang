@@ -115,9 +115,9 @@ B2 b2_2 = { 4, d2, 0 };
 B2 b2_3 = { c2, a2, a2 };
 
 // C++ [dcl.init.aggr]p15:
-union u { int a; char* b; };
+union u { int a; char* b; }; // expected-note{{candidate function}}
 u u1 = { 1 }; 
 u u2 = u1; 
-u u3 = 1; // expected-error{{cannot initialize 'u3' with an rvalue of type 'int'}}
+u u3 = 1; // expected-error{{no viable conversion}}
 u u4 = { 0, "asdf" };  // expected-error{{excess elements in union initializer}}
 u u5 = { "asdf" }; // expected-error{{incompatible type initializing 'char const [5]', expected 'int'}}
