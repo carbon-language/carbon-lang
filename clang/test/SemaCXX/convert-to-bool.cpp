@@ -44,7 +44,7 @@ struct ExplicitConvToRef {
 
 void test_explicit_bool(ExplicitConvToBool ecb) {
   bool b1(ecb); // okay
-  bool b2 = ecb; // expected-error{{incompatible type initializing 'struct ExplicitConvToBool', expected 'bool'}}
+  bool b2 = ecb; // expected-error{{no viable conversion from 'struct ExplicitConvToBool' to 'bool'}}
   accepts_bool(ecb); // expected-error{{no matching function for call to}}
 }
 

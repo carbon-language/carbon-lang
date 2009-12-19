@@ -29,7 +29,7 @@ nullptr_t f(nullptr_t null)
   bool b = nullptr;
 
   // Can't convert nullptr to integral implicitly.
-  uintptr_t i = nullptr; // expected-error {{incompatible type initializing}}
+  uintptr_t i = nullptr; // expected-error {{cannot initialize}}
 
   // Operators
   (void)(null == nullptr);

@@ -1988,6 +1988,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_ConstructorInitialization:
   case SK_ZeroInitialization:
   case SK_CAssignment:
+  case SK_StringInit:
     break;
     
   case SK_ConversionSequence:
@@ -2076,6 +2077,13 @@ void InitializationSequence::AddZeroInitializationStep(QualType T) {
 void InitializationSequence::AddCAssignmentStep(QualType T) {
   Step S;
   S.Kind = SK_CAssignment;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddStringInitStep(QualType T) {
+  Step S;
+  S.Kind = SK_StringInit;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -2492,7 +2500,8 @@ static void TryStringLiteralInitialization(Sema &S,
                                            const InitializationKind &Kind,
                                            Expr *Initializer,
                                        InitializationSequence &Sequence) {
-  // FIXME: Implement!
+  Sequence.setSequenceKind(InitializationSequence::StringInit);
+  Sequence.AddStringInitStep(Entity.getType().getType());
 }
 
 /// \brief Attempt initialization by constructor (C++ [dcl.init]), which
@@ -2711,10 +2720,17 @@ static void TryUserDefinedConversion(Sema &S,
       }
     }    
   }
-  
+
+  SourceLocation DeclLoc = Initializer->getLocStart();
+
   if (const RecordType *SourceRecordType = SourceType->getAs<RecordType>()) {
     // The type we're converting from is a class type, enumerate its conversion
     // functions.
+
+    // Try to force the type to be complete before enumerating the conversion
+    // functions; it's okay if this fails, though.
+    S.RequireCompleteType(DeclLoc, SourceType, 0);
+
     CXXRecordDecl *SourceRecordDecl
       = cast<CXXRecordDecl>(SourceRecordType->getDecl());
     
@@ -2745,8 +2761,6 @@ static void TryUserDefinedConversion(Sema &S,
       }
     }
   }
-  
-  SourceLocation DeclLoc = Initializer->getLocStart();
   
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
@@ -2876,13 +2890,6 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
 
-  // Handle initialization in C
-  if (!S.getLangOptions().CPlusPlus) {
-    setSequenceKind(CAssignment);
-    AddCAssignmentStep(DestType);
-    return;
-  }
-  
   //     - Otherwise, if the destination type is an array, the program is 
   //       ill-formed.
   if (const ArrayType *AT = Context.getAsArrayType(DestType)) {
@@ -2891,6 +2898,13 @@ InitializationSequence::InitializationSequence(Sema &S,
     else
       SetFailed(FK_ArrayNeedsInitList);
     
+    return;
+  }
+
+  // Handle initialization in C
+  if (!S.getLangOptions().CPlusPlus) {
+    setSequenceKind(CAssignment);
+    AddCAssignmentStep(DestType);
     return;
   }
   
@@ -3187,6 +3201,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_ConversionSequence:
   case SK_ListInitialization:
   case SK_CAssignment:
+  case SK_StringInit:
     assert(Args.size() == 1);
     CurInit = Sema::OwningExprResult(S, ((Expr **)(Args.get()))[0]->Retain());
     if (CurInit.isInvalid())
@@ -3423,6 +3438,12 @@ InitializationSequence::Perform(Sema &S,
 
       CurInit.release();
       CurInit = S.Owned(CurInitExpr);
+      break;
+    }
+
+    case SK_StringInit: {
+      QualType Ty = Step->Type;
+      CheckStringInit(CurInitExpr, ResultType ? *ResultType : Ty, S);
       break;
     }
     }

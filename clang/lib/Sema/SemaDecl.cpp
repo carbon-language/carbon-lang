@@ -3525,26 +3525,22 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
-      if (VDecl->getType()->isReferenceType()
-          || isa<InitListExpr>(Init)) {
-        InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-        if (InitSeq) {
-          OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                           MultiExprArg(*this, (void**)&Init, 1),
-                                                    &DclT);
-          if (Result.isInvalid()) {
-            VDecl->setInvalidDecl();
-            return;
-          }
-
-          Init = Result.takeAs<Expr>();
-        } else {
-          InitSeq.Diagnose(*this, Entity, Kind, &Init, 1);
+      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+      if (InitSeq) {
+        OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                          MultiExprArg(*this, (void**)&Init, 1),
+                                                  &DclT);
+        if (Result.isInvalid()) {
           VDecl->setInvalidDecl();
           return;
-        }    
-      } else if (CheckInitializerTypes(Init, DclT, Entity, Kind))
+        }
+
+        Init = Result.takeAs<Expr>();
+      } else {
+        InitSeq.Diagnose(*this, Entity, Kind, &Init, 1);
         VDecl->setInvalidDecl();
+        return;
+      }
 
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
       // Don't check invalid declarations to avoid emitting useless diagnostics.

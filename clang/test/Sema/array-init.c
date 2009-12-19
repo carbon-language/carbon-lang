@@ -167,7 +167,7 @@ void charArrays() {
 
 void variableArrayInit() {
   int a = 4;
-  char strlit[a] = "foo"; //expected-error{{variable-sized object may not be initialized}}
+  char strlit[a] = "foo"; //expected-error{{array initializer must be an initializer list or string literal}}
   int b[a] = { 1, 2, 4 }; //expected-error{{variable-sized object may not be initialized}}
 }
 

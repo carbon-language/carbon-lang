@@ -389,7 +389,10 @@ public:
     StandardConversion,
 
     /// \brief C conversion sequence.
-    CAssignment
+    CAssignment,
+
+    /// \brief String initialization
+    StringInit
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -422,7 +425,9 @@ public:
     /// \brief Zero-initialize the object
     SK_ZeroInitialization,
     /// \brief C assignment
-    SK_CAssignment
+    SK_CAssignment,
+    /// \brief Initialization by string
+    SK_StringInit
   };
   
   /// \brief A single step in the initialization sequence.
@@ -631,6 +636,9 @@ public:
   // ideally, we would handle everything needed in C in the common
   // path. However, that isn't the case yet.
   void AddCAssignmentStep(QualType T);
+
+  /// \brief Add a string init step.
+  void AddStringInitStep(QualType T);
 
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {

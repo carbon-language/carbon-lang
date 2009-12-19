@@ -18,6 +18,6 @@ int f0(int);
 void test_f0_2() {
   using namespace N;
   int (*fp0)(int) = f0; // expected-error{{ambiguous}} \ 
-                        // expected-error{{initializing}}
+                        // expected-error{{cannot initialize}}
   float (*fp1)(float) = f0;
 }

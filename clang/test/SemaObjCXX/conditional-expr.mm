@@ -27,11 +27,11 @@ void f1(id x, A *a) {
 }
 
 void f2(id<P1> x) {
-  id<P0> l = x; // expected-error {{incompatible type initializing 'id<P1>', expected 'id<P0>'}}
+  id<P0> l = x; // expected-error {{cannot initialize a variable of type 'id<P0>' with an lvalue of type 'id<P1>'}}
 }
 
 void f3(A *a) {
-  id<P1> l = a; // expected-error {{incompatible type initializing 'A *', expected 'id<P1>'}}
+  id<P1> l = a; // expected-error {{cannot initialize a variable of type 'id<P1>' with an lvalue of type 'A *'}}
 }
 
 void f4(int cond, id x, A *a) {

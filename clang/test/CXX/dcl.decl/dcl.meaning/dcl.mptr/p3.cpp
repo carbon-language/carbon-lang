@@ -16,7 +16,7 @@ void f() {
   int b;
   A a(b); 
   
-  int A::*ip = &A::s; // expected-error {{incompatible type initializing 'int *', expected 'int class A::*'}}
+  int A::*ip = &A::s; // expected-error {{cannot initialize a variable of type 'int class A::*' with an rvalue of type 'int *'}}
   a.*&A::s = 10; // expected-error{{right hand operand to .* has non pointer-to-member type 'int *'}}
   
   a.*&A::i = 10; // expected-error{{cannot form a pointer-to-member to member 'i' of reference type 'int &'}}

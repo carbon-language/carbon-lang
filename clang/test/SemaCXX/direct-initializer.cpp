@@ -40,11 +40,11 @@ struct Base {
 };
 
 struct Derived : Base {
-   operator int*(); 
+   operator int*(); // expected-note {{candidate function}}
 };
 
 void foo(const Derived cd, Derived d) {
-        int *pi = cd;	// expected-error {{incompatible type initializing 'struct Derived const', expected 'int *'}}
+        int *pi = cd;	// expected-error {{no viable conversion from 'struct Derived const' to 'int *'}}
         int *ppi = d; 
 
 }

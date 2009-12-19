@@ -18,7 +18,7 @@ void ov(double) = delete; // expected-note {{candidate function has been explici
 struct WithDel {
   WithDel() = delete; // expected-note {{candidate function has been explicitly deleted}}
   void fn() = delete; // expected-note {{function has been explicitly marked deleted here}}
-  operator int() = delete; 
+  operator int() = delete; // expected-note {{function has been explicitly marked deleted here}}
   void operator +(int) = delete;
 
   int i = delete; // expected-error {{only functions can have deleted definitions}}
@@ -32,5 +32,5 @@ void test() {
   WithDel dd; // expected-error {{call to deleted constructor of 'dd'}}
   WithDel *d = 0;
   d->fn(); // expected-error {{attempt to use a deleted function}}
-  int i = *d; // expected-error {{incompatible type initializing}}
+  int i = *d; // expected-error {{invokes a deleted function}}
 }

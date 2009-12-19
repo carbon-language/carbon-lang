@@ -5,8 +5,7 @@ class A { };
 class B : private A { }; // expected-note {{'private' inheritance specifier here}}
 
 void f(B* b) {
-  A *a = b; // expected-error{{conversion from 'class T1::B' to inaccessible base class 'class T1::A'}} \
-               expected-error{{incompatible type initializing 'class T1::B *', expected 'class T1::A *'}}
+  A *a = b; // expected-error{{conversion from 'class T1::B' to inaccessible base class 'class T1::A'}}
 }
 
 }
@@ -17,8 +16,7 @@ class A { };
 class B : A { }; // expected-note {{inheritance is implicitly 'private'}}
 
 void f(B* b) {
-  A *a = b; // expected-error {{conversion from 'class T2::B' to inaccessible base class 'class T2::A'}} \
-               expected-error {{incompatible type initializing 'class T2::B *', expected 'class T2::A *'}}
+  A *a = b; // expected-error {{conversion from 'class T2::B' to inaccessible base class 'class T2::A'}}
 }
 
 }
@@ -71,8 +69,7 @@ namespace T6 {
   
   class C : public B { 
     void f(C *c) {
-      A* a = c; // expected-error {{conversion from 'class T6::C' to inaccessible base class 'class T6::A'}} \
-                   expected-error {{incompatible type initializing 'class T6::C *', expected 'class T6::A *'}}
+      A* a = c; // expected-error {{conversion from 'class T6::C' to inaccessible base class 'class T6::A'}}
     }
   };
   

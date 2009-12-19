@@ -35,8 +35,8 @@ void f() {
   pdid = pdi2;
 
   // Fail conversion due to ambiguity and virtuality.
-  int F::*pdif = pdi1; // expected-error {{ambiguous conversion from pointer to member of base class 'struct A' to pointer to member of derived class 'struct F'}} expected-error {{incompatible type}}
-  int G::*pdig = pdi1; // expected-error {{conversion from pointer to member of class 'struct A' to pointer to member of class 'struct G' via virtual base 'struct D' is not allowed}} expected-error {{incompatible type}}
+  int F::*pdif = pdi1; // expected-error {{ambiguous conversion from pointer to member of base class 'struct A' to pointer to member of derived class 'struct F'}}
+  int G::*pdig = pdi1; // expected-error {{conversion from pointer to member of class 'struct A' to pointer to member of class 'struct G' via virtual base 'struct D' is not allowed}}
 
   // Conversion to member of base.
   pdi1 = pdid; // expected-error {{incompatible type assigning 'int struct D::*', expected 'int struct A::*'}}

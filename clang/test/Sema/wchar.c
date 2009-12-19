@@ -17,6 +17,6 @@ int check_wchar_size[sizeof(*L"") == sizeof(wchar_t) ? 1 : -1];
 void foo() {
   WCHAR_T_TYPE t1[] = L"x";
   wchar_t tab[] = L"x";
-  WCHAR_T_TYPE t2[] = "x";     // expected-error {{initialization}}
-  char t3[] = L"x";   // expected-error {{initialization}}
+  WCHAR_T_TYPE t2[] = "x";     // expected-error {{initializer}}
+  char t3[] = L"x";   // expected-error {{initializer}}
 }

@@ -160,11 +160,11 @@ void fnptrs()
 
   // return types and arguments must match exactly, no inheritance allowed
   void (*(*t7)())() throw(B1) = &s8;       // valid
-  void (*(*t8)())() throw(A) = &s8;        // expected-error {{return types differ}} expected-error {{incompatible type}}
-  void (*(*t9)())() throw(D) = &s8;        // expected-error {{return types differ}} expected-error {{incompatible type}}
+  void (*(*t8)())() throw(A) = &s8;        // expected-error {{return types differ}}
+  void (*(*t9)())() throw(D) = &s8;        // expected-error {{return types differ}}
   void (*t10)(void (*)() throw(B1)) = &s9; // valid   expected-warning{{disambiguated}}
-  void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
-  void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
+  void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}} expected-warning{{disambiguated}}
+  void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}} expected-warning{{disambiguated}}
 }
 
 // Member function stuff
@@ -178,7 +178,7 @@ void mfnptr()
 {
   void (Str1::*pfn1)() throw(int) = &Str1::f; // valid
   void (Str1::*pfn2)() = &Str1::f; // valid
-  void (Str1::*pfn3)() throw() = &Str1::f; // expected-error {{not superset}} expected-error {{incompatible type}}
+  void (Str1::*pfn3)() throw() = &Str1::f; // expected-error {{not superset}}
 }
 
 // Don't suppress errors in template instantiation.
