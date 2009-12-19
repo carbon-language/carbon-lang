@@ -97,7 +97,10 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    bool IsInitializer) {
   bool ShouldDestroyTemporaries = false;
   unsigned OldNumLiveTemporaries = 0;
-  
+
+  if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
+    E = DAE->getExpr();
+
   if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
     ShouldDestroyTemporaries = true;
     
