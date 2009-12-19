@@ -687,9 +687,11 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   }
 }
 
+namespace llvm { // in namespace llvm so findable by ADL
 static bool TypesEqual(const Type *Ty, const Type *Ty2) {
   std::map<const Type *, const Type *> EqTypes;
-  return TypesEqual(Ty, Ty2, EqTypes);
+  return ::TypesEqual(Ty, Ty2, EqTypes);
+}
 }
 
 // AbstractTypeHasCycleThrough - Return true there is a path from CurTy to
@@ -725,8 +727,10 @@ static bool ConcreteTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
   return false;
 }
 
-/// TypeHasCycleThroughItself - Return true if the specified type has a cycle
-/// back to itself.
+/// TypeHasCycleThroughItself - Return true if the specified type has
+/// a cycle back to itself.
+
+namespace llvm { // in namespace llvm so it's findable by ADL
 static bool TypeHasCycleThroughItself(const Type *Ty) {
   SmallPtrSet<const Type*, 128> VisitedTypes;
 
@@ -742,6 +746,7 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
         return true;
   }
   return false;
+}
 }
 
 //===----------------------------------------------------------------------===//
