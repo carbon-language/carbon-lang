@@ -30,7 +30,7 @@ class raw_os_ostream : public raw_ostream {
   
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos();
+  virtual uint64_t current_pos() const;
   
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}

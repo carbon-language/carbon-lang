@@ -59,7 +59,7 @@ namespace llvm
 
     /// current_pos - Return the current position within the stream,
     /// not counting the bytes currently in the buffer.
-    virtual uint64_t current_pos() { 
+    virtual uint64_t current_pos() const { 
       // This has the same effect as calling TheStream.current_pos(),
       // but that interface is private.
       return TheStream->tell() - TheStream->GetNumBytesInBuffer();

@@ -67,7 +67,7 @@ raw_ostream::~raw_ostream() {
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
 
-size_t raw_ostream::preferred_buffer_size() {
+size_t raw_ostream::preferred_buffer_size() const {
   // BUFSIZ is intended to be a reasonable default.
   return BUFSIZ;
 }
@@ -440,20 +440,20 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   return pos;  
 }
 
-size_t raw_fd_ostream::preferred_buffer_size() {
+size_t raw_fd_ostream::preferred_buffer_size() const {
 #if !defined(_MSC_VER) && !defined(__MINGW32__) // Windows has no st_blksize.
   assert(FD >= 0 && "File not yet open!");
   struct stat statbuf;
-  if (fstat(FD, &statbuf) == 0) {
-    // If this is a terminal, don't use buffering. Line buffering
-    // would be a more traditional thing to do, but it's not worth
-    // the complexity.
-    if (S_ISCHR(statbuf.st_mode) && isatty(FD))
-      return 0;
-    // Return the preferred block size.
-    return statbuf.st_blksize;
-  }
-  error_detected();
+  if (fstat(FD, &statbuf) != 0)
+    return 0;
+  
+  // If this is a terminal, don't use buffering. Line buffering
+  // would be a more traditional thing to do, but it's not worth
+  // the complexity.
+  if (S_ISCHR(statbuf.st_mode) && isatty(FD))
+    return 0;
+  // Return the preferred block size.
+  return statbuf.st_blksize;
 #endif
   return raw_ostream::preferred_buffer_size();
 }
@@ -578,7 +578,9 @@ void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
-uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
+uint64_t raw_svector_ostream::current_pos() const {
+   return OS.size();
+}
 
 StringRef raw_svector_ostream::str() {
   flush();
@@ -601,6 +603,6 @@ raw_null_ostream::~raw_null_ostream() {
 void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
 }
 
-uint64_t raw_null_ostream::current_pos() {
+uint64_t raw_null_ostream::current_pos() const {
   return 0;
 }

@@ -85,7 +85,7 @@ public:
   virtual ~raw_ostream();
 
   /// tell - Return the current offset with the file.
-  uint64_t tell() { return current_pos() + GetNumBytesInBuffer(); }
+  uint64_t tell() const { return current_pos() + GetNumBytesInBuffer(); }
 
   /// has_error - Return the value of the flag in this raw_ostream indicating
   /// whether an output error has been encountered.
@@ -116,7 +116,7 @@ public:
     SetBufferAndMode(new char[Size], Size, InternalBuffer);
   }
 
-  size_t GetBufferSize() {
+  size_t GetBufferSize() const {
     // If we're supposed to be buffered but haven't actually gotten around
     // to allocating the buffer yet, return the value that would be used.
     if (BufferMode != Unbuffered && OutBufStart == 0)
@@ -269,7 +269,7 @@ private:
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos() = 0;
+  virtual uint64_t current_pos() const = 0;
 
 protected:
   /// SetBuffer - Use the provided buffer as the raw_ostream buffer. This is
@@ -282,7 +282,7 @@ protected:
 
   /// preferred_buffer_size - Return an efficient buffer size for the
   /// underlying output mechanism.
-  virtual size_t preferred_buffer_size();
+  virtual size_t preferred_buffer_size() const;
 
   /// error_detected - Set the flag indicating that an output error has
   /// been encountered.
@@ -325,10 +325,10 @@ class raw_fd_ostream : public raw_ostream {
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos() { return pos; }
+  virtual uint64_t current_pos() const { return pos; }
 
   /// preferred_buffer_size - Determine an efficient buffer size.
-  virtual size_t preferred_buffer_size();
+  virtual size_t preferred_buffer_size() const;
 
 public:
 
@@ -423,7 +423,7 @@ class raw_string_ostream : public raw_ostream {
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos() { return OS.size(); }
+  virtual uint64_t current_pos() const { return OS.size(); }
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream();
@@ -447,7 +447,7 @@ class raw_svector_ostream : public raw_ostream {
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos();
+  virtual uint64_t current_pos() const;
 public:
   /// Construct a new raw_svector_ostream.
   ///
@@ -468,7 +468,7 @@ class raw_null_ostream : public raw_ostream {
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos();
+  virtual uint64_t current_pos() const;
 
 public:
   explicit raw_null_ostream() {}
