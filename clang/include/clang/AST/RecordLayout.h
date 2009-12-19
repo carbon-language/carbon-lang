@@ -53,7 +53,7 @@ public:
     PrimaryBaseInfo() {}
 
     PrimaryBaseInfo(const CXXRecordDecl *Base, bool IsVirtual)
-      : Value(Base, IsVirtual) {}
+      : Value(Base, Base && IsVirtual) {}
 
     /// Value - Points to the primary base. The single-bit value
     /// will be non-zero when the primary base is virtual.
