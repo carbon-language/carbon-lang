@@ -4251,6 +4251,7 @@ SDVTList SelectionDAG::getVTList(const EVT *VTs, unsigned NumVTs) {
     case 1: return getVTList(VTs[0]);
     case 2: return getVTList(VTs[0], VTs[1]);
     case 3: return getVTList(VTs[0], VTs[1], VTs[2]);
+    case 4: return getVTList(VTs[0], VTs[1], VTs[2], VTs[3]);
     default: break;
   }
 
