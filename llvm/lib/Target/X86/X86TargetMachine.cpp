@@ -38,6 +38,8 @@ static const MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   }
 }
 
+extern "C" void LLVMInitializeX86Disassembler();
+
 extern "C" void LLVMInitializeX86Target() { 
   // Register the target.
   RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
@@ -46,6 +48,8 @@ extern "C" void LLVMInitializeX86Target() {
   // Register the target asm info.
   RegisterAsmInfoFn A(TheX86_32Target, createMCAsmInfo);
   RegisterAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
+
+  LLVMInitializeX86Disassembler();
 
   // Register the code emitter.
   TargetRegistry::RegisterCodeEmitter(TheX86_32Target, createX86MCCodeEmitter);

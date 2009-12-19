@@ -23,6 +23,8 @@ add_executable(tblgen
   TGValueTypes.cpp
   TableGen.cpp
   TableGenBackend.cpp
+  X86DisassemblerTables.cpp
+  X86RecognizableInstr.cpp
   )
 
 target_link_libraries(tblgen LLVMSupport LLVMSystem)
