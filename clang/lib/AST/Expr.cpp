@@ -1213,6 +1213,16 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     return LV_Valid;
   }
 
+  case Expr::CXXExprWithTemporariesClass:
+    return cast<CXXExprWithTemporaries>(this)->getSubExpr()->isLvalue(Ctx);
+
+  case Expr::ObjCMessageExprClass:
+    if (const ObjCMethodDecl *Method
+          = cast<ObjCMessageExpr>(this)->getMethodDecl())
+      if (Method->getResultType()->isLValueReferenceType())
+        return LV_Valid;
+    break;
+
   default:
     break;
   }
