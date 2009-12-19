@@ -12,11 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/CharUnits.h"
-
 #include "llvm/ADT/StringExtras.h"
-
-#include <string>
-
 using namespace clang;
 
 std::string CharUnits::toString() const {
