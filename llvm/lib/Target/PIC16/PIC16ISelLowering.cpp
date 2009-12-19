@@ -1270,7 +1270,6 @@ PIC16TargetLowering::LowerReturn(SDValue Chain,
   std::string FuncName = F->getName();
 
   const char *tmpName = createESName(PAN::getFrameLabel(FuncName));
-  SDVTList VTs  = DAG.getVTList (MVT::i8, MVT::Other);
   SDValue ES = DAG.getTargetExternalSymbol(tmpName, MVT::i8);
   SDValue BS = DAG.getConstant(1, MVT::i8);
   SDValue RetVal;
