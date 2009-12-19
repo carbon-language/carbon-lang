@@ -550,13 +550,17 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
       SourceLocation DelLoc = ConsumeToken();
       Actions.SetDeclDeleted(ThisDecl, DelLoc);
     } else {
-      if (getLang().CPlusPlus)
+      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+        EnterScope(0);
         Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
+      }
 
       OwningExprResult Init(ParseInitializer());
 
-      if (getLang().CPlusPlus)
+      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        ExitScope();
+      }
 
       if (Init.isInvalid()) {
         SkipUntil(tok::semi, true, true);

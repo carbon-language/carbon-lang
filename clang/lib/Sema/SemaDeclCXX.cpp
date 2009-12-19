@@ -5529,51 +5529,61 @@ bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
   return true;
 }
 
-/// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
-/// initializer for the declaration 'Dcl'.
+/// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse
+/// an initializer for the out-of-line declaration 'Dcl'.  The scope
+/// is a fresh scope pushed for just this purpose.
+///
 /// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a
 /// static data member of class X, names should be looked up in the scope of
 /// class X.
 void Sema::ActOnCXXEnterDeclInitializer(Scope *S, DeclPtrTy Dcl) {
-  AdjustDeclIfTemplate(Dcl);
-
-  Decl *D = Dcl.getAs<Decl>();
   // If there is no declaration, there was an error parsing it.
-  if (D == 0)
-    return;
+  Decl *D = Dcl.getAs<Decl>();
+  if (D == 0) return;
 
-  // Check whether it is a declaration with a nested name specifier like
-  // int foo::bar;
-  if (!D->isOutOfLine())
-    return;
+  // We should only get called for declarations with scope specifiers, like:
+  //   int foo::bar;
+  assert(D->isOutOfLine());
 
-  // C++ [basic.lookup.unqual]p13
-  //
-  // A name used in the definition of a static data member of class X
-  // (after the qualified-id of the static member) is looked up as if the name
-  // was used in a member function of X.
+  // C++0x [basic.lookup.unqual]p13:
+  //   A name used in the definition of a static data member of class
+  //   X (after the qualified-id of the static member) is looked up as
+  //   if the name was used in a member function of X.
+  // C++0x [basic.lookup.unqual]p14:
+  //   If a variable member of a namespace is defined outside of the
+  //   scope of its namespace then any name used in the definition of
+  //   the variable member (after the declarator-id) is looked up as
+  //   if the definition of the variable member occurred in its
+  //   namespace.
+  // Both of these imply that we should push a scope whose context
+  // is the semantic context of the declaration.  We can't use
+  // PushDeclContext here because that context is not necessarily
+  // lexically contained in the current context.  Fortunately,
+  // scopes should work.
 
-  // Change current context into the context of the initializing declaration.
-  EnterDeclaratorContext(S, D->getDeclContext());
+#ifndef NDEBUG
+  Scope *Ancestor = S->getParent();
+  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
+  assert(Ancestor->getEntity() == CurContext && "ancestor context mismatch");
+#endif
+
+  CurContext = D->getDeclContext();
+  S->setEntity(CurContext);
 }
 
 /// ActOnCXXExitDeclInitializer - Invoked after we are finished parsing an
-/// initializer for the declaration 'Dcl'.
+/// initializer for the out-of-line declaration 'Dcl'.
 void Sema::ActOnCXXExitDeclInitializer(Scope *S, DeclPtrTy Dcl) {
-  AdjustDeclIfTemplate(Dcl);
-
-  Decl *D = Dcl.getAs<Decl>();
   // If there is no declaration, there was an error parsing it.
-  if (D == 0)
-    return;
+  Decl *D = Dcl.getAs<Decl>();
+  if (D == 0) return;
 
-  // Check whether it is a declaration with a nested name specifier like
-  // int foo::bar;
-  if (!D->isOutOfLine())
-    return;
-
+  assert(D->isOutOfLine());
   assert(S->getEntity() == D->getDeclContext() && "Context imbalance!");
-  ExitDeclaratorContext(S);
+  
+  Scope *Ancestor = S->getParent();
+  while (!Ancestor->getEntity()) Ancestor = Ancestor->getParent();
+  CurContext = (DeclContext*) Ancestor->getEntity();
 }
 
 /// ActOnCXXConditionDeclarationExpr - Parsed a condition declaration of a

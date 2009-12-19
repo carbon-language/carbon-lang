@@ -207,3 +207,16 @@ namespace test1 {
     }
   };
 }
+
+// We still need to do lookup in the lexical scope, even if we push a
+// non-lexical scope.
+namespace test2 {
+  namespace ns {
+    int *count_ptr;
+  }
+  namespace {
+    int count = 0;
+  }
+
+  int *ns::count_ptr = &count;
+}

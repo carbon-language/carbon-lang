@@ -137,4 +137,4 @@ struct a {
 
 a a;
 
-int a::sa = a.a;
+int a::sa = a.a; // expected-error {{invalid use of nonstatic data member 'a'}}
