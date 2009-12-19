@@ -192,10 +192,6 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
-  /// PreDeclaratorDC - Keeps the declaration context before switching to the
-  /// context of a declarator's nested-name-specifier.
-  DeclContext *PreDeclaratorDC;
-
   /// CurBlock - If inside of a block definition, this contains a pointer to
   /// the active block object that represents it.
   BlockSemaInfo *CurBlock;

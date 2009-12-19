@@ -350,7 +350,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   : LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
-    PreDeclaratorDC(0), CurBlock(0), PackContext(0), ParsingDeclDepth(0),
+    CurBlock(0), PackContext(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
@@ -815,7 +815,7 @@ void Sema::ActOnEndOfTranslationUnit() {
 //===----------------------------------------------------------------------===//
 
 DeclContext *Sema::getFunctionLevelDeclContext() {
-  DeclContext *DC = PreDeclaratorDC ? PreDeclaratorDC : CurContext;
+  DeclContext *DC = CurContext;
 
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
