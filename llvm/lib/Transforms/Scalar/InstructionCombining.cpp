@@ -11234,6 +11234,23 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
   for (unsigned PHIId = 0; PHIId != PHIsToSlice.size(); ++PHIId) {
     PHINode *PN = PHIsToSlice[PHIId];
     
+    // Scan the input list of the PHI.  If any input is an invoke, and if the
+    // input is defined in the predecessor, then we won't be split the critical
+    // edge which is required to insert a truncate.  Because of this, we have to
+    // bail out.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      InvokeInst *II = dyn_cast<InvokeInst>(PN->getIncomingValue(i));
+      if (II == 0) continue;
+      if (II->getParent() != PN->getIncomingBlock(i))
+        continue;
+     
+      // If we have a phi, and if it's directly in the predecessor, then we have
+      // a critical edge where we need to put the truncate.  Since we can't
+      // split the edge in instcombine, we have to bail out.
+      return 0;
+    }
+      
+    
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
          UI != E; ++UI) {
       Instruction *User = cast<Instruction>(*UI);
@@ -11316,7 +11333,9 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
           PredVal = EltPHI;
           EltPHI->addIncoming(PredVal, Pred);
           continue;
-        } else if (PHINode *InPHI = dyn_cast<PHINode>(PN)) {
+        }
+        
+        if (PHINode *InPHI = dyn_cast<PHINode>(PN)) {
           // If the incoming value was a PHI, and if it was one of the PHIs we
           // already rewrote it, just use the lowered value.
           if (Value *Res = ExtractedVals[LoweredPHIRecord(InPHI, Offset, Ty)]) {

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128:n8:16:32"
 target triple = "i386-apple-darwin10.0"
 
 define i32 @test0(i8 %tmp2) ssp {
@@ -148,3 +148,59 @@ entry:
   store i32* getelementptr (i32* bitcast (i32 (i32, i8**)* @test6 to i32*), i32 -2048), i32** @test6g, align 4
   unreachable
 }
+
+
+; PR5827
+
+%class.RuleBasedBreakIterator = type { i64 ()* }
+%class.UStack = type { i8** }
+
+define i32 @_ZN22RuleBasedBreakIterator15checkDictionaryEi(%class.RuleBasedBreakIterator* %this, i32 %x) align 2 {
+entry:
+  %breaks = alloca %class.UStack, align 4         ; <%class.UStack*> [#uses=3]
+  call void @_ZN6UStackC1Ei(%class.UStack* %breaks, i32 0)
+  %tobool = icmp ne i32 %x, 0                     ; <i1> [#uses=1]
+  br i1 %tobool, label %cond.end, label %cond.false
+
+terminate.handler:                                ; preds = %ehcleanup
+  %exc = call i8* @llvm.eh.exception()            ; <i8*> [#uses=1]
+  %0 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exc, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 1) ; <i32> [#uses=0]
+  call void @_ZSt9terminatev() noreturn nounwind
+  unreachable
+
+ehcleanup:                                        ; preds = %cond.false
+  %exc1 = call i8* @llvm.eh.exception()           ; <i8*> [#uses=2]
+  %1 = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exc1, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null) ; <i32> [#uses=0]
+  invoke void @_ZN6UStackD1Ev(%class.UStack* %breaks)
+          to label %cont unwind label %terminate.handler
+
+cont:                                             ; preds = %ehcleanup
+  call void @_Unwind_Resume_or_Rethrow(i8* %exc1)
+  unreachable
+
+cond.false:                                       ; preds = %entry
+  %tmp4 = getelementptr inbounds %class.RuleBasedBreakIterator* %this, i32 0, i32 0 ; <i64 ()**> [#uses=1]
+  %tmp5 = load i64 ()** %tmp4                     ; <i64 ()*> [#uses=1]
+  %call = invoke i64 %tmp5()
+          to label %cond.end unwind label %ehcleanup ; <i64> [#uses=1]
+
+cond.end:                                         ; preds = %cond.false, %entry
+  %cond = phi i64 [ 0, %entry ], [ %call, %cond.false ] ; <i64> [#uses=1]
+  %conv = trunc i64 %cond to i32                  ; <i32> [#uses=1]
+  call void @_ZN6UStackD1Ev(%class.UStack* %breaks)
+  ret i32 %conv
+}
+
+declare void @_ZN6UStackC1Ei(%class.UStack*, i32)
+
+declare void @_ZN6UStackD1Ev(%class.UStack*)
+
+declare i32 @__gxx_personality_v0(...)
+
+declare i8* @llvm.eh.exception() nounwind readonly
+
+declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
+
+declare void @_ZSt9terminatev()
+
+declare void @_Unwind_Resume_or_Rethrow(i8*)
