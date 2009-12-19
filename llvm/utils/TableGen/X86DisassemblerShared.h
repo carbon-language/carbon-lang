@@ -11,6 +11,7 @@
 #define X86DISASSEMBLERSHARED_H
 
 #include <string>
+#include <string.h>
 
 #define INSTRUCTION_SPECIFIER_FIELDS       \
   bool                    filtered;        \

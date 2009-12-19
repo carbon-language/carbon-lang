@@ -21,8 +21,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 
-#include <string>
-
 using namespace llvm;
 using namespace X86Disassembler;
   
