@@ -1291,20 +1291,6 @@ public:
     return false;
   }
 
-  /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
-  /// it exists. Skip a possible ISD::TokenFactor.
-  static SDValue GetPossiblePreceedingTailCall(SDValue Chain,
-                                                 unsigned TailCallNodeOpCode) {
-    if (Chain.getOpcode() == TailCallNodeOpCode) {
-      return Chain;
-    } else if (Chain.getOpcode() == ISD::TokenFactor) {
-      if (Chain.getNumOperands() &&
-          Chain.getOperand(0).getOpcode() == TailCallNodeOpCode)
-        return Chain.getOperand(0);
-    }
-    return Chain;
-  }
-
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
