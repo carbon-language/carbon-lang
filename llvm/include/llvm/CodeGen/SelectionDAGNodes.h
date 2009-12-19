@@ -1228,7 +1228,7 @@ public:
   SDVTList getVTList() const {
     SDVTList X = { ValueList, NumValues };
     return X;
-  };
+  }
 
   /// getFlaggedNode - If this node has a flag operand, return the node
   /// to which the flag operand points. Otherwise return NULL.
