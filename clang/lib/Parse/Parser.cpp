@@ -880,7 +880,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 /// as the current tokens, so only call it in contexts where these are invalid.
 bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
   assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)
-          || Tok.is(tok::kw_typename)) &&
+          || Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope)) &&
          "Cannot be a type or scope token!");
 
   if (Tok.is(tok::kw_typename)) {
@@ -934,6 +934,9 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     PP.AnnotateCachedTokens(Tok);
     return true;
   }
+
+  // Remembers whether the token was originally a scope annotation.
+  bool wasScopeAnnotation = Tok.is(tok::annot_cxxscope);
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
@@ -1017,9 +1020,11 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
   Tok.setAnnotationValue(SS.getScopeRep());
   Tok.setAnnotationRange(SS.getRange());
 
-  // In case the tokens were cached, have Preprocessor replace them with the
-  // annotation token.
-  PP.AnnotateCachedTokens(Tok);
+  // In case the tokens were cached, have Preprocessor replace them
+  // with the annotation token.  We don't need to do this if we've
+  // just reverted back to the state we were in before being called.
+  if (!wasScopeAnnotation)
+    PP.AnnotateCachedTokens(Tok);
   return true;
 }
 
