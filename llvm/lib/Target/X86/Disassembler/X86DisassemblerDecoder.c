@@ -17,7 +17,7 @@
 #include <stdarg.h>   /* for va_*()       */
 #include <stdio.h>    /* for vsnprintf()  */
 #include <stdlib.h>   /* for exit()       */
-#include <string.h>   /* for bzero()      */
+#include <string.h>   /* for memset()     */
 
 #include "X86DisassemblerDecoder.h"
 
@@ -1331,7 +1331,7 @@ int decodeInstruction(struct InternalInstruction* insn,
                       void* loggerArg,
                       uint64_t startLoc,
                       DisassemblerMode mode) {
-  bzero(insn, sizeof(struct InternalInstruction));
+  memset(insn, 0, sizeof(struct InternalInstruction));
     
   insn->reader = reader;
   insn->readerArg = readerArg;
