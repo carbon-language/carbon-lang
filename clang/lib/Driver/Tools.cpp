@@ -230,7 +230,7 @@ static const char *getARMTargetCPU(const ArgList &Args) {
     if (MArch == "armv5e" || MArch == "armv5te")
       return "arm1026ejs";
     if (MArch == "armv5tej")
-      return "arm926ejs";
+      return "arm926ej-s";
     if (MArch == "armv6" || MArch == "armv6k")
       return "arm1136jf-s";
     if (MArch == "armv6j")
@@ -431,6 +431,24 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     assert(FloatABI == "hard" && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
+  }
+
+  // Set appropriate target features for floating point mode.
+  //
+  // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
+  // yet (it uses the -mfloat-abi and -msoft-float options above), and it is
+  // stripped out by the ARM target.
+
+  // Use software floating point operations?
+  if (FloatABI == "soft") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+soft-float");
+  }
+
+  // Use software floating point argument passing?
+  if (FloatABI != "hard") {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("+soft-float-abi");
   }
 }
 

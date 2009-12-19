@@ -1187,7 +1187,11 @@ class ARMTargetInfo : public TargetInfo {
    static const char * const GCCRegNames[];
 
   std::string ABI, CPU;
-  bool IsThumb;
+  unsigned IsThumb : 1;
+
+  // Initialized via features.
+  unsigned SoftFloat : 1;
+  unsigned SoftFloatABI : 1;
 
 public:
   ARMTargetInfo(const std::string &TripleStr)
@@ -1240,6 +1244,36 @@ public:
 
     return true;
   }
+
+  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                 const std::string &Name,
+                                 bool Enabled) const {
+    if (Name != "soft-float" && Name != "soft-float-abi")
+      return false;
+
+    Features[Name] = Enabled;
+    return true;
+  }
+
+  virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+    SoftFloat = SoftFloatABI = false;
+    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
+      if (Features[i] == "+soft-float")
+        SoftFloat = true;
+      else if (Features[i] == "+soft-float-abi")
+        SoftFloatABI = true;
+    }
+
+    // Remove front-end specific options which the backend handles differently.
+    std::vector<std::string>::iterator it;
+    it = std::find(Features.begin(), Features.end(), "+soft-float");
+    if (it != Features.end())
+      Features.erase(it);
+    it = std::find(Features.begin(), Features.end(), "+soft-float-abi");
+    if (it != Features.end())
+      Features.erase(it);
+  }
+
   static const char *getCPUDefineSuffix(llvm::StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
       .Cases("arm8", "arm810", "4")
@@ -1294,9 +1328,7 @@ public:
     if (ABI == "aapcs" || ABI == "aapcs-linux")
       Define(Defs, "__ARM_EABI__");
 
-    // FIXME: This isn't correct, this should be set based on the various float
-    // options.
-    if (CPUArch[0] <= '5')
+    if (SoftFloat)
       Define(Defs, "__SOFTFP__");
 
     if (CPU == "xscale")
