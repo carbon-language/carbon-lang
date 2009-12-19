@@ -170,7 +170,16 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
   switch (MO.getType()) {
     case MachineOperand::MO_Register:
-      O << getRegisterName(MO.getReg());
+      {
+        // For indirect load/store insns, the fsr name is printed as INDF.
+        std::string RegName = getRegisterName(MO.getReg());
+        if ((MI->getOpcode() == PIC16::load_indirect) ||
+            (MI->getOpcode() == PIC16::store_indirect))
+        {
+          RegName.replace (0, 3, "INDF");
+        }
+        O << RegName;
+      }
       return;
 
     case MachineOperand::MO_Immediate:
@@ -263,10 +272,9 @@ void PIC16AsmPrinter::printLibcallDecls() {
 bool PIC16AsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
 
-  // FIXME:: This is temporary solution to generate the include file.
-  // The processor should be passed to llc as in input and the header file
-  // should be generated accordingly.
-  O << "\n\t#include P16F1937.INC\n";
+  // Every asmbly contains these std headers. 
+  O << "\n#include p16f1xxx.inc";
+  O << "\n#include stdmacros.inc";
 
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
