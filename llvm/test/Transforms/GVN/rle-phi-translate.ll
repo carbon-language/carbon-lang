@@ -112,3 +112,35 @@ bb2:
   ret i32 %dv
 }
 
+
+
+; void test5(int N, double* G) {
+;   for (long j = 1; j < 1000; j++)
+;     G[j] = G[j] + G[j-1];
+; }
+;
+; Should compile into one load in the loop.
+define void @test5(i32 %N, double* nocapture %G) nounwind ssp {
+; CHECK: @test5
+bb.nph:
+  br label %for.body
+
+for.body:
+  %indvar = phi i64 [ 0, %bb.nph ], [ %tmp, %for.body ]
+  %arrayidx6 = getelementptr double* %G, i64 %indvar
+  %tmp = add i64 %indvar, 1
+  %arrayidx = getelementptr double* %G, i64 %tmp
+  %tmp3 = load double* %arrayidx
+  %tmp7 = load double* %arrayidx6
+  %add = fadd double %tmp3, %tmp7
+  store double %add, double* %arrayidx
+  %exitcond = icmp eq i64 %tmp, 999
+  br i1 %exitcond, label %for.end, label %for.body
+; CHECK: for.body:
+; CHECK: phi double
+; CHECK: load double
+; CHECK-NOT: load double
+; CHECK: br i1
+for.end:
+  ret void
+}

@@ -894,36 +894,12 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
                                PredPtrVal);
         Result.push_back(Entry);
 
-        // Add it to the cache for this CacheKey so that subsequent queries get
-        // this result.
-        Cache = &NonLocalPointerDeps[CacheKey].second;
-        MemoryDependenceAnalysis::NonLocalDepInfo::iterator It =
-          std::upper_bound(Cache->begin(), Cache->end(), Entry);
-        
-        if (It != Cache->begin() && (It-1)->getBB() == Pred)
-          --It;
-
-        if (It == Cache->end() || It->getBB() != Pred) {
-          Cache->insert(It, Entry);
-          // Add it to the reverse map.
-          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
-        } else if (!It->getResult().isDirty()) {
-          // noop
-        } else if (It->getResult().getInst() == Pred->getTerminator()) {
-          // Same instruction, clear the dirty marker.
-          It->setResult(Entry.getResult(), PredPtrVal);
-        } else if (It->getResult().getInst() == 0) {
-          // Dirty, with no instruction, just add this.
-          It->setResult(Entry.getResult(), PredPtrVal);
-          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
-        } else {
-          // Otherwise, dirty with a different instruction.
-          RemoveFromReverseMap(ReverseNonLocalPtrDeps,
-                               It->getResult().getInst(), CacheKey);
-          It->setResult(Entry.getResult(),PredPtrVal);
-          ReverseNonLocalPtrDeps[Pred->getTerminator()].insert(CacheKey);
-        }
-        Cache = 0;
+        // Since we had a phi translation failure, the cache for CacheKey won't
+        // include all of the entries that we need to immediately satisfy future
+        // queries.  Mark this in NonLocalPointerDeps by setting the
+        // BBSkipFirstBlockPair pointer to null.  This requires reuse of the
+        // cached value to do more work but not miss the phi trans failure.
+        NonLocalPointerDeps[CacheKey].first = BBSkipFirstBlockPair();
         continue;
       }
 
@@ -961,10 +937,10 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t PointeeSize,
       NumSortedEntries = Cache->size();
     }
     
-    // Since we did phi translation, the "Cache" set won't contain all of the
+    // Since we failed phi translation, the "Cache" set won't contain all of the
     // results for the query.  This is ok (we can still use it to accelerate
     // specific block queries) but we can't do the fastpath "return all
-    // results from the set"  Clear out the indicator for this.
+    // results from the set".  Clear out the indicator for this.
     CacheInfo->first = BBSkipFirstBlockPair();
     
     // If *nothing* works, mark the pointer as being clobbered by the first
