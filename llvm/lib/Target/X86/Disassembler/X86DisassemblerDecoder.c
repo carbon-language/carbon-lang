@@ -219,14 +219,14 @@ CONSUME_FUNC(consumeUInt32, uint32_t)
 CONSUME_FUNC(consumeUInt64, uint64_t)
 
 /*
- * dprintf - Uses the logging function provided by the user to log a single
+ * dbgprintf - Uses the logging function provided by the user to log a single
  *   message, typically without a carriage-return.
  *
  * @param insn    - The instruction containing the logging function.
  * @param format  - See printf().
  * @param ...     - See printf().
  */
-static inline void dprintf(struct InternalInstruction* insn,
+static inline void dbgprintf(struct InternalInstruction* insn,
                            const char* format,
                            ...) {  
   char buffer[256];
@@ -299,7 +299,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
   BOOL hasAdSize = FALSE;
   BOOL hasOpSize = FALSE;
   
-  dprintf(insn, "readPrefixes()");
+  dbgprintf(insn, "readPrefixes()");
     
   while (isPrefix) {
     prefixLocation = insn->readerCursor;
@@ -312,7 +312,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     case 0xf2:  /* REPNE/REPNZ */
     case 0xf3:  /* REP or REPE/REPZ */
       if (prefixGroups[0])
-        dprintf(insn, "Redundant Group 1 prefix");
+        dbgprintf(insn, "Redundant Group 1 prefix");
       prefixGroups[0] = TRUE;
       setPrefixPresent(insn, byte, prefixLocation);
       break;
@@ -345,20 +345,20 @@ static int readPrefixes(struct InternalInstruction* insn) {
         unreachable("Unhandled override");
       }
       if (prefixGroups[1])
-        dprintf(insn, "Redundant Group 2 prefix");
+        dbgprintf(insn, "Redundant Group 2 prefix");
       prefixGroups[1] = TRUE;
       setPrefixPresent(insn, byte, prefixLocation);
       break;
     case 0x66:  /* Operand-size override */
       if (prefixGroups[2])
-        dprintf(insn, "Redundant Group 3 prefix");
+        dbgprintf(insn, "Redundant Group 3 prefix");
       prefixGroups[2] = TRUE;
       hasOpSize = TRUE;
       setPrefixPresent(insn, byte, prefixLocation);
       break;
     case 0x67:  /* Address-size override */
       if (prefixGroups[3])
-        dprintf(insn, "Redundant Group 4 prefix");
+        dbgprintf(insn, "Redundant Group 4 prefix");
       prefixGroups[3] = TRUE;
       hasAdSize = TRUE;
       setPrefixPresent(insn, byte, prefixLocation);
@@ -369,7 +369,7 @@ static int readPrefixes(struct InternalInstruction* insn) {
     }
     
     if (isPrefix)
-      dprintf(insn, "Found prefix 0x%hhx", byte);
+      dbgprintf(insn, "Found prefix 0x%hhx", byte);
   }
   
   if (insn->mode == MODE_64BIT) {
@@ -377,14 +377,14 @@ static int readPrefixes(struct InternalInstruction* insn) {
       uint8_t opcodeByte;
       
       if(lookAtByte(insn, &opcodeByte) || ((opcodeByte & 0xf0) == 0x40)) {
-        dprintf(insn, "Redundant REX prefix");
+        dbgprintf(insn, "Redundant REX prefix");
         return -1;
       }
       
       insn->rexPrefix = byte;
       insn->necessaryPrefixLocation = insn->readerCursor - 2;
       
-      dprintf(insn, "Found REX prefix 0x%hhx", byte);
+      dbgprintf(insn, "Found REX prefix 0x%hhx", byte);
     } else {                
       unconsumeByte(insn);
       insn->necessaryPrefixLocation = insn->readerCursor - 1;
@@ -437,14 +437,14 @@ static int readOpcode(struct InternalInstruction* insn) {
   
   uint8_t current;
   
-  dprintf(insn, "readOpcode()");
+  dbgprintf(insn, "readOpcode()");
   
   insn->opcodeType = ONEBYTE;
   if (consumeByte(insn, &current))
     return -1;
   
   if (current == 0x0f) {
-    dprintf(insn, "Found a two-byte escape prefix (0x%hhx)", current);
+    dbgprintf(insn, "Found a two-byte escape prefix (0x%hhx)", current);
     
     insn->twoByteEscape = current;
     
@@ -452,7 +452,7 @@ static int readOpcode(struct InternalInstruction* insn) {
       return -1;
     
     if (current == 0x38) {
-      dprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
+      dbgprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
       
       insn->threeByteEscape = current;
       
@@ -461,7 +461,7 @@ static int readOpcode(struct InternalInstruction* insn) {
       
       insn->opcodeType = THREEBYTE_38;
     } else if (current == 0x3a) {
-      dprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
+      dbgprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
       
       insn->threeByteEscape = current;
       
@@ -470,7 +470,7 @@ static int readOpcode(struct InternalInstruction* insn) {
       
       insn->opcodeType = THREEBYTE_3A;
     } else {
-      dprintf(insn, "Didn't find a three-byte escape prefix");
+      dbgprintf(insn, "Didn't find a three-byte escape prefix");
       
       insn->opcodeType = TWOBYTE;
     }
@@ -598,7 +598,7 @@ static int getID(struct InternalInstruction* insn) {
   uint8_t attrMask;
   uint16_t instructionID;
   
-  dprintf(insn, "getID()");
+  dbgprintf(insn, "getID()");
     
   attrMask = ATTR_NONE;
   
@@ -718,7 +718,7 @@ static int readSIB(struct InternalInstruction* insn) {
   SIBBase sibBaseBase;
   uint8_t index, base;
   
-  dprintf(insn, "readSIB()");
+  dbgprintf(insn, "readSIB()");
   
   if (insn->consumedSIB)
     return 0;
@@ -727,7 +727,7 @@ static int readSIB(struct InternalInstruction* insn) {
   
   switch (insn->addressSize) {
   case 2:
-    dprintf(insn, "SIB-based addressing doesn't work in 16-bit mode");
+    dbgprintf(insn, "SIB-based addressing doesn't work in 16-bit mode");
     return -1;
     break;
   case 4:
@@ -815,7 +815,7 @@ static int readDisplacement(struct InternalInstruction* insn) {
   int16_t d16;
   int32_t d32;
   
-  dprintf(insn, "readDisplacement()");
+  dbgprintf(insn, "readDisplacement()");
   
   if (insn->consumedDisplacement)
     return 0;
@@ -857,7 +857,7 @@ static int readDisplacement(struct InternalInstruction* insn) {
 static int readModRM(struct InternalInstruction* insn) {  
   uint8_t mod, rm, reg;
   
-  dprintf(insn, "readModRM()");
+  dbgprintf(insn, "readModRM()");
   
   if (insn->consumedModRM)
     return 0;
@@ -1067,7 +1067,7 @@ static int fixupReg(struct InternalInstruction *insn,
                     struct OperandSpecifier *op) {
   uint8_t valid;
   
-  dprintf(insn, "fixupReg()");
+  dbgprintf(insn, "fixupReg()");
   
   switch ((OperandEncoding)op->encoding) {
   default:
@@ -1104,7 +1104,7 @@ static int fixupReg(struct InternalInstruction *insn,
  *                  ModR/M extension; useful for escape opcodes
  */
 static void readOpcodeModifier(struct InternalInstruction* insn) {
-  dprintf(insn, "readOpcodeModifier()");
+  dbgprintf(insn, "readOpcodeModifier()");
   
   if (insn->consumedOpcodeModifier)
     return;
@@ -1136,7 +1136,7 @@ static void readOpcodeModifier(struct InternalInstruction* insn) {
  *                RAX.
  */
 static void readOpcodeRegister(struct InternalInstruction* insn, uint8_t size) {
-  dprintf(insn, "readOpcodeRegister()");
+  dbgprintf(insn, "readOpcodeRegister()");
 
   readOpcodeModifier(insn);
   
@@ -1184,7 +1184,7 @@ static int readImmediate(struct InternalInstruction* insn, uint8_t size) {
   uint32_t imm32;
   uint64_t imm64;
   
-  dprintf(insn, "readImmediate()");
+  dbgprintf(insn, "readImmediate()");
   
   if (insn->numImmediatesConsumed == 2)
     unreachable("Already consumed two immediates");
@@ -1232,7 +1232,7 @@ static int readImmediate(struct InternalInstruction* insn, uint8_t size) {
 static int readOperands(struct InternalInstruction* insn) {
   int index;
   
-  dprintf(insn, "readOperands()");
+  dbgprintf(insn, "readOperands()");
   
   for (index = 0; index < X86_MAX_OPERANDS; ++index) {
     switch (insn->spec->operands[index].encoding) {
@@ -1251,7 +1251,7 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_CP:
     case ENCODING_CO:
     case ENCODING_CT:
-      dprintf(insn, "We currently don't hande code-offset encodings");
+      dbgprintf(insn, "We currently don't hande code-offset encodings");
       return -1;
     case ENCODING_IB:
       if (readImmediate(insn, 1))
@@ -1296,7 +1296,7 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_DUP:
       break;
     default:
-      dprintf(insn, "Encountered an operand with an unknown encoding.");
+      dbgprintf(insn, "Encountered an operand with an unknown encoding.");
       return -1;
     }
   }
@@ -1351,11 +1351,11 @@ int decodeInstruction(struct InternalInstruction* insn,
   
   insn->length = insn->readerCursor - insn->startLocation;
   
-  dprintf(insn, "Read from 0x%llx to 0x%llx: length %llu",
+  dbgprintf(insn, "Read from 0x%llx to 0x%llx: length %llu",
           startLoc, insn->readerCursor, insn->length);
     
   if (insn->length > 15)
-    dprintf(insn, "Instruction exceeds 15-byte limit");
+    dbgprintf(insn, "Instruction exceeds 15-byte limit");
   
   return 0;
 }
