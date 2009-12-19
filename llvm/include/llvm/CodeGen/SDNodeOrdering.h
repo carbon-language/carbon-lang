@@ -18,6 +18,8 @@
 
 namespace llvm {
 
+class SDNode;
+
 /// SDNodeOrdering - Maps a unique (monotonically increasing) value to each
 /// SDNode that roughly corresponds to the ordering of the original LLVM
 /// instruction. This is used for turning off scheduling, because we'll forgo
