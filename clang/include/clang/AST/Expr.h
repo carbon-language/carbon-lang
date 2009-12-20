@@ -1176,6 +1176,11 @@ public:
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
   void setCallee(Expr *F) { SubExprs[FN] = F; }
 
+  Decl *getCalleeDecl();
+  const Decl *getCalleeDecl() const {
+    return const_cast<CallExpr*>(this)->getCalleeDecl();
+  }
+
   /// \brief If the callee is a FunctionDecl, return it. Otherwise return 0.
   FunctionDecl *getDirectCallee();
   const FunctionDecl *getDirectCallee() const {

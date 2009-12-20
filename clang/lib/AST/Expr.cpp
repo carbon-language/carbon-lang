@@ -398,12 +398,16 @@ void CallExpr::DoDestroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
-FunctionDecl *CallExpr::getDirectCallee() {
+Decl *CallExpr::getCalleeDecl() {
   Expr *CEE = getCallee()->IgnoreParenCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE))
-    return dyn_cast<FunctionDecl>(DRE->getDecl());
+    return DRE->getDecl();
 
   return 0;
+}
+
+FunctionDecl *CallExpr::getDirectCallee() {
+    return dyn_cast_or_null<FunctionDecl>(getCalleeDecl());
 }
 
 /// setNumArgs - This changes the number of arguments present in this call.
@@ -858,7 +862,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case CXXMemberCallExprClass: {
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
-    if (const FunctionDecl *FD = CE->getDirectCallee()) {
+    if (const Decl *FD = CE->getCalleeDecl()) {
       // If the callee has attribute pure, const, or warn_unused_result, warn
       // about it. void foo() { strlen("bar"); } should warn.
       //

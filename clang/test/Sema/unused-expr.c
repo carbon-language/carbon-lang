@@ -96,3 +96,8 @@ int t6() {
 
 int t7 __attribute__ ((warn_unused_result)); // expected-warning {{warning: 'warn_unused_result' attribute only applies to function types}}
 
+// PR4010
+int (*fn4)(void) __attribute__ ((warn_unused_result));
+void t8() {
+  fn4(); // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
+}

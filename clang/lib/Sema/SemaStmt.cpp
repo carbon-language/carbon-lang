@@ -96,7 +96,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
     // If the callee has attribute pure, const, or warn_unused_result, warn with
     // a more specific message to make it clear what is happening.
-    if (const FunctionDecl *FD = CE->getDirectCallee()) {
+    if (const Decl *FD = CE->getCalleeDecl()) {
       if (FD->getAttr<WarnUnusedResultAttr>()) {
         Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
         return;
