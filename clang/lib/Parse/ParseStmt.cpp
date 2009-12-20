@@ -1232,7 +1232,6 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   // Remember if this was a volatile asm.
   bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
-  bool isSimple = false;
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after) << "asm";
     SkipUntil(tok::r_paren);
@@ -1249,53 +1248,58 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);
 
-  unsigned NumInputs = 0, NumOutputs = 0;
-
-  SourceLocation RParenLoc;
   if (Tok.is(tok::r_paren)) {
-    // We have a simple asm expression
-    isSimple = true;
-
-    RParenLoc = ConsumeParen();
-  } else {
-    // Parse Outputs, if present.
-    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
-        return StmtError();
-
-    NumOutputs = Names.size();
-
-    // Parse Inputs, if present.
-    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
-        return StmtError();
-
-    assert(Names.size() == Constraints.size() &&
-           Constraints.size() == Exprs.size()
-           && "Input operand size mismatch!");
-
-    NumInputs = Names.size() - NumOutputs;
-
-    // Parse the clobbers, if present.
-    if (Tok.is(tok::colon)) {
-      ConsumeToken();
-
-      // Parse the asm-string list for clobbers.
-      while (1) {
-        OwningExprResult Clobber(ParseAsmStringLiteral());
-
-        if (Clobber.isInvalid())
-          break;
-
-        Clobbers.push_back(Clobber.release());
-
-        if (Tok.isNot(tok::comma)) break;
-        ConsumeToken();
-      }
-    }
-
-    RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
+    // We have a simple asm expression like 'asm("foo")'.
+    SourceLocation RParenLoc = ConsumeParen();
+    return Actions.ActOnAsmStmt(AsmLoc, /*isSimple*/ true, isVolatile,
+                                /*NumOutputs*/ 0, /*NumInputs*/ 0, 0, 
+                                move_arg(Constraints), move_arg(Exprs),
+                                move(AsmString), move_arg(Clobbers),
+                                RParenLoc);
   }
 
-  return Actions.ActOnAsmStmt(AsmLoc, isSimple, isVolatile,
+  // Parse Outputs, if present.
+  if (Tok.is(tok::colon)) {
+    ConsumeToken();
+  
+    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+      return StmtError();
+  }
+  unsigned NumOutputs = Names.size();
+
+  // Parse Inputs, if present.
+  if (Tok.is(tok::colon)) {
+    ConsumeToken();
+    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+      return StmtError();
+  }
+
+  assert(Names.size() == Constraints.size() &&
+         Constraints.size() == Exprs.size() &&
+         "Input operand size mismatch!");
+
+  unsigned NumInputs = Names.size() - NumOutputs;
+
+  // Parse the clobbers, if present.
+  if (Tok.is(tok::colon)) {
+    ConsumeToken();
+
+    // Parse the asm-string list for clobbers.
+    while (1) {
+      OwningExprResult Clobber(ParseAsmStringLiteral());
+
+      if (Clobber.isInvalid())
+        break;
+
+      Clobbers.push_back(Clobber.release());
+
+      if (Tok.isNot(tok::comma)) break;
+      ConsumeToken();
+    }
+  }
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
+  return Actions.ActOnAsmStmt(AsmLoc, false, isVolatile,
                               NumOutputs, NumInputs, Names.data(),
                               move_arg(Constraints), move_arg(Exprs),
                               move(AsmString), move_arg(Clobbers),
@@ -1303,8 +1307,7 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by
-/// asm-statement.  We also parse a leading ':' token.  If the leading colon is
-/// not present, we do not parse anything.
+/// asm-statement, assuming the leading ':' token was eaten.
 ///
 /// [GNU] asm-operands:
 ///         asm-operand
@@ -1319,10 +1322,6 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
                                  llvm::SmallVectorImpl<ExprTy*> &Constraints,
                                  llvm::SmallVectorImpl<ExprTy*> &Exprs) {
-  // Only do anything if this operand is present.
-  if (Tok.isNot(tok::colon)) return false;
-  ConsumeToken();
-
   // 'asm-operands' isn't present?
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return false;
