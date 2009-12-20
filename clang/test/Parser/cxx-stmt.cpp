@@ -52,3 +52,9 @@ void f4() {
     case Type: i = 7; break;  // no error.
   }
 }
+
+// PR5500
+void f5() {
+  asm volatile ("":: :"memory");
+  asm volatile ("": ::"memory");
+}

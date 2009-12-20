@@ -1259,18 +1259,32 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   }
 
   // Parse Outputs, if present.
-  if (Tok.is(tok::colon)) {
+  bool AteExtraColon = false;
+  if (Tok.is(tok::colon) || Tok.is(tok::coloncolon)) {
+    // In C++ mode, parse "::" like ": :".
+    AteExtraColon = Tok.is(tok::coloncolon);
     ConsumeToken();
   
-    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+    if (!AteExtraColon &&
+        ParseAsmOperandsOpt(Names, Constraints, Exprs))
       return StmtError();
   }
+  
   unsigned NumOutputs = Names.size();
 
   // Parse Inputs, if present.
-  if (Tok.is(tok::colon)) {
-    ConsumeToken();
-    if (ParseAsmOperandsOpt(Names, Constraints, Exprs))
+  if (AteExtraColon ||
+      Tok.is(tok::colon) || Tok.is(tok::coloncolon)) {
+    // In C++ mode, parse "::" like ": :".
+    if (AteExtraColon)
+      AteExtraColon = false;
+    else {
+      AteExtraColon = Tok.is(tok::coloncolon);
+      ConsumeToken();
+    }
+    
+    if (!AteExtraColon &&
+        ParseAsmOperandsOpt(Names, Constraints, Exprs))
       return StmtError();
   }
 
@@ -1281,8 +1295,9 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   unsigned NumInputs = Names.size() - NumOutputs;
 
   // Parse the clobbers, if present.
-  if (Tok.is(tok::colon)) {
-    ConsumeToken();
+  if (AteExtraColon || Tok.is(tok::colon)) {
+    if (!AteExtraColon)
+      ConsumeToken();
 
     // Parse the asm-string list for clobbers.
     while (1) {
