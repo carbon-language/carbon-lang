@@ -30,7 +30,7 @@ T Z<T>::value; // expected-error{{no matching constructor}}
 struct DefCon {};
 
 struct NoDefCon { 
-  NoDefCon(const NoDefCon&);
+  NoDefCon(const NoDefCon&); // expected-note{{candidate function}}
 };
 
 void test() {

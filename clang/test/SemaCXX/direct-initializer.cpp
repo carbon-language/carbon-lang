@@ -20,9 +20,9 @@ public:
   X(float, Y); // expected-note{{candidate function}}
 };
 
-class Z {
+class Z { // expected-note{{candidate function}}
 public:
-  Z(int);
+  Z(int); // expected-note{{candidate function}}
 };
 
 void g() {
@@ -32,7 +32,7 @@ void g() {
   Y y(1.0);
   X x4(3.14, y);
 
-  Z z; // expected-error{{no matching constructor for initialization of 'z'}}
+  Z z; // expected-error{{no matching constructor for initialization of 'class Z'}}
 }
 
 struct Base {

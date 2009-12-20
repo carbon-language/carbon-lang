@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-struct IntHolder { // expected-note{{here}}
-  IntHolder(int);
+struct IntHolder { // expected-note{{here}} // expected-note 2{{candidate function}}
+  IntHolder(int); // expected-note 2{{candidate function}}
 };
 
 template<typename T, typename U>

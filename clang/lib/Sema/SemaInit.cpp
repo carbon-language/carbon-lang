@@ -3391,7 +3391,8 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
           
       // Build the an expression that constructs a temporary.
-      CurInit = S.BuildCXXConstructExpr(Loc, Step->Type, Constructor, 
+      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType().getType(),
+                                        Constructor, 
                                         move_arg(ConstructorArgs),
                                         ConstructorInitRequiresZeroInit);
       if (CurInit.isInvalid())

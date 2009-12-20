@@ -25,8 +25,8 @@ T X0<T>::value; // expected-error{{no matching constructor}}
 
 template int X0<int>::value;
 
-struct NotDefaultConstructible {
-  NotDefaultConstructible(int);
+struct NotDefaultConstructible { // expected-note{{candidate function}}
+  NotDefaultConstructible(int); // expected-note{{candidate function}}
 };
 
 template NotDefaultConstructible X0<NotDefaultConstructible>::value; // expected-note{{instantiation}}
