@@ -2727,37 +2727,38 @@ static void TryUserDefinedConversion(Sema &S,
     // The type we're converting from is a class type, enumerate its conversion
     // functions.
 
-    // Try to force the type to be complete before enumerating the conversion
-    // functions; it's okay if this fails, though.
-    S.RequireCompleteType(DeclLoc, SourceType, 0);
-
-    CXXRecordDecl *SourceRecordDecl
-      = cast<CXXRecordDecl>(SourceRecordType->getDecl());
-    
-    const UnresolvedSet *Conversions
-      = SourceRecordDecl->getVisibleConversionFunctions();
-    for (UnresolvedSet::iterator I = Conversions->begin(),
-         E = Conversions->end(); 
-         I != E; ++I) {
-      NamedDecl *D = *I;
-      CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
-      if (isa<UsingShadowDecl>(D))
-        D = cast<UsingShadowDecl>(D)->getTargetDecl();
+    // We can only enumerate the conversion functions for a complete type; if
+    // the type isn't complete, simply skip this step.
+    if (!S.RequireCompleteType(DeclLoc, SourceType, 0)) {
+      CXXRecordDecl *SourceRecordDecl
+        = cast<CXXRecordDecl>(SourceRecordType->getDecl());
       
-      FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
-      CXXConversionDecl *Conv;
-      if (ConvTemplate)
-        Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
-      else
-        Conv = cast<CXXConversionDecl>(*I);
-      
-      if (AllowExplicit || !Conv->isExplicit()) {
+      const UnresolvedSet *Conversions
+        = SourceRecordDecl->getVisibleConversionFunctions();
+      for (UnresolvedSet::iterator I = Conversions->begin(),
+           E = Conversions->end(); 
+           I != E; ++I) {
+        NamedDecl *D = *I;
+        CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
+        if (isa<UsingShadowDecl>(D))
+          D = cast<UsingShadowDecl>(D)->getTargetDecl();
+        
+        FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
+        CXXConversionDecl *Conv;
         if (ConvTemplate)
-          S.AddTemplateConversionCandidate(ConvTemplate, ActingDC, Initializer,
-                                           DestType, CandidateSet);
+          Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
         else
-          S.AddConversionCandidate(Conv, ActingDC, Initializer, DestType,
-                                   CandidateSet);
+          Conv = cast<CXXConversionDecl>(*I);
+        
+        if (AllowExplicit || !Conv->isExplicit()) {
+          if (ConvTemplate)
+            S.AddTemplateConversionCandidate(ConvTemplate, ActingDC,
+                                             Initializer, DestType,
+                                             CandidateSet);
+          else
+            S.AddConversionCandidate(Conv, ActingDC, Initializer, DestType,
+                                     CandidateSet);
+        }
       }
     }
   }
