@@ -9,6 +9,19 @@
 // CHECK: _ZTIP1C = internal constant
 // CHECK: _ZTSPP1C = internal constant
 // CHECK: _ZTIPP1C = internal constant
+// CHECK: _ZTSM1Ci = internal constant
+// CHECK: _ZTIM1Ci = internal constant
+// CHECK: _ZTSPM1Ci = internal constant
+// CHECK: _ZTIPM1Ci = internal constant
+// CHECK: _ZTSM1CS_ = internal constant
+// CHECK: _ZTIM1CS_ = internal constant
+// CHECK: _ZTSM1CPS_ = internal constant
+// CHECK: _ZTIM1CPS_ = internal constant
+// CHECK: _ZTSM1A1C = internal constant
+// CHECK: _ZTIM1A1C = internal constant
+// CHECK: _ZTSM1AP1C = internal constant
+// CHECK: _ZTIM1AP1C = internal constant
+
 // A has no key function, so its RTTI data should be weak_odr.
 struct A { };
 
@@ -26,6 +39,12 @@ struct C;
 void f() {
   (void)typeid(C*);
   (void)typeid(C**);
+  (void)typeid(int C::*);
+  (void)typeid(int C::**);
+  (void)typeid(C C::*);
+  (void)typeid(C *C::*);
+  (void)typeid(C A::*);
+  (void)typeid(C* A::*);
   
 }
 

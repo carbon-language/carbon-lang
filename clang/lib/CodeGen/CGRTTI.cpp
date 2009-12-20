@@ -508,16 +508,34 @@ static bool IsIncompleteClassType(const RecordType *RecordTy) {
   return !RecordTy->getDecl()->isDefinition();
 }  
 
-/// IsPointerToIncompleteClassType - Returns whether the given pointer type
+/// ContainsIncompleteClassType - Returns whether the given type contains an
+/// incomplete class type. This is true if
+///
+///   * The given type is an incomplete class type.
+///   * The given type is a pointer type whose pointee type contains an 
+///     incomplete class type.
+///   * The given type is a member pointer type whose class is an incomplete
+///     class type.
+///   * The given type is a member pointer type whoise pointee type contains an
+///     incomplete class type.
 /// is an indirect or direct pointer to an incomplete class type.
-static bool IsPointerToIncompleteClassType(const PointerType *PointerTy) {
-  QualType PointeeTy = PointerTy->getPointeeType();
-  while ((PointerTy = dyn_cast<PointerType>(PointeeTy)))
-    PointeeTy = PointerTy->getPointeeType();
-
-  if (const RecordType *RecordTy = dyn_cast<RecordType>(PointeeTy)) {
-    // Check if the record type is incomplete.
-    return IsIncompleteClassType(RecordTy);
+static bool ContainsIncompleteClassType(QualType Ty) {
+  if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+    if (IsIncompleteClassType(RecordTy))
+      return true;
+  }
+  
+  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty))
+    return ContainsIncompleteClassType(PointerTy->getPointeeType());
+  
+  if (const MemberPointerType *MemberPointerTy = 
+      dyn_cast<MemberPointerType>(Ty)) {
+    // Check if the class type is incomplete.
+    const RecordType *ClassType = cast<RecordType>(MemberPointerTy->getClass());
+    if (IsIncompleteClassType(ClassType))
+      return true;
+    
+    return ContainsIncompleteClassType(MemberPointerTy->getPointeeType());
   }
   
   return false;
@@ -526,34 +544,19 @@ static bool IsPointerToIncompleteClassType(const PointerType *PointerTy) {
 /// getTypeInfoLinkage - Return the linkage that the type info and type info
 /// name constants should have for the given type.
 static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
-  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty)) {
-    // Itanium C++ ABI 2.9.5p7:
-    //   In addition, it and all of the intermediate abi::__pointer_type_info 
-    //   structs in the chain down to the abi::__class_type_info for the
-    //   incomplete class type must be prevented from resolving to the 
-    //   corresponding type_info structs for the complete class type, possibly
-    //   by making them local static objects. Finally, a dummy class RTTI is
-    //   generated for the incomplete type that will not resolve to the final 
-    //   complete class RTTI (because the latter need not exist), possibly by 
-    //   making it a local static object.
-    if (IsPointerToIncompleteClassType(PointerTy))
-      return llvm::GlobalValue::InternalLinkage;
+  // Itanium C++ ABI 2.9.5p7:
+  //   In addition, it and all of the intermediate abi::__pointer_type_info 
+  //   structs in the chain down to the abi::__class_type_info for the
+  //   incomplete class type must be prevented from resolving to the 
+  //   corresponding type_info structs for the complete class type, possibly
+  //   by making them local static objects. Finally, a dummy class RTTI is
+  //   generated for the incomplete type that will not resolve to the final 
+  //   complete class RTTI (because the latter need not exist), possibly by 
+  //   making it a local static object.
+  if (ContainsIncompleteClassType(Ty))
+    return llvm::GlobalValue::InternalLinkage;
    
-    // FIXME: Check linkage and anonymous namespace.
-    return llvm::GlobalValue::WeakODRLinkage;
-  } else if (const MemberPointerType *MemberPointerTy = 
-              dyn_cast<MemberPointerType>(Ty)) {
-    // If the class type is incomplete, then the type info constants should 
-    // have internal linkage.
-    const RecordType *ClassType = cast<RecordType>(MemberPointerTy->getClass());
-    if (!ClassType->getDecl()->isDefinition())
-      return llvm::GlobalValue::InternalLinkage;
-    
-    // FIXME: Check linkage and anonymous namespace.
-    return llvm::GlobalValue::WeakODRLinkage;
-  }
-
-  assert(false && "FIXME!");
+  // FIXME: Check linkage and anonymous namespace.
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
@@ -664,8 +667,7 @@ static unsigned DetermineQualifierFlags(Qualifiers Quals) {
 /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
 /// used for pointer types.
 void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
-  const PointerType *PointerTy = cast<PointerType>(Ty);
-  QualType PointeeTy = PointerTy->getPointeeType();
+  QualType PointeeTy = Ty->getPointeeType();
   
   // Itanium C++ ABI 2.9.5p7:
   //   __flags is a flag word describing the cv-qualification and other 
@@ -675,7 +677,7 @@ void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
   // Itanium C++ ABI 2.9.5p7:
   //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
   //   incomplete class type, the incomplete target type flag is set. 
-  if (IsPointerToIncompleteClassType(PointerTy))
+  if (ContainsIncompleteClassType(PointeeTy))
     Flags |= PTI_Incomplete;
 
   const llvm::Type *UnsignedIntLTy = 
@@ -699,11 +701,15 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   unsigned Flags = DetermineQualifierFlags(PointeeTy.getQualifiers());
 
   const RecordType *ClassType = cast<RecordType>(Ty->getClass());
-  
+
+  // Itanium C++ ABI 2.9.5p7:
+  //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
+  //   incomplete class type, the incomplete target type flag is set. 
+  if (ContainsIncompleteClassType(PointeeTy))
+    Flags |= PTI_Incomplete;
+
   if (IsIncompleteClassType(ClassType))
     Flags |= PTI_ContainingClassIncomplete;
-  
-  // FIXME: Handle PTI_Incomplete.
   
   const llvm::Type *UnsignedIntLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);

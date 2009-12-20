@@ -20,17 +20,21 @@ return static_cast<const T&>(info);
 }
 struct Incomplete;
 
-#define CHECK(x) if ((x)) return __LINE__;
+struct A { };
+
+#define CHECK(x) if (!(x)) return __LINE__;
 
 // CHECK: define i32 @_Z1fv()
 int f() {
   // Pointers to incomplete classes.
-  CHECK(to<__pbase_type_info>(typeid(Incomplete *)).__flags != __pbase_type_info::__incomplete_mask);
-  CHECK(to<__pbase_type_info>(typeid(Incomplete **)).__flags != __pbase_type_info::__incomplete_mask);
-  CHECK(to<__pbase_type_info>(typeid(Incomplete ***)).__flags != __pbase_type_info::__incomplete_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete *)).__flags == __pbase_type_info::__incomplete_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete **)).__flags == __pbase_type_info::__incomplete_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete ***)).__flags == __pbase_type_info::__incomplete_mask);
 
   // Member pointers.
-  CHECK(to<__pbase_type_info>(typeid(int Incomplete::*)).__flags != __pbase_type_info::__incomplete_class_mask);
+  CHECK(to<__pbase_type_info>(typeid(int Incomplete::*)).__flags == __pbase_type_info::__incomplete_class_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete Incomplete::*)).__flags == (__pbase_type_info::__incomplete_class_mask | __pbase_type_info::__incomplete_mask));
+  CHECK(to<__pbase_type_info>(typeid(Incomplete A::*)).__flags == (__pbase_type_info::__incomplete_mask));
 
   // Success!
   // CHECK: ret i32 0
