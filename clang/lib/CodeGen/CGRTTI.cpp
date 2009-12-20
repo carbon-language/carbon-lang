@@ -24,31 +24,26 @@ class RTTIBuilder {
   const llvm::Type *Int8PtrTy;
   llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
   llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
-
+  
   std::vector<llvm::Constant *> Info;
-  
-  // Type info flags.
-  enum {
-    /// TI_Const - Type has const qualifier.
-    TI_Const = 0x1,
-    
-    /// TI_Volatile - Type has volatile qualifier.
-    TI_Volatile = 0x2,
 
-    /// TI_Restrict - Type has restrict qualifier.
-    TI_Restrict = 0x4,
-    
-    /// TI_Incomplete - Type is incomplete.
-    TI_Incomplete = 0x8,
-
-    /// TI_ContainingClassIncomplete - Containing class is incomplete.
-    /// (in pointer to member).
-    TI_ContainingClassIncomplete = 0x10
-  };
-  
   /// GetAddrOfExternalRTTIDescriptor - Returns the constant for the RTTI 
   /// descriptor of the given type.
   llvm::Constant *GetAddrOfExternalRTTIDescriptor(QualType Ty);
+  
+  /// BuildTypeInfo - Build the RTTI type info struct for the given type.
+  llvm::Constant *BuildTypeInfo(QualType Ty);
+
+  /// BuildVtablePointer - Build the vtable pointer for the given type.
+  void BuildVtablePointer(const Type *Ty);
+  
+  /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
+  /// used for pointer types.
+  void BuildPointerTypeInfo(const PointerType *Ty);
+  
+  /// BuildPointerToMemberTypeInfo - Build an abi::__pointer_to_member_type_info 
+  /// struct, used for member pointer types.
+  void BuildPointerToMemberTypeInfo(const MemberPointerType *Ty);
   
 public:
   RTTIBuilder(CodeGenModule &cgm)
@@ -58,7 +53,7 @@ public:
   /// BuildVtableRef - Build a reference to a vtable.
   llvm::Constant *BuildVtableRef(const char *Name) {
     // Build a descriptor for Name
-    llvm::Constant *GV = CGM.getModule().getGlobalVariable(Name);
+    llvm::Constant *GV = CGM.getModule().getNamedGlobal(Name);
     if (GV)
       GV = llvm::ConstantExpr::getBitCast(GV,
                                           llvm::PointerType::get(Int8PtrTy, 0));
@@ -96,7 +91,7 @@ public:
     CGM.getMangleContext().mangleCXXRTTIName(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
-    llvm::GlobalVariable *OGV = CGM.getModule().getGlobalVariable(Name);
+    llvm::GlobalVariable *OGV = CGM.getModule().getNamedGlobal(Name);
     if (OGV && !OGV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(OGV, Int8PtrTy);
 
@@ -131,7 +126,7 @@ public:
   /// CalculateFlags - Calculate the flags for the __vmi_class_type_info
   /// datastructure.  1 for non-diamond repeated inheritance, 2 for a dimond
   /// shaped class.
-  int CalculateFlags(const CXXRecordDecl*RD) {
+  int CalculateFlags(const CXXRecordDecl *RD) {
     int flags = 0;
     if (SeenBase.count(RD))
       flags |= 1;
@@ -205,7 +200,7 @@ public:
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Name);
+    GV = CGM.getModule().getNamedGlobal(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
@@ -293,76 +288,13 @@ public:
     return false;
   }
 
-  llvm::Constant *BuildPointerType(QualType Ty) {
-    assert(Info.empty() && "Info vector must be empty!");
-    
-    llvm::Constant *C;
-
-    llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
-    llvm::StringRef Name = OutName.str();
-
-    llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Name);
-    if (GV && !GV->isDeclaration())
-      return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    bool Extern = DecideExtern(Ty);
-    bool Hidden = DecideHidden(Ty);
-
-    const MemberPointerType *PtrMemTy = dyn_cast<MemberPointerType>(Ty);
-    QualType PointeeTy;
-    
-    if (PtrMemTy)
-      PointeeTy = PtrMemTy->getPointeeType();
-    else
-      PointeeTy = Ty->getPointeeType();
-
-    if (PtrMemTy)
-      C = BuildVtableRef("_ZTVN10__cxxabiv129__pointer_to_member_type_infoE");
-    else
-      C = BuildVtableRef("_ZTVN10__cxxabiv119__pointer_type_infoE");
-    
-    Info.push_back(C);
-    Info.push_back(BuildName(Ty, Hidden, Extern));
-    Qualifiers Q = PointeeTy.getQualifiers();
-    
-    PointeeTy = 
-      CGM.getContext().getCanonicalType(PointeeTy).getUnqualifiedType();
-    
-    unsigned Flags = 0;
-    if (Q.hasConst())
-      Flags |= TI_Const;
-    if (Q.hasVolatile())
-      Flags |= TI_Volatile;
-    if (Q.hasRestrict())
-      Flags |= TI_Restrict;
-    
-    if (Ty->isIncompleteType())
-      Flags |= TI_Incomplete;
-  
-    if (PtrMemTy && PtrMemTy->getClass()->isIncompleteType())
-      Flags |= TI_ContainingClassIncomplete;
-    
-    Info.push_back(BuildInt(Flags));
-    Info.push_back(BuildInt(0));
-    Info.push_back(RTTIBuilder(CGM).BuildType(PointeeTy));
-
-    if (PtrMemTy)
-      Info.push_back(RTTIBuilder(CGM).BuildType(
-                                            QualType(PtrMemTy->getClass(), 0)));
-
-    // We always generate these as hidden, only the name isn't hidden.
-    return finish(GV, Name, /*Hidden=*/true, GetLinkageFromExternFlag(Extern));
-  }
-
   llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
     llvm::SmallString<256> OutName;
     CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
     llvm::StringRef Name = OutName.str();
 
     llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getGlobalVariable(Name);
+    GV = CGM.getModule().getNamedGlobal(Name);
     if (GV && !GV->isDeclaration())
       return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 
@@ -397,18 +329,10 @@ public:
       return GetAddrOfExternalRTTIDescriptor(Ty);
     }
 
-    case Type::Pointer: {
-      QualType PTy = Ty->getPointeeType();
-      Qualifiers Q = PTy.getQualifiers();
-      Q.removeConst();
-      // T* and const T* for all builtin types T are expected in the library.
-      if (isa<BuiltinType>(PTy) && Q.empty())
-        return GetAddrOfExternalRTTIDescriptor(Ty);
-
-      return BuildPointerType(Ty);
-    }
+    case Type::Pointer:
     case Type::MemberPointer:
-      return BuildPointerType(Ty);
+        
+      return BuildTypeInfo(Ty);
     case Type::FunctionProto:
     case Type::FunctionNoProto:
       return BuildSimpleType(Ty, "_ZTVN10__cxxabiv120__function_type_infoE");
@@ -447,6 +371,25 @@ public:
     // linkage.
     return Buildclass_type_info(RD, llvm::GlobalValue::WeakODRLinkage);
   }
+  
+  // Pointer type info flags.
+  enum {
+    /// PTI_Const - Type has const qualifier.
+    PTI_Const = 0x1,
+    
+    /// PTI_Volatile - Type has volatile qualifier.
+    PTI_Volatile = 0x2,
+    
+    /// PTI_Restrict - Type has restrict qualifier.
+    PTI_Restrict = 0x4,
+    
+    /// PTI_Incomplete - Type is incomplete.
+    PTI_Incomplete = 0x8,
+    
+    /// PTI_ContainingClassIncomplete - Containing class is incomplete.
+    /// (in pointer to member).
+    PTI_ContainingClassIncomplete = 0x10
+  };
 };
 }
 
@@ -456,8 +399,8 @@ llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
   llvm::StringRef Name = OutName.str();
 
-  // Look for an existing global variable.
-  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  // Look for an existing global.
+  llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
   
   if (!GV) {
     // Create a new global variable.
@@ -466,6 +409,316 @@ llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   }
   
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+}
+
+/// TypeInfoIsInStandardLibrary - Given a builtin type, returns whether the type
+/// info for that type is defined in the standard library.
+static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
+  // Itanium C++ ABI 2.9.2:
+  //   Basic type information (e.g. for "int", "bool", etc.) will be kept in
+  //   the run-time support library. Specifically, the run-time support
+  //   library should contain type_info objects for the types X, X* and 
+  //   X const*, for every X in: void, bool, wchar_t, char, unsigned char, 
+  //   signed char, short, unsigned short, int, unsigned int, long, 
+  //   unsigned long, long long, unsigned long long, float, double, long double, 
+  //   char16_t, char32_t, and the IEEE 754r decimal and half-precision 
+  //   floating point types.
+  switch (Ty->getKind()) {
+    case BuiltinType::Void:
+    case BuiltinType::Bool:
+    case BuiltinType::WChar:
+    case BuiltinType::Char_U:
+    case BuiltinType::Char_S:
+    case BuiltinType::UChar:
+    case BuiltinType::SChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+    case BuiltinType::Float:
+    case BuiltinType::Double:
+    case BuiltinType::LongDouble:
+    case BuiltinType::Char16:
+    case BuiltinType::Char32:
+    case BuiltinType::Int128:
+    case BuiltinType::UInt128:
+      return true;
+      
+    case BuiltinType::Overload:
+    case BuiltinType::Dependent:
+    case BuiltinType::UndeducedAuto:
+      assert(false && "Should not see this type here!");
+      
+    case BuiltinType::NullPtr:
+      assert(false && "FIXME: nullptr_t is not handled!");
+
+    case BuiltinType::ObjCId:
+    case BuiltinType::ObjCClass:
+    case BuiltinType::ObjCSel:
+      assert(false && "FIXME: Objective-C types are unsupported!");
+  }
+  
+  // Silent gcc.
+  return false;
+}
+
+static bool TypeInfoIsInStandardLibrary(const PointerType *PointerTy) {
+  QualType PointeeTy = PointerTy->getPointeeType();
+  const BuiltinType *BuiltinTy = dyn_cast<BuiltinType>(PointeeTy);
+  if (!BuiltinTy)
+    return false;
+    
+  // Check the qualifiers.
+  Qualifiers Quals = PointeeTy.getQualifiers();
+  Quals.removeConst();
+    
+  if (!Quals.empty())
+    return false;
+    
+  return TypeInfoIsInStandardLibrary(BuiltinTy);
+}
+
+/// ShouldUseExternalRTTIDescriptor - Returns whether the type information for
+/// the given type exists somewhere else, and that we should not emit the typ
+/// information in this translation unit.
+bool ShouldUseExternalRTTIDescriptor(QualType Ty) {
+  // Type info for builtin types is defined in the standard library.
+  if (const BuiltinType *BuiltinTy = dyn_cast<BuiltinType>(Ty))
+    return TypeInfoIsInStandardLibrary(BuiltinTy);
+  
+  // Type info for some pointer types to builtin types is defined in the
+  // standard library.
+  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty))
+    return TypeInfoIsInStandardLibrary(PointerTy);
+
+  if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+    (void)RecordTy;
+    assert(false && "FIXME");
+  }
+  
+  return false;
+}
+
+/// IsIncompleteClassType - Returns whether the given record type is incomplete.
+static bool IsIncompleteClassType(const RecordType *RecordTy) {
+  return !RecordTy->getDecl()->isDefinition();
+}  
+
+/// IsPointerToIncompleteClassType - Returns whether the given pointer type
+/// is an indirect or direct pointer to an incomplete class type.
+static bool IsPointerToIncompleteClassType(const PointerType *PointerTy) {
+  QualType PointeeTy = PointerTy->getPointeeType();
+  while ((PointerTy = dyn_cast<PointerType>(PointeeTy)))
+    PointeeTy = PointerTy->getPointeeType();
+
+  if (const RecordType *RecordTy = dyn_cast<RecordType>(PointeeTy)) {
+    // Check if the record type is incomplete.
+    return IsIncompleteClassType(RecordTy);
+  }
+  
+  return false;
+}
+
+/// getTypeInfoLinkage - Return the linkage that the type info and type info
+/// name constants should have for the given type.
+static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
+  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty)) {
+    // Itanium C++ ABI 2.9.5p7:
+    //   In addition, it and all of the intermediate abi::__pointer_type_info 
+    //   structs in the chain down to the abi::__class_type_info for the
+    //   incomplete class type must be prevented from resolving to the 
+    //   corresponding type_info structs for the complete class type, possibly
+    //   by making them local static objects. Finally, a dummy class RTTI is
+    //   generated for the incomplete type that will not resolve to the final 
+    //   complete class RTTI (because the latter need not exist), possibly by 
+    //   making it a local static object.
+    if (IsPointerToIncompleteClassType(PointerTy))
+      return llvm::GlobalValue::InternalLinkage;
+   
+    // FIXME: Check linkage and anonymous namespace.
+    return llvm::GlobalValue::WeakODRLinkage;
+  } else if (const MemberPointerType *MemberPointerTy = 
+              dyn_cast<MemberPointerType>(Ty)) {
+    // If the class type is incomplete, then the type info constants should 
+    // have internal linkage.
+    const RecordType *ClassType = cast<RecordType>(MemberPointerTy->getClass());
+    if (!ClassType->getDecl()->isDefinition())
+      return llvm::GlobalValue::InternalLinkage;
+    
+    // FIXME: Check linkage and anonymous namespace.
+    return llvm::GlobalValue::WeakODRLinkage;
+  }
+
+  assert(false && "FIXME!");
+  return llvm::GlobalValue::WeakODRLinkage;
+}
+
+void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
+  const char *VtableName;
+
+  switch (Ty->getTypeClass()) {
+  default: assert(0 && "Unhandled type!");
+  case Type::Pointer:
+    // abi::__pointer_type_info
+    VtableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
+    break;
+  case Type::MemberPointer:
+    // abi::__pointer_to_member_type_info
+    VtableName =  "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
+    break;
+  }
+
+  llvm::Constant *Vtable = 
+    CGM.getModule().getOrInsertGlobal(VtableName, Int8PtrTy);
+    
+  const llvm::Type *PtrDiffTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
+
+  // The vtable address point is 2.
+  llvm::Constant *Two = llvm::ConstantInt::get(PtrDiffTy, 2);
+  Vtable = llvm::ConstantExpr::getInBoundsGetElementPtr(Vtable, &Two, 1);
+  Vtable = llvm::ConstantExpr::getBitCast(Vtable, Int8PtrTy);
+
+  Info.push_back(Vtable);
+}
+
+llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
+  // We want to operate on the canonical type.
+  Ty = CGM.getContext().getCanonicalType(Ty);
+
+  // Check if we've already emitted an RTTI descriptor for this type.
+  llvm::SmallString<256> OutName;
+  CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
+  llvm::StringRef Name = OutName.str();
+  
+  llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
+  if (OldGV && !OldGV->isDeclaration())
+    return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);
+  
+  // Check if there is already an external RTTI descriptor for this type.
+  if (ShouldUseExternalRTTIDescriptor(Ty))
+    return GetAddrOfExternalRTTIDescriptor(Ty);
+
+  llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(Ty);
+
+  // Add the vtable pointer.
+  BuildVtablePointer(cast<Type>(Ty));
+  
+  // And the name.
+  Info.push_back(BuildName(Ty, DecideHidden(Ty), Linkage));
+  
+  switch (Ty->getTypeClass()) {
+  default: assert(false && "Unhandled type class!");
+  case Type::Builtin:
+    assert(false && "Builtin type info must be in the standard library!");
+    break;
+
+  case Type::Pointer:
+    BuildPointerTypeInfo(cast<PointerType>(Ty));
+    break;
+  
+  case Type::MemberPointer:
+    BuildPointerToMemberTypeInfo(cast<MemberPointerType>(Ty));
+    break;
+  }
+
+  llvm::Constant *Init = 
+    llvm::ConstantStruct::get(VMContext, &Info[0], Info.size(), 
+                              /*Packed=*/false);
+
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(CGM.getModule(), Init->getType(), 
+                             /*Constant=*/true, Linkage, Init, Name);
+  
+  // If there's already an old global variable, replace it with the new one.
+  if (OldGV) {
+    GV->takeName(OldGV);
+    llvm::Constant *NewPtr = 
+      llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+    OldGV->replaceAllUsesWith(NewPtr);
+    OldGV->eraseFromParent();
+  }
+    
+  return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+}
+
+/// DetermineQualifierFlags - Deterine the pointer type info flags from the
+/// given qualifier.
+static unsigned DetermineQualifierFlags(Qualifiers Quals) {
+  unsigned Flags = 0;
+
+  if (Quals.hasConst())
+    Flags |= RTTIBuilder::PTI_Const;
+  if (Quals.hasVolatile())
+    Flags |= RTTIBuilder::PTI_Volatile;
+  if (Quals.hasRestrict())
+    Flags |= RTTIBuilder::PTI_Restrict;
+
+  return Flags;
+}
+
+/// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
+/// used for pointer types.
+void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
+  const PointerType *PointerTy = cast<PointerType>(Ty);
+  QualType PointeeTy = PointerTy->getPointeeType();
+  
+  // Itanium C++ ABI 2.9.5p7:
+  //   __flags is a flag word describing the cv-qualification and other 
+  //   attributes of the type pointed to
+  unsigned Flags = DetermineQualifierFlags(PointeeTy.getQualifiers());
+
+  // Itanium C++ ABI 2.9.5p7:
+  //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
+  //   incomplete class type, the incomplete target type flag is set. 
+  if (IsPointerToIncompleteClassType(PointerTy))
+    Flags |= PTI_Incomplete;
+
+  const llvm::Type *UnsignedIntLTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
+  Info.push_back(llvm::ConstantInt::get(UnsignedIntLTy, Flags));
+  
+  // Itanium C++ ABI 2.9.5p7:
+  //  __pointee is a pointer to the std::type_info derivation for the 
+  //  unqualified type being pointed to.
+  Info.push_back(RTTIBuilder(CGM).BuildType(PointeeTy.getUnqualifiedType()));
+}
+
+/// BuildPointerToMemberTypeInfo - Build an abi::__pointer_to_member_type_info 
+/// struct, used for member pointer types.
+void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
+  QualType PointeeTy = Ty->getPointeeType();
+  
+  // Itanium C++ ABI 2.9.5p7:
+  //   __flags is a flag word describing the cv-qualification and other 
+  //   attributes of the type pointed to.
+  unsigned Flags = DetermineQualifierFlags(PointeeTy.getQualifiers());
+
+  const RecordType *ClassType = cast<RecordType>(Ty->getClass());
+  
+  if (IsIncompleteClassType(ClassType))
+    Flags |= PTI_ContainingClassIncomplete;
+  
+  // FIXME: Handle PTI_Incomplete.
+  
+  const llvm::Type *UnsignedIntLTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
+  Info.push_back(llvm::ConstantInt::get(UnsignedIntLTy, Flags));
+  
+  // Itanium C++ ABI 2.9.5p7:
+  //   __pointee is a pointer to the std::type_info derivation for the 
+  //   unqualified type being pointed to.
+  Info.push_back(RTTIBuilder(CGM).BuildType(PointeeTy.getUnqualifiedType()));
+
+  // Itanium C++ ABI 2.9.5p9:
+  //   __context is a pointer to an abi::__class_type_info corresponding to the
+  //   class type containing the member pointed to 
+  //   (e.g., the "A" in "int A::*").
+  Info.push_back(RTTIBuilder(CGM).BuildType(QualType(ClassType, 0)));
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty) {

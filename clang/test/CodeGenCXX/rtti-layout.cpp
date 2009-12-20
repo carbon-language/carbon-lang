@@ -20,12 +20,20 @@ return static_cast<const T&>(info);
 }
 struct Incomplete;
 
+#define CHECK(x) if ((x)) return __LINE__;
+
 // CHECK: define i32 @_Z1fv()
 int f() {
-  if (to<__pbase_type_info>(typeid(Incomplete *)).__flags != __pbase_type_info::__incomplete_mask)
-    return 1;
-    
+  // Pointers to incomplete classes.
+  CHECK(to<__pbase_type_info>(typeid(Incomplete *)).__flags != __pbase_type_info::__incomplete_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete **)).__flags != __pbase_type_info::__incomplete_mask);
+  CHECK(to<__pbase_type_info>(typeid(Incomplete ***)).__flags != __pbase_type_info::__incomplete_mask);
+
+  // Member pointers.
+  CHECK(to<__pbase_type_info>(typeid(int Incomplete::*)).__flags != __pbase_type_info::__incomplete_class_mask);
+
   // Success!
+  // CHECK: ret i32 0
   return 0;
 }
 
@@ -38,7 +46,7 @@ int main() {
   if (result == 0)
     printf("success!\n");
   else
-    printf("test %d failed!\n", result);
+    printf("test on line %d failed!\n", result);
 
   return result;
 }
