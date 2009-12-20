@@ -1389,6 +1389,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     return;
   }
 
+  Actions.ActOnStartCXXMemberDeclarations(CurScope, TagDecl, LBraceLoc);
+
   // C++ 11p3: Members of a class defined with the keyword class are private
   // by default. Members of a class defined with the keywords struct or union
   // are public by default.

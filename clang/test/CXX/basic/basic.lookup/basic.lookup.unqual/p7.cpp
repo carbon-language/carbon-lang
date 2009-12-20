@@ -10,6 +10,7 @@ namespace test0 {
   struct A::C : B { };
 }
 
+// Test that successive base specifiers don't screw with each other.
 namespace test1 {
   struct Opaque1 {};
   struct Opaque2 {};
@@ -26,4 +27,11 @@ namespace test1 {
     // without this qualification.
     C() : A(), test1::B(Opaque2()) {}
   };
+}
+
+// Test that we don't find the injected class name when parsing base
+// specifiers.
+namespace test2 {
+  template <class T> struct bar {}; // expected-note {{template parameter is declared here}}
+  template <class T> struct foo : bar<foo> {}; // expected-error {{template argument for template type parameter must be a type}}
 }

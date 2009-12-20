@@ -662,6 +662,12 @@ public:
   /// struct, or union).
   virtual void ActOnTagStartDefinition(Scope *S, DeclPtrTy TagDecl) { }
 
+  /// ActOnStartCXXMemberDeclarations - Invoked when we have parsed a
+  /// C++ record definition's base-specifiers clause and are starting its
+  /// member declarations.
+  virtual void ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagDecl,
+                                               SourceLocation LBraceLoc) { }
+
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
   /// the definition of a tag (enumeration, class, struct, or union).
   virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl,

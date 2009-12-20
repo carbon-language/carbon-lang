@@ -4962,31 +4962,36 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclPtrTy TagD) {
 
   // Enter the tag context.
   PushDeclContext(S, Tag);
+}
 
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Tag)) {
-    FieldCollector->StartClass();
+void Sema::ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagD,
+                                           SourceLocation LBraceLoc) {
+  AdjustDeclIfTemplate(TagD);
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(TagD.getAs<Decl>());
 
-    if (Record->getIdentifier()) {
-      // C++ [class]p2:
-      //   [...] The class-name is also inserted into the scope of the
-      //   class itself; this is known as the injected-class-name. For
-      //   purposes of access checking, the injected-class-name is treated
-      //   as if it were a public member name.
-      CXXRecordDecl *InjectedClassName
-        = CXXRecordDecl::Create(Context, Record->getTagKind(),
-                                CurContext, Record->getLocation(),
-                                Record->getIdentifier(),
-                                Record->getTagKeywordLoc(),
-                                Record);
-      InjectedClassName->setImplicit();
-      InjectedClassName->setAccess(AS_public);
-      if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate())
-        InjectedClassName->setDescribedClassTemplate(Template);
-      PushOnScopeChains(InjectedClassName, S);
-      assert(InjectedClassName->isInjectedClassName() &&
-             "Broken injected-class-name");
-    }
-  }
+  FieldCollector->StartClass();
+
+  if (!Record->getIdentifier())
+    return;
+
+  // C++ [class]p2:
+  //   [...] The class-name is also inserted into the scope of the
+  //   class itself; this is known as the injected-class-name. For
+  //   purposes of access checking, the injected-class-name is treated
+  //   as if it were a public member name.
+  CXXRecordDecl *InjectedClassName
+    = CXXRecordDecl::Create(Context, Record->getTagKind(),
+                            CurContext, Record->getLocation(),
+                            Record->getIdentifier(),
+                            Record->getTagKeywordLoc(),
+                            Record);
+  InjectedClassName->setImplicit();
+  InjectedClassName->setAccess(AS_public);
+  if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate())
+      InjectedClassName->setDescribedClassTemplate(Template);
+  PushOnScopeChains(InjectedClassName, S);
+  assert(InjectedClassName->isInjectedClassName() &&
+         "Broken injected-class-name");
 }
 
 void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
