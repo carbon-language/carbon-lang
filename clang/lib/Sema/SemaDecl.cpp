@@ -3658,6 +3658,15 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     assert(Deleted && "Unrecorded tentative definition?"); Deleted=Deleted;
   }
 
+  if (getLangOptions().CPlusPlus) {
+    // Make sure we mark the destructor as used if necessary.
+    QualType InitType = VDecl->getType();
+    if (const ArrayType *Array = Context.getAsArrayType(InitType))
+      InitType = Context.getBaseElementType(Array);
+    if (InitType->isRecordType())
+      FinalizeVarWithDestructor(VDecl, InitType);
+  }
+
   return;
 }
 
