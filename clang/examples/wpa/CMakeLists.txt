@@ -17,10 +17,6 @@ set( LLVM_LINK_COMPONENTS
   core
   )
 
-set( LLVM_LINK_COMPONENTS
-    mc
-  )
-
 add_clang_executable(clang-wpa
   clang-wpa.cpp
   )

@@ -3745,28 +3745,19 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           InitType->isRecordType() && !InitType->isDependentType()) {
         if (!RequireCompleteType(Var->getLocation(), InitType,
                                  diag::err_invalid_incomplete_type_use)) {
-          ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+          InitializedEntity Entity
+            = InitializedEntity::InitializeVariable(Var);
+          InitializationKind Kind
+            = InitializationKind::CreateDefault(Var->getLocation());
 
-          CXXConstructorDecl *Constructor
-            = PerformInitializationByConstructor(InitType, 
-                                                 MultiExprArg(*this, 0, 0),
-                                                 Var->getLocation(),
-                                               SourceRange(Var->getLocation(),
-                                                           Var->getLocation()),
-                                                 Var->getDeclName(),
-                         InitializationKind::CreateDefault(Var->getLocation()),
-                                                 ConstructorArgs);
-          
-          // FIXME: Location info for the variable initialization?
-          if (!Constructor)
+          InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
+          OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
+                                                  MultiExprArg(*this, 0, 0));
+          if (Init.isInvalid())
             Var->setInvalidDecl();
           else {
-            // FIXME: Cope with initialization of arrays
-            if (!Constructor->isTrivial() &&
-                InitializeVarWithConstructor(Var, Constructor, 
-                                             move_arg(ConstructorArgs)))
-              Var->setInvalidDecl();
-            
+            Var->setInit(Context, 
+                       MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
             FinalizeVarWithDestructor(Var, InitType);
           }
         } else {
