@@ -1143,7 +1143,7 @@ public:
     // members.
     LookupOperatorName,
     /// Look up of a name that precedes the '::' scope resolution
-    /// operator in C++. This lookup completely ignores operator,
+    /// operator in C++. This lookup completely ignores operator, object,
     /// function, and enumerator names (C++ [basic.lookup.qual]p1).
     LookupNestedNameSpecifierName,
     /// Look up a namespace name within a C++ using directive or
