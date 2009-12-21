@@ -338,7 +338,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
 
 void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
 
   // Select the ABI to use.
   //
@@ -607,7 +607,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfoList &Inputs,
                          const ArgList &Args,
                          const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
@@ -1171,7 +1171,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
                                const InputInfoList &Inputs,
                                const ArgList &Args,
                                const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   for (ArgList::const_iterator
@@ -1259,8 +1259,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       II.getInputArg().render(Args, CmdArgs);
   }
 
-  const char *GCCName =
-    getToolChain().getHost().getDriver().CCCGenericGCCName.c_str();
+  const char *GCCName = getToolChain().getDriver().CCCGenericGCCName.c_str();
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(C, GCCName));
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
@@ -1340,7 +1339,7 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 
 void darwin::CC1::AddCC1Args(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
 
   CheckCodeGenerationOptions(D, Args);
 
@@ -1369,7 +1368,7 @@ void darwin::CC1::AddCC1Args(const ArgList &Args,
 void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                                     const InputInfoList &Inputs,
                                     const ArgStringList &OutputArgs) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
 
   // Derived from cc1_options spec.
   if (Args.hasArg(options::OPT_fast) ||
@@ -1517,7 +1516,7 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
 void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
                                           ArgStringList &CmdArgs,
                                           const InputInfoList &Inputs) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
 
   CheckPreprocessingOptions(D, Args);
 
@@ -1660,7 +1659,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
                                    const InputInfoList &Inputs,
                                    const ArgList &Args,
                                    const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   assert(Inputs.size() == 1 && "Unexpected number of inputs!");
@@ -1909,7 +1908,7 @@ void darwin::DarwinTool::AddDarwinSubArch(const ArgList &Args,
 
 void darwin::Link::AddLinkArgs(const ArgList &Args,
                                ArgStringList &CmdArgs) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
 
   // Derived from the "link" spec.
   Args.AddAllArgs(CmdArgs, options::OPT_static);
@@ -2195,7 +2194,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     // FIXME: g++ is more complicated here, it tries to put -lstdc++
     // before -lm, for example.
-    if (getToolChain().getHost().getDriver().CCCIsCXX)
+    if (getToolChain().getDriver().CCCIsCXX)
       CmdArgs.push_back("-lstdc++");
 
     // link_ssp spec is empty.
@@ -2309,7 +2308,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                   const InputInfoList &Inputs,
                                   const ArgList &Args,
                                   const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
@@ -2440,7 +2439,7 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const InputInfoList &Inputs,
                                  const ArgList &Args,
                                  const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
@@ -2575,7 +2574,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const InputInfoList &Inputs,
                                  const ArgList &Args,
                                  const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if (Args.hasArg(options::OPT_static)) {
@@ -2727,7 +2726,7 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const InputInfoList &Inputs,
                                  const ArgList &Args,
                                  const char *LinkingOutput) const {
-  const Driver &D = getToolChain().getHost().getDriver();
+  const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
   if (Args.hasArg(options::OPT_static)) {

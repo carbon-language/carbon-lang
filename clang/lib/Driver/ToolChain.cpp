@@ -22,6 +22,10 @@ ToolChain::ToolChain(const HostInfo &_Host, const llvm::Triple &_Triple)
 ToolChain::~ToolChain() {
 }
 
+const Driver &ToolChain::getDriver() const {
+ return Host.getDriver();
+}
+
 std::string ToolChain::GetFilePath(const Compilation &C,
                                    const char *Name) const {
   return Host.getDriver().GetFilePath(Name, *this);

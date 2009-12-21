@@ -88,7 +88,7 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
 
   std::string Path;
   if (getArchName() == "x86_64") {
-    Path = getHost().getDriver().Dir;
+    Path = getDriver().Dir;
     Path += "/../lib/gcc/";
     Path += ToolChainDir;
     Path += "/x86_64";
@@ -100,7 +100,7 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
     getFilePaths().push_back(Path);
   }
 
-  Path = getHost().getDriver().Dir;
+  Path = getDriver().Dir;
   Path += "/../lib/gcc/";
   Path += ToolChainDir;
   getFilePaths().push_back(Path);
@@ -109,7 +109,7 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   Path += ToolChainDir;
   getFilePaths().push_back(Path);
 
-  Path = getHost().getDriver().Dir;
+  Path = getDriver().Dir;
   Path += "/../libexec/gcc/";
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
@@ -118,11 +118,11 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
-  Path = getHost().getDriver().Dir;
+  Path = getDriver().Dir;
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
 
-  getProgramPaths().push_back(getHost().getDriver().Dir);
+  getProgramPaths().push_back(getDriver().Dir);
 }
 
 Darwin::~Darwin() {
@@ -134,7 +134,7 @@ Darwin::~Darwin() {
 
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -238,12 +238,12 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
   // Add the relative libexec dir (for clang-cc).
   //
   // FIXME: We should sink clang-cc into libexec/clang/<version>/.
-  std::string Path = getHost().getDriver().Dir;
+  std::string Path = getDriver().Dir;
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
 
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
-  getProgramPaths().push_back(getHost().getDriver().Dir);
+  getProgramPaths().push_back(getDriver().Dir);
 }
 
 void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
@@ -264,7 +264,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // cares. This is useful in situations where someone wants to statically link
   // something like libstdc++, and needs its runtime support routines.
   if (const Arg *A = Args.getLastArg(options::OPT_static_libgcc)) {
-    getHost().getDriver().Diag(clang::diag::err_drv_unsupported_opt)
+    getDriver().Diag(clang::diag::err_drv_unsupported_opt)
       << A->getAsString(Args);
     return;
   }
@@ -284,7 +284,7 @@ void Darwin::getMacosxVersionMin(const ArgList &Args,
     if (!Driver::GetReleaseVersion(A->getValue(Args), Res[0], Res[1], Res[2],
                                    HadExtra) ||
         HadExtra) {
-      const Driver &D = getHost().getDriver();
+      const Driver &D = getDriver();
       D.Diag(clang::diag::err_drv_invalid_version_number)
         << A->getAsString(Args);
     }
@@ -295,7 +295,7 @@ void Darwin::getMacosxVersionMin(const ArgList &Args,
 DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
                                       const char *BoundArch) const {
   DerivedArgList *DAL = new DerivedArgList(Args, false);
-  const OptTable &Opts = getHost().getDriver().getOpts();
+  const OptTable &Opts = getDriver().getOpts();
 
   // FIXME: We really want to get out of the tool chain level argument
   // translation business, as it makes the driver functionality much
@@ -309,7 +309,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
   Arg *iPhoneVersion =
     Args.getLastArgNoClaim(options::OPT_miphoneos_version_min_EQ);
   if (OSXVersion && iPhoneVersion) {
-    getHost().getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
+    getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
           << iPhoneVersion->getAsString(Args);
   } else if (!OSXVersion && !iPhoneVersion) {
@@ -355,7 +355,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
       // like -O4 are going to slip through.
       if (!XarchArg || Index > Prev + 1 ||
           XarchArg->getOption().isDriverOption()) {
-       getHost().getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument)
+       getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument)
           << A->getAsString(Args);
         continue;
       }
@@ -548,11 +548,11 @@ const char *Darwin::GetForcedPicModel() const {
 
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
   : ToolChain(Host, Triple) {
-  std::string Path(getHost().getDriver().Dir);
+  std::string Path(getDriver().Dir);
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
 
-  getProgramPaths().push_back(getHost().getDriver().Dir);
+  getProgramPaths().push_back(getDriver().Dir);
 }
 
 Generic_GCC::~Generic_GCC() {
@@ -565,7 +565,7 @@ Generic_GCC::~Generic_GCC() {
 Tool &Generic_GCC::SelectTool(const Compilation &C,
                               const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -626,13 +626,13 @@ DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args,
 
 OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
-  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
 
 Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -657,17 +657,17 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)
   : Generic_GCC(Host, Triple) {
   if (Lib32) {
-    getFilePaths().push_back(getHost().getDriver().Dir + "/../lib32");
+    getFilePaths().push_back(getDriver().Dir + "/../lib32");
     getFilePaths().push_back("/usr/lib32");
   } else {
-    getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+    getFilePaths().push_back(getDriver().Dir + "/../lib");
     getFilePaths().push_back("/usr/lib");
   }
 }
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -693,13 +693,13 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
   // Path mangling to find libexec
-  std::string Path(getHost().getDriver().Dir);
+  std::string Path(getDriver().Dir);
 
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
-  getProgramPaths().push_back(getHost().getDriver().Dir);
+  getProgramPaths().push_back(getDriver().Dir);
 
-  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
   getFilePaths().push_back("/usr/sfw/lib");
   getFilePaths().push_back("/opt/gcc4/lib");
@@ -709,7 +709,7 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
 
 Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -734,7 +734,7 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
-  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib/clang/1.0/");
+  getFilePaths().push_back(getDriver().Dir + "/../lib/clang/1.0/");
   getFilePaths().push_back("/lib/");
   getFilePaths().push_back("/usr/lib/");
 
@@ -761,20 +761,20 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
   // Path mangling to find libexec
-  std::string Path(getHost().getDriver().Dir);
+  std::string Path(getDriver().Dir);
 
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
-  getProgramPaths().push_back(getHost().getDriver().Dir);
+  getProgramPaths().push_back(getDriver().Dir);
 
-  getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
   getFilePaths().push_back("/usr/lib/gcc41");
 }
 
 Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
