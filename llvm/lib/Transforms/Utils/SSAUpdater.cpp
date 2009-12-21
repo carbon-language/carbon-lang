@@ -149,7 +149,29 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   if (SingularValue != 0)
     return SingularValue;
 
-  // Otherwise, we do need a PHI: insert one now.
+  // Otherwise, we do need a PHI: check to see if we already have one available
+  // in this block that produces the right value.
+  if (isa<PHINode>(BB->begin())) {
+    DenseMap<BasicBlock*, Value*> ValueMapping(PredValues.begin(),
+                                               PredValues.end());
+    PHINode *SomePHI;
+    for (BasicBlock::iterator It = BB->begin();
+         (SomePHI = dyn_cast<PHINode>(It)); ++It) {
+      // Scan this phi to see if it is what we need.
+      bool Equal = true;
+      for (unsigned i = 0, e = SomePHI->getNumIncomingValues(); i != e; ++i)
+        if (ValueMapping[SomePHI->getIncomingBlock(i)] !=
+            SomePHI->getIncomingValue(i)) {
+          Equal = false;
+          break;
+        }
+         
+      if (Equal)
+        return SomePHI;
+    }
+  }
+  
+  // Ok, we have no way out, insert a new one now.
   PHINode *InsertedPHI = PHINode::Create(PrototypeValue->getType(),
                                          PrototypeValue->getName(),
                                          &BB->front());
