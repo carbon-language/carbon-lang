@@ -586,20 +586,15 @@ void SelectionDAGBuilder::visit(unsigned Opcode, User &I) {
   // We're processing a new instruction.
   ++SDNodeOrder;
 
-  SDNode *PrevNode = DAG.getRoot().getNode();
-
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
   switch (Opcode) {
   default: llvm_unreachable("Unknown instruction type encountered!");
     // Build the switch statement using the Instruction.def file.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-  case Instruction::OPCODE: visit##OPCODE((CLASS&)I); break;
+  case Instruction::OPCODE: return visit##OPCODE((CLASS&)I);
 #include "llvm/Instruction.def"
   }
-
-  if (DisableScheduling && DAG.getRoot().getNode() != PrevNode)
-    DAG.AssignOrdering(DAG.getRoot().getNode(), SDNodeOrder);
 }
 
 SDValue SelectionDAGBuilder::getValue(const Value *V) {
@@ -1115,10 +1110,16 @@ void SelectionDAGBuilder::visitBr(BranchInst &I) {
     CurMBB->addSuccessor(Succ0MBB);
 
     // If this is not a fall-through branch, emit the branch.
-    if (Succ0MBB != NextBlock)
-      DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(),
+    if (Succ0MBB != NextBlock) {
+      SDValue V = DAG.getNode(ISD::BR, getCurDebugLoc(),
                               MVT::Other, getControlRoot(),
-                              DAG.getBasicBlock(Succ0MBB)));
+                              DAG.getBasicBlock(Succ0MBB));
+      DAG.setRoot(V);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(V.getNode(), SDNodeOrder);
+    }
+
     return;
   }
 
@@ -1177,6 +1178,7 @@ void SelectionDAGBuilder::visitBr(BranchInst &I) {
   // Create a CaseBlock record representing this branch.
   CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(*DAG.getContext()),
                NULL, Succ0MBB, Succ1MBB, CurMBB);
+
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
   visitSwitchCase(CB);
@@ -1240,6 +1242,7 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB) {
     SDValue True = DAG.getConstant(1, Cond.getValueType());
     Cond = DAG.getNode(ISD::XOR, dl, Cond.getValueType(), Cond, True);
   }
+
   SDValue BrCond = DAG.getNode(ISD::BRCOND, dl,
                                MVT::Other, getControlRoot(), Cond,
                                DAG.getBasicBlock(CB.TrueBB));
@@ -1247,18 +1250,20 @@ void SelectionDAGBuilder::visitSwitchCase(CaseBlock &CB) {
   // If the branch was constant folded, fix up the CFG.
   if (BrCond.getOpcode() == ISD::BR) {
     CurMBB->removeSuccessor(CB.FalseBB);
-    DAG.setRoot(BrCond);
   } else {
     // Otherwise, go ahead and insert the false branch.
     if (BrCond == getControlRoot())
       CurMBB->removeSuccessor(CB.TrueBB);
 
-    if (CB.FalseBB == NextBlock)
-      DAG.setRoot(BrCond);
-    else
-      DAG.setRoot(DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
-                              DAG.getBasicBlock(CB.FalseBB)));
+    if (CB.FalseBB != NextBlock)
+      BrCond = DAG.getNode(ISD::BR, dl, MVT::Other, BrCond,
+                           DAG.getBasicBlock(CB.FalseBB));
   }
+
+  DAG.setRoot(BrCond);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(BrCond.getNode(), SDNodeOrder);
 }
 
 /// visitJumpTable - Emit JumpTable node in the current MBB
@@ -1269,9 +1274,13 @@ void SelectionDAGBuilder::visitJumpTable(JumpTable &JT) {
   SDValue Index = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(),
                                      JT.Reg, PTy);
   SDValue Table = DAG.getJumpTable(JT.JTI, PTy);
-  DAG.setRoot(DAG.getNode(ISD::BR_JT, getCurDebugLoc(),
-                          MVT::Other, Index.getValue(1),
-                          Table, Index));
+  SDValue BrJumpTable = DAG.getNode(ISD::BR_JT, getCurDebugLoc(),
+                                    MVT::Other, Index.getValue(1),
+                                    Table, Index);
+  DAG.setRoot(BrJumpTable);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(BrJumpTable.getNode(), SDNodeOrder);
 }
 
 /// visitJumpTableHeader - This function emits necessary code to produce index
@@ -1317,11 +1326,14 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
                                MVT::Other, CopyTo, CMP,
                                DAG.getBasicBlock(JT.Default));
 
-  if (JT.MBB == NextBlock)
-    DAG.setRoot(BrCond);
-  else
-    DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrCond,
-                            DAG.getBasicBlock(JT.MBB)));
+  if (JT.MBB != NextBlock)
+    BrCond = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrCond,
+                         DAG.getBasicBlock(JT.MBB));
+
+  DAG.setRoot(BrCond);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(BrCond.getNode(), SDNodeOrder);
 }
 
 /// visitBitTestHeader - This function emits necessary code to produce value
@@ -1361,11 +1373,14 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B) {
                                 MVT::Other, CopyTo, RangeCmp,
                                 DAG.getBasicBlock(B.Default));
 
-  if (MBB == NextBlock)
-    DAG.setRoot(BrRange);
-  else
-    DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, CopyTo,
-                            DAG.getBasicBlock(MBB)));
+  if (MBB != NextBlock)
+    BrRange = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, CopyTo,
+                          DAG.getBasicBlock(MBB));
+
+  DAG.setRoot(BrRange);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(BrRange.getNode(), SDNodeOrder);
 }
 
 /// visitBitTestCase - this function produces one "bit test"
