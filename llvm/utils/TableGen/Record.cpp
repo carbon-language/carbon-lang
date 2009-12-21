@@ -945,11 +945,13 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         std::string Val = RHSs->getValue();
 
         std::string::size_type found;
+        std::string::size_type idx = 0;
         do {
-          found = Val.find(LHSs->getValue());
+          found = Val.find(LHSs->getValue(), idx);
           if (found != std::string::npos) {
             Val.replace(found, LHSs->getValue().size(), MHSs->getValue());
           }
+          idx = found +  MHSs->getValue().size();
         } while (found != std::string::npos);
 
         return new StringInit(Val);
