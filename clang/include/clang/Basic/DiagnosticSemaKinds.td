@@ -589,7 +589,8 @@ def err_temp_copy_deleted : Error<
   
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
-    "can't determine the declared type of an overloaded function">;
+    "cannot determine the %select{type|declared type}0 of an overloaded "
+    "function">;
     
 // C++0x auto
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
@@ -1007,6 +1008,8 @@ def err_template_arg_unnamed_type : Error<
   "template argument uses unnamed type">;
 def note_template_unnamed_type_here : Note<
   "unnamed type used in template argument was declared here">;
+def err_template_arg_overload_type : Error<
+  "template argument is the type of an unresolved overloaded function">;
 def err_template_arg_not_class_template : Error<
   "template argument does not refer to a class template or template "
   "template parameter">;

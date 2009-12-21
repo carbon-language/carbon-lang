@@ -308,7 +308,11 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    Result = Context.getTypeOfExprType(E);
+    Result = TheSema.BuildTypeofExprType(E);
+    if (Result.isNull()) {
+      Result = Context.IntTy;
+      TheDeclarator.setInvalidType(true);
+    }
     break;
   }
   case DeclSpec::TST_decltype: {
@@ -1826,14 +1830,41 @@ QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {
 }
 
 QualType Sema::BuildTypeofExprType(Expr *E) {
+  if (E->getType() == Context.OverloadTy) {
+    // C++ [temp.arg.explicit]p3 allows us to resolve a template-id to a 
+    // function template specialization wherever deduction cannot occur.
+    if (FunctionDecl *Specialization
+        = ResolveSingleFunctionTemplateSpecialization(E)) {
+      E = FixOverloadedFunctionReference(E, Specialization);
+      if (!E)
+        return QualType();      
+    } else {
+      Diag(E->getLocStart(),
+           diag::err_cannot_determine_declared_type_of_overloaded_function)
+        << false << E->getSourceRange();
+      return QualType();
+    }
+  }
+  
   return Context.getTypeOfExprType(E);
 }
 
 QualType Sema::BuildDecltypeType(Expr *E) {
   if (E->getType() == Context.OverloadTy) {
-    Diag(E->getLocStart(),
-         diag::err_cannot_determine_declared_type_of_overloaded_function);
-    return QualType();
+    // C++ [temp.arg.explicit]p3 allows us to resolve a template-id to a 
+    // function template specialization wherever deduction cannot occur.
+    if (FunctionDecl *Specialization
+          = ResolveSingleFunctionTemplateSpecialization(E)) {
+      E = FixOverloadedFunctionReference(E, Specialization);
+      if (!E)
+        return QualType();      
+    } else {
+      Diag(E->getLocStart(),
+           diag::err_cannot_determine_declared_type_of_overloaded_function)
+        << true << E->getSourceRange();
+      return QualType();
+    }
   }
+  
   return Context.getDecltypeType(E);
 }

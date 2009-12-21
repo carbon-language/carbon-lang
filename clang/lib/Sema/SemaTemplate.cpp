@@ -2189,6 +2189,9 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
     Diag(SR.getBegin(), diag::err_template_arg_unnamed_type) << SR;
     Diag(Tag->getDecl()->getLocation(), diag::note_template_unnamed_type_here);
     return true;
+  } else if (Context.hasSameUnqualifiedType(Arg, Context.OverloadTy)) {
+    SourceRange SR = ArgInfo->getTypeLoc().getFullSourceRange();
+    return Diag(SR.getBegin(), diag::err_template_arg_overload_type) << SR;
   }
 
   return false;

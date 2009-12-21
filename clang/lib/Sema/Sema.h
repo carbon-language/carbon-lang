@@ -1036,6 +1036,8 @@ public:
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);
+  FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From);
+
   Expr *FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
   OwningExprResult FixOverloadedFunctionReference(OwningExprResult, 
                                                   FunctionDecl *Fn);
@@ -2664,7 +2666,10 @@ public:
     TDK_TooFewArguments,
     /// \brief The explicitly-specified template arguments were not valid
     /// template arguments for the given template.
-    TDK_InvalidExplicitArguments
+    TDK_InvalidExplicitArguments,
+    /// \brief The arguments included an overloaded function name that could
+    /// not be resolved to a suitable function.
+    TDK_FailedOverloadResolution
   };
 
   /// \brief Provides information about an attempted template argument
@@ -2776,6 +2781,12 @@ public:
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           QualType ToType,
                           CXXConversionDecl *&Specialization,
+                          TemplateDeductionInfo &Info);
+
+  TemplateDeductionResult
+  DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          FunctionDecl *&Specialization,
                           TemplateDeductionInfo &Info);
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,

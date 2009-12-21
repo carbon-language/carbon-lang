@@ -4591,6 +4591,93 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   return 0;
 }
 
+/// \brief Given an expression that refers to an overloaded function, try to 
+/// resolve that overloaded function expression down to a single function.
+///
+/// This routine can only resolve template-ids that refer to a single function
+/// template, where that template-id refers to a single template whose template
+/// arguments are either provided by the template-id or have defaults, 
+/// as described in C++0x [temp.arg.explicit]p3.
+FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
+  // C++ [over.over]p1:
+  //   [...] [Note: any redundant set of parentheses surrounding the
+  //   overloaded function name is ignored (5.1). ]
+  Expr *OvlExpr = From->IgnoreParens();
+  
+  // C++ [over.over]p1:
+  //   [...] The overloaded function name can be preceded by the &
+  //   operator.
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(OvlExpr)) {
+    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
+      OvlExpr = UnOp->getSubExpr()->IgnoreParens();
+  }
+  
+  bool HasExplicitTemplateArgs = false;
+  TemplateArgumentListInfo ExplicitTemplateArgs;
+  
+  llvm::SmallVector<NamedDecl*,8> Fns;
+  
+  // Look into the overloaded expression.
+  if (UnresolvedLookupExpr *UL
+      = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
+    Fns.append(UL->decls_begin(), UL->decls_end());
+    if (UL->hasExplicitTemplateArgs()) {
+      HasExplicitTemplateArgs = true;
+      UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
+    }
+  } else if (UnresolvedMemberExpr *ME
+             = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
+    Fns.append(ME->decls_begin(), ME->decls_end());
+    if (ME->hasExplicitTemplateArgs()) {
+      HasExplicitTemplateArgs = true;
+      ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
+    }
+  }
+  
+  // If we didn't actually find any template-ids, we're done.
+  if (Fns.empty() || !HasExplicitTemplateArgs)
+    return 0;
+  
+  // Look through all of the overloaded functions, searching for one
+  // whose type matches exactly.
+  FunctionDecl *Matched = 0;
+  for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
+       E = Fns.end(); I != E; ++I) {
+    // C++0x [temp.arg.explicit]p3:
+    //   [...] In contexts where deduction is done and fails, or in contexts
+    //   where deduction is not done, if a template argument list is 
+    //   specified and it, along with any default template arguments, 
+    //   identifies a single function template specialization, then the 
+    //   template-id is an lvalue for the function template specialization.
+    FunctionTemplateDecl *FunctionTemplate = cast<FunctionTemplateDecl>(*I);
+    
+    // C++ [over.over]p2:
+    //   If the name is a function template, template argument deduction is
+    //   done (14.8.2.2), and if the argument deduction succeeds, the
+    //   resulting template argument list is used to generate a single
+    //   function template specialization, which is added to the set of
+    //   overloaded functions considered.
+    // FIXME: We don't really want to build the specialization here, do we?
+    FunctionDecl *Specialization = 0;
+    TemplateDeductionInfo Info(Context);
+    if (TemplateDeductionResult Result
+          = DeduceTemplateArguments(FunctionTemplate, &ExplicitTemplateArgs,
+                                    Specialization, Info)) {
+      // FIXME: make a note of the failed deduction for diagnostics.
+      (void)Result;
+      continue;
+    } 
+    
+    // Multiple matches; we can't resolve to a single declaration.
+    if (Matched)
+      return 0;
+
+    Matched = Specialization;
+  }
+
+  return Matched;
+}
+    
 /// \brief Add a single candidate to the overload set.
 static void AddOverloadedCallCandidate(Sema &S,
                                        NamedDecl *Callee,
