@@ -1418,11 +1418,14 @@ void SelectionDAGBuilder::visitBitTestCase(MachineBasicBlock* NextMBB,
   if (++BBI != FuncInfo.MF->end())
     NextBlock = BBI;
 
-  if (NextMBB == NextBlock)
-    DAG.setRoot(BrAnd);
-  else
-    DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrAnd,
-                            DAG.getBasicBlock(NextMBB)));
+  if (NextMBB != NextBlock)
+    BrAnd = DAG.getNode(ISD::BR, getCurDebugLoc(), MVT::Other, BrAnd,
+                        DAG.getBasicBlock(NextMBB));
+
+  DAG.setRoot(BrAnd);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(BrAnd.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitInvoke(InvokeInst &I) {
@@ -1445,9 +1448,13 @@ void SelectionDAGBuilder::visitInvoke(InvokeInst &I) {
   CurMBB->addSuccessor(LandingPad);
 
   // Drop into normal successor.
-  DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(),
-                          MVT::Other, getControlRoot(),
-                          DAG.getBasicBlock(Return)));
+  SDValue Branch = DAG.getNode(ISD::BR, getCurDebugLoc(),
+                               MVT::Other, getControlRoot(),
+                               DAG.getBasicBlock(Return));
+  DAG.setRoot(Branch);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Branch.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitUnwind(UnwindInst &I) {

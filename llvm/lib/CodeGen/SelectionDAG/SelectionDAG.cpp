@@ -5218,6 +5218,12 @@ void SelectionDAG::AssignOrdering(SDNode *SD, unsigned Order) {
     Ordering->add(SD, Order);
 }
 
+/// GetOrdering - Get the order for the SDNode.
+unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
+  assert(SD && "Trying to get the order of a null node!");
+  return Ordering ? Ordering->getOrder(SD) : 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
@@ -5857,6 +5863,10 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     if (unsigned int TF = BA->getTargetFlags())
       OS << " [TF=" << TF << ']';
   }
+
+  if (G)
+    if (unsigned Order = G->GetOrdering(this))
+      OS << " [ORD=" << Order << ']';
 }
 
 void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
@@ -6062,25 +6072,31 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
                        const SelectionDAG *G, VisitedSDNodeSet &once) {
   if (!once.insert(N))          // If we've been here before, return now.
     return;
+
   // Dump the current SDNode, but don't end the line yet.
   OS << std::string(indent, ' ');
   N->printr(OS, G);
+
   // Having printed this SDNode, walk the children:
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDNode *child = N->getOperand(i).getNode();
+
     if (i) OS << ",";
     OS << " ";
+
     if (child->getNumOperands() == 0) {
       // This child has no grandchildren; print it inline right here.
       child->printr(OS, G);
       once.insert(child);
-    } else {          // Just the address.  FIXME: also print the child's opcode
+    } else {         // Just the address. FIXME: also print the child's opcode.
       OS << (void*)child;
       if (unsigned RN = N->getOperand(i).getResNo())
         OS << ":" << RN;
     }
   }
+
   OS << "\n";
+
   // Dump children that have grandchildren on their own line(s).
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDNode *child = N->getOperand(i).getNode();
