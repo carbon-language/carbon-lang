@@ -220,7 +220,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 
   // Query AvailableVals by doing an insertion of null.
   std::pair<AvailableValsTy::iterator, bool> InsertRes =
-  AvailableVals.insert(std::make_pair(BB, WeakVH()));
+    AvailableVals.insert(std::make_pair(BB, TrackingVH<Value>()));
 
   // Handle the case when the insertion fails because we have already seen BB.
   if (!InsertRes.second) {
@@ -236,8 +236,8 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     // it.  When we get back to the first instance of the recursion we will fill
     // in the PHI node.
     return InsertRes.first->second =
-    PHINode::Create(PrototypeValue->getType(), PrototypeValue->getName(),
-                    &BB->front());
+      PHINode::Create(PrototypeValue->getType(), PrototypeValue->getName(),
+                      &BB->front());
   }
 
   // Okay, the value isn't in the map and we just inserted a null in the entry
