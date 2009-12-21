@@ -257,7 +257,8 @@ namespace {
                                                 ConstantInt *RHS);
     Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                                 ConstantInt *DivRHS);
-
+    Instruction *FoldICmpAddOpCst(ICmpInst &ICI, Value *X, ConstantInt *CI,
+                                  ICmpInst::Predicate Pred);
     Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                              ICmpInst::Predicate Cond, Instruction &I);
     Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
@@ -6600,9 +6601,80 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
     }
   }
+  
+  {
+    Value *X; ConstantInt *Cst;
+    // icmp (X+Cst), X
+    if (match(Op0, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op1 == X)
+      return FoldICmpAddOpCst(I, X, Cst, I.getPredicate());
+      
+    // icmp X, X+Cst
+    if (match(Op1, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op0 == X)
+      return FoldICmpAddOpCst(I, X, Cst, I.getSwappedPredicate());
+  }
   return Changed ? &I : 0;
 }
 
+/// FoldICmpAddOpCst - Fold "icmp pred (X+CI), X".
+Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
+                                            Value *X, ConstantInt *CI,
+                                            ICmpInst::Predicate Pred) {
+  // If we have X+0, exit early (simplifying logic below) and let it get folded
+  // elsewhere.   icmp X+0, X  -> icmp X, X
+  if (CI->isZero()) {
+    bool isTrue = ICmpInst::isTrueWhenEqual(Pred);
+    return ReplaceInstUsesWith(ICI, ConstantInt::get(ICI.getType(), isTrue));
+  }
+  
+  // (X+4) == X -> false.
+  if (Pred == ICmpInst::ICMP_EQ)
+    return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(X->getContext()));
+
+  // (X+4) != X -> true.
+  if (Pred == ICmpInst::ICMP_NE)
+    return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(X->getContext()));
+  
+  // From this point on, we know that (X+C <= X) --> (X+C < X) because C != 0,
+  // so the values can never be equal.  Similiarly for all other "or equals"
+  // operators.
+  
+  // (X+1) <u X        --> X >u (MAXUINT-1)        --> X != 255
+  // (X+2) <u X        --> X >u (MAXUINT-2)        --> X > 253
+  // (X+MAXUINT) <u X  --> X >u (MAXUINT-MAXUINT)  --> X != 0
+  if (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_ULE) {
+    Value *R = ConstantExpr::getSub(ConstantInt::get(CI->getType(), -1ULL), CI);
+    return new ICmpInst(ICmpInst::ICMP_UGT, X, R);
+  }
+  
+  // (X+1) >u X        --> X <u (0-1)        --> X != 255
+  // (X+2) >u X        --> X <u (0-2)        --> X <u 254
+  // (X+MAXUINT) >u X  --> X <u (0-MAXUINT)  --> X <u 1  --> X == 0
+  if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_UGE)
+    return new ICmpInst(ICmpInst::ICMP_ULT, X, ConstantExpr::getNeg(CI));
+  
+  unsigned BitWidth = CI->getType()->getPrimitiveSizeInBits();
+  ConstantInt *SMax = ConstantInt::get(X->getContext(),
+                                       APInt::getSignedMaxValue(BitWidth));
+
+  // (X+ 1) <s X       --> X >s (MAXSINT-1)          --> X == 127
+  // (X+ 2) <s X       --> X >s (MAXSINT-2)          --> X >s 125
+  // (X+MAXSINT) <s X  --> X >s (MAXSINT-MAXSINT)    --> X >s 0
+  // (X+MINSINT) <s X  --> X >s (MAXSINT-MINSINT)    --> X >s -1
+  // (X+ -2) <s X      --> X >s (MAXSINT- -2)        --> X >s 126
+  // (X+ -1) <s X      --> X >s (MAXSINT- -1)        --> X != 127
+  if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE)
+    return new ICmpInst(ICmpInst::ICMP_SGT, X, ConstantExpr::getSub(SMax, CI));
+  
+  // (X+ 1) >s X       --> X <s (MAXSINT-(1-1))       --> X != 127
+  // (X+ 2) >s X       --> X <s (MAXSINT-(2-1))       --> X <s 126
+  // (X+MAXSINT) >s X  --> X <s (MAXSINT-(MAXSINT-1)) --> X <s 1
+  // (X+MINSINT) >s X  --> X <s (MAXSINT-(MINSINT-1)) --> X <s -2
+  // (X+ -2) >s X      --> X <s (MAXSINT-(-2-1))      --> X <s -126
+  // (X+ -1) >s X      --> X <s (MAXSINT-(-1-1))      --> X == -128
+  assert(Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_SGE);
+  Constant *C = ConstantInt::get(X->getContext(), CI->getValue()-1);
+  return new ICmpInst(ICmpInst::ICMP_SLT, X, ConstantExpr::getSub(SMax, C));
+}
 
 /// FoldICmpDivCst - Fold "icmp pred, ([su]div X, DivRHS), CmpRHS" where DivRHS
 /// and CmpRHS are both known to be integer constants.
@@ -7077,8 +7149,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     break;
 
   case Instruction::Add:
-    // Fold: icmp pred (add, X, C1), C2
-
+    // Fold: icmp pred (add X, C1), C2
     if (!ICI.isEquality()) {
       ConstantInt *LHSC = dyn_cast<ConstantInt>(LHSI->getOperand(1));
       if (!LHSC) break;

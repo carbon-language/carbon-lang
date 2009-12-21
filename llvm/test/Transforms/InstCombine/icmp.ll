@@ -62,3 +62,40 @@ define i32 @test6(i32 %a, i32 %b) {
 ; CHECK-NEXT: %f = and i32 %e, %b
 ; CHECK-NEXT: ret i32 %f
 }
+
+
+define i1 @test7(i32 %x) {
+entry:
+  %a = add i32 %x, -1
+  %b = icmp ult i32 %a, %x
+  ret i1 %b
+; CHECK: %b = icmp ne i32 %x, 0
+; CHECK: ret i1 %b
+}
+
+define i1 @test8(i32 %x){
+entry:
+  %a = add i32 %x, -1 
+  %b = icmp eq i32 %a, %x
+  ret i1 %b
+; CHECK: ret i1 false
+}
+
+define i1 @test9(i32 %x)  {
+entry:
+  %a = add i32 %x, -2
+  %b = icmp ugt i32 %x, %a 
+  ret i1 %b
+; CHECK: icmp ugt i32 %x, 1
+; CHECK: ret i1 %b
+}
+
+define i1 @test10(i32 %x){
+entry:
+  %a = add i32 %x, -1      
+  %b = icmp slt i32 %a, %x 
+  ret i1 %b
+  
+; CHECK: %b = icmp ne i32 %x, -2147483648
+; CHECK: ret i1 %b
+}
