@@ -314,10 +314,6 @@ public:
     const clang::Type &Type
       = *CGM.getContext().getCanonicalType(Ty).getTypePtr();
 
-    if (const RecordType *RT = Ty.getTypePtr()->getAs<RecordType>())
-      if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl()))
-        return BuildClassTypeInfo(RD);
-
     switch (Type.getTypeClass()) {
     default: {
       assert(0 && "typeid expression");
@@ -329,10 +325,20 @@ public:
       return GetAddrOfExternalRTTIDescriptor(Ty);
     }
 
+    case Type::Record: {
+      const RecordType *RT = cast<RecordType>(&Type);
+      
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->getNumBases())
+        return BuildClassTypeInfo(RD);
+
+      // Fall through.
+    }
+
     case Type::Pointer:
     case Type::MemberPointer:
-        
       return BuildTypeInfo(Ty);
+
     case Type::FunctionProto:
     case Type::FunctionNoProto:
       return BuildSimpleType(Ty, "_ZTVN10__cxxabiv120__function_type_infoE");
@@ -496,8 +502,17 @@ bool ShouldUseExternalRTTIDescriptor(QualType Ty) {
     return TypeInfoIsInStandardLibrary(PointerTy);
 
   if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
-    (void)RecordTy;
-    assert(false && "FIXME");
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+    if (!RD->isDynamicClass())
+      return false;
+
+    // Get the key function.
+    const CXXMethodDecl *KeyFunction = RD->getASTContext().getKeyFunction(RD);
+    if (KeyFunction && !KeyFunction->getBody()) {
+      // The class has a key function, but it is not defined in this translation
+      // unit, so we should use the external descriptor for it.
+      return true;
+    }
   }
   
   return false;
@@ -555,8 +570,40 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
   //   making it a local static object.
   if (ContainsIncompleteClassType(Ty))
     return llvm::GlobalValue::InternalLinkage;
-   
-  // FIXME: Check linkage and anonymous namespace.
+  
+  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty)) {
+    // If the pointee type has internal linkage, then the pointer type needs to
+    // have it as well.
+    if (getTypeInfoLinkage(PointerTy->getPointeeType()) == 
+        llvm::GlobalVariable::InternalLinkage)
+      return llvm::GlobalVariable::InternalLinkage;
+    
+    return llvm::GlobalVariable::WeakODRLinkage;
+  }
+    
+  if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+
+    // If we're in an anonymous namespace, then we always want internal linkage.
+    if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
+      return llvm::GlobalVariable::InternalLinkage;
+    
+    if (!RD->isDynamicClass())
+      return llvm::GlobalValue::WeakODRLinkage;
+    
+    // Get the key function.
+    const CXXMethodDecl *KeyFunction = RD->getASTContext().getKeyFunction(RD);
+    if (!KeyFunction) {
+      // There is no key function, the RTTI descriptor is emitted with weak_odr
+      // linkage.
+      return llvm::GlobalValue::WeakODRLinkage;
+    }
+
+    // Otherwise, the RTTI descriptor is emitted with external linkage.
+    return llvm::GlobalValue::ExternalLinkage;
+  }
+
+  assert(false && "Unhandled type!");
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
@@ -565,6 +612,17 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
 
   switch (Ty->getTypeClass()) {
   default: assert(0 && "Unhandled type!");
+  
+  case Type::Record: {
+    const CXXRecordDecl *RD = 
+      cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
+    if (!RD->getNumBases()) {
+      // abi::__class_type_info
+      VtableName = "_ZTVN10__cxxabiv117__class_type_infoE";
+      break;
+    }
+  }
+
   case Type::Pointer:
     // abi::__pointer_type_info
     VtableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
@@ -620,6 +678,15 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
     assert(false && "Builtin type info must be in the standard library!");
     break;
 
+  case Type::Record: {
+    const CXXRecordDecl *RD = 
+      cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
+    if (!RD->getNumBases()) {
+      // We don't need to emit any fields.
+      break;
+    }
+  }
+      
   case Type::Pointer:
     BuildPointerTypeInfo(cast<PointerType>(Ty));
     break;

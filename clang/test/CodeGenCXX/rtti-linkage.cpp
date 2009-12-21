@@ -6,6 +6,8 @@
 // CHECK: _ZTI1A = weak_odr constant
 // CHECK: _ZTI1B = constant
 // CHECK: _ZTSP1C = internal constant
+// CHECK: _ZTS1C = internal constant
+// CHECK: _ZTI1C = internal constant
 // CHECK: _ZTIP1C = internal constant
 // CHECK: _ZTSPP1C = internal constant
 // CHECK: _ZTIPP1C = internal constant
