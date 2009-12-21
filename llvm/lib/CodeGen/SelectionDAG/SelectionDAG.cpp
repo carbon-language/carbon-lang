@@ -10,7 +10,9 @@
 // This implements the SelectionDAG class.
 //
 //===----------------------------------------------------------------------===//
+
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "SDNodeOrdering.h"
 #include "llvm/Constants.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Function.h"
@@ -25,7 +27,6 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/CodeGen/SDNodeOrdering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
