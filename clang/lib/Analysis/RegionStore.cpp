@@ -349,6 +349,7 @@ public:
 
   SVal RetrieveArray(const GRState *St, const TypedRegion* R);
 
+  /// Get the state and region whose binding this region R corresponds to.
   std::pair<const GRState*, const MemRegion*>
   GetLazyBinding(RegionBindings B, const MemRegion *R);
 
