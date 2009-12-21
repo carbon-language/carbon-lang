@@ -25,9 +25,6 @@
 
 #include <cassert>
 #include <cstdio>
-#ifdef WIN32
-#define snprintf _snprintf
-#endif
 
 namespace llvm {
 
