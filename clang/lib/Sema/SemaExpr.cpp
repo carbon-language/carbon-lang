@@ -5170,7 +5170,18 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     if (getLangOptions().CPlusPlus) {
       if (LCanPointeeTy == RCanPointeeTy)
         return ResultTy;
-
+      if (!isRelational &&
+          (LCanPointeeTy->isVoidType() || RCanPointeeTy->isVoidType())) {
+        // Valid unless comparison between non-null pointer and function pointer
+        // This is a gcc extension compatibility comparison.
+        if ((LCanPointeeTy->isFunctionType() || RCanPointeeTy->isFunctionType())
+            && !LHSIsNull && !RHSIsNull) {
+          Diag(Loc, diag::ext_typecheck_comparison_of_fptr_to_void)
+            << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+          ImpCastExprToType(rex, lType, CastExpr::CK_BitCast);
+          return ResultTy;
+        }
+      }
       // C++ [expr.rel]p2:
       //   [...] Pointer conversions (4.10) and qualification
       //   conversions (4.4) are performed on pointer operands (or on
