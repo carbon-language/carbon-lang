@@ -1,4 +1,5 @@
 // RUN: %llvmgxx %s -S -o - | FileCheck %s
+// XFAIL: powerpc-apple-darwin
 
 // Make sure pointers are passed as pointers, not converted to int.
 // The first load should be of type i8** in either 32 or 64 bit mode.
