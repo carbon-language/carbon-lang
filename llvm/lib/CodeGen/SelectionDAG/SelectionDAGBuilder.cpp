@@ -2383,6 +2383,11 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
   SDValue Src1 = getValue(I.getOperand(0));
   SDValue Src2 = getValue(I.getOperand(1));
 
+  if (DisableScheduling) {
+    DAG.AssignOrdering(Src1.getNode(), SDNodeOrder);
+    DAG.AssignOrdering(Src2.getNode(), SDNodeOrder);
+  }
+
   // Convert the ConstantVector mask operand into an array of ints, with -1
   // representing undef values.
   SmallVector<Constant*, 8> MaskElts;
@@ -2460,8 +2465,11 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
                                        &MappedOps[0]);
     setValue(&I, Res);
 
-    if (DisableScheduling)
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Src1.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(Src2.getNode(), SDNodeOrder);
       DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+    }
 
     return;
   }
@@ -2671,10 +2679,12 @@ void SelectionDAGBuilder::visitExtractValue(ExtractValueInst &I) {
     DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
-
 void SelectionDAGBuilder::visitGetElementPtr(User &I) {
   SDValue N = getValue(I.getOperand(0));
   const Type *Ty = I.getOperand(0)->getType();
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(N.getNode(), SDNodeOrder);
 
   for (GetElementPtrInst::op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
@@ -2686,7 +2696,11 @@ void SelectionDAGBuilder::visitGetElementPtr(User &I) {
         uint64_t Offset = TD->getStructLayout(StTy)->getElementOffset(Field);
         N = DAG.getNode(ISD::ADD, getCurDebugLoc(), N.getValueType(), N,
                         DAG.getIntPtrConstant(Offset));
+
+        if (DisableScheduling)
+          DAG.AssignOrdering(N.getNode(), SDNodeOrder);
       }
+
       Ty = StTy->getElementType(Field);
     } else {
       Ty = cast<SequentialType>(Ty)->getElementType();
@@ -2699,14 +2713,21 @@ void SelectionDAGBuilder::visitGetElementPtr(User &I) {
         SDValue OffsVal;
         EVT PTy = TLI.getPointerTy();
         unsigned PtrBits = PTy.getSizeInBits();
-        if (PtrBits < 64) {
+        if (PtrBits < 64)
           OffsVal = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
                                 TLI.getPointerTy(),
                                 DAG.getConstant(Offs, MVT::i64));
-        } else
+        else
           OffsVal = DAG.getIntPtrConstant(Offs);
+
         N = DAG.getNode(ISD::ADD, getCurDebugLoc(), N.getValueType(), N,
                         OffsVal);
+
+        if (DisableScheduling) {
+          DAG.AssignOrdering(OffsVal.getNode(), SDNodeOrder);
+          DAG.AssignOrdering(N.getNode(), SDNodeOrder);
+        }
+
         continue;
       }
 
@@ -2732,12 +2753,19 @@ void SelectionDAGBuilder::visitGetElementPtr(User &I) {
           IdxN = DAG.getNode(ISD::MUL, getCurDebugLoc(),
                              N.getValueType(), IdxN, Scale);
         }
+
+        if (DisableScheduling)
+          DAG.AssignOrdering(IdxN.getNode(), SDNodeOrder);
       }
 
       N = DAG.getNode(ISD::ADD, getCurDebugLoc(),
                       N.getValueType(), N, IdxN);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(N.getNode(), SDNodeOrder);
     }
   }
+
   setValue(&I, N);
 }
 
