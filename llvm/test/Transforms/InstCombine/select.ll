@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ; PR1822
 
-; RUN: opt < %s -instcombine -S | not grep select
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 define i32 @test1(i32 %A, i32 %B) {
         %C = select i1 false, i32 %A, i32 %B            
@@ -97,7 +97,7 @@ define i32 @test11(i32 %a) {
 ; CHECK: @test11
 ; CHECK: icmp ne i32 %a, 0
 ; CHECK: %R = zext i1
-; CHECK: ret i1 %R
+; CHECK: ret i32 %R
 }
 
 define i32 @test12(i1 %cond, i32 %a) {
@@ -284,7 +284,7 @@ define i16 @test22(i32 %x) {
         %tmp = icmp slt i32 %x, 0               
         %retval = select i1 %tmp, i16 -1, i16 0         
         ret i16 %retval
-; CHECK: @test21
+; CHECK: @test22
 ; CHECK-NEXT: ashr i32 %x, 31
 ; CHECK-NEXT: trunc i32 
 ; CHECK-NEXT: ret i16
@@ -377,9 +377,9 @@ ret:
 next:
   %b = select i1 %a, i32 %A, i32 %c
   ret i32 %b
-; CHECK: @test25
+; CHECK: @test29
 ; CHECK: %a = phi i32 [ %A, %jump ], [ %B, %entry ]
-; CHECK-NEXT: ret i32 %a
+; CHECK: ret i32 %a
 }
 
 
