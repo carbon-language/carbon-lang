@@ -198,6 +198,14 @@ TEST(StringRefTest, StartsWith) {
   EXPECT_FALSE(Str.startswith("hi"));
 }
 
+TEST(StringRefTest, EndsWith) {
+  StringRef Str("hello");
+  EXPECT_TRUE(Str.endswith("lo"));
+  EXPECT_FALSE(Str.endswith("helloworld"));
+  EXPECT_FALSE(Str.endswith("worldhello"));
+  EXPECT_FALSE(Str.endswith("so"));
+}
+
 TEST(StringRefTest, Find) {
   StringRef Str("hello");
   EXPECT_EQ(2U, Str.find('l'));

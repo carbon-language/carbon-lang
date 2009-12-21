@@ -159,12 +159,14 @@ namespace llvm {
 
     /// startswith - Check if this string starts with the given \arg Prefix.
     bool startswith(StringRef Prefix) const {
-      return substr(0, Prefix.Length).equals(Prefix);
+      return Length >= Prefix.Length &&
+             memcmp(Data, Prefix.Data, Prefix.Length) == 0;
     }
 
     /// endswith - Check if this string ends with the given \arg Suffix.
     bool endswith(StringRef Suffix) const {
-      return slice(size() - Suffix.Length, size()).equals(Suffix);
+      return Length >= Suffix.Length &&
+             memcmp(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
     }
 
     /// @}
