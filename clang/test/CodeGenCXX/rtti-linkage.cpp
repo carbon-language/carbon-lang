@@ -24,6 +24,11 @@
 // CHECK: _ZTSM1AP1C = internal constant
 // CHECK: _ZTIM1AP1C = internal constant
 
+// CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTIPN12_GLOBAL__N_11DE = internal constant
+
 // A has no key function, so its RTTI data should be weak_odr.
 struct A { };
 
@@ -38,7 +43,7 @@ void B::f() { }
 // internal linkage, as should the type info for C itself (FIXME).
 struct C;
 
-void f() {
+void t1() {
   (void)typeid(C*);
   (void)typeid(C**);
   (void)typeid(int C::*);
@@ -47,6 +52,16 @@ void f() {
   (void)typeid(C *C::*);
   (void)typeid(C A::*);
   (void)typeid(C* A::*);
-  
 }
 
+namespace {
+  // D is inside an anonymous namespace, so all type information related to D should have
+  // internal linkage.
+  struct D { };
+};
+
+void t2() {
+  (void)typeid(D);
+  (void)typeid(D *);
+  
+}
