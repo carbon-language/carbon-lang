@@ -1967,10 +1967,16 @@ void SelectionDAGBuilder::visitSwitch(SwitchInst &SI) {
 
     // If this is not a fall-through branch, emit the branch.
     CurMBB->addSuccessor(Default);
-    if (Default != NextBlock)
-      DAG.setRoot(DAG.getNode(ISD::BR, getCurDebugLoc(),
-                              MVT::Other, getControlRoot(),
-                              DAG.getBasicBlock(Default)));
+    if (Default != NextBlock) {
+      SDValue Val = DAG.getNode(ISD::BR, getCurDebugLoc(),
+                                MVT::Other, getControlRoot(),
+                                DAG.getBasicBlock(Default));
+      DAG.setRoot(Val);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Val.getNode(), SDNodeOrder);
+    }
+
     return;
   }
 
@@ -2022,11 +2028,14 @@ void SelectionDAGBuilder::visitIndirectBr(IndirectBrInst &I) {
   for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i)
     CurMBB->addSuccessor(FuncInfo.MBBMap[I.getSuccessor(i)]);
 
-  DAG.setRoot(DAG.getNode(ISD::BRIND, getCurDebugLoc(),
-                          MVT::Other, getControlRoot(),
-                          getValue(I.getAddress())));
-}
+  SDValue Res = DAG.getNode(ISD::BRIND, getCurDebugLoc(),
+                            MVT::Other, getControlRoot(),
+                            getValue(I.getAddress()));
+  DAG.setRoot(Res);
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+}
 
 void SelectionDAGBuilder::visitFSub(User &I) {
   // -0.0 - X --> fneg
@@ -2040,17 +2049,28 @@ void SelectionDAGBuilder::visitFSub(User &I) {
       Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
       if (CV == CNZ) {
         SDValue Op2 = getValue(I.getOperand(1));
-        setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
-                                 Op2.getValueType(), Op2));
+        SDValue Res = DAG.getNode(ISD::FNEG, getCurDebugLoc(),
+                                  Op2.getValueType(), Op2); 
+        setValue(&I, Res);
+
+        if (DisableScheduling)
+          DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
         return;
       }
     }
   }
+
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
     if (CFP->isExactlyValue(ConstantFP::getNegativeZero(Ty)->getValueAPF())) {
       SDValue Op2 = getValue(I.getOperand(1));
-      setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
-                               Op2.getValueType(), Op2));
+      SDValue Res = DAG.getNode(ISD::FNEG, getCurDebugLoc(),
+                                Op2.getValueType(), Op2);
+      setValue(&I, Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
       return;
     }
 
@@ -2060,9 +2080,12 @@ void SelectionDAGBuilder::visitFSub(User &I) {
 void SelectionDAGBuilder::visitBinary(User &I, unsigned OpCode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
+  SDValue Res = DAG.getNode(OpCode, getCurDebugLoc(),
+                            Op1.getValueType(), Op1, Op2);
+  setValue(&I, Res);
 
-  setValue(&I, DAG.getNode(OpCode, getCurDebugLoc(),
-                           Op1.getValueType(), Op1, Op2));
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitShift(User &I, unsigned Opcode) {
@@ -2095,8 +2118,12 @@ void SelectionDAGBuilder::visitShift(User &I, unsigned Opcode) {
                         TLI.getPointerTy(), Op2);
   }
 
-  setValue(&I, DAG.getNode(Opcode, getCurDebugLoc(),
-                           Op1.getValueType(), Op1, Op2));
+  SDValue Res = DAG.getNode(Opcode, getCurDebugLoc(),
+                            Op1.getValueType(), Op1, Op2);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitICmp(User &I) {
@@ -2110,7 +2137,11 @@ void SelectionDAGBuilder::visitICmp(User &I) {
   ISD::CondCode Opcode = getICmpCondCode(predicate);
   
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Opcode));
+  SDValue Res = DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Opcode);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitFCmp(User &I) {
@@ -2123,37 +2154,54 @@ void SelectionDAGBuilder::visitFCmp(User &I) {
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Condition = getFCmpCondCode(predicate);
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
+  SDValue Res = DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitSelect(User &I) {
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, I.getType(), ValueVTs);
   unsigned NumValues = ValueVTs.size();
-  if (NumValues != 0) {
-    SmallVector<SDValue, 4> Values(NumValues);
-    SDValue Cond     = getValue(I.getOperand(0));
-    SDValue TrueVal  = getValue(I.getOperand(1));
-    SDValue FalseVal = getValue(I.getOperand(2));
+  if (NumValues == 0) return;
 
-    for (unsigned i = 0; i != NumValues; ++i)
-      Values[i] = DAG.getNode(ISD::SELECT, getCurDebugLoc(),
-                              TrueVal.getNode()->getValueType(i), Cond,
-                              SDValue(TrueVal.getNode(), TrueVal.getResNo() + i),
-                              SDValue(FalseVal.getNode(), FalseVal.getResNo() + i));
+  SmallVector<SDValue, 4> Values(NumValues);
+  SDValue Cond     = getValue(I.getOperand(0));
+  SDValue TrueVal  = getValue(I.getOperand(1));
+  SDValue FalseVal = getValue(I.getOperand(2));
 
-    setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
-                             DAG.getVTList(&ValueVTs[0], NumValues),
-                             &Values[0], NumValues));
+  for (unsigned i = 0; i != NumValues; ++i) {
+    Values[i] = DAG.getNode(ISD::SELECT, getCurDebugLoc(),
+                            TrueVal.getNode()->getValueType(i), Cond,
+                            SDValue(TrueVal.getNode(),
+                                    TrueVal.getResNo() + i),
+                            SDValue(FalseVal.getNode(),
+                                    FalseVal.getResNo() + i));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Values[i].getNode(), SDNodeOrder);
   }
-}
 
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
+                            DAG.getVTList(&ValueVTs[0], NumValues),
+                            &Values[0], NumValues);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+}
 
 void SelectionDAGBuilder::visitTrunc(User &I) {
   // TruncInst cannot be a no-op cast because sizeof(src) > sizeof(dest).
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitZExt(User &I) {
@@ -2161,7 +2209,11 @@ void SelectionDAGBuilder::visitZExt(User &I) {
   // ZExt also can't be a cast to bool for same reason. So, nothing much to do
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitSExt(User &I) {
@@ -2169,50 +2221,78 @@ void SelectionDAGBuilder::visitSExt(User &I) {
   // SExt also can't be a cast to bool for same reason. So, nothing much to do
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::SIGN_EXTEND, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitFPTrunc(User &I) {
   // FPTrunc is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::FP_ROUND, getCurDebugLoc(),
-                           DestVT, N, DAG.getIntPtrConstant(0)));
+  SDValue Res = DAG.getNode(ISD::FP_ROUND, getCurDebugLoc(),
+                            DestVT, N, DAG.getIntPtrConstant(0));
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitFPExt(User &I){
   // FPTrunc is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::FP_EXTEND, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::FP_EXTEND, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitFPToUI(User &I) {
   // FPToUI is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::FP_TO_UINT, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::FP_TO_UINT, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitFPToSI(User &I) {
   // FPToSI is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::FP_TO_SINT, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::FP_TO_SINT, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitUIToFP(User &I) {
   // UIToFP is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::UINT_TO_FP, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::UINT_TO_FP, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitSIToFP(User &I){
   // SIToFP is never a no-op cast, no need to check
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getNode(ISD::SINT_TO_FP, getCurDebugLoc(), DestVT, N));
+  SDValue Res = DAG.getNode(ISD::SINT_TO_FP, getCurDebugLoc(), DestVT, N);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitPtrToInt(User &I) {
@@ -2221,8 +2301,11 @@ void SelectionDAGBuilder::visitPtrToInt(User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
-  SDValue Result = DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT);
-  setValue(&I, Result);
+  SDValue Res = DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitIntToPtr(User &I) {
@@ -2231,20 +2314,29 @@ void SelectionDAGBuilder::visitIntToPtr(User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
-  setValue(&I, DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT));
+  SDValue Res = DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitBitCast(User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
 
-  // BitCast assures us that source and destination are the same size so this
-  // is either a BIT_CONVERT or a no-op.
-  if (DestVT != N.getValueType())
-    setValue(&I, DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
-                             DestVT, N)); // convert types
-  else
-    setValue(&I, N); // noop cast.
+  // BitCast assures us that source and destination are the same size so this is
+  // either a BIT_CONVERT or a no-op.
+  if (DestVT != N.getValueType()) {
+    SDValue Res = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(),
+                              DestVT, N); // convert types.
+    setValue(&I, Res);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+  } else {
+    setValue(&I, N);            // noop cast.
+  }
 }
 
 void SelectionDAGBuilder::visitInsertElement(User &I) {
@@ -2253,10 +2345,13 @@ void SelectionDAGBuilder::visitInsertElement(User &I) {
   SDValue InIdx = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
                                 TLI.getPointerTy(),
                                 getValue(I.getOperand(2)));
+  SDValue Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, getCurDebugLoc(),
+                            TLI.getValueType(I.getType()),
+                            InVec, InVal, InIdx);
+  setValue(&I, Res);
 
-  setValue(&I, DAG.getNode(ISD::INSERT_VECTOR_ELT, getCurDebugLoc(),
-                           TLI.getValueType(I.getType()),
-                           InVec, InVal, InIdx));
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitExtractElement(User &I) {
@@ -2264,8 +2359,12 @@ void SelectionDAGBuilder::visitExtractElement(User &I) {
   SDValue InIdx = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
                                 TLI.getPointerTy(),
                                 getValue(I.getOperand(1)));
-  setValue(&I, DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
-                           TLI.getValueType(I.getType()), InVec, InIdx));
+  SDValue Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
+                            TLI.getValueType(I.getType()), InVec, InIdx);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 
