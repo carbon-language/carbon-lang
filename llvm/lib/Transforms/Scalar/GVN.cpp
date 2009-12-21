@@ -1311,7 +1311,15 @@ struct AvailableValueInBlock {
 static Value *ConstructSSAForLoadSet(LoadInst *LI, 
                          SmallVectorImpl<AvailableValueInBlock> &ValuesPerBlock,
                                      const TargetData *TD,
+                                     const DominatorTree &DT,
                                      AliasAnalysis *AA) {
+  // Check for the fully redundant, dominating load case.  In this case, we can
+  // just use the dominating value directly.
+  if (ValuesPerBlock.size() == 1 && 
+      DT.properlyDominates(ValuesPerBlock[0].BB, LI->getParent()))
+    return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), TD);
+
+  // Otherwise, we have to construct SSA form.
   SmallVector<PHINode*, 8> NewPHIs;
   SSAUpdater SSAUpdate(&NewPHIs);
   SSAUpdate.Initialize(LI);
@@ -1494,7 +1502,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
     
     // Perform PHI construction.
-    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD,
+    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
                                       VN.getAliasAnalysis());
     LI->replaceAllUsesWith(V);
 
@@ -1683,7 +1691,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,NewLoad));
 
   // Perform PHI construction.
-  Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD,
+  Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
                                     VN.getAliasAnalysis());
   LI->replaceAllUsesWith(V);
   if (isa<PHINode>(V))
