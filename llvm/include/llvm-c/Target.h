@@ -35,9 +35,11 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 /* Declare all of the target-initialization functions that are available. */
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo();
 #include "llvm/Config/Targets.def"
-
+#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
+  
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
+#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
     it wants access to all available targets that LLVM is configured to
@@ -45,6 +47,7 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 static inline void LLVMInitializeAllTargetInfos() {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
 #include "llvm/Config/Targets.def"
+#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 }
 
 /** LLVMInitializeAllTargets - The main program should call this function if it
@@ -53,6 +56,7 @@ static inline void LLVMInitializeAllTargetInfos() {
 static inline void LLVMInitializeAllTargets() {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
+#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 }
   
 /** LLVMInitializeNativeTarget - The main program should call this function to
