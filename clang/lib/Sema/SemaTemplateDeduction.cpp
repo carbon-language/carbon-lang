@@ -476,7 +476,7 @@ DeduceTemplateArguments(ASTContext &Context,
     }
 
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");
-
+    assert(Arg != Context.OverloadTy && "Unresolved overloaded function");
     QualType DeducedType = Arg;
     DeducedType.removeCVRQualifiers(Param.getCVRQualifiers());
     if (RecanonicalizeArg)
