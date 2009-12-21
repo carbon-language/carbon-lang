@@ -69,6 +69,7 @@ entry:
   %a = add i32 %x, -1
   %b = icmp ult i32 %a, %x
   ret i1 %b
+; CHECK: @test7
 ; CHECK: %b = icmp ne i32 %x, 0
 ; CHECK: ret i1 %b
 }
@@ -78,6 +79,7 @@ entry:
   %a = add i32 %x, -1 
   %b = icmp eq i32 %a, %x
   ret i1 %b
+; CHECK: @test8
 ; CHECK: ret i1 false
 }
 
@@ -86,6 +88,7 @@ entry:
   %a = add i32 %x, -2
   %b = icmp ugt i32 %x, %a 
   ret i1 %b
+; CHECK: @test9
 ; CHECK: icmp ugt i32 %x, 1
 ; CHECK: ret i1 %b
 }
@@ -96,6 +99,16 @@ entry:
   %b = icmp slt i32 %a, %x 
   ret i1 %b
   
+; CHECK: @test10
 ; CHECK: %b = icmp ne i32 %x, -2147483648
 ; CHECK: ret i1 %b
 }
+
+define i1 @test11(i32 %x) {
+  %a = add nsw i32 %x, 8
+  %b = icmp slt i32 %x, %a
+  ret i1 %b
+; CHECK: @test11  
+; CHECK: ret i1 true
+}
+

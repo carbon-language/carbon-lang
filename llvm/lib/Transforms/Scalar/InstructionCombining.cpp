@@ -258,7 +258,7 @@ namespace {
     Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                                 ConstantInt *DivRHS);
     Instruction *FoldICmpAddOpCst(ICmpInst &ICI, Value *X, ConstantInt *CI,
-                                  ICmpInst::Predicate Pred);
+                                  ICmpInst::Predicate Pred, Value *TheAdd);
     Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                              ICmpInst::Predicate Cond, Instruction &I);
     Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
@@ -2737,9 +2737,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (Op0 == Op1)                        // sub X, X  -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // If this is a 'B = x-(-A)', change to B = x+A.
-  if (Value *V = dyn_castNegVal(Op1))
-    return BinaryOperator::CreateAdd(Op0, V);
+  // If this is a 'B = x-(-A)', change to B = x+A.  This preserves NSW/NUW.
+  if (Value *V = dyn_castNegVal(Op1)) {
+    BinaryOperator *Res = BinaryOperator::CreateAdd(Op0, V);
+    Res->setHasNoSignedWrap(I.hasNoSignedWrap());
+    Res->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+    return Res;
+  }
 
   if (isa<UndefValue>(Op0))
     return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
@@ -6604,13 +6608,13 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   
   {
     Value *X; ConstantInt *Cst;
-    // icmp (X+Cst), X
+    // icmp X+Cst, X
     if (match(Op0, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op1 == X)
-      return FoldICmpAddOpCst(I, X, Cst, I.getPredicate());
-      
+      return FoldICmpAddOpCst(I, X, Cst, I.getPredicate(), Op0);
+
     // icmp X, X+Cst
     if (match(Op1, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op0 == X)
-      return FoldICmpAddOpCst(I, X, Cst, I.getSwappedPredicate());
+      return FoldICmpAddOpCst(I, X, Cst, I.getSwappedPredicate(), Op1);
   }
   return Changed ? &I : 0;
 }
@@ -6618,7 +6622,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 /// FoldICmpAddOpCst - Fold "icmp pred (X+CI), X".
 Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
                                             Value *X, ConstantInt *CI,
-                                            ICmpInst::Predicate Pred) {
+                                            ICmpInst::Predicate Pred,
+                                            Value *TheAdd) {
   // If we have X+0, exit early (simplifying logic below) and let it get folded
   // elsewhere.   icmp X+0, X  -> icmp X, X
   if (CI->isZero()) {
@@ -6633,6 +6638,13 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // (X+4) != X -> true.
   if (Pred == ICmpInst::ICMP_NE)
     return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(X->getContext()));
+
+  // If this is an instruction (as opposed to constantexpr) get NUW/NSW info.
+  bool isNUW = false, isNSW = false;
+  if (BinaryOperator *Add = dyn_cast<BinaryOperator>(TheAdd)) {
+    isNUW = Add->hasNoUnsignedWrap();
+    isNSW = Add->hasNoSignedWrap();
+  }      
   
   // From this point on, we know that (X+C <= X) --> (X+C < X) because C != 0,
   // so the values can never be equal.  Similiarly for all other "or equals"
@@ -6642,6 +6654,10 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // (X+2) <u X        --> X >u (MAXUINT-2)        --> X > 253
   // (X+MAXUINT) <u X  --> X >u (MAXUINT-MAXUINT)  --> X != 0
   if (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_ULE) {
+    // If this is an NUW add, then this is always false.
+    if (isNUW)
+      return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(X->getContext())); 
+    
     Value *R = ConstantExpr::getSub(ConstantInt::get(CI->getType(), -1ULL), CI);
     return new ICmpInst(ICmpInst::ICMP_UGT, X, R);
   }
@@ -6649,8 +6665,12 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // (X+1) >u X        --> X <u (0-1)        --> X != 255
   // (X+2) >u X        --> X <u (0-2)        --> X <u 254
   // (X+MAXUINT) >u X  --> X <u (0-MAXUINT)  --> X <u 1  --> X == 0
-  if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_UGE)
+  if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_UGE) {
+    // If this is an NUW add, then this is always true.
+    if (isNUW)
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(X->getContext())); 
     return new ICmpInst(ICmpInst::ICMP_ULT, X, ConstantExpr::getNeg(CI));
+  }
   
   unsigned BitWidth = CI->getType()->getPrimitiveSizeInBits();
   ConstantInt *SMax = ConstantInt::get(X->getContext(),
@@ -6662,8 +6682,16 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // (X+MINSINT) <s X  --> X >s (MAXSINT-MINSINT)    --> X >s -1
   // (X+ -2) <s X      --> X >s (MAXSINT- -2)        --> X >s 126
   // (X+ -1) <s X      --> X >s (MAXSINT- -1)        --> X != 127
-  if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE)
+  if (Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE) {
+    // If this is an NSW add, then we have two cases: if the constant is
+    // positive, then this is always false, if negative, this is always true.
+    if (isNSW) {
+      bool isTrue = CI->getValue().isNegative();
+      return ReplaceInstUsesWith(ICI, ConstantInt::get(ICI.getType(), isTrue));
+    }
+    
     return new ICmpInst(ICmpInst::ICMP_SGT, X, ConstantExpr::getSub(SMax, CI));
+  }
   
   // (X+ 1) >s X       --> X <s (MAXSINT-(1-1))       --> X != 127
   // (X+ 2) >s X       --> X <s (MAXSINT-(2-1))       --> X <s 126
@@ -6671,6 +6699,14 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // (X+MINSINT) >s X  --> X <s (MAXSINT-(MINSINT-1)) --> X <s -2
   // (X+ -2) >s X      --> X <s (MAXSINT-(-2-1))      --> X <s -126
   // (X+ -1) >s X      --> X <s (MAXSINT-(-1-1))      --> X == -128
+  
+  // If this is an NSW add, then we have two cases: if the constant is
+  // positive, then this is always true, if negative, this is always false.
+  if (isNSW) {
+    bool isTrue = !CI->getValue().isNegative();
+    return ReplaceInstUsesWith(ICI, ConstantInt::get(ICI.getType(), isTrue));
+  }
+  
   assert(Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_SGE);
   Constant *C = ConstantInt::get(X->getContext(), CI->getValue()-1);
   return new ICmpInst(ICmpInst::ICMP_SLT, X, ConstantExpr::getSub(SMax, C));
