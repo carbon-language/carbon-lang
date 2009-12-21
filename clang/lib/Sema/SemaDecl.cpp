@@ -106,8 +106,12 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
       return 0;
   }
-      
-  LookupResult Result(*this, &II, NameLoc, LookupOrdinaryName);
+
+  // FIXME: LookupNestedNameSpecifierName isn't the right kind of
+  // lookup for class-names.
+  LookupNameKind Kind = isClassName ? LookupNestedNameSpecifierName :
+                                      LookupOrdinaryName;
+  LookupResult Result(*this, &II, NameLoc, Kind);
   if (LookupCtx) {
     // Perform "qualified" name lookup into the declaration context we
     // computed, which is either the type of the base of a member access
