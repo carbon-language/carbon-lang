@@ -107,12 +107,11 @@ namespace {
     int isSafeAllocaToScalarRepl(AllocaInst *AI);
 
     void isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
-                             uint64_t ArrayOffset, AllocaInfo &Info);
+                             AllocaInfo &Info);
     void isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t &Offset,
-                   uint64_t &ArrayOffset, AllocaInfo &Info);
-    void isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t ArrayOffset,
-                         uint64_t MemSize, const Type *MemOpType, bool isStore,
-                         AllocaInfo &Info);
+                   AllocaInfo &Info);
+    void isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
+                         const Type *MemOpType, bool isStore, AllocaInfo &Info);
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
     uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
                                   const Type *&IdxTy);
@@ -120,7 +119,6 @@ namespace {
     void DoScalarReplacement(AllocaInst *AI, 
                              std::vector<AllocaInst*> &WorkList);
     void DeleteDeadInstructions();
-    void CleanupGEP(GetElementPtrInst *GEP);
     void CleanupAllocaUsers(Value *V);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocaInst *Base);
     
@@ -401,43 +399,33 @@ void SROA::DeleteDeadInstructions() {
   }
 }
     
-/// AllUsersAreLoads - Return true if all users of this value are loads.
-static bool AllUsersAreLoads(Value *Ptr) {
-  for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
-       I != E; ++I)
-    if (cast<Instruction>(*I)->getOpcode() != Instruction::Load)
-      return false;
-  return true;
-}
-
 /// isSafeForScalarRepl - Check if instruction I is a safe use with regard to
 /// performing scalar replacement of alloca AI.  The results are flagged in
-/// the Info parameter.  Offset and ArrayOffset indicate the position within
-/// AI that is referenced by this instruction.
+/// the Info parameter.  Offset indicates the position within AI that is
+/// referenced by this instruction.
 void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
-                               uint64_t ArrayOffset, AllocaInfo &Info) {
+                               AllocaInfo &Info) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
 
     if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
-      isSafeForScalarRepl(BC, AI, Offset, ArrayOffset, Info);
+      isSafeForScalarRepl(BC, AI, Offset, Info);
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
-      uint64_t GEPArrayOffset = ArrayOffset;
       uint64_t GEPOffset = Offset;
-      isSafeGEP(GEPI, AI, GEPOffset, GEPArrayOffset, Info);
+      isSafeGEP(GEPI, AI, GEPOffset, Info);
       if (!Info.isUnsafe)
-        isSafeForScalarRepl(GEPI, AI, GEPOffset, GEPArrayOffset, Info);
+        isSafeForScalarRepl(GEPI, AI, GEPOffset, Info);
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
       ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
       if (Length)
-        isSafeMemAccess(AI, Offset, ArrayOffset, Length->getZExtValue(), 0,
+        isSafeMemAccess(AI, Offset, Length->getZExtValue(), 0,
                         UI.getOperandNo() == 1, Info);
       else
         MarkUnsafe(Info);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (!LI->isVolatile()) {
         const Type *LIType = LI->getType();
-        isSafeMemAccess(AI, Offset, ArrayOffset, TD->getTypeAllocSize(LIType),
+        isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(LIType),
                         LIType, false, Info);
       } else
         MarkUnsafe(Info);
@@ -445,7 +433,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       // Store is ok if storing INTO the pointer, not storing the pointer
       if (!SI->isVolatile() && SI->getOperand(0) != I) {
         const Type *SIType = SI->getOperand(0)->getType();
-        isSafeMemAccess(AI, Offset, ArrayOffset, TD->getTypeAllocSize(SIType),
+        isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(SIType),
                         SIType, true, Info);
       } else
         MarkUnsafe(Info);
@@ -469,12 +457,9 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
 /// replacement.  It is safe when all the indices are constant, in-bounds
 /// references, and when the resulting offset corresponds to an element within
 /// the alloca type.  The results are flagged in the Info parameter.  Upon
-/// return, Offset is adjusted as specified by the GEP indices.  For the
-/// special case of a variable index to a 2-element array, ArrayOffset is set
-/// to the array element size.
+/// return, Offset is adjusted as specified by the GEP indices.
 void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
-                     uint64_t &Offset, uint64_t &ArrayOffset,
-                     AllocaInfo &Info) {
+                     uint64_t &Offset, AllocaInfo &Info) {
   gep_type_iterator GEPIt = gep_type_begin(GEPI), E = gep_type_end(GEPI);
   if (GEPIt == E)
     return;
@@ -485,27 +470,6 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
     return MarkUnsafe(Info);
   if (++GEPIt == E)
     return;
-
-  // If the first index is a non-constant index into an array, see if we can
-  // handle it as a special case.
-  const Type *ArrayEltTy = 0;
-  if (!isa<ConstantInt>(GEPIt.getOperand()) &&
-      ArrayOffset == 0 && Offset == 0) {
-    if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
-      uint64_t NumElements = AT->getNumElements();
-
-      // If this is an array index and the index is not constant, we cannot
-      // promote... that is unless the array has exactly one or two elements
-      // in it, in which case we CAN promote it, but we have to canonicalize
-      // this out if this is the only problem.
-      if ((NumElements != 1 && NumElements != 2) || !AllUsersAreLoads(GEPI))
-        return MarkUnsafe(Info);
-      Info.needsCleanup = true;
-      ArrayOffset = TD->getTypeAllocSizeInBits(AT->getElementType());
-      ArrayEltTy = AT->getElementType();
-      ++GEPIt;
-    }
-  }
 
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
@@ -535,19 +499,9 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
 
   // All the indices are safe.  Now compute the offset due to this GEP and
   // check if the alloca has a component element at that offset.
-  if (ArrayOffset == 0) {
-    SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
-    Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
-                                   &Indices[0], Indices.size());
-  } else {
-    // Both array elements have the same type, so it suffices to check one of
-    // them.  Copy the GEP indices starting from the array index, but replace
-    // that variable index with a constant zero.
-    SmallVector<Value*, 8> Indices(GEPI->op_begin() + 2, GEPI->op_end());
-    Indices[0] = Constant::getNullValue(Type::getInt32Ty(GEPI->getContext()));
-    const Type *ArrayEltPtr = PointerType::getUnqual(ArrayEltTy);
-    Offset += TD->getIndexedOffset(ArrayEltPtr, &Indices[0], Indices.size());
-  }
+  SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
+  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
+                                 &Indices[0], Indices.size());
   if (!TypeHasComponent(AI->getAllocatedType(), Offset, 0))
     MarkUnsafe(Info);
 }
@@ -556,13 +510,11 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
 /// alloca or has an offset and size that corresponds to a component element
 /// within it.  The offset checked here may have been formed from a GEP with a
 /// pointer bitcasted to a different type.
-void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset,
-                           uint64_t ArrayOffset, uint64_t MemSize,
+void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
                            const Type *MemOpType, bool isStore,
                            AllocaInfo &Info) {
   // Check if this is a load/store of the entire alloca.
-  if (Offset == 0 && ArrayOffset == 0 &&
-      MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
+  if (Offset == 0 && MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
     bool UsesAggregateType = (MemOpType == AI->getAllocatedType());
     // This is safe for MemIntrinsics (where MemOpType is 0), integer types
     // (which are essentially the same as the MemIntrinsics, especially with
@@ -580,8 +532,7 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset,
   }
   // Check if the offset/size correspond to a component within the alloca type.
   const Type *T = AI->getAllocatedType();
-  if (TypeHasComponent(T, Offset, MemSize) &&
-      (ArrayOffset == 0 || TypeHasComponent(T, Offset + ArrayOffset, MemSize)))
+  if (TypeHasComponent(T, Offset, MemSize))
     return;
 
   return MarkUnsafe(Info);
@@ -1219,7 +1170,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // the users are safe to transform.
   AllocaInfo Info;
   
-  isSafeForScalarRepl(AI, AI, 0, 0, Info);
+  isSafeForScalarRepl(AI, AI, 0, Info);
   if (Info.isUnsafe) {
     DEBUG(errs() << "Cannot transform: " << *AI << '\n');
     return 0;
@@ -1238,83 +1189,21 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   return Info.needsCleanup ? 1 : 3;
 }
 
-/// CleanupGEP - GEP is used by an Alloca, which can be promoted after the GEP
-/// is canonicalized here.
-void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
-  gep_type_iterator I = gep_type_begin(GEPI);
-  ++I;
-  
-  const ArrayType *AT = dyn_cast<ArrayType>(*I);
-  if (!AT) 
-    return;
-
-  uint64_t NumElements = AT->getNumElements();
-  
-  if (isa<ConstantInt>(I.getOperand()))
-    return;
-
-  if (NumElements == 1) {
-    GEPI->setOperand(2, 
-                  Constant::getNullValue(Type::getInt32Ty(GEPI->getContext())));
-    return;
-  } 
-    
-  assert(NumElements == 2 && "Unhandled case!");
-  // All users of the GEP must be loads.  At each use of the GEP, insert
-  // two loads of the appropriate indexed GEP and select between them.
-  Value *IsOne = new ICmpInst(GEPI, ICmpInst::ICMP_NE, I.getOperand(), 
-                              Constant::getNullValue(I.getOperand()->getType()),
-                              "isone");
-  // Insert the new GEP instructions, which are properly indexed.
-  SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-  Indices[1] = Constant::getNullValue(Type::getInt32Ty(GEPI->getContext()));
-  Value *ZeroIdx = GetElementPtrInst::CreateInBounds(GEPI->getOperand(0),
-                                                     Indices.begin(),
-                                                     Indices.end(),
-                                                     GEPI->getName()+".0",GEPI);
-  Indices[1] = ConstantInt::get(Type::getInt32Ty(GEPI->getContext()), 1);
-  Value *OneIdx = GetElementPtrInst::CreateInBounds(GEPI->getOperand(0),
-                                                    Indices.begin(),
-                                                    Indices.end(),
-                                                    GEPI->getName()+".1", GEPI);
-  // Replace all loads of the variable index GEP with loads from both
-  // indexes and a select.
-  while (!GEPI->use_empty()) {
-    LoadInst *LI = cast<LoadInst>(GEPI->use_back());
-    Value *Zero = new LoadInst(ZeroIdx, LI->getName()+".0", LI);
-    Value *One  = new LoadInst(OneIdx , LI->getName()+".1", LI);
-    Value *R = SelectInst::Create(IsOne, One, Zero, LI->getName(), LI);
-    LI->replaceAllUsesWith(R);
-    LI->eraseFromParent();
-  }
-}
-
 /// CleanupAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
 void SROA::CleanupAllocaUsers(Value *V) {
-  // At this point, we know that the end result will be SROA'd and promoted, so
-  // we can insert ugly code if required so long as sroa+mem2reg will clean it
-  // up.
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ) {
     User *U = *UI++;
-    if (isa<BitCastInst>(U)) {
-      CleanupAllocaUsers(U);
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
-      CleanupGEP(GEPI);
-      CleanupAllocaUsers(GEPI);
-      if (GEPI->use_empty()) GEPI->eraseFromParent();
-    } else {
-      Instruction *I = cast<Instruction>(U);
-      SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
-      if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
-        // Safe to remove debug info uses.
-        while (!DbgInUses.empty()) {
-          DbgInfoIntrinsic *DI = DbgInUses.back(); DbgInUses.pop_back();
-          DI->eraseFromParent();
-        }
-        I->eraseFromParent();
+    Instruction *I = cast<Instruction>(U);
+    SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
+    if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
+      // Safe to remove debug info uses.
+      while (!DbgInUses.empty()) {
+        DbgInfoIntrinsic *DI = DbgInUses.back(); DbgInUses.pop_back();
+        DI->eraseFromParent();
       }
+      I->eraseFromParent();
     }
   }
 }
