@@ -391,6 +391,7 @@ def mcpu_EQ : Joined<"-mcpu=">, Group<m_Group>, Flags<[DriverOption]>;
 def mdynamic_no_pic : Joined<"-mdynamic-no-pic">, Group<m_Group>, Flags<[NoArgumentUnused]>;
 def mfix_and_continue : Flag<"-mfix-and-continue">, Group<clang_ignored_m_Group>;
 def mfloat_abi_EQ : Joined<"-mfloat-abi=">, Group<m_Group>;
+def mfpu_EQ : Joined<"-mfpu=">, Group<m_Group>;
 def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>;
 def mkernel : Flag<"-mkernel">, Group<m_Group>;

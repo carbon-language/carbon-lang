@@ -1183,10 +1183,25 @@ public:
 
 namespace {
 class ARMTargetInfo : public TargetInfo {
-   static const TargetInfo::GCCRegAlias GCCRegAliases[];
-   static const char * const GCCRegNames[];
+  // Possible FPU choices.
+  enum FPUMode {
+    NoFPU,
+    VFP2FPU,
+    VFP3FPU,
+    NeonFPU
+  };
+
+  static bool FPUModeIsVFP(FPUMode Mode) {
+    return Mode >= VFP2FPU && Mode <= NeonFPU;
+  }
+
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  static const char * const GCCRegNames[];
 
   std::string ABI, CPU;
+
+  unsigned FPU : 3;
+
   unsigned IsThumb : 1;
 
   // Initialized via features.
@@ -1245,23 +1260,49 @@ public:
     return true;
   }
 
+  void getDefaultFeatures(const std::string &CPU,
+                          llvm::StringMap<bool> &Features) const {
+    // FIXME: This should not be here.
+    Features["vfp2"] = false;
+    Features["vfp3"] = false;
+    Features["neon"] = false;
+
+    if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
+      Features["vfp2"] = true;
+    else if (CPU == "cortex-a8" || CPU == "cortex-a9")
+      Features["neon"] = true;
+  }
+  
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  const std::string &Name,
                                  bool Enabled) const {
-    if (Name != "soft-float" && Name != "soft-float-abi")
+    if (Name == "soft-float" || Name == "soft-float-abi") {
+      Features[Name] = Enabled;
+    } else if (Name == "vfp2" || Name == "vfp3" || Name == "neon") {
+      // These effectively are a single option, reset them when any is enabled.
+      if (Enabled)
+        Features["vfp2"] = Features["vfp3"] = Features["neon"] = false;
+      Features[Name] = Enabled;
+    } else
       return false;
 
-    Features[Name] = Enabled;
     return true;
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+    FPU = NoFPU;
     SoftFloat = SoftFloatABI = false;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+soft-float")
         SoftFloat = true;
       else if (Features[i] == "+soft-float-abi")
         SoftFloatABI = true;
+      else if (Features[i] == "+vfp2")
+        FPU = VFP2FPU;
+      else if (Features[i] == "+vfp3")
+        FPU = VFP3FPU;
+      else if (Features[i] == "+neon")
+        FPU = NeonFPU;
     }
 
     // Remove front-end specific options which the backend handles differently.
@@ -1286,9 +1327,9 @@ public:
       .Case("arm926ej-s", "5TEJ")
       .Cases("arm10e", "arm1020e", "arm1022e", "5TE")
       .Cases("xscale", "iwmmxt", "5TE")
-      .Cases("arm1136j-s", "arm1136jf-s", "6J")
+      .Case("arm1136j-s", "6J")
       .Cases("arm1176jz-s", "arm1176jzf-s", "6ZK")
-      .Cases("mpcorenovfp", "mpcore", "6K")
+      .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
       .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
       .Cases("cortex-a8", "cortex-a9", "7A")
       .Default(0);
@@ -1334,17 +1375,26 @@ public:
     if (CPU == "xscale")
       Define(Defs, "__XSCALE__");
 
+    bool IsThumb2 = IsThumb && (CPUArch == "6T2" || CPUArch.startswith("7"));
     if (IsThumb) {
       Define(Defs, "__THUMBEL__");
       Define(Defs, "__thumb__");
-      if (CPUArch == "6T2" || CPUArch.startswith("7"))
+      if (IsThumb2)
         Define(Defs, "__thumb2__");
     }
 
     // Note, this is always on in gcc, even though it doesn't make sense.
     Define(Defs, "__APCS_32__");
-    // FIXME: This should be conditional on VFP instruction support.
-    Define(Defs, "__VFP_FP__");
+
+    if (FPUModeIsVFP((FPUMode) FPU))
+      Define(Defs, "__VFP_FP__");
+
+    // This only gets set when Neon instructions are actually available, unlike
+    // the VFP define, hence the soft float and arch check. This is subtly
+    // different from gcc, we follow the intent which was that it should be set
+    // when Neon instructions are actually available.
+    if (FPU == NeonFPU && !SoftFloat && IsThumb2)
+      Define(Defs, "__ARM_NEON__");
 
     if (getTriple().getOS() == llvm::Triple::Darwin)
       Define(Defs, "__USING_SJLJ_EXCEPTIONS__");

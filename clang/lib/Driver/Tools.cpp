@@ -450,6 +450,35 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("+soft-float-abi");
   }
+
+  // Honor -mfpu=.
+  //
+  // FIXME: Centralize feature selection, defaulting shouldn't be also in the
+  // frontend target.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ)) {
+    llvm::StringRef FPU = A->getValue(Args);
+
+    // Set the target features based on the FPU.
+    if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
+      // Disable any default FPU support.
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-vfp2");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp2");
+    } else if (FPU == "vfp3") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp3");
+    } else if (FPU == "neon") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+neon");
+    } else
+      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
 }
 
 void Clang::AddX86TargetArgs(const ArgList &Args,
