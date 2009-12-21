@@ -123,20 +123,6 @@ when it can invert the result of the compare for free.
 
 //===---------------------------------------------------------------------===//
 
-How about intrinsics? An example is:
-  *res = _mm_mulhi_epu16(*A, _mm_mul_epu32(*B, *C));
-
-compiles to
-	pmuludq (%eax), %xmm0
-	movl 8(%esp), %eax
-	movdqa (%eax), %xmm1
-	pmulhuw %xmm0, %xmm1
-
-The transformation probably requires a X86 specific pass or a DAG combiner
-target specific hook.
-
-//===---------------------------------------------------------------------===//
-
 In many cases, LLVM generates code like this:
 
 _test:
@@ -1761,6 +1747,11 @@ LBB1_1:	## bb1
 	incl	%edi
 	cmpl	$150, %edi
 	jne	LBB1_1	## bb1
+
+The issue is that we hoist the cast of "scaler" to long long outside of the
+loop, the value comes into the loop as two values, and
+RegsForValue::getCopyFromRegs doesn't know how to put an AssertSext on the
+constructed BUILD_PAIR which represents the cast value.
 
 //===---------------------------------------------------------------------===//
 
