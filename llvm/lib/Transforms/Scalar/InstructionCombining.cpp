@@ -9598,10 +9598,10 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
     
     // MAX(MIN(a, b), a) -> a
     // MIN(MAX(a, b), a) -> a
-    if (SPF1 == SPF_SMIN && SPF2 == SPF_SMAX ||
-        SPF1 == SPF_SMAX && SPF2 == SPF_SMIN ||
-        SPF1 == SPF_UMIN && SPF2 == SPF_UMAX ||
-        SPF1 == SPF_UMAX && SPF2 == SPF_UMIN)
+    if ((SPF1 == SPF_SMIN && SPF2 == SPF_SMAX) ||
+        (SPF1 == SPF_SMAX && SPF2 == SPF_SMIN) ||
+        (SPF1 == SPF_UMIN && SPF2 == SPF_UMAX) ||
+        (SPF1 == SPF_UMAX && SPF2 == SPF_UMIN))
       return ReplaceInstUsesWith(Outer, C);
   }
   
