@@ -38,6 +38,11 @@ class X86TargetMachine : public LLVMTargetMachine {
   X86ELFWriterInfo  ELFWriterInfo;
   Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 
+private:
+  // We have specific defaults for X86.
+  virtual void setCodeModelForJIT();
+  virtual void setCodeModelForStatic();
+  
 public:
   X86TargetMachine(const Target &T, const std::string &TT, 
                    const std::string &FS, bool is64Bit);

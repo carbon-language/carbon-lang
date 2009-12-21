@@ -95,10 +95,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
   assert(getRelocationModel() != Reloc::Default &&
          "Relocation mode not picked");
 
-  // If no code model is picked, default to small.
-  if (getCodeModel() == CodeModel::Default)
-    setCodeModel(CodeModel::Small);
-      
   // ELF and X86-64 don't have a distinct DynamicNoPIC model.  DynamicNoPIC
   // is defined as a model for code which may be used in static or dynamic
   // executables but not necessarily a shared library. On X86-32 we just
@@ -188,10 +184,6 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
     Subtarget.setPICStyle(PICStyles::None);
   }
   
-  // 64-bit JIT places everything in the same buffer except external functions.
-  if (Subtarget.is64Bit())
-      setCodeModel(CodeModel::Large);
-
   PM.add(createX86CodeEmitterPass(*this, MCE));
 
   return false;
@@ -208,9 +200,6 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
     Subtarget.setPICStyle(PICStyles::None);
   }
   
-  // 64-bit JIT places everything in the same buffer except external functions.
-  if (Subtarget.is64Bit())
-      setCodeModel(CodeModel::Large);
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 
@@ -243,4 +232,24 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             ObjectCodeEmitter &OCE) {
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
   return false;
+}
+
+void X86TargetMachine::setCodeModelForStatic() {
+
+    if (getCodeModel() != CodeModel::Default) return;
+
+    // For static codegen, if we're not already set, use Small codegen.
+    setCodeModel(CodeModel::Small);
+}
+
+
+void X86TargetMachine::setCodeModelForJIT() {
+
+  if (getCodeModel() != CodeModel::Default) return;
+
+  // 64-bit JIT places everything in the same buffer except external functions.
+  if (Subtarget.is64Bit())
+    setCodeModel(CodeModel::Large);
+  else
+    setCodeModel(CodeModel::Small);
 }

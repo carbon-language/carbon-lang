@@ -50,11 +50,6 @@ MipsTargetMachine(const Target &T, const std::string &TT, const std::string &FS,
     else
       setRelocationModel(Reloc::Static);
   }
-
-  // TODO: create an option to enable long calls, like -mlong-calls, 
-  // that would be our CodeModel::Large. It must not work with Abicall.
-  if (getCodeModel() == CodeModel::Default)
-    setCodeModel(CodeModel::Small);
 }
 
 MipselTargetMachine::

@@ -83,7 +83,18 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T,
   AsmInfo = T.createAsmInfo(TargetTriple);
 }
 
+// Set the default code model for the JIT for a generic target.
+// FIXME: Is small right here? or .is64Bit() ? Large : Small?
+void
+LLVMTargetMachine::setCodeModelForJIT() {
+  setCodeModel(CodeModel::Small);
+}
 
+// Set the default code model for static compilation for a generic target.
+void
+LLVMTargetMachine::setCodeModelForStatic() {
+  setCodeModel(CodeModel::Small);
+}
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
@@ -130,6 +141,9 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   MachineCodeEmitter *MCE,
                                                   CodeGenOpt::Level OptLevel) {
+  // Make sure the code model is set.
+  setCodeModelForStatic();
+  
   if (MCE)
     addSimpleCodeEmitter(PM, OptLevel, *MCE);
   if (PrintEmittedAsm)
@@ -146,6 +160,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   JITCodeEmitter *JCE,
                                                   CodeGenOpt::Level OptLevel) {
+  // Make sure the code model is set.
+  setCodeModelForJIT();
+  
   if (JCE)
     addSimpleCodeEmitter(PM, OptLevel, *JCE);
   if (PrintEmittedAsm)
@@ -162,6 +179,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   ObjectCodeEmitter *OCE,
                                                   CodeGenOpt::Level OptLevel) {
+  // Make sure the code model is set.
+  setCodeModelForStatic();
+  
   if (OCE)
     addSimpleCodeEmitter(PM, OptLevel, *OCE);
   if (PrintEmittedAsm)
@@ -181,6 +201,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    MachineCodeEmitter &MCE,
                                                    CodeGenOpt::Level OptLevel) {
+  // Make sure the code model is set.
+  setCodeModelForJIT();
+  
   // Add common CodeGen passes.
   if (addCommonCodeGenPasses(PM, OptLevel))
     return true;
@@ -203,6 +226,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    JITCodeEmitter &JCE,
                                                    CodeGenOpt::Level OptLevel) {
+  // Make sure the code model is set.
+  setCodeModelForJIT();
+  
   // Add common CodeGen passes.
   if (addCommonCodeGenPasses(PM, OptLevel))
     return true;

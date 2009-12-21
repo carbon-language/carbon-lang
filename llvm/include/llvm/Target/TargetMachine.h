@@ -292,6 +292,13 @@ protected: // Can only create subclasses.
   ///
   bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level);
 
+private:
+  // These routines are used by addPassesToEmitFileFinish and
+  // addPassesToEmitMachineCode to set the CodeModel if it's still marked
+  // as default.
+  virtual void setCodeModelForJIT();
+  virtual void setCodeModelForStatic();
+  
 public:
   
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
