@@ -830,27 +830,43 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
                                           0, 0, 0, llvm::DIType(), Elements);
 }
 
-static QualType CanonicalizeTypeForDebugInfo(QualType T) {
-  switch (T->getTypeClass()) {
-  default:
-    return T;
-  case Type::TemplateSpecialization:
-    return cast<TemplateSpecializationType>(T)->desugar();
-  case Type::TypeOfExpr: {
-    TypeOfExprType *Ty = cast<TypeOfExprType>(T);
-    return CanonicalizeTypeForDebugInfo(Ty->getUnderlyingExpr()->getType());
-  }
-  case Type::TypeOf:
-    return cast<TypeOfType>(T)->getUnderlyingType();
-  case Type::Decltype:
-    return cast<DecltypeType>(T)->getUnderlyingType();
-  case Type::QualifiedName:
-    return cast<QualifiedNameType>(T)->getNamedType();
-  case Type::SubstTemplateTypeParm:
-    return cast<SubstTemplateTypeParmType>(T)->getReplacementType();
-  case Type::Elaborated:
-    return cast<ElaboratedType>(T)->getUnderlyingType();
-  }
+static QualType UnwrapTypeForDebugInfo(QualType T) {
+  do {
+    QualType LastT = T;
+    switch (T->getTypeClass()) {
+    default:
+      return T;
+    case Type::TemplateSpecialization:
+      T = cast<TemplateSpecializationType>(T)->desugar();
+      break;
+    case Type::TypeOfExpr: {
+      TypeOfExprType *Ty = cast<TypeOfExprType>(T);
+      T = Ty->getUnderlyingExpr()->getType();
+      break;
+    }
+    case Type::TypeOf:
+      T = cast<TypeOfType>(T)->getUnderlyingType();
+      break;
+    case Type::Decltype:
+      T = cast<DecltypeType>(T)->getUnderlyingType();
+      break;
+    case Type::QualifiedName:
+      T = cast<QualifiedNameType>(T)->getNamedType();
+      break;
+    case Type::SubstTemplateTypeParm:
+      T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
+      break;
+    case Type::Elaborated:
+      T = cast<ElaboratedType>(T)->getUnderlyingType();
+      break;
+    }
+    
+    assert(T != LastT && "Type unwrapping failed to unwrap!");
+    if (T == LastT)
+      return T;
+  } while (true);
+  
+  return T;
 }
 
 /// getOrCreateType - Get the type from the cache or create a new
@@ -860,8 +876,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   if (Ty.isNull())
     return llvm::DIType();
 
-  // Canonicalize the type.
-  Ty = CanonicalizeTypeForDebugInfo(Ty);
+  // Unwrap the type as needed for debug information.
+  Ty = UnwrapTypeForDebugInfo(Ty);
   
   // Check for existing entry.
   std::map<void *, llvm::WeakVH>::iterator it =
@@ -932,43 +948,18 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
     return CreateType(cast<MemberPointerType>(Ty), Unit);
 
   case Type::TemplateSpecialization:
-    // DWARF can't represent template specialization types; instead,
-    // we drill down to the canonical type, which will be a record type.
-    return CreateType(cast<RecordType>(CGM.getContext().getCanonicalType(Ty)),
-                      Unit);
-      
   case Type::Elaborated:
-    // DWARF can't represent elaborated type specifiers any differently from
-    // the underlying type, so create a type node for the underlying type.
-    return CreateTypeNode(cast<ElaboratedType>(Ty)->getUnderlyingType(), Unit);
-    
   case Type::QualifiedName:
-    // DWARF can't represent qualified names any differently from the type
-    // being named, so create a type node for that type.
-    return CreateTypeNode(cast<QualifiedNameType>(Ty)->getNamedType(), Unit);
-      
   case Type::SubstTemplateTypeParm:
-    // DWARF can't represent substituted template type parameter types,
-    // so create a type node for the type that the template type parameter was
-    // replaced with.
-    return CreateTypeNode(cast<SubstTemplateTypeParmType>(Ty)
-                                                        ->getReplacementType(), 
-                          Unit);
-      
   case Type::TypeOfExpr:
   case Type::TypeOf:
-    // FIXME: Implement!
-    Diag = "typeof";
-    break;
+  case Type::Decltype:
+    llvm_unreachable("type should have been unwrapped!");
+    return llvm::DIType();
       
   case Type::RValueReference:
     // FIXME: Implement!
     Diag = "rvalue references";
-    break;
-    
-  case Type::Decltype:
-    // FIXME: Implement!
-    Diag = "decltype";
     break;
   }
   
