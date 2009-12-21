@@ -1277,6 +1277,32 @@ struct AvailableValueInBlock {
     assert(!isSimpleValue() && "Wrong accessor");
     return cast<MemIntrinsic>(Val.getPointer());
   }
+  
+  /// MaterializeAdjustedValue - Emit code into this block to adjust the value
+  /// defined here to the specified type.  This handles various coercion cases.
+  Value *MaterializeAdjustedValue(const Type *LoadTy,
+                                  const TargetData *TD) const {
+    Value *Res;
+    if (isSimpleValue()) {
+      Res = getSimpleValue();
+      if (Res->getType() != LoadTy) {
+        assert(TD && "Need target data to handle type mismatch case");
+        Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(),
+                                   *TD);
+        
+        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
+                     << *getSimpleValue() << '\n'
+                     << *Res << '\n' << "\n\n\n");
+      }
+    } else {
+      Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
+                                   LoadTy, BB->getTerminator(), *TD);
+      DEBUG(errs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
+                   << "  " << *getMemIntrinValue() << '\n'
+                   << *Res << '\n' << "\n\n\n");
+    }
+    return Res;
+  }
 };
 
 /// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
@@ -1299,28 +1325,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
     if (SSAUpdate.HasValueForBlock(BB))
       continue;
 
-    unsigned Offset = AV.Offset;
-
-    Value *AvailableVal;
-    if (AV.isSimpleValue()) {
-      AvailableVal = AV.getSimpleValue();
-      if (AvailableVal->getType() != LoadTy) {
-        assert(TD && "Need target data to handle type mismatch case");
-        AvailableVal = GetStoreValueForLoad(AvailableVal, Offset, LoadTy,
-                                            BB->getTerminator(), *TD);
-        
-        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
-              << *AV.getSimpleValue() << '\n'
-              << *AvailableVal << '\n' << "\n\n\n");
-      }
-    } else {
-      AvailableVal = GetMemInstValueForLoad(AV.getMemIntrinValue(), Offset,
-                                            LoadTy, BB->getTerminator(), *TD);
-      DEBUG(errs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
-            << "  " << *AV.getMemIntrinValue() << '\n'
-            << *AvailableVal << '\n' << "\n\n\n");
-    }
-    SSAUpdate.AddAvailableValue(BB, AvailableVal);
+    SSAUpdate.AddAvailableValue(BB, AV.MaterializeAdjustedValue(LoadTy, TD));
   }
   
   // Perform PHI construction.
