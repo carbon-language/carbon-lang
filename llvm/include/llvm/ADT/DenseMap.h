@@ -46,7 +46,7 @@ public:
   typedef ValueT mapped_type;
   typedef BucketT value_type;
 
-  DenseMap(const DenseMap& other) {
+  DenseMap(const DenseMap &other) {
     NumBuckets = 0;
     CopyFrom(other);
   }
@@ -55,6 +55,12 @@ public:
     init(NumInitBuckets);
   }
 
+  template<typename InputIt>
+  DenseMap(const InputIt &I, const InputIt &E) {
+    init(64);
+    insert(I, E);
+  }
+  
   ~DenseMap() {
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
