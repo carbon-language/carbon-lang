@@ -44,15 +44,31 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
     0
   };
+  static const unsigned CalleeSavedRegsFP[] = {
+    MSP430::R5W, MSP430::R6W, MSP430::R7W,
+    MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
+    0
+  };
   static const unsigned CalleeSavedRegsIntr[] = {
     MSP430::FPW,  MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
     MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
     MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
     0
   };
+  static const unsigned CalleeSavedRegsIntrFP[] = {
+    MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
+    MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
+    MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
+    0
+  };
 
-  return (F->getCallingConv() == CallingConv::MSP430_INTR ?
-          CalleeSavedRegsIntr : CalleeSavedRegs);
+  if (hasFP(*MF))
+    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+            CalleeSavedRegsIntrFP : CalleeSavedRegsFP);
+  else
+    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+            CalleeSavedRegsIntr : CalleeSavedRegs);
+
 }
 
 const TargetRegisterClass *const *
@@ -65,6 +81,12 @@ MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     0
   };
+  static const TargetRegisterClass * const CalleeSavedRegClassesFP[] = {
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, 0
+  };
   static const TargetRegisterClass * const CalleeSavedRegClassesIntr[] = {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
@@ -74,9 +96,21 @@ MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
     0
   };
+  static const TargetRegisterClass * const CalleeSavedRegClassesIntrFP[] = {
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, &MSP430::GR16RegClass,
+    &MSP430::GR16RegClass, 0
+  };
 
-  return (F->getCallingConv() == CallingConv::MSP430_INTR ?
-          CalleeSavedRegClassesIntr : CalleeSavedRegClasses);
+  if (hasFP(*MF))
+    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+            CalleeSavedRegClassesIntrFP : CalleeSavedRegClassesFP);
+  else
+    return (F->getCallingConv() == CallingConv::MSP430_INTR ?
+            CalleeSavedRegClassesIntr : CalleeSavedRegClasses);
 }
 
 BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -102,7 +136,11 @@ MSP430RegisterInfo::getPointerRegClass(unsigned Kind) const {
 
 
 bool MSP430RegisterInfo::hasFP(const MachineFunction &MF) const {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  return (NoFramePointerElim ||
+          MF.getFrameInfo()->hasVarSizedObjects() ||
+          MFI->isFrameAddressTaken());
 }
 
 bool MSP430RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
