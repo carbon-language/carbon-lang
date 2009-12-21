@@ -887,6 +887,8 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   if (Ty.hasLocalQualifiers())
     return CreateQualifiedType(Ty, Unit);
 
+  const char *Diag = 0;
+  
   // Work out details of type.
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -901,9 +903,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::Vector:
   case Type::FixedWidthInt:
     return llvm::DIType();
-  default:
-    assert(false && "Unhandled type class!");
-    return llvm::DIType();
+      
   case Type::ObjCObjectPointer:
     return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
   case Type::ObjCInterface:
@@ -930,7 +930,54 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
   case Type::MemberPointer:
     return CreateType(cast<MemberPointerType>(Ty), Unit);
+
+  case Type::TemplateSpecialization:
+    // DWARF can't represent template specialization types; instead,
+    // we drill down to the canonical type, which will be a record type.
+    return CreateType(cast<RecordType>(CGM.getContext().getCanonicalType(Ty)),
+                      Unit);
+      
+  case Type::Elaborated:
+    // DWARF can't represent elaborated type specifiers any differently from
+    // the underlying type, so create a type node for the underlying type.
+    return CreateTypeNode(cast<ElaboratedType>(Ty)->getUnderlyingType(), Unit);
+    
+  case Type::QualifiedName:
+    // DWARF can't represent qualified names any differently from the type
+    // being named, so create a type node for that type.
+    return CreateTypeNode(cast<QualifiedNameType>(Ty)->getNamedType(), Unit);
+      
+  case Type::SubstTemplateTypeParm:
+    // DWARF can't represent substituted template type parameter types,
+    // so create a type node for the type that the template type parameter was
+    // replaced with.
+    return CreateTypeNode(cast<SubstTemplateTypeParmType>(Ty)
+                                                        ->getReplacementType(), 
+                          Unit);
+      
+  case Type::TypeOfExpr:
+  case Type::TypeOf:
+    // FIXME: Implement!
+    Diag = "typeof";
+    break;
+      
+  case Type::RValueReference:
+    // FIXME: Implement!
+    Diag = "rvalue references";
+    break;
+    
+  case Type::Decltype:
+    // FIXME: Implement!
+    Diag = "decltype";
+    break;
   }
+  
+  assert(Diag && "Fall through without a diagnostic?");
+  unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Error,
+                               "debug information for %0 is not yet supported");
+  CGM.getDiags().Report(FullSourceLoc(), DiagID)
+    << Diag;
+  return llvm::DIType();
 }
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
