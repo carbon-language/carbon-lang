@@ -1002,16 +1002,32 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   }
   // It didn't name a member, so see if it names a class.
   QualType BaseType;
-
   TypeSourceInfo *TInfo = 0;
-  if (TemplateTypeTy)
+
+  if (TemplateTypeTy) {
     BaseType = GetTypeFromParser(TemplateTypeTy, &TInfo);
-  else
-    BaseType = QualType::getFromOpaquePtr(getTypeName(*MemberOrBase, IdLoc, 
-                                                      S, &SS));
-  if (BaseType.isNull())
-    return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
-      << MemberOrBase << SourceRange(IdLoc, RParenLoc);
+  } else {
+    LookupResult R(*this, MemberOrBase, IdLoc, LookupOrdinaryName);
+    LookupParsedName(R, S, &SS);
+
+    TypeDecl *TyD = R.getAsSingle<TypeDecl>();
+    if (!TyD) {
+      if (R.isAmbiguous()) return true;
+
+      Diag(IdLoc, diag::err_mem_init_not_member_or_class)
+        << MemberOrBase << SourceRange(IdLoc, RParenLoc);
+      return true;
+    }
+
+    BaseType = Context.getTypeDeclType(TyD);
+    if (SS.isSet()) {
+      NestedNameSpecifier *Qualifier =
+        static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+
+      // FIXME: preserve source range information
+      BaseType = Context.getQualifiedNameType(Qualifier, BaseType);
+    }
+  }
 
   if (!TInfo)
     TInfo = Context.getTrivialTypeSourceInfo(BaseType, IdLoc);
