@@ -382,3 +382,43 @@ next:
 ; CHECK-NEXT: ret i32 %a
 }
 
+
+define i32 @test30(i32 %x, i32 %y) {
+  %cmp = icmp sgt i32 %x, %y
+  %cond = select i1 %cmp, i32 %x, i32 %y
+  %cmp5 = icmp sgt i32 %cond, %x
+  %retval = select i1 %cmp5, i32 %cond, i32 %x
+  ret i32 %retval
+}
+
+define i32 @test31(i32 %x, i32 %y) {
+  %cmp = icmp ugt i32 %x, %y 
+  %cond = select i1 %cmp, i32 %x, i32 %y
+  %cmp5 = icmp ugt i32 %cond, %x
+  %retval = select i1 %cmp5, i32 %cond, i32 %x
+  ret i32 %retval
+}
+
+define i32 @test32(i32 %x, i32 %y) {
+  %cmp = icmp sgt i32 %x, %y
+  %cond = select i1 %cmp, i32 %y, i32 %x
+  %cmp5 = icmp sgt i32 %cond, %x
+  %retval = select i1 %cmp5, i32 %x, i32 %cond
+  ret i32 %retval
+}
+
+define i32 @test33(i32 %x, i32 %y) {
+  %cmp = icmp sgt i32 %x, %y
+  %cond = select i1 %cmp, i32 %y, i32 %x
+  %cmp5 = icmp sgt i32 %cond, %x
+  %retval = select i1 %cmp5, i32 %cond, i32 %x
+  ret i32 %retval
+}
+
+define i32 @test34(i32 %x, i32 %y) {
+  %cmp = icmp sgt i32 %x, %y
+  %cond = select i1 %cmp, i32 %x, i32 %y
+  %cmp5 = icmp sgt i32 %cond, %x
+  %retval = select i1 %cmp5, i32 %x, i32 %cond
+  ret i32 %retval
+}

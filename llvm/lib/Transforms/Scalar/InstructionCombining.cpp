@@ -75,6 +75,15 @@ STATISTIC(NumDeadInst , "Number of dead inst eliminated");
 STATISTIC(NumDeadStore, "Number of dead stores eliminated");
 STATISTIC(NumSunkInst , "Number of instructions sunk");
 
+/// SelectPatternFlavor - We can match a variety of different patterns for
+/// select operations.
+enum SelectPatternFlavor {
+  SPF_UNKNOWN = 0,
+  SPF_SMIN, SPF_UMIN,
+  SPF_SMAX, SPF_UMAX
+  //SPF_ABS - TODO.
+};
+
 namespace {
   /// InstCombineWorklist - This is the worklist management logic for
   /// InstCombine.
@@ -281,6 +290,9 @@ namespace {
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                 Instruction *FI);
     Instruction *FoldSelectIntoOp(SelectInst &SI, Value*, Value*);
+    Instruction *FoldSPFofSPF(Instruction *Inner, SelectPatternFlavor SPF1,
+                              Value *A, Value *B, Instruction &Outer,
+                              SelectPatternFlavor SPF2, Value *C);
     Instruction *visitSelectInst(SelectInst &SI);
     Instruction *visitSelectInstWithICmp(SelectInst &SI, ICmpInst *ICI);
     Instruction *visitCallInst(CallInst &CI);
@@ -649,6 +661,57 @@ static inline Value *dyn_castFNegVal(Value *V) {
   return 0;
 }
 
+/// MatchSelectPattern - Pattern match integer [SU]MIN, [SU]MAX, and ABS idioms,
+/// returning the kind and providing the out parameter results if we
+/// successfully match.
+static SelectPatternFlavor
+MatchSelectPattern(Value *V, Value *&LHS, Value *&RHS) {
+  SelectInst *SI = dyn_cast<SelectInst>(V);
+  if (SI == 0) return SPF_UNKNOWN;
+  
+  ICmpInst *ICI = dyn_cast<ICmpInst>(SI->getCondition());
+  if (ICI == 0) return SPF_UNKNOWN;
+  
+  LHS = ICI->getOperand(0);
+  RHS = ICI->getOperand(1);
+  
+  // (icmp X, Y) ? X : Y 
+  if (SI->getTrueValue() == ICI->getOperand(0) &&
+      SI->getFalseValue() == ICI->getOperand(1)) {
+    switch (ICI->getPredicate()) {
+    default: return SPF_UNKNOWN; // Equality.
+    case ICmpInst::ICMP_UGT:
+    case ICmpInst::ICMP_UGE: return SPF_UMAX;
+    case ICmpInst::ICMP_SGT:
+    case ICmpInst::ICMP_SGE: return SPF_SMAX;
+    case ICmpInst::ICMP_ULT:
+    case ICmpInst::ICMP_ULE: return SPF_UMIN;
+    case ICmpInst::ICMP_SLT:
+    case ICmpInst::ICMP_SLE: return SPF_SMIN;
+    }
+  }
+  
+  // (icmp X, Y) ? Y : X 
+  if (SI->getTrueValue() == ICI->getOperand(1) &&
+      SI->getFalseValue() == ICI->getOperand(0)) {
+    switch (ICI->getPredicate()) {
+      default: return SPF_UNKNOWN; // Equality.
+      case ICmpInst::ICMP_UGT:
+      case ICmpInst::ICMP_UGE: return SPF_UMIN;
+      case ICmpInst::ICMP_SGT:
+      case ICmpInst::ICMP_SGE: return SPF_SMIN;
+      case ICmpInst::ICMP_ULT:
+      case ICmpInst::ICMP_ULE: return SPF_UMAX;
+      case ICmpInst::ICMP_SLT:
+      case ICmpInst::ICMP_SLE: return SPF_SMAX;
+    }
+  }
+  
+  // TODO: (X > 4) ? X : 5   -->  (X >= 5) ? X : 5  -->  MAX(X, 5)
+  
+  return SPF_UNKNOWN;
+}
+
 /// isFreeToInvert - Return true if the specified value is free to invert (apply
 /// ~ to).  This happens in cases where the ~ can be eliminated.
 static inline bool isFreeToInvert(Value *V) {
@@ -733,12 +796,12 @@ static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign) {
 
   APInt MulExt = LHSExt * RHSExt;
 
-  if (sign) {
-    APInt Min = APInt::getSignedMinValue(W).sext(W * 2);
-    APInt Max = APInt::getSignedMaxValue(W).sext(W * 2);
-    return MulExt.slt(Min) || MulExt.sgt(Max);
-  } else 
+  if (!sign)
     return MulExt.ugt(APInt::getLowBitsSet(W * 2, W));
+  
+  APInt Min = APInt::getSignedMinValue(W).sext(W * 2);
+  APInt Max = APInt::getSignedMaxValue(W).sext(W * 2);
+  return MulExt.slt(Min) || MulExt.sgt(Max);
 }
 
 
@@ -9479,9 +9542,6 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       return ReplaceInstUsesWith(SI, TrueVal);
     /// NOTE: if we wanted to, this is where to detect integer MIN/MAX
   }
-
-  /// NOTE: if we wanted to, this is where to detect integer ABS
-
   return Changed ? &SI : 0;
 }
 
@@ -9522,6 +9582,35 @@ static bool CanSelectOperandBeMappingIntoPredBlock(const Value *V,
   // detailed dominator based analysis, punt.
   return false;
 }
+
+/// FoldSPFofSPF - We have an SPF (e.g. a min or max) of an SPF of the form:
+///   SPF2(SPF1(A, B), C) 
+Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
+                                        SelectPatternFlavor SPF1,
+                                        Value *A, Value *B,
+                                        Instruction &Outer,
+                                        SelectPatternFlavor SPF2, Value *C) {
+  if (C == A || C == B) {
+    // MAX(MAX(A, B), B) -> MAX(A, B)
+    // MIN(MIN(a, b), a) -> MIN(a, b)
+    if (SPF1 == SPF2)
+      return ReplaceInstUsesWith(Outer, Inner);
+    
+    // MAX(MIN(a, b), a) -> a
+    // MIN(MAX(a, b), a) -> a
+    if (SPF1 == SPF_SMIN && SPF2 == SPF_SMAX ||
+        SPF1 == SPF_SMAX && SPF2 == SPF_SMIN ||
+        SPF1 == SPF_UMIN && SPF2 == SPF_UMAX ||
+        SPF1 == SPF_UMAX && SPF2 == SPF_UMIN)
+      return ReplaceInstUsesWith(Outer, C);
+  }
+  
+  // TODO: MIN(MIN(A, 23), 97)
+  return 0;
+}
+
+
+
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *CondVal = SI.getCondition();
@@ -9729,9 +9818,28 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
   // See if we can fold the select into one of our operands.
   if (SI.getType()->isInteger()) {
-    Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal);
-    if (FoldI)
+    if (Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal))
       return FoldI;
+    
+    // MAX(MAX(a, b), a) -> MAX(a, b)
+    // MIN(MIN(a, b), a) -> MIN(a, b)
+    // MAX(MIN(a, b), a) -> a
+    // MIN(MAX(a, b), a) -> a
+    Value *LHS, *RHS, *LHS2, *RHS2;
+    if (SelectPatternFlavor SPF = MatchSelectPattern(&SI, LHS, RHS)) {
+      if (SelectPatternFlavor SPF2 = MatchSelectPattern(LHS, LHS2, RHS2))
+        if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2, 
+                                          SI, SPF, RHS))
+          return R;
+      if (SelectPatternFlavor SPF2 = MatchSelectPattern(RHS, LHS2, RHS2))
+        if (Instruction *R = FoldSPFofSPF(cast<Instruction>(RHS),SPF2,LHS2,RHS2,
+                                          SI, SPF, LHS))
+          return R;
+    }
+
+    // TODO.
+    // ABS(-X) -> ABS(X)
+    // ABS(ABS(X)) -> ABS(X)
   }
 
   // See if we can fold the select into a phi node if the condition is a select.
