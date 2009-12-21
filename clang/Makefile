@@ -10,7 +10,7 @@ endif
 include $(LEVEL)/Makefile.common
 
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
-all::
+$(RecursiveTargets)::
 	$(Verb) if [ ! -f test/Makefile ]; then \
 	  $(MKDIR) test; \
 	  $(CP) $(PROJ_SRC_DIR)/test/Makefile test/Makefile; \
