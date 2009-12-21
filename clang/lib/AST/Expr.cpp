@@ -407,7 +407,7 @@ Decl *CallExpr::getCalleeDecl() {
 }
 
 FunctionDecl *CallExpr::getDirectCallee() {
-    return dyn_cast_or_null<FunctionDecl>(getCalleeDecl());
+  return dyn_cast_or_null<FunctionDecl>(getCalleeDecl());
 }
 
 /// setNumArgs - This changes the number of arguments present in this call.
