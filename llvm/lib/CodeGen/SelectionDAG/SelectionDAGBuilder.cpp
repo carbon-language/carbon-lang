@@ -2401,8 +2401,13 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
   unsigned SrcNumElts = SrcVT.getVectorNumElements();
 
   if (SrcNumElts == MaskNumElts) {
-    setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
-                                      &Mask[0]));
+    SDValue Res = DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
+                                       &Mask[0]);
+    setValue(&I, Res);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
     return;
   }
 
@@ -2413,8 +2418,13 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
     // lengths match.
     if (SrcNumElts*2 == MaskNumElts && SequentialMask(Mask, 0)) {
       // The shuffle is concatenating two vectors together.
-      setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, getCurDebugLoc(),
-                               VT, Src1, Src2));
+      SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, getCurDebugLoc(),
+                                VT, Src1, Src2);
+      setValue(&I, Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
       return;
     }
 
@@ -2445,8 +2455,14 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
       else
         MappedOps.push_back(Idx + MaskNumElts - SrcNumElts);
     }
-    setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2, 
-                                      &MappedOps[0]));
+
+    SDValue Res = DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2, 
+                                       &MappedOps[0]);
+    setValue(&I, Res);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
     return;
   }
 
@@ -2497,20 +2513,28 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
     }
 
     if (RangeUse[0] == 0 && RangeUse[1] == 0) {
-      setValue(&I, DAG.getUNDEF(VT));  // Vectors are not used.
+      SDValue Res = DAG.getUNDEF(VT);
+      setValue(&I, Res);  // Vectors are not used.
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
       return;
     }
     else if (RangeUse[0] < 2 && RangeUse[1] < 2) {
       // Extract appropriate subvector and generate a vector shuffle
       for (int Input=0; Input < 2; ++Input) {
         SDValue& Src = Input == 0 ? Src1 : Src2;
-        if (RangeUse[Input] == 0) {
+        if (RangeUse[Input] == 0)
           Src = DAG.getUNDEF(VT);
-        } else {
+        else
           Src = DAG.getNode(ISD::EXTRACT_SUBVECTOR, getCurDebugLoc(), VT,
                             Src, DAG.getIntPtrConstant(StartIdx[Input]));
-        }
+
+        if (DisableScheduling)
+          DAG.AssignOrdering(Src.getNode(), SDNodeOrder);
       }
+
       // Calculate new mask.
       SmallVector<int, 8> MappedOps;
       for (unsigned i = 0; i != MaskNumElts; ++i) {
@@ -2522,8 +2546,14 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
         else
           MappedOps.push_back(Idx - SrcNumElts - StartIdx[1] + MaskNumElts);
       }
-      setValue(&I, DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
-                                        &MappedOps[0]));
+
+      SDValue Res = DAG.getVectorShuffle(VT, getCurDebugLoc(), Src1, Src2,
+                                         &MappedOps[0]);
+      setValue(&I, Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+
       return;
     }
   }
@@ -2539,17 +2569,29 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
       Ops.push_back(DAG.getUNDEF(EltVT));
     } else {
       int Idx = Mask[i];
+      SDValue Res;
+
       if (Idx < (int)SrcNumElts)
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
-                                  EltVT, Src1, DAG.getConstant(Idx, PtrVT)));
+        Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
+                          EltVT, Src1, DAG.getConstant(Idx, PtrVT));
       else
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
-                                  EltVT, Src2,
-                                  DAG.getConstant(Idx - SrcNumElts, PtrVT)));
+        Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, getCurDebugLoc(),
+                          EltVT, Src2,
+                          DAG.getConstant(Idx - SrcNumElts, PtrVT));
+
+      Ops.push_back(Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     }
   }
-  setValue(&I, DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
-                           VT, &Ops[0], Ops.size()));
+
+  SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                            VT, &Ops[0], Ops.size());
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitInsertValue(InsertValueInst &I) {
@@ -2588,9 +2630,13 @@ void SelectionDAGBuilder::visitInsertValue(InsertValueInst &I) {
     Values[i] = IntoUndef ? DAG.getUNDEF(AggValueVTs[i]) :
                 SDValue(Agg.getNode(), Agg.getResNo() + i);
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
-                           DAG.getVTList(&AggValueVTs[0], NumAggValues),
-                           &Values[0], NumAggValues));
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
+                            DAG.getVTList(&AggValueVTs[0], NumAggValues),
+                            &Values[0], NumAggValues);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitExtractValue(ExtractValueInst &I) {
@@ -2616,9 +2662,13 @@ void SelectionDAGBuilder::visitExtractValue(ExtractValueInst &I) {
         DAG.getUNDEF(Agg.getNode()->getValueType(Agg.getResNo() + i)) :
         SDValue(Agg.getNode(), Agg.getResNo() + i);
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
-                           DAG.getVTList(&ValValueVTs[0], NumValValues),
-                           &Values[0], NumValValues));
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
+                            DAG.getVTList(&ValValueVTs[0], NumValValues),
+                            &Values[0], NumValValues);
+  setValue(&I, Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 
