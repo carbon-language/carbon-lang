@@ -1373,7 +1373,7 @@ emitPrologue(MachineFunction &MF) const {
       // bic r4, r4, MaxAlign
       // mov sp, r4
       // FIXME: It will be better just to find spare register here.
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::R4)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R4)
         .addReg(ARM::SP, RegState::Kill);
       AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl,
                                           TII.get(ARM::t2BICri), ARM::R4)
