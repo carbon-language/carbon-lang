@@ -64,7 +64,7 @@ static inline InstructionContext contextForAttrs(uint8_t attrMask) {
 static inline int modRMRequired(OpcodeType type,
                                 InstructionContext insnContext,
                                 uint8_t opcode) {
-  const struct ContextDecision* decision;
+  const struct ContextDecision* decision = 0;
   
   switch (type) {
   case ONEBYTE:
@@ -714,8 +714,8 @@ static int getID(struct InternalInstruction* insn) {
  * @return      - 0 if the SIB byte was successfully read; nonzero otherwise.
  */
 static int readSIB(struct InternalInstruction* insn) {
-  SIBIndex sibIndexBase;
-  SIBBase sibBaseBase;
+  SIBIndex sibIndexBase = 0;
+  SIBBase sibBaseBase = 0;
   uint8_t index, base;
   
   dbgprintf(insn, "readSIB()");
