@@ -57,14 +57,10 @@ static bool PrintInst(const llvm::MCDisassembler &DisAsm,
   MCInst Inst;
   uint64_t Size;
   
-  std::string verboseOStr;
-  llvm::raw_string_ostream verboseOS(verboseOStr); 
-  
-  if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, verboseOS)) {
+  if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, 
+                             /*REMOVE*/ nulls())) {
     SM.PrintMessage(SMLoc::getFromPointer(Bytes[0].second),
                     "invalid instruction encoding", "error");
-    errs() << "Diagnostic log:" << '\n';
-    errs() << verboseOS.str() << '\n';
     return true;
   }
   
