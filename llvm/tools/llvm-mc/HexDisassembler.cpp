@@ -84,75 +84,68 @@ void printInst(const llvm::MCDisassembler &disassembler,
   }
 }
 
-int HexDisassembler::disassemble(const Target &target,
-                                 const std::string &tripleString,
-                                 MemoryBuffer &buffer) {
-  // Set up disassembler
+int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
+                                 MemoryBuffer &Buffer) {
+  // Set up disassembler.
+  llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
   
-  llvm::OwningPtr<const llvm::MCAsmInfo> asmInfo
-    (target.createAsmInfo(tripleString));
-  
-  if (!asmInfo) {
-    errs() << "error: no assembly info for target " << tripleString << "\n";
+  if (!AsmInfo) {
+    errs() << "error: no assembly info for target " << Triple << "\n";
     return -1;
   }
   
-  llvm::OwningPtr<const llvm::MCDisassembler> disassembler
-    (target.createMCDisassembler());
-  
-  if (!disassembler) {
-    errs() << "error: no disassembler for target " << tripleString << "\n";
+  llvm::OwningPtr<const llvm::MCDisassembler> DisAsm(T.createMCDisassembler());
+  if (!DisAsm) {
+    errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
   }
   
-  llvm::MCInstPrinter *instPrinter = target.createMCInstPrinter(0,
-                                                                *asmInfo,
-                                                                outs());
+  llvm::MCInstPrinter *InstPrinter = T.createMCInstPrinter(0, *AsmInfo, outs());
   
-  if (!instPrinter) {
-    errs() << "error: no instruction printer for target " << tripleString
+  if (!InstPrinter) {
+    errs() << "error: no instruction printer for target " << Triple
       << "\n";
     return -1;
   }
   
   // Convert the input to a vector for disassembly.
+  std::vector<unsigned char> ByteArray;
   
-  std::vector<unsigned char> bytes;
+  StringRef Str = Buffer.getBuffer();
   
-  StringRef str = buffer.getBuffer();
-  
-  while (!str.empty()) {
-    if(str.find_first_of("\n") < str.find_first_not_of(" \t\n\r")) {
-      printInst(*disassembler, *instPrinter, bytes);
+  while (!Str.empty()) {
+    if (Str.find_first_of('\n') < Str.find_first_not_of(" \t\n\r")) {
+      if (!ByteArray.empty())
+        printInst(*DisAsm, *InstPrinter, ByteArray);
       
-      bytes.clear();
+      ByteArray.clear();
     }
     
     // Skip leading space.
-    str = str.substr(str.find_first_not_of(" \t\n\r"));
+    Str = Str.substr(Str.find_first_not_of(" \t\n\r"));
     
     // Get the current token.
-    size_t next = str.find_first_of(" \t\n\r");
+    size_t Next = Str.find_first_of(" \t\n\r");
     
-    if(next == (size_t)StringRef::npos)
+    if(Next == (size_t)StringRef::npos)
       break;
     
-    StringRef value = str.slice(0, next);
+    StringRef Value = Str.slice(0, Next);
     
     // Convert to a byte and add to the byte vector.
-    unsigned byte;
-    if (value.getAsInteger(0, byte) || byte > 255) {
-      errs() << "warning: invalid input token '" << value << "' of length " 
-        << next << "\n";
+    unsigned ByteVal;
+    if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
+      errs() << "warning: invalid input token '" << Value << "' of length " 
+             << Next << "\n";
     }
     else {
-      bytes.push_back((unsigned char)byte);
+      ByteArray.push_back((unsigned char)ByteVal);
     }
-    str = str.substr(next);
+    Str = Str.substr(Next);
   }
   
-  if (!bytes.empty())
-    printInst(*disassembler, *instPrinter, bytes);
+  if (!ByteArray.empty())
+    printInst(*DisAsm, *InstPrinter, ByteArray);
     
   return 0;
 }
