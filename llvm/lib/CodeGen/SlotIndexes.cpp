@@ -92,13 +92,14 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
   functionSize = 0;
   unsigned index = 0;
 
+  push_back(createEntry(0, index));
+
   // Iterate over the the function.
   for (MachineFunction::iterator mbbItr = mf->begin(), mbbEnd = mf->end();
        mbbItr != mbbEnd; ++mbbItr) {
     MachineBasicBlock *mbb = &*mbbItr;
 
     // Insert an index for the MBB start.
-    push_back(createEntry(0, index));
     SlotIndex blockStartIndex(back(), SlotIndex::LOAD);
 
     index += SlotIndex::NUM;
@@ -137,15 +138,15 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
       index += SlotIndex::NUM;
     }
 
-    SlotIndex blockEndIndex(back(), SlotIndex::STORE);
+    // One blank instruction at the end.
+    push_back(createEntry(0, index));    
+
+    SlotIndex blockEndIndex(back(), SlotIndex::LOAD);
     mbb2IdxMap.insert(
       std::make_pair(mbb, std::make_pair(blockStartIndex, blockEndIndex)));
 
     idx2MBBMap.push_back(IdxMBBPair(blockStartIndex, mbb));
   }
-
-  // One blank instruction at the end.
-  push_back(createEntry(0, index));
 
   // Sort the Idx2MBBMap
   std::sort(idx2MBBMap.begin(), idx2MBBMap.end(), Idx2MBBCompare());

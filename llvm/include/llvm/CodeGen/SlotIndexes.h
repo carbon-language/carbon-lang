@@ -579,7 +579,7 @@ namespace llvm {
          (I == idx2MBBMap.end() && idx2MBBMap.size()>0)) ? (I-1): I;
 
       assert(J != idx2MBBMap.end() && J->first <= index &&
-             index <= getMBBEndIdx(J->second) &&
+             index < getMBBEndIdx(J->second) &&
              "index does not correspond to an MBB");
       return J->second;
     }

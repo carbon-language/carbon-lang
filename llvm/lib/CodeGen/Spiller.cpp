@@ -486,10 +486,10 @@ private:
         SlotIndex newKillRangeEnd = oldKillRange->end;
         oldKillRange->end = copyIdx.getDefIndex();
 
-        if (newKillRangeEnd != lis->getMBBEndIdx(killMBB).getNextSlot()) {
-          assert(newKillRangeEnd > lis->getMBBEndIdx(killMBB).getNextSlot() &&
+        if (newKillRangeEnd != lis->getMBBEndIdx(killMBB)) {
+          assert(newKillRangeEnd > lis->getMBBEndIdx(killMBB) &&
                  "PHI kill range doesn't reach kill-block end. Not sane.");
-          newLI->addRange(LiveRange(lis->getMBBEndIdx(killMBB).getNextSlot(),
+          newLI->addRange(LiveRange(lis->getMBBEndIdx(killMBB),
                                     newKillRangeEnd, newVNI));
         }
 
@@ -500,7 +500,7 @@ private:
         newKillVNI->addKill(lis->getMBBTerminatorGap(killMBB));
         newKillVNI->setHasPHIKill(true);
         li->addRange(LiveRange(copyIdx.getDefIndex(),
-                               lis->getMBBEndIdx(killMBB).getNextSlot(),
+                               lis->getMBBEndIdx(killMBB),
                                newKillVNI));
       }
 

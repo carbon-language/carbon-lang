@@ -324,8 +324,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // of the defining block, potentially live across some blocks, then is
     // live into some number of blocks, but gets killed.  Start by adding a
     // range that goes from this definition to the end of the defining block.
-    LiveRange NewLR(defIndex, getMBBEndIdx(mbb).getNextIndex().getLoadIndex(),
-                    ValNo);
+    LiveRange NewLR(defIndex, getMBBEndIdx(mbb), ValNo);
     DEBUG(errs() << " +" << NewLR);
     interval.addRange(NewLR);
 
@@ -334,10 +333,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // live interval.
     for (SparseBitVector<>::iterator I = vi.AliveBlocks.begin(), 
              E = vi.AliveBlocks.end(); I != E; ++I) {
-      LiveRange LR(
-          getMBBStartIdx(mf_->getBlockNumbered(*I)),
-          getMBBEndIdx(mf_->getBlockNumbered(*I)).getNextIndex().getLoadIndex(),
-          ValNo);
+      MachineBasicBlock *aliveBlock = mf_->getBlockNumbered(*I);
+      LiveRange LR(getMBBStartIdx(aliveBlock), getMBBEndIdx(aliveBlock), ValNo);
       interval.addRange(LR);
       DEBUG(errs() << " +" << LR);
     }
@@ -467,7 +464,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, true, VNInfoAllocator);
       
-      SlotIndex killIndex = getMBBEndIdx(mbb).getNextIndex().getLoadIndex();
+      SlotIndex killIndex = getMBBEndIdx(mbb);
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
       ValNo->addKill(indexes_->getTerminatorGap(mbb));
@@ -1247,7 +1244,7 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
       continue;
 
     SlotIndex KillIdx = VNI->kills[j];
-    if (KillIdx > Idx && KillIdx < End)
+    if (KillIdx > Idx && KillIdx <= End)
       return true;
   }
   return false;
@@ -2085,7 +2082,7 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
   VN->kills.push_back(indexes_->getTerminatorGap(startInst->getParent()));
   LiveRange LR(
      SlotIndex(getInstructionIndex(startInst).getDefIndex()),
-     getMBBEndIdx(startInst->getParent()).getNextIndex().getBaseIndex(), VN);
+     getMBBEndIdx(startInst->getParent()), VN);
   Interval.addRange(LR);
   
   return LR;

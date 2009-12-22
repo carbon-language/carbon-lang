@@ -1065,7 +1065,7 @@ SimpleRegisterCoalescing::isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
       if (SuccMBB == CopyMBB)
         continue;
       if (DstInt.overlaps(li_->getMBBStartIdx(SuccMBB),
-                      li_->getMBBEndIdx(SuccMBB).getNextIndex().getBaseIndex()))
+                          li_->getMBBEndIdx(SuccMBB)))
         return false;
     }
   }
@@ -1121,7 +1121,7 @@ SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
       if (PredMBB == SMBB)
         continue;
       if (SrcInt.overlaps(li_->getMBBStartIdx(PredMBB),
-                      li_->getMBBEndIdx(PredMBB).getNextIndex().getBaseIndex()))
+                          li_->getMBBEndIdx(PredMBB)))
         return false;
     }
   }

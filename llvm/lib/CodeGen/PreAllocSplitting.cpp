@@ -378,7 +378,7 @@ PreAllocSplitting::UpdateSpillSlotInterval(VNInfo *ValNo, SlotIndex SpillIndex,
 
   SmallPtrSet<MachineBasicBlock*, 4> Processed;
   SlotIndex EndIdx = LIs->getMBBEndIdx(MBB);
-  LiveRange SLR(SpillIndex, EndIdx.getNextSlot(), CurrSValNo);
+  LiveRange SLR(SpillIndex, EndIdx, CurrSValNo);
   CurrSLI->addRange(SLR);
   Processed.insert(MBB);
 
@@ -475,7 +475,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     SlotIndex EndIndex = LIs->getMBBEndIdx(MBB);
     
     RetVNI = NewVNs[Walker];
-    LI->addRange(LiveRange(DefIndex, EndIndex.getNextSlot(), RetVNI));
+    LI->addRange(LiveRange(DefIndex, EndIndex, RetVNI));
   } else if (!ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
     
@@ -511,8 +511,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     UseIndex = UseIndex.getUseIndex();
     SlotIndex EndIndex;
     if (IsIntraBlock) {
-      EndIndex = LIs->getInstructionIndex(UseI);
-      EndIndex = EndIndex.getUseIndex();
+      EndIndex = LIs->getInstructionIndex(UseI).getDefIndex();
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
@@ -521,7 +520,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
                                     NewVNs, LiveOut, Phis, false, true);
     
-    LI->addRange(LiveRange(UseIndex, EndIndex.getNextSlot(), RetVNI));
+    LI->addRange(LiveRange(UseIndex, EndIndex, RetVNI));
     
     // FIXME: Need to set kills properly for inter-block stuff.
     if (RetVNI->isKill(UseIndex)) RetVNI->removeKill(UseIndex);
@@ -571,8 +570,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     StartIndex = foundDef ? StartIndex.getDefIndex() : StartIndex.getUseIndex();
     SlotIndex EndIndex;
     if (IsIntraBlock) {
-      EndIndex = LIs->getInstructionIndex(UseI);
-      EndIndex = EndIndex.getUseIndex();
+      EndIndex = LIs->getInstructionIndex(UseI).getDefIndex();
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
@@ -582,7 +580,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
       RetVNI = PerformPHIConstruction(Walker, MBB, LI, Visited, Defs, Uses,
                                       NewVNs, LiveOut, Phis, false, true);
 
-    LI->addRange(LiveRange(StartIndex, EndIndex.getNextSlot(), RetVNI));
+    LI->addRange(LiveRange(StartIndex, EndIndex, RetVNI));
     
     if (foundUse && RetVNI->isKill(StartIndex))
       RetVNI->removeKill(StartIndex);
@@ -663,7 +661,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
     for (DenseMap<MachineBasicBlock*, VNInfo*>::iterator I =
            IncomingVNs.begin(), E = IncomingVNs.end(); I != E; ++I) {
       I->second->setHasPHIKill(true);
-      SlotIndex KillIndex = LIs->getMBBEndIdx(I->first);
+      SlotIndex KillIndex(LIs->getMBBEndIdx(I->first), true);
       if (!I->second->isKill(KillIndex))
         I->second->addKill(KillIndex);
     }
@@ -671,11 +669,10 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
       
   SlotIndex EndIndex;
   if (IsIntraBlock) {
-    EndIndex = LIs->getInstructionIndex(UseI);
-    EndIndex = EndIndex.getUseIndex();
+    EndIndex = LIs->getInstructionIndex(UseI).getDefIndex();
   } else
     EndIndex = LIs->getMBBEndIdx(MBB);
-  LI->addRange(LiveRange(StartIndex, EndIndex.getNextSlot(), RetVNI));
+  LI->addRange(LiveRange(StartIndex, EndIndex, RetVNI));
   if (IsIntraBlock)
     RetVNI->addKill(EndIndex);
 
