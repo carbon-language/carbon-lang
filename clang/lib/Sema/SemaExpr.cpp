@@ -3478,15 +3478,22 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   InitializationKind Kind
     = InitializationKind::CreateCast(SourceRange(LParenLoc, RParenLoc), 
                                      /*IsCStyleCast=*/true);
-  if (CheckInitializerTypes(literalExpr, literalType, Entity, Kind))
+  InitializationSequence InitSeq(*this, Entity, Kind, &literalExpr, 1);
+  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                   MultiExprArg(*this, (void**)&literalExpr, 1),
+                                            &literalType);
+  if (Result.isInvalid())
     return ExprError();
+  InitExpr.release();
+  literalExpr = static_cast<Expr*>(Result.get());
 
   bool isFileScope = getCurFunctionOrMethodDecl() == 0;
   if (isFileScope) { // 6.5.2.5p3
     if (CheckForConstantInitializer(literalExpr, literalType))
       return ExprError();
   }
-  InitExpr.release();
+
+  Result.release();
   
   // FIXME: Store the TInfo to preserve type information better.
   return Owned(new (Context) CompoundLiteralExpr(LParenLoc, literalType,

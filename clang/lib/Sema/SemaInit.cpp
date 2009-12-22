@@ -3186,7 +3186,7 @@ InitializationSequence::Perform(Sema &S,
       }
     }
 
-    if (Kind.getKind() == InitializationKind::IK_Copy)
+    if (Kind.getKind() == InitializationKind::IK_Copy || Kind.isExplicitCast())
       return Sema::OwningExprResult(S, Args.release()[0]);
 
     unsigned NumArgs = Args.size();
