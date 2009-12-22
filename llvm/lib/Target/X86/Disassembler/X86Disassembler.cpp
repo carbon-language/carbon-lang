@@ -183,8 +183,12 @@ static void translateRMRegister(MCInst &mcInst,
 /// @param mcInst       - The MCInst to append to.
 /// @param insn         - The instruction to extract Mod, R/M, and SIB fields
 ///                       from.
+/// @param sr           - Whether or not to emit the segment register.  The
+///                       LEA instruction does not expect a segment-register
+///                       operand.
 static void translateRMMemory(MCInst &mcInst,
-                              InternalInstruction &insn) {
+                              InternalInstruction &insn,
+                              bool sr) {
   // Addresses in an MCInst are represented as five operands:
   //   1. basereg       (register)  The R/M base, or (if there is a SIB) the 
   //                                SIB base
@@ -209,7 +213,7 @@ static void translateRMMemory(MCInst &mcInst,
       default:
         llvm_unreachable("Unexpected sibBase");
 #define ENTRY(x)                                          \
-      case SIB_BASE_##x:                                \
+      case SIB_BASE_##x:                                  \
         baseReg = MCOperand::CreateReg(X86::x); break;
       ALL_SIB_BASES
 #undef ENTRY
@@ -222,7 +226,7 @@ static void translateRMMemory(MCInst &mcInst,
       switch (insn.sibIndex) {
       default:
         llvm_unreachable("Unexpected sibIndex");
-#define ENTRY(x)                                            \
+#define ENTRY(x)                                          \
       case SIB_INDEX_##x:                                 \
         indexReg = MCOperand::CreateReg(X86::x); break;
       EA_BASES_32BIT
@@ -286,6 +290,8 @@ static void translateRMMemory(MCInst &mcInst,
             break;
       }
     }
+    
+    scaleAmount = MCOperand::CreateImm(1);
   }
   
   displacement = MCOperand::CreateImm(insn.displacement);
@@ -306,7 +312,9 @@ static void translateRMMemory(MCInst &mcInst,
   mcInst.addOperand(scaleAmount);
   mcInst.addOperand(indexReg);
   mcInst.addOperand(displacement);
-  mcInst.addOperand(segmentReg);
+  
+  if (sr)
+    mcInst.addOperand(segmentReg);
 }
 
 /// translateRM - Translates an operand stored in the R/M (and possibly SIB)
@@ -356,7 +364,10 @@ static void translateRM(MCInst &mcInst,
   case TYPE_M1616:
   case TYPE_M1632:
   case TYPE_M1664:
-    translateRMMemory(mcInst, insn);
+    translateRMMemory(mcInst, insn, true);
+    break;
+  case TYPE_LEA:
+    translateRMMemory(mcInst, insn, false);
     break;
   }
 }
