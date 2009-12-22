@@ -553,7 +553,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         report("Explicit operand marked as implicit", MO, MONum);
     }
   } else {
-    if (MO->isReg() && !MO->isImplicit() && !TI.isVariadic())
+    // ARM adds %reg0 operands to indicate predicates. We'll allow that.
+    if (MO->isReg() && !MO->isImplicit() && !TI.isVariadic() && MO->getReg())
       report("Extra explicit operand on non-variadic instruction", MO, MONum);
   }
 
