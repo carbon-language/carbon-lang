@@ -14,11 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if 0
-
 #include "X86Disassembler.h"
 #include "X86DisassemblerDecoder.h"
-#include "X86InstrInfo.h"
 
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -27,6 +24,9 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include "../X86GenRegisterNames.inc"
+
 using namespace llvm;
 using namespace llvm::X86Disassembler;
 
@@ -45,6 +45,8 @@ namespace X86 {
     sib64 = 505
   };
 }
+
+extern Target TheX86_32Target, TheX86_64Target;
 
 }
 
@@ -460,9 +462,4 @@ extern "C" void LLVMInitializeX86Disassembler() {
                                          createX86_32Disassembler);
   TargetRegistry::RegisterMCDisassembler(TheX86_64Target,
                                          createX86_64Disassembler);
-}
-
-#endif
-
-extern "C" void LLVMInitializeX86Disassembler() { 
 }
