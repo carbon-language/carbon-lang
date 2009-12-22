@@ -2861,11 +2861,15 @@ void SelectionDAGBuilder::visitAlloca(AllocaInst &I) {
                           AllocSize,
                           DAG.getConstant(TySize, AllocSize.getValueType()));
   
-  
+  if (DisableScheduling)
+    DAG.AssignOrdering(AllocSize.getNode(), SDNodeOrder);
   
   EVT IntPtr = TLI.getPointerTy();
   AllocSize = DAG.getZExtOrTrunc(AllocSize, getCurDebugLoc(), IntPtr);
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(AllocSize.getNode(), SDNodeOrder);
+  
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
   // the stack alignment, we note this in the DYNAMIC_STACKALLOC node.
@@ -2879,10 +2883,15 @@ void SelectionDAGBuilder::visitAlloca(AllocaInst &I) {
   AllocSize = DAG.getNode(ISD::ADD, getCurDebugLoc(),
                           AllocSize.getValueType(), AllocSize,
                           DAG.getIntPtrConstant(StackAlign-1));
+  if (DisableScheduling)
+    DAG.AssignOrdering(AllocSize.getNode(), SDNodeOrder);
+
   // Mask out the low bits for alignment purposes.
   AllocSize = DAG.getNode(ISD::AND, getCurDebugLoc(),
                           AllocSize.getValueType(), AllocSize,
                           DAG.getIntPtrConstant(~(uint64_t)(StackAlign-1)));
+  if (DisableScheduling)
+    DAG.AssignOrdering(AllocSize.getNode(), SDNodeOrder);
 
   SDValue Ops[] = { getRoot(), AllocSize, DAG.getIntPtrConstant(Align) };
   SDVTList VTs = DAG.getVTList(AllocSize.getValueType(), MVT::Other);
@@ -2890,6 +2899,9 @@ void SelectionDAGBuilder::visitAlloca(AllocaInst &I) {
                             VTs, Ops, 3);
   setValue(&I, DSA);
   DAG.setRoot(DSA.getValue(1));
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(DSA.getNode(), SDNodeOrder);
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
@@ -2929,30 +2941,41 @@ void SelectionDAGBuilder::visitLoad(LoadInst &I) {
   SmallVector<SDValue, 4> Chains(NumValues);
   EVT PtrVT = Ptr.getValueType();
   for (unsigned i = 0; i != NumValues; ++i) {
+    SDValue A = DAG.getNode(ISD::ADD, getCurDebugLoc(),
+                            PtrVT, Ptr,
+                            DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
-                            DAG.getNode(ISD::ADD, getCurDebugLoc(),
-                                        PtrVT, Ptr,
-                                        DAG.getConstant(Offsets[i], PtrVT)),
-                            SV, Offsets[i], isVolatile, Alignment);
+                            A, SV, Offsets[i], isVolatile, Alignment);
+
     Values[i] = L;
     Chains[i] = L.getValue(1);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(A.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(L.getNode(), SDNodeOrder);
+    }
   }
 
   if (!ConstantMemory) {
     SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
-                                  MVT::Other,
-                                  &Chains[0], NumValues);
+                                MVT::Other, &Chains[0], NumValues);
     if (isVolatile)
       DAG.setRoot(Chain);
     else
       PendingLoads.push_back(Chain);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
   }
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
-                           DAG.getVTList(&ValueVTs[0], NumValues),
-                           &Values[0], NumValues));
-}
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
+                            DAG.getVTList(&ValueVTs[0], NumValues),
+                            &Values[0], NumValues);
+  setValue(&I, Res);
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+}
 
 void SelectionDAGBuilder::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
@@ -2976,16 +2999,26 @@ void SelectionDAGBuilder::visitStore(StoreInst &I) {
   EVT PtrVT = Ptr.getValueType();
   bool isVolatile = I.isVolatile();
   unsigned Alignment = I.getAlignment();
-  for (unsigned i = 0; i != NumValues; ++i)
+
+  for (unsigned i = 0; i != NumValues; ++i) {
+    SDValue Add = DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, Ptr,
+                              DAG.getConstant(Offsets[i], PtrVT));
     Chains[i] = DAG.getStore(Root, getCurDebugLoc(),
                              SDValue(Src.getNode(), Src.getResNo() + i),
-                             DAG.getNode(ISD::ADD, getCurDebugLoc(),
-                                         PtrVT, Ptr,
-                                         DAG.getConstant(Offsets[i], PtrVT)),
-                             PtrV, Offsets[i], isVolatile, Alignment);
+                             Add, PtrV, Offsets[i], isVolatile, Alignment);
 
-  DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
-                          MVT::Other, &Chains[0], NumValues));
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Add.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(Chains[i].getNode(), SDNodeOrder);
+    }
+  }
+
+  SDValue Res = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
+                            MVT::Other, &Chains[0], NumValues);
+  DAG.setRoot(Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
@@ -3030,6 +3063,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
            "Intrinsic uses a non-legal type?");
   }
 #endif // NDEBUG
+
   if (HasChain)
     ValueVTs.push_back(MVT::Other);
 
@@ -3044,16 +3078,19 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
                                      Info.memVT, Info.ptrVal, Info.offset,
                                      Info.align, Info.vol,
                                      Info.readMem, Info.writeMem);
-  }
-  else if (!HasChain)
+  } else if (!HasChain) {
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
-  else if (I.getType() != Type::getVoidTy(*DAG.getContext()))
+  } else if (I.getType() != Type::getVoidTy(*DAG.getContext())) {
     Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
-  else
+  } else {
     Result = DAG.getNode(ISD::INTRINSIC_VOID, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
+  }
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Result.getNode(), SDNodeOrder);
 
   if (HasChain) {
     SDValue Chain = Result.getValue(Result.getNode()->getNumValues()-1);
@@ -3062,11 +3099,16 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
     else
       DAG.setRoot(Chain);
   }
+
   if (I.getType() != Type::getVoidTy(*DAG.getContext())) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
       EVT VT = TLI.getValueType(PTy);
       Result = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(), VT, Result);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Result.getNode(), SDNodeOrder);
     }
+
     setValue(&I, Result);
   }
 }
@@ -3078,12 +3120,20 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
 ///
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
-GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl) {
+GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl, unsigned Order) {
   SDValue t1 = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
                            DAG.getConstant(0x007fffff, MVT::i32));
   SDValue t2 = DAG.getNode(ISD::OR, dl, MVT::i32, t1,
                            DAG.getConstant(0x3f800000, MVT::i32));
-  return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t2);
+  SDValue Res = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t2);
+
+  if (DisableScheduling) {
+    DAG.AssignOrdering(t1.getNode(), Order);
+    DAG.AssignOrdering(t2.getNode(), Order);
+    DAG.AssignOrdering(Res.getNode(), Order);
+  }
+
+  return Res;
 }
 
 /// GetExponent - Get the exponent:
@@ -3093,14 +3143,23 @@ GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl) {
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
 GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI,
-            DebugLoc dl) {
+            DebugLoc dl, unsigned Order) {
   SDValue t0 = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
                            DAG.getConstant(0x7f800000, MVT::i32));
   SDValue t1 = DAG.getNode(ISD::SRL, dl, MVT::i32, t0,
                            DAG.getConstant(23, TLI.getPointerTy()));
   SDValue t2 = DAG.getNode(ISD::SUB, dl, MVT::i32, t1,
                            DAG.getConstant(127, MVT::i32));
-  return DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, t2);
+  SDValue Res = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, t2);
+
+  if (DisableScheduling) {
+    DAG.AssignOrdering(t0.getNode(), Order);
+    DAG.AssignOrdering(t1.getNode(), Order);
+    DAG.AssignOrdering(t2.getNode(), Order);
+    DAG.AssignOrdering(Res.getNode(), Order);
+  }
+
+  return Res;
 }
 
 /// getF32Constant - Get 32-bit floating point constant.
@@ -3124,6 +3183,10 @@ SelectionDAGBuilder::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
                   I.getOperand(1));
   setValue(&I, L);
   DAG.setRoot(L.getValue(1));
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(L.getNode(), SDNodeOrder);
+
   return 0;
 }
 
@@ -3137,6 +3200,10 @@ SelectionDAGBuilder::implVisitAluOverflow(CallInst &I, ISD::NodeType Op) {
   SDValue Result = DAG.getNode(Op, getCurDebugLoc(), VTs, Op1, Op2);
 
   setValue(&I, Result);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Result.getNode(), SDNodeOrder);
+
   return 0;
 }
 
@@ -3164,9 +3231,19 @@ SelectionDAGBuilder::visitExp(CallInst &I) {
     SDValue t1 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, IntegerPartOfX);
     SDValue X = DAG.getNode(ISD::FSUB, dl, MVT::f32, t0, t1);
 
+    if (DisableScheduling) {
+      DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(X.getNode(), SDNodeOrder);
+    }
+
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
                                  DAG.getConstant(23, TLI.getPointerTy()));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3190,6 +3267,16 @@ SelectionDAGBuilder::visitExp(CallInst &I) {
                                TwoToFracPartOfX, IntegerPartOfX);
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t6);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFracPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3216,6 +3303,18 @@ SelectionDAGBuilder::visitExp(CallInst &I) {
                                TwoToFracPartOfX, IntegerPartOfX);
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t8);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFracPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3255,12 +3354,32 @@ SelectionDAGBuilder::visitExp(CallInst &I) {
                                 TwoToFracPartOfX, IntegerPartOfX);
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, t14);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t9.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t10.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t11.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t12.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t13.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t14.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFracPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
     result = DAG.getNode(ISD::FEXP, dl,
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)));
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
@@ -3278,14 +3397,20 @@ SelectionDAGBuilder::visitLog(CallInst &I) {
     SDValue Op = getValue(I.getOperand(1));
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(Op1.getNode(), SDNodeOrder);
+
     // Scale the exponent by log(2) [0.69314718f].
-    SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
+    SDValue Exp = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, dl, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3f317218));
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(LogOfExponent.getNode(), SDNodeOrder);
+
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl);
+    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3305,6 +3430,14 @@ SelectionDAGBuilder::visitLog(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, LogOfMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(LogOfMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3331,6 +3464,18 @@ SelectionDAGBuilder::visitLog(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, LogOfMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(LogOfMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3365,12 +3510,31 @@ SelectionDAGBuilder::visitLog(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, LogOfMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t9.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t10.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(LogOfMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
     result = DAG.getNode(ISD::FLOG, dl,
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
@@ -3388,12 +3552,18 @@ SelectionDAGBuilder::visitLog2(CallInst &I) {
     SDValue Op = getValue(I.getOperand(1));
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(Op1.getNode(), SDNodeOrder);
+
     // Get the exponent.
-    SDValue LogOfExponent = GetExponent(DAG, Op1, TLI, dl);
+    SDValue LogOfExponent = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(LogOfExponent.getNode(), SDNodeOrder);
 
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl);
+    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
 
     // Different possible minimax approximations of significand in
     // floating-point for various degrees of accuracy over [1,2].
@@ -3413,6 +3583,14 @@ SelectionDAGBuilder::visitLog2(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log2ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log2ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3439,6 +3617,18 @@ SelectionDAGBuilder::visitLog2(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log2ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log2ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3474,12 +3664,31 @@ SelectionDAGBuilder::visitLog2(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log2ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t9.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t10.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log2ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
     result = DAG.getNode(ISD::FLOG2, dl,
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
@@ -3497,14 +3706,20 @@ SelectionDAGBuilder::visitLog10(CallInst &I) {
     SDValue Op = getValue(I.getOperand(1));
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(Op1.getNode(), SDNodeOrder);
+
     // Scale the exponent by log10(2) [0.30102999f].
-    SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
+    SDValue Exp = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, dl, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3e9a209a));
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(LogOfExponent.getNode(), SDNodeOrder);
+
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl);
+    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3524,6 +3739,14 @@ SelectionDAGBuilder::visitLog10(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log10ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log10ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3546,6 +3769,16 @@ SelectionDAGBuilder::visitLog10(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log10ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log10ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3576,12 +3809,29 @@ SelectionDAGBuilder::visitLog10(CallInst &I) {
 
       result = DAG.getNode(ISD::FADD, dl,
                            MVT::f32, LogOfExponent, Log10ofMantissa);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(Log10ofMantissa.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
     result = DAG.getNode(ISD::FLOG10, dl,
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
@@ -3600,6 +3850,9 @@ SelectionDAGBuilder::visitExp2(CallInst &I) {
 
     SDValue IntegerPartOfX = DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32, Op);
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
+
     //   FractionalPartOfX = x - (float)IntegerPartOfX;
     SDValue t1 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, IntegerPartOfX);
     SDValue X = DAG.getNode(ISD::FSUB, dl, MVT::f32, Op, t1);
@@ -3607,6 +3860,12 @@ SelectionDAGBuilder::visitExp2(CallInst &I) {
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
                                  DAG.getConstant(23, TLI.getPointerTy()));
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(X.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
+    }
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3629,6 +3888,16 @@ SelectionDAGBuilder::visitExp2(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3654,6 +3923,18 @@ SelectionDAGBuilder::visitExp2(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3690,12 +3971,33 @@ SelectionDAGBuilder::visitExp2(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t9.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t10.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t11.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t12.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t13.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t14.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
     result = DAG.getNode(ISD::FEXP2, dl,
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
@@ -3737,9 +4039,19 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
     SDValue t1 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, IntegerPartOfX);
     SDValue X = DAG.getNode(ISD::FSUB, dl, MVT::f32, t0, t1);
 
+    if (DisableScheduling) {
+      DAG.AssignOrdering(t0.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(t1.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(X.getNode(), SDNodeOrder);
+    }
+
     //   IntegerPartOfX <<= 23;
     IntegerPartOfX = DAG.getNode(ISD::SHL, dl, MVT::i32, IntegerPartOfX,
                                  DAG.getConstant(23, TLI.getPointerTy()));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(IntegerPartOfX.getNode(), SDNodeOrder);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3762,6 +4074,16 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else if (LimitFloatPrecision > 6 && LimitFloatPrecision <= 12) {
       // For floating-point precision of 12:
       //
@@ -3787,6 +4109,18 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     } else { // LimitFloatPrecision > 12 && LimitFloatPrecision <= 18
       // For floating-point precision of 18:
       //
@@ -3823,6 +4157,24 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
 
       result = DAG.getNode(ISD::BIT_CONVERT, dl,
                            MVT::f32, TwoToFractionalPartOfX);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(t2.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t3.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t4.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t5.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t6.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t7.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t8.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t9.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t10.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t11.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t12.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t13.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(t14.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(TwoToFractionalPartOfX.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(result.getNode(), SDNodeOrder);
+      }
     }
   } else {
     // No special expansion.
@@ -3830,6 +4182,9 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
                          getValue(I.getOperand(1)).getValueType(),
                          getValue(I.getOperand(1)),
                          getValue(I.getOperand(2)));
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(result.getNode(), SDNodeOrder);
   }
 
   setValue(&I, result);
