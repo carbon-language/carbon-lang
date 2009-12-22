@@ -100,7 +100,7 @@ void test_x2(X2<int> x2i, X2<NotDefaultConstructible> x2n) {
 // PR5283
 namespace PR5283 {
 template<typename T> struct A {
-  A(T = 1); // expected-error 3 {{incompatible type initializing 'int', expected 'int *'}}
+  A(T = 1); // expected-error 3 {{cannot initialize a parameter of type 'int *' with an rvalue of type 'int'}}
 };
 
 struct B : A<int*> { 

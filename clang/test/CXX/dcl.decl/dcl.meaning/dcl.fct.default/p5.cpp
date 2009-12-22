@@ -2,7 +2,7 @@
 
 float global_f;
 
-void f0(int *ip = &global_f); // expected-error{{incompatible}}
+void f0(int *ip = &global_f); // expected-error{{cannot initialize}}
 
 // Example from C++03 standard
 int a = 1; 

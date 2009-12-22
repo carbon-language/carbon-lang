@@ -128,8 +128,12 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
   InitializedEntity Entity = InitializedEntity::InitializeParameter(Param);
   InitializationKind Kind = InitializationKind::CreateCopy(Param->getLocation(),
                                                            EqualLoc);
-  if (CheckInitializerTypes(Arg, ParamType, Entity, Kind))
+  InitializationSequence InitSeq(*this, Entity, Kind, &Arg, 1);
+  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                          MultiExprArg(*this, (void**)&Arg, 1));
+  if (Result.isInvalid())
     return true;
+  Arg = Result.takeAs<Expr>();
 
   Arg = MaybeCreateCXXExprWithTemporaries(Arg);
 
