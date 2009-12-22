@@ -4707,7 +4707,7 @@ CheckOperatorNewDeleteTypes(Sema &SemaRef, const FunctionDecl *FnDecl,
       << FnDecl->getDeclName() << ExpectedFirstParamType;
 
   // Check that the first parameter type is what we expect.
-  if (SemaRef.Context.getCanonicalType(FirstParamType) != 
+  if (SemaRef.Context.getCanonicalType(FirstParamType).getUnqualifiedType() != 
       ExpectedFirstParamType)
     return SemaRef.Diag(FnDecl->getLocation(), InvalidParamTypeDiag)
     << FnDecl->getDeclName() << ExpectedFirstParamType;

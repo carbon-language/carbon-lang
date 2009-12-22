@@ -102,7 +102,7 @@ private:
   
   /// \brief Create the initialization entity for a parameter.
   InitializedEntity(ParmVarDecl *Parm)
-    : Kind(EK_Parameter), Parent(0), Type(Parm->getType()),
+    : Kind(EK_Parameter), Parent(0), Type(Parm->getType().getUnqualifiedType()),
       VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) { }
   
   /// \brief Create the initialization entity for the result of a

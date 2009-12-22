@@ -737,7 +737,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
       // FIXME: Do we need to check for default arguments here?
       FunctionDecl *Func = cast<FunctionDecl>(*Alloc);
       if (Func->getNumParams() == 1 &&
-          Context.getCanonicalType(Func->getParamDecl(0)->getType())==Argument)
+          Context.getCanonicalType(
+            Func->getParamDecl(0)->getType().getUnqualifiedType()) == Argument)
         return;
     }
   }

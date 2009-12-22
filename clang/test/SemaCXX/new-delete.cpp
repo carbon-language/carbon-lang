@@ -18,7 +18,8 @@ struct V : U
 {
 };
 
-void* operator new(size_t); // expected-note 2 {{candidate}}
+// PR5823
+void* operator new(const size_t); // expected-note 2 {{candidate}}
 void* operator new(size_t, int*); // expected-note 3 {{candidate}}
 void* operator new(size_t, float*); // expected-note 3 {{candidate}}
 void* operator new(size_t, S); // expected-note 2 {{candidate}}
@@ -215,4 +216,3 @@ static void* f(void* g)
 {
     return new (g) X13();
 }
-
