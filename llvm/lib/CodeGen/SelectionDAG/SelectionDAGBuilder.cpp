@@ -4860,8 +4860,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   SmallVector<ISD::ArgFlagsTy, 4> OutsFlags;
   SmallVector<uint64_t, 4> Offsets;
   getReturnInfo(RetTy, CS.getAttributes().getRetAttributes(), 
-    OutVTs, OutsFlags, TLI, &Offsets);
-  
+                OutVTs, OutsFlags, TLI, &Offsets);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(), 
                         FTy->isVarArg(), OutVTs, OutsFlags, DAG);
@@ -4915,8 +4914,11 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getControlRoot(), BeginLabel));
+    SDValue Label = DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                                 getControlRoot(), BeginLabel);
+    DAG.setRoot(Label);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Label.getNode(), SDNodeOrder);
   }
 
   // Check if target-independent constraints permit a tail call here.
@@ -4940,9 +4942,11 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
          "Non-null chain expected with non-tail call!");
   assert((Result.second.getNode() || !Result.first.getNode()) &&
          "Null value expected with tail call!");
-  if (Result.first.getNode())
+  if (Result.first.getNode()) {
     setValue(CS.getInstruction(), Result.first);
-  else if (!CanLowerReturn && Result.second.getNode()) {
+    if (DisableScheduling)
+      DAG.AssignOrdering(Result.first.getNode(), SDNodeOrder);
+  } else if (!CanLowerReturn && Result.second.getNode()) {
     // The instruction result is the result of loading from the
     // hidden sret parameter.
     SmallVector<EVT, 1> PVTs;
@@ -4956,40 +4960,61 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     SmallVector<SDValue, 4> Chains(NumValues);
 
     for (unsigned i = 0; i < NumValues; ++i) {
+      SDValue Add = DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT,
+                                DemoteStackSlot,
+                                DAG.getConstant(Offsets[i], PtrVT));
       SDValue L = DAG.getLoad(OutVTs[i], getCurDebugLoc(), Result.second,
-        DAG.getNode(ISD::ADD, getCurDebugLoc(), PtrVT, DemoteStackSlot,
-        DAG.getConstant(Offsets[i], PtrVT)),
-        NULL, Offsets[i], false, 1);
+                              Add, NULL, Offsets[i], false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(Add.getNode(), SDNodeOrder);
+        DAG.AssignOrdering(L.getNode(), SDNodeOrder);
+      }
     }
+
     SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
                                 MVT::Other, &Chains[0], NumValues);
     PendingLoads.push_back(Chain);
 
-    setValue(CS.getInstruction(), DAG.getNode(ISD::MERGE_VALUES,
-             getCurDebugLoc(), DAG.getVTList(&OutVTs[0], NumValues),
-             &Values[0], NumValues));
+    SDValue MV = DAG.getNode(ISD::MERGE_VALUES,
+                             getCurDebugLoc(),
+                             DAG.getVTList(&OutVTs[0], NumValues),
+                             &Values[0], NumValues);
+    setValue(CS.getInstruction(), MV);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(MV.getNode(), SDNodeOrder);
+    }
   }
-  // As a special case, a null chain means that a tail call has
-  // been emitted and the DAG root is already updated.
-  if (Result.second.getNode())
+
+  // As a special case, a null chain means that a tail call has been emitted and
+  // the DAG root is already updated.
+  if (Result.second.getNode()) {
     DAG.setRoot(Result.second);
-  else
+    if (DisableScheduling)
+      DAG.AssignOrdering(Result.second.getNode(), SDNodeOrder);
+  } else {
     HasTailCall = true;
+  }
 
   if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getRoot(), EndLabel));
+    SDValue Label = DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                                 getRoot(), EndLabel);
+    DAG.setRoot(Label);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Label.getNode(), SDNodeOrder);
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
   }
 }
-
 
 void SelectionDAGBuilder::visitCall(CallInst &I) {
   const char *RenameFn = 0;
