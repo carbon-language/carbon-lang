@@ -5196,13 +5196,10 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
 
   // C++98 [class.friend]p1: A friend of a class is a function
   //   or class that is not a member of the class . . .
-  // But that's a silly restriction which nobody implements for
-  // inner classes, and C++0x removes it anyway, so we only report
-  // this (as a warning) if we're being pedantic.
-  if (!getLangOptions().CPlusPlus0x)
-    if (const RecordType *RT = T->getAs<RecordType>())
-      if (RT->getDecl()->getDeclContext() == CurContext)
-        Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
+  // This is fixed in DR77, which just barely didn't make the C++03
+  // deadline.  It's also a very silly restriction that seriously
+  // affects inner classes and which nobody else seems to implement;
+  // thus we never diagnose it, not even in -pedantic.
 
   Decl *D;
   if (TempParams.size())

@@ -351,8 +351,6 @@ def err_enum_friend : Error<
   "enum types cannot be friends">;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
-def ext_friend_inner_class : Extension<
-  "C++ 98 does not allow inner classes as friends">;
 def err_unelaborated_friend_type : Error<
   "must specify '%select{struct|union|class|enum}0' to befriend %1">;
 def err_qualified_friend_not_found : Error<
