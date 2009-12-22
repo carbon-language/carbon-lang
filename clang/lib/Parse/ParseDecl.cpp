@@ -574,14 +574,30 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
     ExprVector Exprs(Actions);
     CommaLocsTy CommaLocs;
 
+    if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+      EnterScope(0);
+      Actions.ActOnCXXEnterDeclInitializer(CurScope, ThisDecl);
+    }
+
     if (ParseExpressionList(Exprs, CommaLocs)) {
       SkipUntil(tok::r_paren);
+
+      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        ExitScope();
+      }
     } else {
       // Match the ')'.
       SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
       assert(!Exprs.empty() && Exprs.size()-1 == CommaLocs.size() &&
              "Unexpected number of commas!");
+
+      if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
+        Actions.ActOnCXXExitDeclInitializer(CurScope, ThisDecl);
+        ExitScope();
+      }
+
       Actions.AddCXXDirectInitializerToDecl(ThisDecl, LParenLoc,
                                             move_arg(Exprs),
                                             CommaLocs.data(), RParenLoc);

@@ -10,7 +10,9 @@ namespace N {
   struct S {};
   S i; 
   extern S j;
+  extern S j2;
 } 
 
 int i = 2; 
 N::S N::j = i;
+N::S N::j(i);
