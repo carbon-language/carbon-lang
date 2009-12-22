@@ -23,8 +23,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
-
-#include <vector>
+#include "llvm/Support/SourceMgr.h"
 
 using namespace llvm;
 
@@ -47,9 +46,7 @@ public:
   int readByte(uint64_t addr, uint8_t *byte) const {
     if (addr > getExtent())
       return -1;
-    else
-      *byte = Bytes[addr];
-    
+    *byte = Bytes[addr];
     return 0;
   }
 };
@@ -58,26 +55,19 @@ void printInst(const llvm::MCDisassembler &disassembler,
                llvm::MCInstPrinter &instPrinter,
                const std::vector<unsigned char> &bytes) {
   // Wrap the vector in a MemoryObject.
-  
   VectorMemoryObject memoryObject(bytes);
   
   // Disassemble it.
-  
   MCInst inst;
   uint64_t size;
   
   std::string verboseOStr;
   llvm::raw_string_ostream verboseOS(verboseOStr); 
   
-  if (disassembler.getInstruction(inst, 
-                                  size, 
-                                  memoryObject, 
-                                  0, 
-                                  verboseOS)) {
+  if (disassembler.getInstruction(inst, size, memoryObject, 0, verboseOS)) {
     instPrinter.printInst(&inst);
     outs() << "\n";
-  }
-  else {
+  } else {
     errs() << "error: invalid instruction" << "\n";
     errs() << "Diagnostic log:" << "\n";
     errs() << verboseOStr.c_str() << "\n";
@@ -108,11 +98,13 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
     return -1;
   }
   
+  SourceMgr SourceManager;
+  SourceManager.AddNewSourceBuffer(&Buffer, SMLoc());
+  
   // Convert the input to a vector for disassembly.
   std::vector<unsigned char> ByteArray;
   
   StringRef Str = Buffer.getBuffer();
-  
   while (!Str.empty()) {
     // Strip horizontal whitespace.
     if (size_t Pos = Str.find_first_not_of(" \t\r")) {
@@ -148,11 +140,15 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
     // Convert to a byte and add to the byte vector.
     unsigned ByteVal;
     if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
-      errs() << "warning: invalid input token '" << Value << "' of length " 
-             << Next << "\n";
-    } else {
-      ByteArray.push_back((unsigned char)ByteVal);
+      // If we have an error, print it and skip to the end of line.
+      SourceManager.PrintMessage(SMLoc::getFromPointer(Value.data()),
+                                 "invalid input token", "error");
+      Str = Str.substr(Str.find('\n'));
+      ByteArray.clear();
+      continue;
     }
+    
+    ByteArray.push_back((unsigned char)ByteVal);
     Str = Str.substr(Next);
   }
   
