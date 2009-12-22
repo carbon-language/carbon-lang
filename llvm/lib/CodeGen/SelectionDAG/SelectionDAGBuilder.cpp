@@ -5482,8 +5482,12 @@ public:
 
     // If this is an indirect operand, the operand is a pointer to the
     // accessed type.
-    if (isIndirect)
-      OpTy = cast<PointerType>(OpTy)->getElementType();
+    if (isIndirect) {
+      const llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
+      if (!PtrTy)
+        llvm_report_error("Indirect operand for inline asm not a pointer!");
+      OpTy = PtrTy->getElementType();
+    }
 
     // If OpTy is not a single value, it may be a struct/union that we
     // can tile with integers.
