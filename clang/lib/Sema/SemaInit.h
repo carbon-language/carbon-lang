@@ -105,8 +105,9 @@ private:
     : Kind(EK_Parameter), Parent(0), Type(Parm->getType()),
       VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) { }
   
-  /// \brief Create the initialization entity for the result of a function,
-  /// throwing an object, or performing an explicit cast.
+  /// \brief Create the initialization entity for the result of a
+  /// function, throwing an object, performing an explicit cast, or
+  /// initializing a parameter for which there is no declaration.
   InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type)
     : Kind(Kind), Parent(0), Type(Type), Location(Loc.getRawEncoding()) { }
   
@@ -128,6 +129,12 @@ public:
   /// \brief Create the initialization entity for a parameter.
   static InitializedEntity InitializeParameter(ParmVarDecl *Parm) {
     return InitializedEntity(Parm);
+  }
+
+  /// \brief Create the initialization entity for a parameter that is
+  /// only known by its type.
+  static InitializedEntity InitializeParameter(QualType Type) {
+    return InitializedEntity(EK_Parameter, SourceLocation(), Type);
   }
 
   /// \brief Create the initialization entity for the result of a function.

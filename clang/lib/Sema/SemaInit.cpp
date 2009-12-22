@@ -1807,8 +1807,12 @@ InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context,
 
 DeclarationName InitializedEntity::getName() const {
   switch (getKind()) {
-  case EK_Variable:
   case EK_Parameter:
+    if (!VariableOrMember)
+      return DeclarationName();
+    // Fall through
+
+  case EK_Variable:
   case EK_Member:
     return VariableOrMember->getDeclName();
 
