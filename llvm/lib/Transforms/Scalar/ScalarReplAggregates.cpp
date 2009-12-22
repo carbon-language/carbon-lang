@@ -464,13 +464,6 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
   if (GEPIt == E)
     return;
 
-  // The first GEP index must be zero.
-  if (!isa<ConstantInt>(GEPIt.getOperand()) ||
-      !cast<ConstantInt>(GEPIt.getOperand())->isZero())
-    return MarkUnsafe(Info);
-  if (++GEPIt == E)
-    return;
-
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
   for (; GEPIt != E; ++GEPIt) {
@@ -481,24 +474,10 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
     if (!IdxVal)
       return MarkUnsafe(Info);
-
-    if (const ArrayType *AT = dyn_cast<ArrayType>(*GEPIt)) {
-      // This GEP indexes an array.  Verify that this is an in-range constant
-      // integer. Specifically, consider A[0][i]. We cannot know that the user
-      // isn't doing invalid things like allowing i to index an out-of-range
-      // subscript that accesses A[1].  Because of this, we have to reject SROA
-      // of any accesses into structs where any of the components are variables.
-      if (IdxVal->getZExtValue() >= AT->getNumElements())
-        return MarkUnsafe(Info);
-    } else {
-      const VectorType *VT = cast<VectorType>(*GEPIt);
-      if (IdxVal->getZExtValue() >= VT->getNumElements())
-        return MarkUnsafe(Info);
-    }
   }
 
-  // All the indices are safe.  Now compute the offset due to this GEP and
-  // check if the alloca has a component element at that offset.
+  // Compute the offset due to this GEP and check if the alloca has a
+  // component element at that offset.
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
   Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
                                  &Indices[0], Indices.size());
@@ -552,6 +531,8 @@ bool SROA::TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size) {
   } else if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
     EltTy = AT->getElementType();
     EltSize = TD->getTypeAllocSize(EltTy);
+    if (Offset >= AT->getNumElements() * EltSize)
+      return false;
     Offset %= EltSize;
   } else {
     return false;
