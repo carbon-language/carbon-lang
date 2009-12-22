@@ -21,4 +21,7 @@ struct f2_s1 : public f2_s0 { char d;};
 // CHECK: define void @_Z2f25f2_s1([[i64_i64_ty]])
 void f2(f2_s1 a0) { }
 
-
+// PR5831
+struct s3_0 {};
+struct s3_1 { struct s3_0 a; long b; };
+void f3(struct s3_1 x) {}

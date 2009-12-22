@@ -805,6 +805,10 @@ void X86_64ABIInfo::classify(QualType Ty,
         if (Lo == Memory || Hi == Memory)
           break;
       }
+
+      // If this record has no fields but isn't empty, classify as INTEGER.
+      if (RD->field_empty() && Size)
+        Current = Integer;
     }
 
     // Classify the fields one at a time, merging the results.
