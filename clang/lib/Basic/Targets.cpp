@@ -1365,7 +1365,6 @@ public:
     if ('5' <= CPUArch[0] && CPUArch[0] <= '7')
       Define(Defs, "__THUMB_INTERWORK__");
 
-    // FIXME: It's more complicated than this.
     if (ABI == "aapcs" || ABI == "aapcs-linux")
       Define(Defs, "__ARM_EABI__");
 
