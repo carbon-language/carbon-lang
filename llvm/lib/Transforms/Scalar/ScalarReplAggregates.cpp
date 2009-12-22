@@ -1373,11 +1373,16 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      Value *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
+      Instruction *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
       Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
                                              Builder);
       Builder.CreateStore(New, NewAI);
       SI->eraseFromParent();
+      
+      // If the load we just inserted is now dead, then the inserted store
+      // overwrote the entire thing.
+      if (Old->use_empty())
+        Old->eraseFromParent();
       continue;
     }
     
@@ -1397,11 +1402,16 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
           for (unsigned i = 1; i != NumBytes; ++i)
             APVal |= APVal << 8;
         
-        Value *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
+        Instruction *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
         Value *New = ConvertScalar_InsertValue(
                                     ConstantInt::get(User->getContext(), APVal),
                                                Old, Offset, Builder);
         Builder.CreateStore(New, NewAI);
+        
+        // If the load we just inserted is now dead, then the memset overwrote
+        // the entire thing.
+        if (Old->use_empty())
+          Old->eraseFromParent();        
       }
       MSI->eraseFromParent();
       continue;
