@@ -3688,8 +3688,13 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
       Base.get() == E->getBase() &&
       Qualifier == E->getQualifier() &&
       Member == E->getMemberDecl() &&
-      !E->hasExplicitTemplateArgumentList())
+      !E->hasExplicitTemplateArgumentList()) {
+    
+    // Mark it referenced in the new context regardless.
+    // FIXME: this is a bit instantiation-specific.
+    SemaRef.MarkDeclarationReferenced(E->getMemberLoc(), Member);
     return SemaRef.Owned(E->Retain());
+  }
 
   TemplateArgumentListInfo TransArgs;
   if (E->hasExplicitTemplateArgumentList()) {
