@@ -711,6 +711,11 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
   // Add a link action if necessary.
   if (!LinkerInputs.empty())
     Actions.push_back(new LinkJobAction(LinkerInputs, types::TY_Image));
+
+  // If we are linking, claim any options which are obviously only used for
+  // compilation.
+  if (FinalPhase == phases::Link)
+    Args.ClaimAllArgs(options::OPT_CompileOnly_Group);
 }
 
 Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,

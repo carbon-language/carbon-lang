@@ -17,23 +17,27 @@ include "OptParser.td"
 /////////
 // Groups
 
-def I_Group               : OptionGroup<"<I group>">;
-def M_Group               : OptionGroup<"<M group>">;
+// Meta-group which defines
+def CompileOnly_Group     : OptionGroup<"<CompileOnly group>">;
+
+def I_Group               : OptionGroup<"<I group>">, Group<CompileOnly_Group>;
+def M_Group               : OptionGroup<"<M group>">, Group<CompileOnly_Group>;
 def T_Group               : OptionGroup<"<T group>">;
-def O_Group               : OptionGroup<"<O group>">;
-def W_Group               : OptionGroup<"<W group>">;
+def O_Group               : OptionGroup<"<O group>">, Group<CompileOnly_Group>;
+def W_Group               : OptionGroup<"<W group>">, Group<CompileOnly_Group>;
 def X_Group               : OptionGroup<"<X group>">;
 def a_Group               : OptionGroup<"<a group>">;
 def d_Group               : OptionGroup<"<d group>">;
-def f_Group               : OptionGroup<"<f group>">;
+def f_Group               : OptionGroup<"<f group>">, Group<CompileOnly_Group>;
 def g_Group               : OptionGroup<"<g group>">;
-def i_Group               : OptionGroup<"<i group>">;
+def i_Group               : OptionGroup<"<i group>">, Group<CompileOnly_Group>;
 def clang_i_Group         : OptionGroup<"<clang i group>">, Group<i_Group>;
-def m_Group               : OptionGroup<"<m group>">;
-def m_x86_Features_Group  : OptionGroup<"<m x86 features group>">;
+def m_Group               : OptionGroup<"<m group>">, Group<CompileOnly_Group>;
+def m_x86_Features_Group  : OptionGroup<"<m x86 features group>">, Group<m_Group>;
 def u_Group               : OptionGroup<"<u group>">;
 
-def pedantic_Group        : OptionGroup<"<pedantic group>">;
+def pedantic_Group        : OptionGroup<"<pedantic group>">,
+  Group<CompileOnly_Group>;
 
 // Temporary groups for clang options which we know we don't support,
 // but don't want to verbosely warn the user about.
@@ -116,7 +120,7 @@ def A : JoinedOrSeparate<"-A">;
 def B : JoinedOrSeparate<"-B">, Flags<[Unsupported]>;
 def CC : Flag<"-CC">;
 def C : Flag<"-C">;
-def D : JoinedOrSeparate<"-D">;
+def D : JoinedOrSeparate<"-D">, Group<CompileOnly_Group>;
 def E : Flag<"-E">, Flags<[DriverOption]>,
   HelpText<"Only run the preprocessor">;
 def F : JoinedOrSeparate<"-F">;
@@ -152,7 +156,7 @@ def Tbss : JoinedOrSeparate<"-Tbss">, Group<T_Group>;
 def Tdata : JoinedOrSeparate<"-Tdata">, Group<T_Group>;
 def Ttext : JoinedOrSeparate<"-Ttext">, Group<T_Group>;
 def T : JoinedOrSeparate<"-T">, Group<T_Group>;
-def U : JoinedOrSeparate<"-U">;
+def U : JoinedOrSeparate<"-U">, Group<CompileOnly_Group>;
 def V : JoinedOrSeparate<"-V">, Flags<[DriverOption, Unsupported]>;
 def Wa_COMMA : CommaJoined<"-Wa,">,
   HelpText<"Pass the comma separated arguments in <arg> to the assembler">,
