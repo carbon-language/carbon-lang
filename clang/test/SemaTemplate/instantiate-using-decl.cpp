@@ -47,3 +47,17 @@ namespace test1 {
     Knot().Visit((struct Object3*) 0); // expected-error {{no matching member function for call}}
   }
 }
+
+// PR5847
+namespace test2 {
+  namespace ns {
+    void foo();
+  }
+
+  template <class T> void bar(T* ptr) {
+    using ns::foo;
+    foo();
+  }
+
+  template void bar(char *);
+}

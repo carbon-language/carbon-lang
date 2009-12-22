@@ -1161,6 +1161,8 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
   if (NewUD->isInvalidDecl())
     return NewUD;
 
+  bool isFunctionScope = Owner->isFunctionOrMethod();
+
   // Process the shadow decls.
   for (UsingDecl::shadow_iterator I = D->shadow_begin(), E = D->shadow_end();
          I != E; ++I) {
@@ -1176,6 +1178,9 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
     UsingShadowDecl *InstShadow
       = SemaRef.BuildUsingShadowDecl(/*Scope*/ 0, NewUD, InstTarget);
     SemaRef.Context.setInstantiatedFromUsingShadowDecl(InstShadow, Shadow);
+
+    if (isFunctionScope)
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(Shadow, InstShadow);
   }
 
   return NewUD;
