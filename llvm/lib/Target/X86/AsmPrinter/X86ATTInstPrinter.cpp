@@ -45,12 +45,14 @@ void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
 }
 
 /// print_pcrel_imm - This is used to print an immediate value that ends up
-/// being encoded as a pc-relative value.  These print slightly differently, for
-/// example, a $ is not emitted.
+/// being encoded as a pc-relative value (e.g. for jumps and calls).  These
+/// print slightly differently than normal immediates.  For example, a $ is not
+/// emitted.
 void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
-    O << Op.getImm();
+    // Print this as a signed 32-bit value.
+    O << (int)Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
     Op.getExpr()->print(O, &MAI);
