@@ -18,6 +18,7 @@
 #include "PIC16.h"
 #include "PIC16Subtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetLowering.h"
 #include <map>
 
@@ -216,7 +217,9 @@ namespace llvm {
 
     // This function checks if we need to put an operand of an operation on
     // stack and generate a load or not.
-    bool NeedToConvertToMemOp(SDValue Op, unsigned &MemOp); 
+    // DAG parameter is required to access DAG information during
+    // analysis.
+    bool NeedToConvertToMemOp(SDValue Op, unsigned &MemOp, SelectionDAG &DAG); 
 
     /// Subtarget - Keep a pointer to the PIC16Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -238,6 +241,11 @@ namespace llvm {
 
     // Check if operation has a direct load operand.
     inline bool isDirectLoad(const SDValue Op);
+
+  public:
+    // Keep a pointer to SelectionDAGISel to access its public 
+    // interface (It is required during legalization)
+    SelectionDAGISel   *ISel;
 
   private:
     // The frameindexes generated for spill/reload are stack based.
