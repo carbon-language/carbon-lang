@@ -1985,7 +1985,7 @@ public:
   /// non-empty, will create a new CXXExprWithTemporaries expression.
   /// Otherwise, just returs the passed in expression.
   Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr);
-
+  OwningExprResult MaybeCreateCXXExprWithTemporaries(OwningExprResult SubExpr);
   FullExpr CreateFullExpr(Expr *SubExpr);
   
   virtual OwningExprResult ActOnFinishFullExpr(ExprArg Expr);

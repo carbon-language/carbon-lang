@@ -15,4 +15,4 @@ namespace N {
 
 int i = 2; 
 N::S N::j = i;
-N::S N::j(i);
+N::S N::j2(i);

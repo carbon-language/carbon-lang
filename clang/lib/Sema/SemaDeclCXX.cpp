@@ -3927,53 +3927,50 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
     DeclInitType = Context.getBaseElementType(Array);
 
-  // FIXME: This isn't the right place to complete the type.
   if (RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
                           diag::err_typecheck_decl_incomplete_type)) {
     VDecl->setInvalidDecl();
     return;
   }
 
-  if (VDecl->getType()->isRecordType()) {
-    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-    
-    CXXConstructorDecl *Constructor
-      = PerformInitializationByConstructor(DeclInitType,
-                                           move(Exprs),
-                                           VDecl->getLocation(),
-                                           SourceRange(VDecl->getLocation(),
-                                                       RParenLoc),
-                                           VDecl->getDeclName(),
-                      InitializationKind::CreateDirect(VDecl->getLocation(), 
-                                                       LParenLoc, 
-                                                       RParenLoc),
-                                           ConstructorArgs);
-    if (!Constructor)
-      RealDecl->setInvalidDecl();
-    else {
-      VDecl->setCXXDirectInitializer(true);
-      if (InitializeVarWithConstructor(VDecl, Constructor, 
-                                       move_arg(ConstructorArgs)))
-        RealDecl->setInvalidDecl();
-      FinalizeVarWithDestructor(VDecl, DeclInitType);
-    }
+  // The variable can not have an abstract class type.
+  if (RequireNonAbstractType(VDecl->getLocation(), VDecl->getType(),
+                             diag::err_abstract_type_in_decl,
+                             AbstractVariableType))
+    VDecl->setInvalidDecl();
+
+  const VarDecl *Def = 0;
+  if (VDecl->getDefinition(Def)) {
+    Diag(VDecl->getLocation(), diag::err_redefinition)
+    << VDecl->getDeclName();
+    Diag(Def->getLocation(), diag::note_previous_definition);
+    VDecl->setInvalidDecl();
     return;
   }
-
-  if (NumExprs > 1) {
-    Diag(CommaLocs[0], diag::err_builtin_direct_init_more_than_one_arg)
-      << SourceRange(VDecl->getLocation(), RParenLoc);
-    RealDecl->setInvalidDecl();
+  
+  // Capture the variable that is being initialized and the style of
+  // initialization.
+  InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
+  
+  // FIXME: Poor source location information.
+  InitializationKind Kind
+    = InitializationKind::CreateDirect(VDecl->getLocation(),
+                                       LParenLoc, RParenLoc);
+  
+  InitializationSequence InitSeq(*this, Entity, Kind, 
+                                 (Expr**)Exprs.get(), Exprs.size());
+  OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(Exprs));
+  if (Result.isInvalid()) {
+    VDecl->setInvalidDecl();
     return;
   }
-
-  // Let clients know that initialization was done with a direct initializer.
+  
+  Result = MaybeCreateCXXExprWithTemporaries(move(Result));
+  VDecl->setInit(Context, Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
-  assert(NumExprs == 1 && "Expected 1 expression");
-  // Set the init expression, handles conversions.
-  AddInitializerToDecl(Dcl, ExprArg(*this, Exprs.release()[0]),
-                       /*DirectInit=*/true);
+  if (VDecl->getType()->getAs<RecordType>())
+    FinalizeVarWithDestructor(VDecl, DeclInitType);
 }
 
 /// \brief Add the applicable constructor candidates for an initialization

@@ -28,7 +28,7 @@ public:
 void g() {
   X x1(5);
   X x2(1.0, 3, 4.2);
-  X x3(1.0, 1.0); // expected-error{{no matching constructor for initialization of 'x3'; candidates are:}}
+  X x3(1.0, 1.0); // expected-error{{no matching constructor for initialization of 'class X'}}
   Y y(1.0);
   X x4(3.14, y);
 

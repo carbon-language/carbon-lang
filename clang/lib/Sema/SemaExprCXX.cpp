@@ -2097,6 +2097,14 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   return E;
 }
 
+Sema::OwningExprResult 
+Sema::MaybeCreateCXXExprWithTemporaries(OwningExprResult SubExpr) {
+  if (SubExpr.isInvalid())
+    return ExprError();
+  
+  return Owned(MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>()));
+}
+
 FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
   assert(ExprTemporaries.size() >= FirstTemporary);
