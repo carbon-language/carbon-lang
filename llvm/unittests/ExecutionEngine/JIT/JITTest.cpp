@@ -534,6 +534,37 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
+TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
+  Function *F = Function::Create(TypeBuilder<int(void), false>::get(Context),
+                                 GlobalValue::ExternalLinkage, "test", M);
+  BasicBlock *Entry = BasicBlock::Create(Context, "entry", F);
+  IRBuilder<> Builder(Entry);
+  Value *Val = ConstantInt::get(TypeBuilder<int, false>::get(Context), 1);
+  Builder.CreateRet(Val);
+
+  TheJIT->DisableLazyCompilation(true);
+  // Compile the function once, and make sure it works.
+  int (*OrigFPtr)() = reinterpret_cast<int(*)()>(
+    (intptr_t)TheJIT->recompileAndRelinkFunction(F));
+  EXPECT_EQ(1, OrigFPtr());
+
+  // Now change the function to return a different value.
+  Entry->eraseFromParent();
+  BasicBlock *NewEntry = BasicBlock::Create(Context, "new_entry", F);
+  Builder.SetInsertPoint(NewEntry);
+  Val = ConstantInt::get(TypeBuilder<int, false>::get(Context), 2);
+  Builder.CreateRet(Val);
+  // Recompile it, which should produce a new function pointer _and_ update the
+  // old one.
+  int (*NewFPtr)() = reinterpret_cast<int(*)()>(
+    (intptr_t)TheJIT->recompileAndRelinkFunction(F));
+
+  EXPECT_EQ(2, NewFPtr())
+    << "The new pointer should call the new version of the function";
+  EXPECT_EQ(2, OrigFPtr())
+    << "The old pointer's target should now jump to the new version";
+}
+
 }  // anonymous namespace
 // This variable is intentionally defined differently in the statically-compiled
 // program from the IR input to the JIT to assert that the JIT doesn't use its

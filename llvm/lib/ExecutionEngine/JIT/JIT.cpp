@@ -611,11 +611,13 @@ void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
     }
   };
   MCIListener MCIL(MCI);
-  RegisterJITEventListener(&MCIL);
+  if (MCI)
+    RegisterJITEventListener(&MCIL);
 
   runJITOnFunctionUnlocked(F, locked);
 
-  UnregisterJITEventListener(&MCIL);
+  if (MCI)
+    UnregisterJITEventListener(&MCIL);
 }
 
 void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
