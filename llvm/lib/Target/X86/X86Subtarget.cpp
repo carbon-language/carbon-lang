@@ -266,7 +266,6 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     unsigned Model  = 0;
     DetectFamilyModel(EAX, Family, Model);
     IsBTMemSlow = IsAMD || (Family == 6 && Model >= 13);
-    BreakSSEDep = IsIntel;
 
     GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
     HasX86_64 = (EDX >> 29) & 0x1;
@@ -287,7 +286,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , HasFMA3(false)
   , HasFMA4(false)
   , IsBTMemSlow(false)
-  , BreakSSEDep(false)
   , DarwinVers(0)
   , stackAlignment(8)
   // FIXME: this is a known good value for Yonah. How about others?

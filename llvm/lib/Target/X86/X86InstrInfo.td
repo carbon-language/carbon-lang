@@ -298,11 +298,10 @@ def FarData      : Predicate<"TM.getCodeModel() != CodeModel::Small &&"
 def NearData     : Predicate<"TM.getCodeModel() == CodeModel::Small ||"
                              "TM.getCodeModel() == CodeModel::Kernel">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+def OptForSize   : Predicate<"OptForSize">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
-def SSEBreakDep  : Predicate<"Subtarget->shouldBreakSSEDep() && !OptForSize">;
-def NoSSEBreakDep: Predicate<"!Subtarget->shouldBreakSSEDep() || OptForSize">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
