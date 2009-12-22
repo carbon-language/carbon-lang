@@ -24,54 +24,62 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
-
 using namespace llvm;
 
+typedef std::vector<std::pair<unsigned char, const char*> > ByteArrayTy;
+
+namespace {
 class VectorMemoryObject : public MemoryObject {
 private:
-  const std::vector<unsigned char> &Bytes;
+  const ByteArrayTy &Bytes;
 public:
-  VectorMemoryObject(const std::vector<unsigned char> &bytes) : 
-    Bytes(bytes) {
-  }
+  VectorMemoryObject(const ByteArrayTy &bytes) : Bytes(bytes) {}
   
-  uint64_t getBase() const {
-    return 0;
-  }
-  
-  uint64_t getExtent() const {
-    return Bytes.size();
-  }
+  uint64_t getBase() const { return 0; }
+  uint64_t getExtent() const { return Bytes.size(); }
 
-  int readByte(uint64_t addr, uint8_t *byte) const {
-    if (addr > getExtent())
+  int readByte(uint64_t Addr, uint8_t *Byte) const {
+    if (Addr > getExtent())
       return -1;
-    *byte = Bytes[addr];
+    *Byte = Bytes[Addr].first;
     return 0;
   }
 };
+}
 
-void printInst(const llvm::MCDisassembler &disassembler,
-               llvm::MCInstPrinter &instPrinter,
-               const std::vector<unsigned char> &bytes) {
+static bool PrintInst(const llvm::MCDisassembler &DisAsm,
+                      llvm::MCInstPrinter &Printer, const ByteArrayTy &Bytes,
+                      SourceMgr &SM) {
   // Wrap the vector in a MemoryObject.
-  VectorMemoryObject memoryObject(bytes);
+  VectorMemoryObject memoryObject(Bytes);
   
-  // Disassemble it.
-  MCInst inst;
-  uint64_t size;
+  // Disassemble it to a string and get the size of the instruction.
+  MCInst Inst;
+  uint64_t Size;
   
   std::string verboseOStr;
   llvm::raw_string_ostream verboseOS(verboseOStr); 
   
-  if (disassembler.getInstruction(inst, size, memoryObject, 0, verboseOS)) {
-    instPrinter.printInst(&inst);
-    outs() << "\n";
-  } else {
-    errs() << "error: invalid instruction" << "\n";
-    errs() << "Diagnostic log:" << "\n";
-    errs() << verboseOStr.c_str() << "\n";
+  if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, verboseOS)) {
+    // FIXME: Caret.
+    errs() << "error: invalid instruction\n";
+    errs() << "Diagnostic log:" << '\n';
+    errs() << verboseOS.str() << '\n';
+    return true;
   }
+  
+  Printer.printInst(&Inst);
+  outs() << "\n";
+  
+  // If the disassembled instruction was smaller than the number of bytes we
+  // read, reject the excess bytes.
+  if (Bytes.size() != Size) {
+    SM.PrintMessage(SMLoc::getFromPointer(Bytes[Size].second),
+                    "excess data detected in input", "error");
+    return true;
+  }
+  
+  return false;
 }
 
 int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
@@ -93,16 +101,17 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
   llvm::MCInstPrinter *InstPrinter = T.createMCInstPrinter(0, *AsmInfo, outs());
   
   if (!InstPrinter) {
-    errs() << "error: no instruction printer for target " << Triple
-      << "\n";
+    errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;
   }
   
-  SourceMgr SourceManager;
-  SourceManager.AddNewSourceBuffer(&Buffer, SMLoc());
+  bool ErrorOccurred = false;
+  
+  SourceMgr SM;
+  SM.AddNewSourceBuffer(&Buffer, SMLoc());
   
   // Convert the input to a vector for disassembly.
-  std::vector<unsigned char> ByteArray;
+  ByteArrayTy ByteArray;
   
   StringRef Str = Buffer.getBuffer();
   while (!Str.empty()) {
@@ -117,7 +126,7 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
     if (Str[0] == '\n' || Str[0] == '#') {
       // If we have bytes to process, do so.
       if (!ByteArray.empty()) {
-        printInst(*DisAsm, *InstPrinter, ByteArray);
+        ErrorOccurred |= PrintInst(*DisAsm, *InstPrinter, ByteArray, SM);
         ByteArray.clear();
       }
       
@@ -141,19 +150,20 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
     unsigned ByteVal;
     if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
       // If we have an error, print it and skip to the end of line.
-      SourceManager.PrintMessage(SMLoc::getFromPointer(Value.data()),
+      SM.PrintMessage(SMLoc::getFromPointer(Value.data()),
                                  "invalid input token", "error");
+      ErrorOccurred = true;
       Str = Str.substr(Str.find('\n'));
       ByteArray.clear();
       continue;
     }
     
-    ByteArray.push_back((unsigned char)ByteVal);
+    ByteArray.push_back(std::make_pair((unsigned char)ByteVal, Value.data()));
     Str = Str.substr(Next);
   }
   
   if (!ByteArray.empty())
-    printInst(*DisAsm, *InstPrinter, ByteArray);
+    ErrorOccurred |= PrintInst(*DisAsm, *InstPrinter, ByteArray, SM);
     
-  return 0;
+  return ErrorOccurred;
 }

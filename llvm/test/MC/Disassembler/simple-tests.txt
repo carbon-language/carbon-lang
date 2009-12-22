@@ -8,7 +8,7 @@
 
 
 # CHECK: addb	%al, (%rax)
-0 0 0 0 0 0
+0 0
 
 # CHECK: callq	-1234
 0xe8 0x2e 0xfb 0xff 0xff
