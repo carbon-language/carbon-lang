@@ -203,6 +203,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   AllExtensionsSilenced = 0;
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
+  ErrorsAsFatal = false;
   SuppressSystemWarnings = false;
   SuppressAllDiagnostics = false;
   ExtBehavior = Ext_Ignore;
@@ -326,9 +327,13 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
       return Diagnostic::Ignored;
     Result = Diagnostic::Warning;
     if (ExtBehavior == Ext_Error) Result = Diagnostic::Error;
+    if (Result == Diagnostic::Error && ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
   case diag::MAP_ERROR:
     Result = Diagnostic::Error;
+    if (ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
   case diag::MAP_FATAL:
     Result = Diagnostic::Fatal;
@@ -349,6 +354,8 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
 
     if (WarningsAsErrors)
       Result = Diagnostic::Error;
+    if (Result == Diagnostic::Error && ErrorsAsFatal)
+      Result = Diagnostic::Fatal;
     break;
 
   case diag::MAP_WARNING_NO_WERROR:
@@ -360,6 +367,12 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
     if (IgnoreAllWarnings)
       return Diagnostic::Ignored;
 
+    break;
+
+  case diag::MAP_ERROR_NO_WFATAL:
+    // Diagnostics specified as -Wno-fatal-error=foo should be errors, but
+    // unaffected by -Wfatal-errors.
+    Result = Diagnostic::Error;
     break;
   }
 

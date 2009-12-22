@@ -47,8 +47,6 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
   else
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
 
-  // FIXME: -Wfatal-errors / -Wfatal-errors=foo
-
   for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
     const std::string &Opt = Opts.Warnings[i];
     const char *OptStart = &Opt[0];
@@ -95,6 +93,31 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
 
       // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
       Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
+      OptStart = Specifier;
+    }
+
+    // -Wfatal-errors is yet another special case.
+    if (OptEnd-OptStart >= 12 && memcmp(OptStart, "fatal-errors", 12) == 0) {
+      const char* Specifier = 0;
+      if (OptEnd-OptStart != 12) {
+        if ((OptStart[12] != '=' && OptStart[12] != '-') ||
+            OptEnd-OptStart == 13) {
+          fprintf(stderr,
+                  "warning: unknown -Wfatal-errors warning specifier: -W%s\n",
+                  Opt.c_str());
+          continue;
+        }
+        Specifier = OptStart + 13;
+      }
+
+      if (Specifier == 0) {
+        Diags.setErrorsAsFatal(isPositive);
+        continue;
+      }
+
+      // -Wfatal-errors=foo maps foo to Fatal, -Wno-fatal-errors=foo
+      // maps it to Error.
+      Mapping = isPositive ? diag::MAP_FATAL : diag::MAP_ERROR_NO_WFATAL;
       OptStart = Specifier;
     }
 
