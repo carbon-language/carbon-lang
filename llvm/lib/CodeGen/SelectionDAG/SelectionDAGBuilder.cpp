@@ -4196,6 +4196,8 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
 const char *
 SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   DebugLoc dl = getCurDebugLoc();
+  SDValue Res;
+
   switch (Intrinsic) {
   default:
     // By default, turn this into a target intrinsic node.
@@ -4205,26 +4207,33 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::vaend:    visitVAEnd(I); return 0;
   case Intrinsic::vacopy:   visitVACopy(I); return 0;
   case Intrinsic::returnaddress:
-    setValue(&I, DAG.getNode(ISD::RETURNADDR, dl, TLI.getPointerTy(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::RETURNADDR, dl, TLI.getPointerTy(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::frameaddress:
-    setValue(&I, DAG.getNode(ISD::FRAMEADDR, dl, TLI.getPointerTy(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::FRAMEADDR, dl, TLI.getPointerTy(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::setjmp:
     return "_setjmp"+!TLI.usesUnderscoreSetJmp();
-    break;
   case Intrinsic::longjmp:
     return "_longjmp"+!TLI.usesUnderscoreLongJmp();
-    break;
   case Intrinsic::memcpy: {
     SDValue Op1 = getValue(I.getOperand(1));
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
-                              I.getOperand(1), 0, I.getOperand(2), 0));
+    Res = DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
+                        I.getOperand(1), 0, I.getOperand(2), 0);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::memset: {
@@ -4232,8 +4241,11 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue Op2 = getValue(I.getOperand(2));
     SDValue Op3 = getValue(I.getOperand(3));
     unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
-    DAG.setRoot(DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align,
-                              I.getOperand(1), 0));
+    Res = DAG.getMemset(getRoot(), dl, Op1, Op2, Op3, Align,
+                        I.getOperand(1), 0);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::memmove: {
@@ -4249,13 +4261,19 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       Size = C->getZExtValue();
     if (AA->alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
         AliasAnalysis::NoAlias) {
-      DAG.setRoot(DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
-                                I.getOperand(1), 0, I.getOperand(2), 0));
+      Res = DAG.getMemcpy(getRoot(), dl, Op1, Op2, Op3, Align, false,
+                          I.getOperand(1), 0, I.getOperand(2), 0);
+      DAG.setRoot(Res);
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
       return 0;
     }
 
-    DAG.setRoot(DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align,
-                               I.getOperand(1), 0, I.getOperand(2), 0));
+    Res = DAG.getMemmove(getRoot(), dl, Op1, Op2, Op3, Align,
+                         I.getOperand(1), 0, I.getOperand(2), 0);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::dbg_stoppoint: 
@@ -4308,6 +4326,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue Op = DAG.getNode(ISD::EXCEPTIONADDR, dl, VTs, Ops, 1);
     setValue(&I, Op);
     DAG.setRoot(Op.getValue(1));
+    if (DisableScheduling)
+      DAG.AssignOrdering(Op.getNode(), SDNodeOrder);
     return 0;
   }
 
@@ -4334,7 +4354,12 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     DAG.setRoot(Op.getValue(1));
 
-    setValue(&I, DAG.getSExtOrTrunc(Op, dl, MVT::i32));
+    Res = DAG.getSExtOrTrunc(Op, dl, MVT::i32);
+    setValue(&I, Res);
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Op.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+    }
     return 0;
   }
 
@@ -4344,14 +4369,16 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (MMI) {
       // Find the type id for the given typeinfo.
       GlobalVariable *GV = ExtractTypeInfo(I.getOperand(1));
-
       unsigned TypeID = MMI->getTypeIDFor(GV);
-      setValue(&I, DAG.getConstant(TypeID, MVT::i32));
+      Res = DAG.getConstant(TypeID, MVT::i32);
     } else {
       // Return something different to eh_selector.
-      setValue(&I, DAG.getConstant(1, MVT::i32));
+      Res = DAG.getConstant(1, MVT::i32);
     }
 
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
 
@@ -4359,11 +4386,14 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_return_i64:
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
       MMI->setCallsEHReturn(true);
-      DAG.setRoot(DAG.getNode(ISD::EH_RETURN, dl,
-                              MVT::Other,
-                              getControlRoot(),
-                              getValue(I.getOperand(1)),
-                              getValue(I.getOperand(2))));
+      Res = DAG.getNode(ISD::EH_RETURN, dl,
+                        MVT::Other,
+                        getControlRoot(),
+                        getValue(I.getOperand(1)),
+                        getValue(I.getOperand(2)));
+      DAG.setRoot(Res);
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     } else {
       setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
     }
@@ -4373,26 +4403,28 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
       MMI->setCallsUnwindInit(true);
     }
-
     return 0;
-
   case Intrinsic::eh_dwarf_cfa: {
     EVT VT = getValue(I.getOperand(1)).getValueType();
     SDValue CfaArg = DAG.getSExtOrTrunc(getValue(I.getOperand(1)), dl,
                                         TLI.getPointerTy());
-
     SDValue Offset = DAG.getNode(ISD::ADD, dl,
                                  TLI.getPointerTy(),
                                  DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET, dl,
                                              TLI.getPointerTy()),
                                  CfaArg);
-    setValue(&I, DAG.getNode(ISD::ADD, dl,
+    SDValue FA = DAG.getNode(ISD::FRAMEADDR, dl,
                              TLI.getPointerTy(),
-                             DAG.getNode(ISD::FRAMEADDR, dl,
-                                         TLI.getPointerTy(),
-                                         DAG.getConstant(0,
-                                                         TLI.getPointerTy())),
-                             Offset));
+                             DAG.getConstant(0, TLI.getPointerTy()));
+    Res = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(),
+                      FA, Offset);
+    setValue(&I, Res);
+    if (DisableScheduling) {
+      DAG.AssignOrdering(CfaArg.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(Offset.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(FA.getNode(), SDNodeOrder);
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+    }
     return 0;
   }
   case Intrinsic::convertff:
@@ -4417,36 +4449,50 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     case Intrinsic::convertuu:  Code = ISD::CVT_UU; break;
     }
     EVT DestVT = TLI.getValueType(I.getType());
-    Value* Op1 = I.getOperand(1);
-    setValue(&I, DAG.getConvertRndSat(DestVT, getCurDebugLoc(), getValue(Op1),
-                                DAG.getValueType(DestVT),
-                                DAG.getValueType(getValue(Op1).getValueType()),
-                                getValue(I.getOperand(2)),
-                                getValue(I.getOperand(3)),
-                                Code));
+    Value *Op1 = I.getOperand(1);
+    Res = DAG.getConvertRndSat(DestVT, getCurDebugLoc(), getValue(Op1),
+                               DAG.getValueType(DestVT),
+                               DAG.getValueType(getValue(Op1).getValueType()),
+                               getValue(I.getOperand(2)),
+                               getValue(I.getOperand(3)),
+                               Code);
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
-
   case Intrinsic::sqrt:
-    setValue(&I, DAG.getNode(ISD::FSQRT, dl,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::FSQRT, dl,
+                      getValue(I.getOperand(1)).getValueType(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::powi:
-    setValue(&I, DAG.getNode(ISD::FPOWI, dl,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1)),
-                             getValue(I.getOperand(2))));
+    Res = DAG.getNode(ISD::FPOWI, dl,
+                      getValue(I.getOperand(1)).getValueType(),
+                      getValue(I.getOperand(1)),
+                      getValue(I.getOperand(2)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::sin:
-    setValue(&I, DAG.getNode(ISD::FSIN, dl,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::FSIN, dl,
+                      getValue(I.getOperand(1)).getValueType(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::cos:
-    setValue(&I, DAG.getNode(ISD::FCOS, dl,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::FCOS, dl,
+                      getValue(I.getOperand(1)).getValueType(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::log:
     visitLog(I);
@@ -4468,55 +4514,74 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   case Intrinsic::pcmarker: {
     SDValue Tmp = getValue(I.getOperand(1));
-    DAG.setRoot(DAG.getNode(ISD::PCMARKER, dl, MVT::Other, getRoot(), Tmp));
+    Res = DAG.getNode(ISD::PCMARKER, dl, MVT::Other, getRoot(), Tmp);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::readcyclecounter: {
     SDValue Op = getRoot();
-    SDValue Tmp = DAG.getNode(ISD::READCYCLECOUNTER, dl,
-                              DAG.getVTList(MVT::i64, MVT::Other),
-                              &Op, 1);
-    setValue(&I, Tmp);
-    DAG.setRoot(Tmp.getValue(1));
+    Res = DAG.getNode(ISD::READCYCLECOUNTER, dl,
+                      DAG.getVTList(MVT::i64, MVT::Other),
+                      &Op, 1);
+    setValue(&I, Res);
+    DAG.setRoot(Res.getValue(1));
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::bswap:
-    setValue(&I, DAG.getNode(ISD::BSWAP, dl,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
+    Res = DAG.getNode(ISD::BSWAP, dl,
+                      getValue(I.getOperand(1)).getValueType(),
+                      getValue(I.getOperand(1)));
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::cttz: {
     SDValue Arg = getValue(I.getOperand(1));
     EVT Ty = Arg.getValueType();
-    SDValue result = DAG.getNode(ISD::CTTZ, dl, Ty, Arg);
-    setValue(&I, result);
+    Res = DAG.getNode(ISD::CTTZ, dl, Ty, Arg);
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::ctlz: {
     SDValue Arg = getValue(I.getOperand(1));
     EVT Ty = Arg.getValueType();
-    SDValue result = DAG.getNode(ISD::CTLZ, dl, Ty, Arg);
-    setValue(&I, result);
+    Res = DAG.getNode(ISD::CTLZ, dl, Ty, Arg);
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::ctpop: {
     SDValue Arg = getValue(I.getOperand(1));
     EVT Ty = Arg.getValueType();
-    SDValue result = DAG.getNode(ISD::CTPOP, dl, Ty, Arg);
-    setValue(&I, result);
+    Res = DAG.getNode(ISD::CTPOP, dl, Ty, Arg);
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::stacksave: {
     SDValue Op = getRoot();
-    SDValue Tmp = DAG.getNode(ISD::STACKSAVE, dl,
-              DAG.getVTList(TLI.getPointerTy(), MVT::Other), &Op, 1);
-    setValue(&I, Tmp);
-    DAG.setRoot(Tmp.getValue(1));
+    Res = DAG.getNode(ISD::STACKSAVE, dl,
+                      DAG.getVTList(TLI.getPointerTy(), MVT::Other), &Op, 1);
+    setValue(&I, Res);
+    DAG.setRoot(Res.getValue(1));
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::stackrestore: {
-    SDValue Tmp = getValue(I.getOperand(1));
-    DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, dl, MVT::Other, getRoot(), Tmp));
+    Res = getValue(I.getOperand(1));
+    Res = DAG.getNode(ISD::STACKRESTORE, dl, MVT::Other, getRoot(), Res);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::stackprotector: {
@@ -4534,11 +4599,13 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
 
     // Store the stack protector onto the stack.
-    SDValue Result = DAG.getStore(getRoot(), getCurDebugLoc(), Src, FIN,
-                                  PseudoSourceValue::getFixedStack(FI),
-                                  0, true);
-    setValue(&I, Result);
-    DAG.setRoot(Result);
+    Res = DAG.getStore(getRoot(), getCurDebugLoc(), Src, FIN,
+                       PseudoSourceValue::getFixedStack(FI),
+                       0, true);
+    setValue(&I, Res);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::objectsize: {
@@ -4551,9 +4618,13 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     EVT Ty = Arg.getValueType();
 
     if (CI->getZExtValue() < 2)
-      setValue(&I, DAG.getConstant(-1ULL, Ty));
+      Res = DAG.getConstant(-1ULL, Ty);
     else
-      setValue(&I, DAG.getConstant(0, Ty));
+      Res = DAG.getConstant(0, Ty);
+
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::var_annotation:
@@ -4571,15 +4642,16 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     Ops[4] = DAG.getSrcValue(I.getOperand(1));
     Ops[5] = DAG.getSrcValue(F);
 
-    SDValue Tmp = DAG.getNode(ISD::TRAMPOLINE, dl,
-                              DAG.getVTList(TLI.getPointerTy(), MVT::Other),
-                              Ops, 6);
+    Res = DAG.getNode(ISD::TRAMPOLINE, dl,
+                      DAG.getVTList(TLI.getPointerTy(), MVT::Other),
+                      Ops, 6);
 
-    setValue(&I, Tmp);
-    DAG.setRoot(Tmp.getValue(1));
+    setValue(&I, Res);
+    DAG.setRoot(Res.getValue(1));
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
-
   case Intrinsic::gcroot:
     if (GFI) {
       Value *Alloca = I.getOperand(1);
@@ -4589,22 +4661,22 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       GFI->addStackRoot(FI->getIndex(), TypeMap);
     }
     return 0;
-
   case Intrinsic::gcread:
   case Intrinsic::gcwrite:
     llvm_unreachable("GC failed to lower gcread/gcwrite intrinsics!");
     return 0;
-
-  case Intrinsic::flt_rounds: {
-    setValue(&I, DAG.getNode(ISD::FLT_ROUNDS_, dl, MVT::i32));
+  case Intrinsic::flt_rounds:
+    Res = DAG.getNode(ISD::FLT_ROUNDS_, dl, MVT::i32);
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
-  }
-
-  case Intrinsic::trap: {
-    DAG.setRoot(DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot()));
+  case Intrinsic::trap:
+    Res = DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot());
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
-  }
-
   case Intrinsic::uadd_with_overflow:
     return implVisitAluOverflow(I, ISD::UADDO);
   case Intrinsic::sadd_with_overflow:
@@ -4624,7 +4696,10 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     Ops[1] = getValue(I.getOperand(1));
     Ops[2] = getValue(I.getOperand(2));
     Ops[3] = getValue(I.getOperand(3));
-    DAG.setRoot(DAG.getNode(ISD::PREFETCH, dl, MVT::Other, &Ops[0], 4));
+    Res = DAG.getNode(ISD::PREFETCH, dl, MVT::Other, &Ops[0], 4);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
 
@@ -4634,7 +4709,10 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     for (int x = 1; x < 6; ++x)
       Ops[x] = getValue(I.getOperand(x));
 
-    DAG.setRoot(DAG.getNode(ISD::MEMBARRIER, dl, MVT::Other, &Ops[0], 6));
+    Res = DAG.getNode(ISD::MEMBARRIER, dl, MVT::Other, &Ops[0], 6);
+    DAG.setRoot(Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::atomic_cmp_swap: {
@@ -4649,6 +4727,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                     I.getOperand(1));
     setValue(&I, L);
     DAG.setRoot(L.getValue(1));
+    if (DisableScheduling)
+      DAG.AssignOrdering(L.getNode(), SDNodeOrder);
     return 0;
   }
   case Intrinsic::atomic_load_add:
@@ -4677,7 +4757,10 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::invariant_start:
   case Intrinsic::lifetime_start:
     // Discard region information.
-    setValue(&I, DAG.getUNDEF(TLI.getPointerTy()));
+    Res = DAG.getUNDEF(TLI.getPointerTy());
+    setValue(&I, Res);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::invariant_end:
   case Intrinsic::lifetime_end:
