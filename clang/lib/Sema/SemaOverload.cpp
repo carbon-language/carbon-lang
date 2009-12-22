@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "Lookup.h"
+#include "SemaInit.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"
@@ -5167,17 +5168,40 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-          if (PerformObjectArgumentInitialization(Args[0], Method) ||
-              PerformCopyInitialization(Args[1], FnDecl->getParamDecl(0)->getType(),
-                                        AA_Passing))
+          OwningExprResult Arg1
+            = PerformCopyInitialization(
+                                        InitializedEntity::InitializeParameter(
+                                                        FnDecl->getParamDecl(0)),
+                                        SourceLocation(),
+                                        Owned(Args[1]));
+          if (Arg1.isInvalid())
             return ExprError();
+
+          if (PerformObjectArgumentInitialization(Args[0], Method))
+            return ExprError();
+
+          Args[1] = RHS = Arg1.takeAs<Expr>();
         } else {
           // Convert the arguments.
-          if (PerformCopyInitialization(Args[0], FnDecl->getParamDecl(0)->getType(),
-                                        AA_Passing) ||
-              PerformCopyInitialization(Args[1], FnDecl->getParamDecl(1)->getType(),
-                                        AA_Passing))
+          OwningExprResult Arg0
+            = PerformCopyInitialization(
+                                        InitializedEntity::InitializeParameter(
+                                                        FnDecl->getParamDecl(0)),
+                                        SourceLocation(),
+                                        Owned(Args[0]));
+          if (Arg0.isInvalid())
             return ExprError();
+
+          OwningExprResult Arg1
+            = PerformCopyInitialization(
+                                        InitializedEntity::InitializeParameter(
+                                                        FnDecl->getParamDecl(1)),
+                                        SourceLocation(),
+                                        Owned(Args[1]));
+          if (Arg1.isInvalid())
+            return ExprError();
+          Args[0] = LHS = Arg0.takeAs<Expr>();
+          Args[1] = RHS = Arg1.takeAs<Expr>();
         }
 
         // Determine the result type
