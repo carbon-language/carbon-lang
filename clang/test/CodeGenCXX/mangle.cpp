@@ -141,7 +141,7 @@ int f(struct a *x) {
 // PR5017
 extern "C" {
 struct Debug {
- const Debug& operator<< (unsigned a) const { }
+  const Debug& operator<< (unsigned a) const { return *this; }
 };
 Debug dbg;
 // CHECK: @_ZNK5DebuglsEj
@@ -270,5 +270,23 @@ template void f4<1>(int (*)[4]);
 // CHECK: define void @_ZN11Expressions2f4ILb1EEEvPAquT_Li1ELi2E_i
 template <bool b> void f4(int (*)[b ? 1 : 2]) { };
 template void f4<true>(int (*)[1]);
-
 }
+
+struct Ops {
+  Ops& operator+(const Ops&);
+  Ops& operator-(const Ops&);
+  Ops& operator&(const Ops&);
+  Ops& operator*(const Ops&);
+  
+  void *v;
+};
+
+// CHECK: define %struct.Ops* @_ZN3OpsplERKS_
+Ops& Ops::operator+(const Ops&) { return *this; }
+// CHECK: define %struct.Ops* @_ZN3OpsmiERKS_
+Ops& Ops::operator-(const Ops&) { return *this; }
+// CHECK: define %struct.Ops* @_ZN3OpsanERKS_
+Ops& Ops::operator&(const Ops&) { return *this; }
+// CHECK: define %struct.Ops* @_ZN3OpsmlERKS_
+Ops& Ops::operator*(const Ops&) { return *this; }
+

@@ -480,10 +480,17 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     mangleType(Context.getASTContext().getCanonicalType(Name.getCXXNameType()));
     break;
 
-  case DeclarationName::CXXOperatorName:
-    mangleOperatorName(Name.getCXXOverloadedOperator(),
-                       cast<FunctionDecl>(ND)->getNumParams());
+  case DeclarationName::CXXOperatorName: {
+    unsigned Arity = cast<FunctionDecl>(ND)->getNumParams();
+    
+    // If we have a C++ member function, we need to include the 'this' pointer.
+    // FIXME: This does not make sense for operators that are static, but their
+    // names stay the same regardless of the arity (operator new for instance).
+    if (isa<CXXMethodDecl>(ND))
+      Arity++;
+    mangleOperatorName(Name.getCXXOverloadedOperator(), Arity);
     break;
+  }
 
   case DeclarationName::CXXLiteralOperatorName:
     // FIXME: This mangling is not yet official.
@@ -611,16 +618,24 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
   case OO_Array_Delete: Out << "da"; break;
   //              ::= ps        # + (unary)
   //              ::= pl        # +
-  case OO_Plus: Out << (Arity == 1? "ps" : "pl"); break;
+  case OO_Plus: 
+    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
+    Out << (Arity == 1? "ps" : "pl"); break;
   //              ::= ng        # - (unary)
   //              ::= mi        # -
-  case OO_Minus: Out << (Arity == 1? "ng" : "mi"); break;
+  case OO_Minus: 
+    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
+    Out << (Arity == 1? "ng" : "mi"); break;
   //              ::= ad        # & (unary)
   //              ::= an        # &
-  case OO_Amp: Out << (Arity == 1? "ad" : "an"); break;
+  case OO_Amp: 
+    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
+    Out << (Arity == 1? "ad" : "an"); break;
   //              ::= de        # * (unary)
   //              ::= ml        # *
-  case OO_Star: Out << (Arity == 1? "de" : "ml"); break;
+  case OO_Star: 
+    assert((Arity == 1 || Arity == 2) && "Invalid arity!");
+    Out << (Arity == 1? "de" : "ml"); break;
   //              ::= co        # ~
   case OO_Tilde: Out << "co"; break;
   //              ::= dv        # /
