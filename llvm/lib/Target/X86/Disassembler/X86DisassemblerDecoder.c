@@ -876,15 +876,15 @@ static int readModRM(struct InternalInstruction* insn) {
    */
   switch (insn->registerSize) {
   case 2:
-    insn->regBase = REG_AX;
+    insn->regBase = MODRM_REG_AX;
     insn->eaRegBase = EA_REG_AX;
     break;
   case 4:
-    insn->regBase = REG_EAX;
+    insn->regBase = MODRM_REG_EAX;
     insn->eaRegBase = EA_REG_EAX;
     break;
   case 8:
-    insn->regBase = REG_RAX;
+    insn->regBase = MODRM_REG_RAX;
     insn->eaRegBase = EA_REG_RAX;
     break;
   }
@@ -1051,7 +1051,7 @@ static int readModRM(struct InternalInstruction* insn) {
  * @param valid - The address of a uint8_t.  The target is set to 1 if the
  *                field is valid for the register class; 0 if not.
  */
-GENERIC_FIXUP_FUNC(fixupRegValue, insn->regBase,    REG)
+GENERIC_FIXUP_FUNC(fixupRegValue, insn->regBase,    MODRM_REG)
 GENERIC_FIXUP_FUNC(fixupRMValue,  insn->eaRegBase,  EA_REG)
 
 /*
@@ -1145,26 +1145,30 @@ static void readOpcodeRegister(struct InternalInstruction* insn, uint8_t size) {
   
   switch (size) {
   case 1:
-    insn->opcodeRegister = (Reg)(REG_AL + ((bFromREX(insn->rexPrefix) << 3) 
-                                           | insn->opcodeModifier));
+    insn->opcodeRegister = (Reg)(MODRM_REG_AL + ((bFromREX(insn->rexPrefix) << 3) 
+                                                  | insn->opcodeModifier));
     if(insn->rexPrefix && 
-       insn->opcodeRegister >= REG_AL + 0x4 &&
-       insn->opcodeRegister < REG_AL + 0x8) {
-      insn->opcodeRegister = (Reg)(REG_SPL + (insn->opcodeRegister - REG_AL - 4));
+       insn->opcodeRegister >= MODRM_REG_AL + 0x4 &&
+       insn->opcodeRegister < MODRM_REG_AL + 0x8) {
+      insn->opcodeRegister = (Reg)(MODRM_REG_SPL
+                                   + (insn->opcodeRegister - MODRM_REG_AL - 4));
     }
       
     break;
   case 2:
-    insn->opcodeRegister = (Reg)(REG_AX + ((bFromREX(insn->rexPrefix) << 3) 
-                                            | insn->opcodeModifier));
+    insn->opcodeRegister = (Reg)(MODRM_REG_AX
+                                 + ((bFromREX(insn->rexPrefix) << 3) 
+                                    | insn->opcodeModifier));
     break;
   case 4:
-    insn->opcodeRegister = (Reg)(REG_EAX + ((bFromREX(insn->rexPrefix) << 3) 
-                                             | insn->opcodeModifier));
+    insn->opcodeRegister = (Reg)(MODRM_REG_EAX +
+                                 + ((bFromREX(insn->rexPrefix) << 3) 
+                                    | insn->opcodeModifier));
     break;
   case 8:
-    insn->opcodeRegister = (Reg)(REG_RAX + ((bFromREX(insn->rexPrefix) << 3) 
-                                             |insn->opcodeModifier));
+    insn->opcodeRegister = (Reg)(MODRM_REG_RAX 
+                                 + ((bFromREX(insn->rexPrefix) << 3) 
+                                    | insn->opcodeModifier));
     break;
   }
 }

@@ -324,10 +324,10 @@ typedef enum {
  * Reg - All possible values of the reg field in the ModR/M byte.
  */
 typedef enum {
-#define ENTRY(x) REG_##x,
+#define ENTRY(x) MODRM_REG_##x,
   ALL_REGS
 #undef ENTRY
-  REG_max
+  MODRM_REG_max
 } Reg;
   
 /*
