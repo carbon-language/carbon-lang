@@ -452,7 +452,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG)
                     false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("__misaligned_load", getPointerTy()),
-                    Args, DAG, dl);
+                    Args, DAG, dl, DAG.GetOrdering(Chain.getNode()));
 
   SDValue Ops[] =
     { CallResult.first, CallResult.second };
@@ -513,7 +513,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
                     false, false, 0, CallingConv::C, false,
                     /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("__misaligned_store", getPointerTy()),
-                    Args, DAG, dl);
+                    Args, DAG, dl, DAG.GetOrdering(Chain.getNode()));
 
   return CallResult.second;
 }

@@ -1866,7 +1866,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                     0, TLI.getLibcallCallingConv(LC), false,
                     /*isReturnValueUsed=*/true,
                     Callee, Args, DAG,
-                    Node->getDebugLoc());
+                    Node->getDebugLoc(), DAG.GetOrdering(Node));
 
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
@@ -2271,7 +2271,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                       false, false, false, false, 0, CallingConv::C, false,
                       /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),
-                      Args, DAG, dl);
+                      Args, DAG, dl, DAG.GetOrdering(Node));
     Results.push_back(CallResult.second);
     break;
   }

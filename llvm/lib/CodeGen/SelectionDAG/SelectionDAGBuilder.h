@@ -336,6 +336,8 @@ public:
   DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
   void setCurDebugLoc(DebugLoc dl) { CurDebugLoc = dl; }
 
+  unsigned getSDNodeOrder() const { return SDNodeOrder; }
+
   void CopyValueToVirtualRegister(Value *V, unsigned Reg);
 
   void visit(Instruction &I);

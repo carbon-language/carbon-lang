@@ -169,13 +169,14 @@ namespace {
 /// larger then ValueVT then AssertOp can be used to specify whether the extra
 /// bits are known to be zero (ISD::AssertZext) or sign extended from ValueVT
 /// (ISD::AssertSext).
-static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
+static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
                                 const SDValue *Parts,
                                 unsigned NumParts, EVT PartVT, EVT ValueVT,
                                 ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   assert(NumParts > 0 && "No parts to assemble!");
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue Val = Parts[0];
+  if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
 
   if (NumParts > 1) {
     // Assemble the value from multiple parts.
@@ -194,23 +195,32 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
       EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(), RoundBits/2);
 
       if (RoundParts > 2) {
-        Lo = getCopyFromParts(DAG, dl, Parts, RoundParts/2, PartVT, HalfVT);
-        Hi = getCopyFromParts(DAG, dl, Parts+RoundParts/2, RoundParts/2,
+        Lo = getCopyFromParts(DAG, dl, Order, Parts, RoundParts / 2,
                               PartVT, HalfVT);
+        Hi = getCopyFromParts(DAG, dl, Order, Parts + RoundParts / 2,
+                              RoundParts / 2, PartVT, HalfVT);
       } else {
         Lo = DAG.getNode(ISD::BIT_CONVERT, dl, HalfVT, Parts[0]);
         Hi = DAG.getNode(ISD::BIT_CONVERT, dl, HalfVT, Parts[1]);
       }
+
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
+
       Val = DAG.getNode(ISD::BUILD_PAIR, dl, RoundVT, Lo, Hi);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(Lo.getNode(), Order);
+        DAG.AssignOrdering(Hi.getNode(), Order);
+        DAG.AssignOrdering(Val.getNode(), Order);
+      }
 
       if (RoundParts < NumParts) {
         // Assemble the trailing non-power-of-2 part.
         unsigned OddParts = NumParts - RoundParts;
         EVT OddVT = EVT::getIntegerVT(*DAG.getContext(), OddParts * PartBits);
-        Hi = getCopyFromParts(DAG, dl,
-                              Parts+RoundParts, OddParts, PartVT, OddVT);
+        Hi = getCopyFromParts(DAG, dl, Order,
+                              Parts + RoundParts, OddParts, PartVT, OddVT);
 
         // Combine the round and odd parts.
         Lo = Val;
@@ -218,11 +228,15 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
           std::swap(Lo, Hi);
         EVT TotalVT = EVT::getIntegerVT(*DAG.getContext(), NumParts * PartBits);
         Hi = DAG.getNode(ISD::ANY_EXTEND, dl, TotalVT, Hi);
+        if (DisableScheduling) DAG.AssignOrdering(Hi.getNode(), Order);
         Hi = DAG.getNode(ISD::SHL, dl, TotalVT, Hi,
                          DAG.getConstant(Lo.getValueType().getSizeInBits(),
                                          TLI.getPointerTy()));
+        if (DisableScheduling) DAG.AssignOrdering(Hi.getNode(), Order);
         Lo = DAG.getNode(ISD::ZERO_EXTEND, dl, TotalVT, Lo);
+        if (DisableScheduling) DAG.AssignOrdering(Lo.getNode(), Order);
         Val = DAG.getNode(ISD::OR, dl, TotalVT, Lo, Hi);
+        if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
       }
     } else if (ValueVT.isVector()) {
       // Handle a multi-element vector.
@@ -243,7 +257,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
         // If the register was not expanded, truncate or copy the value,
         // as appropriate.
         for (unsigned i = 0; i != NumParts; ++i)
-          Ops[i] = getCopyFromParts(DAG, dl, &Parts[i], 1,
+          Ops[i] = getCopyFromParts(DAG, dl, Order, &Parts[i], 1,
                                     PartVT, IntermediateVT);
       } else if (NumParts > 0) {
         // If the intermediate type was expanded, build the intermediate operands
@@ -252,7 +266,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
                "Must expand into a divisible number of parts!");
         unsigned Factor = NumParts / NumIntermediates;
         for (unsigned i = 0; i != NumIntermediates; ++i)
-          Ops[i] = getCopyFromParts(DAG, dl, &Parts[i * Factor], Factor,
+          Ops[i] = getCopyFromParts(DAG, dl, Order, &Parts[i * Factor], Factor,
                                     PartVT, IntermediateVT);
       }
 
@@ -261,6 +275,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
       Val = DAG.getNode(IntermediateVT.isVector() ?
                         ISD::CONCAT_VECTORS : ISD::BUILD_VECTOR, dl,
                         ValueVT, &Ops[0], NumIntermediates);
+      if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
     } else if (PartVT.isFloatingPoint()) {
       // FP split into multiple FP parts (for ppcf128)
       assert(ValueVT == EVT(MVT::ppcf128) && PartVT == EVT(MVT::f64) &&
@@ -271,12 +286,18 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
       Val = DAG.getNode(ISD::BUILD_PAIR, dl, ValueVT, Lo, Hi);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(Hi.getNode(), Order);
+        DAG.AssignOrdering(Lo.getNode(), Order);
+        DAG.AssignOrdering(Val.getNode(), Order);
+      }
     } else {
       // FP split into integer parts (soft fp)
       assert(ValueVT.isFloatingPoint() && PartVT.isInteger() &&
              !PartVT.isVector() && "Unexpected split");
       EVT IntVT = EVT::getIntegerVT(*DAG.getContext(), ValueVT.getSizeInBits());
-      Val = getCopyFromParts(DAG, dl, Parts, NumParts, PartVT, IntVT);
+      Val = getCopyFromParts(DAG, dl, Order, Parts, NumParts, PartVT, IntVT);
     }
   }
 
@@ -288,14 +309,20 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
 
   if (PartVT.isVector()) {
     assert(ValueVT.isVector() && "Unknown vector conversion!");
-    return DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
+    SDValue Res = DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), Order);
+    return Res;
   }
 
   if (ValueVT.isVector()) {
     assert(ValueVT.getVectorElementType() == PartVT &&
            ValueVT.getVectorNumElements() == 1 &&
            "Only trivial scalar-to-vector conversions should get here!");
-    return DAG.getNode(ISD::BUILD_VECTOR, dl, ValueVT, Val);
+    SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, dl, ValueVT, Val);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Res.getNode(), Order);
+    return Res;
   }
 
   if (PartVT.isInteger() &&
@@ -307,22 +334,36 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
       if (AssertOp != ISD::DELETED_NODE)
         Val = DAG.getNode(AssertOp, dl, PartVT, Val,
                           DAG.getValueType(ValueVT));
-      return DAG.getNode(ISD::TRUNCATE, dl, ValueVT, Val);
+      if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+      Val = DAG.getNode(ISD::TRUNCATE, dl, ValueVT, Val);
+      if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+      return Val;
     } else {
-      return DAG.getNode(ISD::ANY_EXTEND, dl, ValueVT, Val);
+      Val = DAG.getNode(ISD::ANY_EXTEND, dl, ValueVT, Val);
+      if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+      return Val;
     }
   }
 
   if (PartVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
-    if (ValueVT.bitsLT(Val.getValueType()))
+    if (ValueVT.bitsLT(Val.getValueType())) {
       // FP_ROUND's are always exact here.
-      return DAG.getNode(ISD::FP_ROUND, dl, ValueVT, Val,
-                         DAG.getIntPtrConstant(1));
-    return DAG.getNode(ISD::FP_EXTEND, dl, ValueVT, Val);
+      Val = DAG.getNode(ISD::FP_ROUND, dl, ValueVT, Val,
+                        DAG.getIntPtrConstant(1));
+      if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+      return Val;
+    }
+
+    Val = DAG.getNode(ISD::FP_EXTEND, dl, ValueVT, Val);
+    if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+    return Val;
   }
 
-  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
-    return DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
+  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
+    Val = DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
+    if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+    return Val;
+  }
 
   llvm_unreachable("Unknown mismatch!");
   return SDValue();
@@ -331,8 +372,9 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
 /// getCopyToParts - Create a series of nodes that contain the specified value
 /// split into legal parts.  If the parts contain more bits than Val, then, for
 /// integers, ExtendKind can be used to specify how to generate the extra bits.
-static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
-                           SDValue *Parts, unsigned NumParts, EVT PartVT,
+static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
+                           SDValue Val, SDValue *Parts, unsigned NumParts,
+                           EVT PartVT,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT PtrVT = TLI.getPointerTy();
@@ -376,6 +418,8 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
       }
     }
 
+    if (DisableScheduling) DAG.AssignOrdering(Val.getNode(), Order);
+
     // The value may have changed - recompute ValueVT.
     ValueVT = Val.getValueType();
     assert(NumParts * PartBits == ValueVT.getSizeInBits() &&
@@ -398,13 +442,21 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
       SDValue OddVal = DAG.getNode(ISD::SRL, dl, ValueVT, Val,
                                    DAG.getConstant(RoundBits,
                                                    TLI.getPointerTy()));
-      getCopyToParts(DAG, dl, OddVal, Parts + RoundParts, OddParts, PartVT);
+      getCopyToParts(DAG, dl, Order, OddVal, Parts + RoundParts,
+                     OddParts, PartVT);
+
       if (TLI.isBigEndian())
         // The odd parts were reversed by getCopyToParts - unreverse them.
         std::reverse(Parts + RoundParts, Parts + NumParts);
+
       NumParts = RoundParts;
       ValueVT = EVT::getIntegerVT(*DAG.getContext(), NumParts * PartBits);
       Val = DAG.getNode(ISD::TRUNCATE, dl, ValueVT, Val);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(OddVal.getNode(), Order);
+        DAG.AssignOrdering(Val.getNode(), Order);
+      }
     }
 
     // The number of parts is a power of 2.  Repeatedly bisect the value using
@@ -412,6 +464,10 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
     Parts[0] = DAG.getNode(ISD::BIT_CONVERT, dl,
                            EVT::getIntegerVT(*DAG.getContext(), ValueVT.getSizeInBits()),
                            Val);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Parts[0].getNode(), Order);
+
     for (unsigned StepSize = NumParts; StepSize > 1; StepSize /= 2) {
       for (unsigned i = 0; i < NumParts; i += StepSize) {
         unsigned ThisBits = StepSize * PartBits / 2;
@@ -426,11 +482,20 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
                             ThisVT, Part0,
                             DAG.getConstant(0, PtrVT));
 
+        if (DisableScheduling) {
+          DAG.AssignOrdering(Part0.getNode(), Order);
+          DAG.AssignOrdering(Part1.getNode(), Order);
+        }
+
         if (ThisBits == PartBits && ThisVT != PartVT) {
           Part0 = DAG.getNode(ISD::BIT_CONVERT, dl,
                                                 PartVT, Part0);
           Part1 = DAG.getNode(ISD::BIT_CONVERT, dl,
                                                 PartVT, Part1);
+          if (DisableScheduling) {
+            DAG.AssignOrdering(Part0.getNode(), Order);
+            DAG.AssignOrdering(Part1.getNode(), Order);
+          }
         }
       }
     }
@@ -456,6 +521,9 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
       }
     }
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(Val.getNode(), Order);
+
     Parts[0] = Val;
     return;
   }
@@ -473,7 +541,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
 
   // Split the vector into intermediate operands.
   SmallVector<SDValue, 8> Ops(NumIntermediates);
-  for (unsigned i = 0; i != NumIntermediates; ++i)
+  for (unsigned i = 0; i != NumIntermediates; ++i) {
     if (IntermediateVT.isVector())
       Ops[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl,
                            IntermediateVT, Val,
@@ -484,12 +552,16 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
                            IntermediateVT, Val,
                            DAG.getConstant(i, PtrVT));
 
+    if (DisableScheduling)
+      DAG.AssignOrdering(Ops[i].getNode(), Order);
+  }
+
   // Split the intermediate operands into legal parts.
   if (NumParts == NumIntermediates) {
     // If the register was not expanded, promote or copy the value,
     // as appropriate.
     for (unsigned i = 0; i != NumParts; ++i)
-      getCopyToParts(DAG, dl, Ops[i], &Parts[i], 1, PartVT);
+      getCopyToParts(DAG, dl, Order, Ops[i], &Parts[i], 1, PartVT);
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, split each the value into
     // legal parts.
@@ -497,7 +569,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
            "Must expand into a divisible number of parts!");
     unsigned Factor = NumParts / NumIntermediates;
     for (unsigned i = 0; i != NumIntermediates; ++i)
-      getCopyToParts(DAG, dl, Ops[i], &Parts[i * Factor], Factor, PartVT);
+      getCopyToParts(DAG, dl, Order, Ops[i], &Parts[i*Factor], Factor, PartVT);
   }
 }
 
@@ -854,7 +926,7 @@ void SelectionDAGBuilder::visitRet(ReturnInst &I) {
         unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
         EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
         SmallVector<SDValue, 4> Parts(NumParts);
-        getCopyToParts(DAG, getCurDebugLoc(),
+        getCopyToParts(DAG, getCurDebugLoc(), SDNodeOrder,
                        SDValue(RetOp.getNode(), RetOp.getResNo() + j),
                        &Parts[0], NumParts, PartVT, ExtendKind);
 
@@ -4936,7 +5008,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
                     CS.getCallingConv(),
                     isTailCall,
                     !CS.getInstruction()->use_empty(),
-                    Callee, Args, DAG, getCurDebugLoc());
+                    Callee, Args, DAG, getCurDebugLoc(), SDNodeOrder);
   assert((isTailCall || Result.second.getNode()) &&
          "Non-null chain expected with non-tail call!");
   assert((Result.second.getNode() || !Result.first.getNode()) &&
@@ -5205,7 +5277,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
       Parts[i] = P;
     }
 
-    Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
+    Values[Value] = getCopyFromParts(DAG, dl, Order, Parts.begin(),
                                      NumRegs, RegisterVT, ValueVT);
     if (DisableScheduling)
       DAG.AssignOrdering(Values[Value].getNode(), Order);
@@ -5236,7 +5308,8 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
     unsigned NumParts = TLI->getNumRegisters(*DAG.getContext(), ValueVT);
     EVT RegisterVT = RegVTs[Value];
 
-    getCopyToParts(DAG, dl, Val.getValue(Val.getResNo() + Value),
+    getCopyToParts(DAG, dl, Order,
+                   Val.getValue(Val.getResNo() + Value),
                    &Parts[Part], NumParts, RegisterVT);
     Part += NumParts;
   }
@@ -6153,8 +6226,8 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             CallingConv::ID CallConv, bool isTailCall,
                             bool isReturnValueUsed,
                             SDValue Callee,
-                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
-
+                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl,
+                            unsigned Order) {
   assert((!isTailCall || PerformTailCallOpt) &&
          "isTailCall set when tail-call optimizations are disabled!");
 
@@ -6208,7 +6281,8 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       else if (Args[i].isZExt)
         ExtendKind = ISD::ZERO_EXTEND;
 
-      getCopyToParts(DAG, dl, Op, &Parts[0], NumParts, PartVT, ExtendKind);
+      getCopyToParts(DAG, dl, Order, Op, &Parts[0], NumParts,
+                     PartVT, ExtendKind);
 
       for (unsigned j = 0; j != NumParts; ++j) {
         // if it isn't first piece, alignment must be 1
@@ -6269,6 +6343,9 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                  "LowerCall emitted a value with the wrong type!");
         });
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(Chain.getNode(), Order);
+
   // For a tail call, the return value is merely live-out and there aren't
   // any nodes in the DAG representing it. Return a special value to
   // indicate that a tail call has been emitted and no more Instructions
@@ -6293,9 +6370,11 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     unsigned NumRegs = getNumRegisters(RetTy->getContext(), VT);
 
     SDValue ReturnValue =
-      getCopyFromParts(DAG, dl, &InVals[CurReg], NumRegs, RegisterVT, VT,
-                       AssertOp);
+      getCopyFromParts(DAG, dl, Order, &InVals[CurReg], NumRegs,
+                       RegisterVT, VT, AssertOp);
     ReturnValues.push_back(ReturnValue);
+    if (DisableScheduling)
+      DAG.AssignOrdering(ReturnValue.getNode(), Order);
     CurReg += NumRegs;
   }
 
@@ -6308,7 +6387,8 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   SDValue Res = DAG.getNode(ISD::MERGE_VALUES, dl,
                             DAG.getVTList(&RetTys[0], RetTys.size()),
                             &ReturnValues[0], ReturnValues.size());
-
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), Order);
   return std::make_pair(Res, Chain);
 }
 
@@ -6324,7 +6404,6 @@ SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   llvm_unreachable("LowerOperation not implemented for this target!");
   return SDValue();
 }
-
 
 void SelectionDAGBuilder::CopyValueToVirtualRegister(Value *V, unsigned Reg) {
   SDValue Op = getValue(V);
@@ -6347,6 +6426,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
   SelectionDAG &DAG = SDB->DAG;
   SDValue OldRoot = DAG.getRoot();
   DebugLoc dl = SDB->getCurDebugLoc();
+  unsigned Order = SDB->getSDNodeOrder();
   const TargetData *TD = TLI.getTargetData();
   SmallVector<ISD::InputArg, 16> Ins;
 
@@ -6358,7 +6438,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
   FunctionLoweringInfo &FLI = DAG.getFunctionLoweringInfo();
 
   FLI.CanLowerReturn = TLI.CanLowerReturn(F.getCallingConv(), F.isVarArg(), 
-    OutVTs, OutsFlags, DAG);
+                                          OutVTs, OutsFlags, DAG);
   if (!FLI.CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.
     SmallVector<EVT, 1> ValueVTs;
@@ -6445,6 +6525,9 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
                  "LowerFormalArguments emitted a value with the wrong type!");
         });
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(NewRoot.getNode(), Order);
+
   // Update the DAG with the new chain value resulting from argument lowering.
   DAG.setRoot(NewRoot);
 
@@ -6459,8 +6542,8 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     EVT VT = ValueVTs[0];
     EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
-    SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1, RegVT,
-                                        VT, AssertOp);
+    SDValue ArgValue = getCopyFromParts(DAG, dl, Order, &InVals[0], 1,
+                                        RegVT, VT, AssertOp);
 
     MachineFunction& MF = SDB->DAG.getMachineFunction();
     MachineRegisterInfo& RegInfo = MF.getRegInfo();
@@ -6468,11 +6551,14 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     FLI.DemoteRegister = SRetReg;
     NewRoot = SDB->DAG.getCopyToReg(NewRoot, SDB->getCurDebugLoc(), SRetReg, ArgValue);
     DAG.setRoot(NewRoot);
-    
+    if (DisableScheduling)
+      DAG.AssignOrdering(NewRoot.getNode(), Order);
+
     // i indexes lowered arguments.  Bump it past the hidden sret argument.
     // Idx indexes LLVM arguments.  Don't touch it.
     ++i;
   }
+
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E;
       ++I, ++Idx) {
     SmallVector<SDValue, 4> ArgValues;
@@ -6491,19 +6577,28 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
         else if (F.paramHasAttr(Idx, Attribute::ZExt))
           AssertOp = ISD::AssertZext;
 
-        ArgValues.push_back(getCopyFromParts(DAG, dl, &InVals[i], NumParts,
-                                             PartVT, VT, AssertOp));
+        ArgValues.push_back(getCopyFromParts(DAG, dl, Order, &InVals[i],
+                                             NumParts, PartVT, VT,
+                                             AssertOp));
       }
+
       i += NumParts;
     }
+
     if (!I->use_empty()) {
-      SDB->setValue(I, DAG.getMergeValues(&ArgValues[0], NumValues,
-                                          SDB->getCurDebugLoc()));
+      SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,
+                                       SDB->getCurDebugLoc());
+      SDB->setValue(I, Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), Order);
+
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       SDB->CopyToExportRegsIfNeeded(I);
     }
   }
+
   assert(i == InVals.size() && "Argument register count mismatch!");
 
   // Finally, if the target has anything special to do, allow it to do so.

@@ -413,7 +413,8 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
      LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                  false, 0, CallingConv::C, false,
                  /*isReturnValueUsed=*/true,
-                 Callee, Args, DAG, dl);
+                 Callee, Args, DAG, dl,
+                 DAG.GetOrdering(DAG.getEntryNode().getNode()));
 
   return CallInfo.first;
 }

@@ -1333,7 +1333,7 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
                 false, false, false, false, 0, CallingConv::C, false,
                 /*isReturnValueUsed=*/true,
                 DAG.getExternalSymbol("__trampoline_setup", PtrVT),
-                Args, DAG, dl);
+                Args, DAG, dl, DAG.GetOrdering(Chain.getNode()));
 
   SDValue Ops[] =
     { CallResult.first, CallResult.second };

@@ -6194,7 +6194,8 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
         LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()),
                     false, false, false, false,
                     0, CallingConv::C, false, /*isReturnValueUsed=*/false,
-                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl);
+                    DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl,
+                    DAG.GetOrdering(Chain.getNode()));
       return CallResult.second;
     }
 
