@@ -1142,8 +1142,8 @@ struct MemCpyChkOpt : public LibCallOptimization {
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
         !isa<PointerType>(FT->getParamType(1)) ||
-	!isa<IntegerType>(FT->getParamType(3)) ||
-	FT->getParamType(2) != TD->getIntPtrType(*Context))
+        !isa<IntegerType>(FT->getParamType(3)) ||
+        FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
@@ -1170,7 +1170,7 @@ struct MemSetChkOpt : public LibCallOptimization {
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
         !isa<IntegerType>(FT->getParamType(1)) ||
-	!isa<IntegerType>(FT->getParamType(3)) ||
+        !isa<IntegerType>(FT->getParamType(3)) ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1200,7 +1200,7 @@ struct MemMoveChkOpt : public LibCallOptimization {
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
         !isa<PointerType>(FT->getParamType(1)) ||
-	!isa<IntegerType>(FT->getParamType(3)) ||
+        !isa<IntegerType>(FT->getParamType(3)) ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
