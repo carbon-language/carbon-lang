@@ -38,3 +38,22 @@ return:
 @test4g = global i8* blockaddress(@test4, %return)
 
 
+; PR5795
+define void @test5(i32 %A) {
+  switch i32 %A, label %return [
+    i32 2, label %bb
+    i32 10, label %bb1
+  ]
+
+bb:                                               ; preds = %entry
+  ret void
+
+bb1:                                              ; preds = %entry
+  ret void
+
+return:                                           ; preds = %entry
+  ret void
+; CHECK: @test5
+; CHECK-NEXT: bb:
+; CHECK-NEXT: ret void
+}
