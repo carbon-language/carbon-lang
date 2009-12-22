@@ -1028,23 +1028,11 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
   QualType FnRetType;
-  TypeLoc FnRetTypeLoc;
   if (const FunctionDecl *FD = getCurFunctionDecl()) {
     FnRetType = FD->getResultType();
     if (FD->hasAttr<NoReturnAttr>())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
         << getCurFunctionOrMethodDecl()->getDeclName();
-
-#if 0
-    // FIXME: Useful, once we're sure it has all of the information we
-    // need.
-    if (TypeSourceInfo *TInfo = FD->getTypeSourceInfo()) {
-      TypeLoc TL = TInfo->getTypeLoc();
-      if (FunctionTypeLoc *FTL = dyn_cast<FunctionTypeLoc>(&TL))
-        FnRetTypeLoc = FTL->getResultLoc();
-    }
-#endif
-
   } else if (ObjCMethodDecl *MD = getCurMethodDecl())
     FnRetType = MD->getResultType();
   else // If we don't have a function/method context, bail.
@@ -1108,27 +1096,11 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     // FIXME: Elidable
     (void)Elidable;
 
-    // If we somehow didn't get a 
-
-    // FIXME: Should we allocate the TypeSourceInfo and attach it to
-    // the declaration? Alternatively, we could require that all
-    // function and method declarations have TypeSourceInfos, so that
-    // this is never required.  FIXME: Also, the allocated TInfo goes
-    // into the bump pointer, so it cannot actually be freed.
-    TypeSourceInfo *AllocatedTInfo = 0;
-    if (!FnRetTypeLoc) {
-      const FunctionDecl *FD = getCurFunctionDecl();
-      SourceLocation Loc = FD? FD->getLocation()
-                             : getCurMethodDecl()->getLocation();
-      AllocatedTInfo = Context.getTrivialTypeSourceInfo(FnRetType, Loc);
-      FnRetTypeLoc = AllocatedTInfo->getTypeLoc();
-    }
-
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
     OwningExprResult Res = PerformCopyInitialization(
                              InitializedEntity::InitializeResult(ReturnLoc, 
-                                                                 FnRetTypeLoc),
+                                                                 FnRetType),
                              SourceLocation(),
                              Owned(RetValExp));
     if (Res.isInvalid()) {

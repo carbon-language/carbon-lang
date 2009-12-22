@@ -21,6 +21,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/TypeLoc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <map>
 using namespace clang;
@@ -1788,49 +1789,10 @@ InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index,
                                      const InitializedEntity &Parent)
   : Kind(EK_ArrayOrVectorElement), Parent(&Parent), Index(Index) 
 {
-  if (isa<ArrayType>(Parent.TL.getType())) {
-    TL = cast<ArrayTypeLoc>(Parent.TL).getElementLoc();
-    return;
-  }
-
-  // FIXME: should be able to get type location information for vectors, too.
-
-  QualType T;
-  if (const ArrayType *AT = Context.getAsArrayType(Parent.TL.getType()))
-    T = AT->getElementType();
+  if (const ArrayType *AT = Context.getAsArrayType(Parent.getType()))
+    Type = AT->getElementType();
   else
-    T = Parent.TL.getType()->getAs<VectorType>()->getElementType();
-
-  // FIXME: Once we've gone through the effort to create the fake 
-  // TypeSourceInfo, should we cache it somewhere? (If not, we "leak" it).
-  TypeSourceInfo *DI = Context.CreateTypeSourceInfo(T);
-  DI->getTypeLoc().initialize(Parent.TL.getSourceRange().getBegin());
-  TL = DI->getTypeLoc();
-}
-
-void InitializedEntity::InitDeclLoc() {
-  assert((Kind == EK_Variable || Kind == EK_Parameter || Kind == EK_Member) &&
-         "InitDeclLoc cannot be used with non-declaration entities.");
-
-  ASTContext &Context = VariableOrMember->getASTContext();
-  if (Kind == EK_Parameter &&
-      !Context.hasSameUnqualifiedType(
-                     cast<ParmVarDecl>(VariableOrMember)->getOriginalType(),
-                     VariableOrMember->getType())) {
-    // For a parameter whose type has decayed, use the decayed type to
-    // build new source information.
-  } else if (TypeSourceInfo *DI = VariableOrMember->getTypeSourceInfo()) {
-    TL = DI->getTypeLoc();
-    return;
-  }
-  
-  // FIXME: Once we've gone through the effort to create the fake 
-  // TypeSourceInfo, should we cache it in the declaration?
-  // (If not, we "leak" it).
-  TypeSourceInfo *DI
-    = Context.CreateTypeSourceInfo(VariableOrMember->getType());
-  DI->getTypeLoc().initialize(VariableOrMember->getLocation());
-  TL = DI->getTypeLoc();
+    Type = Parent.getType()->getAs<VectorType>()->getElementType();
 }
 
 InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context, 
@@ -1839,10 +1801,7 @@ InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context,
   InitializedEntity Result;
   Result.Kind = EK_Base;
   Result.Base = Base;
-  // FIXME: CXXBaseSpecifier should store a TypeLoc.
-  TypeSourceInfo *DI = Context.CreateTypeSourceInfo(Base->getType());
-  DI->getTypeLoc().initialize(Base->getSourceRange().getBegin());
-  Result.TL = DI->getTypeLoc();
+  Result.Type = Base->getType();
   return Result;
 }
 
@@ -2029,7 +1988,7 @@ static void TryListInitialization(Sema &S,
   // force us to perform more checking here.
   Sequence.setSequenceKind(InitializationSequence::ListInitialization);
 
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
 
   // C++ [dcl.init]p13:
   //   If T is a scalar type, then a declaration of the form 
@@ -2073,7 +2032,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
                                                           Expr *Initializer,
                                                           bool AllowRValues,
                                              InitializationSequence &Sequence) {
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
   QualType T1 = cv1T1.getUnqualifiedType();
   QualType cv2T2 = Initializer->getType();
@@ -2221,7 +2180,7 @@ static void TryReferenceInitialization(Sema &S,
                                        InitializationSequence &Sequence) {
   Sequence.setSequenceKind(InitializationSequence::ReferenceBinding);
   
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
   QualType T1 = cv1T1.getUnqualifiedType();
   QualType cv2T2 = Initializer->getType();
@@ -2417,7 +2376,7 @@ static void TryStringLiteralInitialization(Sema &S,
                                            Expr *Initializer,
                                        InitializationSequence &Sequence) {
   Sequence.setSequenceKind(InitializationSequence::StringInit);
-  Sequence.AddStringInitStep(Entity.getType().getType());
+  Sequence.AddStringInitStep(Entity.getType());
 }
 
 /// \brief Attempt initialization by constructor (C++ [dcl.init]), which
@@ -2509,7 +2468,7 @@ static void TryValueInitialization(Sema &S,
   // C++ [dcl.init]p5:
   //
   //   To value-initialize an object of type T means:
-  QualType T = Entity.getType().getType();
+  QualType T = Entity.getType();
   
   //     -- if T is an array type, then each element is value-initialized;
   while (const ArrayType *AT = S.Context.getAsArrayType(T))
@@ -2534,13 +2493,13 @@ static void TryValueInitialization(Sema &S,
       if ((ClassDecl->getTagKind() == TagDecl::TK_class ||
            ClassDecl->getTagKind() == TagDecl::TK_struct) &&
           !ClassDecl->hasTrivialConstructor()) {
-        Sequence.AddZeroInitializationStep(Entity.getType().getType());
+        Sequence.AddZeroInitializationStep(Entity.getType());
         return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);        
       }
     }
   }
 
-  Sequence.AddZeroInitializationStep(Entity.getType().getType());
+  Sequence.AddZeroInitializationStep(Entity.getType());
   Sequence.setSequenceKind(InitializationSequence::ZeroInitialization);
 }
 
@@ -2554,7 +2513,7 @@ static void TryDefaultInitialization(Sema &S,
   // C++ [dcl.init]p6:
   //   To default-initialize an object of type T means:
   //     - if T is an array type, each element is default-initialized;
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
   while (const ArrayType *Array = S.Context.getAsArrayType(DestType))
     DestType = Array->getElementType();
          
@@ -2589,7 +2548,7 @@ static void TryUserDefinedConversion(Sema &S,
                                      InitializationSequence &Sequence) {
   Sequence.setSequenceKind(InitializationSequence::UserDefinedConversion);
   
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
   assert(!DestType->isReferenceType() && "References are handled elsewhere");
   QualType SourceType = Initializer->getType();
   assert((DestType->isRecordType() || SourceType->isRecordType()) &&
@@ -2721,7 +2680,7 @@ static void TryImplicitConversion(Sema &S,
                                   Expr *Initializer,
                                   InitializationSequence &Sequence) {
   ImplicitConversionSequence ICS
-    = S.TryImplicitConversion(Initializer, Entity.getType().getType(),
+    = S.TryImplicitConversion(Initializer, Entity.getType(),
                               /*SuppressUserConversions=*/true, 
                               /*AllowExplicit=*/false,
                               /*ForceRValue=*/false, 
@@ -2733,7 +2692,7 @@ static void TryImplicitConversion(Sema &S,
     return;
   }
   
-  Sequence.AddConversionSequenceStep(ICS, Entity.getType().getType());
+  Sequence.AddConversionSequenceStep(ICS, Entity.getType());
 }
 
 InitializationSequence::InitializationSequence(Sema &S,
@@ -2749,7 +2708,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   //   type is the type of the initializer expression. The source type is not
   //   defined when the initializer is a braced-init-list or when it is a 
   //   parenthesized list of expressions.
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
 
   if (DestType->isDependentType() ||
       Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
@@ -2836,7 +2795,7 @@ InitializationSequence::InitializationSequence(Sema &S,
          (Context.hasSameUnqualifiedType(SourceType, DestType) ||
           S.IsDerivedFrom(SourceType, DestType))))
       TryConstructorInitialization(S, Entity, Kind, Args, NumArgs, 
-                                   Entity.getType().getType(), *this);
+                                   Entity.getType(), *this);
     //     - Otherwise (i.e., for the remaining copy-initialization cases), 
     //       user-defined conversion sequences that can convert from the source
     //       type to the destination type or (when a conversion function is 
@@ -2944,7 +2903,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
   
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
-    if (Entity.getType().getType()->isReferenceType())
+    if (Entity.getType()->isReferenceType())
       return move(CurInit);
     Loc = Entity.getReturnLoc();
     break;
@@ -2954,7 +2913,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     break;
     
   case InitializedEntity::EK_Variable:
-    if (Entity.getType().getType()->isReferenceType() ||
+    if (Entity.getType()->isReferenceType() ||
         Kind.getKind() != InitializationKind::IK_Copy)
       return move(CurInit);
     Loc = Entity.getDecl()->getLocation();
@@ -3049,9 +3008,9 @@ InitializationSequence::Perform(Sema &S,
     // If the declaration is a non-dependent, incomplete array type
     // that has an initializer, then its type will be completed once
     // the initializer is instantiated.
-    if (ResultType && !Entity.getType().getType()->isDependentType() &&
+    if (ResultType && !Entity.getType()->isDependentType() &&
         Args.size() == 1) {
-      QualType DeclType = Entity.getType().getType();
+      QualType DeclType = Entity.getType();
       if (const IncompleteArrayType *ArrayT
                            = S.Context.getAsIncompleteArrayType(DeclType)) {
         // FIXME: We don't currently have the ability to accurately
@@ -3063,11 +3022,15 @@ InitializationSequence::Perform(Sema &S,
         // bound.
         if (isa<InitListExpr>((Expr *)Args.get()[0])) {
           SourceRange Brackets;
+
           // Scavange the location of the brackets from the entity, if we can.
-          if (isa<IncompleteArrayTypeLoc>(Entity.getType())) {
-            IncompleteArrayTypeLoc ArrayLoc
-              = cast<IncompleteArrayTypeLoc>(Entity.getType());
-            Brackets = ArrayLoc.getBracketsRange();
+          if (DeclaratorDecl *DD = Entity.getDecl()) {
+            if (TypeSourceInfo *TInfo = DD->getTypeSourceInfo()) {
+              TypeLoc TL = TInfo->getTypeLoc();
+              if (IncompleteArrayTypeLoc *ArrayLoc
+                                      = dyn_cast<IncompleteArrayTypeLoc>(&TL))
+              Brackets = ArrayLoc->getBracketsRange();
+            }
           }
 
           *ResultType
@@ -3095,13 +3058,13 @@ InitializationSequence::Perform(Sema &S,
   if (SequenceKind == NoInitialization)
     return S.Owned((Expr *)0);
   
-  QualType DestType = Entity.getType().getType().getNonReferenceType();
-  // FIXME: Ugly hack around the fact that Entity.getType().getType() is not
+  QualType DestType = Entity.getType().getNonReferenceType();
+  // FIXME: Ugly hack around the fact that Entity.getType() is not
   // the same as Entity.getDecl()->getType() in cases involving type merging,
   //  and we want latter when it makes sense.
   if (ResultType)
     *ResultType = Entity.getDecl() ? Entity.getDecl()->getType() :
-                                     Entity.getType().getType();
+                                     Entity.getType();
 
   Sema::OwningExprResult CurInit = S.Owned((Expr *)0);
   
@@ -3176,7 +3139,7 @@ InitializationSequence::Perform(Sema &S,
       if (FieldDecl *BitField = CurInitExpr->getBitField()) {
         // References cannot bind to bit fields (C++ [dcl.init.ref]p5).
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_bitfield)
-          << Entity.getType().getType().isVolatileQualified()
+          << Entity.getType().isVolatileQualified()
           << BitField->getDeclName()
           << CurInitExpr->getSourceRange();
         S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
@@ -3312,7 +3275,7 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
           
       // Build the an expression that constructs a temporary.
-      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType().getType(),
+      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                         Constructor, 
                                         move_arg(ConstructorArgs),
                                         ConstructorInitRequiresZeroInit);
@@ -3392,7 +3355,7 @@ bool InitializationSequence::Diagnose(Sema &S,
   if (SequenceKind != FailedSequence)
     return false;
   
-  QualType DestType = Entity.getType().getType();
+  QualType DestType = Entity.getType();
   switch (Failure) {
   case FK_TooManyInitsForReference:
     S.Diag(Kind.getLocation(), diag::err_reference_has_multiple_inits)

@@ -14,7 +14,7 @@
 #define LLVM_CLANG_SEMA_INIT_H
 
 #include "SemaOverload.h"
-#include "clang/AST/TypeLoc.h"
+#include "clang/AST/Type.h"
 #include "clang/Parse/Action.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -70,9 +70,8 @@ private:
   /// initialization occurs.
   const InitializedEntity *Parent;
 
-  /// \brief The type of the object or reference being initialized along with 
-  /// its location information.
-  TypeLoc TL;
+  /// \brief The type of the object or reference being initialized.
+  QualType Type;
   
   union {
     /// \brief When Kind == EK_Variable, EK_Parameter, or EK_Member, 
@@ -98,40 +97,28 @@ private:
 
   /// \brief Create the initialization entity for a variable.
   InitializedEntity(VarDecl *Var)
-    : Kind(EK_Variable), Parent(0),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Var)) 
-  {
-    InitDeclLoc();
-  }
+    : Kind(EK_Variable), Parent(0), Type(Var->getType()),
+      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Var)) { }
   
   /// \brief Create the initialization entity for a parameter.
   InitializedEntity(ParmVarDecl *Parm)
-    : Kind(EK_Parameter), Parent(0),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) 
-  { 
-    InitDeclLoc();
-  }
+    : Kind(EK_Parameter), Parent(0), Type(Parm->getType()),
+      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Parm)) { }
   
   /// \brief Create the initialization entity for the result of a function,
   /// throwing an object, or performing an explicit cast.
-  InitializedEntity(EntityKind Kind, SourceLocation Loc, TypeLoc TL)
-    : Kind(Kind), Parent(0), TL(TL), Location(Loc.getRawEncoding()) { }
+  InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type)
+    : Kind(Kind), Parent(0), Type(Type), Location(Loc.getRawEncoding()) { }
   
   /// \brief Create the initialization entity for a member subobject.
   InitializedEntity(FieldDecl *Member, const InitializedEntity *Parent) 
-    : Kind(EK_Member), Parent(Parent),
-      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Member))
-  { 
-    InitDeclLoc();
-  }
+    : Kind(EK_Member), Parent(Parent), Type(Member->getType()),
+      VariableOrMember(reinterpret_cast<DeclaratorDecl*>(Member)) { }
   
   /// \brief Create the initialization entity for an array element.
   InitializedEntity(ASTContext &Context, unsigned Index, 
                     const InitializedEntity &Parent);
 
-  /// \brief Initialize type-location information from a declaration.
-  void InitDeclLoc();
-  
 public:
   /// \brief Create the initialization entity for a variable.
   static InitializedEntity InitializeVariable(VarDecl *Var) {
@@ -145,24 +132,24 @@ public:
 
   /// \brief Create the initialization entity for the result of a function.
   static InitializedEntity InitializeResult(SourceLocation ReturnLoc,
-                                            TypeLoc TL) {
-    return InitializedEntity(EK_Result, ReturnLoc, TL);
+                                            QualType Type) {
+    return InitializedEntity(EK_Result, ReturnLoc, Type);
   }
 
   /// \brief Create the initialization entity for an exception object.
   static InitializedEntity InitializeException(SourceLocation ThrowLoc,
-                                               TypeLoc TL) {
-    return InitializedEntity(EK_Exception, ThrowLoc, TL);
+                                               QualType Type) {
+    return InitializedEntity(EK_Exception, ThrowLoc, Type);
   }
 
   /// \brief Create the initialization entity for an object allocated via new.
-  static InitializedEntity InitializeNew(SourceLocation NewLoc, TypeLoc TL) {
-    return InitializedEntity(EK_New, NewLoc, TL);
+  static InitializedEntity InitializeNew(SourceLocation NewLoc, QualType Type) {
+    return InitializedEntity(EK_New, NewLoc, Type);
   }
   
   /// \brief Create the initialization entity for a temporary.
-  static InitializedEntity InitializeTemporary(TypeLoc TL) {
-    return InitializedEntity(EK_Temporary, SourceLocation(), TL);
+  static InitializedEntity InitializeTemporary(QualType Type) {
+    return InitializedEntity(EK_Temporary, SourceLocation(), Type);
   }
   
   /// \brief Create the initialization entity for a base class subobject.
@@ -191,7 +178,7 @@ public:
   const InitializedEntity *getParent() const { return Parent; }
 
   /// \brief Retrieve type being initialized.
-  TypeLoc getType() const { return TL; }
+  QualType getType() const { return Type; }
   
   /// \brief Retrieve the name of the entity being initialized.
   DeclarationName getName() const;

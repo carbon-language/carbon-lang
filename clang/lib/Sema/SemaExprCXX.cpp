@@ -446,18 +446,9 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                                 ConstructorLParen, 
                                                 ConstructorRParen);
     
-    // FIXME: We shouldn't have to fake this.
-    TypeSourceInfo *TInfo
-      = Context.getTrivialTypeSourceInfo(AllocType, TypeLoc);
     InitializedEntity Entity
-      = InitializedEntity::InitializeNew(StartLoc, TInfo->getTypeLoc());
+      = InitializedEntity::InitializeNew(StartLoc, AllocType);
     InitializationSequence InitSeq(*this, Entity, Kind, ConsArgs, NumConsArgs);
-    
-    if (!InitSeq) {
-      InitSeq.Diagnose(*this, Entity, Kind, ConsArgs, NumConsArgs);
-      return ExprError();
-    }
-
     OwningExprResult FullInit = InitSeq.Perform(*this, Entity, Kind, 
                                                 move(ConstructorArgs));
     if (FullInit.isInvalid())

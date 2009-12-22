@@ -3465,10 +3465,7 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc, ExprArg InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
   
-  TypeSourceInfo *TInfo = 0;
-  QualType literalType = GetTypeFromParser(Ty, &TInfo);  
-  if (!TInfo)
-    TInfo = Context.getTrivialTypeSourceInfo(literalType, LParenLoc);
+  QualType literalType = GetTypeFromParser(Ty);  
   
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
@@ -3486,7 +3483,7 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
     return ExprError();
 
   InitializedEntity Entity
-    = InitializedEntity::InitializeTemporary(TInfo->getTypeLoc());
+    = InitializedEntity::InitializeTemporary(literalType);
   InitializationKind Kind
     = InitializationKind::CreateCast(SourceRange(LParenLoc, RParenLoc), 
                                      /*IsCStyleCast=*/true);
