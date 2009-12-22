@@ -6430,7 +6430,6 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
   SelectionDAG &DAG = SDB->DAG;
   SDValue OldRoot = DAG.getRoot();
   DebugLoc dl = SDB->getCurDebugLoc();
-  unsigned Order = SDB->getSDNodeOrder();
   const TargetData *TD = TLI.getTargetData();
   SmallVector<ISD::InputArg, 16> Ins;
 
@@ -6522,15 +6521,14 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
          "LowerFormalArguments didn't return a valid chain!");
   assert(InVals.size() == Ins.size() &&
          "LowerFormalArguments didn't emit the correct number of values!");
-  DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
-          assert(InVals[i].getNode() &&
-                 "LowerFormalArguments emitted a null value!");
-          assert(Ins[i].VT == InVals[i].getValueType() &&
-                 "LowerFormalArguments emitted a value with the wrong type!");
-        });
-
-  if (DisableScheduling)
-    DAG.AssignOrdering(NewRoot.getNode(), Order);
+  DEBUG({
+      for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+        assert(InVals[i].getNode() &&
+               "LowerFormalArguments emitted a null value!");
+        assert(Ins[i].VT == InVals[i].getValueType() &&
+               "LowerFormalArguments emitted a value with the wrong type!");
+      }
+    });
 
   // Update the DAG with the new chain value resulting from argument lowering.
   DAG.setRoot(NewRoot);
@@ -6546,7 +6544,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     EVT VT = ValueVTs[0];
     EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
-    SDValue ArgValue = getCopyFromParts(DAG, dl, Order, &InVals[0], 1,
+    SDValue ArgValue = getCopyFromParts(DAG, dl, 0, &InVals[0], 1,
                                         RegVT, VT, AssertOp);
 
     MachineFunction& MF = SDB->DAG.getMachineFunction();
@@ -6555,8 +6553,6 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     FLI.DemoteRegister = SRetReg;
     NewRoot = SDB->DAG.getCopyToReg(NewRoot, SDB->getCurDebugLoc(), SRetReg, ArgValue);
     DAG.setRoot(NewRoot);
-    if (DisableScheduling)
-      DAG.AssignOrdering(NewRoot.getNode(), Order);
 
     // i indexes lowered arguments.  Bump it past the hidden sret argument.
     // Idx indexes LLVM arguments.  Don't touch it.
@@ -6581,7 +6577,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
         else if (F.paramHasAttr(Idx, Attribute::ZExt))
           AssertOp = ISD::AssertZext;
 
-        ArgValues.push_back(getCopyFromParts(DAG, dl, Order, &InVals[i],
+        ArgValues.push_back(getCopyFromParts(DAG, dl, 0, &InVals[i],
                                              NumParts, PartVT, VT,
                                              AssertOp));
       }
@@ -6593,9 +6589,6 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
       SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,
                                        SDB->getCurDebugLoc());
       SDB->setValue(I, Res);
-
-      if (DisableScheduling)
-        DAG.AssignOrdering(Res.getNode(), Order);
 
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.

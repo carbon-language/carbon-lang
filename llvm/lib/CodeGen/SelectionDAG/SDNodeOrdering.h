@@ -34,7 +34,6 @@ public:
   SDNodeOrdering() {}
 
   void add(const SDNode *Node, unsigned O) {
-    assert(O && "Invalid ordering!");
     OrderMap[Node] = O;
   }
   void remove(const SDNode *Node) {
@@ -46,9 +45,7 @@ public:
     OrderMap.clear();
   }
   unsigned getOrder(const SDNode *Node) {
-    unsigned Order = OrderMap[Node];
-    assert(Order && "Node isn't in ordering map!");
-    return Order;
+    return OrderMap[Node];
   }
 };
 
