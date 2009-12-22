@@ -25,7 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "../X86GenRegisterNames.inc"
+#include "X86GenRegisterNames.inc"
 
 using namespace llvm;
 using namespace llvm::X86Disassembler;
