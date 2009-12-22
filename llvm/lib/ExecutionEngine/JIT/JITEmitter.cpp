@@ -59,6 +59,12 @@ STATISTIC(NumRetries, "Number of retries with more memory");
 static JIT *TheJIT = 0;
 
 
+// A declaration may stop being a declaration once it's fully read from bitcode.
+// This function returns true if F is fully read and is still a declaration.
+static bool isNonGhostDeclaration(const Function *F) {
+  return F->isDeclaration() && !F->hasNotBeenReadFromBitcode();
+}
+
 //===----------------------------------------------------------------------===//
 // JIT lazy compilation code.
 //
@@ -517,15 +523,9 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
   void *Actual = TheJIT->isCompilingLazily()
     ? (void *)(intptr_t)LazyResolverFn : (void *)0;
 
-  // TODO: Delete this when PR5737 is fixed.
-  std::string ErrorMsg;
-  if (TheJIT->materializeFunction(F, &ErrorMsg)) {
-    llvm_report_error("Error reading function '" + F->getName()+
-                      "' from bitcode file: " + ErrorMsg);
-  }
   // If this is an external declaration, attempt to resolve the address now
   // to place in the stub.
-  if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
+  if (isNonGhostDeclaration(F) || F->hasAvailableExternallyLinkage()) {
     Actual = TheJIT->getPointerToFunction(F);
 
     // If we resolved the symbol to a null address (eg. a weak external)
@@ -558,7 +558,7 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
   // exist yet, add it to the JIT's work list so that we can fill in the stub
   // address later.
   if (!Actual && !TheJIT->isCompilingLazily())
-    if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage())
+    if (!isNonGhostDeclaration(F) && !F->hasAvailableExternallyLinkage())
       TheJIT->addPendingFunction(F);
 
   return Stub;
@@ -761,16 +761,9 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
     if (ResultPtr) return ResultPtr;
 
-    // TODO: Delete this when PR5737 is fixed.
-    std::string ErrorMsg;
-    if (TheJIT->materializeFunction(F, &ErrorMsg)) {
-      llvm_report_error("Error reading function '" + F->getName()+
-                        "' from bitcode file: " + ErrorMsg);
-    }
-
     // If this is an external function pointer, we can force the JIT to
     // 'compile' it, which really just adds it to the map.
-    if (F->isDeclaration() || F->hasAvailableExternallyLinkage())
+    if (isNonGhostDeclaration(F) || F->hasAvailableExternallyLinkage())
       return TheJIT->getPointerToFunction(F);
   }
 

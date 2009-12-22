@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Constant.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -24,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetSelect.h"
@@ -177,6 +179,17 @@ public:
   }
 };
 
+bool LoadAssemblyInto(Module *M, const char *assembly) {
+  SMDiagnostic Error;
+  bool success =
+    NULL != ParseAssemblyString(assembly, M, Error, M->getContext());
+  std::string errMsg;
+  raw_string_ostream os(errMsg);
+  Error.Print("", os);
+  EXPECT_TRUE(success) << os.str();
+  return success;
+}
+
 class JITTest : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -192,12 +205,7 @@ class JITTest : public testing::Test {
   }
 
   void LoadAssembly(const char *assembly) {
-    SMDiagnostic Error;
-    bool success = NULL != ParseAssemblyString(assembly, M, Error, Context);
-    std::string errMsg;
-    raw_string_ostream os(errMsg);
-    Error.Print("", os);
-    ASSERT_TRUE(success) << os.str();
+    LoadAssemblyInto(M, assembly);
   }
 
   LLVMContext Context;
@@ -617,6 +625,88 @@ TEST_F(JITTest, AvailableExternallyFunctionIsntCompiled) {
     (intptr_t)TheJIT->getPointerToFunction(funcIR));
   EXPECT_EQ(42, func()) << "func should return 42 from the static version,"
                         << " not 7 from the IR version.";
+}
+
+// Converts the LLVM assembly to bitcode and returns it in a std::string.  An
+// empty string indicates an error.
+std::string AssembleToBitcode(LLVMContext &Context, const char *Assembly) {
+  Module TempModule("TempModule", Context);
+  if (!LoadAssemblyInto(&TempModule, Assembly)) {
+    return "";
+  }
+
+  std::string Result;
+  raw_string_ostream OS(Result);
+  WriteBitcodeToFile(&TempModule, OS);
+  OS.flush();
+  return Result;
+}
+
+// Returns a newly-created ExecutionEngine that reads the bitcode in 'Bitcode'
+// lazily.  The associated ModuleProvider (owned by the ExecutionEngine) is
+// returned in MP.  Both will be NULL on an error.  Bitcode must live at least
+// as long as the ExecutionEngine.
+ExecutionEngine *getJITFromBitcode(
+  LLVMContext &Context, const std::string &Bitcode, ModuleProvider *&MP) {
+  // c_str() is null-terminated like MemoryBuffer::getMemBuffer requires.
+  MemoryBuffer *BitcodeBuffer =
+    MemoryBuffer::getMemBuffer(Bitcode.c_str(),
+                               Bitcode.c_str() + Bitcode.size(),
+                               "Bitcode for test");
+  std::string errMsg;
+  MP = getBitcodeModuleProvider(BitcodeBuffer, Context, &errMsg);
+  if (MP == NULL) {
+    ADD_FAILURE() << errMsg;
+    delete BitcodeBuffer;
+    return NULL;
+  }
+  ExecutionEngine *TheJIT = EngineBuilder(MP)
+    .setEngineKind(EngineKind::JIT)
+    .setErrorStr(&errMsg)
+    .create();
+  if (TheJIT == NULL) {
+    ADD_FAILURE() << errMsg;
+    delete MP;
+    MP = NULL;
+    return NULL;
+  }
+  return TheJIT;
+}
+
+TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
+  LLVMContext Context;
+  const std::string Bitcode =
+    AssembleToBitcode(Context,
+                      "define i32 @recur1(i32 %a) { "
+                      "  %zero = icmp eq i32 %a, 0 "
+                      "  br i1 %zero, label %done, label %notdone "
+                      "done: "
+                      "  ret i32 3 "
+                      "notdone: "
+                      "  %am1 = sub i32 %a, 1 "
+                      "  %result = call i32 @recur2(i32 %am1) "
+                      "  ret i32 %result "
+                      "} "
+                      " "
+                      "define i32 @recur2(i32 %b) { "
+                      "  %result = call i32 @recur1(i32 %b) "
+                      "  ret i32 %result "
+                      "} ");
+  ASSERT_FALSE(Bitcode.empty()) << "Assembling failed";
+  ModuleProvider *MP;
+  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, MP));
+  ASSERT_TRUE(TheJIT.get()) << "Failed to create JIT.";
+  TheJIT->DisableLazyCompilation(true);
+
+  Module *M = MP->getModule();
+  Function *recur1IR = M->getFunction("recur1");
+  Function *recur2IR = M->getFunction("recur2");
+  EXPECT_TRUE(recur1IR->hasNotBeenReadFromBitcode());
+  EXPECT_TRUE(recur2IR->hasNotBeenReadFromBitcode());
+
+  int32_t (*recur1)(int32_t) = reinterpret_cast<int32_t(*)(int32_t)>(
+    (intptr_t)TheJIT->getPointerToFunction(recur1IR));
+  EXPECT_EQ(3, recur1(4));
 }
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
