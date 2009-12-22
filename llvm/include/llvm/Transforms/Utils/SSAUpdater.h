@@ -29,8 +29,8 @@ namespace llvm {
 class SSAUpdater {
   /// AvailableVals - This keeps track of which value to use on a per-block
   /// basis.  When we insert PHI nodes, we keep track of them here.  We use
-  /// WeakVH's for the value of the map because we RAUW PHI nodes when we
-  /// eliminate them, and want the WeakVH to track this.
+  /// TrackingVH's for the value of the map because we RAUW PHI nodes when we
+  /// eliminate them, and want the TrackingVH's to track this.
   //typedef DenseMap<BasicBlock*, TrackingVH<Value> > AvailableValsTy;
   void *AV;
 
