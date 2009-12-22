@@ -1178,14 +1178,14 @@ public:
   ///   X(const X&);
   /// };
   /// @endcode
-  bool isCopyConstructor(ASTContext &Context, unsigned &TypeQuals) const;
+  bool isCopyConstructor(unsigned &TypeQuals) const;
 
   /// isCopyConstructor - Whether this constructor is a copy
   /// constructor (C++ [class.copy]p2, which can be used to copy the
   /// class.
-  bool isCopyConstructor(ASTContext &Context) const {
+  bool isCopyConstructor() const {
     unsigned TypeQuals = 0;
-    return isCopyConstructor(Context, TypeQuals);
+    return isCopyConstructor(TypeQuals);
   }
 
   /// isConvertingConstructor - Whether this constructor is a

@@ -164,8 +164,7 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
     if (isa<FunctionTemplateDecl>(*Con))
       continue;
 
-    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context,
-                                                          FoundTQs)) {
+    if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(FoundTQs)) {
       if (((TypeQuals & Qualifiers::Const) == (FoundTQs & Qualifiers::Const)) ||
           (!(TypeQuals & Qualifiers::Const) && (FoundTQs & Qualifiers::Const)))
         return cast<CXXConstructorDecl>(*Con);
@@ -246,7 +245,7 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
 
   // Note when we have a user-declared copy constructor, which will
   // suppress the implicit declaration of a copy constructor.
-  if (ConDecl->isCopyConstructor(Context)) {
+  if (ConDecl->isCopyConstructor()) {
     UserDeclaredCopyConstructor = true;
 
     // C++ [class.copy]p6:
@@ -757,8 +756,7 @@ bool CXXConstructorDecl::isDefaultConstructor() const {
 }
 
 bool
-CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
-                                      unsigned &TypeQuals) const {
+CXXConstructorDecl::isCopyConstructor(unsigned &TypeQuals) const {
   // C++ [class.copy]p2:
   //   A non-template constructor for class X is a copy constructor
   //   if its first parameter is of type X&, const X&, volatile X& or
@@ -779,6 +777,8 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
     return false;
 
   // Is it a reference to our class type?
+  ASTContext &Context = getASTContext();
+  
   CanQualType PointeeType
     = Context.getCanonicalType(ParamRefType->getPointeeType());
   CanQualType ClassTy 

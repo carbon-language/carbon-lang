@@ -508,7 +508,7 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
-  if (D->isCopyConstructor(getContext())) {
+  if (D->isCopyConstructor()) {
     const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D->getDeclContext());
     if (ClassDecl->hasTrivialCopyConstructor()) {
       assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
@@ -564,7 +564,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     getContext().getAsConstantArrayType(E->getType());
   // For a copy constructor, even if it is trivial, must fall thru so
   // its argument is code-gen'ed.
-  if (!CD->isCopyConstructor(getContext())) {
+  if (!CD->isCopyConstructor()) {
     QualType InitType = E->getType();
     if (Array)
       InitType = getContext().getBaseElementType(Array);

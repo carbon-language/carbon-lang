@@ -451,7 +451,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
       QualType FromCanon
         = Context.getCanonicalType(From->getType().getUnqualifiedType());
       QualType ToCanon = Context.getCanonicalType(ToType).getUnqualifiedType();
-      if (Constructor->isCopyConstructor(Context) &&
+      if (Constructor->isCopyConstructor() &&
           (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon))) {
         // Turn this into a "standard" conversion sequence, so that it
         // gets ranked with standard conversion sequences.

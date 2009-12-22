@@ -331,7 +331,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       // FIXME: For C++0x, we want to look for implicit *definitions* of
       // these special member functions, rather than implicit *declarations*.
-      if (CD->isCopyConstructor(getContext())) {
+      if (CD->isCopyConstructor()) {
         assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
                "Cannot synthesize a non-implicit copy constructor");
         SynthesizeCXXCopyConstructor(CD, GD.getCtorType(), Fn, Args);

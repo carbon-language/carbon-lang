@@ -3096,7 +3096,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     // Find the constructor (which may be a template).
     CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(*Con);
     if (!Constructor || Constructor->isInvalidDecl() ||
-        !Constructor->isCopyConstructor(S.Context))
+        !Constructor->isCopyConstructor())
       continue;
     
     S.AddOverloadCandidate(Constructor, &CurInitExpr, 1, CandidateSet);

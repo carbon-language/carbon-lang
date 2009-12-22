@@ -3732,7 +3732,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                    CXXConstructorDecl *CopyConstructor,
                                    unsigned TypeQuals) {
   assert((CopyConstructor->isImplicit() &&
-          CopyConstructor->isCopyConstructor(Context, TypeQuals) &&
+          CopyConstructor->isCopyConstructor(TypeQuals) &&
           !CopyConstructor->isUsed()) &&
          "DefineImplicitCopyConstructor - call it for implicit copy ctor");
 
@@ -3784,7 +3784,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   //   all, even if the class copy constructor or destructor have side effects.
 
   // FIXME: Is this enough?
-  if (Constructor->isCopyConstructor(Context)) {
+  if (Constructor->isCopyConstructor()) {
     Expr *E = ((Expr **)ExprArgs.get())[0];
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
       if (ICE->getCastKind() == CastExpr::CK_NoOp)

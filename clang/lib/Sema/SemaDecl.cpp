@@ -800,7 +800,7 @@ static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
   if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
     if (Ctor->isDefaultConstructor())
       return Sema::CXXDefaultConstructor;
-    if (Ctor->isCopyConstructor(Ctx))
+    if (Ctor->isCopyConstructor())
       return Sema::CXXCopyConstructor;
   } 
   
