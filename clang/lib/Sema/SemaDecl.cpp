@@ -3557,21 +3557,15 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
       VDecl->setInvalidDecl();
     } else if (!VDecl->isInvalidDecl()) {
       InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      if (InitSeq) {
-        OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                           MultiExprArg(*this, (void**)&Init, 1),
-                                                  &DclT);
-        if (Result.isInvalid()) {
-          VDecl->setInvalidDecl();
-          return;
-        }
-
-        Init = Result.takeAs<Expr>();
-      } else {
-        InitSeq.Diagnose(*this, Entity, Kind, &Init, 1);
+                                                &DclT);
+      if (Result.isInvalid()) {
         VDecl->setInvalidDecl();
         return;
       }
+
+      Init = Result.takeAs<Expr>();
 
       // C++ 3.6.2p2, allow dynamic initialization of static initializers.
       // Don't check invalid declarations to avoid emitting useless diagnostics.
@@ -3630,9 +3624,18 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   } else if (VDecl->isFileVarDecl()) {
     if (VDecl->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
-    if (!VDecl->isInvalidDecl())
-      if (CheckInitializerTypes(Init, DclT, Entity, Kind))
+    if (!VDecl->isInvalidDecl()) {
+      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                          MultiExprArg(*this, (void**)&Init, 1),
+                                                &DclT);
+      if (Result.isInvalid()) {
         VDecl->setInvalidDecl();
+        return;
+      }
+
+      Init = Result.takeAs<Expr>();
+    }
 
     // C++ 3.6.2p2, allow dynamic initialization of static initializers.
     // Don't check invalid declarations to avoid emitting useless diagnostics.

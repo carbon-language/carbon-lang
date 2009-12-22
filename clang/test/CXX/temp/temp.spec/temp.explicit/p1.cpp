@@ -68,7 +68,7 @@ struct X2 {
 };
 
 template<typename T, typename U>
-T X2<T, U>::static_member1 = 17; // expected-error{{incompatible type}}
+T X2<T, U>::static_member1 = 17; // expected-error{{cannot initialize}}
 
 template<typename T, typename U>
 U X2<T, U>::static_member2; // expected-error{{no matching}}

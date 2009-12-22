@@ -13,7 +13,7 @@ struct NonAggregate {
 
   int a, b;
 };
-NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
+NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{non-aggregate type 'struct NonAggregate' cannot be initialized with an initializer list}}
 
 NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
 

@@ -9,7 +9,7 @@ int (*pfi)(int) = &f;    // selects f(int)
 // FIXME: This error message is not very good. We need to keep better
 // track of what went wrong when the implicit conversion failed to
 // give a better error message here.
-int (*pfe)(...) = &f;    // expected-error{{incompatible type initializing '<overloaded function type>', expected 'int (*)(...)'}}
+int (*pfe)(...) = &f;    // expected-error{{cannot initialize a variable of type 'int (*)(...)' with an rvalue of type '<overloaded function type>'}}
 int (&rfi)(int) = f;     // selects f(int)
 int (&rfd)(double) = f;  // selects f(double)
 

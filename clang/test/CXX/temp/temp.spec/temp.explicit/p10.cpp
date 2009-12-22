@@ -20,7 +20,7 @@ struct X0<T>::Inner {
 };
 
 template<typename T>
-T X0<T>::static_var = 1; // expected-error{{incompatible type}}
+T X0<T>::static_var = 1; // expected-error{{cannot initialize}}
 
 extern template struct X0<void*>;
 template struct X0<void*>; // expected-note 2{{instantiation}}

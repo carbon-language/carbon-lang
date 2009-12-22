@@ -3201,8 +3201,12 @@ InitializationSequence::Perform(Sema &S,
     return S.Owned((Expr *)0);
   
   QualType DestType = Entity.getType().getType().getNonReferenceType();
+  // FIXME: Ugly hack around the fact that Entity.getType().getType() is not
+  // the same as Entity.getDecl()->getType() in cases involving type merging,
+  //  and we want latter when it makes sense.
   if (ResultType)
-    *ResultType = Entity.getType().getType();
+    *ResultType = Entity.getDecl() ? Entity.getDecl()->getType() :
+                                     Entity.getType().getType();
 
   Sema::OwningExprResult CurInit = S.Owned((Expr *)0);
   
