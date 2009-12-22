@@ -171,8 +171,9 @@ def Most : DiagGroup<"most", [
 def : DiagGroup<"all", [Most, Parentheses]>;
 
 // Aliases.
-def : DiagGroup<"", [Extra]>;  // -W = -Wextra
-def : DiagGroup<"endif-labels", [ExtraTokens]>; // endif-labels = endif-tokens
+def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
+def : DiagGroup<"endif-labels", [ExtraTokens]>; // -Wendif-labels=-Wendif-tokens
+def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
 
 // A warning group for warnings that we want to have on by default in clang,
 // but which aren't on by default in GCC.
