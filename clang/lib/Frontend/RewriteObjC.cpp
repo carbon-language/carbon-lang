@@ -324,6 +324,7 @@ namespace {
     // Block specific rewrite rules.
     void RewriteBlockCall(CallExpr *Exp);
     void RewriteBlockPointerDecl(NamedDecl *VD);
+    void RewriteByRefVar(NamedDecl *VD);
     Stmt *RewriteBlockDeclRefExpr(BlockDeclRefExpr *VD);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
 
@@ -4321,6 +4322,10 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
+void RewriteObjC::RewriteByRefVar(NamedDecl *ND) {
+  return;
+}
+
 void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
   // Add initializers for any closure decl refs.
   GetBlockDeclRefExprs(Exp->getBody());
@@ -4665,6 +4670,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
           RewriteBlockPointerDecl(ND);
         else if (ND->getType()->isFunctionPointerType())
           CheckFunctionPointerDecl(ND->getType(), ND);
+        if (ND->hasAttr<BlocksAttr>())
+          RewriteByRefVar(ND);
       }
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
         if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
