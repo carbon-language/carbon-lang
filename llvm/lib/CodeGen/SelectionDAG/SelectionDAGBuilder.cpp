@@ -159,7 +159,8 @@ namespace {
     /// (if applicable), and includes the number of values added into it.
     void AddInlineAsmOperands(unsigned Code,
                               bool HasMatching, unsigned MatchingIdx,
-                              SelectionDAG &DAG, std::vector<SDValue> &Ops) const;
+                              SelectionDAG &DAG, unsigned Order,
+                              std::vector<SDValue> &Ops) const;
   };
 }
 
@@ -5281,20 +5282,30 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code,
                                         bool HasMatching,unsigned MatchingIdx,
-                                        SelectionDAG &DAG,
+                                        SelectionDAG &DAG, unsigned Order,
                                         std::vector<SDValue> &Ops) const {
   EVT IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
   assert(Regs.size() < (1 << 13) && "Too many inline asm outputs!");
   unsigned Flag = Code | (Regs.size() << 3);
   if (HasMatching)
     Flag |= 0x80000000 | (MatchingIdx << 16);
-  Ops.push_back(DAG.getTargetConstant(Flag, IntPtrTy));
+
+  SDValue Res = DAG.getTargetConstant(Flag, IntPtrTy);
+  Ops.push_back(Res);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), Order);
+
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI->getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
     EVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i) {
       assert(Reg < Regs.size() && "Mismatch in # registers expected");
-      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
+      SDValue Res = DAG.getRegister(Regs[Reg++], RegisterVT);
+      Ops.push_back(Res);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Res.getNode(), Order);
     }
   }
 }
@@ -5509,6 +5520,9 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
                                          RegVT, OpInfo.CallOperand);
         OpInfo.ConstraintVT = RegVT;
       }
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(OpInfo.CallOperand.getNode(), SDNodeOrder);
     }
 
     NumRegs = TLI.getNumRegisters(Context, OpInfo.ConstraintVT);
@@ -5545,6 +5559,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo,
         Regs.push_back(*I);
       }
     }
+
     OpInfo.AssignedRegs = RegsForValue(TLI, Regs, RegVT, ValueVT);
     const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
     OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs, *TRI);
@@ -5775,12 +5790,18 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         Chain = DAG.getStore(Chain, getCurDebugLoc(),
                              OpInfo.CallOperand, StackSlot, NULL, 0);
         OpInfo.CallOperand = StackSlot;
+        if (DisableScheduling)
+          DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
       }
 
       // There is no longer a Value* corresponding to this operand.
       OpInfo.CallOperandVal = 0;
+
       // It is now an indirect operand.
       OpInfo.isIndirect = true;
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(OpInfo.CallOperand.getNode(), SDNodeOrder);
     }
 
     // If this constraint is for a specific register, allocate it before
@@ -5788,8 +5809,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     if (OpInfo.ConstraintType == TargetLowering::C_Register)
       GetRegistersForValue(OpInfo, OutputRegs, InputRegs);
   }
-  ConstraintInfos.clear();
 
+  ConstraintInfos.clear();
 
   // Second pass - Loop over all of the operands, assigning virtual or physregs
   // to register class operands.
@@ -5863,7 +5884,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                                2 /* REGDEF */ ,
                                                false,
                                                0,
-                                               DAG, AsmNodeOperands);
+                                               DAG, SDNodeOrder,
+                                               AsmNodeOperands);
       break;
     }
     case InlineAsm::isInput: {
@@ -5913,7 +5935,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                     SDNodeOrder, Chain, &Flag);
           MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/,
                                            true, OpInfo.getMatchedOperand(),
-                                           DAG, AsmNodeOperands);
+                                           DAG, SDNodeOrder, AsmNodeOperands);
           break;
         } else {
           assert(((OpFlag & 7) == 4) && "Unknown matching constraint!");
@@ -5976,7 +5998,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                         SDNodeOrder, Chain, &Flag);
 
       OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/, false, 0,
-                                               DAG, AsmNodeOperands);
+                                               DAG, SDNodeOrder,
+                                               AsmNodeOperands);
       break;
     }
     case InlineAsm::isClobber: {
@@ -5984,7 +6007,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // allocator is aware that the physreg got clobbered.
       if (!OpInfo.AssignedRegs.Regs.empty())
         OpInfo.AssignedRegs.AddInlineAsmOperands(6 /* EARLYCLOBBER REGDEF */,
-                                                 false, 0, DAG,AsmNodeOperands);
+                                                 false, 0, DAG, SDNodeOrder,
+                                                 AsmNodeOperands);
       break;
     }
     }
@@ -5998,6 +6022,9 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                       DAG.getVTList(MVT::Other, MVT::Flag),
                       &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
 
   // If this asm returns a register value, copy the result from that register
   // and set it as the value of the call.
@@ -6027,6 +6054,9 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       }
 
       assert(ResultType == Val.getValueType() && "Asm result value mismatch!");
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(Val.getNode(), SDNodeOrder);
     }
 
     setValue(CS.getInstruction(), Val);
@@ -6050,22 +6080,34 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
   // Emit the non-flagged stores from the physregs.
   SmallVector<SDValue, 8> OutChains;
-  for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
-    OutChains.push_back(DAG.getStore(Chain, getCurDebugLoc(),
-                                    StoresToEmit[i].first,
-                                    getValue(StoresToEmit[i].second),
-                                    StoresToEmit[i].second, 0));
+  for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i) {
+    SDValue Val = DAG.getStore(Chain, getCurDebugLoc(),
+                               StoresToEmit[i].first,
+                               getValue(StoresToEmit[i].second),
+                               StoresToEmit[i].second, 0);
+    OutChains.push_back(Val);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Val.getNode(), SDNodeOrder);
+  }
+
   if (!OutChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(), MVT::Other,
                         &OutChains[0], OutChains.size());
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
+
   DAG.setRoot(Chain);
 }
 
 void SelectionDAGBuilder::visitVAStart(CallInst &I) {
-  DAG.setRoot(DAG.getNode(ISD::VASTART, getCurDebugLoc(),
-                          MVT::Other, getRoot(),
-                          getValue(I.getOperand(1)),
-                          DAG.getSrcValue(I.getOperand(1))));
+  SDValue Res = DAG.getNode(ISD::VASTART, getCurDebugLoc(),
+                            MVT::Other, getRoot(),
+                            getValue(I.getOperand(1)),
+                            DAG.getSrcValue(I.getOperand(1)));
+  DAG.setRoot(Res);
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitVAArg(VAArgInst &I) {
@@ -6074,22 +6116,30 @@ void SelectionDAGBuilder::visitVAArg(VAArgInst &I) {
                            DAG.getSrcValue(I.getOperand(0)));
   setValue(&I, V);
   DAG.setRoot(V.getValue(1));
+  if (DisableScheduling)
+    DAG.AssignOrdering(V.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitVAEnd(CallInst &I) {
-  DAG.setRoot(DAG.getNode(ISD::VAEND, getCurDebugLoc(),
-                          MVT::Other, getRoot(),
-                          getValue(I.getOperand(1)),
-                          DAG.getSrcValue(I.getOperand(1))));
+  SDValue Res = DAG.getNode(ISD::VAEND, getCurDebugLoc(),
+                            MVT::Other, getRoot(),
+                            getValue(I.getOperand(1)),
+                            DAG.getSrcValue(I.getOperand(1)));
+  DAG.setRoot(Res);
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitVACopy(CallInst &I) {
-  DAG.setRoot(DAG.getNode(ISD::VACOPY, getCurDebugLoc(),
-                          MVT::Other, getRoot(),
-                          getValue(I.getOperand(1)),
-                          getValue(I.getOperand(2)),
-                          DAG.getSrcValue(I.getOperand(1)),
-                          DAG.getSrcValue(I.getOperand(2))));
+  SDValue Res = DAG.getNode(ISD::VACOPY, getCurDebugLoc(),
+                            MVT::Other, getRoot(),
+                            getValue(I.getOperand(1)),
+                            getValue(I.getOperand(2)),
+                            DAG.getSrcValue(I.getOperand(1)),
+                            DAG.getSrcValue(I.getOperand(2)));
+  DAG.setRoot(Res);
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
 }
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
