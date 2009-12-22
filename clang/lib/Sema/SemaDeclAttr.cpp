@@ -730,10 +730,15 @@ static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) 
     return;
   }
 
-  // TODO: could also be applied to methods?
   if (!isFunctionOrMethod(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  if (getFunctionType(D)->getResultType()->isVoidType()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_void_function)
+      << Attr.getName();
     return;
   }
 

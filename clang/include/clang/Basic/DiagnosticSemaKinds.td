@@ -682,6 +682,8 @@ def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
 def warn_attribute_ignored : Warning<"%0 attribute ignored">;
 def warn_attribute_precede_definition : Warning<
   "attribute declaration must precede definition">;
+def warn_attribute_void_function : Warning<
+  "attribute %0 cannot be applied to functions without return value">;
 def warn_attribute_weak_on_field : Warning<
   "__weak attribute cannot be specified on a field declaration">;
 def warn_attribute_weak_on_local : Warning<
