@@ -144,15 +144,15 @@ namespace {
     /// this value and returns the result as a ValueVTs value.  This uses
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     /// If the Flag pointer is NULL, no flag is used.
-    SDValue getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
-                              SDValue &Chain, SDValue *Flag) const;
+    SDValue getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
+                            SDValue &Chain, SDValue *Flag) const;
 
     /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
     /// specified value into the registers specified by this object.  This uses
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     /// If the Flag pointer is NULL, no flag is used.
     void getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                       SDValue &Chain, SDValue *Flag) const;
+                       unsigned Order, SDValue &Chain, SDValue *Flag) const;
 
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker, matching input operand index
@@ -720,10 +720,8 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
 
   RegsForValue RFV(*DAG.getContext(), TLI, InReg, V->getType());
   SDValue Chain = DAG.getEntryNode();
-  SDValue Res = RFV.getCopyFromRegs(DAG, getCurDebugLoc(), Chain, NULL);
-  if (DisableScheduling)
-    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
-  return Res;
+  return RFV.getCopyFromRegs(DAG, getCurDebugLoc(),
+                             SDNodeOrder, Chain, NULL);
 }
 
 /// Get the EVTs and ArgFlags collections that represent the return type
@@ -5046,8 +5044,11 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(2)->getType()) {
           SDValue LHS = getValue(I.getOperand(1));
           SDValue RHS = getValue(I.getOperand(2));
-          setValue(&I, DAG.getNode(ISD::FCOPYSIGN, getCurDebugLoc(),
-                                   LHS.getValueType(), LHS, RHS));
+          SDValue Res = DAG.getNode(ISD::FCOPYSIGN, getCurDebugLoc(),
+                                    LHS.getValueType(), LHS, RHS);
+          setValue(&I, Res);
+          if (DisableScheduling)
+            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
           return;
         }
       } else if (Name == "fabs" || Name == "fabsf" || Name == "fabsl") {
@@ -5055,8 +5056,11 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          setValue(&I, DAG.getNode(ISD::FABS, getCurDebugLoc(),
-                                   Tmp.getValueType(), Tmp));
+          SDValue Res = DAG.getNode(ISD::FABS, getCurDebugLoc(),
+                                    Tmp.getValueType(), Tmp);
+          setValue(&I, Res);
+          if (DisableScheduling)
+            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
           return;
         }
       } else if (Name == "sin" || Name == "sinf" || Name == "sinl") {
@@ -5065,8 +5069,11 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          setValue(&I, DAG.getNode(ISD::FSIN, getCurDebugLoc(),
-                                   Tmp.getValueType(), Tmp));
+          SDValue Res = DAG.getNode(ISD::FSIN, getCurDebugLoc(),
+                                    Tmp.getValueType(), Tmp);
+          setValue(&I, Res);
+          if (DisableScheduling)
+            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
           return;
         }
       } else if (Name == "cos" || Name == "cosf" || Name == "cosl") {
@@ -5075,8 +5082,11 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          setValue(&I, DAG.getNode(ISD::FCOS, getCurDebugLoc(),
-                                   Tmp.getValueType(), Tmp));
+          SDValue Res = DAG.getNode(ISD::FCOS, getCurDebugLoc(),
+                                    Tmp.getValueType(), Tmp);
+          setValue(&I, Res);
+          if (DisableScheduling)
+            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
           return;
         }
       } else if (Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl") {
@@ -5085,8 +5095,11 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          setValue(&I, DAG.getNode(ISD::FSQRT, getCurDebugLoc(),
-                                   Tmp.getValueType(), Tmp));
+          SDValue Res = DAG.getNode(ISD::FSQRT, getCurDebugLoc(),
+                                    Tmp.getValueType(), Tmp);
+          setValue(&I, Res);
+          if (DisableScheduling)
+            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
           return;
         }
       }
@@ -5102,6 +5115,9 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
+  if (DisableScheduling)
+    DAG.AssignOrdering(Callee.getNode(), SDNodeOrder);
+
   // Check if we can potentially perform a tail call. More detailed
   // checking is be done within LowerCallTo, after more information
   // about the call is known.
@@ -5110,13 +5126,12 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
   LowerCallTo(&I, Callee, isTailCall);
 }
 
-
 /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
 /// this value and returns the result as a ValueVT value.  This uses
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
-                                      SDValue &Chain,
+                                      unsigned Order, SDValue &Chain,
                                       SDValue *Flag) const {
   // Assemble the legal parts into the final values.
   SmallVector<SDValue, 4> Values(ValueVTs.size());
@@ -5130,13 +5145,17 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
     Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
       SDValue P;
-      if (Flag == 0)
+      if (Flag == 0) {
         P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT);
-      else {
+      } else {
         P = DAG.getCopyFromReg(Chain, dl, Regs[Part+i], RegisterVT, *Flag);
         *Flag = P.getValue(2);
       }
+
       Chain = P.getValue(1);
+
+      if (DisableScheduling)
+        DAG.AssignOrdering(P.getNode(), Order);
 
       // If the source register was virtual and if we know something about it,
       // add an assert node.
@@ -5176,6 +5195,8 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
             P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext, dl,
                             RegisterVT, P, DAG.getValueType(FromVT));
 
+            if (DisableScheduling)
+              DAG.AssignOrdering(P.getNode(), Order);
           }
         }
       }
@@ -5185,13 +5206,18 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
 
     Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
                                      NumRegs, RegisterVT, ValueVT);
+    if (DisableScheduling)
+      DAG.AssignOrdering(Values[Value].getNode(), Order);
     Part += NumRegs;
     Parts.clear();
   }
 
-  return DAG.getNode(ISD::MERGE_VALUES, dl,
-                     DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                     &Values[0], ValueVTs.size());
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, dl,
+                            DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                            &Values[0], ValueVTs.size());
+  if (DisableScheduling)
+    DAG.AssignOrdering(Res.getNode(), Order);
+  return Res;
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -5199,7 +5225,8 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                                 SDValue &Chain, SDValue *Flag) const {
+                                 unsigned Order, SDValue &Chain,
+                                 SDValue *Flag) const {
   // Get the list of the values's legal parts.
   unsigned NumRegs = Regs.size();
   SmallVector<SDValue, 8> Parts(NumRegs);
@@ -5217,13 +5244,17 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
   SmallVector<SDValue, 8> Chains(NumRegs);
   for (unsigned i = 0; i != NumRegs; ++i) {
     SDValue Part;
-    if (Flag == 0)
+    if (Flag == 0) {
       Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i]);
-    else {
+    } else {
       Part = DAG.getCopyToReg(Chain, dl, Regs[i], Parts[i], *Flag);
       *Flag = Part.getValue(1);
     }
+
     Chains[i] = Part.getValue(0);
+
+    if (DisableScheduling)
+      DAG.AssignOrdering(Part.getNode(), Order);
   }
 
   if (NumRegs == 1 || Flag)
@@ -5240,6 +5271,9 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
     Chain = Chains[NumRegs-1];
   else
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Chains[0], NumRegs);
+
+  if (DisableScheduling)
+    DAG.AssignOrdering(Chain.getNode(), Order);
 }
 
 /// AddInlineAsmOperands - Add this value to the specified inlineasm node
@@ -5876,7 +5910,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
           // Use the produced MatchedRegs object to
           MatchedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
-                                    Chain, &Flag);
+                                    SDNodeOrder, Chain, &Flag);
           MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/,
                                            true, OpInfo.getMatchedOperand(),
                                            DAG, AsmNodeOperands);
@@ -5939,7 +5973,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
-                                        Chain, &Flag);
+                                        SDNodeOrder, Chain, &Flag);
 
       OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/, false, 0,
                                                DAG, AsmNodeOperands);
@@ -5969,7 +6003,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
     SDValue Val = RetValRegs.getCopyFromRegs(DAG, getCurDebugLoc(),
-                                             Chain, &Flag);
+                                             SDNodeOrder, Chain, &Flag);
 
     // FIXME: Why don't we do this for inline asms with MRVs?
     if (CS.getType()->isSingleValueType() && CS.getType()->isSized()) {
@@ -6009,7 +6043,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     RegsForValue &OutRegs = IndirectStoresToEmit[i].first;
     Value *Ptr = IndirectStoresToEmit[i].second;
     SDValue OutVal = OutRegs.getCopyFromRegs(DAG, getCurDebugLoc(),
-                                             Chain, &Flag);
+                                             SDNodeOrder, Chain, &Flag);
     StoresToEmit.push_back(std::make_pair(OutVal, Ptr));
 
   }
@@ -6251,7 +6285,7 @@ void SelectionDAGBuilder::CopyValueToVirtualRegister(Value *V, unsigned Reg) {
 
   RegsForValue RFV(V->getContext(), TLI, Reg, V->getType());
   SDValue Chain = DAG.getEntryNode();
-  RFV.getCopyToRegs(Op, DAG, getCurDebugLoc(), Chain, 0);
+  RFV.getCopyToRegs(Op, DAG, getCurDebugLoc(), SDNodeOrder, Chain, 0);
   PendingExports.push_back(Chain);
 }
 
