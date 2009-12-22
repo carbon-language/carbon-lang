@@ -62,7 +62,7 @@ static bool PrintInst(const llvm::MCDisassembler &DisAsm,
   
   if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, verboseOS)) {
     SM.PrintMessage(SMLoc::getFromPointer(Bytes[0].second),
-                    "invalid instruction", "error");
+                    "invalid instruction encoding", "error");
     errs() << "Diagnostic log:" << '\n';
     errs() << verboseOS.str() << '\n';
     return true;
