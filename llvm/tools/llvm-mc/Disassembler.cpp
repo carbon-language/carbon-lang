@@ -1,4 +1,4 @@
-//===- HexDisassembler.cpp - Disassembler for hex strings -----------------===//
+//===- Disassembler.cpp - Disassembler for hex strings --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexDisassembler.h"
+#include "Disassembler.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -78,7 +78,7 @@ static bool PrintInst(const llvm::MCDisassembler &DisAsm,
   return false;
 }
 
-int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
+int Disassembler::disassemble(const Target &T, const std::string &Triple,
                                  MemoryBuffer &Buffer) {
   // Set up disassembler.
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));

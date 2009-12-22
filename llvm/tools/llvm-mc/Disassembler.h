@@ -1,4 +1,4 @@
-//===- HexDisassembler.h - Disassembler for hex strings -------------------===//
+//===- Disassembler.h - Text File Disassembler ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXDISASSEMBLER_H
-#define HEXDISASSEMBLER_H
+#ifndef DISASSEMBLER_H
+#define DISASSEMBLER_H
 
 #include <string>
 
@@ -22,7 +22,7 @@ namespace llvm {
 class Target;
 class MemoryBuffer;
 
-class HexDisassembler {
+class Disassembler {
 public:
   static int disassemble(const Target &target, 
                          const std::string &tripleString,

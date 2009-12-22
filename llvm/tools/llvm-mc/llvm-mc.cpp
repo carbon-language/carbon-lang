@@ -32,7 +32,7 @@
 #include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "AsmParser.h"
-#include "HexDisassembler.h"
+#include "Disassembler.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -310,7 +310,7 @@ static int DisassembleInput(const char *ProgName) {
     return 1;
   }
   
-  return HexDisassembler::disassemble(*TheTarget, TripleName, *Buffer);
+  return Disassembler::disassemble(*TheTarget, TripleName, *Buffer);
 }
 
 
