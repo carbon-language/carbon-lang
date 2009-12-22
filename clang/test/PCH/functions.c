@@ -18,3 +18,8 @@ void test_g0(int *x, float * y) {
   g0(y); // expected-warning{{incompatible pointer types passing 'float *', expected 'int *'}}
   g0(x); 
 }
+
+void __attribute__((noreturn)) test_abort(int code) {
+  do_abort(code);
+}
+  
