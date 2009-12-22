@@ -2945,11 +2945,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       // For CallExpr, use the result type to know if it returns a reference.
       if (const CallExpr *CE = dyn_cast<CallExpr>(Ex)) {
         const Expr *Callee = CE->getCallee();
-        SVal L = state->getSVal(Callee);
-        
-        const FunctionDecl *FD = L.getAsFunctionDecl();
-        if (FD)
+        if (const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl())
           T = FD->getResultType();
+      }
+      else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(Ex)) {
+        if (const ObjCMethodDecl *MD = ME->getMethodDecl())
+          T = MD->getResultType();
       }
 
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {

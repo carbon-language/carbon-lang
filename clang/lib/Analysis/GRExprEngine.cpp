@@ -46,10 +46,10 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
   return Ctx.Selectors.getSelector(0, &II);
 }
 
+
 static bool CalleeReturnsReference(const CallExpr *CE) { 
   const Expr *Callee = CE->getCallee();
   QualType T = Callee->getType();
-  
   
   if (const PointerType *PT = T->getAs<PointerType>()) {
     const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>();
@@ -58,9 +58,15 @@ static bool CalleeReturnsReference(const CallExpr *CE) {
   else {
     const BlockPointerType *BT = T->getAs<BlockPointerType>();
     T = BT->getPointeeType()->getAs<FunctionType>()->getResultType();
-  }
-  
+  }  
   return T->isReferenceType();
+}
+
+static bool ReceiverReturnsReference(const ObjCMessageExpr *ME) {
+  const ObjCMethodDecl *MD = ME->getMethodDecl();
+  if (!MD)
+    return false;
+  return MD->getResultType()->isReferenceType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -672,10 +678,9 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S), Pred, Dst);
       break;
 
-    case Stmt::ObjCMessageExprClass: {
-      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
+    case Stmt::ObjCMessageExprClass:
+      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst, false);
       break;
-    }
 
     case Stmt::ObjCAtThrowStmtClass: {
       // FIXME: This is not complete.  We basically treat @throw as
@@ -764,7 +769,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
-      CallExpr* C = cast<CallExpr>(Ex);
+      CallExpr *C = cast<CallExpr>(Ex);
       assert(CalleeReturnsReference(C));
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, true);      
       break;
@@ -785,6 +790,13 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::ObjCIvarRefExprClass:
       VisitObjCIvarRefExpr(cast<ObjCIvarRefExpr>(Ex), Pred, Dst, true);
       return;
+      
+    case Stmt::ObjCMessageExprClass: {
+      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(Ex);
+      assert(ReceiverReturnsReference(ME));
+      VisitObjCMessageExpr(ME, Pred, Dst, true); 
+      return;
+    }
 
     case Stmt::ObjCPropertyRefExprClass:
     case Stmt::ObjCImplicitSetterGetterRefExprClass:
@@ -1888,16 +1900,18 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
-                                        ExplodedNodeSet& Dst){
+                                        ExplodedNodeSet& Dst, bool asLValue){
 
   VisitObjCMessageExprArgHelper(ME, ME->arg_begin(), ME->arg_end(),
-                                Pred, Dst);
+                                Pred, Dst, asLValue);
 }
 
 void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
-                                              ObjCMessageExpr::arg_iterator AI,
-                                              ObjCMessageExpr::arg_iterator AE,
-                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+                                               ObjCMessageExpr::arg_iterator AI,
+                                               ObjCMessageExpr::arg_iterator AE,
+                                                 ExplodedNode* Pred,
+                                                 ExplodedNodeSet& Dst,
+                                                 bool asLValue) {
   if (AI == AE) {
 
     // Process the receiver.
@@ -1908,12 +1922,12 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
 
       for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE;
            ++NI)
-        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
+        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst, asLValue);
 
       return;
     }
 
-    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst);
+    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst, asLValue);
     return;
   }
 
@@ -1923,12 +1937,13 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
   ++AI;
 
   for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end();NI != NE;++NI)
-    VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
+    VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst, asLValue);
 }
 
 void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
                                                       ExplodedNode* Pred,
-                                                      ExplodedNodeSet& Dst) {
+                                                      ExplodedNodeSet& Dst,
+                                                      bool asLValue) {
 
   // Handle previsits checks.
   ExplodedNodeSet Src, DstTmp;
@@ -1936,12 +1951,17 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   
   CheckerVisit(ME, DstTmp, Src, true);
   
-  unsigned size = Dst.size();
+  ExplodedNodeSet PostVisitSrc;
 
   for (ExplodedNodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end();
        DI!=DE; ++DI) {    
+
     Pred = *DI;
     bool RaisesException = false;
+    
+    unsigned OldSize = PostVisitSrc.size();
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+    SaveOr OldHasGen(Builder->HasGeneratedNode);  
 
     if (const Expr *Receiver = ME->getReceiver()) {
       const GRState *state = Pred->getState();
@@ -1956,8 +1976,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       // There are three cases: can be nil or non-nil, must be nil, must be 
       // non-nil. We handle must be nil, and merge the rest two into non-nil.
       if (nilState && !notNilState) {
-        CheckerEvalNilReceiver(ME, Dst, nilState, Pred);
-        return;
+        CheckerEvalNilReceiver(ME, PostVisitSrc, nilState, Pred);
+        continue;
       }
 
       assert(notNilState);
@@ -1968,39 +1988,29 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 
       // Check if we raise an exception.  For now treat these as sinks.
       // Eventually we will want to handle exceptions properly.
-      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       if (RaisesException)
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      SaveOr OldHasGen(Builder->HasGeneratedNode);  
-      EvalObjCMessageExpr(Dst, ME, Pred, notNilState);
+      EvalObjCMessageExpr(PostVisitSrc, ME, Pred, notNilState);
     }
     else {
-
       IdentifierInfo* ClsName = ME->getClassName();
       Selector S = ME->getSelector();
 
       // Check for special instance methods.
-
       if (!NSExceptionII) {
         ASTContext& Ctx = getContext();
-
         NSExceptionII = &Ctx.Idents.get("NSException");
       }
 
       if (ClsName == NSExceptionII) {
-
         enum { NUM_RAISE_SELECTORS = 2 };
 
         // Lazily create a cache of the selectors.
-
         if (!NSExceptionInstanceRaiseSelectors) {
-
           ASTContext& Ctx = getContext();
-
           NSExceptionInstanceRaiseSelectors = new Selector[NUM_RAISE_SELECTORS];
-
           llvm::SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
           unsigned idx = 0;
 
@@ -2018,26 +2028,51 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 
         for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i)
           if (S == NSExceptionInstanceRaiseSelectors[i]) {
-            RaisesException = true; break;
+            RaisesException = true;
+            break;
           }
       }
 
       // Check if we raise an exception.  For now treat these as sinks.
       // Eventually we will want to handle exceptions properly.
-      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       if (RaisesException)
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      SaveOr OldHasGen(Builder->HasGeneratedNode);  
-      EvalObjCMessageExpr(Dst, ME, Pred, Builder->GetState(Pred));
+      EvalObjCMessageExpr(PostVisitSrc, ME, Pred, Builder->GetState(Pred));
     }
+    
+    // Handle the case where no nodes where generated.  Auto-generate that
+    // contains the updated state if we aren't generating sinks.
+    if (!Builder->BuildSinks && PostVisitSrc.size() == OldSize &&
+        !Builder->HasGeneratedNode)
+      MakeNode(PostVisitSrc, ME, Pred, GetState(Pred));
   }
 
-  // Handle the case where no nodes where generated.  Auto-generate that
-  // contains the updated state if we aren't generating sinks.
-  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
-    MakeNode(Dst, ME, Pred, GetState(Pred));
+  // Finally, perform the post-condition check of the ObjCMessageExpr and store
+  // the created nodes in 'Dst'.
+  if (!(!asLValue && ReceiverReturnsReference(ME))) {
+    CheckerVisit(ME, Dst, PostVisitSrc, false);
+    return;
+  }
+  
+  // Handle the case where the message expression returns a reference but
+  // we expect an rvalue.  For such cases, convert the reference to
+  // an rvalue.  
+  // FIXME: This conversion doesn't actually happen unless the result
+  //  of ObjCMessageExpr is consumed by another expression.
+  ExplodedNodeSet DstRValueConvert;
+  CheckerVisit(ME, DstRValueConvert, PostVisitSrc, false);
+  QualType LoadTy = ME->getType();
+  
+  static int *ConvertToRvalueTag = 0;
+  for (ExplodedNodeSet::iterator NI = DstRValueConvert.begin(),
+       NE = DstRValueConvert.end();
+       NI!=NE; ++NI) {
+    const GRState *state = GetState(*NI);
+    EvalLoad(Dst, ME, *NI, state, state->getSVal(ME),
+             &ConvertToRvalueTag, LoadTy);
+  }
 }
 
 //===----------------------------------------------------------------------===//

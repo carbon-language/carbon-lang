@@ -28,10 +28,11 @@ PREVISIT(DeclStmt, Stmt)
 PREVISIT(ObjCMessageExpr, Stmt)
 PREVISIT(ReturnStmt, Stmt)
 
-POSTVISIT(CallExpr, Stmt)
-POSTVISIT(CXXOperatorCallExpr, CallExpr)
 POSTVISIT(BlockExpr, Stmt)
 POSTVISIT(BinaryOperator, Stmt)
+POSTVISIT(CallExpr, Stmt)
+POSTVISIT(CXXOperatorCallExpr, CallExpr)
+POSTVISIT(ObjCMessageExpr, Stmt)
 
 #undef PREVISIT
 #undef POSTVISIT
