@@ -46,7 +46,7 @@
  * @return          - The InstructionContext to use when looking up an
  *                    an instruction with these attributes.
  */
-static inline InstructionContext contextForAttrs(uint8_t attrMask) {
+static InstructionContext contextForAttrs(uint8_t attrMask) {
   return CONTEXTS_SYM[attrMask];
 }
 
@@ -61,7 +61,7 @@ static inline InstructionContext contextForAttrs(uint8_t attrMask) {
  *                      ModR/M extensions and escapes.
  * @return            - TRUE if the ModR/M byte is required, FALSE otherwise.
  */
-static inline int modRMRequired(OpcodeType type,
+static int modRMRequired(OpcodeType type,
                                 InstructionContext insnContext,
                                 uint8_t opcode) {
   const struct ContextDecision* decision = 0;
@@ -97,7 +97,7 @@ static inline int modRMRequired(OpcodeType type,
  * @param opcode      - See modRMRequired().
  * @param modRM       - The ModR/M byte if required, or any value if not.
  */
-static inline InstrUID decode(OpcodeType type,
+static InstrUID decode(OpcodeType type,
                                InstructionContext insnContext,
                                uint8_t opcode,
                                uint8_t modRM) {
@@ -145,7 +145,7 @@ static inline InstrUID decode(OpcodeType type,
  *              decode(); specifierForUID will not check bounds.
  * @return    - A pointer to the specification for that instruction.
  */
-static inline struct InstructionSpecifier* specifierForUID(InstrUID uid) {
+static struct InstructionSpecifier* specifierForUID(InstrUID uid) {
   return &INSTRUCTIONS_SYM[uid];
 }
 
@@ -159,7 +159,7 @@ static inline struct InstructionSpecifier* specifierForUID(InstrUID uid) {
  *                with the data read.
  * @return      - 0 if the read was successful; nonzero otherwise.
  */
-static inline int consumeByte(struct InternalInstruction* insn, uint8_t* byte) {
+static int consumeByte(struct InternalInstruction* insn, uint8_t* byte) {
   int ret = insn->reader(insn->readerArg, byte, insn->readerCursor);
   
   if (!ret)
@@ -175,30 +175,30 @@ static inline int consumeByte(struct InternalInstruction* insn, uint8_t* byte) {
  * @param byte  - See consumeByte().
  * @return      - See consumeByte().
  */
-static inline int lookAtByte(struct InternalInstruction* insn, uint8_t* byte) {
+static int lookAtByte(struct InternalInstruction* insn, uint8_t* byte) {
   return insn->reader(insn->readerArg, byte, insn->readerCursor);
 }
 
-static inline void unconsumeByte(struct InternalInstruction* insn) {
+static void unconsumeByte(struct InternalInstruction* insn) {
   insn->readerCursor--;
 }
 
-#define CONSUME_FUNC(name, type)                                          \
-  static inline int name(struct InternalInstruction* insn, type* ptr) {   \
-    type combined = 0;                                                    \
-    unsigned offset;                                                      \
-    for (offset = 0; offset < sizeof(type); ++offset) {                   \
-      uint8_t byte;                                                       \
-      int ret = insn->reader(insn->readerArg,                             \
-                             &byte,                                       \
-                             insn->readerCursor + offset);                \
-      if (ret)                                                            \
-        return ret;                                                       \
-      combined = combined | ((type)byte << ((type)offset * 8));           \
-    }                                                                     \
-    *ptr = combined;                                                      \
-    insn->readerCursor += sizeof(type);                                   \
-    return 0;                                                             \
+#define CONSUME_FUNC(name, type)                                  \
+  static int name(struct InternalInstruction* insn, type* ptr) {  \
+    type combined = 0;                                            \
+    unsigned offset;                                              \
+    for (offset = 0; offset < sizeof(type); ++offset) {           \
+      uint8_t byte;                                               \
+      int ret = insn->reader(insn->readerArg,                     \
+                             &byte,                               \
+                             insn->readerCursor + offset);        \
+      if (ret)                                                    \
+        return ret;                                               \
+      combined = combined | ((type)byte << ((type)offset * 8));   \
+    }                                                             \
+    *ptr = combined;                                              \
+    insn->readerCursor += sizeof(type);                           \
+    return 0;                                                     \
   }
 
 /*
@@ -226,9 +226,9 @@ CONSUME_FUNC(consumeUInt64, uint64_t)
  * @param format  - See printf().
  * @param ...     - See printf().
  */
-static inline void dbgprintf(struct InternalInstruction* insn,
-                           const char* format,
-                           ...) {  
+static void dbgprintf(struct InternalInstruction* insn,
+                      const char* format,
+                      ...) {  
   char buffer[256];
   va_list ap;
   
@@ -253,7 +253,7 @@ static inline void dbgprintf(struct InternalInstruction* insn,
  * @param location  - The location where the prefix is located (in the address
  *                    space of the instruction's reader).
  */
-static inline void setPrefixPresent(struct InternalInstruction* insn,
+static void setPrefixPresent(struct InternalInstruction* insn,
                                     uint8_t prefix,
                                     uint64_t location)
 {
@@ -270,9 +270,9 @@ static inline void setPrefixPresent(struct InternalInstruction* insn,
  * @param location  - The location to query.
  * @return          - Whether the prefix is at that location.
  */
-static inline BOOL isPrefixAtLocation(struct InternalInstruction* insn,
-                                      uint8_t prefix,
-                                      uint64_t location)
+static BOOL isPrefixAtLocation(struct InternalInstruction* insn,
+                               uint8_t prefix,
+                               uint64_t location)
 {
   if (insn->prefixPresent[prefix] == 1 &&
      insn->prefixLocations[prefix] == location)
