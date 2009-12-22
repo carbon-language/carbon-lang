@@ -132,21 +132,17 @@ namespace llvm {
     }
   };
 
-  /// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache, and an
-  /// entry in the results set for a non-local query.  For each BasicBlock (the
-  /// BB entry) it keeps a MemDepResult and the (potentially phi translated)
-  /// address that was live in the block.
-  class NonLocalDepEntry {
+  /// NonLocalDepResult - This is a result from a NonLocal dependence query.
+  /// For each BasicBlock (the BB entry) it keeps a MemDepResult and the
+  /// (potentially phi translated) address that was live in the block.
+  class NonLocalDepResult {
     BasicBlock *BB;
     MemDepResult Result;
-    WeakVH Address;
+    Value *Address;
   public:
-    NonLocalDepEntry(BasicBlock *bb, MemDepResult result, Value *address)
+    NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
       : BB(bb), Result(result), Address(address) {}
-
-    // This is used for searches.
-    NonLocalDepEntry(BasicBlock *bb) : BB(bb) {}
-
+    
     // BB is the sort key, it can't be changed.
     BasicBlock *getBB() const { return BB; }
     
@@ -154,7 +150,7 @@ namespace llvm {
       Result = R;
       Address = Addr;
     }
-
+    
     const MemDepResult &getResult() const { return Result; }
     
     /// getAddress - Return the address of this pointer in this block.  This can
@@ -165,7 +161,27 @@ namespace llvm {
     ///
     /// The address is always null for a non-local 'call' dependence.
     Value *getAddress() const { return Address; }
+  };
+  
+  /// NonLocalDepEntry - This is an entry in the NonLocalDepInfo cache.  For
+  /// each BasicBlock (the BB entry) it keeps a MemDepResult.
+  class NonLocalDepEntry {
+    BasicBlock *BB;
+    MemDepResult Result;
+  public:
+    NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
+      : BB(bb), Result(result) {}
 
+    // This is used for searches.
+    NonLocalDepEntry(BasicBlock *bb) : BB(bb) {}
+
+    // BB is the sort key, it can't be changed.
+    BasicBlock *getBB() const { return BB; }
+    
+    void setResult(const MemDepResult &R) { Result = R; }
+
+    const MemDepResult &getResult() const { return Result; }
+    
     bool operator<(const NonLocalDepEntry &RHS) const {
       return BB < RHS.BB;
     }
@@ -283,7 +299,7 @@ namespace llvm {
     /// This method assumes the pointer has a "NonLocal" dependency within BB.
     void getNonLocalPointerDependency(Value *Pointer, bool isLoad,
                                       BasicBlock *BB,
-                                     SmallVectorImpl<NonLocalDepEntry> &Result);
+                                    SmallVectorImpl<NonLocalDepResult> &Result);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
@@ -307,7 +323,7 @@ namespace llvm {
                                            BasicBlock *BB);
     bool getNonLocalPointerDepFromBB(const PHITransAddr &Pointer, uint64_t Size,
                                      bool isLoad, BasicBlock *BB,
-                                     SmallVectorImpl<NonLocalDepEntry> &Result,
+                                     SmallVectorImpl<NonLocalDepResult> &Result,
                                      DenseMap<BasicBlock*, Value*> &Visited,
                                      bool SkipFirstBlock = false);
     MemDepResult GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,

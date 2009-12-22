@@ -1358,7 +1358,7 @@ static bool isLifetimeStart(Instruction *Inst) {
 bool GVN::processNonLocalLoad(LoadInst *LI,
                               SmallVectorImpl<Instruction*> &toErase) {
   // Find the non-local dependencies of the load.
-  SmallVector<NonLocalDepEntry, 64> Deps;
+  SmallVector<NonLocalDepResult, 64> Deps;
   MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
                                    Deps);
   //DEBUG(errs() << "INVESTIGATING NONLOCAL LOAD: "
