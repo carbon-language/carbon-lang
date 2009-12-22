@@ -4481,6 +4481,31 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
       !ArgumentChanged)
     return SemaRef.Owned(E->Retain());
 
+  if (!ArraySize.get()) {
+    // If no array size was specified, but the new expression was
+    // instantiated with an array type (e.g., "new T" where T is
+    // instantiated with "int[4]"), extract the outer bound from the
+    // array type as our array size. We do this with constant and
+    // dependently-sized array types.
+    const ArrayType *ArrayT = SemaRef.Context.getAsArrayType(AllocType);
+    if (!ArrayT) {
+      // Do nothing
+    } else if (const ConstantArrayType *ConsArrayT
+                                     = dyn_cast<ConstantArrayType>(ArrayT)) {
+      ArraySize 
+        = SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
+                                                  ConsArrayT->getSize(), 
+                                                  SemaRef.Context.getSizeType(),
+                                                  /*FIXME:*/E->getLocStart()));
+      AllocType = ConsArrayT->getElementType();
+    } else if (const DependentSizedArrayType *DepArrayT
+                              = dyn_cast<DependentSizedArrayType>(ArrayT)) {
+      if (DepArrayT->getSizeExpr()) {
+        ArraySize = SemaRef.Owned(DepArrayT->getSizeExpr()->Retain());
+        AllocType = DepArrayT->getElementType();
+      }
+    }
+  }
   return getDerived().RebuildCXXNewExpr(E->getLocStart(),
                                         E->isGlobalNew(),
                                         /*FIXME:*/E->getLocStart(),

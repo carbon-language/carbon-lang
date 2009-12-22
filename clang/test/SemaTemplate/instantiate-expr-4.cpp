@@ -84,6 +84,20 @@ template struct New2<X, int, float>;
 template struct New2<X, int, int*>; // expected-note{{instantiation}}
 // FIXME: template struct New2<int, int, float>;
 
+// PR5833
+struct New3 {
+  New3();
+
+  void *operator new[](__SIZE_TYPE__) __attribute__((unavailable)); // expected-note{{explicitly made unavailable}}
+};
+
+template<class C>
+void* object_creator() {
+  return new C(); // expected-error{{call to unavailable function 'operator new[]'}}
+}
+
+template void *object_creator<New3[4]>(); // expected-note{{instantiation}}
+
 template<typename T>
 struct Delete0 {
   void f(T t) {
