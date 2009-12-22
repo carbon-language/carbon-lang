@@ -800,7 +800,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
   switch (E->getStmtClass()) {
   case Stmt::ConditionalOperatorClass: {
     const ConditionalOperator *C = cast<ConditionalOperator>(E);
-    return SemaCheckStringLiteral(C->getLHS(), TheCall,
+    return SemaCheckStringLiteral(C->getTrueExpr(), TheCall,
                                   HasVAListArg, format_idx, firstDataArg)
         && SemaCheckStringLiteral(C->getRHS(), TheCall,
                                   HasVAListArg, format_idx, firstDataArg);

@@ -50,6 +50,7 @@ void check_conditional_literal(const char* s, int i) {
   printf(i == 1 ? "yes" : "no"); // no-warning
   printf(i == 0 ? (i == 1 ? "yes" : "no") : "dont know"); // no-warning
   printf(i == 0 ? (i == 1 ? s : "no") : "dont know"); // expected-warning{{format string is not a string literal}}
+  printf("yes" ?: "no %d", 1); // expected-warning{{more data arguments than '%' conversions}}
 }
 
 void check_writeback_specifier()
