@@ -408,7 +408,7 @@ public:
 
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
-    if (RefCount-- == 0 && AbstractTypeUsers.empty())
+    if (--RefCount == 0 && AbstractTypeUsers.empty())
       this->destroy();
   }
   
