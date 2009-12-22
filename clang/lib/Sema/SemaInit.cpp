@@ -1811,8 +1811,15 @@ InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index,
 void InitializedEntity::InitDeclLoc() {
   assert((Kind == EK_Variable || Kind == EK_Parameter || Kind == EK_Member) &&
          "InitDeclLoc cannot be used with non-declaration entities.");
-  
-  if (TypeSourceInfo *DI = VariableOrMember->getTypeSourceInfo()) {
+
+  ASTContext &Context = VariableOrMember->getASTContext();
+  if (Kind == EK_Parameter &&
+      !Context.hasSameUnqualifiedType(
+                     cast<ParmVarDecl>(VariableOrMember)->getOriginalType(),
+                     VariableOrMember->getType())) {
+    // For a parameter whose type has decayed, use the decayed type to
+    // build new source information.
+  } else if (TypeSourceInfo *DI = VariableOrMember->getTypeSourceInfo()) {
     TL = DI->getTypeLoc();
     return;
   }
@@ -1820,8 +1827,8 @@ void InitializedEntity::InitDeclLoc() {
   // FIXME: Once we've gone through the effort to create the fake 
   // TypeSourceInfo, should we cache it in the declaration?
   // (If not, we "leak" it).
-  TypeSourceInfo *DI = VariableOrMember->getASTContext()
-                             .CreateTypeSourceInfo(VariableOrMember->getType());
+  TypeSourceInfo *DI
+    = Context.CreateTypeSourceInfo(VariableOrMember->getType());
   DI->getTypeLoc().initialize(VariableOrMember->getLocation());
   TL = DI->getTypeLoc();
 }
@@ -3346,6 +3353,14 @@ InitializationSequence::Perform(Sema &S,
       QualType SourceType = CurInitExpr->getType();
       Sema::AssignConvertType ConvTy =
         S.CheckSingleAssignmentConstraints(Step->Type, CurInitExpr);
+
+      // If this is a call, allow conversion to a transparent union.
+      if (ConvTy != Sema::Compatible &&
+          Entity.getKind() == InitializedEntity::EK_Parameter &&
+          S.CheckTransparentUnionArgumentConstraints(Step->Type, CurInitExpr)
+            == Sema::Compatible)
+        ConvTy = Sema::Compatible;
+
       if (S.DiagnoseAssignmentResult(ConvTy, Kind.getLocation(),
                                      Step->Type, SourceType,
                                      CurInitExpr, getAssignmentAction(Entity)))

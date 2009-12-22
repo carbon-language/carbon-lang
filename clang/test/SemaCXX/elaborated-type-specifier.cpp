@@ -27,7 +27,7 @@ namespace NS {
 
 void test_X_elab(NS::X x) {
   struct S4 *s4 = 0;
-  x.test_elab2(s4); // expected-error{{incompatible type passing 'struct S4 *', expected 'struct NS::S4 *'}}
+  x.test_elab2(s4); // expected-error{{cannot initialize a parameter of type 'struct NS::S4 *' with an lvalue of type 'struct S4 *'}}
 }
 
 namespace NS {

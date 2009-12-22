@@ -3182,8 +3182,20 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         return true;
       
       // Pass the argument.
-      if (PerformCopyInitialization(Arg, ProtoArgType, AA_Passing))
-        return true;
+      if (FDecl && i < FDecl->getNumParams()) {
+        ParmVarDecl *Param = FDecl->getParamDecl(i);
+        InitializedEntity Entity =InitializedEntity::InitializeParameter(Param);
+        OwningExprResult ArgE = PerformCopyInitialization(Entity,
+                                                          SourceLocation(),
+                                                          Owned(Arg));
+        if (ArgE.isInvalid())
+          return true;
+
+        Arg = ArgE.takeAs<Expr>();
+      } else {
+        if (PerformCopyInitialization(Arg, ProtoArgType, AA_Passing))
+          return true;
+      }
       
       if (!ProtoArgType->isReferenceType())
         Arg = MaybeBindToTemporary(Arg).takeAs<Expr>();
