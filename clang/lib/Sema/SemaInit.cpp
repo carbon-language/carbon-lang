@@ -345,6 +345,9 @@ class InitListChecker {
   int numArrayElements(QualType DeclType);
   int numStructUnionElements(QualType DeclType);
 
+  void FillInValueInitForField(unsigned Init, FieldDecl *Field,
+                               const InitializedEntity &ParentEntity,
+                               InitListExpr *ILE, bool &RequiresSecondPass);
   void FillInValueInitializations(const InitializedEntity &Entity,
                                   InitListExpr *ILE, bool &RequiresSecondPass);
 public:
@@ -357,6 +360,68 @@ public:
   InitListExpr *getFullyStructuredList() const { return FullyStructuredList; }
 };
 } // end anonymous namespace
+
+void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
+                                        const InitializedEntity &ParentEntity,
+                                              InitListExpr *ILE, 
+                                              bool &RequiresSecondPass) {
+  SourceLocation Loc = ILE->getSourceRange().getBegin();
+  unsigned NumInits = ILE->getNumInits();
+  InitializedEntity MemberEntity 
+    = InitializedEntity::InitializeMember(Field, &ParentEntity);
+  if (Init >= NumInits || !ILE->getInit(Init)) {
+    // FIXME: We probably don't need to handle references
+    // specially here, since value-initialization of references is
+    // handled in InitializationSequence.
+    if (Field->getType()->isReferenceType()) {
+      // C++ [dcl.init.aggr]p9:
+      //   If an incomplete or empty initializer-list leaves a
+      //   member of reference type uninitialized, the program is
+      //   ill-formed.
+      SemaRef.Diag(Loc, diag::err_init_reference_member_uninitialized)
+        << Field->getType()
+        << ILE->getSyntacticForm()->getSourceRange();
+      SemaRef.Diag(Field->getLocation(),
+                   diag::note_uninit_reference_member);
+      hadError = true;
+      return;
+    }
+    
+    InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
+                                                              true);
+    InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, 0, 0);
+    if (!InitSeq) {
+      InitSeq.Diagnose(SemaRef, MemberEntity, Kind, 0, 0);
+      hadError = true;
+      return;
+    }
+    
+    Sema::OwningExprResult MemberInit
+      = InitSeq.Perform(SemaRef, MemberEntity, Kind, 
+                        Sema::MultiExprArg(SemaRef, 0, 0));
+    if (MemberInit.isInvalid()) {
+      hadError = true;
+      return;
+    }
+    
+    if (hadError) {
+      // Do nothing
+    } else if (Init < NumInits) {
+      ILE->setInit(Init, MemberInit.takeAs<Expr>());
+    } else if (InitSeq.getKind()
+                 == InitializationSequence::ConstructorInitialization) {
+      // Value-initialization requires a constructor call, so
+      // extend the initializer list to include the constructor
+      // call and make a note that we'll need to take another pass
+      // through the initializer list.
+      ILE->updateInit(Init, MemberInit.takeAs<Expr>());
+      RequiresSecondPass = true;
+    }
+  } else if (InitListExpr *InnerILE
+               = dyn_cast<InitListExpr>(ILE->getInit(Init)))
+    FillInValueInitializations(MemberEntity, InnerILE, 
+                               RequiresSecondPass);  
+}
 
 /// Recursively replaces NULL values within the given initializer list
 /// with expressions that perform value-initialization of the
@@ -372,76 +437,32 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
     Loc = ILE->getSyntacticForm()->getSourceRange().getBegin();
 
   if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
-    unsigned Init = 0, NumInits = ILE->getNumInits();
-    for (RecordDecl::field_iterator
-           Field = RType->getDecl()->field_begin(),
-           FieldEnd = RType->getDecl()->field_end();
-         Field != FieldEnd; ++Field) {
-      if (Field->isUnnamedBitfield())
-        continue;
+    if (RType->getDecl()->isUnion() &&
+        ILE->getInitializedFieldInUnion())
+      FillInValueInitForField(0, ILE->getInitializedFieldInUnion(),
+                              Entity, ILE, RequiresSecondPass);
+    else {
+      unsigned Init = 0;
+      for (RecordDecl::field_iterator
+             Field = RType->getDecl()->field_begin(),
+             FieldEnd = RType->getDecl()->field_end();
+           Field != FieldEnd; ++Field) {
+        if (Field->isUnnamedBitfield())
+          continue;
 
-      if (hadError)
-        return;
-
-      InitializedEntity MemberEntity 
-        = InitializedEntity::InitializeMember(*Field, &Entity);
-      if (Init >= NumInits || !ILE->getInit(Init)) {
-        // FIXME: We probably don't need to handle references
-        // specially here, since value-initialization of references is
-        // handled in InitializationSequence.
-        if (Field->getType()->isReferenceType()) {
-          // C++ [dcl.init.aggr]p9:
-          //   If an incomplete or empty initializer-list leaves a
-          //   member of reference type uninitialized, the program is
-          //   ill-formed.
-          SemaRef.Diag(Loc, diag::err_init_reference_member_uninitialized)
-            << Field->getType()
-            << ILE->getSyntacticForm()->getSourceRange();
-          SemaRef.Diag(Field->getLocation(),
-                        diag::note_uninit_reference_member);
-          hadError = true;
+        if (hadError)
           return;
-        } 
-          
-        InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
-                                                                  true);
-        InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, 0, 0);
-        if (!InitSeq) {
-          InitSeq.Diagnose(SemaRef, MemberEntity, Kind, 0, 0);
-          hadError = true;
+
+        FillInValueInitForField(Init, *Field, Entity, ILE, RequiresSecondPass);
+        if (hadError)
           return;
-        }
 
-        Sema::OwningExprResult MemberInit
-          = InitSeq.Perform(SemaRef, MemberEntity, Kind, 
-                            Sema::MultiExprArg(SemaRef, 0, 0));
-        if (MemberInit.isInvalid()) {
-          hadError = true;
-          return;
-        }
+        ++Init;
 
-        if (hadError) {
-          // Do nothing
-        } else if (Init < NumInits) {
-          ILE->setInit(Init, MemberInit.takeAs<Expr>());
-        } else if (InitSeq.getKind()
-                         == InitializationSequence::ConstructorInitialization) {
-          // Value-initialization requires a constructor call, so
-          // extend the initializer list to include the constructor
-          // call and make a note that we'll need to take another pass
-          // through the initializer list.
-          ILE->updateInit(Init, MemberInit.takeAs<Expr>());
-          RequiresSecondPass = true;
-        }
-      } else if (InitListExpr *InnerILE
-                 = dyn_cast<InitListExpr>(ILE->getInit(Init)))
-          FillInValueInitializations(MemberEntity, InnerILE, 
-                                     RequiresSecondPass);
-      ++Init;
-
-      // Only look at the first initialization of a union.
-      if (RType->getDecl()->isUnion())
-        break;
+        // Only look at the first initialization of a union.
+        if (RType->getDecl()->isUnion())
+          break;
+      }
     }
 
     return;
