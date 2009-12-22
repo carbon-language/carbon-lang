@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef LLVM_TYPE_H
 #define LLVM_TYPE_H
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/System/DataTypes.h"
-#include "llvm/System/Atomic.h"
 #include "llvm/ADT/GraphTraits.h"
 #include <string>
 #include <vector>
@@ -104,7 +102,7 @@ private:
   /// has no AbstractTypeUsers, the type is deleted.  This is only sensical for
   /// derived types.
   ///
-  mutable sys::cas_flag RefCount;
+  mutable unsigned RefCount;
 
   /// Context - This refers to the LLVMContext in which this type was uniqued.
   LLVMContext &Context;
@@ -401,7 +399,7 @@ public:
 
   void addRef() const {
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
-    sys::AtomicIncrement(&RefCount);
+    ++RefCount;
   }
 
   void dropRef() const {
@@ -410,8 +408,7 @@ public:
 
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
-    sys::cas_flag OldCount = sys::AtomicDecrement(&RefCount);
-    if (OldCount == 0 && AbstractTypeUsers.empty())
+    if (RefCount-- == 0 && AbstractTypeUsers.empty())
       this->destroy();
   }
   
