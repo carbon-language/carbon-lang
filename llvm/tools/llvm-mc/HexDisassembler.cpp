@@ -61,8 +61,8 @@ static bool PrintInst(const llvm::MCDisassembler &DisAsm,
   llvm::raw_string_ostream verboseOS(verboseOStr); 
   
   if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, verboseOS)) {
-    // FIXME: Caret.
-    errs() << "error: invalid instruction\n";
+    SM.PrintMessage(SMLoc::getFromPointer(Bytes[0].second),
+                    "invalid instruction", "error");
     errs() << "Diagnostic log:" << '\n';
     errs() << verboseOS.str() << '\n';
     return true;
