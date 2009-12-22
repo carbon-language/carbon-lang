@@ -3669,10 +3669,6 @@ public:
                                    SourceLocation CmpLoc);
 
   /// type checking declaration initializers (C99 6.7.8)
-
-  bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType,
-                             const InitializedEntity &Entity,
-                             const InitializationKind &Kind);
   bool CheckInitList(const InitializedEntity &Entity,
                      InitListExpr *&InitList, QualType &DeclType);
   bool CheckForConstantInitializer(Expr *e, QualType t);
