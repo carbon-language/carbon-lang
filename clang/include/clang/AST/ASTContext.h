@@ -18,7 +18,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/AST/Attr.h"
-#include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -39,6 +38,7 @@ namespace clang {
   class FileManager;
   class ASTRecordLayout;
   class BlockExpr;
+  class CharUnits;
   class Expr;
   class ExternalASTSource;
   class IdentifierTable;
@@ -820,12 +820,8 @@ public:
   
   /// getTypeSizeInChars - Return the size of the specified type, in characters.
   /// This method does not work on incomplete types.
-  CharUnits getTypeSizeInChars(QualType T) {
-    return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
-  }
-  CharUnits getTypeSizeInChars(const Type *T) {
-    return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
-  }
+  CharUnits getTypeSizeInChars(QualType T);
+  CharUnits getTypeSizeInChars(const Type *T);
 
   /// getTypeAlign - Return the ABI-specified alignment of a type, in bits.
   /// This method does not work on incomplete types.

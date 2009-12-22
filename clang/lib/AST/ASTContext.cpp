@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -816,6 +817,15 @@ ASTContext::getTypeInfo(const Type *T) {
 
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
   return std::make_pair(Width, Align);
+}
+
+/// getTypeSizeInChars - Return the size of the specified type, in characters.
+/// This method does not work on incomplete types.
+CharUnits ASTContext::getTypeSizeInChars(QualType T) {
+  return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
+}
+CharUnits ASTContext::getTypeSizeInChars(const Type *T) {
+  return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
 }
 
 /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
