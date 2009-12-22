@@ -1053,8 +1053,11 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
       return TC_NotApplicable;
 
     // If both types have the same size, we can successfully cast.
-    if (Self.Context.getTypeSize(SrcType) == Self.Context.getTypeSize(DestType))
+    if (Self.Context.getTypeSize(SrcType)
+          == Self.Context.getTypeSize(DestType)) {
+      Kind = CastExpr::CK_BitCast;
       return TC_Success;
+    }
     
     if (destIsScalar)
       msg = diag::err_bad_cxx_cast_vector_to_scalar_different_size;
@@ -1083,6 +1086,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     // to the same type. However, the behavior of compilers is pretty consistent
     // on this point: allow same-type conversion if the involved types are
     // pointers, disallow otherwise.
+    Kind = CastExpr::CK_NoOp;
     return TC_Success;
   }
 
