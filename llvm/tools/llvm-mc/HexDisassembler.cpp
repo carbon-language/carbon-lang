@@ -114,31 +114,43 @@ int HexDisassembler::disassemble(const Target &T, const std::string &Triple,
   StringRef Str = Buffer.getBuffer();
   
   while (!Str.empty()) {
-    if (Str.find_first_of('\n') < Str.find_first_not_of(" \t\n\r")) {
-      if (!ByteArray.empty())
-        printInst(*DisAsm, *InstPrinter, ByteArray);
-      
-      ByteArray.clear();
+    // Strip horizontal whitespace.
+    if (size_t Pos = Str.find_first_not_of(" \t\r")) {
+      Str = Str.substr(Pos);
+      continue;
     }
     
-    // Skip leading space.
-    Str = Str.substr(Str.find_first_not_of(" \t\n\r"));
+    // If this is the end of a line or start of a comment, process the
+    // instruction we have so far.
+    if (Str[0] == '\n' || Str[0] == '#') {
+      // If we have bytes to process, do so.
+      if (!ByteArray.empty()) {
+        printInst(*DisAsm, *InstPrinter, ByteArray);
+        ByteArray.clear();
+      }
+      
+      // Strip to the end of line if we already processed any bytes on this
+      // line.  This strips the comment and/or the \n.
+      if (Str[0] == '\n')
+        Str = Str.substr(1);
+      else {
+        Str = Str.substr(Str.find_first_of('\n'));
+        if (!Str.empty())
+          Str = Str.substr(1);
+      }
+      continue;
+    }
     
     // Get the current token.
-    size_t Next = Str.find_first_of(" \t\n\r");
-    
-    if(Next == (size_t)StringRef::npos)
-      break;
-    
-    StringRef Value = Str.slice(0, Next);
+    size_t Next = Str.find_first_of(" \t\n\r#");
+    StringRef Value = Str.substr(0, Next);
     
     // Convert to a byte and add to the byte vector.
     unsigned ByteVal;
     if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
       errs() << "warning: invalid input token '" << Value << "' of length " 
              << Next << "\n";
-    }
-    else {
+    } else {
       ByteArray.push_back((unsigned char)ByteVal);
     }
     Str = Str.substr(Next);
