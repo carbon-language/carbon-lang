@@ -367,6 +367,19 @@ def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
 
+// Just the stack pointer (for tSTRspi and friends).
+def JustSP : RegisterClass<"ARM", [i32], 32, [SP]> {
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+      JustSPClass::iterator
+      JustSPClass::allocation_order_end(const MachineFunction &MF) const {
+        return allocation_order_begin(MF);
+      }
+  }];
+}
+
 //===----------------------------------------------------------------------===//
 // Subregister Set Definitions... now that we have all of the pieces, define the
 // sub registers for each register.
