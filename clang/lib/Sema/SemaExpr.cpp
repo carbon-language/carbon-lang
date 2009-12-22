@@ -259,44 +259,17 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
 bool Sema::DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT) {
   DefaultArgumentPromotion(Expr);
 
-  if (Expr->getType()->isObjCInterfaceType()) {
-    switch (ExprEvalContexts.back().Context ) {
-    case Unevaluated:
-      // The argument will never be evaluated, so don't complain.
-      break;
+  if (Expr->getType()->isObjCInterfaceType() &&
+      DiagRuntimeBehavior(Expr->getLocStart(),
+        PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
+          << Expr->getType() << CT))
+    return true;
 
-    case PotentiallyEvaluated:
-      Diag(Expr->getLocStart(),
-           diag::err_cannot_pass_objc_interface_to_vararg)
-        << Expr->getType() << CT;
-      return true;
-
-    case PotentiallyPotentiallyEvaluated:
-      ExprEvalContexts.back().addDiagnostic(Expr->getLocStart(),
-                           PDiag(diag::err_cannot_pass_objc_interface_to_vararg) 
-                             << Expr->getType() << CT);
-      break;
-    }
-  }
-
-  if (!Expr->getType()->isPODType()) {
-    switch (ExprEvalContexts.back().Context ) {
-    case Unevaluated:
-      // The argument will never be evaluated, so don't complain.
-      break;
-
-    case PotentiallyEvaluated:
-      Diag(Expr->getLocStart(), diag::warn_cannot_pass_non_pod_arg_to_vararg)
-        << Expr->getType() << CT;
-      break;
-
-    case PotentiallyPotentiallyEvaluated:
-      ExprEvalContexts.back().addDiagnostic(Expr->getLocStart(),
-                           PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg) 
-                             << Expr->getType() << CT);
-      break;
-    }
-  }
+  if (!Expr->getType()->isPODType() &&
+      DiagRuntimeBehavior(Expr->getLocStart(), 
+                          PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
+                            << Expr->getType() << CT))
+    return true;
 
   return false;
 }
@@ -6436,28 +6409,12 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
       // Get the decl corresponding to this.
       RecordDecl *RD = RC->getDecl();
       if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
-        if (!CRD->isPOD() && !DidWarnAboutNonPOD) {
-          switch (ExprEvalContexts.back().Context ) {
-          case Unevaluated:
-            // The argument will never be evaluated, so don't complain.
-            break;
-            
-          case PotentiallyEvaluated:
-            ExprError(Diag(BuiltinLoc, diag::warn_offsetof_non_pod_type)
-                      << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
-                      << Res->getType());
-            DidWarnAboutNonPOD = true;
-            break;
-            
-          case PotentiallyPotentiallyEvaluated:
-            ExprEvalContexts.back().addDiagnostic(BuiltinLoc,
-                              PDiag(diag::warn_offsetof_non_pod_type)
-                                << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
-                                << Res->getType());
-            DidWarnAboutNonPOD = true;
-            break;
-          }
-        }
+        if (!CRD->isPOD() && !DidWarnAboutNonPOD &&
+            DiagRuntimeBehavior(BuiltinLoc,
+                                PDiag(diag::warn_offsetof_non_pod_type)
+                                  << SourceRange(CompPtr[0].LocStart, OC.LocEnd)
+                                  << Res->getType()))
+          DidWarnAboutNonPOD = true;
       }
 
       LookupResult R(*this, OC.U.IdentInfo, OC.LocStart, LookupMemberName);
@@ -7076,6 +7033,41 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     D->setUsed(true);
     return;
   }
+}
+
+/// \brief Emit a diagnostic that describes an effect on the run-time behavior
+/// of the program being compiled.
+///
+/// This routine emits the given diagnostic when the code currently being
+/// type-checked is "potentially evaluated", meaning that there is a 
+/// possibility that the code will actually be executable. Code in sizeof()
+/// expressions, code used only during overload resolution, etc., are not
+/// potentially evaluated. This routine will suppress such diagnostics or,
+/// in the absolutely nutty case of potentially potentially evaluated
+/// expressions (C++ typeid), queue the diagnostic to potentially emit it 
+/// later.
+/// 
+/// This routine should be used for all diagnostics that describe the run-time
+/// behavior of a program, such as passing a non-POD value through an ellipsis.
+/// Failure to do so will likely result in spurious diagnostics or failures
+/// during overload resolution or within sizeof/alignof/typeof/typeid.
+bool Sema::DiagRuntimeBehavior(SourceLocation Loc, 
+                               const PartialDiagnostic &PD) {
+  switch (ExprEvalContexts.back().Context ) {
+  case Unevaluated:
+    // The argument will never be evaluated, so don't complain.
+    break;
+      
+  case PotentiallyEvaluated:
+    Diag(Loc, PD);
+    return true;
+      
+  case PotentiallyPotentiallyEvaluated:
+    ExprEvalContexts.back().addDiagnostic(Loc, PD);
+    break;
+  }
+
+  return false;
 }
 
 bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,

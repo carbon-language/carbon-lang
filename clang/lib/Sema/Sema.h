@@ -1437,7 +1437,8 @@ public:
   virtual void PopExpressionEvaluationContext();
 
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
-
+  bool DiagRuntimeBehavior(SourceLocation Loc, const PartialDiagnostic &PD);
+  
   // Primary Expressions.
   virtual SourceRange getExprRange(ExprTy *E) const;
 
