@@ -2931,22 +2931,29 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 void SelectionDAGLegalize::PromoteNode(SDNode *Node,
                                        SmallVectorImpl<SDValue> &Results) {
   EVT OVT = Node->getValueType(0);
+
   if (Node->getOpcode() == ISD::UINT_TO_FP ||
       Node->getOpcode() == ISD::SINT_TO_FP ||
-      Node->getOpcode() == ISD::SETCC) {
+      Node->getOpcode() == ISD::SETCC)
     OVT = Node->getOperand(0).getValueType();
-  }
+
   EVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
   DebugLoc dl = Node->getDebugLoc();
+  unsigned Order = DAG.GetOrdering(Node);
   SDValue Tmp1, Tmp2, Tmp3;
+
   switch (Node->getOpcode()) {
   case ISD::CTTZ:
   case ISD::CTLZ:
   case ISD::CTPOP:
     // Zero extend the argument.
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, Node->getOperand(0));
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
+
     // Perform the larger operation.
     Tmp1 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
+
     if (Node->getOpcode() == ISD::CTTZ) {
       //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
       Tmp2 = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT),
@@ -2954,21 +2961,37 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
                           ISD::SETEQ);
       Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp2,
                           DAG.getConstant(OVT.getSizeInBits(), NVT), Tmp1);
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(Tmp1.getNode(), Order);
+        DAG.AssignOrdering(Tmp2.getNode(), Order);
+      }
     } else if (Node->getOpcode() == ISD::CTLZ) {
       // Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
       Tmp1 = DAG.getNode(ISD::SUB, dl, NVT, Tmp1,
                           DAG.getConstant(NVT.getSizeInBits() -
                                           OVT.getSizeInBits(), NVT));
+      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     }
-    Results.push_back(DAG.getNode(ISD::TRUNCATE, dl, OVT, Tmp1));
+
+    Tmp3 = DAG.getNode(ISD::TRUNCATE, dl, OVT, Tmp1);
+    Results.push_back(Tmp3);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp3.getNode(), Order);
     break;
   case ISD::BSWAP: {
     unsigned DiffBits = NVT.getSizeInBits() - OVT.getSizeInBits();
-    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, Tmp1);
-    Tmp1 = DAG.getNode(ISD::BSWAP, dl, NVT, Tmp1);
-    Tmp1 = DAG.getNode(ISD::SRL, dl, NVT, Tmp1,
-                          DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
-    Results.push_back(Tmp1);
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ISD::BSWAP, dl, NVT, Tmp1);
+    Tmp3 = DAG.getNode(ISD::SRL, dl, NVT, Tmp2,
+                       DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
+    Results.push_back(Tmp3);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+      DAG.AssignOrdering(Tmp3.getNode(), Order);
+    }
+
     break;
   }
   case ISD::FP_TO_UINT:
@@ -2976,12 +2999,14 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     Tmp1 = PromoteLegalFP_TO_INT(Node->getOperand(0), Node->getValueType(0),
                                  Node->getOpcode() == ISD::FP_TO_SINT, dl);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   case ISD::UINT_TO_FP:
   case ISD::SINT_TO_FP:
     Tmp1 = PromoteLegalINT_TO_FP(Node->getOperand(0), Node->getValueType(0),
                                  Node->getOpcode() == ISD::SINT_TO_FP, dl);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   case ISD::AND:
   case ISD::OR:
@@ -2996,12 +3021,23 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     } else {
       llvm_report_error("Cannot promote logic operation");
     }
+
     // Promote each of the values to the new type.
     Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(0));
     Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
+
     // Perform the larger operation, then convert back
-    Tmp1 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1, Tmp2);
-    Results.push_back(DAG.getNode(TruncOp, dl, OVT, Tmp1));
+    Tmp3 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1, Tmp2);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+      DAG.AssignOrdering(Tmp3.getNode(), Order);
+    }
+
+    Tmp1 = DAG.getNode(TruncOp, dl, OVT, Tmp3);
+    Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::SELECT: {
@@ -3016,18 +3052,34 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
       ExtOp   = ISD::FP_EXTEND;
       TruncOp = ISD::FP_ROUND;
     }
+
     Tmp1 = Node->getOperand(0);
+
     // Promote each of the values to the new type.
     Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
     Tmp3 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(2));
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+      DAG.AssignOrdering(Tmp3.getNode(), Order);
+    }
+
     // Perform the larger operation, then round down.
     Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp1, Tmp2, Tmp3);
+
     if (TruncOp != ISD::FP_ROUND)
-      Tmp1 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1);
+      Tmp2 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1);
     else
-      Tmp1 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1,
+      Tmp2 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1,
                          DAG.getIntPtrConstant(0));
-    Results.push_back(Tmp1);
+
+    Results.push_back(Tmp2);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+    }
+
     break;
   }
   case ISD::VECTOR_SHUFFLE: {
@@ -3039,9 +3091,17 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Node->getOperand(1));
 
     // Convert the shuffle mask to the right # elements.
-    Tmp1 = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
-    Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp1);
+    Tmp3 = ShuffleWithNarrowerEltType(NVT, OVT, dl, Tmp1, Tmp2, Mask);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+      DAG.AssignOrdering(Tmp3.getNode(), Order);
+    }
+
+    Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp3);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::SETCC: {
@@ -3051,10 +3111,17 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
         cast<CondCodeSDNode>(Node->getOperand(2))->get();
       ExtOp = isSignedIntSetCC(CCCode) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
     }
+
     Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(0));
     Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
     Results.push_back(DAG.getNode(ISD::SETCC, dl, Node->getValueType(0),
                                   Tmp1, Tmp2, Node->getOperand(2)));
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+    }
+
     break;
   }
   }

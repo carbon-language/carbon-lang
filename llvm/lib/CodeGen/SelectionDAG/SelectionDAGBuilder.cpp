@@ -648,6 +648,7 @@ SDValue SelectionDAGBuilder::getControlRoot() {
                      PendingExports.size());
   PendingExports.clear();
   DAG.setRoot(Root);
+  if (DisableScheduling) DAG.AssignOrdering(Root.getNode(), SDNodeOrder);
   return Root;
 }
 
