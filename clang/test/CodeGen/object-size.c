@@ -35,7 +35,7 @@ void test4() {
 
 void test5() {
   // CHECK:     %tmp = load i8** @gp
-  // CHECK-NEXT:%0 = call i64 @llvm.objectsize.i64(i8* %tmp, i32 0)
+  // CHECK-NEXT:%0 = call i64 @llvm.objectsize.i64(i8* %tmp, i1 false)
   // CHECK-NEXT:%cmp = icmp ne i64 %0, -1
   strcpy(gp, "Hi there");
 }

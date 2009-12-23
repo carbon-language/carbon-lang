@@ -209,10 +209,19 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     const llvm::Type *ResType[] = {
       ConvertType(E->getType())
     };
+    
+    // LLVM only supports 0 and 2, make sure that we pass along that
+    // as a boolean.
+    Value *Ty = EmitScalarExpr(E->getArg(1));
+    ConstantInt *CI = dyn_cast<ConstantInt>(Ty);
+    assert(CI);
+    uint64_t val = CI->getZExtValue();
+    CI = ConstantInt::get(llvm::Type::getInt1Ty(VMContext), (val & 0x2) >> 1);    
+    
     Value *F = CGM.getIntrinsic(Intrinsic::objectsize, ResType, 1);
     return RValue::get(Builder.CreateCall2(F,
                                            EmitScalarExpr(E->getArg(0)),
-                                           EmitScalarExpr(E->getArg(1))));
+                                           CI));
   }
   case Builtin::BI__builtin_prefetch: {
     Value *Locality, *RW, *Address = EmitScalarExpr(E->getArg(0));
