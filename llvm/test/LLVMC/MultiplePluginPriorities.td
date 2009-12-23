@@ -1,6 +1,5 @@
 // Check that multiple plugin priorities are not allowed.
 // RUN: ignore tblgen -I %p/../../include --gen-llvmc %s |& grep "More than one 'PluginPriority' instance found"
-// XFAIL: powerpc-apple-darwin
 
 include "llvm/CompilerDriver/Common.td"
 
