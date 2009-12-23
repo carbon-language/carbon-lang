@@ -355,10 +355,6 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&OutMI, 1);
     break;
-  case X86::MOV16r0:
-    OutMI.setOpcode(X86::MOV32r0);
-    lower_subreg32(&OutMI, 0);
-    break;
   case X86::MOVZX16rr8:
     OutMI.setOpcode(X86::MOVZX32rr8);
     lower_subreg32(&OutMI, 0);

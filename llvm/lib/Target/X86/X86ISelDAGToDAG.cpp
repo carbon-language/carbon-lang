@@ -1867,27 +1867,28 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       }
     }
 
-    unsigned LoReg, HiReg;
+    unsigned LoReg, HiReg, ClrReg;
     unsigned ClrOpcode, SExtOpcode;
+    EVT ClrVT = NVT;
     switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
     case MVT::i8:
-      LoReg = X86::AL;  HiReg = X86::AH;
+      LoReg = X86::AL;  ClrReg = HiReg = X86::AH;
       ClrOpcode  = 0;
       SExtOpcode = X86::CBW;
       break;
     case MVT::i16:
       LoReg = X86::AX;  HiReg = X86::DX;
-      ClrOpcode  = X86::MOV16r0;
+      ClrOpcode  = X86::MOV32r0;  ClrReg = X86::EDX;  ClrVT = MVT::i32;
       SExtOpcode = X86::CWD;
       break;
     case MVT::i32:
-      LoReg = X86::EAX; HiReg = X86::EDX;
+      LoReg = X86::EAX; ClrReg = HiReg = X86::EDX;
       ClrOpcode  = X86::MOV32r0;
       SExtOpcode = X86::CDQ;
       break;
     case MVT::i64:
-      LoReg = X86::RAX; HiReg = X86::RDX;
+      LoReg = X86::RAX; ClrReg = HiReg = X86::RDX;
       ClrOpcode  = ~0U; // NOT USED.
       SExtOpcode = X86::CQO;
       break;
@@ -1942,10 +1943,10 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                            MVT::i64, Zero, ClrNode, SubRegNo),
                     0);
         } else {
-          ClrNode = SDValue(CurDAG->getMachineNode(ClrOpcode, dl, NVT), 0);
+          ClrNode = SDValue(CurDAG->getMachineNode(ClrOpcode, dl, ClrVT), 0);
         }
 
-        InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, HiReg,
+        InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, ClrReg,
                                       ClrNode, InFlag).getValue(1);
       }
     }

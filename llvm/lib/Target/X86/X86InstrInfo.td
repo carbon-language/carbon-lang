@@ -3707,8 +3707,8 @@ def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
 
 // Use xorl instead of xorw since we don't care about the high 16 bits,
 // it's smaller, and it avoids a partial-register update.
-def MOV16r0  : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
-                 "", [/*(set GR16:$dst, 0)*/]>;
+//def MOV16r0  : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
+//                 "", [/*(set GR16:$dst, 0)*/]>;
 }
 
 let AddedComplexity = 1 in
