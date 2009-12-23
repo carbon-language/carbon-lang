@@ -46,7 +46,7 @@ namespace {
 #include "llvm/Instruction.def"
 
     void visitInstruction(Instruction &I) {
-      dbgs() << "Instruction Count does not know about " << I;
+      errs() << "Instruction Count does not know about " << I;
       llvm_unreachable(0);
     }
   public:
