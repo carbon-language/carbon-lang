@@ -181,15 +181,15 @@ LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
                                          const SCEV *B,
                                          Subscript *S) const {
-  DEBUG(errs() << "  Testing subscript: " << *A << ", " << *B << "\n");
+  DEBUG(dbgs() << "  Testing subscript: " << *A << ", " << *B << "\n");
 
   if (A == B) {
-    DEBUG(errs() << "  -> [D] same SCEV\n");
+    DEBUG(dbgs() << "  -> [D] same SCEV\n");
     return Dependent;
   }
 
   if (!isAffine(A) || !isAffine(B)) {
-    DEBUG(errs() << "  -> [?] not affine\n");
+    DEBUG(dbgs() << "  -> [?] not affine\n");
     return Unknown;
   }
 
@@ -204,12 +204,12 @@ LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
 
 LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analysePair(DependencePair *P) const {
-  DEBUG(errs() << "Analysing:\n" << *P->A << "\n" << *P->B << "\n");
+  DEBUG(dbgs() << "Analysing:\n" << *P->A << "\n" << *P->B << "\n");
 
   // We only analyse loads and stores but no possible memory accesses by e.g.
   // free, call, or invoke instructions.
   if (!IsLoadOrStoreInst(P->A) || !IsLoadOrStoreInst(P->B)) {
-    DEBUG(errs() << "--> [?] no load/store\n");
+    DEBUG(dbgs() << "--> [?] no load/store\n");
     return Unknown;
   }
 
@@ -219,12 +219,12 @@ LoopDependenceAnalysis::analysePair(DependencePair *P) const {
   switch (UnderlyingObjectsAlias(AA, aPtr, bPtr)) {
   case AliasAnalysis::MayAlias:
     // We can not analyse objects if we do not know about their aliasing.
-    DEBUG(errs() << "---> [?] may alias\n");
+    DEBUG(dbgs() << "---> [?] may alias\n");
     return Unknown;
 
   case AliasAnalysis::NoAlias:
     // If the objects noalias, they are distinct, accesses are independent.
-    DEBUG(errs() << "---> [I] no alias\n");
+    DEBUG(dbgs() << "---> [I] no alias\n");
     return Independent;
 
   case AliasAnalysis::MustAlias:
