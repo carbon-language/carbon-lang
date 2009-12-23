@@ -38,7 +38,7 @@ namespace llvm {
   class MachineBasicBlock;
   class MachineFunction;
 
-  // Helper for dumping edges to errs().
+  // Helper for dumping edges to dbgs().
   raw_ostream& operator<<(raw_ostream &O, std::pair<const BasicBlock *, const BasicBlock *> E);
   raw_ostream& operator<<(raw_ostream &O, std::pair<const MachineBasicBlock *, const MachineBasicBlock *> E);
 
@@ -123,7 +123,7 @@ namespace llvm {
 
     void setEdgeWeight(Edge e, double w) {
       DEBUG_WITH_TYPE("profile-info",
-            errs() << "Creating Edge " << e
+            dbgs() << "Creating Edge " << e
                    << " (weight: " << format("%.20g",w) << ")\n");
       EdgeInformation[getFunction(e)][e] = w;
     }
@@ -170,18 +170,18 @@ namespace llvm {
     void repair(const FType *F);
 
     void dump(FType *F = 0, bool real = true) {
-      errs() << "**** This is ProfileInfo " << this << " speaking:\n";
+      dbgs() << "**** This is ProfileInfo " << this << " speaking:\n";
       if (!real) {
         typename std::set<const FType*> Functions;
 
-        errs() << "Functions: \n";
+        dbgs() << "Functions: \n";
         if (F) {
-          errs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
+          dbgs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
           Functions.insert(F);
         } else {
           for (typename std::map<const FType*, double>::iterator fi = FunctionInformation.begin(),
                fe = FunctionInformation.end(); fi != fe; ++fi) {
-            errs() << fi->first << "@" << format("%p",fi->first) << ": " << format("%.20g",fi->second) << "\n";
+            dbgs() << fi->first << "@" << format("%p",fi->first) << ": " << format("%.20g",fi->second) << "\n";
             Functions.insert(fi->first);
           }
         }
@@ -190,34 +190,34 @@ namespace llvm {
              FI != FE; ++FI) {
           const FType *F = *FI;
           typename std::map<const FType*, BlockCounts>::iterator bwi = BlockInformation.find(F);
-          errs() << "BasicBlocks for Function " << F << ":\n";
+          dbgs() << "BasicBlocks for Function " << F << ":\n";
           for (typename BlockCounts::const_iterator bi = bwi->second.begin(), be = bwi->second.end(); bi != be; ++bi) {
-            errs() << bi->first << "@" << format("%p", bi->first) << ": " << format("%.20g",bi->second) << "\n";
+            dbgs() << bi->first << "@" << format("%p", bi->first) << ": " << format("%.20g",bi->second) << "\n";
           }
         }
 
         for (typename std::set<const FType*>::iterator FI = Functions.begin(), FE = Functions.end();
              FI != FE; ++FI) {
           typename std::map<const FType*, EdgeWeights>::iterator ei = EdgeInformation.find(*FI);
-          errs() << "Edges for Function " << ei->first << ":\n";
+          dbgs() << "Edges for Function " << ei->first << ":\n";
           for (typename EdgeWeights::iterator ewi = ei->second.begin(), ewe = ei->second.end(); 
                ewi != ewe; ++ewi) {
-            errs() << ewi->first << ": " << format("%.20g",ewi->second) << "\n";
+            dbgs() << ewi->first << ": " << format("%.20g",ewi->second) << "\n";
           }
         }
       } else {
         assert(F && "No function given, this is not supported!");
-        errs() << "Functions: \n";
-        errs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
+        dbgs() << "Functions: \n";
+        dbgs() << F << "@" << format("%p", F) << ": " << format("%.20g",getExecutionCount(F)) << "\n";
 
-        errs() << "BasicBlocks for Function " << F << ":\n";
+        dbgs() << "BasicBlocks for Function " << F << ":\n";
         for (typename FType::const_iterator BI = F->begin(), BE = F->end();
              BI != BE; ++BI) {
           const BType *BB = &(*BI);
-          errs() << BB << "@" << format("%p", BB) << ": " << format("%.20g",getExecutionCount(BB)) << "\n";
+          dbgs() << BB << "@" << format("%p", BB) << ": " << format("%.20g",getExecutionCount(BB)) << "\n";
         }
       }
-      errs() << "**** ProfileInfo " << this << ", over and out.\n";
+      dbgs() << "**** ProfileInfo " << this << ", over and out.\n";
     }
 
     bool CalculateMissingEdge(const BType *BB, Edge &removed, bool assumeEmptyExit = false);
