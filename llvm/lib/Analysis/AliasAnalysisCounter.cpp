@@ -17,6 +17,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -40,31 +41,31 @@ namespace {
     }
 
     void printLine(const char *Desc, unsigned Val, unsigned Sum) {
-      errs() <<  "  " << Val << " " << Desc << " responses ("
+      dbgs() <<  "  " << Val << " " << Desc << " responses ("
              << Val*100/Sum << "%)\n";
     }
     ~AliasAnalysisCounter() {
       unsigned AASum = No+May+Must;
       unsigned MRSum = NoMR+JustRef+JustMod+MR;
       if (AASum + MRSum) { // Print a report if any counted queries occurred...
-        errs() << "\n===== Alias Analysis Counter Report =====\n"
+        dbgs() << "\n===== Alias Analysis Counter Report =====\n"
                << "  Analysis counted: " << Name << "\n"
                << "  " << AASum << " Total Alias Queries Performed\n";
         if (AASum) {
           printLine("no alias",     No, AASum);
           printLine("may alias",   May, AASum);
           printLine("must alias", Must, AASum);
-          errs() << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
+          dbgs() << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
                  << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
         }
 
-        errs() << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
+        dbgs() << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
         if (MRSum) {
           printLine("no mod/ref",    NoMR, MRSum);
           printLine("ref",        JustRef, MRSum);
           printLine("mod",        JustMod, MRSum);
           printLine("mod/ref",         MR, MRSum);
-          errs() << "  Mod/Ref Analysis Counter Summary: " <<NoMR*100/MRSum
+          dbgs() << "  Mod/Ref Analysis Counter Summary: " <<NoMR*100/MRSum
                  << "%/" << JustRef*100/MRSum << "%/" << JustMod*100/MRSum
                  << "%/" << MR*100/MRSum <<"%\n\n";
         }
@@ -124,13 +125,13 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   }
 
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
-    errs() << AliasString << ":\t";
-    errs() << "[" << V1Size << "B] ";
-    WriteAsOperand(errs(), V1, true, M);
-    errs() << ", ";
-    errs() << "[" << V2Size << "B] ";
-    WriteAsOperand(errs(), V2, true, M);
-    errs() << "\n";
+    dbgs() << AliasString << ":\t";
+    dbgs() << "[" << V1Size << "B] ";
+    WriteAsOperand(dbgs(), V1, true, M);
+    dbgs() << ", ";
+    dbgs() << "[" << V2Size << "B] ";
+    WriteAsOperand(dbgs(), V2, true, M);
+    dbgs() << "\n";
   }
 
   return R;
@@ -150,10 +151,10 @@ AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   }
 
   if (PrintAll || (PrintAllFailures && R == ModRef)) {
-    errs() << MRString << ":  Ptr: ";
-    errs() << "[" << Size << "B] ";
-    WriteAsOperand(errs(), P, true, M);
-    errs() << "\t<->" << *CS.getInstruction();
+    dbgs() << MRString << ":  Ptr: ";
+    dbgs() << "[" << Size << "B] ";
+    WriteAsOperand(dbgs(), P, true, M);
+    dbgs() << "\t<->" << *CS.getInstruction();
   }
   return R;
 }
