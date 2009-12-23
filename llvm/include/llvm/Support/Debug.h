@@ -83,7 +83,7 @@ void SetCurrentDebugType(const char *Type);
 extern bool EnableDebugBuffering;
 
 /// dbgs() - This returns a reference to a raw_ostream for debugging
-/// messages.  If debugging is disabled it returns dbgs().  Use it
+/// messages.  If debugging is disabled it returns errs().  Use it
 /// like: dbgs() << "foo" << "bar";
 raw_ostream &dbgs();
 
