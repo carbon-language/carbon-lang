@@ -59,7 +59,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    errs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";
+    dbgs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
       P->dumpPassStructure(Offset + 1);
@@ -126,7 +126,7 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   // The function pass(es) modified the IR, they may have clobbered the
   // callgraph.
   if (Changed && CallGraphUpToDate) {
-    DEBUG(errs() << "CGSCCPASSMGR: Pass Dirtied SCC: "
+    DEBUG(dbgs() << "CGSCCPASSMGR: Pass Dirtied SCC: "
                  << P->getPassName() << '\n');
     CallGraphUpToDate = false;
   }
@@ -143,7 +143,7 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
                                      CallGraph &CG, bool CheckingMode) {
   DenseMap<Value*, CallGraphNode*> CallSites;
   
-  DEBUG(errs() << "CGSCCPASSMGR: Refreshing SCC with " << CurSCC.size()
+  DEBUG(dbgs() << "CGSCCPASSMGR: Refreshing SCC with " << CurSCC.size()
                << " nodes:\n";
         for (unsigned i = 0, e = CurSCC.size(); i != e; ++i)
           CurSCC[i]->dump();
@@ -277,11 +277,11 @@ void CGPassManager::RefreshCallGraph(std::vector<CallGraphNode*> &CurSCC,
   }
 
   DEBUG(if (MadeChange) {
-          errs() << "CGSCCPASSMGR: Refreshed SCC is now:\n";
+          dbgs() << "CGSCCPASSMGR: Refreshed SCC is now:\n";
           for (unsigned i = 0, e = CurSCC.size(); i != e; ++i)
             CurSCC[i]->dump();
          } else {
-           errs() << "CGSCCPASSMGR: SCC Refresh didn't change call graph.\n";
+           dbgs() << "CGSCCPASSMGR: SCC Refresh didn't change call graph.\n";
          }
         );
 }
