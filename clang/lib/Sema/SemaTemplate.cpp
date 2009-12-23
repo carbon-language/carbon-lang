@@ -2488,7 +2488,14 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
       // Check that we don't overflow the template parameter type.
       unsigned AllowedBits = Context.getTypeSize(IntegerType);
-      if (Value.getActiveBits() > AllowedBits) {
+      unsigned RequiredBits;
+      if (IntegerType->isUnsignedIntegerType())
+        RequiredBits = Value.getActiveBits();
+      else if (Value.isUnsigned())
+        RequiredBits = Value.getActiveBits() + 1;
+      else
+        RequiredBits = Value.getMinSignedBits();
+      if (RequiredBits > AllowedBits) {
         Diag(Arg->getSourceRange().getBegin(),
              diag::err_template_arg_too_large)
           << Value.toString(10) << Param->getType()
