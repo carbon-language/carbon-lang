@@ -163,7 +163,7 @@ double ProfileInfoT<MachineFunction, MachineBasicBlock>::
 template<>
 void ProfileInfoT<Function,BasicBlock>::
         setExecutionCount(const BasicBlock *BB, double w) {
-  DEBUG(errs() << "Creating Block " << BB->getName() 
+  DEBUG(dbgs() << "Creating Block " << BB->getName() 
                << " (weight: " << format("%.20g",w) << ")\n");
   BlockInformation[BB->getParent()][BB] = w;
 }
@@ -171,7 +171,7 @@ void ProfileInfoT<Function,BasicBlock>::
 template<>
 void ProfileInfoT<MachineFunction, MachineBasicBlock>::
         setExecutionCount(const MachineBasicBlock *MBB, double w) {
-  DEBUG(errs() << "Creating Block " << MBB->getBasicBlock()->getName()
+  DEBUG(dbgs() << "Creating Block " << MBB->getBasicBlock()->getName()
                << " (weight: " << format("%.20g",w) << ")\n");
   BlockInformation[MBB->getParent()][MBB] = w;
 }
@@ -180,7 +180,7 @@ template<>
 void ProfileInfoT<Function,BasicBlock>::addEdgeWeight(Edge e, double w) {
   double oldw = getEdgeWeight(e);
   assert (oldw != MissingValue && "Adding weight to Edge with no previous weight");
-  DEBUG(errs() << "Adding to Edge " << e
+  DEBUG(dbgs() << "Adding to Edge " << e
                << " (new weight: " << format("%.20g",oldw + w) << ")\n");
   EdgeInformation[getFunction(e)][e] = oldw + w;
 }
@@ -190,7 +190,7 @@ void ProfileInfoT<Function,BasicBlock>::
         addExecutionCount(const BasicBlock *BB, double w) {
   double oldw = getExecutionCount(BB);
   assert (oldw != MissingValue && "Adding weight to Block with no previous weight");
-  DEBUG(errs() << "Adding to Block " << BB->getName()
+  DEBUG(dbgs() << "Adding to Block " << BB->getName()
                << " (new weight: " << format("%.20g",oldw + w) << ")\n");
   BlockInformation[BB->getParent()][BB] = oldw + w;
 }
@@ -201,7 +201,7 @@ void ProfileInfoT<Function,BasicBlock>::removeBlock(const BasicBlock *BB) {
     BlockInformation.find(BB->getParent());
   if (J == BlockInformation.end()) return;
 
-  DEBUG(errs() << "Deleting " << BB->getName() << "\n");
+  DEBUG(dbgs() << "Deleting " << BB->getName() << "\n");
   J->second.erase(BB);
 }
 
@@ -211,7 +211,7 @@ void ProfileInfoT<Function,BasicBlock>::removeEdge(Edge e) {
     EdgeInformation.find(getFunction(e));
   if (J == EdgeInformation.end()) return;
 
-  DEBUG(errs() << "Deleting" << e << "\n");
+  DEBUG(dbgs() << "Deleting" << e << "\n");
   J->second.erase(e);
 }
 
@@ -221,10 +221,10 @@ void ProfileInfoT<Function,BasicBlock>::
   double w;
   if ((w = getEdgeWeight(newedge)) == MissingValue) {
     w = getEdgeWeight(oldedge);
-    DEBUG(errs() << "Replacing " << oldedge << " with " << newedge  << "\n");
+    DEBUG(dbgs() << "Replacing " << oldedge << " with " << newedge  << "\n");
   } else {
     w += getEdgeWeight(oldedge);
-    DEBUG(errs() << "Adding " << oldedge << " to " << newedge  << "\n");
+    DEBUG(dbgs() << "Adding " << oldedge << " to " << newedge  << "\n");
   }
   setEdgeWeight(newedge,w);
   removeEdge(oldedge);
@@ -277,7 +277,7 @@ const BasicBlock *ProfileInfoT<Function,BasicBlock>::
 template<>
 void ProfileInfoT<Function,BasicBlock>::
         divertFlow(const Edge &oldedge, const Edge &newedge) {
-  DEBUG(errs() << "Diverting " << oldedge << " via " << newedge );
+  DEBUG(dbgs() << "Diverting " << oldedge << " via " << newedge );
 
   // First check if the old edge was taken, if not, just delete it...
   if (getEdgeWeight(oldedge) == 0) {
@@ -291,7 +291,7 @@ void ProfileInfoT<Function,BasicBlock>::
   const BasicBlock *BB = GetPath(newedge.second,oldedge.second,P,GetPathToExit | GetPathToDest);
 
   double w = getEdgeWeight (oldedge);
-  DEBUG(errs() << ", Weight: " << format("%.20g",w) << "\n");
+  DEBUG(dbgs() << ", Weight: " << format("%.20g",w) << "\n");
   do {
     const BasicBlock *Parent = P.find(BB)->second;
     Edge e = getEdge(Parent,BB);
@@ -312,7 +312,7 @@ void ProfileInfoT<Function,BasicBlock>::
 template<>
 void ProfileInfoT<Function,BasicBlock>::
         replaceAllUses(const BasicBlock *RmBB, const BasicBlock *DestBB) {
-  DEBUG(errs() << "Replacing " << RmBB->getName()
+  DEBUG(dbgs() << "Replacing " << RmBB->getName()
                << " with " << DestBB->getName() << "\n");
   const Function *F = DestBB->getParent();
   std::map<const Function*, EdgeWeights>::iterator J =
@@ -413,7 +413,7 @@ void ProfileInfoT<Function,BasicBlock>::splitBlock(const BasicBlock *Old,
     EdgeInformation.find(F);
   if (J == EdgeInformation.end()) return;
 
-  DEBUG(errs() << "Splitting " << Old->getName() << " to " << New->getName() << "\n");
+  DEBUG(dbgs() << "Splitting " << Old->getName() << " to " << New->getName() << "\n");
 
   std::set<Edge> Edges;
   for (EdgeWeights::iterator ewi = J->second.begin(), ewe = J->second.end(); 
@@ -444,7 +444,7 @@ void ProfileInfoT<Function,BasicBlock>::splitBlock(const BasicBlock *BB,
     EdgeInformation.find(F);
   if (J == EdgeInformation.end()) return;
 
-  DEBUG(errs() << "Splitting " << NumPreds << " Edges from " << BB->getName() 
+  DEBUG(dbgs() << "Splitting " << NumPreds << " Edges from " << BB->getName() 
                << " to " << NewBB->getName() << "\n");
 
   // Collect weight that was redirected over NewBB.
@@ -474,7 +474,7 @@ void ProfileInfoT<Function,BasicBlock>::splitBlock(const BasicBlock *BB,
 template<>
 void ProfileInfoT<Function,BasicBlock>::transfer(const Function *Old,
                                                  const Function *New) {
-  DEBUG(errs() << "Replacing Function " << Old->getName() << " with "
+  DEBUG(dbgs() << "Replacing Function " << Old->getName() << " with "
                << New->getName() << "\n");
   std::map<const Function*, EdgeWeights>::iterator J =
     EdgeInformation.find(Old);
@@ -552,7 +552,7 @@ bool ProfileInfoT<Function,BasicBlock>::
     } else {
       EdgeInformation[BB->getParent()][edgetocalc] = incount-outcount;
     }
-    DEBUG(errs() << "--Calc Edge Counter for " << edgetocalc << ": "
+    DEBUG(dbgs() << "--Calc Edge Counter for " << edgetocalc << ": "
                  << format("%.20g", getEdgeWeight(edgetocalc)) << "\n");
     removed = edgetocalc;
     return true;
@@ -978,17 +978,17 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
     }
     if (FoundPath) continue;
 
-    errs() << "{";
+    dbgs() << "{";
     FI = Unvisited.begin(), FE = Unvisited.end();
     while(FI != FE) {
       const BasicBlock *BB = *FI; ++FI;
-      errs() << BB->getName();
+      dbgs() << BB->getName();
       if (FI != FE)
-        errs() << ",";
+        dbgs() << ",";
     }
-    errs() << "}";
+    dbgs() << "}";
 
-    errs() << "ASSERT: could not repair function";
+    dbgs() << "ASSERT: could not repair function";
     assert(0 && "could not repair function");
   }
 
