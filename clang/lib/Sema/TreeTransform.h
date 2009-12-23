@@ -1358,8 +1358,10 @@ public:
   /// By default, builds a new default-argument expression, which does not
   /// require any semantic analysis. Subclasses may override this routine to
   /// provide different behavior.
-  OwningExprResult RebuildCXXDefaultArgExpr(ParmVarDecl *Param) {
-    return getSema().Owned(CXXDefaultArgExpr::Create(getSema().Context, Param));
+  OwningExprResult RebuildCXXDefaultArgExpr(SourceLocation Loc, 
+                                            ParmVarDecl *Param) {
+    return getSema().Owned(CXXDefaultArgExpr::Create(getSema().Context, Loc,
+                                                     Param));
   }
 
   /// \brief Build a new C++ zero-initialization expression.
@@ -4416,7 +4418,7 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
       Param == E->getParam())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXDefaultArgExpr(Param);
+  return getDerived().RebuildCXXDefaultArgExpr(E->getUsedLocation(), Param);
 }
 
 template<typename Derived>

@@ -353,9 +353,11 @@ const char *CXXNamedCastExpr::getCastName() const {
 }
 
 CXXDefaultArgExpr *
-CXXDefaultArgExpr::Create(ASTContext &C, ParmVarDecl *Param, Expr *SubExpr) {
+CXXDefaultArgExpr::Create(ASTContext &C, SourceLocation Loc, 
+                          ParmVarDecl *Param, Expr *SubExpr) {
   void *Mem = C.Allocate(sizeof(CXXDefaultArgExpr) + sizeof(Stmt *));
-  return new (Mem) CXXDefaultArgExpr(CXXDefaultArgExprClass, Param, SubExpr);
+  return new (Mem) CXXDefaultArgExpr(CXXDefaultArgExprClass, Loc, Param, 
+                                     SubExpr);
 }
 
 void CXXDefaultArgExpr::DoDestroy(ASTContext &C) {

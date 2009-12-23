@@ -393,16 +393,20 @@ class CXXDefaultArgExpr : public Expr {
   /// actual default expression is the subexpression.
   llvm::PointerIntPair<ParmVarDecl *, 1, bool> Param;
 
+  /// \brief The location where the default argument expression was used.
+  SourceLocation Loc;
+  
 protected:
-  CXXDefaultArgExpr(StmtClass SC, ParmVarDecl *param)
+  CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param)
     : Expr(SC, 
            param->hasUnparsedDefaultArg()
              ? param->getType().getNonReferenceType()
              : param->getDefaultArg()->getType()),
-      Param(param, false) { }
+      Param(param, false), Loc(Loc) { }
 
-  CXXDefaultArgExpr(StmtClass SC, ParmVarDecl *param, Expr *SubExpr)
-    : Expr(SC, SubExpr->getType()), Param(param, true) 
+  CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
+                    Expr *SubExpr)
+    : Expr(SC, SubExpr->getType()), Param(param, true), Loc(Loc)
   {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
@@ -413,13 +417,16 @@ protected:
 public:
   // Param is the parameter whose default argument is used by this
   // expression.
-  static CXXDefaultArgExpr *Create(ASTContext &C, ParmVarDecl *Param) {
-    return new (C) CXXDefaultArgExpr(CXXDefaultArgExprClass, Param);
+  static CXXDefaultArgExpr *Create(ASTContext &C, SourceLocation Loc,
+                                   ParmVarDecl *Param) {
+    return new (C) CXXDefaultArgExpr(CXXDefaultArgExprClass, Loc, Param);
   }
 
   // Param is the parameter whose default argument is used by this
   // expression, and SubExpr is the expression that will actually be used.
-  static CXXDefaultArgExpr *Create(ASTContext &C, ParmVarDecl *Param, 
+  static CXXDefaultArgExpr *Create(ASTContext &C, 
+                                   SourceLocation Loc,
+                                   ParmVarDecl *Param, 
                                    Expr *SubExpr);
   
   // Retrieve the parameter that the argument was created from.
@@ -438,6 +445,10 @@ public:
     return getParam()->getDefaultArg(); 
   }
 
+  /// \brief Retrieve the location where this default argument was actually 
+  /// used.
+  SourceLocation getUsedLocation() const { return Loc; }
+  
   virtual SourceRange getSourceRange() const {
     // Default argument expressions have no representation in the
     // source, so they have an empty source range.

@@ -147,16 +147,17 @@ namespace pr5301 {
 namespace PR5810 {
   template<typename T>
   struct allocator {
-    allocator() { int a[sizeof(T) ? -1 : -1]; } // expected-error{{array size is negative}}
+    allocator() { int a[sizeof(T) ? -1 : -1]; } // expected-error2 {{array size is negative}}
   };
   
   template<typename T>
   struct vector {
-    vector(const allocator<T>& = allocator<T>()) {} // expected-note{{instantiation of}}
+    vector(const allocator<T>& = allocator<T>()) {} // expected-note2 {{instantiation of}}
   };
   
   struct A { };
-  
+  struct B { };
+
   template<typename>
   void FilterVTs() {
     vector<A> Result;
@@ -164,5 +165,15 @@ namespace PR5810 {
   
   void f() {
     vector<A> Result;
+  }
+
+  template<typename T>
+  struct X {
+    vector<B> bs;
+    X() { }
+  };
+
+  void f2() {
+    X<float> x; // expected-note{{member function}}
   }
 }

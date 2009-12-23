@@ -3093,7 +3093,7 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
         return ExprError();
       
       // Build the default argument expression.
-      return Owned(CXXDefaultArgExpr::Create(Context, Param,
+      return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param,
                                              Result.takeAs<Expr>()));
     }
 
@@ -3107,7 +3107,7 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   }
 
   // We already type-checked the argument, so we know it works.
-  return Owned(CXXDefaultArgExpr::Create(Context, Param));
+  return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param));
 }
 
 /// ConvertArgumentsForCall - Converts the arguments specified in
