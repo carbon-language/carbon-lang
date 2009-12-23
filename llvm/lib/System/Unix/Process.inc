@@ -277,7 +277,7 @@ bool Process::ColorNeedsFlush() {
     COLOR(FGBG, "7", BOLD)\
   }
 
-static const char* colorcodes[2][2][8] = {
+static const char colorcodes[2][2][8][10] = {
  { ALLCOLORS("3",""), ALLCOLORS("3","1;") },
  { ALLCOLORS("4",""), ALLCOLORS("4","1;") }
 };

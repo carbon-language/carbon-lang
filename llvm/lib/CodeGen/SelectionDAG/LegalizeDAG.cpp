@@ -2747,7 +2747,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     SDValue RHS = Node->getOperand(1);
     SDValue BottomHalf;
     SDValue TopHalf;
-    static unsigned Ops[2][3] =
+    static const unsigned Ops[2][3] =
         { { ISD::MULHU, ISD::UMUL_LOHI, ISD::ZERO_EXTEND },
           { ISD::MULHS, ISD::SMUL_LOHI, ISD::SIGN_EXTEND }};
     bool isSigned = Node->getOpcode() == ISD::SMULO;
