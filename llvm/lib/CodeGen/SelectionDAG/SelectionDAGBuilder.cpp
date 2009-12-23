@@ -5868,8 +5868,6 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         Chain = DAG.getStore(Chain, getCurDebugLoc(),
                              OpInfo.CallOperand, StackSlot, NULL, 0);
         OpInfo.CallOperand = StackSlot;
-        if (DisableScheduling)
-          DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
       }
 
       // There is no longer a Value* corresponding to this operand.
@@ -5877,9 +5875,6 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
       // It is now an indirect operand.
       OpInfo.isIndirect = true;
-
-      if (DisableScheduling)
-        DAG.AssignOrdering(OpInfo.CallOperand.getNode(), SDNodeOrder);
     }
 
     // If this constraint is for a specific register, allocate it before
@@ -6101,9 +6096,6 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                       &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
 
-  if (DisableScheduling)
-    DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
-
   // If this asm returns a register value, copy the result from that register
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
@@ -6132,9 +6124,6 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       }
 
       assert(ResultType == Val.getValueType() && "Asm result value mismatch!");
-
-      if (DisableScheduling)
-        DAG.AssignOrdering(Val.getNode(), SDNodeOrder);
     }
 
     setValue(CS.getInstruction(), Val);
@@ -6164,16 +6153,11 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                getValue(StoresToEmit[i].second),
                                StoresToEmit[i].second, 0);
     OutChains.push_back(Val);
-    if (DisableScheduling)
-      DAG.AssignOrdering(Val.getNode(), SDNodeOrder);
   }
 
   if (!OutChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(), MVT::Other,
                         &OutChains[0], OutChains.size());
-
-  if (DisableScheduling)
-    DAG.AssignOrdering(Chain.getNode(), SDNodeOrder);
 
   DAG.setRoot(Chain);
 }
