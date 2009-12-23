@@ -497,8 +497,6 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
 
   GRExprEngine Eng(mgr);
 
-  RegisterCallInliner(Eng);
-
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
   
@@ -510,6 +508,9 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
   // Make a fake transfer function. The GRTransferFunc interface will be 
   // removed.
   Eng.setTransferFunctions(new GRTransferFuncs());  
+
+  // Register call inliner as the last checker.
+  RegisterCallInliner(Eng);
 
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList(mgr.getStackFrame(D));
