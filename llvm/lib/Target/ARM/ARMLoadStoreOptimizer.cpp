@@ -88,7 +88,10 @@ namespace {
                   ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
                   DebugLoc dl, SmallVector<std::pair<unsigned, bool>, 8> &Regs);
     void MergeOpsUpdate(MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator MBBI,
+                        MemOpQueue &MemOps,
+                        unsigned memOpsBegin,
+                        unsigned memOpsEnd,
+                        unsigned insertAfter,
                         int Offset,
                         unsigned Base,
                         bool BaseKill,
@@ -97,9 +100,6 @@ namespace {
                         unsigned PredReg,
                         unsigned Scratch,
                         DebugLoc dl,
-                        MemOpQueue &MemOps,
-                        unsigned memOpsFrom,
-                        unsigned memOpsTo,
                         SmallVector<MachineBasicBlock::iterator, 4> &Merges);
     void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
                       int Opcode, unsigned Size,
@@ -266,7 +266,10 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 // success.
 void ARMLoadStoreOpt::
 MergeOpsUpdate(MachineBasicBlock &MBB,
-               MachineBasicBlock::iterator MBBI,
+               MemOpQueue &memOps,
+               unsigned memOpsBegin,
+               unsigned memOpsEnd,
+               unsigned insertAfter,
                int Offset,
                unsigned Base,
                bool BaseKill,
@@ -275,27 +278,27 @@ MergeOpsUpdate(MachineBasicBlock &MBB,
                unsigned PredReg,
                unsigned Scratch,
                DebugLoc dl,
-               MemOpQueue &MemOps,
-               unsigned memOpsFrom,
-               unsigned memOpsTo,
                SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
   // First calculate which of the registers should be killed by the merged
   // instruction.
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
-  for (unsigned i = memOpsFrom; i < memOpsTo; ++i) {
-    const MachineOperand &MO = MemOps[i].MBBI->getOperand(0);
+  for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
+    const MachineOperand &MO = memOps[i].MBBI->getOperand(0);
     Regs.push_back(std::make_pair(MO.getReg(), MO.isKill()));
   }
 
-  if (!MergeOps(MBB, MBBI, Offset, Base, BaseKill, Opcode,
+  // Try to do the merge.
+  MachineBasicBlock::iterator Loc = memOps[insertAfter].MBBI;
+  Loc++;
+  if (!MergeOps(MBB, Loc, Offset, Base, BaseKill, Opcode,
                 Pred, PredReg, Scratch, dl, Regs))
     return;
 
   // Merge succeeded, update records.
-  Merges.push_back(prior(MBBI));
-  for (unsigned i = memOpsFrom; i < memOpsTo; ++i) {
-    MBB.erase(MemOps[i].MBBI);
-    MemOps[i].Merged = true;
+  Merges.push_back(prior(Loc));
+  for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
+    MBB.erase(memOps[i].MBBI);
+    memOps[i].Merged = true;
   }
 }
 
@@ -310,7 +313,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   bool isAM4 = isi32Load(Opcode) || isi32Store(Opcode);
   int Offset = MemOps[SIndex].Offset;
   int SOffset = Offset;
-  unsigned Pos = MemOps[SIndex].Position;
+  unsigned insertAfter = SIndex;
   MachineBasicBlock::iterator Loc = MemOps[SIndex].MBBI;
   DebugLoc dl = Loc->getDebugLoc();
   unsigned PReg = Loc->getOperand(0).getReg();
@@ -328,22 +331,20 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      MergeOpsUpdate(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
-                     Scratch, dl, MemOps, SIndex, i, Merges);
+      MergeOpsUpdate(MBB, MemOps, SIndex, i, insertAfter, SOffset,
+                     Base, false, Opcode, Pred, PredReg, Scratch, dl, Merges);
       MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,
                    MemOps, Merges);
       return;
     }
 
-    if (MemOps[i].Position > Pos) {
-      Pos = MemOps[i].Position;
-      Loc = MemOps[i].MBBI;
-    }
+    if (MemOps[i].Position > MemOps[insertAfter].Position)
+      insertAfter = i;
   }
 
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
-  MergeOpsUpdate(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
-                 Scratch, dl, MemOps, SIndex, MemOps.size(), Merges);
+  MergeOpsUpdate(MBB, MemOps, SIndex, MemOps.size(), insertAfter, SOffset,
+                 Base, BaseKill, Opcode, Pred, PredReg, Scratch, dl, Merges);
   return;
 }
 
