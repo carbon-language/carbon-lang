@@ -69,7 +69,6 @@ More ideas for code modification hints:
 //===---------------------------------------------------------------------===//
 
 Options to support:
-   -Wfatal-errors
    -ftabstop=width
    -fpreprocessed mode.
    -nostdinc++

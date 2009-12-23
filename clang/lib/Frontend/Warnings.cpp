@@ -13,12 +13,12 @@
 //
 // This file is responsible for handling all warning options. This includes
 // a number of -Wfoo options and their variants, which are driven by TableGen-
-// generated data, and the special cases -pedantic, -pedantic-errors, -w and
-// -Werror.
+// generated data, and the special cases -pedantic, -pedantic-errors, -w,
+// -Werror and -Wfatal-errors.
 //
 // Each warning option controls any number of actual warnings.
 // Given a warning option 'foo', the following are valid:
-//    -Wfoo, -Wno-foo, -Werror=foo
+//    -Wfoo, -Wno-foo, -Werror=foo, -Wfatal-errors=foo
 //
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/Diagnostic.h"
@@ -26,7 +26,6 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
-#include <cstdio>
 #include <cstring>
 #include <utility>
 #include <algorithm>
@@ -79,8 +78,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
       if (OptEnd-OptStart != 5) {  // Specifier must be present.
         if ((OptStart[5] != '=' && OptStart[5] != '-') ||
             OptEnd-OptStart == 6) {
-          fprintf(stderr, "warning: unknown -Werror warning specifier: -W%s\n",
-                  Opt.c_str());
+          Diags.Report(diag::warn_unknown_warning_specifier)
+            << "-Werror" << ("-W" + Opt);
           continue;
         }
         Specifier = OptStart+6;
@@ -102,9 +101,8 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
       if (OptEnd-OptStart != 12) {
         if ((OptStart[12] != '=' && OptStart[12] != '-') ||
             OptEnd-OptStart == 13) {
-          fprintf(stderr,
-                  "warning: unknown -Wfatal-errors warning specifier: -W%s\n",
-                  Opt.c_str());
+          Diags.Report(diag::warn_unknown_warning_specifier)
+            << "-Wfatal-errors" << ("-W" + Opt);
           continue;
         }
         Specifier = OptStart + 13;

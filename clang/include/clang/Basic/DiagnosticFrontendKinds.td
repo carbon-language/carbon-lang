@@ -219,4 +219,7 @@ def err_not_a_pch_file : Error<
 def warn_unknown_warning_option : Warning<
     "unknown warning option '%0'">,
     InGroup<DiagGroup<"unknown-warning-option"> >;
+def warn_unknown_warning_specifier : Warning<
+    "unknown %0 warning specifier: '%1'">,
+    InGroup<DiagGroup<"unknown-warning-option"> >;
 }
