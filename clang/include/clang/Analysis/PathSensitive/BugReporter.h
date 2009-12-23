@@ -203,7 +203,10 @@ public:
   ~RangedBugReport();
 
   // FIXME: Move this out of line.
-  void addRange(SourceRange R) { Ranges.push_back(R); }
+  void addRange(SourceRange R) { 
+    assert(R.isValid());
+    Ranges.push_back(R);
+  }
 
   // FIXME: Move this out of line.
   void getRanges(const SourceRange*& beg, const SourceRange*& end) {
