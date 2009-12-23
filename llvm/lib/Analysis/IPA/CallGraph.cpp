@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -181,7 +182,7 @@ void CallGraph::print(raw_ostream &OS, Module*) const {
     I->second->print(OS);
 }
 void CallGraph::dump() const {
-  print(errs(), 0);
+  print(dbgs(), 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -232,7 +233,7 @@ void CallGraphNode::print(raw_ostream &OS) const {
   OS << "\n";
 }
 
-void CallGraphNode::dump() const { print(errs()); }
+void CallGraphNode::dump() const { print(dbgs()); }
 
 /// removeCallEdgeFor - This method removes the edge in the node for the
 /// specified call site.  Note that this method takes linear time, so it
