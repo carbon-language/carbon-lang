@@ -34,3 +34,10 @@ int test3(Test3_Derived x) {
   return test3_aux(x);
 }
 
+int test_init_in_condition_aux();
+int test_init_in_condition() {
+  if (int x = test_init_in_condition_aux()) { // no-warning
+    return 1;
+  }
+  return 0;
+}

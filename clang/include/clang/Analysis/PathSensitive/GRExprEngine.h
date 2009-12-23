@@ -293,6 +293,11 @@ protected:
   void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, ExplodedNode* Pred,
                         ExplodedNodeSet& Dst);
 
+  /// VisitIfStmtCondInit - Transfer function for handling the initialization
+  ///  of a condition variable in an IfStmt.
+  void VisitIfStmtCondInit(IfStmt *IS, ExplodedNode *Pred,
+                           ExplodedNodeSet& Dst);
+  
   void VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
                          ExplodedNodeSet& Dst);
 

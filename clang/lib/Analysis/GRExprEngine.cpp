@@ -661,6 +661,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
       VisitCast(C, C->getSubExpr(), Pred, Dst, false);
       break;
     }
+      
+    case Stmt::IfStmtClass:
+      // This case isn't for branch processing, but for handling the
+      // initialization of a condition variable.
+      VisitIfStmtCondInit(cast<IfStmt>(S), Pred, Dst);
+      break;
 
     case Stmt::InitListExprClass:
       VisitInitListExpr(cast<InitListExpr>(S), Pred, Dst);
@@ -748,6 +754,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 Ex->getLocStart(),
                                 "Error evaluating statement");
+
 
   Ex = Ex->IgnoreParens();
 
@@ -2220,6 +2227,36 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
       state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
       MakeNode(Dst, DS, *I, state);
     }
+  }
+}
+
+void GRExprEngine::VisitIfStmtCondInit(IfStmt *IS, ExplodedNode *Pred,
+                                       ExplodedNodeSet& Dst) {
+  
+  VarDecl* VD = IS->getConditionVariable();
+  Expr* InitEx = VD->getInit();
+  
+  ExplodedNodeSet Tmp;
+  Visit(InitEx, Pred, Tmp);
+
+  for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+    ExplodedNode *N = *I;
+    const GRState *state = GetState(N);
+    
+    const LocationContext *LC = N->getLocationContext();
+    SVal InitVal = state->getSVal(InitEx);
+    QualType T = VD->getType();
+      
+    // Recover some path-sensitivity if a scalar value evaluated to
+    // UnknownVal.
+    if (InitVal.isUnknown() ||
+        !getConstraintManager().canReasonAbout(InitVal)) {
+      InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx, 
+                                            Builder->getCurrentBlockCount());
+    }
+      
+    EvalBind(Dst, IS, IS, N, state,
+             loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
   }
 }
 

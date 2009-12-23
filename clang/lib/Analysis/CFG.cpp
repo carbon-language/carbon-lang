@@ -776,7 +776,19 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // Add the condition as the last statement in the new block.  This may create
   // new blocks as the condition may contain control-flow.  Any newly created
   // blocks will be pointed to be "Block".
-  return addStmt(I->getCond());
+  Block = addStmt(I->getCond());
+  
+  // Finally, if the IfStmt contains a condition variable, add both the IfStmt
+  // and the condition variable initialization to the CFG.
+  if (VarDecl *VD = I->getConditionVariable()) {
+    if (Expr *Init = VD->getInit()) {
+      autoCreateBlock();
+      AppendStmt(Block, I, AddStmtChoice::AlwaysAdd);
+      addStmt(Init);
+    }
+  }
+  
+  return Block;
 }
 
 
