@@ -142,7 +142,7 @@ private:
                                     SmallPtrSet<SDNode*, 32> &NodesLeadingTo);
 
   void LegalizeSetCCCondCode(EVT VT, SDValue &LHS, SDValue &RHS, SDValue &CC,
-                             DebugLoc dl);
+                             DebugLoc dl, unsigned Order);
 
   SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned);
   SDValue ExpandFPLibCall(SDNode *Node, RTLIB::Libcall Call_F32,
@@ -1633,7 +1633,7 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
 void SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
                                                  SDValue &LHS, SDValue &RHS,
                                                  SDValue &CC,
-                                                 DebugLoc dl) {
+                                                 DebugLoc dl, unsigned Order) {
   EVT OpVT = LHS.getValueType();
   ISD::CondCode CCCode = cast<CondCodeSDNode>(CC)->get();
   switch (TLI.getCondCodeAction(CCCode, OpVT)) {
@@ -1666,6 +1666,13 @@ void SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
     LHS = DAG.getNode(Opc, dl, VT, SetCC1, SetCC2);
     RHS = SDValue();
     CC  = SDValue();
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(LHS.getNode(), Order);
+      DAG.AssignOrdering(SetCC1.getNode(), Order);
+      DAG.AssignOrdering(SetCC2.getNode(), Order);
+    }
+
     break;
   }
   }
@@ -2402,12 +2409,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp1 = DAG.getLoad(VT, dl, Tmp4, VAList, NULL, 0);
     Results.push_back(Tmp1);
     Results.push_back(Results[0].getValue(1));
-
-    if (DisableScheduling) {
-      DAG.AssignOrdering(Tmp1.getNode(), Order);
-      DAG.AssignOrdering(Results[0].getValue(1).getNode(), Order);
-    }
-
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::VACOPY: {
@@ -2523,18 +2525,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                 Node->getValueType(0));
       Results.push_back(Tmp1);
       Results.push_back(Results[0].getValue(1));
-
-      if (DisableScheduling) {
-        DAG.AssignOrdering(Tmp1.getNode(), Order);
-        DAG.AssignOrdering(Results[0].getValue(1).getNode(), Order);
-      }
     } else {
       Tmp1 = DAG.getUNDEF(Node->getValueType(0));
       Results.push_back(Tmp1);
       Results.push_back(Node->getOperand(0));
-      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     }
 
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   case ISD::STACKRESTORE:
     // Expand to CopyToReg if the target set StackPointerRegisterToSaveRestore.
@@ -2703,12 +2700,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                               Node->getValueType(0));
     Results.push_back(Tmp1);
     Results.push_back(Results[0].getValue(1));
-
-    if (DisableScheduling) {
-      DAG.AssignOrdering(Tmp1.getNode(), Order);
-      DAG.AssignOrdering(Results[0].getValue(1).getNode(), Order);
-    }
-
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::EXCEPTIONADDR: {
@@ -2718,12 +2710,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                               Node->getValueType(0));
     Results.push_back(Tmp1);
     Results.push_back(Results[0].getValue(1));
-
-    if (DisableScheduling) {
-      DAG.AssignOrdering(Tmp1.getNode(), Order);
-      DAG.AssignOrdering(Results[0].getValue(1).getNode(), Order);
-    }
-
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::SUB: {
@@ -2757,10 +2744,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     if (TLI.isOperationLegalOrCustom(DivRemOpc, VT)) {
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Tmp2, Tmp3).getValue(1);
+      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     } else if (TLI.isOperationLegalOrCustom(DivOpc, VT)) {
       // X % Y -> X-X/Y*Y
       Tmp1 = DAG.getNode(DivOpc, dl, VT, Tmp2, Tmp3);
+      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
       Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Tmp3);
+      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
       Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp1);
     } else if (isSigned) {
       Tmp1 = ExpandIntLibCall(Node, true,
@@ -2775,6 +2765,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     }
 
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::UDIV:
@@ -2797,6 +2788,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                               RTLIB::UDIV_I16, RTLIB::UDIV_I32,
                               RTLIB::UDIV_I64, RTLIB::UDIV_I128);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::MULHU:
@@ -2810,6 +2802,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp1 = DAG.getNode(ExpandOpcode, dl, VTs, Node->getOperand(0),
                        Node->getOperand(1));
     Results.push_back(Tmp1.getValue(1));
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::MUL: {
@@ -2825,6 +2818,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     bool HasMULHS = TLI.isOperationLegalOrCustom(ISD::MULHS, VT);
     bool HasMULHU = TLI.isOperationLegalOrCustom(ISD::MULHU, VT);
     unsigned OpToUse = 0;
+
     if (HasSMUL_LOHI && !HasMULHS) {
       OpToUse = ISD::SMUL_LOHI;
     } else if (HasUMUL_LOHI && !HasMULHU) {
@@ -2834,16 +2828,21 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     } else if (HasUMUL_LOHI) {
       OpToUse = ISD::UMUL_LOHI;
     }
+
     if (OpToUse) {
-      Results.push_back(DAG.getNode(OpToUse, dl, VTs, Node->getOperand(0),
-                                    Node->getOperand(1)));
+      Tmp1 = DAG.getNode(OpToUse, dl, VTs, Node->getOperand(0),
+                         Node->getOperand(1));
+      Results.push_back(Tmp1);
+      if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
       break;
     }
+
     Tmp1 = ExpandIntLibCall(Node, false,
                             RTLIB::MUL_I8,
                             RTLIB::MUL_I16, RTLIB::MUL_I32,
                             RTLIB::MUL_I64, RTLIB::MUL_I128);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::SADDO:
@@ -2854,8 +2853,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                               ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
                               LHS, RHS);
     Results.push_back(Sum);
-    EVT OType = Node->getValueType(1);
+    if (DisableScheduling) DAG.AssignOrdering(Sum.getNode(), Order);
 
+    EVT OType = Node->getValueType(1);
     SDValue Zero = DAG.getConstant(0, LHS.getValueType());
 
     //   LHSSign -> LHS >= 0
@@ -2878,6 +2878,16 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
     Results.push_back(Cmp);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(LHSSign.getNode(), Order);
+      DAG.AssignOrdering(RHSSign.getNode(), Order);
+      DAG.AssignOrdering(SignsMatch.getNode(), Order);
+      DAG.AssignOrdering(SumSign.getNode(), Order);
+      DAG.AssignOrdering(SumSignNE.getNode(), Order);
+      DAG.AssignOrdering(Cmp.getNode(), Order);
+    }
+
     break;
   }
   case ISD::UADDO:
@@ -2888,9 +2898,17 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                               ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
                               LHS, RHS);
     Results.push_back(Sum);
-    Results.push_back(DAG.getSetCC(dl, Node->getValueType(1), Sum, LHS,
-                                   Node->getOpcode () == ISD::UADDO ?
-                                   ISD::SETULT : ISD::SETUGT));
+
+    Tmp1 = DAG.getSetCC(dl, Node->getValueType(1), Sum, LHS,
+                        Node->getOpcode () == ISD::UADDO ?
+                        ISD::SETULT : ISD::SETUGT);
+    Results.push_back(Tmp1);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Sum.getNode(), Order);
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+    }
+
     break;
   }
   case ISD::UMULO:
@@ -2904,6 +2922,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
         { { ISD::MULHU, ISD::UMUL_LOHI, ISD::ZERO_EXTEND },
           { ISD::MULHS, ISD::SMUL_LOHI, ISD::SIGN_EXTEND }};
     bool isSigned = Node->getOpcode() == ISD::SMULO;
+
     if (TLI.isOperationLegalOrCustom(Ops[isSigned][0], VT)) {
       BottomHalf = DAG.getNode(ISD::MUL, dl, VT, LHS, RHS);
       TopHalf = DAG.getNode(Ops[isSigned][0], dl, VT, LHS, RHS);
@@ -2920,6 +2939,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                                DAG.getIntPtrConstant(0));
       TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Tmp1,
                             DAG.getIntPtrConstant(1));
+
+      if (DisableScheduling) {
+        DAG.AssignOrdering(LHS.getNode(), Order);
+        DAG.AssignOrdering(RHS.getNode(), Order);
+        DAG.AssignOrdering(Tmp1.getNode(), Order);
+      }
     } else {
       // FIXME: We should be able to fall back to a libcall with an illegal
       // type in some cases cases.
@@ -2927,6 +2952,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       // performance hit in the general case.
       llvm_unreachable("Don't know how to expand this operation yet!");
     }
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(BottomHalf.getNode(), Order);
+      DAG.AssignOrdering(TopHalf.getNode(), Order);
+    }
+
     if (isSigned) {
       Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1, TLI.getShiftAmountTy());
       Tmp1 = DAG.getNode(ISD::SRA, dl, VT, BottomHalf, Tmp1);
@@ -2936,34 +2967,52 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       TopHalf = DAG.getSetCC(dl, TLI.getSetCCResultType(VT), TopHalf,
                              DAG.getConstant(0, VT), ISD::SETNE);
     }
+
     Results.push_back(BottomHalf);
     Results.push_back(TopHalf);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(BottomHalf.getNode(), Order);
+      DAG.AssignOrdering(TopHalf.getNode(), Order);
+    }
+
     break;
   }
   case ISD::BUILD_PAIR: {
     EVT PairTy = Node->getValueType(0);
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Node->getOperand(0));
     Tmp2 = DAG.getNode(ISD::ANY_EXTEND, dl, PairTy, Node->getOperand(1));
-    Tmp2 = DAG.getNode(ISD::SHL, dl, PairTy, Tmp2,
+    Tmp3 = DAG.getNode(ISD::SHL, dl, PairTy, Tmp2,
                        DAG.getConstant(PairTy.getSizeInBits()/2,
                                        TLI.getShiftAmountTy()));
-    Results.push_back(DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp2));
+    Tmp4 = DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp3);
+    Results.push_back(Tmp4);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Tmp2.getNode(), Order);
+      DAG.AssignOrdering(Tmp3.getNode(), Order);
+      DAG.AssignOrdering(Tmp4.getNode(), Order);
+    }
+
     break;
   }
   case ISD::SELECT:
     Tmp1 = Node->getOperand(0);
     Tmp2 = Node->getOperand(1);
     Tmp3 = Node->getOperand(2);
-    if (Tmp1.getOpcode() == ISD::SETCC) {
+
+    if (Tmp1.getOpcode() == ISD::SETCC)
       Tmp1 = DAG.getSelectCC(dl, Tmp1.getOperand(0), Tmp1.getOperand(1),
                              Tmp2, Tmp3,
                              cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
-    } else {
+    else
       Tmp1 = DAG.getSelectCC(dl, Tmp1,
                              DAG.getConstant(0, Tmp1.getValueType()),
                              Tmp2, Tmp3, ISD::SETNE);
-    }
+
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   case ISD::BR_JT: {
     SDValue Chain = Node->getOperand(0);
@@ -2973,9 +3022,11 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     EVT PTy = TLI.getPointerTy();
     MachineFunction &MF = DAG.getMachineFunction();
     unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
-    Index= DAG.getNode(ISD::MUL, dl, PTy,
+    Index = DAG.getNode(ISD::MUL, dl, PTy,
                         Index, DAG.getConstant(EntrySize, PTy));
+
     SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
+    if (DisableScheduling) DAG.AssignOrdering(Addr.getNode(), Order);
 
     EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
     SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,
@@ -2983,13 +3034,24 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Addr = LD;
     if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
       // For PIC, the sequence is:
-      // BRIND(load(Jumptable + index) + RelocBase)
+      // 
+      //   BRIND(load(Jumptable + index) + RelocBase)
+      // 
       // RelocBase can be JumpTable, GOT or some sort of global base.
       Addr = DAG.getNode(ISD::ADD, dl, PTy, Addr,
                           TLI.getPICJumpTableRelocBase(Table, DAG));
+      if (DisableScheduling) DAG.AssignOrdering(Addr.getNode(), Order);
     }
+
     Tmp1 = DAG.getNode(ISD::BRIND, dl, MVT::Other, LD.getValue(1), Addr);
     Results.push_back(Tmp1);
+
+    if (DisableScheduling) {
+      DAG.AssignOrdering(Tmp1.getNode(), Order);
+      DAG.AssignOrdering(Index.getNode(), Order);
+      DAG.AssignOrdering(LD.getNode(), Order);
+    }
+
     break;
   }
   case ISD::BRCOND:
@@ -2997,24 +3059,26 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     // Node.
     Tmp1 = Node->getOperand(0);
     Tmp2 = Node->getOperand(1);
-    if (Tmp2.getOpcode() == ISD::SETCC) {
+
+    if (Tmp2.getOpcode() == ISD::SETCC)
       Tmp1 = DAG.getNode(ISD::BR_CC, dl, MVT::Other,
                          Tmp1, Tmp2.getOperand(2),
                          Tmp2.getOperand(0), Tmp2.getOperand(1),
                          Node->getOperand(2));
-    } else {
+    else
       Tmp1 = DAG.getNode(ISD::BR_CC, dl, MVT::Other, Tmp1,
                          DAG.getCondCode(ISD::SETNE), Tmp2,
                          DAG.getConstant(0, Tmp2.getValueType()),
                          Node->getOperand(2));
-    }
+
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   case ISD::SETCC: {
     Tmp1 = Node->getOperand(0);
     Tmp2 = Node->getOperand(1);
     Tmp3 = Node->getOperand(2);
-    LegalizeSetCCCondCode(Node->getValueType(0), Tmp1, Tmp2, Tmp3, dl);
+    LegalizeSetCCCondCode(Node->getValueType(0), Tmp1, Tmp2, Tmp3, dl, Order);
 
     // If we expanded the SETCC into an AND/OR, return the new node
     if (Tmp2.getNode() == 0) {
@@ -3028,6 +3092,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, VT, Tmp1, Tmp2,
                        DAG.getConstant(1, VT), DAG.getConstant(0, VT), Tmp3);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::SELECT_CC: {
@@ -3038,7 +3103,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     SDValue CC = Node->getOperand(4);
 
     LegalizeSetCCCondCode(TLI.getSetCCResultType(Tmp1.getValueType()),
-                          Tmp1, Tmp2, CC, dl);
+                          Tmp1, Tmp2, CC, dl, Order);
 
     assert(!Tmp2.getNode() && "Can't legalize SELECT_CC with legal condition!");
     Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
@@ -3046,6 +3111,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp1 = DAG.getNode(ISD::SELECT_CC, dl, Node->getValueType(0), Tmp1, Tmp2,
                        Tmp3, Tmp4, CC);
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::BR_CC: {
@@ -3055,7 +3121,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp4 = Node->getOperand(1);              // CC
 
     LegalizeSetCCCondCode(TLI.getSetCCResultType(Tmp2.getValueType()),
-                          Tmp2, Tmp3, Tmp4, dl);
+                          Tmp2, Tmp3, Tmp4, dl, Order);
     LastCALLSEQ_END = DAG.getEntryNode();
 
     assert(!Tmp3.getNode() && "Can't legalize BR_CC with legal condition!");
@@ -3064,6 +3130,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     Tmp1 = DAG.getNode(ISD::BR_CC, dl, Node->getValueType(0), Tmp1, Tmp4, Tmp2,
                        Tmp3, Node->getOperand(4));
     Results.push_back(Tmp1);
+    if (DisableScheduling) DAG.AssignOrdering(Tmp1.getNode(), Order);
     break;
   }
   case ISD::GLOBAL_OFFSET_TABLE:
@@ -3081,6 +3148,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     break;
   }
 }
+
 void SelectionDAGLegalize::PromoteNode(SDNode *Node,
                                        SmallVectorImpl<SDValue> &Results) {
   EVT OVT = Node->getValueType(0);
