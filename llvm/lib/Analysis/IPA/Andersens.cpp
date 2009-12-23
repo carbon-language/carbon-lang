@@ -806,7 +806,7 @@ unsigned Andersens::getNodeForConstantPointer(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointer(CE->getOperand(0));
     default:
-      errs() << "Constant Expr not yet handled: " << *CE << "\n";
+      dbgs() << "Constant Expr not yet handled: " << *CE << "\n";
       llvm_unreachable(0);
     }
   } else {
@@ -833,7 +833,7 @@ unsigned Andersens::getNodeForConstantPointerTarget(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointerTarget(CE->getOperand(0));
     default:
-      errs() << "Constant Expr not yet handled: " << *CE << "\n";
+      dbgs() << "Constant Expr not yet handled: " << *CE << "\n";
       llvm_unreachable(0);
     }
   } else {
@@ -1132,7 +1132,7 @@ void Andersens::visitInstruction(Instruction &I) {
     return;
   default:
     // Is this something we aren't handling yet?
-    errs() << "Unknown instruction: " << I;
+    dbgs() << "Unknown instruction: " << I;
     llvm_unreachable(0);
   }
 }
@@ -1402,7 +1402,7 @@ void Andersens::ClumpAddressTaken() {
     unsigned Pos = NewPos++;
     Translate[i] = Pos;
     NewGraphNodes.push_back(GraphNodes[i]);
-    DEBUG(errs() << "Renumbering node " << i << " to node " << Pos << "\n");
+    DEBUG(dbgs() << "Renumbering node " << i << " to node " << Pos << "\n");
   }
 
   // I believe this ends up being faster than making two vectors and splicing
@@ -1412,7 +1412,7 @@ void Andersens::ClumpAddressTaken() {
       unsigned Pos = NewPos++;
       Translate[i] = Pos;
       NewGraphNodes.push_back(GraphNodes[i]);
-      DEBUG(errs() << "Renumbering node " << i << " to node " << Pos << "\n");
+      DEBUG(dbgs() << "Renumbering node " << i << " to node " << Pos << "\n");
     }
   }
 
@@ -1421,7 +1421,7 @@ void Andersens::ClumpAddressTaken() {
       unsigned Pos = NewPos++;
       Translate[i] = Pos;
       NewGraphNodes.push_back(GraphNodes[i]);
-      DEBUG(errs() << "Renumbering node " << i << " to node " << Pos << "\n");
+      DEBUG(dbgs() << "Renumbering node " << i << " to node " << Pos << "\n");
     }
   }
 
@@ -1493,7 +1493,7 @@ void Andersens::ClumpAddressTaken() {
 /// receive &D from E anyway.
 
 void Andersens::HVN() {
-  DEBUG(errs() << "Beginning HVN\n");
+  DEBUG(dbgs() << "Beginning HVN\n");
   // Build a predecessor graph.  This is like our constraint graph with the
   // edges going in the opposite direction, and there are edges for all the
   // constraints, instead of just copy constraints.  We also build implicit
@@ -1564,7 +1564,7 @@ void Andersens::HVN() {
   Node2DFS.clear();
   Node2Deleted.clear();
   Node2Visited.clear();
-  DEBUG(errs() << "Finished HVN\n");
+  DEBUG(dbgs() << "Finished HVN\n");
 
 }
 
@@ -1688,7 +1688,7 @@ void Andersens::HVNValNum(unsigned NodeIndex) {
 /// and is equivalent to value numbering the collapsed constraint graph
 /// including evaluating unions.
 void Andersens::HU() {
-  DEBUG(errs() << "Beginning HU\n");
+  DEBUG(dbgs() << "Beginning HU\n");
   // Build a predecessor graph.  This is like our constraint graph with the
   // edges going in the opposite direction, and there are edges for all the
   // constraints, instead of just copy constraints.  We also build implicit
@@ -1768,7 +1768,7 @@ void Andersens::HU() {
   }
   // PEClass nodes will be deleted by the deleting of N->PointsTo in our caller.
   Set2PEClass.clear();
-  DEBUG(errs() << "Finished HU\n");
+  DEBUG(dbgs() << "Finished HU\n");
 }
 
 
@@ -1946,12 +1946,12 @@ void Andersens::RewriteConstraints() {
     // to anything.
     if (LHSLabel == 0) {
       DEBUG(PrintNode(&GraphNodes[LHSNode]));
-      DEBUG(errs() << " is a non-pointer, ignoring constraint.\n");
+      DEBUG(dbgs() << " is a non-pointer, ignoring constraint.\n");
       continue;
     }
     if (RHSLabel == 0) {
       DEBUG(PrintNode(&GraphNodes[RHSNode]));
-      DEBUG(errs() << " is a non-pointer, ignoring constraint.\n");
+      DEBUG(dbgs() << " is a non-pointer, ignoring constraint.\n");
       continue;
     }
     // This constraint may be useless, and it may become useless as we translate
@@ -1999,16 +1999,16 @@ void Andersens::PrintLabels() const {
     if (i < FirstRefNode) {
       PrintNode(&GraphNodes[i]);
     } else if (i < FirstAdrNode) {
-      DEBUG(errs() << "REF(");
+      DEBUG(dbgs() << "REF(");
       PrintNode(&GraphNodes[i-FirstRefNode]);
-      DEBUG(errs() <<")");
+      DEBUG(dbgs() <<")");
     } else {
-      DEBUG(errs() << "ADR(");
+      DEBUG(dbgs() << "ADR(");
       PrintNode(&GraphNodes[i-FirstAdrNode]);
-      DEBUG(errs() <<")");
+      DEBUG(dbgs() <<")");
     }
 
-    DEBUG(errs() << " has pointer label " << GraphNodes[i].PointerEquivLabel
+    DEBUG(dbgs() << " has pointer label " << GraphNodes[i].PointerEquivLabel
          << " and SCC rep " << VSSCCRep[i]
          << " and is " << (GraphNodes[i].Direct ? "Direct" : "Not direct")
          << "\n");
@@ -2025,7 +2025,7 @@ void Andersens::PrintLabels() const {
 /// operation are stored in SDT and are later used in SolveContraints()
 /// and UniteNodes().
 void Andersens::HCD() {
-  DEBUG(errs() << "Starting HCD.\n");
+  DEBUG(dbgs() << "Starting HCD.\n");
   HCDSCCRep.resize(GraphNodes.size());
 
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
@@ -2074,7 +2074,7 @@ void Andersens::HCD() {
   Node2Visited.clear();
   Node2Deleted.clear();
   HCDSCCRep.clear();
-  DEBUG(errs() << "HCD complete.\n");
+  DEBUG(dbgs() << "HCD complete.\n");
 }
 
 // Component of HCD: 
@@ -2146,7 +2146,7 @@ void Andersens::Search(unsigned Node) {
 /// Optimize the constraints by performing offline variable substitution and
 /// other optimizations.
 void Andersens::OptimizeConstraints() {
-  DEBUG(errs() << "Beginning constraint optimization\n");
+  DEBUG(dbgs() << "Beginning constraint optimization\n");
 
   SDTActive = false;
 
@@ -2230,7 +2230,7 @@ void Andersens::OptimizeConstraints() {
 
   // HCD complete.
 
-  DEBUG(errs() << "Finished constraint optimization\n");
+  DEBUG(dbgs() << "Finished constraint optimization\n");
   FirstRefNode = 0;
   FirstAdrNode = 0;
 }
@@ -2238,7 +2238,7 @@ void Andersens::OptimizeConstraints() {
 /// Unite pointer but not location equivalent variables, now that the constraint
 /// graph is built.
 void Andersens::UnitePointerEquivalences() {
-  DEBUG(errs() << "Uniting remaining pointer equivalences\n");
+  DEBUG(dbgs() << "Uniting remaining pointer equivalences\n");
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
     if (GraphNodes[i].AddressTaken && GraphNodes[i].isRep()) {
       unsigned Label = GraphNodes[i].PointerEquivLabel;
@@ -2247,7 +2247,7 @@ void Andersens::UnitePointerEquivalences() {
         UniteNodes(i, PENLEClass2Node[Label]);
     }
   }
-  DEBUG(errs() << "Finished remaining pointer equivalences\n");
+  DEBUG(dbgs() << "Finished remaining pointer equivalences\n");
   PENLEClass2Node.clear();
 }
 
@@ -2403,7 +2403,7 @@ void Andersens::SolveConstraints() {
   std::vector<unsigned int> RSV;
 #endif
   while( !CurrWL->empty() ) {
-    DEBUG(errs() << "Starting iteration #" << ++NumIters << "\n");
+    DEBUG(dbgs() << "Starting iteration #" << ++NumIters << "\n");
 
     Node* CurrNode;
     unsigned CurrNodeIndex;
@@ -2706,11 +2706,11 @@ unsigned Andersens::UniteNodes(unsigned First, unsigned Second,
   SecondNode->OldPointsTo = NULL;
 
   NumUnified++;
-  DEBUG(errs() << "Unified Node ");
+  DEBUG(dbgs() << "Unified Node ");
   DEBUG(PrintNode(FirstNode));
-  DEBUG(errs() << " and Node ");
+  DEBUG(dbgs() << " and Node ");
   DEBUG(PrintNode(SecondNode));
-  DEBUG(errs() << "\n");
+  DEBUG(dbgs() << "\n");
 
   if (SDTActive)
     if (SDT[Second] >= 0) {
@@ -2755,17 +2755,17 @@ unsigned Andersens::FindNode(unsigned NodeIndex) const {
 
 void Andersens::PrintNode(const Node *N) const {
   if (N == &GraphNodes[UniversalSet]) {
-    errs() << "<universal>";
+    dbgs() << "<universal>";
     return;
   } else if (N == &GraphNodes[NullPtr]) {
-    errs() << "<nullptr>";
+    dbgs() << "<nullptr>";
     return;
   } else if (N == &GraphNodes[NullObject]) {
-    errs() << "<null>";
+    dbgs() << "<null>";
     return;
   }
   if (!N->getValue()) {
-    errs() << "artificial" << (intptr_t) N;
+    dbgs() << "artificial" << (intptr_t) N;
     return;
   }
 
@@ -2774,85 +2774,85 @@ void Andersens::PrintNode(const Node *N) const {
   if (Function *F = dyn_cast<Function>(V)) {
     if (isa<PointerType>(F->getFunctionType()->getReturnType()) &&
         N == &GraphNodes[getReturnNode(F)]) {
-      errs() << F->getName() << ":retval";
+      dbgs() << F->getName() << ":retval";
       return;
     } else if (F->getFunctionType()->isVarArg() &&
                N == &GraphNodes[getVarargNode(F)]) {
-      errs() << F->getName() << ":vararg";
+      dbgs() << F->getName() << ":vararg";
       return;
     }
   }
 
   if (Instruction *I = dyn_cast<Instruction>(V))
-    errs() << I->getParent()->getParent()->getName() << ":";
+    dbgs() << I->getParent()->getParent()->getName() << ":";
   else if (Argument *Arg = dyn_cast<Argument>(V))
-    errs() << Arg->getParent()->getName() << ":";
+    dbgs() << Arg->getParent()->getName() << ":";
 
   if (V->hasName())
-    errs() << V->getName();
+    dbgs() << V->getName();
   else
-    errs() << "(unnamed)";
+    dbgs() << "(unnamed)";
 
   if (isa<GlobalValue>(V) || isa<AllocaInst>(V) || isMalloc(V))
     if (N == &GraphNodes[getObject(V)])
-      errs() << "<mem>";
+      dbgs() << "<mem>";
 }
 void Andersens::PrintConstraint(const Constraint &C) const {
   if (C.Type == Constraint::Store) {
-    errs() << "*";
+    dbgs() << "*";
     if (C.Offset != 0)
-      errs() << "(";
+      dbgs() << "(";
   }
   PrintNode(&GraphNodes[C.Dest]);
   if (C.Type == Constraint::Store && C.Offset != 0)
-    errs() << " + " << C.Offset << ")";
-  errs() << " = ";
+    dbgs() << " + " << C.Offset << ")";
+  dbgs() << " = ";
   if (C.Type == Constraint::Load) {
-    errs() << "*";
+    dbgs() << "*";
     if (C.Offset != 0)
-      errs() << "(";
+      dbgs() << "(";
   }
   else if (C.Type == Constraint::AddressOf)
-    errs() << "&";
+    dbgs() << "&";
   PrintNode(&GraphNodes[C.Src]);
   if (C.Offset != 0 && C.Type != Constraint::Store)
-    errs() << " + " << C.Offset;
+    dbgs() << " + " << C.Offset;
   if (C.Type == Constraint::Load && C.Offset != 0)
-    errs() << ")";
-  errs() << "\n";
+    dbgs() << ")";
+  dbgs() << "\n";
 }
 
 void Andersens::PrintConstraints() const {
-  errs() << "Constraints:\n";
+  dbgs() << "Constraints:\n";
 
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i)
     PrintConstraint(Constraints[i]);
 }
 
 void Andersens::PrintPointsToGraph() const {
-  errs() << "Points-to graph:\n";
+  dbgs() << "Points-to graph:\n";
   for (unsigned i = 0, e = GraphNodes.size(); i != e; ++i) {
     const Node *N = &GraphNodes[i];
     if (FindNode(i) != i) {
       PrintNode(N);
-      errs() << "\t--> same as ";
+      dbgs() << "\t--> same as ";
       PrintNode(&GraphNodes[FindNode(i)]);
-      errs() << "\n";
+      dbgs() << "\n";
     } else {
-      errs() << "[" << (N->PointsTo->count()) << "] ";
+      dbgs() << "[" << (N->PointsTo->count()) << "] ";
       PrintNode(N);
-      errs() << "\t--> ";
+      dbgs() << "\t--> ";
 
       bool first = true;
       for (SparseBitVector<>::iterator bi = N->PointsTo->begin();
            bi != N->PointsTo->end();
            ++bi) {
         if (!first)
-          errs() << ", ";
+          dbgs() << ", ";
         PrintNode(&GraphNodes[*bi]);
         first = false;
       }
-      errs() << "\n";
+      dbgs() << "\n";
     }
   }
 }
