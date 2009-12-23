@@ -7257,8 +7257,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare i32 @llvm.objectsize.i32( i8* &lt;ptr&gt;, i32 &lt;type&gt; )
-  declare i64 @llvm.objectsize.i64( i8* &lt;ptr&gt;, i32 &lt;type&gt; )
+  declare i32 @llvm.objectsize.i32( i8* &lt;object&gt;, i1 &lt;type&gt; )
+  declare i64 @llvm.objectsize.i64( i8* &lt;object&gt;, i1 &lt;type&gt; )
 </pre>
 
 <h5>Overview:</h5>
@@ -7267,34 +7267,15 @@ LLVM</a>.</p>
    operation like memcpy will either overflow a buffer that corresponds to
    an object, or b) to determine that a runtime check for overflow isn't
    necessary. An object in this context means an allocation of a
-   specific <a href="#typesystem">type</a>.</p>
+   specific class, structure, array, or other object.</p>
 
 <h5>Arguments:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments.  The first
-   argument is a pointer to the object <tt>ptr</tt>. The second argument
-   is an integer <tt>type</tt> which ranges from 0 to 3. The first bit in
-   the type corresponds to a return value based on whole objects,
-   and the second bit whether or not we return the maximum or minimum
-   remaining bytes computed.</p>
-<table class="layout">
-  <tr class="layout">
-    <td class="left"><tt>00</tt></td>
-    <td class="left">whole object, maximum number of bytes</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>01</tt></td>
-    <td class="left">partial object, maximum number of bytes</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>10</tt></td>
-    <td class="left">whole object, minimum number of bytes</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>11</tt></td>
-    <td class="left">partial object, minimum number of bytes</td>
-  </tr>
-</table>
-
+   argument is a pointer to or into the <tt>object</tt>. The second argument
+   is a boolean 0 or 1.  This argument determines whether you want the 
+   maximum (0) or minimum (1) bytes remaining.  This needs to be a literal 0 or
+   1, variables are not allowed.</p>
+   
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to either a constant
    representing the size of the object concerned or <tt>i32/i64 -1 or 0</tt>
