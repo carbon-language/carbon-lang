@@ -269,7 +269,7 @@ protected:
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
-                 ExplodedNodeSet& Dst);
+                 ExplodedNodeSet& Dst, bool asLValue);
 
   /// VisitCompoundLiteralExpr - Transfer function logic for compound literals.
   void VisitCompoundLiteralExpr(CompoundLiteralExpr* CL, ExplodedNode* Pred,

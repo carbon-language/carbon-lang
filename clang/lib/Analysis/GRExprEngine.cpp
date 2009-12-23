@@ -658,7 +658,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::ImplicitCastExprClass:
     case Stmt::CStyleCastExprClass: {
       CastExpr* C = cast<CastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      VisitCast(C, C->getSubExpr(), Pred, Dst, false);
       break;
     }
 
@@ -753,6 +753,13 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
   }
 
   switch (Ex->getStmtClass()) {
+    // C++ stuff we don't support yet.
+    case Stmt::CXXMemberCallExprClass: {
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      Builder->BuildSinks = true;
+      MakeNode(Dst, Ex, Pred, GetState(Pred));
+      break;
+    }
 
     case Stmt::ArraySubscriptExprClass:
       VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
@@ -782,6 +789,14 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::DeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(Ex), Pred, Dst, true);
       return;
+      
+    case Stmt::ImplicitCastExprClass:
+    case Stmt::CStyleCastExprClass: {
+      CastExpr *C = cast<CastExpr>(Ex);
+      QualType T = Ex->getType();
+      VisitCast(C, C->getSubExpr(), Pred, Dst, true);
+      break;
+    }
       
     case Stmt::MemberExprClass:
       VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
@@ -2080,7 +2095,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, 
-                             ExplodedNodeSet& Dst){
+                             ExplodedNodeSet& Dst, bool asLValue){
   ExplodedNodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
@@ -2088,7 +2103,8 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
 
-  if (ExTy->isArrayType() || ExTy->isFunctionType() || T->isReferenceType())
+  if (ExTy->isArrayType() || ExTy->isFunctionType() || T->isReferenceType() ||
+      asLValue)
     VisitLValue(Ex, Pred, S1);
   else
     Visit(Ex, Pred, S1);
@@ -2098,9 +2114,17 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
 
   // Check for casting to "void".
   if (T->isVoidType()) {
+    assert(!asLValue);
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
       Dst.Add(*I);
     return;
+  }
+  
+  // If we are evaluating the cast in an lvalue context, we implicitly want
+  // the cast to evaluate to a location.
+  if (asLValue) {
+    ASTContext &Ctx = getContext();
+    T = Ctx.getPointerType(Ctx.getCanonicalType(T));
   }
 
   for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
