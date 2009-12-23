@@ -342,7 +342,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
   
   // If we've already computed this block's value, return it.
   if (!BBLV.isUndefined()) {
-    DEBUG(errs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
+    DEBUG(dbgs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
     return BBLV;
   }
 
@@ -365,7 +365,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
       // If we hit overdefined, exit early.  The BlockVals entry is already set
       // to overdefined.
       if (Result.isOverdefined()) {
-        DEBUG(errs() << " compute BB '" << BB->getName()
+        DEBUG(dbgs() << " compute BB '" << BB->getName()
                      << "' - overdefined because of pred.\n");
         return Result;
       }
@@ -394,7 +394,7 @@ LVILatticeVal LVIQuery::getBlockValue(BasicBlock *BB) {
     
   }
   
-  DEBUG(errs() << " compute BB '" << BB->getName()
+  DEBUG(dbgs() << " compute BB '" << BB->getName()
                << "' - overdefined because inst def found.\n");
 
   LVILatticeVal Result;
@@ -471,12 +471,12 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   if (Constant *VC = dyn_cast<Constant>(V))
     return LVILatticeVal::get(VC);
   
-  DEBUG(errs() << "LVI Getting block end value " << *V << " at '"
+  DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
   LVILatticeVal Result = LVIQuery(V, ValueCache[V]).getBlockValue(BB);
   
-  DEBUG(errs() << "  Result = " << Result << "\n");
+  DEBUG(dbgs() << "  Result = " << Result << "\n");
   return Result;
 }
 
@@ -486,12 +486,12 @@ getValueOnEdge(Value *V, BasicBlock *FromBB, BasicBlock *ToBB) {
   if (Constant *VC = dyn_cast<Constant>(V))
     return LVILatticeVal::get(VC);
   
-  DEBUG(errs() << "LVI Getting edge value " << *V << " from '"
+  DEBUG(dbgs() << "LVI Getting edge value " << *V << " from '"
         << FromBB->getName() << "' to '" << ToBB->getName() << "'\n");
   LVILatticeVal Result =
     LVIQuery(V, ValueCache[V]).getEdgeValue(FromBB, ToBB);
   
-  DEBUG(errs() << "  Result = " << Result << "\n");
+  DEBUG(dbgs() << "  Result = " << Result << "\n");
   
   return Result;
 }
