@@ -624,9 +624,9 @@ class IfStmt : public Stmt {
   SourceLocation ElseLoc;
   
 public:
-  IfStmt(SourceLocation IL, VarDecl *Var, Expr *cond, Stmt *then,
+  IfStmt(SourceLocation IL, VarDecl *var, Expr *cond, Stmt *then,
          SourceLocation EL = SourceLocation(), Stmt *elsev = 0)
-    : Stmt(IfStmtClass), Var(Var), IfLoc(IL), ElseLoc(EL)  {
+    : Stmt(IfStmtClass), Var(var), IfLoc(IL), ElseLoc(EL)  {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[THEN] = then;
     SubExprs[ELSE] = elsev;
@@ -674,9 +674,13 @@ public:
   }
   static bool classof(const IfStmt *) { return true; }
 
-  // Iterators
+  // Iterators over subexpressions.  The iterators will include iterating
+  // over the initialization expression referenced by the condition variable.
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+
+protected:
+  virtual void DoDestroy(ASTContext &Ctx);
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.

@@ -65,7 +65,7 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
   assert (getVAPtr() == NULL);
 
   if (inDecl()) {
-    assert (decl);
+    assert(decl);
 
     // FIXME: SIMPLIFY AWAY.
     if (ImmediateAdvance)
@@ -74,7 +74,7 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
       return;
   }
   else {
-    assert (inDeclGroup());
+    assert(inDeclGroup());
 
     if (ImmediateAdvance)
       ++DGI;
@@ -113,10 +113,10 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
   return false;
 }
 
-StmtIteratorBase::StmtIteratorBase(Decl* d)
-  : stmt(0), decl(d), RawVAPtr(DeclMode) {
-  assert (decl);
-  NextDecl(false);
+StmtIteratorBase::StmtIteratorBase(Decl *d, Stmt **s)
+  : stmt(s), decl(d), RawVAPtr(d ? DeclMode : 0) {
+  if (decl)
+    NextDecl(false);
 }
 
 StmtIteratorBase::StmtIteratorBase(Decl** dgi, Decl** dge)
