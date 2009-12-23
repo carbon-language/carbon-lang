@@ -1561,30 +1561,47 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   // We should have handled larger operands in type legalizer itself.
   assert (Op.getValueType() == MVT::i8 && "illegal sub to lower");
-
-  // Nothing to do if the first operand is already a direct load and it has
-  // only one use.
-  if (isDirectLoad(Op.getOperand(0)) && Op.getOperand(0).hasOneUse())
-    return Op;
-
-  // Put first operand on stack.
-  SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG, dl);
-
+  unsigned MemOp = 1;
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
-  switch (Op.getOpcode()) {
-    default:
-      assert (0 && "Opcode unknown."); 
-    case ISD::SUBE:
-      return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1),
-                         Op.getOperand(2));
-      break;
-    case ISD::SUBC:
-      return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
-      break;
-    case ISD::SUB:
-      return DAG.getNode(Op.getOpcode(), dl, MVT::i8, NewVal, Op.getOperand(1));
-      break;
-  }
+
+  // Since we don't have an instruction for X - c , 
+  // we can change it to X + (-c)
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+  if (C && (Op.getOpcode() == ISD::SUB))
+    {
+      return DAG.getNode(ISD::ADD, 
+                         dl, MVT::i8, Op.getOperand(0), 
+                         DAG.getConstant(0-(C->getZExtValue()), MVT::i8));
+    }
+
+  if (NeedToConvertToMemOp(Op, MemOp) ||
+      (isDirectLoad(Op.getOperand(1)) && 
+       (!isDirectLoad(Op.getOperand(0))) &&
+       (Op.getOperand(0).getOpcode() != ISD::Constant)))
+    {
+      // Put first operand on stack.
+      SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG, dl);
+      
+      switch (Op.getOpcode()) {
+      default:
+        assert (0 && "Opcode unknown."); 
+      case ISD::SUBE:
+        return DAG.getNode(Op.getOpcode(), 
+                           dl, Tys, NewVal, Op.getOperand(1),
+                           Op.getOperand(2));
+        break;
+      case ISD::SUBC:
+        return DAG.getNode(Op.getOpcode(), 
+                           dl, Tys, NewVal, Op.getOperand(1));
+        break;
+      case ISD::SUB:
+        return DAG.getNode(Op.getOpcode(), 
+                           dl, MVT::i8, NewVal, Op.getOperand(1));
+        break;
+      }
+    }
+  else 
+    return Op;
 }
 
 void PIC16TargetLowering::InitReservedFrameCount(const Function *F) {

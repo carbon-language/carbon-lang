@@ -161,7 +161,7 @@ class BinOpWF<bits<6> OpCode, string OpcStr, SDNode OpNode>:
 
 // W = W Op L : Do Op of L with W and place result in W.
 let isTwoAddress = 1 in
-class BinOpLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
+class BinOpWL<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
                 !strconcat(OpcStr, " $literal"),
@@ -404,33 +404,46 @@ def subwf_cc: SUBWF<0, "subwf", PIC16Subcc>;
 
 // addlw 
 let Defs = [STATUS] in {
-def addlw_1 : BinOpLW<0, "addlw", add>;
-def addlw_2 : BinOpLW<0, "addlw", addc>;
+def addlw_1 : BinOpWL<0, "addlw", add>;
+def addlw_2 : BinOpWL<0, "addlw", addc>;
 
 let Uses = [STATUS] in
-def addlwc : BinOpLW<0, "addlwc", adde>; // With Carry. (Assembler macro).
+def addlwc : BinOpWL<0, "addlwc", adde>; // With Carry. (Assembler macro).
 
 // bitwise operations involving a literal and w.
-def andlw : BinOpLW<0, "andlw", and>;
-def xorlw : BinOpLW<0, "xorlw", xor>;
-def orlw  : BinOpLW<0, "iorlw", or>;
+def andlw : BinOpWL<0, "andlw", and>;
+def xorlw : BinOpWL<0, "xorlw", xor>;
+def orlw  : BinOpWL<0, "iorlw", or>;
 }
 
 // sublw 
 // W = C - W ; sub W from literal. (Without borrow).
 let isTwoAddress = 1 in
-class SUBLW<bits<6> opcode, SDNode OpNode> :
+class SUBLW<bits<6> opcode, string OpcStr, SDNode OpNode> :
   LiteralFormat<opcode, (outs GPR:$dst),
                 (ins GPR:$src, i8imm:$literal),
-                "sublw $literal",
+                !strconcat(OpcStr, " $literal"),
                 [(set GPR:$dst, (OpNode (i8 imm:$literal), GPR:$src))]>;
+// subwl 
+// W = W - C ; sub literal from W  (Without borrow).
+let isTwoAddress = 1 in
+class SUBWL<bits<6> opcode, string OpcStr, SDNode OpNode> :
+  LiteralFormat<opcode, (outs GPR:$dst),
+                (ins GPR:$src, i8imm:$literal),
+                !strconcat(OpcStr, " $literal"),
+                [(set GPR:$dst, (OpNode GPR:$src, (i8 imm:$literal)))]>;
 
 let Defs = [STATUS] in {
-def sublw_1 : SUBLW<0, sub>;
-def sublw_2 : SUBLW<0, subc>;
+def sublw_1 : SUBLW<0, "sublw", sub>;
+def sublw_2 : SUBLW<0, "sublw", subc>;
+def sublw_3 : SUBLW<0, "sublwb", sube>; // With borrow (Assembler macro).
+
+def sublw_4 : SUBWL<0, "subwl", sub>;   // Assembler macro replace with addlw
+def sublw_5 : SUBWL<0, "subwl", subc>;  // Assembler macro replace with addlw
+def sublw_6 : SUBWL<0, "subwlb", sube>; // With borrow (Assembler macro).
 }
 let Defs = [STATUS], isTerminator = 1 in 
-def sublw_cc : SUBLW<0, PIC16Subcc>;
+def sublw_cc : SUBLW<0, "sublw", PIC16Subcc>;
 
 // Call instruction.
 let isCall = 1,
