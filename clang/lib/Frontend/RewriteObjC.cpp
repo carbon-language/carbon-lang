@@ -30,6 +30,28 @@ using llvm::utostr;
 
 namespace {
   class RewriteObjC : public ASTConsumer {
+    enum {
+      BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)), 
+                                        block, ... */
+      BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
+      BLOCK_FIELD_IS_BYREF    =  8,  /* the on stack structure holding the 
+                                        __block variable */
+      BLOCK_FIELD_IS_WEAK     = 16,  /* declared __weak, only used in byref copy 
+                                        helpers */
+      BLOCK_BYREF_CALLER      = 128, /* called from __block (byref) copy/dispose 
+                                        support routines */
+      BLOCK_BYREF_CURRENT_MAX = 256
+    };
+    
+    enum {
+      BLOCK_NEEDS_FREE =        (1 << 24),
+      BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
+      BLOCK_HAS_CXX_OBJ =       (1 << 26),
+      BLOCK_IS_GC =             (1 << 27),
+      BLOCK_IS_GLOBAL =         (1 << 28),
+      BLOCK_HAS_DESCRIPTOR =    (1 << 29)
+    };
+    
     Rewriter Rewrite;
     Diagnostic &Diags;
     const LangOptions &LangOpts;
@@ -3785,9 +3807,9 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
     S += ", (void*)src->";
     S += (*I)->getNameAsString();
     if (BlockByRefDecls.count((*I)))
-      S += ", 8/*BLOCK_FIELD_IS_BYREF*/);";
+      S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else
-      S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
+      S += ", " + utostr(BLOCK_FIELD_IS_OBJECT) + "/*BLOCK_FIELD_IS_OBJECT*/);";
   }
   S += "}\n";
   
@@ -3801,9 +3823,9 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
     S += "_Block_object_dispose((void*)src->";
     S += (*I)->getNameAsString();
     if (BlockByRefDecls.count((*I)))
-      S += ", 8/*BLOCK_FIELD_IS_BYREF*/);";
+      S += ", " + utostr(BLOCK_FIELD_IS_BYREF) + "/*BLOCK_FIELD_IS_BYREF*/);";
     else
-      S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
+      S += ", " + utostr(BLOCK_FIELD_IS_OBJECT) + "/*BLOCK_FIELD_IS_OBJECT*/);";
   }
   S += "}\n";
   return S;
