@@ -40,3 +40,10 @@ namespace test2 {
     friend void ::test2::foo::Func(int x);
   };
 }
+
+// PR5134
+namespace test3 {
+  class Foo {
+    friend const int getInt(int inInt = 0);
+  };
+}
