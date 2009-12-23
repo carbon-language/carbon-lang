@@ -1122,7 +1122,7 @@ struct SizeOpt : public LibCallOptimization {
 
     const Type *Ty = Callee->getFunctionType()->getReturnType();
 
-    if (Const->getZExtValue() < 2)
+    if (Const->getZExtValue() == 0)
       return Constant::getAllOnesValue(Ty);
     else
       return ConstantInt::get(Ty, 0);

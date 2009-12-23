@@ -4688,7 +4688,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue Arg = getValue(I.getOperand(0));
     EVT Ty = Arg.getValueType();
 
-    if (CI->getZExtValue() < 2)
+    if (CI->getZExtValue() == 0)
       Res = DAG.getConstant(-1ULL, Ty);
     else
       Res = DAG.getConstant(0, Ty);
