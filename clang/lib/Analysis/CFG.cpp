@@ -1548,17 +1548,20 @@ namespace {
   typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
 }
 
-static void FindSubExprAssignments(Stmt* Terminator, llvm::SmallPtrSet<Expr*,50>& Set) {
-  if (!Terminator)
+static void FindSubExprAssignments(Stmt *S,
+                                   llvm::SmallPtrSet<Expr*,50>& Set) {
+  if (!S)
     return;
 
-  for (Stmt::child_iterator I=Terminator->child_begin(), E=Terminator->child_end(); I!=E; ++I) {
-    if (!*I) continue;
-
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(*I))
+  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I) {
+    Stmt *child = *I;    
+    if (!child)
+      continue;
+    
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(child))
       if (B->isAssignmentOp()) Set.insert(B);
 
-    FindSubExprAssignments(*I, Set);
+    FindSubExprAssignments(child, Set);
   }
 }
 
