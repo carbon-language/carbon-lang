@@ -117,8 +117,8 @@ char ScalarEvolution::ID = 0;
 SCEV::~SCEV() {}
 
 void SCEV::dump() const {
-  print(errs());
-  errs() << '\n';
+  print(dbgs());
+  dbgs() << '\n';
 }
 
 bool SCEV::isZero() const {
@@ -3627,10 +3627,10 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   }
   default:
 #if 0
-    errs() << "ComputeBackedgeTakenCount ";
+    dbgs() << "ComputeBackedgeTakenCount ";
     if (ExitCond->getOperand(0)->getType()->isUnsigned())
-      errs() << "[unsigned] ";
-    errs() << *LHS << "   "
+      dbgs() << "[unsigned] ";
+    dbgs() << *LHS << "   "
          << Instruction::getOpcodeName(Instruction::ICmp)
          << "   " << *RHS << "\n";
 #endif
@@ -3751,7 +3751,7 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
     if (!isa<ConstantInt>(Result)) break;  // Couldn't decide for sure
     if (cast<ConstantInt>(Result)->getValue().isMinValue()) {
 #if 0
-      errs() << "\n***\n*** Computed loop count " << *ItCst
+      dbgs() << "\n***\n*** Computed loop count " << *ItCst
              << "\n*** From global " << *GV << "*** BB: " << *L->getHeader()
              << "***\n";
 #endif
@@ -4317,7 +4317,7 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
     const SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
     if (R1) {
 #if 0
-      errs() << "HFTZ: " << *V << " - sol#1: " << *R1
+      dbgs() << "HFTZ: " << *V << " - sol#1: " << *R1
              << "  sol#2: " << *R2 << "\n";
 #endif
       // Pick the smallest positive root value.
