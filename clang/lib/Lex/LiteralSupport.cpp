@@ -615,17 +615,12 @@ GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
   using llvm::APFloat;
   using llvm::StringRef;
 
-  llvm::SmallVector<char,256> floatChars;
   unsigned n = std::min(SuffixBegin - ThisTokBegin, ThisTokEnd - ThisTokBegin);
-  for (unsigned i = 0; i != n; ++i)
-    floatChars.push_back(ThisTokBegin[i]);
-
-  floatChars.push_back('\0');
 
   APFloat V (Format, APFloat::fcZero, false);
   APFloat::opStatus status;
 
-  status = V.convertFromString(StringRef(&floatChars[0], n),
+  status = V.convertFromString(StringRef(ThisTokBegin, n),
                                APFloat::rmNearestTiesToEven);
 
   if (isExact)
