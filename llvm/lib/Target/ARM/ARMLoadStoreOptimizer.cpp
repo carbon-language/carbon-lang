@@ -87,6 +87,21 @@ namespace {
                   int Offset, unsigned Base, bool BaseKill, int Opcode,
                   ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
                   DebugLoc dl, SmallVector<std::pair<unsigned, bool>, 8> &Regs);
+    void MergeOpsUpdate(MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator MBBI,
+                        int Offset,
+                        unsigned Base,
+                        bool BaseKill,
+                        int Opcode,
+                        ARMCC::CondCodes Pred,
+                        unsigned PredReg,
+                        unsigned Scratch,
+                        DebugLoc dl,
+                        SmallVector<std::pair<unsigned, bool>, 8> &Regs,
+                        MemOpQueue &MemOps,
+                        unsigned memOpsFrom,
+                        unsigned memOpsTo,
+                        SmallVector<MachineBasicBlock::iterator, 4> &Merges);
     void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
                       int Opcode, unsigned Size,
                       ARMCC::CondCodes Pred, unsigned PredReg,
@@ -248,6 +263,34 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   return true;
 }
 
+// MergeOpsUpdate - call MergeOps and update MemOps and merges accordingly on
+// success.
+void ARMLoadStoreOpt::
+MergeOpsUpdate(MachineBasicBlock &MBB,
+               MachineBasicBlock::iterator MBBI,
+               int Offset,
+               unsigned Base,
+               bool BaseKill,
+               int Opcode,
+               ARMCC::CondCodes Pred,
+               unsigned PredReg,
+               unsigned Scratch,
+               DebugLoc dl,
+               SmallVector<std::pair<unsigned, bool>, 8> &Regs,
+               MemOpQueue &MemOps,
+               unsigned memOpsFrom,
+               unsigned memOpsTo,
+               SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
+  if (!MergeOps(MBB, MBBI, Offset, Base, BaseKill, Opcode,
+                Pred, PredReg, Scratch, dl, Regs))
+    return;
+  Merges.push_back(prior(MBBI));
+  for (unsigned j = memOpsFrom; j < memOpsTo; ++j) {
+    MBB.erase(MemOps[j].MBBI);
+    MemOps[j].Merged = true;
+  }
+}
+
 /// MergeLDR_STR - Merge a number of load / store instructions into one or more
 /// load / store multiple instructions.
 void
@@ -282,14 +325,8 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      if (MergeOps(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
-                   Scratch, dl, Regs)) {
-        Merges.push_back(prior(Loc));
-        for (unsigned j = SIndex; j < i; ++j) {
-          MBB.erase(MemOps[j].MBBI);
-          MemOps[j].Merged = true;
-        }
-      }
+      MergeOpsUpdate(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
+                     Scratch, dl, Regs, MemOps, SIndex, i, Merges);
       MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,
                    MemOps, Merges);
       return;
@@ -302,15 +339,8 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   }
 
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
-  if (MergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
-               Scratch, dl, Regs)) {
-    Merges.push_back(prior(Loc));
-    for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
-      MBB.erase(MemOps[i].MBBI);
-      MemOps[i].Merged = true;
-    }
-  }
-
+  MergeOpsUpdate(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
+                 Scratch, dl, Regs, MemOps, SIndex, MemOps.size(), Merges);
   return;
 }
 
