@@ -88,7 +88,7 @@ void SparseSolver::UpdateState(Instruction &Inst, LatticeVal V) {
 /// MarkBlockExecutable - This method can be used by clients to mark all of
 /// the blocks that are known to be intrinsically live in the processed unit.
 void SparseSolver::MarkBlockExecutable(BasicBlock *BB) {
-  DEBUG(errs() << "Marking Block Executable: " << BB->getName() << "\n");
+  DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << "\n");
   BBExecutable.insert(BB);   // Basic block is executable!
   BBWorkList.push_back(BB);  // Add the block to the work list!
 }
@@ -99,7 +99,7 @@ void SparseSolver::markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
   if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
     return;  // This edge is already known to be executable!
   
-  DEBUG(errs() << "Marking Edge Executable: " << Source->getName()
+  DEBUG(dbgs() << "Marking Edge Executable: " << Source->getName()
         << " -> " << Dest->getName() << "\n");
 
   if (BBExecutable.count(Dest)) {
@@ -299,7 +299,7 @@ void SparseSolver::Solve(Function &F) {
       Instruction *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off I-WL: " << *I << "\n");
+      DEBUG(dbgs() << "\nPopped off I-WL: " << *I << "\n");
 
       // "I" got into the work list because it made a transition.  See if any
       // users are both live and in need of updating.
@@ -316,7 +316,7 @@ void SparseSolver::Solve(Function &F) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off BBWL: " << *BB);
+      DEBUG(dbgs() << "\nPopped off BBWL: " << *BB);
 
       // Notify all instructions in this basic block that they are newly
       // executable.
