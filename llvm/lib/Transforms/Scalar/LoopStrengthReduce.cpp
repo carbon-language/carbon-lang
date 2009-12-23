@@ -338,9 +338,9 @@ namespace {
 }
 
 void BasedUser::dump() const {
-  errs() << " Base=" << *Base;
-  errs() << " Imm=" << *Imm;
-  errs() << "   Inst: " << *Inst;
+  dbgs() << " Base=" << *Base;
+  dbgs() << " Imm=" << *Imm;
+  dbgs() << "   Inst: " << *Inst;
 }
 
 Value *BasedUser::InsertCodeForBaseAtPosition(const SCEV *NewBase,
@@ -404,9 +404,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
 
-    DEBUG(errs() << "      Replacing with ");
-    DEBUG(WriteAsOperand(errs(), NewVal, /*PrintType=*/false));
-    DEBUG(errs() << ", which has value " << *NewBase << " plus IMM "
+    DEBUG(dbgs() << "      Replacing with ");
+    DEBUG(WriteAsOperand(dbgs(), NewVal, /*PrintType=*/false));
+    DEBUG(dbgs() << ", which has value " << *NewBase << " plus IMM "
                  << *Imm << "\n");
     return;
   }
@@ -464,9 +464,9 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEV *NewBase,
         Code = InsertCodeForBaseAtPosition(NewBase, PN->getType(),
                                            Rewriter, InsertPt, SE);
 
-        DEBUG(errs() << "      Changing PHI use to ");
-        DEBUG(WriteAsOperand(errs(), Code, /*PrintType=*/false));
-        DEBUG(errs() << ", which has value " << *NewBase << " plus IMM "
+        DEBUG(dbgs() << "      Changing PHI use to ");
+        DEBUG(WriteAsOperand(dbgs(), Code, /*PrintType=*/false));
+        DEBUG(dbgs() << ", which has value " << *NewBase << " plus IMM "
                      << *Imm << "\n");
       }
 
@@ -1321,7 +1321,7 @@ LoopStrengthReduce::PrepareToStrengthReduceFully(
                                         const SCEV *CommonExprs,
                                         const Loop *L,
                                         SCEVExpander &PreheaderRewriter) {
-  DEBUG(errs() << "  Fully reducing all users\n");
+  DEBUG(dbgs() << "  Fully reducing all users\n");
 
   // Rewrite the UsersToProcess records, creating a separate PHI for each
   // unique Base value.
@@ -1370,7 +1370,7 @@ LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
                                          Instruction *IVIncInsertPt,
                                          const Loop *L,
                                          SCEVExpander &PreheaderRewriter) {
-  DEBUG(errs() << "  Inserting new PHI:\n");
+  DEBUG(dbgs() << "  Inserting new PHI:\n");
 
   PHINode *Phi = InsertAffinePhi(SE->getUnknown(CommonBaseV),
                                  Stride, IVIncInsertPt, L,
@@ -1383,9 +1383,9 @@ LoopStrengthReduce::PrepareToStrengthReduceWithNewPhi(
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
     UsersToProcess[i].Phi = Phi;
 
-  DEBUG(errs() << "    IV=");
-  DEBUG(WriteAsOperand(errs(), Phi, /*PrintType=*/false));
-  DEBUG(errs() << "\n");
+  DEBUG(dbgs() << "    IV=");
+  DEBUG(WriteAsOperand(dbgs(), Phi, /*PrintType=*/false));
+  DEBUG(dbgs() << "\n");
 }
 
 /// PrepareToStrengthReduceFromSmallerStride - Prepare for the given users to
@@ -1398,7 +1398,7 @@ LoopStrengthReduce::PrepareToStrengthReduceFromSmallerStride(
                                          Value *CommonBaseV,
                                          const IVExpr &ReuseIV,
                                          Instruction *PreInsertPt) {
-  DEBUG(errs() << "  Rewriting in terms of existing IV of STRIDE "
+  DEBUG(dbgs() << "  Rewriting in terms of existing IV of STRIDE "
                << *ReuseIV.Stride << " and BASE " << *ReuseIV.Base << "\n");
 
   // All the users will share the reused IV.
@@ -1507,7 +1507,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
                                          UsersToProcess, TLI);
 
       if (DoSink) {
-        DEBUG(errs() << "  Sinking " << *Imm << " back down into uses\n");
+        DEBUG(dbgs() << "  Sinking " << *Imm << " back down into uses\n");
         for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i)
           UsersToProcess[i].Imm = SE->getAddExpr(UsersToProcess[i].Imm, Imm);
         CommonExprs = NewCommon;
@@ -1519,7 +1519,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
 
   // Now that we know what we need to do, insert the PHI node itself.
   //
-  DEBUG(errs() << "LSR: Examining IVs of TYPE " << *ReplacedTy << " of STRIDE "
+  DEBUG(dbgs() << "LSR: Examining IVs of TYPE " << *ReplacedTy << " of STRIDE "
                << *Stride << ":\n"
                << "  Common base: " << *CommonExprs << "\n");
 
@@ -1583,10 +1583,10 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
     if (!Base->isZero()) {
       BaseV = PreheaderRewriter.expandCodeFor(Base, 0, PreInsertPt);
 
-      DEBUG(errs() << "  INSERTING code for BASE = " << *Base << ":");
+      DEBUG(dbgs() << "  INSERTING code for BASE = " << *Base << ":");
       if (BaseV->hasName())
-        DEBUG(errs() << " Result value name = %" << BaseV->getName());
-      DEBUG(errs() << "\n");
+        DEBUG(dbgs() << " Result value name = %" << BaseV->getName());
+      DEBUG(dbgs() << "\n");
 
       // If BaseV is a non-zero constant, make sure that it gets inserted into
       // the preheader, instead of being forward substituted into the uses.  We
@@ -1607,15 +1607,15 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
       // FIXME: Use emitted users to emit other users.
       BasedUser &User = UsersToProcess.back();
 
-      DEBUG(errs() << "    Examining ");
+      DEBUG(dbgs() << "    Examining ");
       if (User.isUseOfPostIncrementedValue)
-        DEBUG(errs() << "postinc");
+        DEBUG(dbgs() << "postinc");
       else
-        DEBUG(errs() << "preinc");
-      DEBUG(errs() << " use ");
-      DEBUG(WriteAsOperand(errs(), UsersToProcess.back().OperandValToReplace,
+        DEBUG(dbgs() << "preinc");
+      DEBUG(dbgs() << " use ");
+      DEBUG(WriteAsOperand(dbgs(), UsersToProcess.back().OperandValToReplace,
                            /*PrintType=*/false));
-      DEBUG(errs() << " in Inst: " << *User.Inst);
+      DEBUG(dbgs() << " in Inst: " << *User.Inst);
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
@@ -2029,8 +2029,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     Cond = new ICmpInst(OldCond, Predicate, NewCmpLHS, NewCmpRHS,
                         L->getHeader()->getName() + ".termcond");
 
-    DEBUG(errs() << "    Change compare stride in Inst " << *OldCond);
-    DEBUG(errs() << " to " << *Cond << '\n');
+    DEBUG(dbgs() << "    Change compare stride in Inst " << *OldCond);
+    DEBUG(dbgs() << " to " << *Cond << '\n');
 
     // Remove the old compare instruction. The old indvar is probably dead too.
     DeadInsts.push_back(CondUse->getOperandValToReplace());
@@ -2489,7 +2489,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
     if (!UsePostInc)
       continue;
 
-    DEBUG(errs() << "  Change loop exiting icmp to use postinc iv: "
+    DEBUG(dbgs() << "  Change loop exiting icmp to use postinc iv: "
           << *Cond << '\n');
 
     // It's possible for the setcc instruction to be anywhere in the loop, and
@@ -2568,9 +2568,9 @@ bool LoopStrengthReduce::OptimizeLoopCountIVOfStride(const SCEV* &Stride,
   }
 
   // Replace the increment with a decrement.
-  DEBUG(errs() << "LSR: Examining use ");
-  DEBUG(WriteAsOperand(errs(), CondOp0, /*PrintType=*/false));
-  DEBUG(errs() << " in Inst: " << *Cond << '\n');
+  DEBUG(dbgs() << "LSR: Examining use ");
+  DEBUG(WriteAsOperand(dbgs(), CondOp0, /*PrintType=*/false));
+  DEBUG(dbgs() << " in Inst: " << *Cond << '\n');
   BinaryOperator *Decr =  BinaryOperator::Create(Instruction::Sub,
                          Incr->getOperand(0), Incr->getOperand(1), "tmp", Incr);
   Incr->replaceAllUsesWith(Decr);
@@ -2584,7 +2584,7 @@ bool LoopStrengthReduce::OptimizeLoopCountIVOfStride(const SCEV* &Stride,
   unsigned InBlock = L->contains(PHIExpr->getIncomingBlock(0)) ? 1 : 0;
   Value *StartVal = PHIExpr->getIncomingValue(InBlock);
   Value *EndVal = Cond->getOperand(1);
-  DEBUG(errs() << "    Optimize loop counting iv to count down ["
+  DEBUG(dbgs() << "    Optimize loop counting iv to count down ["
         << *EndVal << " .. " << *StartVal << "]\n");
 
   // FIXME: check for case where both are constant.
@@ -2593,7 +2593,7 @@ bool LoopStrengthReduce::OptimizeLoopCountIVOfStride(const SCEV* &Stride,
                                           EndVal, StartVal, "tmp", PreInsertPt);
   PHIExpr->setIncomingValue(InBlock, NewStartVal);
   Cond->setOperand(1, Zero);
-  DEBUG(errs() << "    New icmp: " << *Cond << "\n");
+  DEBUG(dbgs() << "    New icmp: " << *Cond << "\n");
 
   int64_t SInt = cast<SCEVConstant>(Stride)->getValue()->getSExtValue();
   const SCEV *NewStride = 0;
@@ -2676,9 +2676,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   if (!IU->IVUsesByStride.empty()) {
-    DEBUG(errs() << "\nLSR on \"" << L->getHeader()->getParent()->getName()
+    DEBUG(dbgs() << "\nLSR on \"" << L->getHeader()->getParent()->getName()
           << "\" ";
-          L->dump());
+          L->print(dbgs()));
 
     // Sort the StrideOrder so we process larger strides first.
     std::stable_sort(IU->StrideOrder.begin(), IU->StrideOrder.end(),

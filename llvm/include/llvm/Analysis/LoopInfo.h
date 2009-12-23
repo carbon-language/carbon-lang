@@ -37,7 +37,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
@@ -478,10 +477,6 @@ public:
 
     for (iterator I = begin(), E = end(); I != E; ++I)
       (*I)->print(OS, Depth+2);
-  }
-  
-  void dump() const {
-    print(dbgs());
   }
   
 protected:
