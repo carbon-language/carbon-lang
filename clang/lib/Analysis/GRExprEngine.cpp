@@ -744,6 +744,10 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
 void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
                                ExplodedNodeSet& Dst) {
+  
+  PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
+                                Ex->getLocStart(),
+                                "Error evaluating statement");
 
   Ex = Ex->IgnoreParens();
 
