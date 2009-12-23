@@ -282,9 +282,22 @@ MergeOpsUpdate(MachineBasicBlock &MBB,
   // First calculate which of the registers should be killed by the merged
   // instruction.
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
+  const unsigned insertPos = memOps[insertAfter].Position;
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
     const MachineOperand &MO = memOps[i].MBBI->getOperand(0);
-    Regs.push_back(std::make_pair(MO.getReg(), MO.isKill()));
+    unsigned Reg = MO.getReg();
+    bool isKill = MO.isKill();
+
+    // If we are inserting the merged operation after an unmerged operation that
+    // uses the same register, make sure to transfer any kill flag.
+    for (unsigned j = memOpsEnd, e = memOps.size(); !isKill && j != e; ++j)
+      if (memOps[j].Position<insertPos) {
+        const MachineOperand &MOJ = memOps[j].MBBI->getOperand(0);
+        if (MOJ.getReg() == Reg && MOJ.isKill())
+          isKill = true;
+      }
+
+    Regs.push_back(std::make_pair(Reg, isKill));
   }
 
   // Try to do the merge.
@@ -297,6 +310,14 @@ MergeOpsUpdate(MachineBasicBlock &MBB,
   // Merge succeeded, update records.
   Merges.push_back(prior(Loc));
   for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
+    // Remove kill flags from any unmerged memops that come before insertPos.
+    if (Regs[i-memOpsBegin].second)
+      for (unsigned j = memOpsEnd, e = memOps.size(); j != e; ++j)
+        if (memOps[j].Position<insertPos) {
+          MachineOperand &MOJ = memOps[j].MBBI->getOperand(0);
+          if (MOJ.getReg() == Regs[i-memOpsBegin].first && MOJ.isKill())
+            MOJ.setIsKill(false);
+        }
     MBB.erase(memOps[i].MBBI);
     memOps[i].Merged = true;
   }
