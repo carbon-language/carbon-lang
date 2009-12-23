@@ -542,6 +542,9 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
+// ARM doesn't have an implementation of replaceMachineCodeForFunction(), so
+// recompileAndRelinkFunction doesn't work.
+#if !defined(__arm__)
 TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
   Function *F = Function::Create(TypeBuilder<int(void), false>::get(Context),
                                  GlobalValue::ExternalLinkage, "test", M);
@@ -572,6 +575,7 @@ TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
   EXPECT_EQ(2, OrigFPtr())
     << "The old pointer's target should now jump to the new version";
 }
+#endif  // !defined(__arm__)
 
 }  // anonymous namespace
 // This variable is intentionally defined differently in the statically-compiled
