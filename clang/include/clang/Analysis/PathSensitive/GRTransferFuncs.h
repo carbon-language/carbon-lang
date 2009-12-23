@@ -80,9 +80,6 @@ public:
     return state;
   }  
 };
-
-GRTransferFuncs *CreateCallInliner(ASTContext &ctx);
-
 } // end clang namespace
 
 #endif

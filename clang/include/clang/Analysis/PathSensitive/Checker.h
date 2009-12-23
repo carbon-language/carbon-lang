@@ -61,8 +61,12 @@ public:
     return Eng;
   }
 
+  AnalysisManager &getAnalysisManager() {
+    return Eng.getAnalysisManager();
+  }
+
   ConstraintManager &getConstraintManager() {
-      return Eng.getConstraintManager();
+    return Eng.getConstraintManager();
   }
 
   StoreManager &getStoreManager() {

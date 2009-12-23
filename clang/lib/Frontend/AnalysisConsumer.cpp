@@ -254,7 +254,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   if (!TranslationUnitActions.empty()) {  
     // Find the entry function definition (if any).
     FunctionDecl *FD = 0;
-    
+    // Must specify an entry function.
     if (!Opts.AnalyzeSpecificFunction.empty()) {
       for (DeclContext::decl_iterator I=TU->decls_begin(), E=TU->decls_end();
            I != E; ++I) {
@@ -267,9 +267,11 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
       }
     }
 
-    for (Actions::iterator I = TranslationUnitActions.begin(), 
-         E = TranslationUnitActions.end(); I != E; ++I)
-      (*I)(*this, *Mgr, FD);  
+    if (FD) {
+      for (Actions::iterator I = TranslationUnitActions.begin(), 
+             E = TranslationUnitActions.end(); I != E; ++I)
+        (*I)(*this, *Mgr, FD);  
+    }
   }
 
   if (!ObjCImplementationActions.empty()) {
@@ -489,8 +491,35 @@ static void ActionWarnSizeofPointer(AnalysisConsumer &C, AnalysisManager &mgr,
 
 static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
                              Decl *D) {
+  // FIXME: This is largely copy of ActionGRExprEngine. Needs cleanup.  
+  // Display progress.
+  C.DisplayFunction(D);
+
+  GRExprEngine Eng(mgr);
+
+  RegisterCallInliner(Eng);
+
+  if (C.Opts.EnableExperimentalInternalChecks)
+    RegisterExperimentalInternalChecks(Eng);
   
-  ActionGRExprEngine(C, mgr, D, CreateCallInliner(mgr.getASTContext()));
+  RegisterAppleChecks(Eng, *D);
+  
+  if (C.Opts.EnableExperimentalChecks)
+    RegisterExperimentalChecks(Eng);
+  
+  // Make a fake transfer function. The GRTransferFunc interface will be 
+  // removed.
+  Eng.setTransferFunctions(new GRTransferFuncs());  
+
+  // Execute the worklist algorithm.
+  Eng.ExecuteWorkList(mgr.getStackFrame(D));
+
+  // Visualize the exploded graph.
+  if (mgr.shouldVisualizeGraphviz())
+    Eng.ViewGraph(mgr.shouldTrimGraph());
+
+  // Display warnings.
+  Eng.getBugReporter().FlushReports();
 }
 
 //===----------------------------------------------------------------------===//

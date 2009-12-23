@@ -56,6 +56,8 @@ void RegisterExperimentalInternalChecks(GRExprEngine &Eng);
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
+
+void RegisterCallInliner(GRExprEngine &Eng);
 } // end namespace clang
 
 #endif
