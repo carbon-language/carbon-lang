@@ -1213,7 +1213,7 @@ PATypeHolder LLParser::HandleUpRefs(const Type *ty) {
 
   PATypeHolder Ty(ty);
 #if 0
-  errs() << "Type '" << Ty->getDescription()
+  dbgs() << "Type '" << Ty->getDescription()
          << "' newly formed.  Resolving upreferences.\n"
          << UpRefs.size() << " upreferences active!\n";
 #endif
@@ -1231,7 +1231,7 @@ PATypeHolder LLParser::HandleUpRefs(const Type *ty) {
                 UpRefs[i].LastContainedTy) != Ty->subtype_end();
 
 #if 0
-    errs() << "  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", "
+    dbgs() << "  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", "
            << UpRefs[i].LastContainedTy->getDescription() << ") = "
            << (ContainsType ? "true" : "false")
            << " level=" << UpRefs[i].NestingLevel << "\n";
@@ -1248,7 +1248,7 @@ PATypeHolder LLParser::HandleUpRefs(const Type *ty) {
       continue;
 
 #if 0
-    errs() << "  * Resolving upreference for " << UpRefs[i].UpRefTy << "\n";
+    dbgs() << "  * Resolving upreference for " << UpRefs[i].UpRefTy << "\n";
 #endif
     if (!TypeToResolve)
       TypeToResolve = UpRefs[i].UpRefTy;
