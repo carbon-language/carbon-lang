@@ -51,7 +51,6 @@ public:
   // Accessors
 
   const Driver &getDriver() const;
-  const HostInfo &getHost() const { return Host; }
   const llvm::Triple &getTriple() const { return Triple; }
 
   std::string getArchName() const { return Triple.getArchName(); }

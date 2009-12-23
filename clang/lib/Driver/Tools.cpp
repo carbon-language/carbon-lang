@@ -1220,7 +1220,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   // If using a driver driver, force the arch.
   const std::string &Arch = getToolChain().getArchName();
-  if (getToolChain().getHost().useDriverDriver()) {
+  if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin) {
     CmdArgs.push_back("-arch");
 
     // FIXME: Remove these special cases.
