@@ -251,7 +251,7 @@ struct foo {
 };
 
 template <> inline bool isa_impl<foo,bar>(const bar &Val) {
-  errs() << "Classof: " << &Val << "\n";
+  dbgs() << "Classof: " << &Val << "\n";
   return true;
 }
 
