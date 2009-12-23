@@ -929,7 +929,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     // (C++98 8.3.5p3):
     //   All declarations for a function shall agree exactly in both the
     //   return type and the parameter-type-list.
-    if (OldQType == NewQType)
+    // attributes should be ignored when comparing.
+    if (Context.getNoReturnType(OldQType, false) ==
+        Context.getNoReturnType(NewQType, false))
       return MergeCompatibleFunctionDecls(New, Old);
 
     // Fall through for conflicting redeclarations and redefinitions.

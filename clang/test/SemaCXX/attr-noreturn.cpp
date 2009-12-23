@@ -28,3 +28,12 @@ void test_f3() {
   f3(f0); // okay
   f3(f2); // expected-error{{no matching function for call}}
 }
+
+
+class xpto {
+  int blah() __attribute__((noreturn));
+};
+
+int xpto::blah() {
+  return 3; // expected-warning {{function 'blah' declared 'noreturn' should not return}}
+}
