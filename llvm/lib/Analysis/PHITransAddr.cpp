@@ -14,6 +14,7 @@
 #include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -35,12 +36,12 @@ static bool CanPHITrans(Instruction *Inst) {
 
 void PHITransAddr::dump() const {
   if (Addr == 0) {
-    errs() << "PHITransAddr: null\n";
+    dbgs() << "PHITransAddr: null\n";
     return;
   }
-  errs() << "PHITransAddr: " << *Addr << "\n";
+  dbgs() << "PHITransAddr: " << *Addr << "\n";
   for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
-    errs() << "  Input #" << i << " is " << *InstInputs[i] << "\n";
+    dbgs() << "  Input #" << i << " is " << *InstInputs[i] << "\n";
 }
 
 
@@ -62,9 +63,9 @@ static bool VerifySubExpr(Value *Expr,
   // If it isn't in the InstInputs list it is a subexpr incorporated into the
   // address.  Sanity check that it is phi translatable.
   if (!CanPHITrans(I)) {
-    errs() << "Non phi translatable instruction found in PHITransAddr, either "
+    dbgs() << "Non phi translatable instruction found in PHITransAddr, either "
               "something is missing from InstInputs or CanPHITrans is wrong:\n";
-    errs() << *I << '\n';
+    dbgs() << *I << '\n';
     return false;
   }
   
@@ -88,9 +89,9 @@ bool PHITransAddr::Verify() const {
     return false;
   
   if (!Tmp.empty()) {
-    errs() << "PHITransAddr inconsistent, contains extra instructions:\n";
+    dbgs() << "PHITransAddr inconsistent, contains extra instructions:\n";
     for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
-      errs() << "  InstInput #" << i << " is " << *InstInputs[i] << "\n";
+      dbgs() << "  InstInput #" << i << " is " << *InstInputs[i] << "\n";
     return false;
   }
   
