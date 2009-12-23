@@ -102,7 +102,7 @@ namespace llvm {
         typename ProfileInfoT<FType, BType>::Edge E = PI->getEdge(*bbi,BB);
         double EdgeWeight = PI->getEdgeWeight(E);
         if (EdgeWeight == ProfileInfoT<FType, BType>::MissingValue) { EdgeWeight = 0; }
-        errs() << "calculated in-edge " << E << ": " 
+        dbgs() << "calculated in-edge " << E << ": " 
                << format("%20.20g",EdgeWeight) << "\n";
         inWeight += EdgeWeight;
         inCount++;
@@ -117,13 +117,13 @@ namespace llvm {
         typename ProfileInfoT<FType, BType>::Edge E = PI->getEdge(BB,*bbi);
         double EdgeWeight = PI->getEdgeWeight(E);
         if (EdgeWeight == ProfileInfoT<FType, BType>::MissingValue) { EdgeWeight = 0; }
-        errs() << "calculated out-edge " << E << ": " 
+        dbgs() << "calculated out-edge " << E << ": " 
                << format("%20.20g",EdgeWeight) << "\n";
         outWeight += EdgeWeight;
         outCount++;
       }
     }
-    errs() << "Block " << BB->getNameStr()                << " in " 
+    dbgs() << "Block " << BB->getNameStr()                << " in " 
            << BB->getParent()->getNameStr()               << ":"
            << "BBWeight="  << format("%20.20g",BBWeight)  << ","
            << "inWeight="  << format("%20.20g",inWeight)  << ","
@@ -141,7 +141,7 @@ namespace llvm {
 
   template<class FType, class BType>
   void ProfileVerifierPassT<FType, BType>::debugEntry (DetailedBlockInfo *DI) {
-    errs() << "TROUBLE: Block " << DI->BB->getNameStr()       << " in "
+    dbgs() << "TROUBLE: Block " << DI->BB->getNameStr()       << " in "
            << DI->BB->getParent()->getNameStr()               << ":"
            << "BBWeight="  << format("%20.20g",DI->BBWeight)  << ","
            << "inWeight="  << format("%20.20g",DI->inWeight)  << ","
@@ -191,20 +191,20 @@ namespace llvm {
   }
 
   #define ASSERTMESSAGE(M) \
-    { errs() << "ASSERT:" << (M) << "\n"; \
+    { dbgs() << "ASSERT:" << (M) << "\n"; \
       if (!DisableAssertions) assert(0 && (M)); }
 
   template<class FType, class BType>
   double ProfileVerifierPassT<FType, BType>::ReadOrAssert(typename ProfileInfoT<FType, BType>::Edge E) {
     double EdgeWeight = PI->getEdgeWeight(E);
     if (EdgeWeight == ProfileInfoT<FType, BType>::MissingValue) {
-      errs() << "Edge " << E << " in Function " 
+      dbgs() << "Edge " << E << " in Function " 
              << ProfileInfoT<FType, BType>::getFunction(E)->getNameStr() << ": ";
       ASSERTMESSAGE("Edge has missing value");
       return 0;
     } else {
       if (EdgeWeight < 0) {
-        errs() << "Edge " << E << " in Function " 
+        dbgs() << "Edge " << E << " in Function " 
                << ProfileInfoT<FType, BType>::getFunction(E)->getNameStr() << ": ";
         ASSERTMESSAGE("Edge has negative value");
       }
@@ -218,7 +218,7 @@ namespace llvm {
                                                       DetailedBlockInfo *DI) {
     if (Error) {
       DEBUG(debugEntry(DI));
-      errs() << "Block " << DI->BB->getNameStr() << " in Function " 
+      dbgs() << "Block " << DI->BB->getNameStr() << " in Function " 
              << DI->BB->getParent()->getNameStr() << ": ";
       ASSERTMESSAGE(Message);
     }
