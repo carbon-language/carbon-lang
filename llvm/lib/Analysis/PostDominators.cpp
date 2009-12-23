@@ -33,7 +33,7 @@ F("postdomtree", "Post-Dominator Tree Construction", true, true);
 
 bool PostDominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
-  DEBUG(DT->print(errs()));
+  DEBUG(DT->print(dbgs()));
   return false;
 }
 
