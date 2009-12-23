@@ -5001,10 +5001,15 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
           return ExprError();
       } else {
         // Convert the arguments.
-        if (PerformCopyInitialization(Input,
-                                      FnDecl->getParamDecl(0)->getType(),
-                                      AA_Passing))
+        input = PerformCopyInitialization(
+                                     InitializedEntity::InitializeParameter(
+                                                      FnDecl->getParamDecl(0)),
+                                          SourceLocation(), 
+                                          move(input));
+        if (input.isInvalid())
           return ExprError();
+        
+        Input = (Expr *)input.get();
       }
 
       // Determine the result type
