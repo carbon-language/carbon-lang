@@ -31,9 +31,14 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   if (!StdNamespace)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
-  if (isType)
+  if (isType) {
+    // C++ [expr.typeid]p4:
+    //   The top-level cv-qualifiers of the lvalue expression or the type-id 
+    //   that is the operand of typeid are always ignored.
     // FIXME: Preserve type source info.
-    TyOrExpr = GetTypeFromParser(TyOrExpr).getAsOpaquePtr();
+    // FIXME: Preserve the type before we stripped the cv-qualifiers?
+    TyOrExpr =GetTypeFromParser(TyOrExpr).getUnqualifiedType().getAsOpaquePtr();
+  }
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
   LookupResult R(*this, TypeInfoII, SourceLocation(), LookupTagName);
@@ -45,21 +50,35 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   QualType TypeInfoType = Context.getTypeDeclType(TypeInfoRecordDecl);
 
   if (!isType) {
-    // C++0x [expr.typeid]p3:
-    //   When typeid is applied to an expression other than an lvalue of a
-    //   polymorphic class type [...] [the] expression is an unevaluated
-    //   operand.
-
-    // FIXME: if the type of the expression is a class type, the class
-    // shall be completely defined.
     bool isUnevaluatedOperand = true;
     Expr *E = static_cast<Expr *>(TyOrExpr);
-    if (E && !E->isTypeDependent() && E->isLvalue(Context) == Expr::LV_Valid) {
+    if (E && !E->isTypeDependent()) {
       QualType T = E->getType();
       if (const RecordType *RecordT = T->getAs<RecordType>()) {
         CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
-        if (RecordD->isPolymorphic())
+        // C++ [expr.typeid]p3:
+        //   When typeid is applied to an expression other than an lvalue of a
+        //   polymorphic class type [...] [the] expression is an unevaluated
+        //   operand. [...]
+        if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
           isUnevaluatedOperand = false;
+        else {
+          // C++ [expr.typeid]p3:
+          //   [...] If the type of the expression is a class type, the class
+          //   shall be completely-defined.
+          // FIXME: implement this!
+        }
+      }
+
+      // C++ [expr.typeid]p4:
+      //   [...] If the type of the type-id is a reference to a possibly
+      //   cv-qualified type, the result of the typeid expression refers to a 
+      //   std::type_info object representing the cv-unqualified referenced 
+      //   type.
+      if (T.hasQualifiers()) {
+        ImpCastExprToType(E, T.getUnqualifiedType(), CastExpr::CK_NoOp,
+                          E->isLvalue(Context));
+        TyOrExpr = E;
       }
     }
 

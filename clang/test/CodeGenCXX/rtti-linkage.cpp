@@ -60,8 +60,11 @@ namespace {
   struct D { };
 };
 
-void t2() {
-  (void)typeid(D);
-  (void)typeid(D *);
-  
+const D getD();
+
+const std::type_info &t2() {
+  (void)typeid(const D);
+  (void)typeid(D *);  
+  // CHECK: _ZTIN12_GLOBAL__N_11DE to
+  return typeid(getD());  
 }
