@@ -28,3 +28,9 @@ void foo() {
 }
 
 typedef bool (__stdcall __stdcall *blarg)(int);
+
+
+// Charify extension.
+#define FOO(x) #@x
+char x = FOO(a);
+

@@ -178,7 +178,7 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
                                    Preprocessor &PP, bool Charify) {
   Token Tok;
   Tok.startToken();
-  Tok.setKind(tok::string_literal);
+  Tok.setKind(Charify ? tok::char_constant : tok::string_literal);
 
   const Token *ArgTokStart = ArgToks;
 
