@@ -131,7 +131,7 @@ void LoaderPass::readEdge(ProfileInfo::Edge e,
       // in double.
       EdgeInformation[getFunction(e)][e] += (double)weight;
 
-      DEBUG(errs() << "--Read Edge Counter for " << e
+      DEBUG(dbgs() << "--Read Edge Counter for " << e
                    << " (# "<< (ReadCount-1) << "): "
                    << (unsigned)getEdgeWeight(e) << "\n");
     } else {
@@ -151,7 +151,7 @@ bool LoaderPass::runOnModule(Module &M) {
     ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
-      DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
+      DEBUG(dbgs()<<"Working on "<<F->getNameStr()<<"\n");
       readEdge(getEdge(0,&F->getEntryBlock()), Counters);
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         TerminatorInst *TI = BB->getTerminator();
@@ -161,7 +161,7 @@ bool LoaderPass::runOnModule(Module &M) {
       }
     }
     if (ReadCount != Counters.size()) {
-      errs() << "WARNING: profile information is inconsistent with "
+      dbgs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
     NumEdgesRead = ReadCount;
@@ -172,7 +172,7 @@ bool LoaderPass::runOnModule(Module &M) {
     ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
-      DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
+      DEBUG(dbgs()<<"Working on "<<F->getNameStr()<<"\n");
       readEdge(getEdge(0,&F->getEntryBlock()), Counters);
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         TerminatorInst *TI = BB->getTerminator();
@@ -198,10 +198,10 @@ bool LoaderPass::runOnModule(Module &M) {
         }
 
         if (SpanningTree.size() == size) {
-          DEBUG(errs()<<"{");
+          DEBUG(dbgs()<<"{");
           for (std::set<Edge>::iterator ei = SpanningTree.begin(),
                ee = SpanningTree.end(); ei != ee; ++ei) {
-            DEBUG(errs()<< *ei <<",");
+            DEBUG(dbgs()<< *ei <<",");
           }
           assert(0 && "No edge calculated!");
         }
@@ -209,7 +209,7 @@ bool LoaderPass::runOnModule(Module &M) {
       }
     }
     if (ReadCount != Counters.size()) {
-      errs() << "WARNING: profile information is inconsistent with "
+      dbgs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
     NumEdgesRead = ReadCount;
@@ -230,7 +230,7 @@ bool LoaderPass::runOnModule(Module &M) {
           BlockInformation[F][BB] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
-      errs() << "WARNING: profile information is inconsistent with "
+      dbgs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
   }
@@ -249,7 +249,7 @@ bool LoaderPass::runOnModule(Module &M) {
         FunctionInformation[F] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
-      errs() << "WARNING: profile information is inconsistent with "
+      dbgs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
   }
