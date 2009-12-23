@@ -36,7 +36,10 @@ class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
 public:
   explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
         SelectionDAGISel(tm),
-        TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
+        TM(tm), PIC16Lowering(*TM.getTargetLowering()) { 
+    // Keep PIC16 specific DAGISel to use during the lowering
+    PIC16Lowering.ISel = this;
+  }
   
   // Pass Name
   virtual const char *getPassName() const {
