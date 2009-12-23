@@ -548,8 +548,10 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
     assert(SrcTy->isRecordType() && "Src type must be record type!");
     assert(DestTy->isRecordType() && "Dest type must be record type!");
     
-    llvm::Value *SrcArg = CGM.GetAddrOfRTTIDescriptor(SrcTy);
-    llvm::Value *DestArg = CGM.GetAddrOfRTTIDescriptor(DestTy);
+    llvm::Value *SrcArg
+      = CGM.GetAddrOfRTTIDescriptor(SrcTy.getUnqualifiedType());
+    llvm::Value *DestArg
+      = CGM.GetAddrOfRTTIDescriptor(DestTy.getUnqualifiedType());
     
     V = Builder.CreateBitCast(V, PtrToInt8Ty);
     V = Builder.CreateCall4(CGM.CreateRuntimeFunction(FTy, "__dynamic_cast"),

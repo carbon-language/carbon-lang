@@ -367,7 +367,9 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 
   for (unsigned i = 0; i < Proto->getNumExceptions(); ++i) {
     QualType Ty = Proto->getExceptionType(i);
-    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(Ty.getNonReferenceType());
+    QualType ExceptType
+      = Ty.getNonReferenceType().getUnqualifiedType();
+    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(ExceptType);
     SelectorArgs.push_back(EHType);
   }
   if (Proto->getNumExceptions())
@@ -506,8 +508,11 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
     const CXXCatchStmt *C = S.getHandler(i);
     VarDecl *CatchParam = C->getExceptionDecl();
     if (CatchParam) {
+      // C++ [except.handle]p3 indicates that top-level cv-qualifiers
+      // are ignored.
+      QualType CaughtType = C->getCaughtType().getNonReferenceType();
       llvm::Value *EHTypeInfo
-        = CGM.GetAddrOfRTTIDescriptor(C->getCaughtType().getNonReferenceType());
+        = CGM.GetAddrOfRTTIDescriptor(CaughtType.getUnqualifiedType());
       SelectorArgs.push_back(EHTypeInfo);
     } else {
       // null indicates catch all

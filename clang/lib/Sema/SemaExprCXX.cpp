@@ -137,8 +137,15 @@ Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprArg E) {
 /// CheckCXXThrowOperand - Validate the operand of a throw.
 bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   // C++ [except.throw]p3:
-  //   [...] adjusting the type from "array of T" or "function returning T"
-  //   to "pointer to T" or "pointer to function returning T", [...]
+  //   A throw-expression initializes a temporary object, called the exception
+  //   object, the type of which is determined by removing any top-level
+  //   cv-qualifiers from the static type of the operand of throw and adjusting
+  //   the type from "array of T" or "function returning T" to "pointer to T" 
+  //   or "pointer to function returning T", [...]
+  if (E->getType().hasQualifiers())
+    ImpCastExprToType(E, E->getType().getUnqualifiedType(), CastExpr::CK_NoOp,
+                      E->isLvalue(Context) == Expr::LV_Valid);
+  
   DefaultFunctionArrayConversion(E);
 
   //   If the type of the exception would be an incomplete type or a pointer

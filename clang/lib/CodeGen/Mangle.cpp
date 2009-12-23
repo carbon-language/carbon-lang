@@ -1586,6 +1586,7 @@ void MangleContext::mangleCXXCtorVtable(const CXXRecordDecl *RD, int64_t Offset,
 void MangleContext::mangleCXXRTTI(QualType Ty,
                                   llvm::SmallVectorImpl<char> &Res) {
   // <special-name> ::= TI <type>  # typeinfo structure
+  assert(!Ty.hasQualifiers() && "RTTI info cannot have top-level qualifiers");
   CXXNameMangler Mangler(*this, Res);
   Mangler.getStream() << "_ZTI";
   Mangler.mangleType(Ty);
