@@ -648,7 +648,6 @@ SDValue SelectionDAGBuilder::getControlRoot() {
                      PendingExports.size());
   PendingExports.clear();
   DAG.setRoot(Root);
-  if (DisableScheduling) DAG.AssignOrdering(Root.getNode(), SDNodeOrder);
   return Root;
 }
 
@@ -4986,11 +4985,8 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
-    SDValue Label = DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                                 getControlRoot(), BeginLabel);
-    DAG.setRoot(Label);
-    if (DisableScheduling)
-      DAG.AssignOrdering(Label.getNode(), SDNodeOrder);
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                             getControlRoot(), BeginLabel));
   }
 
   // Check if target-independent constraints permit a tail call here.
@@ -5039,11 +5035,6 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
                               Add, NULL, Offsets[i], false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
-
-      if (DisableScheduling) {
-        DAG.AssignOrdering(Add.getNode(), SDNodeOrder);
-        DAG.AssignOrdering(L.getNode(), SDNodeOrder);
-      }
     }
 
     SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
@@ -5076,12 +5067,8 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
-    SDValue Label = DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                                 getRoot(), EndLabel);
-    DAG.setRoot(Label);
-
-    if (DisableScheduling)
-      DAG.AssignOrdering(Label.getNode(), SDNodeOrder);
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
+                             getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
@@ -5118,11 +5105,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(2)->getType()) {
           SDValue LHS = getValue(I.getOperand(1));
           SDValue RHS = getValue(I.getOperand(2));
-          SDValue Res = DAG.getNode(ISD::FCOPYSIGN, getCurDebugLoc(),
-                                    LHS.getValueType(), LHS, RHS);
-          setValue(&I, Res);
-          if (DisableScheduling)
-            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+          setValue(&I, DAG.getNode(ISD::FCOPYSIGN, getCurDebugLoc(),
+                                   LHS.getValueType(), LHS, RHS));
           return;
         }
       } else if (Name == "fabs" || Name == "fabsf" || Name == "fabsl") {
@@ -5130,11 +5114,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          SDValue Res = DAG.getNode(ISD::FABS, getCurDebugLoc(),
-                                    Tmp.getValueType(), Tmp);
-          setValue(&I, Res);
-          if (DisableScheduling)
-            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+          setValue(&I, DAG.getNode(ISD::FABS, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
           return;
         }
       } else if (Name == "sin" || Name == "sinf" || Name == "sinl") {
@@ -5143,11 +5124,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          SDValue Res = DAG.getNode(ISD::FSIN, getCurDebugLoc(),
-                                    Tmp.getValueType(), Tmp);
-          setValue(&I, Res);
-          if (DisableScheduling)
-            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+          setValue(&I, DAG.getNode(ISD::FSIN, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
           return;
         }
       } else if (Name == "cos" || Name == "cosf" || Name == "cosl") {
@@ -5156,11 +5134,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          SDValue Res = DAG.getNode(ISD::FCOS, getCurDebugLoc(),
-                                    Tmp.getValueType(), Tmp);
-          setValue(&I, Res);
-          if (DisableScheduling)
-            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+          setValue(&I, DAG.getNode(ISD::FCOS, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
           return;
         }
       } else if (Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl") {
@@ -5169,11 +5144,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
-          SDValue Res = DAG.getNode(ISD::FSQRT, getCurDebugLoc(),
-                                    Tmp.getValueType(), Tmp);
-          setValue(&I, Res);
-          if (DisableScheduling)
-            DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+          setValue(&I, DAG.getNode(ISD::FSQRT, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
           return;
         }
       }
@@ -5189,12 +5161,8 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
-  if (DisableScheduling)
-    DAG.AssignOrdering(Callee.getNode(), SDNodeOrder);
-
-  // Check if we can potentially perform a tail call. More detailed
-  // checking is be done within LowerCallTo, after more information
-  // about the call is known.
+  // Check if we can potentially perform a tail call. More detailed checking is
+  // be done within LowerCallTo, after more information about the call is known.
   bool isTailCall = PerformTailCallOpt && I.isTailCall();
 
   LowerCallTo(&I, Callee, isTailCall);
