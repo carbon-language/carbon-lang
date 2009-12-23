@@ -213,9 +213,9 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   CFGBlock* Blk = L.getDst();
 
   // Check if we are entering the EXIT block.
-  if (Blk == &(Pred->getLocationContext()->getCFG()->getExit())) {
+  if (Blk == &(L.getLocationContext()->getCFG()->getExit())) {
 
-    assert (Pred->getLocationContext()->getCFG()->getExit().size() == 0
+    assert (L.getLocationContext()->getCFG()->getExit().size() == 0
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
@@ -447,7 +447,7 @@ GRStmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* state,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
   
-  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),tag);  
+  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),tag);
   return generateNodeInternal(L, state, Pred);
 }
 
