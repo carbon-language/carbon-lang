@@ -1482,8 +1482,7 @@ bool PIC16TargetLowering::isDirectLoad(const SDValue Op) {
 // operand no. of the operand to be converted in 'MemOp'. Remember, PIC16 has 
 // no instruction that can operation on two registers. Most insns take
 // one register and one memory operand (addwf) / Constant (addlw).
-bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp, 
-                      SelectionDAG &DAG) {
+bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp) {
   // If one of the operand is a constant, return false.
   if (Op.getOperand(0).getOpcode() == ISD::Constant ||
       Op.getOperand(1).getOpcode() == ISD::Constant)
@@ -1492,33 +1491,11 @@ bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp,
   // Return false if one of the operands is already a direct
   // load and that operand has only one use.
   if (isDirectLoad(Op.getOperand(0))) {
-    if (Op.getOperand(0).hasOneUse()) {  
-      // Legal and profitable folding check uses the NodeId of DAG nodes.
-      // This NodeId is assigned by topological order. Therefore first 
-      // assign topological order then perform legal and profitable check.
-      // Note:- Though this ordering is done before begining with legalization,
-      // newly added node during legalization process have NodeId=-1 (NewNode)
-      // therefore before performing any check proper ordering of the node is
-      // required.
-      DAG.AssignTopologicalOrder();
-
-      // Direct load operands are folded in binary operations. But before folding
-      // verify if this folding is legal. Fold only if it is legal otherwise
-      // convert this direct load to a separate memory operation.
-      if(ISel->IsLegalAndProfitableToFold(Op.getOperand(0).getNode(), 
-                                         Op.getNode(), Op.getNode()))
-        return false;
-      else 
-        MemOp = 0;
-    }
+    if (Op.getOperand(0).hasOneUse())
+      return false;
+    else 
+      MemOp = 0;
   }
-
-  // For operations that are non-cummutative there is no need to check 
-  // for right operand because folding right operand may result in 
-  // incorrect operation. 
-  if (! SelectionDAG::isCommutativeBinOp(Op.getOpcode()))
-    return true;
-
   if (isDirectLoad(Op.getOperand(1))) {
     if (Op.getOperand(1).hasOneUse())
       return false;
@@ -1537,7 +1514,7 @@ SDValue PIC16TargetLowering::LowerBinOp(SDValue Op, SelectionDAG &DAG) {
   assert (Op.getValueType() == MVT::i8 && "illegal Op to lower");
 
   unsigned MemOp = 1;
-  if (NeedToConvertToMemOp(Op, MemOp, DAG)) {
+  if (NeedToConvertToMemOp(Op, MemOp)) {
     // Put one value on stack.
     SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
 
@@ -1556,7 +1533,7 @@ SDValue PIC16TargetLowering::LowerADD(SDValue Op, SelectionDAG &DAG) {
   assert (Op.getValueType() == MVT::i8 && "illegal add to lower");
   DebugLoc dl = Op.getDebugLoc();
   unsigned MemOp = 1;
-  if (NeedToConvertToMemOp(Op, MemOp, DAG)) {
+  if (NeedToConvertToMemOp(Op, MemOp)) {
     // Put one value on stack.
     SDValue NewVal = ConvertToMemOperand (Op.getOperand(MemOp), DAG, dl);
     
@@ -1587,8 +1564,7 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
 
   // Nothing to do if the first operand is already a direct load and it has
   // only one use.
-  unsigned MemOp = 0;
-  if (! NeedToConvertToMemOp(Op, MemOp, DAG)) 
+  if (isDirectLoad(Op.getOperand(0)) && Op.getOperand(0).hasOneUse())
     return Op;
 
   // Put first operand on stack.
