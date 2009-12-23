@@ -1215,17 +1215,10 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     assert(VT && "Result must be a vector");
     llvm::Value *Vec = EmitScalarExpr(E->getBase());
     
-    // Store the vector to memory (because LValue wants an address) and use an
-    // index list of 0,1,2,3 which is the full vector.
+    // Store the vector to memory (because LValue wants an address).
     llvm::Value *VecMem =CreateTempAlloca(ConvertType(E->getBase()->getType()));
     Builder.CreateStore(Vec, VecMem);
-
-    llvm::SmallVector<llvm::Constant *, 4> CElts;
-    for (unsigned i = 0, e = VT->getNumElements(); i != e; ++i)
-      CElts.push_back(llvm::ConstantInt::get(Int32Ty, i));
-                      
-    llvm::Constant *Elts = llvm::ConstantVector::get(&CElts[0], CElts.size());
-    Base = LValue::MakeExtVectorElt(VecMem, Elts, 0);
+    Base = LValue::MakeAddr(VecMem, Qualifiers());
   }
   
   // Encode the element access list into a vector of unsigned indices.
