@@ -72,7 +72,7 @@ class scc_iterator
     SCCNodeStack.push_back(N);
     MinVisitNumStack.push_back(visitNum);
     VisitStack.push_back(std::make_pair(N, GT::child_begin(N)));
-    //errs() << "TarjanSCC: Node " << N <<
+    //dbgs() << "TarjanSCC: Node " << N <<
     //      " : visitNum = " << visitNum << "\n";
   }
 
@@ -107,7 +107,7 @@ class scc_iterator
       if (!MinVisitNumStack.empty() && MinVisitNumStack.back() > minVisitNum)
         MinVisitNumStack.back() = minVisitNum;
 
-      //errs() << "TarjanSCC: Popped node " << visitingN <<
+      //dbgs() << "TarjanSCC: Popped node " << visitingN <<
       //      " : minVisitNum = " << minVisitNum << "; Node visit num = " <<
       //      nodeVisitNumbers[visitingN] << "\n";
 
