@@ -294,6 +294,9 @@ class DeclStmt : public Stmt {
   DeclGroupRef DG;
   SourceLocation StartLoc, EndLoc;
 
+protected:
+  virtual void DoDestroy(ASTContext &Ctx);
+
 public:
   DeclStmt(DeclGroupRef dg, SourceLocation startLoc,
            SourceLocation endLoc) : Stmt(DeclStmtClass), DG(dg),

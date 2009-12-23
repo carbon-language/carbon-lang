@@ -426,6 +426,14 @@ Stmt::child_iterator DeclStmt::child_end() {
   return StmtIterator(DG.end(), DG.end());
 }
 
+void DeclStmt::DoDestroy(ASTContext &C) {
+  // Don't use StmtIterator to iterate over the Decls, as that can recurse
+  // into VLA size expressions (which are owned by the VLA).  Further, Decls
+  // are owned by the DeclContext, and will be destroyed with them.
+  if (DG.isDeclGroup())
+    DG.getDeclGroup().Destroy(C);
+}
+
 // NullStmt
 Stmt::child_iterator NullStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator NullStmt::child_end() { return child_iterator(); }

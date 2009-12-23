@@ -32,6 +32,7 @@ DeclGroup::DeclGroup(unsigned numdecls, Decl** decls) : NumDecls(numdecls) {
 }
 
 void DeclGroup::Destroy(ASTContext& C) {
+  // Decls are destroyed by the DeclContext.
   this->~DeclGroup();
   C.Deallocate((void*) this);
 }
