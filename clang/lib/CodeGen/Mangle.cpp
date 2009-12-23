@@ -125,8 +125,8 @@ private:
 
   void mangleTemplateArgs(const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
-  void mangleTemplateArgumentList(const TemplateArgumentList &L);
-  void mangleTemplateArgument(const TemplateArgument &A);
+  void mangleTemplateArgs(const TemplateArgumentList &L);
+  void mangleTemplateArg(const TemplateArgument &A);
 
   void mangleTemplateParameter(unsigned Index);
 };
@@ -321,7 +321,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     const TemplateArgumentList *TemplateArgs = 0;
     if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
       mangleUnscopedTemplateName(TD);
-      mangleTemplateArgumentList(*TemplateArgs);
+      mangleTemplateArgs(*TemplateArgs);
       return;
     }
 
@@ -524,7 +524,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     mangleTemplatePrefix(TD);
-    mangleTemplateArgumentList(*TemplateArgs);
+    mangleTemplateArgs(*TemplateArgs);
   } else {
     manglePrefix(DC);
     mangleUnqualifiedName(ND);
@@ -580,7 +580,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) {
     mangleTemplatePrefix(TD);
-    mangleTemplateArgumentList(*TemplateArgs);
+    mangleTemplateArgs(*TemplateArgs);
   } else {
     manglePrefix(DC->getParent());
     mangleUnqualifiedName(cast<NamedDecl>(DC));
@@ -1186,11 +1186,11 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
   }
 }
 
-void CXXNameMangler::mangleTemplateArgumentList(const TemplateArgumentList &L) {
+void CXXNameMangler::mangleTemplateArgs(const TemplateArgumentList &L) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
   for (unsigned i = 0, e = L.size(); i != e; ++i)
-    mangleTemplateArgument(L[i]);
+    mangleTemplateArg(L[i]);
   Out << "E";
 }
 
@@ -1199,11 +1199,11 @@ void CXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs,
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
-    mangleTemplateArgument(TemplateArgs[i]);
+    mangleTemplateArg(TemplateArgs[i]);
   Out << "E";
 }
 
-void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
+void CXXNameMangler::mangleTemplateArg(const TemplateArgument &A) {
   // <template-arg> ::= <type>              # type or template
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
@@ -1215,6 +1215,9 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
   case TemplateArgument::Type:
     mangleType(A.getAsType());
     break;
+  case TemplateArgument::Template:
+    mangleName(A.getAsTemplate().getAsTemplateDecl());
+    break;      
   case TemplateArgument::Expression:
     Out << 'X';
     mangleExpression(A.getAsExpr());

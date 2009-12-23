@@ -290,3 +290,19 @@ Ops& Ops::operator&(const Ops&) { return *this; }
 // CHECK: define %struct.Ops* @_ZN3OpsmlERKS_
 Ops& Ops::operator*(const Ops&) { return *this; }
 
+// PR5861
+namespace PR5861 {
+template<bool> class P;
+template<> class P<true> {};
+
+template<template <bool> class, bool>
+struct Policy { };
+
+template<typename T, typename = Policy<P, true> > class Alloc
+{
+  T *allocate(int, const void*) { return 0; }
+};
+
+// CHECK: define i8* @_ZN6PR58615AllocIcNS_6PolicyINS_1PELb1EEEE8allocateEiPKv
+template class Alloc<char>;
+}
