@@ -739,6 +739,10 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   case phases::Precompile:
     return new PrecompileJobAction(Input, types::TY_PCH);
   case phases::Compile: {
+    bool HasO4 = false;
+    if (const Arg *A = Args.getLastArg(options::OPT_O_Group))
+      HasO4 = A->getOption().matches(options::OPT_O4);
+
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       return new CompileJobAction(Input, types::TY_Nothing);
     } else if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto)) {
@@ -746,8 +750,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     } else if (Args.hasArg(options::OPT_emit_ast)) {
       return new CompileJobAction(Input, types::TY_AST);
     } else if (Args.hasArg(options::OPT_emit_llvm) ||
-               Args.hasArg(options::OPT_flto) ||
-               Args.hasArg(options::OPT_O4)) {
+               Args.hasArg(options::OPT_flto) || HasO4) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LLVMAsm : types::TY_LLVMBC;
       return new CompileJobAction(Input, Output);
