@@ -161,7 +161,7 @@ bool LoaderPass::runOnModule(Module &M) {
       }
     }
     if (ReadCount != Counters.size()) {
-      dbgs() << "WARNING: profile information is inconsistent with "
+      errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
     NumEdgesRead = ReadCount;
@@ -209,7 +209,7 @@ bool LoaderPass::runOnModule(Module &M) {
       }
     }
     if (ReadCount != Counters.size()) {
-      dbgs() << "WARNING: profile information is inconsistent with "
+      errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
     NumEdgesRead = ReadCount;
@@ -230,7 +230,7 @@ bool LoaderPass::runOnModule(Module &M) {
           BlockInformation[F][BB] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
-      dbgs() << "WARNING: profile information is inconsistent with "
+      errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
   }
@@ -249,7 +249,7 @@ bool LoaderPass::runOnModule(Module &M) {
         FunctionInformation[F] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
-      dbgs() << "WARNING: profile information is inconsistent with "
+      errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
   }
