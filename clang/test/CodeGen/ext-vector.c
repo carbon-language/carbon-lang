@@ -138,3 +138,16 @@ void test8(float4 *ap, float4 *bp, int c) {
   cmp = a == b;
   cmp = a != b;
 }
+
+int test9(int4 V) {
+  return V.xy.x;
+}
+
+int test10(foo_t V) {
+  return (V+V).x;
+}
+
+int4 test11a();
+int test11() {
+  return test11a().x;
+}

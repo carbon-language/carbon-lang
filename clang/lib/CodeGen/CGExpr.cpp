@@ -1179,7 +1179,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 static
 llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
                                        llvm::SmallVector<unsigned, 4> &Elts) {
-  llvm::SmallVector<llvm::Constant *, 4> CElts;
+  llvm::SmallVector<llvm::Constant*, 4> CElts;
 
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
     CElts.push_back(llvm::ConstantInt::get(
@@ -1190,21 +1190,44 @@ llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
 
 LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
+  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+
   // Emit the base vector as an l-value.
   LValue Base;
 
   // ExtVectorElementExpr's base can either be a vector or pointer to vector.
-  if (!E->isArrow()) {
-    assert(E->getBase()->getType()->isVectorType());
-    Base = EmitLValue(E->getBase());
-  } else {
-    const PointerType *PT = E->getBase()->getType()->getAs<PointerType>();
+  if (E->isArrow()) {
+    // If it is a pointer to a vector, emit the address and form an lvalue with
+    // it.
     llvm::Value *Ptr = EmitScalarExpr(E->getBase());
+    const PointerType *PT = E->getBase()->getType()->getAs<PointerType>();
     Qualifiers Quals = MakeQualifiers(PT->getPointeeType());
     Quals.removeObjCGCAttr();
     Base = LValue::MakeAddr(Ptr, Quals);
-  }
+  } else if (E->getBase()->isLvalue(getContext()) == Expr::LV_Valid) {
+    // Otherwise, if the base is an lvalue ( as in the case of foo.x.x),
+    // emit the base as an lvalue.
+    assert(E->getBase()->getType()->isVectorType());
+    Base = EmitLValue(E->getBase());
+  } else {
+    // Otherwise, the base is a normal rvalue (as in (V+V).x), emit it as such.
+    const VectorType *VT = E->getBase()->getType()->getAs<VectorType>();
+    assert(VT && "Result must be a vector");
+    llvm::Value *Vec = EmitScalarExpr(E->getBase());
+    
+    // Store the vector to memory (because LValue wants an address) and use an
+    // index list of 0,1,2,3 which is the full vector.
+    llvm::Value *VecMem =CreateTempAlloca(ConvertType(E->getBase()->getType()));
+    Builder.CreateStore(Vec, VecMem);
 
+    llvm::SmallVector<llvm::Constant *, 4> CElts;
+    for (unsigned i = 0, e = VT->getNumElements(); i != e; ++i)
+      CElts.push_back(llvm::ConstantInt::get(Int32Ty, i));
+                      
+    llvm::Constant *Elts = llvm::ConstantVector::get(&CElts[0], CElts.size());
+    Base = LValue::MakeExtVectorElt(VecMem, Elts, 0);
+  }
+  
   // Encode the element access list into a vector of unsigned indices.
   llvm::SmallVector<unsigned, 4> Indices;
   E->getEncodedElementAccess(Indices);
@@ -1219,7 +1242,6 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   llvm::Constant *BaseElts = Base.getExtVectorElts();
   llvm::SmallVector<llvm::Constant *, 4> CElts;
 
-  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
     if (isa<llvm::ConstantAggregateZero>(BaseElts))
       CElts.push_back(llvm::ConstantInt::get(Int32Ty, 0));
