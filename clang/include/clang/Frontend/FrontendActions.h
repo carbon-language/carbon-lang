@@ -110,12 +110,6 @@ protected:
                                          llvm::StringRef InFile);
 };
 
-class RewriteBlocksAction : public ASTFrontendAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile);
-};
-
 class SyntaxOnlyAction : public ASTFrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

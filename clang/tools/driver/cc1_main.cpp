@@ -110,7 +110,6 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 
   case PrintDeclContext:       return new DeclContextPrintAction();
   case PrintPreprocessedInput: return new PrintPreprocessedAction();
-  case RewriteBlocks:          return new RewriteBlocksAction();
   case RewriteMacros:          return new RewriteMacrosAction();
   case RewriteObjC:            return new RewriteObjCAction();
   case RewriteTest:            return new RewriteTestAction();

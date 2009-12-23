@@ -101,12 +101,6 @@ ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
                                 llvm::raw_ostream *OS,
                                 const char *isysroot = 0);
 
-// Block rewriter: rewrites code using the Apple blocks extension to pure
-// C code.  Output is always sent to stdout.
-ASTConsumer *CreateBlockRewriter(const std::string &InFile,
-                                 Diagnostic &Diags,
-                                 const LangOptions &LangOpts);
-
 // Inheritance viewer: for C++ code, creates a graph of the inheritance
 // tree for the given class and displays it with "dotty".
 ASTConsumer *CreateInheritanceViewer(const std::string& clsname);

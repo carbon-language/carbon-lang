@@ -280,7 +280,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::ParseSyntaxOnly:        return "-fsyntax-only";
   case frontend::PrintDeclContext:       return "-print-decl-contexts";
   case frontend::PrintPreprocessedInput: return "-E";
-  case frontend::RewriteBlocks:          return "-rewrite-blocks";
   case frontend::RewriteMacros:          return "-rewrite-macros";
   case frontend::RewriteObjC:            return "-rewrite-objc";
   case frontend::RewriteTest:            return "-rewrite-test";
@@ -858,8 +857,6 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
       Opts.ProgramAction = frontend::PrintDeclContext; break;
     case OPT_E:
       Opts.ProgramAction = frontend::PrintPreprocessedInput; break;
-    case OPT_rewrite_blocks:
-      Opts.ProgramAction = frontend::RewriteBlocks; break;
     case OPT_rewrite_macros:
       Opts.ProgramAction = frontend::RewriteMacros; break;
     case OPT_rewrite_objc:

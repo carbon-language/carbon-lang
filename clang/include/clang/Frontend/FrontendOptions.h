@@ -41,7 +41,6 @@ namespace frontend {
     PluginAction,           ///< Run a plugin action, \see ActionName.
     PrintDeclContext,       ///< Print DeclContext and their Decls.
     PrintPreprocessedInput, ///< -E mode.
-    RewriteBlocks,          ///< ObjC->C Rewriter for Blocks.
     RewriteMacros,          ///< Expand macros but not #includes.
     RewriteObjC,            ///< ObjC->C Rewriter.
     RewriteTest,            ///< Rewriter playground

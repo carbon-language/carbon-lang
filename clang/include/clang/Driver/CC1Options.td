@@ -284,8 +284,6 @@ def rewrite_objc : Flag<"-rewrite-objc">,
   HelpText<"Rewrite ObjC into C (code rewriter example)">;
 def rewrite_macros : Flag<"-rewrite-macros">,
   HelpText<"Expand macros without full preprocessing">;
-def rewrite_blocks : Flag<"-rewrite-blocks">,
-  HelpText<"Rewrite Blocks to C">;
 
 }
 

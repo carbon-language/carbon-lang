@@ -154,11 +154,6 @@ ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
   return 0;
 }
 
-ASTConsumer *RewriteBlocksAction::CreateASTConsumer(CompilerInstance &CI,
-                                                    llvm::StringRef InFile) {
-  return CreateBlockRewriter(InFile, CI.getDiagnostics(), CI.getLangOpts());
-}
-
 ASTConsumer *SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef InFile) {
   return new ASTConsumer();
