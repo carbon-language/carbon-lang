@@ -105,7 +105,7 @@ raw_ostream &llvm::dbgs() {
         // force a debug dump.
         sys::AddSignalHandler(&debug_user_sig_handler, 0);
       // Otherwise we've already set the debug stream buffer size to
-      // zero, disabling buffering.
+      // zero, disabling buffering so it will output directly to errs().
     }
   } thestrm;
 
