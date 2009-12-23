@@ -905,12 +905,11 @@ struct StrLenOpt : public LibCallOptimization {
     if (uint64_t Len = GetStringLength(Src))
       return ConstantInt::get(CI->getType(), Len-1);
 
-    // Handle strlen(p) != 0.
-    if (!IsOnlyUsedInZeroEqualityComparison(CI)) return 0;
-
     // strlen(x) != 0 --> *x != 0
     // strlen(x) == 0 --> *x == 0
-    return B.CreateZExt(B.CreateLoad(Src, "strlenfirst"), CI->getType());
+    if (IsOnlyUsedInZeroEqualityComparison(CI))
+      return B.CreateZExt(B.CreateLoad(Src, "strlenfirst"), CI->getType());
+    return 0;
   }
 };
 
