@@ -5326,13 +5326,11 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code,
                                         bool HasMatching,unsigned MatchingIdx,
                                         SelectionDAG &DAG, unsigned Order,
                                         std::vector<SDValue> &Ops) const {
-  EVT IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
   assert(Regs.size() < (1 << 13) && "Too many inline asm outputs!");
   unsigned Flag = Code | (Regs.size() << 3);
   if (HasMatching)
     Flag |= 0x80000000 | (MatchingIdx << 16);
-
-  SDValue Res = DAG.getTargetConstant(Flag, IntPtrTy);
+  SDValue Res = DAG.getTargetConstant(Flag, MVT::i32);
   Ops.push_back(Res);
 
   if (DisableScheduling)

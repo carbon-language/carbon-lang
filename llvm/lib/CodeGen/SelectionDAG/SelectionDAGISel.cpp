@@ -1182,9 +1182,8 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       }
 
       // Add this to the output node.
-      EVT IntPtrTy = TLI.getPointerTy();
       Ops.push_back(CurDAG->getTargetConstant(4/*MEM*/ | (SelOps.size()<< 3),
-                                              IntPtrTy));
+                                              MVT::i32));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
       i += 2;
     }
