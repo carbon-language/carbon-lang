@@ -8,7 +8,13 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL=../../..
+
+ifneq (,$(strip $(wildcard $(LEVEL)/Makefile.config)))
 include $(LEVEL)/Makefile.config
+else
+CP=cp
+RM=rm
+endif
 
 DOC_DIR=../../../docs
 RST2HTML=rst2html --stylesheet=llvm.css --link-stylesheet
