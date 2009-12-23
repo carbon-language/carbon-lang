@@ -6179,13 +6179,10 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 }
 
 void SelectionDAGBuilder::visitVAStart(CallInst &I) {
-  SDValue Res = DAG.getNode(ISD::VASTART, getCurDebugLoc(),
-                            MVT::Other, getRoot(),
-                            getValue(I.getOperand(1)),
-                            DAG.getSrcValue(I.getOperand(1)));
-  DAG.setRoot(Res);
-  if (DisableScheduling)
-    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+  DAG.setRoot(DAG.getNode(ISD::VASTART, getCurDebugLoc(),
+                          MVT::Other, getRoot(),
+                          getValue(I.getOperand(1)),
+                          DAG.getSrcValue(I.getOperand(1))));
 }
 
 void SelectionDAGBuilder::visitVAArg(VAArgInst &I) {
@@ -6194,30 +6191,22 @@ void SelectionDAGBuilder::visitVAArg(VAArgInst &I) {
                            DAG.getSrcValue(I.getOperand(0)));
   setValue(&I, V);
   DAG.setRoot(V.getValue(1));
-  if (DisableScheduling)
-    DAG.AssignOrdering(V.getNode(), SDNodeOrder);
 }
 
 void SelectionDAGBuilder::visitVAEnd(CallInst &I) {
-  SDValue Res = DAG.getNode(ISD::VAEND, getCurDebugLoc(),
-                            MVT::Other, getRoot(),
-                            getValue(I.getOperand(1)),
-                            DAG.getSrcValue(I.getOperand(1)));
-  DAG.setRoot(Res);
-  if (DisableScheduling)
-    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+  DAG.setRoot(DAG.getNode(ISD::VAEND, getCurDebugLoc(),
+                          MVT::Other, getRoot(),
+                          getValue(I.getOperand(1)),
+                          DAG.getSrcValue(I.getOperand(1))));
 }
 
 void SelectionDAGBuilder::visitVACopy(CallInst &I) {
-  SDValue Res = DAG.getNode(ISD::VACOPY, getCurDebugLoc(),
-                            MVT::Other, getRoot(),
-                            getValue(I.getOperand(1)),
-                            getValue(I.getOperand(2)),
-                            DAG.getSrcValue(I.getOperand(1)),
-                            DAG.getSrcValue(I.getOperand(2)));
-  DAG.setRoot(Res);
-  if (DisableScheduling)
-    DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
+  DAG.setRoot(DAG.getNode(ISD::VACOPY, getCurDebugLoc(),
+                          MVT::Other, getRoot(),
+                          getValue(I.getOperand(1)),
+                          getValue(I.getOperand(2)),
+                          DAG.getSrcValue(I.getOperand(1)),
+                          DAG.getSrcValue(I.getOperand(2))));
 }
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
