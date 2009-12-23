@@ -414,7 +414,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     ResultTokTmp.startToken();
 
     // Claim that the tmp token is a string_literal so that we can get the
-    // character pointer back from CreateString.
+    // character pointer back from CreateString in getLiteralData().
     ResultTokTmp.setKind(tok::string_literal);
     PP.CreateString(&Buffer[0], Buffer.size(), ResultTokTmp);
     SourceLocation ResultTokLoc = ResultTokTmp.getLocation();
