@@ -28,11 +28,12 @@ class StmtIteratorBase {
 protected:
   enum { DeclMode = 0x1, SizeOfTypeVAMode = 0x2, DeclGroupMode = 0x3,
          Flags = 0x3 };
-
-  union { Stmt** stmt; Decl* decl; Decl** DGI; };
+  
+  Stmt **stmt;
+  union { Decl *decl; Decl **DGI; };
   uintptr_t RawVAPtr;
-  Decl** DGE;
-
+  Decl **DGE;
+  
   bool inDecl() const {
     return (RawVAPtr & Flags) == DeclMode;
   }
@@ -64,11 +65,11 @@ protected:
 
   Stmt*& GetDeclExpr() const;
 
-  StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
-  StmtIteratorBase(Decl* d);
-  StmtIteratorBase(VariableArrayType* t);
-  StmtIteratorBase(Decl** dgi, Decl** dge);
-  StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
+  StmtIteratorBase(Stmt **s) : stmt(s), decl(0), RawVAPtr(0) {}
+  StmtIteratorBase(Decl *d);
+  StmtIteratorBase(VariableArrayType *t);
+  StmtIteratorBase(Decl **dgi, Decl **dge);
+  StmtIteratorBase() : stmt(0), decl(0), RawVAPtr(0) {}
 };
 
 
@@ -106,11 +107,11 @@ public:
   }
 
   bool operator==(const DERIVED& RHS) const {
-    return stmt == RHS.stmt && RawVAPtr == RHS.RawVAPtr;
+    return stmt == RHS.stmt && decl == RHS.decl && RawVAPtr == RHS.RawVAPtr;
   }
 
   bool operator!=(const DERIVED& RHS) const {
-    return stmt != RHS.stmt || RawVAPtr != RHS.RawVAPtr;
+    return stmt != RHS.stmt || decl != RHS.decl || RawVAPtr != RHS.RawVAPtr;
   }
 
   REFERENCE operator*() const {

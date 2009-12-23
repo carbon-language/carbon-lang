@@ -114,18 +114,18 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
 }
 
 StmtIteratorBase::StmtIteratorBase(Decl* d)
-  : decl(d), RawVAPtr(DeclMode) {
+  : stmt(0), decl(d), RawVAPtr(DeclMode) {
   assert (decl);
   NextDecl(false);
 }
 
 StmtIteratorBase::StmtIteratorBase(Decl** dgi, Decl** dge)
-  : DGI(dgi), RawVAPtr(DeclGroupMode), DGE(dge) {
+  : stmt(0), DGI(dgi), RawVAPtr(DeclGroupMode), DGE(dge) {
   NextDecl(false);
 }
 
 StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
-: decl(0), RawVAPtr(SizeOfTypeVAMode) {
+  : stmt(0), decl(0), RawVAPtr(SizeOfTypeVAMode) {
   RawVAPtr |= reinterpret_cast<uintptr_t>(t);
 }
 
