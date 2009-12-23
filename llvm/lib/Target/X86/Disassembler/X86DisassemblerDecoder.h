@@ -34,16 +34,16 @@ extern "C" {
 /*
  * Accessor functions for various fields of an Intel instruction
  */
-static inline uint8_t modFromModRM(uint8_t modRM){ return (modRM & 0xc0) >> 6; }
-static inline uint8_t regFromModRM(uint8_t modRM){ return (modRM & 0x38) >> 3; }
-static inline uint8_t rmFromModRM(uint8_t modRM) { return (modRM & 0x7);       }
-static inline uint8_t scaleFromSIB(uint8_t sib)  { return (sib & 0xc0) >> 6;   }
-static inline uint8_t indexFromSIB(uint8_t sib)  { return (sib & 0x38) >> 3;   }
-static inline uint8_t baseFromSIB(uint8_t sib)   { return (sib & 0x7);         }
-static inline uint8_t wFromREX(uint8_t rex)      { return (rex & 0x8) >> 3;    }
-static inline uint8_t rFromREX(uint8_t rex)      { return (rex & 0x4) >> 2;    }
-static inline uint8_t xFromREX(uint8_t rex)      { return (rex & 0x2) >> 1;    }
-static inline uint8_t bFromREX(uint8_t rex)      { return (rex & 0x1);         }
+#define modFromModRM(modRM)  ((modRM & 0xc0) >> 6)
+#define regFromModRM(modRM)  ((modRM & 0x38) >> 3)
+#define rmFromModRM(modRM)   (modRM & 0x7)
+#define scaleFromSIB(sib)    ((sib & 0xc0) >> 6)
+#define indexFromSIB(sib)    ((sib & 0x38) >> 3)
+#define baseFromSIB(sib)     (sib & 0x7)
+#define wFromREX(rex)        ((rex & 0x8) >> 3)
+#define rFromREX(rex)        ((rex & 0x4) >> 2)
+#define xFromREX(rex)        ((rex & 0x2) >> 1)
+#define bFromREX(rex)        (rex & 0x1)
 
 /*
  * These enums represent Intel registers for use by the decoder.
