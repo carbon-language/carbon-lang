@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks | FileCheck %s
 
 struct X { };
 struct Y { };
@@ -306,3 +306,6 @@ template<typename T, typename = Policy<P, true> > class Alloc
 // CHECK: define i8* @_ZN6PR58615AllocIcNS_6PolicyINS_1PELb1EEEE8allocateEiPKv
 template class Alloc<char>;
 }
+
+// CHECK: define void @_Z1fU13block_pointerFiiiE
+void f(int (^)(int, int)) { }

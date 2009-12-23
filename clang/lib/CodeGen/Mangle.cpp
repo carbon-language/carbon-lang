@@ -990,7 +990,8 @@ void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
 }
 
 void CXXNameMangler::mangleType(const BlockPointerType *T) {
-  assert(false && "can't mangle block pointer types yet");
+  Out << "U13block_pointer";
+  mangleType(T->getPointeeType());
 }
 
 void CXXNameMangler::mangleType(const FixedWidthIntType *T) {
