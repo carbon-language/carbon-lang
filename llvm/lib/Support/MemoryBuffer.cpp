@@ -46,7 +46,7 @@ MemoryBuffer::~MemoryBuffer() {
 /// successfully.
 void MemoryBuffer::initCopyOf(const char *BufStart, const char *BufEnd) {
   size_t Size = BufEnd-BufStart;
-  BufferStart = (char *)malloc((Size+1) * sizeof(char));
+  BufferStart = (char *)malloc(Size+1);
   BufferEnd = BufferStart+Size;
   memcpy(const_cast<char*>(BufferStart), BufStart, Size);
   *const_cast<char*>(BufferEnd) = 0;   // Null terminate buffer.
@@ -108,7 +108,7 @@ MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr,
 /// the MemoryBuffer object.
 MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
                                                   StringRef BufferName) {
-  char *Buf = (char *)malloc((Size+1) * sizeof(char));
+  char *Buf = (char *)malloc(Size+1);
   if (!Buf) return 0;
   Buf[Size] = 0;
   MemoryBufferMem *SB = new MemoryBufferMem(Buf, Buf+Size, BufferName);
