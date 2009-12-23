@@ -39,6 +39,32 @@ int test2(int x) {
 }
 
 //===----------------------------------------------------------------------===//
+// Dead store checking involving CXXTemporaryExprs
+//===----------------------------------------------------------------------===//
+
+namespace TestTemp {
+  template<typename _Tp>
+  class pencil {
+  public:
+    ~pencil() throw() {}
+  };
+  template<typename _Tp, typename _Number2> struct _Row_base {
+    _Row_base(const pencil<_Tp>& x) {}
+  };
+  template<typename _Tp, typename _Number2 = TestTemp::pencil<_Tp> >
+  class row : protected _Row_base<_Tp, _Number2>     {
+    typedef _Row_base<_Tp, _Number2> _Base;
+    typedef _Number2 pencil_type;
+  public:
+    explicit row(const pencil_type& __a = pencil_type()) : _Base(__a) {}
+  };
+}
+
+void test2_b() {
+  TestTemp::row<const char*> x; // no-warning
+}
+
+//===----------------------------------------------------------------------===//
 // Test references.
 //===----------------------------------------------------------------------===//
 

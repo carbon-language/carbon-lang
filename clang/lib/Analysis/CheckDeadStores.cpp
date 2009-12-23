@@ -201,6 +201,10 @@ public:
             // constructors/destructors don't have side effects.
             if (isa<CXXConstructExpr>(E))
               return;
+
+            if (isa<CXXExprWithTemporaries>(E))
+              return;
+            
             // A dead initialization is a variable that is dead after it
             // is initialized.  We don't flag warnings for those variables
             // marked 'unused'.
