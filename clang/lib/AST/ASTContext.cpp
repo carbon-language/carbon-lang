@@ -56,44 +56,43 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
 }
 
 ASTContext::~ASTContext() {
-  // Deallocate all the types.
-  while (!Types.empty()) {
-    Types.back()->Destroy(*this);
-    Types.pop_back();
-  }
+  if (FreeMemory) {
+    // Deallocate all the types.
+    while (!Types.empty()) {
+      Types.back()->Destroy(*this);
+      Types.pop_back();
+    }
 
-  {
-    llvm::FoldingSet<ExtQuals>::iterator
-      I = ExtQualNodes.begin(), E = ExtQualNodes.end();
-    while (I != E)
+    for (llvm::FoldingSet<ExtQuals>::iterator
+         I = ExtQualNodes.begin(), E = ExtQualNodes.end(); I != E; ) {
+      // Increment in loop to prevent using deallocated memory.
       Deallocate(&*I++);
-  }
-
-  {
-    llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
-      I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end();
-    while (I != E) {
-      ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
-      delete R;
     }
   }
 
-  {
-    llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*>::iterator
-      I = ObjCLayouts.begin(), E = ObjCLayouts.end();
-    while (I != E) {
-      ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
-      delete R;
-    }
+  for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
+       I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
+    // Increment in loop to prevent using deallocated memory.
+    ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
+    delete R;
+  }
+
+  for (llvm::DenseMap<const ObjCContainerDecl*,
+                      const ASTRecordLayout*>::iterator
+       I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; ) {
+    // Increment in loop to prevent using deallocated memory.
+    ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
+    delete R;
   }
 
   // Destroy nested-name-specifiers.
   for (llvm::FoldingSet<NestedNameSpecifier>::iterator
          NNS = NestedNameSpecifiers.begin(),
          NNSEnd = NestedNameSpecifiers.end();
-       NNS != NNSEnd;
-       /* Increment in loop */)
+       NNS != NNSEnd; ) {
+    // Increment in loop to prevent using deallocated memory.
     (*NNS++).Destroy(*this);
+  }
 
   if (GlobalNestedNameSpecifier)
     GlobalNestedNameSpecifier->Destroy(*this);
