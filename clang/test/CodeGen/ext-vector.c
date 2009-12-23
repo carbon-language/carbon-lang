@@ -143,7 +143,7 @@ int test9(int4 V) {
   return V.xy.x;
 }
 
-int test10(foo_t V) {
+int test10(int4 V) {
   return (V+V).x;
 }
 
