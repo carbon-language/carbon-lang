@@ -92,7 +92,7 @@ static void PrintResults(const char *Msg, bool P, const Value *V1,
     
     if (o2 < o1)
       std::swap(o1, o2);
-    dbgs() << "  " << Msg << ":\t"
+    errs() << "  " << Msg << ":\t"
            << o1 << ", "
            << o2 << "\n";
   }
@@ -102,9 +102,9 @@ static inline void
 PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
                    Module *M) {
   if (P) {
-    dbgs() << "  " << Msg << ":  Ptr: ";
-    WriteAsOperand(dbgs(), Ptr, true, M);
-    dbgs() << "\t<->" << *I << '\n';
+    errs() << "  " << Msg << ":  Ptr: ";
+    WriteAsOperand(errs(), Ptr, true, M);
+    errs() << "\t<->" << *I << '\n';
   }
 }
 
@@ -136,7 +136,7 @@ bool AAEval::runOnFunction(Function &F) {
 
   if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
       PrintNoModRef || PrintMod || PrintRef || PrintModRef)
-    dbgs() << "Function: " << F.getName() << ": " << Pointers.size()
+    errs() << "Function: " << F.getName() << ": " << Pointers.size()
            << " pointers, " << CallSites.size() << " call sites\n";
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
@@ -162,7 +162,7 @@ bool AAEval::runOnFunction(Function &F) {
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
         ++MustAlias; break;
       default:
-        dbgs() << "Unknown alias query result!\n";
+        errs() << "Unknown alias query result!\n";
       }
     }
   }
@@ -192,7 +192,7 @@ bool AAEval::runOnFunction(Function &F) {
         PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRef; break;
       default:
-        dbgs() << "Unknown alias query result!\n";
+        errs() << "Unknown alias query result!\n";
       }
     }
   }
@@ -201,24 +201,24 @@ bool AAEval::runOnFunction(Function &F) {
 }
 
 static void PrintPercent(unsigned Num, unsigned Sum) {
-  dbgs() << "(" << Num*100ULL/Sum << "."
+  errs() << "(" << Num*100ULL/Sum << "."
          << ((Num*1000ULL/Sum) % 10) << "%)\n";
 }
 
 bool AAEval::doFinalization(Module &M) {
   unsigned AliasSum = NoAlias + MayAlias + MustAlias;
-  dbgs() << "===== Alias Analysis Evaluator Report =====\n";
+  errs() << "===== Alias Analysis Evaluator Report =====\n";
   if (AliasSum == 0) {
-    dbgs() << "  Alias Analysis Evaluator Summary: No pointers!\n";
+    errs() << "  Alias Analysis Evaluator Summary: No pointers!\n";
   } else {
-    dbgs() << "  " << AliasSum << " Total Alias Queries Performed\n";
-    dbgs() << "  " << NoAlias << " no alias responses ";
+    errs() << "  " << AliasSum << " Total Alias Queries Performed\n";
+    errs() << "  " << NoAlias << " no alias responses ";
     PrintPercent(NoAlias, AliasSum);
-    dbgs() << "  " << MayAlias << " may alias responses ";
+    errs() << "  " << MayAlias << " may alias responses ";
     PrintPercent(MayAlias, AliasSum);
-    dbgs() << "  " << MustAlias << " must alias responses ";
+    errs() << "  " << MustAlias << " must alias responses ";
     PrintPercent(MustAlias, AliasSum);
-    dbgs() << "  Alias Analysis Evaluator Pointer Alias Summary: "
+    errs() << "  Alias Analysis Evaluator Pointer Alias Summary: "
            << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/"
            << MustAlias*100/AliasSum << "%\n";
   }
@@ -226,18 +226,18 @@ bool AAEval::doFinalization(Module &M) {
   // Display the summary for mod/ref analysis
   unsigned ModRefSum = NoModRef + Mod + Ref + ModRef;
   if (ModRefSum == 0) {
-    dbgs() << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
+    errs() << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
   } else {
-    dbgs() << "  " << ModRefSum << " Total ModRef Queries Performed\n";
-    dbgs() << "  " << NoModRef << " no mod/ref responses ";
+    errs() << "  " << ModRefSum << " Total ModRef Queries Performed\n";
+    errs() << "  " << NoModRef << " no mod/ref responses ";
     PrintPercent(NoModRef, ModRefSum);
-    dbgs() << "  " << Mod << " mod responses ";
+    errs() << "  " << Mod << " mod responses ";
     PrintPercent(Mod, ModRefSum);
-    dbgs() << "  " << Ref << " ref responses ";
+    errs() << "  " << Ref << " ref responses ";
     PrintPercent(Ref, ModRefSum);
-    dbgs() << "  " << ModRef << " mod & ref responses ";
+    errs() << "  " << ModRef << " mod & ref responses ";
     PrintPercent(ModRef, ModRefSum);
-    dbgs() << "  Alias Analysis Evaluator Mod/Ref Summary: "
+    errs() << "  Alias Analysis Evaluator Mod/Ref Summary: "
            << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
            << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
   }

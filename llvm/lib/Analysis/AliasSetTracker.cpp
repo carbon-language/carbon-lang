@@ -592,7 +592,7 @@ namespace {
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
         Tracker->add(&*I);
-      Tracker->print(dbgs());
+      Tracker->print(errs());
       delete Tracker;
       return false;
     }
