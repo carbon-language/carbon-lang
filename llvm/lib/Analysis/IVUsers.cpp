@@ -128,7 +128,7 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
     if (!AddRecStride->properlyDominates(Header, DT))
       return false;
 
-    DEBUG(errs() << "[" << L->getHeader()->getName()
+    DEBUG(dbgs() << "[" << L->getHeader()->getName()
                  << "] Variable stride: " << *AddRec << "\n");
   }
 
@@ -233,13 +233,13 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     if (LI->getLoopFor(User->getParent()) != L) {
       if (isa<PHINode>(User) || Processed.count(User) ||
           !AddUsersIfInteresting(User)) {
-        DEBUG(errs() << "FOUND USER in other loop: " << *User << '\n'
+        DEBUG(dbgs() << "FOUND USER in other loop: " << *User << '\n'
                      << "   OF SCEV: " << *ISE << '\n');
         AddUserToIVUsers = true;
       }
     } else if (Processed.count(User) ||
                !AddUsersIfInteresting(User)) {
-      DEBUG(errs() << "FOUND USER: " << *User << '\n'
+      DEBUG(dbgs() << "FOUND USER: " << *User << '\n'
                    << "   OF SCEV: " << *ISE << '\n');
       AddUserToIVUsers = true;
     }
@@ -262,7 +262,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
         const SCEV *NewStart = SE->getMinusSCEV(Start, Stride);
         StrideUses->addUser(NewStart, User, I);
         StrideUses->Users.back().setIsUseOfPostIncrementedValue(true);
-        DEBUG(errs() << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
+        DEBUG(dbgs() << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
       } else {
         StrideUses->addUser(Start, User, I);
       }
@@ -363,7 +363,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
 }
 
 void IVUsers::dump() const {
-  print(errs());
+  print(dbgs());
 }
 
 void IVUsers::releaseMemory() {
