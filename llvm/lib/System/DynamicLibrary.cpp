@@ -69,10 +69,6 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
   return false;
 }
 
-#define EXPLICIT_SYMBOL(SYM) \
-  extern "C" void *SYM;
-#include "DynamicLibrarySymbolDefs.def"
-
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   // First check symbols added via AddSymbol().
   if (ExplicitSymbols) {
@@ -97,15 +93,41 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   }
 
 #define EXPLICIT_SYMBOL(SYM) \
-   if (!strcmp(symbolName, #SYM)) return &SYM;
+   extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
 
   // If this is darwin, it has some funky issues, try to solve them here.  Some
   // important symbols are marked 'private external' which doesn't allow
   // SearchForAddressOfSymbol to find them.  As such, we special case them here,
   // there is only a small handful of them.
+
+#ifdef __APPLE__
   {
-#include "DynamicLibrarySymbolDefs.def"
+    EXPLICIT_SYMBOL(__ashldi3);
+    EXPLICIT_SYMBOL(__ashrdi3);
+    EXPLICIT_SYMBOL(__cmpdi2);
+    EXPLICIT_SYMBOL(__divdi3);
+    EXPLICIT_SYMBOL(__eprintf);
+    EXPLICIT_SYMBOL(__fixdfdi);
+    EXPLICIT_SYMBOL(__fixsfdi);
+    EXPLICIT_SYMBOL(__fixunsdfdi);
+    EXPLICIT_SYMBOL(__fixunssfdi);
+    EXPLICIT_SYMBOL(__floatdidf);
+    EXPLICIT_SYMBOL(__floatdisf);
+    EXPLICIT_SYMBOL(__lshrdi3);
+    EXPLICIT_SYMBOL(__moddi3);
+    EXPLICIT_SYMBOL(__udivdi3);
+    EXPLICIT_SYMBOL(__umoddi3);
   }
+#endif
+
+#ifdef __CYGWIN__
+  {
+    EXPLICIT_SYMBOL(_alloca);
+    EXPLICIT_SYMBOL(__main);
+  }
+#endif
+
+#undef EXPLICIT_SYMBOL
 
 // This macro returns the address of a well-known, explicit symbol
 #define EXPLICIT_SYMBOL(SYM) \
