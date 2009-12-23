@@ -324,7 +324,7 @@ namespace {
     // Block specific rewrite rules.
     void RewriteBlockCall(CallExpr *Exp);
     void RewriteBlockPointerDecl(NamedDecl *VD);
-    void RewriteByRefVar(NamedDecl *VD);
+    void RewriteByRefVar(VarDecl *VD);
     Stmt *RewriteBlockDeclRefExpr(BlockDeclRefExpr *VD);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
 
@@ -577,6 +577,8 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
     Preamble += "#define __attribute__(X)\n";
   }
+  else
+    Preamble += "#define __block\n";
 }
 
 
@@ -3732,8 +3734,8 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
        E = BlockByRefDecls.end(); I != E; ++I) {
     S += "  ";
     std::string Name = (*I)->getNameAsString();
-    Context->getPointerType((*I)->getType()).getAsStringInternal(Name,
-                                                      Context->PrintingPolicy);
+    std::string TypeString = "struct __Block_byref_" + Name + " *";
+    Name = TypeString + Name;
     S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by ref\n";
   }
   // Next, emit a declaration for all "by copy" declarations.
@@ -3859,10 +3861,10 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
-        Context->getPointerType((*I)->getType()).getAsStringInternal(FieldName,
-                                                       Context->PrintingPolicy);
-        Context->getPointerType((*I)->getType()).getAsStringInternal(ArgName,
-                                                       Context->PrintingPolicy);
+        std::string TypeString = "struct __Block_byref_" + FieldName;
+        TypeString += " *";
+        FieldName = TypeString + FieldName;
+        ArgName = TypeString + ArgName;
         Constructor += ", " + ArgName;
       }
       S += FieldName + "; // by ref\n";
@@ -3897,7 +3899,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         Constructor += Name + " = (struct __block_impl *)_";
       else
         Constructor += Name + " = _";
-      Constructor += Name + ";\n";
+      Constructor += Name + "->__forwarding;\n";
     }
   } else {
     // Finish writing the constructor.
@@ -4162,6 +4164,8 @@ void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
 //}
 Stmt *RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
   // FIXME: Add more elaborate code generation required by the ABI.
+  // That is, must generate BYREFVAR->__forwarding->BYREFVAR for each
+  // BDRE where BYREFVAR is name of the variable.
   Expr *DerefExpr = new (Context) UnaryOperator(BDRE, UnaryOperator::Deref,
                              Context->getPointerType(BDRE->getType()),
                              SourceLocation());
@@ -4322,7 +4326,78 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
-void RewriteObjC::RewriteByRefVar(NamedDecl *ND) {
+/// RewriteByRefVar - For each __block typex ND variable this routine transforms
+/// the declaration into:
+/// struct __Block_byref_ND {
+/// void *__isa;                  // NULL for everything except __weak pointers
+/// struct __Block_byref_ND *__forwarding;
+/// int32_t __flags;
+/// int32_t __size;
+/// void *__ByrefKeepFuncPtr;    // Only if variable is __block ObjC object
+/// void *__ByrefDestroyFuncPtr; // Only if variable is __block ObjC object
+/// typex ND;
+/// };
+///
+/// It then replaces declaration of ND variable with:
+/// struct __Block_byref_ND ND = {__isa=0B, __forwarding=&ND, __flags=some_flag, 
+///                               __size=sizeof(struct __Block_byref_ND), 
+///                               ND=initializer-if-any};
+///
+///
+void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
+  SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
+  const char *startBuf = SM->getCharacterData(DeclLoc);
+  const char *endBuf = SM->getCharacterData(ND->getLocEnd());
+  std::string Name(ND->getNameAsString());
+  std::string ByrefType = "struct __Block_byref_";
+  ByrefType += Name;
+  ByrefType += " {\n";
+  ByrefType += "  void *__isa;\n";
+  ByrefType += " struct __Block_byref_" + Name + " *__forwarding;\n";
+  ByrefType += " int __flags;\n";
+  ByrefType += " int __size;\n";
+  // FIXME. Add  void *__ByrefKeepFuncPtr; void *__ByrefDestroyFuncPtr; 
+  // if needed.
+  ND->getType().getAsStringInternal(Name, Context->PrintingPolicy);
+  ByrefType += " " + Name + ";\n";
+  ByrefType += "};\n";
+  // Insert this type in global scope. It is needed by helper function.
+  assert(CurFunctionDef && "RewriteByRefVar - CurFunctionDef is null");
+  SourceLocation FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
+  InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
+  
+  // struct __Block_byref_ND ND = 
+  // {0, &ND, some_flag, __size=sizeof(struct __Block_byref_ND), 
+  //  initializer-if-any};
+  bool hasInit = (ND->getInit() != 0);
+  Name = ND->getNameAsString();
+  ByrefType = "struct __Block_byref_" + Name;
+  if (!hasInit) {
+    ByrefType += " " + Name + " = ";
+    ByrefType += "{0, &" + Name + ", ";
+    // FIXME. Compute the flag.
+    ByrefType += "0, ";
+    ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
+    ByrefType += "};\n";
+    ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), 
+                ByrefType.c_str(), ByrefType.size());
+  }
+  else {
+    SourceLocation startLoc = ND->getInit()->getLocStart();
+    ByrefType += " " + Name;
+    ReplaceText(DeclLoc, endBuf-startBuf, 
+                ByrefType.c_str(), ByrefType.size());
+    ByrefType = " = {0, &" + Name + ", ";
+    // FIXME. Compute the flag.
+    ByrefType += "0, ";
+    ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
+    InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
+#if 0
+    ByrefType = "};\n";
+    SourceLocation endLoc = ND->getInit()->getLocEnd();
+    InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
+#endif
+  }
   return;
 }
 
@@ -4671,8 +4746,9 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
           RewriteBlockPointerDecl(ND);
         else if (ND->getType()->isFunctionPointerType())
           CheckFunctionPointerDecl(ND->getType(), ND);
-        if (ND->hasAttr<BlocksAttr>())
-          RewriteByRefVar(ND);
+        if (VarDecl *VD = dyn_cast<VarDecl>(SD)) 
+          if (VD->hasAttr<BlocksAttr>())
+            RewriteByRefVar(VD);
       }
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
         if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
