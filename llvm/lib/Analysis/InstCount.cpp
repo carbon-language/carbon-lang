@@ -15,6 +15,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,7 +46,7 @@ namespace {
 #include "llvm/Instruction.def"
 
     void visitInstruction(Instruction &I) {
-      errs() << "Instruction Count does not know about " << I;
+      dbgs() << "Instruction Count does not know about " << I;
       llvm_unreachable(0);
     }
   public:
