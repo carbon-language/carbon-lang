@@ -1205,6 +1205,13 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
         Result->AddPlaceholderChunk(Arg);
     }
 
+    if (Method->isVariadic()) {
+      if (AllParametersAreInformative)
+        Result->AddInformativeChunk(", ...");
+      else
+        Result->AddPlaceholderChunk(", ...");
+    }
+    
     return Result;
   }
 

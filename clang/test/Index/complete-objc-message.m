@@ -95,6 +95,14 @@ void test_overload(Overload *ovl) {
   [ovl Method:1 Arg1:1 OtherArg:ovl];
 }
 
+@interface Ellipsis
+- (int)Method:(int)i, ...;
+@end
+
+void f(Ellipsis *e) {
+  [e Method:1, 2, 3];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{Text  withKeyword:}{Placeholder (int)b}
@@ -143,3 +151,5 @@ void test_overload(Overload *ovl) {
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}
 // CHECK-CCA: TypedefDecl:{TypedText SEL}
 // CHECK-CCA: {TypedText super}
+// RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
+// CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}{Placeholder , ...}
