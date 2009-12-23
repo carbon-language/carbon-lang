@@ -255,8 +255,8 @@ public:
   // string processing, because we know we need to read until we find the
   // closing '"' character.
   //
-  // The second interface is the combination of PeekCharAndSize with
-  // ConsumeChar.  PeekCharAndSize reads a phase 1/2 translated character,
+  // The second interface is the combination of getCharAndSize with
+  // ConsumeChar.  getCharAndSize reads a phase 1/2 translated character,
   // returning it and its size.  If the lexer decides that this character is
   // part of the current token, it calls ConsumeChar on it.  This two stage
   // approach allows us to emit diagnostics for characters (e.g. warnings about
@@ -287,7 +287,7 @@ public:
   }
 
 private:
-  /// ConsumeChar - When a character (identified by PeekCharAndSize) is consumed
+  /// ConsumeChar - When a character (identified by getCharAndSize) is consumed
   /// and added to a given token, check to see if there are diagnostics that
   /// need to be emitted or flags that need to be set on the token.  If so, do
   /// it.
