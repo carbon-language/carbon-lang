@@ -3078,15 +3078,30 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       if (Result.isInvalid())
         return ExprError();
 
-      if (SetParamDefaultArgument(Param, move(Result),
-                                  /*FIXME:EqualLoc*/
-                                  UninstExpr->getSourceRange().getBegin()))
+      // Check the expression as an initializer for the parameter.
+      InitializedEntity Entity
+        = InitializedEntity::InitializeParameter(Param);
+      InitializationKind Kind
+        = InitializationKind::CreateCopy(Param->getLocation(),
+               /*FIXME:EqualLoc*/UninstExpr->getSourceRange().getBegin());
+      Expr *ResultE = Result.takeAs<Expr>();
+
+      InitializationSequence InitSeq(*this, Entity, Kind, &ResultE, 1);
+      Result = InitSeq.Perform(*this, Entity, Kind, 
+                               MultiExprArg(*this, (void**)&ResultE, 1));
+      if (Result.isInvalid())
         return ExprError();
+      
+      // Build the default argument expression.
+      return Owned(CXXDefaultArgExpr::Create(Context, Param,
+                                             Result.takeAs<Expr>()));
     }
 
     // If the default expression creates temporaries, we need to
     // push them to the current stack of expression temporaries so they'll
     // be properly destroyed.
+    // FIXME: We should really be rebuilding the default argument with new
+    // bound temporaries; see the comment in PR5810.
     for (unsigned i = 0, e = Param->getNumDefaultArgTemporaries(); i != e; ++i)
       ExprTemporaries.push_back(Param->getDefaultArgTemporary(i));
   }

@@ -352,6 +352,19 @@ const char *CXXNamedCastExpr::getCastName() const {
   }
 }
 
+CXXDefaultArgExpr *
+CXXDefaultArgExpr::Create(ASTContext &C, ParmVarDecl *Param, Expr *SubExpr) {
+  void *Mem = C.Allocate(sizeof(CXXDefaultArgExpr) + sizeof(Stmt *));
+  return new (Mem) CXXDefaultArgExpr(CXXDefaultArgExprClass, Param, SubExpr);
+}
+
+void CXXDefaultArgExpr::DoDestroy(ASTContext &C) {
+  if (Param.getInt())
+    getExpr()->Destroy(C);
+  this->~CXXDefaultArgExpr();
+  C.Deallocate(this);
+}
+
 CXXTemporary *CXXTemporary::Create(ASTContext &C,
                                    const CXXDestructorDecl *Destructor) {
   return new (C) CXXTemporary(Destructor);

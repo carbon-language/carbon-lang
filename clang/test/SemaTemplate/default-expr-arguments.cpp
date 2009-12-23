@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-
 template<typename T>
 class C { C(int a0 = 0); };
 
@@ -144,3 +143,26 @@ namespace pr5301 {
   }
 }
 
+// PR5810
+namespace PR5810 {
+  template<typename T>
+  struct allocator {
+    allocator() { int a[sizeof(T) ? -1 : -1]; } // expected-error{{array size is negative}}
+  };
+  
+  template<typename T>
+  struct vector {
+    vector(const allocator<T>& = allocator<T>()) {} // expected-note{{instantiation of}}
+  };
+  
+  struct A { };
+  
+  template<typename>
+  void FilterVTs() {
+    vector<A> Result;
+  }
+  
+  void f() {
+    vector<A> Result;
+  }
+}

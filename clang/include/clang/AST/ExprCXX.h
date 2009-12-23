@@ -386,15 +386,30 @@ public:
 /// parameter's default argument, when the call did not explicitly
 /// supply arguments for all of the parameters.
 class CXXDefaultArgExpr : public Expr {
-  ParmVarDecl *Param;
+  /// \brief The parameter whose default is being used.
+  ///
+  /// When the bit is set, the subexpression is stored after the 
+  /// CXXDefaultArgExpr itself. When the bit is clear, the parameter's
+  /// actual default expression is the subexpression.
+  llvm::PointerIntPair<ParmVarDecl *, 1, bool> Param;
 
 protected:
   CXXDefaultArgExpr(StmtClass SC, ParmVarDecl *param)
-    : Expr(SC, param->hasUnparsedDefaultArg() ?
-           param->getType().getNonReferenceType()
-           : param->getDefaultArg()->getType()),
-    Param(param) { }
+    : Expr(SC, 
+           param->hasUnparsedDefaultArg()
+             ? param->getType().getNonReferenceType()
+             : param->getDefaultArg()->getType()),
+      Param(param, false) { }
 
+  CXXDefaultArgExpr(StmtClass SC, ParmVarDecl *param, Expr *SubExpr)
+    : Expr(SC, SubExpr->getType()), Param(param, true) 
+  {
+    *reinterpret_cast<Expr **>(this + 1) = SubExpr;
+  }
+  
+protected:
+  virtual void DoDestroy(ASTContext &C);
+  
 public:
   // Param is the parameter whose default argument is used by this
   // expression.
@@ -402,13 +417,26 @@ public:
     return new (C) CXXDefaultArgExpr(CXXDefaultArgExprClass, Param);
   }
 
+  // Param is the parameter whose default argument is used by this
+  // expression, and SubExpr is the expression that will actually be used.
+  static CXXDefaultArgExpr *Create(ASTContext &C, ParmVarDecl *Param, 
+                                   Expr *SubExpr);
+  
   // Retrieve the parameter that the argument was created from.
-  const ParmVarDecl *getParam() const { return Param; }
-  ParmVarDecl *getParam() { return Param; }
+  const ParmVarDecl *getParam() const { return Param.getPointer(); }
+  ParmVarDecl *getParam() { return Param.getPointer(); }
 
   // Retrieve the actual argument to the function call.
-  const Expr *getExpr() const { return Param->getDefaultArg(); }
-  Expr *getExpr() { return Param->getDefaultArg(); }
+  const Expr *getExpr() const { 
+    if (Param.getInt())
+      return *reinterpret_cast<Expr const * const*> (this + 1);
+    return getParam()->getDefaultArg(); 
+  }
+  Expr *getExpr() { 
+    if (Param.getInt())
+      return *reinterpret_cast<Expr **> (this + 1);
+    return getParam()->getDefaultArg(); 
+  }
 
   virtual SourceRange getSourceRange() const {
     // Default argument expressions have no representation in the
