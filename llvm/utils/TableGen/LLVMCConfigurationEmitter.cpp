@@ -101,15 +101,15 @@ void CheckBooleanConstant(const Init* I) {
   }
 }
 
-// checkNumberOfArguments - Ensure that the number of args in d is
+// CheckNumberOfArguments - Ensure that the number of args in d is
 // greater than or equal to min_arguments, otherwise throw an exception.
-void checkNumberOfArguments (const DagInit& d, unsigned minArgs) {
+void CheckNumberOfArguments (const DagInit& d, unsigned minArgs) {
   if (d.getNumArgs() < minArgs)
     throw GetOperatorName(d) + ": too few arguments!";
 }
 
-// isDagEmpty - is this DAG marked with an empty marker?
-bool isDagEmpty (const DagInit& d) {
+// IsDagEmpty - is this DAG marked with an empty marker?
+bool IsDagEmpty (const DagInit& d) {
   return GetOperatorName(d) == "empty_dag_marker";
 }
 
@@ -136,8 +136,8 @@ std::string EscapeVariableName(const std::string& Var) {
   return ret;
 }
 
-/// oneOf - Does the input string contain this character?
-bool oneOf(const char* lst, char c) {
+/// OneOf - Does the input string contain this character?
+bool OneOf(const char* lst, char c) {
   while (*lst) {
     if (*lst++ == c)
       return true;
@@ -146,7 +146,7 @@ bool oneOf(const char* lst, char c) {
 }
 
 template <class I, class S>
-void checkedIncrement(I& P, I E, S ErrorString) {
+void CheckedIncrement(I& P, I E, S ErrorString) {
   ++P;
   if (P == E)
     throw ErrorString;
@@ -588,34 +588,34 @@ private:
   /// Methods that handle option properties such as (help) or (hidden).
 
   void onExtern (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     optDesc_.setExtern();
   }
 
   void onHelp (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     optDesc_.Help = InitPtrToString(d.getArg(0));
   }
 
   void onHidden (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     optDesc_.setHidden();
   }
 
   void onReallyHidden (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     optDesc_.setReallyHidden();
   }
 
   void onCommaSeparated (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     if (!optDesc_.isList())
       throw "'comma_separated' is valid only on list options!";
     optDesc_.setCommaSeparated();
   }
 
   void onRequired (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     if (optDesc_.isOneOrMore() || optDesc_.isOptional())
       throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
@@ -623,7 +623,7 @@ private:
   }
 
   void onInit (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     Init* i = d.getArg(0);
     const std::string& str = i->getAsString();
 
@@ -637,7 +637,7 @@ private:
   }
 
   void onOneOrMore (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     if (optDesc_.isRequired() || optDesc_.isOptional())
       throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
@@ -648,7 +648,7 @@ private:
   }
 
   void onOptional (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     if (optDesc_.isRequired() || optDesc_.isOneOrMore())
       throw "Only one of (required), (optional) or "
         "(one_or_more) properties is allowed!";
@@ -659,7 +659,7 @@ private:
   }
 
   void onMultiVal (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     int val = InitPtrToInt(d.getArg(0));
     if (val < 2)
       throw "Error in the 'multi_val' property: "
@@ -683,7 +683,7 @@ public:
 
   void operator()(const Init* i) {
     const DagInit& d = InitPtrToDag(i);
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
 
     const OptionType::OptionType Type =
       stringToOptionType(GetOperatorName(d));
@@ -692,7 +692,7 @@ public:
     OptionDescription OD(Type, Name);
 
     if (!OD.isExtern())
-      checkNumberOfArguments(d, 2);
+      CheckNumberOfArguments(d, 2);
 
     if (OD.isAlias()) {
       // Aliases store the aliased option name in the 'Help' field.
@@ -708,7 +708,7 @@ private:
   /// processOptionProperties - Go through the list of option
   /// properties and call a corresponding handler for each.
   static void processOptionProperties (const DagInit& d, OptionDescription& o) {
-    checkNumberOfArguments(d, 2);
+    CheckNumberOfArguments(d, 2);
     DagInit::const_arg_iterator B = d.arg_begin();
     // Skip the first argument: it's always the option name.
     ++B;
@@ -813,7 +813,7 @@ private:
   /// DAG representation.
 
   void onActions (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     Init* Case = d.getArg(0);
     if (typeid(*Case) != typeid(DagInit) ||
         GetOperatorName(static_cast<DagInit&>(*Case)) != "case")
@@ -822,12 +822,12 @@ private:
   }
 
   void onCmdLine (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     toolDesc_.CmdLine = d.getArg(0);
   }
 
   void onInLanguage (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     Init* arg = d.getArg(0);
 
     // Find out the argument's type.
@@ -854,22 +854,22 @@ private:
   }
 
   void onJoin (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     toolDesc_.setJoin();
   }
 
   void onOutLanguage (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     toolDesc_.OutLanguage = InitPtrToString(d.getArg(0));
   }
 
   void onOutputSuffix (const DagInit& d) {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     toolDesc_.OutputSuffix = InitPtrToString(d.getArg(0));
   }
 
   void onSink (const DagInit& d) {
-    checkNumberOfArguments(d, 0);
+    CheckNumberOfArguments(d, 0);
     toolDesc_.setSink();
   }
 
@@ -1089,7 +1089,7 @@ class ExtractOptionNames {
         ActionName == "switch_on" || ActionName == "parameter_equals" ||
         ActionName == "element_in_list" || ActionName == "not_empty" ||
         ActionName == "empty") {
-      checkNumberOfArguments(Stmt, 1);
+      CheckNumberOfArguments(Stmt, 1);
       const std::string& Name = InitPtrToString(Stmt.getArg(0));
       OptionNames_.insert(Name);
     }
@@ -1150,7 +1150,7 @@ void CheckForSuperfluousOptions (const RecordVector& Edges,
     const Record* Edge = *B;
     DagInit& Weight = *Edge->getValueAsDag("weight");
 
-    if (!isDagEmpty(Weight))
+    if (!IsDagEmpty(Weight))
       WalkCase(&Weight, ExtractOptionNames(nonSuperfluousOptions), Id());
   }
 
@@ -1307,7 +1307,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
                       const DagInit& d,
                       const OptionDescriptions& OptDescs,
                       raw_ostream& O) {
-  checkNumberOfArguments(d, 1);
+  CheckNumberOfArguments(d, 1);
   if (typeid(*d.getArg(0)) == typeid(ListInit))
     return EmitCaseTest1ArgList(TestName, d, OptDescs, O);
   else
@@ -1320,7 +1320,7 @@ bool EmitCaseTest2Args(const std::string& TestName,
                        unsigned IndentLevel,
                        const OptionDescriptions& OptDescs,
                        raw_ostream& O) {
-  checkNumberOfArguments(d, 2);
+  CheckNumberOfArguments(d, 2);
   const std::string& OptName = InitPtrToString(d.getArg(0));
   const std::string& OptArg = InitPtrToString(d.getArg(1));
 
@@ -1371,7 +1371,7 @@ void EmitLogicalOperationTest(const DagInit& d, const char* LogicOp,
 void EmitLogicalNot(const DagInit& d, unsigned IndentLevel,
                     const OptionDescriptions& OptDescs, raw_ostream& O)
 {
-  checkNumberOfArguments(d, 1);
+  CheckNumberOfArguments(d, 1);
   const DagInit& InnerTest = InitPtrToDag(d.getArg(0));
   O << "! (";
   EmitCaseTest(InnerTest, IndentLevel, OptDescs, O);
@@ -1500,7 +1500,7 @@ void TokenizeCmdLine(const std::string& CmdLine, StrVector& Out) {
         cur_st = SpecialCommand;
         break;
       }
-      if (oneOf(Delimiters, cur_ch)) {
+      if (OneOf(Delimiters, cur_ch)) {
         // Skip whitespace
         B = CmdLine.find_first_not_of(Delimiters, B);
         if (B == std::string::npos) {
@@ -1515,7 +1515,7 @@ void TokenizeCmdLine(const std::string& CmdLine, StrVector& Out) {
 
 
     case SpecialCommand:
-      if (oneOf(Delimiters, cur_ch)) {
+      if (OneOf(Delimiters, cur_ch)) {
         cur_st = Normal;
         Out.push_back("");
         continue;
@@ -1528,7 +1528,7 @@ void TokenizeCmdLine(const std::string& CmdLine, StrVector& Out) {
       break;
 
     case InsideSpecialCommand:
-      if (oneOf(Delimiters, cur_ch)) {
+      if (OneOf(Delimiters, cur_ch)) {
         continue;
       }
       if (cur_ch == '\'') {
@@ -1567,7 +1567,7 @@ SubstituteCall (StrVector::const_iterator Pos,
                 bool IsJoin, raw_ostream& O)
 {
   const char* errorMessage = "Syntax error in $CALL invocation!";
-  checkedIncrement(Pos, End, errorMessage);
+  CheckedIncrement(Pos, End, errorMessage);
   const std::string& CmdName = *Pos;
 
   if (CmdName == ")")
@@ -1579,7 +1579,7 @@ SubstituteCall (StrVector::const_iterator Pos,
 
   bool firstIteration = true;
   while (true) {
-    checkedIncrement(Pos, End, errorMessage);
+    CheckedIncrement(Pos, End, errorMessage);
     const std::string& Arg = *Pos;
     assert(Arg.size() != 0);
 
@@ -1614,7 +1614,7 @@ SubstituteEnv (StrVector::const_iterator Pos,
                StrVector::const_iterator End, raw_ostream& O)
 {
   const char* errorMessage = "Syntax error in $ENV invocation!";
-  checkedIncrement(Pos, End, errorMessage);
+  CheckedIncrement(Pos, End, errorMessage);
   const std::string& EnvName = *Pos;
 
   if (EnvName == ")")
@@ -1624,7 +1624,7 @@ SubstituteEnv (StrVector::const_iterator Pos,
   O << EnvName;
   O << "\"))";
 
-  checkedIncrement(Pos, End, errorMessage);
+  CheckedIncrement(Pos, End, errorMessage);
 
   return Pos;
 }
@@ -1825,7 +1825,7 @@ struct ActionHandlingCallbackBase
   void onWarningDag(const DagInit& d,
                     unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     O.indent(IndentLevel) << "llvm::errs() << \""
                           << InitPtrToString(d.getArg(0)) << "\";\n";
   }
@@ -1875,7 +1875,7 @@ class EmitActionHandlersCallback :
   void onAppendCmd (const DagInit& Dag,
                     unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 1);
+    CheckNumberOfArguments(Dag, 1);
     this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
                              "vec.push_back(", ");\n", IndentLevel, O);
   }
@@ -1883,7 +1883,7 @@ class EmitActionHandlersCallback :
   void onForward (const DagInit& Dag,
                   unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 1);
+    CheckNumberOfArguments(Dag, 1);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
                                           IndentLevel, "", O);
@@ -1892,7 +1892,7 @@ class EmitActionHandlersCallback :
   void onForwardAs (const DagInit& Dag,
                     unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 2);
+    CheckNumberOfArguments(Dag, 2);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     const std::string& NewName = InitPtrToString(Dag.getArg(1));
     EmitForwardOptionPropertyHandlingCode(OptDescs.FindOption(Name),
@@ -1902,7 +1902,7 @@ class EmitActionHandlersCallback :
   void onForwardValue (const DagInit& Dag,
                        unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 1);
+    CheckNumberOfArguments(Dag, 1);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
@@ -1920,7 +1920,7 @@ class EmitActionHandlersCallback :
   void onForwardTransformedValue (const DagInit& Dag,
                                   unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 2);
+    CheckNumberOfArguments(Dag, 2);
     const std::string& Name = InitPtrToString(Dag.getArg(0));
     const std::string& Hook = InitPtrToString(Dag.getArg(1));
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
@@ -1933,7 +1933,7 @@ class EmitActionHandlersCallback :
   void onOutputSuffix (const DagInit& Dag,
                        unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(Dag, 1);
+    CheckNumberOfArguments(Dag, 1);
     this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
                              "output_suffix = ", ";\n", IndentLevel, O);
   }
@@ -2324,7 +2324,7 @@ class EmitPreprocessOptionsCallback :
   void onListOrDag(const DagInit& d, HandlerImpl h,
                    unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     const Init* I = d.getArg(0);
 
     // If I is a list, apply h to each element.
@@ -2368,7 +2368,7 @@ class EmitPreprocessOptionsCallback :
 
   void onSetOptionImpl(const DagInit& d,
                        unsigned IndentLevel, raw_ostream& O) const {
-    checkNumberOfArguments(d, 2);
+    CheckNumberOfArguments(d, 2);
     const std::string& OptName = InitPtrToString(d.getArg(0));
     const Init* Value = d.getArg(1);
     const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
@@ -2412,7 +2412,7 @@ class EmitPreprocessOptionsCallback :
   void onSetOption(const DagInit& d,
                    unsigned IndentLevel, raw_ostream& O) const
   {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
 
     // Two arguments: (set_option "parameter", VALUE), where VALUE can be a
     // boolean, a string or a string list.
@@ -2513,7 +2513,7 @@ void IncDecWeight (const Init* i, unsigned IndentLevel,
     O.indent(IndentLevel) << "ret -= ";
   }
   else if (OpName == "error") {
-    checkNumberOfArguments(d, 1);
+    CheckNumberOfArguments(d, 1);
     O.indent(IndentLevel) << "throw std::runtime_error(\""
                           << InitPtrToString(d.getArg(0))
                           << "\");\n";
@@ -2565,7 +2565,7 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
     const std::string& NodeB = Edge->getValueAsString("b");
     DagInit& Weight = *Edge->getValueAsDag("weight");
 
-    if (!isDagEmpty(Weight))
+    if (!IsDagEmpty(Weight))
       EmitEdgeClass(i, NodeB, &Weight, OptDescs, O);
     ++i;
   }
@@ -2597,7 +2597,7 @@ void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
 
     O.indent(Indent1) << "G.insertEdge(\"" << NodeA << "\", ";
 
-    if (isDagEmpty(Weight))
+    if (IsDagEmpty(Weight))
       O << "new SimpleEdge(\"" << NodeB << "\")";
     else
       O << "new Edge" << i << "()";
@@ -2646,7 +2646,7 @@ public:
     const std::string& Name = GetOperatorName(Dag);
 
     if (Name == "forward_transformed_value") {
-      checkNumberOfArguments(Dag, 2);
+      CheckNumberOfArguments(Dag, 2);
       const std::string& OptName = InitPtrToString(Dag.getArg(0));
       const std::string& HookName = InitPtrToString(Dag.getArg(1));
       const OptionDescription& D = OptDescs_.FindOption(OptName);
@@ -2655,7 +2655,7 @@ public:
                                       : HookInfo::ArgHook);
     }
     else if (Name == "append_cmd" || Name == "output_suffix") {
-      checkNumberOfArguments(Dag, 1);
+      CheckNumberOfArguments(Dag, 1);
       this->onCmdLine(InitPtrToString(Dag.getArg(0)));
     }
   }
@@ -2670,7 +2670,7 @@ public:
 
       if (cmd == "$CALL") {
         unsigned NumArgs = 0;
-        checkedIncrement(B, E, "Syntax error in $CALL invocation!");
+        CheckedIncrement(B, E, "Syntax error in $CALL invocation!");
         const std::string& HookName = *B;
 
         if (HookName.at(0) == ')')
