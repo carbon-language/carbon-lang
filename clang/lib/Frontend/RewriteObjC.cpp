@@ -4163,9 +4163,8 @@ void RewriteObjC::RewriteBlockCall(CallExpr *Exp) {
 //    };
 //}
 Stmt *RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
-  // FIXME: Add more elaborate code generation required by the ABI.
-  // That is, must generate BYREFVAR->__forwarding->BYREFVAR for each
-  // BDRE where BYREFVAR is name of the variable.
+  // Rewrite the byref variable into BYREFVAR->__forwarding->BYREFVAR 
+  // for each BDRE where BYREFVAR is name of the variable.
   FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
                                     &Context->Idents.get("__forwarding"), 
                                     Context->VoidPtrTy, 0,
