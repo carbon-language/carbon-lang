@@ -4581,16 +4581,14 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
       InitExprs.push_back(Exp);
     }
   }
-  if (ImportedBlockDecls.size()) { // generate "1<<25" to indicate we have helper functions.
+  if (ImportedBlockDecls.size()) {
+    // generate BLOCK_HAS_COPY_DISPOSE(have helper funcs) | BLOCK_HAS_DESCRIPTOR
+    int flag = (BLOCK_HAS_COPY_DISPOSE | BLOCK_HAS_DESCRIPTOR);
     unsigned IntSize = 
       static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
-    BinaryOperator *Exp = new (Context) BinaryOperator(
-                              new (Context) IntegerLiteral(llvm::APInt(IntSize, 1), 
-                                                 Context->IntTy,SourceLocation()), 
-                              new (Context) IntegerLiteral(llvm::APInt(IntSize, 25), 
-                                                 Context->IntTy, SourceLocation()), 
-                              BinaryOperator::Shl, Context->IntTy, SourceLocation());
-    InitExprs.push_back(Exp);
+    Expr *FlagExp = new (Context) IntegerLiteral(llvm::APInt(IntSize, flag), 
+                                             Context->IntTy, SourceLocation());
+    InitExprs.push_back(FlagExp);
   }
   NewRep = new (Context) CallExpr(*Context, DRE, &InitExprs[0], InitExprs.size(),
                                   FType, SourceLocation());
