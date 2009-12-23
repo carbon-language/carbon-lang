@@ -4392,11 +4392,22 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += "0, ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
     InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
-#if 0
-    ByrefType = "};\n";
-    SourceLocation endLoc = ND->getInit()->getLocEnd();
-    InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
-#endif
+    
+    // Complete the newly synthesized compound expression by inserting a right
+    // curly brace before the end of the declaration.
+    // FIXME: This approach avoids rewriting the initializer expression. It
+    // also assumes there is only one declarator. For example, the following
+    // isn't currently supported by this routine (in general):
+    // 
+    // double __block BYREFVAR = 1.34, BYREFVAR2 = 1.37;
+    //
+    const char *startBuf = SM->getCharacterData(startLoc);
+    const char *semiBuf = strchr(startBuf, ';');
+    assert((*semiBuf == ';') && "RewriteByRefVar: can't find ';'");
+    SourceLocation semiLoc =
+      startLoc.getFileLocWithOffset(semiBuf-startBuf);
+
+    InsertText(semiLoc, "}", 1);
   }
   return;
 }
