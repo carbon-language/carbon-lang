@@ -635,13 +635,15 @@ that they are not forwarded to the compiler. If no optimization options are
 specified, <tt class="docutils literal"><span class="pre">-O2</span></tt> is enabled.</p>
 <p><tt class="docutils literal"><span class="pre">OptionPreprocessor</span></tt> is basically a single big <tt class="docutils literal"><span class="pre">case</span></tt> expression, which is
 evaluated only once right after the plugin is loaded. The only allowed actions
-in <tt class="docutils literal"><span class="pre">OptionPreprocessor</span></tt> are <tt class="docutils literal"><span class="pre">error</span></tt>, <tt class="docutils literal"><span class="pre">warning</span></tt> and two special actions:
+in <tt class="docutils literal"><span class="pre">OptionPreprocessor</span></tt> are <tt class="docutils literal"><span class="pre">error</span></tt>, <tt class="docutils literal"><span class="pre">warning</span></tt>, and two special actions:
 <tt class="docutils literal"><span class="pre">unset_option</span></tt> and <tt class="docutils literal"><span class="pre">set_option</span></tt>. As their names suggest, they can be used to
-set or unset a given option. To set a parameter option with <tt class="docutils literal"><span class="pre">set_option</span></tt>, use
-the two-argument form: <tt class="docutils literal"><span class="pre">(set_option</span> <span class="pre">&quot;parameter&quot;,</span> <span class="pre">&quot;value&quot;)</span></tt>. For convenience,
-<tt class="docutils literal"><span class="pre">set_option</span></tt> and <tt class="docutils literal"><span class="pre">unset_option</span></tt> also work on lists (that is, instead of
-<tt class="docutils literal"><span class="pre">[(unset_option</span> <span class="pre">&quot;A&quot;),</span> <span class="pre">(unset_option</span> <span class="pre">&quot;B&quot;)]</span></tt> you can use <tt class="docutils literal"><span class="pre">(unset_option</span> <span class="pre">[&quot;A&quot;,</span>
-<span class="pre">&quot;B&quot;])</span></tt>).</p>
+set or unset a given option. To set an option with <tt class="docutils literal"><span class="pre">set_option</span></tt>, use the
+two-argument form: <tt class="docutils literal"><span class="pre">(set_option</span> <span class="pre">&quot;parameter&quot;,</span> <span class="pre">VALUE)</span></tt>. Here, <tt class="docutils literal"><span class="pre">VALUE</span></tt> can be
+either a string, a string list, or a boolean constant.</p>
+<p>For convenience, <tt class="docutils literal"><span class="pre">set_option</span></tt> and <tt class="docutils literal"><span class="pre">unset_option</span></tt> also work on lists. That
+is, instead of <tt class="docutils literal"><span class="pre">[(unset_option</span> <span class="pre">&quot;A&quot;),</span> <span class="pre">(unset_option</span> <span class="pre">&quot;B&quot;)]</span></tt> you can use
+<tt class="docutils literal"><span class="pre">(unset_option</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;])</span></tt>. Obviously, <tt class="docutils literal"><span class="pre">(set_option</span> <span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;])</span></tt> is valid
+only if both <tt class="docutils literal"><span class="pre">A</span></tt> and <tt class="docutils literal"><span class="pre">B</span></tt> are switches.</p>
 </div>
 <div class="section" id="more-advanced-topics">
 <h1><a class="toc-backref" href="#id21">More advanced topics</a></h1>
