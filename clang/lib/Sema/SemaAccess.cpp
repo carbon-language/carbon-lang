@@ -37,6 +37,8 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
       << MemberDecl << LexicalAS;
     Diag(PrevMemberDecl->getLocation(), diag::note_previous_access_declaration)
       << PrevMemberDecl << PrevMemberDecl->getAccess();
+
+    MemberDecl->setAccess(LexicalAS);
     return true;
   }
 

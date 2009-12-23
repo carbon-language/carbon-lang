@@ -21,3 +21,14 @@ protected:
 private:
     template<typename T> struct A {}; // expected-error {{'A' redeclared with 'private' access}}
 };
+
+// PR5573
+namespace test1 {
+  class A {
+  private:
+    class X; // expected-note {{previously declared 'private' here}}
+  public:
+    class X; // expected-error {{ 'X' redeclared with 'public' access}}
+    class X {};
+  };
+}
