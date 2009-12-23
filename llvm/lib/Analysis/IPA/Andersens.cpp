@@ -806,7 +806,7 @@ unsigned Andersens::getNodeForConstantPointer(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointer(CE->getOperand(0));
     default:
-      dbgs() << "Constant Expr not yet handled: " << *CE << "\n";
+      errs() << "Constant Expr not yet handled: " << *CE << "\n";
       llvm_unreachable(0);
     }
   } else {
@@ -833,7 +833,7 @@ unsigned Andersens::getNodeForConstantPointerTarget(Constant *C) {
     case Instruction::BitCast:
       return getNodeForConstantPointerTarget(CE->getOperand(0));
     default:
-      dbgs() << "Constant Expr not yet handled: " << *CE << "\n";
+      errs() << "Constant Expr not yet handled: " << *CE << "\n";
       llvm_unreachable(0);
     }
   } else {
@@ -1132,7 +1132,7 @@ void Andersens::visitInstruction(Instruction &I) {
     return;
   default:
     // Is this something we aren't handling yet?
-    dbgs() << "Unknown instruction: " << I;
+    errs() << "Unknown instruction: " << I;
     llvm_unreachable(0);
   }
 }
