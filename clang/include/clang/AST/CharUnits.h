@@ -16,8 +16,6 @@
 
 #include "llvm/System/DataTypes.h"
 
-#include <string>
-
 namespace clang {
   
   /// CharUnits - This is an opaque type for sizes expressed in character units.
@@ -135,9 +133,6 @@ namespace clang {
       }
       
       // Conversions.
-
-      /// toString - Convert to a string.
-      std::string toString() const;
 
       /// getRaw - Get the raw integer representation of this quantity.
       RawType getRaw() const { return Quantity; }

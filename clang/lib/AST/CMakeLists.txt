@@ -5,7 +5,6 @@ add_clang_library(clangAST
   ASTConsumer.cpp
   ASTContext.cpp
   CXXInheritance.cpp
-  CharUnits.cpp
   Decl.cpp
   DeclBase.cpp
   DeclCXX.cpp
