@@ -3784,8 +3784,13 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
     S += (*I)->getNameAsString();
     S += ", (void*)src->";
     S += (*I)->getNameAsString();
-    S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);}";
+    if (BlockByRefDecls.count((*I)))
+      S += ", 8/*BLOCK_FIELD_IS_BYREF*/);";
+    else
+      S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
   }
+  S += "}\n";
+  
   S += "\nstatic void __";
   S += funcName;
   S += "_block_dispose_" + utostr(i);
@@ -3795,7 +3800,10 @@ std::string RewriteObjC::SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
       E = ImportedBlockDecls.end(); I != E; ++I) {
     S += "_Block_object_dispose((void*)src->";
     S += (*I)->getNameAsString();
-    S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
+    if (BlockByRefDecls.count((*I)))
+      S += ", 8/*BLOCK_FIELD_IS_BYREF*/);";
+    else
+      S += ", 3/*BLOCK_FIELD_IS_OBJECT*/);";
   }
   S += "}\n";
   return S;
