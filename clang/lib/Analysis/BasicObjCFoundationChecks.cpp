@@ -294,7 +294,7 @@ namespace {
 }
 
 static Optional<uint64_t> GetCFNumberSize(ASTContext& Ctx, uint64_t i) {
-  static unsigned char FixedSize[] = { 8, 16, 32, 64, 32, 64 };
+  static const unsigned char FixedSize[] = { 8, 16, 32, 64, 32, 64 };
 
   if (i < kCFNumberCharType)
     return FixedSize[i-1];

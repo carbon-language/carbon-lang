@@ -89,7 +89,7 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
 /// GetImplicitConversionName - Return the name of this kind of
 /// implicit conversion.
 const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
-  static const char* Name[(int)ICK_Num_Conversion_Kinds] = {
+  static const char* const Name[(int)ICK_Num_Conversion_Kinds] = {
     "No conversion",
     "Lvalue-to-rvalue",
     "Array-to-pointer",

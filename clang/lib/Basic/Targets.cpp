@@ -628,7 +628,7 @@ const Builtin::Info BuiltinInfo[] = {
 #include "clang/Basic/BuiltinsX86.def"
 };
 
-const char *GCCRegNames[] = {
+static const char* const GCCRegNames[] = {
   "ax", "dx", "cx", "bx", "si", "di", "bp", "sp",
   "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
   "argp", "flags", "fspr", "dirflag", "frame",

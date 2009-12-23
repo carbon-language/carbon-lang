@@ -210,7 +210,7 @@ std::string DeclarationName::getAsString() const {
   }
 
   case CXXOperatorName: {
-    static const char *OperatorNames[NUM_OVERLOADED_OPERATORS] = {
+    static const char* const OperatorNames[NUM_OVERLOADED_OPERATORS] = {
       0,
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
       Spelling,
