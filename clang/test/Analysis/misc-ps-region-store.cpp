@@ -23,3 +23,14 @@ int test2_b_aux(const short &n);
 int test2_b(int n) {
   return test2_b_aux(n);
 }
+
+// Test getting the lvalue of a derived and converting it to a base.  This
+// previously crashed.
+class Test3_Base {};
+class Test3_Derived : public Test3_Base {};
+
+int test3_aux(Test3_Base &x);
+int test3(Test3_Derived x) {
+  return test3_aux(x);
+}
+

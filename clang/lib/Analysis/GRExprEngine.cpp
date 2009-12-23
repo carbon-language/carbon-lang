@@ -2125,6 +2125,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
   if (asLValue) {
     ASTContext &Ctx = getContext();
     T = Ctx.getPointerType(Ctx.getCanonicalType(T));
+    ExTy = Ctx.getPointerType(Ctx.getCanonicalType(ExTy));
   }
 
   for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
