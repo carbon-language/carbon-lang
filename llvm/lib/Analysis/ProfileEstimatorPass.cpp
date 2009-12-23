@@ -87,11 +87,11 @@ static double ignoreMissing(double w) {
 }
 
 static void inline printEdgeError(ProfileInfo::Edge e, const char *M) {
-  DEBUG(errs() << "-- Edge " << e << " is not calculated, " << M << "\n");
+  DEBUG(dbgs() << "-- Edge " << e << " is not calculated, " << M << "\n");
 }
 
 void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
-  DEBUG(errs() << "-- Weight of Edge " << E << ":"
+  DEBUG(dbgs() << "-- Weight of Edge " << E << ":"
                << format("%20.20g", getEdgeWeight(E)) << "\n");
 }
 
@@ -179,7 +179,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
           // from weight.
           if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
             incoming -= MinimalWeight[*ei];
-            DEBUG(errs() << "Reserving " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+            DEBUG(dbgs() << "Reserving " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
           }
         } else {
           incoming -= w;
@@ -217,7 +217,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
       // Read necessary minimal weight.
       if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
         EdgeInformation[BB->getParent()][*ei] += MinimalWeight[*ei];
-        DEBUG(errs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+        DEBUG(dbgs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
       }
       printEdgeWeight(*ei);
       
@@ -232,7 +232,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
           MinimalWeight[e] = 0;
         }
         MinimalWeight[e] += w;
-        DEBUG(errs() << "Minimal Weight for " << e << ": " << format("%.20g",MinimalWeight[e]) << "\n");
+        DEBUG(dbgs() << "Minimal Weight for " << e << ": " << format("%.20g",MinimalWeight[e]) << "\n");
         Dest = Parent;
       }
     }
@@ -268,7 +268,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
         // from block weight, this is readded later on.
         if (MinimalWeight.find(edge) != MinimalWeight.end()) {
           BBWeight -= MinimalWeight[edge];
-          DEBUG(errs() << "Reserving " << format("%.20g",MinimalWeight[edge]) << " at " << edge << "\n");
+          DEBUG(dbgs() << "Reserving " << format("%.20g",MinimalWeight[edge]) << " at " << edge << "\n");
         }
       }
     }
@@ -288,7 +288,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     // Readd minial necessary weight.
     if (MinimalWeight.find(*ei) != MinimalWeight.end()) {
       EdgeInformation[BB->getParent()][*ei] += MinimalWeight[*ei];
-      DEBUG(errs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
+      DEBUG(dbgs() << "Additionally " << format("%.20g",MinimalWeight[*ei]) << " at " << (*ei) << "\n");
     }
     printEdgeWeight(*ei);
   }
@@ -319,7 +319,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   // Clear Minimal Edges.
   MinimalWeight.clear();
 
-  DEBUG(errs() << "Working on function " << F.getNameStr() << "\n");
+  DEBUG(dbgs() << "Working on function " << F.getNameStr() << "\n");
 
   // Since the entry block is the first one and has no predecessors, the edge
   // (0,entry) is inserted with the starting weight of 1.
@@ -366,7 +366,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
             if (Dest != *bbi) {
               // If there is no circle, just set edge weight to 0
               EdgeInformation[&F][e] = 0;
-              DEBUG(errs() << "Assuming edge weight: ");
+              DEBUG(dbgs() << "Assuming edge weight: ");
               printEdgeWeight(e);
               found = true;
             }
@@ -375,7 +375,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
       }
       if (!found) {
         cleanup = true;
-        DEBUG(errs() << "No assumption possible in Fuction "<<F.getName()<<", setting all to zero\n");
+        DEBUG(dbgs() << "No assumption possible in Fuction "<<F.getName()<<", setting all to zero\n");
       }
     }
   }
