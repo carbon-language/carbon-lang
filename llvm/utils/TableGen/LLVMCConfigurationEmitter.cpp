@@ -17,6 +17,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
+
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -87,6 +88,17 @@ const DagInit& InitPtrToDag(const Init* ptr) {
 
 const std::string GetOperatorName(const DagInit& D) {
   return D.getOperator()->getAsString();
+}
+
+/// CheckBooleanConstant - Check that the provided value is a boolean constant.
+void CheckBooleanConstant(const Init* I) {
+  const DefInit& val = dynamic_cast<const DefInit&>(*I);
+  const std::string& str = val.getAsString();
+
+  if (str != "true" && str != "false") {
+    throw "Incorrect boolean value: '" + str +
+      "': must be either 'true' or 'false'";
+  }
 }
 
 // checkNumberOfArguments - Ensure that the number of args in d is
@@ -2309,8 +2321,8 @@ class EmitPreprocessOptionsCallback :
 
   const OptionDescriptions& OptDescs_;
 
-  void onListOrDag(HandlerImpl h,
-                   const DagInit& d, unsigned IndentLevel, raw_ostream& O) const
+  void onListOrDag(const DagInit& d, HandlerImpl h,
+                   unsigned IndentLevel, raw_ostream& O) const
   {
     checkNumberOfArguments(d, 1);
     const Init* I = d.getArg(0);
@@ -2350,12 +2362,12 @@ class EmitPreprocessOptionsCallback :
   void onUnsetOption(const DagInit& d,
                      unsigned IndentLevel, raw_ostream& O) const
   {
-    this->onListOrDag(&EmitPreprocessOptionsCallback::onUnsetOptionImpl,
-                      d, IndentLevel, O);
+    this->onListOrDag(d, &EmitPreprocessOptionsCallback::onUnsetOptionImpl,
+                      IndentLevel, O);
   }
 
-  void onSetListOrParameter(const DagInit& d,
-                      unsigned IndentLevel, raw_ostream& O) const {
+  void onSetOptionImpl(const DagInit& d,
+                       unsigned IndentLevel, raw_ostream& O) const {
     checkNumberOfArguments(d, 2);
     const std::string& OptName = InitPtrToString(d.getArg(0));
     const Init* Value = d.getArg(1);
@@ -2371,13 +2383,18 @@ class EmitPreprocessOptionsCallback :
                               << InitPtrToString(*B) << "\");\n";
       }
     }
+    else if (OptDesc.isSwitch()) {
+      CheckBooleanConstant(Value);
+      O.indent(IndentLevel) << OptDesc.GenVariableName()
+                            << " = " << Value->getAsString() << ";\n";
+    }
     else if (OptDesc.isParameter()) {
       const std::string& Str = InitPtrToString(Value);
       O.indent(IndentLevel) << OptDesc.GenVariableName()
                             << " = \"" << Str << "\";\n";
     }
     else {
-      throw "set_option: -" + OptName + ": is not a list or parameter option!";
+      throw "Can't apply 'set_option' to alias option -" + OptName + " !";
     }
   }
 
@@ -2397,15 +2414,15 @@ class EmitPreprocessOptionsCallback :
   {
     checkNumberOfArguments(d, 1);
 
-    // Two arguments: (set_option "parameter", VALUE), where VALUE is either a
-    // string or a string list.
+    // Two arguments: (set_option "parameter", VALUE), where VALUE can be a
+    // boolean, a string or a string list.
     if (d.getNumArgs() > 1)
-      this->onSetListOrParameter(d, IndentLevel, O);
+      this->onSetOptionImpl(d, IndentLevel, O);
     // One argument: (set_option "switch")
     // or (set_option ["switch1", "switch2", ...])
     else
-      this->onListOrDag(&EmitPreprocessOptionsCallback::onSetSwitch,
-                        d, IndentLevel, O);
+      this->onListOrDag(d, &EmitPreprocessOptionsCallback::onSetSwitch,
+                        IndentLevel, O);
   }
 
 public:

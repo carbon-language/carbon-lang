@@ -690,13 +690,16 @@ specified, ``-O2`` is enabled.
 
 ``OptionPreprocessor`` is basically a single big ``case`` expression, which is
 evaluated only once right after the plugin is loaded. The only allowed actions
-in ``OptionPreprocessor`` are ``error``, ``warning`` and two special actions:
+in ``OptionPreprocessor`` are ``error``, ``warning``, and two special actions:
 ``unset_option`` and ``set_option``. As their names suggest, they can be used to
-set or unset a given option. To set a parameter option with ``set_option``, use
-the two-argument form: ``(set_option "parameter", "value")``. For convenience,
-``set_option`` and ``unset_option`` also work on lists (that is, instead of
-``[(unset_option "A"), (unset_option "B")]`` you can use ``(unset_option ["A",
-"B"])``).
+set or unset a given option. To set an option with ``set_option``, use the
+two-argument form: ``(set_option "parameter", VALUE)``. Here, ``VALUE`` can be
+either a string, a string list, or a boolean constant.
+
+For convenience, ``set_option`` and ``unset_option`` also work on lists. That
+is, instead of ``[(unset_option "A"), (unset_option "B")]`` you can use
+``(unset_option ["A", "B"])``. Obviously, ``(set_option ["A", "B"])`` is valid
+only if both ``A`` and ``B`` are switches.
 
 
 More advanced topics

@@ -1,4 +1,4 @@
-// Test for the OptionPreprocessor and any*.
+// Test for the OptionPreprocessor and related functionality.
 // RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: FileCheck -input-file %t %s
 // RUN: %compile_cxx -fexceptions -x c++ %t
@@ -26,13 +26,18 @@ def Preprocess : OptionPreprocessor<
                             (unset_option "foo_p"), (unset_option "foo_l")],
       // CHECK: W2
       // CHECK: foo = true;
+      // CHECK: bar = true;
+      // CHECK: baz = false;
       // CHECK: foo_p = "asdf";
       // CHECK: foo_l.clear();
       // CHECK: foo_l.push_back("qwert");
       // CHECK: foo_l.push_back("yuiop");
       // CHECK: foo_l.push_back("asdf");
       (and (switch_on ["foo", "bar"]), (any_empty ["foo_p", "bar_p"])),
-           [(warning "W2"), (set_option "foo"), (set_option "foo_p", "asdf"),
+           [(warning "W2"), (set_option "foo"),
+                            (set_option "bar", true),
+                            (set_option "baz", false),
+                            (set_option "foo_p", "asdf"),
                             (set_option "foo_l", ["qwert", "yuiop", "asdf"])],
       // CHECK: W3
       // CHECK: foo = true;
