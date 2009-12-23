@@ -978,7 +978,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
     }
     if (FoundPath) continue;
 
-    dbgs() << "{";
+    errs() << "{";
     FI = Unvisited.begin(), FE = Unvisited.end();
     while(FI != FE) {
       const BasicBlock *BB = *FI; ++FI;
@@ -986,9 +986,9 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
       if (FI != FE)
         dbgs() << ",";
     }
-    dbgs() << "}";
+    errs() << "}";
 
-    dbgs() << "ASSERT: could not repair function";
+    errs() << "ASSERT: could not repair function";
     assert(0 && "could not repair function");
   }
 
