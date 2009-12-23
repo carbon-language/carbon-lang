@@ -4166,11 +4166,25 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(BlockDeclRefExpr *BDRE) {
   // FIXME: Add more elaborate code generation required by the ABI.
   // That is, must generate BYREFVAR->__forwarding->BYREFVAR for each
   // BDRE where BYREFVAR is name of the variable.
-  Expr *DerefExpr = new (Context) UnaryOperator(BDRE, UnaryOperator::Deref,
-                             Context->getPointerType(BDRE->getType()),
-                             SourceLocation());
+  FieldDecl *FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                                    &Context->Idents.get("__forwarding"), 
+                                    Context->VoidPtrTy, 0,
+                                    /*BitWidth=*/0, /*Mutable=*/true);
+  MemberExpr *ME = new (Context) MemberExpr(BDRE, true, FD, SourceLocation(),
+                                            FD->getType());
+  const char *Name = BDRE->getDecl()->getNameAsCString();
+  FD = FieldDecl::Create(*Context, 0, SourceLocation(),
+                         &Context->Idents.get(Name), 
+                         Context->VoidPtrTy, 0,
+                         /*BitWidth=*/0, /*Mutable=*/true);
+  ME = new (Context) MemberExpr(ME, true, FD, SourceLocation(),
+                                BDRE->getType());
+  
+  
+  
   // Need parens to enforce precedence.
-  ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), DerefExpr);
+  ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
+                                          ME);
   ReplaceStmt(BDRE, PE);
   return PE;
 }
