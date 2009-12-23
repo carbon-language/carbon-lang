@@ -316,13 +316,17 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   unsigned insertAfter = SIndex;
   MachineBasicBlock::iterator Loc = MemOps[SIndex].MBBI;
   DebugLoc dl = Loc->getDebugLoc();
-  unsigned PReg = Loc->getOperand(0).getReg();
-  unsigned PRegNum = ARMRegisterInfo::getRegisterNumbering(PReg);
+  const MachineOperand &PMO = Loc->getOperand(0);
+  unsigned PReg = PMO.getReg();
+  unsigned PRegNum = PMO.isUndef() ? UINT_MAX
+    : ARMRegisterInfo::getRegisterNumbering(PReg);
 
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
     int NewOffset = MemOps[i].Offset;
-    unsigned Reg = MemOps[i].MBBI->getOperand(0).getReg();
-    unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+    const MachineOperand &MO = MemOps[i].MBBI->getOperand(0);
+    unsigned Reg = MO.getReg();
+    unsigned RegNum = MO.isUndef() ? UINT_MAX
+      : ARMRegisterInfo::getRegisterNumbering(Reg);
     // AM4 - register numbers in ascending order.
     // AM5 - consecutive register numbers in ascending order.
     if (NewOffset == Offset + (int)Size &&
