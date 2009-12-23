@@ -97,7 +97,6 @@ namespace {
                         unsigned PredReg,
                         unsigned Scratch,
                         DebugLoc dl,
-                        SmallVector<std::pair<unsigned, bool>, 8> &Regs,
                         MemOpQueue &MemOps,
                         unsigned memOpsFrom,
                         unsigned memOpsTo,
@@ -276,18 +275,27 @@ MergeOpsUpdate(MachineBasicBlock &MBB,
                unsigned PredReg,
                unsigned Scratch,
                DebugLoc dl,
-               SmallVector<std::pair<unsigned, bool>, 8> &Regs,
                MemOpQueue &MemOps,
                unsigned memOpsFrom,
                unsigned memOpsTo,
                SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
+  // First calculate which of the registers should be killed by the merged
+  // instruction.
+  SmallVector<std::pair<unsigned, bool>, 8> Regs;
+  for (unsigned i = memOpsFrom; i < memOpsTo; ++i) {
+    const MachineOperand &MO = MemOps[i].MBBI->getOperand(0);
+    Regs.push_back(std::make_pair(MO.getReg(), MO.isKill()));
+  }
+
   if (!MergeOps(MBB, MBBI, Offset, Base, BaseKill, Opcode,
                 Pred, PredReg, Scratch, dl, Regs))
     return;
+
+  // Merge succeeded, update records.
   Merges.push_back(prior(MBBI));
-  for (unsigned j = memOpsFrom; j < memOpsTo; ++j) {
-    MBB.erase(MemOps[j].MBBI);
-    MemOps[j].Merged = true;
+  for (unsigned i = memOpsFrom; i < memOpsTo; ++i) {
+    MBB.erase(MemOps[i].MBBI);
+    MemOps[i].Merged = true;
   }
 }
 
@@ -307,26 +315,21 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   DebugLoc dl = Loc->getDebugLoc();
   unsigned PReg = Loc->getOperand(0).getReg();
   unsigned PRegNum = ARMRegisterInfo::getRegisterNumbering(PReg);
-  bool isKill = Loc->getOperand(0).isKill();
 
-  SmallVector<std::pair<unsigned,bool>, 8> Regs;
-  Regs.push_back(std::make_pair(PReg, isKill));
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
     int NewOffset = MemOps[i].Offset;
     unsigned Reg = MemOps[i].MBBI->getOperand(0).getReg();
     unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
-    isKill = MemOps[i].MBBI->getOperand(0).isKill();
     // AM4 - register numbers in ascending order.
     // AM5 - consecutive register numbers in ascending order.
     if (NewOffset == Offset + (int)Size &&
         ((isAM4 && RegNum > PRegNum) || RegNum == PRegNum+1)) {
       Offset += Size;
-      Regs.push_back(std::make_pair(Reg, isKill));
       PRegNum = RegNum;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
       MergeOpsUpdate(MBB, ++Loc, SOffset, Base, false, Opcode, Pred, PredReg,
-                     Scratch, dl, Regs, MemOps, SIndex, i, Merges);
+                     Scratch, dl, MemOps, SIndex, i, Merges);
       MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,
                    MemOps, Merges);
       return;
@@ -340,7 +343,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
 
   bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
   MergeOpsUpdate(MBB, ++Loc, SOffset, Base, BaseKill, Opcode, Pred, PredReg,
-                 Scratch, dl, Regs, MemOps, SIndex, MemOps.size(), Merges);
+                 Scratch, dl, MemOps, SIndex, MemOps.size(), Merges);
   return;
 }
 
