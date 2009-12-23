@@ -603,6 +603,10 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     return llvm::GlobalValue::ExternalLinkage;
   }
 
+  if (Ty->getTypeClass() == Type::Builtin) {
+    return llvm::GlobalValue::WeakODRLinkage;
+  }
+
   assert(false && "Unhandled type!");
   return llvm::GlobalValue::WeakODRLinkage;
 }
