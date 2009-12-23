@@ -754,6 +754,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 
   switch (Ex->getStmtClass()) {
     // C++ stuff we don't support yet.
+    case Stmt::CXXExprWithTemporariesClass:
     case Stmt::CXXMemberCallExprClass:
     case Stmt::CXXZeroInitValueExprClass: {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
