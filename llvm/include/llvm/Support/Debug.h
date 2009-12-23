@@ -28,6 +28,8 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 /// DEBUG_TYPE macro - Files can specify a DEBUG_TYPE as a string, which causes
 /// all of their DEBUG statements to be activatable with -debug-only=thatstring.
 #ifndef DEBUG_TYPE
@@ -58,7 +60,7 @@ void SetCurrentDebugType(const char *Type);
 /// this is a debug build, then the code specified as the option to the macro
 /// will be executed.  Otherwise it will not be.  Example:
 ///
-/// DEBUG_WITH_TYPE("bitset", errs() << "Bitset contains: " << Bitset << "\n");
+/// DEBUG_WITH_TYPE("bitset", dbgs() << "Bitset contains: " << Bitset << "\n");
 ///
 /// This will emit the debug information if -debug is present, and -debug-only
 /// is not specified, or is specified as "bitset".
@@ -72,15 +74,28 @@ void SetCurrentDebugType(const char *Type);
 #define DEBUG_WITH_TYPE(TYPE, X) do { } while (0)
 #endif
 
+/// EnableDebugBuffering - This defaults to false.  If true, the debug
+/// stream will install signal handlers to dump any buffered debug
+/// output.  It allows clients to selectively allow the debug stream
+/// to install signal handlers if they are certain there will be no
+/// conflict.
+///
+extern bool EnableDebugBuffering;
+
+/// dbgs() - This returns a reference to a raw_ostream for debugging
+/// messages.  If debugging is disabled it returns dbgs().  Use it
+/// like: dbgs() << "foo" << "bar";
+raw_ostream &dbgs();
+
 // DEBUG macro - This macro should be used by passes to emit debug information.
 // In the '-debug' option is specified on the commandline, and if this is a
 // debug build, then the code specified as the option to the macro will be
 // executed.  Otherwise it will not be.  Example:
 //
-// DEBUG(errs() << "Bitset contains: " << Bitset << "\n");
+// DEBUG(dbgs() << "Bitset contains: " << Bitset << "\n");
 //
 #define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
-  
+
 } // End llvm namespace
 
 #endif
