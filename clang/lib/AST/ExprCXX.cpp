@@ -282,6 +282,18 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
   }
 }
 
+SourceRange CXXConstructExpr::getSourceRange() const { 
+  // FIXME: Should we know where the parentheses are, if there are any?
+  for (std::reverse_iterator<Stmt**> I(&Args[NumArgs]), E(&Args[0]); I!=E;++I) {
+    // Ignore CXXDefaultExprs when computing the range, as they don't
+    // have a range.
+    if (!isa<CXXDefaultArgExpr>(*I))
+      return SourceRange(Loc, (*I)->getLocEnd());
+  }
+  
+  return SourceRange(Loc);
+}
+
 SourceRange CXXOperatorCallExpr::getSourceRange() const {
   OverloadedOperatorKind Kind = getOperator();
   if (Kind == OO_PlusPlus || Kind == OO_MinusMinus) {

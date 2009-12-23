@@ -561,13 +561,7 @@ public:
     Args[Arg] = ArgExpr;
   }
 
-  virtual SourceRange getSourceRange() const { 
-    // FIXME: Should we know where the parentheses are, if there are any?
-    if (NumArgs == 0)
-      return SourceRange(Loc); 
-    
-    return SourceRange(Loc, Args[NumArgs - 1]->getLocEnd());
-  }
+  virtual SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstructExprClass ||
