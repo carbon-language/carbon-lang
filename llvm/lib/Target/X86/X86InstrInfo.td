@@ -3701,16 +3701,13 @@ def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  "xor{b}\t$dst, $dst",
                  [(set GR8:$dst, 0)]>;
                  
- def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins),
-                  "xor{l}\t$dst, $dst",
-                  [(set GR32:$dst, 0)]>;
+def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins),
+                 "xor{l}\t$dst, $dst",
+                 [(set GR32:$dst, 0)]>;
+}
 
 // Use xorl instead of xorw since we don't care about the high 16 bits,
 // it's smaller, and it avoids a partial-register update.
-//def MOV16r0  : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
-//                 "", [/*(set GR16:$dst, 0)*/]>;
-}
-
 let AddedComplexity = 1 in
 def : Pat<(i16 0),
           (EXTRACT_SUBREG (MOV32r0), x86_subreg_16bit)>;
