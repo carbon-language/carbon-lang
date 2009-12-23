@@ -29,3 +29,14 @@ namespace test1 {
     (void) Outer<int>::Inner();
   }
 }
+
+// PR5476
+namespace test2 {
+  namespace foo {
+    void Func(int x);
+  }
+
+  class Bar {
+    friend void ::test2::foo::Func(int x);
+  };
+}
