@@ -1830,6 +1830,7 @@ def err_bad_dynamic_cast_not_polymorphic : Error<"%0 is not polymorphic">;
 // Other C++ expressions
 def err_need_header_before_typeid : Error<
   "you need to include <typeinfo> before using the 'typeid' operator">;
+def err_incomplete_typeid : Error<"'typeid' of incomplete type %0">;
 def err_static_illegal_in_new : Error<
   "the 'static' modifier for the array size is not legal in new expressions">;
 def err_array_new_needs_size : Error<

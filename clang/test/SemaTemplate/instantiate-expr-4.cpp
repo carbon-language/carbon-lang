@@ -133,7 +133,7 @@ struct Throw1 {
   }
 };
 
-struct Incomplete; // expected-note{{forward}}
+struct Incomplete; // expected-note 2{{forward}}
 
 template struct Throw1<int>;
 template struct Throw1<int*>;
@@ -143,7 +143,6 @@ template struct Throw1<Incomplete*>; // expected-note{{instantiation}}
 // typeid expressions
 // ---------------------------------------------------------------------
 
-// FIXME: This should really include <typeinfo>, but we don't have that yet.
 namespace std {
   class type_info;
 }
@@ -154,7 +153,7 @@ struct TypeId0 {
     if (ptr)
       return typeid(ptr);
     else
-      return typeid(T);
+      return typeid(T); // expected-error{{'typeid' of incomplete type 'struct Incomplete'}}
   }
 };
 
@@ -163,7 +162,7 @@ struct Abstract {
 };
 
 template struct TypeId0<int>;
-template struct TypeId0<Incomplete>;
+template struct TypeId0<Incomplete>; // expected-note{{instantiation of member function}}
 template struct TypeId0<Abstract>;
 
 // ---------------------------------------------------------------------

@@ -37,7 +37,22 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     //   that is the operand of typeid are always ignored.
     // FIXME: Preserve type source info.
     // FIXME: Preserve the type before we stripped the cv-qualifiers?
-    TyOrExpr =GetTypeFromParser(TyOrExpr).getUnqualifiedType().getAsOpaquePtr();
+    QualType T = GetTypeFromParser(TyOrExpr);
+    if (T.isNull())
+      return ExprError();
+    
+    // C++ [expr.typeid]p4:
+    //   If the type of the type-id is a class type or a reference to a class 
+    //   type, the class shall be completely-defined.
+    QualType CheckT = T;
+    if (const ReferenceType *RefType = CheckT->getAs<ReferenceType>())
+      CheckT = RefType->getPointeeType();
+    
+    if (CheckT->getAs<RecordType>() &&
+        RequireCompleteType(OpLoc, CheckT, diag::err_incomplete_typeid))
+      return ExprError();
+    
+    TyOrExpr = T.getUnqualifiedType().getAsOpaquePtr();
   }
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
@@ -66,7 +81,8 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
           // C++ [expr.typeid]p3:
           //   [...] If the type of the expression is a class type, the class
           //   shall be completely-defined.
-          // FIXME: implement this!
+          if (RequireCompleteType(OpLoc, T, diag::err_incomplete_typeid))
+            return ExprError();
         }
       }
 
