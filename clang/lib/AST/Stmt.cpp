@@ -47,17 +47,6 @@ const char *Stmt::getStmtClassName() const {
   return getStmtInfoTableEntry((StmtClass)sClass).Name;
 }
 
-void Stmt::DestroyChildren(ASTContext &C) {
-  for (child_iterator I = child_begin(), E = child_end(); I !=E; )
-    if (Stmt* Child = *I++) Child->Destroy(C);
-}
-
-void Stmt::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  this->~Stmt();
-  C.Deallocate((void *)this);
-}
-
 void Stmt::PrintStats() {
   // Ensure the table is primed.
   getStmtInfoTableEntry(Stmt::NullStmtClass);
@@ -91,26 +80,6 @@ static bool StatSwitch = false;
 bool Stmt::CollectingStats(bool Enable) {
   if (Enable) StatSwitch = true;
   return StatSwitch;
-}
-
-void SwitchStmt::DoDestroy(ASTContext &Ctx) {
-  // Destroy the SwitchCase statements in this switch. In the normal
-  // case, this loop will merely decrement the reference counts from
-  // the Retain() calls in addSwitchCase();
-  SwitchCase *SC = FirstCase;
-  while (SC) {
-    SwitchCase *Next = SC->getNextSwitchCase();
-    SC->Destroy(Ctx);
-    SC = Next;
-  }
-  
-  // We do not use child_iterator here because that will include
-  // the expressions referenced by the condition variable.
-  for (Stmt **I = &SubExprs[0], **E = &SubExprs[END_EXPR]; I != E; ++I)
-    if (Stmt *Child = *I) Child->Destroy(Ctx);
-  
-  this->~Stmt();
-  Ctx.Deallocate((void *)this);
 }
 
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
@@ -418,6 +387,71 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
   RParenLoc = rparenloc;
 }
 
+//===----------------------------------------------------------------------===//
+// AST Destruction.
+//===----------------------------------------------------------------------===//
+
+void Stmt::DestroyChildren(ASTContext &C) {
+  for (child_iterator I = child_begin(), E = child_end(); I !=E; )
+    if (Stmt* Child = *I++) Child->Destroy(C);
+}
+
+static void BranchDestroy(ASTContext &C, Stmt *S, Stmt **SubExprs,
+                          unsigned NumExprs) {
+  // We do not use child_iterator here because that will include
+  // the expressions referenced by the condition variable.
+  for (Stmt **I = SubExprs, **E = SubExprs + NumExprs; I != E; ++I)
+    if (Stmt *Child = *I) Child->Destroy(C);
+  
+  S->~Stmt();
+  C.Deallocate((void *) S);
+}
+
+void Stmt::DoDestroy(ASTContext &C) {
+  DestroyChildren(C);
+  this->~Stmt();
+  C.Deallocate((void *)this);
+}
+
+void CXXCatchStmt::DoDestroy(ASTContext& C) {
+  if (ExceptionDecl)
+    ExceptionDecl->Destroy(C);
+  Stmt::DoDestroy(C);
+}
+
+void DeclStmt::DoDestroy(ASTContext &C) {
+  // Don't use StmtIterator to iterate over the Decls, as that can recurse
+  // into VLA size expressions (which are owned by the VLA).  Further, Decls
+  // are owned by the DeclContext, and will be destroyed with them.
+  if (DG.isDeclGroup())
+    DG.getDeclGroup().Destroy(C);
+}
+
+void IfStmt::DoDestroy(ASTContext &C) {
+  BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+void ForStmt::DoDestroy(ASTContext &C) {
+  BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+void SwitchStmt::DoDestroy(ASTContext &C) {
+  // Destroy the SwitchCase statements in this switch. In the normal
+  // case, this loop will merely decrement the reference counts from
+  // the Retain() calls in addSwitchCase();
+  SwitchCase *SC = FirstCase;
+  while (SC) {
+    SwitchCase *Next = SC->getNextSwitchCase();
+    SC->Destroy(C);
+    SC = Next;
+  }
+  
+  BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+void WhileStmt::DoDestroy(ASTContext &C) {
+  BranchDestroy(C, this, SubExprs, END_EXPR);
+}
 
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
@@ -430,14 +464,6 @@ Stmt::child_iterator DeclStmt::child_begin() {
 
 Stmt::child_iterator DeclStmt::child_end() {
   return StmtIterator(DG.end(), DG.end());
-}
-
-void DeclStmt::DoDestroy(ASTContext &C) {
-  // Don't use StmtIterator to iterate over the Decls, as that can recurse
-  // into VLA size expressions (which are owned by the VLA).  Further, Decls
-  // are owned by the DeclContext, and will be destroyed with them.
-  if (DG.isDeclGroup())
-    DG.getDeclGroup().Destroy(C);
 }
 
 // NullStmt
@@ -467,15 +493,6 @@ Stmt::child_iterator IfStmt::child_begin() {
 Stmt::child_iterator IfStmt::child_end() {
   return child_iterator(0, &SubExprs[0]+END_EXPR);
 }
-void IfStmt::DoDestroy(ASTContext &C) {
-  // We do not use child_iterator here because that will include
-  // the expressions referenced by the condition variable.
-  for (Stmt **I = &SubExprs[0], **E = &SubExprs[END_EXPR]; I != E; ++I)
-    if (Stmt *Child = *I) Child->Destroy(C);
-
-  this->~Stmt();
-  C.Deallocate((void *)this);
-}
 
 // SwitchStmt
 Stmt::child_iterator SwitchStmt::child_begin() {
@@ -492,24 +509,18 @@ Stmt::child_iterator WhileStmt::child_begin() {
 Stmt::child_iterator WhileStmt::child_end() {
   return child_iterator(0, &SubExprs[0]+END_EXPR);
 }
-void WhileStmt::DoDestroy(ASTContext &C) {
-  // We do not use child_iterator here because that will include
-  // the expressions referenced by the condition variable.
-  for (Stmt **I = &SubExprs[0], **E = &SubExprs[END_EXPR]; I != E; ++I)
-    if (Stmt *Child = *I) Child->Destroy(C);
-  
-  this->~Stmt();
-  C.Deallocate((void *)this);
-}
-
 
 // DoStmt
 Stmt::child_iterator DoStmt::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
 // ForStmt
-Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+Stmt::child_iterator ForStmt::child_begin() {
+  return child_iterator(CondVar, &SubExprs[0]);
+}
+Stmt::child_iterator ForStmt::child_end() {
+  return child_iterator(CondVar, &SubExprs[0]+END_EXPR);
+}
 
 // ObjCForCollectionStmt
 Stmt::child_iterator ObjCForCollectionStmt::child_begin() {
@@ -608,12 +619,6 @@ QualType CXXCatchStmt::getCaughtType() const {
   if (ExceptionDecl)
     return ExceptionDecl->getType();
   return QualType();
-}
-
-void CXXCatchStmt::DoDestroy(ASTContext& C) {
-  if (ExceptionDecl)
-    ExceptionDecl->Destroy(C);
-  Stmt::DoDestroy(C);
 }
 
 // CXXTryStmt
