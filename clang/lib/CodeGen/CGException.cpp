@@ -149,7 +149,6 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
       CGF.EmitAggExpr(E, This, false);
     } else if (CXXConstructorDecl *CopyCtor
                = RD->getCopyConstructor(CGF.getContext(), 0)) {
-      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
       llvm::Value *CondPtr = 0;
       if (CGF.Exceptions) {
         CodeGenFunction::EHCleanupBlock Cleanup(CGF);
@@ -177,13 +176,12 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
 
       llvm::Value *Src = CGF.EmitLValue(E).getAddress();
         
-      //CGF.setInvokeDest(PrevLandingPad);
       if (CondPtr)
         CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(CGF.getLLVMContext()),
                                 CondPtr);
 
       llvm::BasicBlock *TerminateHandler = CGF.getTerminateHandler();
-      PrevLandingPad = CGF.getInvokeDest();
+      llvm::BasicBlock *PrevLandingPad = CGF.getInvokeDest();
       CGF.setInvokeDest(TerminateHandler);
 
       // Stolen from EmitClassAggrMemberwiseCopy
