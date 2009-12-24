@@ -17,6 +17,9 @@ using namespace CodeGen;
 
 void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
                                        llvm::Value *Ptr) {
+  assert((LiveTemporaries.empty() ||
+          LiveTemporaries.back().ThisPtr != Ptr) &&
+         "Pushed the same temporary twice; AST is likely wrong");
   llvm::BasicBlock *DtorBlock = createBasicBlock("temp.dtor");
 
   llvm::Value *CondPtr = 0;
