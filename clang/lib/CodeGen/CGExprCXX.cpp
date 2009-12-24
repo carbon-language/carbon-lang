@@ -212,7 +212,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // Emit the call to new.
   RValue RV =
     EmitCall(CGM.getTypes().getFunctionInfo(NewFTy->getResultType(), NewArgs),
-             CGM.GetAddrOfFunction(NewFD), NewArgs, NewFD);
+             CGM.GetAddrOfFunction(NewFD), ReturnValueSlot(), NewArgs, NewFD);
 
   // If an allocation function is declared with an empty exception specification
   // it returns null to indicate failure to allocate storage. [expr.new]p13.
@@ -354,7 +354,7 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   // Emit the call to delete.
   EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
                                           DeleteArgs),
-           CGM.GetAddrOfFunction(DeleteFD),
+           CGM.GetAddrOfFunction(DeleteFD), ReturnValueSlot(), 
            DeleteArgs, DeleteFD);
 }
 

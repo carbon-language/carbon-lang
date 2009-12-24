@@ -197,7 +197,7 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
       QualType ResultType =
         CopyCtor->getType()->getAs<FunctionType>()->getResultType();
       CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-                   Callee, CallArgs, CopyCtor);
+                   Callee, ReturnValueSlot(), CallArgs, CopyCtor);
       CGF.setInvokeDest(PrevLandingPad);
     } else
       llvm_unreachable("uncopyable object");
@@ -239,7 +239,7 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
       QualType ResultType =
         CopyCtor->getType()->getAs<FunctionType>()->getResultType();
       CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-                   Callee, CallArgs, CopyCtor);
+                   Callee, ReturnValueSlot(), CallArgs, CopyCtor);
     } else
       llvm_unreachable("uncopyable object");
   }

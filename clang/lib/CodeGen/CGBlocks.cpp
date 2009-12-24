@@ -509,7 +509,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
 
   // And call the block.
-  return EmitCall(FnInfo, Func, Args);
+  return EmitCall(FnInfo, Func, ReturnValueSlot(), Args);
 }
 
 uint64_t CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {

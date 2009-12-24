@@ -1737,7 +1737,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
     CallingConvention = F->getCallingConv();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
                                                  CallingConvention),
-                  Callee, Args, TargetDecl);
+                  Callee, ReturnValueSlot(), Args, TargetDecl);
 }
 
 LValue CodeGenFunction::

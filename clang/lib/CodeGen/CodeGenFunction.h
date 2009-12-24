@@ -1036,6 +1036,7 @@ public:
   /// used to set attributes on the call (noreturn, etc.).
   RValue EmitCall(const CGFunctionInfo &FnInfo,
                   llvm::Value *Callee,
+                  ReturnValueSlot ReturnValue,
                   const CallArgList &Args,
                   const Decl *TargetDecl = 0);
 

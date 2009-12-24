@@ -1581,7 +1581,7 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   assert(Fn && "EmitLegacyMessageSend - unknown API");
   Fn = llvm::ConstantExpr::getBitCast(Fn,
                                       llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(FnInfo, Fn, ActualArgs);
+  return CGF.EmitCall(FnInfo, Fn, ReturnValueSlot(), ActualArgs);
 }
 
 llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
@@ -5169,7 +5169,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, true);
   Callee = CGF.Builder.CreateBitCast(Callee,
                                      llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(FnInfo1, Callee, ActualArgs);
+  return CGF.EmitCall(FnInfo1, Callee, ReturnValueSlot(), ActualArgs);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.

@@ -46,8 +46,8 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
 
   QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
-                  Callee, Args, MD);
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
+                  ReturnValueSlot(), Args, MD);
 }
 
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
@@ -246,8 +246,8 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
   // And the rest of the call args
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
   QualType ResultType = BO->getType()->getAs<FunctionType>()->getResultType();
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
-                  Callee, Args, 0);
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
+                  ReturnValueSlot(), Args);
 }
 
 RValue
@@ -551,7 +551,8 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   // FIXME: We should try to share this code with EmitCXXMemberCall.
   
   QualType ResultType = DD->getType()->getAs<FunctionType>()->getResultType();
-  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, Args, DD);
+  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
+           ReturnValueSlot(), Args, DD);
 }
 
 void
@@ -801,7 +802,7 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   }
 
   RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-                       Callee, CallArgs, MD);
+                       Callee, ReturnValueSlot(), CallArgs, MD);
   if (ShouldAdjustReturnPointer && !Adjustment.ReturnAdjustment.isEmpty()) {
     bool CanBeZero = !(ResultType->isReferenceType()
     // FIXME: attr nonnull can't be zero either
@@ -1111,7 +1112,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
     QualType ResultType =
       BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-             Callee, CallArgs, BaseCopyCtor);
+             Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
   }
   EmitBlock(ContinueBlock);
 
@@ -1195,7 +1196,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                       MD->getParamDecl(0)->getType()));
     QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-             Callee, CallArgs, MD);
+             Callee, ReturnValueSlot(), CallArgs, MD);
   }
   EmitBlock(ContinueBlock);
 
@@ -1245,7 +1246,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     QualType ResultType =
     BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-             Callee, CallArgs, BaseCopyCtor);
+             Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
   }
 }
 
@@ -1292,7 +1293,7 @@ void CodeGenFunction::EmitClassCopyAssignment(
   QualType ResultType =
     MD->getType()->getAs<FunctionType>()->getResultType();
   EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
-           Callee, CallArgs, MD);
+           Callee, ReturnValueSlot(), CallArgs, MD);
 }
 
 /// SynthesizeDefaultConstructor - synthesize a default constructor

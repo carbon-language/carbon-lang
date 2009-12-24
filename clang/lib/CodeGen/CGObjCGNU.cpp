@@ -450,7 +450,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   llvm::Value *imp = CGF.Builder.CreateCall(lookupFunction, lookupArgs,
       lookupArgs+2);
 
-  return CGF.EmitCall(FnInfo, imp, ActualArgs);
+  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
 }
 
 /// Generate code for a message send expression.
@@ -536,7 +536,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
   }
 
-  return CGF.EmitCall(FnInfo, imp, ActualArgs);
+  return CGF.EmitCall(FnInfo, imp, ReturnValueSlot(), ActualArgs);
 }
 
 /// Generates a MethodList.  Used in construction of a objc_class and

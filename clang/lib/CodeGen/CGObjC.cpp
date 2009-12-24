@@ -190,7 +190,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     // FIXME: We shouldn't need to get the function info here, the
     // runtime already should have computed it to build the function.
     RValue RV = EmitCall(Types.getFunctionInfo(PD->getType(), Args),
-                         GetPropertyFn, Args);
+                         GetPropertyFn, ReturnValueSlot(), Args);
     // We need to fix the type here. Ivars with copy & retain are
     // always objects so we don't need to worry about complex or
     // aggregates.
@@ -277,8 +277,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                   getContext().BoolTy));
     // FIXME: We shouldn't need to get the function info here, the runtime
     // already should have computed it to build the function.
-    EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args),
-             SetPropertyFn, Args);
+    EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args), SetPropertyFn, 
+             ReturnValueSlot(), Args);
   } else {
     // FIXME: Find a clean way to avoid AST node creation.
     SourceLocation Loc = PD->getLocation();
@@ -553,7 +553,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // FIXME: We shouldn't need to get the function info here, the runtime already
   // should have computed it to build the function.
   EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args2),
-           EnumerationMutationFn, Args2);
+           EnumerationMutationFn, ReturnValueSlot(), Args2);
 
   EmitBlock(WasNotMutated);
 

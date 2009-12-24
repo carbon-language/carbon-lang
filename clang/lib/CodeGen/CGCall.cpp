@@ -809,6 +809,7 @@ RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
 
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee,
+                                 ReturnValueSlot ReturnValue,
                                  const CallArgList &CallArgs,
                                  const Decl *TargetDecl) {
   // FIXME: We no longer need the types from CallArgs; lift up and simplify.

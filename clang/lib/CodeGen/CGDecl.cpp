@@ -643,7 +643,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
                                                            ConvertType(ArgTy))),
                                     getContext().getPointerType(D.getType())));
-      EmitCall(Info, F, Args);
+      EmitCall(Info, F, ReturnValueSlot(), Args);
     }
     if (Exceptions) {
       EHCleanupBlock Cleanup(*this);
@@ -652,7 +652,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Args.push_back(std::make_pair(RValue::get(Builder.CreateBitCast(DeclPtr,
                                                            ConvertType(ArgTy))),
                                     getContext().getPointerType(D.getType())));
-      EmitCall(Info, F, Args);
+      EmitCall(Info, F, ReturnValueSlot(), Args);
     }
   }
 
