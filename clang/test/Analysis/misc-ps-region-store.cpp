@@ -75,3 +75,17 @@ int test_init_in_condition_while() {
   return 0;
 }
 
+
+int test_init_in_condition_for() {
+  int z = 0;
+  for (int x = 0; int y = ++z; ++x) {
+    if (x == y) // no-warning
+      break;
+  }
+  if (z == 1)
+    return 0;
+    
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+  return 0;
+}
