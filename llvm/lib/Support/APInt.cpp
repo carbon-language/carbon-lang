@@ -2012,8 +2012,8 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   }
 
   if (lhsWords < rhsWords || LHS.ult(RHS)) {
-    Quotient = 0;               // X / Y ===> 0, iff X < Y
     Remainder = LHS;            // X % Y ===> X, iff X < Y
+    Quotient = 0;               // X / Y ===> 0, iff X < Y
     return;
   }
 
