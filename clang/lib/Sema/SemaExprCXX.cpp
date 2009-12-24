@@ -2096,6 +2096,8 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!Context.getLangOptions().CPlusPlus)
     return Owned(E);
 
+  assert(!isa<CXXBindTemporaryExpr>(E) && "Double-bound temporary?");
+
   const RecordType *RT = E->getType()->getAs<RecordType>();
   if (!RT)
     return Owned(E);

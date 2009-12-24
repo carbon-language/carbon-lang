@@ -234,4 +234,18 @@ namespace PR5867 {
     // CHECK-NEXT: ret void
     (f)(S(), 0);
   }
+
+  // CHECK: define linkonce_odr void @_ZN6PR58672g2IiEEvT_
+  template<typename T>
+  void g2(T) {
+    // CHECK: call void @_ZN6PR58671SC1Ev
+    // CHECK-NEXT: call void @_ZN6PR58671fENS_1SEi
+    // CHECK-NEXT: call void @_ZN6PR58671SD1Ev
+    // CHECK-NEXT: ret void
+    (f)(S(), 0);
+  }
+
+  void h() {
+    g2(17);
+  }
 }

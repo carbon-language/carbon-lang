@@ -554,7 +554,6 @@ namespace {
 
     Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
-
     Sema::OwningExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
 
     /// \brief Transforms a template type parameter type by performing

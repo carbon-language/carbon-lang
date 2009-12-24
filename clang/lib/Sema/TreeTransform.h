@@ -4757,37 +4757,24 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
 
 /// \brief Transform a C++ temporary-binding expression.
 ///
-/// The transformation of a temporary-binding expression always attempts to
-/// bind a new temporary variable to its subexpression, even if the
-/// subexpression itself did not change, because the temporary variable itself
-/// must be unique.
+/// Since CXXBindTemporaryExpr nodes are implicitly generated, we just
+/// transform the subexpression and return that.
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
-  if (SubExpr.isInvalid())
-    return SemaRef.ExprError();
-
-  return SemaRef.MaybeBindToTemporary(SubExpr.takeAs<Expr>());
+  return getDerived().TransformExpr(E->getSubExpr());
 }
 
 /// \brief Transform a C++ expression that contains temporaries that should
 /// be destroyed after the expression is evaluated.
 ///
-/// The transformation of a full expression always attempts to build a new
-/// CXXExprWithTemporaries expression, even if the
-/// subexpression itself did not change, because it will need to capture the
-/// the new temporary variables introduced in the subexpression.
+/// Since CXXExprWithTemporaries nodes are implicitly generated, we
+/// just transform the subexpression and return that.
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXExprWithTemporaries(
-                                                      CXXExprWithTemporaries *E) {
-  OwningExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
-  if (SubExpr.isInvalid())
-    return SemaRef.ExprError();
-
-  return SemaRef.Owned(
-           SemaRef.MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>()));
+                                                    CXXExprWithTemporaries *E) {
+  return getDerived().TransformExpr(E->getSubExpr());
 }
 
 template<typename Derived>
