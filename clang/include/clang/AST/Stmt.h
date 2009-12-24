@@ -813,6 +813,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+protected:
+  virtual void DoDestroy(ASTContext &Ctx);
 };
 
 /// DoStmt - This represents a 'do/while' stmt.

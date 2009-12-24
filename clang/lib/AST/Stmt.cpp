@@ -486,8 +486,22 @@ Stmt::child_iterator SwitchStmt::child_end() {
 }
 
 // WhileStmt
-Stmt::child_iterator WhileStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator WhileStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+Stmt::child_iterator WhileStmt::child_begin() {
+  return child_iterator(Var, &SubExprs[0]);
+}
+Stmt::child_iterator WhileStmt::child_end() {
+  return child_iterator(0, &SubExprs[0]+END_EXPR);
+}
+void WhileStmt::DoDestroy(ASTContext &C) {
+  // We do not use child_iterator here because that will include
+  // the expressions referenced by the condition variable.
+  for (Stmt **I = &SubExprs[0], **E = &SubExprs[END_EXPR]; I != E; ++I)
+    if (Stmt *Child = *I) Child->Destroy(C);
+  
+  this->~Stmt();
+  C.Deallocate((void *)this);
+}
+
 
 // DoStmt
 Stmt::child_iterator DoStmt::child_begin() { return &SubExprs[0]; }
