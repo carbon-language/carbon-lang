@@ -83,7 +83,7 @@ SerializedPtrID Serializer::getPtrId(const void* ptr) {
   if (I == PtrMap.end()) {
     unsigned id = PtrMap.size()+1;
 #ifdef DEBUG_BACKPATCH
-    errs() << "Registered PTR: " << ptr << " => " << id << "\n";
+    dbgs() << "Registered PTR: " << ptr << " => " << id << "\n";
 #endif
     PtrMap[ptr] = id;
     return id;
