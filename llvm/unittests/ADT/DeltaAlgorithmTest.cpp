@@ -13,6 +13,8 @@
 #include <cstdarg>
 using namespace llvm;
 
+namespace std {
+
 std::ostream &operator<<(std::ostream &OS,
                          const std::set<unsigned> &S) {
   OS << "{";
@@ -24,6 +26,8 @@ std::ostream &operator<<(std::ostream &OS,
   }
   OS << "}";
   return OS;
+}
+
 }
 
 namespace {
