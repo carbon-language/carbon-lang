@@ -262,6 +262,7 @@ public:
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), n);
   }
 
+  // FIXME: unify with getTypeInfoLinkage
   bool DecideExtern(QualType Ty) {
     // For this type, see if all components are never in an anonymous namespace.
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
@@ -269,12 +270,26 @@ public:
               && DecideExtern(QualType(MPT->getClass(), 0)));
     if (const PointerType *PT = Ty->getAs<PointerType>())
       return DecideExtern(PT->getPointeeType());
+    if (const FunctionType *FT = Ty->getAs<FunctionType>()) {
+      if (DecideExtern(FT->getResultType()) == false)
+        return false;
+      if (const FunctionProtoType *FPT = Ty->getAs<FunctionProtoType>()) {
+        for (unsigned i = 0; i <FPT->getNumArgs(); ++i)
+          if (DecideExtern(FPT->getArgType(i)) == false)
+            return false;
+        for (unsigned i = 0; i <FPT->getNumExceptions(); ++i)
+          if (DecideExtern(FPT->getExceptionType(i)) == false)
+            return false;
+        return true;
+      }
+    }
     if (const RecordType *RT = Ty->getAs<RecordType>())
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
         return !RD->isInAnonymousNamespace() && RD->hasLinkage();
     return true;
   }
 
+  // FIXME: unify with DecideExtern
   bool DecideHidden(QualType Ty) {
     // For this type, see if all components are never hidden.
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
@@ -282,6 +297,19 @@ public:
               && DecideHidden(QualType(MPT->getClass(), 0)));
     if (const PointerType *PT = Ty->getAs<PointerType>())
       return DecideHidden(PT->getPointeeType());
+    if (const FunctionType *FT = Ty->getAs<FunctionType>()) {
+      if (DecideHidden(FT->getResultType()) == false)
+        return false;
+      if (const FunctionProtoType *FPT = Ty->getAs<FunctionProtoType>()) {
+        for (unsigned i = 0; i <FPT->getNumArgs(); ++i)
+          if (DecideHidden(FPT->getArgType(i)) == false)
+            return false;
+        for (unsigned i = 0; i <FPT->getNumExceptions(); ++i)
+          if (DecideHidden(FPT->getExceptionType(i)) == false)
+            return false;
+        return true;
+      }
+    }
     if (const RecordType *RT = Ty->getAs<RecordType>())
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
         return CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
@@ -305,7 +333,7 @@ public:
     Info.push_back(BuildName(Ty, Hidden, Extern));
     
     // We always generate these as hidden, only the name isn't hidden.
-    return finish(GV, Name, /*Hidden=*/true, 
+    return finish(GV, Name, /*Hidden=*/Extern ? true : false, 
                   GetLinkageFromExternFlag(Extern));
   }
 
