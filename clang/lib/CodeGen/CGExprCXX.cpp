@@ -406,7 +406,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
                                            /*isVariadic=*/false);
           
           llvm::Value *Callee = BuildVirtualCall(Dtor, Dtor_Deleting, Ptr, Ty);
-          EmitCXXMemberCall(Dtor, Callee, Ptr, 0, 0);
+          EmitCXXMemberCall(Dtor, Callee, ReturnValueSlot(), Ptr, 0, 0);
 
           // The dtor took care of deleting the object.
           ShouldCallDelete = false;

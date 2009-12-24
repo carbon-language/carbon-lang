@@ -460,7 +460,8 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   return GenericExtendedBlockLiteralType;
 }
 
-RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
+RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E, 
+                                          ReturnValueSlot ReturnValue) {
   const BlockPointerType *BPT =
     E->getCallee()->getType()->getAs<BlockPointerType>();
 
@@ -509,7 +510,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
 
   // And call the block.
-  return EmitCall(FnInfo, Func, ReturnValueSlot(), Args);
+  return EmitCall(FnInfo, Func, ReturnValue, Args);
 }
 
 uint64_t CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {

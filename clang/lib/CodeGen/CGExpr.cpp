@@ -1522,10 +1522,10 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
                                      ReturnValueSlot ReturnValue) {
   // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())
-    return EmitBlockCallExpr(E);
+    return EmitBlockCallExpr(E, ReturnValue);
 
   if (const CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(E))
-    return EmitCXXMemberCallExpr(CE);
+    return EmitCXXMemberCallExpr(CE, ReturnValue);
 
   const Decl *TargetDecl = 0;
   if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E->getCallee())) {
@@ -1539,7 +1539,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
 
   if (const CXXOperatorCallExpr *CE = dyn_cast<CXXOperatorCallExpr>(E))
     if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(TargetDecl))
-      return EmitCXXOperatorMemberCallExpr(CE, MD);
+      return EmitCXXOperatorMemberCallExpr(CE, MD, ReturnValue);
 
   if (isa<CXXPseudoDestructorExpr>(E->getCallee()->IgnoreParens())) {
     // C++ [expr.pseudo]p1:

@@ -28,6 +28,7 @@ using namespace CodeGen;
 
 RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                                           llvm::Value *Callee,
+                                          ReturnValueSlot ReturnValue,
                                           llvm::Value *This,
                                           CallExpr::const_arg_iterator ArgBeg,
                                           CallExpr::const_arg_iterator ArgEnd) {
@@ -47,7 +48,7 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
 
   QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
-                  ReturnValueSlot(), Args, MD);
+                  ReturnValue, Args, MD);
 }
 
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
@@ -78,9 +79,10 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
   return false;
 }
 
-RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
+RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
+                                              ReturnValueSlot ReturnValue) {
   if (isa<BinaryOperator>(CE->getCallee()->IgnoreParens())) 
-    return EmitCXXMemberPointerCallExpr(CE);
+    return EmitCXXMemberPointerCallExpr(CE, ReturnValue);
       
   const MemberExpr *ME = cast<MemberExpr>(CE->getCallee()->IgnoreParens());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
@@ -89,7 +91,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
     // The method is static, emit it as we would a regular call.
     llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
     return EmitCall(getContext().getPointerType(MD->getType()), Callee,
-                    ReturnValueSlot(), CE->arg_begin(), CE->arg_end());
+                    ReturnValue, CE->arg_begin(), CE->arg_end());
   }
   
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
@@ -138,12 +140,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
     Callee = CGM.GetAddrOfFunction(MD, Ty);
   }
 
-  return EmitCXXMemberCall(MD, Callee, This,
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This,
                            CE->arg_begin(), CE->arg_end());
 }
 
 RValue
-CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
+CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
+                                              ReturnValueSlot ReturnValue) {
   const BinaryOperator *BO =
       cast<BinaryOperator>(E->getCallee()->IgnoreParens());
   const Expr *BaseExpr = BO->getLHS();
@@ -247,12 +250,13 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
   QualType ResultType = BO->getType()->getAs<FunctionType>()->getResultType();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
-                  ReturnValueSlot(), Args);
+                  ReturnValue, Args);
 }
 
 RValue
 CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
-                                               const CXXMethodDecl *MD) {
+                                               const CXXMethodDecl *MD,
+                                               ReturnValueSlot ReturnValue) {
   assert(MD->isInstance() &&
          "Trying to emit a member call expr on a static method!");
 
@@ -282,7 +286,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   else
     Callee = CGM.GetAddrOfFunction(MD, Ty);
 
-  return EmitCXXMemberCall(MD, Callee, This,
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This, 
                            E->arg_begin() + 1, E->arg_end());
 }
 
@@ -526,7 +530,7 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
-  EmitCXXMemberCall(D, Callee, This, ArgBeg, ArgEnd);
+  EmitCXXMemberCall(D, Callee, ReturnValueSlot(), This, ArgBeg, ArgEnd);
 }
 
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
