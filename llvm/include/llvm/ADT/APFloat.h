@@ -191,6 +191,7 @@ namespace llvm {
     static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
       return APFloat(Sem, fcInfinity, Negative);
     }
+
     /// getNaN - Factory for QNaN values.
     ///
     /// \param Negative - True iff the NaN generated should be negative.
@@ -200,6 +201,26 @@ namespace llvm {
                           unsigned type = 0) {
       return APFloat(Sem, fcNaN, Negative, type);
     }
+
+    /// getLargest - Returns the largest finite number in the given
+    /// semantics.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getLargest(const fltSemantics &Sem, bool Negative = false);
+
+    /// getSmallest - Returns the smallest (by magnitude) finite number
+    /// in the given semantics.  Might be denormalized, which implies a
+    /// relative loss of precision.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getSmallest(const fltSemantics &Sem, bool Negative = false);
+
+    /// getSmallestNormalized - Returns the smallest (by magnitude)
+    /// normalized finite number in the given semantics.
+    ///
+    /// \param Negative - True iff the number should be negative
+    static APFloat getSmallestNormalized(const fltSemantics &Sem,
+                                         bool Negative = false);
 
     /// Profile - Used to insert APFloat objects, or objects that contain
     ///  APFloat objects, into FoldingSets.
@@ -276,6 +297,29 @@ namespace llvm {
 
     /* Return an arbitrary integer value usable for hashing. */
     uint32_t getHashValue() const;
+
+    /// Converts this value into a decimal string.
+    ///
+    /// \param FormatPrecision The maximum number of digits of
+    ///   precision to output.  If there are fewer digits available,
+    ///   zero padding will not be used unless the value is
+    ///   integral and small enough to be expressed in
+    ///   FormatPrecision digits.
+    /// \param FormatMaxPadding The maximum number of zeros to
+    ///   consider inserting before falling back to scientific
+    ///   notation.  0 means to always use scientific notation.
+    ///
+    /// Number       Precision    MaxPadding      Result
+    /// ------       ---------    ----------      ------
+    /// 1.01E+4              5             2       10100
+    /// 1.01E+4              4             2       1.01E+4
+    /// 1.01E+4              5             1       1.01E+4
+    /// 1.01E-2              5             2       0.0101
+    /// 1.01E-2              4             2       1.01E-2
+    /// 1.01E-2              4             1       1.01E-2
+    void toString(SmallVectorImpl<char> &Str,
+                  unsigned FormatPrecision = 8,
+                  unsigned FormatMaxPadding = 3);
 
   private:
 

@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <ostream>
+#include <string>
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
 
@@ -19,6 +21,13 @@ static double convertToDoubleFromString(const char *Str) {
   llvm::APFloat F(0.0);
   F.convertFromString(Str, llvm::APFloat::rmNearestTiesToEven);
   return F.convertToDouble();
+}
+
+static std::string convertToString(double d, unsigned Prec, unsigned Pad) {
+  llvm::SmallVector<char, 100> Buffer;
+  llvm::APFloat F(d);
+  F.toString(Buffer, Prec, Pad);
+  return std::string(Buffer.data(), Buffer.size());
 }
 
 namespace {
@@ -311,6 +320,17 @@ TEST(APFloatTest, fromHexadecimalString) {
   EXPECT_EQ(1.0, APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
 
   EXPECT_EQ(2.71828, convertToDoubleFromString("2.71828"));
+}
+
+TEST(APFloatTest, toString) {
+  ASSERT_EQ("10", convertToString(10.0, 6, 3));
+  ASSERT_EQ("1.0E+1", convertToString(10.0, 6, 0));
+  ASSERT_EQ("10100", convertToString(1.01E+4, 5, 2));
+  ASSERT_EQ("1.01E+4", convertToString(1.01E+4, 4, 2));
+  ASSERT_EQ("1.01E+4", convertToString(1.01E+4, 5, 1));
+  ASSERT_EQ("0.0101", convertToString(1.01E-2, 5, 2));
+  ASSERT_EQ("1.01E-2", convertToString(1.01E-2, 4, 2));
+  ASSERT_EQ("1.01E-2", convertToString(1.01E-2, 5, 1));
 }
 
 #ifdef GTEST_HAS_DEATH_TEST

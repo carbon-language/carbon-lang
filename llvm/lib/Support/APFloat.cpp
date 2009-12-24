@@ -3139,6 +3139,60 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
     llvm_unreachable(0);
 }
 
+APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 1..10
+  //   significand = 1..1
+
+  Val.exponent = Sem.maxExponent; // unbiased
+
+  // 1-initialize all bits....
+  Val.zeroSignificand();
+  integerPart *significand = Val.significandParts();
+  unsigned N = partCountForBits(Sem.precision);
+  for (unsigned i = 0; i != N; ++i)
+    significand[i] = ~((integerPart) 0);
+
+  // ...and then clear the top bits for internal consistency.
+  significand[N-1]
+    &= (((integerPart) 1) << ((Sem.precision % integerPartWidth) - 1)) - 1;
+
+  return Val;
+}
+
+APFloat APFloat::getSmallest(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 0..0
+  //   significand = 0..01
+
+  Val.exponent = Sem.minExponent; // unbiased
+  Val.zeroSignificand();
+  Val.significandParts()[0] = 1;
+  return Val;
+}
+
+APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
+  APFloat Val(Sem, fcNormal, Negative);
+
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 0..0
+  //   significand = 10..0
+
+  Val.exponent = Sem.minExponent;
+  Val.zeroSignificand();
+  Val.significandParts()[partCountForBits(Sem.precision)-1]
+    |= (((integerPart) 1) << ((Sem.precision % integerPartWidth) - 1));
+
+  return Val;
+}
+
 APFloat::APFloat(const APInt& api, bool isIEEE)
 {
   initFromAPInt(api, isIEEE);
@@ -3154,4 +3208,251 @@ APFloat::APFloat(double d)
 {
   APInt api = APInt(64, 0);
   initFromAPInt(api.doubleToBits(d));
+}
+
+namespace {
+  static void append(SmallVectorImpl<char> &Buffer,
+                     unsigned N, const char *Str) {
+    unsigned Start = Buffer.size();
+    Buffer.set_size(Start + N);
+    memcpy(&Buffer[Start], Str, N);
+  }
+
+  template <unsigned N>
+  void append(SmallVectorImpl<char> &Buffer, const char (&Str)[N]) {
+    append(Buffer, N, Str);
+  }
+
+  void AdjustToPrecision(SmallVectorImpl<char> &buffer,
+                         int &exp, unsigned FormatPrecision) {
+    unsigned N = buffer.size();
+    if (N <= FormatPrecision) return;
+
+    // The most significant figures are the last ones in the buffer.
+    unsigned FirstSignificant = N - FormatPrecision;
+
+    // Round.
+    // FIXME: this probably shouldn't use 'round half up'.
+
+    // Rounding down is just a truncation, except we also want to drop
+    // trailing zeros from the new result.
+    if (buffer[FirstSignificant - 1] < '5') {
+      while (buffer[FirstSignificant] == '0')
+        FirstSignificant++;
+
+      exp += FirstSignificant;
+      buffer.erase(&buffer[0], &buffer[FirstSignificant]);
+      return;
+    }
+
+    // Rounding up requires a decimal add-with-carry.  If we continue
+    // the carry, the newly-introduced zeros will just be truncated.
+    for (unsigned I = FirstSignificant; I != N; ++I) {
+      if (buffer[I] == '9') {
+        FirstSignificant++;
+      } else {
+        buffer[I]++;
+        break;
+      }
+    }
+
+    // If we carried through, we have exactly one digit of precision.
+    if (FirstSignificant == N) {
+      exp += FirstSignificant;
+      buffer.clear();
+      buffer.push_back('1');
+      return;
+    }
+
+    exp += FirstSignificant;
+    buffer.erase(&buffer[0], &buffer[FirstSignificant]);
+  }
+}
+
+void APFloat::toString(SmallVectorImpl<char> &Str,
+                       unsigned FormatPrecision,
+                       unsigned FormatMaxPadding) {
+  switch (category) {
+  case fcInfinity:
+    if (isNegative())
+      return append(Str, "-Inf");
+    else
+      return append(Str, "+Inf");
+
+  case fcNaN: return append(Str, "NaN");
+
+  case fcZero:
+    if (isNegative())
+      Str.push_back('-');
+
+    if (!FormatMaxPadding)
+      append(Str, "0.0E+0");
+    else
+      Str.push_back('0');
+    return;
+
+  case fcNormal:
+    break;
+  }
+
+  if (isNegative())
+    Str.push_back('-');
+
+  // Decompose the number into an APInt and an exponent.
+  int exp = exponent - ((int) semantics->precision - 1);
+  APInt significand(semantics->precision,
+                    partCountForBits(semantics->precision),
+                    significandParts());
+
+  // Ignore trailing binary zeros.
+  int trailingZeros = significand.countTrailingZeros();
+  exp += trailingZeros;
+  significand = significand.lshr(trailingZeros);
+
+  // Change the exponent from 2^e to 10^e.
+  if (exp == 0) {
+    // Nothing to do.
+  } else if (exp > 0) {
+    // Just shift left.
+    significand.zext(semantics->precision + exp);
+    significand <<= exp;
+    exp = 0;
+  } else { /* exp < 0 */
+    int texp = -exp;
+
+    // We transform this using the identity:
+    //   (N)(2^-e) == (N)(5^e)(10^-e)
+    // This means we have to multiply N (the significand) by 5^e.
+    // To avoid overflow, we have to operate on numbers large
+    // enough to store N * 5^e:
+    //   log2(N * 5^e) == log2(N) + e * log2(5)
+    //                 <= semantics->precision + e * 2.5
+    //   (log_2(5) ~ 2.321928)
+    unsigned precision = semantics->precision + 5 * texp / 2;
+
+    // Multiply significand by 5^e.
+    //   N * 5^0101 == N * 5^(1*1) * 5^(0*2) * 5^(1*4) * 5^(0*8)
+    significand.zext(precision);
+    APInt five_to_the_i(precision, 5);
+    while (true) {
+      if (texp & 1) significand *= five_to_the_i;
+      
+      texp >>= 1;
+      if (!texp) break;
+      five_to_the_i *= five_to_the_i;
+    }
+  }
+
+  llvm::SmallVector<char, 256> buffer;
+
+  // Fill the buffer.
+  unsigned precision = significand.getBitWidth();
+  APInt ten(precision, 10);
+  APInt digit(precision, 0);
+
+  bool inTrail = true;
+  while (significand != 0) {
+    // digit <- significand % 10
+    // significand <- significand / 10
+    APInt::udivrem(significand, ten, significand, digit);
+
+    unsigned d = digit.getZExtValue();
+
+    // Drop trailing zeros.
+    if (inTrail && !d) exp++;
+    else {
+      buffer.push_back((char) ('0' + d));
+      inTrail = false;
+    }
+  }
+
+  assert(!buffer.empty() && "no characters in buffer!");
+
+  // Drop down to FormatPrecision.
+  // TODO: don't do more precise calculations above than are required.
+  AdjustToPrecision(buffer, exp, FormatPrecision);
+
+  unsigned NDigits = buffer.size();
+
+  // Check whether we should a non-scientific format.
+  bool FormatScientific;
+  if (!FormatMaxPadding)
+    FormatScientific = true;
+  else {
+    unsigned Padding;
+    if (exp >= 0) {
+      // 765e3 == 765000
+      //             ^^^
+      Padding = (unsigned) exp;
+    } else {
+      unsigned Margin = (unsigned) -exp;
+      if (Margin < NDigits) {
+        // 765e-2 == 7.65
+        Padding = 0;
+      } else {
+        // 765e-5 == 0.00765
+        //           ^ ^^
+        Padding = Margin + 1 - NDigits;
+      }
+    }
+
+    FormatScientific = (Padding > FormatMaxPadding ||
+                        Padding + NDigits > FormatPrecision);
+  }
+
+  // Scientific formatting is pretty straightforward.
+  if (FormatScientific) {
+    exp += (NDigits - 1);
+
+    Str.push_back(buffer[NDigits-1]);
+    Str.push_back('.');
+    if (NDigits == 1)
+      Str.push_back('0');
+    else
+      for (unsigned I = 1; I != NDigits; ++I)
+        Str.push_back(buffer[NDigits-1-I]);
+    Str.push_back('E');
+
+    Str.push_back(exp >= 0 ? '+' : '-');
+    if (exp < 0) exp = -exp;
+    SmallVector<char, 6> expbuf;
+    do {
+      expbuf.push_back((char) ('0' + (exp % 10)));
+      exp /= 10;
+    } while (exp);
+    for (unsigned I = 0, E = expbuf.size(); I != E; ++I)
+      Str.push_back(expbuf[E-1-I]);
+    return;
+  }
+
+  // Non-scientific, positive exponents.
+  if (exp >= 0) {
+    for (unsigned I = 0; I != NDigits; ++I)
+      Str.push_back(buffer[NDigits-1-I]);
+    for (unsigned I = 0; I != (unsigned) exp; ++I)
+      Str.push_back('0');
+    return;
+  }
+
+  // Non-scientific, negative exponents.
+
+  // The number of digits to the left of the decimal point.
+  int NWholeDigits = exp + (int) NDigits;
+
+  unsigned I = 0;
+  if (NWholeDigits > 0) {
+    for (; I != (unsigned) NWholeDigits; ++I)
+      Str.push_back(buffer[NDigits-I-1]);
+    Str.push_back('.');
+  } else {
+    unsigned NZeros = 1 + (unsigned) -NWholeDigits;
+
+    Str.push_back('0');
+    Str.push_back('.');
+    for (unsigned Z = 1; Z != NZeros; ++Z)
+      Str.push_back('0');
+  }
+
+  for (; I != NDigits; ++I)
+    Str.push_back(buffer[NDigits-I-1]);
 }
