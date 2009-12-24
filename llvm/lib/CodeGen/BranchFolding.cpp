@@ -98,7 +98,7 @@ BranchFolder::BranchFolder(bool defaultEnableTailMerge) {
 /// function, updating the CFG.
 void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   assert(MBB->pred_empty() && "MBB must be dead!");
-  DEBUG(errs() << "\nRemoving MBB: " << *MBB);
+  DEBUG(dbgs() << "\nRemoving MBB: " << *MBB);
 
   MachineFunction *MF = MBB->getParent();
   // drop all successors.
@@ -636,7 +636,7 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
     SameTails[commonTailIndex].getTailStartPos();
   MachineBasicBlock *MBB = SameTails[commonTailIndex].getBlock();
 
-  DEBUG(errs() << "\nSplitting BB#" << MBB->getNumber() << ", size "
+  DEBUG(dbgs() << "\nSplitting BB#" << MBB->getNumber() << ", size "
                << maxCommonTailLength);
 
   MachineBasicBlock *newMBB = SplitMBBAt(*MBB, BBI);
@@ -666,18 +666,18 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
   // this many instructions in common.
   unsigned minCommonTailLength = TailMergeSize;
 
-  DEBUG(errs() << "\nTryTailMergeBlocks: ";
+  DEBUG(dbgs() << "\nTryTailMergeBlocks: ";
         for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
-          errs() << "BB#" << MergePotentials[i].getBlock()->getNumber()
+          dbgs() << "BB#" << MergePotentials[i].getBlock()->getNumber()
                  << (i == e-1 ? "" : ", ");
-        errs() << "\n";
+        dbgs() << "\n";
         if (SuccBB) {
-          errs() << "  with successor BB#" << SuccBB->getNumber() << '\n';
+          dbgs() << "  with successor BB#" << SuccBB->getNumber() << '\n';
           if (PredBB)
-            errs() << "  which has fall-through from BB#"
+            dbgs() << "  which has fall-through from BB#"
                    << PredBB->getNumber() << "\n";
         }
-        errs() << "Looking for common tails of at least "
+        dbgs() << "Looking for common tails of at least "
                << minCommonTailLength << " instruction"
                << (minCommonTailLength == 1 ? "" : "s") << '\n';
        );
@@ -748,19 +748,19 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
     MachineBasicBlock *MBB = SameTails[commonTailIndex].getBlock();
     // MBB is common tail.  Adjust all other BB's to jump to this one.
     // Traversal must be forwards so erases work.
-    DEBUG(errs() << "\nUsing common tail in BB#" << MBB->getNumber()
+    DEBUG(dbgs() << "\nUsing common tail in BB#" << MBB->getNumber()
                  << " for ");
     for (unsigned int i=0, e = SameTails.size(); i != e; ++i) {
       if (commonTailIndex == i)
         continue;
-      DEBUG(errs() << "BB#" << SameTails[i].getBlock()->getNumber()
+      DEBUG(dbgs() << "BB#" << SameTails[i].getBlock()->getNumber()
                    << (i == e-1 ? "" : ", "));
       // Hack the end off BB i, making it jump to BB commonTailIndex instead.
       ReplaceTailWithBranchTo(SameTails[i].getTailStartPos(), MBB);
       // BB i is no longer a predecessor of SuccBB; remove it from the worklist.
       MergePotentials.erase(SameTails[i].getMPIter());
     }
-    DEBUG(errs() << "\n");
+    DEBUG(dbgs() << "\n");
     // We leave commonTailIndex in the worklist in case there are other blocks
     // that match it with a smaller number of instructions.
     MadeChange = true;
@@ -999,7 +999,7 @@ ReoptimizeBlock:
     if (PriorCond.empty() && !PriorTBB && MBB->pred_size() == 1 &&
         PrevBB.succ_size() == 1 &&
         !MBB->hasAddressTaken()) {
-      DEBUG(errs() << "\nMerging into block: " << PrevBB
+      DEBUG(dbgs() << "\nMerging into block: " << PrevBB
                    << "From MBB: " << *MBB);
       PrevBB.splice(PrevBB.end(), MBB, MBB->begin(), MBB->end());
       PrevBB.removeSuccessor(PrevBB.succ_begin());;
@@ -1084,7 +1084,7 @@ ReoptimizeBlock:
         // Reverse the branch so we will fall through on the previous true cond.
         SmallVector<MachineOperand, 4> NewPriorCond(PriorCond);
         if (!TII->ReverseBranchCondition(NewPriorCond)) {
-          DEBUG(errs() << "\nMoving MBB: " << *MBB
+          DEBUG(dbgs() << "\nMoving MBB: " << *MBB
                        << "To make fallthrough to: " << *PriorTBB << "\n");
 
           TII->RemoveBranch(PrevBB);
