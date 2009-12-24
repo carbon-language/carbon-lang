@@ -211,6 +211,8 @@ public:
   ///  of this builder.
   CFGBlock* getBlock() const { return &B; }
 
+  unsigned getIndex() const { return Idx; }
+
   void setAuditor(GRAuditor* A) { Auditor = A; }
 
   const GRState* GetState(ExplodedNode* Pred) const {
@@ -401,7 +403,7 @@ public:
 };
 
 class GREndPathNodeBuilder {
-  GRCoreEngine& Eng;
+  GRCoreEngine &Eng;
   CFGBlock& B;
   ExplodedNode* Pred;
 
@@ -413,6 +415,8 @@ public:
     : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}
 
   ~GREndPathNodeBuilder();
+
+  GRWorkList &getWorkList() { return *Eng.WList; }
 
   ExplodedNode* getPredecessor() const { return Pred; }
 

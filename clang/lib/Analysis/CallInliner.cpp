@@ -19,6 +19,11 @@ using namespace clang;
 
 namespace {
 class CallInliner : public Checker {
+
+  /// CallSitePosition - Map the call site to its CFG block and stmt index. This
+  /// is used when exiting from a callee.
+  llvm::DenseMap<const Stmt *, std::pair<CFGBlock*,unsigned> > CallSitePosition;
+
 public:
   static void *getTag() {
     static int x;
@@ -26,6 +31,7 @@ public:
   }
 
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  virtual void EvalEndPath(GREndPathNodeBuilder &B,void *tag,GRExprEngine &Eng);
 };
 }
 
@@ -77,6 +83,37 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 
   Builder.HasGeneratedNode = true;
 
+  // Record the call site position.
+  CallSitePosition[CE] = std::make_pair(Builder.getBlock(), Builder.getIndex());
   return true;
 }
 
+void CallInliner::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+                              GRExprEngine &Eng) {
+  const GRState *state = B.getState();
+  ExplodedNode *Pred = B.getPredecessor();
+  const StackFrameContext *LocCtx = 
+                         cast<StackFrameContext>(Pred->getLocationContext());
+
+  const Stmt *CE = LocCtx->getCallSite();
+
+  // Check if this is the top level stack frame.
+  if (!LocCtx->getParent())
+    return;
+
+  PostStmt NodeLoc(CE, LocCtx->getParent());
+
+  bool isNew;
+  ExplodedNode *Succ = Eng.getGraph().getNode(NodeLoc, state, &isNew);
+  Succ->addPredecessor(Pred, Eng.getGraph());
+
+  assert(CallSitePosition.find(CE) != CallSitePosition.end());
+
+  // When creating the new work list unit, increment the statement index to
+  // point to the statement after the CallExpr.
+  if (isNew)
+    B.getWorkList().Enqueue(Succ, *CallSitePosition[CE].first,
+                            CallSitePosition[CE].second + 1);
+
+  B.HasGeneratedNode = true;
+}
