@@ -32,3 +32,14 @@ namespace PR5531 {
     C();
   }
 }
+
+
+struct X {
+ int foo() __attribute__((warn_unused_result));
+};
+
+void bah() {
+  X x, *x2;
+  x.foo(); // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
+  x2->foo(); // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
+}

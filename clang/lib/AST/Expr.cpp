@@ -402,6 +402,8 @@ Decl *CallExpr::getCalleeDecl() {
   Expr *CEE = getCallee()->IgnoreParenCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE))
     return DRE->getDecl();
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(CEE))
+    return ME->getMemberDecl();
 
   return 0;
 }
