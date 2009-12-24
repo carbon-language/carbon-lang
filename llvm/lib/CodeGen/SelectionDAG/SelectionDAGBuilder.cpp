@@ -5092,17 +5092,8 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
   return true;
 }
 
-static SDValue getMemCmpLoad(Value *PtrVal, unsigned Size,
+static SDValue getMemCmpLoad(Value *PtrVal, MVT LoadVT, const Type *LoadTy,
                              SelectionDAGBuilder &Builder) {
-  MVT LoadVT;
-  const Type *LoadTy;
-  if (Size == 2) {
-    LoadVT = MVT::i16;
-    LoadTy = Type::getInt16Ty(PtrVal->getContext());
-  } else {
-    LoadVT = MVT::i32;
-    LoadTy = Type::getInt32Ty(PtrVal->getContext()); 
-  }
   
   // Check to see if this load can be trivially constant folded, e.g. if the
   // input is from a string literal.
@@ -5158,16 +5149,61 @@ bool SelectionDAGBuilder::visitMemCmpCall(CallInst &I) {
   
   // memcmp(S1,S2,2) != 0 -> (*(short*)LHS != *(short*)RHS)  != 0
   // memcmp(S1,S2,4) != 0 -> (*(int*)LHS != *(int*)RHS)  != 0
-  if (Size && (Size->getValue() == 2 || Size->getValue() == 4) &&
-      IsOnlyUsedInZeroEqualityComparison(&I)) {
-    SDValue LHSVal = getMemCmpLoad(LHS, Size->getZExtValue(), *this);
-    SDValue RHSVal = getMemCmpLoad(RHS, Size->getZExtValue(), *this);
+  if (Size && IsOnlyUsedInZeroEqualityComparison(&I)) {
+    bool ActuallyDoIt = true;
+    MVT LoadVT;
+    const Type *LoadTy;
+    switch (Size->getZExtValue()) {
+    default:
+      LoadVT = MVT::Other;
+      LoadTy = 0;
+      ActuallyDoIt = false;
+      break;
+    case 2:
+      LoadVT = MVT::i16;
+      LoadTy = Type::getInt16Ty(Size->getContext());
+      break;
+    case 4:
+      LoadVT = MVT::i32;
+      LoadTy = Type::getInt32Ty(Size->getContext()); 
+      break;
+    case 8:
+      LoadVT = MVT::i64;
+      LoadTy = Type::getInt64Ty(Size->getContext()); 
+      break;
+        /*
+    case 16:
+      LoadVT = MVT::v4i32;
+      LoadTy = Type::getInt32Ty(Size->getContext()); 
+      LoadTy = VectorType::get(LoadTy, 4);
+      break;
+         */
+    }
     
-    SDValue Res = DAG.getSetCC(getCurDebugLoc(), MVT::i1, LHSVal, RHSVal,
-                               ISD::SETNE);
-    EVT CallVT = TLI.getValueType(I.getType(), true);
-    setValue(&I, DAG.getZExtOrTrunc(Res, getCurDebugLoc(), CallVT));
-    return true;
+    // This turns into unaligned loads.  We only do this if the target natively
+    // supports the MVT we'll be loading or if it is small enough (<= 4) that
+    // we'll only produce a small number of byte loads.
+    
+    // Require that we can find a legal MVT, and only do this if the target
+    // supports unaligned loads of that type.  Expanding into byte loads would
+    // bloat the code.
+    if (ActuallyDoIt && Size->getZExtValue() > 4) {
+      // TODO: Handle 5 byte compare as 4-byte + 1 byte.
+      // TODO: Handle 8 byte compare on x86-32 as two 32-bit loads.
+      if (!TLI.isTypeLegal(LoadVT) ||!TLI.allowsUnalignedMemoryAccesses(LoadVT))
+        ActuallyDoIt = false;
+    }
+    
+    if (ActuallyDoIt) {
+      SDValue LHSVal = getMemCmpLoad(LHS, LoadVT, LoadTy, *this);
+      SDValue RHSVal = getMemCmpLoad(RHS, LoadVT, LoadTy, *this);
+      
+      SDValue Res = DAG.getSetCC(getCurDebugLoc(), MVT::i1, LHSVal, RHSVal,
+                                 ISD::SETNE);
+      EVT CallVT = TLI.getValueType(I.getType(), true);
+      setValue(&I, DAG.getZExtOrTrunc(Res, getCurDebugLoc(), CallVT));
+      return true;
+    }
   }
   
   
