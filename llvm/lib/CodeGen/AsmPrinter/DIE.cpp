@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 using namespace llvm;
@@ -93,7 +94,7 @@ void DIEAbbrev::print(raw_ostream &O) {
       << '\n';
   }
 }
-void DIEAbbrev::dump() { print(errs()); }
+void DIEAbbrev::dump() { print(dbgs()); }
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -164,14 +165,14 @@ void DIE::print(raw_ostream &O, unsigned IncIndent) {
 }
 
 void DIE::dump() {
-  print(errs());
+  print(dbgs());
 }
 #endif
 
 
 #ifndef NDEBUG
 void DIEValue::dump() {
-  print(errs());
+  print(dbgs());
 }
 #endif
 
