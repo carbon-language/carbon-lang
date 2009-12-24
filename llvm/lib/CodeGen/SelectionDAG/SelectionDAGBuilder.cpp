@@ -17,6 +17,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Constants.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
@@ -5075,6 +5076,105 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   }
 }
 
+/// IsOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
+/// value is equal or not-equal to zero.
+static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI) {
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+      if (IC->isEquality())
+        if (Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
+          if (C->isNullValue())
+            continue;
+    // Unknown instruction.
+    return false;
+  }
+  return true;
+}
+
+static SDValue getMemCmpLoad(Value *PtrVal, unsigned Size,
+                             SelectionDAGBuilder &Builder) {
+  MVT LoadVT;
+  const Type *LoadTy;
+  if (Size == 2) {
+    LoadVT = MVT::i16;
+    LoadTy = Type::getInt16Ty(PtrVal->getContext());
+  } else {
+    LoadVT = MVT::i32;
+    LoadTy = Type::getInt32Ty(PtrVal->getContext()); 
+  }
+  
+  // Check to see if this load can be trivially constant folded, e.g. if the
+  // input is from a string literal.
+  if (Constant *LoadInput = dyn_cast<Constant>(PtrVal)) {
+    // Cast pointer to the type we really want to load.
+    LoadInput = ConstantExpr::getBitCast(LoadInput,
+                                         PointerType::getUnqual(LoadTy));
+    
+    if (Constant *LoadCst = ConstantFoldLoadFromConstPtr(LoadInput, Builder.TD))
+      return Builder.getValue(LoadCst);
+  }
+  
+  // Otherwise, we have to emit the load.  If the pointer is to unfoldable but
+  // still constant memory, the input chain can be the entry node.
+  SDValue Root;
+  bool ConstantMemory = false;
+  
+  // Do not serialize (non-volatile) loads of constant memory with anything.
+  if (Builder.AA->pointsToConstantMemory(PtrVal)) {
+    Root = Builder.DAG.getEntryNode();
+    ConstantMemory = true;
+  } else {
+    // Do not serialize non-volatile loads against each other.
+    Root = Builder.DAG.getRoot();
+  }
+  
+  SDValue Ptr = Builder.getValue(PtrVal);
+  SDValue LoadVal = Builder.DAG.getLoad(LoadVT, Builder.getCurDebugLoc(), Root,
+                                        Ptr, PtrVal /*SrcValue*/, 0/*SVOffset*/,
+                                        false /*volatile*/, 1 /* align=1 */);
+  
+  if (!ConstantMemory)
+    Builder.PendingLoads.push_back(LoadVal.getValue(1));
+  return LoadVal;
+}
+
+
+/// visitMemCmpCall - See if we can lower a call to memcmp in an optimized form.
+/// If so, return true and lower it, otherwise return false and it will be
+/// lowered like a normal call.
+bool SelectionDAGBuilder::visitMemCmpCall(CallInst &I) {
+  // Verify that the prototype makes sense.  int memcmp(void*,void*,size_t)
+  if (I.getNumOperands() != 4)
+    return false;
+  
+  Value *LHS = I.getOperand(1), *RHS = I.getOperand(2);
+  if (!isa<PointerType>(LHS->getType()) || !isa<PointerType>(RHS->getType()) ||
+      !isa<IntegerType>(I.getOperand(3)->getType()) ||
+      !isa<IntegerType>(I.getType()))
+    return false;    
+  
+  ConstantInt *Size = dyn_cast<ConstantInt>(I.getOperand(3));
+  
+  // memcmp(S1,S2,2) != 0 -> (*(short*)LHS != *(short*)RHS)  != 0
+  // memcmp(S1,S2,4) != 0 -> (*(int*)LHS != *(int*)RHS)  != 0
+  if (Size && (Size->getValue() == 2 || Size->getValue() == 4) &&
+      IsOnlyUsedInZeroEqualityComparison(&I)) {
+    SDValue LHSVal = getMemCmpLoad(LHS, Size->getZExtValue(), *this);
+    SDValue RHSVal = getMemCmpLoad(RHS, Size->getZExtValue(), *this);
+    
+    SDValue Res = DAG.getSetCC(getCurDebugLoc(), MVT::i1, LHSVal, RHSVal,
+                               ISD::SETNE);
+    EVT CallVT = TLI.getValueType(I.getType(), true);
+    setValue(&I, DAG.getZExtOrTrunc(Res, getCurDebugLoc(), CallVT));
+    return true;
+  }
+  
+  
+  return false;
+}
+
+
 void SelectionDAGBuilder::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
@@ -5148,6 +5248,9 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
+      } else if (Name == "memcmp") {
+        if (visitMemCmpCall(I))
+          return;
       }
     }
   } else if (isa<InlineAsm>(I.getOperand(0))) {

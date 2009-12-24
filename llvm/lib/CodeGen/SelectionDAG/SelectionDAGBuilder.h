@@ -91,11 +91,13 @@ class SelectionDAGBuilder {
 
   DenseMap<const Value*, SDValue> NodeMap;
 
+public:
   /// PendingLoads - Loads are not emitted to the program immediately.  We bunch
   /// them up and then emit token factor nodes when possible.  This allows us to
   /// get simple disambiguation between loads without worrying about alias
   /// analysis.
   SmallVector<SDValue, 8> PendingLoads;
+private:
 
   /// PendingExports - CopyToReg nodes that copy values to virtual registers
   /// for export to other blocks need to be emitted before any terminator
@@ -461,6 +463,8 @@ private:
   void visitStore(StoreInst &I);
   void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
   void visitCall(CallInst &I);
+  bool visitMemCmpCall(CallInst &I);
+  
   void visitInlineAsm(CallSite CS);
   const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
   void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);

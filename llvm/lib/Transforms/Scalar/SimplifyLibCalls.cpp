@@ -1011,19 +1011,6 @@ struct MemCmpOpt : public LibCallOptimization {
       return B.CreateSExt(B.CreateSub(LHSV, RHSV, "chardiff"), CI->getType());
     }
 
-    // memcmp(S1,S2,2) != 0 -> (*(short*)LHS ^ *(short*)RHS)  != 0
-    // memcmp(S1,S2,4) != 0 -> (*(int*)LHS ^ *(int*)RHS)  != 0
-    if ((Len == 2 || Len == 4) && IsOnlyUsedInZeroEqualityComparison(CI)) {
-      const Type *PTy = PointerType::getUnqual(Len == 2 ?
-                       Type::getInt16Ty(*Context) : Type::getInt32Ty(*Context));
-      LHS = B.CreateBitCast(LHS, PTy, "tmp");
-      RHS = B.CreateBitCast(RHS, PTy, "tmp");
-      LoadInst *LHSV = B.CreateLoad(LHS, "lhsv");
-      LoadInst *RHSV = B.CreateLoad(RHS, "rhsv");
-      LHSV->setAlignment(1); RHSV->setAlignment(1);  // Unaligned loads.
-      return B.CreateZExt(B.CreateXor(LHSV, RHSV, "shortdiff"), CI->getType());
-    }
-
     // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
     std::string LHSStr, RHSStr;
     if (GetConstantStringInfo(LHS, LHSStr) &&
