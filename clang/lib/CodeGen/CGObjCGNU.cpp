@@ -1607,7 +1607,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   Params.push_back(PtrTy);
   llvm::Value *RethrowFn =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-          Params, false), "_Unwind_Resume_or_Rethrow");
+          Params, false), "objc_exception_throw");
 
   bool isTry = isa<ObjCAtTryStmt>(S);
   llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
@@ -1618,7 +1618,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::BasicBlock *FinallyRethrow = CGF.createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = CGF.createBasicBlock("finally.end");
 
-  // GNU runtime does not currently support @synchronized()
+  // @synchronized()
   if (!isTry) {
     std::vector<const llvm::Type*> Args(1, IdTy);
     llvm::FunctionType *FTy =
@@ -1770,7 +1770,13 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   ESelArgs.clear();
   ESelArgs.push_back(Exc);
   ESelArgs.push_back(Personality);
-  ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
+  // If there is a @catch or @finally clause in outside of this one then we
+  // need to make sure that we catch and rethrow it.  
+  if (PrevLandingPad) {
+    ESelArgs.push_back(NULLPtr);
+  } else {
+    ESelArgs.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 0));
+  }
   CGF.Builder.CreateCall(llvm_eh_selector, ESelArgs.begin(), ESelArgs.end(),
       "selector");
   CGF.Builder.CreateCall(llvm_eh_typeid_for,
@@ -1811,11 +1817,23 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.EmitBranch(FinallyEnd);
 
   CGF.EmitBlock(FinallyRethrow);
-  CGF.Builder.CreateCall(RethrowFn, CGF.Builder.CreateLoad(RethrowPtr));
-  CGF.Builder.CreateUnreachable();
+
+  llvm::Value *ExceptionObject = CGF.Builder.CreateLoad(RethrowPtr);
+  llvm::BasicBlock *UnwindBB = CGF.getInvokeDest();
+  if (!UnwindBB) {
+    CGF.Builder.CreateCall(RethrowFn, ExceptionObject);
+    // Exception always thrown, next instruction is never reached.
+    CGF.Builder.CreateUnreachable();
+  } else {
+    // If there is a @catch block outside this scope, we invoke instead of
+    // calling because we may return to this function.  This is very slow, but
+    // some people still do it.  It would be nice to add an optimised path for
+    // this.
+    CGF.Builder.CreateInvoke(RethrowFn, UnwindBB, UnwindBB, &ExceptionObject,
+        &ExceptionObject+1);
+  }
 
   CGF.EmitBlock(FinallyEnd);
-
 }
 
 void CGObjCGNU::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
