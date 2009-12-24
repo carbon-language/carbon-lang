@@ -662,3 +662,25 @@ int pr5857(char *src) {
   return 1;
 }
 
+//===----------------------------------------------------------------------===//
+// PR 4358 - Without field-sensitivity, this code previously triggered
+//  a false positive that 'uninit' could be uninitialized at the call
+//  to pr4358_aux().
+//===----------------------------------------------------------------------===//
+
+struct pr4358 {
+  int bar;
+  int baz;
+};
+void pr4358_aux(int x);
+void pr4358(struct pr4358 *pnt) {
+  int uninit;
+  if (pnt->bar < 3) {
+    uninit = 1;
+  } else if (pnt->baz > 2) {
+    uninit = 3;
+  } else if (pnt->baz <= 2) {
+    uninit = 2;
+  }
+  pr4358_aux(uninit); // no-warning
+}
