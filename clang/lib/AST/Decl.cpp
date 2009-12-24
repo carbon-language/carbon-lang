@@ -469,6 +469,20 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
                                            TemplateArgs.flat_size(),
                                            P);
       Names.push_back(Spec->getIdentifier()->getNameStart() + TemplateArgsStr);
+    } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(Ctx)) {
+      if (ND->isAnonymousNamespace())
+        Names.push_back("<anonymous namespace>");
+      else
+        Names.push_back(ND->getNameAsString());
+    } else if (const RecordDecl *RD = dyn_cast<RecordDecl>(Ctx)) {
+      if (!RD->getIdentifier()) {
+        std::string RecordString = "<anonymous ";
+        RecordString += RD->getKindName();
+        RecordString += ">";
+        Names.push_back(RecordString);
+      } else {
+        Names.push_back(RD->getNameAsString());
+      }
     } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());
     else

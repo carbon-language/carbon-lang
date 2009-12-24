@@ -11,6 +11,15 @@
 // CHECK: private constant [45 x i8] c"void NS::Base::functionTemplate1(NS::Base *)\00"
 // CHECK: private constant [38 x i8] c"void NS::Base::functionTemplate1(int)\00"
 
+// CHECK: private constant [23 x i8] c"anonymousUnionFunction\00"
+// CHECK: private constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous union>::anonymousUnionFunction()\00"
+
+// CHECK: private constant [24 x i8] c"anonymousStructFunction\00"
+// CHECK: private constant [85 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous struct>::anonymousStructFunction()\00"
+
+// CHECK: private constant [23 x i8] c"anonymousClassFunction\00"
+// CHECK: private constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous class>::anonymousClassFunction()\00"
+
 // CHECK: private constant [12 x i8] c"~Destructor\00"
 // CHECK: private constant [30 x i8] c"NS::Destructor::~Destructor()\00"
 
@@ -51,7 +60,35 @@
 // CHECK: private constant [11 x i8] c"staticFunc\00"
 // CHECK: private constant [28 x i8] c"void NS::Base::staticFunc()\00"
 
+// CHECK: private constant [26 x i8] c"topLevelNamespaceFunction\00"
+// CHECK: private constant [59 x i8] c"void ClassInTopLevelNamespace::topLevelNamespaceFunction()\00"
+
+// CHECK: private constant [27 x i8] c"anonymousNamespaceFunction\00"
+// CHECK: private constant [84 x i8] c"void <anonymous namespace>::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
+
 int printf(const char * _Format, ...);
+
+class ClassInTopLevelNamespace {
+public:
+  void topLevelNamespaceFunction() {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+};
+
+namespace {
+
+  class ClassInAnonymousNamespace {
+  public:
+    void anonymousNamespaceFunction() {
+      printf("__func__ %s\n", __func__);
+      printf("__FUNCTION__ %s\n", __FUNCTION__);
+      printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+    }
+  };
+
+} // end anonymous namespace
 
 namespace NS {
 
@@ -167,7 +204,6 @@ public:
     printf("__FUNCTION__ %s\n", __FUNCTION__);
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
   }
-
 };
 
 class Destructor {
@@ -179,17 +215,51 @@ public:
   }
 };
 
+class ContainerForAnonymousRecords {
+public:
+  class {
+  public:
+    void anonymousClassFunction() {
+      printf("__func__ %s\n", __func__);
+      printf("__FUNCTION__ %s\n", __FUNCTION__);
+      printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+    }
+  } anonymousClass;
+
+  struct {
+    void anonymousStructFunction() {
+      printf("__func__ %s\n", __func__);
+      printf("__FUNCTION__ %s\n", __FUNCTION__);
+      printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+    }
+  } anonymousStruct;
+
+  union {
+    void anonymousUnionFunction() {
+      printf("__func__ %s\n", __func__);
+      printf("__FUNCTION__ %s\n", __FUNCTION__);
+      printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+    }
+  } anonymousUnion;
+};
+
 extern void externFunction() {
   printf("__func__ %s\n", __func__);
   printf("__FUNCTION__ %s\n", __FUNCTION__);
   printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
 }
 
-}
+} // end NS namespace
 
 int main() {
-  NS::Base::staticFunc();
+  ClassInAnonymousNamespace anonymousNamespace;
+  anonymousNamespace.anonymousNamespaceFunction();
 
+  ClassInTopLevelNamespace topLevelNamespace;
+  topLevelNamespace.topLevelNamespaceFunction();
+
+  NS::Base::staticFunc();
+  
   NS::Base b;
   b.inlineFunction();
   b.virtualFunction();
@@ -219,8 +289,13 @@ int main() {
   {
     NS::Destructor destructor;
   }
-  
+
+  NS::ContainerForAnonymousRecords anonymous; 
+  anonymous.anonymousClass.anonymousClassFunction();
+  anonymous.anonymousStruct.anonymousStructFunction();
+  anonymous.anonymousUnion.anonymousUnionFunction();
+
   NS::externFunction();
-  
+
   return 0;
 }
