@@ -3793,6 +3793,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
       if (ICE->getCastKind() == CastExpr::CK_NoOp)
         E = ICE->getSubExpr();
+    if (CXXFunctionalCastExpr *FCE = dyn_cast<CXXFunctionalCastExpr>(E))
+      E = FCE->getSubExpr();
     while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
       E = BE->getSubExpr();
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
@@ -3802,6 +3804,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
     if (CallExpr *CE = dyn_cast<CallExpr>(E))
       Elidable = !CE->getCallReturnType()->isReferenceType();
     else if (isa<CXXTemporaryObjectExpr>(E))
+      Elidable = true;
+    else if (isa<CXXConstructExpr>(E))
       Elidable = true;
   }
 

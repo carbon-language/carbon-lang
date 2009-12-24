@@ -590,6 +590,9 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
       Arg = ICE->getSubExpr();
     }
 
+    if (const CXXFunctionalCastExpr *FCE = dyn_cast<CXXFunctionalCastExpr>(Arg))
+      Arg = FCE->getSubExpr();
+
     if (const CXXBindTemporaryExpr *BindExpr = 
            dyn_cast<CXXBindTemporaryExpr>(Arg))
       Arg = BindExpr->getSubExpr();
