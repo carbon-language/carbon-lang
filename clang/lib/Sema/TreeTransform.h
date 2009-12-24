@@ -959,6 +959,7 @@ public:
       Expr *BaseExpr = Base.takeAs<Expr>();
       if (getSema().PerformObjectMemberConversion(BaseExpr, Member))
         return getSema().ExprError();
+
       MemberExpr *ME =
         new (getSema().Context) MemberExpr(BaseExpr, isArrow,
                                            Member, MemberLoc,

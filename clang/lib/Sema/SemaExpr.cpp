@@ -564,7 +564,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
                == Context.getCanonicalType(ThisType)) ||
             IsDerivedFrom(ThisType, AnonFieldType)) {
           // Our base object expression is "this".
-          BaseObjectExpr = new (Context) CXXThisExpr(SourceLocation(),
+          BaseObjectExpr = new (Context) CXXThisExpr(Loc,
                                                      MD->getThisType(Context));
           BaseObjectIsPointer = true;
         }
