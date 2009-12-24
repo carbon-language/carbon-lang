@@ -1130,6 +1130,18 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
     assert(Block == EntryConditionBlock);
+    
+    // If this block contains a condition variable, add both the condition
+    // variable and initializer to the CFG.
+    if (VarDecl *VD = W->getConditionVariable()) {
+      if (Expr *Init = VD->getInit()) {
+        autoCreateBlock();
+        AppendStmt(Block, W, AddStmtChoice::AlwaysAdd);
+        EntryConditionBlock = addStmt(Init);
+        assert(Block == EntryConditionBlock);
+      }
+    }
+
     if (Block) {
       if (!FinishBlock(EntryConditionBlock))
         return 0;
@@ -1188,21 +1200,8 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // to this block.  NULL out Block to force lazy creation of another block.
   Block = NULL;
 
-  // Set Succ to be the condition block, which is the dominating block
-  // for the loop.
+  // Return the condition block, which is the dominating block for the loop.
   Succ = EntryConditionBlock;
-  
-  // Finally, if the WhileStmt contains a condition variable, add both the 
-  // WhileStmt and the condition variable initialization to the CFG.
-  if (VarDecl *VD = W->getConditionVariable()) {
-    if (Expr *Init = VD->getInit()) {
-      autoCreateBlock();
-      AppendStmt(Block, W, AddStmtChoice::AlwaysAdd);
-      Succ = addStmt(Init);
-      return Succ;
-    }
-  }
-  
   return EntryConditionBlock;
 }
 

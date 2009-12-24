@@ -61,16 +61,17 @@ int test_init_in_condition_switch() {
 }
 
 int test_init_in_condition_while() {
-  int y = 1;
-  while (int x = test_init_in_condition_aux()) { // no-warning
-    if (!x) {
-      y = 0;
+  int z = 0;
+  while (int x = ++z) { // no-warning
+    if (x == 2)
       break;
-    }
-  }  
-  if (!y) {
-    int *p = 0;
-    *p = 0xDEADBEEF; // no-warning
   }
+  
+  if (z == 2)
+    return 0;
+  
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
   return 0;
 }
+
