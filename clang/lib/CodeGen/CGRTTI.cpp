@@ -607,6 +607,26 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     return llvm::GlobalValue::WeakODRLinkage;
   }
 
+  if (const FunctionType *FT = dyn_cast<FunctionType>(Ty)) {
+    if (getTypeInfoLinkage(FT->getResultType())
+        == llvm::GlobalValue::InternalLinkage)
+      return llvm::GlobalValue::InternalLinkage;
+
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
+      for (unsigned i = 0; i < FPT->getNumArgs(); ++i)
+        if (getTypeInfoLinkage(FPT->getArgType(i))
+            == llvm::GlobalValue::InternalLinkage)
+          return llvm::GlobalValue::InternalLinkage;
+      for (unsigned i = 0; i < FPT->getNumExceptions(); ++i)
+        if (getTypeInfoLinkage(FPT->getExceptionType(i))
+            == llvm::GlobalValue::InternalLinkage)
+          return llvm::GlobalValue::InternalLinkage;
+    }
+
+    return llvm::GlobalValue::WeakODRLinkage;
+  }
+
+  // FIXME: We need to add code to handle all types.
   assert(false && "Unhandled type!");
   return llvm::GlobalValue::WeakODRLinkage;
 }
