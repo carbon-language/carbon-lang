@@ -112,6 +112,11 @@ public:
   void VisitUnaryOperator(UnaryOperator* U);
   void Visit(Stmt *S);
   void VisitTerminator(CFGBlock* B);
+  
+  /// VisitConditionVariableInit - Handle the initialization of condition
+  ///  variables at branches.  Valid statements include IfStmt, ForStmt,
+  ///  WhileStmt, and SwitchStmt.
+  void VisitConditionVariableInit(Stmt *S);
 
   void SetTopValue(LiveVariables::ValTy& V) {
     V = AD.AlwaysLive;
@@ -126,7 +131,9 @@ void TransferFuncs::Visit(Stmt *S) {
     if (AD.Observer)
       AD.Observer->ObserveStmt(S,AD,LiveState);
 
-    if (getCFG().isBlkExpr(S)) LiveState(S,AD) = Dead;
+    if (getCFG().isBlkExpr(S))
+      LiveState(S, AD) = Dead;
+
     StmtVisitor<TransferFuncs,void>::Visit(S);
   }
   else if (!getCFG().isBlkExpr(S)) {
@@ -141,6 +148,11 @@ void TransferFuncs::Visit(Stmt *S) {
     // For block-level expressions, mark that they are live.
     LiveState(S,AD) = Alive;
   }
+}
+  
+void TransferFuncs::VisitConditionVariableInit(Stmt *S) {
+  assert(!getCFG().isBlkExpr(S));
+  CFGRecStmtVisitor<TransferFuncs>::VisitConditionVariableInit(S);
 }
 
 void TransferFuncs::VisitTerminator(CFGBlock* B) {

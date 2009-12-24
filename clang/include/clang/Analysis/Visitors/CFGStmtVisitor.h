@@ -54,6 +54,13 @@ public:
     else
       return RetTy();
   }
+  
+  /// VisitConditionVariableInit - Handle the initialization of condition
+  ///  variables at branches.  Valid statements include IfStmt, ForStmt,
+  ///  WhileStmt, and SwitchStmt.
+  RetTy VisitConditionVariableInit(Stmt *S) {
+    return RetTy();
+  }
 
   /// BlockVisit_XXX - Visitor methods for visiting the "root" statements in
   /// CFGBlocks.  Root statements are the statements that appear explicitly in
@@ -65,6 +72,11 @@ public:
     NullifyStmt cleanup(CurrentBlkStmt);
 
     switch (S->getStmtClass()) {
+      case Stmt::IfStmtClass:
+      case Stmt::ForStmtClass:
+      case Stmt::WhileStmtClass:
+      case Stmt::SwitchStmtClass:
+        return static_cast<ImplClass*>(this)->VisitConditionVariableInit(S);
 
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)

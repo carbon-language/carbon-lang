@@ -25,6 +25,25 @@ public:
   void VisitStmt(Stmt* S) {
     static_cast< ImplClass* >(this)->VisitChildren(S);
   }
+  
+  void VisitConditionVariableInit(Stmt *S) {
+    assert(S == this->getCurrentBlkStmt());
+    VarDecl *CondVar = 0;
+    switch (S->getStmtClass()) {
+#define CONDVAR_CASE(CLASS) \
+case Stmt::CLASS ## Class:\
+CondVar = cast<CLASS>(S)->getConditionVariable();\
+break;
+        CONDVAR_CASE(IfStmt)
+        CONDVAR_CASE(ForStmt)
+        CONDVAR_CASE(SwitchStmt)
+        CONDVAR_CASE(WhileStmt)
+#undef CONDVAR_CASE
+      default:
+        assert(false && "Infeasible");
+    }    
+    static_cast<ImplClass*>(this)->Visit(CondVar->getInit());
+  }
 
   // Defining operator() allows the visitor to be used as a C++ style functor.
   void operator()(Stmt* S) { static_cast<ImplClass*>(this)->BlockStmt_Visit(S);}
