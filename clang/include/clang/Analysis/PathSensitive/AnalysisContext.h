@@ -27,6 +27,7 @@ namespace clang {
 class Decl;
 class Stmt;
 class CFG;
+class CFGBlock;
 class LiveVariables;
 class ParentMap;
 class ImplicitParamDecl;
@@ -136,23 +137,38 @@ public:
 };
 
 class StackFrameContext : public LocationContext {
+  // The callsite where this stack frame is established.
   const Stmt *CallSite;
+
+  // The parent block of the callsite.
+  const CFGBlock *Block;
+
+  // The index of the callsite in the CFGBlock.
+  unsigned Index;
 
   friend class LocationContextManager;
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
-                    const Stmt *s)
-    : LocationContext(StackFrame, ctx, parent), CallSite(s) {}
+                    const Stmt *s, const CFGBlock *blk, unsigned idx)
+    : LocationContext(StackFrame, ctx, parent), CallSite(s), Block(blk), 
+      Index(idx) {}
 
 public:
   ~StackFrameContext() {}
 
   const Stmt *getCallSite() const { return CallSite; }
 
+  const CFGBlock *getCallSiteBlock() const { return Block; }
+
+  unsigned getIndex() const { return Index; }
+
   void Profile(llvm::FoldingSetNodeID &ID);
   
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                      const LocationContext *parent, const Stmt *s) {
+                      const LocationContext *parent, const Stmt *s, 
+                      const CFGBlock *blk, unsigned idx) {
     ProfileCommon(ID, StackFrame, ctx, parent, s);
+    ID.AddPointer(blk);
+    ID.AddInteger(idx);
   }
 
   static bool classof(const LocationContext* Ctx) {
@@ -230,7 +246,8 @@ public:
   
   const StackFrameContext *getStackFrame(AnalysisContext *ctx,
                                          const LocationContext *parent,
-                                         const Stmt *s);
+                                         const Stmt *s, const CFGBlock *blk,
+                                         unsigned idx);
 
   const ScopeContext *getScope(AnalysisContext *ctx,
                                const LocationContext *parent,
