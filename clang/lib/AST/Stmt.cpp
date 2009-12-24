@@ -519,7 +519,7 @@ Stmt::child_iterator ForStmt::child_begin() {
   return child_iterator(CondVar, &SubExprs[0]);
 }
 Stmt::child_iterator ForStmt::child_end() {
-  return child_iterator(CondVar, &SubExprs[0]+END_EXPR);
+  return child_iterator(0, &SubExprs[0]+END_EXPR);
 }
 
 // ObjCForCollectionStmt

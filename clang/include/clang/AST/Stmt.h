@@ -879,9 +879,9 @@ class ForStmt : public Stmt {
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(Stmt *Init, Expr *Cond, VarDecl *CondVar, Expr *Inc, Stmt *Body, 
+  ForStmt(Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc, Stmt *Body, 
           SourceLocation FL, SourceLocation LP, SourceLocation RP)
-    : Stmt(ForStmtClass), CondVar(CondVar), ForLoc(FL), LParenLoc(LP), 
+    : Stmt(ForStmtClass), CondVar(condVar), ForLoc(FL), LParenLoc(LP), 
       RParenLoc(RP) 
   {
     SubExprs[INIT] = Init;
