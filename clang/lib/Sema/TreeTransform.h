@@ -956,8 +956,11 @@ public:
       // We have a reference to an unnamed field.
       assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
 
+      Expr *BaseExpr = Base.takeAs<Expr>();
+      if (getSema().PerformObjectMemberConversion(BaseExpr, Member))
+        return getSema().ExprError();
       MemberExpr *ME =
-        new (getSema().Context) MemberExpr(Base.takeAs<Expr>(), isArrow,
+        new (getSema().Context) MemberExpr(BaseExpr, isArrow,
                                            Member, MemberLoc,
                                            cast<FieldDecl>(Member)->getType());
       return getSema().Owned(ME);
