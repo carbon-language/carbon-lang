@@ -3875,8 +3875,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                                          MultiExprArg Exprs,
                                          SourceLocation *CommaLocs,
                                          SourceLocation RParenLoc) {
-  unsigned NumExprs = Exprs.size();
-  assert(NumExprs != 0 && Exprs.get() && "missing expressions");
+  assert(Exprs.size() != 0 && Exprs.get() && "missing expressions");
   Decl *RealDecl = Dcl.getAs<Decl>();
 
   // If there is no declaration, there was an error parsing it.  Just ignore
