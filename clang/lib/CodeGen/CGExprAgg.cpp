@@ -272,6 +272,13 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
     return;
   }
 
+  // If the struct doesn't require GC, we can just pass the destination
+  // directly to EmitCall.
+  if (!RequiresGCollection) {
+    CGF.EmitCallExpr(E, ReturnValueSlot(DestPtr, VolatileDest));
+    return;
+  }
+  
   RValue RV = CGF.EmitCallExpr(E);
   EmitFinalDestCopy(E, RV);
 }

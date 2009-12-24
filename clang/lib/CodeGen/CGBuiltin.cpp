@@ -581,6 +581,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
     return EmitCall(E->getCallee()->getType(),
                     CGM.getBuiltinLibFunction(FD, BuiltinID),
+                    ReturnValueSlot(),
                     E->arg_begin(), E->arg_end());
 
   // See if we have a target specific intrinsic.

@@ -346,6 +346,7 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
 /// destination type; the upper bits of the src will be lost.
 static void CreateCoercedStore(llvm::Value *Src,
                                llvm::Value *DstPtr,
+                               bool DstIsVolatile,
                                CodeGenFunction &CGF) {
   const llvm::Type *SrcTy = Src->getType();
   const llvm::Type *DstTy =
@@ -359,7 +360,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
     // FIXME: Use better alignment / avoid requiring aligned store.
-    CGF.Builder.CreateStore(Src, Casted)->setAlignment(1);
+    CGF.Builder.CreateStore(Src, Casted, DstIsVolatile)->setAlignment(1);
   } else {
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
@@ -377,7 +378,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
     // FIXME: Use better alignment / avoid requiring aligned load.
     Load->setAlignment(1);
-    CGF.Builder.CreateStore(Load, DstPtr);
+    CGF.Builder.CreateStore(Load, DstPtr, DstIsVolatile);
   }
 }
 
@@ -732,7 +733,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // result in a new alloca anyway, so we could just store into that
       // directly if we broke the abstraction down more.
       llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(Ty), "coerce");
-      CreateCoercedStore(AI, V, *this);
+      CreateCoercedStore(AI, V, /*DestIsVolatile=*/false, *this);
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
         V = EmitLoadOfScalar(V, false, Ty);
@@ -822,9 +823,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
 
   // If the call returns a temporary with struct return, create a temporary
-  // alloca to hold the result.
-  if (CGM.ReturnTypeUsesSret(CallInfo))
-    Args.push_back(CreateTempAlloca(ConvertTypeForMem(RetTy)));
+  // alloca to hold the result, unless one is given to us.
+  if (CGM.ReturnTypeUsesSret(CallInfo)) {
+    llvm::Value *Value = ReturnValue.getValue();
+    if (!Value)
+      Value = CreateTempAlloca(ConvertTypeForMem(RetTy));
+    Args.push_back(Value);
+  }
 
   assert(CallInfo.arg_size() == CallArgs.size() &&
          "Mismatch between function signature & arguments.");
@@ -973,9 +978,15 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       return RValue::getComplex(std::make_pair(Real, Imag));
     }
     if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-      llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(RetTy), "agg.tmp");
-      Builder.CreateStore(CI, V);
-      return RValue::getAggregate(V);
+      llvm::Value *DestPtr = ReturnValue.getValue();
+      bool DestIsVolatile = ReturnValue.isVolatile();
+
+      if (!DestPtr) {
+        DestPtr = CreateTempAlloca(ConvertTypeForMem(RetTy), "agg.tmp");
+        DestIsVolatile = false;
+      }
+      Builder.CreateStore(CI, DestPtr, DestIsVolatile);
+      return RValue::getAggregate(DestPtr);
     }
     return RValue::get(CI);
 
@@ -985,14 +996,20 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     return GetUndefRValue(RetTy);
 
   case ABIArgInfo::Coerce: {
-    // FIXME: Avoid the conversion through memory if possible.
-    llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(RetTy), "coerce");
-    CreateCoercedStore(CI, V, *this);
+    llvm::Value *DestPtr = ReturnValue.getValue();
+    bool DestIsVolatile = ReturnValue.isVolatile();
+    
+    if (!DestPtr) {
+      DestPtr = CreateTempAlloca(ConvertTypeForMem(RetTy), "coerce");
+      DestIsVolatile = false;
+    }
+    
+    CreateCoercedStore(CI, DestPtr, DestIsVolatile, *this);
     if (RetTy->isAnyComplexType())
-      return RValue::getComplex(LoadComplexFromAddr(V, false));
+      return RValue::getComplex(LoadComplexFromAddr(DestPtr, false));
     if (CodeGenFunction::hasAggregateLLVMType(RetTy))
-      return RValue::getAggregate(V);
-    return RValue::get(EmitLoadOfScalar(V, false, RetTy));
+      return RValue::getAggregate(DestPtr);
+    return RValue::get(EmitLoadOfScalar(DestPtr, false, RetTy));
   }
 
   case ABIArgInfo::Expand:

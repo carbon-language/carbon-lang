@@ -1041,10 +1041,12 @@ public:
                   const Decl *TargetDecl = 0);
 
   RValue EmitCall(QualType FnType, llvm::Value *Callee,
+                  ReturnValueSlot ReturnValue,
                   CallExpr::const_arg_iterator ArgBeg,
                   CallExpr::const_arg_iterator ArgEnd,
                   const Decl *TargetDecl = 0);
-  RValue EmitCallExpr(const CallExpr *E);
+  RValue EmitCallExpr(const CallExpr *E, 
+                      ReturnValueSlot ReturnValue = ReturnValueSlot());
 
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                 const llvm::Type *Ty);

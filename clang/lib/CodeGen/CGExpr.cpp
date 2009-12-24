@@ -1518,7 +1518,8 @@ LValue CodeGenFunction::EmitNullInitializationLValue(
 //===--------------------------------------------------------------------===//
 
 
-RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
+RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
+                                     ReturnValueSlot ReturnValue) {
   // Builtins never have block type.
   if (E->getCallee()->getType()->isBlockPointerType())
     return EmitBlockCallExpr(E);
@@ -1551,7 +1552,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   }
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCall(E->getCallee()->getType(), Callee,
+  return EmitCall(E->getCallee()->getType(), Callee, ReturnValue,
                   E->arg_begin(), E->arg_end(), TargetDecl);
 }
 
@@ -1713,6 +1714,7 @@ LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
 }
 
 RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
+                                 ReturnValueSlot ReturnValue,
                                  CallExpr::const_arg_iterator ArgBeg,
                                  CallExpr::const_arg_iterator ArgEnd,
                                  const Decl *TargetDecl) {
@@ -1737,7 +1739,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
     CallingConvention = F->getCallingConv();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
                                                  CallingConvention),
-                  Callee, ReturnValueSlot(), Args, TargetDecl);
+                  Callee, ReturnValue, Args, TargetDecl);
 }
 
 LValue CodeGenFunction::

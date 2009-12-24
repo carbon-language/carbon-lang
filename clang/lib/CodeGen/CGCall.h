@@ -125,6 +125,8 @@ namespace CodeGen {
     }
   };
   
+  /// ReturnValueSlot - Contains the address where the return value of a 
+  /// function can be stored, and whether the address is volatile or not.
   class ReturnValueSlot {
     llvm::PointerIntPair<llvm::Value *, 1, bool> Value;
 
