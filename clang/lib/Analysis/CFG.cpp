@@ -1425,8 +1425,19 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   SwitchTerminatedBlock->setTerminator(Terminator);
   assert (Terminator->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
-
-  return addStmt(Terminator->getCond());
+  Block = addStmt(Terminator->getCond());
+  
+  // Finally, if the SwitchStmt contains a condition variable, add both the
+  // SwitchStmt and the condition variable initialization to the CFG.
+  if (VarDecl *VD = Terminator->getConditionVariable()) {
+    if (Expr *Init = VD->getInit()) {
+      autoCreateBlock();
+      AppendStmt(Block, Terminator, AddStmtChoice::AlwaysAdd);
+      addStmt(Init);
+    }
+  }
+  
+  return Block;
 }
 
 CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
