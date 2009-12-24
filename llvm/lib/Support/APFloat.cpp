@@ -3253,7 +3253,7 @@ namespace {
 
     // Truncate the significand down to its active bit count, but
     // don't try to drop below 32.
-    unsigned newPrecision = std::min(32U, significand.getActiveBits());
+    unsigned newPrecision = std::max(32U, significand.getActiveBits());
     significand.trunc(newPrecision);
   }
 
@@ -3339,6 +3339,16 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
                     partCountForBits(semantics->precision),
                     significandParts());
 
+  // Set FormatPrecision if zero.  We want to do this before we
+  // truncate trailing zeros, as those are part of the precision.
+  if (!FormatPrecision) {
+    // It's an interesting question whether to use the nominal
+    // precision or the active precision here for denormals.
+
+    // FormatPrecision = ceil(significandBits / lg_2(10))
+    FormatPrecision = (semantics->precision * 59 + 195) / 196;
+  }
+
   // Ignore trailing binary zeros.
   int trailingZeros = significand.countTrailingZeros();
   exp += trailingZeros;
@@ -3361,9 +3371,10 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
     // To avoid overflow, we have to operate on numbers large
     // enough to store N * 5^e:
     //   log2(N * 5^e) == log2(N) + e * log2(5)
-    //                 <= semantics->precision + e * 2.5
-    //   (log_2(5) ~ 2.321928)
-    unsigned precision = semantics->precision + 5 * texp / 2;
+    //                 <= semantics->precision + e * 137 / 59
+    //   (log_2(5) ~ 2.321928 < 2.322034 ~ 137/59)
+    
+    unsigned precision = semantics->precision + 137 * texp / 59;
 
     // Multiply significand by 5^e.
     //   N * 5^0101 == N * 5^(1*1) * 5^(0*2) * 5^(1*4) * 5^(0*8)
@@ -3411,30 +3422,29 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
 
   unsigned NDigits = buffer.size();
 
-  // Check whether we should a non-scientific format.
+  // Check whether we should use scientific notation.
   bool FormatScientific;
   if (!FormatMaxPadding)
     FormatScientific = true;
   else {
-    unsigned Padding;
     if (exp >= 0) {
-      // 765e3 == 765000
-      //             ^^^
-      Padding = (unsigned) exp;
+      // 765e3 --> 765000
+      //              ^^^
+      // But we shouldn't make the number look more precise than it is.
+      FormatScientific = ((unsigned) exp > FormatMaxPadding ||
+                          NDigits + (unsigned) exp > FormatPrecision);
     } else {
-      unsigned Margin = (unsigned) -exp;
-      if (Margin < NDigits) {
+      // Power of the most significant digit.
+      int MSD = exp + (int) (NDigits - 1);
+      if (MSD >= 0) {
         // 765e-2 == 7.65
-        Padding = 0;
+        FormatScientific = false;
       } else {
         // 765e-5 == 0.00765
         //           ^ ^^
-        Padding = Margin + 1 - NDigits;
+        FormatScientific = ((unsigned) -MSD) > FormatMaxPadding;
       }
     }
-
-    FormatScientific = (Padding > FormatMaxPadding ||
-                        Padding + NDigits > FormatPrecision);
   }
 
   // Scientific formatting is pretty straightforward.

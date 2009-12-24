@@ -304,7 +304,8 @@ namespace llvm {
     ///   precision to output.  If there are fewer digits available,
     ///   zero padding will not be used unless the value is
     ///   integral and small enough to be expressed in
-    ///   FormatPrecision digits.
+    ///   FormatPrecision digits.  0 means to use the natural
+    ///   precision of the number.
     /// \param FormatMaxPadding The maximum number of zeros to
     ///   consider inserting before falling back to scientific
     ///   notation.  0 means to always use scientific notation.
@@ -315,10 +316,10 @@ namespace llvm {
     /// 1.01E+4              4             2       1.01E+4
     /// 1.01E+4              5             1       1.01E+4
     /// 1.01E-2              5             2       0.0101
-    /// 1.01E-2              4             2       1.01E-2
+    /// 1.01E-2              4             2       0.0101
     /// 1.01E-2              4             1       1.01E-2
     void toString(SmallVectorImpl<char> &Str,
-                  unsigned FormatPrecision = 8,
+                  unsigned FormatPrecision = 0,
                   unsigned FormatMaxPadding = 3);
 
   private:
