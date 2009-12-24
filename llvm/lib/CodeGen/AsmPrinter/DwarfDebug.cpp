@@ -239,7 +239,7 @@ public:
 
 #ifndef NDEBUG
 void DbgScope::dump() const {
-  raw_ostream &err = errs();
+  raw_ostream &err = dbgs();
   err.indent(IndentLevel);
   MDNode *N = Desc.getNode();
   N->dump();
