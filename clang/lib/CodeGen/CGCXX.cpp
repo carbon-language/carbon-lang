@@ -88,9 +88,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   if (MD->isStatic()) {
     // The method is static, emit it as we would a regular call.
     llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
-    return EmitCall(Callee, getContext().getPointerType(MD->getType()),
-                    CE->arg_begin(), CE->arg_end(), 0);
-    
+    return EmitCall(getContext().getPointerType(MD->getType()), Callee,
+                    CE->arg_begin(), CE->arg_end());
   }
   
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();

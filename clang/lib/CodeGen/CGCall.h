@@ -15,7 +15,8 @@
 #ifndef CLANG_CODEGEN_CGCALL_H
 #define CLANG_CODEGEN_CGCALL_H
 
-#include <llvm/ADT/FoldingSet.h>
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/Value.h"
 #include "clang/AST/Type.h"
 
 #include "CGValue.h"
@@ -123,6 +124,21 @@ namespace CodeGen {
         begin->Profile(ID);
     }
   };
+  
+  class ReturnValueSlot {
+    llvm::PointerIntPair<llvm::Value *, 1, bool> Value;
+
+  public:
+    ReturnValueSlot() {}
+    ReturnValueSlot(llvm::Value *Value, bool IsVolatile)
+      : Value(Value, IsVolatile) {}
+
+    bool isNull() const { return !getValue(); }
+    
+    bool isVolatile() const { return Value.getInt(); }
+    llvm::Value *getValue() const { return Value.getPointer(); }
+  };
+  
 }  // end namespace CodeGen
 }  // end namespace clang
 

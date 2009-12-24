@@ -1039,7 +1039,7 @@ public:
                   const CallArgList &Args,
                   const Decl *TargetDecl = 0);
 
-  RValue EmitCall(llvm::Value *Callee, QualType FnType,
+  RValue EmitCall(QualType FnType, llvm::Value *Callee,
                   CallExpr::const_arg_iterator ArgBeg,
                   CallExpr::const_arg_iterator ArgEnd,
                   const Decl *TargetDecl = 0);

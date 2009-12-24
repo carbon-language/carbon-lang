@@ -1551,7 +1551,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   }
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  return EmitCall(Callee, E->getCallee()->getType(),
+  return EmitCall(E->getCallee()->getType(), Callee,
                   E->arg_begin(), E->arg_end(), TargetDecl);
 }
 
@@ -1712,7 +1712,7 @@ LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
   return LValue::MakeAddr(V, MakeQualifiers(Field->getType()));
 }
 
-RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
+RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
                                  CallExpr::const_arg_iterator ArgBeg,
                                  CallExpr::const_arg_iterator ArgEnd,
                                  const Decl *TargetDecl) {
