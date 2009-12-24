@@ -888,6 +888,19 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   if (Stmt* C = F->getCond()) {
     Block = ExitConditionBlock;
     EntryConditionBlock = addStmt(C);
+    assert(Block == EntryConditionBlock);
+
+    // If this block contains a condition variable, add both the condition
+    // variable and initializer to the CFG.
+    if (VarDecl *VD = F->getConditionVariable()) {
+      if (Expr *Init = VD->getInit()) {
+        autoCreateBlock();
+        AppendStmt(Block, F, AddStmtChoice::AlwaysAdd);
+        EntryConditionBlock = addStmt(Init);
+        assert(Block == EntryConditionBlock);
+      }
+    }
+    
     if (Block) {
       if (!FinishBlock(EntryConditionBlock))
         return 0;
