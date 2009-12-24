@@ -13,7 +13,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-namespace {
+namespace llvm {
 
 std::ostream &operator<<(std::ostream &OS, const StringRef &S) {
   OS << S;
@@ -26,6 +26,9 @@ std::ostream &operator<<(std::ostream &OS,
   return OS;
 }
 
+}
+
+namespace {
 TEST(StringRefTest, Construction) {
   EXPECT_EQ("", StringRef());
   EXPECT_EQ("hello", StringRef("hello"));
