@@ -3223,6 +3223,41 @@ namespace {
     append(Buffer, N, Str);
   }
 
+  /// Removes data from the given significand until it is no more
+  /// precise than is required for the desired precision.
+  void AdjustToPrecision(APInt &significand,
+                         int &exp, unsigned FormatPrecision) {
+    unsigned bits = significand.getActiveBits();
+
+    // 196/59 is a very slight overestimate of lg_2(10).
+    unsigned bitsRequired = (FormatPrecision * 196 + 58) / 59;
+
+    if (bits <= bitsRequired) return;
+
+    unsigned tensRemovable = (bits - bitsRequired) * 59 / 196;
+    if (!tensRemovable) return;
+
+    exp += tensRemovable;
+
+    APInt divisor(significand.getBitWidth(), 1);
+    APInt powten(significand.getBitWidth(), 10);
+    while (true) {
+      if (tensRemovable & 1)
+        divisor *= powten;
+      tensRemovable >>= 1;
+      if (!tensRemovable) break;
+      powten *= powten;
+    }
+
+    significand = significand.udiv(divisor);
+
+    // Truncate the significand down to its active bit count, but
+    // don't try to drop below 32.
+    unsigned newPrecision = std::min(32U, significand.getActiveBits());
+    significand.trunc(newPrecision);
+  }
+
+
   void AdjustToPrecision(SmallVectorImpl<char> &buffer,
                          int &exp, unsigned FormatPrecision) {
     unsigned N = buffer.size();
@@ -3342,6 +3377,8 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
       five_to_the_i *= five_to_the_i;
     }
   }
+
+  AdjustToPrecision(significand, exp, FormatPrecision);
 
   llvm::SmallVector<char, 256> buffer;
 
