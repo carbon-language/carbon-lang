@@ -216,3 +216,22 @@ I f12() {
   // CHECK: ret void
   return "Hello";
 }
+
+// PR5867
+namespace PR5867 {
+  struct S {
+    S();
+    S(const S &);
+    ~S();
+  };
+
+  void f(S, int);
+  // CHECK: define void @_ZN6PR58671gEv
+  void g() {
+    // CHECK: call void @_ZN6PR58671SC1Ev
+    // CHECK-NEXT: call void @_ZN6PR58671fENS_1SEi
+    // CHECK-NEXT: call void @_ZN6PR58671SD1Ev
+    // CHECK-NEXT: ret void
+    (f)(S(), 0);
+  }
+}

@@ -3234,9 +3234,6 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         return true;
 
       Arg = ArgE.takeAs<Expr>();
-      
-      if (!ProtoArgType->isReferenceType())
-        Arg = MaybeBindToTemporary(Arg).takeAs<Expr>();
     } else {
       ParmVarDecl *Param = FDecl->getParamDecl(i);
       
