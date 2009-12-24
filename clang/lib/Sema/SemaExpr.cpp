@@ -1589,7 +1589,11 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     APFloat Val(Format);
 
     APFloat::opStatus result = Literal.GetFloatValue(Val);
-    if (result & (APFloat::opOverflow | APFloat::opUnderflow)) {
+
+    // Overflow is always an error, but underflow is only an error if
+    // we underflowed to zero (APFloat reports denormals as underflow).
+    if ((result & APFloat::opOverflow) ||
+        ((result & APFloat::opUnderflow) && Val.isZero())) {
       unsigned diagnostic;
       llvm::SmallVector<char, 20> buffer;
       if (result & APFloat::opOverflow) {
