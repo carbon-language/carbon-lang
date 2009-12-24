@@ -103,8 +103,14 @@ void SwitchStmt::DoDestroy(ASTContext &Ctx) {
     SC->Destroy(Ctx);
     SC = Next;
   }
-
-  Stmt::DoDestroy(Ctx);
+  
+  // We do not use child_iterator here because that will include
+  // the expressions referenced by the condition variable.
+  for (Stmt **I = &SubExprs[0], **E = &SubExprs[END_EXPR]; I != E; ++I)
+    if (Stmt *Child = *I) Child->Destroy(Ctx);
+  
+  this->~Stmt();
+  Ctx.Deallocate((void *)this);
 }
 
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
@@ -472,8 +478,12 @@ void IfStmt::DoDestroy(ASTContext &C) {
 }
 
 // SwitchStmt
-Stmt::child_iterator SwitchStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator SwitchStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+Stmt::child_iterator SwitchStmt::child_begin() {
+  return child_iterator(Var, &SubExprs[0]);
+}
+Stmt::child_iterator SwitchStmt::child_end() {
+  return child_iterator(0, &SubExprs[0]+END_EXPR);
+}
 
 // WhileStmt
 Stmt::child_iterator WhileStmt::child_begin() { return &SubExprs[0]; }
