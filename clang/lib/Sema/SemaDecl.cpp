@@ -35,6 +35,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Triple.h"
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -3398,7 +3399,16 @@ void Sema::CheckMain(FunctionDecl* FD) {
   unsigned nparams = FTP->getNumArgs();
   assert(FD->getNumParams() == nparams);
 
-  if (nparams > 3) {
+  bool HasExtraParameters = (nparams > 3);
+
+  // Darwin passes an undocumented fourth argument of type char**.  If
+  // other platforms start sprouting these, the logic below will start
+  // getting shifty.
+  if (nparams == 4 &&
+      Context.Target.getTriple().getOS() == llvm::Triple::Darwin)
+    HasExtraParameters = false;
+
+  if (HasExtraParameters) {
     Diag(FD->getLocation(), diag::err_main_surplus_args) << nparams;
     FD->setInvalidDecl(true);
     nparams = 3;
@@ -3409,7 +3419,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
 
   QualType CharPP =
     Context.getPointerType(Context.getPointerType(Context.CharTy));
-  QualType Expected[] = { Context.IntTy, CharPP, CharPP };
+  QualType Expected[] = { Context.IntTy, CharPP, CharPP, CharPP };
 
   for (unsigned i = 0; i < nparams; ++i) {
     QualType AT = FTP->getArgType(i);
