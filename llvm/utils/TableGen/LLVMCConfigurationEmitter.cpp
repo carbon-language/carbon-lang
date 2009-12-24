@@ -2551,7 +2551,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
   EmitCaseConstructHandler(Case, Indent2, IncDecWeight, false, OptDescs, O);
 
   O.indent(Indent2) << "return ret;\n";
-  O.indent(Indent1) << "};\n\n};\n\n";
+  O.indent(Indent1) << "}\n\n};\n\n";
 }
 
 /// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
