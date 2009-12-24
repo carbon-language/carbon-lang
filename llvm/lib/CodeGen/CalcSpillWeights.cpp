@@ -37,7 +37,7 @@ void CalculateSpillWeights::getAnalysisUsage(AnalysisUsage &au) const {
 
 bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
 
-  DEBUG(errs() << "********** Compute Spill Weights **********\n"
+  DEBUG(dbgs() << "********** Compute Spill Weights **********\n"
                << "********** Function: "
                << fn.getFunction()->getName() << '\n');
 
