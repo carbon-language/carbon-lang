@@ -59,3 +59,18 @@ int test_init_in_condition_switch() {
   }
   return 0;
 }
+
+int test_init_in_condition_while() {
+  int y = 1;
+  while (int x = test_init_in_condition_aux()) { // no-warning
+    if (!x) {
+      y = 0;
+      break;
+    }
+  }  
+  if (!y) {
+    int *p = 0;
+    *p = 0xDEADBEEF; // no-warning
+  }
+  return 0;
+}

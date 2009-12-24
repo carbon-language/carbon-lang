@@ -751,6 +751,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
         VisitUnaryOperator(U, Pred, Dst, false);
       break;
     }
+      
+    case Stmt::WhileStmtClass:
+      // This case isn't for branch processing, but for handling the
+      // initialization of a condition variable.
+      VisitCondInit(cast<WhileStmt>(S)->getConditionVariable(), S, Pred, Dst);
+      break;      
   }
 }
 
