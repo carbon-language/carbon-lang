@@ -5380,6 +5380,9 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
 
+  if (D.getName().getKind() == UnqualifiedId::IK_TemplateId)
+    FrD->setSpecialization(true);
+
   return DeclPtrTy::make(ND);
 }
 

@@ -401,7 +401,10 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     // Hack to make this work almost well pending a rewrite.
     if (ND->getDeclContext()->isRecord())
       NewND = SemaRef.FindInstantiatedDecl(ND, TemplateArgs);
-    else
+    else if (D->wasSpecialization()) {
+      // Totally egregious hack to work around PR5866
+      return 0;
+    } else
       NewND = Visit(ND);
     if (!NewND) return 0;
 
@@ -687,7 +690,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 ///   1) instantiating function templates
 ///   2) substituting friend declarations
 /// FIXME: preserve function definitions in case #2
-  Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
+Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                        TemplateParameterList *TemplateParams) {
   // Check whether there is already a function template specialization for
   // this declaration.
