@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import subprocess
+import difflib
+
+def capture_2(args0, args1):
+    import subprocess
+    print ' '.join(args0)
+    print ' '.join(args1)
+    p0 = subprocess.Popen(args0, stdin=None, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+    p1 = subprocess.Popen(args1, stdin=p0.stdout, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+    out,_ = p1.communicate()
+    return out
+
+def main():
+    import sys
+    clang = sys.argv[1]
+    flags = sys.argv[2:]
+
+    llvmgcc_nm = capture_2(["llvm-gcc"] + flags + ["-emit-llvm","-c","-o","-"],
+                           ["llvm-nm", "-extern-only"])
+    clang_nm = capture_2([clang] + flags + ["-emit-llvm","-c","-o","-"],
+                         ["llvm-nm", "-extern-only"])
+
+    llvmgcc_nm = llvmgcc_nm.split('\n')
+    clang_nm = clang_nm.split('\n')
+    llvmgcc_nm.sort()
+    clang_nm.sort()
+
+    if llvmgcc_nm == clang_nm:
+        sys.exit(0)
+
+    for line in difflib.unified_diff(llvmgcc_nm, clang_nm,
+                                     fromfile="llvm-gcc symbols",
+                                     tofile="clang symbols"):
+        print line
+    sys.exit(1)
+
+if __name__ == '__main__':
+    main()
