@@ -610,23 +610,14 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   return OverflowOccurred;
 }
 
-llvm::APFloat NumericLiteralParser::
-GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
+llvm::APFloat::opStatus
+NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
   using llvm::APFloat;
   using llvm::StringRef;
 
   unsigned n = std::min(SuffixBegin - ThisTokBegin, ThisTokEnd - ThisTokBegin);
-
-  APFloat V (Format, APFloat::fcZero, false);
-  APFloat::opStatus status;
-
-  status = V.convertFromString(StringRef(ThisTokBegin, n),
-                               APFloat::rmNearestTiesToEven);
-
-  if (isExact)
-    *isExact = status == APFloat::opOK;
-
-  return V;
+  return Result.convertFromString(StringRef(ThisTokBegin, n),
+                                  APFloat::rmNearestTiesToEven);
 }
 
 

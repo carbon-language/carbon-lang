@@ -1585,9 +1585,27 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     const llvm::fltSemantics &Format = Context.getFloatTypeSemantics(Ty);
 
-    // isExact will be set by GetFloatValue().
-    bool isExact = false;
-    llvm::APFloat Val = Literal.GetFloatValue(Format, &isExact);
+    using llvm::APFloat;
+    APFloat Val(Format);
+
+    APFloat::opStatus result = Literal.GetFloatValue(Val);
+    if (result & (APFloat::opOverflow | APFloat::opUnderflow)) {
+      unsigned diagnostic;
+      llvm::SmallVector<char, 20> buffer;
+      if (result & APFloat::opOverflow) {
+        diagnostic = diag::err_float_overflow;
+        APFloat::getLargest(Format).toString(buffer);
+      } else {
+        diagnostic = diag::err_float_underflow;
+        APFloat::getSmallest(Format).toString(buffer);
+      }
+
+      Diag(Tok.getLocation(), diagnostic)
+        << Ty
+        << llvm::StringRef(buffer.data(), buffer.size());
+    }
+
+    bool isExact = (result == APFloat::opOK);
     Res = new (Context) FloatingLiteral(Val, isExact, Ty, Tok.getLocation());
 
   } else if (!Literal.isIntegerLiteral()) {

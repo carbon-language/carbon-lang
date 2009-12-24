@@ -16,14 +16,9 @@
 #define CLANG_LITERALSUPPORT_H
 
 #include <string>
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/System/DataTypes.h"
-
-namespace llvm {
-  class APInt;
-  class APFloat;
-  struct fltSemantics;
-}
 
 namespace clang {
 
@@ -82,8 +77,7 @@ public:
   /// The optional bool isExact (passed-by-reference) has its value
   /// set to true if the returned APFloat can represent the number in the
   /// literal exactly, and false otherwise.
-  llvm::APFloat GetFloatValue(const llvm::fltSemantics &Format,
-                              bool* isExact = NULL);
+  llvm::APFloat::opStatus GetFloatValue(llvm::APFloat &Result);
 
 private:
 

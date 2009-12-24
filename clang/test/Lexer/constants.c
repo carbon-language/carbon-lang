@@ -33,3 +33,25 @@ char e = 'abcd';  // still warn: expected-warning {{multi-character character co
 #pragma clang diagnostic ignored "-Wfour-char-constants"
 
 char f = 'abcd';  // ignored.
+
+// rdar://problem/6974641
+float t0[] = {
+  1.9e20f,
+  1.9e-20f,
+  1.9e50f,   // expected-error {{too large}}
+  1.9e-50f,  // expected-error {{too small}}
+  -1.9e20f,
+  -1.9e-20f,
+  -1.9e50f,  // expected-error {{too large}}
+  -1.9e-50f  // expected-error {{too small}}
+};
+double t1[] = {
+  1.9e50,
+  1.9e-50,
+  1.9e500,   // expected-error {{too large}}
+  1.9e-500,  // expected-error {{too small}}
+  -1.9e50,
+  -1.9e-50,
+  -1.9e500,  // expected-error {{too large}}
+  -1.9e-500  // expected-error {{too small}}
+};
