@@ -41,3 +41,21 @@ int test_init_in_condition() {
   }
   return 0;
 }
+
+int test_init_in_condition_switch() {
+  switch (int x = test_init_in_condition_aux()) { // no-warning
+    case 1:
+      return 0;
+    case 2:
+      if (x == 2)
+        return 0;
+      else {
+        // Unreachable.
+        int *p = 0;
+        *p = 0xDEADBEEF; // no-warning
+      }
+    default:
+      break;
+  }
+  return 0;
+}

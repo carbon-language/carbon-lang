@@ -665,7 +665,7 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     case Stmt::IfStmtClass:
       // This case isn't for branch processing, but for handling the
       // initialization of a condition variable.
-      VisitIfStmtCondInit(cast<IfStmt>(S), Pred, Dst);
+      VisitCondInit(cast<IfStmt>(S)->getConditionVariable(), S, Pred, Dst);
       break;
 
     case Stmt::InitListExprClass:
@@ -732,6 +732,12 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
     case Stmt::StringLiteralClass:
       VisitLValue(cast<StringLiteral>(S), Pred, Dst);
+      break;
+      
+    case Stmt::SwitchStmtClass:
+      // This case isn't for branch processing, but for handling the
+      // initialization of a condition variable.
+      VisitCondInit(cast<SwitchStmt>(S)->getConditionVariable(), S, Pred, Dst);
       break;
 
     case Stmt::UnaryOperatorClass: {
@@ -2230,12 +2236,10 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitIfStmtCondInit(IfStmt *IS, ExplodedNode *Pred,
-                                       ExplodedNodeSet& Dst) {
+void GRExprEngine::VisitCondInit(VarDecl *VD, Stmt *S,
+                                 ExplodedNode *Pred, ExplodedNodeSet& Dst) {
   
-  VarDecl* VD = IS->getConditionVariable();
-  Expr* InitEx = VD->getInit();
-  
+  Expr* InitEx = VD->getInit();  
   ExplodedNodeSet Tmp;
   Visit(InitEx, Pred, Tmp);
 
@@ -2255,7 +2259,7 @@ void GRExprEngine::VisitIfStmtCondInit(IfStmt *IS, ExplodedNode *Pred,
                                             Builder->getCurrentBlockCount());
     }
       
-    EvalBind(Dst, IS, IS, N, state,
+    EvalBind(Dst, S, S, N, state,
              loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
   }
 }
