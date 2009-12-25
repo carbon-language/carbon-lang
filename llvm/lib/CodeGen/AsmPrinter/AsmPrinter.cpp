@@ -1905,7 +1905,6 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
       if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << " Reload Reuse";
-      Newline = true;
     }
   }
 }
