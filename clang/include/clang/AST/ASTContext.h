@@ -1248,7 +1248,8 @@ inline void *operator new[](size_t Bytes, clang::ASTContext& C,
 /// invoking it directly; see the new[] operator for more details. This operator
 /// is called implicitly by the compiler if a placement new[] expression using
 /// the ASTContext throws in the object constructor.
-inline void operator delete[](void *Ptr, clang::ASTContext &C) throw () {
+inline void operator delete[](void *Ptr, clang::ASTContext &C, size_t)
+              throw () {
   C.Deallocate(Ptr);
 }
 
