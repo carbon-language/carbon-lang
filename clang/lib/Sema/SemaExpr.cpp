@@ -1435,7 +1435,6 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   assert(D && "Cannot refer to a NULL declaration");
   assert(!isa<FunctionTemplateDecl>(D) &&
          "Cannot refer unambiguously to a function template");
-  DeclarationName Name = D->getDeclName();
 
   if (CheckDeclInExpr(*this, Loc, D))
     return ExprError();

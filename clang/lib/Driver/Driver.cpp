@@ -776,10 +776,8 @@ void Driver::BuildJobs(Compilation &C) const {
     UsePipes = false;
 
   // -save-temps inhibits pipes.
-  if (SaveTemps && UsePipes) {
+  if (SaveTemps && UsePipes)
     Diag(clang::diag::warn_drv_pipe_ignored_with_save_temps);
-    UsePipes = true;
-  }
 
   Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
 
@@ -914,14 +912,12 @@ void Driver::BuildJobsForAction(Compilation &C,
   // See if we should use an integrated preprocessor. We do so when we have
   // exactly one input, since this is the only use case we care about
   // (irrelevant since we don't support combine yet).
-  bool UseIntegratedCPP = false;
   const ActionList *Inputs = &A->getInputs();
   if (Inputs->size() == 1 && isa<PreprocessJobAction>(*Inputs->begin())) {
     if (!C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
         !C.getArgs().hasArg(options::OPT_traditional_cpp) &&
         !C.getArgs().hasArg(options::OPT_save_temps) &&
         T.hasIntegratedCPP()) {
-      UseIntegratedCPP = true;
       Inputs = &(*Inputs)[0]->getInputs();
     }
   }

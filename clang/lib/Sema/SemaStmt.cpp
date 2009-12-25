@@ -978,7 +978,6 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
     // we have a non-void block with an expression, continue checking
-    QualType RetValType = RetValExp->getType();
 
     // C99 6.8.6.4p3(136): The return statement is not an assignment. The
     // overlap restriction of subclause 6.5.16.1 does not apply to the case of

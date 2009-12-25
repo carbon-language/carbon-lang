@@ -1291,8 +1291,6 @@ unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
 /// VisitSizeAlignOfExpr - Evaluate a sizeof or alignof with a result as the
 /// expression's type.
 bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
-  QualType DstTy = E->getType();
-
   // Handle alignof separately.
   if (!E->isSizeOf()) {
     if (E->isArgumentType())

@@ -78,7 +78,6 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   }
       
   return CalculateCookiePadding(Ctx, E->getAllocatedType());
-  QualType T = E->getAllocatedType();
 }
 
 static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF, 

@@ -1065,9 +1065,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   // Add in synthesized ivar count if laying out an implementation.
   if (Impl) {
-    unsigned FieldCount = D->ivar_size();
     unsigned SynthCount = CountSynthesizedIvars(D);
-    FieldCount += SynthCount;
     // If there aren't any sythesized ivars then reuse the interface
     // entry. Note we can't cache this because we simply free all
     // entries later; however we shouldn't look up implementations

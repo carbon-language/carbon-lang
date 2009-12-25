@@ -3351,7 +3351,6 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     SkipScanIvars.push_back(SkScan);
   }
 
-  bool BytesSkipped = false;
   if (!SkipIvars.empty()) {
     unsigned int LastIndex = SkipIvars.size()-1;
     int LastByteSkipped =
@@ -3360,9 +3359,8 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     int LastByteScanned =
       IvarsInfo[LastIndex].ivar_bytepos +
       IvarsInfo[LastIndex].ivar_size * WordSize;
-    BytesSkipped = (LastByteSkipped > LastByteScanned);
     // Compute number of bytes to skip at the tail end of the last ivar scanned.
-    if (BytesSkipped) {
+    if (LastByteSkipped > LastByteScanned) {
       unsigned int TotalWords = (LastByteSkipped + (WordSize -1)) / WordSize;
       SKIP_SCAN SkScan;
       SkScan.skip = TotalWords - (LastByteScanned/WordSize);
@@ -3393,8 +3391,6 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
     unsigned int skip_big  = SkipScanIvars[i].skip / 0xf;
     unsigned int scan_big  = SkipScanIvars[i].scan / 0xf;
 
-    if (skip_small > 0 || skip_big > 0)
-      BytesSkipped = true;
     // first skip big.
     for (unsigned int ix = 0; ix < skip_big; ix++)
       BitMap += (unsigned char)(0xf0);

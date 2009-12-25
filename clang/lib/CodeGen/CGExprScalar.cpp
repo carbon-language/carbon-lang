@@ -1199,7 +1199,7 @@ BinOpInfo ScalarExprEmitter::EmitBinOps(const BinaryOperator *E) {
 Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
                       Value *(ScalarExprEmitter::*Func)(const BinOpInfo &)) {
   bool Ignore = TestAndClearIgnoreResultAssign();
-  QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
+  QualType LHSTy = E->getLHS()->getType();
 
   BinOpInfo OpInfo;
 

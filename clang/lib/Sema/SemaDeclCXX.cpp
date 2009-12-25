@@ -109,8 +109,6 @@ namespace {
 bool
 Sema::SetParamDefaultArgument(ParmVarDecl *Param, ExprArg DefaultArg,
                               SourceLocation EqualLoc) {
-  QualType ParamType = Param->getType();
-
   if (RequireCompleteType(Param->getLocation(), Param->getType(),
                           diag::err_typecheck_decl_incomplete_type)) {
     Param->setInvalidDecl();
@@ -158,7 +156,6 @@ Sema::ActOnParamDefaultArgument(DeclPtrTy param, SourceLocation EqualLoc,
   UnparsedDefaultArgLocs.erase(Param);
 
   ExprOwningPtr<Expr> DefaultArg(this, defarg.takeAs<Expr>());
-  QualType ParamType = Param->getType();
 
   // Default arguments are only permitted in C++
   if (!getLangOptions().CPlusPlus) {

@@ -975,8 +975,6 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
                                         const SourceRange &OpRange,
                                         unsigned &msg,
                                         CastExpr::CastKind &Kind) {
-  QualType OrigDestType = DestType, OrigSrcType = SrcExpr->getType();
-
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {

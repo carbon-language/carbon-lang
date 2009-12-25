@@ -2453,7 +2453,6 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   typedef CodeCompleteConsumer::Result Result;
   
   Expr *RecExpr = static_cast<Expr *>(Receiver);
-  QualType RecType = RecExpr->getType();
   
   // If necessary, apply function/array conversion to the receiver.
   // C99 6.7.5.3p[7,8].

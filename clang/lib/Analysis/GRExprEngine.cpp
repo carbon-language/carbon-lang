@@ -2228,7 +2228,6 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
 
     if (InitEx) {
       SVal InitVal = state->getSVal(InitEx);
-      QualType T = VD->getType();
 
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
@@ -2261,7 +2260,6 @@ void GRExprEngine::VisitCondInit(VarDecl *VD, Stmt *S,
     
     const LocationContext *LC = N->getLocationContext();
     SVal InitVal = state->getSVal(InitEx);
-    QualType T = VD->getType();
       
     // Recover some path-sensitivity if a scalar value evaluated to
     // UnknownVal.
