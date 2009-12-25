@@ -546,7 +546,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     // static, static inline, always_inline, and extern inline functions can
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
     if (Linkage == GVA_Internal || Linkage == GVA_C99Inline ||
-        Linkage == GVA_CXXInline)
+        Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
       return true;
     return false;
   }

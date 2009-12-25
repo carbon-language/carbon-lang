@@ -1378,6 +1378,15 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
 LValue 
 CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
   if (E->isLvalue(getContext()) == Expr::LV_Valid) {
+    if (int Cond = ConstantFoldsToSimpleInteger(E->getCond())) {
+      Expr *Live = Cond == 1 ? E->getLHS() : E->getRHS();
+      if (Live)
+        return EmitLValue(Live);
+    }
+
+    if (!E->getLHS())
+      return EmitUnsupportedLValue(E, "conditional operator with missing LHS");
+
     llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
     llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
     llvm::BasicBlock *ContBlock = createBasicBlock("cond.end");
