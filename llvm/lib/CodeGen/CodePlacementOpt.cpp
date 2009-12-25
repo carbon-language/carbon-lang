@@ -233,7 +233,6 @@ bool CodePlacementOpt::EliminateUnconditionalJumpsToTop(MachineFunction &MF,
       !BotHasFallthrough &&
       HasFallthrough(L->getBottomBlock())) {
     ++NumIntraElim;
-    BotHasFallthrough = true;
   }
 
   return Changed;
