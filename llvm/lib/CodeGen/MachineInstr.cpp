@@ -1177,7 +1177,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   }
 
   if (!debugLoc.isUnknown() && MF) {
-    if (!HaveSemi) OS << ";"; HaveSemi = true;
+    if (!HaveSemi) OS << ";";
 
     // TODO: print InlinedAtLoc information
 
