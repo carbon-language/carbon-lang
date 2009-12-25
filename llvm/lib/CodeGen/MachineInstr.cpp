@@ -1159,7 +1159,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
   // Briefly indicate whether any call clobbers were omitted.
   if (OmittedAnyCallClobbers) {
-    if (FirstOp) FirstOp = false; else OS << ",";
+    if (!FirstOp) OS << ",";
     OS << " ...";
   }
 
