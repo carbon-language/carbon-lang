@@ -1344,8 +1344,8 @@ void GRExprEngine::VisitCommonDeclRefExpr(Expr *Ex, const NamedDecl *D,
           V = UnknownVal();
       }
       
-      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V,
-                                              ProgramPoint::PostLValueKind));
+      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V),
+               ProgramPoint::PostLValueKind);
     }
     else
       EvalLoad(Dst, Ex, Pred, state, V);
