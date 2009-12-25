@@ -225,8 +225,10 @@ int main(int argc, const char **argv) {
   // We use *argv instead of argv[0] to work around a bogus g++ warning.
   std::string ProgName(llvm::sys::Path(*argv).getBasename());
   if (llvm::StringRef(ProgName).endswith("++") ||
-      llvm::StringRef(ProgName).rsplit('-').first.endswith("++"))
+      llvm::StringRef(ProgName).rsplit('-').first.endswith("++")) {
     TheDriver.CCCIsCXX = true;
+    TheDriver.CCCGenericGCCName = "g++";
+  }
 
   llvm::OwningPtr<Compilation> C;
 
