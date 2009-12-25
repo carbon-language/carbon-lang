@@ -1114,14 +1114,13 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   QualType FieldType = Member->getType();
   if (const ArrayType *Array = Context.getAsArrayType(FieldType))
     FieldType = Array->getElementType();
+  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
   if (FieldType->isDependentType()) {
     // Can't check init for dependent type.
   } else if (FieldType->isRecordType()) {
     // Member is a record (struct/union/class), so pass the initializer
     // arguments down to the record's constructor.
     if (!HasDependentArg) {
-      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-
       C = PerformInitializationByConstructor(FieldType, 
                                              MultiExprArg(*this, 
                                                           (void**)Args, 
@@ -1243,10 +1242,10 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   }
 
   CXXConstructorDecl *C = 0;
+  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
   if (!BaseType->isDependentType() && !HasDependentArg) {
     DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
                       Context.getCanonicalType(BaseType).getUnqualifiedType());
-    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
 
     C = PerformInitializationByConstructor(BaseType, 
                                            MultiExprArg(*this, 
