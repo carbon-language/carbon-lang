@@ -1133,7 +1133,7 @@ bool BBPassManager::runOnFunction(Function &F) {
       removeDeadPasses(BP, I->getName(), ON_BASICBLOCK_MSG);
     }
 
-  return Changed |= doFinalization(F);
+  return doFinalization(F) || Changed;
 }
 
 // Implement doInitialization and doFinalization
@@ -1355,7 +1355,7 @@ bool FPPassManager::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     runOnFunction(*I);
 
-  return Changed |= doFinalization(M);
+  return doFinalization(M) || Changed;
 }
 
 bool FPPassManager::doInitialization(Module &M) {
