@@ -321,8 +321,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N,NumResults);
     
     // It must be integer.
-    bool MadeChange = false;
-    MadeChange |= OtherNode->UpdateNodeType(MVT::iAny, TP);
+    bool MadeChange = OtherNode->UpdateNodeType(MVT::iAny, TP);
     
     // This code only handles nodes that have one type set.  Assert here so
     // that we can change this if we ever need to deal with multiple value
@@ -330,7 +329,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     assert(OtherNode->getExtTypes().size() == 1 && "Node has too many types!");
     if (OtherNode->hasTypeSet() && OtherNode->getTypeNum(0) <= VT)
       OtherNode->UpdateNodeType(MVT::Other, TP);  // Throw an error.
-    return false;
+    return MadeChange;
   }
   case SDTCisOpSmallerThanOp: {
     TreePatternNode *BigOperand =
