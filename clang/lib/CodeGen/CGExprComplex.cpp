@@ -626,6 +626,14 @@ ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
+  if (!E->getLHS()) {
+    CGF.ErrorUnsupported(E, "conditional operator with missing LHS");
+    const llvm::Type *EltTy =
+      CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
+    llvm::Value *U = llvm::UndefValue::get(EltTy);
+    return ComplexPairTy(U, U);
+  }
+
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
   TestAndClearIgnoreRealAssign();
@@ -634,8 +642,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
-  llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
-  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
 
   CGF.EmitBlock(LHSBlock);
 

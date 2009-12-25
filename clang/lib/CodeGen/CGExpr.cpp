@@ -1391,8 +1391,7 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
     llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
     llvm::BasicBlock *ContBlock = createBasicBlock("cond.end");
     
-    llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
-    Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+    EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
     
     EmitBlock(LHSBlock);
 
