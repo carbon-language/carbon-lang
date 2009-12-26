@@ -3373,7 +3373,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // Also, in C++, keep track of whether we should perform argument-dependent
   // lookup and whether there were any explicitly-specified template arguments.
 
-  Expr *NakedFn = Fn->IgnoreParenCasts();
+  Expr *NakedFn = Fn->IgnoreParens();
   if (isa<UnresolvedLookupExpr>(NakedFn)) {
     UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(NakedFn);
     return BuildOverloadedCallExpr(Fn, ULE, LParenLoc, Args, NumArgs,
