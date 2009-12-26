@@ -1128,7 +1128,7 @@ def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
                 "imul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
-let Defs = [EAX,EDX], Uses = [EAX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
                 "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
 }
