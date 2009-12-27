@@ -1118,7 +1118,7 @@ void CodeGenFunction::InitializeVtablePtrsRecursive(
   VtableField = Builder.CreateConstInBoundsGEP1_64(VtableField, Offset/8);
   const llvm::Type *AddressPointPtrTy =
       VtableAddressPoint->getType()->getPointerTo();
-  VtableField = Builder.CreateBitCast(ThisPtr, AddressPointPtrTy);
+  VtableField = Builder.CreateBitCast(VtableField, AddressPointPtrTy);
 
   // Store address point
   Builder.CreateStore(VtableAddressPoint, VtableField);
