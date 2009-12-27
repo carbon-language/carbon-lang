@@ -1108,6 +1108,8 @@ void CodeGenFunction::InitializeVtablePtrsRecursive(
   }
 
   // Compute the address point
+  assert(AddressPoints.count(std::make_pair(ClassDecl, Offset)) &&
+         "Missing address point for class");
   uint64_t AddressPoint = AddressPoints[std::make_pair(ClassDecl, Offset)];
   llvm::Value *VtableAddressPoint =
       Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
