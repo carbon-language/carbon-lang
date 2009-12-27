@@ -222,7 +222,6 @@ public:
 
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
   APValue VisitDeclRefExpr(DeclRefExpr *E);
-  APValue VisitBlockExpr(BlockExpr *E);
   APValue VisitPredefinedExpr(PredefinedExpr *E) { return APValue(E, 0); }
   APValue VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   APValue VisitMemberExpr(MemberExpr *E);
@@ -268,13 +267,6 @@ APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
   }
 
   return APValue();
-}
-
-APValue LValueExprEvaluator::VisitBlockExpr(BlockExpr *E) {
-  if (E->hasBlockDeclRefExprs())
-    return APValue();
-
-  return APValue(E, 0);
 }
 
 APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
@@ -366,7 +358,7 @@ public:
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
   APValue VisitBinaryOperator(const BinaryOperator *E);
-  APValue VisitCastExpr(const CastExpr* E);
+  APValue VisitCastExpr(CastExpr* E);
   APValue VisitUnaryExtension(const UnaryOperator *E)
       { return Visit(E->getSubExpr()); }
   APValue VisitUnaryAddrOf(const UnaryOperator *E);
@@ -443,23 +435,49 @@ APValue PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
 }
 
 
-APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
-  const Expr* SubExpr = E->getSubExpr();
+APValue PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
+  Expr* SubExpr = E->getSubExpr();
 
-   // Check for pointer->pointer cast
-  if (SubExpr->getType()->isPointerType() ||
-      SubExpr->getType()->isObjCObjectPointerType() ||
-      SubExpr->getType()->isNullPtrType()) {
-    APValue Result;
-    if (EvaluatePointer(SubExpr, Result, Info))
+  switch (E->getCastKind()) {
+  default:
+    break;
+
+  case CastExpr::CK_Unknown: {
+    // FIXME: The handling for CK_Unknown is ugly/shouldn't be necessary!
+
+    // Check for pointer->pointer cast
+    if (SubExpr->getType()->isPointerType() ||
+        SubExpr->getType()->isObjCObjectPointerType() ||
+        SubExpr->getType()->isNullPtrType() ||
+        SubExpr->getType()->isBlockPointerType())
+      return Visit(SubExpr);
+
+    if (SubExpr->getType()->isIntegralType()) {
+      APValue Result;
+      if (!EvaluateIntegerOrLValue(SubExpr, Result, Info))
+        break;
+
+      if (Result.isInt()) {
+        Result.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+        return APValue(0, Result.getInt().getZExtValue());
+      }
+
+      // Cast is of an lvalue, no need to change value.
       return Result;
-    return APValue();
+    }
+    break;
   }
 
-  if (SubExpr->getType()->isIntegralType()) {
+  case CastExpr::CK_NoOp:
+  case CastExpr::CK_BitCast:
+  case CastExpr::CK_AnyPointerToObjCPointerCast:
+  case CastExpr::CK_AnyPointerToBlockPointerCast:
+    return Visit(SubExpr);
+
+  case CastExpr::CK_IntegralToPointer: {
     APValue Result;
     if (!EvaluateIntegerOrLValue(SubExpr, Result, Info))
-      return APValue();
+      break;
 
     if (Result.isInt()) {
       Result.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
@@ -469,14 +487,13 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     // Cast is of an lvalue, no need to change value.
     return Result;
   }
-
-  if (SubExpr->getType()->isFunctionType() ||
-      SubExpr->getType()->isBlockPointerType() ||
-      SubExpr->getType()->isArrayType()) {
+  case CastExpr::CK_ArrayToPointerDecay:
+  case CastExpr::CK_FunctionToPointerDecay: {
     APValue Result;
     if (EvaluateLValue(SubExpr, Result, Info))
       return Result;
-    return APValue();
+    break;
+  }
   }
 
   return APValue();
