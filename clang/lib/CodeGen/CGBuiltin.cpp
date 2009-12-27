@@ -340,12 +340,20 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_return_address: {
+    Value *Depth = EmitScalarExpr(E->getArg(0));
+    Depth = Builder.CreateIntCast(Depth,
+                                  llvm::Type::getInt32Ty(VMContext),
+                                  false, "tmp");
     Value *F = CGM.getIntrinsic(Intrinsic::returnaddress, 0, 0);
-    return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
+    return RValue::get(Builder.CreateCall(F, Depth));
   }
   case Builtin::BI__builtin_frame_address: {
+    Value *Depth = EmitScalarExpr(E->getArg(0));
+    Depth = Builder.CreateIntCast(Depth,
+                                  llvm::Type::getInt32Ty(VMContext),
+                                  false, "tmp");
     Value *F = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
-    return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
+    return RValue::get(Builder.CreateCall(F, Depth));
   }
   case Builtin::BI__builtin_extract_return_addr: {
     // FIXME: There should be a target hook for this
