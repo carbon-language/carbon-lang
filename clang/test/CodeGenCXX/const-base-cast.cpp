@@ -1,4 +1,4 @@
-// RUN: clang -cc1 -O1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -O1 -emit-llvm %s -o - | FileCheck %s
 
 // Check that the following construct, which is similar to one which occurs
 // in Firefox, is not misfolded (folding it correctly would be a bonus, but
