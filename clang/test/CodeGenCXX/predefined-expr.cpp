@@ -31,6 +31,15 @@
 // CHECK: private constant [16 x i8] c"virtualFunction\00"
 // CHECK: private constant [44 x i8] c"virtual void NS::Derived::virtualFunction()\00"
 
+// CHECK: private constant [22 x i8] c"constVolatileFunction\00"
+// CHECK: private constant [54 x i8] c"void NS::Base::constVolatileFunction() const volatile\00"
+
+// CHECK: private constant [17 x i8] c"volatileFunction\00"
+// CHECK: private constant [43 x i8] c"void NS::Base::volatileFunction() volatile\00"
+
+// CHECK: private constant [14 x i8] c"constFunction\00"
+// CHECK: private constant [37 x i8] c"void NS::Base::constFunction() const\00"
+
 // CHECK: private constant [26 x i8] c"functionReturingTemplate2\00"
 // CHECK: private constant [64 x i8] c"ClassTemplate<NS::Base *> NS::Base::functionReturingTemplate2()\00"
 
@@ -57,8 +66,8 @@
 // CHECK: private constant [15 x i8] c"inlineFunction\00"
 // CHECK: private constant [32 x i8] c"void NS::Base::inlineFunction()\00"
 
-// CHECK: private constant [11 x i8] c"staticFunc\00"
-// CHECK: private constant [28 x i8] c"void NS::Base::staticFunc()\00"
+// CHECK: private constant [15 x i8] c"staticFunction\00"
+// CHECK: private constant [39 x i8] c"static void NS::Base::staticFunction()\00"
 
 // CHECK: private constant [26 x i8] c"topLevelNamespaceFunction\00"
 // CHECK: private constant [59 x i8] c"void ClassInTopLevelNamespace::topLevelNamespaceFunction()\00"
@@ -104,7 +113,7 @@ public:
 
 class Base {
 public:
-  static void staticFunc() {
+  static void staticFunction() {
     printf("__func__ %s\n", __func__);
     printf("__FUNCTION__ %s\n", __FUNCTION__);
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
@@ -169,6 +178,24 @@ public:
 
   template<typename T>
   void functionTemplate1(T t) {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+
+  void constFunction() const {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+
+  void volatileFunction() volatile {
+    printf("__func__ %s\n", __func__);
+    printf("__FUNCTION__ %s\n", __FUNCTION__);
+    printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+  }
+  
+  void constVolatileFunction() const volatile {
     printf("__func__ %s\n", __func__);
     printf("__FUNCTION__ %s\n", __FUNCTION__);
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
@@ -258,7 +285,7 @@ int main() {
   ClassInTopLevelNamespace topLevelNamespace;
   topLevelNamespace.topLevelNamespaceFunction();
 
-  NS::Base::staticFunc();
+  NS::Base::staticFunction();
   
   NS::Base b;
   b.inlineFunction();
@@ -273,7 +300,10 @@ int main() {
   b.functionReturingTemplate2();
   b.functionTemplate1<int>(0);
   b.functionTemplate1<NS::Base *>(0);
-  
+  b.constFunction();
+  b.volatileFunction();
+  b.constVolatileFunction();
+
   NS::Derived d;
   d.virtualFunction();
   

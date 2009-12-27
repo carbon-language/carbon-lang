@@ -174,6 +174,8 @@ std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
       if (MD->isVirtual())
         Out << "virtual ";
+      if (MD->isStatic())
+        Out << "static ";
     }
 
     PrintingPolicy Policy(Context.getLangOptions());
@@ -202,6 +204,14 @@ std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
       }
     }
     Proto += ")";
+
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      Qualifiers ThisQuals = Qualifiers::fromCVRMask(MD->getTypeQualifiers());
+      if (ThisQuals.hasConst())
+        Proto += " const";
+      if (ThisQuals.hasVolatile())
+        Proto += " volatile";
+    }
 
     if (!isa<CXXConstructorDecl>(FD) && !isa<CXXDestructorDecl>(FD))
       AFT->getResultType().getAsStringInternal(Proto, Policy);
