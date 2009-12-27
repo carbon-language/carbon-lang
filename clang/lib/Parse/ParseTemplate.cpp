@@ -643,8 +643,10 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
     }
   }
 
-  if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater))
+  if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater)) {
+    Diag(Tok.getLocation(), diag::err_expected_greater);
     return true;
+  }
 
   // Determine the location of the '>' or '>>'. Only consume this
   // token if the caller asked us to.
@@ -989,7 +991,7 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
     ConsumeToken();
   }
 
-  return Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater);
+  return false;
 }
 
 /// \brief Parse a C++ explicit template instantiation
