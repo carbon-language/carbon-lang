@@ -190,7 +190,6 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   EVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
-  SDValue Zero = DAG.getConstant(0, PtrVT);
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
 
