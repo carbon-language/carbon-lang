@@ -87,11 +87,12 @@ void MDNodeElement::allUsesReplacedWith(Value *NV) {
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
-  NodeSize = NumVals;
-  Node = new MDNodeElement[NodeSize];
-  MDNodeElement *Ptr = Node;
+  NumOperands = NumVals;
+  Operands = new MDNodeElement[NumOperands];
+  MDNodeElement *Ptr = Operands;
   for (unsigned i = 0; i != NumVals; ++i) 
-    *Ptr++ = MDNodeElement(Vals[i], this);
+    Ptr[i] = MDNodeElement(Vals[i], this);
+    
   if (isFunctionLocal)
     SubclassData |= FunctionLocalBit;
 }
@@ -122,14 +123,14 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
 MDNode::~MDNode() {
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
   pImpl->MDNodeSet.RemoveNode(this);
-  delete [] Node;
-  Node = NULL;
+  delete [] Operands;
+  Operands = NULL;
 }
 
 /// getElement - Return specified element.
 Value *MDNode::getElement(unsigned i) const {
   assert(i < getNumElements() && "Invalid element number!");
-  return Node[i];
+  return Operands[i];
 }
 
 
@@ -161,8 +162,7 @@ void MDNode::replaceElement(Value *From, Value *To) {
   // Replace From element(s) in place.
   for (SmallVector<unsigned, 4>::iterator I = Indexes.begin(), E = Indexes.end(); 
        I != E; ++I) {
-    unsigned Index = *I;
-    Node[Index] = MDNodeElement(To, this);
+    Operands[*I] = MDNodeElement(To, this);
   }
 
   // Insert updated "this" into the context's folding node set.

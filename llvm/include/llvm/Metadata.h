@@ -99,8 +99,8 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   // Replace each instance of F from the element list of this node with T.
   void replaceElement(Value *F, Value *T);
 
-  MDNodeElement *Node;
-  unsigned NodeSize;
+  MDNodeElement *Operands;
+  unsigned NumOperands;
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
@@ -117,7 +117,7 @@ public:
   Value *getElement(unsigned i) const;
   
   /// getNumElements - Return number of MDNode elements.
-  unsigned getNumElements() const { return NodeSize; }
+  unsigned getNumElements() const { return NumOperands; }
   
   /// isFunctionLocal - Return whether MDNode is local to a function.
   /// Note: MDNodes are designated as function-local when created, and keep
