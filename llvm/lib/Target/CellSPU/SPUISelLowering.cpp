@@ -748,9 +748,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case ISD::UNINDEXED: {
     // The vector type we really want to load from the 16-byte chunk.
     EVT vecVT = EVT::getVectorVT(*DAG.getContext(),
-                                 VT, (128 / VT.getSizeInBits())),
-        stVecVT = EVT::getVectorVT(*DAG.getContext(),
-                                   StVT, (128 / StVT.getSizeInBits()));
+                                 VT, (128 / VT.getSizeInBits()));
 
     SDValue alignLoadVec;
     SDValue basePtr = SN->getBasePtr();
@@ -2622,8 +2620,6 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
 
   // Type to extend to
   MVT OpVT = Op.getValueType().getSimpleVT();
-  EVT VecVT = EVT::getVectorVT(*DAG.getContext(),
-                               OpVT, (128 / OpVT.getSizeInBits()));
 
   // Type to extend from
   SDValue Op0 = Op.getOperand(0);
