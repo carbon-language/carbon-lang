@@ -203,15 +203,6 @@ public:
     Node.push_back(TrackingVH<MetadataBase>(M));
   }
 
-  typedef SmallVectorImpl<TrackingVH<MetadataBase> >::iterator elem_iterator;
-  typedef SmallVectorImpl<TrackingVH<MetadataBase> >::const_iterator 
-    const_elem_iterator;
-  bool elem_empty() const                { return Node.empty(); }
-  const_elem_iterator elem_begin() const { return Node.begin(); }
-  const_elem_iterator elem_end() const   { return Node.end();   }
-  elem_iterator elem_begin()             { return Node.begin(); }
-  elem_iterator elem_end()               { return Node.end();   }
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }
   static bool classof(const Value *V) {
