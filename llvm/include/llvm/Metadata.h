@@ -102,7 +102,7 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   };
   
   // Replace each instance of F from the element list of this node with T.
-  void replaceElement(Value *F, Value *T);
+  void replaceElement(MDNodeElement *Op, Value *NewVal);
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,

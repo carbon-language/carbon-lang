@@ -76,11 +76,11 @@ public:
 
 
 void MDNodeElement::deleted() {
-  Parent->replaceElement(this->operator Value*(), 0);
+  Parent->replaceElement(this, 0);
 }
 
 void MDNodeElement::allUsesReplacedWith(Value *NV) {
-  Parent->replaceElement(this->operator Value*(), NV);
+  Parent->replaceElement(this, NV);
 }
 
 
@@ -142,8 +142,10 @@ Value *MDNode::getElement(unsigned i) const {
 
 
 // Replace value from this node's element list.
-void MDNode::replaceElement(Value *From, Value *To) {
-  if (From == To || !getType())
+void MDNode::replaceElement(MDNodeElement *Op, Value *To) {
+  Value *From = *Op;
+  
+  if (From == To)
     return;
 
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
@@ -151,14 +153,9 @@ void MDNode::replaceElement(Value *From, Value *To) {
   // Remove "this" from the context map.  FoldingSet doesn't have to reprofile
   // this node to remove it, so we don't care what state the operands are in.
   pImpl->MDNodeSet.RemoveNode(this);
-  
-  // Find value. This is a linear search, do something if it consumes 
-  // lot of time. It is possible that to have multiple instances of
-  // From in this MDNode's element list.
-  for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
-    if (Operands[i] == From)
-      Operands[i].set(To, this);
-  }
+
+  // Update the operand.
+  Op->set(To, this);
 
   // Insert updated "this" into the context's folding node set.
   // If a node with same element list already exist then before inserting 
