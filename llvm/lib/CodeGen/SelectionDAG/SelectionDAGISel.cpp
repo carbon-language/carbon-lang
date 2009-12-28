@@ -567,9 +567,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (Changed) {
     if (TimePassesIsEnabled) {
       NamedRegionTimer T("Type Legalization 2", GroupName);
-      Changed = CurDAG->LegalizeTypes();
+      CurDAG->LegalizeTypes();
     } else {
-      Changed = CurDAG->LegalizeTypes();
+      CurDAG->LegalizeTypes();
     }
 
     if (ViewDAGCombineLT)
