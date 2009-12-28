@@ -188,46 +188,6 @@ void MDNode::replaceElement(Value *From, Value *To) {
   }
 }
 
-// getLocalFunction - Return false if MDNode's recursive function-localness is
-// invalid (local to more than one function).  Return true otherwise. If MDNode
-// has one function to which it is local, set LocalFunction to that function.
-bool MDNode::getLocalFunction(Function *LocalFunction,
-                              SmallPtrSet<MDNode *, 32> *VisitedMDNodes) {
-  if (!isFunctionLocal())
-    return true;
-    
-  if (!VisitedMDNodes)
-    VisitedMDNodes = new SmallPtrSet<MDNode *, 32>();
-    
-  if (!VisitedMDNodes->insert(this))
-    // MDNode has already been visited, nothing to do.
-    return true;
-
-  for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
-    Value *V = getElement(i);
-    if (!V) continue;
-
-    Function *LocalFunctionTemp = NULL;
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      LocalFunctionTemp = I->getParent()->getParent();
-    else if (MDNode *MD = dyn_cast<MDNode>(V))
-      if (!MD->getLocalFunction(LocalFunctionTemp, VisitedMDNodes))
-        // This MDNode's operand is function-locally invalid or local to a
-        // different function.
-        return false;
-
-    if (LocalFunctionTemp) {
-      if (!LocalFunction)
-        LocalFunction = LocalFunctionTemp;
-      else if (LocalFunction != LocalFunctionTemp)
-        // This MDNode contains operands that are local to different functions.
-        return false;
-    }
-  }
-    
-  return true;
-}
-
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //

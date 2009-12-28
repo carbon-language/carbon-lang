@@ -27,7 +27,6 @@ class LLVMContext;
 class Module;
 class MetadataContextImpl;
 template <typename T> class SmallVectorImpl;
-template<class PtrType, unsigned SmallSize> class SmallPtrSet;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -91,16 +90,19 @@ class MDNodeElement;
 /// MDNode is always unnamed.
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
-
+  void operator=(const MDNode &);        // DO NOT IMPLEMENT
   friend class MDNodeElement;
-  
-  static const unsigned short FunctionLocalBit = 1;
-  
-  // Replace each instance of F from the element list of this node with T.
-  void replaceElement(Value *F, Value *T);
 
   MDNodeElement *Operands;
   unsigned NumOperands;
+  
+  // Subclass data enums.
+  enum {
+    FunctionLocalBit = 1
+  };
+  
+  // Replace each instance of F from the element list of this node with T.
+  void replaceElement(Value *F, Value *T);
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
@@ -124,13 +126,6 @@ public:
   ///       that designation even if their operands are modified to no longer
   ///       refer to function-local IR.
   bool isFunctionLocal() const { return SubclassData & FunctionLocalBit; }
-
-  /// getLocalFunction - Return false if MDNode's recursive function-localness
-  /// is invalid (local to more than one function).  Return true otherwise.
-  /// If MDNode has one function to which it is local, set LocalFunction to that
-  /// function.
-  bool getLocalFunction(Function *LocalFunction,
-                        SmallPtrSet<MDNode *, 32> *VisitedMDNodes = NULL);
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates

@@ -329,6 +329,8 @@ namespace {
                           int VT, unsigned ArgNo, std::string &Suffix);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned RetNum, unsigned ParamNum, ...);
+    void VerifyFunctionLocalMetadata(MDNode *N, Function *F,
+                                     SmallPtrSet<MDNode *, 32> &Visited);
     void VerifyParameterAttrs(Attributes Attrs, const Type *Ty,
                               bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
@@ -1526,6 +1528,38 @@ void Verifier::VerifyType(const Type *Ty) {
   }
 }
 
+/// VerifyFunctionLocalMetadata - Verify that the specified MDNode is local to
+/// specified Function.
+void Verifier::VerifyFunctionLocalMetadata(MDNode *N, Function *F,
+                                           SmallPtrSet<MDNode *, 32> &Visited) {
+  assert(N->isFunctionLocal() && "Should only be called on function-local MD");
+
+  // Only visit each node once.
+  if (!Visited.insert(N))
+    return;
+  
+  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+    Value *V = N->getElement(i);
+    if (!V) continue;
+    
+    Function *ActualF = 0;
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      ActualF = I->getParent()->getParent();
+    else if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
+      ActualF = BB->getParent();
+    else if (Argument *A = dyn_cast<Argument>(V))
+      ActualF = A->getParent();
+    else if (MDNode *MD = dyn_cast<MDNode>(V))
+      if (MD->isFunctionLocal())
+        VerifyFunctionLocalMetadata(MD, F, Visited);
+
+    // If this was an instruction, bb, or argument, verify that it is in the
+    // function that we expect.
+    Assert1(ActualF == 0 || ActualF == F,
+            "function-local metadata used in wrong function", N);
+  }
+}
+
 // Flags used by TableGen to mark intrinsic parameters with the
 // LLVMExtendedElementVectorType and LLVMTruncatedElementVectorType classes.
 static const unsigned ExtendedElementVectorType = 0x40000000;
@@ -1542,14 +1576,13 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_VERIFIER
 
+  // If the intrinsic takes MDNode arguments, verify that they are either global
+  // or are local to *this* function.
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
     if (MDNode *MD = dyn_cast<MDNode>(CI.getOperand(i))) {
-      Function* LocalFunction = NULL;
-      Assert1(MD && MD->getLocalFunction(LocalFunction),
-              "invalid function-local metadata", &CI);
-      if (LocalFunction)
-        Assert1(LocalFunction == CI.getParent()->getParent(),
-                "function-local metadata used in wrong function", &CI);
+      if (!MD->isFunctionLocal()) continue;
+      SmallPtrSet<MDNode *, 32> Visited;
+      VerifyFunctionLocalMetadata(MD, CI.getParent()->getParent(), Visited);
     }
 
   switch (ID) {
