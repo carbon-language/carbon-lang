@@ -20,6 +20,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"

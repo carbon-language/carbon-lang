@@ -17,8 +17,6 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/GlobalAlias.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
@@ -41,98 +39,49 @@ protected:
       I->setName(Name);
   }
 };
-  
-  
-/// IRBuilder - This provides a uniform API for creating instructions and
-/// inserting them into a basic block: either at the end of a BasicBlock, or
-/// at a specific iterator location in a block.
-///
-/// Note that the builder does not expose the full generality of LLVM
-/// instructions.  For access to extra instruction properties, use the mutators
-/// (e.g. setVolatile) on the instructions after they have been created.
-/// The first template argument handles whether or not to preserve names in the
-/// final instruction output. This defaults to on.  The second template argument
-/// specifies a class to use for creating constants.  This defaults to creating
-/// minimally folded constants.  The fourth template argument allows clients to
-/// specify custom insertion hooks that are called on every newly created
-/// insertion.
-template<bool preserveNames = true, typename T = ConstantFolder,
-         typename Inserter = IRBuilderDefaultInserter<preserveNames> >
-class IRBuilder : public Inserter {
+
+/// IRBuilderBase - Common base class shared among various IRBuilders.
+class IRBuilderBase {
+protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
   unsigned DbgMDKind;
   MDNode *CurDbgLocation;
   LLVMContext &Context;
-  T Folder;
 public:
-  IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter())
-    : Inserter(I), DbgMDKind(0), CurDbgLocation(0), Context(C), Folder(F) {
-    ClearInsertionPoint(); 
-  }
   
-  explicit IRBuilder(LLVMContext &C) 
-    : DbgMDKind(0), CurDbgLocation(0), Context(C), Folder(C) {
+  IRBuilderBase(LLVMContext &context)
+    : DbgMDKind(0), CurDbgLocation(0), Context(context) {
     ClearInsertionPoint();
   }
-  
-  explicit IRBuilder(BasicBlock *TheBB, const T &F)
-    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
-    SetInsertPoint(TheBB);
-  }
-  
-  explicit IRBuilder(BasicBlock *TheBB)
-    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
-      Folder(Context) {
-    SetInsertPoint(TheBB);
-  }
-  
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
-    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
-    SetInsertPoint(TheBB, IP);
-  }
-  
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
-      Folder(Context) {
-    SetInsertPoint(TheBB, IP);
-  }
-
-  /// getFolder - Get the constant folder being used.
-  const T &getFolder() { return Folder; }
-
-  /// isNamePreserving - Return true if this builder is configured to actually
-  /// add the requested names to IR created through it.
-  bool isNamePreserving() const { return preserveNames; }
   
   //===--------------------------------------------------------------------===//
   // Builder configuration methods
   //===--------------------------------------------------------------------===//
-
+  
   /// ClearInsertionPoint - Clear the insertion point: created instructions will
   /// not be inserted into a block.
   void ClearInsertionPoint() {
     BB = 0;
   }
-
+  
   BasicBlock *GetInsertBlock() const { return BB; }
-
   BasicBlock::iterator GetInsertPoint() const { return InsertPt; }
-
+  
   /// SetInsertPoint - This specifies that created instructions should be
   /// appended to the end of the specified block.
   void SetInsertPoint(BasicBlock *TheBB) {
     BB = TheBB;
     InsertPt = BB->end();
   }
-
+  
   /// SetInsertPoint - This specifies that created instructions should be
   /// inserted at the specified point.
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
     BB = TheBB;
     InsertPt = IP;
   }
-
+  
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
   void SetCurrentDebugLocation(MDNode *L) {
@@ -140,35 +89,36 @@ public:
       DbgMDKind = Context.getMetadata().getMDKindID("dbg");
     CurDbgLocation = L;
   }
-
+  
   MDNode *getCurrentDebugLocation() const { return CurDbgLocation; }
-
+  
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I) {
     if (CurDbgLocation)
       Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
   }
-
+  
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I, MDNode *Loc) {
     if (DbgMDKind == 0) 
       DbgMDKind = Context.getMetadata().getMDKindID("dbg");
     Context.getMetadata().addMD(DbgMDKind, Loc, I);
   }
-
-  /// Insert - Insert and return the specified instruction.
-  template<typename InstTy>
-  InstTy *Insert(InstTy *I, const Twine &Name = "") const {
-    this->InsertHelper(I, Name, BB, InsertPt);
-    if (CurDbgLocation)
-      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
-    return I;
-  }
-
+  
+  //===--------------------------------------------------------------------===//
+  // Miscellaneous creation methods.
+  //===--------------------------------------------------------------------===//
+  
+  /// CreateGlobalString - Make a new global variable with an initializer that
+  /// has array of i8 type filled in the the nul terminated string value
+  /// specified.  If Name is specified, it is the name of the global variable
+  /// created.
+  Value *CreateGlobalString(const char *Str = "", const Twine &Name = "");
+  
   //===--------------------------------------------------------------------===//
   // Type creation methods
   //===--------------------------------------------------------------------===//
-
+  
   /// getInt1Ty - Fetch the type representing a single bit
   const Type *getInt1Ty() {
     return Type::getInt1Ty(Context);
@@ -193,7 +143,7 @@ public:
   const Type *getInt64Ty() {
     return Type::getInt64Ty(Context);
   }
-
+  
   /// getFloatTy - Fetch the type representing a 32-bit floating point value.
   const Type *getFloatTy() {
     return Type::getFloatTy(Context);
@@ -207,6 +157,68 @@ public:
   /// getVoidTy - Fetch the type representing void.
   const Type *getVoidTy() {
     return Type::getVoidTy(Context);
+  }
+};
+  
+/// IRBuilder - This provides a uniform API for creating instructions and
+/// inserting them into a basic block: either at the end of a BasicBlock, or
+/// at a specific iterator location in a block.
+///
+/// Note that the builder does not expose the full generality of LLVM
+/// instructions.  For access to extra instruction properties, use the mutators
+/// (e.g. setVolatile) on the instructions after they have been created.
+/// The first template argument handles whether or not to preserve names in the
+/// final instruction output. This defaults to on.  The second template argument
+/// specifies a class to use for creating constants.  This defaults to creating
+/// minimally folded constants.  The fourth template argument allows clients to
+/// specify custom insertion hooks that are called on every newly created
+/// insertion.
+template<bool preserveNames = true, typename T = ConstantFolder,
+         typename Inserter = IRBuilderDefaultInserter<preserveNames> >
+class IRBuilder : public IRBuilderBase, public Inserter {
+  T Folder;
+public:
+  IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter())
+    : IRBuilderBase(C), Inserter(I), Folder(F) {
+  }
+  
+  explicit IRBuilder(LLVMContext &C) : IRBuilderBase(C), Folder(C) {
+  }
+  
+  explicit IRBuilder(BasicBlock *TheBB, const T &F)
+    : IRBuilderBase(TheBB->getContext()), Folder(F) {
+    SetInsertPoint(TheBB);
+  }
+  
+  explicit IRBuilder(BasicBlock *TheBB)
+    : IRBuilderBase(TheBB->getContext()), Folder(Context) {
+    SetInsertPoint(TheBB);
+  }
+  
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
+    : IRBuilderBase(TheBB->getContext()), Folder(F) {
+    SetInsertPoint(TheBB, IP);
+  }
+  
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
+    : IRBuilderBase(TheBB->getContext()), Folder(Context) {
+    SetInsertPoint(TheBB, IP);
+  }
+
+  /// getFolder - Get the constant folder being used.
+  const T &getFolder() { return Folder; }
+
+  /// isNamePreserving - Return true if this builder is configured to actually
+  /// add the requested names to IR created through it.
+  bool isNamePreserving() const { return preserveNames; }
+  
+  /// Insert - Insert and return the specified instruction.
+  template<typename InstTy>
+  InstTy *Insert(InstTy *I, const Twine &Name = "") const {
+    this->InsertHelper(I, Name, BB, InsertPt);
+    if (CurDbgLocation)
+      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
+    return I;
   }
 
   //===--------------------------------------------------------------------===//
@@ -646,26 +658,16 @@ public:
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const Twine &Name = "") {
     return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);
   }
-  Value *CreateGlobalString(const char *Str = "", const Twine &Name = "") {
-    Constant *StrConstant = ConstantArray::get(Context, Str, true);
-    Module &M = *BB->getParent()->getParent();
-    GlobalVariable *gv = new GlobalVariable(M,
-                                            StrConstant->getType(),
-                                            true,
-                                            GlobalValue::InternalLinkage,
-                                            StrConstant,
-                                            "",
-                                            0,
-                                            false);
-    gv->setName(Name);
-    return gv;
-  }
+  
+  /// CreateGlobalStringPtr - Same as CreateGlobalString, but return a pointer
+  /// with "i8*" type instead of a pointer to array of i8.
   Value *CreateGlobalStringPtr(const char *Str = "", const Twine &Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
     Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *Args[] = { zero, zero };
     return CreateInBoundsGEP(gv, Args, Args+2, Name);
   }
+  
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
