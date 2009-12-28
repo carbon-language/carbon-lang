@@ -899,8 +899,6 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
                                            MachineBasicBlock* MBB,
                                            int& SS,
                                     SmallPtrSet<MachineInstr*, 4>& RefsInMBB) {
-  MachineBasicBlock::iterator Pt = MBB->begin();
-
   // Go top down if RefsInMBB is empty.
   if (RefsInMBB.empty())
     return 0;
