@@ -17,7 +17,6 @@
 #define LLVM_METADATA_H
 
 #include "llvm/Value.h"
-#include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist_node.h"
 
@@ -25,6 +24,7 @@ namespace llvm {
 class Constant;
 class Instruction;
 class LLVMContext;
+class Module;
 class MetadataContextImpl;
 template <typename T> class SmallVectorImpl;
 template<class PtrType, unsigned SmallSize> class SmallPtrSet;
@@ -55,8 +55,7 @@ class MDString : public MetadataBase {
 
   StringRef Str;
 protected:
-  explicit MDString(LLVMContext &C, StringRef S)
-    : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
+  explicit MDString(LLVMContext &C, StringRef S);
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);

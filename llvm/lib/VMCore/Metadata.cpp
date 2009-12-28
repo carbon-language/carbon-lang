@@ -29,6 +29,10 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // MDString implementation.
 //
+
+MDString::MDString(LLVMContext &C, StringRef S)
+  : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
+
 MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   LLVMContextImpl *pImpl = Context.pImpl;
   StringMapEntry<MDString *> &Entry = 
