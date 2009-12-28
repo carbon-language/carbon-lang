@@ -15,7 +15,6 @@
 #ifndef LLVM_SUPPORT_IRBUILDER_H
 #define LLVM_SUPPORT_IRBUILDER_H
 
-#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/Twine.h"
