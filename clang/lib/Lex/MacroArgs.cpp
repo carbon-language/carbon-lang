@@ -132,13 +132,14 @@ bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok,
 /// getPreExpArgument - Return the pre-expanded form of the specified
 /// argument.
 const std::vector<Token> &
-MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
-  assert(Arg < NumUnexpArgTokens && "Invalid argument number!");
+MacroArgs::getPreExpArgument(unsigned Arg, const MacroInfo *MI, 
+                             Preprocessor &PP) {
+  assert(Arg < MI->getNumArgs() && "Invalid argument number!");
 
   // If we have already computed this, return it.
-  if (PreExpArgTokens.empty())
-    PreExpArgTokens.resize(NumUnexpArgTokens);
-
+  if (PreExpArgTokens.size() < MI->getNumArgs())
+    PreExpArgTokens.resize(MI->getNumArgs());
+  
   std::vector<Token> &Result = PreExpArgTokens[Arg];
   if (!Result.empty()) return Result;
 
