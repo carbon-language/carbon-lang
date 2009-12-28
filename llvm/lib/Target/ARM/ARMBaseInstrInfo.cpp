@@ -944,8 +944,6 @@ reMaterialize(MachineBasicBlock &MBB,
               unsigned DestReg, unsigned SubIdx,
               const MachineInstr *Orig,
               const TargetRegisterInfo *TRI) const {
-  DebugLoc dl = Orig->getDebugLoc();
-
   if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
     DestReg = TRI->getSubReg(DestReg, SubIdx);
     SubIdx = 0;
