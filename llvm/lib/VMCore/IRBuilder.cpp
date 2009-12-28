@@ -14,6 +14,7 @@
 
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 using namespace llvm;
@@ -43,4 +44,9 @@ void IRBuilderBase::SetCurrentDebugLocation(MDNode *L) {
 void IRBuilderBase::SetInstDebugLocation(Instruction *I) const {
   if (CurDbgLocation)
     Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
+}
+
+const Type *IRBuilderBase::getCurrentFunctionReturnType() const {
+  assert(BB && BB->getParent() && "No current function!");
+  return BB->getParent()->getReturnType();
 }

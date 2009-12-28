@@ -17,7 +17,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Function.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ConstantFolder.h"
 
@@ -143,6 +143,10 @@ public:
   const Type *getVoidTy() {
     return Type::getVoidTy(Context);
   }
+  
+  /// getCurrentFunctionReturnType - Get the return type of the current function
+  /// that we're emitting into.
+  const Type *getCurrentFunctionReturnType() const;
 };
   
 /// IRBuilder - This provides a uniform API for creating instructions and
@@ -221,7 +225,7 @@ public:
   ReturnInst *CreateRet(Value *V) {
     return Insert(ReturnInst::Create(Context, V));
   }
-
+  
   /// CreateAggregateRet - Create a sequence of N insertvalue instructions,
   /// with one Value from the retVals array each, that build a aggregate
   /// return value one value at a time, and a ret instruction to return
@@ -229,9 +233,8 @@ public:
   /// code that uses aggregate return values as a vehicle for having
   /// multiple return values.
   ///
-  ReturnInst *CreateAggregateRet(Value * const* retVals, unsigned N) {
-    const Type *RetType = BB->getParent()->getReturnType();
-    Value *V = UndefValue::get(RetType);
+  ReturnInst *CreateAggregateRet(Value *const *retVals, unsigned N) {
+    Value *V = UndefValue::get(getCurrentFunctionReturnType());
     for (unsigned i = 0; i != N; ++i)
       V = CreateInsertValue(V, retVals[i], i, "mrv");
     return Insert(ReturnInst::Create(Context, V));
