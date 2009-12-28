@@ -145,30 +145,20 @@ Value *MDNode::getElement(unsigned i) const {
 void MDNode::replaceElement(Value *From, Value *To) {
   if (From == To || !getType())
     return;
-  LLVMContext &Context = getType()->getContext();
-  LLVMContextImpl *pImpl = Context.pImpl;
 
+  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+
+  // Remove "this" from the context map.  FoldingSet doesn't have to reprofile
+  // this node to remove it, so we don't care what state the operands are in.
+  pImpl->MDNodeSet.RemoveNode(this);
+  
   // Find value. This is a linear search, do something if it consumes 
   // lot of time. It is possible that to have multiple instances of
   // From in this MDNode's element list.
-  SmallVector<unsigned, 4> Indexes;
-  unsigned Index = 0;
-  for (unsigned i = 0, e = getNumElements(); i != e; ++i, ++Index) {
-    Value *V = getElement(i);
-    if (V && V == From) 
-      Indexes.push_back(Index);
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
+    if (Operands[i] == From)
+      Operands[i].set(To, this);
   }
-
-  if (Indexes.empty())
-    return;
-
-  // Remove "this" from the context map. 
-  pImpl->MDNodeSet.RemoveNode(this);
-
-  // Replace From element(s) in place.
-  for (SmallVector<unsigned, 4>::iterator I = Indexes.begin(), E = Indexes.end(); 
-       I != E; ++I)
-    Operands[*I].set(To, this);
 
   // Insert updated "this" into the context's folding node set.
   // If a node with same element list already exist then before inserting 
@@ -182,15 +172,12 @@ void MDNode::replaceElement(Value *From, Value *To) {
   if (N) {
     N->replaceAllUsesWith(this);
     delete N;
-    N = 0;
+    N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+    assert(N == 0 && "shouldn't be in the map now!"); (void)N;
   }
 
-  N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  if (!N) {
-    // InsertPoint will have been set by the FindNodeOrInsertPos call.
-    N = this;
-    pImpl->MDNodeSet.InsertNode(N, InsertPoint);
-  }
+  // InsertPoint will have been set by the FindNodeOrInsertPos call.
+  pImpl->MDNodeSet.InsertNode(this, InsertPoint);
 }
 
 //===----------------------------------------------------------------------===//
