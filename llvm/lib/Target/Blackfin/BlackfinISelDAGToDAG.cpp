@@ -84,7 +84,6 @@ void BlackfinDAGToDAGISel::InstructionSelect() {
 
 SDNode *BlackfinDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
-  DebugLoc dl = N->getDebugLoc();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
