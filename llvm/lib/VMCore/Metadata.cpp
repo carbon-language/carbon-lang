@@ -23,10 +23,6 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// MetadataBase implementation.
-//
-
-//===----------------------------------------------------------------------===//
 // MDString implementation.
 //
 
@@ -130,6 +126,8 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
 void MDNode::Profile(FoldingSetNodeID &ID) const {
   for (unsigned i = 0, e = getNumElements(); i != e; ++i)
     ID.AddPointer(getElement(i));
+  // HASH TABLE COLLISIONS?
+  // DO NOT REINSERT AFTER AN OPERAND DROPS TO NULL!
 }
 
 
@@ -433,10 +431,8 @@ void MetadataContextImpl::ValueIsCloned(const Instruction *In1,
   MDStoreTy::iterator I = MetadataStore.find(In1);
   assert(I != MetadataStore.end() && "Invalid custom metadata info!");
 
-  // FIXME : Give all metadata handlers a chance to adjust.
-
+  // FIXME: Give all metadata handlers a chance to adjust.
   MDMapTy &In1Info = I->second;
-  MDMapTy In2Info;
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
     addMD(I->first, I->second, In2);
 }
@@ -449,15 +445,14 @@ void MetadataContextImpl::ValueIsRAUWd(Value *V1, Value *V2) {
   if (!I1 || !I2)
     return;
 
-  // FIXME : Give custom handlers a chance to override this.
+  // FIXME: Give custom handlers a chance to override this.
   ValueIsCloned(I1, I2);
 }
 
 //===----------------------------------------------------------------------===//
 // MetadataContext implementation.
 //
-MetadataContext::MetadataContext() 
-  : pImpl(new MetadataContextImpl()) { }
+MetadataContext::MetadataContext() : pImpl(new MetadataContextImpl()) { }
 MetadataContext::~MetadataContext() { delete pImpl; }
 
 /// isValidName - Return true if Name is a valid custom metadata handler name.
