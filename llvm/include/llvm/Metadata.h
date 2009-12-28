@@ -84,6 +84,9 @@ public:
   }
 };
 
+  
+class MDNodeElement;
+  
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
 /// These contain a list of the values that represent the metadata. 
@@ -91,29 +94,14 @@ public:
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
 
-  friend class ElementVH;
-  // Use CallbackVH to hold MDNode elements.
-  struct ElementVH : public CallbackVH {
-    MDNode *Parent;
-    ElementVH() {}
-    ElementVH(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
-    ~ElementVH() {}
-
-    virtual void deleted() {
-      Parent->replaceElement(this->operator Value*(), 0);
-    }
-
-    virtual void allUsesReplacedWith(Value *NV) {
-      Parent->replaceElement(this->operator Value*(), NV);
-    }
-  };
+  friend class MDNodeElement;
   
   static const unsigned short FunctionLocalBit = 1;
   
   // Replace each instance of F from the element list of this node with T.
   void replaceElement(Value *F, Value *T);
 
-  ElementVH *Node;
+  MDNodeElement *Node;
   unsigned NodeSize;
 
 protected:
@@ -128,11 +116,8 @@ public:
   ~MDNode();
   
   /// getElement - Return specified element.
-  Value *getElement(unsigned i) const {
-    assert(i < getNumElements() && "Invalid element number!");
-    return Node[i];
-  }
-
+  Value *getElement(unsigned i) const;
+  
   /// getNumElements - Return number of MDNode elements.
   unsigned getNumElements() const { return NodeSize; }
   

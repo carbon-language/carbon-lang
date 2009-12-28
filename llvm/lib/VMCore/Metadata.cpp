@@ -47,16 +47,46 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
 }
 
 //===----------------------------------------------------------------------===//
+// MDNodeElement implementation.
+//
+
+// Use CallbackVH to hold MDNode elements.
+namespace llvm {
+class MDNodeElement : public CallbackVH {
+  MDNode *Parent;
+public:
+  MDNodeElement() {}
+  MDNodeElement(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
+  ~MDNodeElement() {}
+  
+  virtual void deleted();
+  virtual void allUsesReplacedWith(Value *NV);
+};
+} // end namespace llvm.
+
+
+void MDNodeElement::deleted() {
+  Parent->replaceElement(this->operator Value*(), 0);
+}
+
+void MDNodeElement::allUsesReplacedWith(Value *NV) {
+  Parent->replaceElement(this->operator Value*(), NV);
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // MDNode implementation.
 //
+
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NodeSize = NumVals;
-  Node = new ElementVH[NodeSize];
-  ElementVH *Ptr = Node;
+  Node = new MDNodeElement[NodeSize];
+  MDNodeElement *Ptr = Node;
   for (unsigned i = 0; i != NumVals; ++i) 
-    *Ptr++ = ElementVH(Vals[i], this);
+    *Ptr++ = MDNodeElement(Vals[i], this);
   if (isFunctionLocal)
     SubclassData |= FunctionLocalBit;
 }
@@ -91,6 +121,14 @@ MDNode::~MDNode() {
   Node = NULL;
 }
 
+/// getElement - Return specified element.
+Value *MDNode::getElement(unsigned i) const {
+  assert(i < getNumElements() && "Invalid element number!");
+  return Node[i];
+}
+
+
+
 // Replace value from this node's element list.
 void MDNode::replaceElement(Value *From, Value *To) {
   if (From == To || !getType())
@@ -119,7 +157,7 @@ void MDNode::replaceElement(Value *From, Value *To) {
   for (SmallVector<unsigned, 4>::iterator I = Indexes.begin(), E = Indexes.end(); 
        I != E; ++I) {
     unsigned Index = *I;
-    Node[Index] = ElementVH(To, this);
+    Node[Index] = MDNodeElement(To, this);
   }
 
   // Insert updated "this" into the context's folding node set.
