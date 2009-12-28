@@ -61,39 +61,39 @@ template<bool preserveNames = true, typename T = ConstantFolder,
 class IRBuilder : public Inserter {
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
-  unsigned MDKind;
+  unsigned DbgMDKind;
   MDNode *CurDbgLocation;
   LLVMContext &Context;
   T Folder;
 public:
   IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter())
-    : Inserter(I), MDKind(0), CurDbgLocation(0), Context(C), Folder(F) {
+    : Inserter(I), DbgMDKind(0), CurDbgLocation(0), Context(C), Folder(F) {
     ClearInsertionPoint(); 
   }
   
   explicit IRBuilder(LLVMContext &C) 
-    : MDKind(0), CurDbgLocation(0), Context(C), Folder(C) {
+    : DbgMDKind(0), CurDbgLocation(0), Context(C), Folder(C) {
     ClearInsertionPoint();
   }
   
   explicit IRBuilder(BasicBlock *TheBB, const T &F)
-    : MDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
+    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB);
   }
   
   explicit IRBuilder(BasicBlock *TheBB)
-    : MDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
+    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
       Folder(Context) {
     SetInsertPoint(TheBB);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
-    : MDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
+    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB, IP);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-    : MDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
+    : DbgMDKind(0), CurDbgLocation(0), Context(TheBB->getContext()), 
       Folder(Context) {
     SetInsertPoint(TheBB, IP);
   }
@@ -136,8 +136,8 @@ public:
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
   void SetCurrentDebugLocation(MDNode *L) {
-    if (MDKind == 0) 
-      MDKind = Context.getMetadata().getMDKindID("dbg");
+    if (DbgMDKind == 0) 
+      DbgMDKind = Context.getMetadata().getMDKindID("dbg");
     CurDbgLocation = L;
   }
 
@@ -146,14 +146,14 @@ public:
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I) {
     if (CurDbgLocation)
-      Context.getMetadata().addMD(MDKind, CurDbgLocation, I);
+      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
   }
 
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I, MDNode *Loc) {
-    if (MDKind == 0) 
-      MDKind = Context.getMetadata().getMDKindID("dbg");
-    Context.getMetadata().addMD(MDKind, Loc, I);
+    if (DbgMDKind == 0) 
+      DbgMDKind = Context.getMetadata().getMDKindID("dbg");
+    Context.getMetadata().addMD(DbgMDKind, Loc, I);
   }
 
   /// Insert - Insert and return the specified instruction.
@@ -161,7 +161,7 @@ public:
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
     if (CurDbgLocation)
-      Context.getMetadata().addMD(MDKind, CurDbgLocation, I);
+      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
     return I;
   }
 
