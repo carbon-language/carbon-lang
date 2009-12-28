@@ -217,7 +217,6 @@ bool MSP430DAGToDAGISel::MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM) 
 }
 
 bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
-  DebugLoc dl = N.getDebugLoc();
   DEBUG({
       errs() << "MatchAddress: ";
       AM.dump();
