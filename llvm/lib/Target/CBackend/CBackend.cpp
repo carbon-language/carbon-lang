@@ -3389,7 +3389,6 @@ void CWriter::visitInlineAsm(CallInst &CI) {
   
   // Convert over the clobber constraints.
   IsFirst = true;
-  ValueCount = 0;
   for (std::vector<InlineAsm::ConstraintInfo>::iterator I = Constraints.begin(),
        E = Constraints.end(); I != E; ++I) {
     if (I->Type != InlineAsm::isClobber)
