@@ -197,32 +197,25 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// MetadataContext -
-/// MetadataContext handles uniquing and assignment of IDs for custom metadata
-/// types. Custom metadata handler names do not contain spaces. And the name
-/// must start with an alphabet. The regular expression used to check name
-/// is [a-zA-Z$._][a-zA-Z$._0-9]*
+/// MetadataContext - MetadataContext handles uniquing and assignment of IDs for
+/// custom metadata types.
+///
 class MetadataContext {
-  // DO NOT IMPLEMENT
-  MetadataContext(MetadataContext&);
-  void operator=(MetadataContext&);
+  MetadataContext(MetadataContext&); // DO NOT IMPLEMENT
+  void operator=(MetadataContext&);  // DO NOT IMPLEMENT
 
   MetadataContextImpl *const pImpl;
 public:
   MetadataContext();
   ~MetadataContext();
 
-  /// registerMDKind - Register a new metadata kind and return its ID.
-  /// A metadata kind can be registered only once. 
-  unsigned registerMDKind(StringRef Name);
-
-  /// getMDKind - Return metadata kind. If the requested metadata kind
-  /// is not registered then return 0.
-  unsigned getMDKind(StringRef Name) const;
+  /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+  unsigned getMDKindID(StringRef Name) const;
 
   /// isValidName - Return true if Name is a valid custom metadata handler name.
   static bool isValidName(StringRef Name);
 
+#if 1
   /// getMD - Get the metadata of given kind attached to an Instruction.
   /// If the metadata is not found then return 0.
   MDNode *getMD(unsigned Kind, const Instruction *Inst);
@@ -239,6 +232,7 @@ public:
   
   /// removeAllMetadata - Remove all metadata attached with an instruction.
   void removeAllMetadata(Instruction *Inst);
+#endif
 
   /// copyMD - If metadata is attached with Instruction In1 then attach
   /// the same metadata to In2.

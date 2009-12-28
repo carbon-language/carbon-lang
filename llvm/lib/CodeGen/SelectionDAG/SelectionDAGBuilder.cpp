@@ -4383,9 +4383,9 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (MMI) {
       MetadataContext &TheMetadata = 
         DI.getParent()->getContext().getMetadata();
-      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-      MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &DI);
-      MMI->setVariableDbgInfo(Variable, FI, Dbg);
+      unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
+      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &DI))
+        MMI->setVariableDbgInfo(Variable, FI, Dbg);
     }
     return 0;
   }

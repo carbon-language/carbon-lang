@@ -351,9 +351,9 @@ bool FastISel::SelectCall(User *I) {
     if (MMI) {
       MetadataContext &TheMetadata = 
         DI->getParent()->getContext().getMetadata();
-      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-      MDNode *Dbg = TheMetadata.getMD(MDDbgKind, DI);
-      MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
+      unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
+      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, DI))
+        MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
     }
     return true;
   }

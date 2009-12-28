@@ -1123,11 +1123,8 @@ bool LLParser::ParseOptionalCustomMetadata() {
   if (ParseMDNode(Node)) return true;
 
   MetadataContext &TheMetadata = M->getContext().getMetadata();
-  unsigned MDK = TheMetadata.getMDKind(Name.c_str());
-  if (!MDK)
-    MDK = TheMetadata.registerMDKind(Name.c_str());
+  unsigned MDK = TheMetadata.getMDKindID(Name.c_str());
   MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
-
   return false;
 }
 

@@ -221,9 +221,7 @@ static bool StripDebugInfo(Module &M) {
     NMD->eraseFromParent();
   }
   MetadataContext &TheMetadata = M.getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-  if (!MDDbgKind)
-    return Changed;
+  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
 
   for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) 
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;

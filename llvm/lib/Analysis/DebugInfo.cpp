@@ -1119,7 +1119,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
 void DebugInfoFinder::processModule(Module &M) {
 
   MetadataContext &TheMetadata = M.getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
@@ -1127,9 +1127,8 @@ void DebugInfoFinder::processModule(Module &M) {
            ++BI) {
         if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
-        else if (MDDbgKind) 
-          if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) 
-            processLocation(DILocation(L));
+        else if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) 
+          processLocation(DILocation(L));
       }
 
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");

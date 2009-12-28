@@ -261,13 +261,7 @@ private:
   StringMap<unsigned> MDHandlerNames;
 
 public:
-  /// registerMDKind - Register a new metadata kind and return its ID.
-  /// A metadata kind can be registered only once. 
-  unsigned registerMDKind(StringRef Name);
-
-  /// getMDKind - Return metadata kind. If the requested metadata kind
-  /// is not registered then return 0.
-  unsigned getMDKind(StringRef Name) const;
+  unsigned getMDKindID(StringRef Name);
 
   /// getMD - Get the metadata of given kind attached to an Instruction.
   /// If the metadata is not found then return 0.
@@ -308,22 +302,14 @@ public:
 };
 }
 
-/// registerMDKind - Register a new metadata kind and return its ID.
-/// A metadata kind can be registered only once. 
-unsigned MetadataContextImpl::registerMDKind(StringRef Name) {
-  unsigned Count = MDHandlerNames.size();
-  assert(MDHandlerNames.count(Name) == 0 && "Already registered MDKind!");
-  return MDHandlerNames[Name] = Count + 1;
-}
+/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+unsigned MetadataContextImpl::getMDKindID(StringRef Name) {
+  unsigned &Entry = MDHandlerNames[Name];
 
-/// getMDKind - Return metadata kind. If the requested metadata kind
-/// is not registered then return 0.
-unsigned MetadataContextImpl::getMDKind(StringRef Name) const {
-  StringMap<unsigned>::const_iterator I = MDHandlerNames.find(Name);
-  if (I == MDHandlerNames.end())
-    return 0;
-
-  return I->getValue();
+  // If this is new, assign it its ID.
+  if (Entry == 0) Entry = MDHandlerNames.size();
+  
+  return Entry;
 }
 
 /// addMD - Attach the metadata of given kind to an Instruction.
@@ -472,17 +458,9 @@ bool MetadataContext::isValidName(StringRef MDName) {
   return true;
 }
 
-/// registerMDKind - Register a new metadata kind and return its ID.
-/// A metadata kind can be registered only once. 
-unsigned MetadataContext::registerMDKind(StringRef Name) {
-  assert(isValidName(Name) && "Invalid custome metadata name!");
-  return pImpl->registerMDKind(Name);
-}
-
-/// getMDKind - Return metadata kind. If the requested metadata kind
-/// is not registered then return 0.
-unsigned MetadataContext::getMDKind(StringRef Name) const {
-  return pImpl->getMDKind(Name);
+/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+unsigned MetadataContext::getMDKindID(StringRef Name) const {
+  return pImpl->getMDKindID(Name);
 }
 
 /// getMD - Get the metadata of given kind attached to an Instruction.

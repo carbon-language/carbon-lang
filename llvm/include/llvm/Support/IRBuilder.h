@@ -137,9 +137,7 @@ public:
   /// information.
   void SetCurrentDebugLocation(MDNode *L) {
     if (MDKind == 0) 
-      MDKind = Context.getMetadata().getMDKind("dbg");
-    if (MDKind == 0)
-      MDKind = Context.getMetadata().registerMDKind("dbg");
+      MDKind = Context.getMetadata().getMDKindID("dbg");
     CurDbgLocation = L;
   }
 
@@ -154,9 +152,7 @@ public:
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I, MDNode *Loc) {
     if (MDKind == 0) 
-      MDKind = Context.getMetadata().getMDKind("dbg");
-    if (MDKind == 0)
-      MDKind = Context.getMetadata().registerMDKind("dbg");
+      MDKind = Context.getMetadata().getMDKindID("dbg");
     Context.getMetadata().addMD(MDKind, Loc, I);
   }
 

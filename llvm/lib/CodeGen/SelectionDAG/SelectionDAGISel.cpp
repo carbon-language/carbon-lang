@@ -362,27 +362,25 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
 /// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
 /// attached with this instruction.
-static void SetDebugLoc(unsigned MDDbgKind,
-                        MetadataContext &TheMetadata,
-                        Instruction *I,
-                        SelectionDAGBuilder *SDB,
-                        FastISel *FastIS,
-                        MachineFunction *MF) {
-  if (!isa<DbgInfoIntrinsic>(I)) 
-    if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
-      DILocation DILoc(Dbg);
-      DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
+static void SetDebugLoc(unsigned MDDbgKind, MetadataContext &TheMetadata,
+                        Instruction *I, SelectionDAGBuilder *SDB,
+                        FastISel *FastIS, MachineFunction *MF) {
+  if (isa<DbgInfoIntrinsic>(I)) return;
+  
+  if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
+    DILocation DILoc(Dbg);
+    DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
 
-      SDB->setCurDebugLoc(Loc);
+    SDB->setCurDebugLoc(Loc);
 
-      if (FastIS)
-        FastIS->setCurDebugLoc(Loc);
+    if (FastIS)
+      FastIS->setCurDebugLoc(Loc);
 
-      // If the function doesn't have a default debug location yet, set
-      // it. This is kind of a hack.
-      if (MF->getDefaultDebugLoc().isUnknown())
-        MF->setDefaultDebugLoc(Loc);
-    }
+    // If the function doesn't have a default debug location yet, set
+    // it. This is kind of a hack.
+    if (MF->getDefaultDebugLoc().isUnknown())
+      MF->setDefaultDebugLoc(Loc);
+  }
 }
 
 /// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
@@ -398,14 +396,13 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator End,
                                         bool &HadTailCall) {
   SDB->setCurrentBasicBlock(BB);
-  MetadataContext &TheMetadata = LLVMBB->getParent()->getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  MetadataContext &TheMetadata =LLVMBB->getParent()->getContext().getMetadata();
+  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
 
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
   for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
-    if (MDDbgKind)
-      SetDebugLoc(MDDbgKind, TheMetadata, I, SDB, 0, MF);
+    SetDebugLoc(MDDbgKind, TheMetadata, I, SDB, 0, MF);
 
     if (!isa<TerminatorInst>(I)) {
       SDB->visit(*I);
@@ -681,7 +678,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
                                 );
 
   MetadataContext &TheMetadata = Fn.getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
 
   // Iterate over all basic blocks in the function.
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
@@ -779,8 +776,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             break;
           }
 
-        if (MDDbgKind)
-          SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
+        SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
 
         // First try normal tablegen-generated "fast" selection.
         if (FastIS->SelectInstruction(BI)) {

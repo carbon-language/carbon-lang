@@ -840,17 +840,10 @@ bool BitcodeReader::ParseMetadata() {
       (void) Kind;
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
-      MetadataContext &TheMetadata = Context.getMetadata();
-      unsigned ExistingKind = TheMetadata.getMDKind(Name.str());
-      if (ExistingKind == 0) {
-        unsigned NewKind = TheMetadata.registerMDKind(Name.str());
-        (void) NewKind;
-        assert (Kind == NewKind 
-                && "Unable to handle custom metadata mismatch!");
-      } else {
-        assert (ExistingKind == Kind 
-                && "Unable to handle custom metadata mismatch!");
-      }
+      
+      unsigned NewKind = Context.getMetadata().getMDKindID(Name.str());
+      assert(Kind == NewKind &&
+             "FIXME: Unable to handle custom metadata mismatch!");(void)NewKind;
       break;
     }
     }
