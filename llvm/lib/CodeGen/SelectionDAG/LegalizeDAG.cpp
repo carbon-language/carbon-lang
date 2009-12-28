@@ -187,7 +187,6 @@ SDValue
 SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  DebugLoc dl, 
                                                  SDValue N1, SDValue N2,
                                              SmallVectorImpl<int> &Mask) const {
-  EVT EltVT = NVT.getVectorElementType();
   unsigned NumMaskElts = VT.getVectorNumElements();
   unsigned NumDestElts = NVT.getVectorNumElements();
   unsigned NumEltsGrowth = NumDestElts / NumMaskElts;
