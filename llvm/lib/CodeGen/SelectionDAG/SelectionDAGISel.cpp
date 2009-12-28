@@ -362,12 +362,12 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
 /// SetDebugLoc - Update MF's and SDB's DebugLocs if debug information is
 /// attached with this instruction.
-static void SetDebugLoc(unsigned MDDbgKind, MetadataContext &TheMetadata,
-                        Instruction *I, SelectionDAGBuilder *SDB,
+static void SetDebugLoc(unsigned MDDbgKind, Instruction *I,
+                        SelectionDAGBuilder *SDB,
                         FastISel *FastIS, MachineFunction *MF) {
   if (isa<DbgInfoIntrinsic>(I)) return;
   
-  if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
+  if (MDNode *Dbg = I->getMetadata(MDDbgKind)) {
     DILocation DILoc(Dbg);
     DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
 
@@ -384,8 +384,7 @@ static void SetDebugLoc(unsigned MDDbgKind, MetadataContext &TheMetadata,
 }
 
 /// ResetDebugLoc - Set MF's and SDB's DebugLocs to Unknown.
-static void ResetDebugLoc(SelectionDAGBuilder *SDB,
-                          FastISel *FastIS) {
+static void ResetDebugLoc(SelectionDAGBuilder *SDB, FastISel *FastIS) {
   SDB->setCurDebugLoc(DebugLoc::getUnknownLoc());
   if (FastIS)
     FastIS->setCurDebugLoc(DebugLoc::getUnknownLoc());
@@ -402,7 +401,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
   for (BasicBlock::iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
-    SetDebugLoc(MDDbgKind, TheMetadata, I, SDB, 0, MF);
+    SetDebugLoc(MDDbgKind, I, SDB, 0, MF);
 
     if (!isa<TerminatorInst>(I)) {
       SDB->visit(*I);
@@ -425,7 +424,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
       HandlePHINodesInSuccessorBlocks(LLVMBB);
 
       // Lower the terminator after the copies are emitted.
-      SetDebugLoc(MDDbgKind, TheMetadata, LLVMBB->getTerminator(), SDB, 0, MF);
+      SetDebugLoc(MDDbgKind, LLVMBB->getTerminator(), SDB, 0, MF);
       SDB->visit(*LLVMBB->getTerminator());
       ResetDebugLoc(SDB, 0);
     }
@@ -776,7 +775,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             break;
           }
 
-        SetDebugLoc(MDDbgKind, TheMetadata, BI, SDB, FastIS, &MF);
+        SetDebugLoc(MDDbgKind, BI, SDB, FastIS, &MF);
 
         // First try normal tablegen-generated "fast" selection.
         if (FastIS->SelectInstruction(BI)) {

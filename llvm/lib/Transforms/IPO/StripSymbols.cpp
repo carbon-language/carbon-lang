@@ -228,7 +228,7 @@ static bool StripDebugInfo(Module &M) {
          ++FI)
       for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE;
            ++BI) 
-        TheMetadata.removeMD(MDDbgKind, BI);
+        BI->setMetadata(MDDbgKind, 0);
 
   return true;
 }

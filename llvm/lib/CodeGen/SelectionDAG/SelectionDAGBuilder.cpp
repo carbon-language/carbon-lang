@@ -27,7 +27,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
@@ -4379,14 +4378,9 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0; // VLAs.
     int FI = SI->second;
 
-    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    if (MMI) {
-      MetadataContext &TheMetadata = 
-        DI.getParent()->getContext().getMetadata();
-      unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
-      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &DI))
+    if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
+      if (MDNode *Dbg = DI.getMetadata("dbg"))
         MMI->setVariableDbgInfo(Variable, FI, Dbg);
-    }
     return 0;
   }
   case Intrinsic::eh_exception: {

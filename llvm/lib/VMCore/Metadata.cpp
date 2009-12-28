@@ -261,32 +261,27 @@ private:
   StringMap<unsigned> MDHandlerNames;
 
 public:
+  // Name <-> ID mapping methods.
   unsigned getMDKindID(StringRef Name);
-
-  /// getMD - Get the metadata of given kind attached to an Instruction.
-  /// If the metadata is not found then return 0.
-  MDNode *getMD(unsigned Kind, const Instruction *Inst);
-
-  /// getMDs - Get the metadata attached to an Instruction.
-  void getMDs(const Instruction *Inst,
-              SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const;
-
-  /// addMD - Attach the metadata of given kind to an Instruction.
-  void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
+  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
   
-  /// removeMD - Remove metadata of given kind attached with an instruction.
-  void removeMD(unsigned Kind, Instruction *Inst);
   
+  // Instruction metadata methods.
+  MDNode *getMetadata(const Instruction *Inst, unsigned Kind);
+  void getAllMetadata(const Instruction *Inst,
+                      SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs)const;
+
+  void setMetadata(Instruction *Inst, unsigned Kind, MDNode *Node);
+
   /// removeAllMetadata - Remove all metadata attached with an instruction.
   void removeAllMetadata(Instruction *Inst);
-
+  
+  
+  
   /// copyMD - If metadata is attached with Instruction In1 then attach
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
-
-  /// getMDKindNames - Populate client-supplied smallvector using custom
-  /// metadata name and ID.
-  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
+  
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
@@ -308,94 +303,7 @@ unsigned MetadataContextImpl::getMDKindID(StringRef Name) {
 
   // If this is new, assign it its ID.
   if (Entry == 0) Entry = MDHandlerNames.size();
-  
   return Entry;
-}
-
-/// addMD - Attach the metadata of given kind to an Instruction.
-void MetadataContextImpl::addMD(unsigned MDKind, MDNode *Node, 
-                                Instruction *Inst) {
-  assert(Node && "Invalid null MDNode");
-  Inst->HasMetadata = true;
-  MDMapTy &Info = MetadataStore[Inst];
-  if (Info.empty()) {
-    Info.push_back(std::make_pair(MDKind, Node));
-    MetadataStore.insert(std::make_pair(Inst, Info));
-    return;
-  }
-
-  // If there is an entry for this MDKind then replace it.
-  for (unsigned i = 0, e = Info.size(); i != e; ++i) {
-    MDPairTy &P = Info[i];
-    if (P.first == MDKind) {
-      Info[i] = std::make_pair(MDKind, Node);
-      return;
-    }
-  }
-
-  // Otherwise add a new entry.
-  Info.push_back(std::make_pair(MDKind, Node));
-}
-
-/// removeMD - Remove metadata of given kind attached with an instruction.
-void MetadataContextImpl::removeMD(unsigned Kind, Instruction *Inst) {
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
-  if (I == MetadataStore.end())
-    return;
-
-  MDMapTy &Info = I->second;
-  for (MDMapTy::iterator MI = Info.begin(), ME = Info.end(); MI != ME; ++MI) {
-    MDPairTy &P = *MI;
-    if (P.first == Kind) {
-      Info.erase(MI);
-      return;
-    }
-  }
-}
-
-/// removeAllMetadata - Remove all metadata attached with an instruction.
-void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
-  MetadataStore.erase(Inst);
-  Inst->HasMetadata = false;
-}
-
-/// copyMD - If metadata is attached with Instruction In1 then attach
-/// the same metadata to In2.
-void MetadataContextImpl::copyMD(Instruction *In1, Instruction *In2) {
-  assert(In1 && In2 && "Invalid instruction!");
-  MDMapTy &In1Info = MetadataStore[In1];
-  if (In1Info.empty())
-    return;
-
-  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    addMD(I->first, I->second, In2);
-}
-
-/// getMD - Get the metadata of given kind attached to an Instruction.
-/// If the metadata is not found then return 0.
-MDNode *MetadataContextImpl::getMD(unsigned MDKind, const Instruction *Inst) {
-  MDMapTy &Info = MetadataStore[Inst];
-  if (Info.empty())
-    return NULL;
-
-  for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
-    if (I->first == MDKind)
-      return I->second;
-  return NULL;
-}
-
-/// getMDs - Get the metadata attached to an Instruction.
-void MetadataContextImpl::
-getMDs(const Instruction *Inst,
-       SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const {
-  MDStoreTy::const_iterator I = MetadataStore.find(Inst);
-  if (I == MetadataStore.end())
-    return;
-  MDs.resize(I->second.size());
-  for (MDMapTy::const_iterator MI = I->second.begin(), ME = I->second.end();
-       MI != ME; ++MI)
-    // MD kinds are numbered from 1.
-    MDs[MI->first - 1] = std::make_pair(MI->first, MI->second);
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
@@ -405,9 +313,105 @@ getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
   Names.resize(MDHandlerNames.size()+1);
   Names[0] = "";
   for (StringMap<unsigned>::const_iterator I = MDHandlerNames.begin(),
-         E = MDHandlerNames.end(); I != E; ++I) 
+       E = MDHandlerNames.end(); I != E; ++I) 
     // MD Handlers are numbered from 1.
     Names[I->second] = I->first();
+}
+
+
+/// getMetadata - Get the metadata of given kind attached to an Instruction.
+/// If the metadata is not found then return 0.
+MDNode *MetadataContextImpl::
+getMetadata(const Instruction *Inst, unsigned MDKind) {
+  MDMapTy &Info = MetadataStore[Inst];
+  assert(Inst->hasMetadata() && !Info.empty() && "Shouldn't have called this");
+  
+  for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
+    if (I->first == MDKind)
+      return I->second;
+  return 0;
+}
+
+/// getAllMetadata - Get all of the metadata attached to an Instruction.
+void MetadataContextImpl::
+getAllMetadata(const Instruction *Inst,
+               SmallVectorImpl<std::pair<unsigned, MDNode*> > &Result) const {
+  assert(Inst->hasMetadata() && MetadataStore.find(Inst) != MetadataStore.end()
+         && "Shouldn't have called this");
+  const MDMapTy &Info = MetadataStore.find(Inst)->second;
+  assert(!Info.empty() && "Shouldn't have called this");
+
+  Result.clear();
+  Result.append(Info.begin(), Info.end());
+  
+  // Sort the resulting array so it is stable.
+  if (Result.size() > 1)
+    array_pod_sort(Result.begin(), Result.end());
+}
+
+
+void MetadataContextImpl::setMetadata(Instruction *Inst, unsigned Kind,
+                                      MDNode *Node) {
+  // Handle the case when we're adding/updating metadata on an instruction.
+  if (Node) {
+    MDMapTy &Info = MetadataStore[Inst];
+    assert(!Info.empty() == Inst->HasMetadata && "HasMetadata bit is wonked");
+    if (Info.empty()) {
+      Inst->HasMetadata = true;
+    } else {
+      // Handle replacement of an existing value.
+      for (unsigned i = 0, e = Info.size(); i != e; ++i)
+        if (Info[i].first == Kind) {
+          Info[i].second = Node;
+          return;
+        }
+    }
+    
+    // No replacement, just add it to the list.
+    Info.push_back(std::make_pair(Kind, Node));
+    return;
+  }
+  
+  // Otherwise, we're removing metadata from an instruction.
+  assert(Inst->HasMetadata && MetadataStore.count(Inst) &&
+         "HasMetadata bit out of date!");
+  MDMapTy &Info = MetadataStore[Inst];
+
+  // Common case is removing the only entry.
+  if (Info.size() == 1 && Info[0].first == Kind) {
+    MetadataStore.erase(Inst);
+    Inst->HasMetadata = false;
+    return;
+  }
+  
+  // Handle replacement of an existing value.
+  for (unsigned i = 0, e = Info.size(); i != e; ++i)
+    if (Info[i].first == Kind) {
+      Info[i] = Info.back();
+      Info.pop_back();
+      assert(!Info.empty() && "Removing last entry should be handled above");
+      return;
+    }
+  // Otherwise, removing an entry that doesn't exist on the instruction.
+}
+
+/// removeAllMetadata - Remove all metadata attached with an instruction.
+void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
+  MetadataStore.erase(Inst);
+  Inst->HasMetadata = false;
+}
+
+
+/// copyMD - If metadata is attached with Instruction In1 then attach
+/// the same metadata to In2.
+void MetadataContextImpl::copyMD(Instruction *In1, Instruction *In2) {
+  assert(In1 && In2 && "Invalid instruction!");
+  MDMapTy &In1Info = MetadataStore[In1];
+  if (In1Info.empty())
+    return;
+  
+  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
+    In2->setMetadata(I->first, I->second);
 }
 
 /// ValueIsCloned - This handler is used to update metadata store
@@ -421,7 +425,7 @@ void MetadataContextImpl::ValueIsCloned(const Instruction *In1,
   // FIXME: Give all metadata handlers a chance to adjust.
   MDMapTy &In1Info = I->second;
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    addMD(I->first, I->second, In2);
+    In2->setMetadata(I->first, I->second);
 }
 
 /// ValueIsRAUWd - This handler is used when V1's all uses are replaced by
@@ -463,34 +467,6 @@ unsigned MetadataContext::getMDKindID(StringRef Name) const {
   return pImpl->getMDKindID(Name);
 }
 
-/// getMD - Get the metadata of given kind attached to an Instruction.
-/// If the metadata is not found then return 0.
-MDNode *MetadataContext::getMD(unsigned Kind, const Instruction *Inst) {
-  return pImpl->getMD(Kind, Inst);
-}
-
-/// getMDs - Get the metadata attached to an Instruction.
-void MetadataContext::
-getMDs(const Instruction *Inst, 
-       SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const {
-  return pImpl->getMDs(Inst, MDs);
-}
-
-/// addMD - Attach the metadata of given kind to an Instruction.
-void MetadataContext::addMD(unsigned Kind, MDNode *Node, Instruction *Inst) {
-  pImpl->addMD(Kind, Node, Inst);
-}
-
-/// removeMD - Remove metadata of given kind attached with an instruction.
-void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
-  pImpl->removeMD(Kind, Inst);
-}
-
-/// removeAllMetadata - Remove all metadata attached with an instruction.
-void MetadataContext::removeAllMetadata(Instruction *Inst) {
-  pImpl->removeAllMetadata(Inst);
-}
-
 /// copyMD - If metadata is attached with Instruction In1 then attach
 /// the same metadata to In2.
 void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
@@ -517,3 +493,35 @@ void MetadataContext::ValueIsRAUWd(Value *V1, Value *V2) {
 void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   pImpl->ValueIsCloned(In1, In2);
 }
+
+//===----------------------------------------------------------------------===//
+// Instruction Metadata method implementations.
+//
+
+void Instruction::setMetadata(const char *Kind, MDNode *Node) {
+  if (Node == 0 && !hasMetadata()) return;
+  setMetadata(getContext().getMetadata().getMDKindID(Kind), Node);
+}
+
+MDNode *Instruction::getMetadataImpl(const char *Kind) const {
+  return getMetadataImpl(getContext().getMetadata().getMDKindID(Kind));
+}
+
+/// setMetadata - Set the metadata of of the specified kind to the specified
+/// node.  This updates/replaces metadata if already present, or removes it if
+/// Node is null.
+void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
+  if (Node == 0 && !hasMetadata()) return;
+  
+  getContext().getMetadata().pImpl->setMetadata(this, KindID, Node);
+}
+
+MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
+  return getContext().getMetadata().pImpl->getMetadata(this, KindID);
+}
+
+void Instruction::getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,
+                                       MDNode*> > &Result)const {
+  getContext().getMetadata().pImpl->getAllMetadata(this, Result);
+}
+

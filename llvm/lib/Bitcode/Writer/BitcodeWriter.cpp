@@ -561,32 +561,29 @@ static void WriteMetadataAttachment(const Function &F,
 
   // Write metadata attachments
   // METADATA_ATTACHMENT - [m x [value, [n x [id, mdnode]]]
-  MetadataContext &TheMetadata = F.getContext().getMetadata();
-  typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
-  MDMapTy MDs;
+  SmallVector<std::pair<unsigned, MDNode*>, 4> MDs;
+  
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
       MDs.clear();
-      TheMetadata.getMDs(I, MDs);
-      bool RecordedInstruction = false;
-      for (MDMapTy::const_iterator PI = MDs.begin(), PE = MDs.end();
-             PI != PE; ++PI) {
-        if (RecordedInstruction == false) {
-          Record.push_back(VE.getInstructionID(I));
-          RecordedInstruction = true;
-        }
-        Record.push_back(PI->first);
-        Record.push_back(VE.getValueID(PI->second));
+      I->getAllMetadata(MDs);
+      
+      // If no metadata, ignore instruction.
+      if (MDs.empty()) continue;
+
+      Record.push_back(VE.getInstructionID(I));
+      
+      for (unsigned i = 0, e = MDs.size(); i != e; ++i) {
+        Record.push_back(MDs[i].first);
+        Record.push_back(VE.getValueID(MDs[i].second));
       }
-      if (!Record.empty()) {
-        if (!StartedMetadataBlock)  {
-          Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
-          StartedMetadataBlock = true;
-        }
-        Stream.EmitRecord(bitc::METADATA_ATTACHMENT, Record, 0);
-        Record.clear();
+      if (!StartedMetadataBlock)  {
+        Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
+        StartedMetadataBlock = true;
       }
+      Stream.EmitRecord(bitc::METADATA_ATTACHMENT, Record, 0);
+      Record.clear();
     }
 
   if (StartedMetadataBlock)
@@ -1208,7 +1205,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
       WriteInstruction(*I, InstID, VE, Stream, Vals);
-      if (I->getType() != Type::getVoidTy(F.getContext()))
+      if (!I->getType()->isVoidTy())
         ++InstID;
     }
 

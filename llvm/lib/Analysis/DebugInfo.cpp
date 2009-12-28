@@ -1117,9 +1117,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
-
-  MetadataContext &TheMetadata = M.getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
+  unsigned MDDbgKind = M.getContext().getMetadata().getMDKindID("dbg");
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
@@ -1127,7 +1125,7 @@ void DebugInfoFinder::processModule(Module &M) {
            ++BI) {
         if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
-        else if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) 
+        else if (MDNode *L = BI->getMetadata(MDDbgKind)) 
           processLocation(DILocation(L));
       }
 

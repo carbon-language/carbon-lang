@@ -14,8 +14,6 @@
 #include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
@@ -87,9 +85,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
          I != E; ++I)
       EnumerateType(I->getType());
 
-    MetadataContext &TheMetadata = F->getContext().getMetadata();
-    typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
-    MDMapTy MDs;
+    SmallVector<std::pair<unsigned, MDNode*>, 2> MDs;
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
@@ -103,10 +99,9 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
 
         // Enumerate metadata attached with this instruction.
         MDs.clear();
-        TheMetadata.getMDs(I, MDs);
-        for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME;
-             ++MI)
-          EnumerateMetadata(MI->second);
+        I->getAllMetadata(MDs);
+        for (unsigned i = 0, e = MDs.size(); i != e; ++i)
+          EnumerateMetadata(MDs[i].second);
       }
   }
 

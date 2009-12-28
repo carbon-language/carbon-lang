@@ -2826,10 +2826,9 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       ParseOptionalCustomMetadata();
 
     // Set metadata attached with this instruction.
-    MetadataContext &TheMetadata = M->getContext().getMetadata();
     for (SmallVector<std::pair<unsigned, MDNode *>, 2>::iterator
            MDI = MDsOnInst.begin(), MDE = MDsOnInst.end(); MDI != MDE; ++MDI)
-      TheMetadata.addMD(MDI->first, MDI->second, Inst);
+      Inst->setMetadata(MDI->first, MDI->second);
     MDsOnInst.clear();
 
     BB->getInstList().push_back(Inst);

@@ -205,6 +205,7 @@ class MetadataContext {
   void operator=(MetadataContext&);  // DO NOT IMPLEMENT
 
   MetadataContextImpl *const pImpl;
+  friend class Instruction;
 public:
   MetadataContext();
   ~MetadataContext();
@@ -214,25 +215,6 @@ public:
 
   /// isValidName - Return true if Name is a valid custom metadata handler name.
   static bool isValidName(StringRef Name);
-
-#if 1
-  /// getMD - Get the metadata of given kind attached to an Instruction.
-  /// If the metadata is not found then return 0.
-  MDNode *getMD(unsigned Kind, const Instruction *Inst);
-
-  /// getMDs - Get the metadata attached to an Instruction.
-  void getMDs(const Instruction *Inst, 
-              SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const;
-
-  /// addMD - Attach the metadata of given kind to an Instruction.
-  void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
-  
-  /// removeMD - Remove metadata of given kind attached with an instuction.
-  void removeMD(unsigned Kind, Instruction *Inst);
-  
-  /// removeAllMetadata - Remove all metadata attached with an instruction.
-  void removeAllMetadata(Instruction *Inst);
-#endif
 
   /// copyMD - If metadata is attached with Instruction In1 then attach
   /// the same metadata to In2.

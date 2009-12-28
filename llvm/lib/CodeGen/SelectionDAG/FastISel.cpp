@@ -43,7 +43,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -349,10 +348,7 @@ bool FastISel::SelectCall(User *I) {
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
     if (MMI) {
-      MetadataContext &TheMetadata = 
-        DI->getParent()->getContext().getMetadata();
-      unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
-      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, DI))
+      if (MDNode *Dbg = DI->getMetadata("dbg"))
         MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
     }
     return true;

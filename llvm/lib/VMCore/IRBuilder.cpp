@@ -43,7 +43,7 @@ void IRBuilderBase::SetCurrentDebugLocation(MDNode *L) {
 
 void IRBuilderBase::SetInstDebugLocation(Instruction *I) const {
   if (CurDbgLocation)
-    Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
+    I->setMetadata(DbgMDKind, CurDbgLocation);
 }
 
 const Type *IRBuilderBase::getCurrentFunctionReturnType() const {

@@ -41,7 +41,7 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, unsigned scid)
-  : SubclassID(scid), HasValueHandle(0), HasMetadata(0),
+  : SubclassID(scid), HasValueHandle(0),
     SubclassOptionalData(0), SubclassData(0), VTy(checkType(ty)),
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
@@ -57,11 +57,6 @@ Value::Value(const Type *ty, unsigned scid)
 }
 
 Value::~Value() {
-  if (HasMetadata) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsDeleted(this);
-  }
-
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsDeleted(this);
@@ -306,10 +301,14 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
-  if (HasMetadata) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsRAUWd(this, New);
-  }
+
+  // FIXME: It doesn't make sense at all for metadata to follow RAUW.
+  if (Instruction *I = dyn_cast<Instruction>(this))
+    if (I->hasMetadata()) {
+      LLVMContext &Context = getContext();
+      // FIXME: NUKE ValueIsRAUWd??
+      Context.pImpl->TheMetadata.ValueIsRAUWd(this, New);
+    }
 
   while (!use_empty()) {
     Use &U = *UseList;

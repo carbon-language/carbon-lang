@@ -21,11 +21,9 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
-#include "llvm/Instruction.h"
-#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
-#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
@@ -680,30 +678,30 @@ void SlotTracker::processFunction() {
 
   ST_DEBUG("Inserting Instructions:\n");
 
-  MetadataContext &TheMetadata = TheFunction->getContext().getMetadata();
-  typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
-  MDMapTy MDs;
+  SmallVector<std::pair<unsigned, MDNode*>, 2> MDForInst;
 
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
        E = TheFunction->end(); BB != E; ++BB) {
     if (!BB->hasName())
       CreateFunctionSlot(BB);
+    
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E;
          ++I) {
-      if (I->getType() != Type::getVoidTy(TheFunction->getContext()) &&
-          !I->hasName())
+      if (!I->getType()->isVoidTy() && !I->hasName())
         CreateFunctionSlot(I);
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
-          CreateMetadataSlot(N);
+      
+      // Intrinsics can directly use metadata.
+      if (isa<IntrinsicInst>(I))
+        for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+          if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
+            CreateMetadataSlot(N);
 
       // Process metadata attached with this instruction.
-      MDs.clear();
-      TheMetadata.getMDs(I, MDs);
-      for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME; 
-           ++MI)
-        CreateMetadataSlot(MI->second);
+      MDForInst.clear();
+      I->getAllMetadata(MDForInst);
+      for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
+        CreateMetadataSlot(MDForInst[i].second);
     }
   }
 
@@ -2076,14 +2074,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
   // Print Metadata info.
   if (!MDNames.empty()) {
-    MetadataContext &TheMetadata = I.getContext().getMetadata();
-    typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
-    MDMapTy MDs;
-    TheMetadata.getMDs(&I, MDs);
-    for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME; 
-         ++MI)
-      Out << ", !" << MDNames[MI->first]
-          << " !" << Machine.getMetadataSlot(MI->second);
+    SmallVector<std::pair<unsigned, MDNode*>, 4> InstMD;
+    I.getAllMetadata(InstMD);
+    for (unsigned i = 0, e = InstMD.size(); i != e; ++i)
+      Out << ", !" << MDNames[InstMD[i].first]
+          << " !" << Machine.getMetadataSlot(InstMD[i].second);
   }
   printInfoComment(I);
 }
