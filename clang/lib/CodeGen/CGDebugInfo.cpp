@@ -26,6 +26,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1216,9 +1217,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   llvm::DIScope DS(RegionStack.back());
   llvm::DILocation DO(NULL);
-  llvm::DILocation DL = 
-    DebugFactory.CreateLocation(Line, Column, DS, DO);
-  Builder.SetDebugLocation(Call, DL.getNode());
+  llvm::DILocation DL = DebugFactory.CreateLocation(Line, Column, DS, DO);
+  
+  // TODO: Remove #include of LLVMContext from this.
+  llvm::LLVMContext &Context = Call->getContext();
+  unsigned DbgMDKind = Context.getMetadata().getMDKindID("dbg");
+  Context.getMetadata().addMD(DbgMDKind, DL.getNode(), Call);
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
@@ -1419,7 +1423,12 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   llvm::DILocation DO(NULL);
   llvm::DILocation DL = 
     DebugFactory.CreateLocation(Line, PLoc.getColumn(), DS, DO);
-  Builder.SetDebugLocation(Call, DL.getNode());
+  
+  // TODO: Remove #include of LLVMContext from this.
+  llvm::LLVMContext &Context = Call->getContext();
+  unsigned DbgMDKind = Context.getMetadata().getMDKindID("dbg");
+  Context.getMetadata().addMD(DbgMDKind, DL.getNode(), Call);
+  
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *Decl,

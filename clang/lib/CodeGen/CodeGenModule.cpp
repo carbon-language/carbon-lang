@@ -30,6 +30,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -1089,9 +1090,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
       CI->replaceAllUsesWith(NewCall);
 
     // Copy any custom metadata attached with CI.
-    llvm::MetadataContext &TheMetadata = CI->getContext().getMetadata();
-    TheMetadata.copyMD(CI, NewCall);
-
+    CI->getContext().getMetadata().copyMD(CI, NewCall);
     CI->eraseFromParent();
   }
 }
