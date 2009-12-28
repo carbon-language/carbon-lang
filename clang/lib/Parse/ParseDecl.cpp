@@ -2369,7 +2369,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       if (ParseUnqualifiedId(D.getCXXScopeSpec(), 
                              /*EnteringContext=*/true, 
                              /*AllowDestructorName=*/true, 
-                   /*AllowConstructorName=*/!D.getDeclSpec().hasTypeSpecifier(), 
+                   /*AllowConstructorName=*/!D.getDeclSpec().hasTypeSpecifier(),
                              /*ObjectType=*/0,
                              D.getName())) {
         D.SetIdentifier(0, Tok.getLocation());
