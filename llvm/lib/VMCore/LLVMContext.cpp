@@ -19,7 +19,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ValueHandle.h"
 #include "LLVMContextImpl.h"
-#include <set>
 
 using namespace llvm;
 

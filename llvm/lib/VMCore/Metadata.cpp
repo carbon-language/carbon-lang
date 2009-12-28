@@ -11,14 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMContextImpl.h"
 #include "llvm/Metadata.h"
+#include "LLVMContextImpl.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Instruction.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "SymbolTableListTraitsImpl.h"
+#include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
