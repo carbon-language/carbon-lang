@@ -226,12 +226,19 @@ bool MDNode::getLocalFunction(Function *LocalFunction,
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //
+static SmallVector<TrackingVH<MetadataBase>, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<TrackingVH<MetadataBase>, 4>*)Operands;
+}
+
 NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
                          MetadataBase *const *MDs, 
                          unsigned NumMDs, Module *ParentModule)
   : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
-
+    
+  Operands = new SmallVector<TrackingVH<MetadataBase>, 4>();
+    
+  SmallVector<TrackingVH<MetadataBase>, 4> &Node = getNMDOps(Operands);
   for (unsigned i = 0; i != NumMDs; ++i)
     Node.push_back(TrackingVH<MetadataBase>(MDs[i]));
 
@@ -242,10 +249,33 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
   assert(NMD && "Invalid source NamedMDNode!");
   SmallVector<MetadataBase *, 4> Elems;
+  Elems.reserve(NMD->getNumElements());
+  
   for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i)
     Elems.push_back(NMD->getElement(i));
   return new NamedMDNode(NMD->getContext(), NMD->getName().data(),
                          Elems.data(), Elems.size(), M);
+}
+
+NamedMDNode::~NamedMDNode() {
+  dropAllReferences();
+  delete &getNMDOps(Operands);
+}
+
+/// getNumElements - Return number of NamedMDNode elements.
+unsigned NamedMDNode::getNumElements() const {
+  return (unsigned)getNMDOps(Operands).size();
+}
+
+/// getElement - Return specified element.
+MetadataBase *NamedMDNode::getElement(unsigned i) const {
+  assert(i < getNumElements() && "Invalid element number!");
+  return getNMDOps(Operands)[i];
+}
+
+/// addElement - Add metadata element.
+void NamedMDNode::addElement(MetadataBase *M) {
+  getNMDOps(Operands).push_back(TrackingVH<MetadataBase>(M));
 }
 
 /// eraseFromParent - Drop all references and remove the node from parent
@@ -256,12 +286,9 @@ void NamedMDNode::eraseFromParent() {
 
 /// dropAllReferences - Remove all uses and clear node vector.
 void NamedMDNode::dropAllReferences() {
-  Node.clear();
+  getNMDOps(Operands).clear();
 }
 
-NamedMDNode::~NamedMDNode() {
-  dropAllReferences();
-}
 
 //===----------------------------------------------------------------------===//
 // MetadataContextImpl implementation.

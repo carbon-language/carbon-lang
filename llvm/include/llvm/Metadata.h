@@ -158,7 +158,7 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
   Module *Parent;
-  SmallVector<TrackingVH<MetadataBase>, 4> Node;
+  void *Operands; // SmallVector<TrackingVH<MetadataBase>, 4>
 
   void setParent(Module *M) { Parent = M; }
 protected:
@@ -188,21 +188,14 @@ public:
   inline const Module *getParent() const { return Parent; }
 
   /// getElement - Return specified element.
-  MetadataBase *getElement(unsigned i) const {
-    assert(i < getNumElements() && "Invalid element number!");
-    return Node[i];
-  }
-
+  MetadataBase *getElement(unsigned i) const;
+  
   /// getNumElements - Return number of NamedMDNode elements.
-  unsigned getNumElements() const {
-    return (unsigned)Node.size();
-  }
+  unsigned getNumElements() const;
 
   /// addElement - Add metadata element.
-  void addElement(MetadataBase *M) {
-    Node.push_back(TrackingVH<MetadataBase>(M));
-  }
-
+  void addElement(MetadataBase *M);
+  
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }
   static bool classof(const Value *V) {
