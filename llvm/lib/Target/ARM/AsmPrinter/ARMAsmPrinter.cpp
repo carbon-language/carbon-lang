@@ -23,6 +23,7 @@
 #include "ARMTargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
