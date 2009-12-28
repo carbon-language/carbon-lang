@@ -930,7 +930,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
   }
   else if (VT == MVT::i16) {
     BP = DAG.getNode(ISD::BUILD_PAIR, dl, VT, PICLoads[0], PICLoads[1]);
-    if (MemVT == MVT::i8)
+    if ((MemVT == MVT::i8) || (MemVT == MVT::i1))
       Chain = getChain(PICLoads[0]);
     else
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
@@ -942,7 +942,7 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     BPs[1] = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i16,
                          PICLoads[2], PICLoads[3]);
     BP = DAG.getNode(ISD::BUILD_PAIR, dl, VT, BPs[0], BPs[1]);
-    if (MemVT == MVT::i8)
+    if ((MemVT == MVT::i8) || (MemVT == MVT::i1))
       Chain = getChain(PICLoads[0]);
     else if (MemVT == MVT::i16)
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, 
