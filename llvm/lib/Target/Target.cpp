@@ -15,6 +15,7 @@
 #include "llvm-c/Target.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/LLVMContext.h"
 #include <cstring>
 
 using namespace llvm;

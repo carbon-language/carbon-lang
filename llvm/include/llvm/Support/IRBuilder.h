@@ -18,12 +18,11 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "llvm/Metadata.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {
+  class MDNode;
 
 /// IRBuilderDefaultInserter - This provides the default implementation of the
 /// IRBuilder 'InsertHelper' method that is called whenever an instruction is
@@ -42,11 +41,11 @@ protected:
 
 /// IRBuilderBase - Common base class shared among various IRBuilders.
 class IRBuilderBase {
+  unsigned DbgMDKind;
+  MDNode *CurDbgLocation;
 protected:
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
-  unsigned DbgMDKind;
-  MDNode *CurDbgLocation;
   LLVMContext &Context;
 public:
   
@@ -84,27 +83,13 @@ public:
   
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
-  void SetCurrentDebugLocation(MDNode *L) {
-    if (DbgMDKind == 0) 
-      DbgMDKind = Context.getMetadata().getMDKindID("dbg");
-    CurDbgLocation = L;
-  }
-  
+  void SetCurrentDebugLocation(MDNode *L);
   MDNode *getCurrentDebugLocation() const { return CurDbgLocation; }
   
-  /// SetDebugLocation -  Set location information for the given instruction.
-  void SetDebugLocation(Instruction *I) {
-    if (CurDbgLocation)
-      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
-  }
-  
-  /// SetDebugLocation -  Set location information for the given instruction.
-  void SetDebugLocation(Instruction *I, MDNode *Loc) {
-    if (DbgMDKind == 0) 
-      DbgMDKind = Context.getMetadata().getMDKindID("dbg");
-    Context.getMetadata().addMD(DbgMDKind, Loc, I);
-  }
-  
+  /// SetInstDebugLocation - If this builder has a current debug location, set
+  /// it on the specified instruction.
+  void SetInstDebugLocation(Instruction *I) const;
+
   //===--------------------------------------------------------------------===//
   // Miscellaneous creation methods.
   //===--------------------------------------------------------------------===//
@@ -216,8 +201,8 @@ public:
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
-    if (CurDbgLocation)
-      Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
+    if (getCurrentDebugLocation() != 0)
+      this->SetInstDebugLocation(I);
     return I;
   }
 

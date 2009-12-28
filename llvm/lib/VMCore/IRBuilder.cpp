@@ -14,6 +14,8 @@
 
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Metadata.h"
+#include "llvm/LLVMContext.h"
 using namespace llvm;
 
 /// CreateGlobalString - Make a new global variable with an initializer that
@@ -28,4 +30,17 @@ Value *IRBuilderBase::CreateGlobalString(const char *Str, const Twine &Name) {
                                           StrConstant, "", 0, false);
   GV->setName(Name);
   return GV;
+}
+
+/// SetCurrentDebugLocation - Set location information used by debugging
+/// information.
+void IRBuilderBase::SetCurrentDebugLocation(MDNode *L) {
+  if (DbgMDKind == 0) 
+    DbgMDKind = Context.getMetadata().getMDKindID("dbg");
+  CurDbgLocation = L;
+}
+
+void IRBuilderBase::SetInstDebugLocation(Instruction *I) const {
+  if (CurDbgLocation)
+    Context.getMetadata().addMD(DbgMDKind, CurDbgLocation, I);
 }
