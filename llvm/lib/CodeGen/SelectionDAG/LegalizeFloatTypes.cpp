@@ -637,7 +637,8 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
     }
   }
 
-  EVT RetVT = MVT::i32; // FIXME: is this the correct return type?
+  // Use the target specific return value for comparions lib calls.
+  EVT RetVT = TLI.getCmpLibcallReturnType();
   SDValue Ops[2] = { LHSInt, RHSInt };
   NewLHS = MakeLibCall(LC1, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
   NewRHS = DAG.getConstant(0, RetVT);

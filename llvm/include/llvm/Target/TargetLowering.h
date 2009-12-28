@@ -139,6 +139,12 @@ public:
   virtual
   MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
+  /// getCmpLibcallReturnType - Return the ValueType for comparison 
+  /// libcalls. Comparions libcalls include floating point comparion calls,
+  /// and Ordered/Unordered check calls on floating point numbers.
+  virtual 
+  MVT::SimpleValueType getCmpLibcallReturnType() const;
+
   /// getBooleanContents - For targets without i1 registers, this gives the
   /// nature of the high-bits of boolean values held in types wider than i1.
   /// "Boolean values" are special true/false values produced by nodes like

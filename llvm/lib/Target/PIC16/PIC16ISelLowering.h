@@ -84,6 +84,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
     /// getSetCCResultType - Return the ISD::SETCC ValueType
     virtual MVT::SimpleValueType getSetCCResultType(EVT ValType) const;
+    virtual MVT::SimpleValueType getCmpLibcallReturnType() const;
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
     SDValue LowerMUL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerADD(SDValue Op, SelectionDAG &DAG);

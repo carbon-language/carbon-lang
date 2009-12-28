@@ -713,6 +713,10 @@ MVT::SimpleValueType TargetLowering::getSetCCResultType(EVT VT) const {
   return PointerTy.SimpleTy;
 }
 
+MVT::SimpleValueType TargetLowering::getCmpLibcallReturnType() const {
+  return MVT::i32; // return the default value
+}
+
 /// getVectorTypeBreakdown - Vector types are broken down into some number of
 /// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.

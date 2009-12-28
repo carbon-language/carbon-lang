@@ -371,6 +371,11 @@ PIC16TargetLowering::getSetCCResultType(EVT ValType) const {
   return MVT::i8;
 }
 
+MVT::SimpleValueType
+PIC16TargetLowering::getCmpLibcallReturnType() const {
+  return MVT::i8; 
+}
+
 /// The type legalizer framework of generating legalizer can generate libcalls
 /// only when the operand/result types are illegal.
 /// PIC16 needs to generate libcalls even for the legal types (i8) for some ops.
