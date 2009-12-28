@@ -429,13 +429,12 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 
     // Asm->EOL("Region start");
 
-    if (!S.EndLabel) {
+    if (!S.EndLabel)
       EndLabelPtr = (intptr_t)EndFunction;
-      JCE->emitInt32((intptr_t)EndFunction - BeginLabelPtr);
-    } else {
+    else
       EndLabelPtr = JCE->getLabelAddress(S.EndLabel);
-      JCE->emitInt32(EndLabelPtr - BeginLabelPtr);
-    }
+
+    JCE->emitInt32(EndLabelPtr - BeginLabelPtr);
     //Asm->EOL("Region length");
 
     if (!S.PadLabel) {
