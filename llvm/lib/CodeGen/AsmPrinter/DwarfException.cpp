@@ -35,19 +35,13 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-static TimerGroup &getDwarfTimerGroup() {
-  static TimerGroup DwarfTimerGroup("DWARF Exception");
-  return DwarfTimerGroup;
-}
-
 DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
                                const MCAsmInfo *T)
   : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)
-    ExceptionTimer = new Timer("DWARF Exception Writer",
-                               getDwarfTimerGroup());
+    ExceptionTimer = new Timer("DWARF Exception Writer");
 }
 
 DwarfException::~DwarfException() {

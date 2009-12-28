@@ -30,11 +30,6 @@
 #include "llvm/System/Path.h"
 using namespace llvm;
 
-static TimerGroup &getDwarfTimerGroup() {
-  static TimerGroup DwarfTimerGroup("Dwarf Debugging");
-  return DwarfTimerGroup;
-}
-
 //===----------------------------------------------------------------------===//
 
 /// Configuration values for initial hash set sizes (log2).
@@ -274,8 +269,7 @@ DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
     SectionSourceLines(), didInitial(false), shouldEmit(false),
     CurrentFnDbgScope(0), DebugTimer(0) {
   if (TimePassesIsEnabled)
-    DebugTimer = new Timer("Dwarf Debug Writer",
-                           getDwarfTimerGroup());
+    DebugTimer = new Timer("Dwarf Debug Writer");
 }
 DwarfDebug::~DwarfDebug() {
   for (unsigned j = 0, M = DIEValues.size(); j < M; ++j)
