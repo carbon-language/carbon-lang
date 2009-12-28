@@ -22,6 +22,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -963,7 +964,7 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
-      SMLoc StartLoc = Lexer.getLoc();
+      SMLoc ATTRIBUTE_UNUSED StartLoc = Lexer.getLoc();
       if (ParseExpression(Value))
         return true;
 
@@ -1631,7 +1632,7 @@ bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (Lexer.isNot(AsmToken::String))
     return TokError("unexpected token in '.file' directive");
   
-  StringRef FileName = Lexer.getTok().getString();
+  StringRef ATTRIBUTE_UNUSED FileName = Lexer.getTok().getString();
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
