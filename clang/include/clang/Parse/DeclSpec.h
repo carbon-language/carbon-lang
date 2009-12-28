@@ -995,7 +995,7 @@ struct DeclaratorChunk {
 /// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
 public:
-   enum TheContext {
+  enum TheContext {
     FileContext,         // File scope declaration.
     PrototypeContext,    // Within a function prototype.
     KNRTypeListContext,  // K&R type definition list for formals.
