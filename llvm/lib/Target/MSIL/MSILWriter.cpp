@@ -556,8 +556,7 @@ void MSILWriter::printSimpleInstruction(const char* Inst, const char* Operand) {
 
 
 void MSILWriter::printPHICopy(const BasicBlock* Src, const BasicBlock* Dst) {
-  for (BasicBlock::const_iterator I = Dst->begin(), E = Dst->end();
-       isa<PHINode>(I); ++I) {
+  for (BasicBlock::const_iterator I = Dst->begin(); isa<PHINode>(I); ++I) {
     const PHINode* Phi = cast<PHINode>(I);
     const Value* Val = Phi->getIncomingValueForBlock(Src);
     if (isa<UndefValue>(Val)) continue;
