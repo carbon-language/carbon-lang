@@ -1157,11 +1157,6 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Handy pointer type
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
-  // Accumulate how many bytes are to be pushed on the stack, including the
-  // linkage area, and parameter passing area.  According to the SPU ABI,
-  // we minimally need space for [LR] and [SP]
-  unsigned NumStackBytes = SPUFrameInfo::minStackSize();
-
   // Set up a copy of the stack pointer for use loading and storing any
   // arguments that may not fit in the registers available for argument
   // passing.
@@ -1224,8 +1219,12 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
   }
 
-  // Update number of stack bytes actually used, insert a call sequence start
-  NumStackBytes = (ArgOffset - SPUFrameInfo::minStackSize());
+  // Accumulate how many bytes are to be pushed on the stack, including the
+  // linkage area, and parameter passing area.  According to the SPU ABI,
+  // we minimally need space for [LR] and [SP].
+  unsigned NumStackBytes = ArgOffset - SPUFrameInfo::minStackSize();
+
+  // Insert a call sequence start
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumStackBytes,
                                                             true));
 
