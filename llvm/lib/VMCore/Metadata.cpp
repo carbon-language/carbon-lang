@@ -89,22 +89,25 @@ void MDNodeElement::allUsesReplacedWith(Value *NV) {
 // MDNode implementation.
 //
 
+/// ~MDNode - Destroy MDNode.
+MDNode::~MDNode() {
+  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  pImpl->MDNodeSet.RemoveNode(this);
+  delete [] Operands;
+  Operands = NULL;
+}
+
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = NumVals;
   Operands = new MDNodeElement[NumOperands];
-  MDNodeElement *Ptr = Operands;
+    
   for (unsigned i = 0; i != NumVals; ++i) 
-    Ptr[i].set(Vals[i], this);
+    Operands[i].set(Vals[i], this);
     
   if (isFunctionLocal)
     SubclassData |= FunctionLocalBit;
-}
-
-void MDNode::Profile(FoldingSetNodeID &ID) const {
-  for (unsigned i = 0, e = getNumElements(); i != e; ++i)
-    ID.AddPointer(getElement(i));
 }
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
@@ -124,13 +127,11 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
   return N;
 }
 
-/// ~MDNode - Destroy MDNode.
-MDNode::~MDNode() {
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-  pImpl->MDNodeSet.RemoveNode(this);
-  delete [] Operands;
-  Operands = NULL;
+void MDNode::Profile(FoldingSetNodeID &ID) const {
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i)
+    ID.AddPointer(getElement(i));
 }
+
 
 /// getElement - Return specified element.
 Value *MDNode::getElement(unsigned i) const {
