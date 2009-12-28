@@ -75,6 +75,9 @@
 // CHECK: private constant [27 x i8] c"anonymousNamespaceFunction\00"
 // CHECK: private constant [84 x i8] c"void <anonymous namespace>::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
 
+// CHECK: private constant [19 x i8] c"localClassFunction\00"
+// CHECK: private constant [59 x i8] c"void NS::localClass(int)::LocalClass::localClassFunction()\00"
+
 int printf(const char * _Format, ...);
 
 class ClassInTopLevelNamespace {
@@ -270,6 +273,19 @@ public:
   } anonymousUnion;
 };
 
+void localClass(int) {
+  class LocalClass {
+  public:
+    void localClassFunction() {
+      printf("__func__ %s\n", __func__);
+      printf("__FUNCTION__ %s\n", __FUNCTION__);
+      printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
+    }
+  };
+  LocalClass lc;
+  lc.localClassFunction();
+}
+
 extern void externFunction() {
   printf("__func__ %s\n", __func__);
   printf("__FUNCTION__ %s\n", __FUNCTION__);
@@ -324,6 +340,8 @@ int main() {
   anonymous.anonymousClass.anonymousClassFunction();
   anonymous.anonymousStruct.anonymousStructFunction();
   anonymous.anonymousUnion.anonymousUnionFunction();
+
+  NS::localClass(0);
 
   NS::externFunction();
 

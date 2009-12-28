@@ -455,11 +455,6 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
     return getNameAsString();
 
   while (Ctx) {
-    if (Ctx->isFunctionOrMethod())
-      // FIXME: That probably will happen, when D was member of local
-      // scope class/struct/union. How do we handle this case?
-      break;
-
     if (const ClassTemplateSpecializationDecl *Spec
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
@@ -483,6 +478,34 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
       } else {
         Names.push_back(RD->getNameAsString());
       }
+    } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Ctx)) {
+      std::string Proto = FD->getNameAsString();
+
+      const FunctionProtoType *FT = 0;
+      if (FD->hasWrittenPrototype())
+        FT = dyn_cast<FunctionProtoType>(FD->getType()->getAs<FunctionType>());
+
+      Proto += "(";
+      if (FT) {
+        llvm::raw_string_ostream POut(Proto);
+        unsigned NumParams = FD->getNumParams();
+        for (unsigned i = 0; i < NumParams; ++i) {
+          if (i)
+            POut << ", ";
+          std::string Param;
+          FD->getParamDecl(i)->getType().getAsStringInternal(Param, P);
+          POut << Param;
+        }
+
+        if (FT->isVariadic()) {
+          if (NumParams > 0)
+            POut << ", ";
+          POut << "...";
+        }
+      }
+      Proto += ")";
+
+      Names.push_back(Proto);
     } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());
     else
