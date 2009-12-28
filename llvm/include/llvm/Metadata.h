@@ -22,7 +22,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 class Constant;

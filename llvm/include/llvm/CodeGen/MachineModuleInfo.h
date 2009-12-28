@@ -43,6 +43,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 #include "llvm/Metadata.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 

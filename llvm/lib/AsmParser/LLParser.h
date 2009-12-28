@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include <map>
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class Module;
