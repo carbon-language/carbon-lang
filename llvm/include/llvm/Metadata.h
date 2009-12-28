@@ -19,8 +19,6 @@
 #include "llvm/Value.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
@@ -28,6 +26,8 @@ class Constant;
 class Instruction;
 class LLVMContext;
 class MetadataContextImpl;
+template <typename T> class SmallVectorImpl;
+template<class PtrType, unsigned SmallSize> class SmallPtrSet;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
