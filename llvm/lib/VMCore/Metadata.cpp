@@ -290,9 +290,9 @@ public:
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
 
-  /// getHandlerNames - Populate client-supplied smallvector using custom
+  /// getMDKindNames - Populate client-supplied smallvector using custom
   /// metadata name and ID.
-  void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&) const;
+  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
@@ -415,12 +415,13 @@ getMDs(const Instruction *Inst,
 /// getHandlerNames - Populate client supplied smallvector using custome
 /// metadata name and ID.
 void MetadataContextImpl::
-getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&Names) const {
-  Names.resize(MDHandlerNames.size());
+getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
+  Names.resize(MDHandlerNames.size()+1);
+  Names[0] = "";
   for (StringMap<unsigned>::const_iterator I = MDHandlerNames.begin(),
          E = MDHandlerNames.end(); I != E; ++I) 
     // MD Handlers are numbered from 1.
-    Names[I->second - 1] = std::make_pair(I->second, I->first());
+    Names[I->second] = I->first();
 }
 
 /// ValueIsCloned - This handler is used to update metadata store
@@ -520,9 +521,8 @@ void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
 
 /// getHandlerNames - Populate client supplied smallvector using custome
 /// metadata name and ID.
-void MetadataContext::
-getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&N) const {
-  pImpl->getHandlerNames(N);
+void MetadataContext::getMDKindNames(SmallVectorImpl<StringRef> &N) const {
+  pImpl->getMDKindNames(N);
 }
 
 /// ValueIsDeleted - This handler is used to update metadata store

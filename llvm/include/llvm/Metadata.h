@@ -244,9 +244,9 @@ public:
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
 
-  /// getHandlerNames - Populate client supplied smallvector using custom
-  /// metadata name and ID.
-  void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&) const;
+  /// getMDKindNames - Populate client supplied SmallVector with the name for
+  /// each custom metadata ID.   ID #0 is not used, so it is filled in as empty.
+  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.

@@ -1330,8 +1330,8 @@ class AssemblyWriter {
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
   std::vector<const Type*> NumberedTypes;
-  DenseMap<unsigned, StringRef> MDNames;
-
+  SmallVector<StringRef, 8> MDNames;
+  
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
                         const Module *M,
@@ -1339,16 +1339,8 @@ public:
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
     // FIXME: Provide MDPrinter
-    if (M) {
-      MetadataContext &TheMetadata = M->getContext().getMetadata();
-      SmallVector<std::pair<unsigned, StringRef>, 4> Names;
-      TheMetadata.getHandlerNames(Names);
-      for (SmallVector<std::pair<unsigned, StringRef>, 4>::iterator 
-             I = Names.begin(),
-             E = Names.end(); I != E; ++I) {
-      MDNames[I->first] = I->second;
-      }
-    }
+    if (M)
+      M->getContext().getMetadata().getMDKindNames(MDNames);
   }
 
   void write(const Module *M) { printModule(M); }
@@ -2075,14 +2067,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
   }
 
-  // Print post operand alignment for load/store
+  // Print post operand alignment for load/store.
   if (isa<LoadInst>(I) && cast<LoadInst>(I).getAlignment()) {
     Out << ", align " << cast<LoadInst>(I).getAlignment();
   } else if (isa<StoreInst>(I) && cast<StoreInst>(I).getAlignment()) {
     Out << ", align " << cast<StoreInst>(I).getAlignment();
   }
 
-  // Print Metadata info
+  // Print Metadata info.
   if (!MDNames.empty()) {
     MetadataContext &TheMetadata = I.getContext().getMetadata();
     typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;

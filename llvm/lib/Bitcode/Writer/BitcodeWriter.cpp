@@ -593,35 +593,30 @@ static void WriteMetadataAttachment(const Function &F,
     Stream.ExitBlock();
 }
 
-static void WriteModuleMetadataStore(const Module *M,
-                                     const ValueEnumerator &VE,
-                                     BitstreamWriter &Stream) {
-
-  bool StartedMetadataBlock = false;
+static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
   SmallVector<uint64_t, 64> Record;
 
   // Write metadata kinds
   // METADATA_KIND - [n x [id, name]]
   MetadataContext &TheMetadata = M->getContext().getMetadata();
-  SmallVector<std::pair<unsigned, StringRef>, 4> Names;
-  TheMetadata.getHandlerNames(Names);
-  for (SmallVector<std::pair<unsigned, StringRef>, 4>::iterator 
-         I = Names.begin(),
-         E = Names.end(); I != E; ++I) {
-    Record.push_back(I->first);
-    StringRef KName = I->second;
-    for (unsigned i = 0, e = KName.size(); i != e; ++i)
-      Record.push_back(KName[i]);
-    if (!StartedMetadataBlock)  {
-      Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-      StartedMetadataBlock = true;
-    }
+  SmallVector<StringRef, 4> Names;
+  TheMetadata.getMDKindNames(Names);
+  
+  assert(Names[0] == "" && "MDKind #0 is invalid");
+  if (Names.size() == 1) return;
+
+  Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+  
+  for (unsigned MDKindID = 1, e = Names.size(); MDKindID != e; ++MDKindID) {
+    Record.push_back(MDKindID);
+    StringRef KName = Names[MDKindID];
+    Record.append(KName.begin(), KName.end());
+    
     Stream.EmitRecord(bitc::METADATA_KIND, Record, 0);
     Record.clear();
   }
 
-  if (StartedMetadataBlock)
-    Stream.ExitBlock();
+  Stream.ExitBlock();
 }
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
@@ -1466,7 +1461,7 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
       WriteFunction(*I, VE, Stream);
 
   // Emit metadata.
-  WriteModuleMetadataStore(M, VE, Stream);
+  WriteModuleMetadataStore(M, Stream);
 
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
