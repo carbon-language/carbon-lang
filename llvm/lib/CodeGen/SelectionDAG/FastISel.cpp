@@ -548,9 +548,6 @@ FastISel::SelectInstruction(Instruction *I) {
 /// the CFG.
 void
 FastISel::FastEmitBranch(MachineBasicBlock *MSucc) {
-  MachineFunction::iterator NextMBB =
-     llvm::next(MachineFunction::iterator(MBB));
-
   if (MBB->isLayoutSuccessor(MSucc)) {
     // The unconditional fall-through case, which needs no instructions.
   } else {
