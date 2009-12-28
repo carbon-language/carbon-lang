@@ -29,6 +29,12 @@
 #define ATTRIBUTE_USED
 #endif
 
+#if (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#define ATTRIBUTE_UNUSED __attribute__((__unused__))
+#else
+#define ATTRIBUTE_UNUSED
+#endif
+
 #ifdef __GNUC__ // aka 'ATTRIBUTE_CONST' but following LLVM Conventions.
 #define ATTRIBUTE_READNONE __attribute__((__const__))
 #else

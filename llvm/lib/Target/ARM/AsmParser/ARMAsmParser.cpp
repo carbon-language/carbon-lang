@@ -15,6 +15,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -666,7 +667,7 @@ bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
   const AsmToken &Tok = getLexer().getTok();
   if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
     return Error(L, "unexpected token in .syntax directive");
-  StringRef SymbolName = getLexer().getTok().getIdentifier();
+  StringRef ATTRIBUTE_UNUSED SymbolName = getLexer().getTok().getIdentifier();
   getLexer().Lex(); // Consume the identifier token.
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
