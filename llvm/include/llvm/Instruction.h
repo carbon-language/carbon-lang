@@ -43,47 +43,11 @@ public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
   
-  /// clone() - Create a copy of 'this' instruction that is identical in all
-  /// ways except the following:
-  ///   * The instruction has no parent
-  ///   * The instruction has no name
-  ///
-  Instruction *clone() const;
-
-  /// isIdenticalTo - Return true if the specified instruction is exactly
-  /// identical to the current one.  This means that all operands match and any
-  /// extra information (e.g. load is volatile) agree.
-  bool isIdenticalTo(const Instruction *I) const;
-
-  /// isIdenticalToWhenDefined - This is like isIdenticalTo, except that it
-  /// ignores the SubclassOptionalData flags, which specify conditions
-  /// under which the instruction's result is undefined.
-  bool isIdenticalToWhenDefined(const Instruction *I) const;
-
-  /// This function determines if the specified instruction executes the same
-  /// operation as the current one. This means that the opcodes, type, operand
-  /// types and any other factors affecting the operation must be the same. This
-  /// is similar to isIdenticalTo except the operands themselves don't have to
-  /// be identical.
-  /// @returns true if the specified instruction is the same operation as
-  /// the current one.
-  /// @brief Determine if one instruction is the same operation as another.
-  bool isSameOperationAs(const Instruction *I) const;
-
-  /// isUsedOutsideOfBlock - Return true if there are any uses of this
-  /// instruction in blocks other than the specified block.  Note that PHI nodes
-  /// are considered to evaluate their operands in the corresponding predecessor
-  /// block.
-  bool isUsedOutsideOfBlock(const BasicBlock *BB) const;
-  
-  
   /// use_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
   const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
   
-  // Accessor methods...
-  //
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
 
@@ -216,6 +180,40 @@ public:
   /// for such instructions, moving them may change the resulting value.
   bool isSafeToSpeculativelyExecute() const;
 
+  /// clone() - Create a copy of 'this' instruction that is identical in all
+  /// ways except the following:
+  ///   * The instruction has no parent
+  ///   * The instruction has no name
+  ///
+  Instruction *clone() const;
+  
+  /// isIdenticalTo - Return true if the specified instruction is exactly
+  /// identical to the current one.  This means that all operands match and any
+  /// extra information (e.g. load is volatile) agree.
+  bool isIdenticalTo(const Instruction *I) const;
+  
+  /// isIdenticalToWhenDefined - This is like isIdenticalTo, except that it
+  /// ignores the SubclassOptionalData flags, which specify conditions
+  /// under which the instruction's result is undefined.
+  bool isIdenticalToWhenDefined(const Instruction *I) const;
+  
+  /// This function determines if the specified instruction executes the same
+  /// operation as the current one. This means that the opcodes, type, operand
+  /// types and any other factors affecting the operation must be the same. This
+  /// is similar to isIdenticalTo except the operands themselves don't have to
+  /// be identical.
+  /// @returns true if the specified instruction is the same operation as
+  /// the current one.
+  /// @brief Determine if one instruction is the same operation as another.
+  bool isSameOperationAs(const Instruction *I) const;
+  
+  /// isUsedOutsideOfBlock - Return true if there are any uses of this
+  /// instruction in blocks other than the specified block.  Note that PHI nodes
+  /// are considered to evaluate their operands in the corresponding predecessor
+  /// block.
+  bool isUsedOutsideOfBlock(const BasicBlock *BB) const;
+  
+  
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *) { return true; }
   static inline bool classof(const Value *V) {
@@ -223,7 +221,7 @@ public:
   }
 
   //----------------------------------------------------------------------
-  // Exported enumerations...
+  // Exported enumerations.
   //
   enum TermOps {       // These terminate basic blocks
 #define  FIRST_TERM_INST(N)             TermOpsBegin = N,
