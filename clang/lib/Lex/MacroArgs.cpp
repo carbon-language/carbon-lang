@@ -24,25 +24,34 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              Preprocessor &PP) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-  MacroArgs *Result = 0;
+  MacroArgs **ResultEnt = 0;
+  unsigned ClosestMatch = ~0U;
   
   // See if we have an entry with a big enough argument list to reuse on the
   // free list.  If so, reuse it.
   for (MacroArgs **Entry = &PP.MacroArgCache; *Entry;
        Entry = &(*Entry)->ArgCache)
-    if ((*Entry)->NumUnexpArgTokens >= NumToks) {
-      Result = *Entry;
-      // Unlink this node from the preprocessors singly linked list.
-      *Entry = Result->ArgCache;
-      break;
+    if ((*Entry)->NumUnexpArgTokens >= NumToks &&
+        (*Entry)->NumUnexpArgTokens < ClosestMatch) {
+      ResultEnt = Entry;
+      
+      // If we have an exact match, use it.
+      if ((*Entry)->NumUnexpArgTokens == NumToks)
+        break;
+      // Otherwise, use the best fit.
+      ClosestMatch = (*Entry)->NumUnexpArgTokens;
     }
   
-  if (Result == 0) {
+  MacroArgs *Result;
+  if (ResultEnt == 0) {
     // Allocate memory for a MacroArgs object with the lexer tokens at the end.
     Result = (MacroArgs*)malloc(sizeof(MacroArgs) + NumToks*sizeof(Token));
     // Construct the MacroArgs object.
     new (Result) MacroArgs(NumToks, VarargsElided);
   } else {
+    Result = *ResultEnt;
+    // Unlink this node from the preprocessors singly linked list.
+    *ResultEnt = Result->ArgCache;
     Result->NumUnexpArgTokens = NumToks;
     Result->VarargsElided = VarargsElided;
   }
