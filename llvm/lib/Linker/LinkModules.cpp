@@ -664,7 +664,6 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
         Var->eraseFromParent();
       else
         cast<Function>(DGV)->eraseFromParent();
-      DGV = NewDGV;
 
       // If the symbol table renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename.
