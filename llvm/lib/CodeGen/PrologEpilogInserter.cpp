@@ -860,7 +860,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
               // Remove all instructions up 'til the last use, since they're
               // just calculating the value we already have.
               BB->erase(I, LastUseMI);
-              MI = I = LastUseMI;
+              I = LastUseMI;
 
               // Extend the live range of the scratch register
               PrevLastUseMI->getOperand(PrevLastUseOp).setIsKill(false);
