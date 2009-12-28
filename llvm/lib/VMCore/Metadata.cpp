@@ -322,7 +322,8 @@ public:
   MDNode *getMD(unsigned Kind, const Instruction *Inst);
 
   /// getMDs - Get the metadata attached to an Instruction.
-  void getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const;
+  void getMDs(const Instruction *Inst,
+              SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const;
 
   /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
@@ -447,7 +448,8 @@ MDNode *MetadataContextImpl::getMD(unsigned MDKind, const Instruction *Inst) {
 
 /// getMDs - Get the metadata attached to an Instruction.
 void MetadataContextImpl::
-getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const {
+getMDs(const Instruction *Inst,
+       SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const {
   MDStoreTy::const_iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
     return;
@@ -542,7 +544,7 @@ MDNode *MetadataContext::getMD(unsigned Kind, const Instruction *Inst) {
 /// getMDs - Get the metadata attached to an Instruction.
 void MetadataContext::
 getMDs(const Instruction *Inst, 
-       SmallVectorImpl<std::pair<unsigned, TrackingVH<MDNode> > > &MDs) const {
+       SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const {
   return pImpl->getMDs(Inst, MDs);
 }
 

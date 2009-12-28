@@ -236,7 +236,7 @@ public:
 
   /// getMDs - Get the metadata attached to an Instruction.
   void getMDs(const Instruction *Inst, 
-        SmallVectorImpl<std::pair<unsigned, TrackingVH<MDNode> > > &MDs) const;
+              SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs) const;
 
   /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);

@@ -681,7 +681,7 @@ void SlotTracker::processFunction() {
   ST_DEBUG("Inserting Instructions:\n");
 
   MetadataContext &TheMetadata = TheFunction->getContext().getMetadata();
-  typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+  typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
   MDMapTy MDs;
 
   // Add all of the basic blocks and instructions with no names.
@@ -2085,7 +2085,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print Metadata info
   if (!MDNames.empty()) {
     MetadataContext &TheMetadata = I.getContext().getMetadata();
-    typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+    typedef SmallVector<std::pair<unsigned, MDNode*>, 2> MDMapTy;
     MDMapTy MDs;
     TheMetadata.getMDs(&I, MDs);
     for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME; 
