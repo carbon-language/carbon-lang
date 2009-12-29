@@ -6,6 +6,6 @@
 // CHECK: -triple i386-apple-darwin9
 // CHECK: -g
 // CHECK: -Os
-// CHECK: [DW_TAG_compile_unit ]
+// CHECK: [ DW_TAG_compile_unit ]
 
 int x;
