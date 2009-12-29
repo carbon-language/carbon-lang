@@ -193,8 +193,8 @@ namespace llvm {
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility);
     bool ParseStandaloneMetadata();
     bool ParseNamedMetadata();
-    bool ParseMDString(MetadataBase *&S);
-    bool ParseMDNode(MetadataBase *&N);
+    bool ParseMDString(MDString *&Result);
+    bool ParseMDNode(MDNode *&Result);
 
     // Type Parsing.
     bool ParseType(PATypeHolder &Result, bool AllowVoid = false);

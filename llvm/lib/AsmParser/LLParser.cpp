@@ -463,17 +463,16 @@ bool LLParser::ParseNamedGlobal() {
 
 // MDString:
 //   ::= '!' STRINGCONSTANT
-bool LLParser::ParseMDString(MetadataBase *&MDS) {
+bool LLParser::ParseMDString(MDString *&Result) {
   std::string Str;
   if (ParseStringConstant(Str)) return true;
-  MDS = MDString::get(Context, Str);
+  Result = MDString::get(Context, Str);
   return false;
 }
 
 // MDNode:
 //   ::= '!' MDNodeNumber
-// FIXME: Take an MDNode*&.
-bool LLParser::ParseMDNode(MetadataBase *&Node) {
+bool LLParser::ParseMDNode(MDNode *&Result) {
   // !{ ..., !42, ... }
   unsigned MID = 0;
   if (ParseUInt32(MID)) return true;
@@ -481,7 +480,7 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
   // Check existing MDNode.
   std::map<unsigned, TrackingVH<MDNode> >::iterator I = MetadataCache.find(MID);
   if (I != MetadataCache.end()) {
-    Node = I->second;
+    Result = I->second;
     return false;
   }
 
@@ -489,7 +488,7 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
   std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MID);
   if (FI != ForwardRefMDNodes.end()) {
-    Node = FI->second.first;
+    Result = FI->second.first;
     return false;
   }
 
@@ -499,7 +498,7 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
   Elts.push_back(MDString::get(Context, FwdRefName));
   MDNode *FwdNode = MDNode::get(Context, Elts.data(), Elts.size());
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
-  Node = FwdNode;
+  Result = FwdNode;
   return false;
 }
 
@@ -522,10 +521,13 @@ bool LLParser::ParseNamedMetadata() {
   Lex.Lex();
   SmallVector<MetadataBase *, 8> Elts;
   do {
+    // FIXME: Eat if present.
     if (Lex.getKind() != lltok::Metadata)
       return TokError("Expected '!' here");
     Lex.Lex();
-    MetadataBase *N = 0;
+    
+    // FIXME: Will crash on mdstrings etc.
+    MDNode *N = 0;
     if (ParseMDNode(N)) return true;
     Elts.push_back(N);
   } while (EatIfPresent(lltok::comma));
@@ -562,6 +564,7 @@ bool LLParser::ParseStandaloneMetadata() {
   if (Lex.getKind() != lltok::lbrace)
     return TokError("Expected '{' here");
 
+  // FIXME: This doesn't make sense here.
   SmallVector<Value *, 16> Elts;
   if (ParseMDNodeVector(Elts)
       || ParseToken(lltok::rbrace, "expected end of metadata node"))
@@ -599,14 +602,16 @@ bool LLParser::ParseInlineMetadata(Value *&V, PerFunctionState &PFS) {
     return false;
   }
 
+  // FIXME: This can't possibly work at all.  r90497
+  
   // Standalone metadata reference
   // !{ ..., !42, ... }
-  if (!ParseMDNode((MetadataBase *&)V))
+  if (!ParseMDNode((MDNode *&)V))
     return false;
 
   // MDString:
   // '!' STRINGCONSTANT
-  if (ParseMDString((MetadataBase *&)V)) return true;
+  if (ParseMDString((MDString *&)V)) return true;
   return false;
 }
 
@@ -1118,11 +1123,11 @@ bool LLParser::ParseOptionalCustomMetadata() {
       return TokError("expected '!' here");
     Lex.Lex();
 
-    MetadataBase *Node;
+    MDNode *Node;
     if (ParseMDNode(Node)) return true;
 
     unsigned MDK = M->getMDKindID(Name.c_str());
-    MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
+    MDsOnInst.push_back(std::make_pair(MDK, Node));
 
     // If this is the end of the list, we're done.
     if (!EatIfPresent(lltok::comma))
@@ -1937,6 +1942,8 @@ bool LLParser::ParseValID(ValID &ID) {
   case lltok::Metadata: {  // !{...} MDNode, !"foo" MDString
     ID.Kind = ValID::t_Metadata;
     Lex.Lex();
+    
+    // FIXME: This doesn't belong here.
     if (Lex.getKind() == lltok::lbrace) {
       SmallVector<Value*, 16> Elts;
       if (ParseMDNodeVector(Elts) ||
@@ -1949,12 +1956,13 @@ bool LLParser::ParseValID(ValID &ID) {
 
     // Standalone metadata reference
     // !{ ..., !42, ... }
-    if (!ParseMDNode(ID.MetadataVal))
+    // FIXME: Split MetadataVal into one for MDNode and one for MDString.
+    if (!ParseMDNode((MDNode*&)ID.MetadataVal))
       return false;
 
     // MDString:
     //   ::= '!' STRINGCONSTANT
-    if (ParseMDString(ID.MetadataVal)) return true;
+    if (ParseMDString((MDString*&)ID.MetadataVal)) return true;
     ID.Kind = ValID::t_Metadata;
     return false;
   }
@@ -3842,6 +3850,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
   Lex.Lex();
   do {
     Value *V = 0;
+    // FIXME: REWRITE.
     if (Lex.getKind() == lltok::kw_null) {
       Lex.Lex();
       V = 0;
@@ -3850,11 +3859,11 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
       if (ParseType(Ty)) return true;
       if (Lex.getKind() == lltok::Metadata) {
         Lex.Lex();
-        MetadataBase *Node = 0;
+        MDNode *Node = 0;
         if (!ParseMDNode(Node))
           V = Node;
         else {
-          MetadataBase *MDS = 0;
+          MDString *MDS = 0;
           if (ParseMDString(MDS)) return true;
           V = MDS;
         }
