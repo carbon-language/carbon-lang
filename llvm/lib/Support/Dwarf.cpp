@@ -13,16 +13,13 @@
 
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
-
 #include <cassert>
-
-namespace llvm {
-
-namespace dwarf {
+using namespace llvm;
+using namespace dwarf;
 
 /// TagString - Return the string for the specified tag.
 ///
-const char *TagString(unsigned Tag) {
+const char *llvm::dwarf::TagString(unsigned Tag) {
   switch (Tag) {
     case DW_TAG_array_type:                return "DW_TAG_array_type";
     case DW_TAG_class_type:                return "DW_TAG_class_type";
@@ -90,7 +87,7 @@ const char *TagString(unsigned Tag) {
 
 /// ChildrenString - Return the string for the specified children flag.
 ///
-const char *ChildrenString(unsigned Children) {
+const char *llvm::dwarf::ChildrenString(unsigned Children) {
   switch (Children) {
     case DW_CHILDREN_no:                   return "CHILDREN_no";
     case DW_CHILDREN_yes:                  return "CHILDREN_yes";
@@ -101,7 +98,7 @@ const char *ChildrenString(unsigned Children) {
 
 /// AttributeString - Return the string for the specified attribute.
 ///
-const char *AttributeString(unsigned Attribute) {
+const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   switch (Attribute) {
     case DW_AT_sibling:                    return "DW_AT_sibling";
     case DW_AT_location:                   return "DW_AT_location";
@@ -212,7 +209,7 @@ const char *AttributeString(unsigned Attribute) {
 
 /// FormEncodingString - Return the string for the specified form encoding.
 ///
-const char *FormEncodingString(unsigned Encoding) {
+const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
   switch (Encoding) {
     case DW_FORM_addr:                     return "FORM_addr";
     case DW_FORM_block2:                   return "FORM_block2";
@@ -242,7 +239,7 @@ const char *FormEncodingString(unsigned Encoding) {
 
 /// OperationEncodingString - Return the string for the specified operation
 /// encoding.
-const char *OperationEncodingString(unsigned Encoding) {
+const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   switch (Encoding) {
     case DW_OP_addr:                       return "OP_addr";
     case DW_OP_deref:                      return "OP_deref";
@@ -317,7 +314,7 @@ const char *OperationEncodingString(unsigned Encoding) {
 
 /// AttributeEncodingString - Return the string for the specified attribute
 /// encoding.
-const char *AttributeEncodingString(unsigned Encoding) {
+const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   switch (Encoding) {
     case DW_ATE_address:                   return "ATE_address";
     case DW_ATE_boolean:                   return "ATE_boolean";
@@ -343,7 +340,7 @@ const char *AttributeEncodingString(unsigned Encoding) {
 
 /// DecimalSignString - Return the string for the specified decimal sign
 /// attribute.
-const char *DecimalSignString(unsigned Sign) {
+const char *llvm::dwarf::DecimalSignString(unsigned Sign) {
   switch (Sign) {
     case DW_DS_unsigned:                   return "DS_unsigned";
     case DW_DS_leading_overpunch:          return "DS_leading_overpunch";
@@ -357,7 +354,7 @@ const char *DecimalSignString(unsigned Sign) {
 
 /// EndianityString - Return the string for the specified endianity.
 ///
-const char *EndianityString(unsigned Endian) {
+const char *llvm::dwarf::EndianityString(unsigned Endian) {
   switch (Endian) {
     case DW_END_default:                   return "END_default";
     case DW_END_big:                       return "END_big";
@@ -371,7 +368,7 @@ const char *EndianityString(unsigned Endian) {
 
 /// AccessibilityString - Return the string for the specified accessibility.
 ///
-const char *AccessibilityString(unsigned Access) {
+const char *llvm::dwarf::AccessibilityString(unsigned Access) {
   switch (Access) {
     // Accessibility codes
     case DW_ACCESS_public:                 return "ACCESS_public";
@@ -384,7 +381,7 @@ const char *AccessibilityString(unsigned Access) {
 
 /// VisibilityString - Return the string for the specified visibility.
 ///
-const char *VisibilityString(unsigned Visibility) {
+const char *llvm::dwarf::VisibilityString(unsigned Visibility) {
   switch (Visibility) {
     case DW_VIS_local:                     return "VIS_local";
     case DW_VIS_exported:                  return "VIS_exported";
@@ -396,7 +393,7 @@ const char *VisibilityString(unsigned Visibility) {
 
 /// VirtualityString - Return the string for the specified virtuality.
 ///
-const char *VirtualityString(unsigned Virtuality) {
+const char *llvm::dwarf::VirtualityString(unsigned Virtuality) {
   switch (Virtuality) {
     case DW_VIRTUALITY_none:               return "VIRTUALITY_none";
     case DW_VIRTUALITY_virtual:            return "VIRTUALITY_virtual";
@@ -408,7 +405,7 @@ const char *VirtualityString(unsigned Virtuality) {
 
 /// LanguageString - Return the string for the specified language.
 ///
-const char *LanguageString(unsigned Language) {
+const char *llvm::dwarf::LanguageString(unsigned Language) {
   switch (Language) {
     case DW_LANG_C89:                      return "LANG_C89";
     case DW_LANG_C:                        return "LANG_C";
@@ -438,7 +435,7 @@ const char *LanguageString(unsigned Language) {
 
 /// CaseString - Return the string for the specified identifier case.
 ///
-const char *CaseString(unsigned Case) {
+const char *llvm::dwarf::CaseString(unsigned Case) {
    switch (Case) {
     case DW_ID_case_sensitive:             return "ID_case_sensitive";
     case DW_ID_up_case:                    return "ID_up_case";
@@ -451,7 +448,7 @@ const char *CaseString(unsigned Case) {
 
 /// ConventionString - Return the string for the specified calling convention.
 ///
-const char *ConventionString(unsigned Convention) {
+const char *llvm::dwarf::ConventionString(unsigned Convention) {
    switch (Convention) {
     case DW_CC_normal:                     return "CC_normal";
     case DW_CC_program:                    return "CC_program";
@@ -465,7 +462,7 @@ const char *ConventionString(unsigned Convention) {
 
 /// InlineCodeString - Return the string for the specified inline code.
 ///
-const char *InlineCodeString(unsigned Code) {
+const char *llvm::dwarf::InlineCodeString(unsigned Code) {
    switch (Code) {
     case DW_INL_not_inlined:               return "INL_not_inlined";
     case DW_INL_inlined:                   return "INL_inlined";
@@ -478,7 +475,7 @@ const char *InlineCodeString(unsigned Code) {
 
 /// ArrayOrderString - Return the string for the specified array order.
 ///
-const char *ArrayOrderString(unsigned Order) {
+const char *llvm::dwarf::ArrayOrderString(unsigned Order) {
    switch (Order) {
     case DW_ORD_row_major:                 return "ORD_row_major";
     case DW_ORD_col_major:                 return "ORD_col_major";
@@ -489,7 +486,7 @@ const char *ArrayOrderString(unsigned Order) {
 
 /// DiscriminantString - Return the string for the specified discriminant
 /// descriptor.
-const char *DiscriminantString(unsigned Discriminant) {
+const char *llvm::dwarf::DiscriminantString(unsigned Discriminant) {
    switch (Discriminant) {
     case DW_DSC_label:                     return "DSC_label";
     case DW_DSC_range:                     return "DSC_range";
@@ -500,7 +497,7 @@ const char *DiscriminantString(unsigned Discriminant) {
 
 /// LNStandardString - Return the string for the specified line number standard.
 ///
-const char *LNStandardString(unsigned Standard) {
+const char *llvm::dwarf::LNStandardString(unsigned Standard) {
    switch (Standard) {
     case DW_LNS_copy:                      return "LNS_copy";
     case DW_LNS_advance_pc:                return "LNS_advance_pc";
@@ -521,7 +518,7 @@ const char *LNStandardString(unsigned Standard) {
 
 /// LNExtendedString - Return the string for the specified line number extended
 /// opcode encodings.
-const char *LNExtendedString(unsigned Encoding) {
+const char *llvm::dwarf::LNExtendedString(unsigned Encoding) {
    switch (Encoding) {
     // Line Number Extended Opcode Encodings
     case DW_LNE_end_sequence:              return "LNE_end_sequence";
@@ -536,7 +533,7 @@ const char *LNExtendedString(unsigned Encoding) {
 
 /// MacinfoString - Return the string for the specified macinfo type encodings.
 ///
-const char *MacinfoString(unsigned Encoding) {
+const char *llvm::dwarf::MacinfoString(unsigned Encoding) {
    switch (Encoding) {
     // Macinfo Type Encodings
     case DW_MACINFO_define:                return "MACINFO_define";
@@ -551,7 +548,7 @@ const char *MacinfoString(unsigned Encoding) {
 
 /// CallFrameString - Return the string for the specified call frame instruction
 /// encodings.
-const char *CallFrameString(unsigned Encoding) {
+const char *llvm::dwarf::CallFrameString(unsigned Encoding) {
    switch (Encoding) {
     case DW_CFA_advance_loc:               return "CFA_advance_loc";
     case DW_CFA_offset:                    return "CFA_offset";
@@ -584,7 +581,3 @@ const char *CallFrameString(unsigned Encoding) {
   llvm_unreachable("Unknown Dwarf Call Frame Instruction Encodings");
   return "";
 }
-
-} // End of namespace dwarf.
-
-} // End of namespace llvm.
