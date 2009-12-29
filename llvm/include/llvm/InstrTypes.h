@@ -20,6 +20,7 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/Operator.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 
@@ -160,7 +161,7 @@ public:
   /// Instruction is allowed to be a dereferenced end iterator.
   ///
   static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
-                                const Twine &Name = "",
+                                const Twine &Name = Twine(),
                                 Instruction *InsertBefore = 0);
 
   /// Create() - Construct a binary instruction, given the opcode and the two

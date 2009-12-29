@@ -56,7 +56,7 @@ public:
 
 protected:
   GlobalValue(const Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
-              LinkageTypes linkage, const Twine &Name = "")
+              LinkageTypes linkage, const Twine &Name)
     : Constant(ty, vty, Ops, NumOps), Parent(0),
       Linkage(linkage), Visibility(DefaultVisibility), Alignment(0) {
     setName(Name);

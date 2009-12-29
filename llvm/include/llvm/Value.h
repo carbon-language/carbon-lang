@@ -17,7 +17,6 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
 #include <string>
 
@@ -43,6 +42,7 @@ class AssemblyAnnotationWriter;
 class ValueHandleBase;
 class LLVMContext;
 class MetadataContextImpl;
+class Twine;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
