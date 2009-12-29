@@ -33,18 +33,11 @@ class Instruction : public User, public ilist_node<Instruction> {
 
   BasicBlock *Parent;
   
-  // FIXME: Bitfieldize this.
-  bool HasMetadata;
-  friend class MetadataContextImpl;
-
-  friend class SymbolTableListTraits<Instruction, BasicBlock>;
-  void setParent(BasicBlock *P);
-protected:
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              Instruction *InsertBefore = 0);
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              BasicBlock *InsertAtEnd);
-  virtual Instruction *clone_impl() const = 0;
+  enum {
+    /// HasMetadataBit - This is a bit stored in the SubClassData field which
+    /// indicates whether this instruction has metadata attached to it or not.
+    HasMetadataBit = 1 << 15
+  };
 public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
@@ -131,7 +124,7 @@ public:
   /// hasMetadata() - Return true if this instruction has any metadata attached
   /// to it.
   bool hasMetadata() const {
-    return HasMetadata;
+    return (getSubclassDataFromValue() & HasMetadataBit) != 0;
   }
   
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
@@ -312,6 +305,44 @@ public:
 #define   LAST_OTHER_INST(N)             OtherOpsEnd = N+1
 #include "llvm/Instruction.def"
   };
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
+  }
+  unsigned short getSubclassDataFromValue() const {
+    return Value::getSubclassDataFromValue();
+  }
+  
+  friend class MetadataContextImpl;
+  void setHasMetadata(bool V) {
+    setValueSubclassData((getSubclassDataFromValue() & ~HasMetadataBit) |
+                         (V ? HasMetadataBit : 0));
+  }
+  
+  friend class SymbolTableListTraits<Instruction, BasicBlock>;
+  void setParent(BasicBlock *P);
+protected:
+  // Instruction subclasses can stick up to 15 bits of stuff into the
+  // SubclassData field of instruction with these members.
+  
+  // Verify that only the low 15 bits are used.
+  void setInstructionSubclassData(unsigned short D) {
+    assert((D & HasMetadataBit) == 0 && "Out of range value put into field");
+    setValueSubclassData((getSubclassDataFromValue() & HasMetadataBit) | D);
+  }
+  
+  unsigned getSubclassDataFromInstruction() const {
+    return getSubclassDataFromValue() & ~HasMetadataBit;
+  }
+  
+  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+              Instruction *InsertBefore = 0);
+  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+              BasicBlock *InsertAtEnd);
+  virtual Instruction *clone_impl() const = 0;
+  
 };
 
 // Instruction* is only 4-byte aligned.

@@ -733,11 +733,11 @@ public:
 
   /// @brief Return the predicate for this instruction.
   Predicate getPredicate() const {
-    return Predicate(getSubclassDataFromValue());
+    return Predicate(getSubclassDataFromInstruction());
   }
 
   /// @brief Set the predicate for this instruction to the specified value.
-  void setPredicate(Predicate P) { setValueSubclassData(P); }
+  void setPredicate(Predicate P) { setInstructionSubclassData(P); }
 
   static bool isFPPredicate(Predicate P) {
     return P >= FIRST_FCMP_PREDICATE && P <= LAST_FCMP_PREDICATE;

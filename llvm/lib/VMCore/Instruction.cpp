@@ -24,8 +24,7 @@ using namespace llvm;
 
 Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
                          Instruction *InsertBefore)
-  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0),
-    HasMetadata(false) {
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
 
@@ -39,8 +38,7 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
 
 Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
                          BasicBlock *InsertAtEnd)
-  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0),
-    HasMetadata(false) {
+  : User(ty, Value::InstructionVal + it, Ops, NumOps), Parent(0) {
   // Make sure that we get added to a basicblock
   LeakDetector::addGarbageObject(this);
 
@@ -53,7 +51,7 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
 // Out of line virtual method, so the vtable, etc has a home.
 Instruction::~Instruction() {
   assert(Parent == 0 && "Instruction still linked in the program!");
-  if (HasMetadata)
+  if (hasMetadata())
     getContext().pImpl->TheMetadata.ValueIsDeleted(this);
 }
 
@@ -464,7 +462,7 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
 Instruction *Instruction::clone() const {
   Instruction *New = clone_impl();
   New->SubclassOptionalData = SubclassOptionalData;
-  if (HasMetadata)
+  if (hasMetadata())
     getContext().pImpl->TheMetadata.ValueIsCloned(this, New);
   return New;
 }

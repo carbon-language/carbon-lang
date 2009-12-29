@@ -83,7 +83,7 @@ public:
   /// by the instruction.
   ///
   unsigned getAlignment() const {
-    return (1u << getSubclassDataFromValue()) >> 1;
+    return (1u << getSubclassDataFromInstruction()) >> 1;
   }
   void setAlignment(unsigned Align);
 
@@ -101,10 +101,10 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 private:
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // subclasses cannot accidentally use it.
-  void setValueSubclassData(unsigned short D) {
-    Value::setValueSubclassData(D);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
   }
 };
 
@@ -142,18 +142,19 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return getSubclassDataFromValue() & 1; }
+  bool isVolatile() const { return getSubclassDataFromInstruction() & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) {
-    setValueSubclassData((getSubclassDataFromValue() & ~1) | (V ? 1 : 0));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                               (V ? 1 : 0));
   }
 
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    return (1 << (getSubclassDataFromValue() >> 1)) >> 1;
+    return (1 << (getSubclassDataFromInstruction() >> 1)) >> 1;
   }
 
   void setAlignment(unsigned Align);
@@ -176,10 +177,10 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 private:
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // subclasses cannot accidentally use it.
-  void setValueSubclassData(unsigned short D) {
-    Value::setValueSubclassData(D);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
   }
 };
 
@@ -214,12 +215,13 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return getSubclassDataFromValue() & 1; }
+  bool isVolatile() const { return getSubclassDataFromInstruction() & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) {
-    setValueSubclassData((getSubclassDataFromValue() & ~1) | (V ? 1 : 0));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                               (V ? 1 : 0));
   }
 
   /// Transparently provide more efficient getOperand methods.
@@ -228,7 +230,7 @@ public:
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    return (1 << (getSubclassDataFromValue() >> 1)) >> 1;
+    return (1 << (getSubclassDataFromInstruction() >> 1)) >> 1;
   }
 
   void setAlignment(unsigned Align);
@@ -250,10 +252,10 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 private:
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // subclasses cannot accidentally use it.
-  void setValueSubclassData(unsigned short D) {
-    Value::setValueSubclassData(D);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
   }
 };
 
@@ -929,9 +931,10 @@ public:
 
   ~CallInst();
 
-  bool isTailCall() const { return getSubclassDataFromValue() & 1; }
+  bool isTailCall() const { return getSubclassDataFromInstruction() & 1; }
   void setTailCall(bool isTC = true) {
-    setValueSubclassData((getSubclassDataFromValue() & ~1) | unsigned(isTC));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                               unsigned(isTC));
   }
 
   /// Provide fast operand accessors
@@ -940,11 +943,11 @@ public:
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 1);
+    return static_cast<CallingConv::ID>(getSubclassDataFromInstruction() >> 1);
   }
   void setCallingConv(CallingConv::ID CC) {
-    setValueSubclassData((getSubclassDataFromValue() & 1) |
-                         (static_cast<unsigned>(CC) << 1));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+                               (static_cast<unsigned>(CC) << 1));
   }
 
   /// getAttributes - Return the parameter attributes for this call.
@@ -1043,10 +1046,10 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 private:
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // subclasses cannot accidentally use it.
-  void setValueSubclassData(unsigned short D) {
-    Value::setValueSubclassData(D);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
   }
 };
 
@@ -2425,10 +2428,10 @@ public:
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(getSubclassDataFromValue());
+    return static_cast<CallingConv::ID>(getSubclassDataFromInstruction());
   }
   void setCallingConv(CallingConv::ID CC) {
-    setValueSubclassData(static_cast<unsigned>(CC));
+    setInstructionSubclassData(static_cast<unsigned>(CC));
   }
 
   /// getAttributes - Return the parameter attributes for this invoke.
@@ -2553,10 +2556,10 @@ private:
   virtual unsigned getNumSuccessorsV() const;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // subclasses cannot accidentally use it.
-  void setValueSubclassData(unsigned short D) {
-    Value::setValueSubclassData(D);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
   }
 };
 

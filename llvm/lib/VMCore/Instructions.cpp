@@ -959,7 +959,7 @@ AllocaInst::~AllocaInst() {
 
 void AllocaInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  setValueSubclassData(Log2_32(Align) + 1);
+  setInstructionSubclassData(Log2_32(Align) + 1);
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
@@ -1094,8 +1094,8 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
 
 void LoadInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  setValueSubclassData((getSubclassDataFromValue() & 1) |
-                       ((Log2_32(Align)+1)<<1));
+  setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+                             ((Log2_32(Align)+1)<<1));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1190,8 +1190,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 void StoreInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  setValueSubclassData((getSubclassDataFromValue() & 1) |
-                       ((Log2_32(Align)+1) << 1));
+  setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+                             ((Log2_32(Align)+1) << 1));
 }
 
 //===----------------------------------------------------------------------===//

@@ -355,9 +355,9 @@ void MetadataContextImpl::setMetadata(Instruction *Inst, unsigned Kind,
   // Handle the case when we're adding/updating metadata on an instruction.
   if (Node) {
     MDMapTy &Info = MetadataStore[Inst];
-    assert(!Info.empty() == Inst->HasMetadata && "HasMetadata bit is wonked");
+    assert(!Info.empty() == Inst->hasMetadata() && "HasMetadata bit is wonked");
     if (Info.empty()) {
-      Inst->HasMetadata = true;
+      Inst->setHasMetadata(true);
     } else {
       // Handle replacement of an existing value.
       for (unsigned i = 0, e = Info.size(); i != e; ++i)
@@ -373,14 +373,14 @@ void MetadataContextImpl::setMetadata(Instruction *Inst, unsigned Kind,
   }
   
   // Otherwise, we're removing metadata from an instruction.
-  assert(Inst->HasMetadata && MetadataStore.count(Inst) &&
+  assert(Inst->hasMetadata() && MetadataStore.count(Inst) &&
          "HasMetadata bit out of date!");
   MDMapTy &Info = MetadataStore[Inst];
 
   // Common case is removing the only entry.
   if (Info.size() == 1 && Info[0].first == Kind) {
     MetadataStore.erase(Inst);
-    Inst->HasMetadata = false;
+    Inst->setHasMetadata(false);
     return;
   }
   
@@ -398,7 +398,7 @@ void MetadataContextImpl::setMetadata(Instruction *Inst, unsigned Kind,
 /// removeAllMetadata - Remove all metadata attached with an instruction.
 void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
   MetadataStore.erase(Inst);
-  Inst->HasMetadata = false;
+  Inst->setHasMetadata(false);
 }
 
 
