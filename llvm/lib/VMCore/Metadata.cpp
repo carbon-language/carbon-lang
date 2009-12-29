@@ -389,8 +389,9 @@ void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
 MetadataContext::MetadataContext() : pImpl(new MetadataContextImpl()) { }
 MetadataContext::~MetadataContext() { delete pImpl; }
 
+#ifndef NDEBUG
 /// isValidName - Return true if Name is a valid custom metadata handler name.
-bool MetadataContext::isValidName(StringRef MDName) {
+static bool isValidName(StringRef MDName) {
   if (MDName.empty())
     return false;
 
@@ -404,9 +405,11 @@ bool MetadataContext::isValidName(StringRef MDName) {
   }
   return true;
 }
+#endif
 
 /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
 unsigned MetadataContext::getMDKindID(StringRef Name) const {
+  assert(isValidName(Name) && "Invalid MDNode name");
   return pImpl->getMDKindID(Name);
 }
 

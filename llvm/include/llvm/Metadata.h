@@ -221,9 +221,6 @@ public:
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
   unsigned getMDKindID(StringRef Name) const;
 
-  /// isValidName - Return true if Name is a valid custom metadata handler name.
-  static bool isValidName(StringRef Name);
-
   /// getMDKindNames - Populate client supplied SmallVector with the name for
   /// each custom metadata ID.   ID #0 is not used, so it is filled in as empty.
   void getMDKindNames(SmallVectorImpl<StringRef> &) const;
