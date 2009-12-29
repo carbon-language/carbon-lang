@@ -1090,7 +1090,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
       CI->replaceAllUsesWith(NewCall);
 
     // Copy any custom metadata attached with CI.
-    CI->getContext().getMetadata().copyMD(CI, NewCall);
+    if (llvm::MDNode *DbgNode = CI->getMetadata("dbg"))
+      NewCall->setMetadata("dbg", DbgNode);
     CI->eraseFromParent();
   }
 }
