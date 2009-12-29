@@ -496,7 +496,7 @@ bool LLParser::ParseMDNode(MDNode *&Result) {
 
   // FIXME: This is not unique enough!
   std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
-  Value *V = MDString::get(Context, FwdRefName));
+  Value *V = MDString::get(Context, FwdRefName);
   MDNode *FwdNode = MDNode::get(Context, &V, 1);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
   Result = FwdNode;
