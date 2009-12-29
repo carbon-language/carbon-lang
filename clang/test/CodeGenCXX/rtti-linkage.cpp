@@ -38,6 +38,9 @@
 // CHECK: _ZTIFvvE = weak_odr
 // CHECK: _ZTIPFvvE = weak_odr constant
 
+// CHECK: _ZTSN12_GLOBAL__N_11EE = internal constant
+// CHECK: _ZTIN12_GLOBAL__N_11EE = internal constant
+
 // A has no key function, so its RTTI data should be weak_odr.
 struct A { };
 
@@ -67,6 +70,10 @@ namespace {
   // D is inside an anonymous namespace, so all type information related to D should have
   // internal linkage.
   struct D { };
+  
+  // E is also inside an anonymous namespace.
+  enum E { };
+  
 };
 
 const D getD();
@@ -79,6 +86,8 @@ const std::type_info &t2() {
   // The exception specification is not part of the RTTI descriptor, so it should not have
   // internal linkage.
   (void)typeid(void (*)() throw (D));
+  
+  (void)typeid(E);
   
   // CHECK: _ZTIN12_GLOBAL__N_11DE to
   return typeid(getD());  

@@ -370,13 +370,12 @@ public:
     case Type::ConstantArray:
     case Type::IncompleteArray:
     case Type::VariableArray:
+    case Type::Enum:
       return BuildTypeInfo(Ty);
 
     case Type::Vector:
     case Type::ExtVector:
       return BuildSimpleType(Ty, "_ZTVN10__cxxabiv117__array_type_infoE");
-    case Type::Enum:
-      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv116__enum_type_infoE");
     }
   }
   
@@ -614,7 +613,17 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
       return llvm::GlobalVariable::InternalLinkage;
     
     return llvm::GlobalVariable::WeakODRLinkage;
-    break;
+  }
+
+  case Type::Enum: {
+    const EnumType *EnumTy = cast<EnumType>(Ty);
+    const EnumDecl *ED = EnumTy->getDecl();
+    
+    // If we're in an anonymous namespace, then we always want internal linkage.
+    if (ED->isInAnonymousNamespace() || !ED->hasLinkage())
+      return llvm::GlobalVariable::InternalLinkage;
+    
+    return llvm::GlobalValue::WeakODRLinkage;
   }
 
   case Type::Record: {
@@ -694,6 +703,11 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
     break;
 
+  case Type::Enum:
+    // abi::__enum_type_info
+    VtableName = "_ZTVN10__cxxabiv116__enum_type_infoE";
+    break;
+      
   case Type::Record: {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
@@ -770,6 +784,11 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   case Type::FunctionProto:
     // Itanium C++ ABI 2.9.5p4:
     // abi::__function_type_info adds no data members to std::type_info;
+    break;
+
+  case Type::Enum:
+    // Itanium C++ ABI 2.9.5p4:
+    // abi::__enum_type_info adds no data members to std::type_info;
     break;
 
   case Type::Record: {
