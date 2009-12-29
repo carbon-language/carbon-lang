@@ -367,11 +367,11 @@ public:
     case Type::MemberPointer:
     case Type::FunctionProto:
     case Type::FunctionNoProto:
-      return BuildTypeInfo(Ty);
-
     case Type::ConstantArray:
     case Type::IncompleteArray:
     case Type::VariableArray:
+      return BuildTypeInfo(Ty);
+
     case Type::Vector:
     case Type::ExtVector:
       return BuildSimpleType(Ty, "_ZTVN10__cxxabiv117__array_type_infoE");
@@ -598,7 +598,15 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
   if (ContainsIncompleteClassType(Ty))
     return llvm::GlobalValue::InternalLinkage;
   
-  if (const PointerType *PointerTy = dyn_cast<PointerType>(Ty)) {
+  switch (Ty->getTypeClass()) {
+  default:   
+    // FIXME: We need to add code to handle all types.
+    assert(false && "Unhandled type!");
+    break;
+
+  case Type::Pointer: {
+    const PointerType *PointerTy = cast<PointerType>(Ty);
+ 
     // If the pointee type has internal linkage, then the pointer type needs to
     // have it as well.
     if (getTypeInfoLinkage(PointerTy->getPointeeType()) == 
@@ -606,9 +614,11 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
       return llvm::GlobalVariable::InternalLinkage;
     
     return llvm::GlobalVariable::WeakODRLinkage;
+    break;
   }
-    
-  if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
+
+  case Type::Record: {
+    const RecordType *RecordTy = cast<RecordType>(Ty);
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
 
     // If we're in an anonymous namespace, then we always want internal linkage.
@@ -630,31 +640,39 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     return llvm::GlobalValue::ExternalLinkage;
   }
 
-  if (Ty->getTypeClass() == Type::Builtin) {
+  case Type::Builtin:
     return llvm::GlobalValue::WeakODRLinkage;
-  }
 
-  if (const FunctionType *FT = dyn_cast<FunctionType>(Ty)) {
-    if (getTypeInfoLinkage(FT->getResultType())
-        == llvm::GlobalValue::InternalLinkage)
+  case Type::FunctionProto: {
+    const FunctionProtoType *FPT = cast<FunctionProtoType>(Ty);
+
+    // Check the return type.
+    if (getTypeInfoLinkage(FPT->getResultType()) == 
+        llvm::GlobalValue::InternalLinkage)
       return llvm::GlobalValue::InternalLinkage;
-
-    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
-      for (unsigned i = 0; i < FPT->getNumArgs(); ++i)
-        if (getTypeInfoLinkage(FPT->getArgType(i))
-            == llvm::GlobalValue::InternalLinkage)
-          return llvm::GlobalValue::InternalLinkage;
-      for (unsigned i = 0; i < FPT->getNumExceptions(); ++i)
-        if (getTypeInfoLinkage(FPT->getExceptionType(i))
-            == llvm::GlobalValue::InternalLinkage)
-          return llvm::GlobalValue::InternalLinkage;
+    
+    // Check the parameter types.
+    for (unsigned i = 0; i != FPT->getNumArgs(); ++i) {
+      if (getTypeInfoLinkage(FPT->getArgType(i)) == 
+          llvm::GlobalValue::InternalLinkage)
+        return llvm::GlobalValue::InternalLinkage;
     }
-
+    
     return llvm::GlobalValue::WeakODRLinkage;
   }
+  
+  case Type::ConstantArray: 
+  case Type::IncompleteArray: {
+    const ArrayType *AT = cast<ArrayType>(Ty);
 
-  // FIXME: We need to add code to handle all types.
-  assert(false && "Unhandled type!");
+    // Check the element type.
+    if (getTypeInfoLinkage(AT->getElementType()) ==
+        llvm::GlobalValue::InternalLinkage)
+      return llvm::GlobalValue::InternalLinkage;
+  }
+
+  }
+
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
@@ -663,7 +681,19 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
 
   switch (Ty->getTypeClass()) {
   default: assert(0 && "Unhandled type!");
-  
+
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+    // abi::__array_type_info
+    VtableName = "_ZTVN10__cxxabiv117__array_type_infoE";
+    break;
+
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+    // abi::__function_type_info
+    VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
+    break;
+
   case Type::Record: {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
@@ -678,15 +708,11 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     // abi::__pointer_type_info
     VtableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
     break;
+
   case Type::MemberPointer:
     // abi::__pointer_to_member_type_info
     VtableName = "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
     break;
-  
-  case Type::FunctionNoProto:
-  case Type::FunctionProto:
-    // abi::__function_type_info
-    VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
   }
 
   llvm::Constant *Vtable = 
@@ -732,6 +758,12 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   default: assert(false && "Unhandled type class!");
   case Type::Builtin:
     assert(false && "Builtin type info must be in the standard library!");
+    break;
+
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+    // Itanium C++ ABI 2.9.5p4:
+    // abi::__array_type_info adds no data members to std::type_info;
     break;
 
   case Type::FunctionNoProto:
