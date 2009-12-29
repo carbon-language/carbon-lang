@@ -160,6 +160,7 @@ private:
   MDNode *getMetadataImpl(unsigned KindID) const;
   MDNode *getMetadataImpl(const char *Kind) const;
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
+  void removeAllMetadata();
 public:
   //===--------------------------------------------------------------------===//
   // Predicates and helper methods.

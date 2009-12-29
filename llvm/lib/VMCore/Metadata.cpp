@@ -273,26 +273,12 @@ public:
 
   void setMetadata(Instruction *Inst, unsigned Kind, MDNode *Node);
 
-  /// removeAllMetadata - Remove all metadata attached with an instruction.
+  /// removeAllMetadata - Remove all metadata attached to an instruction.
   void removeAllMetadata(Instruction *Inst);
-  
-  
   
   /// copyMD - If metadata is attached with Instruction In1 then attach
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
-  
-
-  /// ValueIsDeleted - This handler is used to update metadata store
-  /// when a value is deleted.
-  void ValueIsDeleted(const Value *) {}
-  void ValueIsDeleted(Instruction *Inst) {
-    removeAllMetadata(Inst);
-  }
-
-  /// ValueIsCloned - This handler is used to update metadata store
-  /// when In1 is cloned to create In2.
-  void ValueIsCloned(const Instruction *In1, Instruction *In2);
 };
 }
 
@@ -413,20 +399,6 @@ void MetadataContextImpl::copyMD(Instruction *In1, Instruction *In2) {
     In2->setMetadata(I->first, I->second);
 }
 
-/// ValueIsCloned - This handler is used to update metadata store
-/// when In1 is cloned to create In2.
-void MetadataContextImpl::ValueIsCloned(const Instruction *In1, 
-                                        Instruction *In2) {
-  // Find Metadata handles for In1.
-  MDStoreTy::iterator I = MetadataStore.find(In1);
-  assert(I != MetadataStore.end() && "Invalid custom metadata info!");
-
-  // FIXME: Give all metadata handlers a chance to adjust.
-  MDMapTy &In1Info = I->second;
-  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    In2->setMetadata(I->first, I->second);
-}
-
 //===----------------------------------------------------------------------===//
 // MetadataContext implementation.
 //
@@ -466,18 +438,6 @@ void MetadataContext::getMDKindNames(SmallVectorImpl<StringRef> &N) const {
   pImpl->getMDKindNames(N);
 }
 
-/// ValueIsDeleted - This handler is used to update metadata store
-/// when a value is deleted.
-void MetadataContext::ValueIsDeleted(Instruction *Inst) {
-  pImpl->ValueIsDeleted(Inst);
-}
-
-/// ValueIsCloned - This handler is used to update metadata store
-/// when In1 is cloned to create In2.
-void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
-  pImpl->ValueIsCloned(In1, In2);
-}
-
 //===----------------------------------------------------------------------===//
 // Instruction Metadata method implementations.
 //
@@ -507,5 +467,11 @@ MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
 void Instruction::getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,
                                        MDNode*> > &Result)const {
   getContext().getMetadata().pImpl->getAllMetadata(this, Result);
+}
+
+/// removeAllMetadata - Remove all metadata from this instruction.
+void Instruction::removeAllMetadata() {
+  assert(hasMetadata() && "Caller should check");
+  getContext().getMetadata().pImpl->removeAllMetadata(this);
 }
 

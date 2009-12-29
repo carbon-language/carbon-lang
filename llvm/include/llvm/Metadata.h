@@ -231,14 +231,6 @@ public:
   /// getMDKindNames - Populate client supplied SmallVector with the name for
   /// each custom metadata ID.   ID #0 is not used, so it is filled in as empty.
   void getMDKindNames(SmallVectorImpl<StringRef> &) const;
-
-  /// ValueIsDeleted - This handler is used to update metadata store
-  /// when a value is deleted.
-  void ValueIsDeleted(Instruction *Inst);
-
-  /// ValueIsCloned - This handler is used to update metadata store
-  /// when In1 is cloned to create In2.
-  void ValueIsCloned(const Instruction *In1, Instruction *In2);
 };
 
 } // end llvm namespace
