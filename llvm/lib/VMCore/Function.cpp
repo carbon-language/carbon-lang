@@ -160,7 +160,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
 
   // If the function has arguments, mark them as lazily built.
   if (Ty->getNumParams())
-    SubclassData = 1;   // Set the "has lazy arguments" bit.
+    setValueSubclassData(1);   // Set the "has lazy arguments" bit.
   
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -195,7 +195,8 @@ void Function::BuildLazyArguments() const {
   }
   
   // Clear the lazy arguments bit.
-  const_cast<Function*>(this)->SubclassData &= ~1;
+  unsigned SDC = getSubclassDataFromValue();
+  const_cast<Function*>(this)->setValueSubclassData(SDC &= ~1);
 }
 
 size_t Function::arg_size() const {

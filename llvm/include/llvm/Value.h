@@ -57,7 +57,7 @@ class MetadataContextImpl;
 ///
 /// Every value has a "use list" that keeps track of which other Values are
 /// using this Value.  A Value can also have an arbitrary number of ValueHandle
-/// objects that watch it and listen to RAUW and Destroy events see
+/// objects that watch it and listen to RAUW and Destroy events.  See
 /// llvm/Support/ValueHandle.h for details.
 ///
 /// @brief LLVM Value Representation
@@ -71,11 +71,12 @@ protected:
   /// interpretation.
   unsigned char SubclassOptionalData : 7;
 
+private:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
   /// This field is initialized to zero by the ctor.
   unsigned short SubclassData;
-private:
+
   PATypeHolder VTy;
   Use *UseList;
 
@@ -300,6 +301,10 @@ public:
                                 const BasicBlock *PredBB) const{
     return const_cast<Value*>(this)->DoPHITranslation(CurBB, PredBB);
   }
+  
+protected:
+  unsigned short getSubclassDataFromValue() const { return SubclassData; }
+  void setValueSubclassData(unsigned short D) { SubclassData = D; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {

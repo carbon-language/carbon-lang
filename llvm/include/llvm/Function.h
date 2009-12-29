@@ -87,6 +87,9 @@ private:
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
   AttrListPtr AttributeList;              ///< Parameter attributes
 
+  // HasLazyArguments is stored in Value::SubclassData.
+  /*bool HasLazyArguments;*/
+                   
   // The Calling Convention is stored in Value::SubclassData.
   /*CallingConv::ID CallingConvention;*/
 
@@ -99,7 +102,7 @@ private:
   /// needs it.  The hasLazyArguments predicate returns true if the arg list
   /// hasn't been set up yet.
   bool hasLazyArguments() const {
-    return SubclassData & 1;
+    return getSubclassDataFromValue() & 1;
   }
   void CheckLazyArguments() const {
     if (hasLazyArguments())
@@ -156,10 +159,11 @@ public:
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(SubclassData >> 1);
+    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 1);
   }
   void setCallingConv(CallingConv::ID CC) {
-    SubclassData = (SubclassData & 1) | (static_cast<unsigned>(CC) << 1);
+    setValueSubclassData((getSubclassDataFromValue() & 1) |
+                         (static_cast<unsigned>(CC) << 1));
   }
   
   /// getAttributes - Return the attribute list for this Function.
@@ -407,6 +411,12 @@ public:
   /// hasAddressTaken - returns true if there are any uses of this function
   /// other than direct calls or invokes to it.
   bool hasAddressTaken() const;
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
+  }
 };
 
 inline ValueSymbolTable *

@@ -82,7 +82,9 @@ public:
   /// getAlignment - Return the alignment of the memory that is being allocated
   /// by the instruction.
   ///
-  unsigned getAlignment() const { return (1u << SubclassData) >> 1; }
+  unsigned getAlignment() const {
+    return (1u << getSubclassDataFromValue()) >> 1;
+  }
   void setAlignment(unsigned Align);
 
   /// isStaticAlloca - Return true if this alloca is in the entry block of the
@@ -97,6 +99,12 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 
@@ -134,18 +142,18 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return SubclassData & 1; }
+  bool isVolatile() const { return getSubclassDataFromValue() & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) {
-    SubclassData = (SubclassData & ~1) | (V ? 1 : 0);
+    setValueSubclassData((getSubclassDataFromValue() & ~1) | (V ? 1 : 0));
   }
 
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    return (1 << (SubclassData>>1)) >> 1;
+    return (1 << (getSubclassDataFromValue() >> 1)) >> 1;
   }
 
   void setAlignment(unsigned Align);
@@ -166,6 +174,12 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 
@@ -200,12 +214,12 @@ public:
   /// isVolatile - Return true if this is a load from a volatile memory
   /// location.
   ///
-  bool isVolatile() const { return SubclassData & 1; }
+  bool isVolatile() const { return getSubclassDataFromValue() & 1; }
 
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) {
-    SubclassData = (SubclassData & ~1) | (V ? 1 : 0);
+    setValueSubclassData((getSubclassDataFromValue() & ~1) | (V ? 1 : 0));
   }
 
   /// Transparently provide more efficient getOperand methods.
@@ -214,7 +228,7 @@ public:
   /// getAlignment - Return the alignment of the access that is being performed
   ///
   unsigned getAlignment() const {
-    return (1 << (SubclassData>>1)) >> 1;
+    return (1 << (getSubclassDataFromValue() >> 1)) >> 1;
   }
 
   void setAlignment(unsigned Align);
@@ -234,6 +248,12 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 
@@ -675,7 +695,7 @@ public:
   /// (e.g. ult).
   /// @brief Swap operands and adjust predicate.
   void swapOperands() {
-    SubclassData = getSwappedPredicate();
+    setPredicate(getSwappedPredicate());
     Op<0>().swap(Op<1>());
   }
 
@@ -761,18 +781,18 @@ public:
   /// @returns true if the predicate of this instruction is EQ or NE.
   /// @brief Determine if this is an equality predicate.
   bool isEquality() const {
-    return SubclassData == FCMP_OEQ || SubclassData == FCMP_ONE ||
-           SubclassData == FCMP_UEQ || SubclassData == FCMP_UNE;
+    return getPredicate() == FCMP_OEQ || getPredicate() == FCMP_ONE ||
+           getPredicate() == FCMP_UEQ || getPredicate() == FCMP_UNE;
   }
 
   /// @returns true if the predicate of this instruction is commutative.
   /// @brief Determine if this is a commutative predicate.
   bool isCommutative() const {
     return isEquality() ||
-           SubclassData == FCMP_FALSE ||
-           SubclassData == FCMP_TRUE ||
-           SubclassData == FCMP_ORD ||
-           SubclassData == FCMP_UNO;
+           getPredicate() == FCMP_FALSE ||
+           getPredicate() == FCMP_TRUE ||
+           getPredicate() == FCMP_ORD ||
+           getPredicate() == FCMP_UNO;
   }
 
   /// @returns true if the predicate is relational (not EQ or NE).
@@ -785,7 +805,7 @@ public:
   /// (e.g. ult).
   /// @brief Swap operands and adjust predicate.
   void swapOperands() {
-    SubclassData = getSwappedPredicate();
+    setPredicate(getSwappedPredicate());
     Op<0>().swap(Op<1>());
   }
 
@@ -800,14 +820,11 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-//                                 CallInst Class
-//===----------------------------------------------------------------------===//
 /// CallInst - This class represents a function call, abstracting a target
 /// machine's calling convention.  This class uses low bit of the SubClassData
 /// field to indicate whether or not this is a tail call.  The rest of the bits
 /// hold the calling convention of the call.
 ///
-
 class CallInst : public Instruction {
   AttrListPtr AttributeList; ///< parameter attributes for call
   CallInst(const CallInst &CI);
@@ -912,9 +929,9 @@ public:
 
   ~CallInst();
 
-  bool isTailCall() const           { return SubclassData & 1; }
+  bool isTailCall() const { return getSubclassDataFromValue() & 1; }
   void setTailCall(bool isTC = true) {
-    SubclassData = (SubclassData & ~1) | unsigned(isTC);
+    setValueSubclassData((getSubclassDataFromValue() & ~1) | unsigned(isTC));
   }
 
   /// Provide fast operand accessors
@@ -923,10 +940,11 @@ public:
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(SubclassData >> 1);
+    return static_cast<CallingConv::ID>(getSubclassDataFromValue() >> 1);
   }
   void setCallingConv(CallingConv::ID CC) {
-    SubclassData = (SubclassData & 1) | (static_cast<unsigned>(CC) << 1);
+    setValueSubclassData((getSubclassDataFromValue() & 1) |
+                         (static_cast<unsigned>(CC) << 1));
   }
 
   /// getAttributes - Return the parameter attributes for this call.
@@ -1023,6 +1041,12 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 
@@ -2401,10 +2425,10 @@ public:
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(SubclassData);
+    return static_cast<CallingConv::ID>(getSubclassDataFromValue());
   }
   void setCallingConv(CallingConv::ID CC) {
-    SubclassData = static_cast<unsigned>(CC);
+    setValueSubclassData(static_cast<unsigned>(CC));
   }
 
   /// getAttributes - Return the parameter attributes for this invoke.
@@ -2528,6 +2552,12 @@ private:
   virtual BasicBlock *getSuccessorV(unsigned idx) const;
   virtual unsigned getNumSuccessorsV() const;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
+  }
 };
 
 template <>

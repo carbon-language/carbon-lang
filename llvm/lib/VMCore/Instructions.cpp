@@ -413,7 +413,9 @@ CallInst::CallInst(const CallInst &CI)
                 OperandTraits<CallInst>::op_end(this) - CI.getNumOperands(),
                 CI.getNumOperands()) {
   setAttributes(CI.getAttributes());
-  SubclassData = CI.SubclassData;
+  setTailCall(CI.isTailCall());
+  setCallingConv(CI.getCallingConv());
+    
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
@@ -637,7 +639,7 @@ InvokeInst::InvokeInst(const InvokeInst &II)
                    - II.getNumOperands(),
                    II.getNumOperands()) {
   setAttributes(II.getAttributes());
-  SubclassData = II.SubclassData;
+  setCallingConv(II.getCallingConv());
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
     OL[i] = InOL[i];
@@ -957,7 +959,7 @@ AllocaInst::~AllocaInst() {
 
 void AllocaInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  SubclassData = Log2_32(Align) + 1;
+  setValueSubclassData(Log2_32(Align) + 1);
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
@@ -1092,7 +1094,8 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
 
 void LoadInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  SubclassData = (SubclassData & 1) | ((Log2_32(Align)+1)<<1);
+  setValueSubclassData((getSubclassDataFromValue() & 1) |
+                       ((Log2_32(Align)+1)<<1));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1187,7 +1190,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 
 void StoreInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
-  SubclassData = (SubclassData & 1) | ((Log2_32(Align)+1)<<1);
+  setValueSubclassData((getSubclassDataFromValue() & 1) |
+                       ((Log2_32(Align)+1) << 1));
 }
 
 //===----------------------------------------------------------------------===//
@@ -2720,7 +2724,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                 InsertBefore) {
     Op<0>() = LHS;
     Op<1>() = RHS;
-  SubclassData = predicate;
+  setPredicate((Predicate)predicate);
   setName(Name);
 }
 
@@ -2733,7 +2737,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                 InsertAtEnd) {
   Op<0>() = LHS;
   Op<1>() = RHS;
-  SubclassData = predicate;
+  setPredicate((Predicate)predicate);
   setName(Name);
 }
 

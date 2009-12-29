@@ -103,7 +103,7 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
     Operands[i].set(Vals[i], this);
     
   if (isFunctionLocal)
-    SubclassData |= FunctionLocalBit;
+    setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
 }
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,

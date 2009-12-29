@@ -732,10 +732,12 @@ public:
   }
 
   /// @brief Return the predicate for this instruction.
-  Predicate getPredicate() const { return Predicate(SubclassData); }
+  Predicate getPredicate() const {
+    return Predicate(getSubclassDataFromValue());
+  }
 
   /// @brief Set the predicate for this instruction to the specified value.
-  void setPredicate(Predicate P) { SubclassData = P; }
+  void setPredicate(Predicate P) { setValueSubclassData(P); }
 
   static bool isFPPredicate(Predicate P) {
     return P >= FIRST_FCMP_PREDICATE && P <= LAST_FCMP_PREDICATE;
@@ -855,6 +857,12 @@ public:
                              vt->getNumElements());
     }
     return Type::getInt1Ty(opnd_type->getContext());
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 

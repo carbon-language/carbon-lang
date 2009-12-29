@@ -239,15 +239,21 @@ public:
 
   /// hasAddressTaken - returns true if there are any uses of this basic block
   /// other than direct branches, switches, etc. to it.
-  bool hasAddressTaken() const { return SubclassData != 0; }
+  bool hasAddressTaken() const { return getSubclassDataFromValue() != 0; }
                      
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
   /// objects using it.  This is almost always 0, sometimes one, possibly but
   /// almost never 2, and inconceivably 3 or more.
   void AdjustBlockAddressRefCount(int Amt) {
-    SubclassData += Amt;
-    assert((int)(signed char)SubclassData >= 0 && "Refcount wrap-around");
+    setValueSubclassData(getSubclassDataFromValue()+Amt);
+    assert((int)(signed char)getSubclassDataFromValue() >= 0 &&
+           "Refcount wrap-around");
+  }
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // any future subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 

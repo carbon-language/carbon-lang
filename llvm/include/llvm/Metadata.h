@@ -125,7 +125,9 @@ public:
   /// Note: MDNodes are designated as function-local when created, and keep
   ///       that designation even if their operands are modified to no longer
   ///       refer to function-local IR.
-  bool isFunctionLocal() const { return SubclassData & FunctionLocalBit; }
+  bool isFunctionLocal() const {
+    return (getSubclassDataFromValue() & FunctionLocalBit) != 0;
+  }
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates
@@ -135,6 +137,12 @@ public:
   static inline bool classof(const MDNode *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueID() == MDNodeVal;
+  }
+private:
+  // Shadow Value::setValueSubclassData with a private forwarding method so that
+  // any future subclasses cannot accidentally use it.
+  void setValueSubclassData(unsigned short D) {
+    Value::setValueSubclassData(D);
   }
 };
 

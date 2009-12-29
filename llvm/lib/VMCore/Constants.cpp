@@ -763,14 +763,14 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
         ConstantExpr::getGetElementPtr(Op, &Ops[0], Ops.size());
     Ops[OpNo-1] = Op;
     return cast<GEPOperator>(this)->isInBounds() ?
-      ConstantExpr::getInBoundsGetElementPtr(getOperand(0), &Ops[0], Ops.size()) :
+      ConstantExpr::getInBoundsGetElementPtr(getOperand(0), &Ops[0],Ops.size()):
       ConstantExpr::getGetElementPtr(getOperand(0), &Ops[0], Ops.size());
   }
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
     Op0 = (OpNo == 0) ? Op : getOperand(0);
     Op1 = (OpNo == 1) ? Op : getOperand(1);
-    return ConstantExpr::get(getOpcode(), Op0, Op1, SubclassData);
+    return ConstantExpr::get(getOpcode(), Op0, Op1, SubclassOptionalData);
   }
 }
 
@@ -820,7 +820,7 @@ getWithOperands(Constant* const *Ops, unsigned NumOps) const {
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
-    return ConstantExpr::get(getOpcode(), Ops[0], Ops[1], SubclassData);
+    return ConstantExpr::get(getOpcode(), Ops[0], Ops[1], SubclassOptionalData);
   }
 }
 
@@ -2196,7 +2196,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     Constant *C2 = getOperand(1);
     if (C1 == From) C1 = To;
     if (C2 == From) C2 = To;
-    Replacement = ConstantExpr::get(getOpcode(), C1, C2, SubclassData);
+    Replacement = ConstantExpr::get(getOpcode(), C1, C2, SubclassOptionalData);
   } else {
     llvm_unreachable("Unknown ConstantExpr type!");
     return;
