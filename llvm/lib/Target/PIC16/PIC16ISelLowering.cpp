@@ -226,6 +226,7 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setLibcallName(RTLIB::DIV_F32, getIntrinsicName(RTLIB::DIV_F32));
 
   // Floationg point comparison
+  setLibcallName(RTLIB::O_F32, getIntrinsicName(RTLIB::O_F32));
   setLibcallName(RTLIB::UO_F32, getIntrinsicName(RTLIB::UO_F32));
   setLibcallName(RTLIB::OLE_F32, getIntrinsicName(RTLIB::OLE_F32));
   setLibcallName(RTLIB::OGE_F32, getIntrinsicName(RTLIB::OGE_F32));
