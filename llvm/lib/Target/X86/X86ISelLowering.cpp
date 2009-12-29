@@ -5128,12 +5128,9 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
     Tys = DAG.getVTList(Op.getValueType(), MVT::Other);
-  SmallVector<SDValue, 8> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(StackSlot);
-  Ops.push_back(DAG.getValueType(SrcVT));
+  SDValue Ops[] = { Chain, StackSlot, DAG.getValueType(SrcVT) };
   SDValue Result = DAG.getNode(useSSE ? X86ISD::FILD_FLAG : X86ISD::FILD, dl,
-                                 Tys, &Ops[0], Ops.size());
+                               Tys, Ops, array_lengthof(Ops));
 
   if (useSSE) {
     Chain = Result.getValue(1);
@@ -5146,13 +5143,10 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8, false);
     SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
     Tys = DAG.getVTList(MVT::Other);
-    SmallVector<SDValue, 8> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Result);
-    Ops.push_back(StackSlot);
-    Ops.push_back(DAG.getValueType(Op.getValueType()));
-    Ops.push_back(InFlag);
-    Chain = DAG.getNode(X86ISD::FST, dl, Tys, &Ops[0], Ops.size());
+    SDValue Ops[] = {
+      Chain, Result, StackSlot, DAG.getValueType(Op.getValueType()), InFlag
+    };
+    Chain = DAG.getNode(X86ISD::FST, dl, Tys, Ops, array_lengthof(Ops));
     Result = DAG.getLoad(Op.getValueType(), dl, Chain, StackSlot,
                          PseudoSourceValue::getFixedStack(SSFI), 0);
   }
@@ -5947,14 +5941,10 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
   }
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
-  SmallVector<SDValue, 4> Ops;
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
-  Ops.push_back(Op.getOperand(2));
-  Ops.push_back(Op.getOperand(1));
-  Ops.push_back(CC);
-  Ops.push_back(Cond);
-  return DAG.getNode(X86ISD::CMOV, dl, VTs, &Ops[0], Ops.size());
+  SDValue Ops[] = { Op.getOperand(2), Op.getOperand(1), CC, Cond };
+  return DAG.getNode(X86ISD::CMOV, dl, VTs, Ops, array_lengthof(Ops));
 }
 
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
@@ -6265,11 +6255,8 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SmallVector<SDValue, 8> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(DAG.getValueType(AVT));
-  Ops.push_back(InFlag);
-  Chain  = DAG.getNode(X86ISD::REP_STOS, dl, Tys, &Ops[0], Ops.size());
+  SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
+  Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
 
   if (TwoRepStos) {
     InFlag = Chain.getValue(1);
@@ -6282,11 +6269,8 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                               Left, InFlag);
     InFlag = Chain.getValue(1);
     Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-    Ops.clear();
-    Ops.push_back(Chain);
-    Ops.push_back(DAG.getValueType(MVT::i8));
-    Ops.push_back(InFlag);
-    Chain  = DAG.getNode(X86ISD::REP_STOS, dl, Tys, &Ops[0], Ops.size());
+    SDValue Ops[] = { Chain, DAG.getValueType(MVT::i8), InFlag };
+    Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
   } else if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
@@ -6350,11 +6334,9 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SmallVector<SDValue, 8> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(DAG.getValueType(AVT));
-  Ops.push_back(InFlag);
-  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, &Ops[0], Ops.size());
+  SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
+  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, Ops,
+                                array_lengthof(Ops));
 
   SmallVector<SDValue, 4> Results;
   Results.push_back(RepMovs);
@@ -6978,12 +6960,13 @@ SDValue X86TargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) {
   Op = DAG.getNode(X86ISD::BSR, dl, VTs, Op);
 
   // If src is zero (i.e. bsr sets ZF), returns NumBits.
-  SmallVector<SDValue, 4> Ops;
-  Ops.push_back(Op);
-  Ops.push_back(DAG.getConstant(NumBits+NumBits-1, OpVT));
-  Ops.push_back(DAG.getConstant(X86::COND_E, MVT::i8));
-  Ops.push_back(Op.getValue(1));
-  Op = DAG.getNode(X86ISD::CMOV, dl, OpVT, &Ops[0], 4);
+  SDValue Ops[] = {
+    Op,
+    DAG.getConstant(NumBits+NumBits-1, OpVT),
+    DAG.getConstant(X86::COND_E, MVT::i8),
+    Op.getValue(1)
+  };
+  Op = DAG.getNode(X86ISD::CMOV, dl, OpVT, Ops, array_lengthof(Ops));
 
   // Finally xor with NumBits-1.
   Op = DAG.getNode(ISD::XOR, dl, OpVT, Op, DAG.getConstant(NumBits-1, OpVT));
@@ -7010,12 +6993,13 @@ SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
   Op = DAG.getNode(X86ISD::BSF, dl, VTs, Op);
 
   // If src is zero (i.e. bsf sets ZF), returns NumBits.
-  SmallVector<SDValue, 4> Ops;
-  Ops.push_back(Op);
-  Ops.push_back(DAG.getConstant(NumBits, OpVT));
-  Ops.push_back(DAG.getConstant(X86::COND_E, MVT::i8));
-  Ops.push_back(Op.getValue(1));
-  Op = DAG.getNode(X86ISD::CMOV, dl, OpVT, &Ops[0], 4);
+  SDValue Ops[] = {
+    Op,
+    DAG.getConstant(NumBits, OpVT),
+    DAG.getConstant(X86::COND_E, MVT::i8),
+    Op.getValue(1)
+  };
+  Op = DAG.getNode(X86ISD::CMOV, dl, OpVT, Ops, array_lengthof(Ops));
 
   if (VT == MVT::i8)
     Op = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Op);
