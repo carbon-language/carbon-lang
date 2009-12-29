@@ -347,8 +347,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
                                   Ops.size(), TD);
 }
 
-static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD,
-                                   LLVMContext &Context) {
+static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
   DILocation ILoc(InsnMD);
   if (ILoc.isNull()) return InsnMD;
 
@@ -358,14 +357,14 @@ static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD,
   DILocation OrigLocation = ILoc.getOrigLocation();
   MDNode *NewLoc = TheCallMD;
   if (!OrigLocation.isNull())
-    NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD, Context);
+    NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD);
 
   SmallVector<Value *, 4> MDVs;
   MDVs.push_back(InsnMD->getElement(0)); // Line
   MDVs.push_back(InsnMD->getElement(1)); // Col
   MDVs.push_back(InsnMD->getElement(2)); // Scope
   MDVs.push_back(NewLoc);
-  return MDNode::get(Context, MDVs.data(), MDVs.size());
+  return MDNode::get(InsnMD->getContext(), MDVs.data(), MDVs.size());
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
@@ -421,8 +420,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //
     BasicBlock::iterator I = NewBB->begin();
 
-    LLVMContext &Context = OldFunc->getContext();
-    unsigned DbgKind = Context.getMetadata().getMDKindID("dbg");
+    // FIXME: Only use of context.
+    unsigned DbgKind = OldFunc->getContext().getMetadata().getMDKindID("dbg");
     MDNode *TheCallMD = NULL;
     SmallVector<Value *, 4> MDVs;
     if (TheCall && TheCall->hasMetadata()) 
@@ -437,7 +436,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
         if (I->hasMetadata()) {
           if (TheCallMD) {
             if (MDNode *IMD = I->getMetadata(DbgKind)) {
-              MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD, Context);
+              MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
               I->setMetadata(DbgKind, NewMD);
             }
           } else {
@@ -461,7 +460,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       if (I->hasMetadata()) {
         if (TheCallMD) {
           if (MDNode *IMD = I->getMetadata(DbgKind)) {
-            MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD, Context);
+            MDNode *NewMD = UpdateInlinedAtInfo(IMD, TheCallMD);
             I->setMetadata(DbgKind, NewMD);
           }
         } else {
