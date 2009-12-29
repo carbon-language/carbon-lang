@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Target/TargetMachine.h"  // FIXME: LAYERING VIOLATION!
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
@@ -34,7 +35,7 @@ using namespace llvm::dwarf;
 
 /// ValidDebugInfo - Return true if V represents valid debug info value.
 /// FIXME : Add DIDescriptor.isValid()
-bool DIDescriptor::ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel) {
+bool DIDescriptor::ValidDebugInfo(MDNode *N, unsigned OptLevel) {
   if (!N)
     return false;
 
@@ -1353,7 +1354,7 @@ namespace llvm {
 
 bool getLocationInfo(const Value *V, std::string &DisplayName,
                      std::string &Type, unsigned &LineNo, std::string &File,
-                       std::string &Dir) {
+                     std::string &Dir) {
     DICompileUnit Unit;
     DIType TypeD;
 
@@ -1395,37 +1396,32 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
 
   /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI,
-                                 CodeGenOpt::Level OptLev) {
+  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, unsigned OptLev) {
     return DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
-                                 CodeGenOpt::Level OptLev) {
+  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI, unsigned OptLev) {
     return DIDescriptor::ValidDebugInfo(FSI.getSubprogram(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
-                                 CodeGenOpt::Level OptLev) {
+  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI, unsigned OptLev) {
     return DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
-                                 CodeGenOpt::Level OptLev) {
+  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI, unsigned OptLev) {
     return DIDescriptor::ValidDebugInfo(REI.getContext(), OptLev);
   }
 
 
   /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
-                                 CodeGenOpt::Level OptLev) {
+  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI, unsigned OptLev) {
     return DIDescriptor::ValidDebugInfo(DI.getVariable(), OptLev);
   }
 

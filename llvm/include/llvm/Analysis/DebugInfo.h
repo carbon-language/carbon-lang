@@ -17,14 +17,10 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
-#include "llvm/Metadata.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/Metadata.h"  // FIXME: Should not need this.
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/Dwarf.h"  // FIXME: Should not need this.
 
 namespace llvm {
   class BasicBlock;
@@ -42,13 +38,13 @@ namespace llvm {
   class DebugLoc;
   struct DebugLocTracker;
   class Instruction;
-  class LLVMContext;
 
-  /// DIDescriptor - A thin wraper around MDNode to access encoded debug info. This should not
-  /// be stored in a container, because underly MDNode may change in certain situations.
+  /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
+  /// This should not be stored in a container, because underly MDNode may
+  /// change in certain situations.
   class DIDescriptor {
   protected:
-    MDNode  *DbgNode;
+    MDNode *DbgNode;
 
     /// DIDescriptor constructor.  If the specified node is non-null, check
     /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If
@@ -86,7 +82,7 @@ namespace llvm {
     }
 
     /// ValidDebugInfo - Return true if N represents valid debug info value.
-    static bool ValidDebugInfo(MDNode *N, CodeGenOpt::Level OptLevel);
+    static bool ValidDebugInfo(MDNode *N, unsigned OptLevel);
 
     /// dump - print descriptor.
     void dump() const;
@@ -483,7 +479,7 @@ namespace llvm {
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const { return getContext().getDirectory(); }
     StringRef getFilename() const  { return getContext().getFilename();  }
-    DICompileUnit getCompileUnit() const { return getFieldAs<DICompileUnit>(3); }
+    DICompileUnit getCompileUnit() const { return getFieldAs<DICompileUnit>(3);}
     unsigned getLineNumber() const { return getUnsignedField(4);         }
   };
 
@@ -688,34 +684,29 @@ namespace llvm {
   /// Find the debug info descriptor corresponding to this global variable.
   Value *findDbgGlobalDeclare(GlobalVariable *V);
 
-bool getLocationInfo(const Value *V, std::string &DisplayName,
-                     std::string &Type, unsigned &LineNo, std::string &File,
-                     std::string &Dir);
+  bool getLocationInfo(const Value *V, std::string &DisplayName,
+                       std::string &Type, unsigned &LineNo, std::string &File,
+                       std::string &Dir);
 
   /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI,
-                                 CodeGenOpt::Level OptLev);
+  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, unsigned OptLev);
 
   /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
-                                 CodeGenOpt::Level OptLev);
+  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI, unsigned OptLev);
 
   /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
-                                 CodeGenOpt::Level OptLev);
+  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI, unsigned OptLev);
 
   /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
-                                 CodeGenOpt::Level OptLev);
+  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI, unsigned OptLev);
 
   /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
-                                 CodeGenOpt::Level OptLev);
+  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI, unsigned OptLev);
 
   /// ExtractDebugLocation - Extract debug location information
   /// from llvm.dbg.stoppoint intrinsic.
