@@ -779,8 +779,7 @@ int SlotTracker::getLocalSlot(const Value *V) {
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
   assert(V && "Can't insert a null Value into SlotTracker!");
-  assert(V->getType() != Type::getVoidTy(V->getContext()) &&
-         "Doesn't need a slot!");
+  assert(!V->getType()->isVoidTy() && "Doesn't need a slot!");
   assert(!V->hasName() && "Doesn't need a slot!");
 
   unsigned DestSlot = mNext++;
@@ -796,8 +795,7 @@ void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
 
 /// CreateSlot - Create a new slot for the specified value if it has no name.
 void SlotTracker::CreateFunctionSlot(const Value *V) {
-  assert(V->getType() != Type::getVoidTy(TheFunction->getContext()) &&
-         !V->hasName() && "Doesn't need a slot!");
+  assert(!V->getType()->isVoidTy() && !V->hasName() && "Doesn't need a slot!");
 
   unsigned DestSlot = fNext++;
   fMap[V] = DestSlot;
@@ -881,20 +879,22 @@ static void WriteMDNodeComment(const MDNode *Node,
   if (!CI) return;
   unsigned Val = CI->getZExtValue();
   unsigned Tag = Val & ~LLVMDebugVersionMask;
-  if (Val >= LLVMDebugVersion) {
-    if (Tag == dwarf::DW_TAG_auto_variable)
-      Out << "; [ DW_TAG_auto_variable ]";
-    else if (Tag == dwarf::DW_TAG_arg_variable)
-      Out << "; [ DW_TAG_arg_variable ]";
-    else if (Tag == dwarf::DW_TAG_return_variable)
-      Out << "; [ DW_TAG_return_variable ]";
-    else if (Tag == dwarf::DW_TAG_vector_type)
-      Out << "; [ DW_TAG_vector_type ]";
-    else if (Tag == dwarf::DW_TAG_user_base)
-      Out << "; [ DW_TAG_user_base ]";
-    else
-      Out << "; [" << dwarf::TagString(Tag) << " ]";
-  }
+  if (Val < LLVMDebugVersion)
+    return;
+
+  Out.PadToColumn(50);
+  if (Tag == dwarf::DW_TAG_auto_variable)
+    Out << "; [ DW_TAG_auto_variable ]";
+  else if (Tag == dwarf::DW_TAG_arg_variable)
+    Out << "; [ DW_TAG_arg_variable ]";
+  else if (Tag == dwarf::DW_TAG_return_variable)
+    Out << "; [ DW_TAG_return_variable ]";
+  else if (Tag == dwarf::DW_TAG_vector_type)
+    Out << "; [ DW_TAG_vector_type ]";
+  else if (Tag == dwarf::DW_TAG_user_base)
+    Out << "; [ DW_TAG_user_base ]";
+  else
+    Out << "; [ " << dwarf::TagString(Tag) << " ]";
 }
 
 static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
@@ -1795,12 +1795,12 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 /// which slot it occupies.
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
-  if (V.getType() != Type::getVoidTy(V.getContext())) {
-    Out.PadToColumn(50);
-    Out << "; <";
-    TypePrinter.print(V.getType(), Out);
-    Out << "> [#uses=" << V.getNumUses() << ']';  // Output # uses
-  }
+  if (V.getType()->isVoidTy()) return;
+  
+  Out.PadToColumn(50);
+  Out << "; <";
+  TypePrinter.print(V.getType(), Out);
+  Out << "> [#uses=" << V.getNumUses() << ']';  // Output # uses
 }
 
 // This member is called for each Instruction in a function..
@@ -1814,7 +1814,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (I.hasName()) {
     PrintLLVMName(Out, &I);
     Out << " = ";
-  } else if (I.getType() != Type::getVoidTy(I.getContext())) {
+  } else if (!I.getType()->isVoidTy()) {
     // Print out the def slot taken.
     int SlotNum = Machine.getLocalSlot(&I);
     if (SlotNum == -1)
