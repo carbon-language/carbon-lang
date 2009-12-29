@@ -365,11 +365,10 @@ public:
 
     case Type::Pointer:
     case Type::MemberPointer:
-      return BuildTypeInfo(Ty);
-
     case Type::FunctionProto:
     case Type::FunctionNoProto:
-      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv120__function_type_infoE");
+      return BuildTypeInfo(Ty);
+
     case Type::ConstantArray:
     case Type::IncompleteArray:
     case Type::VariableArray:
@@ -681,8 +680,13 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     break;
   case Type::MemberPointer:
     // abi::__pointer_to_member_type_info
-    VtableName =  "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
+    VtableName = "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
     break;
+  
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+    // abi::__function_type_info
+    VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
   }
 
   llvm::Constant *Vtable = 
@@ -728,6 +732,12 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   default: assert(false && "Unhandled type class!");
   case Type::Builtin:
     assert(false && "Builtin type info must be in the standard library!");
+    break;
+
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+    // Itanium C++ ABI 2.9.5p4:
+    // abi::__function_type_info adds no data members to std::type_info;
     break;
 
   case Type::Record: {

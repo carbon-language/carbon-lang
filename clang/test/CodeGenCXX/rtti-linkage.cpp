@@ -28,6 +28,15 @@
 // CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIPN12_GLOBAL__N_11DE = internal constant
+// CHECK: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
+// CHECK: _ZTIFN12_GLOBAL__N_11DEvE = internal constant
+// CHECK: _ZTSFvN12_GLOBAL__N_11DEE = internal constant
+// CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
+
+// CHECK: _ZTSPFvvE = weak_odr constant
+// CHECK: _ZTSFvvE = weak_odr constant
+// CHECK: _ZTIFvvE = weak_odr
+// CHECK: _ZTIPFvvE = weak_odr constant
 
 // A has no key function, so its RTTI data should be weak_odr.
 struct A { };
@@ -64,7 +73,13 @@ const D getD();
 
 const std::type_info &t2() {
   (void)typeid(const D);
-  (void)typeid(D *);  
+  (void)typeid(D *);
+  (void)typeid(D (*)());
+  (void)typeid(void (*)(D));
+  // The exception specification is not part of the RTTI descriptor, so it should not have
+  // internal linkage.
+  (void)typeid(void (*)() throw (D));
+  
   // CHECK: _ZTIN12_GLOBAL__N_11DE to
   return typeid(getD());  
 }
