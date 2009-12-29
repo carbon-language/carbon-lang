@@ -371,11 +371,9 @@ public:
     case Type::IncompleteArray:
     case Type::VariableArray:
     case Type::Enum:
-      return BuildTypeInfo(Ty);
-
     case Type::Vector:
     case Type::ExtVector:
-      return BuildSimpleType(Ty, "_ZTVN10__cxxabiv117__array_type_infoE");
+      return BuildTypeInfo(Ty);
     }
   }
   
@@ -649,6 +647,8 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     return llvm::GlobalValue::ExternalLinkage;
   }
 
+  case Type::Vector:
+  case Type::ExtVector:
   case Type::Builtin:
     return llvm::GlobalValue::WeakODRLinkage;
 
@@ -690,6 +690,13 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
 
   switch (Ty->getTypeClass()) {
   default: assert(0 && "Unhandled type!");
+
+  // GCC treats vector types as fundamental types.
+  case Type::Vector:
+  case Type::ExtVector:
+    // abi::__fundamental_type_info
+    VtableName = "_ZTVN10__cxxabiv123__fundamental_type_infoE";
+    break;
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
@@ -774,21 +781,28 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
     assert(false && "Builtin type info must be in the standard library!");
     break;
 
+  // GCC treats vector types as fundamental types.
+  case Type::Vector:
+  case Type::ExtVector:
+    // Itanium C++ ABI 2.9.5p4:
+    // abi::__fundamental_type_info adds no data members to std::type_info.
+    break;
+      
   case Type::ConstantArray:
   case Type::IncompleteArray:
-    // Itanium C++ ABI 2.9.5p4:
-    // abi::__array_type_info adds no data members to std::type_info;
+    // Itanium C++ ABI 2.9.5p5:
+    // abi::__array_type_info adds no data members to std::type_info.
     break;
 
   case Type::FunctionNoProto:
   case Type::FunctionProto:
-    // Itanium C++ ABI 2.9.5p4:
-    // abi::__function_type_info adds no data members to std::type_info;
+    // Itanium C++ ABI 2.9.5p5:
+    // abi::__function_type_info adds no data members to std::type_info.
     break;
 
   case Type::Enum:
-    // Itanium C++ ABI 2.9.5p4:
-    // abi::__enum_type_info adds no data members to std::type_info;
+    // Itanium C++ ABI 2.9.5p5:
+    // abi::__enum_type_info adds no data members to std::type_info.
     break;
 
   case Type::Record: {
