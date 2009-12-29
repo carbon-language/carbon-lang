@@ -492,11 +492,12 @@ bool LLParser::ParseMDNode(MDNode *&Result) {
     return false;
   }
 
-  // Create MDNode forward reference
+  // Create MDNode forward reference.
+
+  // FIXME: This is not unique enough!
   std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
-  SmallVector<Value *, 1> Elts;
-  Elts.push_back(MDString::get(Context, FwdRefName));
-  MDNode *FwdNode = MDNode::get(Context, Elts.data(), Elts.size());
+  Value *V = MDString::get(Context, FwdRefName));
+  MDNode *FwdNode = MDNode::get(Context, &V, 1);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
   Result = FwdNode;
   return false;
@@ -521,12 +522,11 @@ bool LLParser::ParseNamedMetadata() {
   Lex.Lex();
   SmallVector<MetadataBase *, 8> Elts;
   do {
-    // FIXME: Eat if present.
-    if (Lex.getKind() != lltok::Metadata)
-      return TokError("Expected '!' here");
+    if (ParseToken(lltok::Metadata, "Expected '!' here"))
+      return true;
     Lex.Lex();
     
-    // FIXME: Will crash on mdstrings etc.
+    // FIXME: This rejects MDStrings.  Are they legal in an named MDNode or not?
     MDNode *N = 0;
     if (ParseMDNode(N)) return true;
     Elts.push_back(N);
