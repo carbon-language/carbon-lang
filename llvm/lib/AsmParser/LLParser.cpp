@@ -472,29 +472,30 @@ bool LLParser::ParseMDString(MetadataBase *&MDS) {
 
 // MDNode:
 //   ::= '!' MDNodeNumber
+// FIXME: Take an MDNode*&.
 bool LLParser::ParseMDNode(MetadataBase *&Node) {
   // !{ ..., !42, ... }
   unsigned MID = 0;
-  if (ParseUInt32(MID))  return true;
+  if (ParseUInt32(MID)) return true;
 
   // Check existing MDNode.
-  std::map<unsigned, WeakVH>::iterator I = MetadataCache.find(MID);
+  std::map<unsigned, TrackingVH<MDNode> >::iterator I = MetadataCache.find(MID);
   if (I != MetadataCache.end()) {
-    Node = cast<MetadataBase>(I->second);
+    Node = I->second;
     return false;
   }
 
   // Check known forward references.
-  std::map<unsigned, std::pair<WeakVH, LocTy> >::iterator
+  std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MID);
   if (FI != ForwardRefMDNodes.end()) {
-    Node = cast<MetadataBase>(FI->second.first);
+    Node = FI->second.first;
     return false;
   }
 
   // Create MDNode forward reference
-  SmallVector<Value *, 1> Elts;
   std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
+  SmallVector<Value *, 1> Elts;
   Elts.push_back(MDString::get(Context, FwdRefName));
   MDNode *FwdNode = MDNode::get(Context, Elts.data(), Elts.size());
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
@@ -544,7 +545,7 @@ bool LLParser::ParseStandaloneMetadata() {
   unsigned MetadataID = 0;
   if (ParseUInt32(MetadataID))
     return true;
-  if (MetadataCache.find(MetadataID) != MetadataCache.end())
+  if (MetadataCache.count(MetadataID))
     return TokError("Metadata id is already used");
   if (ParseToken(lltok::equal, "expected '=' here"))
     return true;
@@ -568,11 +569,10 @@ bool LLParser::ParseStandaloneMetadata() {
 
   MDNode *Init = MDNode::get(Context, Elts.data(), Elts.size());
   MetadataCache[MetadataID] = Init;
-  std::map<unsigned, std::pair<WeakVH, LocTy> >::iterator
+  std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
-    MDNode *FwdNode = cast<MDNode>(FI->second.first);
-    FwdNode->replaceAllUsesWith(Init);
+    FI->second.first->replaceAllUsesWith(Init);
     ForwardRefMDNodes.erase(FI);
   }
 

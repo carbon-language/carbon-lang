@@ -17,8 +17,8 @@
 #include "LLLexer.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include <map>
 #include "llvm/Support/ValueHandle.h"
+#include <map>
 
 namespace llvm {
   class Module;
@@ -80,8 +80,8 @@ namespace llvm {
     std::map<unsigned, std::pair<PATypeHolder, LocTy> > ForwardRefTypeIDs;
     std::vector<PATypeHolder> NumberedTypes;
     /// MetadataCache - This map keeps track of parsed metadata constants.
-    std::map<unsigned, WeakVH> MetadataCache;
-    std::map<unsigned, std::pair<WeakVH, LocTy> > ForwardRefMDNodes;
+    std::map<unsigned, TrackingVH<MDNode> > MetadataCache;
+    std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> > ForwardRefMDNodes;
     SmallVector<std::pair<unsigned, MDNode *>, 2> MDsOnInst;
     struct UpRefRecord {
       /// Loc - This is the location of the upref.
