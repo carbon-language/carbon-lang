@@ -892,8 +892,8 @@ static void WriteMDNodeComment(const MDNode *Node,
     Out << "; [ DW_TAG_vector_type ]";
   else if (Tag == dwarf::DW_TAG_user_base)
     Out << "; [ DW_TAG_user_base ]";
-  else
-    Out << "; [ " << dwarf::TagString(Tag) << " ]";
+  else if (const char *TagName = dwarf::TagString(Tag))
+    Out << "; [ " << TagName << " ]";
 }
 
 static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
@@ -1519,7 +1519,6 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT,
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
                             formatted_raw_ostream &Out) {
   switch (Vis) {
-  default: llvm_unreachable("Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
   case GlobalValue::HiddenVisibility:    Out << "hidden "; break;
   case GlobalValue::ProtectedVisibility: Out << "protected "; break;

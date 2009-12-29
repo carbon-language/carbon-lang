@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/ErrorHandling.h"
-#include <cassert>
 using namespace llvm;
 using namespace dwarf;
 
@@ -81,19 +79,17 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_lo_user:                   return "DW_TAG_lo_user";
   case DW_TAG_hi_user:                   return "DW_TAG_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Tag");
-  return "";
+  return 0;
 }
 
 /// ChildrenString - Return the string for the specified children flag.
 ///
 const char *llvm::dwarf::ChildrenString(unsigned Children) {
   switch (Children) {
-    case DW_CHILDREN_no:                   return "CHILDREN_no";
-    case DW_CHILDREN_yes:                  return "CHILDREN_yes";
+  case DW_CHILDREN_no:                   return "CHILDREN_no";
+  case DW_CHILDREN_yes:                  return "CHILDREN_yes";
   }
-  llvm_unreachable("Unknown Dwarf ChildrenFlag");
-  return "";
+  return 0;
 }
 
 /// AttributeString - Return the string for the specified attribute.
@@ -203,8 +199,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_major_runtime_vers:  return "DW_AT_APPLE_major_runtime_vers";
   case DW_AT_APPLE_runtime_class:        return "DW_AT_APPLE_runtime_class";
   }
-  llvm_unreachable("Unknown Dwarf Attribute");
-  return "";
+  return 0;
 }
 
 /// FormEncodingString - Return the string for the specified form encoding.
@@ -233,8 +228,7 @@ const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
   case DW_FORM_ref_udata:                return "FORM_ref_udata";
   case DW_FORM_indirect:                 return "FORM_indirect";
   }
-  llvm_unreachable("Unknown Dwarf Form Encoding");
-  return "";
+  return 0;
 }
 
 /// OperationEncodingString - Return the string for the specified operation
@@ -308,8 +302,7 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   case DW_OP_lo_user:                    return "OP_lo_user";
   case DW_OP_hi_user:                    return "OP_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Operation Encoding");
-  return "";
+  return 0;
 }
 
 /// AttributeEncodingString - Return the string for the specified attribute
@@ -334,8 +327,7 @@ const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   case DW_ATE_lo_user:                   return "ATE_lo_user";
   case DW_ATE_hi_user:                   return "ATE_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Attribute Encoding");
-  return "";
+  return 0;
 }
 
 /// DecimalSignString - Return the string for the specified decimal sign
@@ -348,8 +340,7 @@ const char *llvm::dwarf::DecimalSignString(unsigned Sign) {
   case DW_DS_leading_separate:           return "DS_leading_separate";
   case DW_DS_trailing_separate:          return "DS_trailing_separate";
   }
-  llvm_unreachable("Unknown Dwarf Decimal Sign Attribute");
-  return "";
+  return 0;
 }
 
 /// EndianityString - Return the string for the specified endianity.
@@ -362,8 +353,7 @@ const char *llvm::dwarf::EndianityString(unsigned Endian) {
   case DW_END_lo_user:                   return "END_lo_user";
   case DW_END_hi_user:                   return "END_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Endianity");
-  return "";
+  return 0;
 }
 
 /// AccessibilityString - Return the string for the specified accessibility.
@@ -375,8 +365,7 @@ const char *llvm::dwarf::AccessibilityString(unsigned Access) {
   case DW_ACCESS_protected:              return "ACCESS_protected";
   case DW_ACCESS_private:                return "ACCESS_private";
   }
-  llvm_unreachable("Unknown Dwarf Accessibility");
-  return "";
+  return 0;
 }
 
 /// VisibilityString - Return the string for the specified visibility.
@@ -387,8 +376,7 @@ const char *llvm::dwarf::VisibilityString(unsigned Visibility) {
   case DW_VIS_exported:                  return "VIS_exported";
   case DW_VIS_qualified:                 return "VIS_qualified";
   }
-  llvm_unreachable("Unknown Dwarf Visibility");
-  return "";
+  return 0;
 }
 
 /// VirtualityString - Return the string for the specified virtuality.
@@ -399,8 +387,7 @@ const char *llvm::dwarf::VirtualityString(unsigned Virtuality) {
   case DW_VIRTUALITY_virtual:            return "VIRTUALITY_virtual";
   case DW_VIRTUALITY_pure_virtual:       return "VIRTUALITY_pure_virtual";
   }
-  llvm_unreachable("Unknown Dwarf Virtuality");
-  return "";
+  return 0;
 }
 
 /// LanguageString - Return the string for the specified language.
@@ -429,8 +416,7 @@ const char *llvm::dwarf::LanguageString(unsigned Language) {
   case DW_LANG_lo_user:                  return "LANG_lo_user";
   case DW_LANG_hi_user:                  return "LANG_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Language");
-  return "";
+  return 0;
 }
 
 /// CaseString - Return the string for the specified identifier case.
@@ -442,8 +428,7 @@ const char *llvm::dwarf::CaseString(unsigned Case) {
   case DW_ID_down_case:                  return "ID_down_case";
   case DW_ID_case_insensitive:           return "ID_case_insensitive";
   }
-  llvm_unreachable("Unknown Dwarf Identifier Case");
-  return "";
+  return 0;
 }
 
 /// ConventionString - Return the string for the specified calling convention.
@@ -456,8 +441,7 @@ const char *llvm::dwarf::ConventionString(unsigned Convention) {
    case DW_CC_lo_user:                    return "CC_lo_user";
    case DW_CC_hi_user:                    return "CC_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Calling Convention");
-  return "";
+  return 0;
 }
 
 /// InlineCodeString - Return the string for the specified inline code.
@@ -469,8 +453,7 @@ const char *llvm::dwarf::InlineCodeString(unsigned Code) {
   case DW_INL_declared_not_inlined:      return "INL_declared_not_inlined";
   case DW_INL_declared_inlined:          return "INL_declared_inlined";
   }
-  llvm_unreachable("Unknown Dwarf Inline Code");
-  return "";
+  return 0;
 }
 
 /// ArrayOrderString - Return the string for the specified array order.
@@ -480,8 +463,7 @@ const char *llvm::dwarf::ArrayOrderString(unsigned Order) {
   case DW_ORD_row_major:                 return "ORD_row_major";
   case DW_ORD_col_major:                 return "ORD_col_major";
   }
-  llvm_unreachable("Unknown Dwarf Array Order");
-  return "";
+  return 0;
 }
 
 /// DiscriminantString - Return the string for the specified discriminant
@@ -491,8 +473,7 @@ const char *llvm::dwarf::DiscriminantString(unsigned Discriminant) {
   case DW_DSC_label:                     return "DSC_label";
   case DW_DSC_range:                     return "DSC_range";
   }
-  llvm_unreachable("Unknown Dwarf Discriminant Descriptor");
-  return "";
+  return 0;
 }
 
 /// LNStandardString - Return the string for the specified line number standard.
@@ -512,8 +493,7 @@ const char *llvm::dwarf::LNStandardString(unsigned Standard) {
   case DW_LNS_set_epilogue_begin:        return "LNS_set_epilogue_begin";
   case DW_LNS_set_isa:                   return "LNS_set_isa";
   }
-  llvm_unreachable("Unknown Dwarf Line Number Standard");
-  return "";
+  return 0;
 }
 
 /// LNExtendedString - Return the string for the specified line number extended
@@ -527,8 +507,7 @@ const char *llvm::dwarf::LNExtendedString(unsigned Encoding) {
   case DW_LNE_lo_user:                   return "LNE_lo_user";
   case DW_LNE_hi_user:                   return "LNE_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Line Number Extended Opcode Encoding");
-  return "";
+  return 0;
 }
 
 /// MacinfoString - Return the string for the specified macinfo type encodings.
@@ -542,8 +521,7 @@ const char *llvm::dwarf::MacinfoString(unsigned Encoding) {
   case DW_MACINFO_end_file:              return "MACINFO_end_file";
   case DW_MACINFO_vendor_ext:            return "MACINFO_vendor_ext";
   }
-  llvm_unreachable("Unknown Dwarf Macinfo Type Encodings");
-  return "";
+  return 0;
 }
 
 /// CallFrameString - Return the string for the specified call frame instruction
@@ -578,6 +556,5 @@ const char *llvm::dwarf::CallFrameString(unsigned Encoding) {
   case DW_CFA_lo_user:                   return "CFA_lo_user";
   case DW_CFA_hi_user:                   return "CFA_hi_user";
   }
-  llvm_unreachable("Unknown Dwarf Call Frame Instruction Encodings");
-  return "";
+  return 0;
 }
