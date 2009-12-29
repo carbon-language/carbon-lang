@@ -118,6 +118,20 @@ GlobalValue *Module::getNamedValue(StringRef Name) const {
   return cast_or_null<GlobalValue>(getValueSymbolTable().lookup(Name));
 }
 
+/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+/// This ID is uniqued across modules in the current LLVMContext.
+unsigned Module::getMDKindID(StringRef Name) const {
+  return Context.getMDKindID(Name);
+}
+
+/// getMDKindNames - Populate client supplied SmallVector with the name for
+/// custom metadata IDs registered in this LLVMContext.   ID #0 is not used,
+/// so it is filled in as an empty string.
+void Module::getMDKindNames(SmallVectorImpl<StringRef> &Result) const {
+  return Context.getMDKindNames(Result);
+}
+
+
 //===----------------------------------------------------------------------===//
 // Methods for easy access to the functions in the module.
 //

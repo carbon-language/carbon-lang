@@ -18,7 +18,6 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1117,7 +1116,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
 
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
-  unsigned MDDbgKind = M.getContext().getMetadata().getMDKindID("dbg");
+  unsigned MDDbgKind = M.getMDKindID("dbg");
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)

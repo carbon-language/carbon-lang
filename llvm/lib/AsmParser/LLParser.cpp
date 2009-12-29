@@ -18,8 +18,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include "llvm/ValueSymbolTable.h"
@@ -1122,8 +1120,7 @@ bool LLParser::ParseOptionalCustomMetadata() {
   MetadataBase *Node;
   if (ParseMDNode(Node)) return true;
 
-  MetadataContext &TheMetadata = M->getContext().getMetadata();
-  unsigned MDK = TheMetadata.getMDKindID(Name.c_str());
+  unsigned MDK = M->getMDKindID(Name.c_str());
   MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
   return false;
 }

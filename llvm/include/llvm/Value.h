@@ -41,7 +41,6 @@ class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
 class LLVMContext;
-class MetadataContextImpl;
 class Twine;
 
 //===----------------------------------------------------------------------===//

@@ -25,7 +25,6 @@ class Constant;
 class Instruction;
 class LLVMContext;
 class Module;
-class MetadataContextImpl;
 template <typename T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
@@ -202,28 +201,6 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == NamedMDNodeVal;
   }
-};
-
-//===----------------------------------------------------------------------===//
-/// MetadataContext - MetadataContext handles uniquing and assignment of IDs for
-/// custom metadata types.
-///
-class MetadataContext {
-  MetadataContext(MetadataContext&); // DO NOT IMPLEMENT
-  void operator=(MetadataContext&);  // DO NOT IMPLEMENT
-
-  MetadataContextImpl *const pImpl;
-  friend class Instruction;
-public:
-  MetadataContext();
-  ~MetadataContext();
-
-  /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
-  unsigned getMDKindID(StringRef Name) const;
-
-  /// getMDKindNames - Populate client supplied SmallVector with the name for
-  /// each custom metadata ID.   ID #0 is not used, so it is filled in as empty.
-  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
 };
 
 } // end llvm namespace

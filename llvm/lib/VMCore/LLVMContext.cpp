@@ -17,9 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/ValueHandle.h"
 #include "LLVMContextImpl.h"
-
 using namespace llvm;
 
 static ManagedStatic<LLVMContext> GlobalContext;
@@ -44,6 +42,3 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr
     OperandList[i+1] = IdxList[i];
 }
 
-MetadataContext &LLVMContext::getMetadata() {
-  return pImpl->TheMetadata;
-}

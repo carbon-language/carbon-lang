@@ -170,7 +170,7 @@ class BitcodeReader : public ModuleProvider {
   DenseMap<Function*, std::vector<BlockAddrRefTy> > BlockAddrFwdRefs;
   
 public:
-  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext& C)
+  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
     : Context(C), Buffer(buffer), ErrorString(0), ValueList(C), MDValueList(C) {
     HasReversedFunctionsWithBodies = false;
   }

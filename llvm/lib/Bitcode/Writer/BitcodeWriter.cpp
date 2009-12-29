@@ -19,8 +19,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include "llvm/TypeSymbolTable.h"
@@ -595,9 +593,8 @@ static void WriteModuleMetadataStore(const Module *M, BitstreamWriter &Stream) {
 
   // Write metadata kinds
   // METADATA_KIND - [n x [id, name]]
-  MetadataContext &TheMetadata = M->getContext().getMetadata();
   SmallVector<StringRef, 4> Names;
-  TheMetadata.getMDKindNames(Names);
+  M->getMDKindNames(Names);
   
   assert(Names[0] == "" && "MDKind #0 is invalid");
   if (Names.size() == 1) return;

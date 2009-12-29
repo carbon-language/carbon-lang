@@ -18,7 +18,8 @@
 namespace llvm {
 
 class LLVMContextImpl;
-class MetadataContext;
+class StringRef;
+template <typename T> class SmallVectorImpl;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 
@@ -31,14 +32,23 @@ class LLVMContext {
   void operator=(LLVMContext&);
 
 public:
-  LLVMContextImpl* const pImpl;
-  MetadataContext &getMetadata();
+  LLVMContextImpl *const pImpl;
   LLVMContext();
   ~LLVMContext();
+  
+  /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+  /// This ID is uniqued across modules in the current LLVMContext.
+  unsigned getMDKindID(StringRef Name) const;
+  
+  /// getMDKindNames - Populate client supplied SmallVector with the name for
+  /// custom metadata IDs registered in this LLVMContext.   ID #0 is not used,
+  /// so it is filled in as an empty string.
+  void getMDKindNames(SmallVectorImpl<StringRef> &Result) const;
 };
 
-/// FOR BACKWARDS COMPATIBILITY - Returns a global context.
-extern LLVMContext& getGlobalContext();
+/// getGlobalContext - Returns a global context.  This is for LLVM clients that
+/// only care about operating on a single thread.
+extern LLVMContext &getGlobalContext();
 
 }
 

@@ -15,7 +15,6 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
-#include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 using namespace llvm;
 
@@ -37,7 +36,7 @@ Value *IRBuilderBase::CreateGlobalString(const char *Str, const Twine &Name) {
 /// information.
 void IRBuilderBase::SetCurrentDebugLocation(MDNode *L) {
   if (DbgMDKind == 0) 
-    DbgMDKind = Context.getMetadata().getMDKindID("dbg");
+    DbgMDKind = Context.getMDKindID("dbg");
   CurDbgLocation = L;
 }
 

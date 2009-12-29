@@ -24,7 +24,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -220,9 +219,8 @@ static bool StripDebugInfo(Module &M) {
     Changed = true;
     NMD->eraseFromParent();
   }
-  MetadataContext &TheMetadata = M.getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKindID("dbg");
-
+  
+  unsigned MDDbgKind = M.getMDKindID("dbg");
   for (Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) 
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE;
          ++FI)

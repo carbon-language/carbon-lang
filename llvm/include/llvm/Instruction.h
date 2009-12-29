@@ -22,7 +22,6 @@ namespace llvm {
 
 class LLVMContext;
 class MDNode;
-class MetadataContextImpl;
 
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
@@ -316,7 +315,6 @@ private:
     return Value::getSubclassDataFromValue();
   }
   
-  friend class MetadataContextImpl;
   void setHasMetadata(bool V) {
     setValueSubclassData((getSubclassDataFromValue() & ~HasMetadataBit) |
                          (V ? HasMetadataBit : 0));

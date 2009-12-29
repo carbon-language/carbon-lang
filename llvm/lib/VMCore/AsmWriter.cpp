@@ -22,7 +22,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
@@ -1338,7 +1337,7 @@ public:
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
     // FIXME: Provide MDPrinter
     if (M)
-      M->getContext().getMetadata().getMDKindNames(MDNames);
+      M->getMDKindNames(MDNames);
   }
 
   void write(const Module *M) { printModule(M); }

@@ -243,151 +243,8 @@ void NamedMDNode::dropAllReferences() {
 
 
 //===----------------------------------------------------------------------===//
-// MetadataContextImpl implementation.
-//
-namespace llvm {
-class MetadataContextImpl {
-public:
-  typedef std::pair<unsigned, TrackingVH<MDNode> > MDPairTy;
-  typedef SmallVector<MDPairTy, 2> MDMapTy;
-  typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
-  friend class BitcodeReader;
-private:
-
-  /// MetadataStore - Collection of metadata used in this context.
-  MDStoreTy MetadataStore;
-
-  /// MDHandlerNames - Map to hold metadata handler names.
-  StringMap<unsigned> MDHandlerNames;
-
-public:
-  // Name <-> ID mapping methods.
-  unsigned getMDKindID(StringRef Name);
-  void getMDKindNames(SmallVectorImpl<StringRef> &) const;
-  
-  
-  // Instruction metadata methods.
-  MDNode *getMetadata(const Instruction *Inst, unsigned Kind);
-  void getAllMetadata(const Instruction *Inst,
-                      SmallVectorImpl<std::pair<unsigned, MDNode*> > &MDs)const;
-
-  void setMetadata(Instruction *Inst, unsigned Kind, MDNode *Node);
-
-  /// removeAllMetadata - Remove all metadata attached to an instruction.
-  void removeAllMetadata(Instruction *Inst);
-};
-}
-
-/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
-unsigned MetadataContextImpl::getMDKindID(StringRef Name) {
-  unsigned &Entry = MDHandlerNames[Name];
-
-  // If this is new, assign it its ID.
-  if (Entry == 0) Entry = MDHandlerNames.size();
-  return Entry;
-}
-
-/// getHandlerNames - Populate client supplied smallvector using custome
-/// metadata name and ID.
-void MetadataContextImpl::
-getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
-  Names.resize(MDHandlerNames.size()+1);
-  Names[0] = "";
-  for (StringMap<unsigned>::const_iterator I = MDHandlerNames.begin(),
-       E = MDHandlerNames.end(); I != E; ++I) 
-    // MD Handlers are numbered from 1.
-    Names[I->second] = I->first();
-}
-
-
-/// getMetadata - Get the metadata of given kind attached to an Instruction.
-/// If the metadata is not found then return 0.
-MDNode *MetadataContextImpl::
-getMetadata(const Instruction *Inst, unsigned MDKind) {
-  MDMapTy &Info = MetadataStore[Inst];
-  assert(Inst->hasMetadata() && !Info.empty() && "Shouldn't have called this");
-  
-  for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
-    if (I->first == MDKind)
-      return I->second;
-  return 0;
-}
-
-/// getAllMetadata - Get all of the metadata attached to an Instruction.
-void MetadataContextImpl::
-getAllMetadata(const Instruction *Inst,
-               SmallVectorImpl<std::pair<unsigned, MDNode*> > &Result) const {
-  assert(Inst->hasMetadata() && MetadataStore.find(Inst) != MetadataStore.end()
-         && "Shouldn't have called this");
-  const MDMapTy &Info = MetadataStore.find(Inst)->second;
-  assert(!Info.empty() && "Shouldn't have called this");
-
-  Result.clear();
-  Result.append(Info.begin(), Info.end());
-  
-  // Sort the resulting array so it is stable.
-  if (Result.size() > 1)
-    array_pod_sort(Result.begin(), Result.end());
-}
-
-
-void MetadataContextImpl::setMetadata(Instruction *Inst, unsigned Kind,
-                                      MDNode *Node) {
-  // Handle the case when we're adding/updating metadata on an instruction.
-  if (Node) {
-    MDMapTy &Info = MetadataStore[Inst];
-    assert(!Info.empty() == Inst->hasMetadata() && "HasMetadata bit is wonked");
-    if (Info.empty()) {
-      Inst->setHasMetadata(true);
-    } else {
-      // Handle replacement of an existing value.
-      for (unsigned i = 0, e = Info.size(); i != e; ++i)
-        if (Info[i].first == Kind) {
-          Info[i].second = Node;
-          return;
-        }
-    }
-    
-    // No replacement, just add it to the list.
-    Info.push_back(std::make_pair(Kind, Node));
-    return;
-  }
-  
-  // Otherwise, we're removing metadata from an instruction.
-  assert(Inst->hasMetadata() && MetadataStore.count(Inst) &&
-         "HasMetadata bit out of date!");
-  MDMapTy &Info = MetadataStore[Inst];
-
-  // Common case is removing the only entry.
-  if (Info.size() == 1 && Info[0].first == Kind) {
-    MetadataStore.erase(Inst);
-    Inst->setHasMetadata(false);
-    return;
-  }
-  
-  // Handle replacement of an existing value.
-  for (unsigned i = 0, e = Info.size(); i != e; ++i)
-    if (Info[i].first == Kind) {
-      Info[i] = Info.back();
-      Info.pop_back();
-      assert(!Info.empty() && "Removing last entry should be handled above");
-      return;
-    }
-  // Otherwise, removing an entry that doesn't exist on the instruction.
-}
-
-/// removeAllMetadata - Remove all metadata attached with an instruction.
-void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
-  MetadataStore.erase(Inst);
-  Inst->setHasMetadata(false);
-}
-
-
-//===----------------------------------------------------------------------===//
 // MetadataContext implementation.
 //
-MetadataContext::MetadataContext() : pImpl(new MetadataContextImpl()) { }
-MetadataContext::~MetadataContext() { delete pImpl; }
 
 #ifndef NDEBUG
 /// isValidName - Return true if Name is a valid custom metadata handler name.
@@ -408,15 +265,25 @@ static bool isValidName(StringRef MDName) {
 #endif
 
 /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
-unsigned MetadataContext::getMDKindID(StringRef Name) const {
+unsigned LLVMContext::getMDKindID(StringRef Name) const {
   assert(isValidName(Name) && "Invalid MDNode name");
-  return pImpl->getMDKindID(Name);
+  
+  unsigned &Entry = pImpl->CustomMDKindNames[Name];
+  
+  // If this is new, assign it its ID.
+  if (Entry == 0) Entry = pImpl->CustomMDKindNames.size();
+  return Entry;
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
 /// metadata name and ID.
-void MetadataContext::getMDKindNames(SmallVectorImpl<StringRef> &N) const {
-  pImpl->getMDKindNames(N);
+void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
+  Names.resize(pImpl->CustomMDKindNames.size()+1);
+  Names[0] = "";
+  for (StringMap<unsigned>::const_iterator I = pImpl->CustomMDKindNames.begin(),
+       E = pImpl->CustomMDKindNames.end(); I != E; ++I) 
+    // MD Handlers are numbered from 1.
+    Names[I->second] = I->first();
 }
 
 //===----------------------------------------------------------------------===//
@@ -425,11 +292,11 @@ void MetadataContext::getMDKindNames(SmallVectorImpl<StringRef> &N) const {
 
 void Instruction::setMetadata(const char *Kind, MDNode *Node) {
   if (Node == 0 && !hasMetadata()) return;
-  setMetadata(getContext().getMetadata().getMDKindID(Kind), Node);
+  setMetadata(getContext().getMDKindID(Kind), Node);
 }
 
 MDNode *Instruction::getMetadataImpl(const char *Kind) const {
-  return getMetadataImpl(getContext().getMetadata().getMDKindID(Kind));
+  return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 
 /// setMetadata - Set the metadata of of the specified kind to the specified
@@ -438,21 +305,80 @@ MDNode *Instruction::getMetadataImpl(const char *Kind) const {
 void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   if (Node == 0 && !hasMetadata()) return;
   
-  getContext().getMetadata().pImpl->setMetadata(this, KindID, Node);
+  // Handle the case when we're adding/updating metadata on an instruction.
+  if (Node) {
+    LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
+    assert(!Info.empty() == hasMetadata() && "HasMetadata bit is wonked");
+    if (Info.empty()) {
+      setHasMetadata(true);
+    } else {
+      // Handle replacement of an existing value.
+      for (unsigned i = 0, e = Info.size(); i != e; ++i)
+        if (Info[i].first == KindID) {
+          Info[i].second = Node;
+          return;
+        }
+    }
+    
+    // No replacement, just add it to the list.
+    Info.push_back(std::make_pair(KindID, Node));
+    return;
+  }
+  
+  // Otherwise, we're removing metadata from an instruction.
+  assert(hasMetadata() && getContext().pImpl->MetadataStore.count(this) &&
+         "HasMetadata bit out of date!");
+  LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
+  
+  // Common case is removing the only entry.
+  if (Info.size() == 1 && Info[0].first == KindID) {
+    getContext().pImpl->MetadataStore.erase(this);
+    setHasMetadata(false);
+    return;
+  }
+  
+  // Handle replacement of an existing value.
+  for (unsigned i = 0, e = Info.size(); i != e; ++i)
+    if (Info[i].first == KindID) {
+      Info[i] = Info.back();
+      Info.pop_back();
+      assert(!Info.empty() && "Removing last entry should be handled above");
+      return;
+    }
+  // Otherwise, removing an entry that doesn't exist on the instruction.
 }
 
 MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
-  return getContext().getMetadata().pImpl->getMetadata(this, KindID);
+  LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
+  assert(hasMetadata() && !Info.empty() && "Shouldn't have called this");
+  
+  for (LLVMContextImpl::MDMapTy::iterator I = Info.begin(), E = Info.end();
+       I != E; ++I)
+    if (I->first == KindID)
+      return I->second;
+  return 0;
 }
 
 void Instruction::getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,
                                        MDNode*> > &Result)const {
-  getContext().getMetadata().pImpl->getAllMetadata(this, Result);
+  assert(hasMetadata() && getContext().pImpl->MetadataStore.count(this) &&
+         "Shouldn't have called this");
+  const LLVMContextImpl::MDMapTy &Info =
+    getContext().pImpl->MetadataStore.find(this)->second;
+  assert(!Info.empty() && "Shouldn't have called this");
+  
+  Result.clear();
+  Result.append(Info.begin(), Info.end());
+  
+  // Sort the resulting array so it is stable.
+  if (Result.size() > 1)
+    array_pod_sort(Result.begin(), Result.end());
 }
 
 /// removeAllMetadata - Remove all metadata from this instruction.
 void Instruction::removeAllMetadata() {
   assert(hasMetadata() && "Caller should check");
-  getContext().getMetadata().pImpl->removeAllMetadata(this);
+  getContext().pImpl->MetadataStore.erase(this);
+  setHasMetadata(false);
 }
 

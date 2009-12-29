@@ -17,7 +17,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
 #include "llvm/AutoUpgrade.h"
@@ -840,7 +839,7 @@ bool BitcodeReader::ParseMetadata() {
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
       
-      unsigned NewKind = Context.getMetadata().getMDKindID(Name.str());
+      unsigned NewKind = TheModule->getMDKindID(Name.str());
       assert(Kind == NewKind &&
              "FIXME: Unable to handle custom metadata mismatch!");(void)NewKind;
       break;

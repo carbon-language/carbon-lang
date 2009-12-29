@@ -420,8 +420,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     //
     BasicBlock::iterator I = NewBB->begin();
 
-    // FIXME: Only use of context.
-    unsigned DbgKind = OldFunc->getContext().getMetadata().getMDKindID("dbg");
+    unsigned DbgKind = OldFunc->getContext().getMDKindID("dbg");
     MDNode *TheCallMD = NULL;
     SmallVector<Value *, 4> MDVs;
     if (TheCall && TheCall->hasMetadata()) 

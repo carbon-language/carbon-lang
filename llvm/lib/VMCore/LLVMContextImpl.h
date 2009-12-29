@@ -23,6 +23,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
@@ -171,7 +172,17 @@ public:
   typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
   ValueHandlesTy ValueHandles;
   
-  MetadataContext TheMetadata;
+  /// CustomMDKindNames - Map to hold the metadata string to ID mapping.
+  StringMap<unsigned> CustomMDKindNames;
+  
+  typedef std::pair<unsigned, TrackingVH<MDNode> > MDPairTy;
+  typedef SmallVector<MDPairTy, 2> MDMapTy;
+
+  /// MetadataStore - Collection of per-instruction metadata used in this
+  /// context.
+  DenseMap<const Instruction *, MDMapTy> MetadataStore;
+  
+  
   LLVMContextImpl(LLVMContext &C) : TheTrueVal(0), TheFalseVal(0),
     VoidTy(C, Type::VoidTyID),
     LabelTy(C, Type::LabelTyID),
@@ -187,8 +198,7 @@ public:
     Int32Ty(C, 32),
     Int64Ty(C, 64) { }
 
-  ~LLVMContextImpl()
-  {
+  ~LLVMContextImpl() {
     ExprConstants.freeConstants();
     ArrayConstants.freeConstants();
     StructConstants.freeConstants();
