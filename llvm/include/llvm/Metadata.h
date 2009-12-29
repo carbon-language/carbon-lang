@@ -224,10 +224,6 @@ public:
   /// isValidName - Return true if Name is a valid custom metadata handler name.
   static bool isValidName(StringRef Name);
 
-  /// copyMD - If metadata is attached with Instruction In1 then attach
-  /// the same metadata to In2.
-  void copyMD(Instruction *In1, Instruction *In2);
-
   /// getMDKindNames - Populate client supplied SmallVector with the name for
   /// each custom metadata ID.   ID #0 is not used, so it is filled in as empty.
   void getMDKindNames(SmallVectorImpl<StringRef> &) const;

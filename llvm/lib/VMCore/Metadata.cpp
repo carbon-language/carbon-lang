@@ -275,10 +275,6 @@ public:
 
   /// removeAllMetadata - Remove all metadata attached to an instruction.
   void removeAllMetadata(Instruction *Inst);
-  
-  /// copyMD - If metadata is attached with Instruction In1 then attach
-  /// the same metadata to In2.
-  void copyMD(Instruction *In1, Instruction *In2);
 };
 }
 
@@ -387,18 +383,6 @@ void MetadataContextImpl::removeAllMetadata(Instruction *Inst) {
 }
 
 
-/// copyMD - If metadata is attached with Instruction In1 then attach
-/// the same metadata to In2.
-void MetadataContextImpl::copyMD(Instruction *In1, Instruction *In2) {
-  assert(In1 && In2 && "Invalid instruction!");
-  MDMapTy &In1Info = MetadataStore[In1];
-  if (In1Info.empty())
-    return;
-  
-  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    In2->setMetadata(I->first, I->second);
-}
-
 //===----------------------------------------------------------------------===//
 // MetadataContext implementation.
 //
@@ -424,12 +408,6 @@ bool MetadataContext::isValidName(StringRef MDName) {
 /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
 unsigned MetadataContext::getMDKindID(StringRef Name) const {
   return pImpl->getMDKindID(Name);
-}
-
-/// copyMD - If metadata is attached with Instruction In1 then attach
-/// the same metadata to In2.
-void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
-  pImpl->copyMD(In1, In2);
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
