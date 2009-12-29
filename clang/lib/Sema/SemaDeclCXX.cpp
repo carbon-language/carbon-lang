@@ -4206,7 +4206,7 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
 /// type, and the first type (T1) is the pointee type of the reference
 /// type being initialized.
 Sema::ReferenceCompareResult
-Sema::CompareReferenceRelationship(SourceLocation Loc, 
+Sema::CompareReferenceRelationship(SourceLocation Loc,
                                    QualType OrigT1, QualType OrigT2,
                                    bool& DerivedToBase) {
   assert(!OrigT1->isReferenceType() &&
@@ -4215,8 +4215,9 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
 
   QualType T1 = Context.getCanonicalType(OrigT1);
   QualType T2 = Context.getCanonicalType(OrigT2);
-  QualType UnqualT1 = T1.getLocalUnqualifiedType();
-  QualType UnqualT2 = T2.getLocalUnqualifiedType();
+  Qualifiers T1Quals, T2Quals;
+  QualType UnqualT1 = Context.getUnqualifiedArrayType(T1, T1Quals);
+  QualType UnqualT2 = Context.getUnqualifiedArrayType(T2, T2Quals);
 
   // C++ [dcl.init.ref]p4:
   //   Given types "cv1 T1" and "cv2 T2," "cv1 T1" is
@@ -4234,6 +4235,13 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   // At this point, we know that T1 and T2 are reference-related (at
   // least).
 
+  // If the type is an array type, promote the element qualifiers to the type
+  // for comparison.
+  if (isa<ArrayType>(T1) && T1Quals)
+    T1 = Context.getQualifiedType(UnqualT1, T1Quals);
+  if (isa<ArrayType>(T2) && T2Quals)
+    T2 = Context.getQualifiedType(UnqualT2, T2Quals);
+
   // C++ [dcl.init.ref]p4:
   //   "cv1 T1" is reference-compatible with "cv2 T2" if T1 is
   //   reference-related to T2 and cv1 is the same cv-qualification
@@ -4241,7 +4249,7 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   //   overload resolution, cases for which cv1 is greater
   //   cv-qualification than cv2 are identified as
   //   reference-compatible with added qualification (see 13.3.3.2).
-  if (T1.getCVRQualifiers() == T2.getCVRQualifiers())
+  if (T1Quals.getCVRQualifiers() == T2Quals.getCVRQualifiers())
     return Ref_Compatible;
   else if (T1.isMoreQualifiedThan(T2))
     return Ref_Compatible_With_Added_Qualification;

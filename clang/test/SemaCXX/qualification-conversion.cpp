@@ -21,3 +21,14 @@ void test_mquals(int A::*p, int A::* A::*pp, int A::* A::* A::*ppp) {
   mquals2(pp);
   mquals3(ppp); // expected-error {{no matching}}
 }
+
+void aquals1(int const (*p)[1]);
+void aquals2(int * const (*pp)[1]);
+void aquals2a(int const * (*pp2)[1]); // expected-note{{candidate function}}
+
+void test_aquals(int (*p)[1], int * (*pp)[1], int * (*pp2)[1]) {
+  int const (*p2)[1] = p;
+  aquals1(p);
+  aquals2(pp);
+  aquals2a(pp2); // expected-error {{no matching}}
+}

@@ -2372,6 +2372,36 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
                                                      VAT->getBracketsRange()));
 }
 
+QualType ASTContext::getUnqualifiedArrayType(QualType T,
+                                             Qualifiers &Quals) {
+  assert(T.isCanonical() && "Only operates on canonical types");
+  if (!isa<ArrayType>(T)) {
+    Quals = T.getLocalQualifiers();
+    return T.getLocalUnqualifiedType();
+  }
+
+  assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
+  const ArrayType *AT = cast<ArrayType>(T);
+  QualType Elt = AT->getElementType();
+  QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);
+  if (Elt == UnqualElt)
+    return T;
+
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T)) {
+    return getConstantArrayType(UnqualElt, CAT->getSize(),
+                                CAT->getSizeModifier(), 0);
+  }
+
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(T)) {
+    return getIncompleteArrayType(UnqualElt, IAT->getSizeModifier(), 0);
+  }
+
+  const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(T);
+  return getDependentSizedArrayType(UnqualElt, DSAT->getSizeExpr()->Retain(),
+                                    DSAT->getSizeModifier(), 0,
+                                    SourceRange());
+}
+
 DeclarationName ASTContext::getNameForTemplate(TemplateName Name) {
   if (TemplateDecl *TD = Name.getAsTemplateDecl())
     return TD->getDeclName();

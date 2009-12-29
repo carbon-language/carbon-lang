@@ -1802,7 +1802,16 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
     T1 = Context.getCanonicalType(T1);
     T2 = Context.getCanonicalType(T2);
-    if (Context.hasSameUnqualifiedType(T1, T2)) {
+    Qualifiers T1Quals, T2Quals;
+    QualType UnqualT1 = Context.getUnqualifiedArrayType(T1, T1Quals);
+    QualType UnqualT2 = Context.getUnqualifiedArrayType(T2, T2Quals);
+    if (UnqualT1 == UnqualT2) {
+      // If the type is an array type, promote the element qualifiers to the type
+      // for comparison.
+      if (isa<ArrayType>(T1) && T1Quals)
+        T1 = Context.getQualifiedType(UnqualT1, T1Quals);
+      if (isa<ArrayType>(T2) && T2Quals)
+        T2 = Context.getQualifiedType(UnqualT2, T2Quals);
       if (T2.isMoreQualifiedThan(T1))
         return ImplicitConversionSequence::Better;
       else if (T1.isMoreQualifiedThan(T2))
@@ -1835,11 +1844,21 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
   QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
   T1 = Context.getCanonicalType(T1);
   T2 = Context.getCanonicalType(T2);
+  Qualifiers T1Quals, T2Quals;
+  QualType UnqualT1 = Context.getUnqualifiedArrayType(T1, T1Quals);
+  QualType UnqualT2 = Context.getUnqualifiedArrayType(T2, T2Quals);
 
   // If the types are the same, we won't learn anything by unwrapped
   // them.
-  if (Context.hasSameUnqualifiedType(T1, T2))
+  if (UnqualT1 == UnqualT2)
     return ImplicitConversionSequence::Indistinguishable;
+
+  // If the type is an array type, promote the element qualifiers to the type
+  // for comparison.
+  if (isa<ArrayType>(T1) && T1Quals)
+    T1 = Context.getQualifiedType(UnqualT1, T1Quals);
+  if (isa<ArrayType>(T2) && T2Quals)
+    T2 = Context.getQualifiedType(UnqualT2, T2Quals);
 
   ImplicitConversionSequence::CompareKind Result
     = ImplicitConversionSequence::Indistinguishable;
