@@ -539,31 +539,23 @@ bool LLParser::ParseStandaloneMetadata() {
   assert(Lex.getKind() == lltok::Metadata);
   Lex.Lex();
   unsigned MetadataID = 0;
-  if (ParseUInt32(MetadataID))
-    return true;
-  if (MetadataCache.count(MetadataID))
-    return TokError("Metadata id is already used");
-  if (ParseToken(lltok::equal, "expected '=' here"))
-    return true;
 
   LocTy TyLoc;
   PATypeHolder Ty(Type::getVoidTy(Context));
-  if (ParseType(Ty, TyLoc))
-    return true;
-
-  if (Lex.getKind() != lltok::Metadata)
-    return TokError("Expected metadata here");
-
-  Lex.Lex();
-  if (Lex.getKind() != lltok::lbrace)
-    return TokError("Expected '{' here");
-
-  // FIXME: This doesn't make sense here.
   SmallVector<Value *, 16> Elts;
-  if (ParseMDNodeVector(Elts)
-      || ParseToken(lltok::rbrace, "expected end of metadata node"))
+  // FIXME: This doesn't make sense here.  Pull braced MD stuff parsing out!
+  if (ParseUInt32(MetadataID) ||
+      ParseToken(lltok::equal, "expected '=' here") ||
+      ParseType(Ty, TyLoc) ||
+      ParseToken(lltok::Metadata, "Expected metadata here") ||
+      ParseToken(lltok::lbrace, "Expected '{' here") ||
+      ParseMDNodeVector(Elts) ||
+      ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
+  if (MetadataCache.count(MetadataID))
+    return TokError("Metadata id is already used");
+  
   MDNode *Init = MDNode::get(Context, Elts.data(), Elts.size());
   MetadataCache[MetadataID] = Init;
   std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
@@ -585,14 +577,12 @@ bool LLParser::ParseInlineMetadata(Value *&V, PerFunctionState &PFS) {
   V = 0;
 
   Lex.Lex();
-  if (Lex.getKind() == lltok::lbrace) {
-    Lex.Lex();
+  if (EatIfPresent(lltok::lbrace)) {
     if (ParseTypeAndValue(V, PFS) ||
         ParseToken(lltok::rbrace, "expected end of metadata node"))
       return true;
 
-    Value *Vals[] = { V };
-    V = MDNode::get(Context, Vals, 1);
+    V = MDNode::get(Context, &V, 1);
     return false;
   }
 
@@ -1938,7 +1928,7 @@ bool LLParser::ParseValID(ValID &ID) {
     Lex.Lex();
     
     // FIXME: This doesn't belong here.
-    if (Lex.getKind() == lltok::lbrace) {
+    if (EatIfPresent(lltok::lbrace)) {
       SmallVector<Value*, 16> Elts;
       if (ParseMDNodeVector(Elts) ||
           ParseToken(lltok::rbrace, "expected end of metadata node"))
@@ -3840,8 +3830,6 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 /// Element
 ///   ::= 'null' | TypeAndValue
 bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
-  assert(Lex.getKind() == lltok::lbrace);
-  Lex.Lex();
   do {
     Value *V = 0;
     // FIXME: REWRITE.
