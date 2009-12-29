@@ -959,8 +959,9 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // as must be the final pointee type.
   while (SrcType != DestType &&
          Self.UnwrapSimilarPointerTypes(SrcType, DestType)) {
-    SrcType = SrcType.getUnqualifiedType();
-    DestType = DestType.getUnqualifiedType();
+    Qualifiers Quals;
+    SrcType = Self.Context.getUnqualifiedArrayType(SrcType, Quals);
+    DestType = Self.Context.getUnqualifiedArrayType(DestType, Quals);
   }
 
   // Since we're dealing in canonical types, the remainder must be the same.

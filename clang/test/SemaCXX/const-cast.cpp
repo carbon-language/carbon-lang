@@ -28,8 +28,9 @@ char ***good_const_cast_test(ccvpcvpp var)
   char ***&var4 = const_cast<cpppr>(var3);
   // Drop reference. Intentionally without qualifier change.
   char *** var5 = const_cast<cppp>(var4);
+  // Const array to array reference.
   const int ar[100] = {0};
-  int (&rar)[100] = const_cast<iarr>(ar); // expected-error {{const_cast from 'int const [100]' to 'iarr' (aka 'iar &') is not allowed}}
+  int (&rar)[100] = const_cast<iarr>(ar);
   // Array decay. Intentionally without qualifier change.
   int *pi = const_cast<int*>(ar);
   f fp = 0;
