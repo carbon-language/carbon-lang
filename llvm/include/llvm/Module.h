@@ -24,7 +24,6 @@
 
 namespace llvm {
 
-class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
 class LLVMContext;
 
@@ -132,7 +131,7 @@ public:
 /// @name Member Variables
 /// @{
 private:
-  LLVMContext& Context;          ///< The LLVMContext from which types and
+  LLVMContext &Context;          ///< The LLVMContext from which types and
                                  ///< constants are allocated.
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
@@ -161,7 +160,7 @@ public:
 /// @}
 /// @name Module Level Accessors
 /// @{
-public:
+
   /// Get the module identifier which is, essentially, the name of the module.
   /// @returns the module identifier as a string
   const std::string &getModuleIdentifier() const { return ModuleID; }
@@ -190,11 +189,11 @@ public:
   /// Get any module-scope inline assembly blocks.
   /// @returns a string containing the module-scope inline assembly blocks.
   const std::string &getModuleInlineAsm() const { return GlobalScopeAsm; }
+  
 /// @}
 /// @name Module Level Mutators
 /// @{
-public:
-
+  
   /// Set the module identifier.
   void setModuleIdentifier(StringRef ID) { ModuleID = ID; }
 
@@ -226,7 +225,7 @@ public:
 /// @}
 /// @name Function Accessors
 /// @{
-public:
+
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  Four possibilities:
   ///   1. If it does not exist, add a prototype for the function and return it.
@@ -267,7 +266,7 @@ public:
 /// @}
 /// @name Global Variable Accessors
 /// @{
-public:
+
   /// getGlobalVariable - Look up the specified global variable in the module
   /// symbol table.  If it does not exist, return null. If AllowInternal is set
   /// to true, this function will return types that have InternalLinkage. By
@@ -294,7 +293,7 @@ public:
 /// @}
 /// @name Global Alias Accessors
 /// @{
-public:
+
   /// getNamedAlias - Return the first global alias in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
@@ -303,7 +302,7 @@ public:
 /// @}
 /// @name Named Metadata Accessors
 /// @{
-public:
+  
   /// getNamedMetadata - Return the first NamedMDNode in the module with the
   /// specified name. This method returns null if a NamedMDNode with the 
   /// specified name is not found.
@@ -317,7 +316,7 @@ public:
 /// @}
 /// @name Type Accessors
 /// @{
-public:
+
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.
@@ -334,7 +333,7 @@ public:
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table
 /// @{
-public:
+
   /// Get the Module's list of global variables (constant).
   const GlobalListType   &getGlobalList() const       { return GlobalList; }
   /// Get the Module's list of global variables.
@@ -375,7 +374,7 @@ public:
 /// @}
 /// @name Global Variable Iteration
 /// @{
-public:
+
   /// Get an iterator to the first global variable
   global_iterator       global_begin()       { return GlobalList.begin(); }
   /// Get a constant iterator to the first global variable
@@ -390,7 +389,7 @@ public:
 /// @}
 /// @name Function Iteration
 /// @{
-public:
+
   /// Get an iterator to the first function.
   iterator                begin()       { return FunctionList.begin(); }
   /// Get a constant iterator to the first function.
@@ -407,7 +406,7 @@ public:
 /// @}
 /// @name Dependent Library Iteration
 /// @{
-public:
+
   /// @brief Get a constant iterator to beginning of dependent library list.
   inline lib_iterator lib_begin() const { return LibraryList.begin(); }
   /// @brief Get a constant iterator to end of dependent library list.
@@ -424,7 +423,7 @@ public:
 /// @}
 /// @name Alias Iteration
 /// @{
-public:
+
   /// Get an iterator to the first alias.
   alias_iterator       alias_begin()            { return AliasList.begin(); }
   /// Get a constant iterator to the first alias.
@@ -442,31 +441,31 @@ public:
 /// @}
 /// @name Named Metadata Iteration
 /// @{
-public:
+
   /// Get an iterator to the first named metadata.
-  named_metadata_iterator       named_metadata_begin()            
-                                                { return NamedMDList.begin(); }
+  named_metadata_iterator named_metadata_begin() { return NamedMDList.begin(); }
   /// Get a constant iterator to the first named metadata.
-  const_named_metadata_iterator named_metadata_begin() const      
-                                                { return NamedMDList.begin(); }
+  const_named_metadata_iterator named_metadata_begin() const {
+    return NamedMDList.begin();
+  }
+  
   /// Get an iterator to the last named metadata.
-  named_metadata_iterator       named_metadata_end  ()            
-                                                { return NamedMDList.end();   }
+  named_metadata_iterator named_metadata_end() { return NamedMDList.end(); }
   /// Get a constant iterator to the last named metadata.
-  const_named_metadata_iterator named_metadata_end  () const      
-                                                { return NamedMDList.end();   }
+  const_named_metadata_iterator named_metadata_end() const {
+    return NamedMDList.end();
+  }
+  
   /// Determine how many NamedMDNodes are in the Module's list of named metadata.
-  size_t                        named_metadata_size () const      
-                                                { return NamedMDList.size();  }
+  size_t named_metadata_size() const { return NamedMDList.size();  }
   /// Determine if the list of named metadata is empty.
-  bool                          named_metadata_empty() const      
-                                                { return NamedMDList.empty(); }
+  bool named_metadata_empty() const { return NamedMDList.empty(); }
 
 
 /// @}
 /// @name Utility functions for printing and dumping Module objects
 /// @{
-public:
+
   /// Print the module to an output stream with AssemblyAnnotationWriter.
   void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const;
   
