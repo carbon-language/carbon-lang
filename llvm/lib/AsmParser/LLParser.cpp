@@ -503,28 +503,22 @@ bool LLParser::ParseMDNode(MDNode *&Result) {
   return false;
 }
 
-///ParseNamedMetadata:
+/// ParseNamedMetadata:
 ///   !foo = !{ !1, !2 }
 bool LLParser::ParseNamedMetadata() {
   assert(Lex.getKind() == lltok::NamedOrCustomMD);
   Lex.Lex();
   std::string Name = Lex.getStrVal();
 
-  if (ParseToken(lltok::equal, "expected '=' here"))
+  if (ParseToken(lltok::equal, "expected '=' here") ||
+      ParseToken(lltok::Metadata, "Expected '!' here") ||
+      ParseToken(lltok::lbrace, "Expected '{' here"))
     return true;
 
-  if (Lex.getKind() != lltok::Metadata)
-    return TokError("Expected '!' here");
-  Lex.Lex();
-
-  if (Lex.getKind() != lltok::lbrace)
-    return TokError("Expected '{' here");
-  Lex.Lex();
   SmallVector<MetadataBase *, 8> Elts;
   do {
     if (ParseToken(lltok::Metadata, "Expected '!' here"))
       return true;
-    Lex.Lex();
     
     // FIXME: This rejects MDStrings.  Are they legal in an named MDNode or not?
     MDNode *N = 0;
