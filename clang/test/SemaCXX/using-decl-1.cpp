@@ -42,3 +42,21 @@ struct X1 : X0 {
 struct A { void f(); };
 struct B : A { };
 class C : B { using B::f; };
+
+// PR5751: Resolve overloaded functions through using decls.
+namespace O {
+  void f(int i);
+  void f(double d);
+}
+namespace P {
+  void f();
+  void g(void (*ptr)(int));
+  using O::f;
+  void test() {
+    f();
+    f(1);
+    void (*f_ptr1)(double) = f;
+    void (*f_ptr2)() = f;
+    g(f);
+  }
+}

@@ -4465,6 +4465,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   bool FoundNonTemplateFunction = false;
   for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
          E = Fns.end(); I != E; ++I) {
+    // Look through any using declarations to find the underlying function.
+    NamedDecl *Fn = (*I)->getUnderlyingDecl();
+
     // C++ [over.over]p3:
     //   Non-member functions and static member functions match
     //   targets of type "pointer-to-function" or "reference-to-function."
@@ -4473,7 +4476,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // Note that according to DR 247, the containing class does not matter.
 
     if (FunctionTemplateDecl *FunctionTemplate
-          = dyn_cast<FunctionTemplateDecl>(*I)) {
+          = dyn_cast<FunctionTemplateDecl>(Fn)) {
       if (CXXMethodDecl *Method
             = dyn_cast<CXXMethodDecl>(FunctionTemplate->getTemplatedDecl())) {
         // Skip non-static function templates when converting to pointer, and
@@ -4510,7 +4513,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       continue;
     }
 
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I)) {
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
       // Skip non-static functions when converting to pointer, and static
       // when converting to member pointer.
       if (Method->isStatic() == IsMember)
@@ -4522,7 +4525,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     } else if (IsMember)
       continue;
 
-    if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*I)) {
+    if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(Fn)) {
       QualType ResultTy;
       if (Context.hasSameUnqualifiedType(FunctionType, FunDecl->getType()) ||
           IsNoReturnConversion(Context, FunDecl->getType(), FunctionType, 

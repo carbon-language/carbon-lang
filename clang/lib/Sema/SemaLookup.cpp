@@ -1528,15 +1528,12 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
 
     for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Functions.begin(),
            E = Functions.end(); I != E; ++I) {
-      FunctionDecl *FDecl = dyn_cast<FunctionDecl>(*I);
-      if (!FDecl)
-        FDecl = cast<FunctionTemplateDecl>(*I)->getTemplatedDecl();
+      // Look through any using declarations to find the underlying function.
+      NamedDecl *Fn = (*I)->getUnderlyingDecl();
 
-      // Add the namespace in which this function was defined. Note
-      // that, if this is a member function, we do *not* consider the
-      // enclosing namespace of its class.
-      DeclContext *Ctx = FDecl->getDeclContext();
-      CollectNamespace(AssociatedNamespaces, Ctx);
+      FunctionDecl *FDecl = dyn_cast<FunctionDecl>(Fn);
+      if (!FDecl)
+        FDecl = cast<FunctionTemplateDecl>(Fn)->getTemplatedDecl();
 
       // Add the classes and namespaces associated with the parameter
       // types and return type of this function.
