@@ -1105,24 +1105,33 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
 
 /// ParseOptionalCustomMetadata
 ///   ::= /* empty */
-///   ::= !dbg !42
+///   ::= !dbg !42 (',' !dbg !57)*
 bool LLParser::ParseOptionalCustomMetadata() {
   if (Lex.getKind() != lltok::NamedOrCustomMD)
     return false;
 
-  std::string Name = Lex.getStrVal();
-  Lex.Lex();
+  while (1) {
+    std::string Name = Lex.getStrVal();
+    Lex.Lex();
 
-  if (Lex.getKind() != lltok::Metadata)
-    return TokError("Expected '!' here");
-  Lex.Lex();
+    if (Lex.getKind() != lltok::Metadata)
+      return TokError("expected '!' here");
+    Lex.Lex();
 
-  MetadataBase *Node;
-  if (ParseMDNode(Node)) return true;
+    MetadataBase *Node;
+    if (ParseMDNode(Node)) return true;
 
-  unsigned MDK = M->getMDKindID(Name.c_str());
-  MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
-  return false;
+    unsigned MDK = M->getMDKindID(Name.c_str());
+    MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
+
+    // If this is the end of the list, we're done.
+    if (!EatIfPresent(lltok::comma))
+      return false;
+
+    // The next value must be a custom metadata id.
+    if (Lex.getKind() != lltok::NamedOrCustomMD)
+      return TokError("expected more custom metadata ids");
+  }
 }
 
 /// ParseOptionalAlignment
@@ -3008,9 +3017,9 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 //===----------------------------------------------------------------------===//
 
 /// ParseRet - Parse a return instruction.
-///   ::= 'ret' void (',' !dbg, !1)
-///   ::= 'ret' TypeAndValue (',' !dbg, !1)
-///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' !dbg, !1)
+///   ::= 'ret' void (',' !dbg, !1)*
+///   ::= 'ret' TypeAndValue (',' !dbg, !1)*
+///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' !dbg, !1)*
 ///         [[obsolete: LLVM 3.0]]
 bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                         PerFunctionState &PFS) {
@@ -3031,8 +3040,8 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
       if (ParseOptionalCustomMetadata()) return true;
     } else {
       // The normal case is one return value.
-      // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring use
-      // of 'ret {i32,i32} {i32 1, i32 2}'
+      // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring
+      // use of 'ret {i32,i32} {i32 1, i32 2}'
       SmallVector<Value*, 8> RVs;
       RVs.push_back(RV);
 
