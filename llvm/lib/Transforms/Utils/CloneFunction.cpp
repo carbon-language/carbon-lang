@@ -359,12 +359,13 @@ static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
   if (!OrigLocation.isNull())
     NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD);
 
-  SmallVector<Value *, 4> MDVs;
-  MDVs.push_back(InsnMD->getElement(0)); // Line
-  MDVs.push_back(InsnMD->getElement(1)); // Col
-  MDVs.push_back(InsnMD->getElement(2)); // Scope
-  MDVs.push_back(NewLoc);
-  return MDNode::get(InsnMD->getContext(), MDVs.data(), MDVs.size());
+  Value *MDVs[] = {
+    InsnMD->getElement(0), // Line
+    InsnMD->getElement(1), // Col
+    InsnMD->getElement(2), // Scope
+    NewLoc
+  };
+  return MDNode::get(InsnMD->getContext(), MDVs, 4);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
@@ -422,7 +423,6 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
     unsigned DbgKind = OldFunc->getContext().getMDKindID("dbg");
     MDNode *TheCallMD = NULL;
-    SmallVector<Value *, 4> MDVs;
     if (TheCall && TheCall->hasMetadata()) 
       TheCallMD = TheCall->getMetadata(DbgKind);
     
