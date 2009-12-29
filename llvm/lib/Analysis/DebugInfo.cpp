@@ -1366,36 +1366,6 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
   return true;
 }
 
-/// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug
-/// info intrinsic.
-bool llvm::isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, unsigned OptLev) {
-  return DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLev);
-}
-
-/// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug
-/// info intrinsic.
-bool llvm::isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI, unsigned OptLev) {
-  return DIDescriptor::ValidDebugInfo(FSI.getSubprogram(), OptLev);
-}
-
-/// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug
-/// info intrinsic.
-bool llvm::isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI, unsigned OptLev) {
-  return DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLev);
-}
-
-/// isValidDebugInfoIntrinsic - Return true if REI is a valid debug
-/// info intrinsic.
-bool llvm::isValidDebugInfoIntrinsic(DbgRegionEndInst &REI, unsigned OptLev) {
-  return DIDescriptor::ValidDebugInfo(REI.getContext(), OptLev);
-}
-
-/// isValidDebugInfoIntrinsic - Return true if DI is a valid debug
-/// info intrinsic.
-bool llvm::isValidDebugInfoIntrinsic(DbgDeclareInst &DI, unsigned OptLev) {
-  return DIDescriptor::ValidDebugInfo(DI.getVariable(), OptLev);
-}
-
 /// ExtractDebugLocation - Extract debug location information
 /// from llvm.dbg.stoppoint intrinsic.
 DebugLoc llvm::ExtractDebugLocation(DbgStopPointInst &SPI,

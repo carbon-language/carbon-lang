@@ -688,26 +688,6 @@ namespace llvm {
                        std::string &Type, unsigned &LineNo, std::string &File,
                        std::string &Dir);
 
-  /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug
-  /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, unsigned OptLev);
-
-  /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug
-  /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI, unsigned OptLev);
-
-  /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug
-  /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI, unsigned OptLev);
-
-  /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug
-  /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI, unsigned OptLev);
-
-  /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug
-  /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI, unsigned OptLev);
-
   /// ExtractDebugLocation - Extract debug location information
   /// from llvm.dbg.stoppoint intrinsic.
   DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
@@ -730,7 +710,6 @@ namespace llvm {
   DICompositeType getDICompositeType(DIType T);
 
   class DebugInfoFinder {
-
   public:
     /// processModule - Process entire module and collect debug info
     /// anchors.

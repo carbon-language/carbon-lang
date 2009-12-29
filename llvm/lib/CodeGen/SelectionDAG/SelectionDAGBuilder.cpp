@@ -4361,7 +4361,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (!DW)
       return 0;
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (!isValidDebugInfoIntrinsic(DI, CodeGenOpt::None))
+    if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
       return 0;
 
     MDNode *Variable = DI.getVariable();

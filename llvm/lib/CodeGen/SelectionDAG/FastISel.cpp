@@ -333,7 +333,7 @@ bool FastISel::SelectCall(User *I) {
     return true;
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
-    if (!isValidDebugInfoIntrinsic(*DI, CodeGenOpt::None) || !DW
+    if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None)||!DW
         || !DW->ShouldEmitDwarfDebug())
       return true;
 
