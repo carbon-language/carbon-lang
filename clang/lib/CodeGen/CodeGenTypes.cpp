@@ -254,9 +254,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     assert(0 && "Unknown builtin type!");
     break;
   }
-  case Type::FixedWidthInt:
-    return llvm::IntegerType::get(getLLVMContext(),
-                                  cast<FixedWidthIntType>(T)->getWidth());
   case Type::Complex: {
     const llvm::Type *EltTy =
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());

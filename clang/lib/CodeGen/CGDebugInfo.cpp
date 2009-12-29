@@ -917,7 +917,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   // FIXME: Handle these.
   case Type::ExtVector:
   case Type::Vector:
-  case Type::FixedWidthInt:
     return llvm::DIType();
       
   case Type::ObjCObjectPointer:
@@ -1101,7 +1100,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     EltTys.push_back(FieldTy);
     FieldOffset += FieldSize;
 
-    FType = CGM.getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FType = CGM.getContext().IntTy;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
     FieldAlign = CGM.getContext().getTypeAlign(FType);
@@ -1112,7 +1111,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     EltTys.push_back(FieldTy);
     FieldOffset += FieldSize;
 
-    FType = CGM.getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FType = CGM.getContext().IntTy;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
     FieldAlign = CGM.getContext().getTypeAlign(FType);
@@ -1278,7 +1277,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     EltTys.push_back(FieldTy);
     FieldOffset += FieldSize;
 
-    FType = CGM.getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FType = CGM.getContext().IntTy;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
     FieldAlign = CGM.getContext().getTypeAlign(FType);
@@ -1289,7 +1288,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     EltTys.push_back(FieldTy);
     FieldOffset += FieldSize;
 
-    FType = CGM.getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FType = CGM.getContext().IntTy;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
     FieldAlign = CGM.getContext().getTypeAlign(FType);

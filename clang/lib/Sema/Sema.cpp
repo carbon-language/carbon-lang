@@ -389,12 +389,6 @@ static bool getIntProperties(ASTContext &C, const Type *T,
     return true;
   }
 
-  if (const FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
-    BitWidth = FWIT->getWidth();
-    Signed = FWIT->isSigned();
-    return true;
-  }
-
   return false;
 }
 
@@ -655,8 +649,7 @@ static void CheckImplicitConversion(Sema &S, Expr *E, QualType T) {
     }
 
     // If the target is integral, always warn.
-    if ((TargetBT && TargetBT->isInteger()) ||
-        isa<FixedWidthIntType>(Target))
+    if ((TargetBT && TargetBT->isInteger()))
       // TODO: don't warn for integer values?
       return DiagnoseImpCast(S, E, T, diag::warn_impcast_float_integer);
 

@@ -69,12 +69,6 @@ void PCHTypeWriter::VisitBuiltinType(const BuiltinType *T) {
   assert(false && "Built-in types are never serialized");
 }
 
-void PCHTypeWriter::VisitFixedWidthIntType(const FixedWidthIntType *T) {
-  Record.push_back(T->getWidth());
-  Record.push_back(T->isSigned());
-  Code = pch::TYPE_FIXED_WIDTH_INT;
-}
-
 void PCHTypeWriter::VisitComplexType(const ComplexType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Code = pch::TYPE_COMPLEX;
@@ -281,9 +275,6 @@ void TypeLocWriter::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do
 }
 void TypeLocWriter::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getNameLoc(), Record);
-}
-void TypeLocWriter::VisitFixedWidthIntTypeLoc(FixedWidthIntTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitComplexTypeLoc(ComplexTypeLoc TL) {
@@ -559,7 +550,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   // Decls and Types block.
   BLOCK(DECLTYPES_BLOCK);
   RECORD(TYPE_EXT_QUAL);
-  RECORD(TYPE_FIXED_WIDTH_INT);
   RECORD(TYPE_COMPLEX);
   RECORD(TYPE_POINTER);
   RECORD(TYPE_BLOCK_POINTER);

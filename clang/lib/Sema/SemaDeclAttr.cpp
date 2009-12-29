@@ -1614,7 +1614,10 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
       S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
       return;
     }
-    NewTy = S.Context.getFixedWidthIntType(128, OldTy->isSignedIntegerType());
+    if (OldTy->isSignedIntegerType())
+      NewTy = S.Context.Int128Ty;
+    else
+      NewTy = S.Context.UnsignedInt128Ty;
     break;
   }
 

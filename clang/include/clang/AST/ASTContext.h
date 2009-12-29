@@ -115,9 +115,6 @@ class ASTContext {
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
 
-  llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
-  llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
-
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
@@ -724,8 +721,6 @@ public:
 
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
-
-  QualType getFixedWidthIntType(unsigned Width, bool Signed);
 
   /// getCVRQualifiedType - Returns a type with additional const,
   /// volatile, or restrict qualifiers.

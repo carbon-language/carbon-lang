@@ -2401,7 +2401,6 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 
   // None of these types have any template parameters in them.
   case Type::Builtin:
-  case Type::FixedWidthInt:
   case Type::VariableArray:
   case Type::FunctionNoProto:
   case Type::Record:

@@ -357,8 +357,6 @@ namespace clang {
     enum TypeCode {
       /// \brief An ExtQualType record.
       TYPE_EXT_QUAL                 = 1,
-      /// \brief A FixedWidthIntType record.
-      TYPE_FIXED_WIDTH_INT          = 2,
       /// \brief A ComplexType record.
       TYPE_COMPLEX                  = 3,
       /// \brief A PointerType record.

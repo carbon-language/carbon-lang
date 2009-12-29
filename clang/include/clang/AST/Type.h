@@ -1049,28 +1049,6 @@ public:
   static bool classof(const BuiltinType *) { return true; }
 };
 
-/// FixedWidthIntType - Used for arbitrary width types that we either don't
-/// want to or can't map to named integer types.  These always have a lower
-/// integer rank than builtin types of the same width.
-class FixedWidthIntType : public Type {
-private:
-  unsigned Width;
-  bool Signed;
-public:
-  FixedWidthIntType(unsigned W, bool S) : Type(FixedWidthInt, QualType(), false),
-                                          Width(W), Signed(S) {}
-
-  unsigned getWidth() const { return Width; }
-  bool isSigned() const { return Signed; }
-  const char *getName() const;
-
-  bool isSugared() const { return false; }
-  QualType desugar() const { return QualType(this, 0); }
-
-  static bool classof(const Type *T) { return T->getTypeClass() == FixedWidthInt; }
-  static bool classof(const FixedWidthIntType *) { return true; }
-};
-
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
 /// types (_Complex float etc) as well as the GCC integer complex extensions.
 ///

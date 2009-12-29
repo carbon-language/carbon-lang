@@ -94,21 +94,6 @@ void TypePrinter::PrintBuiltin(const BuiltinType *T, std::string &S) {
   }
 }
 
-void TypePrinter::PrintFixedWidthInt(const FixedWidthIntType *T, 
-                                     std::string &S) {
-  // FIXME: Once we get bitwidth attribute, write as
-  // "int __attribute__((bitwidth(x)))".
-  std::string prefix = "__clang_fixedwidth";
-  prefix += llvm::utostr_32(T->getWidth());
-  prefix += (char)(T->isSigned() ? 'S' : 'U');
-  if (S.empty()) {
-    S = prefix;
-  } else {
-    // Prefix the basic type, e.g. 'int X'.
-    S = prefix + S;
-  }  
-}
-
 void TypePrinter::PrintComplex(const ComplexType *T, std::string &S) {
   Print(T->getElementType(), S);
   S = "_Complex " + S;

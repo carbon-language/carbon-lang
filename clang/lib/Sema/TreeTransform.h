@@ -2134,13 +2134,6 @@ QualType TreeTransform<Derived>::TransformBuiltinType(TypeLocBuilder &TLB,
 }
 
 template<typename Derived>
-QualType
-TreeTransform<Derived>::TransformFixedWidthIntType(TypeLocBuilder &TLB,
-                                                   FixedWidthIntTypeLoc T) {
-  return TransformTypeSpecType(TLB, T);
-}
-
-template<typename Derived>
 QualType TreeTransform<Derived>::TransformComplexType(TypeLocBuilder &TLB,
                                                       ComplexTypeLoc T) {
   // FIXME: recurse?
@@ -5254,9 +5247,6 @@ TreeTransform<Derived>::RebuildArrayType(QualType ElementType,
       SizeType = Types[I];
       break;
     }
-
-  if (SizeType.isNull())
-    SizeType = SemaRef.Context.getFixedWidthIntType(Size->getBitWidth(), false);
 
   IntegerLiteral ArraySize(*Size, SizeType, /*FIXME*/BracketsRange.getBegin());
   return SemaRef.BuildArrayType(ElementType, SizeMod, &ArraySize,

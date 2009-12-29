@@ -1761,11 +1761,6 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getQualifiedType(Base, Quals);
   }
 
-  case pch::TYPE_FIXED_WIDTH_INT: {
-    assert(Record.size() == 2 && "Incorrect encoding of fixed-width int type");
-    return Context->getFixedWidthIntType(Record[0], Record[1]);
-  }
-
   case pch::TYPE_COMPLEX: {
     assert(Record.size() == 1 && "Incorrect encoding of complex type");
     QualType ElemType = GetType(Record[0]);
@@ -1985,9 +1980,6 @@ void TypeLocReader::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do
 }
 void TypeLocReader::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitFixedWidthIntTypeLoc(FixedWidthIntTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitComplexTypeLoc(ComplexTypeLoc TL) {

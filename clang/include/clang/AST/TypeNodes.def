@@ -52,7 +52,6 @@
 #endif
 
 TYPE(Builtin, Type)
-TYPE(FixedWidthInt, Type)
 TYPE(Complex, Type)
 TYPE(Pointer, Type)
 TYPE(BlockPointer, Type)
@@ -92,7 +91,6 @@ TYPE(ObjCObjectPointer, Type)
 #ifdef LEAF_TYPE
 LEAF_TYPE(Enum)
 LEAF_TYPE(Builtin)
-LEAF_TYPE(FixedWidthInt)
 LEAF_TYPE(ObjCInterface)
 LEAF_TYPE(TemplateTypeParm)
 #undef LEAF_TYPE

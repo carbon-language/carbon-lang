@@ -694,13 +694,6 @@ ASTContext::getTypeInfo(const Type *T) {
       break;
     }
     break;
-  case Type::FixedWidthInt:
-    // FIXME: This isn't precisely correct; the width/alignment should depend
-    // on the available types for the target
-    Width = cast<FixedWidthIntType>(T)->getWidth();
-    Width = std::max(llvm::NextPowerOf2(Width - 1), (uint64_t)8);
-    Align = Width;
-    break;
   case Type::ObjCObjectPointer:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
@@ -1272,15 +1265,6 @@ QualType ASTContext::getComplexType(QualType T) {
   Types.push_back(New);
   ComplexTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
-}
-
-QualType ASTContext::getFixedWidthIntType(unsigned Width, bool Signed) {
-  llvm::DenseMap<unsigned, FixedWidthIntType*> &Map = Signed ?
-     SignedFixedWidthIntTypes : UnsignedFixedWidthIntTypes;
-  FixedWidthIntType *&Entry = Map[Width];
-  if (!Entry)
-    Entry = new FixedWidthIntType(Width, Signed);
-  return QualType(Entry, 0);
 }
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
@@ -2688,12 +2672,6 @@ unsigned ASTContext::getIntegerRank(Type *T) {
 
   if (T->isSpecificBuiltinType(BuiltinType::Char32))
     T = getFromTargetType(Target.getChar32Type()).getTypePtr();
-
-  // There are two things which impact the integer rank: the width, and
-  // the ordering of builtins.  The builtin ordering is encoded in the
-  // bottom three bits; the width is encoded in the bits above that.
-  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T))
-    return FWIT->getWidth() << 3;
 
   switch (cast<BuiltinType>(T)->getKind()) {
   default: assert(0 && "getIntegerRank(): not a built-in integer");
@@ -4507,9 +4485,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
     return QualType();
   }
-  case Type::FixedWidthInt:
-    // Distinct fixed-width integers are not compatible.
-    return QualType();
   case Type::TemplateSpecialization:
     assert(false && "Dependent types have no size");
     break;
@@ -4525,9 +4500,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 unsigned ASTContext::getIntWidth(QualType T) {
   if (T->isBooleanType())
     return 1;
-  if (FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
-    return FWIT->getWidth();
-  }
   if (EnumType *ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getIntegerType();
   // For builtin types, just use the standard type sizing method

@@ -1023,13 +1023,6 @@ class DependentSizedExtVectorTypeLoc :
                                      DependentSizedExtVectorType> {
 };
 
-// FIXME: I'm not sure how you actually specify these;  with attributes?
-class FixedWidthIntTypeLoc :
-    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                     FixedWidthIntTypeLoc,
-                                     FixedWidthIntType> {
-};
-
 // FIXME: location of the '_Complex' keyword.
 class ComplexTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                         ComplexTypeLoc,

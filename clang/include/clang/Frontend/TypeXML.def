@@ -103,12 +103,6 @@ NODE_XML(BuiltinType, "FundamentalType")
   END_ENUM_XML
 END_NODE_XML
 
-NODE_XML(FixedWidthIntType, "FixedWidthIntType")
-  ID_ATTRIBUTE_XML
-  ATTRIBUTE_XML(getWidth(), "width")                    // unsigned
-  ATTRIBUTE_XML(isSigned(), "is_signed")                // boolean
-END_NODE_XML
-
 NODE_XML(PointerType, "PointerType")    
   ID_ATTRIBUTE_XML
   TYPE_ATTRIBUTE_XML(getPointeeType())

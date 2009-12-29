@@ -994,10 +994,6 @@ void CXXNameMangler::mangleType(const BlockPointerType *T) {
   mangleType(T->getPointeeType());
 }
 
-void CXXNameMangler::mangleType(const FixedWidthIntType *T) {
-  assert(false && "can't mangle arbitary-precision integer type yet");
-}
-
 void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
   TemplateDecl *TD = T->getTemplateName().getAsTemplateDecl();
   assert(TD && "FIXME: Support dependent template names!");
