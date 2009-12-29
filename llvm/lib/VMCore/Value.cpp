@@ -19,7 +19,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
 #include "llvm/Module.h"
-#include "llvm/Metadata.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
@@ -301,14 +300,6 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
-
-  // FIXME: It doesn't make sense at all for metadata to follow RAUW.
-  if (Instruction *I = dyn_cast<Instruction>(this))
-    if (I->hasMetadata()) {
-      LLVMContext &Context = getContext();
-      // FIXME: NUKE ValueIsRAUWd??
-      Context.pImpl->TheMetadata.ValueIsRAUWd(this, New);
-    }
 
   while (!use_empty()) {
     Use &U = *UseList;

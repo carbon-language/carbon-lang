@@ -289,7 +289,6 @@ public:
   void ValueIsDeleted(Instruction *Inst) {
     removeAllMetadata(Inst);
   }
-  void ValueIsRAUWd(Value *V1, Value *V2);
 
   /// ValueIsCloned - This handler is used to update metadata store
   /// when In1 is cloned to create In2.
@@ -428,18 +427,6 @@ void MetadataContextImpl::ValueIsCloned(const Instruction *In1,
     In2->setMetadata(I->first, I->second);
 }
 
-/// ValueIsRAUWd - This handler is used when V1's all uses are replaced by
-/// V2.
-void MetadataContextImpl::ValueIsRAUWd(Value *V1, Value *V2) {
-  Instruction *I1 = dyn_cast<Instruction>(V1);
-  Instruction *I2 = dyn_cast<Instruction>(V2);
-  if (!I1 || !I2)
-    return;
-
-  // FIXME: Give custom handlers a chance to override this.
-  ValueIsCloned(I1, I2);
-}
-
 //===----------------------------------------------------------------------===//
 // MetadataContext implementation.
 //
@@ -483,9 +470,6 @@ void MetadataContext::getMDKindNames(SmallVectorImpl<StringRef> &N) const {
 /// when a value is deleted.
 void MetadataContext::ValueIsDeleted(Instruction *Inst) {
   pImpl->ValueIsDeleted(Inst);
-}
-void MetadataContext::ValueIsRAUWd(Value *V1, Value *V2) {
-  pImpl->ValueIsRAUWd(V1, V2);
 }
 
 /// ValueIsCloned - This handler is used to update metadata store
