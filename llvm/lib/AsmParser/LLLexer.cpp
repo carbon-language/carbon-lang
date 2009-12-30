@@ -254,7 +254,7 @@ lltok::Kind LLLexer::LexToken() {
   case ';':
     SkipLineComment();
     return LexToken();
-  case '!': return LexMetadata();
+  case '!': return LexExclaim();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
   case '-':
@@ -422,11 +422,11 @@ static bool JustWhitespaceNewLine(const char *&Ptr) {
   return false;
 }
 
-/// LexMetadata:
+/// LexExclaim:
 ///    !{...}
 ///    !42
 ///    !foo
-lltok::Kind LLLexer::LexMetadata() {
+lltok::Kind LLLexer::LexExclaim() {
   if (isalpha(CurPtr[0])) {
     ++CurPtr;
     while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
@@ -436,7 +436,7 @@ lltok::Kind LLLexer::LexMetadata() {
     StrVal.assign(TokStart+1, CurPtr);   // Skip !
     return lltok::NamedOrCustomMD;
   }
-  return lltok::Metadata;
+  return lltok::exclaim;
 }
   
 /// LexIdentifier: Handle several related productions:

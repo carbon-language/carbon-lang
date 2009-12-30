@@ -75,7 +75,7 @@ namespace llvm {
     lltok::Kind LexDigitOrNegative();
     lltok::Kind LexPositive();
     lltok::Kind LexAt();
-    lltok::Kind LexMetadata();
+    lltok::Kind LexExclaim();
     lltok::Kind LexPercent();
     lltok::Kind LexQuote();
     lltok::Kind Lex0x();

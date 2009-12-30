@@ -168,7 +168,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
-    case lltok::Metadata:   if (ParseStandaloneMetadata()) return true; break;
+    case lltok::exclaim:    if (ParseStandaloneMetadata()) return true; break;
     case lltok::NamedOrCustomMD: if (ParseNamedMetadata()) return true; break;
 
     // The Global variable production with no name can have many different
@@ -506,13 +506,13 @@ bool LLParser::ParseNamedMetadata() {
   std::string Name = Lex.getStrVal();
 
   if (ParseToken(lltok::equal, "expected '=' here") ||
-      ParseToken(lltok::Metadata, "Expected '!' here") ||
+      ParseToken(lltok::exclaim, "Expected '!' here") ||
       ParseToken(lltok::lbrace, "Expected '{' here"))
     return true;
 
   SmallVector<MetadataBase *, 8> Elts;
   do {
-    if (ParseToken(lltok::Metadata, "Expected '!' here"))
+    if (ParseToken(lltok::exclaim, "Expected '!' here"))
       return true;
     
     // FIXME: This rejects MDStrings.  Are they legal in an named MDNode or not?
@@ -531,7 +531,7 @@ bool LLParser::ParseNamedMetadata() {
 /// ParseStandaloneMetadata:
 ///   !42 = !{...}
 bool LLParser::ParseStandaloneMetadata() {
-  assert(Lex.getKind() == lltok::Metadata);
+  assert(Lex.getKind() == lltok::exclaim);
   Lex.Lex();
   unsigned MetadataID = 0;
 
@@ -542,7 +542,7 @@ bool LLParser::ParseStandaloneMetadata() {
   if (ParseUInt32(MetadataID) ||
       ParseToken(lltok::equal, "expected '=' here") ||
       ParseType(Ty, TyLoc) ||
-      ParseToken(lltok::Metadata, "Expected metadata here") ||
+      ParseToken(lltok::exclaim, "Expected '!' here") ||
       ParseToken(lltok::lbrace, "Expected '{' here") ||
       ParseMDNodeVector(Elts) ||
       ParseToken(lltok::rbrace, "expected end of metadata node"))
@@ -1074,12 +1074,10 @@ bool LLParser::ParseOptionalCustomMetadata() {
     std::string Name = Lex.getStrVal();
     Lex.Lex();
 
-    if (Lex.getKind() != lltok::Metadata)
-      return TokError("expected '!' here");
-    Lex.Lex();
-
     MDNode *Node;
-    if (ParseMDNodeID(Node)) return true;
+    if (ParseToken(lltok::exclaim, "expected '!' here") ||
+        ParseMDNodeID(Node))
+      return true;
 
     unsigned MDK = M->getMDKindID(Name.c_str());
     MDsOnInst.push_back(std::make_pair(MDK, Node));
@@ -1890,7 +1888,7 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
-  case lltok::Metadata:   // !{...} MDNode, !"foo" MDString
+  case lltok::exclaim:   // !{...} MDNode, !"foo" MDString
     Lex.Lex();
     
     // FIXME: This doesn't belong here.
