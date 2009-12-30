@@ -375,9 +375,11 @@ DeduceTemplateArguments(ASTContext &Context,
   //     referred to by the reference) can be more cv-qualified than the
   //     transformed A.
   if (TDF & TDF_ParamWithReferenceType) {
-    Qualifiers Quals = Param.getQualifiers();
-    Quals.setCVRQualifiers(Quals.getCVRQualifiers() & Arg.getCVRQualifiers());
-    Param = Context.getQualifiedType(Param.getUnqualifiedType(), Quals);
+    Qualifiers Quals;
+    QualType UnqualParam = Context.getUnqualifiedArrayType(Param, Quals);
+    Quals.setCVRQualifiers(Quals.getCVRQualifiers() &
+                           Arg.getCVRQualifiersThroughArrayTypes());
+    Param = Context.getQualifiedType(UnqualParam, Quals);
   }
 
   // If the parameter type is not dependent, there is nothing to deduce.

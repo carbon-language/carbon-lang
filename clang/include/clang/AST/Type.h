@@ -531,7 +531,12 @@ public:
   /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers 
   /// applied to this type.
   unsigned getCVRQualifiers() const;
-  
+
+  /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers
+  /// applied to this type, looking through any number of unqualified array
+  /// types to their element types' qualifiers.
+  unsigned getCVRQualifiersThroughArrayTypes() const;
+
   bool isConstant(ASTContext& Ctx) const {
     return QualType::isConstant(*this, Ctx);
   }
@@ -2686,7 +2691,20 @@ inline unsigned QualType::getCVRQualifiers() const {
   return getLocalCVRQualifiers() | 
               getTypePtr()->getCanonicalTypeInternal().getLocalCVRQualifiers();
 }
-  
+
+/// getCVRQualifiersThroughArrayTypes - If there are CVR qualifiers for this
+/// type, returns them. Otherwise, if this is an array type, recurses
+/// on the element type until some qualifiers have been found or a non-array
+/// type reached.
+inline unsigned QualType::getCVRQualifiersThroughArrayTypes() const {
+  if (unsigned Quals = getCVRQualifiers())
+    return Quals;
+  QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
+    return AT->getElementType().getCVRQualifiersThroughArrayTypes();
+  return 0;
+}
+
 inline void QualType::removeConst() {
   removeFastQualifiers(Qualifiers::Const);
 }
@@ -2786,8 +2804,8 @@ inline bool QualType::getNoReturnAttr() const {
 /// int".
 inline bool QualType::isMoreQualifiedThan(QualType Other) const {
   // FIXME: work on arbitrary qualifiers
-  unsigned MyQuals = this->getCVRQualifiers();
-  unsigned OtherQuals = Other.getCVRQualifiers();
+  unsigned MyQuals = this->getCVRQualifiersThroughArrayTypes();
+  unsigned OtherQuals = Other.getCVRQualifiersThroughArrayTypes();
   if (getAddressSpace() != Other.getAddressSpace())
     return false;
   return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
@@ -2799,8 +2817,8 @@ inline bool QualType::isMoreQualifiedThan(QualType Other) const {
 /// "int", and "const volatile int".
 inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
   // FIXME: work on arbitrary qualifiers
-  unsigned MyQuals = this->getCVRQualifiers();
-  unsigned OtherQuals = Other.getCVRQualifiers();
+  unsigned MyQuals = this->getCVRQualifiersThroughArrayTypes();
+  unsigned OtherQuals = Other.getCVRQualifiersThroughArrayTypes();
   if (getAddressSpace() != Other.getAddressSpace())
     return false;
   return (MyQuals | OtherQuals) == MyQuals;
