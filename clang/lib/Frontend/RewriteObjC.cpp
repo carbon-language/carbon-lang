@@ -4390,7 +4390,9 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
 void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
   const char *startBuf = SM->getCharacterData(DeclLoc);
-  const char *endBuf = SM->getCharacterData(ND->getLocEnd());
+  SourceLocation X = ND->getLocEnd();
+  X = SM->getInstantiationLoc(X);
+  const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
   std::string ByrefType = "struct __Block_byref_";
   ByrefType += Name;
