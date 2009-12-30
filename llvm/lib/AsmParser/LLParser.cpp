@@ -169,7 +169,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::exclaim:    if (ParseStandaloneMetadata()) return true; break;
-    case lltok::NamedOrCustomMD: if (ParseNamedMetadata()) return true; break;
+    case lltok::MetadataVar: if (ParseNamedMetadata()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -501,9 +501,9 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
 /// ParseNamedMetadata:
 ///   !foo = !{ !1, !2 }
 bool LLParser::ParseNamedMetadata() {
-  assert(Lex.getKind() == lltok::NamedOrCustomMD);
-  Lex.Lex();
+  assert(Lex.getKind() == lltok::MetadataVar);
   std::string Name = Lex.getStrVal();
+  Lex.Lex();
 
   if (ParseToken(lltok::equal, "expected '=' here") ||
       ParseToken(lltok::exclaim, "Expected '!' here") ||
@@ -1067,7 +1067,7 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
 ///   ::= /* empty */
 ///   ::= !dbg !42 (',' !dbg !57)*
 bool LLParser::ParseOptionalCustomMetadata() {
-  if (Lex.getKind() != lltok::NamedOrCustomMD)
+  if (Lex.getKind() != lltok::MetadataVar)
     return false;
 
   while (1) {
@@ -1087,7 +1087,7 @@ bool LLParser::ParseOptionalCustomMetadata() {
       return false;
 
     // The next value must be a custom metadata id.
-    if (Lex.getKind() != lltok::NamedOrCustomMD)
+    if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected more custom metadata ids");
   }
 }
@@ -1112,7 +1112,7 @@ bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
 
   // FIXME: Handle customized metadata info attached with an instruction.
   do {
-      if (Lex.getKind() == lltok::NamedOrCustomMD) {
+    if (Lex.getKind() == lltok::MetadataVar) {
       if (ParseOptionalCustomMetadata()) return true;
     } else if (Lex.getKind() == lltok::kw_align) {
       if (ParseOptionalAlignment(Alignment)) return true;
@@ -1131,7 +1131,8 @@ bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
     return TokError("expected ',' as start of index list");
 
   while (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::NamedOrCustomMD)
+    // FIXME: TERRIBLE HACK.  Loses comma state.
+    if (Lex.getKind() == lltok::MetadataVar)
       break;
     unsigned Idx;
     if (ParseUInt32(Idx)) return true;
@@ -2115,7 +2116,8 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in extractvalue constantexpr"))
       return true;
-    if (Lex.getKind() == lltok::NamedOrCustomMD)
+    // FIXME: THIS ISN'T RIGHT?  WHERE IS THE COMMA?
+    if (Lex.getKind() == lltok::MetadataVar)
       if (ParseOptionalCustomMetadata()) return true;
 
     if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
@@ -2139,7 +2141,7 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in insertvalue constantexpr"))
       return true;
-    if (Lex.getKind() == lltok::NamedOrCustomMD)
+    if (Lex.getKind() == lltok::MetadataVar)
       if (ParseOptionalCustomMetadata()) return true;
     if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
       return Error(ID.Loc, "extractvalue operand must be array or struct");
@@ -3014,7 +3016,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
 
   if (EatIfPresent(lltok::comma)) {
     // Parse optional custom metadata, e.g. !dbg
-    if (Lex.getKind() == lltok::NamedOrCustomMD) {
+    if (Lex.getKind() == lltok::MetadataVar) {
       if (ParseOptionalCustomMetadata()) return true;
     } else {
       // The normal case is one return value.
@@ -3026,7 +3028,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
       do {
         // If optional custom metadata, e.g. !dbg is seen then this is the 
         // end of MRV.
-        if (Lex.getKind() == lltok::NamedOrCustomMD)
+        if (Lex.getKind() == lltok::MetadataVar)
           break;
         if (ParseTypeAndValue(RV, PFS)) return true;
         RVs.push_back(RV);
@@ -3485,7 +3487,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
     if (!EatIfPresent(lltok::comma))
       break;
 
-    if (Lex.getKind() == lltok::NamedOrCustomMD)
+    if (Lex.getKind() == lltok::MetadataVar)
       break;
 
     if (ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
@@ -3496,7 +3498,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
       return true;
   }
 
-  if (Lex.getKind() == lltok::NamedOrCustomMD)
+  if (Lex.getKind() == lltok::MetadataVar)
     if (ParseOptionalCustomMetadata()) return true;
 
   if (!Ty->isFirstClassType())
@@ -3624,7 +3626,7 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
 
   if (EatIfPresent(lltok::comma)) {
     if (Lex.getKind() == lltok::kw_align 
-        || Lex.getKind() == lltok::NamedOrCustomMD) {
+        || Lex.getKind() == lltok::MetadataVar) {
       if (ParseOptionalInfo(Alignment)) return true;
     } else {
       if (ParseTypeAndValue(Size, SizeLoc, PFS)) return true;
@@ -3744,14 +3746,14 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
 
   SmallVector<Value*, 16> Indices;
   while (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::NamedOrCustomMD)
+    if (Lex.getKind() == lltok::MetadataVar)
       break;
     if (ParseTypeAndValue(Val, EltLoc, PFS)) return true;
     if (!isa<IntegerType>(Val->getType()))
       return Error(EltLoc, "getelementptr index must be an integer");
     Indices.push_back(Val);
   }
-  if (Lex.getKind() == lltok::NamedOrCustomMD)
+  if (Lex.getKind() == lltok::MetadataVar)
     if (ParseOptionalCustomMetadata()) return true;
 
   if (!GetElementPtrInst::getIndexedType(Ptr->getType(),
@@ -3771,7 +3773,7 @@ bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseIndexList(Indices))
     return true;
-  if (Lex.getKind() == lltok::NamedOrCustomMD)
+  if (Lex.getKind() == lltok::MetadataVar)
     if (ParseOptionalCustomMetadata()) return true;
 
   if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
@@ -3794,7 +3796,7 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
       ParseTypeAndValue(Val1, Loc1, PFS) ||
       ParseIndexList(Indices))
     return true;
-  if (Lex.getKind() == lltok::NamedOrCustomMD)
+  if (Lex.getKind() == lltok::MetadataVar)
     if (ParseOptionalCustomMetadata()) return true;
 
   if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))

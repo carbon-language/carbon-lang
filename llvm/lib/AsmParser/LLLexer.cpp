@@ -423,10 +423,10 @@ static bool JustWhitespaceNewLine(const char *&Ptr) {
 }
 
 /// LexExclaim:
-///    !{...}
-///    !42
 ///    !foo
+///    !
 lltok::Kind LLLexer::LexExclaim() {
+  // Lex a metadata name as a MetadataVar.
   if (isalpha(CurPtr[0])) {
     ++CurPtr;
     while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
@@ -434,7 +434,7 @@ lltok::Kind LLLexer::LexExclaim() {
       ++CurPtr;
 
     StrVal.assign(TokStart+1, CurPtr);   // Skip !
-    return lltok::NamedOrCustomMD;
+    return lltok::MetadataVar;
   }
   return lltok::exclaim;
 }

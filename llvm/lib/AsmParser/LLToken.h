@@ -129,8 +129,8 @@ namespace lltok {
     LabelStr,          // foo:
     GlobalVar,         // @foo @"foo"
     LocalVar,          // %foo %"foo"
+    MetadataVar,       // !foo
     StringConstant,    // "foo"
-    NamedOrCustomMD,   // !foo
 
     // Type valued tokens (TyVal).
     Type,
