@@ -255,10 +255,41 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   // We don't have anything to suggest (yet).
   SuggestedType = 0;
   
+  // There may have been a typo in the name of the type. Look up typo
+  // results, in case we have something that we can suggest.
+  LookupResult Lookup(*this, &II, IILoc, LookupOrdinaryName, 
+                      NotForRedeclaration);
+
+  // FIXME: It would be nice if we could correct for typos in built-in
+  // names, such as "itn" for "int".
+
+  if (CorrectTypo(Lookup, S, SS) && Lookup.isSingleResult()) {
+    NamedDecl *Result = Lookup.getAsSingle<NamedDecl>();
+    if ((isa<TypeDecl>(Result) || isa<ObjCInterfaceDecl>(Result)) &&
+        !Result->isInvalidDecl()) {
+      // We found a similarly-named type or interface; suggest that.
+      if (!SS || !SS->isSet())
+        Diag(IILoc, diag::err_unknown_typename_suggest)
+          << &II << Lookup.getLookupName()
+          << CodeModificationHint::CreateReplacement(SourceRange(IILoc),
+                                                     Result->getNameAsString());
+      else if (DeclContext *DC = computeDeclContext(*SS, false))
+        Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
+          << &II << DC << Lookup.getLookupName() << SS->getRange()
+          << CodeModificationHint::CreateReplacement(SourceRange(IILoc),
+                                                     Result->getNameAsString());
+      else
+        llvm_unreachable("could not have corrected a typo here");
+
+      SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS);
+      return true;
+    }
+  }
+
   // FIXME: Should we move the logic that tries to recover from a missing tag
   // (struct, union, enum) from Parser::ParseImplicitInt here, instead?
   
-  if (!SS)
+  if (!SS || (!SS->isSet() && !SS->isInvalid()))
     Diag(IILoc, diag::err_unknown_typename) << &II;
   else if (DeclContext *DC = computeDeclContext(*SS, false))
     Diag(IILoc, diag::err_typename_nested_not_found) 

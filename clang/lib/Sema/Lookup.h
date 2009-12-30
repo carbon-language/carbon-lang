@@ -168,6 +168,11 @@ public:
     return Name;
   }
 
+  /// \brief Sets the name to look up.
+  void setLookupName(DeclarationName Name) {
+    this->Name = Name;
+  }
+
   /// Gets the kind of lookup to perform.
   Sema::LookupNameKind getLookupKind() const {
     return LookupKind;
@@ -370,6 +375,10 @@ public:
     return NameLoc;
   }
 
+  /// \brief Get the Sema object that this lookup result is searching
+  /// with.
+  Sema &getSema() const { return SemaRef; }
+
   /// A class for iterating through a result set and possibly
   /// filtering out results.  The results returned are possibly
   /// sugared.
@@ -497,6 +506,26 @@ private:
   bool Diagnose;
 };
 
+  /// \brief Consumes visible declarations found when searching for
+  /// all visible names within a given scope or context.
+  ///
+  /// This abstract class is meant to be subclassed by clients of \c
+  /// Sema::LookupVisibleDecls(), each of which should override the \c
+  /// FoundDecl() function to process declarations as they are found.
+  class VisibleDeclConsumer {
+  public:
+    /// \brief Destroys the visible declaration consumer.
+    virtual ~VisibleDeclConsumer();
+
+    /// \brief Invoked each time \p Sema::LookupVisibleDecls() finds a
+    /// declaration visible from the current scope or context.
+    ///
+    /// \param ND the declaration found.
+    ///
+    /// \param Hiding a declaration that hides the declaration \p ND,
+    /// or NULL if no such declaration exists.
+    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding) = 0;
+  };
 }
 
 #endif

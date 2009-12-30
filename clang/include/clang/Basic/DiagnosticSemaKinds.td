@@ -2546,4 +2546,13 @@ def warn_attribute_method_def : Warning<
 def ext_typecheck_base_super : Warning<
   "method parameter type %0 does not match "
   "super class method parameter type %1">, InGroup<SuperSubClassMismatch>, DefaultIgnore;
+
+// Spell-checking diagnostics
+def err_unknown_typename_suggest : Error<
+  "unknown type name %0; did you mean %1?">;
+def err_unknown_nested_typename_suggest : Error<
+  "no type named %0 in %1; did you mean %2?">;
+
 }
+
+

@@ -27,6 +27,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <list>
 #include <set>
 #include <vector>
 #include <iterator>
@@ -1703,4 +1704,492 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
         CollectFunctionDecl(Functions, D);
     }
   }
+}
+
+//----------------------------------------------------------------------------
+// Search for all visible declarations.
+//----------------------------------------------------------------------------
+VisibleDeclConsumer::~VisibleDeclConsumer() { }
+
+namespace {
+
+class ShadowContextRAII;
+
+class VisibleDeclsRecord {
+public:
+  /// \brief An entry in the shadow map, which is optimized to store a
+  /// single declaration (the common case) but can also store a list
+  /// of declarations.
+  class ShadowMapEntry {
+    typedef llvm::SmallVector<NamedDecl *, 4> DeclVector;
+    
+    /// \brief Contains either the solitary NamedDecl * or a vector
+    /// of declarations.
+    llvm::PointerUnion<NamedDecl *, DeclVector*> DeclOrVector;
+
+  public:
+    ShadowMapEntry() : DeclOrVector() { }
+
+    void Add(NamedDecl *ND);
+    void Destroy();
+
+    // Iteration.
+    typedef NamedDecl **iterator;
+    iterator begin();
+    iterator end();
+  };
+
+private:
+  /// \brief A mapping from declaration names to the declarations that have
+  /// this name within a particular scope.
+  typedef llvm::DenseMap<DeclarationName, ShadowMapEntry> ShadowMap;
+
+  /// \brief A list of shadow maps, which is used to model name hiding.
+  std::list<ShadowMap> ShadowMaps;
+
+  /// \brief The declaration contexts we have already visited.
+  llvm::SmallPtrSet<DeclContext *, 8> VisitedContexts;
+
+  friend class ShadowContextRAII;
+
+public:
+  /// \brief Determine whether we have already visited this context
+  /// (and, if not, note that we are going to visit that context now).
+  bool visitedContext(DeclContext *Ctx) {
+    return !VisitedContexts.insert(Ctx);
+  }
+
+  /// \brief Determine whether the given declaration is hidden in the
+  /// current scope.
+  ///
+  /// \returns the declaration that hides the given declaration, or
+  /// NULL if no such declaration exists.
+  NamedDecl *checkHidden(NamedDecl *ND);
+
+  /// \brief Add a declaration to the current shadow map.
+  void add(NamedDecl *ND) { ShadowMaps.back()[ND->getDeclName()].Add(ND); }
+};
+
+/// \brief RAII object that records when we've entered a shadow context.
+class ShadowContextRAII {
+  VisibleDeclsRecord &Visible;
+
+  typedef VisibleDeclsRecord::ShadowMap ShadowMap;
+
+public:
+  ShadowContextRAII(VisibleDeclsRecord &Visible) : Visible(Visible) {
+    Visible.ShadowMaps.push_back(ShadowMap());
+  }
+
+  ~ShadowContextRAII() {
+    for (ShadowMap::iterator E = Visible.ShadowMaps.back().begin(),
+                          EEnd = Visible.ShadowMaps.back().end();
+         E != EEnd;
+         ++E)
+      E->second.Destroy();
+
+    Visible.ShadowMaps.pop_back();
+  }
+};
+
+} // end anonymous namespace
+
+void VisibleDeclsRecord::ShadowMapEntry::Add(NamedDecl *ND) {
+  if (DeclOrVector.isNull()) {
+    // 0 - > 1 elements: just set the single element information.
+    DeclOrVector = ND;
+    return;
+  }
+  
+  if (NamedDecl *PrevND = DeclOrVector.dyn_cast<NamedDecl *>()) {
+    // 1 -> 2 elements: create the vector of results and push in the
+    // existing declaration.
+    DeclVector *Vec = new DeclVector;
+    Vec->push_back(PrevND);
+    DeclOrVector = Vec;
+  }
+
+  // Add the new element to the end of the vector.
+  DeclOrVector.get<DeclVector*>()->push_back(ND);
+}
+
+void VisibleDeclsRecord::ShadowMapEntry::Destroy() {
+  if (DeclVector *Vec = DeclOrVector.dyn_cast<DeclVector *>()) {
+    delete Vec;
+    DeclOrVector = ((NamedDecl *)0);
+  }
+}
+
+VisibleDeclsRecord::ShadowMapEntry::iterator 
+VisibleDeclsRecord::ShadowMapEntry::begin() {
+  if (DeclOrVector.isNull())
+    return 0;
+
+  if (DeclOrVector.dyn_cast<NamedDecl *>())
+    return &reinterpret_cast<NamedDecl*&>(DeclOrVector);
+
+  return DeclOrVector.get<DeclVector *>()->begin();
+}
+
+VisibleDeclsRecord::ShadowMapEntry::iterator 
+VisibleDeclsRecord::ShadowMapEntry::end() {
+  if (DeclOrVector.isNull())
+    return 0;
+
+  if (DeclOrVector.dyn_cast<NamedDecl *>())
+    return &reinterpret_cast<NamedDecl*&>(DeclOrVector) + 1;
+
+  return DeclOrVector.get<DeclVector *>()->end();
+}
+
+NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
+  unsigned IDNS = ND->getIdentifierNamespace();
+  std::list<ShadowMap>::reverse_iterator SM = ShadowMaps.rbegin();
+  for (std::list<ShadowMap>::reverse_iterator SMEnd = ShadowMaps.rend();
+       SM != SMEnd; ++SM) {
+    ShadowMap::iterator Pos = SM->find(ND->getDeclName());
+    if (Pos == SM->end())
+      continue;
+
+    for (ShadowMapEntry::iterator I = Pos->second.begin(), 
+                               IEnd = Pos->second.end();
+         I != IEnd; ++I) {
+      // A tag declaration does not hide a non-tag declaration.
+      if ((*I)->getIdentifierNamespace() == Decl::IDNS_Tag &&
+          (IDNS & (Decl::IDNS_Member | Decl::IDNS_Ordinary | 
+                   Decl::IDNS_ObjCProtocol)))
+        continue;
+
+      // Protocols are in distinct namespaces from everything else.
+      if ((((*I)->getIdentifierNamespace() & Decl::IDNS_ObjCProtocol)
+           || (IDNS & Decl::IDNS_ObjCProtocol)) &&
+          (*I)->getIdentifierNamespace() != IDNS)
+        continue;
+
+      // We've found a declaration that hides this one.
+      return *I;
+    }
+  }
+
+  return 0;
+}
+
+static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
+                               bool QualifiedNameLookup,
+                               VisibleDeclConsumer &Consumer,
+                               VisibleDeclsRecord &Visited) {
+  // Make sure we don't visit the same context twice.
+  if (Visited.visitedContext(Ctx->getPrimaryContext()))
+    return;
+  
+  // Enumerate all of the results in this context.
+  for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
+       CurCtx = CurCtx->getNextContext()) {
+    for (DeclContext::decl_iterator D = CurCtx->decls_begin(), 
+                                 DEnd = CurCtx->decls_end();
+         D != DEnd; ++D) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
+        if (Result.isAcceptableDecl(ND)) {
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
+          Visited.add(ND);
+        }
+
+      // Visit transparent contexts inside this context.
+      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
+        if (InnerCtx->isTransparentContext())
+          LookupVisibleDecls(InnerCtx, Result, QualifiedNameLookup, 
+                             Consumer, Visited);
+      }
+    }
+  }
+
+  // Traverse using directives for qualified name lookup.
+  if (QualifiedNameLookup) {
+    ShadowContextRAII Shadow(Visited);
+    DeclContext::udir_iterator I, E;
+    for (llvm::tie(I, E) = Ctx->getUsingDirectives(); I != E; ++I) {
+      LookupVisibleDecls((*I)->getNominatedNamespace(), Result, 
+                         QualifiedNameLookup, Consumer, Visited);
+    }
+  }
+
+  // Traverse the contexts of inherited classes.
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
+    for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
+                                         BEnd = Record->bases_end();
+         B != BEnd; ++B) {
+      QualType BaseType = B->getType();
+      
+      // Don't look into dependent bases, because name lookup can't look
+      // there anyway.
+      if (BaseType->isDependentType())
+        continue;
+      
+      const RecordType *Record = BaseType->getAs<RecordType>();
+      if (!Record)
+        continue;
+      
+      // FIXME: It would be nice to be able to determine whether referencing
+      // a particular member would be ambiguous. For example, given
+      //
+      //   struct A { int member; };
+      //   struct B { int member; };
+      //   struct C : A, B { };
+      //
+      //   void f(C *c) { c->### }
+      //
+      // accessing 'member' would result in an ambiguity. However, we
+      // could be smart enough to qualify the member with the base
+      // class, e.g.,
+      //
+      //   c->B::member
+      //
+      // or
+      //
+      //   c->A::member
+      
+      // Find results in this base class (and its bases).
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(Record->getDecl(), Result, QualifiedNameLookup,
+                         Consumer, Visited);
+    }
+  }
+  
+  // FIXME: Look into base classes in Objective-C!
+}
+
+static void LookupVisibleDecls(Scope *S, LookupResult &Result,
+                               UnqualUsingDirectiveSet &UDirs,
+                               VisibleDeclConsumer &Consumer,
+                               VisibleDeclsRecord &Visited) {
+  if (!S)
+    return;
+
+  DeclContext *Entity = 0;
+  if (S->getEntity() && 
+      !((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+    // Look into this scope's declaration context, along with any of its
+    // parent lookup contexts (e.g., enclosing classes), up to the point
+    // where we hit the context stored in the next outer scope.
+    Entity = (DeclContext *)S->getEntity();
+    DeclContext *OuterCtx = findOuterContext(S);
+    
+    for (DeclContext *Ctx = Entity; Ctx && Ctx->getPrimaryContext() != OuterCtx;
+         Ctx = Ctx->getLookupParent()) {
+      if (Ctx->isFunctionOrMethod())
+        continue;
+      
+      LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/false, 
+                         Consumer, Visited);
+    }
+  } else if (!S->getParent()) {
+    // Look into the translation unit scope. We walk through the translation
+    // unit's declaration context, because the Scope itself won't have all of
+    // the declarations if we loaded a precompiled header.
+    // FIXME: We would like the translation unit's Scope object to point to the
+    // translation unit, so we don't need this special "if" branch. However,
+    // doing so would force the normal C++ name-lookup code to look into the
+    // translation unit decl when the IdentifierInfo chains would suffice. 
+    // Once we fix that problem (which is part of a more general "don't look
+    // in DeclContexts unless we have to" optimization), we can eliminate the
+    // TranslationUnit parameter entirely.
+    Entity = Result.getSema().Context.getTranslationUnitDecl();
+    LookupVisibleDecls(Entity, Result, /*QualifiedNameLookup=*/false, 
+                       Consumer, Visited);
+  } else {
+    // Walk through the declarations in this Scope.
+    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+         D != DEnd; ++D) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
+        if (Result.isAcceptableDecl(ND)) {
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
+          Visited.add(ND);
+        }
+    }
+  }
+  
+  if (Entity) {
+    // Lookup visible declarations in any namespaces found by using
+    // directives.
+    UnqualUsingDirectiveSet::const_iterator UI, UEnd;
+    llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(Entity);
+    for (; UI != UEnd; ++UI)
+      LookupVisibleDecls(const_cast<DeclContext *>(UI->getNominatedNamespace()),
+                         Result, /*QualifiedNameLookup=*/false, Consumer, 
+                         Visited);
+  }
+
+  // Lookup names in the parent scope.
+  ShadowContextRAII Shadow(Visited);
+  LookupVisibleDecls(S->getParent(), Result, UDirs, Consumer, Visited);
+}
+
+void Sema::LookupVisibleDecls(Scope *S, LookupNameKind Kind,
+                              VisibleDeclConsumer &Consumer) {
+  // Determine the set of using directives available during
+  // unqualified name lookup.
+  Scope *Initial = S;
+  UnqualUsingDirectiveSet UDirs;
+  if (getLangOptions().CPlusPlus) {
+    // Find the first namespace or translation-unit scope.
+    while (S && !isNamespaceOrTranslationUnitScope(S))
+      S = S->getParent();
+
+    UDirs.visitScopeChain(Initial, S);
+  }
+  UDirs.done();
+
+  // Look for visible declarations.
+  LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
+  VisibleDeclsRecord Visited;
+  ShadowContextRAII Shadow(Visited);
+  ::LookupVisibleDecls(Initial, Result, UDirs, Consumer, Visited);
+}
+
+void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
+                              VisibleDeclConsumer &Consumer) {
+  LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
+  VisibleDeclsRecord Visited;
+  ShadowContextRAII Shadow(Visited);
+  ::LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/true, Consumer, 
+                       Visited);
+}
+
+//----------------------------------------------------------------------------
+// Typo correction
+//----------------------------------------------------------------------------
+
+namespace {
+class TypoCorrectionConsumer : public VisibleDeclConsumer {
+  /// \brief The name written that is a typo in the source.
+  llvm::StringRef Typo;
+
+  /// \brief The results found that have the smallest edit distance
+  /// found (so far) with the typo name.
+  llvm::SmallVector<NamedDecl *, 4> BestResults;
+
+  /// \brief The best edit distance found so far.
+  unsigned BestEditDistance;
+  
+public:
+  explicit TypoCorrectionConsumer(IdentifierInfo *Typo)
+    : Typo(Typo->getName()) { }
+
+  virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding);
+
+  typedef llvm::SmallVector<NamedDecl *, 4>::const_iterator iterator;
+  iterator begin() const { return BestResults.begin(); }
+  iterator end() const { return BestResults.end(); }
+  bool empty() const { return BestResults.empty(); }
+
+  unsigned getBestEditDistance() const { return BestEditDistance; }
+};
+
+}
+
+void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
+  // Don't consider hidden names for typo correction.
+  if (Hiding)
+    return;
+  
+  // Only consider entities with identifiers for names, ignoring
+  // special names (constructors, overloaded operators, selectors,
+  // etc.).
+  IdentifierInfo *Name = ND->getIdentifier();
+  if (!Name)
+    return;
+
+  // Compute the edit distance between the typo and the name of this
+  // entity. If this edit distance is not worse than the best edit
+  // distance we've seen so far, add it to the list of results.
+  unsigned ED = Typo.edit_distance(Name->getName());
+  if (!BestResults.empty()) {
+    if (ED < BestEditDistance) {
+      // This result is better than any we've seen before; clear out
+      // the previous results.
+      BestResults.clear();
+      BestEditDistance = ED;
+    } else if (ED > BestEditDistance) {
+      // This result is worse than the best results we've seen so far;
+      // ignore it.
+      return;
+    }
+  } else
+    BestEditDistance = ED;
+
+  BestResults.push_back(ND);
+}
+
+/// \brief Try to "correct" a typo in the source code by finding
+/// visible declarations whose names are similar to the name that was
+/// present in the source code.
+///
+/// \param Res the \c LookupResult structure that contains the name
+/// that was present in the source code along with the name-lookup
+/// criteria used to search for the name. On success, this structure
+/// will contain the results of name lookup.
+///
+/// \param S the scope in which name lookup occurs.
+///
+/// \param SS the nested-name-specifier that precedes the name we're
+/// looking for, if present.
+///
+/// \returns true if the typo was corrected, in which case the \p Res
+/// structure will contain the results of name lookup for the
+/// corrected name. Otherwise, returns false.
+bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
+                       bool AllowBuiltinCreation, bool EnteringContext) {
+  // We only attempt to correct typos for identifiers.
+  IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
+  if (!Typo)
+    return false;
+
+  // If the scope specifier itself was invalid, don't try to correct
+  // typos.
+  if (SS && SS->isInvalid())
+    return false;
+
+  // Never try to correct typos during template deduction or
+  // instantiation.
+  if (!ActiveTemplateInstantiations.empty())
+    return false;
+
+  TypoCorrectionConsumer Consumer(Typo);
+  if (SS && SS->isSet()) {
+    DeclContext *DC = computeDeclContext(*SS, EnteringContext);
+    if (!DC)
+      return false;
+    
+    LookupVisibleDecls(DC, Res.getLookupKind(), Consumer);
+  } else {
+    LookupVisibleDecls(S, Res.getLookupKind(), Consumer);
+  }
+
+  if (Consumer.empty())
+    return false;
+
+  // Only allow a single, closest name in the result set (it's okay to
+  // have overloads of that name, though).
+  TypoCorrectionConsumer::iterator I = Consumer.begin();
+  DeclarationName BestName = (*I)->getDeclName();
+  ++I;
+  for(TypoCorrectionConsumer::iterator IEnd = Consumer.end(); I != IEnd; ++I) {
+    if (BestName != (*I)->getDeclName())
+      return false;
+  }
+
+  // BestName is the closest viable name to what the user
+  // typed. However, to make sure that we don't pick something that's
+  // way off, make sure that the user typed at least 3 characters for
+  // each correction.
+  unsigned ED = Consumer.getBestEditDistance();
+  if (ED == 0 || (BestName.getAsIdentifierInfo()->getName().size() / ED) < 3)
+    return false;
+
+  // Perform name lookup again with the name we chose, and declare
+  // success if we found something that was not ambiguous.
+  Res.clear();
+  Res.setLookupName(BestName);
+  LookupParsedName(Res, S, SS, AllowBuiltinCreation, EnteringContext);
+  return Res.getResultKind() != LookupResult::NotFound && !Res.isAmbiguous();
 }

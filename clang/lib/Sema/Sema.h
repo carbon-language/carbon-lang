@@ -100,7 +100,8 @@ namespace clang {
   class InitializedEntity;
   class InitializationKind;
   class InitializationSequence;
-  
+  class VisibleDeclConsumer;
+
 /// BlockSemaInfo - When a block is being parsed, this contains information
 /// about the block.  It is pointed to from Sema::CurBlock.
 struct BlockSemaInfo {
@@ -1197,10 +1198,19 @@ public:
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
                                     FunctionSet &Functions);
-
+  
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
                                FunctionSet &Functions);
+
+  void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
+                          VisibleDeclConsumer &Consumer);
+  void LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
+                          VisibleDeclConsumer &Consumer);
+
+  bool CorrectTypo(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+                        bool AllowBuiltinCreation = false,
+                        bool EnteringContext = false);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
