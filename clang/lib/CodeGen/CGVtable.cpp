@@ -752,10 +752,10 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   }
   
   const CXXRecordDecl *DerivedDecl = 
-  cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
+    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
   
   const CXXRecordDecl *BaseDecl = 
-  cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
+    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
   
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }

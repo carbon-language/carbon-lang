@@ -21,10 +21,8 @@ namespace {
 class RTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
-  const llvm::Type *Int8PtrTy;
-  llvm::SmallSet<const CXXRecordDecl *, 16> SeenVBase;
-  llvm::SmallSet<const CXXRecordDecl *, 32> SeenBase;
   
+  const llvm::Type *Int8PtrTy;
   std::vector<llvm::Constant *> Info;
 
   /// GetAddrOfExternalRTTIDescriptor - Returns the constant for the RTTI 
@@ -38,8 +36,13 @@ class RTTIBuilder {
   void BuildVtablePointer(const Type *Ty);
   
   /// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
-  /// inheritance, according to the Itanium C++ ABI, 2.95p6b.
+  /// inheritance, according to the Itanium C++ ABI, 2.9.5p6b.
   void BuildSIClassTypeInfo(const CXXRecordDecl *RD);
+  
+  /// BuildVMIClassTypeInfo - Build an abi::__vmi_class_type_info, used for
+  /// classes with bases that do not satisfy the abi::__si_class_type_info 
+  /// constraints, according ti the Itanium C++ ABI, 2.9.5p5c.
+  void BuildVMIClassTypeInfo(const CXXRecordDecl *RD);
   
   /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct, used
   /// for pointer types.
@@ -53,25 +56,6 @@ public:
   RTTIBuilder(CodeGenModule &cgm)
     : CGM(cgm), VMContext(cgm.getModule().getContext()),
       Int8PtrTy(llvm::Type::getInt8PtrTy(VMContext)) { }
-
-  /// BuildVtableRef - Build a reference to a vtable.
-  llvm::Constant *BuildVtableRef(const char *Name) {
-    // Build a descriptor for Name
-    llvm::Constant *GV = CGM.getModule().getNamedGlobal(Name);
-    if (GV)
-      GV = llvm::ConstantExpr::getBitCast(GV,
-                                          llvm::PointerType::get(Int8PtrTy, 0));
-    else {
-      llvm::GlobalVariable::LinkageTypes linktype;
-      linktype = llvm::GlobalValue::ExternalLinkage;
-      GV = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy,
-                                    true, linktype, 0, Name);
-    }
-    llvm::Constant *C;
-    C = llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), 2);
-    C = llvm::ConstantExpr::getInBoundsGetElementPtr(GV, &C, 1);
-    return llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
-  }
 
   // FIXME: This should be removed, and clients should pass in the linkage
   // directly instead.
@@ -127,145 +111,6 @@ public:
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), c);
   }
 
-  /// CalculateFlags - Calculate the flags for the __vmi_class_type_info
-  /// datastructure.  1 for non-diamond repeated inheritance, 2 for a dimond
-  /// shaped class.
-  int CalculateFlags(const CXXRecordDecl *RD) {
-    int flags = 0;
-    if (SeenBase.count(RD))
-      flags |= 1;
-    else
-      SeenBase.insert(RD);
-    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-           e = RD->bases_end(); i != e; ++i) {
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (i->isVirtual()) {
-        if (SeenVBase.count(Base))
-          flags |= 2;
-        else
-          SeenVBase.insert(Base);
-      }
-      flags |= CalculateFlags(Base);
-    }
-    return flags;
-  }
-
-  bool SimpleInheritance(const CXXRecordDecl *RD) {
-    if (RD->getNumBases() != 1)
-      return false;
-    CXXRecordDecl::base_class_const_iterator i = RD->bases_begin();
-    if (i->isVirtual())
-      return false;
-    if (i->getAccessSpecifier() != AS_public)
-      return false;
-
-    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-    const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (Layout.getBaseClassOffset(Base) != 0)
-      return false;
-    return true;
-  }
-
-  llvm::Constant *finish(llvm::GlobalVariable *GV,
-                         llvm::StringRef Name, bool Hidden, 
-                         llvm::GlobalVariable::LinkageTypes Linkage) {
-    llvm::Constant *C = 
-      llvm::ConstantStruct::get(VMContext, &Info[0], Info.size(), 
-                                /*Packed=*/false);
-
-    llvm::GlobalVariable *OGV = GV;
-    GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true, Linkage,
-                                  C, Name);
-    if (OGV) {
-      GV->takeName(OGV);
-      llvm::Constant *NewPtr = llvm::ConstantExpr::getBitCast(GV,
-                                                              OGV->getType());
-      OGV->replaceAllUsesWith(NewPtr);
-      OGV->eraseFromParent();
-    }
-    if (Hidden)
-      GV->setVisibility(llvm::GlobalVariable::HiddenVisibility);
-    return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-  }
-
-
-  llvm::Constant *
-  Buildclass_type_info(const CXXRecordDecl *RD,
-                       llvm::GlobalVariable::LinkageTypes Linkage) {
-    assert(Info.empty() && "Info vector must be empty!");
-    
-    llvm::Constant *C;
-
-    llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRTTI(CGM.getContext().getTagDeclType(RD),
-                                         OutName);
-    llvm::StringRef Name = OutName.str();
-
-    llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getNamedGlobal(Name);
-    if (GV && !GV->isDeclaration())
-      return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    // If we're in an anonymous namespace, then we always want internal linkage.
-    if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
-      Linkage = llvm::GlobalVariable::InternalLinkage;
-    
-    bool Hidden = CGM.getDeclVisibilityMode(RD) == LangOptions::Hidden;
-
-    bool simple = false;
-    if (RD->getNumBases() == 0)
-      C = BuildVtableRef("_ZTVN10__cxxabiv117__class_type_infoE");
-    else if (SimpleInheritance(RD)) {
-      simple = true;
-      C = BuildVtableRef("_ZTVN10__cxxabiv120__si_class_type_infoE");
-    } else
-      C = BuildVtableRef("_ZTVN10__cxxabiv121__vmi_class_type_infoE");
-    Info.push_back(C);
-    Info.push_back(BuildName(CGM.getContext().getTagDeclType(RD), Hidden,
-                             Linkage));
-
-    // If we have no bases, there are no more fields.
-    if (RD->getNumBases()) {
-      if (!simple) {
-        Info.push_back(BuildFlags(CalculateFlags(RD)));
-        Info.push_back(BuildBaseCount(RD->getNumBases()));
-      }
-
-      const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-      for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-             e = RD->bases_end(); i != e; ++i) {
-        QualType BaseType = i->getType();
-        const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-        Info.push_back(CGM.GetAddrOfRTTIDescriptor(BaseType));
-        if (simple)
-          break;
-        int64_t offset;
-        if (!i->isVirtual())
-          offset = Layout.getBaseClassOffset(Base)/8;
-        else
-          offset = CGM.getVtableInfo().getVirtualBaseOffsetIndex(RD, Base);
-        offset <<= 8;
-        // Now set the flags.
-        offset += i->isVirtual() ? 1 : 0;;
-        offset += i->getAccessSpecifier() == AS_public ? 2 : 0;
-        const llvm::Type *LongTy =
-          CGM.getTypes().ConvertType(CGM.getContext().LongTy);
-        C = llvm::ConstantInt::get(LongTy, offset);
-        Info.push_back(C);
-      }
-    }
-
-    return finish(GV, Name, Hidden, Linkage);
-  }
-
-  /// - BuildFlags - Build a __flags value for __pbase_type_info.
-  llvm::Constant *BuildInt(unsigned n) {
-    return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), n);
-  }
-
   // FIXME: unify with DecideExtern
   bool DecideHidden(QualType Ty) {
     // For this type, see if all components are never hidden.
@@ -309,16 +154,7 @@ public:
       return GetAddrOfExternalRTTIDescriptor(Ty);
     }
 
-    case Type::Record: {
-      const RecordType *RT = cast<RecordType>(&Type);
-      
-      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->getNumBases() != 0 && !SimpleInheritance(RD))
-        return BuildClassTypeInfo(RD);
-
-      // Fall through.
-    }
-
+    case Type::Record:
     case Type::Pointer:
     case Type::MemberPointer:
     case Type::FunctionProto:
@@ -331,31 +167,6 @@ public:
     case Type::ExtVector:
       return BuildTypeInfo(Ty);
     }
-  }
-  
-  /// BuildClassTypeInfo - Builds the class type info (or a reference to it)
-  /// for the given record decl.
-  llvm::Constant *BuildClassTypeInfo(const CXXRecordDecl *RD) {
-    const CXXMethodDecl *KeyFunction = 0;
-
-    if (RD->isDynamicClass())
-      KeyFunction = CGM.getContext().getKeyFunction(RD);
-    
-    if (KeyFunction) {
-      // If the key function is defined in this translation unit, then the RTTI
-      // related constants should also be emitted here, with external linkage.
-      if (KeyFunction->getBody())
-        return Buildclass_type_info(RD, llvm::GlobalValue::ExternalLinkage);
-      
-      // Otherwise, we just want a reference to the type info.
-      QualType Ty = CGM.getContext().getTagDeclType(RD);
-      return GetAddrOfExternalRTTIDescriptor(Ty);
-    }
-    
-    // If there is no key function (or if the record doesn't have any virtual
-    // member functions or virtual bases), emit the type info with weak_odr
-    // linkage.
-    return Buildclass_type_info(RD, llvm::GlobalValue::WeakODRLinkage);
   }
   
   // Pointer type info flags.
@@ -375,6 +186,24 @@ public:
     /// PTI_ContainingClassIncomplete - Containing class is incomplete.
     /// (in pointer to member).
     PTI_ContainingClassIncomplete = 0x10
+  };
+  
+  // VMI type info flags.
+  enum {
+    /// VMI_NonDiamondRepeat - Class has non-diamond repeated inheritance.
+    VMI_NonDiamondRepeat = 0x1,
+    
+    /// VMI_DiamondShaped - Class is diamond shaped.
+    VMI_DiamondShaped = 0x2
+  };
+  
+  // Base class type info flags.
+  enum {
+    /// BCTI_Virtual - Base class is virtual.
+    BCTI_Virtual = 0x1,
+    
+    /// BCTI_Public - Base class is public.
+    BCTI_Public = 0x2
   };
 };
 }
@@ -679,50 +508,52 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   // GCC treats vector types as fundamental types.
   case Type::Vector:
   case Type::ExtVector:
-    // abi::__fundamental_type_info
+    // abi::__fundamental_type_info.
     VtableName = "_ZTVN10__cxxabiv123__fundamental_type_infoE";
     break;
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
-    // abi::__array_type_info
+    // abi::__array_type_info.
     VtableName = "_ZTVN10__cxxabiv117__array_type_infoE";
     break;
 
   case Type::FunctionNoProto:
   case Type::FunctionProto:
-    // abi::__function_type_info
+    // abi::__function_type_info.
     VtableName = "_ZTVN10__cxxabiv120__function_type_infoE";
     break;
 
   case Type::Enum:
-    // abi::__enum_type_info
+    // abi::__enum_type_info.
     VtableName = "_ZTVN10__cxxabiv116__enum_type_infoE";
     break;
       
   case Type::Record: {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
+    
     if (!RD->getNumBases()) {
-      // abi::__class_type_info
+      // abi::__class_type_info.
       VtableName = "_ZTVN10__cxxabiv117__class_type_infoE";
     } else if (CanUseSingleInheritance(RD)) {
-      // abi::__si_class_type_info;
+      // abi::__si_class_type_info.
       VtableName = "_ZTVN10__cxxabiv120__si_class_type_infoE";
     } else {
-      assert(false && "Should not get here!");
+      // abi::__vmi_class_type_info.
+      VtableName = "_ZTVN10__cxxabiv121__vmi_class_type_infoE";
     }
     
     break;
   }
 
   case Type::Pointer:
-    // abi::__pointer_type_info
+    // abi::__pointer_type_info.
     VtableName = "_ZTVN10__cxxabiv119__pointer_type_infoE";
     break;
 
   case Type::MemberPointer:
-    // abi::__pointer_to_member_type_info
+    // abi::__pointer_to_member_type_info.
     VtableName = "_ZTVN10__cxxabiv129__pointer_to_member_type_infoE";
     break;
   }
@@ -804,10 +635,12 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
       break;
     }
     
-    if (CanUseSingleInheritance(RD)) {
+    if (CanUseSingleInheritance(RD))
       BuildSIClassTypeInfo(RD);
-      break;
-    }
+    else 
+      BuildVMIClassTypeInfo(RD);
+
+    break;
   }
       
   case Type::Pointer:
@@ -839,9 +672,9 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 }
 
-/// DetermineQualifierFlags - Deterine the pointer type info flags from the
+/// ComputeQualifierFlags - Compute the pointer type info flags from the
 /// given qualifier.
-static unsigned DetermineQualifierFlags(Qualifiers Quals) {
+static unsigned ComputeQualifierFlags(Qualifiers Quals) {
   unsigned Flags = 0;
 
   if (Quals.hasConst())
@@ -863,6 +696,148 @@ void RTTIBuilder::BuildSIClassTypeInfo(const CXXRecordDecl *RD) {
   Info.push_back(RTTIBuilder(CGM).BuildType(RD->bases_begin()->getType()));
 }
 
+/// SeenBases - Contains virtual and non-virtual bases seen when traversing
+/// a class hierarchy.
+struct SeenBases {
+  llvm::SmallPtrSet<const CXXRecordDecl *, 16> NonVirtualBases;
+  llvm::SmallPtrSet<const CXXRecordDecl *, 16> VirtualBases;
+};
+
+/// ComputeVMIClassTypeInfoFlags - Compute the value of the flags member in
+/// abi::__vmi_class_type_info.
+///
+static unsigned ComputeVMIClassTypeInfoFlags(const CXXBaseSpecifier *Base, 
+                                             SeenBases &Bases) {
+  
+  unsigned Flags = 0;
+  
+  const CXXRecordDecl *BaseDecl = 
+    cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+  
+  if (Base->isVirtual()) {
+    if (Bases.VirtualBases.count(BaseDecl)) {
+      // If this virtual base has been seen before, then the class is diamond
+      // shaped.
+      Flags |= RTTIBuilder::VMI_DiamondShaped;
+    } else {
+      if (Bases.NonVirtualBases.count(BaseDecl))
+        Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+
+      // Mark the virtual base as seen.
+      Bases.VirtualBases.insert(BaseDecl);
+    }
+  } else {
+    if (Bases.NonVirtualBases.count(BaseDecl)) {
+      // If this non-virtual base has been seen before, then the class has non-
+      // diamond shaped repeated inheritance.
+      Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+    } else {
+      if (Bases.VirtualBases.count(BaseDecl))
+        Flags |= RTTIBuilder::VMI_NonDiamondRepeat;
+        
+      // Mark the non-virtual base as seen.
+      Bases.NonVirtualBases.insert(BaseDecl);
+    }
+  }
+
+  // Walk all bases.
+  for (CXXRecordDecl::base_class_const_iterator I = BaseDecl->bases_begin(),
+       E = BaseDecl->bases_end(); I != E; ++I) 
+    Flags |= ComputeVMIClassTypeInfoFlags(I, Bases);
+  
+  return Flags;
+}
+
+static unsigned ComputeVMIClassTypeInfoFlags(const CXXRecordDecl *RD) {
+  unsigned Flags = 0;
+  SeenBases Bases;
+  
+  // Walk all bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) 
+    Flags |= ComputeVMIClassTypeInfoFlags(I, Bases);
+  
+  return Flags;
+}
+
+/// BuildVMIClassTypeInfo - Build an abi::__vmi_class_type_info, used for
+/// classes with bases that do not satisfy the abi::__si_class_type_info 
+/// constraints, according ti the Itanium C++ ABI, 2.9.5p5c.
+void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
+  const llvm::Type *UnsignedIntLTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
+  
+  // Itanium C++ ABI 2.9.5p6c:
+  //   __flags is a word with flags describing details about the class 
+  //   structure, which may be referenced by using the __flags_masks 
+  //   enumeration. These flags refer to both direct and indirect bases. 
+  unsigned Flags = ComputeVMIClassTypeInfoFlags(RD);
+  Info.push_back(llvm::ConstantInt::get(UnsignedIntLTy, Flags));
+
+  // Itanium C++ ABI 2.9.5p6c:
+  //   __base_count is a word with the number of direct proper base class 
+  //   descriptions that follow.
+  Info.push_back(llvm::ConstantInt::get(UnsignedIntLTy, RD->getNumBases()));
+  
+  if (!RD->getNumBases())
+    return;
+  
+  const llvm::Type *LongLTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().LongTy);
+
+  // Now add the base class descriptions.
+  
+  // Itanium C++ ABI 2.9.5p6c:
+  //   __base_info[] is an array of base class descriptions -- one for every 
+  //   direct proper base. Each description is of the type:
+  //
+  //   struct abi::__base_class_type_info {
+	//   public:
+  //     const __class_type_info *__base_type;
+  //     long __offset_flags;
+  //
+  //     enum __offset_flags_masks {
+  //       __virtual_mask = 0x1,
+  //       __public_mask = 0x2,
+  //       __offset_shift = 8
+  //     };
+  //   };
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXBaseSpecifier *Base = I;
+
+    // The __base_type member points to the RTTI for the base type.
+    Info.push_back(RTTIBuilder(CGM).BuildType(Base->getType()));
+
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+
+    int64_t OffsetFlags = 0;
+    
+    // All but the lower 8 bits of __offset_flags are a signed offset. 
+    // For a non-virtual base, this is the offset in the object of the base
+    // subobject. For a virtual base, this is the offset in the virtual table of
+    // the virtual base offset for the virtual base referenced (negative).
+    if (Base->isVirtual())
+      OffsetFlags = CGM.getVtableInfo().getVirtualBaseOffsetIndex(RD, BaseDecl);
+    else {
+      const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+      OffsetFlags = Layout.getBaseClassOffset(BaseDecl) / 8;
+    };
+    
+    OffsetFlags <<= 8;
+    
+    // The low-order byte of __offset_flags contains flags, as given by the 
+    // masks from the enumeration __offset_flags_masks.
+    if (Base->isVirtual())
+      OffsetFlags |= BCTI_Virtual;
+    if (Base->getAccessSpecifier() == AS_public)
+      OffsetFlags |= BCTI_Public;
+
+    Info.push_back(llvm::ConstantInt::get(LongLTy, OffsetFlags));
+  }
+}
+
 /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
 /// used for pointer types.
 void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
@@ -871,7 +846,7 @@ void RTTIBuilder::BuildPointerTypeInfo(const PointerType *Ty) {
   // Itanium C++ ABI 2.9.5p7:
   //   __flags is a flag word describing the cv-qualification and other 
   //   attributes of the type pointed to
-  unsigned Flags = DetermineQualifierFlags(PointeeTy.getQualifiers());
+  unsigned Flags = ComputeQualifierFlags(PointeeTy.getQualifiers());
 
   // Itanium C++ ABI 2.9.5p7:
   //   When the abi::__pbase_type_info is for a direct or indirect pointer to an
@@ -897,7 +872,7 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   // Itanium C++ ABI 2.9.5p7:
   //   __flags is a flag word describing the cv-qualification and other 
   //   attributes of the type pointed to.
-  unsigned Flags = DetermineQualifierFlags(PointeeTy.getQualifiers());
+  unsigned Flags = ComputeQualifierFlags(PointeeTy.getQualifiers());
 
   const RecordType *ClassType = cast<RecordType>(Ty->getClass());
 
