@@ -212,6 +212,9 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) TypedefDecl(DC, L, Id, TInfo);
 }
 
+// Anchor TypedefDecl's vtable here.
+TypedefDecl::~TypedefDecl() {}
+
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id, SourceLocation TKL,
                            EnumDecl *PrevDecl) {

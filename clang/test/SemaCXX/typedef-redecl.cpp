@@ -29,3 +29,11 @@ typedef I I;
 
 struct s { };
 
+// PR5874
+namespace test1 {
+  typedef int foo;
+  namespace a { using test1::foo; };
+  typedef int foo;
+  using namespace a; 
+  foo x;
+}

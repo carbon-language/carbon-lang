@@ -145,6 +145,11 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (Invalid)
     Typedef->setInvalidDecl();
 
+  if (TypedefDecl *Prev = D->getPreviousDeclaration()) {
+    NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(Prev, TemplateArgs);
+    Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
+  }
+
   Owner->addDecl(Typedef);
 
   return Typedef;

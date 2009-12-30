@@ -696,9 +696,8 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
   }
 
   // Verify the old decl was also a type.
-  TypeDecl *Old = 0;
-  if (!OldDecls.isSingleResult() ||
-      !(Old = dyn_cast<TypeDecl>(OldDecls.getFoundDecl()))) {
+  TypeDecl *Old = OldDecls.getAsSingle<TypeDecl>();
+  if (!Old) {
     Diag(New->getLocation(), diag::err_redefinition_different_kind)
       << New->getDeclName();
 
@@ -732,6 +731,13 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
       Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
   }
+
+  // The types match.  Link up the redeclaration chain if the old
+  // declaration was a typedef.
+  // FIXME: this is a potential source of wierdness if the type
+  // spellings don't match exactly.
+  if (isa<TypedefDecl>(Old))
+    New->setPreviousDeclaration(cast<TypedefDecl>(Old));
 
   if (getLangOptions().Microsoft)
     return;

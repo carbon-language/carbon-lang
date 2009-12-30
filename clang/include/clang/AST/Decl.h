@@ -1449,7 +1449,7 @@ public:
 };
 
 
-class TypedefDecl : public TypeDecl {
+class TypedefDecl : public TypeDecl, public Redeclarable<TypedefDecl> {
   /// UnderlyingType - This is the type the typedef is set to.
   TypeSourceInfo *TInfo;
 
@@ -1457,7 +1457,7 @@ class TypedefDecl : public TypeDecl {
               IdentifierInfo *Id, TypeSourceInfo *TInfo)
     : TypeDecl(Typedef, DC, L, Id), TInfo(TInfo) {}
 
-  virtual ~TypedefDecl() {}
+  virtual ~TypedefDecl();
 public:
 
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1466,6 +1466,14 @@ public:
 
   TypeSourceInfo *getTypeSourceInfo() const {
     return TInfo;
+  }
+
+  /// Retrieves the canonical declaration of this typedef.
+  TypedefDecl *getCanonicalDecl() {
+    return getFirstDeclaration();
+  }
+  const TypedefDecl *getCanonicalDecl() const {
+    return getFirstDeclaration();
   }
 
   QualType getUnderlyingType() const {
