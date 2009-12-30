@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "Sema.h"
-#include "Lookup.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
