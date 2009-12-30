@@ -2032,7 +2032,7 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
                 QualType retType, ObjCMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType), SelName(selInfo),
+  : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
     MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Stmt*[NumArgs+1];
@@ -2051,7 +2051,7 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                 QualType retType, ObjCMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType), SelName(selInfo),
+  : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
     MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Stmt*[NumArgs+1];
@@ -2069,7 +2069,7 @@ ObjCMessageExpr::ObjCMessageExpr(ObjCInterfaceDecl *cls, Selector selInfo,
                                  QualType retType, ObjCMethodDecl *mproto,
                                  SourceLocation LBrac, SourceLocation RBrac,
                                  Expr **ArgExprs, unsigned nargs)
-: Expr(ObjCMessageExprClass, retType), SelName(selInfo),
+: Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
 MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Stmt*[NumArgs+1];

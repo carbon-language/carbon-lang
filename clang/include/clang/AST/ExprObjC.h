@@ -30,7 +30,7 @@ class ObjCStringLiteral : public Expr {
   SourceLocation AtLoc;
 public:
   ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
-    : Expr(ObjCStringLiteralClass, T), String(SL), AtLoc(L) {}
+    : Expr(ObjCStringLiteralClass, T, false, false), String(SL), AtLoc(L) {}
   explicit ObjCStringLiteral(EmptyShell Empty)
     : Expr(ObjCStringLiteralClass, Empty) {}
 
@@ -100,7 +100,8 @@ class ObjCSelectorExpr : public Expr {
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCSelectorExprClass, T), SelName(selInfo), AtLoc(at), RParenLoc(rp){}
+  : Expr(ObjCSelectorExprClass, T, false, false), SelName(selInfo), AtLoc(at),
+    RParenLoc(rp){}
   explicit ObjCSelectorExpr(EmptyShell Empty)
    : Expr(ObjCSelectorExprClass, Empty) {}
 
@@ -139,7 +140,7 @@ class ObjCProtocolExpr : public Expr {
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCProtocolExprClass, T), TheProtocol(protocol),
+  : Expr(ObjCProtocolExprClass, T, false, false), TheProtocol(protocol),
     AtLoc(at), RParenLoc(rp) {}
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
@@ -178,7 +179,7 @@ public:
   ObjCIvarRefExpr(ObjCIvarDecl *d,
                   QualType t, SourceLocation l, Expr *base=0,
                   bool arrow = false, bool freeIvar = false) :
-    Expr(ObjCIvarRefExprClass, t), D(d),
+    Expr(ObjCIvarRefExprClass, t, false, false), D(d),
     Loc(l), Base(base), IsArrow(arrow),
     IsFreeIvar(freeIvar) {}
 
@@ -227,7 +228,8 @@ private:
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
                       SourceLocation l, Expr *base)
-    : Expr(ObjCPropertyRefExprClass, t), AsProperty(PD), IdLoc(l), Base(base) {
+    : Expr(ObjCPropertyRefExprClass, t, false, false), AsProperty(PD),
+      IdLoc(l), Base(base) {
   }
 
   explicit ObjCPropertyRefExpr(EmptyShell Empty)
@@ -291,16 +293,17 @@ public:
                  QualType t,
                  ObjCMethodDecl *setter,
                  SourceLocation l, Expr *base)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), MemberLoc(l), Base(base), InterfaceDecl(0),
-      ClassLoc(SourceLocation()) {
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
+      Setter(setter), Getter(getter), MemberLoc(l), Base(base),
+      InterfaceDecl(0), ClassLoc(SourceLocation()) {
     }
   ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter,
                  QualType t,
                  ObjCMethodDecl *setter,
                  SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t), Setter(setter),
-      Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C), ClassLoc(CL) {
+    : Expr(ObjCImplicitSetterGetterRefExprClass, t, false, false),
+      Setter(setter), Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C),
+      ClassLoc(CL) {
     }
   explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty)
            : Expr(ObjCImplicitSetterGetterRefExprClass, Empty){}
@@ -488,7 +491,7 @@ class ObjCSuperExpr : public Expr {
   SourceLocation Loc;
 public:
   ObjCSuperExpr(SourceLocation L, QualType Type)
-    : Expr(ObjCSuperExprClass, Type), Loc(L) { }
+    : Expr(ObjCSuperExprClass, Type, false, false), Loc(L) { }
   explicit ObjCSuperExpr(EmptyShell Empty) : Expr(ObjCSuperExprClass, Empty) {}
 
   SourceLocation getLoc() const { return Loc; }
@@ -519,7 +522,7 @@ class ObjCIsaExpr : public Expr {
   bool IsArrow;
 public:
   ObjCIsaExpr(Expr *base, bool isarrow, SourceLocation l, QualType ty)
-    : Expr(ObjCIsaExprClass, ty),
+    : Expr(ObjCIsaExprClass, ty, false, false),
       Base(base), IsaMemberLoc(l), IsArrow(isarrow) {}
 
   /// \brief Build an empty expression.

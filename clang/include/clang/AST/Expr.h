@@ -53,14 +53,6 @@ protected:
   /// (C++ [temp.dep.constexpr]).
   bool ValueDependent : 1;
 
-  // FIXME: Eventually, this constructor should go away and we should
-  // require every subclass to provide type/value-dependence
-  // information.
-  Expr(StmtClass SC, QualType T)
-    : Stmt(SC), TypeDependent(false), ValueDependent(false) {
-    setType(T);
-  }
-
   Expr(StmtClass SC, QualType T, bool TD, bool VD)
     : Stmt(SC), TypeDependent(TD), ValueDependent(VD) {
     setType(T);
@@ -609,7 +601,7 @@ public:
   // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy,
   // or UnsignedLongLongTy
   IntegerLiteral(const llvm::APInt &V, QualType type, SourceLocation l)
-    : Expr(IntegerLiteralClass, type), Value(V), Loc(l) {
+    : Expr(IntegerLiteralClass, type, false, false), Value(V), Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
 
@@ -643,7 +635,8 @@ class CharacterLiteral : public Expr {
 public:
   // type should be IntTy
   CharacterLiteral(unsigned value, bool iswide, QualType type, SourceLocation l)
-    : Expr(CharacterLiteralClass, type), Value(value), Loc(l), IsWide(iswide) {
+    : Expr(CharacterLiteralClass, type, false, false), Value(value), Loc(l),
+      IsWide(iswide) {
   }
 
   /// \brief Construct an empty character literal.
@@ -677,7 +670,8 @@ class FloatingLiteral : public Expr {
 public:
   FloatingLiteral(const llvm::APFloat &V, bool isexact,
                   QualType Type, SourceLocation L)
-    : Expr(FloatingLiteralClass, Type), Value(V), IsExact(isexact), Loc(L) {}
+    : Expr(FloatingLiteralClass, Type, false, false), Value(V),
+      IsExact(isexact), Loc(L) {}
 
   /// \brief Construct an empty floating-point literal.
   explicit FloatingLiteral(EmptyShell Empty)
@@ -718,7 +712,7 @@ class ImaginaryLiteral : public Expr {
   Stmt *Val;
 public:
   ImaginaryLiteral(Expr *val, QualType Ty)
-    : Expr(ImaginaryLiteralClass, Ty), Val(val) {}
+    : Expr(ImaginaryLiteralClass, Ty, false, false), Val(val) {}
 
   /// \brief Build an empty imaginary literal.
   explicit ImaginaryLiteral(EmptyShell Empty)
@@ -762,7 +756,7 @@ class StringLiteral : public Expr {
   unsigned NumConcatenated;
   SourceLocation TokLocs[1];
 
-  StringLiteral(QualType Ty) : Expr(StringLiteralClass, Ty) {}
+  StringLiteral(QualType Ty) : Expr(StringLiteralClass, Ty, false, false) {}
 
 protected:
   virtual void DoDestroy(ASTContext &C);
@@ -1466,10 +1460,11 @@ class CompoundLiteralExpr : public Expr {
   Stmt *Init;
   bool FileScope;
 public:
+  // FIXME: Can compound literals be value-dependent?
   CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init,
                       bool fileScope)
-    : Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init),
-      FileScope(fileScope) {}
+    : Expr(CompoundLiteralExprClass, ty, ty->isDependentType(), false),
+      LParenLoc(lparenloc), Init(init), FileScope(fileScope) {}
 
   /// \brief Construct an empty compound literal.
   explicit CompoundLiteralExpr(EmptyShell Empty)
@@ -1903,8 +1898,11 @@ public:
 
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
-                 SourceLocation oploc, bool dead)
-    : Expr(CompoundAssignOperatorClass, ResTy), Opc(opc), OpLoc(oploc) {
+                 SourceLocation opLoc, bool dead)
+    : Expr(CompoundAssignOperatorClass, ResTy,
+           lhs->isTypeDependent() || rhs->isTypeDependent(),
+           lhs->isValueDependent() || rhs->isValueDependent()),
+      Opc(opc), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }
@@ -2033,7 +2031,8 @@ class AddrLabelExpr : public Expr {
 public:
   AddrLabelExpr(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L,
                 QualType t)
-    : Expr(AddrLabelExprClass, t), AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
+    : Expr(AddrLabelExprClass, t, false, false),
+      AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
 
   /// \brief Build an empty address of a label expression.
   explicit AddrLabelExpr(EmptyShell Empty)
@@ -2068,9 +2067,11 @@ class StmtExpr : public Expr {
   Stmt *SubStmt;
   SourceLocation LParenLoc, RParenLoc;
 public:
+  // FIXME: Does type-dependence need to be computed differently?
   StmtExpr(CompoundStmt *substmt, QualType T,
            SourceLocation lp, SourceLocation rp) :
-    Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) { }
+    Expr(StmtExprClass, T, T->isDependentType(), false),
+    SubStmt(substmt), LParenLoc(lp), RParenLoc(rp) { }
 
   /// \brief Build an empty statement expression.
   explicit StmtExpr(EmptyShell Empty) : Expr(StmtExprClass, Empty) { }
@@ -2109,8 +2110,8 @@ class TypesCompatibleExpr : public Expr {
 public:
   TypesCompatibleExpr(QualType ReturnType, SourceLocation BLoc,
                       QualType t1, QualType t2, SourceLocation RP) :
-    Expr(TypesCompatibleExprClass, ReturnType), Type1(t1), Type2(t2),
-    BuiltinLoc(BLoc), RParenLoc(RP) {}
+    Expr(TypesCompatibleExprClass, ReturnType, false, false),
+    Type1(t1), Type2(t2), BuiltinLoc(BLoc), RParenLoc(RP) {}
 
   /// \brief Build an empty __builtin_type_compatible_p expression.
   explicit TypesCompatibleExpr(EmptyShell Empty)
@@ -2160,11 +2161,13 @@ protected:
   virtual void DoDestroy(ASTContext &C);
 
 public:
+  // FIXME: Can a shufflevector be value-dependent?  Does type-dependence need
+  // to be computed differently?
   ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
                     QualType Type, SourceLocation BLoc,
                     SourceLocation RP) :
-    Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
-    RParenLoc(RP), NumExprs(nexpr) {
+    Expr(ShuffleVectorExprClass, Type, Type->isDependentType(), false),
+    BuiltinLoc(BLoc), RParenLoc(RP), NumExprs(nexpr) {
 
     SubExprs = new (C) Stmt*[nexpr];
     for (unsigned i = 0; i < nexpr; i++)
@@ -2292,7 +2295,7 @@ class GNUNullExpr : public Expr {
 
 public:
   GNUNullExpr(QualType Ty, SourceLocation Loc)
-    : Expr(GNUNullExprClass, Ty), TokenLoc(Loc) { }
+    : Expr(GNUNullExprClass, Ty, false, false), TokenLoc(Loc) { }
 
   /// \brief Build an empty GNU __null expression.
   explicit GNUNullExpr(EmptyShell Empty) : Expr(GNUNullExprClass, Empty) { }
@@ -2320,7 +2323,7 @@ class VAArgExpr : public Expr {
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   VAArgExpr(SourceLocation BLoc, Expr* e, QualType t, SourceLocation RPLoc)
-    : Expr(VAArgExprClass, t),
+    : Expr(VAArgExprClass, t, t->isDependentType(), false),
       Val(e),
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
@@ -2802,7 +2805,7 @@ public:
 class ImplicitValueInitExpr : public Expr {
 public:
   explicit ImplicitValueInitExpr(QualType ty)
-    : Expr(ImplicitValueInitExprClass, ty) { }
+    : Expr(ImplicitValueInitExprClass, ty, false, false) { }
 
   /// \brief Construct an empty implicit value initialization.
   explicit ImplicitValueInitExpr(EmptyShell Empty)
@@ -2890,7 +2893,8 @@ class ExtVectorElementExpr : public Expr {
 public:
   ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
                        SourceLocation loc)
-    : Expr(ExtVectorElementExprClass, ty),
+    : Expr(ExtVectorElementExprClass, ty, base->isTypeDependent(),
+           base->isValueDependent()),
       Base(base), Accessor(&accessor), AccessorLoc(loc) {}
 
   /// \brief Build an empty vector element expression.
@@ -2945,7 +2949,7 @@ protected:
   bool HasBlockDeclRefExprs;
 public:
   BlockExpr(BlockDecl *BD, QualType ty, bool hasBlockDeclRefExprs)
-    : Expr(BlockExprClass, ty),
+    : Expr(BlockExprClass, ty, ty->isDependentType(), false),
       TheBlock(BD), HasBlockDeclRefExprs(hasBlockDeclRefExprs) {}
 
   /// \brief Build an empty block expression.
@@ -2990,10 +2994,11 @@ class BlockDeclRefExpr : public Expr {
   bool IsByRef : 1;
   bool ConstQualAdded : 1;
 public:
+  // FIXME: Fix type/value dependence!
   BlockDeclRefExpr(ValueDecl *d, QualType t, SourceLocation l, bool ByRef,
-                   bool constAdded = false) :
-       Expr(BlockDeclRefExprClass, t), D(d), Loc(l), IsByRef(ByRef),
-                                       ConstQualAdded(constAdded) {}
+                   bool constAdded = false)
+  : Expr(BlockDeclRefExprClass, t, false, false), D(d), Loc(l), IsByRef(ByRef),
+    ConstQualAdded(constAdded) {}
 
   // \brief Build an empty reference to a declared variable in a
   // block.

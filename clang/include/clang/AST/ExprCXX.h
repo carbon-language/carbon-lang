@@ -224,7 +224,7 @@ class CXXBoolLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
-    Expr(CXXBoolLiteralExprClass, Ty), Value(val), Loc(l) {}
+    Expr(CXXBoolLiteralExprClass, Ty, false, false), Value(val), Loc(l) {}
 
   bool getValue() const { return Value; }
 
@@ -245,7 +245,7 @@ class CXXNullPtrLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
-    Expr(CXXNullPtrLiteralExprClass, Ty), Loc(l) {}
+    Expr(CXXNullPtrLiteralExprClass, Ty, false, false), Loc(l) {}
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
@@ -401,12 +401,13 @@ protected:
     : Expr(SC, 
            param->hasUnparsedDefaultArg()
              ? param->getType().getNonReferenceType()
-             : param->getDefaultArg()->getType()),
+             : param->getDefaultArg()->getType(),
+           false, false),
       Param(param, false), Loc(Loc) { }
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
-    : Expr(SC, SubExpr->getType()), Param(param, true), Loc(Loc)
+    : Expr(SC, SubExpr->getType(), false, false), Param(param, true), Loc(Loc)
   {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
@@ -491,8 +492,8 @@ class CXXBindTemporaryExpr : public Expr {
   Stmt *SubExpr;
 
   CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr)
-   : Expr(CXXBindTemporaryExprClass,
-          subexpr->getType()), Temp(temp), SubExpr(subexpr) { }
+   : Expr(CXXBindTemporaryExprClass, subexpr->getType(), false, false),
+     Temp(temp), SubExpr(subexpr) { }
   ~CXXBindTemporaryExpr() { }
 
 protected:
