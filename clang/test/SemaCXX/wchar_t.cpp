@@ -11,3 +11,17 @@ void f(wchar_t p) {
 // PR4502
 wchar_t const c = L'c';
 int a[c == L'c' ? 1 : -1];
+
+
+// PR5917
+template<typename _CharT>
+struct basic_string {
+};
+
+template<typename _CharT>
+basic_string<_CharT> operator+ (const basic_string<_CharT>&, _CharT);
+
+int t(void) {
+  basic_string<wchar_t>() + L'-';
+  return (0);
+}

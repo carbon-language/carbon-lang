@@ -1541,11 +1541,17 @@ Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   if (Literal.hadError())
     return ExprError();
 
-  QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
+  QualType Ty;
+  if (!getLangOptions().CPlusPlus)
+    Ty = Context.IntTy;   // 'x' and L'x' -> int in C.
+  else if (Literal.isWide())
+    Ty = Context.WCharTy; // L'x' -> wchar_t in C++.
+  else
+    Ty = Context.CharTy;  // 'x' -> char in C++
 
   return Owned(new (Context) CharacterLiteral(Literal.getValue(),
                                               Literal.isWide(),
-                                              type, Tok.getLocation()));
+                                              Ty, Tok.getLocation()));
 }
 
 Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
