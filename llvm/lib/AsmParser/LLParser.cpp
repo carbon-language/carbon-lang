@@ -2813,10 +2813,26 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
         return true;
     }
 
-    if (ParseInstruction(Inst, BB, PFS)) return true;
-    
-    if (EatIfPresent(lltok::comma))
-      ParseOptionalCustomMetadata();
+    switch (ParseInstruction(Inst, BB, PFS)) {
+    default: assert(0 && "Unknown ParseInstruction result!");
+    case InstError: return true;
+    case InstNormal:
+      // With a normal result, we check to see if the instruction is followed by
+      // a comma and metadata.
+      if (EatIfPresent(lltok::comma))
+        if (ParseOptionalCustomMetadata())
+          return true;
+      break;
+    case InstExtraComma:
+      // If the instruction parser ate an extra comma at the end of it, it
+      // *must* be followed by metadata.
+      if (Lex.getKind() != lltok::MetadataVar)
+        return TokError("expected metadata after comma");
+      // Parse it.
+      if (ParseOptionalCustomMetadata())
+        return true;
+      break;        
+    }
 
     // Set metadata attached with this instruction.
     for (SmallVector<std::pair<unsigned, MDNode *>, 2>::iterator
@@ -2839,8 +2855,8 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
 
 /// ParseInstruction - Parse one of the many different instructions.
 ///
-bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
-                                PerFunctionState &PFS) {
+int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
+                               PerFunctionState &PFS) {
   lltok::Kind Token = Lex.getKind();
   if (Token == lltok::Eof)
     return TokError("found end of file when expecting more instructions");
@@ -3008,8 +3024,8 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 ///   ::= 'ret' TypeAndValue (',' !dbg, !1)*
 ///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' !dbg, !1)*
 ///         [[obsolete: LLVM 3.0]]
-bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
-                        PerFunctionState &PFS) {
+int LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
+                       PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty, true /*void allowed*/)) return true;
 
@@ -3021,10 +3037,11 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
   Value *RV;
   if (ParseValue(Ty, RV, PFS)) return true;
 
+  bool ExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
     // Parse optional custom metadata, e.g. !dbg
     if (Lex.getKind() == lltok::MetadataVar) {
-      if (ParseOptionalCustomMetadata()) return true;
+      ExtraComma = true;
     } else {
       // The normal case is one return value.
       // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring
@@ -3051,7 +3068,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
   }
 
   Inst = ReturnInst::Create(Context, RV);
-  return false;
+  return ExtraComma ? InstExtraComma : InstNormal;
 }
 
 

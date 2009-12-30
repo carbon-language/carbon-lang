@@ -316,12 +316,14 @@ namespace llvm {
     bool ParseFunctionBody(Function &Fn);
     bool ParseBasicBlock(PerFunctionState &PFS);
 
-    // Instruction Parsing.
-    bool ParseInstruction(Instruction *&Inst, BasicBlock *BB,
-                          PerFunctionState &PFS);
+    // Instruction Parsing.  Each instruction parsing routine can return with a
+    // normal result, an error result, or return having eaten an extra comma.
+    enum InstResult { InstNormal = 0, InstError = 1, InstExtraComma = 2 };
+    int ParseInstruction(Instruction *&Inst, BasicBlock *BB,
+                         PerFunctionState &PFS);
     bool ParseCmpPredicate(unsigned &Pred, unsigned Opc);
 
-    bool ParseRet(Instruction *&Inst, BasicBlock *BB, PerFunctionState &PFS);
+    int ParseRet(Instruction *&Inst, BasicBlock *BB, PerFunctionState &PFS);
     bool ParseBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseSwitch(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS);
