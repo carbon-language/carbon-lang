@@ -301,17 +301,8 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-
-struct Merge {
-  typedef StmtDeclBitVector_Types::ValTy ValTy;
-
-  void operator()(ValTy& Dst, const ValTy& Src) {
-    Dst.OrDeclBits(Src);
-    Dst.OrBlkExprBits(Src);
-  }
-};
-
-typedef DataflowSolver<LiveVariables, TransferFuncs, Merge> Solver;
+  typedef StmtDeclBitVector_Types::Union Merge;
+  typedef DataflowSolver<LiveVariables, TransferFuncs, Merge> Solver;
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
