@@ -538,7 +538,6 @@ bool LLParser::ParseStandaloneMetadata() {
   LocTy TyLoc;
   PATypeHolder Ty(Type::getVoidTy(Context));
   SmallVector<Value *, 16> Elts;
-  // FIXME: This doesn't make sense here.  Pull braced MD stuff parsing out!
   if (ParseUInt32(MetadataID) ||
       ParseToken(lltok::equal, "expected '=' here") ||
       ParseType(Ty, TyLoc) ||
@@ -1907,7 +1906,6 @@ bool LLParser::ParseValID(ValID &ID) {
   case lltok::exclaim:   // !{...} MDNode, !"foo" MDString
     Lex.Lex();
     
-    // FIXME: This doesn't belong here.
     if (EatIfPresent(lltok::lbrace)) {
       SmallVector<Value*, 16> Elts;
       if (ParseMDNodeVector(Elts) ||
