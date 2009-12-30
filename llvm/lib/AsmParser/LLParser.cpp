@@ -3491,7 +3491,7 @@ bool LLParser::ParseShuffleVector(Instruction *&Inst, PerFunctionState &PFS) {
 
 /// ParsePHI
 ///   ::= 'phi' Type '[' Value ',' Value ']' (',' '[' Value ',' Value ']')*
-bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
+int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Op0, *Op1;
   LocTy TypeLoc = Lex.getLoc();
@@ -3504,6 +3504,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
       ParseToken(lltok::rsquare, "expected ']' in phi value list"))
     return true;
 
+  bool AteExtraComma = false;
   SmallVector<std::pair<Value*, BasicBlock*>, 16> PHIVals;
   while (1) {
     PHIVals.push_back(std::make_pair(Op0, cast<BasicBlock>(Op1)));
@@ -3511,8 +3512,10 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
     if (!EatIfPresent(lltok::comma))
       break;
 
-    if (Lex.getKind() == lltok::MetadataVar)
+    if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
       break;
+    }
 
     if (ParseToken(lltok::lsquare, "expected '[' in phi value list") ||
         ParseValue(Ty, Op0, PFS) ||
@@ -3522,9 +3525,6 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
       return true;
   }
 
-  if (Lex.getKind() == lltok::MetadataVar)
-    if (ParseOptionalCustomMetadata()) return true;
-
   if (!Ty->isFirstClassType())
     return Error(TypeLoc, "phi node must have first class type");
 
@@ -3533,7 +3533,7 @@ bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
   for (unsigned i = 0, e = PHIVals.size(); i != e; ++i)
     PN->addIncoming(PHIVals[i].first, PHIVals[i].second);
   Inst = PN;
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseCall
@@ -3758,7 +3758,7 @@ bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
 
 /// ParseGetElementPtr
 ///   ::= 'getelementptr' 'inbounds'? TypeAndValue (',' TypeAndValue)*
-bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
+int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Val; LocTy Loc, EltLoc;
 
   bool InBounds = EatIfPresent(lltok::kw_inbounds);
@@ -3769,16 +3769,17 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(Loc, "base of getelementptr must be a pointer");
 
   SmallVector<Value*, 16> Indices;
+  bool AteExtraComma = false;
   while (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::MetadataVar)
+    if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
       break;
+    }
     if (ParseTypeAndValue(Val, EltLoc, PFS)) return true;
     if (!isa<IntegerType>(Val->getType()))
       return Error(EltLoc, "getelementptr index must be an integer");
     Indices.push_back(Val);
   }
-  if (Lex.getKind() == lltok::MetadataVar)
-    if (ParseOptionalCustomMetadata()) return true;
 
   if (!GetElementPtrInst::getIndexedType(Ptr->getType(),
                                          Indices.begin(), Indices.end()))
@@ -3786,22 +3787,18 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   Inst = GetElementPtrInst::Create(Ptr, Indices.begin(), Indices.end());
   if (InBounds)
     cast<GetElementPtrInst>(Inst)->setIsInBounds(true);
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseExtractValue
 ///   ::= 'extractvalue' TypeAndValue (',' uint32)+
-bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
+int LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Val; LocTy Loc;
   SmallVector<unsigned, 4> Indices;
-  bool ParsedExtraComma;
+  bool AteExtraComma;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
-      ParseIndexList(Indices, ParsedExtraComma))
+      ParseIndexList(Indices, AteExtraComma))
     return true;
-  if (ParsedExtraComma) {
-    assert(Lex.getKind() == lltok::MetadataVar && "Should only happen for md");
-    if (ParseOptionalCustomMetadata()) return true;
-  }
 
   if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
     return Error(Loc, "extractvalue operand must be array or struct");
@@ -3810,24 +3807,20 @@ bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
                                         Indices.end()))
     return Error(Loc, "invalid indices for extractvalue");
   Inst = ExtractValueInst::Create(Val, Indices.begin(), Indices.end());
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseInsertValue
 ///   ::= 'insertvalue' TypeAndValue ',' TypeAndValue (',' uint32)+
-bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
+int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Val0, *Val1; LocTy Loc0, Loc1;
   SmallVector<unsigned, 4> Indices;
-  bool ParsedExtraComma;
+  bool AteExtraComma;
   if (ParseTypeAndValue(Val0, Loc0, PFS) ||
       ParseToken(lltok::comma, "expected comma after insertvalue operand") ||
       ParseTypeAndValue(Val1, Loc1, PFS) ||
-      ParseIndexList(Indices, ParsedExtraComma))
+      ParseIndexList(Indices, AteExtraComma))
     return true;
-  if (ParsedExtraComma) {
-    assert(Lex.getKind() == lltok::MetadataVar && "Should only happen for md");
-    if (ParseOptionalCustomMetadata()) return true;
-  }
   
   if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
     return Error(Loc0, "extractvalue operand must be array or struct");
@@ -3836,7 +3829,7 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
                                         Indices.end()))
     return Error(Loc0, "invalid indices for insertvalue");
   Inst = InsertValueInst::Create(Val0, Val1, Indices.begin(), Indices.end());
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 //===----------------------------------------------------------------------===//

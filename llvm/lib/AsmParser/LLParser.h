@@ -339,7 +339,7 @@ namespace llvm {
     bool ParseExtractElement(Instruction *&I, PerFunctionState &PFS);
     bool ParseInsertElement(Instruction *&I, PerFunctionState &PFS);
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);
-    bool ParsePHI(Instruction *&I, PerFunctionState &PFS);
+    int ParsePHI(Instruction *&I, PerFunctionState &PFS);
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
     bool ParseAlloc(Instruction *&I, PerFunctionState &PFS,
                     BasicBlock *BB = 0, bool isAlloca = true);
@@ -347,9 +347,9 @@ namespace llvm {
     bool ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseGetResult(Instruction *&I, PerFunctionState &PFS);
-    bool ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
-    bool ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
-    bool ParseInsertValue(Instruction *&I, PerFunctionState &PFS);
+    int ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
+    int ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
+    int ParseInsertValue(Instruction *&I, PerFunctionState &PFS);
     
     bool ResolveForwardRefBlockAddresses(Function *TheFn, 
                              std::vector<std::pair<ValID, GlobalValue*> > &Refs,
