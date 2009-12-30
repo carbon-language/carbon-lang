@@ -2116,9 +2116,6 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in extractvalue constantexpr"))
       return true;
-    // FIXME: THIS ISN'T RIGHT?  WHERE IS THE COMMA?
-    if (Lex.getKind() == lltok::MetadataVar)
-      if (ParseOptionalCustomMetadata()) return true;
 
     if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
       return Error(ID.Loc, "extractvalue operand must be array or struct");
@@ -2141,8 +2138,6 @@ bool LLParser::ParseValID(ValID &ID) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in insertvalue constantexpr"))
       return true;
-    if (Lex.getKind() == lltok::MetadataVar)
-      if (ParseOptionalCustomMetadata()) return true;
     if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
       return Error(ID.Loc, "extractvalue operand must be array or struct");
     if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
