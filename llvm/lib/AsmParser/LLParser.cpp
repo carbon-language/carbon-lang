@@ -1888,7 +1888,7 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
-  case lltok::Metadata: {  // !{...} MDNode, !"foo" MDString
+  case lltok::Metadata:   // !{...} MDNode, !"foo" MDString
     Lex.Lex();
     
     // FIXME: This doesn't belong here.
@@ -1905,20 +1905,17 @@ bool LLParser::ParseValID(ValID &ID) {
 
     // Standalone metadata reference
     // !{ ..., !42, ... }
-    // FIXME: Split MetadataVal into one for MDNode and one for MDString.
-    if (!ParseMDNode(ID.MDNodeVal)) {
+    if (Lex.getKind() == lltok::APSInt) {
+      if (ParseMDNode(ID.MDNodeVal)) return true;
       ID.Kind = ValID::t_MDNode;
       return false;
     }
     
-    // FIXME: This can't work.
-
     // MDString:
     //   ::= '!' STRINGCONSTANT
     if (ParseMDString(ID.MDStringVal)) return true;
     ID.Kind = ValID::t_MDString;
     return false;
-  }
   case lltok::APSInt:
     ID.APSIntVal = Lex.getAPSIntVal();
     ID.Kind = ValID::t_APSInt;
@@ -2473,7 +2470,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   case ValID::t_LocalID: V = PFS.GetVal(ID.UIntVal, Ty, ID.Loc); break;
   case ValID::t_LocalName: V = PFS.GetVal(ID.StrVal, Ty, ID.Loc); break;
   case ValID::t_MDNode: V = ID.MDNodeVal; break;
-  case ValID::t_MDString: V = ID.MDStringVal;
+  case ValID::t_MDString: V = ID.MDStringVal; break;
   case ValID::t_InlineAsm: {
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
     const FunctionType *FTy = 
