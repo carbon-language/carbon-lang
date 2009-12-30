@@ -329,7 +329,7 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
 /// This routine differs only slightly from ActOnCXXNestedNameSpecifier, in
 /// that it contains an extra parameter \p ScopeLookupResult, which provides
 /// the result of name lookup within the scope of the nested-name-specifier
-/// that was computed at template definitino time.
+/// that was computed at template definition time.
 ///
 /// If ErrorRecoveryLookup is true, then this call is used to improve error
 /// recovery.  This means that it should not emit diagnostics, it should
