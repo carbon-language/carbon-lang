@@ -31,6 +31,13 @@ public:
   };
 };
 
+class __class_type_info : public std::type_info { };
+
+class __si_class_type_info : public __class_type_info {
+public:
+  const __class_type_info *__base_type;
+};
+
 template<typename T> const T& to(const std::type_info &info) {
 return static_cast<const T&>(info);
 }
@@ -81,6 +88,10 @@ int f() {
 
   // VMI4 has two bases.
   CHECK_VTABLE(VMI4, vmi_class);
+  
+  CHECK(to<__si_class_type_info>(typeid(SI1)).__base_type == &typeid(A));
+  CHECK(to<__si_class_type_info>(typeid(SI2)).__base_type == &typeid(Empty));
+  CHECK(to<__si_class_type_info>(typeid(SI3)).__base_type == &typeid(Empty));
   
   // Pointers to incomplete classes.
   CHECK_VTABLE(Incomplete *, pointer);
