@@ -81,8 +81,7 @@ namespace llvm {
     std::map<std::string, std::pair<PATypeHolder, LocTy> > ForwardRefTypes;
     std::map<unsigned, std::pair<PATypeHolder, LocTy> > ForwardRefTypeIDs;
     std::vector<PATypeHolder> NumberedTypes;
-    /// MetadataCache - This map keeps track of parsed metadata constants.
-    std::map<unsigned, TrackingVH<MDNode> > MetadataCache;
+    std::vector<TrackingVH<MDNode> > NumberedMetadata;
     std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> > ForwardRefMDNodes;
     SmallVector<std::pair<unsigned, MDNode *>, 2> MDsOnInst;
     struct UpRefRecord {

@@ -478,17 +478,8 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   if (ParseUInt32(MID)) return true;
 
   // Check existing MDNode.
-  std::map<unsigned, TrackingVH<MDNode> >::iterator I = MetadataCache.find(MID);
-  if (I != MetadataCache.end()) {
-    Result = I->second;
-    return false;
-  }
-
-  // Check known forward references.
-  std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
-    FI = ForwardRefMDNodes.find(MID);
-  if (FI != ForwardRefMDNodes.end()) {
-    Result = FI->second.first;
+  if (MID < NumberedMetadata.size() && NumberedMetadata[MID] != 0) {
+    Result = NumberedMetadata[MID];
     return false;
   }
 
@@ -499,6 +490,10 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   Value *V = MDString::get(Context, FwdRefName);
   MDNode *FwdNode = MDNode::get(Context, &V, 1);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
+  
+  if (NumberedMetadata.size() <= MID)
+    NumberedMetadata.resize(MID+1);
+  NumberedMetadata[MID] = FwdNode;
   Result = FwdNode;
   return false;
 }
@@ -553,16 +548,23 @@ bool LLParser::ParseStandaloneMetadata() {
       ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
-  if (MetadataCache.count(MetadataID))
-    return TokError("Metadata id is already used");
-  
   MDNode *Init = MDNode::get(Context, Elts.data(), Elts.size());
-  MetadataCache[MetadataID] = Init;
+  
+  // See if this was forward referenced, if so, handle it.
   std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
     FI->second.first->replaceAllUsesWith(Init);
     ForwardRefMDNodes.erase(FI);
+    
+    assert(NumberedMetadata[MetadataID] == Init && "Tracking VH didn't work");
+  } else {
+    if (MetadataID >= NumberedMetadata.size())
+      NumberedMetadata.resize(MetadataID+1);
+
+    if (NumberedMetadata[MetadataID] != 0)
+      return TokError("Metadata id is already used");
+    NumberedMetadata[MetadataID] = Init;
   }
 
   return false;
