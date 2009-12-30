@@ -213,6 +213,8 @@ namespace llvm {
     // Constants.
     bool ParseValID(ValID &ID);
     bool ConvertGlobalValIDToValue(const Type *Ty, ValID &ID, Constant *&V);
+    bool ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
+                                             Value *&V);
     bool ParseGlobalValue(const Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);

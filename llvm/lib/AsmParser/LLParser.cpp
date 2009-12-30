@@ -2430,6 +2430,30 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
   }
 }
 
+/// ConvertGlobalOrMetadataValIDToValue - Apply a type to a ValID to get a fully
+/// resolved constant or metadata value.
+bool LLParser::ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
+                                                   Value *&V) {
+  switch (ID.Kind) {
+  case ValID::t_MDNode:
+    if (!Ty->isMetadataTy())
+      return Error(ID.Loc, "metadata value must have metadata type");
+    V = ID.MDNodeVal;
+    return false;
+  case ValID::t_MDString:
+    if (!Ty->isMetadataTy())
+      return Error(ID.Loc, "metadata value must have metadata type");
+    V = ID.MDStringVal;
+    return false;
+  default:
+    Constant *C;
+    if (ConvertGlobalValIDToValue(Ty, ID, C)) return true;
+    V = C;
+    return false;
+  }
+}
+  
+
 bool LLParser::ParseGlobalTypeAndValue(Constant *&V) {
   PATypeHolder Type(Type::getVoidTy(Context));
   return ParseType(Type) ||
@@ -2469,8 +2493,6 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   switch (ID.Kind) {
   case ValID::t_LocalID: V = PFS.GetVal(ID.UIntVal, Ty, ID.Loc); break;
   case ValID::t_LocalName: V = PFS.GetVal(ID.StrVal, Ty, ID.Loc); break;
-  case ValID::t_MDNode: V = ID.MDNodeVal; break;
-  case ValID::t_MDString: V = ID.MDStringVal; break;
   case ValID::t_InlineAsm: {
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
     const FunctionType *FTy = 
@@ -2480,12 +2502,8 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1, ID.UIntVal>>1);
     return false;
   }
-  default: {
-    Constant *C;
-    if (ConvertGlobalValIDToValue(Ty, ID, C)) return true;
-    V = C;
-    return false;
-  }
+  default:
+    return ConvertGlobalOrMetadataValIDToValue(Ty, ID, V);
   }
 
   return V == 0;
@@ -3799,30 +3817,19 @@ bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'null' | TypeAndValue
 bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
   do {
-    Value *V = 0;
-    // FIXME: REWRITE.
-    if (Lex.getKind() == lltok::kw_null) {
-      Lex.Lex();
-      V = 0;
-    } else {
-      PATypeHolder Ty(Type::getVoidTy(Context));
-      if (ParseType(Ty)) return true;
-      if (Lex.getKind() == lltok::Metadata) {
-        Lex.Lex();
-        MDNode *Node = 0;
-        if (!ParseMDNodeID(Node))
-          V = Node;
-        else {
-          MDString *MDS = 0;
-          if (ParseMDString(MDS)) return true;
-          V = MDS;
-        }
-      } else {
-        Constant *C;
-        if (ParseGlobalValue(Ty, C)) return true;
-        V = C;
-      }
+    // Null is a special case since it is typeless.
+    if (EatIfPresent(lltok::kw_null)) {
+      Elts.push_back(0);
+      continue;
     }
+    
+    Value *V = 0;
+    PATypeHolder Ty(Type::getVoidTy(Context));
+    ValID ID;
+    if (ParseType(Ty) || ParseValID(ID) ||
+        ConvertGlobalOrMetadataValIDToValue(Ty, ID, V))
+      return true;
+    
     Elts.push_back(V);
   } while (EatIfPresent(lltok::comma));
 
