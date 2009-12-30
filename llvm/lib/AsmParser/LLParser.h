@@ -196,7 +196,7 @@ namespace llvm {
     bool ParseStandaloneMetadata();
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);
-    bool ParseMDNode(MDNode *&Result);
+    bool ParseMDNodeID(MDNode *&Result);
 
     // Type Parsing.
     bool ParseType(PATypeHolder &Result, bool AllowVoid = false);

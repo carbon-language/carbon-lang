@@ -472,7 +472,7 @@ bool LLParser::ParseMDString(MDString *&Result) {
 
 // MDNode:
 //   ::= '!' MDNodeNumber
-bool LLParser::ParseMDNode(MDNode *&Result) {
+bool LLParser::ParseMDNodeID(MDNode *&Result) {
   // !{ ..., !42, ... }
   unsigned MID = 0;
   if (ParseUInt32(MID)) return true;
@@ -522,7 +522,7 @@ bool LLParser::ParseNamedMetadata() {
     
     // FIXME: This rejects MDStrings.  Are they legal in an named MDNode or not?
     MDNode *N = 0;
-    if (ParseMDNode(N)) return true;
+    if (ParseMDNodeID(N)) return true;
     Elts.push_back(N);
   } while (EatIfPresent(lltok::comma));
 
@@ -1077,7 +1077,7 @@ bool LLParser::ParseOptionalCustomMetadata() {
     Lex.Lex();
 
     MDNode *Node;
-    if (ParseMDNode(Node)) return true;
+    if (ParseMDNodeID(Node)) return true;
 
     unsigned MDK = M->getMDKindID(Name.c_str());
     MDsOnInst.push_back(std::make_pair(MDK, Node));
@@ -1906,7 +1906,7 @@ bool LLParser::ParseValID(ValID &ID) {
     // Standalone metadata reference
     // !{ ..., !42, ... }
     if (Lex.getKind() == lltok::APSInt) {
-      if (ParseMDNode(ID.MDNodeVal)) return true;
+      if (ParseMDNodeID(ID.MDNodeVal)) return true;
       ID.Kind = ValID::t_MDNode;
       return false;
     }
@@ -3810,7 +3810,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
       if (Lex.getKind() == lltok::Metadata) {
         Lex.Lex();
         MDNode *Node = 0;
-        if (!ParseMDNode(Node))
+        if (!ParseMDNodeID(Node))
           V = Node;
         else {
           MDString *MDS = 0;
