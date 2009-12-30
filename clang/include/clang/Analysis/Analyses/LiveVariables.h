@@ -70,7 +70,7 @@ public:
 
   LiveVariables(AnalysisContext &AC);
 
-  /// IsLive - Return true if a variable is live at beginning of a
+  /// IsLive - Return true if a variable is live at the end of a
   /// specified block.
   bool isLive(const CFGBlock* B, const VarDecl* D) const;
 
