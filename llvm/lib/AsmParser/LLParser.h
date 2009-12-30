@@ -173,7 +173,14 @@ namespace llvm {
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseOptionalCustomMetadata();
     bool ParseOptionalInfo(unsigned &Alignment);
-    bool ParseIndexList(SmallVectorImpl<unsigned> &Indices);
+    bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
+    bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
+      bool AteExtraComma;
+      if (ParseIndexList(Indices, AteExtraComma)) return true;
+      if (AteExtraComma)
+        return TokError("expected index");
+      return false;
+    }
 
     // Top-Level Entities
     bool ParseTopLevelEntities();

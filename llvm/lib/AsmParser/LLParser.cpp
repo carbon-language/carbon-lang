@@ -1124,16 +1124,27 @@ bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
 }
 
 
+/// ParseIndexList - This parses the index list for an insert/extractvalue
+/// instruction.  This sets AteExtraComma in the case where we eat an extra
+/// comma at the end of the line and find that it is followed by metadata.
+/// Clients that don't allow metadata can call the version of this function that
+/// only takes one argument.
+///
 /// ParseIndexList
 ///    ::=  (',' uint32)+
-bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
+///
+bool LLParser::ParseIndexList(SmallVectorImpl<unsigned> &Indices,
+                              bool &AteExtraComma) {
+  AteExtraComma = false;
+  
   if (Lex.getKind() != lltok::comma)
     return TokError("expected ',' as start of index list");
 
   while (EatIfPresent(lltok::comma)) {
-    // FIXME: TERRIBLE HACK.  Loses comma state.
-    if (Lex.getKind() == lltok::MetadataVar)
-      break;
+    if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
+      return false;
+    }
     unsigned Idx;
     if (ParseUInt32(Idx)) return true;
     Indices.push_back(Idx);
@@ -2803,6 +2814,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
     }
 
     if (ParseInstruction(Inst, BB, PFS)) return true;
+    
     if (EatIfPresent(lltok::comma))
       ParseOptionalCustomMetadata();
 
@@ -3765,11 +3777,14 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Val; LocTy Loc;
   SmallVector<unsigned, 4> Indices;
+  bool ParsedExtraComma;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
-      ParseIndexList(Indices))
+      ParseIndexList(Indices, ParsedExtraComma))
     return true;
-  if (Lex.getKind() == lltok::MetadataVar)
+  if (ParsedExtraComma) {
+    assert(Lex.getKind() == lltok::MetadataVar && "Should only happen for md");
     if (ParseOptionalCustomMetadata()) return true;
+  }
 
   if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
     return Error(Loc, "extractvalue operand must be array or struct");
@@ -3786,14 +3801,17 @@ bool LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Val0, *Val1; LocTy Loc0, Loc1;
   SmallVector<unsigned, 4> Indices;
+  bool ParsedExtraComma;
   if (ParseTypeAndValue(Val0, Loc0, PFS) ||
       ParseToken(lltok::comma, "expected comma after insertvalue operand") ||
       ParseTypeAndValue(Val1, Loc1, PFS) ||
-      ParseIndexList(Indices))
+      ParseIndexList(Indices, ParsedExtraComma))
     return true;
-  if (Lex.getKind() == lltok::MetadataVar)
+  if (ParsedExtraComma) {
+    assert(Lex.getKind() == lltok::MetadataVar && "Should only happen for md");
     if (ParseOptionalCustomMetadata()) return true;
-
+  }
+  
   if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
     return Error(Loc0, "extractvalue operand must be array or struct");
 
