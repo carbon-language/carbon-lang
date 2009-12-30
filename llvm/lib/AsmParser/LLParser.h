@@ -46,7 +46,8 @@ namespace llvm {
       t_EmptyArray,               // No value:  []
       t_Constant,                 // Value in ConstantVal.
       t_InlineAsm,                // Value in StrVal/StrVal2/UIntVal.
-      t_Metadata                  // Value in MetadataVal.
+      t_MDNode,                   // Value in MDNodeVal.
+      t_MDString                  // Value in MDStringVal.
     } Kind;
     
     LLLexer::LocTy Loc;
@@ -55,7 +56,8 @@ namespace llvm {
     APSInt APSIntVal;
     APFloat APFloatVal;
     Constant *ConstantVal;
-    MetadataBase *MetadataVal;
+    MDNode *MDNodeVal;
+    MDString *MDStringVal;
     ValID() : APFloatVal(0.0) {}
     
     bool operator<(const ValID &RHS) const {

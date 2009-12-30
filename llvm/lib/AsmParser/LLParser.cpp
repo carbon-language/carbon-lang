@@ -1408,17 +1408,21 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     if (ParseType(ArgTy, ArgLoc))
       return true;
 
+    // Parse metadata operands to calls (for intrinsics).
     if (Lex.getKind() == lltok::Metadata) {
       if (ParseInlineMetadata(V, PFS))
         return true;
-    } else {
-      if (ParseOptionalAttrs(ArgAttrs1, 0) ||
-          ParseValue(ArgTy, V, PFS) ||
-          // FIXME: Should not allow attributes after the argument, remove this
-          // in LLVM 3.0.
-          ParseOptionalAttrs(ArgAttrs2, 3))
-        return true;
+      ArgList.push_back(ParamInfo(ArgLoc, V, Attribute::None));
+      continue;
     }
+    
+    // Otherwise, handle normal operands.
+    if (ParseOptionalAttrs(ArgAttrs1, 0) ||
+        ParseValue(ArgTy, V, PFS) ||
+        // FIXME: Should not allow attributes after the argument, remove this
+        // in LLVM 3.0.
+        ParseOptionalAttrs(ArgAttrs2, 3))
+      return true;
     ArgList.push_back(ParamInfo(ArgLoc, V, ArgAttrs1|ArgAttrs2));
   }
 
@@ -1924,7 +1928,6 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_LocalName;
     break;
   case lltok::Metadata: {  // !{...} MDNode, !"foo" MDString
-    ID.Kind = ValID::t_Metadata;
     Lex.Lex();
     
     // FIXME: This doesn't belong here.
@@ -1934,20 +1937,25 @@ bool LLParser::ParseValID(ValID &ID) {
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.MetadataVal = MDNode::get(Context, Elts.data(), Elts.size());
+      ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
+      ID.Kind = ValID::t_MDNode;
       return false;
     }
 
     // Standalone metadata reference
     // !{ ..., !42, ... }
     // FIXME: Split MetadataVal into one for MDNode and one for MDString.
-    if (!ParseMDNode((MDNode*&)ID.MetadataVal))
+    if (!ParseMDNode(ID.MDNodeVal)) {
+      ID.Kind = ValID::t_MDNode;
       return false;
+    }
+    
+    // FIXME: This can't work.
 
     // MDString:
     //   ::= '!' STRINGCONSTANT
-    if (ParseMDString((MDString*&)ID.MetadataVal)) return true;
-    ID.Kind = ValID::t_Metadata;
+    if (ParseMDString(ID.MDStringVal)) return true;
+    ID.Kind = ValID::t_MDString;
     return false;
   }
   case lltok::APSInt:
@@ -2393,7 +2401,8 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
 
   switch (ID.Kind) {
   default: llvm_unreachable("Unknown ValID!");
-  case ValID::t_Metadata:
+  case ValID::t_MDNode:
+  case ValID::t_MDString:
     return Error(ID.Loc, "invalid use of metadata");
   case ValID::t_LocalID:
   case ValID::t_LocalName:
@@ -2499,25 +2508,26 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts) {
 
 bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
                                    PerFunctionState &PFS) {
-  if (ID.Kind == ValID::t_LocalID)
-    V = PFS.GetVal(ID.UIntVal, Ty, ID.Loc);
-  else if (ID.Kind == ValID::t_LocalName)
-    V = PFS.GetVal(ID.StrVal, Ty, ID.Loc);
-  else if (ID.Kind == ValID::t_InlineAsm) {
+  switch (ID.Kind) {
+  case ValID::t_LocalID: V = PFS.GetVal(ID.UIntVal, Ty, ID.Loc); break;
+  case ValID::t_LocalName: V = PFS.GetVal(ID.StrVal, Ty, ID.Loc); break;
+  case ValID::t_MDNode: V = ID.MDNodeVal; break;
+  case ValID::t_MDString: V = ID.MDStringVal;
+  case ValID::t_InlineAsm: {
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
     const FunctionType *FTy =
-      PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
+    PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, ID.StrVal2))
       return Error(ID.Loc, "invalid type for inline asm constraint string");
     V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1, ID.UIntVal>>1);
     return false;
-  } else if (ID.Kind == ValID::t_Metadata) {
-    V = ID.MetadataVal;
-  } else {
+  }
+  default: {
     Constant *C;
     if (ConvertGlobalValIDToValue(Ty, ID, C)) return true;
     V = C;
     return false;
+  }
   }
 
   return V == 0;
