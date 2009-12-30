@@ -1100,19 +1100,27 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   return false;
 }
 
-/// ParseOptionalInfo
-///   ::= OptionalInfo (',' OptionalInfo)+
-bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
-
-  // FIXME: Handle customized metadata info attached with an instruction.
-  do {
+/// ParseOptionalCommaAlign
+///   ::= 
+///   ::= ',' align 4
+///
+/// This returns with AteExtraComma set to true if it ate an excess comma at the
+/// end.
+bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
+                                       bool &AteExtraComma) {
+  AteExtraComma = false;
+  while (EatIfPresent(lltok::comma)) {
+    // Metadata at the end is an early exit.
     if (Lex.getKind() == lltok::MetadataVar) {
-      if (ParseInstructionMetadata()) return true;
-    } else if (Lex.getKind() == lltok::kw_align) {
+      AteExtraComma = true;
+      return false;
+    }
+    
+    if (Lex.getKind() == lltok::kw_align) {
       if (ParseOptionalAlignment(Alignment)) return true;
     } else
       return true;
-  } while (EatIfPresent(lltok::comma));
+  }
 
   return false;
 }
@@ -3631,22 +3639,24 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 /// ParseAlloc
 ///   ::= 'malloc' Type (',' TypeAndValue)? (',' OptionalInfo)?
 ///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
-bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
-                          BasicBlock* BB, bool isAlloca) {
+int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
+                         BasicBlock* BB, bool isAlloca) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Size = 0;
   LocTy SizeLoc;
   unsigned Alignment = 0;
   if (ParseType(Ty)) return true;
 
+  bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::kw_align 
-        || Lex.getKind() == lltok::MetadataVar) {
-      if (ParseOptionalInfo(Alignment)) return true;
+    if (Lex.getKind() == lltok::kw_align) {
+      if (ParseOptionalAlignment(Alignment)) return true;
+    } else if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
     } else {
-      if (ParseTypeAndValue(Size, SizeLoc, PFS)) return true;
-      if (EatIfPresent(lltok::comma))
-        if (ParseOptionalInfo(Alignment)) return true;
+      if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
+          ParseOptionalCommaAlign(Alignment, AteExtraComma))
+        return true;
     }
   }
 
@@ -3655,7 +3665,7 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
 
   if (isAlloca) {
     Inst = new AllocaInst(Ty, Size, Alignment);
-    return false;
+    return AteExtraComma ? InstExtraComma : InstNormal;
   }
 
   // Autoupgrade old malloc instruction to malloc call.
@@ -3669,7 +3679,7 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     MallocF = cast<Function>(
        M->getOrInsertFunction("", Type::getInt8PtrTy(Context), IntPtrTy, NULL));
   Inst = CallInst::CreateMalloc(BB, IntPtrTy, Ty, AllocSize, Size, MallocF);
-  return false;
+return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseFree
@@ -3686,36 +3696,35 @@ bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS,
 
 /// ParseLoad
 ///   ::= 'volatile'? 'load' TypeAndValue (',' OptionalInfo)?
-bool LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
-                         bool isVolatile) {
+int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
+                        bool isVolatile) {
   Value *Val; LocTy Loc;
   unsigned Alignment = 0;
-  if (ParseTypeAndValue(Val, Loc, PFS)) return true;
-
-  if (EatIfPresent(lltok::comma))
-    if (ParseOptionalInfo(Alignment)) return true;
+  bool AteExtraComma = false;
+  if (ParseTypeAndValue(Val, Loc, PFS) ||
+      ParseOptionalCommaAlign(Alignment, AteExtraComma))
+    return true;
 
   if (!isa<PointerType>(Val->getType()) ||
       !cast<PointerType>(Val->getType())->getElementType()->isFirstClassType())
     return Error(Loc, "load operand must be a pointer to a first class type");
 
   Inst = new LoadInst(Val, "", isVolatile, Alignment);
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseStore
 ///   ::= 'volatile'? 'store' TypeAndValue ',' TypeAndValue (',' 'align' i32)?
-bool LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
-                          bool isVolatile) {
+int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
+                         bool isVolatile) {
   Value *Val, *Ptr; LocTy Loc, PtrLoc;
   unsigned Alignment = 0;
+  bool AteExtraComma = false;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after store operand") ||
-      ParseTypeAndValue(Ptr, PtrLoc, PFS))
+      ParseTypeAndValue(Ptr, PtrLoc, PFS) ||
+      ParseOptionalCommaAlign(Alignment, AteExtraComma))
     return true;
-
-  if (EatIfPresent(lltok::comma))
-    if (ParseOptionalInfo(Alignment)) return true;
 
   if (!isa<PointerType>(Ptr->getType()))
     return Error(PtrLoc, "store operand must be a pointer");
@@ -3725,7 +3734,7 @@ bool LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
     return Error(Loc, "stored value and pointer type do not match");
 
   Inst = new StoreInst(Val, Ptr, isVolatile, Alignment);
-  return false;
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseGetResult

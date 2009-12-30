@@ -172,7 +172,7 @@ namespace llvm {
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
     bool ParseInstructionMetadata();
-    bool ParseOptionalInfo(unsigned &Alignment);
+    bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
       bool AteExtraComma;
@@ -341,11 +341,11 @@ namespace llvm {
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);
     int ParsePHI(Instruction *&I, PerFunctionState &PFS);
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
-    bool ParseAlloc(Instruction *&I, PerFunctionState &PFS,
+    int ParseAlloc(Instruction *&I, PerFunctionState &PFS,
                     BasicBlock *BB = 0, bool isAlloca = true);
     bool ParseFree(Instruction *&I, PerFunctionState &PFS, BasicBlock *BB);
-    bool ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
-    bool ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
+    int ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
+    int ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseGetResult(Instruction *&I, PerFunctionState &PFS);
     int ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
     int ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
