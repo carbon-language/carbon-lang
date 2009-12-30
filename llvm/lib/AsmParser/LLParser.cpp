@@ -1065,7 +1065,9 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
 
 /// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
-bool LLParser::ParseInstructionMetadata() {
+bool LLParser::
+ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
+                                                 MDNode *> > &Result){
   do {
     if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected metadata after comma");
@@ -1079,7 +1081,7 @@ bool LLParser::ParseInstructionMetadata() {
       return true;
 
     unsigned MDK = M->getMDKindID(Name.c_str());
-    MDsOnInst.push_back(std::make_pair(MDK, Node));
+    Result.push_back(std::make_pair(MDK, Node));
 
     // If this is the end of the list, we're done.
   } while (EatIfPresent(lltok::comma));
@@ -2794,6 +2796,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
 
   // Parse the instructions in this block until we get a terminator.
   Instruction *Inst;
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MetadataOnInst;
   do {
     // This instruction may have three possibilities for a name: a) none
     // specified, b) name specified "%foo =", c) number specified: "%4 =".
@@ -2822,22 +2825,21 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
-        if (ParseInstructionMetadata())
+        if (ParseInstructionMetadata(MetadataOnInst))
           return true;
       break;
     case InstExtraComma:
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
-      if (ParseInstructionMetadata())
+      if (ParseInstructionMetadata(MetadataOnInst))
         return true;
       break;        
     }
 
     // Set metadata attached with this instruction.
-    for (SmallVector<std::pair<unsigned, MDNode *>, 2>::iterator
-           MDI = MDsOnInst.begin(), MDE = MDsOnInst.end(); MDI != MDE; ++MDI)
-      Inst->setMetadata(MDI->first, MDI->second);
-    MDsOnInst.clear();
+    for (unsigned i = 0, e = MetadataOnInst.size(); i != e; ++i)
+      Inst->setMetadata(MetadataOnInst[i].first, MetadataOnInst[i].second);
+    MetadataOnInst.clear();
 
     BB->getInstList().push_back(Inst);
 

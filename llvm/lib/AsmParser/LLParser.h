@@ -83,7 +83,6 @@ namespace llvm {
     std::vector<PATypeHolder> NumberedTypes;
     std::vector<TrackingVH<MDNode> > NumberedMetadata;
     std::map<unsigned, std::pair<TrackingVH<MDNode>, LocTy> > ForwardRefMDNodes;
-    SmallVector<std::pair<unsigned, MDNode *>, 2> MDsOnInst;
     struct UpRefRecord {
       /// Loc - This is the location of the upref.
       LocTy Loc;
@@ -171,7 +170,8 @@ namespace llvm {
     bool ParseOptionalVisibility(unsigned &Visibility);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
-    bool ParseInstructionMetadata();
+    bool ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
+                                                            MDNode *> > &);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
