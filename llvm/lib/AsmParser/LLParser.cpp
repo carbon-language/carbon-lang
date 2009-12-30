@@ -1063,14 +1063,13 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   return false;
 }
 
-/// ParseOptionalCustomMetadata
-///   ::= /* empty */
+/// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
-bool LLParser::ParseOptionalCustomMetadata() {
-  if (Lex.getKind() != lltok::MetadataVar)
-    return false;
+bool LLParser::ParseInstructionMetadata() {
+  do {
+    if (Lex.getKind() != lltok::MetadataVar)
+      return TokError("expected metadata after comma");
 
-  while (1) {
     std::string Name = Lex.getStrVal();
     Lex.Lex();
 
@@ -1083,13 +1082,8 @@ bool LLParser::ParseOptionalCustomMetadata() {
     MDsOnInst.push_back(std::make_pair(MDK, Node));
 
     // If this is the end of the list, we're done.
-    if (!EatIfPresent(lltok::comma))
-      return false;
-
-    // The next value must be a custom metadata id.
-    if (Lex.getKind() != lltok::MetadataVar)
-      return TokError("expected more custom metadata ids");
-  }
+  } while (EatIfPresent(lltok::comma));
+  return false;
 }
 
 /// ParseOptionalAlignment
@@ -1113,7 +1107,7 @@ bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
   // FIXME: Handle customized metadata info attached with an instruction.
   do {
     if (Lex.getKind() == lltok::MetadataVar) {
-      if (ParseOptionalCustomMetadata()) return true;
+      if (ParseInstructionMetadata()) return true;
     } else if (Lex.getKind() == lltok::kw_align) {
       if (ParseOptionalAlignment(Alignment)) return true;
     } else
@@ -2820,16 +2814,13 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
-        if (ParseOptionalCustomMetadata())
+        if (ParseInstructionMetadata())
           return true;
       break;
     case InstExtraComma:
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
-      if (Lex.getKind() != lltok::MetadataVar)
-        return TokError("expected metadata after comma");
-      // Parse it.
-      if (ParseOptionalCustomMetadata())
+      if (ParseInstructionMetadata())
         return true;
       break;        
     }
