@@ -37,8 +37,12 @@ class RTTIBuilder {
   /// BuildVtablePointer - Build the vtable pointer for the given type.
   void BuildVtablePointer(const Type *Ty);
   
-  /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,
-  /// used for pointer types.
+  /// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
+  /// inheritance, according to the Itanium C++ ABI, 2.95p6b.
+  void BuildSIClassTypeInfo(const CXXRecordDecl *RD);
+  
+  /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct, used
+  /// for pointer types.
   void BuildPointerTypeInfo(const PointerType *Ty);
   
   /// BuildPointerToMemberTypeInfo - Build an abi::__pointer_to_member_type_info 
@@ -262,33 +266,6 @@ public:
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), n);
   }
 
-  // FIXME: unify with getTypeInfoLinkage
-  bool DecideExtern(QualType Ty) {
-    // For this type, see if all components are never in an anonymous namespace.
-    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
-      return (DecideExtern(MPT->getPointeeType())
-              && DecideExtern(QualType(MPT->getClass(), 0)));
-    if (const PointerType *PT = Ty->getAs<PointerType>())
-      return DecideExtern(PT->getPointeeType());
-    if (const FunctionType *FT = Ty->getAs<FunctionType>()) {
-      if (DecideExtern(FT->getResultType()) == false)
-        return false;
-      if (const FunctionProtoType *FPT = Ty->getAs<FunctionProtoType>()) {
-        for (unsigned i = 0; i <FPT->getNumArgs(); ++i)
-          if (DecideExtern(FPT->getArgType(i)) == false)
-            return false;
-        for (unsigned i = 0; i <FPT->getNumExceptions(); ++i)
-          if (DecideExtern(FPT->getExceptionType(i)) == false)
-            return false;
-        return true;
-      }
-    }
-    if (const RecordType *RT = Ty->getAs<RecordType>())
-      if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
-        return !RD->isInAnonymousNamespace() && RD->hasLinkage();
-    return true;
-  }
-
   // FIXME: unify with DecideExtern
   bool DecideHidden(QualType Ty) {
     // For this type, see if all components are never hidden.
@@ -316,27 +293,6 @@ public:
     return false;
   }
 
-  llvm::Constant *BuildSimpleType(QualType Ty, const char *vtbl) {
-    llvm::SmallString<256> OutName;
-    CGM.getMangleContext().mangleCXXRTTI(Ty, OutName);
-    llvm::StringRef Name = OutName.str();
-
-    llvm::GlobalVariable *GV;
-    GV = CGM.getModule().getNamedGlobal(Name);
-    if (GV && !GV->isDeclaration())
-      return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
-
-    bool Extern = DecideExtern(Ty);
-    bool Hidden = DecideHidden(Ty);
-
-    Info.push_back(BuildVtableRef(vtbl));
-    Info.push_back(BuildName(Ty, Hidden, Extern));
-    
-    // We always generate these as hidden, only the name isn't hidden.
-    return finish(GV, Name, /*Hidden=*/Extern ? true : false, 
-                  GetLinkageFromExternFlag(Extern));
-  }
-
   /// BuildType - Builds the type info for the given type.
   llvm::Constant *BuildType(QualType Ty) {
     const clang::Type &Type
@@ -357,7 +313,7 @@ public:
       const RecordType *RT = cast<RecordType>(&Type);
       
       const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->getNumBases())
+      if (RD->getNumBases() != 0 && !SimpleInheritance(RD))
         return BuildClassTypeInfo(RD);
 
       // Fall through.
@@ -685,6 +641,35 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
+// CanUseSingleInheritance - Return whether the given record decl has a "single, 
+// public, non-virtual base at offset zero (i.e. the derived class is dynamic 
+// iff the base is)", according to Itanium C++ ABI, 2.95p6b.
+static bool CanUseSingleInheritance(const CXXRecordDecl *RD) {
+  // Check the number of bases.
+  if (RD->getNumBases() != 1)
+    return false;
+  
+  // Get the base.
+  CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin();
+  
+  // Check that the base is not virtual.
+  if (Base->isVirtual())
+    return false;
+  
+  // Check that the base is public.
+  if (Base->getAccessSpecifier() != AS_public)
+    return false;
+  
+  // Check that the class is dynamic iff the base is.
+  const CXXRecordDecl *BaseDecl = 
+    cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+  if (!BaseDecl->isEmpty() && 
+      BaseDecl->isDynamicClass() != RD->isDynamicClass())
+    return false;
+  
+  return true;
+}
+
 void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   const char *VtableName;
 
@@ -721,8 +706,14 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     if (!RD->getNumBases()) {
       // abi::__class_type_info
       VtableName = "_ZTVN10__cxxabiv117__class_type_infoE";
-      break;
+    } else if (CanUseSingleInheritance(RD)) {
+      // abi::__si_class_type_info;
+      VtableName = "_ZTVN10__cxxabiv120__si_class_type_infoE";
+    } else {
+      assert(false && "Should not get here!");
     }
+    
+    break;
   }
 
   case Type::Pointer:
@@ -812,6 +803,11 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
       // We don't need to emit any fields.
       break;
     }
+    
+    if (CanUseSingleInheritance(RD)) {
+      BuildSIClassTypeInfo(RD);
+      break;
+    }
   }
       
   case Type::Pointer:
@@ -856,6 +852,15 @@ static unsigned DetermineQualifierFlags(Qualifiers Quals) {
     Flags |= RTTIBuilder::PTI_Restrict;
 
   return Flags;
+}
+
+/// BuildSIClassTypeInfo - Build an abi::__si_class_type_info, used for single
+/// inheritance, according to the Itanium C++ ABI, 2.95p6b.
+void RTTIBuilder::BuildSIClassTypeInfo(const CXXRecordDecl *RD) {
+  // Itanium C++ ABI 2.9.5p6b:
+  // It adds to abi::__class_type_info a single member pointing to the 
+  // type_info structure for the base type,
+  Info.push_back(RTTIBuilder(CGM).BuildType(RD->bases_begin()->getType()));
 }
 
 /// BuildPointerTypeInfo - Build an abi::__pointer_type_info struct,

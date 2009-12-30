@@ -52,7 +52,7 @@ struct B : A {
 void B::f() { }
 
 // C is an incomplete class type, so any direct or indirect pointer types should have 
-// internal linkage, as should the type info for C itself (FIXME).
+// internal linkage, as should the type info for C itself.
 struct C;
 
 void t1() {
