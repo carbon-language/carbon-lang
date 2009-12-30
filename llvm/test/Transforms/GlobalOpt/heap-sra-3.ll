@@ -8,7 +8,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 
 define void @bar(i64 %Size) nounwind noinline {
 entry:
-  %mallocsize = mul i64 8, %Size, ; <i64> [#uses=1]
+  %mallocsize = mul i64 8, %Size ; <i64> [#uses=1]
 ; CHECK: mul i64 %Size, 4
   %malloccall = tail call i8* @malloc(i64 %mallocsize) ; <i8*> [#uses=1]
   %.sub = bitcast i8* %malloccall to %struct.foo* ; <%struct.foo*> [#uses=1]

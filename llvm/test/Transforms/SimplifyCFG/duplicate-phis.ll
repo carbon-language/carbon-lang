@@ -6,7 +6,7 @@
 define i32 @foo(i1 %t) {
 entry:
   call void @bar()
-  br i1 %t, label %true, label %false,
+  br i1 %t, label %true, label %false
 true:
   call void @bar()
   br label %false
