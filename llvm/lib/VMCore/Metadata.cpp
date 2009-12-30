@@ -87,8 +87,10 @@ void MDNodeElement::allUsesReplacedWith(Value *NV) {
 
 /// ~MDNode - Destroy MDNode.
 MDNode::~MDNode() {
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-  pImpl->MDNodeSet.RemoveNode(this);
+  if (!isNotUniqued()) {
+    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+    pImpl->MDNodeSet.RemoveNode(this);
+  }
   delete [] Operands;
   Operands = NULL;
 }
@@ -97,6 +99,7 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = NumVals;
+  // FIXME: Coallocate the operand list.  These have fixed arity.
   Operands = new MDNodeElement[NumOperands];
     
   for (unsigned i = 0; i != NumVals; ++i) 
@@ -146,25 +149,40 @@ void MDNode::replaceElement(MDNodeElement *Op, Value *To) {
   if (From == To)
     return;
 
+  // Update the operand.
+  Op->set(To, this);
+
+  // If this node is already not being uniqued (because one of the operands
+  // already went to null), then there is nothing else to do here.
+  if (isNotUniqued()) return;
+  
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
 
   // Remove "this" from the context map.  FoldingSet doesn't have to reprofile
   // this node to remove it, so we don't care what state the operands are in.
   pImpl->MDNodeSet.RemoveNode(this);
 
-  // Update the operand.
-  Op->set(To, this);
-
-  // Insert updated "this" into the context's folding node set.
-  // If a node with same element list already exist then before inserting 
-  // updated "this" into the folding node set, replace all uses of existing 
-  // node with updated "this" node.
+  // If we are dropping an argument to null, we choose to not unique the MDNode
+  // anymore.  This commonly occurs during destruction, and uniquing these
+  // brings little reuse.
+  if (To == 0) {
+    setIsNotUniqued();
+    return;
+  }
+  
+  // Now that the node is out of the folding set, get ready to reinsert it.
+  // First, check to see if another node with the same operands already exists
+  // in the set.  If it doesn't exist, this returns the position to insert it.
   FoldingSetNodeID ID;
   Profile(ID);
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
 
   if (N) {
+    // FIXME:
+    // If it already exists in the set, we don't reinsert it, we just claim it
+    // isn't uniqued.
+    
     N->replaceAllUsesWith(this);
     delete N;
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);

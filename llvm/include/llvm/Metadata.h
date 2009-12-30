@@ -85,8 +85,6 @@ class MDNodeElement;
   
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
-/// These contain a list of the values that represent the metadata. 
-/// MDNode is always unnamed.
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
@@ -97,7 +95,14 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   
   // Subclass data enums.
   enum {
-    FunctionLocalBit = 1
+    /// FunctionLocalBit - This bit is set if this MDNode is function local.
+    /// This is true when it (potentially transitively) contains a reference to
+    /// something in a function, like an argument, basicblock, or instruction.
+    FunctionLocalBit = 1 << 0,
+    
+    /// NotUniquedBit - This is set on MDNodes that are not uniqued because they
+    /// have a null perand.
+    NotUniquedBit    = 1 << 1
   };
   
   // Replace each instance of F from the element list of this node with T.
@@ -138,6 +143,13 @@ public:
     return V->getValueID() == MDNodeVal;
   }
 private:
+  bool isNotUniqued() const { 
+    return (getSubclassDataFromValue() & NotUniquedBit) != 0;
+  }
+  void setIsNotUniqued() {
+    setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
+  }
+  
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // any future subclasses cannot accidentally use it.
   void setValueSubclassData(unsigned short D) {
