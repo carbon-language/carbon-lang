@@ -283,8 +283,6 @@ namespace llvm {
       return ParseTypeAndBasicBlock(BB, Loc, PFS);
     }
 
-    bool ParseInlineMetadata(Value *&V, PerFunctionState &PFS);
-
     struct ParamInfo {
       LocTy Loc;
       Value *V;

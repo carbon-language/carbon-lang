@@ -568,37 +568,6 @@ bool LLParser::ParseStandaloneMetadata() {
   return false;
 }
 
-/// ParseInlineMetadata:
-///   !{type %instr}
-///   !{...} MDNode
-///   !"foo" MDString
-bool LLParser::ParseInlineMetadata(Value *&V, PerFunctionState &PFS) {
-  assert(Lex.getKind() == lltok::Metadata && "Only for Metadata");
-  V = 0;
-
-  Lex.Lex();
-  if (EatIfPresent(lltok::lbrace)) {
-    if (ParseTypeAndValue(V, PFS) ||
-        ParseToken(lltok::rbrace, "expected end of metadata node"))
-      return true;
-
-    V = MDNode::get(Context, &V, 1);
-    return false;
-  }
-
-  // FIXME: This can't possibly work at all.  r90497
-  
-  // Standalone metadata reference
-  // !{ ..., !42, ... }
-  if (!ParseMDNode((MDNode *&)V))
-    return false;
-
-  // MDString:
-  // '!' STRINGCONSTANT
-  if (ParseMDString((MDString *&)V)) return true;
-  return false;
-}
-
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalVisibility 'alias' OptionalLinkage Aliasee
 /// Aliasee
@@ -1408,14 +1377,6 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
     if (ParseType(ArgTy, ArgLoc))
       return true;
 
-    // Parse metadata operands to calls (for intrinsics).
-    if (Lex.getKind() == lltok::Metadata) {
-      if (ParseInlineMetadata(V, PFS))
-        return true;
-      ArgList.push_back(ParamInfo(ArgLoc, V, Attribute::None));
-      continue;
-    }
-    
     // Otherwise, handle normal operands.
     if (ParseOptionalAttrs(ArgAttrs1, 0) ||
         ParseValue(ArgTy, V, PFS) ||
@@ -2515,8 +2476,8 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   case ValID::t_MDString: V = ID.MDStringVal;
   case ValID::t_InlineAsm: {
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
-    const FunctionType *FTy =
-    PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
+    const FunctionType *FTy = 
+      PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, ID.StrVal2))
       return Error(ID.Loc, "invalid type for inline asm constraint string");
     V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1, ID.UIntVal>>1);
