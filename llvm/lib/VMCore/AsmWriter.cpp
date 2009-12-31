@@ -57,9 +57,11 @@ static const Module *getModuleFromVal(const Value *V) {
     const Function *M = I->getParent() ? I->getParent()->getParent() : 0;
     return M ? M->getParent() : 0;
   }
-
+  
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
+  if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
+    return NMD->getParent();
   return 0;
 }
 
@@ -2091,13 +2093,6 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     SlotTracker SlotTable(GV->getParent());
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
-  } else if (const MDString *MDS = dyn_cast<MDString>(this)) {
-    TypePrinting TypePrinter;
-    TypePrinter.print(MDS->getType(), OS);
-    OS << ' ';
-    OS << "!\"";
-    PrintEscapedString(MDS->getString(), OS);
-    OS << '"';
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     SlotTracker SlotTable(N);
     TypePrinting TypePrinter;
@@ -2123,10 +2118,8 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     TypePrinter.print(C->getType(), OS);
     OS << ' ';
     WriteConstantInt(OS, C, TypePrinter, 0);
-  } else if (const Argument *A = dyn_cast<Argument>(this)) {
-    WriteAsOperand(OS, this, true,
-                   A->getParent() ? A->getParent()->getParent() : 0);
-  } else if (isa<InlineAsm>(this)) {
+  } else if (isa<InlineAsm>(this) || isa<MDString>(this) ||
+             isa<Argument>(this)) {
     WriteAsOperand(OS, this, true, 0);
   } else {
     // Otherwise we don't know what it is. Call the virtual function to
