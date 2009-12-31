@@ -483,7 +483,7 @@ private:
   unsigned fNext;
 
   /// mdnMap - Map for MDNodes.
-  ValueMap mdnMap;
+  DenseMap<const MDNode*, unsigned> mdnMap;
   unsigned mdnNext;
 public:
   /// Construct from a module
@@ -510,10 +510,11 @@ public:
   void purgeFunction();
 
   /// MDNode map iterators.
-  ValueMap::iterator mdnBegin() { return mdnMap.begin(); }
-  ValueMap::iterator mdnEnd() { return mdnMap.end(); }
-  unsigned mdnSize() const { return mdnMap.size(); }
-  bool mdnEmpty() const { return mdnMap.empty(); }
+  typedef DenseMap<const MDNode*, unsigned>::iterator mdn_iterator;
+  mdn_iterator mdn_begin() { return mdnMap.begin(); }
+  mdn_iterator mdn_end() { return mdnMap.end(); }
+  unsigned mdn_size() const { return mdnMap.size(); }
+  bool mdn_empty() const { return mdnMap.empty(); }
 
   /// This function does the actual initialization.
   inline void initialize();
@@ -694,13 +695,13 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   return MI == mMap.end() ? -1 : (int)MI->second;
 }
 
-/// getGlobalSlot - Get the slot number of a MDNode.
+/// getMetadataSlot - Get the slot number of a MDNode.
 int SlotTracker::getMetadataSlot(const MDNode *N) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
   // Find the type plane in the module map
-  ValueMap::iterator MI = mdnMap.find(N);
+  mdn_iterator MI = mdnMap.find(N);
   return MI == mdnMap.end() ? -1 : (int)MI->second;
 }
 
@@ -754,7 +755,7 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   if (N->isFunctionLocal())
     return;
 
-  ValueMap::iterator I = mdnMap.find(N);
+  mdn_iterator I = mdnMap.find(N);
   if (I != mdnMap.end())
     return;
 
@@ -1366,7 +1367,7 @@ void AssemblyWriter::printModule(const Module *M) {
     printNamedMDNode(I);
 
   // Output metadata.
-  if (!Machine.mdnEmpty()) {
+  if (!Machine.mdn_empty()) {
     Out << '\n';
     writeAllMDNodes();
   }
@@ -2003,9 +2004,9 @@ static void WriteMDNodeComment(const MDNode *Node,
 
 void AssemblyWriter::writeAllMDNodes() {
   SmallVector<const MDNode *, 16> Nodes;
-  Nodes.resize(Machine.mdnSize());
-  for (SlotTracker::ValueMap::iterator I =
-       Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I)
+  Nodes.resize(Machine.mdn_size());
+  for (SlotTracker::mdn_iterator I = Machine.mdn_begin(), E = Machine.mdn_end();
+       I != E; ++I)
     Nodes[I->second] = cast<MDNode>(I->first);
   
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
