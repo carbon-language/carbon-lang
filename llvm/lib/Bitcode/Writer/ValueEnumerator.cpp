@@ -78,6 +78,8 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());
 
+  SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
+
   // Enumerate types used by function bodies and argument lists.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
 
@@ -85,7 +87,6 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
          I != E; ++I)
       EnumerateType(I->getType());
 
-    SmallVector<std::pair<unsigned, MDNode*>, 2> MDs;
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
@@ -229,13 +230,13 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   }
 
   // Add the value.
+  assert(isa<MDString>(MD) && "Unknown metadata kind");
   MDValues.push_back(std::make_pair(MD, 1U));
   MDValueID = MDValues.size();
 }
 
 void ValueEnumerator::EnumerateValue(const Value *V) {
-  assert(V->getType() != Type::getVoidTy(V->getContext()) &&
-         "Can't insert void values!");
+  assert(!V->getType()->isVoidTy() && "Can't insert void values!");
   if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
     return EnumerateMetadata(MB);
 
