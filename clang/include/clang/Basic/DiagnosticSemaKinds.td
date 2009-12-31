@@ -497,6 +497,9 @@ def err_covariant_return_ambiguous_derived_to_base_conv : Error<
 def err_covariant_return_not_derived : Error<
   "return type of virtual function %0 is not covariant with the return type of "
   "the function it overrides (%1 is not derived from %2)">;
+def err_covariant_return_incomplete : Error<
+  "return type of virtual function %0 is not covariant with the return type of "
+  "the function it overrides (%1 is incomplete)">;
 def err_covariant_return_type_different_qualifications : Error<
   "return type of virtual function %0 is not covariant with the return type of "
   "the function it overrides (%1 has different qualifiers than %2)">;

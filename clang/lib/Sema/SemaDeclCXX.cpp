@@ -5528,6 +5528,15 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
     return true;
   }
 
+  // C++ [class.virtual]p6:
+  //   If the return type of D::f differs from the return type of B::f, the 
+  //   class type in the return type of D::f shall be complete at the point of
+  //   declaration of D::f or shall be the class type D.
+  if (RequireCompleteType(New->getLocation(), NewClassTy, 
+                          PDiag(diag::err_covariant_return_incomplete)
+                            << New->getDeclName()))
+    return true;
+
   if (!Context.hasSameUnqualifiedType(NewClassTy, OldClassTy)) {
     // Check if the new class derives from the old class.
     if (!IsDerivedFrom(NewClassTy, OldClassTy)) {

@@ -104,6 +104,35 @@ namespace T7 {
   };
 }
 
+namespace T8 {
+  struct a { };
+  struct b; // expected-note {{forward declaration of 'struct T8::b'}}
+  
+  class A {
+    virtual a *f();
+  };
+  
+  class B : A {
+    b* f(); // expected-error {{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('struct T8::b' is incomplete)}}
+  };
+}
+
+namespace T9 {
+  struct a { };
+  
+  template<typename T> struct b : a {
+    int a[sizeof(T) ? -1 : -1]; // expected-error {{array size is negative}}
+  };
+  
+  class A {
+    virtual a *f();
+  };
+  
+  class B : A {
+    virtual b<int> *f(); // expected-note {{in instantiation of template class 'struct T9::b<int>' requested here}}
+  };
+}
+
 // PR5656
 class X0 {
   virtual void f0();
@@ -149,4 +178,22 @@ struct Bar3 : Foo3 {
 void test3() {
   Bar3<int> b3i; // okay
   Bar3<float> b3f; // expected-error{{is an abstract class}}
+}
+
+// 5920
+namespace PR5920 {
+  class Base {};
+
+  template <typename T>
+  class Derived : public Base {};
+
+  class Foo {
+   public:
+    virtual Base* Method();
+  };
+
+  class Bar : public Foo {
+   public:
+    virtual Derived<int>* Method();
+  };
 }
