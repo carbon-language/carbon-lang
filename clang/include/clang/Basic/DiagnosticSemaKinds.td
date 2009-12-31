@@ -2552,6 +2552,11 @@ def err_unknown_typename_suggest : Error<
   "unknown type name %0; did you mean %1?">;
 def err_unknown_nested_typename_suggest : Error<
   "no type named %0 in %1; did you mean %2?">;
+def err_no_member_suggest : Error<"no member named %0 in %1; did you mean %2?">;
+def err_undeclared_use_suggest : Error<
+  "use of undeclared %0; did you mean %1?">;
+def err_undeclared_var_use_suggest : Error<
+  "use of undeclared identifier %0; did you mean %1?">;
 
 }
 

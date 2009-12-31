@@ -879,28 +879,25 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
 /// Diagnose an empty lookup.
 ///
 /// \return false if new lookup candidates were found
-bool Sema::DiagnoseEmptyLookup(const CXXScopeSpec &SS,
+bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
                                LookupResult &R) {
   DeclarationName Name = R.getLookupName();
 
-  // We don't know how to recover from bad qualified lookups.
-  if (!SS.isEmpty()) {
-    Diag(R.getNameLoc(), diag::err_no_member)
-      << Name << computeDeclContext(SS, false)
-      << SS.getRange();
-    return true;
-  }
-
   unsigned diagnostic = diag::err_undeclared_var_use;
+  unsigned diagnostic_suggest = diag::err_undeclared_var_use_suggest;
   if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
       Name.getNameKind() == DeclarationName::CXXLiteralOperatorName ||
-      Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
+      Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
     diagnostic = diag::err_undeclared_use;
+    diagnostic_suggest = diag::err_undeclared_use_suggest;
+  }
 
-  // Fake an unqualified lookup.  This is useful when (for example)
-  // the original lookup would not have found something because it was
-  // a dependent name.
-  for (DeclContext *DC = CurContext; DC; DC = DC->getParent()) {
+  // If the original lookup was an unqualified lookup, fake an
+  // unqualified lookup.  This is useful when (for example) the
+  // original lookup would not have found something because it was a
+  // dependent name.
+  for (DeclContext *DC = SS.isEmpty()? CurContext : 0;
+       DC; DC = DC->getParent()) {
     if (isa<CXXRecordDecl>(DC)) {
       LookupQualifiedName(R, DC);
 
@@ -931,6 +928,33 @@ bool Sema::DiagnoseEmptyLookup(const CXXScopeSpec &SS,
         return false;
       }
     }
+  }
+
+  // We didn't find anything, so try to correct for a typo.
+  if (S && CorrectTypo(R, S, &SS) && 
+      (isa<ValueDecl>(*R.begin()) || isa<TemplateDecl>(*R.begin()))) {
+    if (SS.isEmpty())
+      Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
+        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                              R.getLookupName().getAsString());
+    else 
+      Diag(R.getNameLoc(), diag::err_no_member_suggest)
+        << Name << computeDeclContext(SS, false) << R.getLookupName()
+        << SS.getRange()
+        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                              R.getLookupName().getAsString());
+
+    // Tell the callee to try to recover.
+    return false;
+  }
+
+  // Emit a special diagnostic for failed member lookups.
+  // FIXME: computing the declaration context might fail here (?)
+  if (!SS.isEmpty()) {
+    Diag(R.getNameLoc(), diag::err_no_member)
+      << Name << computeDeclContext(SS, false)
+      << SS.getRange();
+    return true;
   }
 
   // Give up, we can't recover.
@@ -1010,7 +1034,7 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // If this name wasn't predeclared and if this is not a function
     // call, diagnose the problem.
     if (R.empty()) {
-      if (DiagnoseEmptyLookup(SS, R))
+      if (DiagnoseEmptyLookup(S, SS, R))
         return ExprError();
 
       assert(!R.empty() &&

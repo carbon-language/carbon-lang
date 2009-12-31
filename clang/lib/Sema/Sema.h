@@ -1209,8 +1209,7 @@ public:
                           VisibleDeclConsumer &Consumer);
 
   bool CorrectTypo(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
-                        bool AllowBuiltinCreation = false,
-                        bool EnteringContext = false);
+                   bool EnteringContext = false);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
@@ -1458,7 +1457,7 @@ public:
                                              bool HasTrailingLParen,
                                              bool IsAddressOfOperand);
 
-  bool DiagnoseEmptyLookup(const CXXScopeSpec &SS, LookupResult &R);
+  bool DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS, LookupResult &R);
 
   OwningExprResult LookupInObjCMethod(LookupResult &R,
                                       Scope *S,

@@ -2134,11 +2134,14 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
 /// \param SS the nested-name-specifier that precedes the name we're
 /// looking for, if present.
 ///
+/// \param EnteringContext whether we're entering the context described by 
+/// the nested-name-specifier SS.
+///
 /// \returns true if the typo was corrected, in which case the \p Res
 /// structure will contain the results of name lookup for the
 /// corrected name. Otherwise, returns false.
 bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
-                       bool AllowBuiltinCreation, bool EnteringContext) {
+                       bool EnteringContext) {
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
   if (!Typo)
@@ -2190,6 +2193,12 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
   // success if we found something that was not ambiguous.
   Res.clear();
   Res.setLookupName(BestName);
-  LookupParsedName(Res, S, SS, AllowBuiltinCreation, EnteringContext);
-  return Res.getResultKind() != LookupResult::NotFound && !Res.isAmbiguous();
+  LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, EnteringContext);
+
+  if (Res.isAmbiguous()) {
+    Res.suppressDiagnostics();
+    return false;
+  }
+
+  return Res.getResultKind() != LookupResult::NotFound;
 }

@@ -53,7 +53,8 @@ void outer_shadowing_test() {
 void g18(void) {
   extern int g19;
 }
-int *p=&g19; // expected-error{{use of undeclared identifier 'g19'}}
+int *p=&g19; // expected-error{{use of undeclared identifier 'g19'}} \
+             // expected-warning{{incompatible pointer types}}
 
 // PR3645
 static int a;
