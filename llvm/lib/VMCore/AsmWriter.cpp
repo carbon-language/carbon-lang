@@ -751,7 +751,8 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
 void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   assert(N && "Can't insert a null Value into SlotTracker!");
 
-  // Don't insert if N is a function-local metadata.
+  // Don't insert if N is a function-local metadata, these are always printed
+  // inline.
   if (N->isFunctionLocal())
     return;
 
@@ -762,12 +763,10 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   unsigned DestSlot = mdnNext++;
   mdnMap[N] = DestSlot;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    const Value *TV = N->getOperand(i);
-    if (TV)
-      if (const MDNode *N2 = dyn_cast<MDNode>(TV))
-        CreateMetadataSlot(N2);
-  }
+  // Recursively add any MDNodes referenced by operands.
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    if (const MDNode *Op = dyn_cast_or_null<MDNode>(N->getOperand(i)))
+      CreateMetadataSlot(Op);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1217,7 +1216,6 @@ public:
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
-    // FIXME: Provide MDPrinter
     if (M)
       M->getMDKindNames(MDNames);
   }
@@ -1996,8 +1994,7 @@ void AssemblyWriter::writeAllMDNodes() {
   
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     Out << '!' << i << " = metadata ";
-    const MDNode *Node = Nodes[i];
-    printMDNodeBody(Node);
+    printMDNodeBody(Nodes[i]);
   }
 }
 
