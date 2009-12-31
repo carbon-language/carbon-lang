@@ -474,9 +474,6 @@ private:
   const Function* TheFunction;
   bool FunctionProcessed;
 
-  /// TheMDNode - The MDNode for which we are holding slot numbers.
-  const MDNode *TheMDNode;
-
   /// mMap - The TypePlanes map for the module level data.
   ValueMap mMap;
   unsigned mNext;
@@ -493,8 +490,6 @@ public:
   explicit SlotTracker(const Module *M);
   /// Construct from a function, starting out in incorp state.
   explicit SlotTracker(const Function *F);
-  /// Construct from a mdnode.
-  explicit SlotTracker(const MDNode *N);
 
   /// Return the slot number of the specified value in it's type
   /// plane.  If something is not in the SlotTracker, return -1.
@@ -541,9 +536,6 @@ private:
   /// Add all of the functions arguments, basic blocks, and instructions.
   void processFunction();
 
-  /// Add all MDNode operands.
-  void processMDNode();
-
   SlotTracker(const SlotTracker &);  // DO NOT IMPLEMENT
   void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
 };
@@ -582,7 +574,7 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
-  : TheModule(M), TheFunction(0), FunctionProcessed(false), TheMDNode(0),
+  : TheModule(M), TheFunction(0), FunctionProcessed(false), 
     mNext(0), fNext(0),  mdnNext(0) {
 }
 
@@ -590,13 +582,7 @@ SlotTracker::SlotTracker(const Module *M)
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
-    TheMDNode(0), mNext(0), fNext(0), mdnNext(0) {
-}
-
-// Constructor to handle single MDNode.
-SlotTracker::SlotTracker(const MDNode *C)
-  : TheModule(0), TheFunction(0), FunctionProcessed(false), TheMDNode(C),
-     mNext(0), fNext(0),  mdnNext(0) {
+    mNext(0), fNext(0), mdnNext(0) {
 }
 
 inline void SlotTracker::initialize() {
@@ -607,9 +593,6 @@ inline void SlotTracker::initialize() {
 
   if (TheFunction && !FunctionProcessed)
     processFunction();
-
-  if (TheMDNode)
-    processMDNode();
 }
 
 // Iterate through all the global variables, functions, and global
@@ -662,7 +645,7 @@ void SlotTracker::processFunction() {
 
   ST_DEBUG("Inserting Instructions:\n");
 
-  SmallVector<std::pair<unsigned, MDNode*>, 2> MDForInst;
+  SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
 
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
@@ -682,25 +665,16 @@ void SlotTracker::processFunction() {
             CreateMetadataSlot(N);
 
       // Process metadata attached with this instruction.
-      MDForInst.clear();
       I->getAllMetadata(MDForInst);
       for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
         CreateMetadataSlot(MDForInst[i].second);
+      MDForInst.clear();
     }
   }
 
   FunctionProcessed = true;
 
   ST_DEBUG("end processFunction!\n");
-}
-
-/// processMDNode - Process TheMDNode.
-void SlotTracker::processMDNode() {
-  ST_DEBUG("begin processMDNode!\n");
-  mdnNext = 0;
-  CreateMetadataSlot(TheMDNode);
-  TheMDNode = 0;
-  ST_DEBUG("end processMDNode!\n");
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
@@ -812,97 +786,36 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
 static const char *getPredicateText(unsigned predicate) {
   const char * pred = "unknown";
   switch (predicate) {
-    case FCmpInst::FCMP_FALSE: pred = "false"; break;
-    case FCmpInst::FCMP_OEQ:   pred = "oeq"; break;
-    case FCmpInst::FCMP_OGT:   pred = "ogt"; break;
-    case FCmpInst::FCMP_OGE:   pred = "oge"; break;
-    case FCmpInst::FCMP_OLT:   pred = "olt"; break;
-    case FCmpInst::FCMP_OLE:   pred = "ole"; break;
-    case FCmpInst::FCMP_ONE:   pred = "one"; break;
-    case FCmpInst::FCMP_ORD:   pred = "ord"; break;
-    case FCmpInst::FCMP_UNO:   pred = "uno"; break;
-    case FCmpInst::FCMP_UEQ:   pred = "ueq"; break;
-    case FCmpInst::FCMP_UGT:   pred = "ugt"; break;
-    case FCmpInst::FCMP_UGE:   pred = "uge"; break;
-    case FCmpInst::FCMP_ULT:   pred = "ult"; break;
-    case FCmpInst::FCMP_ULE:   pred = "ule"; break;
-    case FCmpInst::FCMP_UNE:   pred = "une"; break;
-    case FCmpInst::FCMP_TRUE:  pred = "true"; break;
-    case ICmpInst::ICMP_EQ:    pred = "eq"; break;
-    case ICmpInst::ICMP_NE:    pred = "ne"; break;
-    case ICmpInst::ICMP_SGT:   pred = "sgt"; break;
-    case ICmpInst::ICMP_SGE:   pred = "sge"; break;
-    case ICmpInst::ICMP_SLT:   pred = "slt"; break;
-    case ICmpInst::ICMP_SLE:   pred = "sle"; break;
-    case ICmpInst::ICMP_UGT:   pred = "ugt"; break;
-    case ICmpInst::ICMP_UGE:   pred = "uge"; break;
-    case ICmpInst::ICMP_ULT:   pred = "ult"; break;
-    case ICmpInst::ICMP_ULE:   pred = "ule"; break;
+  case FCmpInst::FCMP_FALSE: pred = "false"; break;
+  case FCmpInst::FCMP_OEQ:   pred = "oeq"; break;
+  case FCmpInst::FCMP_OGT:   pred = "ogt"; break;
+  case FCmpInst::FCMP_OGE:   pred = "oge"; break;
+  case FCmpInst::FCMP_OLT:   pred = "olt"; break;
+  case FCmpInst::FCMP_OLE:   pred = "ole"; break;
+  case FCmpInst::FCMP_ONE:   pred = "one"; break;
+  case FCmpInst::FCMP_ORD:   pred = "ord"; break;
+  case FCmpInst::FCMP_UNO:   pred = "uno"; break;
+  case FCmpInst::FCMP_UEQ:   pred = "ueq"; break;
+  case FCmpInst::FCMP_UGT:   pred = "ugt"; break;
+  case FCmpInst::FCMP_UGE:   pred = "uge"; break;
+  case FCmpInst::FCMP_ULT:   pred = "ult"; break;
+  case FCmpInst::FCMP_ULE:   pred = "ule"; break;
+  case FCmpInst::FCMP_UNE:   pred = "une"; break;
+  case FCmpInst::FCMP_TRUE:  pred = "true"; break;
+  case ICmpInst::ICMP_EQ:    pred = "eq"; break;
+  case ICmpInst::ICMP_NE:    pred = "ne"; break;
+  case ICmpInst::ICMP_SGT:   pred = "sgt"; break;
+  case ICmpInst::ICMP_SGE:   pred = "sge"; break;
+  case ICmpInst::ICMP_SLT:   pred = "slt"; break;
+  case ICmpInst::ICMP_SLE:   pred = "sle"; break;
+  case ICmpInst::ICMP_UGT:   pred = "ugt"; break;
+  case ICmpInst::ICMP_UGE:   pred = "uge"; break;
+  case ICmpInst::ICMP_ULT:   pred = "ult"; break;
+  case ICmpInst::ICMP_ULE:   pred = "ule"; break;
   }
   return pred;
 }
 
-static void WriteMDNodeComment(const MDNode *Node,
-			       formatted_raw_ostream &Out) {
-  if (Node->getNumOperands() < 1)
-    return;
-  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));
-  if (!CI) return;
-  unsigned Val = CI->getZExtValue();
-  unsigned Tag = Val & ~LLVMDebugVersionMask;
-  if (Val < LLVMDebugVersion)
-    return;
-
-  Out.PadToColumn(50);
-  if (Tag == dwarf::DW_TAG_auto_variable)
-    Out << "; [ DW_TAG_auto_variable ]";
-  else if (Tag == dwarf::DW_TAG_arg_variable)
-    Out << "; [ DW_TAG_arg_variable ]";
-  else if (Tag == dwarf::DW_TAG_return_variable)
-    Out << "; [ DW_TAG_return_variable ]";
-  else if (Tag == dwarf::DW_TAG_vector_type)
-    Out << "; [ DW_TAG_vector_type ]";
-  else if (Tag == dwarf::DW_TAG_user_base)
-    Out << "; [ DW_TAG_user_base ]";
-  else if (const char *TagName = dwarf::TagString(Tag))
-    Out << "; [ " << TagName << " ]";
-}
-
-static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
-                         SlotTracker &Machine) {
-  SmallVector<const MDNode *, 16> Nodes;
-  Nodes.resize(Machine.mdnSize());
-  for (SlotTracker::ValueMap::iterator I =
-         Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I)
-    Nodes[I->second] = cast<MDNode>(I->first);
-
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    Out << '!' << i << " = metadata ";
-    const MDNode *Node = Nodes[i];
-    Out << "!{";
-    for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
-      const Value *V = Node->getOperand(mi);
-      if (!V)
-        Out << "null";
-      else if (const MDNode *N = dyn_cast<MDNode>(V)) {
-        Out << "metadata ";
-        Out << '!' << Machine.getMetadataSlot(N);
-      }
-      else {
-        TypePrinter.print(V->getType(), Out);
-        Out << ' ';
-        WriteAsOperandInternal(Out, Node->getOperand(mi), 
-                               &TypePrinter, &Machine);
-      }
-      if (mi + 1 != me)
-        Out << ", ";
-    }
-
-    Out << "}";
-    WriteMDNodeComment(Node, Out);
-    Out << "\n";
-  }
-}
 
 static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
@@ -1312,6 +1225,7 @@ public:
       M->getMDKindNames(MDNames);
   }
 
+  void printMDNodeBody(const MDNode *MD);
   void printNamedMDNode(const NamedMDNode *NMD);
   
   void write(const Module *M) { printModule(M); }
@@ -1332,6 +1246,8 @@ public:
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
+
+  void writeAllMDNodes();
 
 private:
   void printModule(const Module *M);
@@ -1450,12 +1366,14 @@ void AssemblyWriter::printModule(const Module *M) {
   if (!M->named_metadata_empty()) Out << '\n';
   
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-         E = M->named_metadata_end(); I != E; ++I)
+       E = M->named_metadata_end(); I != E; ++I)
     printNamedMDNode(I);
 
   // Output metadata.
-  if (!Machine.mdnEmpty()) Out << '\n';
-  WriteMDNodes(Out, TypePrinter, Machine);
+  if (!Machine.mdnEmpty()) {
+    Out << '\n';
+    writeAllMDNodes();
+  }
 }
 
 void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
@@ -2061,6 +1979,68 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   printInfoComment(I);
 }
 
+static void WriteMDNodeComment(const MDNode *Node,
+			       formatted_raw_ostream &Out) {
+  if (Node->getNumOperands() < 1)
+    return;
+  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));
+  if (!CI) return;
+  unsigned Val = CI->getZExtValue();
+  unsigned Tag = Val & ~LLVMDebugVersionMask;
+  if (Val < LLVMDebugVersion)
+    return;
+  
+  Out.PadToColumn(50);
+  if (Tag == dwarf::DW_TAG_auto_variable)
+    Out << "; [ DW_TAG_auto_variable ]";
+  else if (Tag == dwarf::DW_TAG_arg_variable)
+    Out << "; [ DW_TAG_arg_variable ]";
+  else if (Tag == dwarf::DW_TAG_return_variable)
+    Out << "; [ DW_TAG_return_variable ]";
+  else if (Tag == dwarf::DW_TAG_vector_type)
+    Out << "; [ DW_TAG_vector_type ]";
+  else if (Tag == dwarf::DW_TAG_user_base)
+    Out << "; [ DW_TAG_user_base ]";
+  else if (const char *TagName = dwarf::TagString(Tag))
+    Out << "; [ " << TagName << " ]";
+}
+
+void AssemblyWriter::writeAllMDNodes() {
+  SmallVector<const MDNode *, 16> Nodes;
+  Nodes.resize(Machine.mdnSize());
+  for (SlotTracker::ValueMap::iterator I =
+       Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I)
+    Nodes[I->second] = cast<MDNode>(I->first);
+  
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+    Out << '!' << i << " = metadata ";
+    const MDNode *Node = Nodes[i];
+    printMDNodeBody(Node);
+  }
+}
+
+void AssemblyWriter::printMDNodeBody(const MDNode *Node) {
+  Out << "!{";
+  for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
+    const Value *V = Node->getOperand(mi);
+    if (V == 0)
+      Out << "null";
+    else if (const MDNode *N = dyn_cast<MDNode>(V)) {
+      Out << "metadata !" << Machine.getMetadataSlot(N);
+    } else {
+      TypePrinter.print(V->getType(), Out);
+      Out << ' ';
+      WriteAsOperandInternal(Out, Node->getOperand(mi), 
+                             &TypePrinter, &Machine);
+    }
+    if (mi + 1 != me)
+      Out << ", ";
+  }
+  
+  Out << "}";
+  WriteMDNodeComment(Node, Out);
+  Out << "\n";
+}
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declarations
@@ -2090,22 +2070,20 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
     const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
     SlotTracker SlotTable(F);
-    AssemblyWriter W(OS, SlotTable, F ? F->getParent() : 0, AAW);
+    AssemblyWriter W(OS, SlotTable, getModuleFromVal(F), AAW);
     W.write(I);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
     SlotTracker SlotTable(BB->getParent());
-    AssemblyWriter W(OS, SlotTable,
-                     BB->getParent() ? BB->getParent()->getParent() : 0, AAW);
+    AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), AAW);
     W.write(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     SlotTracker SlotTable(GV->getParent());
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
-    SlotTracker SlotTable(N);
-    TypePrinting TypePrinter;
-    SlotTable.initialize();
-    WriteMDNodes(OS, TypePrinter, SlotTable);
+    SlotTracker SlotTable((Function*)0);
+    AssemblyWriter W(OS, SlotTable, 0, AAW);
+    W.printMDNodeBody(N);
   } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(this)) {
     SlotTracker SlotTable(N->getParent());
     AssemblyWriter W(OS, SlotTable, N->getParent(), AAW);
