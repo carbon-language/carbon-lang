@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
-#include <vector>
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 // MSVC emits references to this into the translation units which reference it.
@@ -36,17 +36,26 @@ int StringRef::compare_lower(StringRef RHS) const {
   return Length < RHS.Length ? -1 : 1;
 }
 
-/// \brief Compute the edit distance between the two given strings.
+// Compute the edit distance between the two given strings.
 unsigned StringRef::edit_distance(llvm::StringRef Other, 
                                   bool AllowReplacements) {
+  // The algorithm implemented below is the "classic"
+  // dynamic-programming algorithm for computing the Levenshtein
+  // distance, which is described here:
+  //
+  //   http://en.wikipedia.org/wiki/Levenshtein_distance
+  //
+  // Although the algorithm is typically described using an m x n
+  // array, only two rows are used at a time, so this implemenation
+  // just keeps two separate vectors for those two rows.
   size_type m = size();
   size_type n = Other.size();
 
-  std::vector<unsigned> previous(n+1, 0);
-  for (std::vector<unsigned>::size_type i = 0; i <= n; ++i) 
+  SmallVector<unsigned, 32> previous(n+1, 0);
+  for (SmallVector<unsigned, 32>::size_type i = 0; i <= n; ++i) 
     previous[i] = i;
 
-  std::vector<unsigned> current(n+1, 0);
+  SmallVector<unsigned, 32> current(n+1, 0);
   for (size_type y = 1; y <= m; ++y) {
     current.assign(n+1, 0);
     current[0] = y;

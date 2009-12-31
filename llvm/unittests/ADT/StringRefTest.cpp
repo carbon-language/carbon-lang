@@ -247,6 +247,11 @@ TEST(StringRefTest, Count) {
   EXPECT_EQ(0U, Str.count("zz"));
 }
 
+TEST(StringRefTest, EditDistance) {
+  StringRef Str("hello");
+  EXPECT_EQ(2, Str.edit_distance("hill"));
+}
+
 TEST(StringRefTest, Misc) {
   std::string Storage;
   raw_string_ostream OS(Storage);
