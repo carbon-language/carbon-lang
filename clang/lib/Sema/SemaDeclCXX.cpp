@@ -5532,10 +5532,13 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   //   If the return type of D::f differs from the return type of B::f, the 
   //   class type in the return type of D::f shall be complete at the point of
   //   declaration of D::f or shall be the class type D.
-  if (RequireCompleteType(New->getLocation(), NewClassTy, 
-                          PDiag(diag::err_covariant_return_incomplete)
-                            << New->getDeclName()))
+  if (const RecordType *RT = NewClassTy->getAs<RecordType>()) {
+    if (!RT->isBeingDefined() &&
+        RequireCompleteType(New->getLocation(), NewClassTy, 
+                            PDiag(diag::err_covariant_return_incomplete)
+                              << New->getDeclName()))
     return true;
+  }
 
   if (!Context.hasSameUnqualifiedType(NewClassTy, OldClassTy)) {
     // Check if the new class derives from the old class.
