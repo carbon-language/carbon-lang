@@ -59,7 +59,7 @@ namespace {
 #ifndef NDEBUG
 /// PrintOps - Print out the expression identified in the Ops list.
 ///
-static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
+static void PrintOps(Instruction *I, const SmallVectorImpl<ValueEntry> &Ops) {
   Module *M = I->getParent()->getParent()->getParent();
   errs() << Instruction::getOpcodeName(I->getOpcode()) << " "
        << *Ops[0].Op->getType() << '\t';
@@ -89,11 +89,12 @@ namespace {
     void BuildRankMap(Function &F);
     unsigned getRank(Value *V);
     void ReassociateExpression(BinaryOperator *I);
-    void RewriteExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops,
+    void RewriteExprTree(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops,
                          unsigned Idx = 0);
-    Value *OptimizeExpression(BinaryOperator *I, std::vector<ValueEntry> &Ops);
-    Value *OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops);
-    void LinearizeExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops);
+    Value *OptimizeExpression(BinaryOperator *I,
+                              SmallVectorImpl<ValueEntry> &Ops);
+    Value *OptimizeAdd(Instruction *I, SmallVectorImpl<ValueEntry> &Ops);
+    void LinearizeExprTree(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     void LinearizeExpr(BinaryOperator *I);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
     void ReassociateBB(BasicBlock *BB);
@@ -253,7 +254,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
 /// caller MUST use something like RewriteExprTree to put the values back in.
 ///
 void Reassociate::LinearizeExprTree(BinaryOperator *I,
-                                    std::vector<ValueEntry> &Ops) {
+                                    SmallVectorImpl<ValueEntry> &Ops) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
   unsigned Opcode = I->getOpcode();
 
@@ -325,7 +326,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
 // linearized and optimized, emit them in-order.  This function is written to be
 // tail recursive.
 void Reassociate::RewriteExprTree(BinaryOperator *I,
-                                  std::vector<ValueEntry> &Ops,
+                                  SmallVectorImpl<ValueEntry> &Ops,
                                   unsigned i) {
   if (i+2 == Ops.size()) {
     if (I->getOperand(0) != Ops[i].Op ||
@@ -478,7 +479,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl,
 
 // Scan backwards and forwards among values with the same rank as element i to
 // see if X exists.  If X does not exist, return i.
-static unsigned FindInOperandList(std::vector<ValueEntry> &Ops, unsigned i,
+static unsigned FindInOperandList(SmallVectorImpl<ValueEntry> &Ops, unsigned i,
                                   Value *X) {
   unsigned XRank = Ops[i].Rank;
   unsigned e = Ops.size();
@@ -510,7 +511,7 @@ Value *Reassociate::RemoveFactorFromExpression(Value *V, Value *Factor) {
   BinaryOperator *BO = isReassociableOp(V, Instruction::Mul);
   if (!BO) return 0;
   
-  std::vector<ValueEntry> Factors;
+  SmallVector<ValueEntry, 8> Factors;
   LinearizeExprTree(BO, Factors);
 
   bool FoundFactor = false;
@@ -553,7 +554,8 @@ static void FindSingleUseMultiplyFactors(Value *V,
 /// instruction.  This optimizes based on identities.  If it can be reduced to
 /// a single Value, it is returned, otherwise the Ops list is mutated as
 /// necessary.
-static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
+static Value *OptimizeAndOrXor(unsigned Opcode,
+                               SmallVectorImpl<ValueEntry> &Ops) {
   // Scan the operand lists looking for X and ~X pairs, along with X,X pairs.
   // If we find any, we can simplify the expression. X&~X == 0, X|~X == -1.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -598,7 +600,8 @@ static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
 /// OptimizeAdd - Optimize a series of operands to an 'add' instruction.  This
 /// optimizes based on identities.  If it can be reduced to a single Value, it
 /// is returned, otherwise the Ops list is mutated as necessary.
-Value *Reassociate::OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops) {
+Value *Reassociate::OptimizeAdd(Instruction *I,
+                                SmallVectorImpl<ValueEntry> &Ops) {
   // Scan the operand lists looking for X and -X pairs.  If we find any, we
   // can simplify the expression. X+-X == 0.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -718,7 +721,7 @@ Value *Reassociate::OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops) {
 }
 
 Value *Reassociate::OptimizeExpression(BinaryOperator *I,
-                                       std::vector<ValueEntry> &Ops) {
+                                       SmallVectorImpl<ValueEntry> &Ops) {
   // Now that we have the linearized expression tree, try to optimize it.
   // Start by folding any constants that we found.
   bool IterateOptimization = false;
@@ -852,7 +855,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
 void Reassociate::ReassociateExpression(BinaryOperator *I) {
   
   // First, walk the expression tree, linearizing the tree, collecting
-  std::vector<ValueEntry> Ops;
+  SmallVector<ValueEntry, 8> Ops;
   LinearizeExprTree(I, Ops);
   
   DEBUG(errs() << "RAIn:\t"; PrintOps(I, Ops); errs() << '\n');
@@ -885,8 +888,8 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
       cast<Instruction>(I->use_back())->getOpcode() == Instruction::Add &&
       isa<ConstantInt>(Ops.back().Op) &&
       cast<ConstantInt>(Ops.back().Op)->isAllOnesValue()) {
-    Ops.insert(Ops.begin(), Ops.back());
-    Ops.pop_back();
+    ValueEntry Tmp = Ops.pop_back_val();
+    Ops.insert(Ops.begin(), Tmp);
   }
   
   DEBUG(errs() << "RAOut:\t"; PrintOps(I, Ops); errs() << '\n');
