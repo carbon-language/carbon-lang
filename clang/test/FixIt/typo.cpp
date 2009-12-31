@@ -19,6 +19,8 @@ other_std::strng str1; // expected-error{{use of undeclared identifier 'other_st
 // expected-error{{no type named 'strng' in namespace 'otherstd'; did you mean 'string'?}}
 tring str2; // expected-error{{unknown type name 'tring'; did you mean 'string'?}}
 
+::other_std::string str3; // expected-error{{no member named 'other_std' in the global namespace; did you mean 'otherstd'?}}
+
 float area(float radius, float pi) {
   return radious * pi; // expected-error{{use of undeclared identifier 'radious'; did you mean 'radius'?}}
 }
