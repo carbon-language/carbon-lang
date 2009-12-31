@@ -563,15 +563,11 @@ static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
       Value *X = BinaryOperator::getNotArgument(Ops[i].Op);
       unsigned FoundX = FindInOperandList(Ops, i, X);
       if (FoundX != i) {
-        if (Opcode == Instruction::And) {   // ...&X&~X = 0
-          ++NumAnnihil;
+        if (Opcode == Instruction::And)   // ...&X&~X = 0
           return Constant::getNullValue(X->getType());
-        }
         
-        if (Opcode == Instruction::Or) {   // ...|X|~X = -1
-          ++NumAnnihil;
+        if (Opcode == Instruction::Or)    // ...|X|~X = -1
           return Constant::getAllOnesValue(X->getType());
-        }
       }
     }
     
@@ -586,10 +582,9 @@ static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
         ++NumAnnihil;
       } else {
         assert(Opcode == Instruction::Xor);
-        if (e == 2) {
-          ++NumAnnihil;
+        if (e == 2)
           return Constant::getNullValue(Ops[0].Op->getType());
-        }
+        
         // ... X^X -> ...
         Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
         i -= 1; e -= 2;
@@ -618,10 +613,8 @@ Value *Reassociate::OptimizeAdd(std::vector<ValueEntry> &Ops) {
       continue;
     
     // Remove X and -X from the operand list.
-    if (Ops.size() == 2) {
-      ++NumAnnihil;
+    if (Ops.size() == 2)
       return Constant::getNullValue(X->getType());
-    }
     
     Ops.erase(Ops.begin()+i);
     if (i < FoundX)
@@ -657,11 +650,9 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     switch (Opcode) {
     default: break;
     case Instruction::And:
-      if (CstVal->isZero()) {                // ... & 0 -> 0
-        ++NumAnnihil;
+      if (CstVal->isZero())                  // ... & 0 -> 0
         return CstVal;
-      }
-      if (CstVal->isAllOnesValue()) // ... & -1 -> ...
+      if (CstVal->isAllOnesValue())          // ... & -1 -> ...
         Ops.pop_back();
       break;
     case Instruction::Mul:
@@ -674,10 +665,8 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
         Ops.pop_back();                      // ... * 1 -> ...
       break;
     case Instruction::Or:
-      if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
-        ++NumAnnihil;
+      if (CstVal->isAllOnesValue())          // ... | -1 -> -1
         return CstVal;
-      }
       // FALLTHROUGH!
     case Instruction::Add:
     case Instruction::Xor:
@@ -883,6 +872,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
     DEBUG(errs() << "Reassoc to scalar: " << *V << "\n");
     I->replaceAllUsesWith(V);
     RemoveDeadBinaryOp(I);
+    ++NumAnnihil;
     return;
   }
   
