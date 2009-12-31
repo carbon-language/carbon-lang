@@ -220,32 +220,28 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // Get the identifier name without trigraphs or embedded newlines.  Note
     // that we can't use Tok.getIdentifierInfo() because its lookup is disabled
     // when skipping.
-    // TODO: could do this with zero copies in the no-clean case by using
-    // strncmp below.
-    char Directive[20];
-    unsigned IdLen;
+    char DirectiveBuf[20];
+    llvm::StringRef Directive;
     if (!Tok.needsCleaning() && Tok.getLength() < 20) {
-      IdLen = Tok.getLength();
-      memcpy(Directive, RawCharData, IdLen);
-      Directive[IdLen] = 0;
+      Directive = llvm::StringRef(RawCharData, Tok.getLength());
     } else {
       std::string DirectiveStr = getSpelling(Tok);
-      IdLen = DirectiveStr.size();
+      unsigned IdLen = DirectiveStr.size();
       if (IdLen >= 20) {
         CurPPLexer->ParsingPreprocessorDirective = false;
         // Restore comment saving mode.
         if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
         continue;
       }
-      memcpy(Directive, &DirectiveStr[0], IdLen);
-      Directive[IdLen] = 0;
-      FirstChar = Directive[0];
+      memcpy(DirectiveBuf, &DirectiveStr[0], IdLen);
+      Directive = llvm::StringRef(DirectiveBuf, IdLen);
     }
 
-    if (FirstChar == 'i' && Directive[1] == 'f') {
-      if ((IdLen == 2) ||   // "if"
-          (IdLen == 5 && !strcmp(Directive+2, "def")) ||   // "ifdef"
-          (IdLen == 6 && !strcmp(Directive+2, "ndef"))) {  // "ifndef"
+    if (Directive.startswith("if")) {
+      llvm::StringRef Sub = Directive.substr(2);
+      if (Sub.empty() ||   // "if"
+          Sub == "def" ||   // "ifdef"
+          Sub == "ndef") {  // "ifndef"
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
         DiscardUntilEndOfDirective();
@@ -253,8 +249,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                        /*foundnonskip*/false,
                                        /*fnddelse*/false);
       }
-    } else if (FirstChar == 'e') {
-      if (IdLen == 5 && !strcmp(Directive+1, "ndif")) {  // "endif"
+    } else if (Directive[0] == 'e') {
+      llvm::StringRef Sub = Directive.substr(1);
+      if (Sub == "ndif") {  // "endif"
         CheckEndOfDirective("endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
@@ -265,7 +262,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // If we popped the outermost skipping block, we're done skipping!
         if (!CondInfo.WasSkipping)
           break;
-      } else if (IdLen == 4 && !strcmp(Directive+1, "lse")) { // "else".
+      } else if (Sub == "lse") { // "else".
         // #else directive in a skipping conditional.  If not in some other
         // skipping conditional, and if #else hasn't already been seen, enter it
         // as a non-skipping conditional.
@@ -284,7 +281,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           CondInfo.FoundNonSkip = true;
           break;
         }
-      } else if (IdLen == 4 && !strcmp(Directive+1, "lif")) {  // "elif".
+      } else if (Sub == "lif") {  // "elif".
         PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
 
         bool ShouldEnter;
