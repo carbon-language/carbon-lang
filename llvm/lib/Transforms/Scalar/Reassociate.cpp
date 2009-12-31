@@ -92,6 +92,7 @@ namespace {
     void RewriteExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops,
                          unsigned Idx = 0);
     Value *OptimizeExpression(BinaryOperator *I, std::vector<ValueEntry> &Ops);
+    Value *OptimizeAdd(std::vector<ValueEntry> &Ops);
     void LinearizeExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops);
     void LinearizeExpr(BinaryOperator *I);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
@@ -284,15 +285,15 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
       I->setOperand(0, UndefValue::get(I->getType()));
       I->setOperand(1, UndefValue::get(I->getType()));
       return;
-    } else {
-      // Turn X+(Y+Z) -> (Y+Z)+X
-      std::swap(LHSBO, RHSBO);
-      std::swap(LHS, RHS);
-      bool Success = !I->swapOperands();
-      assert(Success && "swapOperands failed");
-      Success = false;
-      MadeChange = true;
     }
+    
+    // Turn X+(Y+Z) -> (Y+Z)+X
+    std::swap(LHSBO, RHSBO);
+    std::swap(LHS, RHS);
+    bool Success = !I->swapOperands();
+    assert(Success && "swapOperands failed");
+    Success = false;
+    MadeChange = true;
   } else if (RHSBO) {
     // Turn (A+B)+(C+D) -> (((A+B)+C)+D).  This guarantees the the RHS is not
     // part of the expression tree.
@@ -462,11 +463,10 @@ static Instruction *ConvertShiftToMul(Instruction *Shl,
        (isReassociableOp(Shl->use_back(), Instruction::Mul) ||
         isReassociableOp(Shl->use_back(), Instruction::Add)))) {
     Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
-    MulCst =
-        ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+    MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
-    Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
-                                                 "", Shl);
+    Instruction *Mul =
+      BinaryOperator::CreateMul(Shl->getOperand(0), MulCst, "", Shl);
     ValueRankMap.erase(Shl);
     Mul->takeName(Shl);
     Shl->replaceAllUsesWith(Mul);
@@ -549,7 +549,92 @@ static void FindSingleUseMultiplyFactors(Value *V,
   FindSingleUseMultiplyFactors(BO->getOperand(0), Factors);
 }
 
+/// OptimizeAndOrXor - Optimize a series of operands to an 'and', 'or', or 'xor'
+/// instruction.  This optimizes based on identities.  If it can be reduced to
+/// a single Value, it is returned, otherwise the Ops list is mutated as
+/// necessary.
+static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
+  // Scan the operand lists looking for X and ~X pairs, along with X,X pairs.
+  // If we find any, we can simplify the expression. X&~X == 0, X|~X == -1.
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    // First, check for X and ~X in the operand list.
+    assert(i < Ops.size());
+    if (BinaryOperator::isNot(Ops[i].Op)) {    // Cannot occur for ^.
+      Value *X = BinaryOperator::getNotArgument(Ops[i].Op);
+      unsigned FoundX = FindInOperandList(Ops, i, X);
+      if (FoundX != i) {
+        if (Opcode == Instruction::And) {   // ...&X&~X = 0
+          ++NumAnnihil;
+          return Constant::getNullValue(X->getType());
+        }
+        
+        if (Opcode == Instruction::Or) {   // ...|X|~X = -1
+          ++NumAnnihil;
+          return Constant::getAllOnesValue(X->getType());
+        }
+      }
+    }
+    
+    // Next, check for duplicate pairs of values, which we assume are next to
+    // each other, due to our sorting criteria.
+    assert(i < Ops.size());
+    if (i+1 != Ops.size() && Ops[i+1].Op == Ops[i].Op) {
+      if (Opcode == Instruction::And || Opcode == Instruction::Or) {
+        // Drop duplicate values.
+        Ops.erase(Ops.begin()+i);
+        --i; --e;
+        ++NumAnnihil;
+      } else {
+        assert(Opcode == Instruction::Xor);
+        if (e == 2) {
+          ++NumAnnihil;
+          return Constant::getNullValue(Ops[0].Op->getType());
+        }
+        // ... X^X -> ...
+        Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
+        i -= 1; e -= 2;
+        ++NumAnnihil;
+      }
+    }
+  }
+  return 0;
+}
 
+/// OptimizeAdd - Optimize a series of operands to an 'add' instruction.  This
+/// optimizes based on identities.  If it can be reduced to a single Value, it
+/// is returned, otherwise the Ops list is mutated as necessary.
+Value *Reassociate::OptimizeAdd(std::vector<ValueEntry> &Ops) {
+  // Scan the operand lists looking for X and -X pairs.  If we find any, we
+  // can simplify the expression. X+-X == 0.
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    assert(i < Ops.size());
+    // Check for X and -X in the operand list.
+    if (!BinaryOperator::isNeg(Ops[i].Op))
+      continue;
+    
+    Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
+    unsigned FoundX = FindInOperandList(Ops, i, X);
+    if (FoundX == i)
+      continue;
+    
+    // Remove X and -X from the operand list.
+    if (Ops.size() == 2) {
+      ++NumAnnihil;
+      return Constant::getNullValue(X->getType());
+    }
+    
+    Ops.erase(Ops.begin()+i);
+    if (i < FoundX)
+      --FoundX;
+    else
+      --i;   // Need to back up an extra one.
+    Ops.erase(Ops.begin()+FoundX);
+    ++NumAnnihil;
+    --i;     // Revisit element.
+    e -= 2;  // Removed two elements.
+  }
+  return 0;
+}
 
 Value *Reassociate::OptimizeExpression(BinaryOperator *I,
                                        std::vector<ValueEntry> &Ops) {
@@ -608,84 +693,20 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   default: break;
   case Instruction::And:
   case Instruction::Or:
-  case Instruction::Xor:
-    // Scan the operand lists looking for X and ~X pairs, along with X,X pairs.
-    // If we find any, we can simplify the expression. X&~X == 0, X|~X == -1.
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-      // First, check for X and ~X in the operand list.
-      assert(i < Ops.size());
-      if (BinaryOperator::isNot(Ops[i].Op)) {    // Cannot occur for ^.
-        Value *X = BinaryOperator::getNotArgument(Ops[i].Op);
-        unsigned FoundX = FindInOperandList(Ops, i, X);
-        if (FoundX != i) {
-          if (Opcode == Instruction::And) {   // ...&X&~X = 0
-            ++NumAnnihil;
-            return Constant::getNullValue(X->getType());
-          }
-          
-          if (Opcode == Instruction::Or) {   // ...|X|~X = -1
-            ++NumAnnihil;
-            return Constant::getAllOnesValue(X->getType());
-          }
-        }
-      }
-
-      // Next, check for duplicate pairs of values, which we assume are next to
-      // each other, due to our sorting criteria.
-      assert(i < Ops.size());
-      if (i+1 != Ops.size() && Ops[i+1].Op == Ops[i].Op) {
-        if (Opcode == Instruction::And || Opcode == Instruction::Or) {
-          // Drop duplicate values.
-          Ops.erase(Ops.begin()+i);
-          --i; --e;
-          IterateOptimization = true;
-          ++NumAnnihil;
-        } else {
-          assert(Opcode == Instruction::Xor);
-          if (e == 2) {
-            ++NumAnnihil;
-            return Constant::getNullValue(Ops[0].Op->getType());
-          }
-          // ... X^X -> ...
-          Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
-          i -= 1; e -= 2;
-          IterateOptimization = true;
-          ++NumAnnihil;
-        }
-      }
-    }
+  case Instruction::Xor: {
+    unsigned NumOps = Ops.size();
+    if (Value *Result = OptimizeAndOrXor(Opcode, Ops))
+      return Result;
+    IterateOptimization |= Ops.size() != NumOps;
     break;
+  }
 
-  case Instruction::Add:
-    // Scan the operand lists looking for X and -X pairs.  If we find any, we
-    // can simplify the expression. X+-X == 0.
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-      assert(i < Ops.size());
-      // Check for X and -X in the operand list.
-      if (!BinaryOperator::isNeg(Ops[i].Op))
-        continue;
-      
-      Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
-      unsigned FoundX = FindInOperandList(Ops, i, X);
-      if (FoundX == i)
-        continue;
-      
-      // Remove X and -X from the operand list.
-      if (Ops.size() == 2) {
-        ++NumAnnihil;
-        return Constant::getNullValue(X->getType());
-      }
-      Ops.erase(Ops.begin()+i);
-      if (i < FoundX)
-        --FoundX;
-      else
-        --i;   // Need to back up an extra one.
-      Ops.erase(Ops.begin()+FoundX);
-      IterateOptimization = true;
-      ++NumAnnihil;
-      --i;     // Revisit element.
-      e -= 2;  // Removed two elements.
-    }
+  case Instruction::Add: {
+    unsigned NumOps = Ops.size();
+    if (Value *Result = OptimizeAdd(Ops))
+      return Result;
+    IterateOptimization |= Ops.size() != NumOps;
+  }
 
     // Scan the operand list, checking to see if there are any common factors
     // between operands.  Consider something like A*A+A*B*C+D.  We would like to
