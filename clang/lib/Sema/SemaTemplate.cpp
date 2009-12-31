@@ -102,7 +102,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
 
   QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
 
-  LookupResult R(*this, TName, SourceLocation(), LookupOrdinaryName);
+  LookupResult R(*this, TName, Name.getSourceRange().getBegin(), 
+                 LookupOrdinaryName);
   R.suppressDiagnostics();
   LookupTemplateName(R, S, SS, ObjectType, EnteringContext);
   if (R.empty())
@@ -201,6 +202,29 @@ void Sema::LookupTemplateName(LookupResult &Found,
   // FIXME: Cope with ambiguous name-lookup results.
   assert(!Found.isAmbiguous() &&
          "Cannot handle template name-lookup ambiguities");
+
+  if (Found.empty()) {
+    // If we did not find any names, attempt to correct any typos.
+    DeclarationName Name = Found.getLookupName();
+    if (CorrectTypo(Found, S, &SS, LookupCtx)) {
+      FilterAcceptableTemplateNames(Context, Found);
+      if (!Found.empty() && isa<TemplateDecl>(*Found.begin())) {
+        if (LookupCtx)
+          Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
+            << Name << LookupCtx << Found.getLookupName() << SS.getRange()
+            << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+                                          Found.getLookupName().getAsString());
+        else
+          Diag(Found.getNameLoc(), diag::err_no_template_suggest)
+            << Name << Found.getLookupName()
+            << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+                                          Found.getLookupName().getAsString());
+      } else
+        Found.clear();
+    } else {
+      Found.clear();
+    }
+  }
 
   FilterAcceptableTemplateNames(Context, Found);
   if (Found.empty())

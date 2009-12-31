@@ -2557,6 +2557,9 @@ def err_undeclared_use_suggest : Error<
   "use of undeclared %0; did you mean %1?">;
 def err_undeclared_var_use_suggest : Error<
   "use of undeclared identifier %0; did you mean %1?">;
+def err_no_template_suggest : Error<"no template named %0; did you mean %1?">;
+def err_no_member_template_suggest : Error<
+  "no template named %0 in %1; did you mean %2?">;
 
 }
 

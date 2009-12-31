@@ -23,6 +23,10 @@ float area(float radius, float pi) {
 }
 
 bool test_string(std::string s) {
+  basc_string<char> b1; // expected-error{{no template named 'basc_string'; did you mean 'basic_string'?}}
+  std::basic_sting<char> b2; // expected-error{{no template named 'basic_sting' in namespace 'std'; did you mean 'basic_string'?}}
+  (void)b1;
+  (void)b2;
   return s.fnd("hello") // expected-error{{no member named 'fnd' in 'class std::basic_string<char>'; did you mean 'find'?}}
     == std::string::pos; // expected-error{{no member named 'pos' in 'class std::basic_string<char>'; did you mean 'npos'?}}
 }
