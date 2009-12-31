@@ -1209,6 +1209,7 @@ public:
                           VisibleDeclConsumer &Consumer);
 
   bool CorrectTypo(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+                   DeclContext *MemberContext = 0,
                    bool EnteringContext = false);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,

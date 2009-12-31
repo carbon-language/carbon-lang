@@ -932,7 +932,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
 
   // We didn't find anything, so try to correct for a typo.
   if (S && CorrectTypo(R, S, &SS) && 
-      (isa<ValueDecl>(*R.begin()) || isa<TemplateDecl>(*R.begin()))) {
+      (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
     if (SS.isEmpty())
       Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
         << CodeModificationHint::CreateReplacement(R.getNameLoc(),
@@ -2345,6 +2345,23 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
 
   // The record definition is complete, now look up the member.
   SemaRef.LookupQualifiedName(R, DC);
+
+  if (!R.empty())
+    return false;
+
+  // We didn't find anything with the given name, so try to correct
+  // for typos.
+  DeclarationName Name = R.getLookupName();
+  if (SemaRef.CorrectTypo(R, 0, &SS, DC) && 
+      (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
+    SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
+      << Name << DC << R.getLookupName() << SS.getRange()
+      << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                         R.getLookupName().getAsString());
+    return false;
+  } else {
+    R.clear();
+  }
 
   return false;
 }

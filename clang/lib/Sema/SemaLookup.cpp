@@ -2134,6 +2134,9 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
 /// \param SS the nested-name-specifier that precedes the name we're
 /// looking for, if present.
 ///
+/// \param MemberContext if non-NULL, the context in which to look for
+/// a member access expression.
+///
 /// \param EnteringContext whether we're entering the context described by 
 /// the nested-name-specifier SS.
 ///
@@ -2141,7 +2144,7 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
 /// structure will contain the results of name lookup for the
 /// corrected name. Otherwise, returns false.
 bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
-                       bool EnteringContext) {
+                       DeclContext *MemberContext, bool EnteringContext) {
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
   if (!Typo)
@@ -2158,7 +2161,9 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
     return false;
 
   TypoCorrectionConsumer Consumer(Typo);
-  if (SS && SS->isSet()) {
+  if (MemberContext)
+    LookupVisibleDecls(MemberContext, Res.getLookupKind(), Consumer);
+  else if (SS && SS->isSet()) {
     DeclContext *DC = computeDeclContext(*SS, EnteringContext);
     if (!DC)
       return false;
@@ -2193,7 +2198,11 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
   // success if we found something that was not ambiguous.
   Res.clear();
   Res.setLookupName(BestName);
-  LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, EnteringContext);
+  if (MemberContext)
+    LookupQualifiedName(Res, MemberContext);
+  else
+    LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
+                     EnteringContext);
 
   if (Res.isAmbiguous()) {
     Res.suppressDiagnostics();
