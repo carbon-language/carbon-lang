@@ -1208,9 +1208,9 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
         if (!Val)
           Out << "null";
         else {
-          TypePrinter->print(N->getOperand(0)->getType(), Out);
+          TypePrinter->print(N->getOperand(mi)->getType(), Out);
           Out << ' ';
-          WriteAsOperandInternal(Out, N->getOperand(0), TypePrinter, Machine);
+          WriteAsOperandInternal(Out, N->getOperand(mi), TypePrinter, Machine);
         }
         if (mi + 1 != me)
           Out << ", ";
