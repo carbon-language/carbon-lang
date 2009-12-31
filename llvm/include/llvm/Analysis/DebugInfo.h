@@ -17,9 +17,9 @@
 #ifndef LLVM_ANALYSIS_DEBUGINFO_H
 #define LLVM_ANALYSIS_DEBUGINFO_H
 
-#include "llvm/Metadata.h"  // FIXME: Should not need this.
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Dwarf.h"  // FIXME: Should not need this.
 
 namespace llvm {
@@ -38,6 +38,8 @@ namespace llvm {
   class DebugLoc;
   struct DebugLocTracker;
   class Instruction;
+  class MDNode;
+  class LLVMContext;
 
   /// DIDescriptor - A thin wraper around MDNode to access encoded debug info.
   /// This should not be stored in a container, because underly MDNode may
@@ -368,20 +370,10 @@ namespace llvm {
     unsigned isLocalToUnit() const     { return getUnsignedField(9); }
     unsigned isDefinition() const      { return getUnsignedField(10); }
 
-    unsigned getVirtuality() const {
-      if (DbgNode->getNumOperands() < 14)
-        return 0;
-      return getUnsignedField(11);
-    }
-
-    unsigned getVirtualIndex() const { 
-      if (DbgNode->getNumOperands() < 14)
-        return 0;
-      return getUnsignedField(12);
-    }
+    unsigned getVirtuality() const { return getUnsignedField(11); }
+    unsigned getVirtualIndex() const { return getUnsignedField(12); }
 
     DICompositeType getContainingType() const {
-      assert (DbgNode->getNumOperands() >= 14 && "Invalid type!");
       return getFieldAs<DICompositeType>(13);
     }
 
@@ -439,8 +431,8 @@ namespace llvm {
       return getNumAddrElements() > 0;
     }
 
-    unsigned getNumAddrElements() const { return DbgNode->getNumOperands()-6; }
-
+    unsigned getNumAddrElements() const;
+    
     uint64_t getAddrElement(unsigned Idx) const {
       return getUInt64Field(Idx+6);
     }

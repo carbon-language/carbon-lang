@@ -21,6 +21,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"

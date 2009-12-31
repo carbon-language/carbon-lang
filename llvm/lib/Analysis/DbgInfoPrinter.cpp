@@ -19,6 +19,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Metadata.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/Passes.h"

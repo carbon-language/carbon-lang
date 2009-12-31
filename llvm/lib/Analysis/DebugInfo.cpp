@@ -120,6 +120,11 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
   return 0;
 }
 
+unsigned DIVariable::getNumAddrElements() const {
+  return DbgNode->getNumOperands()-6;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Predicates
 //===----------------------------------------------------------------------===//
