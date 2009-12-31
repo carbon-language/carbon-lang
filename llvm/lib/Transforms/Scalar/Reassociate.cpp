@@ -627,7 +627,7 @@ Restart:
         --j; --je;
       }
 
-      /*DEBUG*/(errs() << "\nFACTORING [" << NumFound << "]: " << *TheOp << '\n');
+      DEBUG(errs() << "\nFACTORING [" << NumFound << "]: " << *TheOp << '\n');
       ++NumFactor;
 
       
