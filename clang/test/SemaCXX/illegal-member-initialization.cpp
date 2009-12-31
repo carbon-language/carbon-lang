@@ -20,3 +20,13 @@ struct X {
    B& b; // expected-note{{declared at}}
    const B cb; // expected-note{{declared at}}
 };
+
+
+// PR5924
+struct bar {};
+bar xxx();
+
+struct foo {
+  foo_t a;  // expected-error {{unknown type name 'foo_t'}}
+  foo() : a(xxx()) {}  // no error here.
+};

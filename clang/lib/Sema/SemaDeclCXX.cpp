@@ -1155,7 +1155,8 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
     }
     else
       NewExp = (Expr*)Args[0];
-    if (PerformCopyInitialization(NewExp, FieldType, AA_Passing))
+    if (!Member->isInvalidDecl() &&
+        PerformCopyInitialization(NewExp, FieldType, AA_Passing))
       return true;
     Args[0] = NewExp;
   }
