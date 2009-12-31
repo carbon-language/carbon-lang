@@ -605,10 +605,6 @@ void SlotTracker::processModule() {
          E = TheModule->global_end(); I != E; ++I) {
     if (!I->hasName())
       CreateModuleSlot(I);
-    if (I->hasInitializer()) {
-      if (MDNode *N = dyn_cast<MDNode>(I->getInitializer()))
-        CreateMetadataSlot(N);
-    }
   }
 
   // Add metadata used by named metadata.
