@@ -2560,6 +2560,9 @@ def err_undeclared_var_use_suggest : Error<
 def err_no_template_suggest : Error<"no template named %0; did you mean %1?">;
 def err_no_member_template_suggest : Error<
   "no template named %0 in %1; did you mean %2?">;
+def err_mem_init_not_member_or_class_suggest : Error<
+  "initializer %0 does not name a non-static data member or base "
+  "class; did you mean the %select{base class|member}1 %2?">;
 
 }
 

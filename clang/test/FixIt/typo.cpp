@@ -33,3 +33,11 @@ bool test_string(std::string s) {
   return s.fnd("hello") // expected-error{{no member named 'fnd' in 'class std::basic_string<char>'; did you mean 'find'?}}
     == std::string::pos; // expected-error{{no member named 'pos' in 'class std::basic_string<char>'; did you mean 'npos'?}}
 }
+
+struct Base { };
+struct Derived : public Base {
+  int member;
+
+  Derived() : base(), // expected-error{{initializer 'base' does not name a non-static data member or base class; did you mean the base class 'Base'?}}
+              ember() { } // expected-error{{initializer 'ember' does not name a non-static data member or base class; did you mean the member 'member'?}}
+};

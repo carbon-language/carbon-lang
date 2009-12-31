@@ -948,6 +948,51 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   return DeclPtrTy::make(Member);
 }
 
+/// \brief Find the direct and/or virtual base specifiers that
+/// correspond to the given base type, for use in base initialization
+/// within a constructor.
+static bool FindBaseInitializer(Sema &SemaRef, 
+                                CXXRecordDecl *ClassDecl,
+                                QualType BaseType,
+                                const CXXBaseSpecifier *&DirectBaseSpec,
+                                const CXXBaseSpecifier *&VirtualBaseSpec) {
+  // First, check for a direct base class.
+  DirectBaseSpec = 0;
+  for (CXXRecordDecl::base_class_const_iterator Base
+         = ClassDecl->bases_begin(); 
+       Base != ClassDecl->bases_end(); ++Base) {
+    if (SemaRef.Context.hasSameUnqualifiedType(BaseType, Base->getType())) {
+      // We found a direct base of this type. That's what we're
+      // initializing.
+      DirectBaseSpec = &*Base;
+      break;
+    }
+  }
+
+  // Check for a virtual base class.
+  // FIXME: We might be able to short-circuit this if we know in advance that
+  // there are no virtual bases.
+  VirtualBaseSpec = 0;
+  if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
+    // We haven't found a base yet; search the class hierarchy for a
+    // virtual base class.
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                       /*DetectVirtual=*/false);
+    if (SemaRef.IsDerivedFrom(SemaRef.Context.getTypeDeclType(ClassDecl), 
+                              BaseType, Paths)) {
+      for (CXXBasePaths::paths_iterator Path = Paths.begin();
+           Path != Paths.end(); ++Path) {
+        if (Path->back().Base->isVirtual()) {
+          VirtualBaseSpec = Path->back().Base;
+          break;
+        }
+      }
+    }
+  }
+
+  return DirectBaseSpec || VirtualBaseSpec;
+}
+
 /// ActOnMemInitializer - Handle a C++ member initializer.
 Sema::MemInitResult
 Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
@@ -1015,9 +1060,46 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     if (!TyD) {
       if (R.isAmbiguous()) return true;
 
-      Diag(IdLoc, diag::err_mem_init_not_member_or_class)
-        << MemberOrBase << SourceRange(IdLoc, RParenLoc);
-      return true;
+      // If no results were found, try to correct typos.
+      if (R.empty() && 
+          CorrectTypo(R, S, &SS, ClassDecl) && R.isSingleResult()) {
+        if (FieldDecl *Member = R.getAsSingle<FieldDecl>()) {
+          if (Member->getDeclContext()->getLookupContext()->Equals(ClassDecl)) {
+            // We have found a non-static data member with a similar
+            // name to what was typed; complain and initialize that
+            // member.
+            Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
+              << MemberOrBase << true << R.getLookupName()
+              << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                               R.getLookupName().getAsString());
+
+            return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
+                                          LParenLoc, RParenLoc);
+          }
+        } else if (TypeDecl *Type = R.getAsSingle<TypeDecl>()) {
+          const CXXBaseSpecifier *DirectBaseSpec;
+          const CXXBaseSpecifier *VirtualBaseSpec;
+          if (FindBaseInitializer(*this, ClassDecl, 
+                                  Context.getTypeDeclType(Type),
+                                  DirectBaseSpec, VirtualBaseSpec)) {
+            // We have found a direct or virtual base class with a
+            // similar name to what was typed; complain and initialize
+            // that base class.
+            Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
+              << MemberOrBase << false << R.getLookupName()
+              << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                               R.getLookupName().getAsString());
+            
+            TyD = Type;
+          }
+        }
+      }
+
+      if (!TyD) {
+        Diag(IdLoc, diag::err_mem_init_not_member_or_class)
+          << MemberOrBase << SourceRange(IdLoc, RParenLoc);
+        return true;
+      }
     }
 
     BaseType = Context.getTypeDeclType(TyD);
@@ -1193,37 +1275,11 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
     //   mem-initializer-list can initialize a base class using any
     //   name that denotes that base class type.
 
-    // First, check for a direct base class.
+    // Check for direct and virtual base classes.
     const CXXBaseSpecifier *DirectBaseSpec = 0;
-    for (CXXRecordDecl::base_class_const_iterator Base =
-         ClassDecl->bases_begin(); Base != ClassDecl->bases_end(); ++Base) {
-      if (Context.hasSameUnqualifiedType(BaseType, Base->getType())) {
-        // We found a direct base of this type. That's what we're
-        // initializing.
-        DirectBaseSpec = &*Base;
-        break;
-      }
-    }
-
-    // Check for a virtual base class.
-    // FIXME: We might be able to short-circuit this if we know in advance that
-    // there are no virtual bases.
     const CXXBaseSpecifier *VirtualBaseSpec = 0;
-    if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
-      // We haven't found a base yet; search the class hierarchy for a
-      // virtual base class.
-      CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                         /*DetectVirtual=*/false);
-      if (IsDerivedFrom(Context.getTypeDeclType(ClassDecl), BaseType, Paths)) {
-        for (CXXBasePaths::paths_iterator Path = Paths.begin();
-             Path != Paths.end(); ++Path) {
-          if (Path->back().Base->isVirtual()) {
-            VirtualBaseSpec = Path->back().Base;
-            break;
-          }
-        }
-      }
-    }
+    FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
+                        VirtualBaseSpec);
 
     // C++ [base.class.init]p2:
     //   If a mem-initializer-id is ambiguous because it designates both
