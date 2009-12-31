@@ -700,17 +700,17 @@ Value *Reassociate::OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops) {
     // Now that we have inserted V and its sole use, optimize it. This allows
     // us to handle cases that require multiple factoring steps, such as this:
     // A*A*B + A*A*C   -->   A*(A*B+A*C)   -->   A*(A*(B+C))
-    if (NumAddedValues > 1)
-      ReassociateExpression(cast<BinaryOperator>(V));
+    assert(NumAddedValues > 1 && "Each occurrence should contribute a value");
+    ReassociateExpression(cast<BinaryOperator>(V));
     
     // If every add operand included the factor (e.g. "A*B + A*C"), then the
     // entire result expression is just the multiply "A*(B+C)".
     if (Ops.empty())
       return V2;
     
-    // Otherwise, we had some input that didn't have the fact, such as
+    // Otherwise, we had some input that didn't have the factor, such as
     // "A*B + A*C + D" -> "A*(B+C) + D".  Add the new multiply to the list of
-    // things being added.
+    // things being added by this operation.
     Ops.insert(Ops.begin(), ValueEntry(getRank(V2), V2));
   }
   
