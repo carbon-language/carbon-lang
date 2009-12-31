@@ -35,6 +35,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 #include <map>
 using namespace llvm;
@@ -600,7 +601,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     }
   if (Ops.size() == 1) return Ops[0].Op;
 
-  // Handle destructive annihilation do to identities between elements in the
+  // Handle destructive annihilation due to identities between elements in the
   // argument list here.
   switch (Opcode) {
   default: break;
@@ -688,7 +689,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     // reassociate this to A*(A+B*C)+D, which reduces the number of multiplies.
     // To efficiently find this, we count the number of times a factor occurs
     // for any ADD operands that are MULs.
-    std::map<Value*, unsigned> FactorOccurrences;
+    DenseMap<Value*, unsigned> FactorOccurrences;
     unsigned MaxOcc = 0;
     Value *MaxOccVal = 0;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -708,9 +709,9 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
               if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
             }
           } else {
-            std::set<Value*> Duplicates;
+            SmallPtrSet<Value*, 4> Duplicates;
             for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
-              if (Duplicates.insert(Factors[i]).second) {
+              if (Duplicates.insert(Factors[i])) {
                 unsigned Occ = ++FactorOccurrences[Factors[i]];
                 if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
               }
