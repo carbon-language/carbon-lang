@@ -494,7 +494,7 @@ static unsigned FindInOperandList(std::vector<ValueEntry> &Ops, unsigned i,
 
 /// EmitAddTreeOfValues - Emit a tree of add instructions, summing Ops together
 /// and returning the result.  Insert the tree before I.
-static Value *EmitAddTreeOfValues(Instruction *I, std::vector<Value*> &Ops) {
+static Value *EmitAddTreeOfValues(Instruction *I, SmallVectorImpl<Value*> &Ops){
   if (Ops.size() == 1) return Ops.back();
   
   Value *V1 = Ops.back();
@@ -535,7 +535,7 @@ Value *Reassociate::RemoveFactorFromExpression(Value *V, Value *Factor) {
 /// FindSingleUseMultiplyFactors - If V is a single-use multiply, recursively
 /// add its operands as factors, otherwise add V to the list of factors.
 static void FindSingleUseMultiplyFactors(Value *V,
-                                         std::vector<Value*> &Factors) {
+                                         SmallVectorImpl<Value*> &Factors) {
   BinaryOperator *BO;
   if ((!V->hasOneUse() && !V->use_empty()) ||
       !(BO = dyn_cast<BinaryOperator>(V)) ||
@@ -575,17 +575,18 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       if (CstVal->isZero()) {                // ... & 0 -> 0
         ++NumAnnihil;
         return CstVal;
-      } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
-        Ops.pop_back();
       }
+      if (CstVal->isAllOnesValue()) // ... & -1 -> ...
+        Ops.pop_back();
       break;
     case Instruction::Mul:
       if (CstVal->isZero()) {                // ... * 0 -> 0
         ++NumAnnihil;
         return CstVal;
-      } else if (cast<ConstantInt>(CstVal)->isOne()) {
-        Ops.pop_back();                      // ... * 1 -> ...
       }
+        
+      if (cast<ConstantInt>(CstVal)->isOne())
+        Ops.pop_back();                      // ... * 1 -> ...
       break;
     case Instruction::Or:
       if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
@@ -620,7 +621,9 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           if (Opcode == Instruction::And) {   // ...&X&~X = 0
             ++NumAnnihil;
             return Constant::getNullValue(X->getType());
-          } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
+          }
+          
+          if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
             return Constant::getAllOnesValue(X->getType());
           }
@@ -659,30 +662,30 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       assert(i < Ops.size());
       // Check for X and -X in the operand list.
-      if (BinaryOperator::isNeg(Ops[i].Op)) {
-        Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
-        unsigned FoundX = FindInOperandList(Ops, i, X);
-        if (FoundX != i) {
-          // Remove X and -X from the operand list.
-          if (Ops.size() == 2) {
-            ++NumAnnihil;
-            return Constant::getNullValue(X->getType());
-          } else {
-            Ops.erase(Ops.begin()+i);
-            if (i < FoundX)
-              --FoundX;
-            else
-              --i;   // Need to back up an extra one.
-            Ops.erase(Ops.begin()+FoundX);
-            IterateOptimization = true;
-            ++NumAnnihil;
-            --i;     // Revisit element.
-            e -= 2;  // Removed two elements.
-          }
-        }
+      if (!BinaryOperator::isNeg(Ops[i].Op))
+        continue;
+      
+      Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
+      unsigned FoundX = FindInOperandList(Ops, i, X);
+      if (FoundX == i)
+        continue;
+      
+      // Remove X and -X from the operand list.
+      if (Ops.size() == 2) {
+        ++NumAnnihil;
+        return Constant::getNullValue(X->getType());
       }
+      Ops.erase(Ops.begin()+i);
+      if (i < FoundX)
+        --FoundX;
+      else
+        --i;   // Need to back up an extra one.
+      Ops.erase(Ops.begin()+FoundX);
+      IterateOptimization = true;
+      ++NumAnnihil;
+      --i;     // Revisit element.
+      e -= 2;  // Removed two elements.
     }
-    
 
     // Scan the operand list, checking to see if there are any common factors
     // between operands.  Consider something like A*A+A*B*C+D.  We would like to
@@ -693,30 +696,30 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     unsigned MaxOcc = 0;
     Value *MaxOccVal = 0;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-      if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op)) {
-        if (BOp->getOpcode() == Instruction::Mul && BOp->use_empty()) {
-          // Compute all of the factors of this added value.
-          std::vector<Value*> Factors;
-          FindSingleUseMultiplyFactors(BOp, Factors);
-          assert(Factors.size() > 1 && "Bad linearize!");
+      BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
+      if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
+        continue;
+      
+      // Compute all of the factors of this added value.
+      SmallVector<Value*, 8> Factors;
+      FindSingleUseMultiplyFactors(BOp, Factors);
+      assert(Factors.size() > 1 && "Bad linearize!");
 
-          // Add one to FactorOccurrences for each unique factor in this op.
-          if (Factors.size() == 2) {
-            unsigned Occ = ++FactorOccurrences[Factors[0]];
-            if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
-            if (Factors[0] != Factors[1]) {   // Don't double count A*A.
-              Occ = ++FactorOccurrences[Factors[1]];
-              if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
-            }
-          } else {
-            SmallPtrSet<Value*, 4> Duplicates;
-            for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
-              if (Duplicates.insert(Factors[i])) {
-                unsigned Occ = ++FactorOccurrences[Factors[i]];
-                if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
-              }
-            }
-          }
+      // Add one to FactorOccurrences for each unique factor in this op.
+      if (Factors.size() == 2) {
+        unsigned Occ = ++FactorOccurrences[Factors[0]];
+        if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
+        if (Factors[0] != Factors[1]) {   // Don't double count A*A.
+          Occ = ++FactorOccurrences[Factors[1]];
+          if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
+        }
+      } else {
+        SmallPtrSet<Value*, 4> Duplicates;
+        for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
+          if (!Duplicates.insert(Factors[i])) continue;
+          
+          unsigned Occ = ++FactorOccurrences[Factors[i]];
+          if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
         }
       }
     }
@@ -730,7 +733,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       // from an expression will drop a use of maxocc, and this can cause 
       // RemoveFactorFromExpression on successive values to behave differently.
       Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
-      std::vector<Value*> NewMulOps;
+      SmallVector<Value*, 4> NewMulOps;
       for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
         if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
           NewMulOps.push_back(V);
