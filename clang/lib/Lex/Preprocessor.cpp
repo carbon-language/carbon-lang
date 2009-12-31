@@ -446,19 +446,10 @@ void Preprocessor::EnterMainSourceFile() {
   if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
     HeaderInfo.IncrementIncludeCount(FE);
 
-  std::vector<char> PrologFile;
-  PrologFile.reserve(4080);
-
-  // FIXME: Don't make a copy.
-  PrologFile.insert(PrologFile.end(), Predefines.begin(), Predefines.end());
-
-  // Memory buffer must end with a null byte!
-  PrologFile.push_back(0);
-
-  // Now that we have emitted the predefined macros, #includes, etc into
-  // PrologFile, preprocess it to populate the initial preprocessor state.
+  // Preprocess Predefines to populate the initial preprocessor state.
   llvm::MemoryBuffer *SB =
-    llvm::MemoryBuffer::getMemBufferCopy(&PrologFile.front(),&PrologFile.back(),
+    llvm::MemoryBuffer::getMemBufferCopy(Predefines.data(),
+                                         Predefines.data() + Predefines.size(),
                                          "<built-in>");
   assert(SB && "Cannot fail to create predefined source buffer");
   FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
