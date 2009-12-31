@@ -1225,29 +1225,13 @@ public:
   void printMDNodeBody(const MDNode *MD);
   void printNamedMDNode(const NamedMDNode *NMD);
   
-  void write(const Module *M) { printModule(M); }
-
-  void write(const GlobalValue *G) {
-    if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G))
-      printGlobal(GV);
-    else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(G))
-      printAlias(GA);
-    else if (const Function *F = dyn_cast<Function>(G))
-      printFunction(F);
-    else
-      llvm_unreachable("Unknown global");
-  }
-
-  void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
-  void write(const Instruction *I)    { printInstruction(*I); }
+  void printModule(const Module *M);
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
 
   void writeAllMDNodes();
 
-private:
-  void printModule(const Module *M);
   void printTypeSymbolTable(const TypeSymbolTable &ST);
   void printGlobal(const GlobalVariable *GV);
   void printAlias(const GlobalAlias *GV);
@@ -1255,6 +1239,7 @@ private:
   void printArgument(const Argument *FA, Attributes Attrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
+private:
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
@@ -2047,7 +2032,7 @@ void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   SlotTracker SlotTable(this);
   formatted_raw_ostream OS(ROS);
   AssemblyWriter W(OS, SlotTable, this, AAW);
-  W.write(this);
+  W.printModule(this);
 }
 
 void Type::print(raw_ostream &OS) const {
@@ -2068,15 +2053,20 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
     SlotTracker SlotTable(F);
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(F), AAW);
-    W.write(I);
+    W.printInstruction(*I);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
     SlotTracker SlotTable(BB->getParent());
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), AAW);
-    W.write(BB);
+    W.printBasicBlock(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     SlotTracker SlotTable(GV->getParent());
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
-    W.write(GV);
+    if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
+      W.printGlobal(V);
+    else if (const Function *F = dyn_cast<Function>(GV))
+      W.printFunction(F);
+    else
+      W.printAlias(cast<GlobalAlias>(GV));
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     SlotTracker SlotTable((Function*)0);
     AssemblyWriter W(OS, SlotTable, 0, AAW);
