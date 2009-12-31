@@ -20,7 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Dwarf.h"  // FIXME: Should not need this.
+#include "llvm/Support/Dwarf.h"
 
 namespace llvm {
   class BasicBlock;
