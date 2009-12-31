@@ -587,20 +587,22 @@ static Value *OptimizeAndOrXor(unsigned Opcode,
     assert(i < Ops.size());
     if (i+1 != Ops.size() && Ops[i+1].Op == Ops[i].Op) {
       if (Opcode == Instruction::And || Opcode == Instruction::Or) {
-        // Drop duplicate values.
+        // Drop duplicate values for And and Or.
         Ops.erase(Ops.begin()+i);
         --i; --e;
         ++NumAnnihil;
-      } else {
-        assert(Opcode == Instruction::Xor);
-        if (e == 2)
-          return Constant::getNullValue(Ops[0].Op->getType());
-        
-        // ... X^X -> ...
-        Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
-        i -= 1; e -= 2;
-        ++NumAnnihil;
+        continue;
       }
+      
+      // Drop pairs of values for Xor.
+      assert(Opcode == Instruction::Xor);
+      if (e == 2)
+        return Constant::getNullValue(Ops[0].Op->getType());
+      
+      // ... X^X -> ...
+      Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
+      i -= 1; e -= 2;
+      ++NumAnnihil;
     }
   }
   return 0;
@@ -611,31 +613,24 @@ static Value *OptimizeAndOrXor(unsigned Opcode,
 /// is returned, otherwise the Ops list is mutated as necessary.
 Value *Reassociate::OptimizeAdd(Instruction *I,
                                 SmallVectorImpl<ValueEntry> &Ops) {
-  SmallPtrSet<Value*, 8> OperandsSeen;
-  
-Restart:
-  OperandsSeen.clear();
-  
   // Scan the operand lists looking for X and -X pairs.  If we find any, we
   // can simplify the expression. X+-X == 0.  While we're at it, scan for any
   // duplicates.  We want to canonicalize Y+Y+Y+Z -> 3*Y+Z.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     Value *TheOp = Ops[i].Op;
     // Check to see if we've seen this operand before.  If so, we factor all
-    // instances of the operand together.
-    if (!OperandsSeen.insert(TheOp)) {
-      // Rescan the list, removing all instances of this operand from the expr.
+    // instances of the operand together.  Due to our sorting criteria, we know
+    // that these need to be next to each other in the vector.
+    if (i+1 != Ops.size() && Ops[i+1].Op == TheOp) {
+      // Rescan the list, remove all instances of this operand from the expr.
       unsigned NumFound = 0;
-      for (unsigned j = 0, je = Ops.size(); j != je; ++j) {
-        if (Ops[j].Op != TheOp) continue;
+      do {
+        Ops.erase(Ops.begin()+i);
         ++NumFound;
-        Ops.erase(Ops.begin()+j);
-        --j; --je;
-      }
-
+      } while (i != Ops.size() && Ops[i].Op == TheOp);
+      
       DEBUG(errs() << "\nFACTORING [" << NumFound << "]: " << *TheOp << '\n');
       ++NumFactor;
-
       
       // Insert a new multiply.
       Value *Mul = ConstantInt::get(cast<IntegerType>(I->getType()), NumFound);
@@ -654,7 +649,10 @@ Restart:
       // "A + A + B" -> "A*2 + B".  Add the new multiply to the list of
       // things being added by this operation.
       Ops.insert(Ops.begin(), ValueEntry(getRank(Mul), Mul));
-      goto Restart;
+      
+      --i;
+      e = Ops.size();
+      continue;
     }
     
     // Check for X and -X in the operand list.
@@ -755,7 +753,9 @@ Restart:
     // Create the multiply.
     Value *V2 = BinaryOperator::CreateMul(V, MaxOccVal, "tmp", I);
 
-    // FIXME: Should rerun 'ReassociateExpression' on the mul too??
+    // Rerun associate on the multiply in case the inner expression turned into
+    // a multiply.  We want to make sure that we keep things in canonical form.
+    V2 = ReassociateExpression(cast<BinaryOperator>(V2));
     
     // If every add operand included the factor (e.g. "A*B + A*C"), then the
     // entire result expression is just the multiply "A*(B+C)".
