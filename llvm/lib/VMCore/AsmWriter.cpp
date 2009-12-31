@@ -1074,6 +1074,27 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
   Out << "<placeholder or erroneous Constant>";
 }
 
+static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
+                                    TypePrinting *TypePrinter,
+                                    SlotTracker *Machine) {
+  Out << "!{";
+  for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
+    const Value *V = Node->getOperand(mi);
+    if (V == 0)
+      Out << "null";
+    else {
+      TypePrinter->print(V->getType(), Out);
+      Out << ' ';
+      WriteAsOperandInternal(Out, Node->getOperand(mi), 
+                             TypePrinter, Machine);
+    }
+    if (mi + 1 != me)
+      Out << ", ";
+  }
+  
+  Out << "}";
+}
+
 
 /// WriteAsOperand - Write the name of the specified value out to the specified
 /// ostream.  This can be useful when you just want to print int %reg126, not
@@ -1111,20 +1132,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   if (const MDNode *N = dyn_cast<MDNode>(V)) {
     if (N->isFunctionLocal()) {
       // Print metadata inline, not via slot reference number.
-      Out << "!{";
-      for (unsigned mi = 0, me = N->getNumOperands(); mi != me; ++mi) {
-        const Value *Val = N->getOperand(mi);
-        if (!Val)
-          Out << "null";
-        else {
-          TypePrinter->print(N->getOperand(mi)->getType(), Out);
-          Out << ' ';
-          WriteAsOperandInternal(Out, N->getOperand(mi), TypePrinter, Machine);
-        }
-        if (mi + 1 != me)
-          Out << ", ";
-      }
-      Out << '}';
+      WriteMDNodeBodyInternal(Out, N, TypePrinter, Machine);
       return;
     }
   
@@ -1999,24 +2007,7 @@ void AssemblyWriter::writeAllMDNodes() {
 }
 
 void AssemblyWriter::printMDNodeBody(const MDNode *Node) {
-  Out << "!{";
-  for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
-    const Value *V = Node->getOperand(mi);
-    if (V == 0)
-      Out << "null";
-    else if (const MDNode *N = dyn_cast<MDNode>(V)) {
-      Out << "metadata !" << Machine.getMetadataSlot(N);
-    } else {
-      TypePrinter.print(V->getType(), Out);
-      Out << ' ';
-      WriteAsOperandInternal(Out, Node->getOperand(mi), 
-                             &TypePrinter, &Machine);
-    }
-    if (mi + 1 != me)
-      Out << ", ";
-  }
-  
-  Out << "}";
+  WriteMDNodeBodyInternal(Out, Node, &TypePrinter, &Machine);
   WriteMDNodeComment(Node, Out);
   Out << "\n";
 }
