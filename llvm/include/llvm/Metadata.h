@@ -90,7 +90,8 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
   friend class MDNodeElement;
 
-  MDNodeElement *Operands;
+  /// NumOperands - This many 'MDNodeElement' items are co-allocated onto the
+  /// end of this MDNode.
   unsigned NumOperands;
   
   // Subclass data enums.
@@ -102,11 +103,16 @@ class MDNode : public MetadataBase, public FoldingSetNode {
     
     /// NotUniquedBit - This is set on MDNodes that are not uniqued because they
     /// have a null perand.
-    NotUniquedBit    = 1 << 1
+    NotUniquedBit    = 1 << 1,
+    
+    /// DestroyFlag - This bit is set by destroy() so the destructor can assert
+    /// that the node isn't being destroyed with a plain 'delete'.
+    DestroyFlag      = 1 << 2
   };
   
   // Replace each instance of F from the element list of this node with T.
   void replaceElement(MDNodeElement *Op, Value *NewVal);
+  ~MDNode();
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
@@ -115,9 +121,6 @@ public:
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, Value *const *Vals, unsigned NumVals,
                      bool isFunctionLocal = false);
-
-  /// ~MDNode - Destroy MDNode.
-  ~MDNode();
   
   /// getElement - Return specified element.
   Value *getElement(unsigned i) const;
@@ -132,6 +135,9 @@ public:
   bool isFunctionLocal() const {
     return (getSubclassDataFromValue() & FunctionLocalBit) != 0;
   }
+
+  // destroy - Delete this node.  Only when there are no uses.
+  void destroy();
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates

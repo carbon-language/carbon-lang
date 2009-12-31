@@ -56,13 +56,11 @@ namespace llvm {
 class MDNodeElement : public CallbackVH {
   MDNode *Parent;
 public:
-  MDNodeElement() {}
   MDNodeElement(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
   ~MDNodeElement() {}
   
-  void set(Value *V, MDNode *P) {
+  void set(Value *V) {
     setValPtr(V);
-    Parent = P;
   }
   
   virtual void deleted();
@@ -85,29 +83,51 @@ void MDNodeElement::allUsesReplacedWith(Value *NV) {
 // MDNode implementation.
 //
 
-/// ~MDNode - Destroy MDNode.
-MDNode::~MDNode() {
-  if (!isNotUniqued()) {
-    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-    pImpl->MDNodeSet.RemoveNode(this);
-  }
-  delete [] Operands;
-  Operands = NULL;
+/// getOperandPtr - Helper function to get the MDNodeElement's coallocated on
+/// the end of the MDNode.
+static MDNodeElement *getOperandPtr(MDNode *N, unsigned Op) {
+  assert(Op < N->getNumElements() && "Invalid operand number");
+  return reinterpret_cast<MDNodeElement*>(N+1)+Op;
 }
 
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
-  : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
+: MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = NumVals;
-  // FIXME: Coallocate the operand list.  These have fixed arity.
-  Operands = new MDNodeElement[NumOperands];
-    
-  for (unsigned i = 0; i != NumVals; ++i) 
-    Operands[i].set(Vals[i], this);
-    
+ 
   if (isFunctionLocal)
     setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
+
+  // Initialize the operand list, which is co-allocated on the end of the node.
+  for (MDNodeElement *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+       Op != E; ++Op, ++Vals)
+    new (Op) MDNodeElement(*Vals, this);
 }
+
+
+/// ~MDNode - Destroy MDNode.
+MDNode::~MDNode() {
+  assert((getSubclassDataFromValue() & DestroyFlag) != 0 && 
+         "Not being destroyed through destroy()?");
+  if (!isNotUniqued()) {
+    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+    pImpl->MDNodeSet.RemoveNode(this);
+  }
+  
+  // Destroy the operands.
+  for (MDNodeElement *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+       Op != E; ++Op)
+    Op->~MDNodeElement();
+}
+
+// destroy - Delete this node.  Only when there are no uses.
+void MDNode::destroy() {
+  setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);
+  // Placement delete, the free the memory.
+  this->~MDNode();
+  free(this);
+}
+
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
                     bool isFunctionLocal) {
@@ -119,27 +139,25 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
+    // Coallocate space for the node and elements together, then placement new.
+    void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeElement));
+    N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
+    
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
-    N = new MDNode(Context, Vals, NumVals, isFunctionLocal);
     pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
   return N;
 }
 
+/// getElement - Return specified element.
+Value *MDNode::getElement(unsigned i) const {
+  return *getOperandPtr(const_cast<MDNode*>(this), i);
+}
+
 void MDNode::Profile(FoldingSetNodeID &ID) const {
   for (unsigned i = 0, e = getNumElements(); i != e; ++i)
     ID.AddPointer(getElement(i));
-  // HASH TABLE COLLISIONS?
-  // DO NOT REINSERT AFTER AN OPERAND DROPS TO NULL!
 }
-
-
-/// getElement - Return specified element.
-Value *MDNode::getElement(unsigned i) const {
-  assert(i < getNumElements() && "Invalid element number!");
-  return Operands[i];
-}
-
 
 
 // Replace value from this node's element list.
@@ -150,7 +168,7 @@ void MDNode::replaceElement(MDNodeElement *Op, Value *To) {
     return;
 
   // Update the operand.
-  Op->set(To, this);
+  Op->set(To);
 
   // If this node is already not being uniqued (because one of the operands
   // already went to null), then there is nothing else to do here.
@@ -179,12 +197,8 @@ void MDNode::replaceElement(MDNodeElement *Op, Value *To) {
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
 
   if (N) {
-    // FIXME:
-    // If it already exists in the set, we don't reinsert it, we just claim it
-    // isn't uniqued.
-    
     N->replaceAllUsesWith(this);
-    delete N;
+    N->destroy();
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
     assert(N == 0 && "shouldn't be in the map now!"); (void)N;
   }
@@ -261,7 +275,7 @@ void NamedMDNode::dropAllReferences() {
 
 
 //===----------------------------------------------------------------------===//
-// MetadataContext implementation.
+// LLVMContext MDKind naming implementation.
 //
 
 #ifndef NDEBUG

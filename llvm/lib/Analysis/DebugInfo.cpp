@@ -284,7 +284,7 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
   if (getNode() != D.getNode()) {
     MDNode *Node = DbgNode;
     Node->replaceAllUsesWith(D.getNode());
-    delete Node;
+    Node->destroy();
   }
 }
 
