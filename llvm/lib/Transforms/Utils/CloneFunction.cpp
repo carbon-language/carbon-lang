@@ -360,9 +360,9 @@ static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
     NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD);
 
   Value *MDVs[] = {
-    InsnMD->getElement(0), // Line
-    InsnMD->getElement(1), // Col
-    InsnMD->getElement(2), // Scope
+    InsnMD->getOperand(0), // Line
+    InsnMD->getOperand(1), // Col
+    InsnMD->getOperand(2), // Scope
     NewLoc
   };
   return MDNode::get(InsnMD->getContext(), MDVs, 4);

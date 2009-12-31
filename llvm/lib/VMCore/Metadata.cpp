@@ -48,16 +48,16 @@ MDString *MDString::get(LLVMContext &Context, const char *Str) {
 }
 
 //===----------------------------------------------------------------------===//
-// MDNodeElement implementation.
+// MDNodeOperand implementation.
 //
 
-// Use CallbackVH to hold MDNode elements.
+// Use CallbackVH to hold MDNode operands.
 namespace llvm {
-class MDNodeElement : public CallbackVH {
+class MDNodeOperand : public CallbackVH {
   MDNode *Parent;
 public:
-  MDNodeElement(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
-  ~MDNodeElement() {}
+  MDNodeOperand(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
+  ~MDNodeOperand() {}
   
   void set(Value *V) {
     setValPtr(V);
@@ -69,12 +69,12 @@ public:
 } // end namespace llvm.
 
 
-void MDNodeElement::deleted() {
-  Parent->replaceElement(this, 0);
+void MDNodeOperand::deleted() {
+  Parent->replaceOperand(this, 0);
 }
 
-void MDNodeElement::allUsesReplacedWith(Value *NV) {
-  Parent->replaceElement(this, NV);
+void MDNodeOperand::allUsesReplacedWith(Value *NV) {
+  Parent->replaceOperand(this, NV);
 }
 
 
@@ -83,11 +83,11 @@ void MDNodeElement::allUsesReplacedWith(Value *NV) {
 // MDNode implementation.
 //
 
-/// getOperandPtr - Helper function to get the MDNodeElement's coallocated on
+/// getOperandPtr - Helper function to get the MDNodeOperand's coallocated on
 /// the end of the MDNode.
-static MDNodeElement *getOperandPtr(MDNode *N, unsigned Op) {
-  assert(Op < N->getNumElements() && "Invalid operand number");
-  return reinterpret_cast<MDNodeElement*>(N+1)+Op;
+static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
+  assert(Op < N->getNumOperands() && "Invalid operand number");
+  return reinterpret_cast<MDNodeOperand*>(N+1)+Op;
 }
 
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
@@ -99,9 +99,9 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
     setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
 
   // Initialize the operand list, which is co-allocated on the end of the node.
-  for (MDNodeElement *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
        Op != E; ++Op, ++Vals)
-    new (Op) MDNodeElement(*Vals, this);
+    new (Op) MDNodeOperand(*Vals, this);
 }
 
 
@@ -115,9 +115,9 @@ MDNode::~MDNode() {
   }
   
   // Destroy the operands.
-  for (MDNodeElement *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
        Op != E; ++Op)
-    Op->~MDNodeElement();
+    Op->~MDNodeOperand();
 }
 
 // destroy - Delete this node.  Only when there are no uses.
@@ -139,8 +139,8 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
-    // Coallocate space for the node and elements together, then placement new.
-    void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeElement));
+    // Coallocate space for the node and Operands together, then placement new.
+    void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
     N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
     
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
@@ -149,19 +149,19 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals,
   return N;
 }
 
-/// getElement - Return specified element.
-Value *MDNode::getElement(unsigned i) const {
+/// getOperand - Return specified operand.
+Value *MDNode::getOperand(unsigned i) const {
   return *getOperandPtr(const_cast<MDNode*>(this), i);
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
-  for (unsigned i = 0, e = getNumElements(); i != e; ++i)
-    ID.AddPointer(getElement(i));
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    ID.AddPointer(getOperand(i));
 }
 
 
-// Replace value from this node's element list.
-void MDNode::replaceElement(MDNodeElement *Op, Value *To) {
+// Replace value from this node's operand list.
+void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
   Value *From = *Op;
   
   if (From == To)
@@ -233,10 +233,10 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
   assert(NMD && "Invalid source NamedMDNode!");
   SmallVector<MetadataBase *, 4> Elems;
-  Elems.reserve(NMD->getNumElements());
+  Elems.reserve(NMD->getNumOperands());
   
-  for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i)
-    Elems.push_back(NMD->getElement(i));
+  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+    Elems.push_back(NMD->getOperand(i));
   return new NamedMDNode(NMD->getContext(), NMD->getName().data(),
                          Elems.data(), Elems.size(), M);
 }
@@ -246,19 +246,19 @@ NamedMDNode::~NamedMDNode() {
   delete &getNMDOps(Operands);
 }
 
-/// getNumElements - Return number of NamedMDNode elements.
-unsigned NamedMDNode::getNumElements() const {
+/// getNumOperands - Return number of NamedMDNode operands.
+unsigned NamedMDNode::getNumOperands() const {
   return (unsigned)getNMDOps(Operands).size();
 }
 
-/// getElement - Return specified element.
-MetadataBase *NamedMDNode::getElement(unsigned i) const {
-  assert(i < getNumElements() && "Invalid element number!");
+/// getOperand - Return specified operand.
+MetadataBase *NamedMDNode::getOperand(unsigned i) const {
+  assert(i < getNumOperands() && "Invalid Operand number!");
   return getNMDOps(Operands)[i];
 }
 
-/// addElement - Add metadata element.
-void NamedMDNode::addElement(MetadataBase *M) {
+/// addOperand - Add metadata Operand.
+void NamedMDNode::addOperand(MetadataBase *M) {
   getNMDOps(Operands).push_back(TrackingVH<MetadataBase>(M));
 }
 

@@ -648,8 +648,8 @@ void SlotTracker::processModule() {
          I = TheModule->named_metadata_begin(),
          E = TheModule->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
-    for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getElement(i));
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getOperand(i));
       if (MD)
         CreateMetadataSlot(MD);
     }
@@ -722,8 +722,8 @@ void SlotTracker::processMDNode() {
 void SlotTracker::processNamedMDNode() {
   ST_DEBUG("begin processNamedMDNode!\n");
   mdnNext = 0;
-  for (unsigned i = 0, e = TheNamedMDNode->getNumElements(); i != e; ++i) {
-    MDNode *MD = dyn_cast_or_null<MDNode>(TheNamedMDNode->getElement(i));
+  for (unsigned i = 0, e = TheNamedMDNode->getNumOperands(); i != e; ++i) {
+    MDNode *MD = dyn_cast_or_null<MDNode>(TheNamedMDNode->getOperand(i));
     if (MD)
       CreateMetadataSlot(MD);
   }
@@ -819,8 +819,8 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   unsigned DestSlot = mdnNext++;
   mdnMap[N] = DestSlot;
 
-  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-    const Value *TV = N->getElement(i);
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    const Value *TV = N->getOperand(i);
     if (TV)
       if (const MDNode *N2 = dyn_cast<MDNode>(TV))
         CreateMetadataSlot(N2);
@@ -872,9 +872,9 @@ static const char *getPredicateText(unsigned predicate) {
 
 static void WriteMDNodeComment(const MDNode *Node,
 			       formatted_raw_ostream &Out) {
-  if (Node->getNumElements() < 1)
+  if (Node->getNumOperands() < 1)
     return;
-  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getElement(0));
+  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));
   if (!CI) return;
   unsigned Val = CI->getZExtValue();
   unsigned Tag = Val & ~LLVMDebugVersionMask;
@@ -908,8 +908,8 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
     Out << '!' << i << " = metadata ";
     const MDNode *Node = Nodes[i];
     Out << "!{";
-    for (unsigned mi = 0, me = Node->getNumElements(); mi != me; ++mi) {
-      const Value *V = Node->getElement(mi);
+    for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
+      const Value *V = Node->getOperand(mi);
       if (!V)
         Out << "null";
       else if (const MDNode *N = dyn_cast<MDNode>(V)) {
@@ -919,7 +919,7 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
       else {
         TypePrinter.print(V->getType(), Out);
         Out << ' ';
-        WriteAsOperandInternal(Out, Node->getElement(mi), 
+        WriteAsOperandInternal(Out, Node->getOperand(mi), 
                                &TypePrinter, &Machine);
       }
       if (mi + 1 != me)
@@ -1231,14 +1231,14 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     if (N->isFunctionLocal()) {
       // Print metadata inline, not via slot reference number.
       Out << "!{";
-      for (unsigned mi = 0, me = N->getNumElements(); mi != me; ++mi) {
-        const Value *Val = N->getElement(mi);
+      for (unsigned mi = 0, me = N->getNumOperands(); mi != me; ++mi) {
+        const Value *Val = N->getOperand(mi);
         if (!Val)
           Out << "null";
         else {
-          TypePrinter->print(N->getElement(0)->getType(), Out);
+          TypePrinter->print(N->getOperand(0)->getType(), Out);
           Out << ' ';
-          WriteAsOperandInternal(Out, N->getElement(0), TypePrinter, Machine);
+          WriteAsOperandInternal(Out, N->getOperand(0), TypePrinter, Machine);
         }
         if (mi + 1 != me)
           Out << ", ";
@@ -1478,9 +1478,9 @@ void AssemblyWriter::printModule(const Module *M) {
          E = M->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
     Out << "!" << NMD->getName() << " = !{";
-    for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       if (i) Out << ", ";
-      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getElement(i));
+      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getOperand(i));
       Out << '!' << Machine.getMetadataSlot(MD);
     }
     Out << "}\n";
@@ -2138,9 +2138,9 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     TypePrinting TypePrinter;
     SlotTable.initialize();
     OS << "!" << N->getName() << " = !{";
-    for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
       if (i) OS << ", ";
-      MDNode *MD = dyn_cast_or_null<MDNode>(N->getElement(i));
+      MDNode *MD = dyn_cast_or_null<MDNode>(N->getOperand(i));
       if (MD)
         OS << '!' << SlotTable.getMetadataSlot(MD);
       else

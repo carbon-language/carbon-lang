@@ -369,19 +369,19 @@ namespace llvm {
     unsigned isDefinition() const      { return getUnsignedField(10); }
 
     unsigned getVirtuality() const {
-      if (DbgNode->getNumElements() < 14)
+      if (DbgNode->getNumOperands() < 14)
         return 0;
       return getUnsignedField(11);
     }
 
     unsigned getVirtualIndex() const { 
-      if (DbgNode->getNumElements() < 14)
+      if (DbgNode->getNumOperands() < 14)
         return 0;
       return getUnsignedField(12);
     }
 
     DICompositeType getContainingType() const {
-      assert (DbgNode->getNumElements() >= 14 && "Invalid type!");
+      assert (DbgNode->getNumOperands() >= 14 && "Invalid type!");
       return getFieldAs<DICompositeType>(13);
     }
 
@@ -439,7 +439,7 @@ namespace llvm {
       return getNumAddrElements() > 0;
     }
 
-    unsigned getNumAddrElements() const { return DbgNode->getNumElements()-6; }
+    unsigned getNumAddrElements() const { return DbgNode->getNumOperands()-6; }
 
     uint64_t getAddrElement(unsigned Idx) const {
       return getUInt64Field(Idx+6);

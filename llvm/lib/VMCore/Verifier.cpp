@@ -1538,8 +1538,8 @@ void Verifier::VerifyFunctionLocalMetadata(MDNode *N, Function *F,
   if (!Visited.insert(N))
     return;
   
-  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-    Value *V = N->getElement(i);
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    Value *V = N->getOperand(i);
     if (!V) continue;
     
     Function *ActualF = 0;

@@ -92,13 +92,13 @@ TEST(MDNodeTest, Simple) {
   (void) n3;
 #endif
 
-  EXPECT_EQ(3u, n1->getNumElements());
-  EXPECT_EQ(s1, n1->getElement(0));
-  EXPECT_EQ(CI, n1->getElement(1));
-  EXPECT_EQ(s2, n1->getElement(2));
+  EXPECT_EQ(3u, n1->getNumOperands());
+  EXPECT_EQ(s1, n1->getOperand(0));
+  EXPECT_EQ(CI, n1->getOperand(1));
+  EXPECT_EQ(s2, n1->getOperand(2));
 
-  EXPECT_EQ(1u, n2->getNumElements());
-  EXPECT_EQ(n1, n2->getElement(0));
+  EXPECT_EQ(1u, n2->getNumOperands());
+  EXPECT_EQ(n1, n2->getOperand(0));
 
   std::string Str;
   raw_string_ostream oss(Str);

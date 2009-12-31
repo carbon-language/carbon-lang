@@ -26,7 +26,10 @@ class Instruction;
 class LLVMContext;
 class Module;
 template <typename T> class SmallVectorImpl;
-
+template<typename ValueSubClass, typename ItemParentClass>
+  class SymbolTableListTraits;
+  
+  
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
 class MetadataBase : public Value {
@@ -81,16 +84,16 @@ public:
 };
 
   
-class MDNodeElement;
+class MDNodeOperand;
   
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
-  friend class MDNodeElement;
+  friend class MDNodeOperand;
 
-  /// NumOperands - This many 'MDNodeElement' items are co-allocated onto the
+  /// NumOperands - This many 'MDNodeOperand' items are co-allocated onto the
   /// end of this MDNode.
   unsigned NumOperands;
   
@@ -110,8 +113,8 @@ class MDNode : public MetadataBase, public FoldingSetNode {
     DestroyFlag      = 1 << 2
   };
   
-  // Replace each instance of F from the element list of this node with T.
-  void replaceElement(MDNodeElement *Op, Value *NewVal);
+  // Replace each instance of F from the operand list of this node with T.
+  void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
 
 protected:
@@ -122,11 +125,11 @@ public:
   static MDNode *get(LLVMContext &Context, Value *const *Vals, unsigned NumVals,
                      bool isFunctionLocal = false);
   
-  /// getElement - Return specified element.
-  Value *getElement(unsigned i) const;
+  /// getOperand - Return specified operand.
+  Value *getOperand(unsigned i) const;
   
-  /// getNumElements - Return number of MDNode elements.
-  unsigned getNumElements() const { return NumOperands; }
+  /// getNumOperands - Return number of MDNode operands.
+  unsigned getNumOperands() const { return NumOperands; }
   
   /// isFunctionLocal - Return whether MDNode is local to a function.
   /// Note: MDNodes are designated as function-local when created, and keep
@@ -165,10 +168,7 @@ private:
 
 //===----------------------------------------------------------------------===//
 /// NamedMDNode - a tuple of other metadata. 
-/// NamedMDNode is always named. All NamedMDNode element has a type of metadata.
-template<typename ValueSubClass, typename ItemParentClass>
-  class SymbolTableListTraits;
-
+/// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
 class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
   friend class LLVMContextImpl;
@@ -205,14 +205,14 @@ public:
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
 
-  /// getElement - Return specified element.
-  MetadataBase *getElement(unsigned i) const;
+  /// getOperand - Return specified operand.
+  MetadataBase *getOperand(unsigned i) const;
   
-  /// getNumElements - Return number of NamedMDNode elements.
-  unsigned getNumElements() const;
+  /// getNumOperands - Return the number of NamedMDNode operands.
+  unsigned getNumOperands() const;
 
-  /// addElement - Add metadata element.
-  void addElement(MetadataBase *M);
+  /// addOperand - Add metadata operand.
+  void addOperand(MetadataBase *M);
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }

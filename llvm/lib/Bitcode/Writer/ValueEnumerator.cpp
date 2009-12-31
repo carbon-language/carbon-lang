@@ -212,8 +212,8 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
     MDValues.push_back(std::make_pair(MD, 1U));
     MDValueMap[MD] = MDValues.size();
     MDValueID = MDValues.size();
-    for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {    
-      if (Value *V = N->getElement(i))
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {    
+      if (Value *V = N->getOperand(i))
         EnumerateValue(V);
       else
         EnumerateType(Type::getVoidTy(MD->getContext()));
@@ -222,8 +222,8 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   }
   
   if (const NamedMDNode *N = dyn_cast<NamedMDNode>(MD)) {
-    for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
-      EnumerateValue(N->getElement(i));
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      EnumerateValue(N->getOperand(i));
     MDValues.push_back(std::make_pair(MD, 1U));
     MDValueMap[MD] = Values.size();
     return;
@@ -327,8 +327,8 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
     }
 
     if (const MDNode *N = dyn_cast<MDNode>(V)) {
-      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
-        if (Value *Elem = N->getElement(i))
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+        if (Value *Elem = N->getOperand(i))
           EnumerateOperandType(Elem);
     }
   } else if (isa<MDString>(V) || isa<MDNode>(V))

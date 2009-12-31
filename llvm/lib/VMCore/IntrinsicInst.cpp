@@ -61,11 +61,11 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 Value *DbgStopPointInst::getFileName() const {
   // Once the operand indices are verified, update this assert
   assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
-  return getContext()->getElement(3);
+  return getContext()->getOperand(3);
 }
 
 Value *DbgStopPointInst::getDirectory() const {
   // Once the operand indices are verified, update this assert
   assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
-  return getContext()->getElement(4);
+  return getContext()->getOperand(4);
 }

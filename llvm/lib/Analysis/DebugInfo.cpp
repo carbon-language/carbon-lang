@@ -83,8 +83,8 @@ DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)
     return StringRef();
 
-  if (Elt < DbgNode->getNumElements())
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt)))
+  if (Elt < DbgNode->getNumOperands())
+    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getOperand(Elt)))
       return MDS->getString();
 
   return StringRef();
@@ -94,8 +94,8 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
   if (DbgNode == 0)
     return 0;
 
-  if (Elt < DbgNode->getNumElements())
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(DbgNode->getElement(Elt)))
+  if (Elt < DbgNode->getNumOperands())
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(DbgNode->getOperand(Elt)))
       return CI->getZExtValue();
 
   return 0;
@@ -105,8 +105,8 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
   if (DbgNode == 0)
     return DIDescriptor();
 
-  if (Elt < DbgNode->getNumElements() && DbgNode->getElement(Elt))
-    return DIDescriptor(dyn_cast<MDNode>(DbgNode->getElement(Elt)));
+  if (Elt < DbgNode->getNumOperands() && DbgNode->getOperand(Elt))
+    return DIDescriptor(dyn_cast<MDNode>(DbgNode->getOperand(Elt)));
 
   return DIDescriptor();
 }
@@ -115,8 +115,8 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
   if (DbgNode == 0)
     return 0;
 
-  if (Elt < DbgNode->getNumElements())
-      return dyn_cast_or_null<GlobalVariable>(DbgNode->getElement(Elt));
+  if (Elt < DbgNode->getNumOperands())
+      return dyn_cast_or_null<GlobalVariable>(DbgNode->getOperand(Elt));
   return 0;
 }
 
@@ -264,7 +264,7 @@ DIType::DIType(MDNode *N) : DIDescriptor(N) {
 
 unsigned DIArray::getNumElements() const {
   assert(DbgNode && "Invalid DIArray");
-  return DbgNode->getNumElements();
+  return DbgNode->getNumOperands();
 }
 
 /// replaceAllUsesWith - Replace all uses of debug info referenced by
@@ -886,18 +886,18 @@ DISubprogram DIFactory::CreateSubprogramDefinition(DISubprogram &SPDeclaration) 
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
-    DeclNode->getElement(2), // Context
-    DeclNode->getElement(3), // Name
-    DeclNode->getElement(4), // DisplayName
-    DeclNode->getElement(5), // LinkageName
-    DeclNode->getElement(6), // CompileUnit
-    DeclNode->getElement(7), // LineNo
-    DeclNode->getElement(8), // Type
-    DeclNode->getElement(9), // isLocalToUnit
+    DeclNode->getOperand(2), // Context
+    DeclNode->getOperand(3), // Name
+    DeclNode->getOperand(4), // DisplayName
+    DeclNode->getOperand(5), // LinkageName
+    DeclNode->getOperand(6), // CompileUnit
+    DeclNode->getOperand(7), // LineNo
+    DeclNode->getOperand(8), // Type
+    DeclNode->getOperand(9), // isLocalToUnit
     ConstantInt::get(Type::getInt1Ty(VMContext), true),
-    DeclNode->getElement(11), // Virtuality
-    DeclNode->getElement(12), // VIndex
-    DeclNode->getElement(13)  // Containting Type
+    DeclNode->getOperand(11), // Virtuality
+    DeclNode->getOperand(12), // VIndex
+    DeclNode->getOperand(13)  // Containting Type
   };
   return DISubprogram(MDNode::get(VMContext, &Elts[0], 14));
 }
@@ -930,7 +930,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
 
   // Create a named metadata so that we do not lose this mdnode.
   NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
-  NMD->addElement(Node);
+  NMD->addOperand(Node);
 
   return DIGlobalVariable(Node);
 }
@@ -1106,8 +1106,8 @@ void DebugInfoFinder::processModule(Module &M) {
   if (!NMD)
     return;
 
-  for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-    DIGlobalVariable DIG(cast<MDNode>(NMD->getElement(i)));
+  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+    DIGlobalVariable DIG(cast<MDNode>(NMD->getOperand(i)));
     if (addGlobalVariable(DIG)) {
       addCompileUnit(DIG.getCompileUnit());
       processType(DIG.getType());
@@ -1289,8 +1289,8 @@ Value *llvm::findDbgGlobalDeclare(GlobalVariable *V) {
   if (!NMD)
     return 0;
 
-  for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-    DIGlobalVariable DIG(cast_or_null<MDNode>(NMD->getElement(i)));
+  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+    DIGlobalVariable DIG(cast_or_null<MDNode>(NMD->getOperand(i)));
     if (DIG.isNull())
       continue;
     if (DIG.getGlobal() == V)

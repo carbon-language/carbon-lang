@@ -475,10 +475,10 @@ static void WriteMDNode(const MDNode *N,
                         const ValueEnumerator &VE,
                         BitstreamWriter &Stream,
                         SmallVector<uint64_t, 64> &Record) {
-  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-    if (N->getElement(i)) {
-      Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
-      Record.push_back(VE.getValueID(N->getElement(i)));
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    if (N->getOperand(i)) {
+      Record.push_back(VE.getTypeID(N->getOperand(i)->getType()));
+      Record.push_back(VE.getValueID(N->getOperand(i)));
     } else {
       Record.push_back(VE.getTypeID(Type::getVoidTy(N->getContext())));
       Record.push_back(0);
@@ -535,10 +535,10 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
       Record.clear();
 
-      // Write named metadata elements.
-      for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
-        if (NMD->getElement(i))
-          Record.push_back(VE.getValueID(NMD->getElement(i)));
+      // Write named metadata operands.
+      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+        if (NMD->getOperand(i))
+          Record.push_back(VE.getValueID(NMD->getOperand(i)));
         else
           Record.push_back(0);
       }
