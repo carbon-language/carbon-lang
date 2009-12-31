@@ -376,6 +376,9 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
 // that should be processed next by the reassociation pass.
 //
 static Value *NegateValue(Value *V, Instruction *BI) {
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantExpr::getNeg(C);
+  
   // We are trying to expose opportunity for reassociation.  One of the things
   // that we want to do to achieve this is to push a negation as deep into an
   // expression chain as possible, to expose the add instructions.  In practice,
@@ -400,10 +403,36 @@ static Value *NegateValue(Value *V, Instruction *BI) {
       I->setName(I->getName()+".neg");
       return I;
     }
+  
+  // Okay, we need to materialize a negated version of V with an instruction.
+  // Scan the use lists of V to see if we have one already.
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
+    if (!BinaryOperator::isNeg(*UI)) continue;
+
+    // We found one!  Now we have to make sure that the definition dominates
+    // this use.  We do this by moving it to the entry block (if it is a
+    // non-instruction value) or right after the definition.  These negates will
+    // be zapped by reassociate later, so we don't need much finesse here.
+    BinaryOperator *TheNeg = cast<BinaryOperator>(*UI);
+    
+    BasicBlock::iterator InsertPt;
+    if (Instruction *InstInput = dyn_cast<Instruction>(V)) {
+      if (InvokeInst *II = dyn_cast<InvokeInst>(InstInput)) {
+        InsertPt = II->getNormalDest()->begin();
+      } else {
+        InsertPt = InstInput;
+        ++InsertPt;
+      }
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+    } else {
+      InsertPt = TheNeg->getParent()->getParent()->getEntryBlock().begin();
+    }
+    TheNeg->moveBefore(InsertPt);
+    return TheNeg;
+  }
 
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
-  //
   return BinaryOperator::CreateNeg(V, V->getName() + ".neg", BI);
 }
 

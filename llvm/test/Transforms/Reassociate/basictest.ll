@@ -165,4 +165,17 @@ define i32 @test11(i32 %W) {
 ; CHECK-NEXT: ret i32
 }
 
+define i32 @test12(i32 %X) {
+  %A = sub i32 1, %X
+  %B = sub i32 2, %X
+  %C = sub i32 3, %X
+
+  %Y = add i32 %A ,%B
+  %Z = add i32 %Y, %C
+  ret i32 %Z
+; CHECK: @test12
+; CHECK-NEXT: mul i32 %X, -3
+; CHECK-NEXT: add i32{{.*}}, 6
+; CHECK-NEXT: ret i32
+}
 
