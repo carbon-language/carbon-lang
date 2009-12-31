@@ -330,8 +330,9 @@ GRExprEngine::~GRExprEngine() {
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
+void GRExprEngine::setTransferFunctionsAndCheckers(GRTransferFuncs* tf) {
   StateMgr.TF = tf;
+  StateMgr.Checkers = &Checkers;
   tf->RegisterChecks(*this);
   tf->RegisterPrinters(getStateManager().Printers);
 }

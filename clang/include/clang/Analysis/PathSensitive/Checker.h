@@ -269,6 +269,11 @@ public:
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
     return false;
   }
+
+  virtual const GRState *EvalAssume(const GRState *state, SVal Cond, 
+                                    bool Assumption) {
+    return state;
+  }
 };
 } // end clang namespace
 

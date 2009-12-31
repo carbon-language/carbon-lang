@@ -373,7 +373,7 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
   
-  Eng.setTransferFunctions(tf);  
+  Eng.setTransferFunctionsAndCheckers(tf);  
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
@@ -506,7 +506,7 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
   
   // Make a fake transfer function. The GRTransferFunc interface will be 
   // removed.
-  Eng.setTransferFunctions(new GRTransferFuncs());  
+  Eng.setTransferFunctionsAndCheckers(new GRTransferFuncs());  
 
   // Register call inliner as the last checker.
   RegisterCallInliner(Eng);

@@ -15,6 +15,7 @@
 #include "SimpleConstraintManager.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRState.h"
+#include "clang/Analysis/PathSensitive/Checker.h"
 
 namespace clang {
 
@@ -72,8 +73,17 @@ const GRState *SimpleConstraintManager::Assume(const GRState *state, Loc Cond,
   // EvalAssume is used to call into the GRTransferFunction object to perform
   // any checker-specific update of the state based on this assumption being
   // true or false.
-  return state ? state->getTransferFuncs().EvalAssume(state, Cond, Assumption)
-               : NULL;
+
+  if (!state)
+    return 0;
+
+  std::vector<std::pair<void *, Checker*> >::iterator 
+    I = state->checker_begin(), E = state->checker_end();
+
+  for (; I != E; ++I) {
+    state = I->second->EvalAssume(state, Cond, Assumption);
+  }
+  return state->getTransferFuncs().EvalAssume(state, Cond, Assumption);
 }
 
 const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
@@ -128,8 +138,18 @@ const GRState *SimpleConstraintManager::Assume(const GRState *state,
   // EvalAssume is used to call into the GRTransferFunction object to perform
   // any checker-specific update of the state based on this assumption being
   // true or false.
-  return state ? state->getTransferFuncs().EvalAssume(state, Cond, Assumption)
-               : NULL;
+
+  if (!state)
+    return 0;
+
+  std::vector<std::pair<void *, Checker*> >::iterator 
+    I = state->checker_begin(), E = state->checker_end();
+
+  for (; I != E; ++I) {
+    state = I->second->EvalAssume(state, Cond, Assumption);
+  }
+
+  return state->getTransferFuncs().EvalAssume(state, Cond, Assumption);
 }
 
 const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,

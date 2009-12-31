@@ -23,13 +23,13 @@ using namespace clang;
 namespace {
 
 class RefState {
-  enum Kind { Allocated, Released, Escaped } K;
+  enum Kind { AllocateUnchecked, AllocateFailed, Released, Escaped } K;
   const Stmt *S;
 
 public:
   RefState(Kind k, const Stmt *s) : K(k), S(s) {}
 
-  bool isAllocated() const { return K == Allocated; }
+  bool isAllocated() const { return K == AllocateUnchecked; }
   bool isReleased() const { return K == Released; }
   bool isEscaped() const { return K == Escaped; }
 
@@ -37,7 +37,12 @@ public:
     return K == X.K && S == X.S;
   }
 
-  static RefState getAllocated(const Stmt *s) { return RefState(Allocated, s); }
+  static RefState getAllocateUnchecked(const Stmt *s) { 
+    return RefState(AllocateUnchecked, s); 
+  }
+  static RefState getAllocateFailed() {
+    return RefState(AllocateFailed, 0);
+  }
   static RefState getReleased(const Stmt *s) { return RefState(Released, s); }
   static RefState getEscaped(const Stmt *s) { return RefState(Escaped, s); }
 
@@ -62,6 +67,8 @@ public:
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
+  const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption);
+
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
@@ -73,6 +80,8 @@ private:
   void ReallocMem(CheckerContext &C, const CallExpr *CE);
 };
 } // end anonymous namespace
+
+typedef llvm::ImmutableMap<SymbolRef, RefState> RegionStateTy;
 
 namespace clang {
   template <>
@@ -144,7 +153,7 @@ const GRState *MallocChecker::MallocMemAux(CheckerContext &C,
   SymbolRef Sym = RetVal.getAsLocSymbol();
   assert(Sym);
   // Set the symbol's state to Allocated.
-  return state->set<RegionState>(Sym, RefState::getAllocated(CE));
+  return state->set<RegionState>(Sym, RefState::getAllocateUnchecked(CE));
 }
 
 void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
@@ -297,4 +306,19 @@ void MallocChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
     state = state->set<RegionState>(Sym, RefState::getEscaped(S));
 
   C.addTransition(state);
+}
+
+const GRState *MallocChecker::EvalAssume(const GRState *state, SVal Cond, 
+                                         bool Assumption) {
+  // If a symblic region is assumed to NULL, set its state to AllocateFailed.
+  // FIXME: should also check symbols assumed to non-null.
+
+  RegionStateTy RS = state->get<RegionState>();
+
+  for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+    if (state->getSymVal(I.getKey()))
+      state = state->set<RegionState>(I.getKey(),RefState::getAllocateFailed());
+  }
+
+  return state;
 }

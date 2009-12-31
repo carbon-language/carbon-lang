@@ -80,7 +80,7 @@ class GRExprEngine : public GRSubEngine {
   typedef llvm::DenseMap<void *, unsigned> CheckerMap;
   CheckerMap CheckerM;
   
-  typedef std::vector<std::pair<void *, Checker*> >CheckersOrdered;
+  typedef std::vector<std::pair<void *, Checker*> > CheckersOrdered;
   CheckersOrdered Checkers;
 
   /// BR - The BugReporter associated with this engine.  It is important that
@@ -111,10 +111,10 @@ public:
   GRStmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
 
   /// setTransferFunctions
-  void setTransferFunctions(GRTransferFuncs* tf);
+  void setTransferFunctionsAndCheckers(GRTransferFuncs* tf);
 
   void setTransferFunctions(GRTransferFuncs& tf) {
-    setTransferFunctions(&tf);
+    setTransferFunctionsAndCheckers(&tf);
   }
 
   /// ViewGraph - Visualize the ExplodedGraph created by executing the

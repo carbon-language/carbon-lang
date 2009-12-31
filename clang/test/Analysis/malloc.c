@@ -43,3 +43,11 @@ int *f5() {
   q = realloc(q, 20);
   return q; // no-warning
 }
+
+void f6() {
+  int *p = malloc(10);
+  if (!p)
+    return; // no-warning
+  else
+    free(p);
+}
