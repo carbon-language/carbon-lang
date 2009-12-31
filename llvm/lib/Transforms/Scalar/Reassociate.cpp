@@ -92,7 +92,7 @@ namespace {
     void RewriteExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops,
                          unsigned Idx = 0);
     Value *OptimizeExpression(BinaryOperator *I, std::vector<ValueEntry> &Ops);
-    Value *OptimizeAdd(std::vector<ValueEntry> &Ops);
+    Value *OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops);
     void LinearizeExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops);
     void LinearizeExpr(BinaryOperator *I);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
@@ -598,7 +598,7 @@ static Value *OptimizeAndOrXor(unsigned Opcode, std::vector<ValueEntry> &Ops) {
 /// OptimizeAdd - Optimize a series of operands to an 'add' instruction.  This
 /// optimizes based on identities.  If it can be reduced to a single Value, it
 /// is returned, otherwise the Ops list is mutated as necessary.
-Value *Reassociate::OptimizeAdd(std::vector<ValueEntry> &Ops) {
+Value *Reassociate::OptimizeAdd(Instruction *I, std::vector<ValueEntry> &Ops) {
   // Scan the operand lists looking for X and -X pairs.  If we find any, we
   // can simplify the expression. X+-X == 0.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -626,6 +626,94 @@ Value *Reassociate::OptimizeAdd(std::vector<ValueEntry> &Ops) {
     --i;     // Revisit element.
     e -= 2;  // Removed two elements.
   }
+  
+  // Scan the operand list, checking to see if there are any common factors
+  // between operands.  Consider something like A*A+A*B*C+D.  We would like to
+  // reassociate this to A*(A+B*C)+D, which reduces the number of multiplies.
+  // To efficiently find this, we count the number of times a factor occurs
+  // for any ADD operands that are MULs.
+  DenseMap<Value*, unsigned> FactorOccurrences;
+  
+  // Keep track of each multiply we see, to avoid triggering on (X*4)+(X*4)
+  // where they are actually the same multiply.
+  SmallPtrSet<BinaryOperator*, 4> Multiplies;
+  unsigned MaxOcc = 0;
+  Value *MaxOccVal = 0;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
+    if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
+      continue;
+    
+    // If we've already seen this multiply, don't revisit it.
+    if (!Multiplies.insert(BOp)) continue;
+    
+    // Compute all of the factors of this added value.
+    SmallVector<Value*, 8> Factors;
+    FindSingleUseMultiplyFactors(BOp, Factors);
+    assert(Factors.size() > 1 && "Bad linearize!");
+    
+    // Add one to FactorOccurrences for each unique factor in this op.
+    if (Factors.size() == 2) {
+      unsigned Occ = ++FactorOccurrences[Factors[0]];
+      if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
+      if (Factors[0] != Factors[1]) {   // Don't double count A*A.
+        Occ = ++FactorOccurrences[Factors[1]];
+        if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
+      }
+    } else {
+      SmallPtrSet<Value*, 4> Duplicates;
+      for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
+        if (!Duplicates.insert(Factors[i])) continue;
+        
+        unsigned Occ = ++FactorOccurrences[Factors[i]];
+        if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
+      }
+    }
+  }
+  
+  // If any factor occurred more than one time, we can pull it out.
+  if (MaxOcc > 1) {
+    DEBUG(errs() << "\nFACTORING [" << MaxOcc << "]: " << *MaxOccVal << "\n");
+    ++NumFactor;
+
+    // Create a new instruction that uses the MaxOccVal twice.  If we don't do
+    // this, we could otherwise run into situations where removing a factor
+    // from an expression will drop a use of maxocc, and this can cause 
+    // RemoveFactorFromExpression on successive values to behave differently.
+    Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
+    SmallVector<Value*, 4> NewMulOps;
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
+        NewMulOps.push_back(V);
+        Ops.erase(Ops.begin()+i);
+        --i; --e;
+      }
+    }
+    
+    // No need for extra uses anymore.
+    delete DummyInst;
+    
+    unsigned NumAddedValues = NewMulOps.size();
+    Value *V = EmitAddTreeOfValues(I, NewMulOps);
+    Value *V2 = BinaryOperator::CreateMul(V, MaxOccVal, "tmp", I);
+    
+    // Now that we have inserted V and its sole use, optimize it. This allows
+    // us to handle cases that require multiple factoring steps, such as this:
+    // A*A*B + A*A*C   -->   A*(A*B+A*C)   -->   A*(A*(B+C))
+    if (NumAddedValues > 1)
+      ReassociateExpression(cast<BinaryOperator>(V));
+    
+    // If every add operand included the factor (e.g. "A*B + A*C"), then the
+    // entire result expression is just the multiply "A*(B+C)".
+    if (Ops.empty())
+      return V2;
+    
+    // Otherwise, we had some input that didn't have the fact, such as
+    // "A*B + A*C + D" -> "A*(B+C) + D".  Add the new multiply to the list of
+    // things being added.
+    Ops.insert(Ops.begin(), ValueEntry(getRank(V2), V2));
+  }
+  
   return 0;
 }
 
@@ -692,98 +780,11 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
 
   case Instruction::Add: {
     unsigned NumOps = Ops.size();
-    if (Value *Result = OptimizeAdd(Ops))
+    if (Value *Result = OptimizeAdd(I, Ops))
       return Result;
     IterateOptimization |= Ops.size() != NumOps;
   }
 
-    // Scan the operand list, checking to see if there are any common factors
-    // between operands.  Consider something like A*A+A*B*C+D.  We would like to
-    // reassociate this to A*(A+B*C)+D, which reduces the number of multiplies.
-    // To efficiently find this, we count the number of times a factor occurs
-    // for any ADD operands that are MULs.
-    DenseMap<Value*, unsigned> FactorOccurrences;
-      
-    // Keep track of each multiply we see, to avoid triggering on (X*4)+(X*4)
-    // where they are actually the same multiply.
-    SmallPtrSet<BinaryOperator*, 4> Multiplies;
-    unsigned MaxOcc = 0;
-    Value *MaxOccVal = 0;
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-      BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
-      if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
-        continue;
-      
-      // If we've already seen this multiply, don't revisit it.
-      if (!Multiplies.insert(BOp)) continue;
-      
-      // Compute all of the factors of this added value.
-      SmallVector<Value*, 8> Factors;
-      FindSingleUseMultiplyFactors(BOp, Factors);
-      assert(Factors.size() > 1 && "Bad linearize!");
-
-      // Add one to FactorOccurrences for each unique factor in this op.
-      if (Factors.size() == 2) {
-        unsigned Occ = ++FactorOccurrences[Factors[0]];
-        if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[0]; }
-        if (Factors[0] != Factors[1]) {   // Don't double count A*A.
-          Occ = ++FactorOccurrences[Factors[1]];
-          if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[1]; }
-        }
-      } else {
-        SmallPtrSet<Value*, 4> Duplicates;
-        for (unsigned i = 0, e = Factors.size(); i != e; ++i) {
-          if (!Duplicates.insert(Factors[i])) continue;
-          
-          unsigned Occ = ++FactorOccurrences[Factors[i]];
-          if (Occ > MaxOcc) { MaxOcc = Occ; MaxOccVal = Factors[i]; }
-        }
-      }
-    }
-
-    // If any factor occurred more than one time, we can pull it out.
-    if (MaxOcc > 1) {
-      DEBUG(errs() << "\nFACTORING [" << MaxOcc << "]: " << *MaxOccVal << "\n");
-      
-      // Create a new instruction that uses the MaxOccVal twice.  If we don't do
-      // this, we could otherwise run into situations where removing a factor
-      // from an expression will drop a use of maxocc, and this can cause 
-      // RemoveFactorFromExpression on successive values to behave differently.
-      Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
-      SmallVector<Value*, 4> NewMulOps;
-      for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-        if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
-          NewMulOps.push_back(V);
-          Ops.erase(Ops.begin()+i);
-          --i; --e;
-        }
-      }
-      
-      // No need for extra uses anymore.
-      delete DummyInst;
-
-      unsigned NumAddedValues = NewMulOps.size();
-      Value *V = EmitAddTreeOfValues(I, NewMulOps);
-      Value *V2 = BinaryOperator::CreateMul(V, MaxOccVal, "tmp", I);
-
-      // Now that we have inserted V and its sole use, optimize it. This allows
-      // us to handle cases that require multiple factoring steps, such as this:
-      // A*A*B + A*A*C   -->   A*(A*B+A*C)   -->   A*(A*(B+C))
-      if (NumAddedValues > 1)
-        ReassociateExpression(cast<BinaryOperator>(V));
-      
-      ++NumFactor;
-      
-      if (Ops.empty())
-        return V2;
-
-      // Add the new value to the list of things being added.
-      Ops.insert(Ops.begin(), ValueEntry(getRank(V2), V2));
-      
-      // Rewrite the tree so that there is now a use of V.
-      RewriteExprTree(I, Ops);
-      return OptimizeExpression(I, Ops);
-    }
     break;
   //case Instruction::Mul:
   }
@@ -854,7 +855,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
   std::vector<ValueEntry> Ops;
   LinearizeExprTree(I, Ops);
   
-  DEBUG(errs() << "RAIn:\t"; PrintOps(I, Ops); errs() << "\n");
+  DEBUG(errs() << "RAIn:\t"; PrintOps(I, Ops); errs() << '\n');
   
   // Now that we have linearized the tree to a list and have gathered all of
   // the operands and their ranks, sort the operands by their rank.  Use a
@@ -869,7 +870,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
   if (Value *V = OptimizeExpression(I, Ops)) {
     // This expression tree simplified to something that isn't a tree,
     // eliminate it.
-    DEBUG(errs() << "Reassoc to scalar: " << *V << "\n");
+    DEBUG(errs() << "Reassoc to scalar: " << *V << '\n');
     I->replaceAllUsesWith(V);
     RemoveDeadBinaryOp(I);
     ++NumAnnihil;
@@ -888,7 +889,7 @@ void Reassociate::ReassociateExpression(BinaryOperator *I) {
     Ops.pop_back();
   }
   
-  DEBUG(errs() << "RAOut:\t"; PrintOps(I, Ops); errs() << "\n");
+  DEBUG(errs() << "RAOut:\t"; PrintOps(I, Ops); errs() << '\n');
   
   if (Ops.size() == 1) {
     // This expression tree simplified to something that isn't a tree,
