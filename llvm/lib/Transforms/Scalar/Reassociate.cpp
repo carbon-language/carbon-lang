@@ -530,7 +530,13 @@ Value *Reassociate::RemoveFactorFromExpression(Value *V, Value *Factor) {
     return 0;
   }
   
-  if (Factors.size() == 1) return Factors[0].Op;
+  // If this was just a single multiply, remove the multiply and return the only
+  // remaining operand.
+  if (Factors.size() == 1) {
+    ValueRankMap.erase(BO);
+    BO->eraseFromParent();
+    return Factors[0].Op;
+  }
   
   RewriteExprTree(BO, Factors);
   return BO;
