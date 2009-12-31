@@ -88,19 +88,19 @@ define void @test5() {
 }
 
 define i32 @test6() {
-	%tmp.0 = load i32* @a		; <i32> [#uses=2]
-	%tmp.1 = load i32* @b		; <i32> [#uses=2]
+	%tmp.0 = load i32* @a
+	%tmp.1 = load i32* @b
         ; (a+b)
-	%tmp.2 = add i32 %tmp.0, %tmp.1		; <i32> [#uses=1]
-	%tmp.4 = load i32* @c		; <i32> [#uses=2]
+	%tmp.2 = add i32 %tmp.0, %tmp.1
+	%tmp.4 = load i32* @c
 	; (a+b)+c
-        %tmp.5 = add i32 %tmp.2, %tmp.4		; <i32> [#uses=1]
+        %tmp.5 = add i32 %tmp.2, %tmp.4
 	; (a+c)
-        %tmp.8 = add i32 %tmp.0, %tmp.4		; <i32> [#uses=1]
+        %tmp.8 = add i32 %tmp.0, %tmp.4
 	; (a+c)+b
-        %tmp.11 = add i32 %tmp.8, %tmp.1		; <i32> [#uses=1]
+        %tmp.11 = add i32 %tmp.8, %tmp.1
 	; X ^ X = 0
-        %RV = xor i32 %tmp.5, %tmp.11		; <i32> [#uses=1]
+        %RV = xor i32 %tmp.5, %tmp.11
 	ret i32 %RV
 ; CHECK: @test6
 ; CHECK: ret i32 0
@@ -108,6 +108,7 @@ define i32 @test6() {
 
 ; This should be one add and two multiplies.
 define i32 @test7(i32 %A, i32 %B, i32 %C) {
+ ; A*A*B + A*C*A
 	%aa = mul i32 %A, %A
 	%aab = mul i32 %aa, %B
 	%ac = mul i32 %A, %C
@@ -141,6 +142,27 @@ define i32 @test9(i32 %X) {
   %Z = add i32 %Y, %Y
   ret i32 %Z
 ; CHECK: @test9
-; CHECK-NEXT: %Z = mul i32 %X, 94
-; CHECK-NEXT: ret i32 %Z
+; CHECK-NEXT: mul i32 %X, 94
+; CHECK-NEXT: ret i32
 }
+
+define i32 @test10(i32 %X) {
+  %Y = add i32 %X ,%X
+  %Z = add i32 %Y, %X
+  ret i32 %Z
+; CHECK: @test10
+; CHECK-NEXT: mul i32 %X, 3
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test11(i32 %W) {
+  %X = mul i32 %W, 127
+  %Y = add i32 %X ,%X
+  %Z = add i32 %Y, %X
+  ret i32 %Z
+; CHECK: @test11
+; CHECK-NEXT: mul i32 %W, 381
+; CHECK-NEXT: ret i32
+}
+
+
