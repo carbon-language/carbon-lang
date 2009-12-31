@@ -1257,29 +1257,30 @@ private:
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   if (Operand == 0) {
     Out << "<null operand!>";
-  } else {
-    if (PrintType) {
-      TypePrinter.print(Operand->getType(), Out);
-      Out << ' ';
-    }
-    WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
+    return;
   }
+  if (PrintType) {
+    TypePrinter.print(Operand->getType(), Out);
+    Out << ' ';
+  }
+  WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
 }
 
 void AssemblyWriter::writeParamOperand(const Value *Operand,
                                        Attributes Attrs) {
   if (Operand == 0) {
     Out << "<null operand!>";
-  } else {
-    // Print the type
-    TypePrinter.print(Operand->getType(), Out);
-    // Print parameter attributes list
-    if (Attrs != Attribute::None)
-      Out << ' ' << Attribute::getAsString(Attrs);
-    Out << ' ';
-    // Print the operand
-    WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
+    return;
   }
+
+  // Print the type
+  TypePrinter.print(Operand->getType(), Out);
+  // Print parameter attributes list
+  if (Attrs != Attribute::None)
+    Out << ' ' << Attribute::getAsString(Attrs);
+  Out << ' ';
+  // Print the operand
+  WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine);
 }
 
 void AssemblyWriter::printModule(const Module *M) {
