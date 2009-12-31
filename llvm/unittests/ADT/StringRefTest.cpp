@@ -249,7 +249,7 @@ TEST(StringRefTest, Count) {
 
 TEST(StringRefTest, EditDistance) {
   StringRef Str("hello");
-  EXPECT_EQ(2, Str.edit_distance("hill"));
+  EXPECT_EQ(2U, Str.edit_distance("hill"));
 }
 
 TEST(StringRefTest, Misc) {
