@@ -105,3 +105,31 @@ define i32 @test6() {
 ; CHECK: @test6
 ; CHECK: ret i32 0
 }
+
+; This should be one add and two multiplies.
+define i32 @test7(i32 %A, i32 %B, i32 %C) {
+	%aa = mul i32 %A, %A
+	%aab = mul i32 %aa, %B
+	%ac = mul i32 %A, %C
+	%aac = mul i32 %ac, %A
+	%r = add i32 %aab, %aac
+	ret i32 %r
+; CHECK: @test7
+; CHECK-NEXT: add i32 %C, %B
+; CHECK-NEXT: mul i32 
+; CHECK-NEXT: mul i32 
+; CHECK-NEXT: ret i32 
+}
+
+
+define i32 @test8(i32 %X, i32 %Y, i32 %Z) {
+	%A = sub i32 0, %X
+	%B = mul i32 %A, %Y
+        ; (-X)*Y + Z -> Z-X*Y
+	%C = add i32 %B, %Z
+	ret i32 %C
+; CHECK: @test8
+; CHECK-NEXT: %A = mul i32 %Y, %X
+; CHECK-NEXT: %C = sub i32 %Z, %A
+; CHECK-NEXT: ret i32 %C
+}
