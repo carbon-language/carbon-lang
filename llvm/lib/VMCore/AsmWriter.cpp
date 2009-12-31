@@ -634,8 +634,8 @@ void SlotTracker::processModule() {
          E = TheModule->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getOperand(i));
-      if (MD)
+      // FIXME: Change accessor to be type safe.
+      if (MDNode *MD = cast_or_null<MDNode>(NMD->getOperand(i)))
         CreateMetadataSlot(MD);
     }
   }
@@ -1312,6 +1312,8 @@ public:
       M->getMDKindNames(MDNames);
   }
 
+  void printNamedMDNode(const NamedMDNode *NMD);
+  
   void write(const Module *M) { printModule(M); }
 
   void write(const GlobalValue *G) {
@@ -1446,22 +1448,28 @@ void AssemblyWriter::printModule(const Module *M) {
 
   // Output named metadata.
   if (!M->named_metadata_empty()) Out << '\n';
+  
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-         E = M->named_metadata_end(); I != E; ++I) {
-    const NamedMDNode *NMD = I;
-    Out << "!" << NMD->getName() << " = !{";
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      if (i) Out << ", ";
-      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getOperand(i));
-      Out << '!' << Machine.getMetadataSlot(MD);
-    }
-    Out << "}\n";
-  }
+         E = M->named_metadata_end(); I != E; ++I)
+    printNamedMDNode(I);
 
   // Output metadata.
   if (!Machine.mdnEmpty()) Out << '\n';
   WriteMDNodes(Out, TypePrinter, Machine);
 }
+
+void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
+  Out << "!" << NMD->getName() << " = !{";
+  for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+    if (i) Out << ", ";
+    // FIXME: Change accessor to be typesafe.
+    // FIXME: This doesn't handle null??
+    MDNode *MD = cast_or_null<MDNode>(NMD->getOperand(i));
+    Out << '!' << Machine.getMetadataSlot(MD);
+  }
+  Out << "}\n";
+}
+
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT,
                          formatted_raw_ostream &Out) {
@@ -2100,19 +2108,8 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     WriteMDNodes(OS, TypePrinter, SlotTable);
   } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(this)) {
     SlotTracker SlotTable(N->getParent());
-    TypePrinting TypePrinter;
-    SlotTable.initialize();
-    OS << "!" << N->getName() << " = !{";
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-      if (i) OS << ", ";
-      MDNode *MD = dyn_cast_or_null<MDNode>(N->getOperand(i));
-      if (MD)
-        OS << '!' << SlotTable.getMetadataSlot(MD);
-      else
-        OS << "null";
-    }
-    OS << "}\n";
-    WriteMDNodes(OS, TypePrinter, SlotTable);
+    AssemblyWriter W(OS, SlotTable, N->getParent(), AAW);
+    W.printNamedMDNode(N);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
