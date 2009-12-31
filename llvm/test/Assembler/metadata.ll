@@ -16,4 +16,7 @@ define void @test() {
 declare void @llvm.dbg.func.start(metadata) nounwind readnone
 
 
+!foo = !{ !0 }
+!bar = !{ !1 }
+
 ; !foo = !{ !0, !"foo" }
