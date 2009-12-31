@@ -42,6 +42,7 @@ class AssemblyAnnotationWriter;
 class ValueHandleBase;
 class LLVMContext;
 class Twine;
+class MDNode;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -349,6 +350,9 @@ template <> inline bool isa_impl<GlobalAlias, Value>(const Value &Val) {
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val) ||
          isa<GlobalAlias>(Val);
+}
+template <> inline bool isa_impl<MDNode, Value>(const Value &Val) {
+  return Val.getValueID() == Value::MDNodeVal;
 }
   
   

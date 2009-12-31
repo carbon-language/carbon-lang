@@ -69,3 +69,11 @@ Value *DbgStopPointInst::getDirectory() const {
   assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
   return getContext()->getOperand(4);
 }
+
+//===----------------------------------------------------------------------===//
+/// DbgValueInst - This represents the llvm.dbg.value instruction.
+///
+
+Value *DbgValueInst::getValue() const {
+  return cast<MDNode>(getOperand(1))->getOperand(0);
+}

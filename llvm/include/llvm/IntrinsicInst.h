@@ -25,7 +25,6 @@
 #define LLVM_INTRINSICINST_H
 
 #include "llvm/Constants.h"
-#include "llvm/Metadata.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -175,9 +174,7 @@ namespace llvm {
   /// DbgValueInst - This represents the llvm.dbg.value instruction.
   ///
   struct DbgValueInst : public DbgInfoIntrinsic {
-    Value *getValue() const {
-      return cast<MDNode>(getOperand(1))->getOperand(0);
-    }
+    Value *getValue() const;
     Value *getOffset() const { return getOperand(2); }
     MDNode *getVariable() const { return cast<MDNode>(getOperand(3)); }
 
