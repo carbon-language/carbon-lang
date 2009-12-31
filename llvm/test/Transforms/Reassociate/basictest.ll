@@ -133,3 +133,14 @@ define i32 @test8(i32 %X, i32 %Y, i32 %Z) {
 ; CHECK-NEXT: %C = sub i32 %Z, %A
 ; CHECK-NEXT: ret i32 %C
 }
+
+
+; PR5458
+define i32 @test9(i32 %X) {
+  %Y = mul i32 %X, 47
+  %Z = add i32 %Y, %Y
+  ret i32 %Z
+; CHECK: @test9
+; CHECK-NEXT: %Z = mul i32 %X, 94
+; CHECK-NEXT: ret i32 %Z
+}

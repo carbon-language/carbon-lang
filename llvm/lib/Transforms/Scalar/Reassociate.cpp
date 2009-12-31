@@ -714,12 +714,19 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     // To efficiently find this, we count the number of times a factor occurs
     // for any ADD operands that are MULs.
     DenseMap<Value*, unsigned> FactorOccurrences;
+      
+    // Keep track of each multiply we see, to avoid triggering on (X*4)+(X*4)
+    // where they are actually the same multiply.
+    SmallPtrSet<BinaryOperator*, 4> Multiplies;
     unsigned MaxOcc = 0;
     Value *MaxOccVal = 0;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
       if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
         continue;
+      
+      // If we've already seen this multiply, don't revisit it.
+      if (!Multiplies.insert(BOp)) continue;
       
       // Compute all of the factors of this added value.
       SmallVector<Value*, 8> Factors;
