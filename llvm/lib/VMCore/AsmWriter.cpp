@@ -475,9 +475,6 @@ private:
   /// TheMDNode - The MDNode for which we are holding slot numbers.
   const MDNode *TheMDNode;
 
-  /// TheNamedMDNode - The MDNode for which we are holding slot numbers.
-  const NamedMDNode *TheNamedMDNode;
-
   /// mMap - The TypePlanes map for the module level data.
   ValueMap mMap;
   unsigned mNext;
@@ -496,8 +493,6 @@ public:
   explicit SlotTracker(const Function *F);
   /// Construct from a mdnode.
   explicit SlotTracker(const MDNode *N);
-  /// Construct from a named mdnode.
-  explicit SlotTracker(const NamedMDNode *N);
 
   /// Return the slot number of the specified value in it's type
   /// plane.  If something is not in the SlotTracker, return -1.
@@ -547,9 +542,6 @@ private:
   /// Add all MDNode operands.
   void processMDNode();
 
-  /// Add all MDNode operands.
-  void processNamedMDNode();
-
   SlotTracker(const SlotTracker &);  // DO NOT IMPLEMENT
   void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
 };
@@ -589,26 +581,20 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
   : TheModule(M), TheFunction(0), FunctionProcessed(false), TheMDNode(0),
-    TheNamedMDNode(0), mNext(0), fNext(0),  mdnNext(0) {
+    mNext(0), fNext(0),  mdnNext(0) {
 }
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
-    TheMDNode(0), TheNamedMDNode(0), mNext(0), fNext(0), mdnNext(0) {
+    TheMDNode(0), mNext(0), fNext(0), mdnNext(0) {
 }
 
 // Constructor to handle single MDNode.
 SlotTracker::SlotTracker(const MDNode *C)
   : TheModule(0), TheFunction(0), FunctionProcessed(false), TheMDNode(C),
-    TheNamedMDNode(0), mNext(0), fNext(0),  mdnNext(0) {
-}
-
-// Constructor to handle single NamedMDNode.
-SlotTracker::SlotTracker(const NamedMDNode *N)
-  : TheModule(0), TheFunction(0), FunctionProcessed(false), TheMDNode(0),
-    TheNamedMDNode(N), mNext(0), fNext(0),  mdnNext(0) {
+     mNext(0), fNext(0),  mdnNext(0) {
 }
 
 inline void SlotTracker::initialize() {
@@ -622,9 +608,6 @@ inline void SlotTracker::initialize() {
 
   if (TheMDNode)
     processMDNode();
-
-  if (TheNamedMDNode)
-    processNamedMDNode();
 }
 
 // Iterate through all the global variables, functions, and global
@@ -716,19 +699,6 @@ void SlotTracker::processMDNode() {
   CreateMetadataSlot(TheMDNode);
   TheMDNode = 0;
   ST_DEBUG("end processMDNode!\n");
-}
-
-/// processNamedMDNode - Process TheNamedMDNode.
-void SlotTracker::processNamedMDNode() {
-  ST_DEBUG("begin processNamedMDNode!\n");
-  mdnNext = 0;
-  for (unsigned i = 0, e = TheNamedMDNode->getNumOperands(); i != e; ++i) {
-    MDNode *MD = dyn_cast_or_null<MDNode>(TheNamedMDNode->getOperand(i));
-    if (MD)
-      CreateMetadataSlot(MD);
-  }
-  TheNamedMDNode = 0;
-  ST_DEBUG("end processNamedMDNode!\n");
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
@@ -2134,7 +2104,7 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     SlotTable.initialize();
     WriteMDNodes(OS, TypePrinter, SlotTable);
   } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(this)) {
-    SlotTracker SlotTable(N);
+    SlotTracker SlotTable(N->getParent());
     TypePrinting TypePrinter;
     SlotTable.initialize();
     OS << "!" << N->getName() << " = !{";
