@@ -24,6 +24,8 @@
 // CHECK: _ZTSM1AP1C = internal constant
 // CHECK: _ZTIM1AP1C = internal constant
 
+// CHECK: _ZTS1F = weak_odr constant
+
 // CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant
@@ -76,6 +78,13 @@ namespace {
   
 };
 
+// F has a key function defined in the translation unit, but it is inline so the RTTI
+// data should be emitted with weak_odr linkage.
+struct F {
+  virtual void f();
+};
+
+inline void F::f() { }
 const D getD();
 
 const std::type_info &t2() {
