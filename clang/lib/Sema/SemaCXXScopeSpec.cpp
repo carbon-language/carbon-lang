@@ -428,6 +428,28 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   }
 
   // FIXME: Deal with ambiguities cleanly.
+
+  if (Found.empty() && !ErrorRecoveryLookup) {
+    // We haven't found anything, and we're not recovering from a
+    // different kind of error, so look for typos.
+    DeclarationName Name = Found.getLookupName();
+    if (CorrectTypo(Found, S, &SS, LookupCtx, EnteringContext) &&
+        Found.isSingleResult() &&
+        isAcceptableNestedNameSpecifier(Found.getAsSingle<NamedDecl>())) {
+      if (LookupCtx)
+        Diag(Found.getNameLoc(), diag::err_no_member_suggest)
+          << Name << LookupCtx << Found.getLookupName() << SS.getRange()
+          << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+                                           Found.getLookupName().getAsString());
+      else
+        Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
+          << Name << Found.getLookupName()
+          << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
+                                           Found.getLookupName().getAsString());
+    } else
+      Found.clear();
+  }
+
   NamedDecl *SD = Found.getAsSingle<NamedDecl>();
   if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {

@@ -15,7 +15,8 @@ namespace otherstd {
 
 using namespace std;
 
-otherstd::strng str1; // expected-error{{no type named 'strng' in namespace 'otherstd'; did you mean 'string'?}}
+other_std::strng str1; // expected-error{{use of undeclared identifier 'other_std'; did you mean 'otherstd'?}} \
+// expected-error{{no type named 'strng' in namespace 'otherstd'; did you mean 'string'?}}
 tring str2; // expected-error{{unknown type name 'tring'; did you mean 'string'?}}
 
 float area(float radius, float pi) {
