@@ -4295,11 +4295,12 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
       SDValue Res;  // Logically starts equal to 1.0
       SDValue CurSquare = LHS;
       while (Val) {
-        if (Val & 1)
+        if (Val & 1) {
           if (Res.getNode())
             Res = DAG.getNode(ISD::FMUL, DL,Res.getValueType(), Res, CurSquare);
           else
             Res = CurSquare;  // 1.0*CurSquare.
+        }
 
         CurSquare = DAG.getNode(ISD::FMUL, DL, CurSquare.getValueType(),
                                 CurSquare, CurSquare);
