@@ -437,7 +437,7 @@ m_SelectCst(const Cond &C) {
 // Matchers for CastInst classes
 //
 
-template<typename Op_t, typename Class>
+template<typename Op_t, unsigned Opcode>
 struct CastClass_match {
   Op_t Op;
 
@@ -445,17 +445,28 @@ struct CastClass_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (Class *I = dyn_cast<Class>(V))
-      return Op.match(I->getOperand(0));
+    if (CastInst *I = dyn_cast<CastInst>(V))
+      return I->getOpcode() == Opcode && Op.match(I->getOperand(0));
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      return CE->getOpcode() == Opcode && Op.match(CE->getOperand(0));
     return false;
   }
 };
 
-template<typename Class, typename OpTy>
-inline CastClass_match<OpTy, Class> m_Cast(const OpTy &Op) {
-  return CastClass_match<OpTy, Class>(Op);
+/// m_PtrToInt
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::PtrToInt>
+m_PtrToInt(const OpTy &Op) {
+  return CastClass_match<OpTy, Instruction::PtrToInt>(Op);
 }
 
+/// m_Trunc
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::Trunc>
+m_Trunc(const OpTy &Op) {
+  return CastClass_match<OpTy, Instruction::Trunc>(Op);
+}
+  
 
 //===----------------------------------------------------------------------===//
 // Matchers for unary operators

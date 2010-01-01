@@ -2950,20 +2950,16 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   //  &A[10] - &A[0]: we should compile this to "10".
   if (TD) {
     Value *LHSOp, *RHSOp;
-    if (match(Op0, m_Cast<PtrToIntInst>(m_Value(LHSOp))) &&
-        match(Op1, m_Cast<PtrToIntInst>(m_Value(RHSOp))))
+    if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
+        match(Op1, m_PtrToInt(m_Value(RHSOp))))
       if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
         return ReplaceInstUsesWith(I, Res);
     
     // trunc(p)-trunc(q) -> trunc(p-q)
-    if (TruncInst *LHST = dyn_cast<TruncInst>(Op0))
-      if (TruncInst *RHST = dyn_cast<TruncInst>(Op1))
-        if (PtrToIntInst *LHS = dyn_cast<PtrToIntInst>(LHST->getOperand(0)))
-          if (PtrToIntInst *RHS = dyn_cast<PtrToIntInst>(RHST->getOperand(0)))
-            if (Value *Res = OptimizePointerDifference(LHS->getOperand(0),
-                                                       RHS->getOperand(0),
-                                                       I.getType()))
-              return ReplaceInstUsesWith(I, Res);
+    if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
+        match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
+      if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
+        return ReplaceInstUsesWith(I, Res);
   }
   
   return 0;

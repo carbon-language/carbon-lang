@@ -248,3 +248,15 @@ define i64 @test24a(i8* %P, i64 %A){
 ; CHECK-NEXT: ret i64 
 }
 
+@Arr = external global [42 x i16]
+
+define i64 @test24b(i8* %P, i64 %A){
+  %B = getelementptr inbounds [42 x i16]* @Arr, i64 0, i64 %A
+  %C = ptrtoint i16* %B to i64
+  %G = sub i64 %C, ptrtoint ([42 x i16]* @Arr to i64)
+  ret i64 %G
+; CHECK: @test24b
+; CHECK-NEXT: shl i64 %A, 1
+; CHECK-NEXT: ret i64 
+}
+
