@@ -1206,7 +1206,7 @@ void EmitListTest(const ListInit& L, const char* LogicOp,
     if (isFirst)
       isFirst = false;
     else
-      O << " || ";
+      O << ' ' << LogicOp << ' ';
     Callback(InitPtrToString(*B), O);
   }
 }
