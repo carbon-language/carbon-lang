@@ -106,7 +106,17 @@ Shrink: (setlt (loadi32 P), 0) -> (setlt (loadi8 Phi), 0)
 
 //===---------------------------------------------------------------------===//
 
-Reassociate should turn: X*X*X*X -> t=(X*X) (t*t) to eliminate a multiply.
+Reassociate should turn things like:
+
+int factorial(int X) {
+ return X*X*X*X*X*X*X*X;
+}
+
+into llvm.powi calls, allowing the code generator to produce balanced
+multiplication trees.
+
+First, the intrinsic needs to be extended to support integers, and second the
+code generator needs to be enhanced to lower these to multiplication trees.
 
 //===---------------------------------------------------------------------===//
 
@@ -119,7 +129,32 @@ int foo(int z, int n) {
   return bar(z, n) + bar(2*z, 2*n);
 }
 
-Reassociate should handle the example in GCC PR16157.
+This is blocked on not handling X*X*X -> powi(X, 3) (see note above).  The issue
+is that we end up getting t = 2*X  s = t*t   and don't turn this into 4*X*X,
+which is the same number of multiplies and is canonical, because the 2*X has
+multiple uses.  Here's a simple example:
+
+define i32 @test15(i32 %X1) {
+  %B = mul i32 %X1, 47   ; X1*47
+  %C = mul i32 %B, %B
+  ret i32 %C
+}
+
+
+//===---------------------------------------------------------------------===//
+
+Reassociate should handle the example in GCC PR16157:
+
+extern int a0, a1, a2, a3, a4; extern int b0, b1, b2, b3, b4; 
+void f () {  /* this can be optimized to four additions... */ 
+        b4 = a4 + a3 + a2 + a1 + a0; 
+        b3 = a3 + a2 + a1 + a0; 
+        b2 = a2 + a1 + a0; 
+        b1 = a1 + a0; 
+} 
+
+This requires reassociating to forms of expressions that are already available,
+something that reassoc doesn't think about yet.
 
 //===---------------------------------------------------------------------===//
 
@@ -718,17 +753,6 @@ We do a number of simplifications in simplify libcalls to strength reduce
 standard library functions, but we don't currently merge them together.  For
 example, it is useful to merge memcpy(a,b,strlen(b)) -> strcpy.  This can only
 be done safely if "b" isn't modified between the strlen and memcpy of course.
-
-//===---------------------------------------------------------------------===//
-
-Reassociate should turn things like:
-
-int factorial(int X) {
- return X*X*X*X*X*X*X*X;
-}
-
-into llvm.powi calls, allowing the code generator to produce balanced
-multiplication trees.
 
 //===---------------------------------------------------------------------===//
 
