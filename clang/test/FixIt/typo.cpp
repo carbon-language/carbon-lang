@@ -40,4 +40,14 @@ struct Derived : public Base {
 
   Derived() : base(), // expected-error{{initializer 'base' does not name a non-static data member or base class; did you mean the base class 'Base'?}}
               ember() { } // expected-error{{initializer 'ember' does not name a non-static data member or base class; did you mean the member 'member'?}}
+
+  int getMember() const {
+    return ember; // expected-error{{use of undeclared identifier 'ember'; did you mean 'member'?}}
+  }
+
+  int &getMember();
 };
+
+int &Derived::getMember() {
+  return ember; // expected-error{{use of undeclared identifier 'ember'; did you mean 'member'?}}
+}

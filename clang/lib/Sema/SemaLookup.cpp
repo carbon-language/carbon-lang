@@ -1966,8 +1966,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     return;
 
   DeclContext *Entity = 0;
-  if (S->getEntity() && 
-      !((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+  if (S->getEntity()) {
     // Look into this scope's declaration context, along with any of its
     // parent lookup contexts (e.g., enclosing classes), up to the point
     // where we hit the context stored in the next outer scope.
