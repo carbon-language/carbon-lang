@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass reassociates commutative expressions in an order that is designed
-// to promote better constant propagation, GCSE, LICM, PRE...
+// to promote better constant propagation, GCSE, LICM, PRE, etc.
 //
 // For example: 4 + (x + 5) -> x + (4 + 5)
 //
@@ -386,7 +386,7 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   //   X = -(A+12+C+D)   into    X = -A + -12 + -C + -D = -12 + -A + -C + -D
   // so that later, a: Y = 12+X could get reassociated with the -12 to eliminate
   // the constants.  We assume that instcombine will clean up the mess later if
-  // we introduce tons of unnecessary negation instructions...
+  // we introduce tons of unnecessary negation instructions.
   //
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::Add && I->hasOneUse()) {
@@ -464,11 +464,11 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub,
                               DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
-  // Convert a subtract into an add and a neg instruction... so that sub
-  // instructions can be commuted with other add instructions...
+  // Convert a subtract into an add and a neg instruction. This allows sub
+  // instructions to be commuted with other add instructions.
   //
-  // Calculate the negative value of Operand 1 of the sub instruction...
-  // and set it as the RHS of the add instruction we just made...
+  // Calculate the negative value of Operand 1 of the sub instruction,
+  // and set it as the RHS of the add instruction we just made.
   //
   Value *NegVal = NegateValue(Sub->getOperand(1), Sub);
   Instruction *New =
@@ -628,7 +628,7 @@ static Value *OptimizeAndOrXor(unsigned Opcode,
       if (e == 2)
         return Constant::getNullValue(Ops[0].Op->getType());
       
-      // ... X^X -> ...
+      // Y ^ X^X -> Y
       Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
       i -= 1; e -= 2;
       ++NumAnnihil;
@@ -821,27 +821,27 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     switch (Opcode) {
     default: break;
     case Instruction::And:
-      if (CstVal->isZero())                  // ... & 0 -> 0
+      if (CstVal->isZero())                  // X & 0 -> 0
         return CstVal;
-      if (CstVal->isAllOnesValue())          // ... & -1 -> ...
+      if (CstVal->isAllOnesValue())          // X & -1 -> X
         Ops.pop_back();
       break;
     case Instruction::Mul:
-      if (CstVal->isZero()) {                // ... * 0 -> 0
+      if (CstVal->isZero()) {                // X * 0 -> 0
         ++NumAnnihil;
         return CstVal;
       }
         
       if (cast<ConstantInt>(CstVal)->isOne())
-        Ops.pop_back();                      // ... * 1 -> ...
+        Ops.pop_back();                      // X * 1 -> X
       break;
     case Instruction::Or:
-      if (CstVal->isAllOnesValue())          // ... | -1 -> -1
+      if (CstVal->isAllOnesValue())          // X | -1 -> -1
         return CstVal;
       // FALLTHROUGH!
     case Instruction::Add:
     case Instruction::Xor:
-      if (CstVal->isZero())                  // ... [|^+] 0 -> ...
+      if (CstVal->isZero())                  // X [|^+] 0 -> X
         Ops.pop_back();
       break;
     }
