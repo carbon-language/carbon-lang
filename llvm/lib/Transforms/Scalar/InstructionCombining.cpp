@@ -2770,21 +2770,57 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
   // this.
   bool Swapped;
-  GetElementPtrInst *GEP;
+  GetElementPtrInst *GEP = 0;
+  ConstantExpr *CstGEP = 0;
   
-  if ((GEP = dyn_cast<GetElementPtrInst>(LHS)) &&
-      GEP->getOperand(0) == RHS)
-    Swapped = false;
-  else if ((GEP = dyn_cast<GetElementPtrInst>(RHS)) &&
-           GEP->getOperand(0) == LHS)
-    Swapped = true;
-  else
+  // TODO: Could also optimize &A[i] - &A[j] -> "i-j", and "&A.foo[i] - &A.foo".
+  // For now we require one side to be the base pointer "A" or a constant
+  // expression derived from it.
+  if (GetElementPtrInst *LHSGEP = dyn_cast<GetElementPtrInst>(LHS)) {
+    // (gep X, ...) - X
+    if (LHSGEP->getOperand(0) == RHS) {
+      GEP = LHSGEP;
+      Swapped = false;
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(RHS)) {
+      // (gep X, ...) - (ce_gep X, ...)
+      if (CE->getOpcode() == Instruction::GetElementPtr &&
+          LHSGEP->getOperand(0) == CE->getOperand(0)) {
+        CstGEP = CE;
+        GEP = LHSGEP;
+        Swapped = false;
+      }
+    }
+  }
+  
+  if (GetElementPtrInst *RHSGEP = dyn_cast<GetElementPtrInst>(RHS)) {
+    // X - (gep X, ...)
+    if (RHSGEP->getOperand(0) == LHS) {
+      GEP = RHSGEP;
+      Swapped = true;
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(LHS)) {
+      // (ce_gep X, ...) - (gep X, ...)
+      if (CE->getOpcode() == Instruction::GetElementPtr &&
+          RHSGEP->getOperand(0) == CE->getOperand(0)) {
+        CstGEP = CE;
+        GEP = RHSGEP;
+        Swapped = true;
+      }
+    }
+  }
+  
+  if (GEP == 0)
     return 0;
-  
-  // TODO: Could also optimize &A[i] - &A[j] -> "i-j".
   
   // Emit the offset of the GEP and an intptr_t.
   Value *Result = EmitGEPOffset(GEP, *this);
+  
+  // If we had a constant expression GEP on the other side offsetting the
+  // pointer, subtract it from the offset we have.
+  if (CstGEP) {
+    Value *CstOffset = EmitGEPOffset(CstGEP, *this);
+    Result = Builder->CreateSub(Result, CstOffset);
+  }
+  
 
   // If we have p - gep(p, ...)  then we have to negate the result.
   if (Swapped)
