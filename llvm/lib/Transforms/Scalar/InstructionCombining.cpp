@@ -2949,12 +2949,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   // Optimize pointer differences into the same array into a size.  Consider:
   //  &A[10] - &A[0]: we should compile this to "10".
   if (TD) {
-    if (PtrToIntInst *LHS = dyn_cast<PtrToIntInst>(Op0))
-      if (PtrToIntInst *RHS = dyn_cast<PtrToIntInst>(Op1))
-        if (Value *Res = OptimizePointerDifference(LHS->getOperand(0),
-                                                   RHS->getOperand(0),
-                                                   I.getType()))
-          return ReplaceInstUsesWith(I, Res);
+    Value *LHSOp, *RHSOp;
+    if (match(Op0, m_Cast<PtrToIntInst>(m_Value(LHSOp))) &&
+        match(Op1, m_Cast<PtrToIntInst>(m_Value(RHSOp))))
+      if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
+        return ReplaceInstUsesWith(I, Res);
     
     // trunc(p)-trunc(q) -> trunc(p-q)
     if (TruncInst *LHST = dyn_cast<TruncInst>(Op0))
