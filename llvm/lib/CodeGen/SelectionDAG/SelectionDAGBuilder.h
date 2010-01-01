@@ -163,7 +163,7 @@ private:
   /// The comparison function for sorting the switch case values in the vector.
   /// WARNING: Case ranges should be disjoint!
   struct CaseCmp {
-    bool operator () (const Case& C1, const Case& C2) {
+    bool operator()(const Case &C1, const Case &C2) {
       assert(isa<ConstantInt>(C1.Low) && isa<ConstantInt>(C2.High));
       const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
       const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
@@ -172,12 +172,12 @@ private:
   };
 
   struct CaseBitsCmp {
-    bool operator () (const CaseBits& C1, const CaseBits& C2) {
+    bool operator()(const CaseBits &C1, const CaseBits &C2) {
       return C1.Bits > C2.Bits;
     }
   };
 
-  size_t Clusterify(CaseVector& Cases, const SwitchInst &SI);
+  size_t Clusterify(CaseVector &Cases, const SwitchInst &SI);
 
   /// CaseBlock - This structure is used to communicate between
   /// SelectionDAGBuilder and SDISel for the code generation of additional basic
@@ -215,7 +215,7 @@ private:
     MachineBasicBlock *Default;
   };
   struct JumpTableHeader {
-    JumpTableHeader(APInt F, APInt L, Value* SV, MachineBasicBlock* H,
+    JumpTableHeader(APInt F, APInt L, Value *SV, MachineBasicBlock *H,
                     bool E = false):
       First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
     APInt First;
@@ -230,8 +230,8 @@ private:
     BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
       Mask(M), ThisBB(T), TargetBB(Tr) { }
     uint64_t Mask;
-    MachineBasicBlock* ThisBB;
-    MachineBasicBlock* TargetBB;
+    MachineBasicBlock *ThisBB;
+    MachineBasicBlock *TargetBB;
   };
 
   typedef SmallVector<BitTestCase, 3> BitTestInfo;
