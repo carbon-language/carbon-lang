@@ -1086,14 +1086,28 @@ class ExtractOptionNames {
     if (ActionName == "forward" || ActionName == "forward_as" ||
         ActionName == "forward_value" ||
         ActionName == "forward_transformed_value" ||
-        ActionName == "switch_on" || ActionName == "parameter_equals" ||
+        ActionName == "switch_on" || ActionName == "any_switch_on" ||
+        ActionName == "parameter_equals" ||
         ActionName == "element_in_list" || ActionName == "not_empty" ||
         ActionName == "empty") {
       CheckNumberOfArguments(Stmt, 1);
-      const std::string& Name = InitPtrToString(Stmt.getArg(0));
-      OptionNames_.insert(Name);
+
+      Init* Arg = Stmt.getArg(0);
+      if (typeid(*Arg) == typeid(StringInit)) {
+        const std::string& Name = InitPtrToString(Arg);
+        OptionNames_.insert(Name);
+      }
+      else {
+        // It's a list.
+        const ListInit& List = InitPtrToList(Arg);
+        for (ListInit::const_iterator B = List.begin(), E = List.end();
+             B != E; ++B) {
+          const std::string& Name = InitPtrToString(*B);
+          OptionNames_.insert(Name);
+        }
+      }
     }
-    else if (ActionName == "and" || ActionName == "or") {
+    else if (ActionName == "and" || ActionName == "or" || ActionName == "not") {
       for (unsigned i = 0, NumArgs = Stmt.getNumArgs(); i < NumArgs; ++i) {
         this->processDag(Stmt.getArg(i));
       }
@@ -2895,7 +2909,6 @@ void CheckPluginData(PluginData& Data) {
   // Check that there are no options without side effects (specified
   // only in the OptionList).
   CheckForSuperfluousOptions(Data.Edges, Data.ToolDescs, Data.OptDescs);
-
 }
 
 void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
