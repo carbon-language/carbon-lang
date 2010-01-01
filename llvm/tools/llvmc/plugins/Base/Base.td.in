@@ -97,10 +97,9 @@ def Preprocess : OptionPreprocessor<
            (unset_option ["O0", "O1", "O2"]),
       (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
            (unset_option ["O0", "O1"]),
-      (and (switch_on "O1"), (switch_on "O0")),
+      (switch_on ["O1", "O0"]),
            (unset_option "O0"))
 >;
-
 
 // Tools
 

@@ -1240,7 +1240,7 @@ bool EmitCaseTest1ArgList(const std::string& TestName,
                           const DagInit& d,
                           const OptionDescriptions& OptDescs,
                           raw_ostream& O) {
-  const ListInit& L = *static_cast<ListInit*>(d.getArg(0));
+  const ListInit& L = InitPtrToList(d.getArg(0));
 
   if (TestName == "any_switch_on") {
     EmitListTest(L, "||", EmitSwitchOn(OptDescs), O);
