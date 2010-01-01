@@ -931,21 +931,41 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
   }
 
   // We didn't find anything, so try to correct for a typo.
-  if (S && CorrectTypo(R, S, &SS) && 
-      (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
-    if (SS.isEmpty())
-      Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
-        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+  if (S && CorrectTypo(R, S, &SS)) {
+    if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
+      if (SS.isEmpty())
+        Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
+          << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                               R.getLookupName().getAsString());
-    else 
-      Diag(R.getNameLoc(), diag::err_no_member_suggest)
-        << Name << computeDeclContext(SS, false) << R.getLookupName()
-        << SS.getRange()
-        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+      else 
+        Diag(R.getNameLoc(), diag::err_no_member_suggest)
+          << Name << computeDeclContext(SS, false) << R.getLookupName()
+          << SS.getRange()
+          << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                               R.getLookupName().getAsString());
 
-    // Tell the callee to try to recover.
-    return false;
+      // Tell the callee to try to recover.
+      return false;
+    }
+
+    if (isa<TypeDecl>(*R.begin()) || isa<ObjCInterfaceDecl>(*R.begin())) {
+      // FIXME: If we ended up with a typo for a type name or
+      // Objective-C class name, we're in trouble because the parser
+      // is in the wrong place to recover. Suggest the typo
+      // correction, but don't make it a fix-it since we're not going
+      // to recover well anyway.
+      if (SS.isEmpty())
+        Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName();
+      else 
+        Diag(R.getNameLoc(), diag::err_no_member_suggest)
+          << Name << computeDeclContext(SS, false) << R.getLookupName()
+          << SS.getRange();
+
+      // Don't try to recover; it won't work.
+      return true;
+    }
+
+    R.clear();
   }
 
   // Emit a special diagnostic for failed member lookups.
