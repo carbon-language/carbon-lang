@@ -10139,6 +10139,19 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(II->getOperand(1)))
       if (Operand->getIntrinsicID() == Intrinsic::bswap)
         return ReplaceInstUsesWith(CI, Operand->getOperand(1));
+      
+    // bswap(trunc(bswap(x))) -> trunc(lshr(x, c))
+    if (TruncInst *TI = dyn_cast<TruncInst>(II->getOperand(1))) {
+      if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(TI->getOperand(0)))
+        if (Operand->getIntrinsicID() == Intrinsic::bswap) {
+          unsigned C = Operand->getType()->getPrimitiveSizeInBits() -
+                       TI->getType()->getPrimitiveSizeInBits();
+          Value *CV = ConstantInt::get(Operand->getType(), C);
+          Value *V = Builder->CreateLShr(Operand->getOperand(1), CV);
+          return new TruncInst(V, TI->getType());
+        }
+    }
+      
     break;
   case Intrinsic::powi:
     if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getOperand(2))) {
