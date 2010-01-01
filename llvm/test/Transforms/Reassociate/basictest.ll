@@ -179,3 +179,15 @@ define i32 @test12(i32 %X) {
 ; CHECK-NEXT: ret i32
 }
 
+define i32 @test13(i32 %X1, i32 %X2, i32 %X3) {
+  %A = sub i32 0, %X1
+  %B = mul i32 %A, %X2   ; -X1*X2
+  %C = mul i32 %X1, %X3  ; X1*X3
+  %D = add i32 %B, %C    ; -X1*X2 + X1*X3 -> X1*(X3-X2)
+  ret i32 %D
+; CHECK: @test13
+; CHECK-NEXT: sub i32 %X3, %X2
+; CHECK-NEXT: mul i32 {{.*}}, %X1
+; CHECK-NEXT: ret i32
+}
+
