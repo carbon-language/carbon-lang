@@ -756,36 +756,6 @@ be done safely if "b" isn't modified between the strlen and memcpy of course.
 
 //===---------------------------------------------------------------------===//
 
-We generate a horrible  libcall for llvm.powi.  For example, we compile:
-
-#include <cmath>
-double f(double a) { return std::pow(a, 4); }
-
-into:
-
-__Z1fd:
-	subl	$12, %esp
-	movsd	16(%esp), %xmm0
-	movsd	%xmm0, (%esp)
-	movl	$4, 8(%esp)
-	call	L___powidf2$stub
-	addl	$12, %esp
-	ret
-
-GCC produces:
-
-__Z1fd:
-	subl	$12, %esp
-	movsd	16(%esp), %xmm0
-	mulsd	%xmm0, %xmm0
-	mulsd	%xmm0, %xmm0
-	movsd	%xmm0, (%esp)
-	fldl	(%esp)
-	addl	$12, %esp
-	ret
-
-//===---------------------------------------------------------------------===//
-
 We compile this program: (from GCC PR11680)
 http://gcc.gnu.org/bugzilla/attachment.cgi?id=4487
 

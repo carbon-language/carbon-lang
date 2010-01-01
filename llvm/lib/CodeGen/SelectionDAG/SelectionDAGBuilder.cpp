@@ -462,7 +462,8 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
     // The number of parts is a power of 2.  Repeatedly bisect the value using
     // EXTRACT_ELEMENT.
     Parts[0] = DAG.getNode(ISD::BIT_CONVERT, dl,
-                           EVT::getIntegerVT(*DAG.getContext(), ValueVT.getSizeInBits()),
+                           EVT::getIntegerVT(*DAG.getContext(),
+                                             ValueVT.getSizeInBits()),
                            Val);
 
     if (DisableScheduling)
@@ -4261,6 +4262,59 @@ SelectionDAGBuilder::visitPow(CallInst &I) {
   setValue(&I, result);
 }
 
+
+/// ExpandPowI - Expand a llvm.powi intrinsic.
+static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
+                          SelectionDAG &DAG) {
+  // If RHS is a constant, we can expand this out to a multiplication tree,
+  // otherwise we end up lowering to a call to __powidf2 (for example).  When
+  // optimizing for size, we only want to do this if the expansion would produce
+  // a small number of multiplies, otherwise we do the full expansion.
+  if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
+    // Get the exponent as a positive value.
+    unsigned Val = RHSC->getSExtValue();
+    if ((int)Val < 0) Val = -Val;
+    
+    // powi(x, 0) -> 1.0
+    if (Val == 0)
+      return DAG.getConstantFP(1.0, LHS.getValueType());
+
+    Function *F = DAG.getMachineFunction().getFunction();
+    if (!F->hasFnAttr(Attribute::OptimizeForSize) ||
+        // If optimizing for size, don't insert too many multiplies.  This
+        // inserts up to 5 multiplies.
+        CountPopulation_32(Val)+Log2_32(Val) < 7) {
+      // We use the simple binary decomposition method to generate the multiply
+      // sequence.  There are more optimal ways to do this (for example, 
+      // powi(x,15) generates one more multiply than it should), but this has
+      // the benefit of being both really simple and much better than a libcall.
+      SDValue Res;  // Logically starts equal to 1.0
+      SDValue CurSquare = LHS;
+      while (Val) {
+        if (Val & 1)
+          if (Res.getNode())
+            Res = DAG.getNode(ISD::FMUL, DL,Res.getValueType(), Res, CurSquare);
+          else
+            Res = CurSquare;  // 1.0*CurSquare.
+        
+        CurSquare = DAG.getNode(ISD::FMUL, DL, CurSquare.getValueType(),
+                                CurSquare, CurSquare);
+        Val >>= 1;
+      }
+      
+      // If the original was negative, invert the result, producing 1/(x*x*x).
+      if (RHSC->getSExtValue() < 0)
+        Res = DAG.getNode(ISD::FDIV, DL, LHS.getValueType(),
+                          DAG.getConstantFP(1.0, LHS.getValueType()), Res);
+      return Res;
+    }
+  }
+
+  // Otherwise, expand to a libcall.
+  return DAG.getNode(ISD::FPOWI, DL, LHS.getValueType(), LHS, RHS);
+}
+
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -4536,10 +4590,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   case Intrinsic::powi:
-    Res = DAG.getNode(ISD::FPOWI, dl,
-                      getValue(I.getOperand(1)).getValueType(),
-                      getValue(I.getOperand(1)),
-                      getValue(I.getOperand(2)));
+    Res = ExpandPowI(dl, getValue(I.getOperand(1)), getValue(I.getOperand(2)),
+                     DAG);
     setValue(&I, Res);
     if (DisableScheduling)
       DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
