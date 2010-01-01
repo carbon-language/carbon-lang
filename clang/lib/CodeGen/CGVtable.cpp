@@ -161,7 +161,6 @@ private:
   llvm::DenseMap<CtorVtable_t, int64_t> &subAddressPoints;
 
   typedef CXXRecordDecl::method_iterator method_iter;
-  const bool Extern;
   const uint32_t LLVMPointerWidth;
   Index_t extra;
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
@@ -199,7 +198,6 @@ public:
       rtti(0), VMContext(cgm.getModule().getContext()),CGM(cgm),
       PureVirtualFn(0),
       subAddressPoints(AllocAddressPoint(cgm, l, MostDerivedClass)),
-      Extern(!l->isInAnonymousNamespace()),
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
     if (BuildVtable) {

@@ -15,6 +15,327 @@
 using namespace clang;
 using namespace CodeGen;
 
+RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
+                                          llvm::Value *Callee,
+                                          ReturnValueSlot ReturnValue,
+                                          llvm::Value *This,
+                                          CallExpr::const_arg_iterator ArgBeg,
+                                          CallExpr::const_arg_iterator ArgEnd) {
+  assert(MD->isInstance() &&
+         "Trying to emit a member call expr on a static method!");
+
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+
+  CallArgList Args;
+
+  // Push the this ptr.
+  Args.push_back(std::make_pair(RValue::get(This),
+                                MD->getThisType(getContext())));
+
+  // And the rest of the call args
+  EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
+
+  QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
+                  ReturnValue, Args, MD);
+}
+
+/// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
+/// expr can be devirtualized.
+static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      // This is a record decl. We know the type and can devirtualize it.
+      return VD->getType()->isRecordType();
+    }
+    
+    return false;
+  }
+  
+  // We can always devirtualize calls on temporary object expressions.
+  if (isa<CXXTemporaryObjectExpr>(Base))
+    return true;
+  
+  // And calls on bound temporaries.
+  if (isa<CXXBindTemporaryExpr>(Base))
+    return true;
+  
+  // Check if this is a call expr that returns a record type.
+  if (const CallExpr *CE = dyn_cast<CallExpr>(Base))
+    return CE->getCallReturnType()->isRecordType();
+  
+  // We can't devirtualize the call.
+  return false;
+}
+
+RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
+                                              ReturnValueSlot ReturnValue) {
+  if (isa<BinaryOperator>(CE->getCallee()->IgnoreParens())) 
+    return EmitCXXMemberPointerCallExpr(CE, ReturnValue);
+      
+  const MemberExpr *ME = cast<MemberExpr>(CE->getCallee()->IgnoreParens());
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
+
+  if (MD->isStatic()) {
+    // The method is static, emit it as we would a regular call.
+    llvm::Value *Callee = CGM.GetAddrOfFunction(MD);
+    return EmitCall(getContext().getPointerType(MD->getType()), Callee,
+                    ReturnValue, CE->arg_begin(), CE->arg_end());
+  }
+  
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+
+  const llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                   FPT->isVariadic());
+  llvm::Value *This;
+
+  if (ME->isArrow())
+    This = EmitScalarExpr(ME->getBase());
+  else {
+    LValue BaseLV = EmitLValue(ME->getBase());
+    This = BaseLV.getAddress();
+  }
+
+  if (MD->isCopyAssignment() && MD->isTrivial()) {
+    // We don't like to generate the trivial copy assignment operator when
+    // it isn't necessary; just produce the proper effect here.
+    llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
+    EmitAggregateCopy(This, RHS, CE->getType());
+    return RValue::get(This);
+  }
+
+  // C++ [class.virtual]p12:
+  //   Explicit qualification with the scope operator (5.1) suppresses the
+  //   virtual call mechanism.
+  //
+  // We also don't emit a virtual call if the base expression has a record type
+  // because then we know what the type is.
+  llvm::Value *Callee;
+  if (const CXXDestructorDecl *Destructor
+             = dyn_cast<CXXDestructorDecl>(MD)) {
+    if (Destructor->isTrivial())
+      return RValue::get(0);
+    if (MD->isVirtual() && !ME->hasQualifier() && 
+        !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
+      Callee = BuildVirtualCall(Destructor, Dtor_Complete, This, Ty); 
+    } else {
+      Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
+    }
+  } else if (MD->isVirtual() && !ME->hasQualifier() && 
+             !canDevirtualizeMemberFunctionCalls(ME->getBase())) {
+    Callee = BuildVirtualCall(MD, This, Ty); 
+  } else {
+    Callee = CGM.GetAddrOfFunction(MD, Ty);
+  }
+
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This,
+                           CE->arg_begin(), CE->arg_end());
+}
+
+RValue
+CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
+                                              ReturnValueSlot ReturnValue) {
+  const BinaryOperator *BO =
+      cast<BinaryOperator>(E->getCallee()->IgnoreParens());
+  const Expr *BaseExpr = BO->getLHS();
+  const Expr *MemFnExpr = BO->getRHS();
+  
+  const MemberPointerType *MPT = 
+    MemFnExpr->getType()->getAs<MemberPointerType>();
+  const FunctionProtoType *FPT = 
+    MPT->getPointeeType()->getAs<FunctionProtoType>();
+  const CXXRecordDecl *RD = 
+    cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
+
+  const llvm::FunctionType *FTy = 
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
+                                   FPT->isVariadic());
+
+  const llvm::Type *Int8PtrTy = 
+    llvm::Type::getInt8Ty(VMContext)->getPointerTo();
+
+  // Get the member function pointer.
+  llvm::Value *MemFnPtr = 
+    CreateTempAlloca(ConvertType(MemFnExpr->getType()), "mem.fn");
+  EmitAggExpr(MemFnExpr, MemFnPtr, /*VolatileDest=*/false);
+
+  // Emit the 'this' pointer.
+  llvm::Value *This;
+  
+  if (BO->getOpcode() == BinaryOperator::PtrMemI)
+    This = EmitScalarExpr(BaseExpr);
+  else 
+    This = EmitLValue(BaseExpr).getAddress();
+  
+  // Adjust it.
+  llvm::Value *Adj = Builder.CreateStructGEP(MemFnPtr, 1);
+  Adj = Builder.CreateLoad(Adj, "mem.fn.adj");
+  
+  llvm::Value *Ptr = Builder.CreateBitCast(This, Int8PtrTy, "ptr");
+  Ptr = Builder.CreateGEP(Ptr, Adj, "adj");
+  
+  This = Builder.CreateBitCast(Ptr, This->getType(), "this");
+  
+  llvm::Value *FnPtr = Builder.CreateStructGEP(MemFnPtr, 0, "mem.fn.ptr");
+  
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
+
+  llvm::Value *FnAsInt = Builder.CreateLoad(FnPtr, "fn");
+  
+  // If the LSB in the function pointer is 1, the function pointer points to
+  // a virtual function.
+  llvm::Value *IsVirtual 
+    = Builder.CreateAnd(FnAsInt, llvm::ConstantInt::get(PtrDiffTy, 1),
+                        "and");
+  
+  IsVirtual = Builder.CreateTrunc(IsVirtual,
+                                  llvm::Type::getInt1Ty(VMContext));
+  
+  llvm::BasicBlock *FnVirtual = createBasicBlock("fn.virtual");
+  llvm::BasicBlock *FnNonVirtual = createBasicBlock("fn.nonvirtual");
+  llvm::BasicBlock *FnEnd = createBasicBlock("fn.end");
+  
+  Builder.CreateCondBr(IsVirtual, FnVirtual, FnNonVirtual);
+  EmitBlock(FnVirtual);
+  
+  const llvm::Type *VTableTy = 
+    FTy->getPointerTo()->getPointerTo()->getPointerTo();
+
+  llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy);
+  VTable = Builder.CreateLoad(VTable);
+  
+  VTable = Builder.CreateGEP(VTable, FnAsInt, "fn");
+  
+  // Since the function pointer is 1 plus the virtual table offset, we
+  // subtract 1 by using a GEP.
+  VTable = Builder.CreateConstGEP1_64(VTable, (uint64_t)-1);
+  
+  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
+  
+  EmitBranch(FnEnd);
+  EmitBlock(FnNonVirtual);
+  
+  // If the function is not virtual, just load the pointer.
+  llvm::Value *NonVirtualFn = Builder.CreateLoad(FnPtr, "fn");
+  NonVirtualFn = Builder.CreateIntToPtr(NonVirtualFn, FTy->getPointerTo());
+  
+  EmitBlock(FnEnd);
+
+  llvm::PHINode *Callee = Builder.CreatePHI(FTy->getPointerTo());
+  Callee->reserveOperandSpace(2);
+  Callee->addIncoming(VirtualFn, FnVirtual);
+  Callee->addIncoming(NonVirtualFn, FnNonVirtual);
+
+  CallArgList Args;
+
+  QualType ThisType = 
+    getContext().getPointerType(getContext().getTagDeclType(RD));
+
+  // Push the this ptr.
+  Args.push_back(std::make_pair(RValue::get(This), ThisType));
+  
+  // And the rest of the call args
+  EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
+  QualType ResultType = BO->getType()->getAs<FunctionType>()->getResultType();
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
+                  ReturnValue, Args);
+}
+
+RValue
+CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
+                                               const CXXMethodDecl *MD,
+                                               ReturnValueSlot ReturnValue) {
+  assert(MD->isInstance() &&
+         "Trying to emit a member call expr on a static method!");
+
+  if (MD->isCopyAssignment()) {
+    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
+    if (ClassDecl->hasTrivialCopyAssignment()) {
+      assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
+             "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
+      llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+      llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
+      QualType Ty = E->getType();
+      EmitAggregateCopy(This, Src, Ty);
+      return RValue::get(This);
+    }
+  }
+
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  const llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                   FPT->isVariadic());
+
+  llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
+
+  llvm::Value *Callee;
+  if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0)))
+    Callee = BuildVirtualCall(MD, This, Ty);
+  else
+    Callee = CGM.GetAddrOfFunction(MD, Ty);
+
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This, 
+                           E->arg_begin() + 1, E->arg_end());
+}
+
+void
+CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
+                                      const CXXConstructExpr *E) {
+  assert(Dest && "Must have a destination!");
+  const CXXConstructorDecl *CD = E->getConstructor();
+  const ConstantArrayType *Array =
+  getContext().getAsConstantArrayType(E->getType());
+  // For a copy constructor, even if it is trivial, must fall thru so
+  // its argument is code-gen'ed.
+  if (!CD->isCopyConstructor()) {
+    QualType InitType = E->getType();
+    if (Array)
+      InitType = getContext().getBaseElementType(Array);
+    const CXXRecordDecl *RD =
+    cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
+    if (RD->hasTrivialConstructor())
+      return;
+  }
+  // Code gen optimization to eliminate copy constructor and return
+  // its first argument instead.
+  if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
+    const Expr *Arg = E->getArg(0);
+    
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+      assert((ICE->getCastKind() == CastExpr::CK_NoOp ||
+              ICE->getCastKind() == CastExpr::CK_ConstructorConversion ||
+              ICE->getCastKind() == CastExpr::CK_UserDefinedConversion) &&
+             "Unknown implicit cast kind in constructor elision");
+      Arg = ICE->getSubExpr();
+    }
+    
+    if (const CXXFunctionalCastExpr *FCE = dyn_cast<CXXFunctionalCastExpr>(Arg))
+      Arg = FCE->getSubExpr();
+    
+    if (const CXXBindTemporaryExpr *BindExpr = 
+        dyn_cast<CXXBindTemporaryExpr>(Arg))
+      Arg = BindExpr->getSubExpr();
+    
+    EmitAggExpr(Arg, Dest, false);
+    return;
+  }
+  if (Array) {
+    QualType BaseElementTy = getContext().getBaseElementType(Array);
+    const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+    BasePtr = llvm::PointerType::getUnqual(BasePtr);
+    llvm::Value *BaseAddrPtr =
+    Builder.CreateBitCast(Dest, BasePtr);
+    
+    EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
+                               E->arg_begin(), E->arg_end());
+  }
+  else
+    // Call the constructor.
+    EmitCXXConstructorCall(CD, Ctor_Complete, Dest,
+                           E->arg_begin(), E->arg_end());
+}
+
 static uint64_t CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
   const RecordType *RT = ElementType->getAs<RecordType>();
   if (!RT)
