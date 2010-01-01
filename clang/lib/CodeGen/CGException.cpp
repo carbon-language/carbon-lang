@@ -207,20 +207,21 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
 // CopyObject - Utility to copy an object.  Calls copy constructor as necessary.
 // N is casted to the right type.
 static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
-                       bool WasPointer, bool WasReference, llvm::Value *E,
-                       llvm::Value *N) {
+                       bool WasPointer, bool WasPointerReference,
+                       llvm::Value *E, llvm::Value *N) {
   // Store the throw exception in the exception object.
   if (WasPointer || !CGF.hasAggregateLLVMType(ObjectType)) {
     llvm::Value *Value = E;
     if (!WasPointer)
       Value = CGF.Builder.CreateLoad(Value);
     const llvm::Type *ValuePtrTy = Value->getType()->getPointerTo(0);
-    if (WasReference) {
+    if (WasPointerReference) {
       llvm::Value *Tmp = CGF.CreateTempAlloca(Value->getType(), "catch.param");
       CGF.Builder.CreateStore(Value, Tmp);
       Value = Tmp;
-    } else
-      N = CGF.Builder.CreateBitCast(N, ValuePtrTy);
+      ValuePtrTy = Value->getType()->getPointerTo(0);
+    }
+    N = CGF.Builder.CreateBitCast(N, ValuePtrTy);
     CGF.Builder.CreateStore(Value, N);
   } else {
     const llvm::Type *Ty = CGF.ConvertType(ObjectType)->getPointerTo(0);
@@ -570,11 +571,12 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         QualType CatchType = CatchParam->getType().getNonReferenceType();
         setInvokeDest(TerminateHandler);
         bool WasPointer = true;
-        bool WasReference = false;
+        bool WasPointerReference = false;
         CatchType = CGM.getContext().getCanonicalType(CatchType);
-        if (isa<ReferenceType>(CatchParam->getType()))
-          WasReference = true;
-        if (!CatchType.getTypePtr()->isPointerType()) {
+        if (CatchType.getTypePtr()->isPointerType()) {
+          if (isa<ReferenceType>(CatchParam->getType()))
+            WasPointerReference = true;
+        } else {
           if (!isa<ReferenceType>(CatchParam->getType()))
             WasPointer = false;
           CatchType = getContext().getPointerType(CatchType);
@@ -585,7 +587,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
         // cleanup doesn't start until after the ctor completes, use a decl
         // init?
         CopyObject(*this, CatchParam->getType().getNonReferenceType(),
-                   WasPointer, WasReference, ExcObject,
+                   WasPointer, WasPointerReference, ExcObject,
                    GetAddrOfLocalVar(CatchParam));
         setInvokeDest(MatchHandler);
       }
