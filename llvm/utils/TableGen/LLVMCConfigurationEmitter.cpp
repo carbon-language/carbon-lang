@@ -1397,7 +1397,7 @@ void EmitCaseTest(const DagInit& d, unsigned IndentLevel,
   else if (EmitCaseTest2Args(TestName, d, IndentLevel, OptDescs, O))
     return;
   else
-    throw TestName + ": unknown edge property!";
+    throw "Unknown test '" + TestName + "' used in the 'case' construct!";
 }
 
 
