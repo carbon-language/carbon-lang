@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SemaInit.h"
+#include "Lookup.h"
 #include "Sema.h"
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
@@ -1286,22 +1287,33 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
       // may find nothing, or may find a member of an anonymous
       // struct/union.
       DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
+      FieldDecl *ReplacementField = 0;
       if (Lookup.first == Lookup.second) {
-        // Name lookup didn't find anything.
-        SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
-          << FieldName << CurrentObjectType;
-        ++Index;
-        return true;
-      } else if (!KnownField && isa<FieldDecl>(*Lookup.first) &&
-                 cast<RecordDecl>((*Lookup.first)->getDeclContext())
-                   ->isAnonymousStructOrUnion()) {
-        // Handle an field designator that refers to a member of an
-        // anonymous struct or union.
-        ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx,
-                                       cast<FieldDecl>(*Lookup.first),
-                                       Field, FieldIndex);
-        D = DIE->getDesignator(DesigIdx);
-      } else {
+        // Name lookup didn't find anything. Determine whether this
+        // was a typo for another field name.
+        LookupResult R(SemaRef, FieldName, D->getFieldLoc(), 
+                       Sema::LookupMemberName);
+        if (SemaRef.CorrectTypo(R, /*Scope=*/0, /*SS=*/0, RT->getDecl()) &&
+            (ReplacementField = R.getAsSingle<FieldDecl>()) &&
+            ReplacementField->getDeclContext()->getLookupContext()
+                                                      ->Equals(RT->getDecl())) {
+          SemaRef.Diag(D->getFieldLoc(), 
+                       diag::err_field_designator_unknown_suggest)
+            << FieldName << CurrentObjectType << R.getLookupName()
+            << CodeModificationHint::CreateReplacement(D->getFieldLoc(),
+                                               R.getLookupName().getAsString());
+        } else {
+          SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
+            << FieldName << CurrentObjectType;
+          ++Index;
+          return true;
+        }
+      } else if (!KnownField) {
+        // Determine whether we found a field at all.
+        ReplacementField = dyn_cast<FieldDecl>(*Lookup.first);
+      }
+
+      if (!ReplacementField) {
         // Name lookup found something, but it wasn't a field.
         SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
           << FieldName;
@@ -1309,6 +1321,32 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
                       diag::note_field_designator_found);
         ++Index;
         return true;
+      }
+
+      if (!KnownField && 
+          cast<RecordDecl>((ReplacementField)->getDeclContext())
+                                                 ->isAnonymousStructOrUnion()) {
+        // Handle an field designator that refers to a member of an
+        // anonymous struct or union.
+        ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx,
+                                       ReplacementField,
+                                       Field, FieldIndex);
+        D = DIE->getDesignator(DesigIdx);
+      } else if (!KnownField) {
+        // The replacement field comes from typo correction; find it
+        // in the list of fields.
+        FieldIndex = 0;
+        Field = RT->getDecl()->field_begin();
+        for (; Field != FieldEnd; ++Field) {
+          if (Field->isUnnamedBitfield())
+            continue;
+
+          if (ReplacementField == *Field || 
+              Field->getIdentifier() == ReplacementField->getIdentifier())
+            break;
+
+          ++FieldIndex;
+        }
       }
     } else if (!KnownField &&
                cast<RecordDecl>((*Field)->getDeclContext())

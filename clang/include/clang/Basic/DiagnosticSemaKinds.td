@@ -2566,6 +2566,9 @@ def err_no_member_template_suggest : Error<
 def err_mem_init_not_member_or_class_suggest : Error<
   "initializer %0 does not name a non-static data member or base "
   "class; did you mean the %select{base class|member}1 %2?">;
+def err_field_designator_unknown_suggest : Error<
+  "field designator %0 does not refer to any field in type %1; did you mean "
+  "%2?">;
 
 }
 
