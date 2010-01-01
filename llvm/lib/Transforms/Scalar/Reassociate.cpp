@@ -37,7 +37,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseMap.h"
 #include <algorithm>
-#include <map>
 using namespace llvm;
 
 STATISTIC(NumLinear , "Number of insts linearized");
@@ -73,8 +72,8 @@ static void PrintOps(Instruction *I, const SmallVectorImpl<ValueEntry> &Ops) {
   
 namespace {
   class Reassociate : public FunctionPass {
-    std::map<BasicBlock*, unsigned> RankMap;
-    std::map<AssertingVH<>, unsigned> ValueRankMap;
+    DenseMap<BasicBlock*, unsigned> RankMap;
+    DenseMap<AssertingVH<>, unsigned> ValueRankMap;
     bool MadeChange;
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -163,13 +162,14 @@ void Reassociate::BuildRankMap(Function &F) {
 }
 
 unsigned Reassociate::getRank(Value *V) {
-  if (isa<Argument>(V)) return ValueRankMap[V];   // Function argument...
-
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0) return 0;  // Otherwise it's a global or constant, rank 0.
+  if (I == 0) {
+    if (isa<Argument>(V)) return ValueRankMap[V];   // Function argument.
+    return 0;  // Otherwise it's a global or constant, rank 0.
+  }
 
-  unsigned &CachedRank = ValueRankMap[I];
-  if (CachedRank) return CachedRank;    // Rank already known?
+  if (unsigned Rank = ValueRankMap[I])
+    return Rank;    // Rank already known?
 
   // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
   // we can reassociate expressions for code motion!  Since we do not recurse
@@ -189,7 +189,7 @@ unsigned Reassociate::getRank(Value *V) {
   //DEBUG(errs() << "Calculated Rank[" << V->getName() << "] = "
   //     << Rank << "\n");
 
-  return CachedRank = Rank;
+  return ValueRankMap[I] = Rank;
 }
 
 /// isReassociableOp - Return true if V is an instruction of the specified
@@ -204,7 +204,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
-                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
+                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
   Constant *Cst = Constant::getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
@@ -463,7 +463,7 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub,
-                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
+                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
   //
@@ -488,7 +488,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl, 
-                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
+                              DenseMap<AssertingVH<>, unsigned> &ValueRankMap) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
@@ -998,7 +998,7 @@ bool Reassociate::runOnFunction(Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     ReassociateBB(FI);
 
-  // We are done with the rank map...
+  // We are done with the rank map.
   RankMap.clear();
   ValueRankMap.clear();
   return MadeChange;
