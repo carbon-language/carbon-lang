@@ -10149,8 +10149,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Power->isOne())
         return ReplaceInstUsesWith(CI, II->getOperand(1));
       // powi(x, -1) -> 1/x
-      return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),
-                                        II->getOperand(1));
+      if (Power->isAllOnesValue())
+        return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),
+                                          II->getOperand(1));
     }
     break;
       
