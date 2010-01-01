@@ -6427,21 +6427,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::GetElementPtr:
-        if (RHSC->isNullValue()) {
           // icmp pred GEP (P, int 0, int 0, int 0), null -> icmp pred P, null
-          bool isAllZeros = true;
-          for (unsigned i = 1, e = LHSI->getNumOperands(); i != e; ++i)
-            if (!isa<Constant>(LHSI->getOperand(i)) ||
-                !cast<Constant>(LHSI->getOperand(i))->isNullValue()) {
-              isAllZeros = false;
-              break;
-            }
-          if (isAllZeros)
-            return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
-                    Constant::getNullValue(LHSI->getOperand(0)->getType()));
-        }
+        if (RHSC->isNullValue() &&
+            cast<GetElementPtrInst>(LHSI)->hasAllZeroIndices())
+          return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
+                  Constant::getNullValue(LHSI->getOperand(0)->getType()));
         break;
-
       case Instruction::PHI:
         // Only fold icmp into the PHI if the phi and icmp are in the same
         // block.  If in the same block, we're encouraging jump threading.  If
@@ -6505,6 +6496,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                                                       !I.isTrueWhenEqual()));
             }
         }
+        break;
+      case Instruction::IntToPtr:
+        // icmp pred inttoptr(X), null -> icmp pred X, 0
+        if (RHSC->isNullValue() && TD &&
+            TD->getIntPtrType(RHSC->getContext()) == 
+               LHSI->getOperand(0)->getType())
+          return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
+                        Constant::getNullValue(LHSI->getOperand(0)->getType()));
         break;
       }
   }

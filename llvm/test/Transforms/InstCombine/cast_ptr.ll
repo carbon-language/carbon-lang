@@ -36,3 +36,12 @@ define i1 @test3(i8* %a) {
         %r = icmp eq i32 %tmpa, ptrtoint (i8* @global to i32)
         ret i1 %r
 }
+
+define i1 @test4(i32 %A) {
+  %B = inttoptr i32 %A to i8*
+  %C = icmp eq i8* %B, null
+  ret i1 %C
+; CHECK: @test4
+; CHECK-NEXT: %C = icmp eq i32 %A, 0
+; CHECK-NEXT: ret i1 %C 
+}
