@@ -4,6 +4,7 @@
 
 declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8)
 declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8)
+declare double @llvm.powi.f64(double, i32) nounwind readonly
 
 define i8 @test1(i8 %A, i8 %B) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
@@ -77,3 +78,24 @@ define i8 @test6(i8 %A, i1* %overflowPtr) {
 ; CHECK-NEXT: store i1 false, i1* %overflowPtr
 ; CHECK-NEXT: ret i8 %A
 }
+
+
+define void @powi(double %V, double *%P) {
+entry:
+  %A = tail call double @llvm.powi.f64(double %V, i32 -1) nounwind
+  volatile store double %A, double* %P
+
+  %B = tail call double @llvm.powi.f64(double %V, i32 0) nounwind
+  volatile store double %B, double* %P
+
+  %C = tail call double @llvm.powi.f64(double %V, i32 1) nounwind
+  volatile store double %C, double* %P
+  ret void
+; CHECK: @powi
+; CHECK: %A = fdiv double 1.0{{.*}}, %V
+; CHECK: volatile store double %A, 
+; CHECK: volatile store double 1.0 
+; CHECK: volatile store double %V
+}
+
+

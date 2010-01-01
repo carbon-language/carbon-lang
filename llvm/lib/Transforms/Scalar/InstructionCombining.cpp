@@ -10140,6 +10140,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Operand->getIntrinsicID() == Intrinsic::bswap)
         return ReplaceInstUsesWith(CI, Operand->getOperand(1));
     break;
+  case Intrinsic::powi:
+    if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getOperand(2))) {
+      // powi(x, 0) -> 1.0
+      if (Power->isZero())
+        return ReplaceInstUsesWith(CI, ConstantFP::get(CI.getType(), 1.0));
+      // powi(x, 1) -> x
+      if (Power->isOne())
+        return ReplaceInstUsesWith(CI, II->getOperand(1));
+      // powi(x, -1) -> 1/x
+      return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),
+                                        II->getOperand(1));
+    }
+    break;
+      
   case Intrinsic::uadd_with_overflow: {
     Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
     const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
