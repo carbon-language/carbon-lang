@@ -6053,6 +6053,14 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // form "i != 47 & i != 87".  Same state transitions as for true elements.
   int FirstFalseElement = Undefined, SecondFalseElement = Undefined;
   
+  /// TrueRangeEnd/FalseRangeEnd - In conjunction with First*Element, these
+  /// define a state machine that triggers for ranges of values that the index
+  /// is true or false for.  This triggers on things like "abbbbc"[i] == 'b'.
+  /// This is -2 when undefined, -3 when overdefined, and otherwise the last
+  /// index in the range (inclusive).  We use -2 for undefined here because we
+  /// use relative comparisons and don't want 0-1 to match -1.
+  int TrueRangeEnd = Undefined, FalseRangeEnd = Undefined;
+  
   // MagicBitvector - This is a magic bitvector where we set a bit if the
   // comparison is true for element 'i'.  If there are 64 elements or less in
   // the array, this will fully represent all the comparison results.
@@ -6067,7 +6075,15 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
                                                   Init->getOperand(i),
                                                   CompareRHS, TD);
     // If the result is undef for this element, ignore it.
-    if (isa<UndefValue>(C)) continue;
+    if (isa<UndefValue>(C)) {
+      // Extend range state machines to cover this element in case there is an
+      // undef in the middle of the range.
+      if (TrueRangeEnd == (int)i-1)
+        TrueRangeEnd = i;
+      if (FalseRangeEnd == (int)i-1)
+        FalseRangeEnd = i;
+      continue;
+    }
     
     // If we can't compute the result for any of the elements, we have to give
     // up evaluating the entire conditional.
@@ -6077,32 +6093,54 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     // update our state machines.
     bool IsTrueForElt = !cast<ConstantInt>(C)->isZero();
     
-    // State machine for single index comparison.
+    // State machine for single/double/range index comparison.
     if (IsTrueForElt) {
       // Update the TrueElement state machine.
       if (FirstTrueElement == Undefined)
-        FirstTrueElement = i;
-      else if (SecondTrueElement == Undefined)
-        SecondTrueElement = i;
-      else
-        SecondTrueElement = Overdefined;
+        FirstTrueElement = TrueRangeEnd = i;  // First true element.
+      else {
+        // Update double-compare state machine.
+        if (SecondTrueElement == Undefined)
+          SecondTrueElement = i;
+        else
+          SecondTrueElement = Overdefined;
+        
+        // Update range state machine.
+        if (TrueRangeEnd == (int)i-1)
+          TrueRangeEnd = i;
+        else
+          TrueRangeEnd = Overdefined;
+      }
     } else {
       // Update the FalseElement state machine.
       if (FirstFalseElement == Undefined)
-        FirstFalseElement = i;
-      else if (SecondFalseElement == Undefined)
-        SecondFalseElement = i;
-      else
-        SecondFalseElement = Overdefined;
+        FirstFalseElement = FalseRangeEnd = i; // First false element.
+      else {
+        // Update double-compare state machine.
+        if (SecondFalseElement == Undefined)
+          SecondFalseElement = i;
+        else
+          SecondFalseElement = Overdefined;
+        
+        // Update range state machine.
+        if (FalseRangeEnd == (int)i-1)
+          FalseRangeEnd = i;
+        else
+          FalseRangeEnd = Overdefined;
+      }
     }
+    
     
     // If this element is in range, update our magic bitvector.
     if (i < 64 && IsTrueForElt)
       MagicBitvector |= 1ULL << i;
     
-    // If all of our states become overdefined, bail out early.
-    if (i >= 64 && SecondTrueElement == Overdefined &&
-        SecondFalseElement == Overdefined)
+    // If all of our states become overdefined, bail out early.  Since the
+    // predicate is expensive, only check it every 8 elements.  This is only
+    // really useful for really huge arrays.
+    if ((i & 8) == 0 && i >= 64 && SecondTrueElement == Overdefined &&
+        SecondFalseElement == Overdefined && TrueRangeEnd == Overdefined &&
+        FalseRangeEnd == Overdefined)
       return 0;
   }
 
@@ -6110,6 +6148,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // order the state machines in complexity of the generated code.
   Value *Idx = GEP->getOperand(2);
 
+  
   // If the comparison is only true for one or two elements, emit direct
   // comparisons.
   if (SecondTrueElement != Overdefined) {
@@ -6150,6 +6189,37 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     return BinaryOperator::CreateAnd(C1, C2);
   }
   
+  // If the comparison can be replaced with a range comparison for the elements
+  // where it is true, emit the range check.
+  if (TrueRangeEnd != Overdefined) {
+    assert(TrueRangeEnd != FirstTrueElement && "Should emit single compare");
+    
+    // Generate (i-FirstTrue) <u (TrueRangeEnd-FirstTrue+1).
+    if (FirstTrueElement) {
+      Value *Offs = ConstantInt::get(Idx->getType(), -FirstTrueElement);
+      Idx = Builder->CreateAdd(Idx, Offs);
+    }
+    
+    Value *End = ConstantInt::get(Idx->getType(),
+                                  TrueRangeEnd-FirstTrueElement+1);
+    return new ICmpInst(ICmpInst::ICMP_ULT, Idx, End);
+  }
+  
+  // False range check.
+  if (FalseRangeEnd != Overdefined) {
+    assert(FalseRangeEnd != FirstFalseElement && "Should emit single compare");
+    // Generate (i-FirstFalse) >u (FalseRangeEnd-FirstFalse).
+    if (FirstFalseElement) {
+      Value *Offs = ConstantInt::get(Idx->getType(), -FirstFalseElement);
+      Idx = Builder->CreateAdd(Idx, Offs);
+    }
+    
+    Value *End = ConstantInt::get(Idx->getType(),
+                                  FalseRangeEnd-FirstFalseElement);
+    return new ICmpInst(ICmpInst::ICMP_UGT, Idx, End);
+  }
+  
+  
   // If a 32-bit or 64-bit magic bitvector captures the entire comparison state
   // of this load, replace it with computation that does:
   //   ((magic_cst >> i) & 1) != 0
@@ -6166,14 +6236,8 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
   }
   
-  // TODO: Range check
-  // TODO: GEP 0, i, 4
   // TODO: A[i]&4 == 0
-  
-  //errs() << "XFORM: " << *GV << "\n";
-  //errs() << "\t" << *GEP << "\n";
-  //errs() << "\t " << ICI << "\n\n\n\n";
-  
+  // TODO: GEP 0, i, 4
   
   return 0;
 }
