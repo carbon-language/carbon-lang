@@ -2234,8 +2234,6 @@ public:
   void CheckConversionDeclarator(Declarator &D, QualType &R,
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
-
-  bool isImplicitMemberReference(const LookupResult &R, QualType &ThisType);
   
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
@@ -3615,9 +3613,6 @@ public:
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
                                  AssignmentAction Action, bool IgnoreBaseAccess);
-  
-  bool BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
-                                 const ImplicitConversionSequence& ICS);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

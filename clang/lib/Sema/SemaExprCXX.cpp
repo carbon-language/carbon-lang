@@ -1092,39 +1092,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   return PerformImplicitConversion(From, ToType, ICS, Action);
 }
 
-/// BuildCXXDerivedToBaseExpr - This routine generates the suitable AST
-/// for the derived to base conversion of the expression 'From'. All
-/// necessary information is passed in ICS.
-bool 
-Sema::BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
-                                     const ImplicitConversionSequence& ICS) {
-  QualType  BaseType = 
-    QualType::getFromOpaquePtr(ICS.UserDefined.After.ToTypePtr);
-  // Must do additional defined to base conversion.
-  QualType  DerivedType = 
-    QualType::getFromOpaquePtr(ICS.UserDefined.After.FromTypePtr);
-
-  From = new (Context) ImplicitCastExpr(
-                                        DerivedType.getNonReferenceType(),
-                                        CastKind, 
-                                        From, 
-                                        DerivedType->isLValueReferenceType());
-  From = new (Context) ImplicitCastExpr(BaseType.getNonReferenceType(),
-                                        CastExpr::CK_DerivedToBase, From, 
-                                        BaseType->isLValueReferenceType());
-  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-  OwningExprResult FromResult =
-  BuildCXXConstructExpr(
-                        ICS.UserDefined.After.CopyConstructor->getLocation(),
-                        BaseType,
-                        ICS.UserDefined.After.CopyConstructor,
-                        MultiExprArg(*this, (void **)&From, 1));
-  if (FromResult.isInvalid())
-    return true;
-  From = FromResult.takeAs<Expr>();
-  return false;
-}
-
 /// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType using the pre-computed implicit
 /// conversion sequence ICS. Returns true if there was an error, false
@@ -1185,20 +1152,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         return true;
 
       From = CastArg.takeAs<Expr>();
-
-      // FIXME: This and the following if statement shouldn't be necessary, but
-      // there's some nasty stuff involving MaybeBindToTemporary going on here.
-      if (ICS.UserDefined.After.Second == ICK_Derived_To_Base &&
-          ICS.UserDefined.After.CopyConstructor) {
-        return BuildCXXDerivedToBaseExpr(From, CastKind, ICS);
-      }
-
-      if (ICS.UserDefined.After.CopyConstructor) {
-        From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
-                                              CastKind, From,
-                                              ToType->isLValueReferenceType());
-        return false;
-      }
 
       return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
                                        AA_Converting, IgnoreBaseAccess);
@@ -2305,71 +2258,3 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 
   return Owned(FullExpr);
 }
-
-/// \brief Determine whether a reference to the given declaration in the 
-/// current context is an implicit member access 
-/// (C++ [class.mfct.non-static]p2).
-///
-/// FIXME: Should Objective-C also use this approach?
-///
-/// \param D the declaration being referenced from the current scope.
-///
-/// \param NameLoc the location of the name in the source.
-///
-/// \param ThisType if the reference to this declaration is an implicit member
-/// access, will be set to the type of the "this" pointer to be used when
-/// building that implicit member access.
-///
-/// \returns true if this is an implicit member reference (in which case 
-/// \p ThisType and \p MemberType will be set), or false if it is not an
-/// implicit member reference.
-bool Sema::isImplicitMemberReference(const LookupResult &R,
-                                     QualType &ThisType) {
-  // If this isn't a C++ method, then it isn't an implicit member reference.
-  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext);
-  if (!MD || MD->isStatic())
-    return false;
-  
-  // C++ [class.mfct.nonstatic]p2:
-  //   [...] if name lookup (3.4.1) resolves the name in the
-  //   id-expression to a nonstatic nontype member of class X or of
-  //   a base class of X, the id-expression is transformed into a
-  //   class member access expression (5.2.5) using (*this) (9.3.2)
-  //   as the postfix-expression to the left of the '.' operator.
-  DeclContext *Ctx = 0;
-  if (R.isUnresolvableResult()) {
-    // FIXME: this is just picking one at random
-    Ctx = R.getRepresentativeDecl()->getDeclContext();
-  } else if (FieldDecl *FD = R.getAsSingle<FieldDecl>()) {
-    Ctx = FD->getDeclContext();
-  } else {
-    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
-      CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I);
-      FunctionTemplateDecl *FunTmpl = 0;
-      if (!Method && (FunTmpl = dyn_cast<FunctionTemplateDecl>(*I)))
-        Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
-      
-      // FIXME: Do we have to know if there are explicit template arguments?
-      if (Method && !Method->isStatic()) {
-        Ctx = Method->getParent();
-        break;
-      }
-    }
-  } 
-  
-  if (!Ctx || !Ctx->isRecord())
-    return false;
-  
-  // Determine whether the declaration(s) we found are actually in a base 
-  // class. If not, this isn't an implicit member reference.
-  ThisType = MD->getThisType(Context);
-
-  // FIXME: this doesn't really work for overloaded lookups.
-  
-  QualType CtxType = Context.getTypeDeclType(cast<CXXRecordDecl>(Ctx));
-  QualType ClassType
-    = Context.getTypeDeclType(cast<CXXRecordDecl>(MD->getParent()));
-  return Context.hasSameType(CtxType, ClassType) || 
-         IsDerivedFrom(ClassType, CtxType);
-}
-
