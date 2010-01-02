@@ -1790,6 +1790,12 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //      type and the other is a null pointer constant; pointer conversions
   //      and qualification conversions are performed to bring them to their
   //      composite pointer type. The result is of the composite pointer type.
+  //   -- The second and third operands have pointer to member type, or one has
+  //      pointer to member type and the other is a null pointer constant;
+  //      pointer to member conversions and qualification conversions are
+  //      performed to bring them to a common type, whose cv-qualification
+  //      shall match the cv-qualification of either the second or the third
+  //      operand. The result is of the common type.
   QualType Composite = FindCompositePointerType(LHS, RHS);
   if (!Composite.isNull())
     return Composite;
@@ -1798,83 +1804,6 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   Composite = FindCompositeObjCPointerType(LHS, RHS, QuestionLoc);
   if (!Composite.isNull())
     return Composite;
-
-  // Fourth bullet is same for pointers-to-member. However, the possible
-  // conversions are far more limited: we have null-to-pointer, upcast of
-  // containing class, and second-level cv-ness.
-  // cv-ness is not a union, but must match one of the two operands. (Which,
-  // frankly, is stupid.)
-  const MemberPointerType *LMemPtr = LTy->getAs<MemberPointerType>();
-  const MemberPointerType *RMemPtr = RTy->getAs<MemberPointerType>();
-  if (LMemPtr && 
-      RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(RHS, LTy, CastExpr::CK_NullToMemberPointer);
-    return LTy;
-  }
-  if (RMemPtr && 
-      LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(LHS, RTy, CastExpr::CK_NullToMemberPointer);
-    return RTy;
-  }
-  if (LMemPtr && RMemPtr) {
-    QualType LPointee = LMemPtr->getPointeeType();
-    QualType RPointee = RMemPtr->getPointeeType();
-
-    QualifierCollector LPQuals, RPQuals;
-    const Type *LPCan = LPQuals.strip(Context.getCanonicalType(LPointee));
-    const Type *RPCan = RPQuals.strip(Context.getCanonicalType(RPointee));
-
-    // First, we check that the unqualified pointee type is the same. If it's
-    // not, there's no conversion that will unify the two pointers.
-    if (LPCan == RPCan) {
-
-      // Second, we take the greater of the two qualifications. If neither
-      // is greater than the other, the conversion is not possible.
-
-      Qualifiers MergedQuals = LPQuals + RPQuals;
-
-      bool CompatibleQuals = true;
-      if (MergedQuals.getCVRQualifiers() != LPQuals.getCVRQualifiers() &&
-          MergedQuals.getCVRQualifiers() != RPQuals.getCVRQualifiers())
-        CompatibleQuals = false;
-      else if (LPQuals.getAddressSpace() != RPQuals.getAddressSpace())
-        // FIXME:
-        // C99 6.5.15 as modified by TR 18037:
-        //   If the second and third operands are pointers into different
-        //   address spaces, the address spaces must overlap.
-        CompatibleQuals = false;
-      // FIXME: GC qualifiers?
-
-      if (CompatibleQuals) {
-        // Third, we check if either of the container classes is derived from
-        // the other.
-        QualType LContainer(LMemPtr->getClass(), 0);
-        QualType RContainer(RMemPtr->getClass(), 0);
-        QualType MoreDerived;
-        if (Context.getCanonicalType(LContainer) ==
-            Context.getCanonicalType(RContainer))
-          MoreDerived = LContainer;
-        else if (IsDerivedFrom(LContainer, RContainer))
-          MoreDerived = LContainer;
-        else if (IsDerivedFrom(RContainer, LContainer))
-          MoreDerived = RContainer;
-
-        if (!MoreDerived.isNull()) {
-          // The type 'Q Pointee (MoreDerived::*)' is the common type.
-          // We don't use ImpCastExprToType here because this could still fail
-          // for ambiguous or inaccessible conversions.
-          LPointee = Context.getQualifiedType(LPointee, MergedQuals);
-          QualType Common
-            = Context.getMemberPointerType(LPointee, MoreDerived.getTypePtr());
-          if (PerformImplicitConversion(LHS, Common, Sema::AA_Converting))
-            return QualType();
-          if (PerformImplicitConversion(RHS, Common, Sema::AA_Converting))
-            return QualType();
-          return Common;
-        }
-      }
-    }
-  }
 
   Diag(QuestionLoc, diag::err_typecheck_cond_incompatible_operands)
     << LHS->getType() << RHS->getType()
