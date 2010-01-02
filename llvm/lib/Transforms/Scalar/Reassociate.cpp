@@ -414,6 +414,10 @@ static Value *NegateValue(Value *V, Instruction *BI) {
     // non-instruction value) or right after the definition.  These negates will
     // be zapped by reassociate later, so we don't need much finesse here.
     BinaryOperator *TheNeg = cast<BinaryOperator>(*UI);
+
+    // Verify that the negate is in this function, V might be a constant expr.
+    if (TheNeg->getParent()->getParent() != BI->getParent()->getParent())
+      continue;
     
     BasicBlock::iterator InsertPt;
     if (Instruction *InstInput = dyn_cast<Instruction>(V)) {
