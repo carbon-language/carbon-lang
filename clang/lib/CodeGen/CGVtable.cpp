@@ -167,9 +167,9 @@ private:
   static llvm::DenseMap<CtorVtable_t, int64_t>&
   AllocAddressPoint(CodeGenModule &cgm, const CXXRecordDecl *l,
                     const CXXRecordDecl *c) {
-    CodeGenModule::AddrMap_t *&oref = cgm.AddressPoints[l];
+    CGVtableInfo::AddrMap_t *&oref = cgm.getVtableInfo().AddressPoints[l];
     if (oref == 0)
-      oref = new CodeGenModule::AddrMap_t;
+      oref = new CGVtableInfo::AddrMap_t;
 
     llvm::DenseMap<CtorVtable_t, int64_t> *&ref = (*oref)[c];
     if (ref == 0)
@@ -1137,7 +1137,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
 
 uint64_t CGVtableInfo::getVtableAddressPoint(const CXXRecordDecl *RD) {
   uint64_t AddressPoint = 
-    (*(*(CGM.AddressPoints[RD]))[RD])[std::make_pair(RD, 0)];
+    (*(*(CGM.getVtableInfo().AddressPoints[RD]))[RD])[std::make_pair(RD, 0)];
   
   return AddressPoint;
 }
@@ -1156,7 +1156,8 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   llvm::StringRef Name = OutName.str();
 
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
-  if (GV == 0 || CGM.AddressPoints[LayoutClass] == 0 || GV->isDeclaration()) {
+  if (GV == 0 || CGM.getVtableInfo().AddressPoints[LayoutClass] == 0 || 
+      GV->isDeclaration()) {
     VtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
@@ -1204,7 +1205,7 @@ class VTTBuilder {
   /// BLayout - Layout for the most derived class that this vtable is being
   /// built for.
   const ASTRecordLayout &BLayout;
-  CodeGenModule::AddrMap_t &AddressPoints;
+  CGVtableInfo::AddrMap_t &AddressPoints;
   // vtbl - A pointer to the vtable for Class.
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
@@ -1365,7 +1366,7 @@ public:
              CodeGenModule &cgm, bool GenerateDefinition)
     : Inits(inits), Class(c), CGM(cgm),
       BLayout(cgm.getContext().getASTRecordLayout(c)),
-      AddressPoints(*cgm.AddressPoints[c]),
+      AddressPoints(*cgm.getVtableInfo().AddressPoints[c]),
       VMContext(cgm.getModule().getContext()),
       GenerateDefinition(GenerateDefinition) {
     

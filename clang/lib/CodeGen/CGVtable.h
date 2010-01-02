@@ -66,6 +66,11 @@ public:
   typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
       AdjustmentVectorTy;
 
+  typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
+  typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
+  typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
+  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
+
 private:
   CodeGenModule &CGM;
 

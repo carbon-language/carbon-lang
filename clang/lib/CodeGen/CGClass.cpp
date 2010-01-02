@@ -1359,8 +1359,8 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
     return;
 
   llvm::Constant *Vtable = CGM.getVtableInfo().getVtable(ClassDecl);
-  CodeGenModule::AddrSubMap_t& AddressPoints =
-      *(*CGM.AddressPoints[ClassDecl])[ClassDecl];
+  CGVtableInfo::AddrSubMap_t& AddressPoints =
+      *(*CGM.getVtableInfo().AddressPoints[ClassDecl])[ClassDecl];
   llvm::Value *ThisPtr = LoadCXXThis();
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
 
@@ -1382,7 +1382,7 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
 void CodeGenFunction::InitializeVtablePtrsRecursive(
         const CXXRecordDecl *ClassDecl,
         llvm::Constant *Vtable,
-        CodeGenModule::AddrSubMap_t& AddressPoints,
+        CGVtableInfo::AddrSubMap_t& AddressPoints,
         llvm::Value *ThisPtr,
         uint64_t Offset) {
   if (!ClassDecl->isDynamicClass())
