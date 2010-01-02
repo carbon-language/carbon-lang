@@ -258,6 +258,8 @@ namespace {
     Instruction *commonShiftTransforms(BinaryOperator &I);
     Instruction *FoldFCmp_IntToFP_Cst(FCmpInst &I, Instruction *LHSI,
                                       Constant *RHSC);
+    Instruction *FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP,
+                                              GlobalVariable *GV, CmpInst &ICI);
     Instruction *visitFCmpInst(FCmpInst &I);
     Instruction *visitICmpInst(ICmpInst &I);
     Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
@@ -6015,6 +6017,112 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   return new ICmpInst(Pred, LHSI->getOperand(0), RHSInt);
 }
 
+
+/// FoldCmpLoadFromIndexedGlobal - Called we see this pattern:
+///   cmp pred (load (gep GV, ...)), cmpcst
+/// where GV is a global variable with a constant initializer.  Try to simplify
+/// this into one or two simpler comparisons that do not need the load.  For
+/// example, we can optimize "icmp eq (load (gep "foo", 0, i)), 0" into
+/// "icmp eq i, 3".  We assume that eliminating a load is always goodness.
+Instruction *InstCombiner::
+FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
+                             CmpInst &ICI) {
+  
+  // There are many forms of this optimization we can handle, for now, just do
+  // the simple index into a single-dimensional array.
+  //
+  // Require: GEP GV, 0, i
+  if (GEP->getNumOperands() != 3 ||
+      !isa<ConstantInt>(GEP->getOperand(1)) ||
+      !cast<ConstantInt>(GEP->getOperand(1))->isZero())
+    return 0;
+  
+  ConstantArray *Init = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (Init == 0 || Init->getNumOperands() > 1024) return 0;
+  
+  
+  // Variables for our state machines.
+  
+  // OnlyTrueElement - Used to emit a comparison of "i == 47", where 47 is the
+  // only index the condition is true for.  The values are -1 -> undef,
+  // -2 -> overdef, >= 0 -> that index is true.
+  int OnlyTrueElement = -1;
+
+  // OnlyFalseElement - Used to emit a comparison of "i != 47", where 47 is the
+  // only index the condition is false for.  The values are -1 -> undef,
+  // -2 -> overdef, >= 0 -> that index is false.
+  int OnlyFalseElement = -1;
+  
+  // Scan the array and see if one of our patterns matches.
+  Constant *CompareRHS = cast<Constant>(ICI.getOperand(1));
+  for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
+    // Find out if the comparison would be true or false for the i'th element.
+    Constant *C = ConstantFoldCompareInstOperands(ICI.getPredicate(),
+                                                  Init->getOperand(i),
+                                                  CompareRHS, TD);
+    // If the result is undef for this element, ignore it.
+    if (isa<UndefValue>(C)) continue;
+    
+    // If we can't compute the result for any of the elements, we have to give
+    // up evaluating the entire conditional.
+    if (!isa<ConstantInt>(C)) return 0;
+    
+    // Otherwise, we know if the comparison is true or false for this element,
+    // update our state machines.
+    bool IsTrueForElt = !cast<ConstantInt>(C)->isZero();
+    
+    // State machine for single index comparison.
+    if (IsTrueForElt) {
+      // If undefined -> defined.  Otherwise -> overdefined.
+      OnlyTrueElement = OnlyTrueElement == -1 ? i : -2;
+    } else {
+      // If undefined -> defined.  Otherwise -> overdefined.
+      OnlyFalseElement = OnlyFalseElement == -1 ? i : -2;
+    }
+    
+    // If all of our states become overdefined, bail out early.
+    if (OnlyTrueElement == -2 && OnlyFalseElement == -2)
+      return 0;
+  }
+
+  // Now that we've scanned the entire array, emit our new comparison(s).  We
+  // order the state machines in complexity of the generated code.
+  if (OnlyTrueElement != -2) {
+    // None true -> false.
+    if (OnlyTrueElement == -1)
+      return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
+    
+    // True for one element -> 'i == 47'.
+    return new ICmpInst(ICmpInst::ICMP_EQ, GEP->getOperand(2),
+                        ConstantInt::get(GEP->getOperand(2)->getType(),
+                                         OnlyTrueElement));
+  }
+
+  if (OnlyFalseElement != -2) {
+    // None false -> true.
+    if (OnlyFalseElement == -1)
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
+    
+    return new ICmpInst(ICmpInst::ICMP_NE, GEP->getOperand(2),
+                        ConstantInt::get(GEP->getOperand(2)->getType(),
+                                         OnlyFalseElement));
+  }
+  
+  assert(0 && "Should have bailed out early");
+  
+  // TODO: FCMP.
+  
+  // TODO: Range check.
+  
+  // TODO: If the global array has 32 (or 64 if native!) or less entries, we
+  // can turn this into something like:
+  //  ((magicbitconstant >> i) & 1) != 0)
+  // where we populate magicbitconstant with 0101010 based on the comparison
+  // results.
+  return 0;
+}
+
+
 Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   bool Changed = false;
   
@@ -6175,7 +6283,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     Value *A = 0, *B = 0;
     
     // (icmp ne/eq (sub A B) 0) -> (icmp ne/eq A, B)
-    if (I.isEquality() && CI->isNullValue() &&
+    if (I.isEquality() && CI->isZero() &&
         match(Op0, m_Sub(m_Value(A), m_Value(B)))) {
       // (icmp cond A B) if cond is equality
       return new ICmpInst(I.getPredicate(), A, B);
@@ -6474,6 +6582,17 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                LHSI->getOperand(0)->getType())
           return new ICmpInst(I.getPredicate(), LHSI->getOperand(0),
                         Constant::getNullValue(LHSI->getOperand(0)->getType()));
+        break;
+
+      case Instruction::Load:
+        if (GetElementPtrInst *GEP =
+              dyn_cast<GetElementPtrInst>(LHSI->getOperand(0)))
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
+            if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
+                !cast<LoadInst>(LHSI)->isVolatile()) {
+              if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
+                return Res;
+            }
         break;
       }
   }
