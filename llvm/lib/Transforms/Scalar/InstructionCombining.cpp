@@ -4166,21 +4166,6 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
 /// FoldAndOfICmps - Fold (icmp)&(icmp) if possible.
 Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
                                           ICmpInst *LHS, ICmpInst *RHS) {
-  // (icmp eq A, null) & (icmp eq B, null) -->
-  //     (icmp eq (ptrtoint(A)|ptrtoint(B)), 0)
-  if (TD &&
-      LHS->getPredicate() == ICmpInst::ICMP_EQ &&
-      RHS->getPredicate() == ICmpInst::ICMP_EQ &&
-      isa<ConstantPointerNull>(LHS->getOperand(1)) &&
-      isa<ConstantPointerNull>(RHS->getOperand(1))) {
-    const Type *IntPtrTy = TD->getIntPtrType(I.getContext());
-    Value *A = Builder->CreatePtrToInt(LHS->getOperand(0), IntPtrTy);
-    Value *B = Builder->CreatePtrToInt(RHS->getOperand(0), IntPtrTy);
-    Value *NewOr = Builder->CreateOr(A, B);
-    return new ICmpInst(ICmpInst::ICMP_EQ, NewOr,
-                        Constant::getNullValue(IntPtrTy));
-  }
-  
   Value *Val, *Val2;
   ConstantInt *LHSCst, *RHSCst;
   ICmpInst::Predicate LHSCC, RHSCC;
@@ -4861,21 +4846,6 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
 /// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
 Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
                                          ICmpInst *LHS, ICmpInst *RHS) {
-  // (icmp ne A, null) | (icmp ne B, null) -->
-  //     (icmp ne (ptrtoint(A)|ptrtoint(B)), 0)
-  if (TD &&
-      LHS->getPredicate() == ICmpInst::ICMP_NE &&
-      RHS->getPredicate() == ICmpInst::ICMP_NE &&
-      isa<ConstantPointerNull>(LHS->getOperand(1)) &&
-      isa<ConstantPointerNull>(RHS->getOperand(1))) {
-    const Type *IntPtrTy = TD->getIntPtrType(I.getContext());
-    Value *A = Builder->CreatePtrToInt(LHS->getOperand(0), IntPtrTy);
-    Value *B = Builder->CreatePtrToInt(RHS->getOperand(0), IntPtrTy);
-    Value *NewOr = Builder->CreateOr(A, B);
-    return new ICmpInst(ICmpInst::ICMP_NE, NewOr,
-                        Constant::getNullValue(IntPtrTy));
-  }
-  
   Value *Val, *Val2;
   ConstantInt *LHSCst, *RHSCst;
   ICmpInst::Predicate LHSCC, RHSCC;

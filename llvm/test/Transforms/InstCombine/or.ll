@@ -269,21 +269,6 @@ define i1 @test26(i32 %A, i32 %B) {
 }
 
 ; PR5634
-define i1 @test27(i32* %A, i32* %B) {
-        %C1 = icmp eq i32* %A, null
-        %C2 = icmp eq i32* %B, null
-        ; (A == 0) & (A == 0)   -->   (A|B) == 0
-        %D = and i1 %C1, %C2
-        ret i1 %D
-; CHECK: @test27
-; CHECK: ptrtoint i32* %A
-; CHECK: ptrtoint i32* %B
-; CHECK: or i32 
-; CHECK: icmp eq i32 {{.*}}, 0
-; CHECK: ret i1 
-}
-
-; PR5634
 define i1 @test28(i32 %A, i32 %B) {
         %C1 = icmp ne i32 %A, 0
         %C2 = icmp ne i32 %B, 0
