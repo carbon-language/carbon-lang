@@ -6180,7 +6180,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         if (Instruction *NV = FoldFCmp_IntToFP_Cst(I, LHSI, RHSC))
           return NV;
         break;
-      case Instruction::Select:
+      case Instruction::Select: {
         // If either operand of the select is a constant, we can fold the
         // comparison into the select arms, which will cause one to be
         // constant folded and the select turned into a bitwise or.
@@ -6205,6 +6205,20 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
         break;
       }
+    case Instruction::Load:
+      if (GetElementPtrInst *GEP =
+          dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
+          if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
+              !cast<LoadInst>(LHSI)->isVolatile())
+            if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
+              return Res;
+            //errs() << "NOT HANDLED: " << *GV << "\n";
+            //errs() << "\t" << *GEP << "\n";
+            //errs() << "\t " << I << "\n\n\n";
+      }
+      break;
+    }
   }
 
   return Changed ? &I : 0;
@@ -6586,13 +6600,16 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
       case Instruction::Load:
         if (GetElementPtrInst *GEP =
-              dyn_cast<GetElementPtrInst>(LHSI->getOperand(0)))
+              dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
             if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-                !cast<LoadInst>(LHSI)->isVolatile()) {
+                !cast<LoadInst>(LHSI)->isVolatile())
               if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
                 return Res;
-            }
+          //errs() << "NOT HANDLED: " << *GV << "\n";
+          //errs() << "\t" << *GEP << "\n";
+          //errs() << "\t " << I << "\n\n\n";
+        }
         break;
       }
   }
