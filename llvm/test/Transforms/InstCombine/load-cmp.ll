@@ -80,3 +80,15 @@ define i1 @test7(i32 %X) {
 ; CHECK-NEXT: %R = icmp ugt i32 {{.*}}, 2
 ; CHECK-NEXT: ret i1 %R
 }
+
+define i1 @test8(i32 %X) {
+  %P = getelementptr [10 x i16]* @G16, i32 0, i32 %X
+  %Q = load i16* %P
+  %R = and i16 %Q, 3
+  %S = icmp eq i16 %R, 0
+  ret i1 %S
+; CHECK: @test8
+; CHECK-NEXT: add i32 %X, -8
+; CHECK-NEXT: %S = icmp ult i32 {{.*}}, 2
+; CHECK-NEXT: ret i1 %S
+}

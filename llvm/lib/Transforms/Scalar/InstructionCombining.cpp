@@ -259,7 +259,8 @@ namespace {
     Instruction *FoldFCmp_IntToFP_Cst(FCmpInst &I, Instruction *LHSI,
                                       Constant *RHSC);
     Instruction *FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP,
-                                              GlobalVariable *GV, CmpInst &ICI);
+                                              GlobalVariable *GV, CmpInst &ICI,
+                                              ConstantInt *AndCst = 0);
     Instruction *visitFCmpInst(FCmpInst &I);
     Instruction *visitICmpInst(ICmpInst &I);
     Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
@@ -6022,9 +6023,12 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 /// where GV is a global variable with a constant initializer.  Try to simplify
 /// this into some simple computation that does not need the load.  For example
 /// we can optimize "icmp eq (load (gep "foo", 0, i)), 0" into "icmp eq i, 3".
+///
+/// If AndCst is non-null, then the loaded value is masked with that constant
+/// before doing the comparison.  This handles cases like "A[i]&4 == 0".
 Instruction *InstCombiner::
 FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
-                             CmpInst &ICI) {
+                             CmpInst &ICI, ConstantInt *AndCst) {
   
   // There are many forms of this optimization we can handle, for now, just do
   // the simple index into a single-dimensional array.
@@ -6070,9 +6074,13 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // Scan the array and see if one of our patterns matches.
   Constant *CompareRHS = cast<Constant>(ICI.getOperand(1));
   for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
+    Constant *Elt = Init->getOperand(i);
+    
+    // If the element is masked, handle it.
+    if (AndCst) Elt = ConstantExpr::getAnd(Elt, AndCst);
+    
     // Find out if the comparison would be true or false for the i'th element.
-    Constant *C = ConstantFoldCompareInstOperands(ICI.getPredicate(),
-                                                  Init->getOperand(i),
+    Constant *C = ConstantFoldCompareInstOperands(ICI.getPredicate(), Elt,
                                                   CompareRHS, TD);
     // If the result is undef for this element, ignore it.
     if (isa<UndefValue>(C)) {
@@ -6236,7 +6244,6 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
   }
   
-  // TODO: A[i]&4 == 0
   // TODO: GEP 0, i, 4
   
   return 0;
@@ -6333,7 +6340,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
               !cast<LoadInst>(LHSI)->isVolatile())
             if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
               return Res;
-            //errs() << "NOT HANDLED: " << *GV << "\n";
+            //errs() << "NOT HANDLED FP: " << *GV << "\n";
             //errs() << "\t" << *GEP << "\n";
             //errs() << "\t " << I << "\n\n\n";
       }
@@ -6719,6 +6726,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         break;
 
       case Instruction::Load:
+        // Try to optimize things like "A[i] > 4" to index computations.
         if (GetElementPtrInst *GEP =
               dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
@@ -6726,7 +6734,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                 !cast<LoadInst>(LHSI)->isVolatile())
               if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
                 return Res;
-          //errs() << "NOT HANDLED: " << *GV << "\n";
+          //errs() << "NOT HANDLED INT: " << *GV << "\n";
           //errs() << "\t" << *GEP << "\n";
           //errs() << "\t " << I << "\n\n\n";
         }
@@ -7381,6 +7389,22 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         ICI.setOperand(0, NewAnd);
         return &ICI;
       }
+    }
+      
+    // Try to optimize things like "A[i]&42 == 0" to index computations.
+    if (LoadInst *LI = dyn_cast<LoadInst>(LHSI->getOperand(0))) {
+      if (GetElementPtrInst *GEP =
+          dyn_cast<GetElementPtrInst>(LI->getOperand(0)))
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
+          if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
+              !LI->isVolatile() && isa<ConstantInt>(LHSI->getOperand(1))) {
+            ConstantInt *C = cast<ConstantInt>(LHSI->getOperand(1));
+            if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV,ICI, C))
+              return Res;
+            //errs() << "NOT HANDLED INT: " << *GV << "\n";
+            //errs() << "\t" << *GEP << "\n";
+            //errs() << "\t " << I << "\n\n\n";
+          }
     }
     break;
 
