@@ -53,7 +53,6 @@ namespace {
       (void) llvm::createLibCallAliasAnalysisPass(0);
       (void) llvm::createScalarEvolutionAliasAnalysisPass();
       (void) llvm::createBlockPlacementPass();
-      (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();
       (void) llvm::createCFGSimplificationPass();
       (void) llvm::createConstantMergePass();
@@ -71,7 +70,6 @@ namespace {
       (void) llvm::createOptimalEdgeProfilerPass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createAlwaysInlinerPass();
-      (void) llvm::createFunctionProfilerPass();
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();
       (void) llvm::createGlobalsModRefPass();
@@ -120,8 +118,6 @@ namespace {
       (void) llvm::createTailDuplicationPass();
       (void) llvm::createJumpThreadingPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
-      (void) llvm::createNullProfilerRSPass();
-      (void) llvm::createRSProfilingPass();
       (void) llvm::createInstCountPass();
       (void) llvm::createCodeGenPreparePass();
       (void) llvm::createGVNPass();

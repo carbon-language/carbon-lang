@@ -6167,6 +6167,12 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   
   // TODO: Range check
   // TODO: GEP 0, i, 4
+  
+  //errs() << "XFORM: " << *GV << "\n";
+  //errs() << "\t" << *GEP << "\n";
+  //errs() << "\t " << ICI << "\n\n\n\n";
+  
+  
   return 0;
 }
 
