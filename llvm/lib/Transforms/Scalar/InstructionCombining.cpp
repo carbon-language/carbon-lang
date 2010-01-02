@@ -6043,15 +6043,16 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   
   // Variables for our state machines.
   
-  // OnlyTrueElement - Used to emit a comparison of "i == 47", where 47 is the
-  // only index the condition is true for.  The values are -1 -> undef,
-  // -2 -> overdef, >= 0 -> that index is true.
-  int OnlyTrueElement = -1;
+  // FirstTrueElement/SecondTrueElement - Used to emit a comparison of the form
+  // "i == 47 | i == 87", where 47 is the first index the condition is true for,
+  // and 87 is the second (and last) index.  FirstTrueElement is -1 when
+  // undefined, otherwise set to the first true element.  SecondTrueElement is
+  // -1 when undefined, -2 when overdefined and >= 0 when that index is true.
+  int FirstTrueElement = -1, SecondTrueElement = -1;
 
-  // OnlyFalseElement - Used to emit a comparison of "i != 47", where 47 is the
-  // only index the condition is false for.  The values are -1 -> undef,
-  // -2 -> overdef, >= 0 -> that index is false.
-  int OnlyFalseElement = -1;
+  // FirstFalseElement/SecondFalseElement - Used to emit a comparison of the
+  // form "i != 47 & i != 87".  Same state transitions as for true elements.
+  int FirstFalseElement = -1, SecondFalseElement = -1;
   
   // MagicBitvector - This is a magic bitvector where we set a bit if the
   // comparison is true for element 'i'.  If there are 64 elements or less in
@@ -6079,11 +6080,21 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     
     // State machine for single index comparison.
     if (IsTrueForElt) {
-      // If undefined -> defined.  Otherwise -> overdefined.
-      OnlyTrueElement = OnlyTrueElement == -1 ? i : -2;
+      // Update the TrueElement state machine.
+      if (FirstTrueElement == -1)
+        FirstTrueElement = i;
+      else if (SecondTrueElement == -1)
+        SecondTrueElement = i;
+      else
+        SecondTrueElement = -2;
     } else {
-      // If undefined -> defined.  Otherwise -> overdefined.
-      OnlyFalseElement = OnlyFalseElement == -1 ? i : -2;
+      // Update the FalseElement state machine.
+      if (FirstFalseElement == -1)
+        FirstFalseElement = i;
+      else if (SecondFalseElement == -1)
+        SecondFalseElement = i;
+      else
+        SecondFalseElement = -2;
     }
     
     // If this element is in range, update our magic bitvector.
@@ -6091,31 +6102,52 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
       MagicBitvector |= 1ULL << i;
     
     // If all of our states become overdefined, bail out early.
-    if (i >= 64 && OnlyTrueElement == -2 && OnlyFalseElement == -2)
+    if (i >= 64 && SecondTrueElement == -2 && SecondFalseElement == -2)
       return 0;
   }
 
   // Now that we've scanned the entire array, emit our new comparison(s).  We
   // order the state machines in complexity of the generated code.
-  if (OnlyTrueElement != -2) {
+  Value *Idx = GEP->getOperand(2);
+
+  // If the comparison is only true for one or two elements, emit direct
+  // comparisons.
+  if (SecondTrueElement != -2) {
     // None true -> false.
-    if (OnlyTrueElement == -1)
+    if (FirstTrueElement == -1)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     
+    Value *FirstTrueIdx = ConstantInt::get(Idx->getType(), FirstTrueElement);
+    
     // True for one element -> 'i == 47'.
-    return new ICmpInst(ICmpInst::ICMP_EQ, GEP->getOperand(2),
-                        ConstantInt::get(GEP->getOperand(2)->getType(),
-                                         OnlyTrueElement));
+    if (SecondTrueElement == -1)
+      return new ICmpInst(ICmpInst::ICMP_EQ, Idx, FirstTrueIdx);
+    
+    // True for two elements -> 'i == 47 | i == 72'.
+    Value *C1 = Builder->CreateICmpEQ(Idx, FirstTrueIdx);
+    Value *SecondTrueIdx = ConstantInt::get(Idx->getType(), SecondTrueElement);
+    Value *C2 = Builder->CreateICmpEQ(Idx, SecondTrueIdx);
+    return BinaryOperator::CreateOr(C1, C2);
   }
 
-  if (OnlyFalseElement != -2) {
+  // If the comparison is only false for one or two elements, emit direct
+  // comparisons.
+  if (SecondFalseElement != -2) {
     // None false -> true.
-    if (OnlyFalseElement == -1)
+    if (FirstFalseElement == -1)
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     
-    return new ICmpInst(ICmpInst::ICMP_NE, GEP->getOperand(2),
-                        ConstantInt::get(GEP->getOperand(2)->getType(),
-                                         OnlyFalseElement));
+    Value *FirstFalseIdx = ConstantInt::get(Idx->getType(), FirstFalseElement);
+
+    // False for one element -> 'i != 47'.
+    if (SecondFalseElement == -1)
+      return new ICmpInst(ICmpInst::ICMP_NE, Idx, FirstFalseIdx);
+     
+    // False for two elements -> 'i != 47 & i != 72'.
+    Value *C1 = Builder->CreateICmpNE(Idx, FirstFalseIdx);
+    Value *SecondFalseIdx = ConstantInt::get(Idx->getType(),SecondFalseElement);
+    Value *C2 = Builder->CreateICmpNE(Idx, SecondFalseIdx);
+    return BinaryOperator::CreateAnd(C1, C2);
   }
   
   // If a 32-bit or 64-bit magic bitvector captures the entire comparison state
@@ -6128,14 +6160,14 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
       Ty = Type::getInt32Ty(Init->getContext());
     else
       Ty = Type::getInt64Ty(Init->getContext());
-    Value *V = Builder->CreateIntCast(GEP->getOperand(2), Ty, false);
+    Value *V = Builder->CreateIntCast(Idx, Ty, false);
     V = Builder->CreateLShr(ConstantInt::get(Ty, MagicBitvector), V);
     V = Builder->CreateAnd(ConstantInt::get(Ty, 1), V);
     return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
   }
   
-  // TODO: Range check, two compares.
-
+  // TODO: Range check
+  // TODO: GEP 0, i, 4
   return 0;
 }
 

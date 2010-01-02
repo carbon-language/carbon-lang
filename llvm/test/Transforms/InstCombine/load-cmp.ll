@@ -45,3 +45,15 @@ define i1 @test4(i32 %X) {
 ; CHECK-NEXT: %R = icmp ne i32 {{.*}}, 0
 ; CHECK-NEXT: ret i1 %R
 }
+
+define i1 @test5(i32 %X) {
+  %P = getelementptr [10 x i16]* @G16, i32 0, i32 %X
+  %Q = load i16* %P
+  %R = icmp eq i16 %Q, 69
+  ret i1 %R
+; CHECK: @test5
+; CHECK-NEXT: icmp eq i32 %X, 2
+; CHECK-NEXT: icmp eq i32 %X, 7
+; CHECK-NEXT: %R = or i1
+; CHECK-NEXT: ret i1 %R
+}
