@@ -375,9 +375,8 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     // If the key function is defined, but inlined, then the RTTI descriptor is
     // emitted with weak_odr linkage.
     const FunctionDecl* KeyFunctionDefinition;
-    KeyFunction->getBody(KeyFunctionDefinition);
-
-    if (KeyFunctionDefinition->isInlined())
+    if (KeyFunction->getBody(KeyFunctionDefinition) &&
+        KeyFunctionDefinition->isInlined())
       return llvm::GlobalValue::WeakODRLinkage;
       
     // Otherwise, the RTTI descriptor is emitted with external linkage.
