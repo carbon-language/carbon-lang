@@ -718,14 +718,13 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
   
   switch (Opcode) {
   default: return 0;
+  case Instruction::ICmp:
+  case Instruction::FCmp: assert(0 && "Invalid for compares");
   case Instruction::Call:
     if (Function *F = dyn_cast<Function>(Ops[0]))
       if (canConstantFoldCallTo(F))
         return ConstantFoldCall(F, Ops+1, NumOps-1);
     return 0;
-  case Instruction::ICmp:
-  case Instruction::FCmp:
-    llvm_unreachable("This function is invalid for compares: no predicate specified");
   case Instruction::PtrToInt:
     // If the input is a inttoptr, eliminate the pair.  This requires knowing
     // the width of a pointer, so it can't be done in ConstantExpr::getCast.
@@ -876,6 +875,20 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
           return ConstantFoldCompareInstOperands(Predicate, CE0->getOperand(0),
                                                  CE1->getOperand(0), TD);
       }
+    }
+    
+    // icmp eq (or x, y), 0 -> (icmp eq x, 0) & (icmp eq y, 0)
+    // icmp ne (or x, y), 0 -> (icmp ne x, 0) | (icmp ne y, 0)
+    if ((Predicate == ICmpInst::ICMP_EQ || Predicate == ICmpInst::ICMP_NE) &&
+        CE0->getOpcode() == Instruction::Or && Ops1->isNullValue()) {
+      Constant *LHS = 
+        ConstantFoldCompareInstOperands(Predicate, CE0->getOperand(0), Ops1,TD);
+      Constant *RHS = 
+        ConstantFoldCompareInstOperands(Predicate, CE0->getOperand(1), Ops1,TD);
+      unsigned OpC = 
+        Predicate == ICmpInst::ICMP_EQ ? Instruction::And : Instruction::Or;
+      Constant *Ops[] = { LHS, RHS };
+      return ConstantFoldInstOperands(OpC, LHS->getType(), Ops, 2, TD);
     }
   }
   
