@@ -293,3 +293,17 @@ define i1 @test28(i32 %A, i32 %B) {
 ; CHECK: icmp ne i32 {{.*}}, 0
 ; CHECK: ret i1 
 }
+
+define i1 @test29(i32* %A, i32* %B) {
+  %C1 = ptrtoint i32* %A to i32
+  %C2 = ptrtoint i32* %B to i32
+  %D = or i32 %C1, %C2
+  %E = icmp ne i32 %D, 0
+  ret i1 %E
+; CHECK: @test29
+; CHECK: icmp ne i32* %A, null
+; CHECK: icmp ne i32* %B, null
+; CHECK: or i1
+; CHECK: ret i1
+}
+

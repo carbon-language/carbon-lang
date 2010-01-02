@@ -7324,9 +7324,13 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                         Constant::getNullValue(P->getType()));
       Value *ICIQ = Builder->CreateICmp(ICI.getPredicate(), Q,
                                         Constant::getNullValue(Q->getType()));
-      Instruction *And = BinaryOperator::CreateAnd(ICIP, ICIQ, "");
-      And->takeName(&ICI);
-      return And;
+      Instruction *Op;
+      if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
+        Op = BinaryOperator::CreateAnd(ICIP, ICIQ, "");
+      else
+        Op = BinaryOperator::CreateOr(ICIP, ICIQ, "");
+      Op->takeName(&ICI);
+      return Op;
     }
     break;
   }
