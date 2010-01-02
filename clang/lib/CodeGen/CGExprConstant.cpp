@@ -633,32 +633,6 @@ public:
     return ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
   }
 
-  llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
-    const llvm::VectorType *VType =
-        cast<llvm::VectorType>(ConvertType(ILE->getType()));
-    const llvm::Type *ElemTy = VType->getElementType();
-    std::vector<llvm::Constant*> Elts;
-    unsigned NumElements = VType->getNumElements();
-    unsigned NumInitElements = ILE->getNumInits();
-
-    unsigned NumInitableElts = std::min(NumInitElements, NumElements);
-
-    // Copy initializer elements.
-    unsigned i = 0;
-    for (; i < NumInitableElts; ++i) {
-      Expr *Init = ILE->getInit(i);
-      llvm::Constant *C = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
-      if (!C)
-        return 0;
-      Elts.push_back(C);
-    }
-
-    for (; i < NumElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
-
-    return llvm::ConstantVector::get(VType, Elts);
-  }
-
   llvm::Constant *VisitImplicitValueInitExpr(ImplicitValueInitExpr* E) {
     return CGM.EmitNullConstant(E->getType());
   }
@@ -682,8 +656,9 @@ public:
     if (ILE->getType()->isUnionType())
       return EmitUnionInitialization(ILE);
 
+    // If ILE was a constant vector, we would have handled it already.
     if (ILE->getType()->isVectorType())
-      return EmitVectorInitialization(ILE);
+      return 0;
 
     assert(0 && "Unable to handle InitListExpr");
     // Get rid of control reaches end of void function warning.
