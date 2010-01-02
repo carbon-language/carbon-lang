@@ -34,3 +34,14 @@ define i1 @test3(i32 %X) {
 ; CHECK-NEXT: ret i1 %R
 }
 
+define i1 @test4(i32 %X) {
+  %P = getelementptr [10 x i16]* @G16, i32 0, i32 %X
+  %Q = load i16* %P
+  %R = icmp sle i16 %Q, 73
+  ret i1 %R
+; CHECK: @test4
+; CHECK-NEXT: lshr i32 933, %X
+; CHECK-NEXT: and i32 {{.*}}, 1
+; CHECK-NEXT: %R = icmp ne i32 {{.*}}, 0
+; CHECK-NEXT: ret i1 %R
+}

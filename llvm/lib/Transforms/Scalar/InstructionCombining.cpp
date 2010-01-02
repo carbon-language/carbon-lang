@@ -6053,6 +6053,12 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // -2 -> overdef, >= 0 -> that index is false.
   int OnlyFalseElement = -1;
   
+  // MagicBitvector - This is a magic bitvector where we set a bit if the
+  // comparison is true for element 'i'.  If there are 64 elements or less in
+  // the array, this will fully represent all the comparison results.
+  uint64_t MagicBitvector = 0;
+  
+  
   // Scan the array and see if one of our patterns matches.
   Constant *CompareRHS = cast<Constant>(ICI.getOperand(1));
   for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
@@ -6080,8 +6086,12 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
       OnlyFalseElement = OnlyFalseElement == -1 ? i : -2;
     }
     
+    // If this element is in range, update our magic bitvector.
+    if (i < 64 && IsTrueForElt)
+      MagicBitvector |= 1 << i;
+    
     // If all of our states become overdefined, bail out early.
-    if (OnlyTrueElement == -2 && OnlyFalseElement == -2)
+    if (i >= 64 && OnlyTrueElement == -2 && OnlyFalseElement == -2)
       return 0;
   }
 
@@ -6108,17 +6118,24 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
                                          OnlyFalseElement));
   }
   
-  assert(0 && "Should have bailed out early");
+  // If a 32-bit or 64-bit magic bitvector captures the entire comparison state
+  // of this load, replace it with computation that does:
+  //   ((magic_cst >> i) & 1) != 0
+  if (Init->getNumOperands() <= 32 ||
+      (TD && Init->getNumOperands() <= 64 && TD->isLegalInteger(64))) {
+    const Type *Ty;
+    if (Init->getNumOperands() <= 32)
+      Ty = Type::getInt32Ty(Init->getContext());
+    else
+      Ty = Type::getInt64Ty(Init->getContext());
+    Value *V = Builder->CreateIntCast(GEP->getOperand(2), Ty, false);
+    V = Builder->CreateLShr(ConstantInt::get(Ty, MagicBitvector), V);
+    V = Builder->CreateAnd(ConstantInt::get(Ty, 1), V);
+    return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
+  }
   
-  // TODO: FCMP.
-  
-  // TODO: Range check.
-  
-  // TODO: If the global array has 32 (or 64 if native!) or less entries, we
-  // can turn this into something like:
-  //  ((magicbitconstant >> i) & 1) != 0)
-  // where we populate magicbitconstant with 0101010 based on the comparison
-  // results.
+  // TODO: Range check, two compares.
+
   return 0;
 }
 
