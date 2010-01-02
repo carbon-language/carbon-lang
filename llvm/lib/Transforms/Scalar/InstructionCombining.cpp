@@ -4432,8 +4432,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
-    return &I;
-  
+    return &I;  
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     const APInt &AndRHSMask = AndRHS->getValue();
@@ -7312,6 +7311,25 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       }
     }
     break;
+
+  case Instruction::Or: {
+    if (!ICI.isEquality() || !RHS->isNullValue() || !LHSI->hasOneUse())
+      break;
+    Value *P, *Q;
+    if (match(LHSI, m_Or(m_PtrToInt(m_Value(P)), m_PtrToInt(m_Value(Q))))) {
+      // Simplify icmp eq (or (ptrtoint P), (ptrtoint Q)), 0
+      // -> and (icmp eq P, null), (icmp eq Q, null).
+
+      Value *ICIP = Builder->CreateICmp(ICI.getPredicate(), P,
+                                        Constant::getNullValue(P->getType()));
+      Value *ICIQ = Builder->CreateICmp(ICI.getPredicate(), Q,
+                                        Constant::getNullValue(Q->getType()));
+      Instruction *And = BinaryOperator::CreateAnd(ICIP, ICIQ, "");
+      And->takeName(&ICI);
+      return And;
+    }
+    break;
+  }
     
   case Instruction::Shl: {       // (icmp pred (shl X, ShAmt), CI)
     ConstantInt *ShAmt = dyn_cast<ConstantInt>(LHSI->getOperand(1));
