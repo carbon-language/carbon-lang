@@ -6088,7 +6088,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     
     // If this element is in range, update our magic bitvector.
     if (i < 64 && IsTrueForElt)
-      MagicBitvector |= 1 << i;
+      MagicBitvector |= 1ULL << i;
     
     // If all of our states become overdefined, bail out early.
     if (i >= 64 && OnlyTrueElement == -2 && OnlyFalseElement == -2)
