@@ -6020,9 +6020,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 /// FoldCmpLoadFromIndexedGlobal - Called we see this pattern:
 ///   cmp pred (load (gep GV, ...)), cmpcst
 /// where GV is a global variable with a constant initializer.  Try to simplify
-/// this into one or two simpler comparisons that do not need the load.  For
-/// example, we can optimize "icmp eq (load (gep "foo", 0, i)), 0" into
-/// "icmp eq i, 3".  We assume that eliminating a load is always goodness.
+/// this into some simple computation that does not need the load.  For example
+/// we can optimize "icmp eq (load (gep "foo", 0, i)), 0" into "icmp eq i, 3".
 Instruction *InstCombiner::
 FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
                              CmpInst &ICI) {
@@ -6039,19 +6038,20 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   ConstantArray *Init = dyn_cast<ConstantArray>(GV->getInitializer());
   if (Init == 0 || Init->getNumOperands() > 1024) return 0;
   
-  
+  enum { Overdefined = -3, Undefined = -2 };
+
   // Variables for our state machines.
   
   // FirstTrueElement/SecondTrueElement - Used to emit a comparison of the form
   // "i == 47 | i == 87", where 47 is the first index the condition is true for,
-  // and 87 is the second (and last) index.  FirstTrueElement is -1 when
+  // and 87 is the second (and last) index.  FirstTrueElement is -2 when
   // undefined, otherwise set to the first true element.  SecondTrueElement is
-  // -1 when undefined, -2 when overdefined and >= 0 when that index is true.
-  int FirstTrueElement = -1, SecondTrueElement = -1;
+  // -2 when undefined, -3 when overdefined and >= 0 when that index is true.
+  int FirstTrueElement = Undefined, SecondTrueElement = Undefined;
 
   // FirstFalseElement/SecondFalseElement - Used to emit a comparison of the
   // form "i != 47 & i != 87".  Same state transitions as for true elements.
-  int FirstFalseElement = -1, SecondFalseElement = -1;
+  int FirstFalseElement = Undefined, SecondFalseElement = Undefined;
   
   // MagicBitvector - This is a magic bitvector where we set a bit if the
   // comparison is true for element 'i'.  If there are 64 elements or less in
@@ -6080,20 +6080,20 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     // State machine for single index comparison.
     if (IsTrueForElt) {
       // Update the TrueElement state machine.
-      if (FirstTrueElement == -1)
+      if (FirstTrueElement == Undefined)
         FirstTrueElement = i;
-      else if (SecondTrueElement == -1)
+      else if (SecondTrueElement == Undefined)
         SecondTrueElement = i;
       else
-        SecondTrueElement = -2;
+        SecondTrueElement = Overdefined;
     } else {
       // Update the FalseElement state machine.
-      if (FirstFalseElement == -1)
+      if (FirstFalseElement == Undefined)
         FirstFalseElement = i;
-      else if (SecondFalseElement == -1)
+      else if (SecondFalseElement == Undefined)
         SecondFalseElement = i;
       else
-        SecondFalseElement = -2;
+        SecondFalseElement = Overdefined;
     }
     
     // If this element is in range, update our magic bitvector.
@@ -6101,7 +6101,8 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
       MagicBitvector |= 1ULL << i;
     
     // If all of our states become overdefined, bail out early.
-    if (i >= 64 && SecondTrueElement == -2 && SecondFalseElement == -2)
+    if (i >= 64 && SecondTrueElement == Overdefined &&
+        SecondFalseElement == Overdefined)
       return 0;
   }
 
@@ -6111,15 +6112,15 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 
   // If the comparison is only true for one or two elements, emit direct
   // comparisons.
-  if (SecondTrueElement != -2) {
+  if (SecondTrueElement != Overdefined) {
     // None true -> false.
-    if (FirstTrueElement == -1)
+    if (FirstTrueElement == Undefined)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(*Context));
     
     Value *FirstTrueIdx = ConstantInt::get(Idx->getType(), FirstTrueElement);
     
     // True for one element -> 'i == 47'.
-    if (SecondTrueElement == -1)
+    if (SecondTrueElement == Undefined)
       return new ICmpInst(ICmpInst::ICMP_EQ, Idx, FirstTrueIdx);
     
     // True for two elements -> 'i == 47 | i == 72'.
@@ -6131,15 +6132,15 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 
   // If the comparison is only false for one or two elements, emit direct
   // comparisons.
-  if (SecondFalseElement != -2) {
+  if (SecondFalseElement != Overdefined) {
     // None false -> true.
-    if (FirstFalseElement == -1)
+    if (FirstFalseElement == Undefined)
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(*Context));
     
     Value *FirstFalseIdx = ConstantInt::get(Idx->getType(), FirstFalseElement);
 
     // False for one element -> 'i != 47'.
-    if (SecondFalseElement == -1)
+    if (SecondFalseElement == Undefined)
       return new ICmpInst(ICmpInst::ICMP_NE, Idx, FirstFalseIdx);
      
     // False for two elements -> 'i != 47 & i != 72'.
@@ -6167,6 +6168,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   
   // TODO: Range check
   // TODO: GEP 0, i, 4
+  // TODO: A[i]&4 == 0
   
   //errs() << "XFORM: " << *GV << "\n";
   //errs() << "\t" << *GEP << "\n";
