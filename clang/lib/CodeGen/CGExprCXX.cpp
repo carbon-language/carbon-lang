@@ -19,6 +19,7 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                                           llvm::Value *Callee,
                                           ReturnValueSlot ReturnValue,
                                           llvm::Value *This,
+                                          llvm::Value *VTT,
                                           CallExpr::const_arg_iterator ArgBeg,
                                           CallExpr::const_arg_iterator ArgEnd) {
   assert(MD->isInstance() &&
@@ -32,6 +33,12 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   Args.push_back(std::make_pair(RValue::get(This),
                                 MD->getThisType(getContext())));
 
+  // If there is a VTT parameter, emit it.
+  if (VTT) {
+    QualType T = getContext().getPointerType(getContext().VoidPtrTy);
+    Args.push_back(std::make_pair(RValue::get(VTT), T));
+  }
+  
   // And the rest of the call args
   EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
 
@@ -129,7 +136,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     Callee = CGM.GetAddrOfFunction(MD, Ty);
   }
 
-  return EmitCXXMemberCall(MD, Callee, ReturnValue, This,
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,
                            CE->arg_begin(), CE->arg_end());
 }
 
@@ -275,7 +282,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   else
     Callee = CGM.GetAddrOfFunction(MD, Ty);
 
-  return EmitCXXMemberCall(MD, Callee, ReturnValue, This, 
+  return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,
                            E->arg_begin() + 1, E->arg_end());
 }
 
@@ -726,7 +733,8 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
                                            /*isVariadic=*/false);
           
           llvm::Value *Callee = BuildVirtualCall(Dtor, Dtor_Deleting, Ptr, Ty);
-          EmitCXXMemberCall(Dtor, Callee, ReturnValueSlot(), Ptr, 0, 0);
+          EmitCXXMemberCall(Dtor, Callee, ReturnValueSlot(), Ptr, /*VTT=*/0,
+                            0, 0);
 
           // The dtor took care of deleting the object.
           ShouldCallDelete = false;

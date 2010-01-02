@@ -8,14 +8,14 @@ struct B : A {
   virtual ~B();
 };
 
+// Complete dtor.
+// CHECK: define void @_ZN1BD1Ev
+// CHECK: call void @_ZN1AD2Ev
+
 // Deleting dtor.
 // CHECK: define void @_ZN1BD0Ev
 // CHECK: call void @_ZN1AD2Ev
 // check: call void @_ZdlPv
-
-// Complete dtor.
-// CHECK: define void @_ZN1BD1Ev
-// CHECK: call void @_ZN1AD2Ev
 
 // Base dtor.
 // CHECK: define void @_ZN1BD2Ev

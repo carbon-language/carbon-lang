@@ -728,6 +728,10 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
 
+  /// LoadCXXVTT - Load the VTT parameter to base constructors/destructors have
+  /// virtual bases.
+  llvm::Value *LoadCXXVTT();
+  
   /// GetAddressOfBaseClass - This function will add the necessary delta to the
   /// load of 'this' and returns address of the base class.
   // FIXME. This currently only does a derived to non-virtual base conversion.
@@ -1057,6 +1061,7 @@ public:
                            llvm::Value *Callee,
                            ReturnValueSlot ReturnValue,
                            llvm::Value *This,
+                           llvm::Value *VTT,
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
   RValue EmitCXXMemberCallExpr(const CXXMemberCallExpr *E,

@@ -211,7 +211,7 @@ public:
     return VtableComponents;
   }
   
-  llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> &getVBIndex()
     { return VBIndex; }
 
   SavedAdjustmentsVectorTy &getSavedAdjustments()
@@ -1209,6 +1209,10 @@ class VTTBuilder {
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
 
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> SubVTTIndicies;
+  
+  bool GenerateDefinition;
+  
   /// BuildVtablePtr - Build up a referene to the given secondary vtable
   llvm::Constant *BuildVtablePtr(llvm::Constant *Vtable,
                                  const CXXRecordDecl *VtableClass,
@@ -1268,14 +1272,17 @@ class VTTBuilder {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *init;
         if (BaseMorallyVirtual)
-          init = BuildVtablePtr(vtbl, VtblClass, RD, Offset);
+          init = GenerateDefinition ? 
+            BuildVtablePtr(vtbl, VtblClass, RD, Offset) : 0;
         else {
-          init = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset);
+          init = GenerateDefinition ?
+            CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset) : 0;
           
           subvtbl = init;
           subVtblClass = Base;
           
-          init = BuildVtablePtr(init, Class, Base, BaseOffset);
+          init = GenerateDefinition ?
+          BuildVtablePtr(init, Class, Base, BaseOffset) : 0;
         }
         Inits.push_back(init);
       }
@@ -1294,14 +1301,16 @@ class VTTBuilder {
 
     // First comes the primary virtual table pointer...
     if (MorallyVirtual) {
-      Vtable = ClassVtbl;
+      Vtable = GenerateDefinition ? ClassVtbl : 0;
       VtableClass = Class;
     } else {
-      Vtable = CGM.getVtableInfo().getCtorVtable(Class, RD, Offset);
+      Vtable = GenerateDefinition ? 
+        CGM.getVtableInfo().getCtorVtable(Class, RD, Offset) : 0;
       VtableClass = RD;
     }
     
-    llvm::Constant *Init = BuildVtablePtr(Vtable, VtableClass, RD, Offset);
+    llvm::Constant *Init = GenerateDefinition ?
+      BuildVtablePtr(Vtable, VtableClass, RD, Offset) : 0;
     Inits.push_back(Init);
 
     // then the secondary VTTs....
@@ -1324,6 +1333,10 @@ class VTTBuilder {
         continue;
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base);
+      
+      // Remember the sub-VTT index.
+      SubVTTIndicies[Base] = Inits.size();
+
       BuildVTT(Base, BaseOffset, MorallyVirtual);
     }
   }
@@ -1336,6 +1349,9 @@ class VTTBuilder {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (i->isVirtual() && !SeenVBase.count(Base)) {
+        // Remember the sub-VTT index.
+        SubVTTIndicies[Base] = Inits.size();
+
         SeenVBase.insert(Base);
         uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         BuildVTT(Base, BaseOffset, true);
@@ -1346,15 +1362,18 @@ class VTTBuilder {
 
 public:
   VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
-             CodeGenModule &cgm)
+             CodeGenModule &cgm, bool GenerateDefinition)
     : Inits(inits), Class(c), CGM(cgm),
       BLayout(cgm.getContext().getASTRecordLayout(c)),
       AddressPoints(*cgm.AddressPoints[c]),
-      VMContext(cgm.getModule().getContext()) {
+      VMContext(cgm.getModule().getContext()),
+      GenerateDefinition(GenerateDefinition) {
     
     // First comes the primary virtual table pointer for the complete class...
     ClassVtbl = CGM.getVtableInfo().getVtable(Class);
-    Inits.push_back(BuildVtablePtr(ClassVtbl, Class, Class, 0));
+    llvm::Constant *Init = GenerateDefinition ? 
+      BuildVtablePtr(ClassVtbl, Class, Class, 0) : 0;
+    Inits.push_back(Init);
     
     // then the secondary VTTs...
     SecondaryVTTs(Class);
@@ -1365,11 +1384,16 @@ public:
     // and last, the virtual VTTs.
     VirtualVTTs(Class);
   }
+  
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> &getSubVTTIndicies() {
+    return SubVTTIndicies;
+  }
 };
 }
 
 llvm::GlobalVariable *
 CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
+                          bool GenerateDefinition,
                           const CXXRecordDecl *RD) {
   // Only classes that have virtual bases need a VTT.
   if (RD->getNumVBases() == 0)
@@ -1379,23 +1403,36 @@ CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
   CGM.getMangleContext().mangleCXXVTT(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
-
   D1(printf("vtt %s\n", RD->getNameAsCString()));
 
-  std::vector<llvm::Constant *> inits;
-  VTTBuilder b(inits, RD, CGM);
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (GV == 0 || GV->isDeclaration()) {
+    const llvm::Type *Int8PtrTy = 
+      llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  const llvm::ArrayType *Type = llvm::ArrayType::get(Int8PtrTy, inits.size());
+    std::vector<llvm::Constant *> inits;
+    VTTBuilder b(inits, RD, CGM, GenerateDefinition);
+
+    const llvm::ArrayType *Type = llvm::ArrayType::get(Int8PtrTy, inits.size());
+    llvm::Constant *Init = 0;
+    if (GenerateDefinition)
+      Init = llvm::ConstantArray::get(Type, inits);
+
+    llvm::GlobalVariable *OldGV = GV;
+    GV = new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
+                                  Linkage, Init, Name);
+    CGM.setGlobalVisibility(GV, RD);
+    
+    if (OldGV) {
+      GV->takeName(OldGV);
+      llvm::Constant *NewPtr = 
+        llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+      OldGV->replaceAllUsesWith(NewPtr);
+      OldGV->eraseFromParent();
+    }
+  }
   
-  llvm::Constant *Init = llvm::ConstantArray::get(Type, inits);
-  
-  llvm::GlobalVariable *VTT = 
-    new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
-                             Linkage, Init, Name);
-  CGM.setGlobalVisibility(VTT, RD);
-  
-  return VTT;
+  return GV;
 }
 
 void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
@@ -1407,7 +1444,7 @@ void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   }
   
   Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
-  GenerateVTT(Linkage, RD);  
+  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);  
 }
 
 llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
@@ -1428,6 +1465,13 @@ CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
                         LayoutClass, RD, Offset);
 }
 
+llvm::GlobalVariable *CGVtableInfo::getVTT(const CXXRecordDecl *RD) {
+  return GenerateVTT(llvm::GlobalValue::ExternalLinkage, 
+                     /*GenerateDefinition=*/false, RD);
+  
+}
+
+
 void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const CXXRecordDecl *RD = MD->getParent();
@@ -1442,16 +1486,6 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   if (KeyFunction) {
     // We don't have the right key function.
     if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
-      return;
-    
-    // If the key function is a destructor, we only want to emit the vtable 
-    // once, so do it for the complete destructor.
-    if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() != Dtor_Complete)
-      return;
-  } else {
-    // If there is no key function, we only want to emit the vtable if we are
-    // emitting a constructor.
-    if (!isa<CXXConstructorDecl>(MD) || GD.getCtorType() != Ctor_Complete)
       return;
   }
 
@@ -1479,3 +1513,47 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   }
 }
 
+bool CGVtableInfo::needsVTTParameter(GlobalDecl GD) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  
+  // We don't have any virtual bases, just return early.
+  if (!MD->getParent()->getNumVBases())
+    return false;
+  
+  // Check if we have a base constructor.
+  if (isa<CXXConstructorDecl>(MD) && GD.getCtorType() == Ctor_Base)
+    return true;
+
+  // Check if we have a base destructor.
+  if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
+    return true;
+  
+  return false;
+}
+
+uint64_t CGVtableInfo::getSubVTTIndex(const CXXRecordDecl *RD, 
+                                      const CXXRecordDecl *Base) {
+  ClassPairTy ClassPair(RD, Base);
+
+  SubVTTIndiciesTy::iterator I = 
+    SubVTTIndicies.find(ClassPair);
+  if (I != SubVTTIndicies.end())
+    return I->second;
+  
+  std::vector<llvm::Constant *> inits;
+  VTTBuilder Builder(inits, RD, CGM, /*GenerateDefinition=*/false);
+
+  for (llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I =
+       Builder.getSubVTTIndicies().begin(), 
+       E = Builder.getSubVTTIndicies().end(); I != E; ++I) {
+    // Insert all indices.
+    ClassPairTy ClassPair(RD, I->first);
+    
+    SubVTTIndicies.insert(std::make_pair(ClassPair, I->second));
+  }
+    
+  I = SubVTTIndicies.find(ClassPair);
+  assert(I != SubVTTIndicies.end() && "Did not find index!");
+  
+  return I->second;
+}

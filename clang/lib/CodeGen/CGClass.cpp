@@ -431,6 +431,37 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
   EmitBlock(AfterFor, true);
 }
 
+/// GetVTTParameter - Return the VTT parameter that should be passed to a
+/// base constructor/destructor with virtual bases.
+static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
+  if (!CGVtableInfo::needsVTTParameter(GD)) {
+    // This constructor/destructor does not need a VTT parameter.
+    return 0;
+  }
+  
+  const CXXRecordDecl *RD = cast<CXXMethodDecl>(CGF.CurFuncDecl)->getParent();
+  const CXXRecordDecl *Base = cast<CXXMethodDecl>(GD.getDecl())->getParent();
+  
+  llvm::Value *VTT;
+
+  uint64_t SubVTTIndex = 
+    CGF.CGM.getVtableInfo().getSubVTTIndex(RD, Base);
+  assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
+  
+  if (CGVtableInfo::needsVTTParameter(CGF.CurGD)) {
+    // A VTT parameter was passed to the constructor, use it.
+    VTT = CGF.LoadCXXVTT();
+    VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
+  } else {
+    // We're the complete constructor, so get the VTT by name.
+    VTT = CGF.CGM.getVtableInfo().getVTT(RD);
+    VTT = CGF.Builder.CreateConstInBoundsGEP2_64(VTT, 0, SubVTTIndex);
+  }
+
+  return VTT;
+}
+
+                                    
 /// EmitClassMemberwiseCopy - This routine generates code to copy a class
 /// object from SrcValue to DestValue. Copying can be either a bitwise copy
 /// or via a copy constructor call.
@@ -438,11 +469,16 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
                         llvm::Value *Dest, llvm::Value *Src,
                         const CXXRecordDecl *ClassDecl,
                         const CXXRecordDecl *BaseClassDecl, QualType Ty) {
+  CXXCtorType CtorType = Ctor_Complete;
+  
   if (ClassDecl) {
     Dest = GetAddressOfBaseClass(Dest, ClassDecl, BaseClassDecl,
                                  /*NullCheckValue=*/false);
     Src = GetAddressOfBaseClass(Src, ClassDecl, BaseClassDecl,
                                 /*NullCheckValue=*/false);
+
+    // We want to call the base constructor.
+    CtorType = Ctor_Base;
   }
   if (BaseClassDecl->hasTrivialCopyConstructor()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -451,12 +487,18 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
 
   if (CXXConstructorDecl *BaseCopyCtor =
       BaseClassDecl->getCopyConstructor(getContext(), 0)) {
-    llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor,
-                                                      Ctor_Complete);
+    llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, CtorType);
     CallArgList CallArgs;
     // Push the this (Dest) ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Dest),
                                       BaseCopyCtor->getThisType(getContext())));
+
+    // Push the VTT parameter, if necessary.
+    if (llvm::Value *VTT = 
+          GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType))) {
+      QualType T = getContext().getPointerType(getContext().VoidPtrTy);
+      CallArgs.push_back(std::make_pair(RValue::get(VTT), T));
+    }
 
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
@@ -787,10 +829,8 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset/8);
   V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
 
-  // FIXME: This should always use Ctor_Base as the ctor type!  (But that
-  // causes crashes in tests.)
   CGF.EmitCXXConstructorCall(BaseInit->getConstructor(),
-                             CtorType, V,
+                             Ctor_Base, V,
                              BaseInit->const_arg_begin(),
                              BaseInit->const_arg_end());
 }
@@ -1248,6 +1288,7 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   return m;
 }
 
+
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         CXXCtorType Type,
@@ -1271,35 +1312,19 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     return;
   }
 
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(D, Type));
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
-  EmitCXXMemberCall(D, Callee, ReturnValueSlot(), This, ArgBeg, ArgEnd);
+  EmitCXXMemberCall(D, Callee, ReturnValueSlot(), This, VTT, ArgBeg, ArgEnd);
 }
 
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             CXXDtorType Type,
                                             llvm::Value *This) {
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(DD, Type));
   llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
   
-  CallArgList Args;
-
-  // Push the this ptr.
-  Args.push_back(std::make_pair(RValue::get(This),
-                                DD->getThisType(getContext())));
-  
-  // Add a VTT parameter if necessary.
-  // FIXME: This should not be a dummy null parameter!
-  if (Type == Dtor_Base && DD->getParent()->getNumVBases() != 0) {
-    QualType T = getContext().getPointerType(getContext().VoidPtrTy);
-    
-    Args.push_back(std::make_pair(RValue::get(CGM.EmitNullConstant(T)), T));
-  }
-
-  // FIXME: We should try to share this code with EmitCXXMemberCall.
-  
-  QualType ResultType = DD->getType()->getAs<FunctionType>()->getResultType();
-  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args), Callee, 
-           ReturnValueSlot(), Args, DD);
+  EmitCXXMemberCall(DD, Callee, ReturnValueSlot(), This, VTT, 0, 0);
 }
 
 llvm::Value *
@@ -1394,4 +1419,12 @@ void CodeGenFunction::InitializeVtablePtrsRecursive(
 
   // Store address point
   Builder.CreateStore(VtableAddressPoint, VtableField);
+}
+
+llvm::Value *CodeGenFunction::LoadCXXVTT() {
+  assert((isa<CXXConstructorDecl>(CurFuncDecl) ||
+          isa<CXXDestructorDecl>(CurFuncDecl)) &&
+         "Must be in a C++ ctor or dtor to load the vtt parameter");
+
+  return Builder.CreateLoad(LocalDeclMap[CXXVTTDecl], "vtt");
 }

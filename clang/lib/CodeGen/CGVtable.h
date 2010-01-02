@@ -93,6 +93,9 @@ private:
   SavedAdjustmentsTy SavedAdjustments;
   llvm::DenseSet<const CXXRecordDecl*> SavedAdjustmentRecords;
 
+  typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesTy;
+  SubVTTIndiciesTy SubVTTIndicies;
+
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
@@ -113,12 +116,22 @@ private:
                  const CXXRecordDecl *RD, uint64_t Offset);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
+                                    bool GenerateDefinition,
                                     const CXXRecordDecl *RD);
 
 public:
   CGVtableInfo(CodeGenModule &CGM)
     : CGM(CGM) { }
 
+  /// needsVTTParameter - Return whether the given global decl needs a VTT
+  /// parameter, which it does if it's a base constructor or destructor with
+  /// virtual bases.
+  static bool needsVTTParameter(GlobalDecl GD);
+
+  /// getSubVTTIndex - Return the index of the sub-VTT for the base class of the
+  /// given record decl.
+  uint64_t getSubVTTIndex(const CXXRecordDecl *RD, const CXXRecordDecl *Base);
+  
   /// getMethodVtableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
   /// stored.
@@ -144,6 +157,7 @@ public:
                                       const CXXRecordDecl *Class, 
                                       uint64_t Offset);
   
+  llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   
   void MaybeEmitVtable(GlobalDecl GD);
 };
