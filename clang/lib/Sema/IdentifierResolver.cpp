@@ -46,22 +46,6 @@ public:
 // IdDeclInfo Implementation
 //===----------------------------------------------------------------------===//
 
-/// AddShadowed - Add a decl by putting it directly above the 'Shadow' decl.
-/// Later lookups will find the 'Shadow' decl first. The 'Shadow' decl must
-/// be already added to the scope chain and must be in the same context as
-/// the decl that we want to add.
-void IdentifierResolver::IdDeclInfo::AddShadowed(NamedDecl *D,
-                                                 NamedDecl *Shadow) {
-  for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
-    if (Shadow == *(I-1)) {
-      Decls.insert(I-1, D);
-      return;
-    }
-  }
-
-  assert(0 && "Shadow wasn't in scope chain!");
-}
-
 /// RemoveDecl - Remove the decl from the scope chain.
 /// The decl must already be part of the decl chain.
 void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
@@ -158,32 +142,6 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
     IDI = toIdDeclInfo(Ptr);
 
   IDI->AddDecl(D);
-}
-
-/// AddShadowedDecl - Link the decl to its shadowed decl chain putting it
-/// after the decl that the iterator points to, thus the 'Shadow' decl will be
-/// encountered before the 'D' decl.
-void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
-  assert(D->getDeclName() == Shadow->getDeclName() && "Different ids!");
-
-  DeclarationName Name = D->getDeclName();
-  void *Ptr = Name.getFETokenInfo<void>();
-  assert(Ptr && "No decl from Ptr ?");
-
-  IdDeclInfo *IDI;
-
-  if (isDeclPtr(Ptr)) {
-    Name.setFETokenInfo(NULL);
-    IDI = &(*IdDeclInfos)[Name];
-    NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
-    assert(PrevD == Shadow && "Invalid shadow decl ?");
-    IDI->AddDecl(D);
-    IDI->AddDecl(PrevD);
-    return;
-  }
-
-  IDI = toIdDeclInfo(Ptr);
-  IDI->AddShadowed(D, Shadow);
 }
 
 /// RemoveDecl - Unlink the decl from its shadowed decl chain.

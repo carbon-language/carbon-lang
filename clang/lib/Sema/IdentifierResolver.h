@@ -41,12 +41,6 @@ class IdentifierResolver {
 
     void AddDecl(NamedDecl *D) { Decls.push_back(D); }
 
-    /// AddShadowed - Add a decl by putting it directly above the 'Shadow' decl.
-    /// Later lookups will find the 'Shadow' decl first. The 'Shadow' decl must
-    /// be already added to the scope chain and must be in the same context as
-    /// the decl that we want to add.
-    void AddShadowed(NamedDecl *D, NamedDecl *Shadow);
-
     /// RemoveDecl - Remove the decl from the scope chain.
     /// The decl must already be part of the decl chain.
     void RemoveDecl(NamedDecl *D);
@@ -162,11 +156,6 @@ public:
 
   /// AddDecl - Link the decl to its shadowed decl chain.
   void AddDecl(NamedDecl *D);
-
-  /// AddShadowedDecl - Link the decl to its shadowed decl chain putting it
-  /// after the decl that the iterator points to, thus the 'Shadow' decl will be
-  /// encountered before the 'D' decl.
-  void AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow);
 
   /// RemoveDecl - Unlink the decl from its shadowed decl chain.
   /// The decl must already be part of the decl chain.

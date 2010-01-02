@@ -1461,34 +1461,6 @@ void LocInfoType::getAsStringInternal(std::string &Str,
          " GetTypeFromParser");
 }
 
-/// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
-/// declarator
-QualType Sema::ObjCGetTypeForMethodDefinition(DeclPtrTy D) {
-  ObjCMethodDecl *MDecl = cast<ObjCMethodDecl>(D.getAs<Decl>());
-  QualType T = MDecl->getResultType();
-  llvm::SmallVector<QualType, 16> ArgTys;
-
-  // Add the first two invisible argument types for self and _cmd.
-  if (MDecl->isInstanceMethod()) {
-    QualType selfTy = Context.getObjCInterfaceType(MDecl->getClassInterface());
-    selfTy = Context.getPointerType(selfTy);
-    ArgTys.push_back(selfTy);
-  } else
-    ArgTys.push_back(Context.getObjCIdType());
-  ArgTys.push_back(Context.getObjCSelType());
-
-  for (ObjCMethodDecl::param_iterator PI = MDecl->param_begin(),
-       E = MDecl->param_end(); PI != E; ++PI) {
-    QualType ArgTy = (*PI)->getType();
-    assert(!ArgTy.isNull() && "Couldn't parse type?");
-    ArgTy = adjustParameterType(ArgTy);
-    ArgTys.push_back(ArgTy);
-  }
-  T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
-                              MDecl->isVariadic(), 0);
-  return T;
-}
-
 /// UnwrapSimilarPointerTypes - If T1 and T2 are pointer types  that
 /// may be similar (C++ 4.4), replaces T1 and T2 with the type that
 /// they point to and return true. If T1 and T2 aren't pointer types
