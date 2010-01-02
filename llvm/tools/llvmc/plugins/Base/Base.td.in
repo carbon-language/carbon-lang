@@ -56,7 +56,7 @@ def OptList : OptionList<[
     (help "A deprecated synonym for -mtune"), (hidden)),
  (parameter_option "MF",
     (help "Specify a file to write dependencies to"), (hidden)),
- (parameter_option "MT",
+ (parameter_list_option "MT",
     (help "Change the name of the rule emitted by dependency generation"),
     (hidden)),
  (parameter_list_option "include",
