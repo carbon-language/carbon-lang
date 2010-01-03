@@ -819,7 +819,6 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     const TargetData *TD = TM.getTargetData();
     unsigned Opcode = CE->getOpcode();    
     switch (Opcode) {
-    case Instruction::Trunc:
     case Instruction::ZExt:
     case Instruction::SExt:
     case Instruction::FPTrunc:
@@ -865,7 +864,6 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       return EmitConstantValueOnly(Op);
     }
       
-      
     case Instruction::PtrToInt: {
       // Support only foldable casts to/from pointers that can be eliminated by
       // changing the pointer to the appropriately sized integer type.
@@ -887,6 +885,14 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       O << ") & " << S.str() << ')';
       break;
     }
+        
+    case Instruction::Trunc:
+      // We emit the value and depend on the assembler to truncate the generated
+      // expression properly.  This is important for differences between
+      // blockaddress labels.  Since the two labels are in the same function, it
+      // is reasonable to treat their delta as a 32-bit value.
+      return EmitConstantValueOnly(CE->getOperand(0));
+        
     case Instruction::Add:
     case Instruction::Sub:
     case Instruction::And:
