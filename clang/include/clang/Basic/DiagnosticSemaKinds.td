@@ -2569,6 +2569,17 @@ def err_mem_init_not_member_or_class_suggest : Error<
 def err_field_designator_unknown_suggest : Error<
   "field designator %0 does not refer to any field in type %1; did you mean "
   "%2?">;
+def err_typecheck_member_reference_ivar_suggest : Error<
+  "%0 does not have a member named %1; did you mean %2?">;
+def err_property_not_found_suggest : Error<
+  "property %0 not found on object of type %1; did you mean %2?">;
+def err_undef_interface_suggest : Error<
+  "cannot find interface declaration for %0; did you mean %1?">;
+def err_undef_superclass_suggest : Error<
+  "cannot find interface declaration for %0, superclass of %1; did you mean "
+  "%2?">;
+def err_undeclared_protocol_suggest : Error<
+  "cannot find protocol declaration for %0; did you mean %1?">;
 
 }
 

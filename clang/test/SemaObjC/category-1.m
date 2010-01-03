@@ -29,7 +29,7 @@
 
 @interface MyClass1 (Category) <p2, p3> @end  // expected-warning {{cannot find protocol definition for 'p2'}}
 
-@interface MyClass  (Category) @end // expected-error {{cannot find interface declaration for 'MyClass'}}
+@interface UnknownClass  (Category) @end // expected-error {{cannot find interface declaration for 'UnknownClass'}}
 
 @class MyClass2;
 

@@ -4,10 +4,10 @@
 + (int) flashCache;
 @end
 
-@interface Child (Categ) // expected-error {{cannot find interface declaration for 'Child'}}
+@interface Child (Categ) // expected-error {{cannot find interface declaration for 'Child'; did you mean '_Child'?}}
 + (int) flushCache2;
 @end
 
-@implementation Child (Categ) // expected-error {{cannot find interface declaration for 'Child'}}
+@implementation OtherChild (Categ) // expected-error {{cannot find interface declaration for 'OtherChild'}}
 + (int) flushCache2 { [super flashCache]; } // expected-error {{no @interface declaration found in class messaging of 'flushCache2'}}
 @end

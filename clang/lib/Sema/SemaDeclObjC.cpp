@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
@@ -133,6 +134,17 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   if (SuperName) {
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupSingleName(TUScope, SuperName, LookupOrdinaryName);
+
+    if (!PrevDecl) {
+      // Try to correct for a typo in the superclass name.
+      LookupResult R(*this, SuperName, SuperLoc, LookupOrdinaryName);
+      if (CorrectTypo(R, TUScope, 0) &&
+          (PrevDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
+        Diag(SuperLoc, diag::err_undef_superclass_suggest)
+          << SuperName << ClassName << PrevDecl->getDeclName();
+      }
+    }
+
     if (PrevDecl == IDecl) {
       Diag(SuperLoc, diag::err_recursive_superclass)
         << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
@@ -316,6 +328,16 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               llvm::SmallVectorImpl<DeclPtrTy> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
     ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first);
+    if (!PDecl) {
+      LookupResult R(*this, ProtocolId[i].first, ProtocolId[i].second,
+                     LookupObjCProtocolName);
+      if (CorrectTypo(R, TUScope, 0) &&
+          (PDecl = R.getAsSingle<ObjCProtocolDecl>())) {
+        Diag(ProtocolId[i].second, diag::err_undeclared_protocol_suggest)
+          << ProtocolId[i].first << R.getLookupName();
+      }
+    }
+
     if (!PDecl) {
       Diag(ProtocolId[i].second, diag::err_undeclared_protocol)
         << ProtocolId[i].first;
@@ -568,7 +590,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
 
-  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
+  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl()) {
     CDecl->setInvalidDecl();
@@ -616,7 +638,7 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
                       SourceLocation AtCatImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
-  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
+  ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
   ObjCCategoryDecl *CatIDecl = 0;
   if (IDecl) {
     CatIDecl = IDecl->FindCategoryDeclaration(CatName);

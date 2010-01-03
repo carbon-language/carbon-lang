@@ -1208,7 +1208,8 @@ public:
 
   bool CorrectTypo(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
                    DeclContext *MemberContext = 0,
-                   bool EnteringContext = false);
+                   bool EnteringContext = false,
+                   const ObjCObjectPointerType *OPT = 0);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
@@ -1217,7 +1218,8 @@ public:
   bool DiagnoseAmbiguousLookup(LookupResult &Result);
   //@}
 
-  ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
+  ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *&Id,
+                                 SourceLocation RecoverLoc = SourceLocation());
   NamedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
                                  Scope *S, bool ForRedeclaration,
                                  SourceLocation Loc);

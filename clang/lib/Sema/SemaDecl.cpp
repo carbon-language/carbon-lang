@@ -555,10 +555,34 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
 /// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
-ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
+///
+/// \param Id the name of the Objective-C class we're looking for. If
+/// typo-correction fixes this name, the Id will be updated
+/// to the fixed name.
+///
+/// \param RecoverLoc if provided, this routine will attempt to
+/// recover from a typo in the name of an existing Objective-C class
+/// and, if successful, will return the lookup that results from
+/// typo-correction.
+ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
+                                              SourceLocation RecoverLoc) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
   NamedDecl *IDecl = LookupSingleName(TUScope, Id, LookupOrdinaryName);
+
+  if (!IDecl && !RecoverLoc.isInvalid()) {
+    // Perform typo correction at the given location, but only if we
+    // find an Objective-C class name.
+    LookupResult R(*this, Id, RecoverLoc, LookupOrdinaryName);
+    if (CorrectTypo(R, TUScope, 0) &&
+        (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
+      Diag(RecoverLoc, diag::err_undef_interface_suggest)
+        << Id << IDecl->getDeclName() 
+        << CodeModificationHint::CreateReplacement(RecoverLoc, 
+                                                   IDecl->getNameAsString());
+      Id = IDecl->getIdentifier();
+    }
+  }
 
   return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
 }

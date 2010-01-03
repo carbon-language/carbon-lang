@@ -1913,7 +1913,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     }
   }
 
-  // Traverse the contexts of inherited classes.
+  // Traverse the contexts of inherited C++ classes.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
     for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
                                          BEnd = Record->bases_end();
@@ -1955,7 +1955,42 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     }
   }
   
-  // FIXME: Look into base classes in Objective-C!
+  // Traverse the contexts of Objective-C classes.
+  if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Ctx)) {
+    // Traverse categories.
+    for (ObjCCategoryDecl *Category = IFace->getCategoryList();
+         Category; Category = Category->getNextClassCategory()) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(Category, Result, QualifiedNameLookup, Consumer, 
+                         Visited);
+    }
+
+    // Traverse protocols.
+    for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
+         E = IFace->protocol_end(); I != E; ++I) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+    }
+
+    // Traverse the superclass.
+    if (IFace->getSuperClass()) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(IFace->getSuperClass(), Result, QualifiedNameLookup,
+                         Consumer, Visited);
+    }
+  } else if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Ctx)) {
+    for (ObjCProtocolDecl::protocol_iterator I = Protocol->protocol_begin(),
+           E = Protocol->protocol_end(); I != E; ++I) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+    }
+  } else if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Ctx)) {
+    for (ObjCCategoryDecl::protocol_iterator I = Category->protocol_begin(),
+           E = Category->protocol_end(); I != E; ++I) {
+      ShadowContextRAII Shadow(Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+    }
+  }
 }
 
 static void LookupVisibleDecls(Scope *S, LookupResult &Result,
@@ -1975,6 +2010,22 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     
     for (DeclContext *Ctx = Entity; Ctx && Ctx->getPrimaryContext() != OuterCtx;
          Ctx = Ctx->getLookupParent()) {
+      if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(Ctx)) {
+        if (Method->isInstanceMethod()) {
+          // For instance methods, look for ivars in the method's interface.
+          LookupResult IvarResult(Result.getSema(), Result.getLookupName(),
+                                  Result.getNameLoc(), Sema::LookupMemberName);
+          ObjCInterfaceDecl *IFace = Method->getClassInterface();
+          LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false, 
+                             Consumer, Visited);
+        }
+
+        // We've already performed all of the name lookup that we need
+        // to for Objective-C methods; the next context will be the
+        // outer scope.
+        break;
+      }
+
       if (Ctx->isFunctionOrMethod())
         continue;
       
@@ -2139,11 +2190,15 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
 /// \param EnteringContext whether we're entering the context described by 
 /// the nested-name-specifier SS.
 ///
+/// \param OPT when non-NULL, the search for visible declarations will
+/// also walk the protocols in the qualified interfaces of \p OPT.
+///
 /// \returns true if the typo was corrected, in which case the \p Res
 /// structure will contain the results of name lookup for the
 /// corrected name. Otherwise, returns false.
 bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
-                       DeclContext *MemberContext, bool EnteringContext) {
+                       DeclContext *MemberContext, bool EnteringContext,
+                       const ObjCObjectPointerType *OPT) {
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
   if (!Typo)
@@ -2160,9 +2215,17 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
     return false;
 
   TypoCorrectionConsumer Consumer(Typo);
-  if (MemberContext)
+  if (MemberContext) {
     LookupVisibleDecls(MemberContext, Res.getLookupKind(), Consumer);
-  else if (SS && SS->isSet()) {
+
+    // Look in qualified interfaces.
+    if (OPT) {
+      for (ObjCObjectPointerType::qual_iterator 
+             I = OPT->qual_begin(), E = OPT->qual_end(); 
+           I != E; ++I)
+        LookupVisibleDecls(*I, Res.getLookupKind(), Consumer);
+    }
+  } else if (SS && SS->isSet()) {
     DeclContext *DC = computeDeclContext(*SS, EnteringContext);
     if (!DC)
       return false;
@@ -2179,10 +2242,22 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
   // have overloads of that name, though).
   TypoCorrectionConsumer::iterator I = Consumer.begin();
   DeclarationName BestName = (*I)->getDeclName();
+
+  // If we've found an Objective-C ivar or property, don't perform
+  // name lookup again; we'll just return the result directly.
+  NamedDecl *FoundBest = 0;
+  if (isa<ObjCIvarDecl>(*I) || isa<ObjCPropertyDecl>(*I))
+    FoundBest = *I;
   ++I;
   for(TypoCorrectionConsumer::iterator IEnd = Consumer.end(); I != IEnd; ++I) {
     if (BestName != (*I)->getDeclName())
       return false;
+
+    // FIXME: If there are both ivars and properties of the same name,
+    // don't return both because the callee can't handle two
+    // results. We really need to separate ivar lookup from property
+    // lookup to avoid this problem.
+    FoundBest = 0;
   }
 
   // BestName is the closest viable name to what the user
@@ -2197,8 +2272,16 @@ bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
   // success if we found something that was not ambiguous.
   Res.clear();
   Res.setLookupName(BestName);
-  if (MemberContext)
+
+  // If we found an ivar or property, add that result; no further
+  // lookup is required.
+  if (FoundBest)
+    Res.addDecl(FoundBest);  
+  // If we're looking into the context of a member, perform qualified
+  // name lookup on the best name.
+  else if (MemberContext)
     LookupQualifiedName(Res, MemberContext);
+  // Perform lookup as if we had just parsed the best name.
   else
     LookupParsedName(Res, S, SS, /*AllowBuiltinCreation=*/false, 
                      EnteringContext);

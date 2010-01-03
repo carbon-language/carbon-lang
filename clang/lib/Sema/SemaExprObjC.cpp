@@ -287,7 +287,8 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   SourceLocation &receiverNameLoc,
   SourceLocation &propertyNameLoc) {
 
-  ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(&receiverName);
+  IdentifierInfo *receiverNamePtr = &receiverName;
+  ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(receiverNamePtr);
 
   // Search for a declared property first.
 
@@ -400,7 +401,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
       return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
     }
   } else
-    ClassDecl = getObjCInterfaceDecl(receiverName);
+    ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
 
   // The following code allows for the following GCC-ism:
   //

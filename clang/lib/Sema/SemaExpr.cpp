@@ -1059,6 +1059,16 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
 
       assert(!R.empty() &&
              "DiagnoseEmptyLookup returned false but added no results");
+
+      // If we found an Objective-C instance variable, let
+      // LookupInObjCMethod build the appropriate expression to
+      // reference the ivar. 
+      if (ObjCIvarDecl *Ivar = R.getAsSingle<ObjCIvarDecl>()) {
+        R.clear();
+        OwningExprResult E(LookupInObjCMethod(R, S, Ivar->getIdentifier()));
+        assert(E.isInvalid() || E.get());
+        return move(E);
+      }
     }
   }
 
@@ -2848,6 +2858,20 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       ObjCInterfaceDecl *ClassDeclared;
       ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
 
+      if (!IV) {
+        // Attempt to correct for typos in ivar names.
+        LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
+                         LookupMemberName);
+        if (CorrectTypo(Res, 0, 0, IDecl) &&
+            (IV = Res.getAsSingle<ObjCIvarDecl>())) {
+          Diag(R.getNameLoc(), 
+               diag::err_typecheck_member_reference_ivar_suggest)
+            << IDecl->getDeclName() << MemberName << IV->getDeclName()
+            << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                                       IV->getNameAsString());
+        }
+      }
+
       if (IV) {
         // If the decl being referenced had an error, return an error for this
         // sub-expr without emitting another error, in order to avoid cascading
@@ -3014,6 +3038,20 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
                                       Setter, MemberLoc, BaseExpr));
     }
+
+    // Attempt to correct for typos in property names.
+    LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
+                     LookupOrdinaryName);
+    if (CorrectTypo(Res, 0, 0, IFace, false, OPT) && 
+        Res.getAsSingle<ObjCPropertyDecl>()) {
+      Diag(R.getNameLoc(), diag::err_property_not_found_suggest)
+        << MemberName << BaseType << Res.getLookupName()
+        << CodeModificationHint::CreateReplacement(R.getNameLoc(),
+                                           Res.getLookupName().getAsString());
+      return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS,
+                              FirstQualifierInScope, ObjCImpDecl);
+    }
+
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
       << MemberName << BaseType);
   }
