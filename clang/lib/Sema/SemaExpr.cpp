@@ -5776,7 +5776,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
         << PointeeTy << Op->getSourceRange();
       return QualType();
     }
-  } else if (ResType->isComplexType()) {
+  } else if (ResType->isAnyComplexType()) {
     // C99 does not support ++/-- on complex types, we allow as an extension.
     Diag(OpLoc, diag::ext_integer_increment_complex)
       << ResType << Op->getSourceRange();

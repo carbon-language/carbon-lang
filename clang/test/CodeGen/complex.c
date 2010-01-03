@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm < %s
+// RUN: %clang_cc1 -emit-llvm-only %s
 
 int main(void)
 {
@@ -39,6 +39,25 @@ void test3() {
   g1 = D + g1;
 }
 
+__complex__ int ci1, ci2;
+__complex__ short cs;
+int i;
+void test3int() {
+  ci1 = ci1 + ci2;
+  ci1 = ci1 - ci2;
+  ci1 = ci1 * ci2;
+  ci1 = +-~ci1;
+
+  i = __real ci1;
+
+  cs += i;
+  // FIXME: Currently unsupported!
+  //D += cf;
+  cs /= ci1;
+  ci1 = ci1 + i;
+  ci1 = i + ci1;
+}
+
 void t1() {
   (__real__ cf) = 4.0;
 }
@@ -57,5 +76,16 @@ float _Complex t4();
 
 void t5() {
   float _Complex x = t4();
+}
+
+void t6() {
+  g1++;
+  g1--;
+  ++g1;
+  --g1;
+  ci1++;
+  ci1--;
+  ++ci1;
+  --ci1;
 }
 

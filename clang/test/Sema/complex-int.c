@@ -49,3 +49,7 @@ void test3(_Complex int *x) {
 void test4(_Complex float *x) {
   *x = ~*x;
 }
+
+void test5(_Complex int *x) {
+  (*x)++;
+}
