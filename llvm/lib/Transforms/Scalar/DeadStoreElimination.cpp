@@ -52,9 +52,9 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep);
     bool handleEndBlock(BasicBlock &BB);
-    bool RemoveUndeadPointers(Value* Ptr, uint64_t killPointerSize,
-                              BasicBlock::iterator& BBI,
-                              SmallPtrSet<Value*, 64>& deadPointers);
+    bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
+                              BasicBlock::iterator &BBI,
+                              SmallPtrSet<Value*, 64> &deadPointers);
     void DeleteDeadInstruction(Instruction *I,
                                SmallPtrSet<Value*, 64> *deadPointers = 0);
     
@@ -70,6 +70,8 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
+
+    unsigned getPointerSize(Value *V) const;
   };
 }
 
@@ -173,7 +175,7 @@ static bool isStoreAtLeastAsWideAs(Instruction *I1, Instruction *I2,
 }
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   TD = getAnalysisIfAvailable<TargetData>();
 
   bool MadeChange = false;
@@ -355,7 +357,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
         continue;
     }
     
-    Value* killPointer = 0;
+    Value *killPointer = 0;
     uint64_t killPointerSize = ~0UL;
     
     // If we encounter a use of the pointer, it is no longer considered dead
@@ -371,14 +373,14 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       }
       
       killPointer = L->getPointerOperand();
-    } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
+    } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {
       killPointer = V->getOperand(0);
     } else if (isa<MemTransferInst>(BBI) &&
                isa<ConstantInt>(cast<MemTransferInst>(BBI)->getLength())) {
       killPointer = cast<MemTransferInst>(BBI)->getSource();
       killPointerSize = cast<ConstantInt>(
                        cast<MemTransferInst>(BBI)->getLength())->getZExtValue();
-    } else if (AllocaInst* A = dyn_cast<AllocaInst>(BBI)) {
+    } else if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
       deadPointers.erase(A);
       
       // Dead alloca's can be DCE'd when we reach them
@@ -412,23 +414,10 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
           deadPointers.clear();
           return MadeChange;
         }
-
-        // Get size information for the alloca
-        unsigned pointerSize = ~0U;
-        if (TD) {
-          if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
-            if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
-              pointerSize = C->getZExtValue() *
-                            TD->getTypeAllocSize(A->getAllocatedType());
-          } else {
-            const PointerType* PT = cast<PointerType>(
-                                                   cast<Argument>(*I)->getType());
-            pointerSize = TD->getTypeAllocSize(PT->getElementType());
-          }
-        }
-
+        
         // See if the call site touches it
-        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
+        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I,
+                                                         getPointerSize(*I));
         
         if (A == AliasAnalysis::ModRef)
           modRef++;
@@ -469,11 +458,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
 /// RemoveUndeadPointers - check for uses of a pointer that make it
 /// undead when scanning for dead stores to alloca's.
-bool DSE::RemoveUndeadPointers(Value* killPointer, uint64_t killPointerSize,
+bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
                                BasicBlock::iterator &BBI,
-                               SmallPtrSet<Value*, 64>& deadPointers) {
+                               SmallPtrSet<Value*, 64> &deadPointers) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-                                  
+
   // If the kill pointer can be easily reduced to an alloca,
   // don't bother doing extraneous AA queries.
   if (deadPointers.count(killPointer)) {
@@ -488,32 +477,19 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, uint64_t killPointerSize,
   bool MadeChange = false;
   
   SmallVector<Value*, 16> undead;
-    
+  
   for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
-      E = deadPointers.end(); I != E; ++I) {
-    // Get size information for the alloca.
-    unsigned pointerSize = ~0U;
-    if (TD) {
-      if (AllocaInst* A = dyn_cast<AllocaInst>(*I)) {
-        if (ConstantInt* C = dyn_cast<ConstantInt>(A->getArraySize()))
-          pointerSize = C->getZExtValue() *
-                        TD->getTypeAllocSize(A->getAllocatedType());
-      } else {
-        const PointerType* PT = cast<PointerType>(cast<Argument>(*I)->getType());
-        pointerSize = TD->getTypeAllocSize(PT->getElementType());
-      }
-    }
-
+       E = deadPointers.end(); I != E; ++I) {
     // See if this pointer could alias it
-    AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
+    AliasAnalysis::AliasResult A = AA.alias(*I, getPointerSize(*I),
                                             killPointer, killPointerSize);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
-      StoreInst* S = cast<StoreInst>(BBI);
+      StoreInst *S = cast<StoreInst>(BBI);
 
       // Remove it!
-      BBI++;
+      ++BBI;
       DeleteDeadInstruction(S, &deadPointers);
       NumFastStores++;
       MadeChange = true;
@@ -574,4 +550,19 @@ void DSE::DeleteDeadInstruction(Instruction *I,
     
     if (ValueSet) ValueSet->erase(DeadInst);
   }
+}
+
+unsigned DSE::getPointerSize(Value *V) const {
+  if (TD) {
+    if (AllocaInst *A = dyn_cast<AllocaInst>(V)) {
+      // Get size information for the alloca
+      if (ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
+        return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
+    } else {
+      assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
+      const PointerType *PT = cast<PointerType>(V->getType());
+      return TD->getTypeAllocSize(PT->getElementType());
+    }
+  }
+  return ~0U;
 }
