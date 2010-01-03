@@ -92,3 +92,21 @@ define i1 @test8(i32 %X) {
 ; CHECK-NEXT: %S = icmp ult i32 {{.*}}, 2
 ; CHECK-NEXT: ret i1 %S
 }
+
+@GA = internal constant [4 x { i32, i32 } ] [
+  { i32, i32 } { i32 1, i32 0 },
+  { i32, i32 } { i32 2, i32 1 },
+  { i32, i32 } { i32 3, i32 1 },
+  { i32, i32 } { i32 4, i32 0 }
+]
+
+define i1 @test9(i32 %X) {
+  %P = getelementptr [4 x { i32, i32 } ]* @GA, i32 0, i32 %X, i32 1
+  %Q = load i32* %P
+  %R = icmp eq i32 %Q, 1
+  ret i1 %R
+; CHECK: @test9
+; CHECK-NEXT: add i32 %X, -1
+; CHECK-NEXT: %R = icmp ult i32 {{.*}}, 2
+; CHECK-NEXT: ret i1 %R
+}

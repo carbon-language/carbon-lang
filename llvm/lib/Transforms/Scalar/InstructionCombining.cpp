@@ -6017,7 +6017,6 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   return new ICmpInst(Pred, LHSI->getOperand(0), RHSInt);
 }
 
-
 /// FoldCmpLoadFromIndexedGlobal - Called we see this pattern:
 ///   cmp pred (load (gep GV, ...)), cmpcst
 /// where GV is a global variable with a constant initializer.  Try to simplify
@@ -6029,18 +6028,43 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 Instruction *InstCombiner::
 FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
                              CmpInst &ICI, ConstantInt *AndCst) {
+  ConstantArray *Init = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (Init == 0 || Init->getNumOperands() > 1024) return 0;
   
   // There are many forms of this optimization we can handle, for now, just do
   // the simple index into a single-dimensional array.
   //
-  // Require: GEP GV, 0, i
-  if (GEP->getNumOperands() != 3 ||
+  // Require: GEP GV, 0, i {{, constant indices}}
+  if (GEP->getNumOperands() < 3 ||
       !isa<ConstantInt>(GEP->getOperand(1)) ||
-      !cast<ConstantInt>(GEP->getOperand(1))->isZero())
+      !cast<ConstantInt>(GEP->getOperand(1))->isZero() ||
+      isa<Constant>(GEP->getOperand(2)))
     return 0;
+
+  // Check that indices after the variable are constants and in-range for the
+  // type they index.  Collect the indices.  This is typically for arrays of
+  // structs.
+  SmallVector<unsigned, 4> LaterIndices;
   
-  ConstantArray *Init = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (Init == 0 || Init->getNumOperands() > 1024) return 0;
+  const Type *EltTy = cast<ArrayType>(Init->getType())->getElementType();
+  for (unsigned i = 3, e = GEP->getNumOperands(); i != e; ++i) {
+    ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(i));
+    if (Idx == 0) return 0;  // Variable index.
+    
+    uint64_t IdxVal = Idx->getZExtValue();
+    if ((unsigned)IdxVal != IdxVal) return 0; // Too large array index.
+    
+    if (const StructType *STy = dyn_cast<StructType>(EltTy))
+      EltTy = STy->getElementType(IdxVal);
+    else if (const ArrayType *ATy = dyn_cast<ArrayType>(EltTy)) {
+      if (IdxVal >= ATy->getNumElements()) return 0;
+      EltTy = ATy->getElementType();
+    } else {
+      return 0; // Unknown type.
+    }
+    
+    LaterIndices.push_back(IdxVal);
+  }
   
   enum { Overdefined = -3, Undefined = -2 };
 
@@ -6075,6 +6099,11 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   Constant *CompareRHS = cast<Constant>(ICI.getOperand(1));
   for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
     Constant *Elt = Init->getOperand(i);
+    
+    // If this is indexing an array of structures, get the structure element.
+    if (!LaterIndices.empty())
+      Elt = ConstantExpr::getExtractValue(Elt, LaterIndices.data(),
+                                          LaterIndices.size());
     
     // If the element is masked, handle it.
     if (AndCst) Elt = ConstantExpr::getAnd(Elt, AndCst);
@@ -6244,8 +6273,6 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     return new ICmpInst(ICmpInst::ICMP_NE, V, ConstantInt::get(Ty, 0));
   }
   
-  // TODO: GEP 0, i, 4
-  
   return 0;
 }
 
@@ -6337,12 +6364,15 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
           if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-              !cast<LoadInst>(LHSI)->isVolatile())
+              !cast<LoadInst>(LHSI)->isVolatile()) {
             if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
               return Res;
-            //errs() << "NOT HANDLED FP: " << *GV << "\n";
-            //errs() << "\t" << *GEP << "\n";
-            //errs() << "\t " << I << "\n\n\n";
+#if 0
+            errs() << "NOT HANDLED FP: " << *GV << "\n";
+            errs() << "\t" << *GEP << "\n";
+            errs() << "\t " << I << "\n\n\n";
+#endif
+          }
       }
       break;
     }
@@ -6731,12 +6761,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
             if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-                !cast<LoadInst>(LHSI)->isVolatile())
+                !cast<LoadInst>(LHSI)->isVolatile()) {
               if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
                 return Res;
-          //errs() << "NOT HANDLED INT: " << *GV << "\n";
-          //errs() << "\t" << *GEP << "\n";
-          //errs() << "\t " << I << "\n\n\n";
+#if 0
+              errs() << "NOT HANDLED INT: " << *GV << "\n";
+              errs() << "\t" << *GEP << "\n";
+              errs() << "\t " << I << "\n\n\n";
+#endif
+            }
         }
         break;
       }
@@ -7401,9 +7434,12 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             ConstantInt *C = cast<ConstantInt>(LHSI->getOperand(1));
             if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV,ICI, C))
               return Res;
-            //errs() << "NOT HANDLED INT: " << *GV << "\n";
-            //errs() << "\t" << *GEP << "\n";
-            //errs() << "\t " << I << "\n\n\n";
+#if 0
+            errs() << "NOT HANDLED 'AND': " << *GV << "\n";
+            errs() << "\t" << *GEP << "\n";
+            errs() << "\t " << *LHSI << "\n\n\n";
+            errs() << "\t " << ICI << "\n\n\n";
+#endif
           }
     }
     break;
