@@ -408,6 +408,19 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<function template> " << FTD->getNameAsString() << "\n";
       break;
     }
+    case Decl::FileScopeAsm: {
+      Out << "<file-scope asm>\n";
+      break;
+    }
+    case Decl::UsingDirective: {
+      Out << "<using directive>\n";
+      break;
+    }
+    case Decl::NamespaceAlias: {
+      NamespaceAliasDecl* NAD = cast<NamespaceAliasDecl>(*I);
+      Out << "<namespace alias> " << NAD->getNameAsString() << "\n";
+      break;
+    }
     default:
       Out << "DeclKind: " << DK << '"' << I->getDeclKindName() << "\"\n";
       assert(0 && "decl unhandled");
