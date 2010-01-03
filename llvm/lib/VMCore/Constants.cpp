@@ -197,6 +197,24 @@ Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(this))
     return BA->getFunction()->getRelocationInfo();
   
+  // While raw uses of blockaddress need to be relocated, differences between
+  // two of them don't when they are for labels in the same function.  This is a
+  // common idiom when creating a table for the indirect goto extension, so we
+  // handle it efficiently here.
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(this))
+    if (CE->getOpcode() == Instruction::Sub) {
+      ConstantExpr *LHS = dyn_cast<ConstantExpr>(CE->getOperand(0));
+      ConstantExpr *RHS = dyn_cast<ConstantExpr>(CE->getOperand(1));
+      if (LHS && RHS &&
+          LHS->getOpcode() == Instruction::PtrToInt &&
+          RHS->getOpcode() == Instruction::PtrToInt &&
+          isa<BlockAddress>(LHS->getOperand(0)) &&
+          isa<BlockAddress>(RHS->getOperand(0)) &&
+          cast<BlockAddress>(LHS->getOperand(0))->getFunction() ==
+            cast<BlockAddress>(RHS->getOperand(0))->getFunction())
+        return NoRelocation;
+    }
+  
   PossibleRelocationsTy Result = NoRelocation;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     Result = std::max(Result,
