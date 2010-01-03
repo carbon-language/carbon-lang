@@ -374,37 +374,6 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-// Code here matches isMalloc from MemoryBuiltins, which is not in VMCore.
-static bool isMalloc(const Value* I) {
-  const CallInst *CI = dyn_cast<CallInst>(I);
-  if (!CI) {
-    const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
-    if (!BCI) return false;
-
-    CI = dyn_cast<CallInst>(BCI->getOperand(0));
-  }
-
-  if (!CI)
-    return false;
-  Function *Callee = CI->getCalledFunction();
-  if (Callee == 0 || !Callee->isDeclaration() || Callee->getName() != "malloc")
-    return false;
-
-  // Check malloc prototype.
-  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
-  // attribute will exist.
-  const FunctionType *FTy = Callee->getFunctionType();
-  if (FTy->getNumParams() != 1)
-    return false;
-  if (IntegerType *ITy = dyn_cast<IntegerType>(FTy->param_begin()->get())) {
-    if (ITy->getBitWidth() != 32 && ITy->getBitWidth() != 64)
-      return false;
-    return true;
-  }
-
-  return false;
-}
-
 bool Instruction::isSafeToSpeculativelyExecute() const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (Constant *C = dyn_cast<Constant>(getOperand(i)))
@@ -430,7 +399,7 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Load: {
     if (cast<LoadInst>(this)->isVolatile())
       return false;
-    if (isa<AllocaInst>(getOperand(0)) || isMalloc(getOperand(0)))
+    if (isa<AllocaInst>(getOperand(0)))
       return true;
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(getOperand(0)))
       return !GV->hasExternalWeakLinkage();
