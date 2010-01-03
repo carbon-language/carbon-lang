@@ -6364,15 +6364,9 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
           if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-              !cast<LoadInst>(LHSI)->isVolatile()) {
+              !cast<LoadInst>(LHSI)->isVolatile())
             if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
               return Res;
-#if 0
-            errs() << "NOT HANDLED FP: " << *GV << "\n";
-            errs() << "\t" << *GEP << "\n";
-            errs() << "\t " << I << "\n\n\n";
-#endif
-          }
       }
       break;
     }
@@ -6761,15 +6755,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
               dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
           if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
             if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-                !cast<LoadInst>(LHSI)->isVolatile()) {
+                !cast<LoadInst>(LHSI)->isVolatile())
               if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
                 return Res;
-#if 0
-              errs() << "NOT HANDLED INT: " << *GV << "\n";
-              errs() << "\t" << *GEP << "\n";
-              errs() << "\t " << I << "\n\n\n";
-#endif
-            }
         }
         break;
       }
@@ -7434,12 +7422,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             ConstantInt *C = cast<ConstantInt>(LHSI->getOperand(1));
             if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV,ICI, C))
               return Res;
-#if 0
-            errs() << "NOT HANDLED 'AND': " << *GV << "\n";
-            errs() << "\t" << *GEP << "\n";
-            errs() << "\t " << *LHSI << "\n\n\n";
-            errs() << "\t " << ICI << "\n\n\n";
-#endif
           }
     }
     break;
