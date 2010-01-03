@@ -989,7 +989,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
     // TODO: Perhaps we should let LLVM lower this?
     if (E->getArg(0)->HasSideEffects(Info.Ctx)) {
-      if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() == 0)
+      if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() <= 1)
         return Success(-1ULL, E);
       return Success(0, E);
     }

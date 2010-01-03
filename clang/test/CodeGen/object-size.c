@@ -109,3 +109,14 @@ void test16() {
   // CHECK:       %call = call i8* @__inline_strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0))
   strcpy(gp += 1, "Hi there");
 }
+
+void test17() {
+  // CHECK: store i32 -1
+  gi = __builtin_object_size(gp++, 0);
+  // CHECK: store i32 -1
+  gi = __builtin_object_size(gp++, 1);
+  // CHECK: store i32 0
+  gi = __builtin_object_size(gp++, 2);
+  // CHECK: store i32 0
+  gi = __builtin_object_size(gp++, 3);
+}
