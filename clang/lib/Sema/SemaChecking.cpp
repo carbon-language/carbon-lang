@@ -1559,3 +1559,84 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
     Diag(loc, diag::warn_floatingpoint_eq)
       << lex->getSourceRange() << rex->getSourceRange();
 }
+
+//===--- CHECK: Comparison of signed and unsigned int (-Wsign-compare) ----===//
+
+/// Returns true if we can prove that the result of the given
+/// integral expression will not have its sign bit set.
+static bool IsSignBitProvablyZero(ASTContext &Context, Expr *E) {
+  E = E->IgnoreParens();
+
+  llvm::APSInt value;
+  if (E->isIntegerConstantExpr(value, Context))
+    return value.isNonNegative();
+
+  if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E))
+    return IsSignBitProvablyZero(Context, CO->getLHS()) &&
+           IsSignBitProvablyZero(Context, CO->getRHS());
+
+  return false;
+}
+
+/// \brief Implements -Wsign-compare.
+///
+/// \param lex the left-hand expression
+/// \param rex the right-hand expression
+/// \param OpLoc the location of the joining operator
+/// \param Equality whether this is an "equality-like" join, which
+///   suppresses the warning in some cases
+void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
+                            const PartialDiagnostic &PD, bool Equality) {
+  // Don't warn if we're in an unevaluated context.
+  if (ExprEvalContexts.back().Context == Unevaluated)
+    return;
+
+  QualType lt = lex->getType(), rt = rex->getType();
+
+  // Only warn if both operands are integral.
+  if (!lt->isIntegerType() || !rt->isIntegerType())
+    return;
+
+  // If either expression is value-dependent, don't warn. We'll get another
+  // chance at instantiation time.
+  if (lex->isValueDependent() || rex->isValueDependent())
+    return;
+
+  // The rule is that the signed operand becomes unsigned, so isolate the
+  // signed operand.
+  Expr *signedOperand, *unsignedOperand;
+  if (lt->isSignedIntegerType()) {
+    if (rt->isSignedIntegerType()) return;
+    signedOperand = lex;
+    unsignedOperand = rex;
+  } else {
+    if (!rt->isSignedIntegerType()) return;
+    signedOperand = rex;
+    unsignedOperand = lex;
+  }
+
+  // If the unsigned type is strictly smaller than the signed type,
+  // then (1) the result type will be signed and (2) the unsigned
+  // value will fit fully within the signed type, and thus the result
+  // of the comparison will be exact.
+  if (Context.getIntWidth(signedOperand->getType()) >
+      Context.getIntWidth(unsignedOperand->getType()))
+    return;
+
+  // If the value is a non-negative integer constant, then the
+  // signed->unsigned conversion won't change it.
+  if (IsSignBitProvablyZero(Context, signedOperand))
+    return;
+
+  // For (in)equality comparisons, if the unsigned operand is a
+  // constant which cannot collide with a overflowed signed operand,
+  // then reinterpreting the signed operand as unsigned will not
+  // change the result of the comparison.
+  if (Equality && IsSignBitProvablyZero(Context, unsignedOperand))
+    return;
+
+  Diag(OpLoc, PD)
+    << lex->getType() << rex->getType()
+    << lex->getSourceRange() << rex->getSourceRange();
+}
+
