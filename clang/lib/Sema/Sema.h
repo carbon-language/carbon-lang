@@ -1438,10 +1438,6 @@ public:
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                              Expr **Args, unsigned NumArgs);
 
-  void CheckSignCompare(Expr *LHS, Expr *RHS, SourceLocation Loc,
-                        const PartialDiagnostic &PD,
-                        bool Equality = false);
-
   virtual void
   PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext);
 
@@ -3891,6 +3887,11 @@ private:
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
+  void CheckSignCompare(Expr *LHS, Expr *RHS, SourceLocation Loc,
+                        const PartialDiagnostic &PD,
+                        bool Equality = false);
+  void CheckImplicitConversion(Expr *E, QualType Target);
+
 };
 
 //===--------------------------------------------------------------------===//
