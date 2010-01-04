@@ -1211,8 +1211,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     Base = EmitLValue(E->getBase());
   } else {
     // Otherwise, the base is a normal rvalue (as in (V+V).x), emit it as such.
-    const VectorType *VT = E->getBase()->getType()->getAs<VectorType>();
-    assert(VT && "Result must be a vector");
+    assert(E->getBase()->getType()->getAs<VectorType>() &&
+           "Result must be a vector");
     llvm::Value *Vec = EmitScalarExpr(E->getBase());
     
     // Store the vector to memory (because LValue wants an address).
