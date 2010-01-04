@@ -1095,7 +1095,7 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
   
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
   // this.
-  bool Swapped;
+  bool Swapped = false;
   GetElementPtrInst *GEP = 0;
   ConstantExpr *CstGEP = 0;
   
