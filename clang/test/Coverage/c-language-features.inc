@@ -179,3 +179,12 @@ void f8(x)
 
 // Function which inputs an array
 void f9(int x[]) { }
+
+// Object literals.
+void f10() {
+  struct f10_s0 {
+    char iv0[10];
+  } x;
+
+  x = (struct f10_s0) { .iv0 = "name" };
+}
