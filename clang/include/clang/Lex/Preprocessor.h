@@ -32,6 +32,7 @@
 namespace clang {
 
 class SourceManager;
+class ExternalPreprocessorSource;
 class FileManager;
 class FileEntry;
 class HeaderSearch;
@@ -42,7 +43,7 @@ class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
 class DirectoryLookup;
-
+  
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -57,6 +58,9 @@ class Preprocessor {
   ScratchBuffer     *ScratchBuf;
   HeaderSearch      &HeaderInfo;
 
+  /// \brief External source of macros.
+  ExternalPreprocessorSource *ExternalSource;
+  
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
   llvm::OwningPtr<PTHManager> PTH;
@@ -99,6 +103,9 @@ class Preprocessor {
   /// DisableMacroExpansion - True if macro expansion is disabled.
   bool DisableMacroExpansion : 1;
 
+  /// \brief Whether we have already loaded macros from the external source.
+  mutable bool ReadMacrosFromExternalSource : 1;
+  
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;
@@ -247,6 +254,14 @@ public:
 
   PTHManager *getPTHManager() { return PTH.get(); }
 
+  void setExternalSource(ExternalPreprocessorSource *Source) {
+    ExternalSource = Source;
+  }
+  
+  ExternalPreprocessorSource *getExternalSource() const {
+    return ExternalSource;
+  }
+  
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
@@ -296,11 +311,9 @@ public:
   /// state of the macro table.  This visits every currently-defined macro.
   typedef llvm::DenseMap<IdentifierInfo*,
                          MacroInfo*>::const_iterator macro_iterator;
-  macro_iterator macro_begin() const { return Macros.begin(); }
-  macro_iterator macro_end() const { return Macros.end(); }
-
-
-
+  macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
+  macro_iterator macro_end(bool IncludeExternalMacros = true) const;
+  
   const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These
   /// predefines are automatically injected when parsing the main file.

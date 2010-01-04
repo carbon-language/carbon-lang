@@ -1079,6 +1079,61 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
   }
 }
 
+void PCHReader::ReadDefinedMacros() {
+  // If there was no preprocessor block, do nothing.
+  if (!MacroCursor.getBitStreamReader())
+    return;
+  
+  llvm::BitstreamCursor Cursor = MacroCursor;
+  if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
+    Error("malformed preprocessor block record in PCH file");
+    return;
+  }
+  
+  RecordData Record;
+  while (true) {
+    unsigned Code = Cursor.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (Cursor.ReadBlockEnd())
+        Error("error at end of preprocessor block in PCH file");
+      return;
+    }
+    
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Cursor.ReadSubBlockID();
+      if (Cursor.SkipBlock()) {
+        Error("malformed block record in PCH file");
+        return;
+      }
+      continue;
+    }
+    
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      Cursor.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    const char *BlobStart;
+    unsigned BlobLen;
+    Record.clear();
+    switch (Cursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    default:  // Default behavior: ignore.
+      break;
+        
+    case pch::PP_MACRO_OBJECT_LIKE:
+    case pch::PP_MACRO_FUNCTION_LIKE:
+        DecodeIdentifierInfo(Record[0]);
+      break;
+
+    case pch::PP_TOKEN:
+      // Ignore tokens.
+      break;
+    }
+  }
+}
+
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
@@ -1140,6 +1195,10 @@ PCHReader::ReadPCHBlock() {
         break;
 
       case pch::PREPROCESSOR_BLOCK_ID:
+        MacroCursor = Stream;
+        if (PP)
+          PP->setExternalSource(this);
+
         if (Stream.SkipBlock()) {
           Error("malformed block record in PCH file");
           return Failure;
@@ -1494,7 +1553,8 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   assert(PP && "Forgot to set Preprocessor ?");
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->getHeaderSearchInfo().SetExternalLookup(this);
-
+  PP->setExternalSource(this);
+  
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
 

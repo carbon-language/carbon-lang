@@ -1,8 +1,3 @@
-#define FOO
-#define BAR(X, Y) X, Y
-#define IDENTITY(X) X
-#define WIBBLE(...)
-
 enum Color {
   Red, Green, Blue
 };
@@ -13,11 +8,17 @@ struct Point {
 };
 
 void test(struct Point *p) {
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-macros -code-completion-at=%s:17:14 %s -o - | FileCheck -check-prefix=CC1 %s
+  // RUN: %clang_cc1 -include %S/Inputs/macros.h -fsyntax-only -code-completion-macros -code-completion-at=%s:12:14 %s -o - | FileCheck -check-prefix=CC1 %s
   switch (p->IDENTITY(color)) {
-  // RUN: %clang_cc1 -fsyntax-only -code-completion-macros -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC2 %s
+  // RUN: %clang_cc1 -include %S/Inputs/macros.h -fsyntax-only -code-completion-macros -code-completion-at=%s:14:9 %s -o - | FileCheck -check-prefix=CC2 %s
     case 
   }
+
+  // Run the same tests, this time with macros loaded from the PCH file.
+  // RUN: %clang_cc1 -emit-pch -o %t %S/Inputs/macros.h
+  // RUN: %clang_cc1 -include-pch %t -fsyntax-only -code-completion-macros -code-completion-at=%s:12:14 %s -o - | FileCheck -check-prefix=CC1 %s
+  // RUN: %clang_cc1 -include-pch %t -fsyntax-only -code-completion-macros -code-completion-at=%s:14:9 %s -o - | FileCheck -check-prefix=CC2 %s
+
   // CC1: color
   // CC1: x
   // CC1: y

@@ -27,6 +27,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "MacroArgs.h"
+#include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Pragma.h"
@@ -43,6 +44,7 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            const TargetInfo &target, SourceManager &SM,
@@ -50,9 +52,9 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            IdentifierInfoLookup* IILookup,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
-    SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts, IILookup),
-    BuiltinInfo(Target), CodeCompletionFile(0), CurPPLexer(0), CurDirLookup(0),
-    Callbacks(0), MacroArgCache(0) {
+    SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
+    Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0), 
+    CurPPLexer(0), CurDirLookup(0), Callbacks(0), MacroArgCache(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -77,6 +79,9 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
   CachedLexPos = 0;
 
+  // We haven't read anything from the external source.
+  ReadMacrosFromExternalSource = false;
+      
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -192,6 +197,28 @@ void Preprocessor::PrintStats() {
   llvm::errs() << (NumFastTokenPaste+NumTokenPaste)
              << " token paste (##) operations performed, "
              << NumFastTokenPaste << " on the fast path.\n";
+}
+
+Preprocessor::macro_iterator 
+Preprocessor::macro_begin(bool IncludeExternalMacros) const { 
+  if (IncludeExternalMacros && ExternalSource && 
+      !ReadMacrosFromExternalSource) {
+    ReadMacrosFromExternalSource = true;
+    ExternalSource->ReadDefinedMacros();
+  }
+  
+  return Macros.begin(); 
+}
+
+Preprocessor::macro_iterator 
+Preprocessor::macro_end(bool IncludeExternalMacros) const { 
+  if (IncludeExternalMacros && ExternalSource && 
+      !ReadMacrosFromExternalSource) {
+    ReadMacrosFromExternalSource = true;
+    ExternalSource->ReadDefinedMacros();
+  }
+  
+  return Macros.end(); 
 }
 
 bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File, 
