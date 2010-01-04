@@ -212,19 +212,30 @@ public:
   ///
   void addVariable(DbgVariable *V) { Variables.push_back(V); }
 
-  void fixInstructionMarkers() {
+  void fixInstructionMarkers(DenseMap<const MachineInstr *, 
+                             unsigned> &MIIndexMap) {
     assert (getFirstInsn() && "First instruction is missing!");
-    if (getLastInsn())
-      return;
-
-    // If a scope does not have an instruction to mark an end then use
-    // the end of last child scope.
+    
+    // Use the end of last child scope as end of this scope.
     SmallVector<DbgScope *, 4> &Scopes = getScopes();
-    assert (!Scopes.empty() && "Inner most scope does not have last insn!");
-    DbgScope *L = Scopes.back();
-    if (!L->getLastInsn())
-      L->fixInstructionMarkers();
-    setLastInsn(L->getLastInsn());
+    const MachineInstr *LastInsn = NULL;
+    unsigned LIndex = 0;
+    if (Scopes.empty()) {
+      assert (getLastInsn() && "Inner most scope does not have last insn!");
+      return;
+    }
+    for (SmallVector<DbgScope *, 4>::iterator SI = Scopes.begin(),
+           SE = Scopes.end(); SI != SE; ++SI) {
+      DbgScope *DS = *SI;
+      DS->fixInstructionMarkers(MIIndexMap);
+      const MachineInstr *DSLastInsn = DS->getLastInsn();
+      unsigned DSI = MIIndexMap[DSLastInsn];
+      if (DSI > LIndex) {
+        LastInsn = DSLastInsn;
+        LIndex = DSI;
+      }
+    }
+    setLastInsn(LastInsn);
   }
 
 #ifndef NDEBUG
@@ -1976,12 +1987,15 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
   if (!DbgScopeMap.empty())
     return false;
 
+  DenseMap<const MachineInstr *, unsigned> MIIndexMap;
+  unsigned MIIndex = 0;
   // Scan each instruction and create scopes. First build working set of scopes.
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I) {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
+      MIIndexMap[MInsn] = MIIndex++;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
       DebugLocTuple DLT = MF->getDebugLocTuple(DL);
@@ -2014,16 +2028,10 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
     }
   }
 
-  // If a scope's last instruction is not set then use its child scope's
-  // last instruction as this scope's last instrunction.
-  for (ValueMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
-	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
-    if (DI->second->isAbstractScope())
-      continue;
-    assert (DI->second->getFirstInsn() && "Invalid first instruction!");
-    DI->second->fixInstructionMarkers();
-    assert (DI->second->getLastInsn() && "Invalid last instruction!");
-  }
+  if (!CurrentFnDbgScope)
+    return false;
+
+  CurrentFnDbgScope->fixInstructionMarkers(MIIndexMap);
 
   // Each scope has first instruction and last instruction to mark beginning
   // and end of a scope respectively. Create an inverse map that list scopes
@@ -2105,29 +2113,31 @@ void DwarfDebug::endFunction(MachineFunction *MF) {
   if (DbgScopeMap.empty())
     return;
 
-  // Define end label for subprogram.
-  EmitLabel("func_end", SubprogramCount);
-
-  // Get function line info.
-  if (!Lines.empty()) {
-    // Get section line info.
-    unsigned ID = SectionMap.insert(Asm->getCurrentSection());
-    if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
-    std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
-    // Append the function info to section info.
-    SectionLineInfos.insert(SectionLineInfos.end(),
-                            Lines.begin(), Lines.end());
+  if (CurrentFnDbgScope) {
+    // Define end label for subprogram.
+    EmitLabel("func_end", SubprogramCount);
+    
+    // Get function line info.
+    if (!Lines.empty()) {
+      // Get section line info.
+      unsigned ID = SectionMap.insert(Asm->getCurrentSection());
+      if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
+      std::vector<SrcLineInfo> &SectionLineInfos = SectionSourceLines[ID-1];
+      // Append the function info to section info.
+      SectionLineInfos.insert(SectionLineInfos.end(),
+                              Lines.begin(), Lines.end());
+    }
+    
+    // Construct abstract scopes.
+    for (SmallVector<DbgScope *, 4>::iterator AI = AbstractScopesList.begin(),
+           AE = AbstractScopesList.end(); AI != AE; ++AI)
+      constructScopeDIE(*AI);
+    
+    constructScopeDIE(CurrentFnDbgScope);
+    
+    DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
+                                                 MMI->getFrameMoves()));
   }
-
-  // Construct abstract scopes.
-  for (SmallVector<DbgScope *, 4>::iterator AI = AbstractScopesList.begin(),
-         AE = AbstractScopesList.end(); AI != AE; ++AI)
-    constructScopeDIE(*AI);
-
-  constructScopeDIE(CurrentFnDbgScope);
-
-  DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
-                                               MMI->getFrameMoves()));
 
   // Clear debug info
   CurrentFnDbgScope = NULL;
