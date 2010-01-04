@@ -643,16 +643,16 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     EVT ResVT;
     bool is32Bit = false;
     switch (NVT.getSimpleVT().SimpleTy) {
-      default: assert(0 && "Unsupported VT!");
-      case MVT::i32:
-        Opc = SystemZ::SDIVREM32r; MOpc = SystemZ::SDIVREM32m;
-        ResVT = MVT::v2i64;
-        is32Bit = true;
-        break;
-      case MVT::i64:
-        Opc = SystemZ::SDIVREM64r; MOpc = SystemZ::SDIVREM64m;
-        ResVT = MVT::v2i64;
-        break;
+    default: assert(0 && "Unsupported VT!");
+    case MVT::i32:
+      Opc = SystemZ::SDIVREM32r; MOpc = SystemZ::SDIVREM32m;
+      ResVT = MVT::v2i64;
+      is32Bit = true;
+      break;
+    case MVT::i64:
+      Opc = SystemZ::SDIVREM64r; MOpc = SystemZ::SDIVREM64m;
+      ResVT = MVT::v2i64;
+      break;
     }
 
     SDValue Tmp0, Tmp1, Tmp2;
@@ -677,10 +677,10 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     SDValue DivVal = SDValue(Dividend, 0);
     if (foldedLoad) {
       SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
-      Result = CurDAG->getMachineNode(MOpc, dl, ResVT,
+      Result = CurDAG->getMachineNode(MOpc, dl, ResVT, MVT::Other,
                                       Ops, array_lengthof(Ops));
       // Update the chain.
-      ReplaceUses(N1.getValue(1), SDValue(Result, 0));
+      ReplaceUses(N1.getValue(1), SDValue(Result, 1));
     } else {
       Result = CurDAG->getMachineNode(Opc, dl, ResVT, SDValue(Dividend, 0), N1);
     }
@@ -729,18 +729,18 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
 
     bool is32Bit = false;
     switch (NVT.getSimpleVT().SimpleTy) {
-      default: assert(0 && "Unsupported VT!");
-      case MVT::i32:
-        Opc = SystemZ::UDIVREM32r; MOpc = SystemZ::UDIVREM32m;
-        ClrOpc = SystemZ::MOV64Pr0_even;
-        ResVT = MVT::v2i32;
-        is32Bit = true;
-        break;
-      case MVT::i64:
-        Opc = SystemZ::UDIVREM64r; MOpc = SystemZ::UDIVREM64m;
-        ClrOpc = SystemZ::MOV128r0_even;
-        ResVT = MVT::v2i64;
-        break;
+    default: assert(0 && "Unsupported VT!");
+    case MVT::i32:
+      Opc = SystemZ::UDIVREM32r; MOpc = SystemZ::UDIVREM32m;
+      ClrOpc = SystemZ::MOV64Pr0_even;
+      ResVT = MVT::v2i32;
+      is32Bit = true;
+      break;
+    case MVT::i64:
+      Opc = SystemZ::UDIVREM64r; MOpc = SystemZ::UDIVREM64m;
+      ClrOpc = SystemZ::MOV128r0_even;
+      ResVT = MVT::v2i64;
+      break;
     }
 
     SDValue Tmp0, Tmp1, Tmp2;
@@ -767,10 +767,10 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     SDNode *Result;
     if (foldedLoad) {
       SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
-      Result = CurDAG->getMachineNode(MOpc, dl,ResVT,
+      Result = CurDAG->getMachineNode(MOpc, dl, ResVT, MVT::Other,
                                       Ops, array_lengthof(Ops));
       // Update the chain.
-      ReplaceUses(N1.getValue(1), SDValue(Result, 0));
+      ReplaceUses(N1.getValue(1), SDValue(Result, 1));
     } else {
       Result = CurDAG->getMachineNode(Opc, dl, ResVT, DivVal, N1);
     }
