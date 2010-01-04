@@ -1,4 +1,4 @@
-; RUN: llc < %s | grep "func_end1:" | count 1
+; RUN: llc < %s -o /dev/null
 ; XFAIL: powerpc-apple-darwin
 declare void @foo()
 
