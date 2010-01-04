@@ -24,6 +24,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
@@ -813,7 +814,7 @@ raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
 }
 
 void LiveRange::dump() const {
-  errs() << *this << "\n";
+  dbgs() << *this << "\n";
 }
 
 void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
@@ -872,7 +873,7 @@ void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
 }
 
 void LiveInterval::dump() const {
-  errs() << *this << "\n";
+  dbgs() << *this << "\n";
 }
 
 
