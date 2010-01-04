@@ -109,7 +109,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
 
       // If the instruction is dead, delete it!
       if (isDead(MI)) {
-        DEBUG(errs() << "DeadMachineInstructionElim: DELETING: " << *MI);
+        DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
         AnyChanges = true;
         MI->eraseFromParent();
         MIE = MBB->rend();
