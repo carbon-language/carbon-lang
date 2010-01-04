@@ -5110,6 +5110,22 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   return LHSTy;
 }
 
+/// Returns true if we can prove that the result of the given
+/// integral expression will not have its sign bit set.
+static bool IsSignBitProvablyZero(ASTContext &Context, Expr *E) {
+  E = E->IgnoreParens();
+
+  llvm::APSInt value;
+  if (E->isIntegerConstantExpr(value, Context))
+    return value.isNonNegative();
+
+  if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E))
+    return IsSignBitProvablyZero(Context, CO->getLHS()) &&
+           IsSignBitProvablyZero(Context, CO->getRHS());
+
+  return false;
+}
+
 /// \brief Implements -Wsign-compare.
 ///
 /// \param lex the left-hand expression
@@ -5157,27 +5173,15 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
 
   // If the value is a non-negative integer constant, then the
   // signed->unsigned conversion won't change it.
-  llvm::APSInt value;
-  if (signedOperand->isIntegerConstantExpr(value, Context)) {
-    assert(value.isSigned() && "result of signed expression not signed");
+  if (IsSignBitProvablyZero(Context, signedOperand))
+    return;
 
-    if (value.isNonNegative())
-      return;
-  }
-
-  if (Equality) {
-    // For (in)equality comparisons, if the unsigned operand is a
-    // constant which cannot collide with a overflowed signed operand,
-    // then reinterpreting the signed operand as unsigned will not
-    // change the result of the comparison.
-    if (unsignedOperand->isIntegerConstantExpr(value, Context)) {
-      assert(!value.isSigned() && "result of unsigned expression is signed");
-
-      // 2's complement:  test the top bit.
-      if (value.isNonNegative())
-        return;
-    }
-  }
+  // For (in)equality comparisons, if the unsigned operand is a
+  // constant which cannot collide with a overflowed signed operand,
+  // then reinterpreting the signed operand as unsigned will not
+  // change the result of the comparison.
+  if (Equality && IsSignBitProvablyZero(Context, unsignedOperand))
+    return;
 
   Diag(OpLoc, PD)
     << lex->getType() << rex->getType()

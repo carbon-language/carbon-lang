@@ -194,6 +194,9 @@ int ints(long a, unsigned long b) {
          ((short) a < (unsigned short) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
          ((signed char) a < (unsigned char) 0x80000) +  // expected-warning {{comparison of integers of different signs}}
 
+         // We should be able to avoid warning about this.
+         (b != (a < 4 ? 1 : 2)) +
+
          10
     ;
 }
