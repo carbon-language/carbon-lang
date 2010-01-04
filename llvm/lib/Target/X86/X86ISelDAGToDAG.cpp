@@ -310,6 +310,11 @@ bool X86DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   if (U == Root)
     switch (U->getOpcode()) {
     default: break;
+    case X86ISD::ADD:
+    case X86ISD::SUB:
+    case X86ISD::AND:
+    case X86ISD::XOR:
+    case X86ISD::OR:
     case ISD::ADD:
     case ISD::ADDC:
     case ISD::ADDE:
