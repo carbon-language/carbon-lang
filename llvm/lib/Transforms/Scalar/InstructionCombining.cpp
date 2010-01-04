@@ -5213,12 +5213,30 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             return ReplaceInstUsesWith(I, B);
         }
       }
-      V1 = 0; V2 = 0; V3 = 0;
+      
+      // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
+      // iff (C1&C2) == 0 and (N&~C1) == 0
+      if ((C1->getValue() & C2->getValue()) == 0) {
+        if (match(A, m_Or(m_Value(V1), m_Value(V2))) &&
+            ((V1 == B && MaskedValueIsZero(V2, ~C1->getValue())) ||  // (V|N)
+             (V2 == B && MaskedValueIsZero(V1, ~C1->getValue()))))   // (N|V)
+          return BinaryOperator::CreateAnd(A,
+                               ConstantInt::get(A->getContext(),
+                                                C1->getValue()|C2->getValue()));
+        // Or commutes, try both ways.
+        if (match(B, m_Or(m_Value(V1), m_Value(V2))) &&
+            ((V1 == A && MaskedValueIsZero(V2, ~C2->getValue())) ||  // (V|N)
+             (V2 == A && MaskedValueIsZero(V1, ~C2->getValue()))))   // (N|V)
+          return BinaryOperator::CreateAnd(B,
+                               ConstantInt::get(B->getContext(),
+                                                C1->getValue()|C2->getValue()));
+      }
     }
     
     // Check to see if we have any common things being and'ed.  If so, find the
     // terms for V1 & (V2|V3).
     if (isOnlyUse(Op0) || isOnlyUse(Op1)) {
+      V1 = 0;
       if (A == B)      // (A & C)|(A & D) == A & (C|D)
         V1 = A, V2 = C, V3 = D;
       else if (A == D) // (A & C)|(B & A) == A & (B|C)

@@ -307,3 +307,16 @@ define i1 @test29(i32* %A, i32* %B) {
 ; CHECK: ret i1
 }
 
+; PR4216
+define i32 @test30(i32 %A) {
+entry:
+  %B = or i32 %A, 32962
+  %C = and i32 %A, -65536
+  %D = and i32 %B, 40186
+  %E = or i32 %D, %C
+  ret i32 %E
+; CHECK: @test30
+; CHECK: %B = or i32 %A, 32962
+; CHECK: %E = and i32 %B, -25350
+; CHECK: ret i32 %E
+}
