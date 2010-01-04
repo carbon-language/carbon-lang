@@ -843,11 +843,6 @@ class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 // Complex pattern definitions.
 //
 
-class CPAttribute;
-// Pass the parent Operand as root to CP function rather 
-// than the root of the sub-DAG
-def CPAttrParentAsRoot : CPAttribute;
-
 // Complex patterns, e.g. X86 addressing mode, requires pattern matching code
 // in C++. NumOperands is the number of operands returned by the select function;
 // SelectFunc is the name of the function used to pattern match the max. pattern;
@@ -855,12 +850,10 @@ def CPAttrParentAsRoot : CPAttribute;
 // e.g. X86 addressing mode - def addr : ComplexPattern<4, "SelectAddr", [add]>;
 //
 class ComplexPattern<ValueType ty, int numops, string fn,
-                     list<SDNode> roots = [], list<SDNodeProperty> props = [],
-                     list<CPAttribute> attrs = []> {
+                     list<SDNode> roots = [], list<SDNodeProperty> props = []> {
   ValueType Ty = ty;
   int NumOperands = numops;
   string SelectFunc = fn;
   list<SDNode> RootNodes = roots;
   list<SDNodeProperty> Properties = props;
-  list<CPAttribute> Attributes = attrs;
 }

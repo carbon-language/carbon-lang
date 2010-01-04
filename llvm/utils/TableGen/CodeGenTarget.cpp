@@ -402,18 +402,6 @@ ComplexPattern::ComplexPattern(Record *R) {
              << "' on ComplexPattern '" << R->getName() << "'!\n";
       exit(1);
     }
-  
-  // Parse the attributes.  
-  Attributes = 0;
-  PropList = R->getValueAsListOfDefs("Attributes");
-  for (unsigned i = 0, e = PropList.size(); i != e; ++i)
-    if (PropList[i]->getName() == "CPAttrParentAsRoot") {
-      Attributes |= 1 << CPAttrParentAsRoot;
-    } else {
-      errs() << "Unsupported pattern attribute '" << PropList[i]->getName()
-             << "' on ComplexPattern '" << R->getName() << "'!\n";
-      exit(1);
-    }
 }
 
 //===----------------------------------------------------------------------===//
