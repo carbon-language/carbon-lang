@@ -530,7 +530,7 @@ We should inline lrintf and probably other libc functions.
 
 //===---------------------------------------------------------------------===//
 
-Start using the flags more.  For example, compile:
+Use the FLAGS values from arithmetic instructions more.  For example, compile:
 
 int add_zf(int *x, int y, int a, int b) {
      if ((*x += y) == 0)
@@ -554,31 +554,8 @@ _add_zf:
         movl %ecx, %eax
         ret
 
-and:
-
-int add_zf(int *x, int y, int a, int b) {
-     if ((*x + y) < 0)
-          return a;
-     else
-          return b;
-}
-
-to:
-
-add_zf:
-        addl    (%rdi), %esi
-        movl    %edx, %eax
-        cmovns  %ecx, %eax
-        ret
-
-instead of:
-
-_add_zf:
-        addl (%rdi), %esi
-        testl %esi, %esi
-        cmovs %edx, %ecx
-        movl %ecx, %eax
-        ret
+As another example, compile function f2 in test/CodeGen/X86/cmp-test.ll
+without a test instruction.
 
 //===---------------------------------------------------------------------===//
 
@@ -682,55 +659,6 @@ LBB1_1:
         call L_abort$stub
 
 Though this probably isn't worth it.
-
-//===---------------------------------------------------------------------===//
-
-We need to teach the codegen to convert two-address INC instructions to LEA
-when the flags are dead (likewise dec).  For example, on X86-64, compile:
-
-int foo(int A, int B) {
-  return A+1;
-}
-
-to:
-
-_foo:
-        leal    1(%edi), %eax
-        ret
-
-instead of:
-
-_foo:
-        incl %edi
-        movl %edi, %eax
-        ret
-
-Another example is:
-
-;; X's live range extends beyond the shift, so the register allocator
-;; cannot coalesce it with Y.  Because of this, a copy needs to be
-;; emitted before the shift to save the register value before it is
-;; clobbered.  However, this copy is not needed if the register
-;; allocator turns the shift into an LEA.  This also occurs for ADD.
-
-; Check that the shift gets turned into an LEA.
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
-; RUN:   not grep {mov E.X, E.X}
-
-@G = external global i32		; <i32*> [#uses=3]
-
-define i32 @test1(i32 %X, i32 %Y) {
-	%Z = add i32 %X, %Y		; <i32> [#uses=1]
-	volatile store i32 %Y, i32* @G
-	volatile store i32 %Z, i32* @G
-	ret i32 %X
-}
-
-define i32 @test2(i32 %X) {
-	%Z = add i32 %X, 1		; <i32> [#uses=1]
-	volatile store i32 %Z, i32* @G
-	ret i32 %X
-}
 
 //===---------------------------------------------------------------------===//
 
@@ -851,11 +779,6 @@ __Z11no_overflowjj:
         movzbl  %al, %eax
         ret
 
-
-//===---------------------------------------------------------------------===//
-
-Re-materialize MOV32r0 etc. with xor instead of changing them to moves if the
-condition register is dead. xor reg reg is shorter than mov reg, #0.
 
 //===---------------------------------------------------------------------===//
 
