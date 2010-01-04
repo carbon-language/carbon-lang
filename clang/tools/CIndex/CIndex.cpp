@@ -1272,7 +1272,9 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   argv.push_back(code_complete_at.c_str());
   argv.push_back("-Xclang");
   argv.push_back("-no-code-completion-debug-printer");
-
+  argv.push_back("-Xclang");
+  argv.push_back("-code-completion-macros");
+  
   std::vector<std::string> RemapArgs;
   for (unsigned i = 0; i != num_unsaved_files; ++i) {
     char tmpFile[L_tmpnam];
