@@ -1,22 +1,35 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah | grep {testl.*%e.x.*%e.x}
+; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck %s
 ; rdar://5752025
 
-; We don't want to fold the and into the test, because the and clobbers its
-; input forcing a copy.  We want:
-;	movl	$15, %ecx
-;	andl	4(%esp), %ecx
-;	testl	%ecx, %ecx
+; We want:
+;      CHECK: movl	4(%esp), %ecx
+; CHECK-NEXT: andl	$15, %ecx
+; CHECK-NEXT: movl	$42, %eax
+; CHECK-NEXT: cmovel	%ecx, %eax
+; CHECK-NEXT: ret
+;
+; We don't want:
+;	movl	4(%esp), %eax
+;	movl	%eax, %ecx     # bad: extra copy
+;	andl	$15, %ecx
+;	testl	$15, %eax      # bad: peep obstructed
 ;	movl	$42, %eax
-;	cmove	%ecx, %eax
+;	cmovel	%ecx, %eax
 ;	ret
 ;
-; Not:
-;	movl	4(%esp), %eax
-;	movl	%eax, %ecx
-;	andl	$15, %ecx
-;	testl	$15, %eax
+; We also don't want:
+;	movl	$15, %ecx      # bad: larger encoding
+;	andl	4(%esp), %ecx
 ;	movl	$42, %eax
-;	cmove	%ecx, %eax
+;	cmovel	%ecx, %eax
+;	ret
+;
+; We also don't want:
+;	movl	4(%esp), %ecx
+;	andl	$15, %ecx
+;	testl	%ecx, %ecx     # bad: unnecessary test
+;	movl	$42, %eax
+;	cmovel	%ecx, %eax
 ;	ret
 
 define i32 @t1(i32 %X) nounwind  {
