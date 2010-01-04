@@ -336,14 +336,14 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
 
 #ifndef NDEBUG
   {
-    DEBUG(errs() << "Critical path has total latency "
+    DEBUG(dbgs() << "Critical path has total latency "
           << (Max->getDepth() + Max->Latency) << "\n");
-    DEBUG(errs() << "Available regs:");
+    DEBUG(dbgs() << "Available regs:");
     for (unsigned Reg = 0; Reg < TRI->getNumRegs(); ++Reg) {
       if (KillIndices[Reg] == ~0u)
-        DEBUG(errs() << " " << TRI->getName(Reg));
+        DEBUG(dbgs() << " " << TRI->getName(Reg));
     }
-    DEBUG(errs() << '\n');
+    DEBUG(dbgs() << '\n');
   }
 #endif
 
@@ -498,7 +498,7 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
       if (unsigned NewReg = findSuitableFreeRegister(AntiDepReg,
                                                      LastNewReg[AntiDepReg],
                                                      RC)) {
-        DEBUG(errs() << "Breaking anti-dependence edge on "
+        DEBUG(dbgs() << "Breaking anti-dependence edge on "
               << TRI->getName(AntiDepReg)
               << " with " << RegRefs.count(AntiDepReg) << " references"
               << " using " << TRI->getName(NewReg) << "!\n");
