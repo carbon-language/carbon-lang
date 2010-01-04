@@ -6068,7 +6068,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
   std::vector<SDValue> AsmNodeOperands;
   AsmNodeOperands.push_back(SDValue());  // reserve space for input chain
   AsmNodeOperands.push_back(
-          DAG.getTargetExternalSymbol(IA->getAsmString().c_str(), MVT::Other));
+          DAG.getTargetExternalSymbol(IA->getAsmString().c_str(),
+                                      TLI.getPointerTy()));
 
 
   // Loop over all of the inputs, copying the operand values into the
