@@ -32,6 +32,20 @@ enum SelectPatternFlavor {
   SPF_SMAX, SPF_UMAX
   //SPF_ABS - TODO.
 };
+  
+/// getComplexity:  Assign a complexity or rank value to LLVM Values...
+///   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
+static inline unsigned getComplexity(Value *V) {
+  if (isa<Instruction>(V)) {
+    if (BinaryOperator::isNeg(V) ||
+        BinaryOperator::isFNeg(V) ||
+        BinaryOperator::isNot(V))
+      return 3;
+    return 4;
+  }
+  if (isa<Argument>(V)) return 3;
+  return isa<Constant>(V) ? (isa<UndefValue>(V) ? 0 : 1) : 2;
+}
 
   
 /// InstCombineIRInserter - This is an IRBuilder insertion helper that works
@@ -179,6 +193,8 @@ public:
   Instruction *visitInstruction(Instruction &I) { return 0; }
 
 private:
+  Value *dyn_castNegVal(Value *V) const;
+
   Instruction *visitCallSite(CallSite CS);
   bool transformConstExprCastCall(CallSite CS);
   Instruction *transformCallThroughTrampoline(CallSite CS);
@@ -186,7 +202,7 @@ private:
                                  bool DoXform = true);
   bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS);
   DbgDeclareInst *hasOneUsePlusDeclare(Value *V);
-
+  Value *EmitGEPOffset(User *GEP);
 
 public:
   // InsertNewInstBefore - insert an instruction New before instruction Old
