@@ -193,7 +193,17 @@ public:
   Instruction *visitInstruction(Instruction &I) { return 0; }
 
 private:
+  bool ShouldChangeType(const Type *From, const Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
+  const Type *FindElementAtOffset(const Type *Ty, int64_t Offset, 
+                                  SmallVectorImpl<Value*> &NewIndices);
+  Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
+                                 
+  /// ValueRequiresCast - Return true if the cast from "V to Ty" actually
+  /// results in any code being generated.  It does not require codegen if V is
+  /// simple enough or if the cast can be folded into other casts.
+  bool ValueRequiresCast(Instruction::CastOps opcode,const Value *V,
+                         const Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
   bool transformConstExprCastCall(CallSite CS);
