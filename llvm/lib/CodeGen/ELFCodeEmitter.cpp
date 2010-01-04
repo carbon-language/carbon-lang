@@ -37,7 +37,7 @@ namespace llvm {
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
 void ELFCodeEmitter::startFunction(MachineFunction &MF) {
-  DEBUG(errs() << "processing function: "
+  DEBUG(dbgs() << "processing function: "
         << MF.getFunction()->getName() << "\n");
 
   // Get the ELF Section that this function belongs in.
