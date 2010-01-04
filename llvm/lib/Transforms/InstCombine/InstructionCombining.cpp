@@ -9132,7 +9132,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
 }
 
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
-  // If one of the common conversion will work ..
+  // If one of the common conversion will work, do it.
   if (Instruction *Result = commonIntCastTransforms(CI))
     return Result;
 

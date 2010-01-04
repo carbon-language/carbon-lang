@@ -9,7 +9,6 @@ add_llvm_library(LLVMScalarOpts
   GEPSplitter.cpp
   GVN.cpp
   IndVarSimplify.cpp
-  InstructionCombining.cpp
   JumpThreading.cpp
   LICM.cpp
   LoopDeletion.cpp
