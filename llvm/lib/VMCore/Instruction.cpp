@@ -399,6 +399,8 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Load: {
     if (cast<LoadInst>(this)->isVolatile())
       return false;
+    // Note that it is not safe to speculate into a malloc'd region because
+    // malloc may return null.
     if (isa<AllocaInst>(getOperand(0)))
       return true;
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(getOperand(0)))
