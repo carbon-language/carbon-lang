@@ -48,7 +48,7 @@ ExactHazardRecognizer(const InstrItineraryData &LItinData) :
   Scoreboard = new unsigned[ScoreboardDepth];
   ScoreboardHead = 0;
 
-  DEBUG(errs() << "Using exact hazard recognizer: ScoreboardDepth = " 
+  DEBUG(dbgs() << "Using exact hazard recognizer: ScoreboardDepth = " 
                << ScoreboardDepth << '\n');
 }
 
@@ -66,7 +66,7 @@ unsigned ExactHazardRecognizer::getFutureIndex(unsigned offset) {
 }
 
 void ExactHazardRecognizer::dumpScoreboard() {
-  errs() << "Scoreboard:\n";
+  dbgs() << "Scoreboard:\n";
   
   unsigned last = ScoreboardDepth - 1;
   while ((last > 0) && (Scoreboard[getFutureIndex(last)] == 0))
@@ -74,10 +74,10 @@ void ExactHazardRecognizer::dumpScoreboard() {
 
   for (unsigned i = 0; i <= last; i++) {
     unsigned FUs = Scoreboard[getFutureIndex(i)];
-    errs() << "\t";
+    dbgs() << "\t";
     for (int j = 31; j >= 0; j--)
-      errs() << ((FUs & (1 << j)) ? '1' : '0');
-    errs() << '\n';
+      dbgs() << ((FUs & (1 << j)) ? '1' : '0');
+    dbgs() << '\n';
   }
 }
 
@@ -102,8 +102,8 @@ ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU
       unsigned index = getFutureIndex(cycle + i);
       unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
       if (!freeUnits) {
-        DEBUG(errs() << "*** Hazard in cycle " << (cycle + i) << ", ");
-        DEBUG(errs() << "SU(" << SU->NodeNum << "): ");
+        DEBUG(dbgs() << "*** Hazard in cycle " << (cycle + i) << ", ");
+        DEBUG(dbgs() << "SU(" << SU->NodeNum << "): ");
         DEBUG(SU->getInstr()->dump());
         return Hazard;
       }
