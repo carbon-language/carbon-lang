@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -299,7 +300,7 @@ MachineFunction::extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
 }
 
 void MachineFunction::dump() const {
-  print(errs());
+  print(dbgs());
 }
 
 void MachineFunction::print(raw_ostream &OS) const {
@@ -519,7 +520,7 @@ void MachineFrameInfo::print(const MachineFunction &MF, raw_ostream &OS) const{
 }
 
 void MachineFrameInfo::dump(const MachineFunction &MF) const {
-  print(MF, errs());
+  print(MF, dbgs());
 }
 
 //===----------------------------------------------------------------------===//
@@ -579,7 +580,7 @@ void MachineJumpTableInfo::print(raw_ostream &OS) const {
   OS << '\n';
 }
 
-void MachineJumpTableInfo::dump() const { print(errs()); }
+void MachineJumpTableInfo::dump() const { print(dbgs()); }
 
 
 //===----------------------------------------------------------------------===//
@@ -702,4 +703,4 @@ void MachineConstantPool::print(raw_ostream &OS) const {
   }
 }
 
-void MachineConstantPool::dump() const { print(errs()); }
+void MachineConstantPool::dump() const { print(dbgs()); }
