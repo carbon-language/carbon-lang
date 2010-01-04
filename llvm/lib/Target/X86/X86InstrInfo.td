@@ -160,15 +160,21 @@ def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
                         [SDNPHasChain,  SDNPOptInFlag]>;
 
-def X86add_flag  : SDNode<"X86ISD::ADD",  SDTBinaryArithWithFlags>;
+def X86add_flag  : SDNode<"X86ISD::ADD",  SDTBinaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
 def X86sub_flag  : SDNode<"X86ISD::SUB",  SDTBinaryArithWithFlags>;
-def X86smul_flag : SDNode<"X86ISD::SMUL", SDTBinaryArithWithFlags>;
-def X86umul_flag : SDNode<"X86ISD::UMUL", SDTUnaryArithWithFlags>;
+def X86smul_flag : SDNode<"X86ISD::SMUL", SDTBinaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
+def X86umul_flag : SDNode<"X86ISD::UMUL", SDTUnaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
 def X86inc_flag  : SDNode<"X86ISD::INC",  SDTUnaryArithWithFlags>;
 def X86dec_flag  : SDNode<"X86ISD::DEC",  SDTUnaryArithWithFlags>;
-def X86or_flag   : SDNode<"X86ISD::OR",   SDTBinaryArithWithFlags>;
-def X86xor_flag  : SDNode<"X86ISD::XOR",  SDTBinaryArithWithFlags>;
-def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags>;
+def X86or_flag   : SDNode<"X86ISD::OR",   SDTBinaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
+def X86xor_flag  : SDNode<"X86ISD::XOR",  SDTBinaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
+def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
+                          [SDNPCommutative, SDNPAssociative]>;
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
