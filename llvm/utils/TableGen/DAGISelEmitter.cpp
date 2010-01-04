@@ -1241,12 +1241,7 @@ public:
         ;
       } else if (InputHasChain && !NodeHasChain) {
         // One of the inner node produces a chain.
-        if (NodeHasOutFlag) {
-          ReplaceFroms.push_back("SDValue(N.getNode(), " +
-                                 utostr(NumPatResults+1) +
-                                 ")");
-          ReplaceTos.push_back("SDValue(ResNode, N.getResNo()-1)");
-        }
+        assert(!NodeHasOutFlag && "Node has flag but not chain!");
         ReplaceFroms.push_back("SDValue(N.getNode(), " +
                                utostr(NumPatResults) + ")");
         ReplaceTos.push_back(ChainName);
