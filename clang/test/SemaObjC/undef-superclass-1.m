@@ -31,3 +31,5 @@
 @implementation RecursiveClass
 @end
 
+@implementation iNTF3 // expected-warning{{cannot find interface declaration for 'iNTF3'; did you mean 'INTF3'?}}
+@end

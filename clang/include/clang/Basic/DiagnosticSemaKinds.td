@@ -2575,6 +2575,8 @@ def err_property_not_found_suggest : Error<
   "property %0 not found on object of type %1; did you mean %2?">;
 def err_undef_interface_suggest : Error<
   "cannot find interface declaration for %0; did you mean %1?">;
+def warn_undef_interface_suggest : Warning<
+  "cannot find interface declaration for %0; did you mean %1?">;
 def err_undef_superclass_suggest : Error<
   "cannot find interface declaration for %0, superclass of %1; did you mean "
   "%2?">;

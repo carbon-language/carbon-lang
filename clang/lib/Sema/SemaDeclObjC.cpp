@@ -689,12 +689,26 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-  }  else {
-    // Is there an interface declaration of this class; if not, warn!
-    IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-    if (!IDecl || IDecl->isForwardDecl()) {
+  } else if ((IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))) {
+    // If this is a forward declaration of an interface, warn.
+    if (IDecl->isForwardDecl()) {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
       IDecl = 0;
+    }
+  } else {
+    // We did not find anything with the name ClassName; try to correct for 
+    // typos in the class name.
+    LookupResult R(*this, ClassName, ClassLoc, LookupOrdinaryName);
+    if (CorrectTypo(R, TUScope, 0) &&
+        (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
+      // Suggest the (potentially) correct interface name. However, don't
+      // provide a code-modification hint or use the typo name for recovery,
+      // because this is just a warning. The program may actually be correct.
+      Diag(ClassLoc, diag::warn_undef_interface_suggest)
+        << ClassName << R.getLookupName();
+      IDecl = 0;
+    } else {
+      Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
     }
   }
 
