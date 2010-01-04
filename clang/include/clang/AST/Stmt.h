@@ -1116,6 +1116,7 @@ class AsmStmt : public Stmt {
 
   bool IsSimple;
   bool IsVolatile;
+  bool MSAsm;
 
   unsigned NumOutputs;
   unsigned NumInputs;
@@ -1126,7 +1127,7 @@ class AsmStmt : public Stmt {
 
   llvm::SmallVector<StringLiteral*, 4> Clobbers;
 public:
-  AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
+  AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile, bool msasm,
           unsigned numoutputs, unsigned numinputs,
           std::string *names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
@@ -1144,6 +1145,8 @@ public:
   void setVolatile(bool V) { IsVolatile = V; }
   bool isSimple() const { return IsSimple; }
   void setSimple(bool V) { IsSimple = false; }
+  bool isMSAsm() const { return MSAsm; }
+  void setMSAsm(bool V) { MSAsm = V; }
 
   //===--- Asm String Analysis ---===//
 

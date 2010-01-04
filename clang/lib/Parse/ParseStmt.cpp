@@ -1182,7 +1182,7 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   return Actions.ActOnAsmStmt(Tok.getLocation(), true, true, 0, 0, Names.data(),
                               move_arg(Constraints), move_arg(Exprs),
                               move(AsmString), move_arg(Clobbers),
-                              Tok.getLocation());
+                              Tok.getLocation(), true);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.

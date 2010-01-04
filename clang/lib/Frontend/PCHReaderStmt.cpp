@@ -304,6 +304,7 @@ unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
   S->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   S->setVolatile(Record[Idx++]);
   S->setSimple(Record[Idx++]);
+  S->setMSAsm(Record[Idx++]);
 
   unsigned StackIdx
     = StmtStack.size() - (NumOutputs*2 + NumInputs*2 + NumClobbers + 1);

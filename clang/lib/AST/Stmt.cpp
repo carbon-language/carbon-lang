@@ -337,12 +337,12 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
 //===----------------------------------------------------------------------===//
 
 AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
-                 unsigned numoutputs, unsigned numinputs,
+                 bool msasm, unsigned numoutputs, unsigned numinputs,
                  std::string *names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , IsSimple(issimple), IsVolatile(isvolatile)
+  , IsSimple(issimple), IsVolatile(isvolatile), MSAsm(msasm)
   , NumOutputs(numoutputs), NumInputs(numinputs) {
   for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
     Names.push_back(names[i]);

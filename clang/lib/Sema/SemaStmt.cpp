@@ -1157,7 +1157,8 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                           MultiExprArg exprs,
                                           ExprArg asmString,
                                           MultiExprArg clobbers,
-                                          SourceLocation RParenLoc) {
+                                          SourceLocation RParenLoc,
+                                          bool MSAsm) {
   unsigned NumClobbers = clobbers.size();
   StringLiteral **Constraints =
     reinterpret_cast<StringLiteral**>(constraints.get());
@@ -1261,9 +1262,9 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   asmString.release();
   clobbers.release();
   AsmStmt *NS =
-    new (Context) AsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs, NumInputs,
-                          Names, Constraints, Exprs, AsmString, NumClobbers,
-                          Clobbers, RParenLoc);
+    new (Context) AsmStmt(AsmLoc, IsSimple, IsVolatile, MSAsm, NumOutputs,
+                          NumInputs, Names, Constraints, Exprs, AsmString,
+                          NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
   llvm::SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
