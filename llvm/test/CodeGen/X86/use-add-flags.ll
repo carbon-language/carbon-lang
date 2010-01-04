@@ -42,7 +42,7 @@ false:
 
 ; CHECK: qux:
 ;      CHECK: andl    $16, %edi
-; CHECK-NEXT: jne     .LBB3_2
+; CHECK-NEXT: jne
 
 define void @qux(i32 %x) nounwind {
   %y = and i32 %x, 16
