@@ -229,14 +229,14 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  DEBUG(errs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
+  DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
                << MF.getFunction()->getName() << "\'");
 
   if (FnNum < IfCvtFnStart || (IfCvtFnStop != -1 && FnNum > IfCvtFnStop)) {
-    DEBUG(errs() << " skipped\n");
+    DEBUG(dbgs() << " skipped\n");
     return false;
   }
-  DEBUG(errs() << "\n");
+  DEBUG(dbgs() << "\n");
 
   MF.RenumberBlocks();
   BBAnalysis.resize(MF.getNumBlockIDs());
@@ -281,13 +281,13 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       case ICSimpleFalse: {
         bool isFalse = Kind == ICSimpleFalse;
         if ((isFalse && DisableSimpleF) || (!isFalse && DisableSimple)) break;
-        DEBUG(errs() << "Ifcvt (Simple" << (Kind == ICSimpleFalse ? " false" :"")
+        DEBUG(dbgs() << "Ifcvt (Simple" << (Kind == ICSimpleFalse ? " false" :"")
                      << "): BB#" << BBI.BB->getNumber() << " ("
                      << ((Kind == ICSimpleFalse)
                          ? BBI.FalseBB->getNumber()
                          : BBI.TrueBB->getNumber()) << ") ");
         RetVal = IfConvertSimple(BBI, Kind);
-        DEBUG(errs() << (RetVal ? "succeeded!" : "failed!") << "\n");
+        DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) {
           if (isFalse) NumSimpleFalse++;
           else         NumSimple++;
@@ -304,16 +304,16 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         if (DisableTriangleR && !isFalse && isRev) break;
         if (DisableTriangleF && isFalse && !isRev) break;
         if (DisableTriangleFR && isFalse && isRev) break;
-        DEBUG(errs() << "Ifcvt (Triangle");
+        DEBUG(dbgs() << "Ifcvt (Triangle");
         if (isFalse)
-          DEBUG(errs() << " false");
+          DEBUG(dbgs() << " false");
         if (isRev)
-          DEBUG(errs() << " rev");
-        DEBUG(errs() << "): BB#" << BBI.BB->getNumber() << " (T:"
+          DEBUG(dbgs() << " rev");
+        DEBUG(dbgs() << "): BB#" << BBI.BB->getNumber() << " (T:"
                      << BBI.TrueBB->getNumber() << ",F:"
                      << BBI.FalseBB->getNumber() << ") ");
         RetVal = IfConvertTriangle(BBI, Kind);
-        DEBUG(errs() << (RetVal ? "succeeded!" : "failed!") << "\n");
+        DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) {
           if (isFalse) {
             if (isRev) NumTriangleFRev++;
@@ -327,11 +327,11 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       }
       case ICDiamond: {
         if (DisableDiamond) break;
-        DEBUG(errs() << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
+        DEBUG(dbgs() << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
                      << BBI.TrueBB->getNumber() << ",F:"
                      << BBI.FalseBB->getNumber() << ") ");
         RetVal = IfConvertDiamond(BBI, Kind, NumDups, NumDups2);
-        DEBUG(errs() << (RetVal ? "succeeded!" : "failed!") << "\n");
+        DEBUG(dbgs() << (RetVal ? "succeeded!" : "failed!") << "\n");
         if (RetVal) NumDiamonds++;
         break;
       }
@@ -1141,7 +1141,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
       continue;
     if (!TII->PredicateInstruction(I, Cond)) {
 #ifndef NDEBUG
-      errs() << "Unable to predicate " << *I << "!\n";
+      dbgs() << "Unable to predicate " << *I << "!\n";
 #endif
       llvm_unreachable(0);
     }
@@ -1177,7 +1177,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     if (!isPredicated)
       if (!TII->PredicateInstruction(MI, Cond)) {
 #ifndef NDEBUG
-        errs() << "Unable to predicate " << *I << "!\n";
+        dbgs() << "Unable to predicate " << *I << "!\n";
 #endif
         llvm_unreachable(0);
       }
