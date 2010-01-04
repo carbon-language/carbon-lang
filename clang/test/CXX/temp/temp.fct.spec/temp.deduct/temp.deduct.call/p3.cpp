@@ -22,12 +22,14 @@ void test_f1(int i, const int ci, volatile int vi) {
 
 template<typename T, unsigned N> struct B { };
 template<typename T, unsigned N> B<T, N> g0(T (&array)[N]);
+template<typename T, unsigned N> B<T, N> g0b(const T (&array)[N]);
 
 void test_g0() {
   int array0[5];
   B<int, 5> b0 = g0(array0);
   const int array1[] = { 1, 2, 3};
   B<const int, 3> b1 = g0(array1);
+  B<int, 3> b2 = g0b(array1);
 }
 
 template<typename T> B<T, 0> g1(const A<T>&);

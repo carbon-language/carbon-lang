@@ -542,13 +542,13 @@ DeduceTemplateArguments(ASTContext &Context,
 
     //     type [i]
     case Type::DependentSizedArray: {
-      const ArrayType *ArrayArg = dyn_cast<ArrayType>(Arg);
+      const ArrayType *ArrayArg = Context.getAsArrayType(Arg);
       if (!ArrayArg)
         return Sema::TDK_NonDeducedMismatch;
 
       // Check the element type of the arrays
       const DependentSizedArrayType *DependentArrayParm
-        = cast<DependentSizedArrayType>(Param);
+        = Context.getAsDependentSizedArrayType(Param);
       if (Sema::TemplateDeductionResult Result
             = DeduceTemplateArguments(Context, TemplateParams,
                                       DependentArrayParm->getElementType(),

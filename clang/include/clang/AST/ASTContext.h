@@ -996,7 +996,10 @@ public:
   const IncompleteArrayType *getAsIncompleteArrayType(QualType T) {
     return dyn_cast_or_null<IncompleteArrayType>(getAsArrayType(T));
   }
-
+  const DependentSizedArrayType *getAsDependentSizedArrayType(QualType T) {
+    return dyn_cast_or_null<DependentSizedArrayType>(getAsArrayType(T));
+  }
+  
   /// getBaseElementType - Returns the innermost element type of an array type.
   /// For example, will return "int" for int[m][n]
   QualType getBaseElementType(const ArrayType *VAT);
