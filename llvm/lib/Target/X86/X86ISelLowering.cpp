@@ -5612,7 +5612,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
       for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
            UE = Op.getNode()->use_end(); UI != UE; ++UI)
         if (UI->getOpcode() != ISD::BRCOND &&
-            UI->getOpcode() != ISD::SELECT &&
+            (UI->getOpcode() != ISD::SELECT || UI.getOperandNo() != 0) &&
             UI->getOpcode() != ISD::SETCC) {
           NonFlagUse = true;
           break;
