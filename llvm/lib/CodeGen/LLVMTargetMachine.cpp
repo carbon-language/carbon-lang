@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
@@ -246,7 +247,7 @@ static void printAndVerify(PassManagerBase &PM,
                            const char *Banner,
                            bool allowDoubleDefs = false) {
   if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(errs(), Banner));
+    PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 
   if (VerifyMachineCode)
     PM.add(createMachineVerifierPass(allowDoubleDefs));
@@ -269,7 +270,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None && !DisableLSR) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
-      PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &errs()));
+      PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
   }
 
   // Turn exception handling constructs into something the code generators can
@@ -302,7 +303,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (PrintISelInput)
     PM.add(createPrintFunctionPass("\n\n"
                                    "*** Final LLVM Code input to ISel ***\n",
-                                   &errs()));
+                                   &dbgs()));
 
   // Standard Lower-Level Passes.
 
@@ -391,7 +392,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   PM.add(createGCMachineCodeAnalysisPass());
 
   if (PrintGCInfo)
-    PM.add(createGCInfoPrinter(errs()));
+    PM.add(createGCInfoPrinter(dbgs()));
 
   if (OptLevel != CodeGenOpt::None && !DisableCodePlace) {
     PM.add(createCodePlacementOptPass());
