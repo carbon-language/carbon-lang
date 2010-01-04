@@ -1393,7 +1393,16 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
     I->second.push_back(std::make_pair(StartID, ScopeDIE));
 
   StringPool.insert(InlinedSP.getName());
-  StringPool.insert(InlinedSP.getLinkageName());
+  StringRef LinkageName = InlinedSP.getLinkageName();
+  if (!LinkageName.empty()) {
+    // Skip special LLVM prefix that is used to inform the asm printer to not
+    // emit usual symbol prefix before the symbol name. This happens for
+    // Objective-C symbol names and symbol whose name is replaced using GCC's
+    // __asm__ attribute.
+    if (LinkageName[0] == 1)
+      LinkageName = LinkageName.substr(1);
+  }
+  StringPool.insert(LinkageName);
   DILocation DL(Scope->getInlinedAt());
   addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, ModuleCU->getID());
   addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
@@ -2918,8 +2927,6 @@ void DwarfDebug::emitDebugInlineInfo() {
   for (SmallVector<MDNode *, 4>::iterator I = InlinedSPNodes.begin(),
          E = InlinedSPNodes.end(); I != E; ++I) {
 
-//  for (ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
-    //        I = InlineInfo.begin(), E = InlineInfo.end(); I != E; ++I) {
     MDNode *Node = *I;
     ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
       = InlineInfo.find(Node);
@@ -2937,13 +2944,11 @@ void DwarfDebug::emitDebugInlineInfo() {
       // __asm__ attribute.
       if (LName[0] == 1)
         LName = LName.substr(1);
-//      Asm->EmitString(LName);
       EmitSectionOffset("string", "section_str",
                         StringPool.idFor(LName), false, true);
 
     }
     Asm->EOL("MIPS linkage name");
-//    Asm->EmitString(Name);
     EmitSectionOffset("string", "section_str",
                       StringPool.idFor(Name), false, true);
     Asm->EOL("Function name");
