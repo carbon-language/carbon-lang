@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
@@ -1094,7 +1095,7 @@ unsigned MachineInstr::isConstantValuePHI() const {
 }
 
 void MachineInstr::dump() const {
-  errs() << "  " << *this;
+  dbgs() << "  " << *this;
 }
 
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
