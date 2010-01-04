@@ -80,7 +80,7 @@ public:
   /// specified pointer and character.  Ptr is required to be some pointer type,
   /// and the return value has 'i8*' type.
   Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B);
-  
+
   /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This
   /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
   Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len,
@@ -101,10 +101,11 @@ public:
   /// EmitMemSet - Emit a call to the memset function
   Value *EmitMemSet(Value *Dst, Value *Val, Value *Len, IRBuilder<> &B);
 
-  /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
-  /// 'floor').  This function is known to take a single of type matching 'Op'
-  /// and returns one value with the same type.  If 'Op' is a long double, 'l'
-  /// is added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
+  /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name'
+  /// (e.g.  'floor').  This function is known to take a single of type matching
+  /// 'Op' and returns one value with the same type.  If 'Op' is a long double,
+  /// 'l' is added as the suffix of name, if 'Op' is a float, we add a 'f'
+  /// suffix.
   Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B,
                               const AttrListPtr &Attrs);
 
@@ -163,7 +164,7 @@ Value *LibCallOptimization::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B) {
   Module *M = Caller->getParent();
   AttributeWithIndex AWI =
     AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
-  
+
   const Type *I8Ptr = Type::getInt8PtrTy(*Context);
   const Type *I32Ty = Type::getInt32Ty(*Context);
   Constant *StrChr = M->getOrInsertFunction("strchr", AttrListPtr::get(&AWI, 1),
@@ -678,7 +679,8 @@ struct StrChrOpt : public LibCallOptimization {
 
       uint64_t Len = GetStringLength(SrcStr);
       if (Len == 0 ||
-          FT->getParamType(1) != Type::getInt32Ty(*Context)) // memchr needs i32.
+          FT->getParamType(1) != Type::getInt32Ty(*Context)) // memchr needs
+                                                             // i32.
         return 0;
 
       return EmitMemChr(SrcStr, CI->getOperand(2), // include nul.
@@ -949,20 +951,20 @@ struct StrStrOpt : public LibCallOptimization {
     // fold strstr(x, x) -> x.
     if (CI->getOperand(1) == CI->getOperand(2))
       return B.CreateBitCast(CI->getOperand(1), CI->getType());
-    
+
     // See if either input string is a constant string.
     std::string SearchStr, ToFindStr;
     bool HasStr1 = GetConstantStringInfo(CI->getOperand(1), SearchStr);
     bool HasStr2 = GetConstantStringInfo(CI->getOperand(2), ToFindStr);
-    
+
     // fold strstr(x, "") -> x.
     if (HasStr2 && ToFindStr.empty())
       return B.CreateBitCast(CI->getOperand(1), CI->getType());
-    
+
     // If both strings are known, constant fold it.
     if (HasStr1 && HasStr2) {
       std::string::size_type Offset = SearchStr.find(ToFindStr);
-      
+
       if (Offset == std::string::npos) // strstr("foo", "bar") -> null
         return Constant::getNullValue(CI->getType());
 
@@ -971,7 +973,7 @@ struct StrStrOpt : public LibCallOptimization {
       Result = B.CreateConstInBoundsGEP1_64(Result, Offset, "strstr");
       return B.CreateBitCast(Result, CI->getType());
     }
-    
+
     // fold strstr(x, "y") -> strchr(x, 'y').
     if (HasStr2 && ToFindStr.size() == 1)
       return B.CreateBitCast(EmitStrChr(CI->getOperand(1), ToFindStr[0], B),
@@ -979,7 +981,7 @@ struct StrStrOpt : public LibCallOptimization {
     return 0;
   }
 };
-  
+
 
 //===---------------------------------------===//
 // 'memcmp' Optimizations
@@ -1558,7 +1560,8 @@ struct SPrintFOpt : public LibCallOptimization {
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), // Copy the nul byte.
-          ConstantInt::get(TD->getIntPtrType(*Context), FormatStr.size()+1),1,B);
+          ConstantInt::get
+                 (TD->getIntPtrType(*Context), FormatStr.size()+1),1,B);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
 
@@ -1688,8 +1691,9 @@ struct FPrintFOpt : public LibCallOptimization {
       // These optimizations require TargetData.
       if (!TD) return 0;
 
-      EmitFWrite(CI->getOperand(2), ConstantInt::get(TD->getIntPtrType(*Context),
-                                                     FormatStr.size()),
+      EmitFWrite(CI->getOperand(2),
+                 ConstantInt::get(TD->getIntPtrType(*Context),
+                                  FormatStr.size()),
                  CI->getOperand(1), B);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
