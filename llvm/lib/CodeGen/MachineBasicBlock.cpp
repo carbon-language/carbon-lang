@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Assembly/Writer.h"
@@ -158,7 +159,7 @@ bool MachineBasicBlock::isOnlyReachableByFallthrough() const {
 }
 
 void MachineBasicBlock::dump() const {
-  print(errs());
+  print(dbgs());
 }
 
 static inline void OutputReg(raw_ostream &os, unsigned RegNo,
