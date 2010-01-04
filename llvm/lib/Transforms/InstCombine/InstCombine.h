@@ -74,11 +74,8 @@ public:
   
   bool DoOneIteration(Function &F, unsigned ItNum);
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addPreservedID(LCSSAID);
-    AU.setPreservesCFG();
-  }
-
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+                                 
   TargetData *getTargetData() const { return TD; }
 
   // Visitation implementation - Implement instruction combining for different
