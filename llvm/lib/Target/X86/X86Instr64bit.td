@@ -2098,48 +2098,13 @@ def : Pat<(sra GR64:$src1, (and CL:$amt, 63)),
 def : Pat<(store (sra (loadi64 addr:$dst), (and CL:$amt, 63)), addr:$dst),
           (SAR64mCL addr:$dst)>;
 
-// (or (x >> c) | (y << (64 - c))) ==> (shrd64 x, y, c)
-def : Pat<(or (srl GR64:$src1, CL:$amt),
-              (shl GR64:$src2, (sub 64, CL:$amt))),
-          (SHRD64rrCL GR64:$src1, GR64:$src2)>;
-
-def : Pat<(store (or (srl (loadi64 addr:$dst), CL:$amt),
-                     (shl GR64:$src2, (sub 64, CL:$amt))), addr:$dst),
-          (SHRD64mrCL addr:$dst, GR64:$src2)>;
-
-def : Pat<(or (srl GR64:$src1, (i8 (trunc RCX:$amt))),
-              (shl GR64:$src2, (i8 (trunc (sub 64, RCX:$amt))))),
-          (SHRD64rrCL GR64:$src1, GR64:$src2)>;
-
-def : Pat<(store (or (srl (loadi64 addr:$dst), (i8 (trunc RCX:$amt))),
-                     (shl GR64:$src2, (i8 (trunc (sub 64, RCX:$amt))))),
-                 addr:$dst),
-          (SHRD64mrCL addr:$dst, GR64:$src2)>;
-
+// Double shift patterns
 def : Pat<(shrd GR64:$src1, (i8 imm:$amt1), GR64:$src2, (i8 imm:$amt2)),
           (SHRD64rri8 GR64:$src1, GR64:$src2, (i8 imm:$amt1))>;
 
 def : Pat<(store (shrd (loadi64 addr:$dst), (i8 imm:$amt1),
                        GR64:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHRD64mri8 addr:$dst, GR64:$src2, (i8 imm:$amt1))>;
-
-// (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
-def : Pat<(or (shl GR64:$src1, CL:$amt),
-              (srl GR64:$src2, (sub 64, CL:$amt))),
-          (SHLD64rrCL GR64:$src1, GR64:$src2)>;
-
-def : Pat<(store (or (shl (loadi64 addr:$dst), CL:$amt),
-                     (srl GR64:$src2, (sub 64, CL:$amt))), addr:$dst),
-          (SHLD64mrCL addr:$dst, GR64:$src2)>;
-
-def : Pat<(or (shl GR64:$src1, (i8 (trunc RCX:$amt))),
-              (srl GR64:$src2, (i8 (trunc (sub 64, RCX:$amt))))),
-          (SHLD64rrCL GR64:$src1, GR64:$src2)>;
-
-def : Pat<(store (or (shl (loadi64 addr:$dst), (i8 (trunc RCX:$amt))),
-                     (srl GR64:$src2, (i8 (trunc (sub 64, RCX:$amt))))),
-                 addr:$dst),
-          (SHLD64mrCL addr:$dst, GR64:$src2)>;
 
 def : Pat<(shld GR64:$src1, (i8 imm:$amt1), GR64:$src2, (i8 imm:$amt2)),
           (SHLD64rri8 GR64:$src1, GR64:$src2, (i8 imm:$amt1))>;

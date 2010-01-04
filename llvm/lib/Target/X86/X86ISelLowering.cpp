@@ -978,6 +978,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SHL);
   setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
+  setTargetDAGCombine(ISD::OR);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::MEMBARRIER);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
@@ -9108,6 +9109,64 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
+                                const X86Subtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+  if (VT != MVT::i64 || !Subtarget->is64Bit())
+    return SDValue();
+
+  // fold (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
+    std::swap(N0, N1);
+  if (N0.getOpcode() != ISD::SHL || N1.getOpcode() != ISD::SRL)
+    return SDValue();
+
+  SDValue ShAmt0 = N0.getOperand(1);
+  if (ShAmt0.getValueType() != MVT::i8)
+    return SDValue();
+  SDValue ShAmt1 = N1.getOperand(1);
+  if (ShAmt1.getValueType() != MVT::i8)
+    return SDValue();
+  if (ShAmt0.getOpcode() == ISD::TRUNCATE)
+    ShAmt0 = ShAmt0.getOperand(0);
+  if (ShAmt1.getOpcode() == ISD::TRUNCATE)
+    ShAmt1 = ShAmt1.getOperand(0);
+
+  DebugLoc DL = N->getDebugLoc();
+  unsigned Opc = X86ISD::SHLD;
+  SDValue Op0 = N0.getOperand(0);
+  SDValue Op1 = N1.getOperand(0);
+  if (ShAmt0.getOpcode() == ISD::SUB) {
+    Opc = X86ISD::SHRD;
+    std::swap(Op0, Op1);
+    std::swap(ShAmt0, ShAmt1);
+  }
+
+  if (ShAmt1.getOpcode() == ISD::SUB) {
+    SDValue Sum = ShAmt1.getOperand(0);
+    if (ConstantSDNode *SumC = dyn_cast<ConstantSDNode>(Sum)) {
+      if (SumC->getSExtValue() == 64 &&
+          ShAmt1.getOperand(1) == ShAmt0)
+        return DAG.getNode(Opc, DL, VT,
+                           Op0, Op1,
+                           DAG.getNode(ISD::TRUNCATE, DL,
+                                       MVT::i8, ShAmt0));
+    }
+  } else if (ConstantSDNode *ShAmt1C = dyn_cast<ConstantSDNode>(ShAmt1)) {
+    ConstantSDNode *ShAmt0C = dyn_cast<ConstantSDNode>(ShAmt0);
+    if (ShAmt0C &&
+        ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue() == 64)
+      return DAG.getNode(Opc, DL, VT,
+                         N0.getOperand(0), N1.getOperand(0),
+                         DAG.getNode(ISD::TRUNCATE, DL,
+                                       MVT::i8, ShAmt0));
+  }
+
+  return SDValue();
+}
+
 /// PerformSTORECombine - Do target-specific dag combines on STORE nodes.
 static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                    const X86Subtarget *Subtarget) {
@@ -9370,6 +9429,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
+  case ISD::OR:             return PerformOrCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
