@@ -1,4 +1,4 @@
-//===-- llvm/Attributes.h - Container for Attributes ---*---------- C++ -*-===//
+//===-- llvm/Attributes.h - Container for Attributes ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,9 +27,9 @@ typedef unsigned Attributes;
 
 namespace Attribute {
 
-/// Function parameters and results can have attributes to indicate how they 
-/// should be treated by optimizations and code generation. This enumeration 
-/// lists the attributes that can be associated with parameters, function 
+/// Function parameters and results can have attributes to indicate how they
+/// should be treated by optimizations and code generation. This enumeration
+/// lists the attributes that can be associated with parameters, function
 /// results or the function itself.
 /// @brief Function attributes.
 
@@ -45,7 +45,7 @@ const Attributes ByVal     = 1<<7;  ///< Pass structure by value
 const Attributes Nest      = 1<<8;  ///< Nested function static chain
 const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
 const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
-const Attributes NoInline        = 1<<11; ///< inline=never 
+const Attributes NoInline        = 1<<11; ///< inline=never
 const Attributes AlwaysInline    = 1<<12; ///< inline=always
 const Attributes OptimizeForSize = 1<<13; ///< opt_size
 const Attributes StackProtect    = 1<<14; ///< Stack protection.
@@ -58,14 +58,15 @@ const Attributes NoRedZone = 1<<22; /// disable redzone
 const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
                                           /// instructions.
 const Attributes Naked           = 1<<24; ///< Naked function
-const Attributes InlineHint      = 1<<25; ///< source said inlining was desirable
+const Attributes InlineHint      = 1<<25; ///< source said inlining was
+                                          ///desirable
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 
 /// @brief Attributes that may be applied to the function itself.  These cannot
 /// be used on return values or function parameters.
-const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly | 
+const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
   NoRedZone | NoImplicitFloat | Naked | InlineHint;
 
@@ -100,26 +101,26 @@ inline unsigned getAlignmentFromAttrs(Attributes A) {
   Attributes Align = A & Attribute::Alignment;
   if (Align == 0)
     return 0;
-  
+
   return 1U << ((Align >> 16) - 1);
 }
-  
-  
+
+
 /// The set of Attributes set in Attributes is converted to a
 /// string of equivalent mnemonics. This is, presumably, for writing out
-/// the mnemonics for the assembly writer. 
+/// the mnemonics for the assembly writer.
 /// @brief Convert attribute bits to text
 std::string getAsString(Attributes Attrs);
 } // end namespace Attribute
 
 /// This is just a pair of values to associate a set of attributes
-/// with an index. 
+/// with an index.
 struct AttributeWithIndex {
   Attributes Attrs; ///< The attributes that are set, or'd together.
   unsigned Index; ///< Index of the parameter for which the attributes apply.
                   ///< Index 0 is used for return value attributes.
                   ///< Index ~0U is used for function attributes.
-  
+
   static AttributeWithIndex get(unsigned Idx, Attributes Attrs) {
     AttributeWithIndex P;
     P.Index = Idx;
@@ -127,14 +128,14 @@ struct AttributeWithIndex {
     return P;
   }
 };
-  
+
 //===----------------------------------------------------------------------===//
 // AttrListPtr Smart Pointer
 //===----------------------------------------------------------------------===//
 
 class AttributeListImpl;
-  
-/// AttrListPtr - This class manages the ref count for the opaque 
+
+/// AttrListPtr - This class manages the ref count for the opaque
 /// AttributeListImpl object and provides accessors for it.
 class AttrListPtr {
   /// AttrList - The attributes that we are managing.  This can be null
@@ -145,14 +146,14 @@ public:
   AttrListPtr(const AttrListPtr &P);
   const AttrListPtr &operator=(const AttrListPtr &RHS);
   ~AttrListPtr();
-  
+
   //===--------------------------------------------------------------------===//
   // Attribute List Construction and Mutation
   //===--------------------------------------------------------------------===//
-  
+
   /// get - Return a Attributes list with the specified parameter in it.
   static AttrListPtr get(const AttributeWithIndex *Attr, unsigned NumAttrs);
-  
+
   /// get - Return a Attribute list with the parameters specified by the
   /// consecutive random access iterator range.
   template <typename Iter>
@@ -165,24 +166,24 @@ public:
   /// attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
   AttrListPtr addAttr(unsigned Idx, Attributes Attrs) const;
-  
+
   /// removeAttr - Remove the specified attribute at the specified index from
   /// this attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
   AttrListPtr removeAttr(unsigned Idx, Attributes Attrs) const;
-  
+
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors
   //===--------------------------------------------------------------------===//
   /// getParamAttributes - The attributes for the specified index are
-  /// returned. 
+  /// returned.
   Attributes getParamAttributes(unsigned Idx) const {
     assert (Idx && Idx != ~0U && "Invalid parameter index!");
     return getAttributes(Idx);
   }
 
   /// getRetAttributes - The attributes for the ret value are
-  /// returned. 
+  /// returned.
   Attributes getRetAttributes() const {
     return getAttributes(0);
   }
@@ -191,58 +192,60 @@ public:
   Attributes getFnAttributes() const {
     return getAttributes(~0U);
   }
-  
+
   /// paramHasAttr - Return true if the specified parameter index has the
   /// specified attribute set.
   bool paramHasAttr(unsigned Idx, Attributes Attr) const {
     return getAttributes(Idx) & Attr;
   }
-  
+
   /// getParamAlignment - Return the alignment for the specified function
   /// parameter.
   unsigned getParamAlignment(unsigned Idx) const {
     return Attribute::getAlignmentFromAttrs(getAttributes(Idx));
   }
-  
+
   /// hasAttrSomewhere - Return true if the specified attribute is set for at
   /// least one parameter or for the return value.
   bool hasAttrSomewhere(Attributes Attr) const;
 
   /// operator==/!= - Provide equality predicates.
-  bool operator==(const AttrListPtr &RHS) const { return AttrList == RHS.AttrList; }
-  bool operator!=(const AttrListPtr &RHS) const { return AttrList != RHS.AttrList; }
-  
+  bool operator==(const AttrListPtr &RHS) const
+  { return AttrList == RHS.AttrList; }
+  bool operator!=(const AttrListPtr &RHS) const
+  { return AttrList != RHS.AttrList; }
+
   void dump() const;
 
   //===--------------------------------------------------------------------===//
   // Attribute List Introspection
   //===--------------------------------------------------------------------===//
-  
+
   /// getRawPointer - Return a raw pointer that uniquely identifies this
-  /// attribute list. 
+  /// attribute list.
   void *getRawPointer() const {
     return AttrList;
   }
-  
+
   // Attributes are stored as a dense set of slots, where there is one
   // slot for each argument that has an attribute.  This allows walking over the
   // dense set instead of walking the sparse list of attributes.
-  
+
   /// isEmpty - Return true if there are no attributes.
   ///
   bool isEmpty() const {
     return AttrList == 0;
   }
-  
-  /// getNumSlots - Return the number of slots used in this attribute list. 
+
+  /// getNumSlots - Return the number of slots used in this attribute list.
   /// This is the number of arguments that have an attribute set on them
   /// (including the function itself).
   unsigned getNumSlots() const;
-  
+
   /// getSlot - Return the AttributeWithIndex at the specified slot.  This
   /// holds a index number plus a set of attributes.
   const AttributeWithIndex &getSlot(unsigned Slot) const;
-  
+
 private:
   explicit AttrListPtr(AttributeListImpl *L);
 
