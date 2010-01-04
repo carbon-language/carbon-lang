@@ -33,6 +33,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -634,7 +635,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
       }
       case Instruction::Add:
       default:
-        errs() << "ConstantExpr not handled as global var init: " << *CE <<"\n";
+        dbgs() << "ConstantExpr not handled as global var init: " << *CE <<"\n";
         llvm_unreachable(0);
       }
     } else if (PC->getType()->isSingleValueType()) {
@@ -732,7 +733,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
         WorkList.push_back(CPair(CPS->getOperand(i),
                                  PA+SL->getElementOffset(i)));
     } else {
-      errs() << "Bad Type: " << *PC->getType() << "\n";
+      dbgs() << "Bad Type: " << *PC->getType() << "\n";
       llvm_unreachable("Unknown constant type to initialize memory with!");
     }
   }
