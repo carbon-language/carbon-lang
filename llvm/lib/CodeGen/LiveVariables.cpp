@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -59,17 +60,17 @@ LiveVariables::VarInfo::findKill(const MachineBasicBlock *MBB) const {
 }
 
 void LiveVariables::VarInfo::dump() const {
-  errs() << "  Alive in blocks: ";
+  dbgs() << "  Alive in blocks: ";
   for (SparseBitVector<>::iterator I = AliveBlocks.begin(),
            E = AliveBlocks.end(); I != E; ++I)
-    errs() << *I << ", ";
-  errs() << "\n  Killed by:";
+    dbgs() << *I << ", ";
+  dbgs() << "\n  Killed by:";
   if (Kills.empty())
-    errs() << " No instructions.\n";
+    dbgs() << " No instructions.\n";
   else {
     for (unsigned i = 0, e = Kills.size(); i != e; ++i)
-      errs() << "\n    #" << i << ": " << *Kills[i];
-    errs() << "\n";
+      dbgs() << "\n    #" << i << ": " << *Kills[i];
+    dbgs() << "\n";
   }
 }
 
