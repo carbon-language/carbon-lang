@@ -325,12 +325,6 @@ bool FastISel::SelectCall(User *I) {
   unsigned IID = F->getIntrinsicID();
   switch (IID) {
   default: break;
-  case Intrinsic::dbg_stoppoint: 
-  case Intrinsic::dbg_region_start: 
-  case Intrinsic::dbg_region_end: 
-  case Intrinsic::dbg_func_start:
-    // FIXME - Remove this instructions once the dust settles.
-    return true;
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
     if (!DIDescriptor::ValidDebugInfo(DI->getVariable(), CodeGenOpt::None)||!DW

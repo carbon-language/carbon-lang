@@ -4418,12 +4418,6 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
-  case Intrinsic::dbg_stoppoint:
-  case Intrinsic::dbg_region_start:
-  case Intrinsic::dbg_region_end:
-  case Intrinsic::dbg_func_start:
-    // FIXME - Remove this instructions once the dust settles.
-    return 0;
   case Intrinsic::dbg_declare: {
     if (OptLevel != CodeGenOpt::None)
       // FIXME: Variable debug info is not supported here.
