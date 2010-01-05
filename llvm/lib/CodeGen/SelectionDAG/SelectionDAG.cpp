@@ -36,6 +36,7 @@
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
@@ -644,7 +645,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       !N->isMachineOpcode() && !doNotCSE(N)) {
     N->dump(this);
-    errs() << "\n";
+    dbgs() << "\n";
     llvm_unreachable("Node is not in map!");
   }
 #endif
@@ -5713,7 +5714,7 @@ std::string ISD::ArgFlagsTy::getArgFlagsString() {
 
 void SDNode::dump() const { dump(0); }
 void SDNode::dump(const SelectionDAG *G) const {
-  print(errs(), G);
+  print(dbgs(), G);
 }
 
 void SDNode::print_types(raw_ostream &OS, const SelectionDAG *G) const {
@@ -5885,12 +5886,12 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
     if (N->getOperand(i).getNode()->hasOneUse())
       DumpNodes(N->getOperand(i).getNode(), indent+2, G);
     else
-      errs() << "\n" << std::string(indent+2, ' ')
-             << (void*)N->getOperand(i).getNode() << ": <multiple use>";
+      dbgs() << "\n" << std::string(indent+2, ' ')
+           << (void*)N->getOperand(i).getNode() << ": <multiple use>";
 
 
-  errs() << "\n";
-  errs().indent(indent);
+  dbgs() << "\n";
+  dbgs().indent(indent);
   N->dump(G);
 }
 
@@ -6048,7 +6049,7 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
 }
 
 void SelectionDAG::dump() const {
-  errs() << "SelectionDAG has " << AllNodes.size() << " nodes:";
+  dbgs() << "SelectionDAG has " << AllNodes.size() << " nodes:";
 
   for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
        I != E; ++I) {
@@ -6059,7 +6060,7 @@ void SelectionDAG::dump() const {
 
   if (getRoot().getNode()) DumpNodes(getRoot().getNode(), 2, this);
 
-  errs() << "\n\n";
+  dbgs() << "\n\n";
 }
 
 void SDNode::printr(raw_ostream &OS, const SelectionDAG *G) const {
@@ -6106,12 +6107,12 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
 
 void SDNode::dumpr() const {
   VisitedSDNodeSet once;
-  DumpNodesr(errs(), this, 0, 0, once);
+  DumpNodesr(dbgs(), this, 0, 0, once);
 }
 
 void SDNode::dumpr(const SelectionDAG *G) const {
   VisitedSDNodeSet once;
-  DumpNodesr(errs(), this, 0, G, once);
+  DumpNodesr(dbgs(), this, 0, G, once);
 }
 
 
