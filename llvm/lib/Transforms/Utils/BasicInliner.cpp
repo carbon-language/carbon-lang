@@ -89,7 +89,7 @@ void BasicInlinerImpl::inlineFunctions() {
       }
   }
   
-  DEBUG(errs() << ": " << CallSites.size() << " call sites.\n");
+  DEBUG(dbgs() << ": " << CallSites.size() << " call sites.\n");
   
   // Inline call sites.
   bool Changed = false;
@@ -109,21 +109,21 @@ void BasicInlinerImpl::inlineFunctions() {
         }
         InlineCost IC = CA.getInlineCost(CS, NeverInline);
         if (IC.isAlways()) {        
-          DEBUG(errs() << "  Inlining: cost=always"
+          DEBUG(dbgs() << "  Inlining: cost=always"
                        <<", call: " << *CS.getInstruction());
         } else if (IC.isNever()) {
-          DEBUG(errs() << "  NOT Inlining: cost=never"
+          DEBUG(dbgs() << "  NOT Inlining: cost=never"
                        <<", call: " << *CS.getInstruction());
           continue;
         } else {
           int Cost = IC.getValue();
           
           if (Cost >= (int) BasicInlineThreshold) {
-            DEBUG(errs() << "  NOT Inlining: cost = " << Cost
+            DEBUG(dbgs() << "  NOT Inlining: cost = " << Cost
                          << ", call: " <<  *CS.getInstruction());
             continue;
           } else {
-            DEBUG(errs() << "  Inlining: cost = " << Cost
+            DEBUG(dbgs() << "  Inlining: cost = " << Cost
                          << ", call: " <<  *CS.getInstruction());
           }
         }
