@@ -459,7 +459,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         // Remove PHI node entries for the dead edge.
         ThisCases[0].second->removePredecessor(TI->getParent());
 
-        DEBUG(errs() << "Threading pred instr: " << *Pred->getTerminator()
+        DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
              << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
 
         EraseTerminatorInstAndDCECond(TI);
@@ -472,7 +472,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
           DeadCases.insert(PredCases[i].first);
 
-        DEBUG(errs() << "Threading pred instr: " << *Pred->getTerminator()
+        DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
                      << "Through successor TI: " << *TI);
 
         for (unsigned i = SI->getNumCases()-1; i != 0; --i)
@@ -481,7 +481,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
             SI->removeCase(i);
           }
 
-        DEBUG(errs() << "Leaving: " << *TI << "\n");
+        DEBUG(dbgs() << "Leaving: " << *TI << "\n");
         return true;
       }
     }
@@ -524,7 +524,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     Instruction *NI = BranchInst::Create(TheRealDest, TI);
     (void) NI;
 
-    DEBUG(errs() << "Threading pred instr: " << *Pred->getTerminator()
+    DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
               << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
 
     EraseTerminatorInstAndDCECond(TI);
@@ -1111,7 +1111,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     if (NumPhis > 2)
       return false;
   
-  DEBUG(errs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+  DEBUG(dbgs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
         << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
   
   // Loop over the PHI's seeing if we can promote them all to select
@@ -1295,7 +1295,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
               ReturnInst::Create(BI->getContext(), TrueValue, BI);
   (void) RI;
       
-  DEBUG(errs() << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
+  DEBUG(dbgs() << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
                << "\n  " << *BI << "NewRet = " << *RI
                << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc);
       
@@ -1377,7 +1377,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     else
       continue;
 
-    DEBUG(errs() << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB);
+    DEBUG(dbgs() << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB);
     
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
@@ -1511,7 +1511,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // Finally, if everything is ok, fold the branches to logical ops.
   BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
   
-  DEBUG(errs() << "FOLDING BRs:" << *PBI->getParent()
+  DEBUG(dbgs() << "FOLDING BRs:" << *PBI->getParent()
                << "AND: " << *BI->getParent());
   
   
@@ -1531,7 +1531,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     OtherDest = InfLoopBlock;
   }  
   
-  DEBUG(errs() << *PBI->getParent()->getParent());
+  DEBUG(dbgs() << *PBI->getParent()->getParent());
   
   // BI may have other predecessors.  Because of this, we leave
   // it alone, but modify PBI.
@@ -1581,8 +1581,8 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     }
   }
   
-  DEBUG(errs() << "INTO: " << *PBI->getParent());
-  DEBUG(errs() << *PBI->getParent()->getParent());
+  DEBUG(dbgs() << "INTO: " << *PBI->getParent());
+  DEBUG(dbgs() << *PBI->getParent()->getParent());
   
   // This basic block is probably dead.  We know it has at least
   // one fewer predecessor.
@@ -1608,7 +1608,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // Remove basic blocks that have no predecessors... or that just have themself
   // as a predecessor.  These are unreachable.
   if (pred_begin(BB) == pred_end(BB) || BB->getSinglePredecessor() == BB) {
-    DEBUG(errs() << "Removing BB: \n" << *BB);
+    DEBUG(dbgs() << "Removing BB: \n" << *BB);
     DeleteDeadBlock(BB);
     return true;
   }
@@ -1651,7 +1651,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       if (!UncondBranchPreds.empty()) {
         while (!UncondBranchPreds.empty()) {
           BasicBlock *Pred = UncondBranchPreds.pop_back_val();
-          DEBUG(errs() << "FOLDING: " << *BB
+          DEBUG(dbgs() << "FOLDING: " << *BB
                        << "INTO UNCOND BRANCH PRED: " << *Pred);
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
