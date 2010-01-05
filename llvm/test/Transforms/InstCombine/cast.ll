@@ -373,4 +373,11 @@ define i32* @test41(i32* %tmp1) {
 ; CHECK: ret i32* %tmp1
 }
 
+define i32 @test42(i32 %X) {
+        %Y = trunc i32 %X to i8         ; <i8> [#uses=1]
+        %Z = zext i8 %Y to i32          ; <i32> [#uses=1]
+        ret i32 %Z
+; CHECK: @test42
+; CHECK: %Z = and i32 %X, 255
+}
 

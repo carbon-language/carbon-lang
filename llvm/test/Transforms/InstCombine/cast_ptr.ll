@@ -45,3 +45,35 @@ define i1 @test4(i32 %A) {
 ; CHECK-NEXT: %C = icmp eq i32 %A, 0
 ; CHECK-NEXT: ret i1 %C 
 }
+
+
+; Pulling the cast out of the load allows us to eliminate the load, and then 
+; the whole array.
+
+        %op = type { float }
+        %unop = type { i32 }
+@Array = internal constant [1 x %op* (%op*)*] [ %op* (%op*)* @foo ]             ; <[1 x %op* (%op*)*]*> [#uses=1]
+
+declare %op* @foo(%op* %X)
+
+define %unop* @test5(%op* %O) {
+        %tmp = load %unop* (%op*)** bitcast ([1 x %op* (%op*)*]* @Array to %unop* (%op*)**); <%unop* (%op*)*> [#uses=1]
+        %tmp.2 = call %unop* %tmp( %op* %O )            ; <%unop*> [#uses=1]
+        ret %unop* %tmp.2
+; CHECK: @test5
+; CHECK: call %op* @foo(%op* %O)
+}
+
+
+
+; InstCombine can not 'load (cast P)' -> cast (load P)' if the cast changes
+; the address space.
+
+define i8 @test6(i8 addrspace(1)* %source) {                                                                                        
+entry: 
+  %arrayidx223 = bitcast i8 addrspace(1)* %source to i8*
+  %tmp4 = load i8* %arrayidx223
+  ret i8 %tmp4
+; CHECK: @test6
+; CHECK: load i8* %arrayidx223
+} 
