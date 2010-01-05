@@ -603,8 +603,10 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
     Preamble += "#define __attribute__(X)\n";
   }
-  else
+  else {
     Preamble += "#define __block\n";
+    Preamble += "#define __weak\n";
+  }
 }
 
 
@@ -4461,7 +4463,8 @@ std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
 ///
 ///
 void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
-  int flag;
+  int flag = 0;
+  int isa = 0;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   SourceLocation X = ND->getLocEnd();
@@ -4491,6 +4494,11 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   assert(CurFunctionDef && "RewriteByRefVar - CurFunctionDef is null");
   SourceLocation FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
   InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
+  if (Ty.isObjCGCWeak()) {
+    flag |= BLOCK_FIELD_IS_WEAK;
+    isa = 1;
+  }
+  
   if (HasCopyAndDispose) {
     flag = BLOCK_BYREF_CALLER;
     QualType Ty = ND->getType();
@@ -4514,8 +4522,9 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   Name = ND->getNameAsString();
   ByrefType = "struct __Block_byref_" + Name;
   if (!hasInit) {
-    ByrefType += " " + Name + " = ";
-    ByrefType += "{0, &" + Name + ", ";
+    ByrefType += " " + Name + " = {(void*)";
+    ByrefType += utostr(isa);
+    ByrefType += ", &" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
@@ -4534,7 +4543,9 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += " " + Name;
     ReplaceText(DeclLoc, endBuf-startBuf, 
                 ByrefType.c_str(), ByrefType.size());
-    ByrefType = " = {0, &" + Name + ", ";
+    ByrefType = " = {(void*)";
+    ByrefType += utostr(isa);
+    ByrefType += ", &" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
