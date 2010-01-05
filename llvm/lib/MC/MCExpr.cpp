@@ -11,6 +11,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -108,8 +109,8 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCExpr::dump() const {
-  print(errs(), 0);
-  errs() << '\n';
+  print(dbgs(), 0);
+  dbgs() << '\n';
 }
 
 /* *** */
