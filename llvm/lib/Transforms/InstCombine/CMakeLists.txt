@@ -1,6 +1,7 @@
 add_llvm_library(LLVMInstCombine
   InstructionCombining.cpp
   InstCombineAddSub.cpp
+  InstCombineCalls.cpp
   InstCombineCasts.cpp
   InstCombineCompares.cpp
   InstCombineLoadStoreAlloca.cpp
