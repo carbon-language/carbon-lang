@@ -207,7 +207,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
       IncomingReg = entry;
       reusedIncoming = true;
       ++NumReused;
-      DEBUG(errs() << "Reusing %reg" << IncomingReg << " for " << *MPhi);
+      DEBUG(dbgs() << "Reusing %reg" << IncomingReg << " for " << *MPhi);
     } else {
       entry = IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
     }
@@ -234,7 +234,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
       // AfterPHIsIt, so it appears before the current PHICopy.
       if (reusedIncoming)
         if (MachineInstr *OldKill = VI.findKill(&MBB)) {
-          DEBUG(errs() << "Remove old kill from " << *OldKill);
+          DEBUG(dbgs() << "Remove old kill from " << *OldKill);
           LV->removeVirtualRegisterKilled(IncomingReg, OldKill);
           DEBUG(MBB.dump());
         }
@@ -421,7 +421,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
   MF->insert(llvm::next(MachineFunction::iterator(A)), NMBB);
-  DEBUG(errs() << "PHIElimination splitting critical edge:"
+  DEBUG(dbgs() << "PHIElimination splitting critical edge:"
         " BB#" << A->getNumber()
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << B->getNumber() << '\n');
