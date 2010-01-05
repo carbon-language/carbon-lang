@@ -966,9 +966,6 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
 ///
 ///  (8) Check that the format string is a wide literal.
 ///
-///  (9) Also check the arguments of functions with the __format__ attribute.
-///      (TODO).
-///
 /// All of these checks can be done by parsing the format string.
 ///
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
