@@ -480,8 +480,9 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
   }
 }
 
-/// This function checks debug info intrinsics. If an intrinsic is invalid
-/// then this function simply removes the intrinsic. 
+/// This function strips all debug info intrinsics, except for llvm.dbg.declare.
+/// If an llvm.dbg.declare intrinsic is invalid, then this function simply
+/// strips that use.
 void llvm::CheckDebugInfoIntrinsics(Module *M) {
 
 
