@@ -56,6 +56,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -85,9 +86,9 @@ namespace {  // Anonymous namespace for class
 
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
         if (I->empty() || !I->back().isTerminator()) {
-          errs() << "Basic Block does not have terminator!\n";
-          WriteAsOperand(errs(), I, true);
-          errs() << "\n";
+          dbgs() << "Basic Block does not have terminator!\n";
+          WriteAsOperand(dbgs(), I, true);
+          dbgs() << "\n";
           Broken = true;
         }
       }
@@ -262,12 +263,12 @@ namespace {
       default: llvm_unreachable("Unknown action");
       case AbortProcessAction:
         MessagesStr << "compilation aborted!\n";
-        errs() << MessagesStr.str();
+        dbgs() << MessagesStr.str();
         // Client should choose different reaction if abort is not desired
         abort();
       case PrintMessageAction:
         MessagesStr << "verification continues.\n";
-        errs() << MessagesStr.str();
+        dbgs() << MessagesStr.str();
         return false;
       case ReturnStatusAction:
         MessagesStr << "compilation terminated.\n";
