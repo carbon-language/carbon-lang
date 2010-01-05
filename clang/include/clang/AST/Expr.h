@@ -241,6 +241,11 @@ public:
   /// stack based objects.
   bool EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const;
 
+  /// EvaluateAsBooleanCondition - Return true if this is a constant
+  /// which we we can fold and convert to a boolean condition using
+  /// any crazy technique that we want to.
+  bool EvaluateAsBooleanCondition(bool &Result, ASTContext &Ctx) const;
+
   /// isEvaluatable - Call Evaluate to see if this expression can be constant
   /// folded, but discard the result.
   bool isEvaluatable(ASTContext &Ctx) const;

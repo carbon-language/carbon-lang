@@ -73,7 +73,8 @@ static bool EvalPointerValueAsBool(APValue& Value, bool& Result) {
   return true;
 }
 
-static bool HandleConversionToBool(Expr* E, bool& Result, EvalInfo &Info) {
+static bool HandleConversionToBool(const Expr* E, bool& Result,
+                                   EvalInfo &Info) {
   if (E->getType()->isIntegralType()) {
     APSInt IntResult;
     if (!EvaluateInteger(E, IntResult, Info))
@@ -1976,6 +1977,13 @@ bool Expr::EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const {
     return false;
 
   return true;
+}
+
+bool Expr::EvaluateAsBooleanCondition(bool &Result, ASTContext &Ctx) const {
+  EvalResult Scratch;
+  EvalInfo Info(Ctx, Scratch);
+
+  return HandleConversionToBool(this, Result, Info);
 }
 
 bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
