@@ -81,8 +81,6 @@ static void PrintDeclExtent(CXDecl Dcl) {
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
-    CXDecl subDecl;
-    CXSourceExtent extent;
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
                                 GetCursorSource(Cursor),
                                 clang_getCursorLine(Cursor),
