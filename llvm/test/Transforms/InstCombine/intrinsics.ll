@@ -5,6 +5,8 @@
 declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8)
 declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8)
 declare double @llvm.powi.f64(double, i32) nounwind readonly
+declare i32 @llvm.cttz.i32(i32) nounwind readnone
+declare i8 @llvm.ctlz.i8(i8) nounwind readnone
 
 define i8 @test1(i8 %A, i8 %B) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
@@ -79,7 +81,6 @@ define i8 @test6(i8 %A, i1* %overflowPtr) {
 ; CHECK-NEXT: ret i8 %A
 }
 
-
 define void @powi(double %V, double *%P) {
 entry:
   %A = tail call double @llvm.powi.f64(double %V, i32 -1) nounwind
@@ -98,4 +99,26 @@ entry:
 ; CHECK: volatile store double %V
 }
 
+define i32 @cttz(i32 %a)
+{
+entry:
+  %or = or i32 %a, 8
+  %and = and i32 %or, -8
+  %count = tail call i32 @llvm.cttz.i32(i32 %and) nounwind readnone
+  ret i32 %count
+; CHECK: @cttz
+; CHECK-NEXT: entry:
+; CHECK-NEXT: ret i32 3
+}
 
+define i8 @ctlz(i8 %a)
+{
+entry:
+  %or = or i8 %a, 32
+  %and = and i8 %or, 63
+  %count = tail call i8 @llvm.ctlz.i8(i8 %and) nounwind readnone
+  ret i8 %count
+; CHECK: @ctlz
+; CHECK-NEXT: entry:
+; CHECK-NEXT: ret i8 2
+}

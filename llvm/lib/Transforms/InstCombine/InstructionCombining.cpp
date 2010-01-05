@@ -3144,7 +3144,40 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
                                           II->getOperand(1));
     }
     break;
-      
+  case Intrinsic::cttz: {
+    // If all bits below the first known one are known zero,
+    // this value is constant.
+    const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
+    uint32_t BitWidth = IT->getBitWidth();
+    APInt KnownZero(BitWidth, 0);
+    APInt KnownOne(BitWidth, 0);
+    ComputeMaskedBits(II->getOperand(1), APInt::getAllOnesValue(BitWidth),
+                      KnownZero, KnownOne);
+    unsigned TrailingZeros = KnownOne.countTrailingZeros();
+    APInt Mask(APInt::getLowBitsSet(BitWidth, TrailingZeros));
+    if ((Mask & KnownZero) == Mask)
+      return ReplaceInstUsesWith(CI, ConstantInt::get(IT,
+                                 APInt(BitWidth, TrailingZeros)));
+    
+    }
+    break;
+  case Intrinsic::ctlz: {
+    // If all bits above the first known one are known zero,
+    // this value is constant.
+    const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
+    uint32_t BitWidth = IT->getBitWidth();
+    APInt KnownZero(BitWidth, 0);
+    APInt KnownOne(BitWidth, 0);
+    ComputeMaskedBits(II->getOperand(1), APInt::getAllOnesValue(BitWidth),
+                      KnownZero, KnownOne);
+    unsigned LeadingZeros = KnownOne.countLeadingZeros();
+    APInt Mask(APInt::getHighBitsSet(BitWidth, LeadingZeros));
+    if ((Mask & KnownZero) == Mask)
+      return ReplaceInstUsesWith(CI, ConstantInt::get(IT,
+                                 APInt(BitWidth, LeadingZeros)));
+    
+    }
+    break;
   case Intrinsic::uadd_with_overflow: {
     Value *LHS = II->getOperand(1), *RHS = II->getOperand(2);
     const IntegerType *IT = cast<IntegerType>(II->getOperand(1)->getType());
