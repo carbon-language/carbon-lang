@@ -165,9 +165,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 /// If CastOpc is a sext or zext, we are asking if the low bits of the value can
 /// bit computed in a larger type, which is then and'd or sext_in_reg'd to get
 /// the final result.
-bool InstCombiner::CanEvaluateInDifferentType(Value *V, const Type *Ty,
-                                              unsigned CastOpc,
-                                              int &NumCastsRemoved){
+static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
+                                       unsigned CastOpc, int &NumCastsRemoved) {
   // We can always evaluate constants in another type.
   if (isa<Constant>(V))
     return true;
@@ -274,7 +273,9 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const Type *Ty,
                                       NumCastsRemoved);
   }
   case Instruction::PHI: {
-    // We can change a phi if we can change all operands.
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!CanEvaluateInDifferentType(PN->getIncomingValue(i), Ty, CastOpc,

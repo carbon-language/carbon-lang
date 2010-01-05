@@ -338,8 +338,6 @@ private:
 
   Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
 
-  bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
-                                  unsigned CastOpc, int &NumCastsRemoved);
   unsigned GetOrEnforceKnownAlignment(Value *V,
                                       unsigned PrefAlign = 0);
 
