@@ -87,7 +87,7 @@ private:
 
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGList::Schedule() {
-  DEBUG(errs() << "********** List Scheduling **********\n");
+  DEBUG(dbgs() << "********** List Scheduling **********\n");
   
   // Build the scheduling graph.
   BuildSchedGraph(NULL);
@@ -110,9 +110,9 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
 
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft == 0) {
-    errs() << "*** Scheduling failed! ***\n";
+    dbgs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
-    errs() << " has been released too many times!\n";
+    dbgs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
@@ -141,7 +141,7 @@ void ScheduleDAGList::ReleaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
+  DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
@@ -233,7 +233,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      DEBUG(errs() << "*** Advancing cycle, no work to do\n");
+      DEBUG(dbgs() << "*** Advancing cycle, no work to do\n");
       HazardRec->AdvanceCycle();
       ++NumStalls;
       ++CurCycle;
@@ -241,7 +241,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      DEBUG(errs() << "*** Emitting noop\n");
+      DEBUG(dbgs() << "*** Emitting noop\n");
       HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL here means noop
       ++NumNoops;
