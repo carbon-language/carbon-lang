@@ -932,6 +932,10 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     if (BI->getOpcode() == Instruction::Sub) {
       if (ShouldBreakUpSubtract(BI)) {
         BI = BreakUpSubtract(BI, ValueRankMap);
+        // Reset the BBI iterator in case BreakUpSubtract changed the
+        // instruction it points to.
+        BBI = BI;
+        ++BBI;
         MadeChange = true;
       } else if (BinaryOperator::isNeg(BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
