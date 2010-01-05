@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/DenseSet.h"
 using namespace clang;
 using llvm::utostr;
 
@@ -75,7 +76,9 @@ namespace {
     llvm::SmallVector<int, 8> ObjCBcLabelNo;
     // Remember all the @protocol(<expr>) expressions.
     llvm::SmallPtrSet<ObjCProtocolDecl *, 32> ProtocolExprDecls;
-
+    
+    llvm::DenseSet<uint64_t> CopyDestroyCache;
+    
     unsigned NumObjCStringLiterals;
 
     FunctionDecl *MsgSendFunctionDecl;
@@ -347,7 +350,7 @@ namespace {
     void RewriteBlockCall(CallExpr *Exp);
     void RewriteBlockPointerDecl(NamedDecl *VD);
     void RewriteByRefVar(VarDecl *VD);
-    std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD);
+    std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
     Stmt *RewriteBlockDeclRefExpr(Expr *VD);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
 
@@ -4402,20 +4405,16 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
 ///                         [|BLOCK_FIELD_IS_WEAK]) // block
 /// }
 
-std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD) {
-  static bool synthesized = false;
+std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
+                                                          int flag) {
   std::string S;
-  if (synthesized)
+  if (CopyDestroyCache.count(flag) > 0)
     return S;
-  synthesized = true;
-  S = "static void __Block_byref_id_object_copy(void *dst, void *src) {\n";
-  int flag = BLOCK_BYREF_CALLER;
-  QualType Ty = VD->getType();
-  // FIXME. Handle __weak variable (BLOCK_FIELD_IS_WEAK) as well.
-  if (Ty->isBlockPointerType())
-    flag |= BLOCK_FIELD_IS_BLOCK;
-  else
-    flag |= BLOCK_FIELD_IS_OBJECT;
+  CopyDestroyCache.insert(flag);
+  S = "static void __Block_byref_id_object_copy_";
+  S += utostr(flag);
+  S += "(void *dst, void *src) {\n";
+  
   // offset into the object pointer is computed as:
   // void * + void* + int + int + void* + void *
   unsigned IntSize = 
@@ -4432,7 +4431,9 @@ std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD) {
   S += utostr(flag);
   S += ");\n}\n";
   
-  S += "static void __Block_byref_id_object_dispose(void *src) {\n";
+  S += "static void __Block_byref_id_object_dispose_";
+  S += utostr(flag);
+  S += "(void *src) {\n";
   S += " _Block_object_dispose(*(void * *) ((char*)src + ";
   S += utostr(offset);
   S += "), ";
@@ -4460,6 +4461,7 @@ std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD) {
 ///
 ///
 void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
+  int flag;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   SourceLocation X = ND->getLocEnd();
@@ -4490,7 +4492,14 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   SourceLocation FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
   InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
   if (HasCopyAndDispose) {
-    std::string HF = SynthesizeByrefCopyDestroyHelper(ND);
+    flag = BLOCK_BYREF_CALLER;
+    QualType Ty = ND->getType();
+    // FIXME. Handle __weak variable (BLOCK_FIELD_IS_WEAK) as well.
+    if (Ty->isBlockPointerType())
+      flag |= BLOCK_FIELD_IS_BLOCK;
+    else
+      flag |= BLOCK_FIELD_IS_OBJECT;
+    std::string HF = SynthesizeByrefCopyDestroyHelper(ND, flag);
     if (!HF.empty())
       InsertText(FunLocStart, HF.c_str(), HF.size());
   }
@@ -4504,15 +4513,17 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   if (!hasInit) {
     ByrefType += " " + Name + " = ";
     ByrefType += "{0, &" + Name + ", ";
-    unsigned flag = 0;
+    unsigned flags = 0;
     if (HasCopyAndDispose)
-      flag |= BLOCK_HAS_COPY_DISPOSE;
-    ByrefType += utostr(flag);
+      flags |= BLOCK_HAS_COPY_DISPOSE;
+    ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
     if (HasCopyAndDispose) {
-      ByrefType += ", __Block_byref_id_object_copy";
-      ByrefType += ", __Block_byref_id_object_dispose";
+      ByrefType += ", __Block_byref_id_object_copy_";
+      ByrefType += utostr(flag);
+      ByrefType += ", __Block_byref_id_object_dispose_";
+      ByrefType += utostr(flag);
     }
     ByrefType += "};\n";
     ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), 
@@ -4524,15 +4535,18 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ReplaceText(DeclLoc, endBuf-startBuf, 
                 ByrefType.c_str(), ByrefType.size());
     ByrefType = " = {0, &" + Name + ", ";
-    unsigned flag = 0;
+    unsigned flags = 0;
     if (HasCopyAndDispose)
-      flag |= BLOCK_HAS_COPY_DISPOSE;
-    ByrefType += utostr(flag);
+      flags |= BLOCK_HAS_COPY_DISPOSE;
+    ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
     if (HasCopyAndDispose) {
-      ByrefType += "__Block_byref_id_object_copy";
-      ByrefType += ", __Block_byref_id_object_dispose, ";
+      ByrefType += "__Block_byref_id_object_copy_";
+      ByrefType += utostr(flag);
+      ByrefType += ", __Block_byref_id_object_dispose_";
+      ByrefType += utostr(flag);
+      ByrefType += ", ";
     }
     InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
     
