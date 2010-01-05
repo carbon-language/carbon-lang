@@ -425,7 +425,7 @@ void DAE::SurveyFunction(Function &F) {
     return;
   }
 
-  DEBUG(errs() << "DAE - Inspecting callers for fn: " << F.getName() << "\n");
+  DEBUG(dbgs() << "DAE - Inspecting callers for fn: " << F.getName() << "\n");
   // Keep track of the number of live retvals, so we can skip checks once all
   // of them turn out to be live.
   unsigned NumLiveRetVals = 0;
@@ -488,7 +488,7 @@ void DAE::SurveyFunction(Function &F) {
   for (unsigned i = 0; i != RetCount; ++i)
     MarkValue(CreateRet(&F, i), RetValLiveness[i], MaybeLiveRetUses[i]);
 
-  DEBUG(errs() << "DAE - Inspecting args for fn: " << F.getName() << "\n");
+  DEBUG(dbgs() << "DAE - Inspecting args for fn: " << F.getName() << "\n");
 
   // Now, check all of our arguments.
   unsigned i = 0;
@@ -530,7 +530,7 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
 /// mark any values that are used as this function's parameters or by its return
 /// values (according to Uses) live as well.
 void DAE::MarkLive(const Function &F) {
-  DEBUG(errs() << "DAE - Intrinsically live fn: " << F.getName() << "\n");
+  DEBUG(dbgs() << "DAE - Intrinsically live fn: " << F.getName() << "\n");
     // Mark the function as live.
     LiveFunctions.insert(&F);
     // Mark all arguments as live.
@@ -551,7 +551,7 @@ void DAE::MarkLive(const RetOrArg &RA) {
   if (!LiveValues.insert(RA).second)
     return; // We were already marked Live.
 
-  DEBUG(errs() << "DAE - Marking " << RA.getDescription() << " live\n");
+  DEBUG(dbgs() << "DAE - Marking " << RA.getDescription() << " live\n");
   PropagateLiveness(RA);
 }
 
@@ -616,7 +616,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           NewRetIdxs[i] = RetTypes.size() - 1;
         } else {
           ++NumRetValsEliminated;
-          DEBUG(errs() << "DAE - Removing return value " << i << " from "
+          DEBUG(dbgs() << "DAE - Removing return value " << i << " from "
                 << F->getName() << "\n");
         }
       }
@@ -626,7 +626,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         RetTypes.push_back(RetTy);
         NewRetIdxs[0] = 0;
       } else {
-        DEBUG(errs() << "DAE - Removing return value from " << F->getName()
+        DEBUG(dbgs() << "DAE - Removing return value from " << F->getName()
               << "\n");
         ++NumRetValsEliminated;
       }
@@ -681,7 +681,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         AttributesVec.push_back(AttributeWithIndex::get(Params.size(), Attrs));
     } else {
       ++NumArgumentsEliminated;
-      DEBUG(errs() << "DAE - Removing argument " << i << " (" << I->getName()
+      DEBUG(dbgs() << "DAE - Removing argument " << i << " (" << I->getName()
             << ") from " << F->getName() << "\n");
     }
   }
@@ -915,7 +915,7 @@ bool DAE::runOnModule(Module &M) {
   // removed.  We can do this if they never call va_start.  This loop cannot be
   // fused with the next loop, because deleting a function invalidates
   // information computed while surveying other functions.
-  DEBUG(errs() << "DAE - Deleting dead varargs\n");
+  DEBUG(dbgs() << "DAE - Deleting dead varargs\n");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
     Function &F = *I++;
     if (F.getFunctionType()->isVarArg())
@@ -926,7 +926,7 @@ bool DAE::runOnModule(Module &M) {
   // We assume all arguments are dead unless proven otherwise (allowing us to
   // determine that dead arguments passed into recursive functions are dead).
   //
-  DEBUG(errs() << "DAE - Determining liveness\n");
+  DEBUG(dbgs() << "DAE - Determining liveness\n");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     SurveyFunction(*I);
   
