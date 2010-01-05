@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
 
 using namespace llvm;
@@ -89,5 +90,12 @@ formatted_raw_ostream &llvm::fouts() {
 /// standard error.  Use it like: ferrs() << "foo" << "bar";
 formatted_raw_ostream &llvm::ferrs() {
   static formatted_raw_ostream S(errs());
+  return S;
+}
+
+/// fdbgs() - This returns a reference to a formatted_raw_ostream for
+/// the debug stream.  Use it like: fdbgs() << "foo" << "bar";
+formatted_raw_ostream &llvm::fdbgs() {
+  static formatted_raw_ostream S(dbgs());
   return S;
 }
