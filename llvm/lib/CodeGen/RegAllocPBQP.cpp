@@ -717,7 +717,7 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
       // Get the physical reg, subtracting 1 to account for the spill option.
       unsigned physReg = allowedSets[node][allocSelection - 1];
 
-      DEBUG(errs() << "VREG " << virtReg << " -> "
+      DEBUG(dbgs() << "VREG " << virtReg << " -> "
                    << tri->getName(physReg) << "\n");
 
       assert(physReg != 0);
@@ -741,7 +741,7 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
       addStackInterval(spillInterval, mri);
 
       (void) oldSpillWeight;
-      DEBUG(errs() << "VREG " << virtReg << " -> SPILLED (Cost: "
+      DEBUG(dbgs() << "VREG " << virtReg << " -> SPILLED (Cost: "
                    << oldSpillWeight << ", New vregs: ");
 
       // Copy any newly inserted live intervals into the list of regs to
@@ -752,12 +752,12 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
 
         assert(!(*itr)->empty() && "Empty spill range.");
 
-        DEBUG(errs() << (*itr)->reg << " ");
+        DEBUG(dbgs() << (*itr)->reg << " ");
 
         vregIntervalsToAlloc.insert(*itr);
       }
 
-      DEBUG(errs() << ")\n");
+      DEBUG(dbgs() << ")\n");
 
       // We need another round if spill intervals were added.
       anotherRoundNeeded |= !newSpills.empty();
@@ -849,7 +849,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
 
   vrm = &getAnalysis<VirtRegMap>();
 
-  DEBUG(errs() << "PBQP2 Register Allocating for " << mf->getFunction()->getName() << "\n");
+  DEBUG(dbgs() << "PBQP2 Register Allocating for " << mf->getFunction()->getName() << "\n");
 
   // Allocator main loop:
   //
@@ -874,7 +874,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
     unsigned round = 0;
 
     while (!pbqpAllocComplete) {
-      DEBUG(errs() << "  PBQP Regalloc round " << round << ":\n");
+      DEBUG(dbgs() << "  PBQP Regalloc round " << round << ":\n");
 
       PBQP::SimpleGraph problem = constructPBQPProblem();
       PBQP::HeuristicSolver<PBQP::Heuristics::Briggs> solver;
@@ -896,7 +896,7 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
   node2LI.clear();
   allowedSets.clear();
 
-  DEBUG(errs() << "Post alloc VirtRegMap:\n" << *vrm << "\n");
+  DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *vrm << "\n");
 
   // Run rewriter
   std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
