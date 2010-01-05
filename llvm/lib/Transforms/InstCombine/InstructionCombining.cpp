@@ -298,69 +298,10 @@ static Constant *SubOne(ConstantInt *C) {
 ///
 template<typename Functor>
 static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
-  unsigned Opcode = Root.getOpcode();
-  Value *LHS = Root.getOperand(0);
-
   // Quick check, see if the immediate LHS matches...
-  if (F.shouldApply(LHS))
+  if (F.shouldApply(Root.getOperand(0)))
     return F.apply(Root);
 
-  // Otherwise, if the LHS is not of the same opcode as the root, return.
-  Instruction *LHSI = dyn_cast<Instruction>(LHS);
-  while (LHSI && LHSI->getOpcode() == Opcode && LHSI->hasOneUse()) {
-    // Should we apply this transform to the RHS?
-    bool ShouldApply = F.shouldApply(LHSI->getOperand(1));
-
-    // If not to the RHS, check to see if we should apply to the LHS...
-    if (!ShouldApply && F.shouldApply(LHSI->getOperand(0))) {
-      cast<BinaryOperator>(LHSI)->swapOperands();   // Make the LHS the RHS
-      ShouldApply = true;
-    }
-
-    // If the functor wants to apply the optimization to the RHS of LHSI,
-    // reassociate the expression from ((? op A) op B) to (? op (A op B))
-    if (ShouldApply) {
-      // Now all of the instructions are in the current basic block, go ahead
-      // and perform the reassociation.
-      Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
-
-      // First move the selected RHS to the LHS of the root...
-      Root.setOperand(0, LHSI->getOperand(1));
-
-      // Make what used to be the LHS of the root be the user of the root...
-      Value *ExtraOperand = TmpLHSI->getOperand(1);
-      if (&Root == TmpLHSI) {
-        Root.replaceAllUsesWith(Constant::getNullValue(TmpLHSI->getType()));
-        return 0;
-      }
-      Root.replaceAllUsesWith(TmpLHSI);          // Users now use TmpLHSI
-      TmpLHSI->setOperand(1, &Root);             // TmpLHSI now uses the root
-      BasicBlock::iterator ARI = &Root; ++ARI;
-      TmpLHSI->moveBefore(ARI);                  // Move TmpLHSI to after Root
-      ARI = Root;
-
-      // Now propagate the ExtraOperand down the chain of instructions until we
-      // get to LHSI.
-      while (TmpLHSI != LHSI) {
-        Instruction *NextLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
-        // Move the instruction to immediately before the chain we are
-        // constructing to avoid breaking dominance properties.
-        NextLHSI->moveBefore(ARI);
-        ARI = NextLHSI;
-
-        Value *NextOp = NextLHSI->getOperand(1);
-        NextLHSI->setOperand(1, ExtraOperand);
-        TmpLHSI = NextLHSI;
-        ExtraOperand = NextOp;
-      }
-
-      // Now that the instructions are reassociated, have the functor perform
-      // the transformation...
-      return F.apply(Root);
-    }
-
-    LHSI = dyn_cast<Instruction>(LHSI->getOperand(0));
-  }
   return 0;
 }
 
