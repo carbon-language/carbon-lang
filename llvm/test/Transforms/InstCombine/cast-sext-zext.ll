@@ -11,3 +11,11 @@ entry:
 	%4 = load i16* %3, align 2
 	ret i16 %4
 }
+
+define zeroext i64 @t2(i8 zeroext %on_off) nounwind readonly {
+entry:
+	%0 = zext i8 %on_off to i32
+	%1 = add i32 %0, -1
+	%2 = sext i32 %1 to i64
+	ret i64 %2  ;; Should be (add (zext i8 -> i64), -1)
+}
