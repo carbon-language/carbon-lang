@@ -421,7 +421,7 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
 static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
-  DEBUG(errs() << "Looking to fold " << BB->getName() << " into " 
+  DEBUG(dbgs() << "Looking to fold " << BB->getName() << " into " 
         << Succ->getName() << "\n");
   // Shortcut, if there is only a single predecessor it must be BB and merging
   // is always safe
@@ -456,7 +456,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
             PI != PE; PI++) {
         if (BBPN->getIncomingValueForBlock(*PI) 
               != PN->getIncomingValueForBlock(*PI)) {
-          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+          DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with " 
                 << BBPN->getName() << " with regard to common predecessor "
                 << (*PI)->getName() << "\n");
@@ -471,7 +471,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
         // one for BB, in which case this phi node will not prevent the merging
         // of the block.
         if (Val != PN->getIncomingValueForBlock(*PI)) {
-          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+          DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with regard to common "
                 << "predecessor " << (*PI)->getName() << "\n");
           return false;
@@ -525,7 +525,7 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
     }
   }
 
-  DEBUG(errs() << "Killing Trivial BB: \n" << *BB);
+  DEBUG(dbgs() << "Killing Trivial BB: \n" << *BB);
   
   if (isa<PHINode>(Succ->begin())) {
     // If there is more than one pred of succ, and there are PHI nodes in
