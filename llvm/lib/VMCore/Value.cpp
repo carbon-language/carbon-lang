@@ -68,9 +68,9 @@ Value::~Value() {
   // a <badref>
   //
   if (!use_empty()) {
-    errs() << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
+    dbgs() << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
-      errs() << "Use still stuck around after Def is destroyed:"
+      dbgs() << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
   }
 #endif
@@ -522,7 +522,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   // All callbacks, weak references, and assertingVHs should be dropped by now.
   if (V->HasValueHandle) {
 #ifndef NDEBUG      // Only in +Asserts mode...
-    errs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
+    dbgs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
            << "\n";
     if (pImpl->ValueHandles[V]->getKind() == Assert)
       llvm_unreachable("An asserting value handle still pointed to this"
