@@ -22,6 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConstantRange.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Instructions.h"
 using namespace llvm;
@@ -655,7 +656,7 @@ void ConstantRange::print(raw_ostream &OS) const {
 /// dump - Allow printing from a debugger easily...
 ///
 void ConstantRange::dump() const {
-  print(errs());
+  print(dbgs());
 }
 
 
