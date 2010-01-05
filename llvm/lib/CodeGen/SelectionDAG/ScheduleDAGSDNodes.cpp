@@ -253,19 +253,19 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
   if (!SU->getNode()) {
-    errs() << "PHYS REG COPY\n";
+    dbgs() << "PHYS REG COPY\n";
     return;
   }
 
   SU->getNode()->dump(DAG);
-  errs() << "\n";
+  dbgs() << "\n";
   SmallVector<SDNode *, 4> FlaggedNodes;
   for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
     FlaggedNodes.push_back(N);
   while (!FlaggedNodes.empty()) {
-    errs() << "    ";
+    dbgs() << "    ";
     FlaggedNodes.back()->dump(DAG);
-    errs() << "\n";
+    dbgs() << "\n";
     FlaggedNodes.pop_back();
   }
 }
