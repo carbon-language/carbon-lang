@@ -1144,7 +1144,7 @@ public:
   bool isVolatile() const { return IsVolatile; }
   void setVolatile(bool V) { IsVolatile = V; }
   bool isSimple() const { return IsSimple; }
-  void setSimple(bool V) { IsSimple = false; }
+  void setSimple(bool V) { IsSimple = V; }
   bool isMSAsm() const { return MSAsm; }
   void setMSAsm(bool V) { MSAsm = V; }
 
