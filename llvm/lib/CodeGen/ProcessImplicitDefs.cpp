@@ -61,7 +61,7 @@ bool ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
 /// implicit_def defs and their uses.
 bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
 
-  DEBUG(errs() << "********** PROCESS IMPLICIT DEFS **********\n"
+  DEBUG(dbgs() << "********** PROCESS IMPLICIT DEFS **********\n"
                << "********** Function: "
                << ((Value*)fn.getFunction())->getName() << '\n');
 
