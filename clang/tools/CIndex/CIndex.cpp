@@ -19,6 +19,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
 
+// Needed to define L_TMPNAM on some systems.
+#include <cstdio>
+
 using namespace clang;
 using namespace idx;
 
