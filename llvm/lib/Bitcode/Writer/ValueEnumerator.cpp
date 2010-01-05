@@ -382,7 +382,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
-      if (I->getType() != Type::getVoidTy(F.getContext()))
+      if (!I->getType()->isVoidTy())
         EnumerateValue(I);
     }
   }

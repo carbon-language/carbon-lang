@@ -593,7 +593,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     // this should be rewritten as a `ret'
 
     // Check if the function should return a value
-    if (OldFnRetTy == Type::getVoidTy(Context)) {
+    if (OldFnRetTy->isVoidTy()) {
       ReturnInst::Create(Context, 0, TheSwitch);  // Return void
     } else if (OldFnRetTy == TheSwitch->getCondition()->getType()) {
       // return what we have

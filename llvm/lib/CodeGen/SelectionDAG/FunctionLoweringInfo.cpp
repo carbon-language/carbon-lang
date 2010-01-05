@@ -113,7 +113,7 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
     return;
   }
   // Interpret void as zero return values.
-  if (Ty == Type::getVoidTy(Ty->getContext()))
+  if (Ty->isVoidTy())
     return;
   // Base case: we can get an EVT for this LLVM IR type.
   ValueVTs.push_back(TLI.getValueType(Ty));

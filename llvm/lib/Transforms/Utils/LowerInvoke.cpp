@@ -255,7 +255,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
       ReturnInst::Create(F.getContext(),
-                         F.getReturnType() == Type::getVoidTy(F.getContext()) ?
+                         F.getReturnType()->isVoidTy() ?
                           0 : Constant::getNullValue(F.getReturnType()), UI);
 
       // Remove the unwind instruction now.

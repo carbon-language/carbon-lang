@@ -32,7 +32,7 @@ namespace {
     bool runOnFunction(Function &F) {
       for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end();
            AI != AE; ++AI)
-        if (!AI->hasName() && AI->getType() != Type::getVoidTy(F.getContext()))
+        if (!AI->hasName() && !AI->getType()->isVoidTy())
           AI->setName("arg");
 
       for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
@@ -40,7 +40,7 @@ namespace {
           BB->setName("bb");
         
         for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-          if (!I->hasName() && I->getType() != Type::getVoidTy(F.getContext()))
+          if (!I->hasName() && !I->getType()->isVoidTy())
             I->setName("tmp");
       }
       return true;

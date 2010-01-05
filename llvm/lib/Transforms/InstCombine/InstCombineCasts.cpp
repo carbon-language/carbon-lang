@@ -1027,7 +1027,7 @@ static Value *LookThroughFPExtensions(Value *V) {
     // See if the value can be truncated to float and then reextended.
     if (Value *V = FitsInFPType(CFP, APFloat::IEEEsingle))
       return V;
-    if (CFP->getType() == Type::getDoubleTy(V->getContext()))
+    if (CFP->getType()->isDoubleTy())
       return V;  // Won't shrink.
     if (Value *V = FitsInFPType(CFP, APFloat::IEEEdouble))
       return V;

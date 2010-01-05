@@ -808,7 +808,7 @@ bool BitcodeReader::ParseMetadata() {
         const Type *Ty = getTypeByID(Record[i], false);
         if (Ty->isMetadataTy())
           Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
-        else if (Ty != Type::getVoidTy(Context))
+        else if (!Ty->isVoidTy())
           Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
         else
           Elts.push_back(NULL);
@@ -2238,7 +2238,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
 
     // Non-void values get registered in the value table for future use.
-    if (I && I->getType() != Type::getVoidTy(Context))
+    if (I && !I->getType()->isVoidTy())
       ValueList.AssignValue(I, NextValueNo++);
   }
 

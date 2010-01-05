@@ -217,7 +217,7 @@ bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
   
   switch (NumOutputs) {
   case 0:
-    if (Ty->getReturnType() != Type::getVoidTy(Ty->getContext())) return false;
+    if (!Ty->getReturnType()->isVoidTy()) return false;
     break;
   case 1:
     if (isa<StructType>(Ty->getReturnType())) return false;

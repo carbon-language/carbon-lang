@@ -792,7 +792,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             BI->dump();
           }
 
-          if (BI->getType() != Type::getVoidTy(*CurDAG->getContext())) {
+          if (!BI->getType()->isVoidTy()) {
             unsigned &R = FuncInfo->ValueMap[BI];
             if (!R)
               R = FuncInfo->CreateRegForValue(BI);

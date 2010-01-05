@@ -498,7 +498,7 @@ static void ThunkGToF(Function *F, Function *G) {
   CallInst *CI = CallInst::Create(F, Args.begin(), Args.end(), "", BB);
   CI->setTailCall();
   CI->setCallingConv(F->getCallingConv());
-  if (NewG->getReturnType() == Type::getVoidTy(F->getContext())) {
+  if (NewG->getReturnType()->isVoidTy()) {
     ReturnInst::Create(F->getContext(), BB);
   } else if (CI->getType() != NewG->getReturnType()) {
     Value *BCI = new BitCastInst(CI, NewG->getReturnType(), "", BB);

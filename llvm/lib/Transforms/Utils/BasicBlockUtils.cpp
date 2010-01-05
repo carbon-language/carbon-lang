@@ -252,7 +252,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
       Value *RetVal = 0;
 
       // Create a value to return... if the function doesn't return null...
-      if (BB->getParent()->getReturnType() != Type::getVoidTy(TI->getContext()))
+      if (!BB->getParent()->getReturnType()->isVoidTy())
         RetVal = Constant::getNullValue(BB->getParent()->getReturnType());
 
       // Create the return...

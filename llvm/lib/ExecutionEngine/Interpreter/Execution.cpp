@@ -602,7 +602,7 @@ void Interpreter::popStackAndReturnValueToCaller(const Type *RetTy,
     ExecutionContext &CallingSF = ECStack.back();
     if (Instruction *I = CallingSF.Caller.getInstruction()) {
       // Save result...
-      if (CallingSF.Caller.getType() != Type::getVoidTy(RetTy->getContext()))
+      if (!CallingSF.Caller.getType()->isVoidTy())
         SetValue(I, Result, CallingSF);
       if (InvokeInst *II = dyn_cast<InvokeInst> (I))
         SwitchToNewBasicBlock (II->getNormalDest (), CallingSF);

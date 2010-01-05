@@ -343,9 +343,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   // Check main() type
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
   const FunctionType *FTy = Fn->getFunctionType();
-  const Type* PPInt8Ty = 
-    PointerType::getUnqual(PointerType::getUnqual(
-          Type::getInt8Ty(Fn->getContext())));
+  const Type* PPInt8Ty = Type::getInt8PtrTy(Fn->getContext())->getPointerTo();
   switch (NumArgs) {
   case 3:
    if (FTy->getParamType(2) != PPInt8Ty) {
@@ -364,7 +362,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
    // FALLS THROUGH
   case 0:
    if (!isa<IntegerType>(FTy->getReturnType()) &&
-       FTy->getReturnType() != Type::getVoidTy(FTy->getContext())) {
+       !FTy->getReturnType()->isVoidTy()) {
      llvm_report_error("Invalid return type of main() supplied");
    }
    break;

@@ -753,7 +753,7 @@ HoistTerminator:
   // Okay, it is safe to hoist the terminator.
   Instruction *NT = I1->clone();
   BIParent->getInstList().insert(BI, NT);
-  if (NT->getType() != Type::getVoidTy(BB1->getContext())) {
+  if (!NT->getType()->isVoidTy()) {
     I1->replaceAllUsesWith(NT);
     I2->replaceAllUsesWith(NT);
     NT->takeName(I1);

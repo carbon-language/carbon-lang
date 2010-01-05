@@ -411,8 +411,7 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy == Type::getInt32Ty(F->getContext()) ||
-      RetTy == Type::getVoidTy(F->getContext())) {
+  if (RetTy == Type::getInt32Ty(F->getContext()) || RetTy->isVoidTy()) {
     switch (ArgValues.size()) {
     case 3:
       if (FTy->getParamType(0) == Type::getInt32Ty(F->getContext()) &&
@@ -548,7 +547,7 @@ GenericValue JIT::runFunction(Function *F,
                                        "", StubBB);
   TheCall->setCallingConv(F->getCallingConv());
   TheCall->setTailCall();
-  if (TheCall->getType() != Type::getVoidTy(F->getContext()))
+  if (!TheCall->getType()->isVoidTy())
     // Return result of the call.
     ReturnInst::Create(F->getContext(), TheCall, StubBB);
   else

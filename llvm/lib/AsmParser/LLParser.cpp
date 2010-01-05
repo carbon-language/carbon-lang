@@ -1715,8 +1715,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   }
 
   // Don't make placeholders with invalid type.
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) &&
-      Ty != Type::getLabelTy(F.getContext())) {
+  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && !Ty->isLabelTy()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
@@ -1757,8 +1756,7 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
     return 0;
   }
 
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) &&
-      Ty != Type::getLabelTy(F.getContext())) {
+  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && !Ty->isLabelTy()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
@@ -2663,8 +2661,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
-  if (PAL.paramHasAttr(1, Attribute::StructRet) &&
-      RetType != Type::getVoidTy(Context))
+  if (PAL.paramHasAttr(1, Attribute::StructRet) && !RetType->isVoidTy())
     return Error(RetTypeLoc, "functions with 'sret' argument must return void");
 
   const FunctionType *FT =

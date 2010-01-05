@@ -349,12 +349,12 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::setjmp: {
     Value *V = ReplaceCallWith("setjmp", CI, CI->op_begin() + 1, CI->op_end(),
                                Type::getInt32Ty(Context));
-    if (CI->getType() != Type::getVoidTy(Context))
+    if (!CI->getType()->isVoidTy())
       CI->replaceAllUsesWith(V);
     break;
   }
   case Intrinsic::sigsetjmp:
-     if (CI->getType() != Type::getVoidTy(Context))
+     if (!CI->getType()->isVoidTy())
        CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
      break;
 
@@ -508,7 +508,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
   case Intrinsic::flt_rounds:
      // Lower to "round to the nearest"
-     if (CI->getType() != Type::getVoidTy(Context))
+     if (!CI->getType()->isVoidTy())
        CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
      break;
   case Intrinsic::invariant_start:

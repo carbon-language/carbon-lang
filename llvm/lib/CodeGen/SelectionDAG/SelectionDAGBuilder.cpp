@@ -3169,7 +3169,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
   } else if (!HasChain) {
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
-  } else if (I.getType() != Type::getVoidTy(*DAG.getContext())) {
+  } else if (!I.getType()->isVoidTy()) {
     Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, getCurDebugLoc(),
                          VTs, &Ops[0], Ops.size());
   } else {
@@ -3188,7 +3188,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
       DAG.setRoot(Chain);
   }
 
-  if (I.getType() != Type::getVoidTy(*DAG.getContext())) {
+  if (!I.getType()->isVoidTy()) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
       EVT VT = TLI.getValueType(PTy);
       Result = DAG.getNode(ISD::BIT_CONVERT, getCurDebugLoc(), VT, Result);
@@ -5937,7 +5937,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
       // The return value of the call is this value.  As such, there is no
       // corresponding argument.
-      assert(CS.getType() != Type::getVoidTy(*DAG.getContext()) &&
+      assert(!CS.getType()->isVoidTy() &&
              "Bad inline asm!");
       if (const StructType *STy = dyn_cast<StructType>(CS.getType())) {
         OpVT = TLI.getValueType(STy->getElementType(ResNo));
@@ -6107,8 +6107,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                                       OpInfo.CallOperandVal));
       } else {
         // This is the result value of the call.
-        assert(CS.getType() != Type::getVoidTy(*DAG.getContext()) &&
-               "Bad inline asm!");
+        assert(!CS.getType()->isVoidTy() && "Bad inline asm!");
         // Concatenate this output onto the outputs list.
         RetValRegs.append(OpInfo.AssignedRegs);
       }

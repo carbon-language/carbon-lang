@@ -1929,7 +1929,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
       if (!PFTy) return 0;
       const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());
-      if (!FTy || FTy->getReturnType() != Type::getVoidTy(M.getContext()) ||
+      if (!FTy || !FTy->getReturnType()->isVoidTy() ||
           FTy->isVarArg() || FTy->getNumParams() != 0)
         return 0;
       
