@@ -233,7 +233,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       TargetSubtarget::ANTIDEP_NONE;
   }
 
-  DEBUG(errs() << "PostRAScheduler\n");
+  DEBUG(dbgs() << "PostRAScheduler\n");
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   const MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
@@ -258,7 +258,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       static int bbcnt = 0;
       if (bbcnt++ % DebugDiv != DebugMod)
         continue;
-      errs() << "*** DEBUG scheduling " << Fn.getFunction()->getNameStr() <<
+      dbgs() << "*** DEBUG scheduling " << Fn.getFunction()->getNameStr() <<
         ":BB#" << MBB->getNumber() << " ***\n";
     }
 #endif
@@ -342,7 +342,7 @@ void SchedulePostRATDList::Schedule() {
     }
   }
 
-  DEBUG(errs() << "********** List Scheduling **********\n");
+  DEBUG(dbgs() << "********** List Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
@@ -448,7 +448,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
 /// incorrect by instruction reordering.
 ///
 void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
-  DEBUG(errs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
+  DEBUG(dbgs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
 
   std::set<unsigned> killedRegs;
   BitVector ReservedRegs = TRI->getReservedRegs(MF);
@@ -511,7 +511,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       }
       
       if (MO.isKill() != kill) {
-        DEBUG(errs() << "Fixing " << MO << " in ");
+        DEBUG(dbgs() << "Fixing " << MO << " in ");
         // Warning: ToggleKillFlag may invalidate MO.
         ToggleKillFlag(MI, MO);
         DEBUG(MI->dump());
@@ -549,9 +549,9 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
 
 #ifndef NDEBUG
   if (SuccSU->NumPredsLeft == 0) {
-    errs() << "*** Scheduling failed! ***\n";
+    dbgs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
-    errs() << " has been released too many times!\n";
+    dbgs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
@@ -580,7 +580,7 @@ void SchedulePostRATDList::ReleaseSuccessors(SUnit *SU) {
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
 void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
-  DEBUG(errs() << "*** Scheduling [" << CurCycle << "]: ");
+  DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
   
   Sequence.push_back(SU);
@@ -640,11 +640,11 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         MinDepth = PendingQueue[i]->getDepth();
     }
 
-    DEBUG(errs() << "\n*** Examining Available\n";
+    DEBUG(dbgs() << "\n*** Examining Available\n";
           LatencyPriorityQueue q = AvailableQueue;
           while (!q.empty()) {
             SUnit *su = q.pop();
-            errs() << "Height " << su->getHeight() << ": ";
+            dbgs() << "Height " << su->getHeight() << ": ";
             su->dump(this);
           });
 
@@ -689,19 +689,19 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       }
     } else {
       if (CycleHasInsts) {
-        DEBUG(errs() << "*** Finished cycle " << CurCycle << '\n');
+        DEBUG(dbgs() << "*** Finished cycle " << CurCycle << '\n');
         HazardRec->AdvanceCycle();
       } else if (!HasNoopHazards) {
         // Otherwise, we have a pipeline stall, but no other problem,
         // just advance the current cycle and try again.
-        DEBUG(errs() << "*** Stall in cycle " << CurCycle << '\n');
+        DEBUG(dbgs() << "*** Stall in cycle " << CurCycle << '\n');
         HazardRec->AdvanceCycle();
         ++NumStalls;
       } else {
         // Otherwise, we have no instructions to issue and we have instructions
         // that will fault if we don't do this right.  This is the case for
         // processors without pipeline interlocks and other cases.
-        DEBUG(errs() << "*** Emitting noop in cycle " << CurCycle << '\n');
+        DEBUG(dbgs() << "*** Emitting noop in cycle " << CurCycle << '\n');
         HazardRec->EmitNoop();
         Sequence.push_back(0);   // NULL here means noop
         ++NumNoops;
