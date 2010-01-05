@@ -302,7 +302,7 @@ public:
   void RefineAbstractType(TypeClass *Ty, const DerivedType *OldType,
                         const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-    DEBUG(errs() << "RefineAbstractType(" << (void*)OldType << "[" << *OldType
+    DEBUG(dbgs() << "RefineAbstractType(" << (void*)OldType << "[" << *OldType
                  << "], " << (void*)NewType << " [" << *NewType << "])\n");
 #endif
     
@@ -408,11 +408,11 @@ public:
 
   void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
-    DEBUG(errs() << "TypeMap<>::" << Arg << " table contents:\n");
+    DEBUG(dbgs() << "TypeMap<>::" << Arg << " table contents:\n");
     unsigned i = 0;
     for (typename std::map<ValType, PATypeHolder>::const_iterator I
            = Map.begin(), E = Map.end(); I != E; ++I)
-      DEBUG(errs() << " " << (++i) << ". " << (void*)I->second.get() << " "
+      DEBUG(dbgs() << " " << (++i) << ". " << (void*)I->second.get() << " "
                    << *I->second.get() << "\n");
 #endif
   }
