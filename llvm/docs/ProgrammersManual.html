@@ -94,6 +94,7 @@ option</a></li>
     <li><a href="#ds_bit">BitVector-like containers</a>
     <ul>
       <li><a href="#dss_bitvector">A dense bitvector</a></li>
+      <li><a href="#dss_smallbitvector">A "small" dense bitvector</a></li>
       <li><a href="#dss_sparsebitvector">A sparse bitvector</a></li>
     </ul></li>
   </ul>
@@ -1584,12 +1585,31 @@ please don't use it.</p>
 </div>
 
 <div class="doc_text">
-<p> The BitVector container provides a fixed size set of bits for manipulation.
+<p> The BitVector container provides a dynamic size set of bits for manipulation.
 It supports individual bit setting/testing, as well as set operations.  The set
 operations take time O(size of bitvector), but operations are performed one word
 at a time, instead of one bit at a time.  This makes the BitVector very fast for
 set operations compared to other containers.  Use the BitVector when you expect
 the number of set bits to be high (IE a dense set).
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_smallbitvector">SmallBitVector</a>
+</div>
+
+<div class="doc_text">
+<p> The SmallBitVector container provides the same interface as BitVector, but
+it is optimized for the case where only a small number of bits, less than
+25 or so, are needed. It also transparently supports larger bit counts, but
+slightly less efficiently than a plain BitVector, so SmallBitVector should
+only be used when larger counts are rare.
+</p>
+
+<p>
+At this time, SmallBitVector does not support set operations (and, or, xor),
+and its operator[] does not provide an assignable lvalue.
 </p>
 </div>
 
