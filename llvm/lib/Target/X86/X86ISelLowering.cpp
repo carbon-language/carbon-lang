@@ -7535,8 +7535,7 @@ bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
 
 bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
   // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
-  return Ty1 == Type::getInt32Ty(Ty1->getContext()) &&
-         Ty2 == Type::getInt64Ty(Ty1->getContext()) && Subtarget->is64Bit();
+  return Ty1->isInteger(64) && Ty2->isInteger(64) && Subtarget->is64Bit();
 }
 
 bool X86TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {

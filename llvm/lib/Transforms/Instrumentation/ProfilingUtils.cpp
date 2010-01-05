@@ -84,7 +84,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     AI = MainFn->arg_begin();
     // If the program looked at argc, have it look at the return value of the
     // init call instead.
-    if (AI->getType() != Type::getInt32Ty(Context)) {
+    if (!AI->getType()->isInteger(32)) {
       Instruction::CastOps opcode;
       if (!AI->use_empty()) {
         opcode = CastInst::getCastOpcode(InitCall, true, AI->getType(), true);

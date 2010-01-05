@@ -596,8 +596,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (TD && isa<ArrayType>(SrcElTy) &&
-          ResElTy == Type::getInt8Ty(GEP.getContext())) {
+      if (TD && isa<ArrayType>(SrcElTy) && ResElTy->isInteger(8)) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         

@@ -1925,7 +1925,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       if (!ATy) return 0;
       const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
       if (!STy || STy->getNumElements() != 2 ||
-          STy->getElementType(0) != Type::getInt32Ty(M.getContext())) return 0;
+          !STy->getElementType(0)->isInteger(32)) return 0;
       const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
       if (!PFTy) return 0;
       const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());

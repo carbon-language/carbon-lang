@@ -411,7 +411,7 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy == Type::getInt32Ty(F->getContext()) || RetTy->isVoidTy()) {
+  if (RetTy->isInteger(32) || RetTy->isVoidTy()) {
     switch (ArgValues.size()) {
     case 3:
       if (FTy->getParamType(0)->isInteger(32) &&

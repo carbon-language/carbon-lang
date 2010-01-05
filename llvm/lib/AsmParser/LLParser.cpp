@@ -3656,7 +3656,7 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     }
   }
 
-  if (Size && Size->getType() != Type::getInt32Ty(Context))
+  if (Size && !Size->getType()->isInteger(32))
     return Error(SizeLoc, "element count must be i32");
 
   if (isAlloca) {

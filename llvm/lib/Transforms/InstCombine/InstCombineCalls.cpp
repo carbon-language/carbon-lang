@@ -199,7 +199,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   // Extract the length and alignment and fill if they are constant.
   ConstantInt *LenC = dyn_cast<ConstantInt>(MI->getLength());
   ConstantInt *FillC = dyn_cast<ConstantInt>(MI->getValue());
-  if (!LenC || !FillC || FillC->getType() != Type::getInt8Ty(MI->getContext()))
+  if (!LenC || !FillC || !FillC->getType()->isInteger(8))
     return 0;
   uint64_t Len = LenC->getZExtValue();
   Alignment = MI->getAlignment();

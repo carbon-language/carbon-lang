@@ -1391,8 +1391,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
-  if (!isa<VectorType>(Val->getType()) ||
-      Index->getType() != Type::getInt32Ty(Val->getContext()))
+  if (!isa<VectorType>(Val->getType()) || !Index->getType()->isInteger(32))
     return false;
   return true;
 }
@@ -1439,7 +1438,7 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
   if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
     return false;// Second operand of insertelement must be vector element type.
     
-  if (Index->getType() != Type::getInt32Ty(Vec->getContext()))
+  if (!Index->getType()->isInteger(32))
     return false;  // Third operand of insertelement must be i32.
   return true;
 }
@@ -1491,7 +1490,7 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
   
   const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
   if (!isa<Constant>(Mask) || MaskTy == 0 ||
-      MaskTy->getElementType() != Type::getInt32Ty(V1->getContext()))
+      !MaskTy->getElementType()->isInteger(32))
     return false;
   return true;
 }

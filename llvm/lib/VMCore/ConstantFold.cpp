@@ -1229,10 +1229,10 @@ static int IdxCompare(LLVMContext &Context, Constant *C1, Constant *C2,
 
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
-  if (C1->getType() != Type::getInt64Ty(Context))
+  if (!C1->getType()->isInteger(64))
     C1 = ConstantExpr::getSExt(C1, Type::getInt64Ty(Context));
 
-  if (C2->getType() != Type::getInt64Ty(Context))
+  if (!C2->getType()->isInteger(64))
     C2 = ConstantExpr::getSExt(C2, Type::getInt64Ty(Context));
 
   if (C1 == C2) return 0;  // They are equal
@@ -2042,10 +2042,10 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
 
             // Before adding, extend both operands to i64 to avoid
             // overflow trouble.
-            if (PrevIdx->getType() != Type::getInt64Ty(Context))
+            if (!PrevIdx->getType()->isInteger(64))
               PrevIdx = ConstantExpr::getSExt(PrevIdx,
                                               Type::getInt64Ty(Context));
-            if (Div->getType() != Type::getInt64Ty(Context))
+            if (!Div->getType()->isInteger(64))
               Div = ConstantExpr::getSExt(Div,
                                           Type::getInt64Ty(Context));
 

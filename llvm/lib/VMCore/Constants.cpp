@@ -928,7 +928,7 @@ void ConstantArray::destroyConstant() {
 /// if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
   // Check the element type for i8...
-  if (getType()->getElementType() != Type::getInt8Ty(getContext()))
+  if (!getType()->getElementType()->isInteger(8))
     return false;
   // Check the elements to make sure they are all integers, not constant
   // expressions.
@@ -943,7 +943,7 @@ bool ConstantArray::isString() const {
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
   // Check the element type for i8...
-  if (getType()->getElementType() != Type::getInt8Ty(getContext()))
+  if (!getType()->getElementType()->isInteger(8))
     return false;
 
   // Last element must be a null.

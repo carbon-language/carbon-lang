@@ -1348,7 +1348,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
     // Make sure the index-ee is a pointer to array of i8.
     const PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
     const ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
-    if (AT == 0 || AT->getElementType() != Type::getInt8Ty(V->getContext()))
+    if (AT == 0 || !AT->getElementType()->isInteger(8))
       return false;
     
     // Check to make sure that the first operand of the GEP is an integer and
@@ -1387,8 +1387,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
   
   // Must be a Constant Array
   ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
-  if (Array == 0 ||
-      Array->getType()->getElementType() != Type::getInt8Ty(V->getContext()))
+  if (Array == 0 || !Array->getType()->getElementType()->isInteger(8))
     return false;
   
   // Get the number of elements in the array
