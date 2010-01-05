@@ -337,3 +337,40 @@ define i64 @test38(i32 %a) {
 ; CHECK: %2 = zext i1 %1 to i64
 ; CHECK: ret i64 %2
 }
+
+define i16 @test39(i16 %a) {
+        %tmp = zext i16 %a to i32
+        %tmp21 = lshr i32 %tmp, 8
+        %tmp5 = shl i32 %tmp, 8
+        %tmp.upgrd.32 = or i32 %tmp21, %tmp5
+        %tmp.upgrd.3 = trunc i32 %tmp.upgrd.32 to i16
+        ret i16 %tmp.upgrd.3
+; CHECK: @test39
+; CHECK: %tmp.upgrd.32 = call i16 @llvm.bswap.i16(i16 %a)
+; CHECK: ret i16 %tmp.upgrd.32
+}
+
+define i16 @test40(i16 %a) {
+        %tmp = zext i16 %a to i32
+        %tmp21 = lshr i32 %tmp, 9
+        %tmp5 = shl i32 %tmp, 8
+        %tmp.upgrd.32 = or i32 %tmp21, %tmp5
+        %tmp.upgrd.3 = trunc i32 %tmp.upgrd.32 to i16
+        ret i16 %tmp.upgrd.3
+; CHECK: @test40
+; CHECK: %tmp21 = lshr i16 %a, 9
+; CHECK: %tmp5 = shl i16 %a, 8
+; CHECK: %tmp.upgrd.32 = or i16 %tmp21, %tmp5
+; CHECK: ret i16 %tmp.upgrd.32
+}
+
+; PR1263
+define i32* @test41(i32* %tmp1) {
+        %tmp64 = bitcast i32* %tmp1 to { i32 }*
+        %tmp65 = getelementptr { i32 }* %tmp64, i32 0, i32 0
+        ret i32* %tmp65
+; CHECK: @test41
+; CHECK: ret i32* %tmp1
+}
+
+
