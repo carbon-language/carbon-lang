@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -355,7 +356,7 @@ void SubtargetFeatures::print(raw_ostream &OS) const {
 /// dump - Dump feature info.
 ///
 void SubtargetFeatures::dump() const {
-  print(errs());
+  print(dbgs());
 }
 
 /// getDefaultSubtargetFeatures - Return a string listing
