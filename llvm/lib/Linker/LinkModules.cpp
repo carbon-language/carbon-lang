@@ -25,6 +25,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -144,7 +145,7 @@ protected:
 
   // for debugging...
   virtual void dump() const {
-    errs() << "AbstractTypeSet!\n";
+    dbgs() << "AbstractTypeSet!\n";
   }
 };
 }
@@ -337,11 +338,11 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
-    errs() << " Fr: " << (void*)I->first << " ";
+    dbgs() << " Fr: " << (void*)I->first << " ";
     I->first->dump();
-    errs() << " To: " << (void*)I->second << " ";
+    dbgs() << " To: " << (void*)I->second << " ";
     I->second->dump();
-    errs() << "\n";
+    dbgs() << "\n";
   }
 }
 #endif
@@ -404,10 +405,10 @@ static Value *RemapOperand(const Value *In,
   }
 
 #ifndef NDEBUG
-  errs() << "LinkModules ValueMap: \n";
+  dbgs() << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
-  errs() << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
+  dbgs() << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   llvm_unreachable("Couldn't remap value!");
 #endif
   return 0;
