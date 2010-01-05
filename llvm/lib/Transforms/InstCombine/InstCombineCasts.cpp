@@ -498,22 +498,21 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
 
-  Value *Src = CI.getOperand(0);
-  const Type *SrcTy = Src->getType();
-  const Type *DestTy = CI.getType();
-  uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
-  uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-
   // See if we can simplify any instructions used by the LHS whose sole 
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(CI))
     return &CI;
-
+  
   // If the source isn't an instruction or has more than one use then we
   // can't do anything more. 
-  Instruction *SrcI = dyn_cast<Instruction>(Src);
-  if (!SrcI || !Src->hasOneUse())
+  Instruction *Src = dyn_cast<Instruction>(CI.getOperand(0));
+  if (!Src || !Src->hasOneUse())
     return 0;
+  
+  const Type *SrcTy = Src->getType();
+  const Type *DestTy = CI.getType();
+  uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
+  uint32_t DestBitSize = DestTy->getScalarSizeInBits();
 
   // Attempt to propagate the cast into the instruction for int->int casts.
   int NumCastsRemoved = 0;
@@ -521,8 +520,8 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // expression tree to something weird like i93 unless the source is also
   // strange.
   if ((isa<VectorType>(DestTy) ||
-       ShouldChangeType(SrcI->getType(), DestTy)) &&
-      CanEvaluateInDifferentType(SrcI, DestTy,
+       ShouldChangeType(Src->getType(), DestTy)) &&
+      CanEvaluateInDifferentType(Src, DestTy,
                                  CI.getOpcode(), NumCastsRemoved)) {
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.  If this is a zero-extension,
@@ -546,7 +545,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       if (!DoXForm && 0) {
         // If it's unnecessary to issue an AND to clear the high bits, it's
         // always profitable to do this xform.
-        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, false);
+        Value *TryRes = EvaluateInDifferentType(Src, DestTy, false);
         APInt Mask(APInt::getBitsSet(DestBitSize, SrcBitSize, DestBitSize));
         if (MaskedValueIsZero(TryRes, Mask))
           return ReplaceInstUsesWith(CI, TryRes);
@@ -559,7 +558,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     }
     case Instruction::SExt: {
       DoXForm = NumCastsRemoved >= 2;
-      if (!DoXForm && !isa<TruncInst>(SrcI) && 0) {
+      if (!DoXForm && !isa<TruncInst>(Src) && 0) {
         // If we do not have to emit the truncate + sext pair, then it's always
         // profitable to do this xform.
         //
@@ -569,7 +568,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         // t3 = sext i16 t2 to i32
         // !=
         // i32 t1
-        Value *TryRes = EvaluateInDifferentType(SrcI, DestTy, true);
+        Value *TryRes = EvaluateInDifferentType(Src, DestTy, true);
         unsigned NumSignBits = ComputeNumSignBits(TryRes);
         if (NumSignBits > (DestBitSize - SrcBitSize))
           return ReplaceInstUsesWith(CI, TryRes);
@@ -585,7 +584,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     if (DoXForm) {
       DEBUG(errs() << "ICE: EvaluateInDifferentType converting expression type"
             " to avoid cast: " << CI);
-      Value *Res = EvaluateInDifferentType(SrcI, DestTy, 
+      Value *Res = EvaluateInDifferentType(Src, DestTy, 
                                            CI.getOpcode() == Instruction::SExt);
       if (JustReplace)
         // Just replace this cast with the result.
@@ -634,11 +633,9 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   
   Value *Src = CI.getOperand(0);
   const Type *DestTy = CI.getType();
-  uint32_t DestBitWidth = DestTy->getScalarSizeInBits();
-  uint32_t SrcBitWidth = Src->getType()->getScalarSizeInBits();
 
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
-  if (DestBitWidth == 1) {
+  if (DestTy->isInteger(1)) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
     Src = Builder->CreateAnd(Src, One, "tmp");
     Value *Zero = Constant::getNullValue(Src->getType());
