@@ -35,7 +35,7 @@ _clang_getFileTime
 _clang_getNullCursor
 _clang_getNumCompletionChunks
 _clang_getTranslationUnitSpelling
-_clang_getURI
+_clang_getUSR
 _clang_isDeclaration
 _clang_isDefinition
 _clang_isInvalid

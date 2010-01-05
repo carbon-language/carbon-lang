@@ -322,8 +322,8 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
  * CXEntity Operations.
  */
 CINDEX_LINKAGE const char *clang_getDeclarationName(CXEntity);
-CINDEX_LINKAGE const char *clang_getURI(CXEntity);
-CINDEX_LINKAGE CXEntity clang_getEntity(const char *URI);
+CINDEX_LINKAGE const char *clang_getUSR(CXEntity);
+CINDEX_LINKAGE CXEntity clang_getEntity(const char *USR);
 /*
  * CXDecl Operations.
  */

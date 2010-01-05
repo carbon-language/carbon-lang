@@ -529,35 +529,6 @@ void clang_loadDeclaration(CXDecl Dcl,
   DVisit.Visit(static_cast<Decl *>(Dcl));
 }
 
-// Some notes on CXEntity:
-//
-// - Since the 'ordinary' namespace includes functions, data, typedefs,
-// ObjC interfaces, thecurrent algorithm is a bit naive (resulting in one
-// entity for 2 different types). For example:
-//
-// module1.m: @interface Foo @end Foo *x;
-// module2.m: void Foo(int);
-//
-// - Since the unique name spans translation units, static data/functions
-// within a CXTranslationUnit are *not* currently represented by entities.
-// As a result, there will be no entity for the following:
-//
-// module.m: static void Foo() { }
-//
-
-
-const char *clang_getDeclarationName(CXEntity) {
-  return "";
-}
-
-const char *clang_getURI(CXEntity) {
-  return "";
-}
-
-CXEntity clang_getEntity(const char *URI) {
-  return 0;
-}
-
 //
 // CXDecl Operations.
 //
