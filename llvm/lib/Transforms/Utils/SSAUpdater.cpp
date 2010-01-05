@@ -191,7 +191,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   // If the client wants to know about all new instructions, tell it.
   if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
 
-  DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+  DEBUG(dbgs() << "  Inserted PHI: " << *InsertedPHI << "\n");
   return InsertedPHI;
 }
 
@@ -352,7 +352,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     InsertedPHI->eraseFromParent();
     InsertedVal = ConstVal;
   } else {
-    DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+    DEBUG(dbgs() << "  Inserted PHI: " << *InsertedPHI << "\n");
 
     // If the client wants to know about all new instructions, tell it.
     if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
