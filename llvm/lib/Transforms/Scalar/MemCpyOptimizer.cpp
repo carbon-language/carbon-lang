@@ -456,10 +456,10 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       ConstantInt::get(Type::getInt32Ty(Context), Range.Alignment)
     };
     Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
-    DEBUG(errs() << "Replace stores:\n";
+    DEBUG(dbgs() << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
-            errs() << *Range.TheStores[i];
-          errs() << "With: " << *C); C=C;
+            dbgs() << *Range.TheStores[i];
+          dbgs() << "With: " << *C); C=C;
   
     // Don't invalidate the iterator
     BBI = BI;
@@ -725,7 +725,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
       AliasAnalysis::NoAlias)
     return false;
   
-  DEBUG(errs() << "MemCpyOpt: Optimizing memmove -> memcpy: " << *M << "\n");
+  DEBUG(dbgs() << "MemCpyOpt: Optimizing memmove -> memcpy: " << *M << "\n");
   
   // If not, then we know we can transform this.
   Module *Mod = M->getParent()->getParent()->getParent();
