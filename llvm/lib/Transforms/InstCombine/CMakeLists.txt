@@ -8,6 +8,7 @@ add_llvm_library(LLVMInstCombine
   InstCombineMulDivRem.cpp
   InstCombinePHI.cpp
   InstCombineSelect.cpp
+  InstCombineShifts.cpp 
   InstCombineSimplifyDemanded.cpp
   InstCombineVectorOps.cpp
   )
