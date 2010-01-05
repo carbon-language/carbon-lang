@@ -17,6 +17,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
@@ -54,8 +55,8 @@ void ExtAddrMode::print(raw_ostream &OS) const {
 }
 
 void ExtAddrMode::dump() const {
-  print(errs());
-  errs() << '\n';
+  print(dbgs());
+  dbgs() << '\n';
 }
 
 
