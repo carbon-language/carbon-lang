@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/System/Path.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
@@ -60,7 +61,7 @@ Linker::warning(StringRef message) {
 void
 Linker::verbose(StringRef message) {
   if (Flags&Verbose)
-    errs() << "  " << message << "\n";
+    dbgs() << "  " << message << "\n";
 }
 
 void
