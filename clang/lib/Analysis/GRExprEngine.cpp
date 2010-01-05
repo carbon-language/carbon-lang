@@ -300,23 +300,27 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterOSAtomicChecker(Eng);
 }
 
-GRExprEngine::GRExprEngine(AnalysisManager &mgr)
+GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
   : AMgr(mgr),
     CoreEngine(mgr.getASTContext(), *this),
     G(CoreEngine.getGraph()),
     Builder(NULL),
     StateMgr(G.getContext(), mgr.getStoreManagerCreator(),
-             mgr.getConstraintManagerCreator(), G.getAllocator()),
+             mgr.getConstraintManagerCreator(), G.getAllocator(),
+             *this),
     SymMgr(StateMgr.getSymbolManager()),
     ValMgr(StateMgr.getValueManager()),
     SVator(ValMgr.getSValuator()),
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())),
-    BR(mgr, *this)
-{
+    BR(mgr, *this), TF(tf) {
   // Register internal checks.
   RegisterInternalChecks(*this);
+  
+  // FIXME: Eventually remove the TF object entirely.
+  TF->RegisterChecks(*this);
+  TF->RegisterPrinters(getStateManager().Printers);
 }
 
 GRExprEngine::~GRExprEngine() {
@@ -329,13 +333,6 @@ GRExprEngine::~GRExprEngine() {
 //===----------------------------------------------------------------------===//
 // Utility methods.
 //===----------------------------------------------------------------------===//
-
-void GRExprEngine::setTransferFunctionsAndCheckers(GRTransferFuncs* tf) {
-  StateMgr.TF = tf;
-  StateMgr.Checkers = &Checkers;
-  tf->RegisterChecks(*this);
-  tf->RegisterPrinters(getStateManager().Printers);
-}
 
 void GRExprEngine::AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
   if (!BatchAuditor)
@@ -414,6 +411,25 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 //===----------------------------------------------------------------------===//
 // Top-level transfer function logic (Dispatcher).
 //===----------------------------------------------------------------------===//
+
+/// EvalAssume - Called by ConstraintManager. Used to call checker-specific
+///  logic for handling assumptions on symbolic values.
+const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
+                                           bool assumption) {  
+  for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
+        I != E; ++I) {
+
+    if (!state)
+      return NULL;  
+    
+    state = I->second->EvalAssume(state, cond, assumption);
+  }
+  
+  if (!state)
+    return NULL;
+  
+  return TF->EvalAssume(state, cond, assumption);
+}
 
 void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
   CurrentStmt = CE.getStmt();

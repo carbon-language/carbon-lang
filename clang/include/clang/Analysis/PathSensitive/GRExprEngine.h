@@ -87,9 +87,11 @@ class GRExprEngine : public GRSubEngine {
   //   this object be placed at the very end of member variables so that its
   //   destructor is called before the rest of the GRExprEngine is destroyed.
   GRBugReporter BR;
+  
+  llvm::OwningPtr<GRTransferFuncs> TF;
 
 public:
-  GRExprEngine(AnalysisManager &mgr);
+  GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf);
 
   ~GRExprEngine();
 
@@ -104,18 +106,14 @@ public:
 
   SValuator &getSValuator() { return SVator; }
 
-  GRTransferFuncs& getTF() { return *StateMgr.TF; }
+  GRTransferFuncs& getTF() { return *TF; }
 
   BugReporter& getBugReporter() { return BR; }
 
   GRStmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
 
-  /// setTransferFunctions
-  void setTransferFunctionsAndCheckers(GRTransferFuncs* tf);
-
-  void setTransferFunctions(GRTransferFuncs& tf) {
-    setTransferFunctionsAndCheckers(&tf);
-  }
+  // FIXME: Remove once GRTransferFuncs is no longer referenced.
+  void setTransferFunction(GRTransferFuncs* tf);
 
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
@@ -173,6 +171,10 @@ public:
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
   void ProcessEndPath(GREndPathNodeBuilder& builder);
+  
+  /// EvalAssume - Callback function invoked by the ConstraintManager when
+  ///  making assumptions about state values.
+  const GRState *ProcessAssume(const GRState *state, SVal cond, bool assumption);
 
   GRStateManager& getStateManager() { return StateMgr; }
   const GRStateManager& getStateManager() const { return StateMgr; }

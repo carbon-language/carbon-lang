@@ -234,7 +234,8 @@ namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(const GRState *state, SymbolRef sym);
 public:
-  RangeConstraintManager() {}
+  RangeConstraintManager(GRSubEngine &subengine)
+    : SimpleConstraintManager(subengine) {}
 
   const GRState* AssumeSymNE(const GRState* St, SymbolRef sym,
                              const llvm::APSInt& V);
@@ -273,8 +274,9 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager&) {
-  return new RangeConstraintManager();
+ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager&,
+                                                       GRSubEngine &subeng) {
+  return new RangeConstraintManager(subeng);
 }
 
 const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState* St,

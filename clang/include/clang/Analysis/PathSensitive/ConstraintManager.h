@@ -25,6 +25,7 @@ namespace clang {
 
 class GRState;
 class GRStateManager;
+class GRSubEngine;
 class SVal;
 
 class ConstraintManager {
@@ -64,8 +65,10 @@ public:
   virtual bool canReasonAbout(SVal X) const = 0;
 };
 
-ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr);
-ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr);
+ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr,
+                                                GRSubEngine &subengine);
+ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr,
+                                                GRSubEngine &subengine);
 
 } // end clang namespace
 

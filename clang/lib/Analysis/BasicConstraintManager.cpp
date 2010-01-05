@@ -49,8 +49,9 @@ class BasicConstraintManager
   : public SimpleConstraintManager {
   GRState::IntSetTy::Factory ISetFactory;
 public:
-  BasicConstraintManager(GRStateManager& statemgr)
-    : ISetFactory(statemgr.getAllocator()) {}
+  BasicConstraintManager(GRStateManager &statemgr, GRSubEngine &subengine)
+    : SimpleConstraintManager(subengine), 
+      ISetFactory(statemgr.getAllocator()) {}
 
   const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V);
@@ -88,9 +89,9 @@ public:
 
 } // end anonymous namespace
 
-ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& StateMgr)
-{
-  return new BasicConstraintManager(StateMgr);
+ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& statemgr,
+                                                       GRSubEngine &subengine) {
+  return new BasicConstraintManager(statemgr, subengine);
 }
 
 const GRState*

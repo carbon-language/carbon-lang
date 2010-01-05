@@ -13,6 +13,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
 #define LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
 
+#include "clang/Analysis/PathSensitive/SVals.h"
+
 namespace clang {
 
 class Stmt;
@@ -62,8 +64,12 @@ public:
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
   virtual void ProcessEndPath(GREndPathNodeBuilder& builder) = 0;
+  
+  /// EvalAssume - Called by ConstraintManager. Used to call checker-specific
+  ///  logic for handling assumptions on symbolic values.
+  virtual const GRState* ProcessAssume(const GRState *state,
+                                       SVal cond, bool assumption) = 0;
 };
-
 }
 
 #endif

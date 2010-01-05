@@ -65,25 +65,10 @@ const GRState *SimpleConstraintManager::Assume(const GRState *state,
     return Assume(state, cast<Loc>(Cond), Assumption);
 }
 
-const GRState *SimpleConstraintManager::Assume(const GRState *state, Loc Cond,
-                                               bool Assumption) {
-
-  state = AssumeAux(state, Cond, Assumption);
-
-  // EvalAssume is used to call into the GRTransferFunction object to perform
-  // any checker-specific update of the state based on this assumption being
-  // true or false.
-
-  if (!state)
-    return 0;
-
-  std::vector<std::pair<void *, Checker*> >::iterator 
-    I = state->checker_begin(), E = state->checker_end();
-
-  for (; I != E; ++I) {
-    state = I->second->EvalAssume(state, Cond, Assumption);
-  }
-  return state->getTransferFuncs().EvalAssume(state, Cond, Assumption);
+const GRState *SimpleConstraintManager::Assume(const GRState *state, Loc cond,
+                                               bool assumption) {
+  state = AssumeAux(state, cond, assumption);
+  return SU.ProcessAssume(state, cond, assumption);
 }
 
 const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
@@ -130,26 +115,10 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
 }
 
 const GRState *SimpleConstraintManager::Assume(const GRState *state,
-                                               NonLoc Cond,
-                                               bool Assumption) {
-
-  state = AssumeAux(state, Cond, Assumption);
-
-  // EvalAssume is used to call into the GRTransferFunction object to perform
-  // any checker-specific update of the state based on this assumption being
-  // true or false.
-
-  if (!state)
-    return 0;
-
-  std::vector<std::pair<void *, Checker*> >::iterator 
-    I = state->checker_begin(), E = state->checker_end();
-
-  for (; I != E; ++I) {
-    state = I->second->EvalAssume(state, Cond, Assumption);
-  }
-
-  return state->getTransferFuncs().EvalAssume(state, Cond, Assumption);
+                                               NonLoc cond,
+                                               bool assumption) {
+  state = AssumeAux(state, cond, assumption);
+  return SU.ProcessAssume(state, cond, assumption);
 }
 
 const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,

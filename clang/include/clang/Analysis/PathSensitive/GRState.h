@@ -40,10 +40,10 @@
 namespace clang {
 
 class GRStateManager;
-class GRTransferFuncs;
 class Checker;
 
-typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&);
+typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&,
+                                                       GRSubEngine&);
 typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
 
 //===----------------------------------------------------------------------===//
@@ -159,10 +159,6 @@ public:
 
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
-  GRTransferFuncs &getTransferFuncs() const;
-
-  std::vector<std::pair<void *, Checker *> >::iterator checker_begin() const;
-  std::vector<std::pair<void *, Checker *> >::iterator checker_end() const;
 
   //==---------------------------------------------------------------------==//
   // Constraints on values.
@@ -391,9 +387,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 class GRStateManager {
-  friend class GRExprEngine;
   friend class GRState;
-
+  friend class GRExprEngine; // FIXME: Remove.
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
@@ -416,27 +411,20 @@ private:
   ValueManager ValueMgr;
 
   /// Alloc - A BumpPtrAllocator to allocate states.
-  llvm::BumpPtrAllocator& Alloc;
-
-  /// TF - Object that represents a bundle of transfer functions
-  ///  for manipulating and creating SVals.
-  GRTransferFuncs* TF;
-
-  /// Reference to all checkers in GRExprEngine.
-  std::vector<std::pair<void *, Checker*> > *Checkers;
+  llvm::BumpPtrAllocator &Alloc;
 
 public:
-
   GRStateManager(ASTContext& Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
-                 llvm::BumpPtrAllocator& alloc)
+                 llvm::BumpPtrAllocator& alloc,
+                 GRSubEngine &subeng)
     : EnvMgr(alloc),
       GDMFactory(alloc),
       ValueMgr(alloc, Ctx, *this),
       Alloc(alloc) {
     StoreMgr.reset((*CreateStoreManager)(*this));
-    ConstraintMgr.reset((*CreateConstraintManager)(*this));
+    ConstraintMgr.reset((*CreateConstraintManager)(*this, subeng));
   }
 
   ~GRStateManager();
@@ -445,10 +433,6 @@ public:
 
   ASTContext &getContext() { return ValueMgr.getContext(); }
   const ASTContext &getContext() const { return ValueMgr.getContext(); }
-
-  GRTransferFuncs& getTransferFuncs() { return *TF; }
-
-  std::vector<std::pair<void *, Checker *> > &getCheckers() { return *Checkers;}
 
   BasicValueFactory &getBasicVals() {
     return ValueMgr.getBasicValueFactory();
@@ -700,20 +684,6 @@ inline BasicValueFactory &GRState::getBasicVals() const {
 
 inline SymbolManager &GRState::getSymbolManager() const {
   return getStateManager().getSymbolManager();
-}
-
-inline GRTransferFuncs &GRState::getTransferFuncs() const {
-  return getStateManager().getTransferFuncs();
-}
-
-inline std::vector<std::pair<void *, Checker *> >::iterator 
-GRState::checker_begin() const {
-  return getStateManager().getCheckers().begin();
-}
-
-inline std::vector<std::pair<void *, Checker *> >::iterator 
-GRState::checker_end() const {
-  return getStateManager().getCheckers().end();
 }
 
 template<typename T>

@@ -363,7 +363,7 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (!mgr.getLiveVariables(D))
     return;  
   
-  GRExprEngine Eng(mgr);
+  GRExprEngine Eng(mgr, TF.take());
   
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
@@ -373,8 +373,6 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
   
-  Eng.setTransferFunctionsAndCheckers(tf);  
-
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
   if (mgr.shouldVisualizeUbigraph()) {
@@ -494,7 +492,9 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
   // Display progress.
   C.DisplayFunction(D);
 
-  GRExprEngine Eng(mgr);
+  // FIXME: Make a fake transfer function. The GRTransferFunc interface
+  // eventually will be removed.
+  GRExprEngine Eng(mgr, new GRTransferFuncs());
 
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
@@ -503,10 +503,6 @@ static void ActionInlineCall(AnalysisConsumer &C, AnalysisManager &mgr,
   
   if (C.Opts.EnableExperimentalChecks)
     RegisterExperimentalChecks(Eng);
-  
-  // Make a fake transfer function. The GRTransferFunc interface will be 
-  // removed.
-  Eng.setTransferFunctionsAndCheckers(new GRTransferFuncs());  
 
   // Register call inliner as the last checker.
   RegisterCallInliner(Eng);
