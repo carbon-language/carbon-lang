@@ -197,4 +197,14 @@ L0:
   return x;
 }
 
-
+// radr://7438948
+void test20() {
+  int n = 7;
+  int vla[n]; // expected-note {{declared at}}
+  int (*vm)[n] = 0; // expected-note {{declared at}}
+  vla[1] = 4341;
+  ^{
+    (void)vla[1];  // expected-error {{cannot refer to declaration with a variably modified type inside block}}
+    (void)(vm+1);  // expected-error {{cannot refer to declaration with a variably modified type inside block}}
+  }();
+}

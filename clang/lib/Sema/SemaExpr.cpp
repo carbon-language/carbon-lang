@@ -1531,6 +1531,12 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // as they do not get snapshotted.
   //
   if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
+    if (VD->getType().getTypePtr()->isVariablyModifiedType()) {
+      Diag(Loc, diag::err_ref_vm_type);
+      Diag(D->getLocation(), diag::note_declared_at);
+      return ExprError();
+    }
+
     MarkDeclarationReferenced(Loc, VD);
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.

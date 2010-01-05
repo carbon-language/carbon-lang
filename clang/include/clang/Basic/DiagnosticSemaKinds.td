@@ -1721,6 +1721,8 @@ def warn_printf_nonliteral : Warning<
 def err_unexpected_interface : Error<
   "unexpected interface name %0: expected expression">;
 def err_ref_non_value : Error<"%0 does not refer to a value">;
+def err_ref_vm_type : Error<
+  "cannot refer to declaration with a variably modified type inside block">;
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
 def err_duplicate_property : Error<
