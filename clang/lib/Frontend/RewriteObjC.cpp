@@ -347,6 +347,7 @@ namespace {
     void RewriteBlockCall(CallExpr *Exp);
     void RewriteBlockPointerDecl(NamedDecl *VD);
     void RewriteByRefVar(VarDecl *VD);
+    std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD);
     Stmt *RewriteBlockDeclRefExpr(Expr *VD);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
 
@@ -4380,6 +4381,66 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   return;
 }
 
+
+/// SynthesizeByrefCopyDestroyHelper - This routine synthesizes:
+/// void __Block_byref_id_object_copy(struct Block_byref_id_object *dst,
+///                    struct Block_byref_id_object *src) {
+///  _Block_object_assign (&_dest->object, _src->object, 
+///                        BLOCK_BYREF_CALLER | BLOCK_FIELD_IS_OBJECT
+///                        [|BLOCK_FIELD_IS_WEAK]) // object
+///  _Block_object_assign(&_dest->object, _src->object, 
+///                       BLOCK_BYREF_CALLER | BLOCK_FIELD_IS_BLOCK
+///                       [|BLOCK_FIELD_IS_WEAK]) // block
+/// }
+/// And:
+/// void __Block_byref_id_object_dispose(struct Block_byref_id_object *_src) {
+///  _Block_object_dispose(_src->object, 
+///                        BLOCK_BYREF_CALLER | BLOCK_FIELD_IS_OBJECT
+///                        [|BLOCK_FIELD_IS_WEAK]) // object
+///  _Block_object_dispose(_src->object, 
+///                         BLOCK_BYREF_CALLER | BLOCK_FIELD_IS_BLOCK
+///                         [|BLOCK_FIELD_IS_WEAK]) // block
+/// }
+
+std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD) {
+  static bool synthesized = false;
+  std::string S;
+  if (synthesized)
+    return S;
+  synthesized = true;
+  S = "static void __Block_byref_id_object_copy(void *dst, void *src) {\n";
+  int flag = BLOCK_BYREF_CALLER;
+  QualType Ty = VD->getType();
+  // FIXME. Handle __weak variable (BLOCK_FIELD_IS_WEAK) as well.
+  if (Ty->isBlockPointerType())
+    flag |= BLOCK_FIELD_IS_BLOCK;
+  else
+    flag |= BLOCK_FIELD_IS_OBJECT;
+  // offset into the object pointer is computed as:
+  // void * + void* + int + int + void* + void *
+  unsigned IntSize = 
+  static_cast<unsigned>(Context->getTypeSize(Context->IntTy));
+  unsigned VoidPtrSize = 
+  static_cast<unsigned>(Context->getTypeSize(Context->VoidPtrTy));
+  
+  unsigned offset = (VoidPtrSize*4 + IntSize + IntSize)/8;
+  S += " _Block_object_assign((char*)dst + ";
+  S += utostr(offset);
+  S += ", *(void * *) ((char*)src + ";
+  S += utostr(offset);
+  S += "), ";
+  S += utostr(flag);
+  S += ");\n}\n";
+  
+  S += "static void __Block_byref_id_object_dispose(void *src) {\n";
+  S += " _Block_object_dispose(*(void * *) ((char*)src + ";
+  S += utostr(offset);
+  S += "), ";
+  S += utostr(flag);
+  S += ");\n}\n";
+  return S;
+}
+
 /// RewriteByRefVar - For each __block typex ND variable this routine transforms
 /// the declaration into:
 /// struct __Block_byref_ND {
@@ -4387,8 +4448,8 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
 /// struct __Block_byref_ND *__forwarding;
 /// int32_t __flags;
 /// int32_t __size;
-/// void *__copy_helper;    // Only if variable is __block ObjC object
-/// void *__destroy_helper; // Only if variable is __block ObjC object
+/// void *__Block_byref_id_object_copy; // If variable is __block ObjC object
+/// void *__Block_byref_id_object_dispose; // If variable is __block ObjC object
 /// typex ND;
 /// };
 ///
@@ -4412,12 +4473,13 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   ByrefType += " struct __Block_byref_" + Name + " *__forwarding;\n";
   ByrefType += " int __flags;\n";
   ByrefType += " int __size;\n";
-  // Add void *__copy_helper; void *__destroy_helper; if needed.
+  // Add void *__Block_byref_id_object_copy; 
+  // void *__Block_byref_id_object_dispose; if needed.
   QualType Ty = ND->getType();
   bool HasCopyAndDispose = Context->BlockRequiresCopying(Ty);
   if (HasCopyAndDispose) {
-    ByrefType += " void *__copy_helper;\n";
-    ByrefType += " void *__destroy_helper;\n";
+    ByrefType += " void (*__Block_byref_id_object_copy)(void*, void*);\n";
+    ByrefType += " void (*__Block_byref_id_object_dispose)(void*);\n";
   }
   
   Ty.getAsStringInternal(Name, Context->PrintingPolicy);
@@ -4427,6 +4489,11 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   assert(CurFunctionDef && "RewriteByRefVar - CurFunctionDef is null");
   SourceLocation FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
   InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
+  if (HasCopyAndDispose) {
+    std::string HF = SynthesizeByrefCopyDestroyHelper(ND);
+    if (!HF.empty())
+      InsertText(FunLocStart, HF.c_str(), HF.size());
+  }
   
   // struct __Block_byref_ND ND = 
   // {0, &ND, some_flag, __size=sizeof(struct __Block_byref_ND), 
@@ -4443,6 +4510,10 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += utostr(flag);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
+    if (HasCopyAndDispose) {
+      ByrefType += ", __Block_byref_id_object_copy";
+      ByrefType += ", __Block_byref_id_object_dispose";
+    }
     ByrefType += "};\n";
     ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), 
                 ByrefType.c_str(), ByrefType.size());
@@ -4459,6 +4530,10 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += utostr(flag);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
+    if (HasCopyAndDispose) {
+      ByrefType += "__Block_byref_id_object_copy";
+      ByrefType += ", __Block_byref_id_object_dispose, ";
+    }
     InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
     
     // Complete the newly synthesized compound expression by inserting a right
