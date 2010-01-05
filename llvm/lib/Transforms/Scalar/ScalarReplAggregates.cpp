@@ -252,8 +252,8 @@ bool SROA::performScalarRepl(Function &F) {
     // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
     // is only subsequently read.
     if (Instruction *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
-      DEBUG(errs() << "Found alloca equal to global: " << *AI << '\n');
-      DEBUG(errs() << "  memcpy = " << *TheCopy << '\n');
+      DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
+      DEBUG(dbgs() << "  memcpy = " << *TheCopy << '\n');
       Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
       AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
@@ -314,14 +314,14 @@ bool SROA::performScalarRepl(Function &F) {
       // we just get a lot of insert/extracts.  If at least one vector is
       // involved, then we probably really do have a union of vector/array.
       if (VectorTy && isa<VectorType>(VectorTy) && HadAVector) {
-        DEBUG(errs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
+        DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
                      << *VectorTy << '\n');
         
         // Create and insert the vector alloca.
         NewAI = new AllocaInst(VectorTy, 0, "",  AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       } else {
-        DEBUG(errs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
+        DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
         
         // Create and insert the integer alloca.
         const Type *NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
@@ -345,7 +345,7 @@ bool SROA::performScalarRepl(Function &F) {
 /// predicate, do SROA now.
 void SROA::DoScalarReplacement(AllocaInst *AI, 
                                std::vector<AllocaInst*> &WorkList) {
-  DEBUG(errs() << "Found inst to SROA: " << *AI << '\n');
+  DEBUG(dbgs() << "Found inst to SROA: " << *AI << '\n');
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
@@ -919,7 +919,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
                           IntegerType::get(SI->getContext(), AllocaSizeBits), 
                           "", SI);
 
-  DEBUG(errs() << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << '\n' << *SI
+  DEBUG(dbgs() << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << '\n' << *SI
                << '\n');
 
   // There are two forms here: AI could be an array or struct.  Both cases
@@ -1029,7 +1029,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
   const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
   
-  DEBUG(errs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << '\n' << *LI
+  DEBUG(dbgs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << '\n' << *LI
                << '\n');
   
   // There are two forms here: AI could be an array or struct.  Both cases
@@ -1153,7 +1153,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   
   isSafeForScalarRepl(AI, AI, 0, Info);
   if (Info.isUnsafe) {
-    DEBUG(errs() << "Cannot transform: " << *AI << '\n');
+    DEBUG(dbgs() << "Cannot transform: " << *AI << '\n');
     return 0;
   }
   
