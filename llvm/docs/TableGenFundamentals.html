@@ -423,6 +423,10 @@ class.  This operation is analogous to $(foreach) in GNU make.</dd>
   <dd>An integer {0,1} indicating whether list 'a' is empty.</dd>
 <dt><tt>!if(a,b,c)</tt></dt>
   <dd>'b' if the result of integer operator 'a' is nonzero, 'c' otherwise.</dd>
+<dt><tt>!eq(a,b)</tt></dt>
+  <dd>Integer one if string a is equal to string b, zero otherwise.  This
+      only operates on string objects.  Use !cast<string> to compare other
+      types of objects.</dd>
 </dl>
 
 <p>Note that all of the values have rules specifying how they convert to values

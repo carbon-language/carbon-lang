@@ -730,6 +730,15 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
+  case EQ: {
+    // Make sure we've resolved
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+    if (LHSs && RHSs)
+      return new IntInit(LHSs->getValue() == RHSs->getValue());
+
+    break;
+  }
   case SHL:
   case SRA:
   case SRL: {
@@ -768,6 +777,7 @@ std::string BinOpInit::getAsString() const {
   case SHL: Result = "!shl"; break;
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
+  case EQ: Result = "!eq"; break;
   case STRCONCAT: Result = "!strconcat"; break;
   case NAMECONCAT:
     Result = "!nameconcat<" + getType()->getAsString() + ">"; break;

@@ -792,6 +792,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   case tgtok::XSRA:
   case tgtok::XSRL:
   case tgtok::XSHL:
+  case tgtok::XEq:
   case tgtok::XStrConcat:
   case tgtok::XNameConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     BinOpInit::BinaryOp Code;
@@ -818,6 +819,11 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     case tgtok::XSHL:
       Lex.Lex();  // eat the operation
       Code = BinOpInit::SHL;
+      Type = new IntRecTy();
+      break;
+    case tgtok::XEq:  
+      Lex.Lex();  // eat the operation
+      Code = BinOpInit::EQ;
       Type = new IntRecTy();
       break;
     case tgtok::XStrConcat:
@@ -1257,6 +1263,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   case tgtok::XSRA:
   case tgtok::XSRL:
   case tgtok::XSHL:
+  case tgtok::XEq:
   case tgtok::XStrConcat:
   case tgtok::XNameConcat:  // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:
