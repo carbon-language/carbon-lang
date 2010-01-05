@@ -317,7 +317,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   if (Is64Bit)
     HasX86_64 = true;
 
-  DEBUG(errs() << "Subtarget features: SSELevel " << X86SSELevel
+  DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel
                << ", 64bit " << HasX86_64 << "\n");
   assert((!Is64Bit || HasX86_64) &&
