@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -125,9 +126,9 @@ void Twine::printRepr(raw_ostream &OS) const {
 }
 
 void Twine::dump() const {
-  print(llvm::errs());
+  print(llvm::dbgs());
 }
 
 void Twine::dumpRepr() const {
-  printRepr(llvm::errs());
+  printRepr(llvm::dbgs());
 }
