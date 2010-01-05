@@ -67,7 +67,7 @@ protected:
   /// immediately before each use, and stores after each def. No folding or
   /// remat is attempted.
   std::vector<LiveInterval*> trivialSpillEverywhere(LiveInterval *li) {
-    DEBUG(errs() << "Spilling everywhere " << *li << "\n");
+    DEBUG(dbgs() << "Spilling everywhere " << *li << "\n");
 
     assert(li->weight != HUGE_VALF &&
            "Attempting to spill already spilled value.");
@@ -75,7 +75,7 @@ protected:
     assert(!li->isStackSlot() &&
            "Trying to spill a stack slot.");
 
-    DEBUG(errs() << "Trivial spill everywhere of reg" << li->reg << "\n");
+    DEBUG(dbgs() << "Trivial spill everywhere of reg" << li->reg << "\n");
 
     std::vector<LiveInterval*> added;
     
@@ -89,7 +89,7 @@ protected:
       // Grab the use/def instr.
       MachineInstr *mi = &*regItr;
 
-      DEBUG(errs() << "  Processing " << *mi);
+      DEBUG(dbgs() << "  Processing " << *mi);
 
       // Step regItr to the next use/def instr.
       do {
@@ -242,7 +242,7 @@ private:
   std::vector<LiveInterval*> tryVNISplit(LiveInterval *li,
                                          SlotIndex *earliestStart) {
 
-    DEBUG(errs() << "Trying VNI split of %reg" << *li << "\n");
+    DEBUG(dbgs() << "Trying VNI split of %reg" << *li << "\n");
 
     std::vector<LiveInterval*> added;
     SmallVector<VNInfo*, 4> vnis;
@@ -257,11 +257,11 @@ private:
       if (vni->isUnused() || vni->kills.empty())
         continue;
 
-      DEBUG(errs() << "  Extracted Val #" << vni->id << " as ");
+      DEBUG(dbgs() << "  Extracted Val #" << vni->id << " as ");
       LiveInterval *splitInterval = extractVNI(li, vni);
       
       if (splitInterval != 0) {
-        DEBUG(errs() << *splitInterval << "\n");
+        DEBUG(dbgs() << *splitInterval << "\n");
         added.push_back(splitInterval);
         alreadySplit.insert(splitInterval);
         if (earliestStart != 0) {
@@ -269,11 +269,11 @@ private:
             *earliestStart = splitInterval->beginIndex();
         }
       } else {
-        DEBUG(errs() << "0\n");
+        DEBUG(dbgs() << "0\n");
       }
     } 
 
-    DEBUG(errs() << "Original LI: " << *li << "\n");
+    DEBUG(dbgs() << "Original LI: " << *li << "\n");
 
     // If there original interval still contains some live ranges
     // add it to added and alreadySplit.    
