@@ -218,7 +218,7 @@ public:
     
     // Use the end of last child scope as end of this scope.
     SmallVector<DbgScope *, 4> &Scopes = getScopes();
-    const MachineInstr *LastInsn = NULL;
+    const MachineInstr *LastInsn = getFirstInsn();
     unsigned LIndex = 0;
     if (Scopes.empty()) {
       assert (getLastInsn() && "Inner most scope does not have last insn!");
