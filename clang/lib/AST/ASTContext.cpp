@@ -2383,7 +2383,6 @@ QualType ASTContext::getUnqualifiedArrayType(QualType T,
   assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
   const ArrayType *AT = cast<ArrayType>(T);
   QualType Elt = AT->getElementType();
-  assert(Elt.isCanonical());
   QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);
   if (Elt == UnqualElt)
     return T;
@@ -2395,12 +2394,6 @@ QualType ASTContext::getUnqualifiedArrayType(QualType T,
 
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(T)) {
     return getIncompleteArrayType(UnqualElt, IAT->getSizeModifier(), 0);
-  }
-
-  if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(T)) {
-    return getVariableArrayType(UnqualElt, VAT->getSizeExpr()->Retain(),
-                                VAT->getSizeModifier(), 0,
-                                SourceRange());
   }
 
   const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(T);

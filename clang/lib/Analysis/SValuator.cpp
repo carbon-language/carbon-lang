@@ -62,8 +62,9 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
   ASTContext &C = ValMgr.getContext();
 
   // For const casts, just propagate the value.
-  if (C.hasSameUnqualifiedType(castTy, originalTy))
-    return CastResult(state, val);
+  if (!castTy->isVariableArrayType() && !originalTy->isVariableArrayType())
+    if (C.hasSameUnqualifiedType(castTy, originalTy))
+      return CastResult(state, val);
 
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::IsLocType(originalTy))
