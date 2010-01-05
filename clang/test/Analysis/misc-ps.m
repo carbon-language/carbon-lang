@@ -793,3 +793,12 @@ void test_bad_msg(TestBadArg *p) {
   [p testBadArg:y]; // expected-warning{{Pass-by-value argument in message expression is undefined}}
 }
 
+// Test cast VariableSizeArray to pointer does not crash.
+void *memcpy(void *, void const *, unsigned long);
+typedef unsigned char Byte;
+void doit(char *data, int len) {
+    if (len) {
+        Byte buf[len];
+        memcpy(buf, data, len);
+    }
+}
