@@ -251,30 +251,6 @@ static inline Value *dyn_castNotVal(Value *V) {
 
 
 
-// dyn_castFoldableMul - If this value is a multiply that can be folded into
-// other computations (because it has a constant operand), return the
-// non-constant operand of the multiply, and set CST to point to the multiplier.
-// Otherwise, return null.
-//
-static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
-  if (V->hasOneUse() && V->getType()->isInteger())
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (I->getOpcode() == Instruction::Mul)
-        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
-          return I->getOperand(0);
-      if (I->getOpcode() == Instruction::Shl)
-        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
-          // The multiplier is really 1 << CST.
-          uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-          uint32_t CSTVal = CST->getLimitedValue(BitWidth);
-          CST = ConstantInt::get(V->getType()->getContext(),
-                                 APInt(BitWidth, 1).shl(CSTVal));
-          return I->getOperand(0);
-        }
-    }
-  return 0;
-}
-
 /// AddOne - Add one to a ConstantInt.
 static Constant *AddOne(Constant *C) {
   return ConstantExpr::getAdd(C, ConstantInt::get(C->getType(), 1));
