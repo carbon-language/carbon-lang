@@ -77,14 +77,8 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 
-// isOnlyUse - Return true if this instruction will be deleted if we stop using
-// it.
-static bool isOnlyUse(Value *V) {
-  return V->hasOneUse() || isa<Constant>(V);
-}
-
 // getPromotedType - Return the specified type promoted as it would be to pass
-// though a va_arg area...
+// though a va_arg area.
 static const Type *getPromotedType(const Type *Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty)) {
     if (ITy->getBitWidth() < 32)
@@ -152,6 +146,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
     Changed = !I.swapOperands();
 
   if (!I.isAssociative()) return Changed;
+  
   Instruction::BinaryOps Opcode = I.getOpcode();
   if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
     if (Op->getOpcode() == Opcode && isa<Constant>(Op->getOperand(1))) {
@@ -162,9 +157,11 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
         I.setOperand(0, Op->getOperand(0));
         I.setOperand(1, Folded);
         return true;
-      } else if (BinaryOperator *Op1=dyn_cast<BinaryOperator>(I.getOperand(1)))
+      }
+      
+      if (BinaryOperator *Op1 = dyn_cast<BinaryOperator>(I.getOperand(1)))
         if (Op1->getOpcode() == Opcode && isa<Constant>(Op1->getOperand(1)) &&
-            isOnlyUse(Op) && isOnlyUse(Op1)) {
+            Op->hasOneUse() && Op1->hasOneUse()) {
           Constant *C1 = cast<Constant>(Op->getOperand(1));
           Constant *C2 = cast<Constant>(Op1->getOperand(1));
 
@@ -2555,7 +2552,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) &&
-        isOnlyUse(Op0)) {
+        Op0->hasOneUse()) {
       Value *Or = Builder->CreateOr(X, RHS);
       Or->takeName(Op0);
       return BinaryOperator::CreateAnd(Or, 
@@ -2565,7 +2562,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
     // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
     if (match(Op0, m_Xor(m_Value(X), m_ConstantInt(C1))) &&
-        isOnlyUse(Op0)) {
+        Op0->hasOneUse()) {
       Value *Or = Builder->CreateOr(X, RHS);
       Or->takeName(Op0);
       return BinaryOperator::CreateXor(Or,
@@ -2665,7 +2662,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     
     // Check to see if we have any common things being and'ed.  If so, find the
     // terms for V1 & (V2|V3).
-    if (isOnlyUse(Op0) || isOnlyUse(Op1)) {
+    if (Op0->hasOneUse() || Op1->hasOneUse()) {
       V1 = 0;
       if (A == B)      // (A & C)|(A & D) == A & (C|D)
         V1 = A, V2 = C, V3 = D;
