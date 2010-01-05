@@ -118,7 +118,7 @@ FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }
 /// runOnFunction - Top level algorithm.
 ///
 bool JumpThreading::runOnFunction(Function &F) {
-  DEBUG(errs() << "Jump threading on function '" << F.getName() << "'\n");
+  DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
   TD = getAnalysisIfAvailable<TargetData>();
   LVI = EnableLVI ? &getAnalysis<LazyValueInfo>() : 0;
   
@@ -140,7 +140,7 @@ bool JumpThreading::runOnFunction(Function &F) {
       // edges which simplifies the CFG.
       if (pred_begin(BB) == pred_end(BB) &&
           BB != &BB->getParent()->getEntryBlock()) {
-        DEBUG(errs() << "  JT: Deleting dead block '" << BB->getName()
+        DEBUG(dbgs() << "  JT: Deleting dead block '" << BB->getName()
               << "' with terminator: " << *BB->getTerminator() << '\n');
         LoopHeaders.erase(BB);
         DeleteDeadBlock(BB);
@@ -490,7 +490,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // terminator to an unconditional branch.  This can occur due to threading in
   // other blocks.
   if (isa<ConstantInt>(Condition)) {
-    DEBUG(errs() << "  In block '" << BB->getName()
+    DEBUG(dbgs() << "  In block '" << BB->getName()
           << "' folding terminator: " << *BB->getTerminator() << '\n');
     ++NumFolds;
     ConstantFoldTerminator(BB);
@@ -509,7 +509,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       RemovePredecessorAndSimplify(BBTerm->getSuccessor(i), BB, TD);
     }
     
-    DEBUG(errs() << "  In block '" << BB->getName()
+    DEBUG(dbgs() << "  In block '" << BB->getName()
           << "' folding undef terminator: " << *BBTerm << '\n');
     BranchInst::Create(BBTerm->getSuccessor(BestSucc), BBTerm);
     BBTerm->eraseFromParent();
@@ -636,7 +636,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   else if (PredBI->getSuccessor(0) != BB)
     BranchDir = false;
   else {
-    DEBUG(errs() << "  In block '" << PredBB->getName()
+    DEBUG(dbgs() << "  In block '" << PredBB->getName()
           << "' folding terminator: " << *PredBB->getTerminator() << '\n');
     ++NumFolds;
     ConstantFoldTerminator(PredBB);
@@ -648,7 +648,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   // If the dest block has one predecessor, just fix the branch condition to a
   // constant and fold it.
   if (BB->getSinglePredecessor()) {
-    DEBUG(errs() << "  In block '" << BB->getName()
+    DEBUG(dbgs() << "  In block '" << BB->getName()
           << "' folding condition to '" << BranchDir << "': "
           << *BB->getTerminator() << '\n');
     ++NumFolds;
@@ -727,8 +727,8 @@ bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
 
       // Otherwise, we're safe to make the change.  Make sure that the edge from
       // DestSI to DestSucc is not critical and has no PHI nodes.
-      DEBUG(errs() << "FORWARDING EDGE " << *DestVal << "   FROM: " << *PredSI);
-      DEBUG(errs() << "THROUGH: " << *DestSI);
+      DEBUG(dbgs() << "FORWARDING EDGE " << *DestVal << "   FROM: " << *PredSI);
+      DEBUG(dbgs() << "THROUGH: " << *DestSI);
 
       // If the destination has PHI nodes, just split the edge for updating
       // simplicity.
@@ -979,14 +979,14 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
   assert(!PredValues.empty() &&
          "ComputeValueKnownInPredecessors returned true with no values");
 
-  DEBUG(errs() << "IN BB: " << *BB;
+  DEBUG(dbgs() << "IN BB: " << *BB;
         for (unsigned i = 0, e = PredValues.size(); i != e; ++i) {
-          errs() << "  BB '" << BB->getName() << "': FOUND condition = ";
+          dbgs() << "  BB '" << BB->getName() << "': FOUND condition = ";
           if (PredValues[i].first)
-            errs() << *PredValues[i].first;
+            dbgs() << *PredValues[i].first;
           else
-            errs() << "UNDEF";
-          errs() << " for pred '" << PredValues[i].second->getName()
+            dbgs() << "UNDEF";
+          dbgs() << " for pred '" << PredValues[i].second->getName()
           << "'.\n";
         });
   
@@ -1133,7 +1133,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
                                BasicBlock *SuccBB) {
   // If threading to the same block as we come from, we would infinite loop.
   if (SuccBB == BB) {
-    DEBUG(errs() << "  Not threading across BB '" << BB->getName()
+    DEBUG(dbgs() << "  Not threading across BB '" << BB->getName()
           << "' - would thread to self!\n");
     return false;
   }
@@ -1141,7 +1141,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   // If threading this would thread across a loop header, don't thread the edge.
   // See the comments above FindLoopHeaders for justifications and caveats.
   if (LoopHeaders.count(BB)) {
-    DEBUG(errs() << "  Not threading across loop header BB '" << BB->getName()
+    DEBUG(dbgs() << "  Not threading across loop header BB '" << BB->getName()
           << "' to dest BB '" << SuccBB->getName()
           << "' - it might create an irreducible loop!\n");
     return false;
@@ -1149,7 +1149,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
 
   unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
   if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
+    DEBUG(dbgs() << "  Not threading BB '" << BB->getName()
           << "' - Cost is too high: " << JumpThreadCost << "\n");
     return false;
   }
@@ -1159,14 +1159,14 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   if (PredBBs.size() == 1)
     PredBB = PredBBs[0];
   else {
-    DEBUG(errs() << "  Factoring out " << PredBBs.size()
+    DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
           << " common predecessors.\n");
     PredBB = SplitBlockPredecessors(BB, &PredBBs[0], PredBBs.size(),
                                     ".thr_comm", this);
   }
   
   // And finally, do it!
-  DEBUG(errs() << "  Threading edge from '" << PredBB->getName() << "' to '"
+  DEBUG(dbgs() << "  Threading edge from '" << PredBB->getName() << "' to '"
         << SuccBB->getName() << "' with cost: " << JumpThreadCost
         << ", across block:\n    "
         << *BB << "\n");
@@ -1235,7 +1235,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
     if (UsesToRename.empty())
       continue;
     
-    DEBUG(errs() << "JT: Renaming non-local uses of: " << *I << "\n");
+    DEBUG(dbgs() << "JT: Renaming non-local uses of: " << *I << "\n");
 
     // We found a use of I outside of BB.  Rename all uses of I that are outside
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
@@ -1246,7 +1246,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
     
     while (!UsesToRename.empty())
       SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
-    DEBUG(errs() << "\n");
+    DEBUG(dbgs() << "\n");
   }
   
   
@@ -1294,7 +1294,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   // cause us to transform this into an irreducible loop, don't do this.
   // See the comments above FindLoopHeaders for justifications and caveats.
   if (LoopHeaders.count(BB)) {
-    DEBUG(errs() << "  Not duplicating loop header '" << BB->getName()
+    DEBUG(dbgs() << "  Not duplicating loop header '" << BB->getName()
           << "' into predecessor block '" << PredBB->getName()
           << "' - it might create an irreducible loop!\n");
     return false;
@@ -1302,14 +1302,14 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   
   unsigned DuplicationCost = getJumpThreadDuplicationCost(BB);
   if (DuplicationCost > Threshold) {
-    DEBUG(errs() << "  Not duplicating BB '" << BB->getName()
+    DEBUG(dbgs() << "  Not duplicating BB '" << BB->getName()
           << "' - Cost is too high: " << DuplicationCost << "\n");
     return false;
   }
   
   // Okay, we decided to do this!  Clone all the instructions in BB onto the end
   // of PredBB.
-  DEBUG(errs() << "  Duplicating block '" << BB->getName() << "' into end of '"
+  DEBUG(dbgs() << "  Duplicating block '" << BB->getName() << "' into end of '"
         << PredBB->getName() << "' to eliminate branch on phi.  Cost: "
         << DuplicationCost << " block is:" << *BB << "\n");
   
@@ -1373,7 +1373,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     if (UsesToRename.empty())
       continue;
     
-    DEBUG(errs() << "JT: Renaming non-local uses of: " << *I << "\n");
+    DEBUG(dbgs() << "JT: Renaming non-local uses of: " << *I << "\n");
     
     // We found a use of I outside of BB.  Rename all uses of I that are outside
     // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
@@ -1384,7 +1384,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     
     while (!UsesToRename.empty())
       SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
-    DEBUG(errs() << "\n");
+    DEBUG(dbgs() << "\n");
   }
   
   // PredBB no longer jumps to BB, remove entries in the PHI node for the edge
