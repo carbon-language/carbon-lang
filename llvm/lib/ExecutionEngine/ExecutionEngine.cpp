@@ -138,7 +138,7 @@ void *ExecutionEngineState::RemoveMapping(
 void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  DEBUG(errs() << "JIT: Map \'" << GV->getName() 
+  DEBUG(dbgs() << "JIT: Map \'" << GV->getName() 
         << "\' to [" << Addr << "]\n";);
   void *&CurVal = EEState.getGlobalAddressMap(locked)[GV];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
@@ -246,13 +246,13 @@ static void *CreateArgv(LLVMContext &C, ExecutionEngine *EE,
   unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
-  DEBUG(errs() << "JIT: ARGV = " << (void*)Result << "\n");
+  DEBUG(dbgs() << "JIT: ARGV = " << (void*)Result << "\n");
   const Type *SBytePtr = Type::getInt8PtrTy(C);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
-    DEBUG(errs() << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n");
+    DEBUG(dbgs() << "JIT: ARGV[" << i << "] = " << (void*)Dest << "\n");
 
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
@@ -832,7 +832,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
     *((PointerTy*)Ptr) = Val.PointerVal;
     break;
   default:
-    errs() << "Cannot store value of type " << *Ty << "!\n";
+    dbgs() << "Cannot store value of type " << *Ty << "!\n";
   }
 
   if (sys::isLittleEndianHost() != getTargetData()->isLittleEndian())
@@ -908,7 +908,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 // specified memory location...
 //
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
-  DEBUG(errs() << "JIT: Initializing " << Addr << " ");
+  DEBUG(dbgs() << "JIT: Initializing " << Addr << " ");
   DEBUG(Init->dump());
   if (isa<UndefValue>(Init)) {
     return;
@@ -939,7 +939,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   }
 
-  errs() << "Bad Type: " << *Init->getType() << "\n";
+  dbgs() << "Bad Type: " << *Init->getType() << "\n";
   llvm_unreachable("Unknown constant type to initialize memory with!");
 }
 
