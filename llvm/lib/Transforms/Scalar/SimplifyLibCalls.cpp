@@ -1900,8 +1900,8 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
       Value *Result = LCO->OptimizeCall(CI, TD, Builder);
       if (Result == 0) continue;
 
-      DEBUG(errs() << "SimplifyLibCalls simplified: " << *CI;
-            errs() << "  into: " << *Result << "\n");
+      DEBUG(dbgs() << "SimplifyLibCalls simplified: " << *CI;
+            dbgs() << "  into: " << *Result << "\n");
 
       // Something changed!
       Changed = true;
