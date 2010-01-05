@@ -28,6 +28,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -210,6 +211,10 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
+
+  // Enable debug stream buffering.
+  EnableDebugBuffering = true;
+
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
