@@ -335,6 +335,22 @@ CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
 CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 
+typedef struct CXSourceLineColumn {
+  unsigned line;
+  unsigned column;
+} CXSourceLineColumn;
+
+typedef struct CXDeclExtent {
+  CXSourceLineColumn begin;
+  CXSourceLineColumn end;
+} CXSourceExtent;
+
+/* clang_getDeclExtent() returns the physical extent of a declaration.  The beginning
+ * line/column pair points to the start of the first token in the declaration, and the
+ * ending line/column pair points the start of the last token in the declaration.
+ */
+CXSourceExtent clang_getDeclExtent(CXDecl);
+
 /*
  * CXCursor Operations.
  */

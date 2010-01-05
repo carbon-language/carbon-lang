@@ -70,16 +70,32 @@ static const char* GetCursorSource(CXCursor Cursor) {
 /* Logic for testing clang_loadTranslationUnit().                             */
 /******************************************************************************/
 
+static const char *FileCheckPrefix = "CHECK";
+
+static void PrintDeclExtent(CXDecl Dcl) {
+  CXSourceExtent extent = clang_getDeclExtent(Dcl);
+  printf(" [Extent=%d:%d:%d:%d]", extent.begin.line, extent.begin.column,
+         extent.end.line, extent.end.column);
+}
+
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
-    printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
-                                 clang_getCursorLine(Cursor),
-                                 clang_getCursorColumn(Cursor));
+    CXDecl subDecl;
+    CXSourceExtent extent;
+    printf("// %s: %s:%d:%d: ", FileCheckPrefix,
+                                GetCursorSource(Cursor),
+                                clang_getCursorLine(Cursor),
+                                clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
+
     string = clang_getDeclSpelling(Dcl);
-    printf(" [Context=%s]\n", clang_getCString(string));
+    printf(" [Context=%s]", clang_getCString(string));
     clang_disposeString(string);
+    
+    PrintDeclExtent(clang_getCursorDecl(Cursor));
+
+    printf("\n");
   }
 }
 
@@ -87,15 +103,19 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXString string;
-    printf("// CHECK: %s:%d:%d: ", GetCursorSource(Cursor),
-                                 clang_getCursorLine(Cursor),
-                                 clang_getCursorColumn(Cursor));
+    printf("// %s: %s:%d:%d: ", FileCheckPrefix,
+           GetCursorSource(Cursor), clang_getCursorLine(Cursor),
+           clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
     string = clang_getTranslationUnitSpelling(Unit);
-    printf(" [Context=%s]\n",
+    printf(" [Context=%s]",
           basename(clang_getCString(string)));
     clang_disposeString(string);
+    
+    PrintDeclExtent(Cursor.decl);
 
+    printf("\n");
+    
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
   }
 }
@@ -130,7 +150,7 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
       /* Nothing found here; that's fine. */
     } else if (Ref.kind != CXCursor_FunctionDecl) {
       CXString string;
-      printf("// CHECK: %s:%d:%d: ", GetCursorSource(Ref),
+      printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
              curLine, curColumn);
       PrintCursor(Ref);
       string = clang_getDeclSpelling(Ref.decl);
@@ -142,11 +162,14 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 }
 
 static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
-                             const char *filter) {
+                             const char *filter, const char *prefix) {
   enum CXCursorKind K = CXCursor_NotImplemented;
   CXTranslationUnitIterator Visitor = TranslationUnitVisitor;
   enum CXCursorKind *ck = &K;
 
+  if (prefix)
+    FileCheckPrefix = prefix;  
+  
   /* Perform some simple filtering. */
   if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
   else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
@@ -165,7 +188,8 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
   return 0;
 }
 
-int perform_test_load_tu(const char *file, const char *filter) {
+int perform_test_load_tu(const char *file, const char *filter,
+                         const char *prefix) {
   CXIndex Idx;
   CXTranslationUnit TU;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
@@ -175,7 +199,7 @@ int perform_test_load_tu(const char *file, const char *filter) {
   if (!CreateTranslationUnit(Idx, file, &TU))
     return 1;
 
-  return perform_test_load(Idx, TU, filter);
+  return perform_test_load(Idx, TU, filter, prefix);
 }
 
 int perform_test_load_source(int argc, const char **argv, const char *filter) {
@@ -196,7 +220,7 @@ int perform_test_load_source(int argc, const char **argv, const char *filter) {
     return 1;
   }
 
-  return perform_test_load(Idx, TU, filter);
+  return perform_test_load(Idx, TU, filter, NULL);
 }
 
 /******************************************************************************/
@@ -536,7 +560,8 @@ static void print_usage(void) {
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n"
-    "       c-index-test -test-load-tu <AST file> <symbol filter>\n\n"
+    "       c-index-test -test-load-tu <AST file> <symbol filter> "
+          "[FileCheck prefix]\n"
     "       c-index-test -test-load-source <symbol filter> {<args>}*\n\n"
     " <symbol filter> options for -test-load-tu and -test-load-source:\n%s",
     "   all - load all symbols, including those from PCH\n"
@@ -552,8 +577,9 @@ static void print_usage(void) {
 int main(int argc, const char **argv) {
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv);
-  if (argc == 4 && strcmp(argv[1], "-test-load-tu") == 0)
-    return perform_test_load_tu(argv[2], argv[3]);
+  if (argc >= 4 && strcmp(argv[1], "-test-load-tu") == 0)
+    return perform_test_load_tu(argv[2], argv[3],
+                                argc >= 5 ? argv[4] : 0);
   if (argc >= 4 && strcmp(argv[1], "-test-load-source") == 0)
     return perform_test_load_source(argc - 3, argv + 3, argv[2]);
   if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)

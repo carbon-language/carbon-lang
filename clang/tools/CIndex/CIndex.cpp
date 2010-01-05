@@ -569,6 +569,25 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl) {
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   return SourceMgr.getSpellingColumnNumber(ND->getLocation());
 }
+  
+CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  SourceRange R = ND->getSourceRange();
+
+  CXDeclExtent extent;
+  
+  SourceLocation L = SourceMgr.getSpellingLoc(R.getBegin());
+  extent.begin.line = SourceMgr.getSpellingLineNumber(L);
+  extent.begin.column = SourceMgr.getSpellingColumnNumber(L);
+  
+  L = SourceMgr.getSpellingLoc(R.getEnd());
+  extent.end.line = SourceMgr.getSpellingLineNumber(L);
+  extent.end.column = SourceMgr.getSpellingColumnNumber(L);
+  
+  return extent;  
+}
 
 const char *clang_getDeclSource(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
