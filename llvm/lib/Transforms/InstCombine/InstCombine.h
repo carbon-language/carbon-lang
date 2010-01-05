@@ -20,9 +20,9 @@
 namespace llvm {
   class CallSite;
   class TargetData;
-  class DbgDeclareInst;
-  class MemIntrinsic;
-  class MemSetInst;
+  struct DbgDeclareInst;
+  struct MemIntrinsic;
+  struct MemSetInst;
   
 /// SelectPatternFlavor - We can match a variety of different patterns for
 /// select operations.
