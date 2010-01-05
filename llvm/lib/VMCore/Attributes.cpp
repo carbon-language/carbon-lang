@@ -17,6 +17,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -318,11 +319,11 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
 }
 
 void AttrListPtr::dump() const {
-  errs() << "PAL[ ";
+  dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
     const AttributeWithIndex &PAWI = getSlot(i);
-    errs() << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
+    dbgs() << "{" << PAWI.Index << "," << PAWI.Attrs << "} ";
   }
   
-  errs() << "]\n";
+  dbgs() << "]\n";
 }
