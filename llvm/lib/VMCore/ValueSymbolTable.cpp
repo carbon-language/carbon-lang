@@ -24,7 +24,7 @@ using namespace llvm;
 ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
-    errs() << "Value still in symbol table! Type = '"
+    dbgs() << "Value still in symbol table! Type = '"
            << VI->getValue()->getType()->getDescription() << "' Name = '"
            << VI->getKeyData() << "'\n";
   assert(vmap.empty() && "Values remain in symbol table!");
@@ -38,7 +38,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
 
   // Try inserting the name, assuming it won't conflict.
   if (vmap.insert(V->Name)) {
-    //DEBUG(errs() << " Inserted value: " << V->Name << ": " << *V << "\n");
+    //DEBUG(dbgs() << " Inserted value: " << V->Name << ": " << *V << "\n");
     return;
   }
   
@@ -62,14 +62,14 @@ void ValueSymbolTable::reinsertValue(Value* V) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
       V->Name = &NewName;
-     //DEBUG(errs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
+     //DEBUG(dbgs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return;
     }
   }
 }
 
 void ValueSymbolTable::removeValueName(ValueName *V) {
-  //DEBUG(errs() << " Removing Value: " << V->getKeyData() << "\n");
+  //DEBUG(dbgs() << " Removing Value: " << V->getKeyData() << "\n");
   // Remove the value from the symbol table.
   vmap.remove(V);
 }
@@ -82,7 +82,7 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
   ValueName &Entry = vmap.GetOrCreateValue(Name);
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
-    //DEBUG(errs() << " Inserted value: " << Entry.getKeyData() << ": "
+    //DEBUG(dbgs() << " Inserted value: " << Entry.getKeyData() << ": "
     //           << *V << "\n");
     return &Entry;
   }
@@ -102,7 +102,7 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
-     //DEBUG(errs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
+     //DEBUG(dbgs() << " Inserted value: " << UniqueName << ": " << *V << "\n");
       return &NewName;
     }
   }
@@ -112,10 +112,10 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
 // dump - print out the symbol table
 //
 void ValueSymbolTable::dump() const {
-  //DEBUG(errs() << "ValueSymbolTable:\n");
+  //DEBUG(dbgs() << "ValueSymbolTable:\n");
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    //DEBUG(errs() << "  '" << I->getKeyData() << "' = ");
+    //DEBUG(dbgs() << "  '" << I->getKeyData() << "' = ");
     I->getValue()->dump();
-    //DEBUG(errs() << "\n");
+    //DEBUG(dbgs() << "\n");
   }
 }
