@@ -268,11 +268,12 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
 
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
-/// trivially dead, delete them too, recursively.
-void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
+/// trivially dead, delete them too, recursively.  Return true if any
+/// instructions were deleted.
+bool llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || !I->use_empty() || !isInstructionTriviallyDead(I))
-    return;
+    return false;
   
   SmallVector<Instruction*, 16> DeadInsts;
   DeadInsts.push_back(I);
@@ -298,21 +299,24 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
     
     I->eraseFromParent();
   }
+
+  return true;
 }
 
 /// RecursivelyDeleteDeadPHINode - If the specified value is an effectively
 /// dead PHI node, due to being a def-use chain of single-use nodes that
 /// either forms a cycle or is terminated by a trivially dead instruction,
 /// delete it.  If that makes any of its operands trivially dead, delete them
-/// too, recursively.
-void
+/// too, recursively.  Return true if the PHI node is actually deleted.
+bool
 llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
   // We can remove a PHI if it is on a cycle in the def-use graph
   // where each node in the cycle has degree one, i.e. only one use,
   // and is an instruction with no side effects.
   if (!PN->hasOneUse())
-    return;
+    return false;
 
+  bool Changed = false;
   SmallPtrSet<PHINode *, 4> PHIs;
   PHIs.insert(PN);
   for (Instruction *J = cast<Instruction>(*PN->use_begin());
@@ -324,9 +328,10 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
       if (!PHIs.insert(cast<PHINode>(JP))) {
         // Break the cycle and delete the PHI and its operands.
         JP->replaceAllUsesWith(UndefValue::get(JP->getType()));
-        RecursivelyDeleteTriviallyDeadInstructions(JP);
+        Changed |= RecursivelyDeleteTriviallyDeadInstructions(JP);
         break;
       }
+  return Changed;
 }
 
 //===----------------------------------------------------------------------===//

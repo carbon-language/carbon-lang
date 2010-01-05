@@ -63,15 +63,16 @@ bool isInstructionTriviallyDead(Instruction *I);
 
 /// RecursivelyDeleteTriviallyDeadInstructions - If the specified value is a
 /// trivially dead instruction, delete it.  If that makes any of its operands
-/// trivially dead, delete them too, recursively.
-void RecursivelyDeleteTriviallyDeadInstructions(Value *V);
+/// trivially dead, delete them too, recursively.  Return true if any
+/// instructions were deleted.
+bool RecursivelyDeleteTriviallyDeadInstructions(Value *V);
 
 /// RecursivelyDeleteDeadPHINode - If the specified value is an effectively
 /// dead PHI node, due to being a def-use chain of single-use nodes that
 /// either forms a cycle or is terminated by a trivially dead instruction,
 /// delete it.  If that makes any of its operands trivially dead, delete them
-/// too, recursively.
-void RecursivelyDeleteDeadPHINode(PHINode *PN);
+/// too, recursively.  Return true if the PHI node is actually deleted.
+bool RecursivelyDeleteDeadPHINode(PHINode *PN);
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring.

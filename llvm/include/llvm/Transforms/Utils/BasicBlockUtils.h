@@ -40,8 +40,9 @@ void FoldSingleEntryPHINodes(BasicBlock *BB);
 /// DeleteDeadPHIs - Examine each PHI in the given block and delete it if it
 /// is dead. Also recursively delete any operands that become dead as
 /// a result. This includes tracing the def-use list from the PHI to see if
-/// it is ultimately unused or if it reaches an unused cycle.
-void DeleteDeadPHIs(BasicBlock *BB);
+/// it is ultimately unused or if it reaches an unused cycle. Return true
+/// if any PHIs were deleted.
+bool DeleteDeadPHIs(BasicBlock *BB);
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
