@@ -195,6 +195,7 @@ public:
 private:
   bool ShouldChangeType(const Type *From, const Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
+  Value *dyn_castFNegVal(Value *V) const;
   const Type *FindElementAtOffset(const Type *Ty, int64_t Offset, 
                                   SmallVectorImpl<Value*> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);

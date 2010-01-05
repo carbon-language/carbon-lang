@@ -3,6 +3,7 @@ add_llvm_library(LLVMInstCombine
   InstCombineCasts.cpp
   InstCombineCompares.cpp
   InstCombineLoadStoreAlloca.cpp
+  InstCombineMulDivRem.cpp
   InstCombinePHI.cpp
   InstCombineSelect.cpp
   InstCombineSimplifyDemanded.cpp
