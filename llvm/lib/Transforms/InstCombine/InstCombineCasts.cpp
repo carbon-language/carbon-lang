@@ -645,16 +645,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
             cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
     }
-
-    // cast (xor bool X, true) to int  --> xor (cast bool X to int), 1
-    if (isa<ZExtInst>(CI) && SrcBitSize == 1 && 
-        SrcI->getOpcode() == Instruction::Xor &&
-        Op1 == ConstantInt::getTrue(CI.getContext()) &&
-        (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
-      Value *New = Builder->CreateZExt(Op0, DestTy, Op0->getName());
-      return BinaryOperator::CreateXor(New,
-                                      ConstantInt::get(CI.getType(), 1));
-    }
     break;
   }
   return 0;
@@ -933,6 +923,15 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
             }
           }
 
+  // zext (xor i1 X, true) to i32  --> xor (zext i1 X to i32), 1
+  Value *X;
+  if (SrcI && SrcI->getType()->isInteger(1) &&
+      match(SrcI, m_Not(m_Value(X))) && 
+      (!X->hasOneUse() || !isa<CmpInst>(X))) {
+    Value *New = Builder->CreateZExt(X, CI.getType());
+    return BinaryOperator::CreateXor(New, ConstantInt::get(CI.getType(), 1));
+  }
+  
   return 0;
 }
 
