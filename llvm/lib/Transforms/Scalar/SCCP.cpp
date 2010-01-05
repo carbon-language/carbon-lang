@@ -218,7 +218,7 @@ public:
   /// This returns true if the block was not considered live before.
   bool MarkBlockExecutable(BasicBlock *BB) {
     if (!BBExecutable.insert(BB)) return false;
-    DEBUG(errs() << "Marking Block Executable: " << BB->getName() << "\n");
+    DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << "\n");
     BBWorkList.push_back(BB);  // Add the block to the work list!
     return true;
   }
@@ -316,7 +316,7 @@ private:
   //
   void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (!IV.markConstant(C)) return;
-    DEBUG(errs() << "markConstant: " << *C << ": " << *V << '\n');
+    DEBUG(dbgs() << "markConstant: " << *C << ": " << *V << '\n');
     InstWorkList.push_back(V);
   }
   
@@ -328,7 +328,7 @@ private:
   void markForcedConstant(Value *V, Constant *C) {
     assert(!isa<StructType>(V->getType()) && "Should use other method");
     ValueState[V].markForcedConstant(C);
-    DEBUG(errs() << "markForcedConstant: " << *C << ": " << *V << '\n');
+    DEBUG(dbgs() << "markForcedConstant: " << *C << ": " << *V << '\n');
     InstWorkList.push_back(V);
   }
   
@@ -339,11 +339,11 @@ private:
   void markOverdefined(LatticeVal &IV, Value *V) {
     if (!IV.markOverdefined()) return;
     
-    DEBUG(errs() << "markOverdefined: ";
+    DEBUG(dbgs() << "markOverdefined: ";
           if (Function *F = dyn_cast<Function>(V))
-            errs() << "Function '" << F->getName() << "'\n";
+            dbgs() << "Function '" << F->getName() << "'\n";
           else
-            errs() << *V << '\n');
+            dbgs() << *V << '\n');
     // Only instructions go on the work list
     OverdefinedInstWorkList.push_back(V);
   }
@@ -431,7 +431,7 @@ private:
       // If the destination is already executable, we just made an *edge*
       // feasible that wasn't before.  Revisit the PHI nodes in the block
       // because they have potentially new operands.
-      DEBUG(errs() << "Marking Edge Executable: " << Source->getName()
+      DEBUG(dbgs() << "Marking Edge Executable: " << Source->getName()
             << " -> " << Dest->getName() << "\n");
 
       PHINode *PN;
@@ -516,7 +516,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle.
-    errs() << "SCCP: Don't know how to handle: " << I;
+    dbgs() << "SCCP: Don't know how to handle: " << I;
     markAnythingOverdefined(&I);   // Just in case
   }
 };
@@ -580,7 +580,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   }
   
 #ifndef NDEBUG
-  errs() << "Unknown terminator instruction: " << TI << '\n';
+  dbgs() << "Unknown terminator instruction: " << TI << '\n';
 #endif
   llvm_unreachable("SCCP: Don't know how to handle this terminator!");
 }
@@ -640,7 +640,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return true;
   
 #ifndef NDEBUG
-  errs() << "Unknown terminator instruction: " << *TI << '\n';
+  dbgs() << "Unknown terminator instruction: " << *TI << '\n';
 #endif
   llvm_unreachable(0);
 }
@@ -1324,7 +1324,7 @@ void SCCPSolver::Solve() {
     while (!OverdefinedInstWorkList.empty()) {
       Value *I = OverdefinedInstWorkList.pop_back_val();
 
-      DEBUG(errs() << "\nPopped off OI-WL: " << *I << '\n');
+      DEBUG(dbgs() << "\nPopped off OI-WL: " << *I << '\n');
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1343,7 +1343,7 @@ void SCCPSolver::Solve() {
     while (!InstWorkList.empty()) {
       Value *I = InstWorkList.pop_back_val();
 
-      DEBUG(errs() << "\nPopped off I-WL: " << *I << '\n');
+      DEBUG(dbgs() << "\nPopped off I-WL: " << *I << '\n');
 
       // "I" got into the work list because it made the transition from undef to
       // constant.
@@ -1364,7 +1364,7 @@ void SCCPSolver::Solve() {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off BBWL: " << *BB << '\n');
+      DEBUG(dbgs() << "\nPopped off BBWL: " << *BB << '\n');
 
       // Notify all instructions in this basic block that they are newly
       // executable.
@@ -1597,7 +1597,7 @@ FunctionPass *llvm::createSCCPPass() {
 }
 
 static void DeleteInstructionInBlock(BasicBlock *BB) {
-  DEBUG(errs() << "  BasicBlock Dead:" << *BB);
+  DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
   ++NumDeadBlocks;
   
   // Delete the instructions backwards, as it has a reduced likelihood of
@@ -1616,7 +1616,7 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
-  DEBUG(errs() << "SCCP on function '" << F.getName() << "'\n");
+  DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
   SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
 
   // Mark the first block of the function as being executable.
@@ -1630,7 +1630,7 @@ bool SCCP::runOnFunction(Function &F) {
   bool ResolvedUndefs = true;
   while (ResolvedUndefs) {
     Solver.Solve();
-    DEBUG(errs() << "RESOLVING UNDEFs\n");
+    DEBUG(dbgs() << "RESOLVING UNDEFs\n");
     ResolvedUndefs = Solver.ResolvedUndefsIn(F);
   }
 
@@ -1665,7 +1665,7 @@ bool SCCP::runOnFunction(Function &F) {
       
       Constant *Const = IV.isConstant()
         ? IV.getConstant() : UndefValue::get(Inst->getType());
-      DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
+      DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst);
 
       // Replaces all of the uses of a variable with uses of the constant.
       Inst->replaceAllUsesWith(Const);
@@ -1775,7 +1775,7 @@ bool IPSCCP::runOnModule(Module &M) {
   while (ResolvedUndefs) {
     Solver.Solve();
 
-    DEBUG(errs() << "RESOLVING UNDEFS\n");
+    DEBUG(dbgs() << "RESOLVING UNDEFS\n");
     ResolvedUndefs = false;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
       ResolvedUndefs |= Solver.ResolvedUndefsIn(*F);
@@ -1802,7 +1802,7 @@ bool IPSCCP::runOnModule(Module &M) {
         
         Constant *CST = IV.isConstant() ?
         IV.getConstant() : UndefValue::get(AI->getType());
-        DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
+        DEBUG(dbgs() << "***  Arg " << *AI << " = " << *CST <<"\n");
         
         // Replaces all of the uses of a variable with uses of the
         // constant.
@@ -1847,7 +1847,7 @@ bool IPSCCP::runOnModule(Module &M) {
         
         Constant *Const = IV.isConstant()
           ? IV.getConstant() : UndefValue::get(Inst->getType());
-        DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
+        DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst);
 
         // Replaces all of the uses of a variable with uses of the
         // constant.
@@ -1944,7 +1944,7 @@ bool IPSCCP::runOnModule(Module &M) {
     GlobalVariable *GV = I->first;
     assert(!I->second.isOverdefined() &&
            "Overdefined values should have been taken out of the map!");
-    DEBUG(errs() << "Found that GV '" << GV->getName() << "' is constant!\n");
+    DEBUG(dbgs() << "Found that GV '" << GV->getName() << "' is constant!\n");
     while (!GV->use_empty()) {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       SI->eraseFromParent();
