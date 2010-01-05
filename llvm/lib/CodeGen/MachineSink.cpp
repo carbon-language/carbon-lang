@@ -90,7 +90,7 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
 }
 
 bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(errs() << "******** Machine Sinking ********\n");
+  DEBUG(dbgs() << "******** Machine Sinking ********\n");
   
   const TargetMachine &TM = MF.getTarget();
   TII = TM.getInstrInfo();
@@ -255,15 +255,15 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (MI->getParent() == SuccToSinkTo)
     return false;
   
-  DEBUG(errs() << "Sink instr " << *MI);
-  DEBUG(errs() << "to block " << *SuccToSinkTo);
+  DEBUG(dbgs() << "Sink instr " << *MI);
+  DEBUG(dbgs() << "to block " << *SuccToSinkTo);
   
   // If the block has multiple predecessors, this would introduce computation on
   // a path that it doesn't already exist.  We could split the critical edge,
   // but for now we just punt.
   // FIXME: Split critical edges if not backedges.
   if (SuccToSinkTo->pred_size() > 1) {
-    DEBUG(errs() << " *** PUNTING: Critical edge found\n");
+    DEBUG(dbgs() << " *** PUNTING: Critical edge found\n");
     return false;
   }
   
