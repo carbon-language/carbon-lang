@@ -829,7 +829,7 @@ SpeculationFailure:
   SmallVector<BasicBlock*, 32> BBWorklist;
   BBWorklist.push_back(BB);
 
-  while (!BBWorklist.empty()) {
+  do {
     BasicBlock *Entry = BBWorklist.pop_back_val();
     // Note that this sets blocks to 0 (unavailable) if they happen to not
     // already be in FullyAvailableBlocks.  This is safe.
@@ -841,7 +841,7 @@ SpeculationFailure:
 
     for (succ_iterator I = succ_begin(Entry), E = succ_end(Entry); I != E; ++I)
       BBWorklist.push_back(*I);
-  }
+  } while (!BBWorklist.empty());
 
   return false;
 }

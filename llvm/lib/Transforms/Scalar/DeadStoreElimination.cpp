@@ -523,9 +523,8 @@ void DSE::DeleteDeadInstruction(Instruction *I,
 
   // Before we touch this instruction, remove it from memdep!
   MemoryDependenceAnalysis &MDA = getAnalysis<MemoryDependenceAnalysis>();
-  while (!NowDeadInsts.empty()) {
-    Instruction *DeadInst = NowDeadInsts.back();
-    NowDeadInsts.pop_back();
+  do {
+    Instruction *DeadInst = NowDeadInsts.pop_back_val();
     
     ++NumFastOther;
     
@@ -549,7 +548,7 @@ void DSE::DeleteDeadInstruction(Instruction *I,
     DeadInst->eraseFromParent();
     
     if (ValueSet) ValueSet->erase(DeadInst);
-  }
+  } while (!NowDeadInsts.empty());
 }
 
 unsigned DSE::getPointerSize(Value *V) const {

@@ -62,8 +62,7 @@ bool ADCE::runOnFunction(Function& F) {
   
   // Propagate liveness backwards to operands.
   while (!worklist.empty()) {
-    Instruction* curr = worklist.back();
-    worklist.pop_back();
+    Instruction* curr = worklist.pop_back_val();
     
     for (Instruction::op_iterator OI = curr->op_begin(), OE = curr->op_end();
          OI != OE; ++OI)

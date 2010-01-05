@@ -1181,7 +1181,7 @@ void SROA::CleanupAllocaUsers(Value *V) {
     if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
       // Safe to remove debug info uses.
       while (!DbgInUses.empty()) {
-        DbgInfoIntrinsic *DI = DbgInUses.back(); DbgInUses.pop_back();
+        DbgInfoIntrinsic *DI = DbgInUses.pop_back_val();
         DI->eraseFromParent();
       }
       I->eraseFromParent();

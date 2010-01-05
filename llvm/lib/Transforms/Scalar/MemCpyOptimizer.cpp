@@ -562,8 +562,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   SmallVector<User*, 8> srcUseList(srcAlloca->use_begin(),
                                    srcAlloca->use_end());
   while (!srcUseList.empty()) {
-    User *UI = srcUseList.back();
-    srcUseList.pop_back();
+    User *UI = srcUseList.pop_back_val();
 
     if (isa<BitCastInst>(UI)) {
       for (User::use_iterator I = UI->use_begin(), E = UI->use_end();

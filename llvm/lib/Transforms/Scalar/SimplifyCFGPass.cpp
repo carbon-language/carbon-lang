@@ -99,9 +99,8 @@ static bool MarkAliveBlocks(BasicBlock *BB,
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);
   bool Changed = false;
-  while (!Worklist.empty()) {
-    BB = Worklist.back();
-    Worklist.pop_back();
+  do {
+    BB = Worklist.pop_back_val();
     
     if (!Reachable.insert(BB))
       continue;
@@ -150,7 +149,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     Changed |= ConstantFoldTerminator(BB);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
       Worklist.push_back(*SI);
-  }
+  } while (!Worklist.empty());
   return Changed;
 }
 

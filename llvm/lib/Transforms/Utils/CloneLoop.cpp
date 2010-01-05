@@ -91,7 +91,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
 
 
   Loop *NewParentLoop = NULL;
-  while (!LoopNest.empty()) {
+  do {
     Loop *L = LoopNest.pop_back_val();
     Loop *NewLoop = new Loop();
 
@@ -123,7 +123,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
     // Process sub loops
     for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
       LoopNest.push_back(*I);
-  }
+  } while (!LoopNest.empty());
 
   // Remap instructions to reference operands from ValueMap.
   for(SmallVector<BasicBlock *, 16>::iterator NBItr = NewBlocks.begin(), 

@@ -448,13 +448,13 @@ void PromoteMem2Reg::run() {
   //
   std::vector<RenamePassData> RenamePassWorkList;
   RenamePassWorkList.push_back(RenamePassData(F.begin(), 0, Values));
-  while (!RenamePassWorkList.empty()) {
+  do {
     RenamePassData RPD;
     RPD.swap(RenamePassWorkList.back());
     RenamePassWorkList.pop_back();
     // RenamePass may add new worklist entries.
     RenamePass(RPD.BB, RPD.Pred, RPD.Values, RenamePassWorkList);
-  }
+  } while (!RenamePassWorkList.empty());
   
   // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
   Visited.clear();

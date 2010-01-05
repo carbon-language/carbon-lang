@@ -1000,9 +1000,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
 
   SmallPtrSet<ConstantExpr*, 64> FoldedConstants;
   
-  while (!Worklist.empty()) {
-    BB = Worklist.back();
-    Worklist.pop_back();
+  do {
+    BB = Worklist.pop_back_val();
     
     // We have now visited this block!  If we've already been here, ignore it.
     if (!Visited.insert(BB)) continue;
@@ -1082,7 +1081,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
     
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
       Worklist.push_back(TI->getSuccessor(i));
-  }
+  } while (!Worklist.empty());
   
   // Once we've found all of the instructions to add to instcombine's worklist,
   // add them in reverse order.  This way instcombine will visit from the top

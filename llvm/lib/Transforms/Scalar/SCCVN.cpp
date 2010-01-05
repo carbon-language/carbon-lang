@@ -678,8 +678,7 @@ bool SCCVN::runOnFunction(Function& F) {
           stack.push_back(*PI);
       
       while (!stack.empty()) {
-        BasicBlock* CurrBB = stack.back();
-        stack.pop_back();
+        BasicBlock* CurrBB = stack.pop_back_val();
         visited.insert(CurrBB);
         
         ValueNumberScope* S = BBMap[CurrBB];

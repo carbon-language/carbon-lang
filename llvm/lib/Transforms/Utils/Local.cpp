@@ -278,7 +278,7 @@ bool llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
   SmallVector<Instruction*, 16> DeadInsts;
   DeadInsts.push_back(I);
   
-  while (!DeadInsts.empty()) {
+  do {
     I = DeadInsts.pop_back_val();
 
     // Null out all of the instruction's operands to see if any operand becomes
@@ -298,7 +298,7 @@ bool llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
     }
     
     I->eraseFromParent();
-  }
+  } while (!DeadInsts.empty());
 
   return true;
 }

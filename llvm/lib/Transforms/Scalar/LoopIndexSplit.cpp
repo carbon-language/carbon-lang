@@ -708,7 +708,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
   }
 
   while (!WorkList.empty()) {
-    BasicBlock *BB = WorkList.back(); WorkList.pop_back();
+    BasicBlock *BB = WorkList.pop_back_val();
     LPM->deleteSimpleAnalysisValue(BB, LP);
     for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
         BBI != BBE; ) {
@@ -726,7 +726,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 
   // Update Frontier BBs' dominator info.
   while (!FrontierBBs.empty()) {
-    BasicBlock *FBB = FrontierBBs.back(); FrontierBBs.pop_back();
+    BasicBlock *FBB = FrontierBBs.pop_back_val();
     BasicBlock *NewDominator = FBB->getSinglePredecessor();
     if (!NewDominator) {
       pred_iterator PI = pred_begin(FBB), PE = pred_end(FBB);
