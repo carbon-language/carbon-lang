@@ -161,7 +161,7 @@ static bool LoopIsOuterMostWithPreheader(MachineLoop *CurLoop) {
 /// loop.
 ///
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(errs() << "******** Machine LICM ********\n");
+  DEBUG(dbgs() << "******** Machine LICM ********\n");
 
   Changed = FirstInLoop = false;
   MCP = MF.getConstantPool();
@@ -253,28 +253,28 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   }
 
   DEBUG({
-      errs() << "--- Checking if we can hoist " << I;
+      dbgs() << "--- Checking if we can hoist " << I;
       if (I.getDesc().getImplicitUses()) {
-        errs() << "  * Instruction has implicit uses:\n";
+        dbgs() << "  * Instruction has implicit uses:\n";
 
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpUses = I.getDesc().getImplicitUses();
              *ImpUses; ++ImpUses)
-          errs() << "      -> " << TRI->getName(*ImpUses) << "\n";
+          dbgs() << "      -> " << TRI->getName(*ImpUses) << "\n";
       }
 
       if (I.getDesc().getImplicitDefs()) {
-        errs() << "  * Instruction has implicit defines:\n";
+        dbgs() << "  * Instruction has implicit defines:\n";
 
         const TargetRegisterInfo *TRI = TM->getRegisterInfo();
         for (const unsigned *ImpDefs = I.getDesc().getImplicitDefs();
              *ImpDefs; ++ImpDefs)
-          errs() << "      -> " << TRI->getName(*ImpDefs) << "\n";
+          dbgs() << "      -> " << TRI->getName(*ImpDefs) << "\n";
       }
     });
 
   if (I.getDesc().getImplicitDefs() || I.getDesc().getImplicitUses()) {
-    DEBUG(errs() << "Cannot hoist with implicit defines or uses\n");
+    DEBUG(dbgs() << "Cannot hoist with implicit defines or uses\n");
     return false;
   }
 
@@ -479,7 +479,7 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
     return false;
 
   if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second)) {
-    DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
+    DEBUG(dbgs() << "CSEing " << *MI << " with " << *Dup);
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg() && MO.isDef())
@@ -506,14 +506,14 @@ void MachineLICM::Hoist(MachineInstr *MI) {
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
   DEBUG({
-      errs() << "Hoisting " << *MI;
+      dbgs() << "Hoisting " << *MI;
       if (CurPreheader->getBasicBlock())
-        errs() << " to MachineBasicBlock "
+        dbgs() << " to MachineBasicBlock "
                << CurPreheader->getName();
       if (MI->getParent()->getBasicBlock())
-        errs() << " from MachineBasicBlock "
+        dbgs() << " from MachineBasicBlock "
                << MI->getParent()->getName();
-      errs() << "\n";
+      dbgs() << "\n";
     });
 
   // If this is the first instruction being hoisted to the preheader,
