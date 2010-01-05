@@ -252,8 +252,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
                                            BasicBlock *newHeader,
                                            Function *oldFunction,
                                            Module *M) {
-  DEBUG(errs() << "inputs: " << inputs.size() << "\n");
-  DEBUG(errs() << "outputs: " << outputs.size() << "\n");
+  DEBUG(dbgs() << "inputs: " << inputs.size() << "\n");
+  DEBUG(dbgs() << "outputs: " << outputs.size() << "\n");
 
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
@@ -269,25 +269,25 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (Values::const_iterator i = inputs.begin(),
          e = inputs.end(); i != e; ++i) {
     const Value *value = *i;
-    DEBUG(errs() << "value used in func: " << *value << "\n");
+    DEBUG(dbgs() << "value used in func: " << *value << "\n");
     paramTy.push_back(value->getType());
   }
 
   // Add the types of the output values to the function's argument list.
   for (Values::const_iterator I = outputs.begin(), E = outputs.end();
        I != E; ++I) {
-    DEBUG(errs() << "instr used in func: " << **I << "\n");
+    DEBUG(dbgs() << "instr used in func: " << **I << "\n");
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
       paramTy.push_back(PointerType::getUnqual((*I)->getType()));
   }
 
-  DEBUG(errs() << "Function type: " << *RetTy << " f(");
+  DEBUG(dbgs() << "Function type: " << *RetTy << " f(");
   for (std::vector<const Type*>::iterator i = paramTy.begin(),
          e = paramTy.end(); i != e; ++i)
-    DEBUG(errs() << **i << ", ");
-  DEBUG(errs() << ")\n");
+    DEBUG(dbgs() << **i << ", ");
+  DEBUG(dbgs() << ")\n");
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     PointerType *StructPtr =
