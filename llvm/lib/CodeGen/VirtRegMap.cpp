@@ -278,5 +278,5 @@ void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
 }
 
 void VirtRegMap::dump() const {
-  print(errs());
+  print(dbgs());
 }
