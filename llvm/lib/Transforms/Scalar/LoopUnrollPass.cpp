@@ -89,7 +89,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
 
   BasicBlock *Header = L->getHeader();
-  DEBUG(errs() << "Loop Unroll: F[" << Header->getParent()->getName()
+  DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
         << "] Loop %" << Header->getName() << "\n");
   (void)Header;
 
@@ -111,13 +111,13 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Enforce the threshold.
   if (UnrollThreshold != NoThreshold) {
     unsigned LoopSize = ApproximateLoopSize(L);
-    DEBUG(errs() << "  Loop Size = " << LoopSize << "\n");
+    DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     uint64_t Size = (uint64_t)LoopSize*Count;
     if (TripCount != 1 && Size > UnrollThreshold) {
-      DEBUG(errs() << "  Too large to fully unroll with count: " << Count
+      DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
             << " because size: " << Size << ">" << UnrollThreshold << "\n");
       if (!UnrollAllowPartial) {
-        DEBUG(errs() << "  will not try to unroll partially because "
+        DEBUG(dbgs() << "  will not try to unroll partially because "
               << "-unroll-allow-partial not given\n");
         return false;
       }
@@ -127,10 +127,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
         Count--;
       }
       if (Count < 2) {
-        DEBUG(errs() << "  could not unroll partially\n");
+        DEBUG(dbgs() << "  could not unroll partially\n");
         return false;
       }
-      DEBUG(errs() << "  partially unrolling with count: " << Count << "\n");
+      DEBUG(dbgs() << "  partially unrolling with count: " << Count << "\n");
     }
   }
 
