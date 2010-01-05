@@ -1745,7 +1745,7 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
   if (Density < 0.4)
     return false;
 
-  DEBUG(errs() << "Lowering jump table\n"
+  DEBUG(dbgs() << "Lowering jump table\n"
                << "First entry: " << First << ". Last entry: " << Last << '\n'
                << "Range: " << Range
                << "Size: " << TSize << ". Density: " << Density << "\n\n");
@@ -1849,7 +1849,7 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
 
   APInt LSize = FrontCase.size();
   APInt RSize = TSize-LSize;
-  DEBUG(errs() << "Selecting best pivot: \n"
+  DEBUG(dbgs() << "Selecting best pivot: \n"
                << "First: " << First << ", Last: " << Last <<'\n'
                << "LSize: " << LSize << ", RSize: " << RSize << '\n');
   for (CaseItr I = CR.Range.first, J=I+1, E = CR.Range.second;
@@ -1865,7 +1865,7 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
                            (Last - RBegin + 1ULL).roundToDouble();
     double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
-    DEBUG(errs() <<"=>Step\n"
+    DEBUG(dbgs() <<"=>Step\n"
                  << "LEnd: " << LEnd << ", RBegin: " << RBegin << '\n'
                  << "LDensity: " << LDensity
                  << ", RDensity: " << RDensity << '\n'
@@ -1873,7 +1873,7 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
     if (FMetric < Metric) {
       Pivot = J;
       FMetric = Metric;
-      DEBUG(errs() << "Current metric set to: " << FMetric << '\n');
+      DEBUG(dbgs() << "Current metric set to: " << FMetric << '\n');
     }
 
     LSize += J->size();
@@ -1977,7 +1977,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
       // Don't bother the code below, if there are too much unique destinations
       return false;
   }
-  DEBUG(errs() << "Total number of unique destinations: "
+  DEBUG(dbgs() << "Total number of unique destinations: "
         << Dests.size() << '\n'
         << "Total number of comparisons: " << numCmps << '\n');
 
@@ -1986,7 +1986,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
   const APInt& maxValue = cast<ConstantInt>(BackCase.High)->getValue();
   APInt cmpRange = maxValue - minValue;
 
-  DEBUG(errs() << "Compare range: " << cmpRange << '\n'
+  DEBUG(dbgs() << "Compare range: " << cmpRange << '\n'
                << "Low bound: " << minValue << '\n'
                << "High bound: " << maxValue << '\n');
 
@@ -1996,7 +1996,7 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
        !(Dests.size() >= 3 && numCmps >= 6)))
     return false;
 
-  DEBUG(errs() << "Emitting bit tests\n");
+  DEBUG(dbgs() << "Emitting bit tests\n");
   APInt lowBound = APInt::getNullValue(cmpRange.getBitWidth());
 
   // Optimize the case where all the case values fit in a
@@ -2046,9 +2046,9 @@ bool SelectionDAGBuilder::handleBitTestsSwitchCase(CaseRec& CR,
 
   const BasicBlock *LLVMBB = CR.CaseBB->getBasicBlock();
 
-  DEBUG(errs() << "Cases:\n");
+  DEBUG(dbgs() << "Cases:\n");
   for (unsigned i = 0, e = CasesBits.size(); i!=e; ++i) {
-    DEBUG(errs() << "Mask: " << CasesBits[i].Mask
+    DEBUG(dbgs() << "Mask: " << CasesBits[i].Mask
                  << ", Bits: " << CasesBits[i].Bits
                  << ", BB: " << CasesBits[i].BB << '\n');
 
@@ -2147,7 +2147,7 @@ void SelectionDAGBuilder::visitSwitch(SwitchInst &SI) {
   // create a binary search tree from them.
   CaseVector Cases;
   size_t numCmps = Clusterify(Cases, SI);
-  DEBUG(errs() << "Clusterify finished. Total clusters: " << Cases.size()
+  DEBUG(dbgs() << "Clusterify finished. Total clusters: " << Cases.size()
                << ". Total compares: " << numCmps << '\n');
   numCmps = 0;
 
