@@ -2723,7 +2723,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // At this point, it is worth checking to see if any recurrence PHIs are also
   // dead, so that we can remove them as well.
-  DeleteDeadPHIs(L->getHeader());
+  Changed |= DeleteDeadPHIs(L->getHeader());
 
   return Changed;
 }

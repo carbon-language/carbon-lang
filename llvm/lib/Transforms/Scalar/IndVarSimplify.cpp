@@ -438,7 +438,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     IU->AddUsersIfInteresting(cast<Instruction>(NewICmp->getOperand(0)));
 
   // Clean up dead instructions.
-  DeleteDeadPHIs(L->getHeader());
+  Changed |= DeleteDeadPHIs(L->getHeader());
   // Check a post-condition.
   assert(L->isLCSSAForm() && "Indvars did not leave the loop in lcssa form!");
   return Changed;
