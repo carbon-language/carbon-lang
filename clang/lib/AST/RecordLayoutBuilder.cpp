@@ -719,11 +719,6 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
   // If a class isnt' polymorphic it doesn't have a key function.
   if (!RD->isPolymorphic())
     return 0;
-  
-  // A class template specialization or instantation does not have a key
-  // function.
-  if (RD->getTemplateSpecializationKind() != TSK_Undeclared)
-    return 0;
 
   // A class inside an anonymous namespace doesn't have a key function.  (Or
   // at least, there's no point to assigning a key function to such a class;
@@ -741,12 +736,12 @@ ASTRecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
     if (MD->isPure())
       continue;
 
-    if (MD->isInlineSpecified())
-      continue;
-    
     // Ignore implicit member functions, they are always marked as inline, but
     // they don't have a body until they're defined.
     if (MD->isImplicit())
+      continue;
+    
+    if (MD->isInlineSpecified())
       continue;
 
     if (MD->hasInlineBody())

@@ -3749,7 +3749,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   if (getLangOptions().CPlusPlus) {
     // Make sure we mark the destructor as used if necessary.
     QualType InitType = VDecl->getType();
-    if (const ArrayType *Array = Context.getAsArrayType(InitType))
+    while (const ArrayType *Array = Context.getAsArrayType(InitType))
       InitType = Context.getBaseElementType(Array);
     if (InitType->isRecordType())
       FinalizeVarWithDestructor(VDecl, InitType);

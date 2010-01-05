@@ -1493,8 +1493,22 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   llvm::GlobalVariable::LinkageTypes Linkage;
   if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
     Linkage = llvm::GlobalVariable::InternalLinkage;
-  else if (KeyFunction && !MD->isInlined())
-    Linkage = llvm::GlobalVariable::ExternalLinkage;
+  else if (KeyFunction && !MD->isInlined()) {
+    switch (MD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      Linkage = llvm::GlobalVariable::ExternalLinkage;
+      break;
+
+    case TSK_ImplicitInstantiation:
+    case TSK_ExplicitInstantiationDeclaration:
+      // FIXME: could an explicit instantiation declaration imply
+      // available_externally linkage?
+    case TSK_ExplicitInstantiationDefinition:
+      Linkage = llvm::GlobalVariable::WeakODRLinkage;
+      break;
+    }
+  }
   else
     Linkage = llvm::GlobalVariable::WeakODRLinkage;
   

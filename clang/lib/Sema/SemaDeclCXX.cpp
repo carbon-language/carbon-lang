@@ -5702,19 +5702,31 @@ void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
       ClassesWithUnmarkedVirtualMembers.insert(std::make_pair(RD, Loc));
     return;
   }
-  
-  const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
 
-  if (!KeyFunction) {
-    // This record does not have a key function, so we assume that the vtable
-    // will be emitted when it's used by the constructor.
-    if (!isa<CXXConstructorDecl>(MD))
+  switch (RD->getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization: {
+    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
+
+    if (!KeyFunction) {
+      // This record does not have a key function, so we assume that the vtable
+      // will be emitted when it's used by the constructor.
+      if (!isa<CXXConstructorDecl>(MD))
+        return;
+    } else if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl()) {
+      // We don't have the right key function.
       return;
-  } else if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl()) {
-    // We don't have the right key function.
-    return;
+    }
+    break;
   }
-  
+
+  case TSK_ImplicitInstantiation:
+  case TSK_ExplicitInstantiationDeclaration:
+  case TSK_ExplicitInstantiationDefinition:
+    // Always mark the virtual members of an instantiated template.
+    break;
+  }
+
   // Mark the members as referenced.
   MarkVirtualMembersReferenced(Loc, RD);
   ClassesWithUnmarkedVirtualMembers.erase(RD);

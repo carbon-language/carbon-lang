@@ -547,7 +547,8 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
       const CXXRecordDecl *RD = MD->getParent();
       if (MD->isOutOfLine() && RD->isDynamicClass()) {
         const CXXMethodDecl *KeyFunction = getContext().getKeyFunction(RD);
-        if (KeyFunction == MD->getCanonicalDecl())
+        if (KeyFunction && 
+            KeyFunction->getCanonicalDecl() == MD->getCanonicalDecl())
           return false;
       }
     }

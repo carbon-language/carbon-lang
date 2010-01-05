@@ -13,3 +13,21 @@ struct A {
 A::A() { }
 A::A(int) { }
 }
+
+// Make sure that we don't assert when building the vtable for a class
+// template specialization or explicit instantiation with a key
+// function.
+template<typename T>
+struct Base {
+  virtual ~Base();
+};
+
+template<typename T>
+struct Derived : public Base<T> { };
+
+template<>
+struct Derived<char> : public Base<char> {
+  virtual void anchor();
+};
+
+void Derived<char>::anchor() { }
