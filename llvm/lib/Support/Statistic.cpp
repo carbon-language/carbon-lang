@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
@@ -127,6 +128,6 @@ StatisticInfo::~StatisticInfo() {
   OutStream << '\n';  // Flush the output stream...
   OutStream.flush();
   
-  if (&OutStream != &outs() && &OutStream != &errs())
+  if (&OutStream != &outs() && &OutStream != &errs() && &OutStream != &dbgs())
     delete &OutStream;   // Close the file.
 }
