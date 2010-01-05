@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -30,5 +31,5 @@ void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCValue::dump() const {
-  print(errs(), 0);
+  print(dbgs(), 0);
 }
