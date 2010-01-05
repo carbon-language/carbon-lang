@@ -2329,6 +2329,9 @@ has undefined behavior.</p>
    event that a value is deleted, it will be replaced with a typeless
    "<tt>null</tt>", such as "<tt>metadata !{null, i32 10}</tt>".</p>
 
+<p>A named metadata is a collection of metadata nodes. For example: "<tt>!foo =
+   metadata !{!4, !3}</tt>".
+
 <p>Optimizations may rely on metadata to provide additional information about
    the program that isn't available in the instructions, or that isn't easily
    computable. Similarly, the code generator may expect a certain metadata

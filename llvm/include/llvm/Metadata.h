@@ -167,7 +167,7 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-/// NamedMDNode - a tuple of other metadata. 
+/// NamedMDNode - a tuple of MDNodes.
 /// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
 class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
@@ -176,15 +176,15 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
   Module *Parent;
-  void *Operands; // SmallVector<TrackingVH<MetadataBase>, 4>
+  void *Operands; // SmallVector<WeakVH<MDNode>, 4>
 
   void setParent(Module *M) { Parent = M; }
 protected:
-  explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const *Vals, 
+  explicit NamedMDNode(LLVMContext &C, const Twine &N, MDNode*const *Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
   static NamedMDNode *Create(LLVMContext &C, const Twine &N, 
-                             MetadataBase *const *MDs, 
+                             MDNode *const *MDs, 
                              unsigned NumMDs, Module *M = 0) {
     return new NamedMDNode(C, N, MDs, NumMDs, M);
   }
@@ -206,13 +206,13 @@ public:
   inline const Module *getParent() const { return Parent; }
 
   /// getOperand - Return specified operand.
-  MetadataBase *getOperand(unsigned i) const;
+  MDNode *getOperand(unsigned i) const;
   
   /// getNumOperands - Return the number of NamedMDNode operands.
   unsigned getNumOperands() const;
 
   /// addOperand - Add metadata operand.
-  void addOperand(MetadataBase *M);
+  void addOperand(MDNode *M);
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }

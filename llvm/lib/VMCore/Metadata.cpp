@@ -210,21 +210,21 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //
-static SmallVector<TrackingVH<MetadataBase>, 4> &getNMDOps(void *Operands) {
-  return *(SmallVector<TrackingVH<MetadataBase>, 4>*)Operands;
+static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
+  return *(SmallVector<WeakVH, 4>*)Operands;
 }
 
 NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
-                         MetadataBase *const *MDs, 
+                         MDNode *const *MDs, 
                          unsigned NumMDs, Module *ParentModule)
   : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
     
-  Operands = new SmallVector<TrackingVH<MetadataBase>, 4>();
+  Operands = new SmallVector<WeakVH, 4>();
     
-  SmallVector<TrackingVH<MetadataBase>, 4> &Node = getNMDOps(Operands);
+  SmallVector<WeakVH, 4> &Node = getNMDOps(Operands);
   for (unsigned i = 0; i != NumMDs; ++i)
-    Node.push_back(TrackingVH<MetadataBase>(MDs[i]));
+    Node.push_back(WeakVH(MDs[i]));
 
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
@@ -232,7 +232,7 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
 
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
   assert(NMD && "Invalid source NamedMDNode!");
-  SmallVector<MetadataBase *, 4> Elems;
+  SmallVector<MDNode *, 4> Elems;
   Elems.reserve(NMD->getNumOperands());
   
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
@@ -252,14 +252,14 @@ unsigned NamedMDNode::getNumOperands() const {
 }
 
 /// getOperand - Return specified operand.
-MetadataBase *NamedMDNode::getOperand(unsigned i) const {
+MDNode *NamedMDNode::getOperand(unsigned i) const {
   assert(i < getNumOperands() && "Invalid Operand number!");
-  return getNMDOps(Operands)[i];
+  return dyn_cast_or_null<MDNode>(getNMDOps(Operands)[i]);
 }
 
 /// addOperand - Add metadata Operand.
-void NamedMDNode::addOperand(MetadataBase *M) {
-  getNMDOps(Operands).push_back(TrackingVH<MetadataBase>(M));
+void NamedMDNode::addOperand(MDNode *M) {
+  getNMDOps(Operands).push_back(WeakVH(M));
 }
 
 /// eraseFromParent - Drop all references and remove the node from parent

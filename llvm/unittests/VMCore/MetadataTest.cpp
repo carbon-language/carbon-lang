@@ -123,7 +123,7 @@ TEST(NamedMDNodeTest, Search) {
   MDNode *n = MDNode::get(Context, &V, 1);
   MDNode *n2 = MDNode::get(Context, &V2, 1);
 
-  MetadataBase *Nodes[2] = { n, n2 };
+  MDNode *Nodes[2] = { n, n2 };
 
   Module *M = new Module("MyModule", getGlobalContext());
   const char *Name = "llvm.NMD1";

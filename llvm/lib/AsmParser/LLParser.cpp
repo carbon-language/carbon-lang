@@ -510,12 +510,11 @@ bool LLParser::ParseNamedMetadata() {
       ParseToken(lltok::lbrace, "Expected '{' here"))
     return true;
 
-  SmallVector<MetadataBase *, 8> Elts;
+  SmallVector<MDNode *, 8> Elts;
   do {
     if (ParseToken(lltok::exclaim, "Expected '!' here"))
       return true;
     
-    // FIXME: This rejects MDStrings.  Are they legal in an named MDNode or not?
     MDNode *N = 0;
     if (ParseMDNodeID(N)) return true;
     Elts.push_back(N);

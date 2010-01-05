@@ -787,11 +787,11 @@ bool BitcodeReader::ParseMetadata() {
 
       // Read named metadata elements.
       unsigned Size = Record.size();
-      SmallVector<MetadataBase*, 8> Elts;
+      SmallVector<MDNode *, 8> Elts;
       for (unsigned i = 0; i != Size; ++i) {
         Value *MD = MDValueList.getValueFwdRef(Record[i]);
-        if (MetadataBase *B = dyn_cast<MetadataBase>(MD))
-        Elts.push_back(B);
+        if (MDNode *B = dyn_cast_or_null<MDNode>(MD))
+          Elts.push_back(B);
       }
       Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(),
                                      Elts.size(), TheModule);
