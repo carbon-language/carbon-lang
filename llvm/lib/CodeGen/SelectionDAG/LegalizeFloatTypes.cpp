@@ -43,15 +43,15 @@ static RTLIB::Libcall GetFPLibCall(EVT VT,
 //===----------------------------------------------------------------------===//
 
 void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Soften float result " << ResNo << ": "; N->dump(&DAG);
-        errs() << "\n");
+  DEBUG(dbgs() << "Soften float result " << ResNo << ": "; N->dump(&DAG);
+        dbgs() << "\n");
   SDValue R = SDValue();
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "SoftenFloatResult #" << ResNo << ": ";
-    N->dump(&DAG); errs() << "\n";
+    dbgs() << "SoftenFloatResult #" << ResNo << ": ";
+    N->dump(&DAG); dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to soften the result of this operator!");
 
@@ -531,15 +531,15 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
 //===----------------------------------------------------------------------===//
 
 bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(errs() << "Soften float operand " << OpNo << ": "; N->dump(&DAG);
-        errs() << "\n");
+  DEBUG(dbgs() << "Soften float operand " << OpNo << ": "; N->dump(&DAG);
+        dbgs() << "\n");
   SDValue Res = SDValue();
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "SoftenFloatOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); errs() << "\n";
+    dbgs() << "SoftenFloatOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to soften this operator's operand!");
 
@@ -768,7 +768,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
 /// have invalid operands or may have other results that need promotion, we just
 /// know that (at least) one result needs expansion.
 void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Expand float result: "; N->dump(&DAG); errs() << "\n");
+  DEBUG(dbgs() << "Expand float result: "; N->dump(&DAG); dbgs() << "\n");
   SDValue Lo, Hi;
   Lo = Hi = SDValue();
 
@@ -779,8 +779,8 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "ExpandFloatResult #" << ResNo << ": ";
-    N->dump(&DAG); errs() << "\n";
+    dbgs() << "ExpandFloatResult #" << ResNo << ": ";
+    N->dump(&DAG); dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to expand the result of this operator!");
 
@@ -1167,7 +1167,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
 /// types of the node are known to be legal, but other operands of the node may
 /// need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(errs() << "Expand float operand: "; N->dump(&DAG); errs() << "\n");
+  DEBUG(dbgs() << "Expand float operand: "; N->dump(&DAG); dbgs() << "\n");
   SDValue Res = SDValue();
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
@@ -1178,8 +1178,8 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
     switch (N->getOpcode()) {
     default:
   #ifndef NDEBUG
-      errs() << "ExpandFloatOperand Op #" << OpNo << ": ";
-      N->dump(&DAG); errs() << "\n";
+      dbgs() << "ExpandFloatOperand Op #" << OpNo << ": ";
+      N->dump(&DAG); dbgs() << "\n";
   #endif
       llvm_unreachable("Do not know how to expand this operator's operand!");
 
