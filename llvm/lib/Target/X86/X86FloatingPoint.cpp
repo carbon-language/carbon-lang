@@ -75,12 +75,12 @@ namespace {
     unsigned StackTop;          // The current top of the FP stack.
 
     void dumpStack() const {
-      errs() << "Stack contents:";
+      dbgs() << "Stack contents:";
       for (unsigned i = 0; i != StackTop; ++i) {
-        errs() << " FP" << Stack[i];
+        dbgs() << " FP" << Stack[i];
         assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!");
       }
-      errs() << "\n";
+      dbgs() << "\n";
     }
   private:
     /// isStackEmpty - Return true if the FP stack is empty.
@@ -246,7 +246,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
-    DEBUG(errs() << "\nFPInst:\t" << *MI);
+    DEBUG(dbgs() << "\nFPInst:\t" << *MI);
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
@@ -273,7 +273,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     for (unsigned i = 0, e = DeadRegs.size(); i != e; ++i) {
       unsigned Reg = DeadRegs[i];
       if (Reg >= X86::FP0 && Reg <= X86::FP6) {
-        DEBUG(errs() << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
+        DEBUG(dbgs() << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
         freeStackSlotAfter(I, Reg-X86::FP0);
       }
     }
@@ -282,13 +282,13 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     DEBUG(
       MachineBasicBlock::iterator PrevI(PrevMI);
       if (I == PrevI) {
-        errs() << "Just deleted pseudo instruction\n";
+        dbgs() << "Just deleted pseudo instruction\n";
       } else {
         MachineBasicBlock::iterator Start = I;
         // Rewind to first instruction newly inserted.
         while (Start != BB.begin() && prior(Start) != PrevI) --Start;
-        errs() << "Inserted instructions:\n\t";
-        Start->print(errs(), &MF.getTarget());
+        dbgs() << "Inserted instructions:\n\t";
+        Start->print(dbgs(), &MF.getTarget());
         while (++Start != llvm::next(I)) {}
       }
       dumpStack();
