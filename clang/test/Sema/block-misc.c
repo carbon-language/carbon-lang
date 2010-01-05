@@ -209,6 +209,7 @@ void test20() {
   }();
 }
 
+// radr://7438948
 void test21() {
   int a[7]; // expected-note {{declared at}}
   a[1] = 1;
