@@ -149,7 +149,7 @@ namespace llvm {
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
     }
     
-    /// isPow2VectorType - Retuns true if the given vector is a power of 2.
+    /// isPow2VectorType - Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();
       return !(NElts & (NElts - 1));
