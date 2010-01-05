@@ -84,14 +84,14 @@ private:
   }
 
   SDNode *getGlobalBaseReg();
-  SDNode *Select(SDValue N);
+  SDNode *Select(SDNode *N);
 
   // Complex Pattern.
-  bool SelectAddr(SDValue Op, SDValue N, 
+  bool SelectAddr(SDNode *Op, SDValue N, 
                   SDValue &Base, SDValue &Offset);
 
-  SDNode *SelectLoadFp64(SDValue N);
-  SDNode *SelectStoreFp64(SDValue N);
+  SDNode *SelectLoadFp64(SDNode *N);
+  SDNode *SelectStoreFp64(SDNode *N);
 
   // getI32Imm - Return a target constant with the specified
   // value, of type i32.
@@ -132,7 +132,7 @@ SDNode *MipsDAGToDAGISel::getGlobalBaseReg() {
 /// ComplexPattern used on MipsInstrInfo
 /// Used on Mips Load/Store instructions
 bool MipsDAGToDAGISel::
-SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
+SelectAddr(SDNode *Op, SDValue Addr, SDValue &Offset, SDValue &Base)
 {
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
@@ -199,19 +199,19 @@ SelectAddr(SDValue Op, SDValue Addr, SDValue &Offset, SDValue &Base)
   return true;
 }
 
-SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDValue N) {
+SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDNode *N) {
   MVT::SimpleValueType NVT = 
-    N.getNode()->getValueType(0).getSimpleVT().SimpleTy;
+    N->getValueType(0).getSimpleVT().SimpleTy;
 
   if (!Subtarget.isMips1() || NVT != MVT::f64)
     return NULL;
 
-  if (!Predicate_unindexedload(N.getNode()) ||
-      !Predicate_load(N.getNode()))
+  if (!Predicate_unindexedload(N) ||
+      !Predicate_load(N))
     return NULL;
 
-  SDValue Chain = N.getOperand(0);
-  SDValue N1 = N.getOperand(1);
+  SDValue Chain = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
   SDValue Offset0, Offset1, Base;
 
   if (!SelectAddr(N, N1, Offset0, Base) ||
@@ -220,7 +220,7 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDValue N) {
 
   MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);
   MemRefs0[0] = cast<MemSDNode>(N)->getMemOperand();
-  DebugLoc dl = N.getDebugLoc();
+  DebugLoc dl = N->getDebugLoc();
 
   // The second load should start after for 4 bytes. 
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Offset0))
@@ -255,27 +255,27 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDValue N) {
   SDValue I1 = CurDAG->getTargetInsertSubreg(Mips::SUBREG_FPODD, dl, 
                             MVT::f64, I0, SDValue(LD1, 0));
 
-  ReplaceUses(N, I1);
-  ReplaceUses(N.getValue(1), Chain);
+  ReplaceUses(SDValue(N, 0), I1);
+  ReplaceUses(SDValue(N, 1), Chain);
   cast<MachineSDNode>(LD0)->setMemRefs(MemRefs0, MemRefs0 + 1);
   cast<MachineSDNode>(LD1)->setMemRefs(MemRefs0, MemRefs0 + 1);
   return I1.getNode();
 }
 
-SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDValue N) {
+SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDNode *N) {
 
   if (!Subtarget.isMips1() || 
-      N.getOperand(1).getValueType() != MVT::f64)
+      N->getOperand(1).getValueType() != MVT::f64)
     return NULL;
 
-  SDValue Chain = N.getOperand(0);
+  SDValue Chain = N->getOperand(0);
 
-  if (!Predicate_unindexedstore(N.getNode()) ||
-      !Predicate_store(N.getNode()))
+  if (!Predicate_unindexedstore(N) ||
+      !Predicate_store(N))
     return NULL;
 
-  SDValue N1 = N.getOperand(1);
-  SDValue N2 = N.getOperand(2);
+  SDValue N1 = N->getOperand(1);
+  SDValue N2 = N->getOperand(2);
   SDValue Offset0, Offset1, Base;
 
   if (!SelectAddr(N, N2, Offset0, Base) ||
@@ -285,7 +285,7 @@ SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDValue N) {
 
   MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);
   MemRefs0[0] = cast<MemSDNode>(N)->getMemOperand();
-  DebugLoc dl = N.getDebugLoc();
+  DebugLoc dl = N->getDebugLoc();
 
   // Get the even and odd part from the f64 register
   SDValue FPOdd = CurDAG->getTargetExtractSubreg(Mips::SUBREG_FPODD, 
@@ -318,14 +318,13 @@ SDNode *MipsDAGToDAGISel::SelectStoreFp64(SDValue N) {
                                        MVT::Other, Ops1, 4), 0);
   cast<MachineSDNode>(Chain.getNode())->setMemRefs(MemRefs0, MemRefs0 + 1);
 
-  ReplaceUses(N.getValue(0), Chain);
+  ReplaceUses(SDValue(N, 0), Chain);
   return Chain.getNode();
 }
 
 /// Select instructions not customized! Used for
 /// expanded, promoted and normal instructions
-SDNode* MipsDAGToDAGISel::Select(SDValue N) {
-  SDNode *Node = N.getNode();
+SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
   DebugLoc dl = Node->getDebugLoc();
 
@@ -379,7 +378,7 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
       SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, dl, VT, 
                                                 SDValue(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(N.getNode(), MOp, VT, MVT::Flag,
+      return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Flag,
                                   LHS, SDValue(AddCarry,0));
     }
 
@@ -405,11 +404,11 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
       InFlag = SDValue(Lo,1);
       SDNode *Hi = CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
 
-      if (!N.getValue(0).use_empty()) 
-        ReplaceUses(N.getValue(0), SDValue(Lo,0));
+      if (!SDValue(Node, 0).use_empty()) 
+        ReplaceUses(SDValue(Node, 0), SDValue(Lo,0));
 
-      if (!N.getValue(1).use_empty()) 
-        ReplaceUses(N.getValue(1), SDValue(Hi,0));
+      if (!SDValue(Node, 1).use_empty()) 
+        ReplaceUses(SDValue(Node, 1), SDValue(Hi,0));
 
       return NULL;
     }
@@ -460,23 +459,23 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
       return getGlobalBaseReg();
 
     case ISD::ConstantFP: {
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      if (N.getValueType() == MVT::f64 && CN->isExactlyValue(+0.0)) { 
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
+      if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) { 
         SDValue Zero = CurDAG->getRegister(Mips::ZERO, MVT::i32);
-        ReplaceUses(N, Zero);
+        ReplaceUses(SDValue(Node, 0), Zero);
         return Zero.getNode();
       }
       break;
     }
 
     case ISD::LOAD:
-      if (SDNode *ResNode = SelectLoadFp64(N))
+      if (SDNode *ResNode = SelectLoadFp64(Node))
         return ResNode;
       // Other cases are autogenerated.
       break;
 
     case ISD::STORE:
-      if (SDNode *ResNode = SelectStoreFp64(N))
+      if (SDNode *ResNode = SelectStoreFp64(Node))
         return ResNode;
       // Other cases are autogenerated.
       break;
@@ -523,11 +522,11 @@ SDNode* MipsDAGToDAGISel::Select(SDValue N) {
   }
 
   // Select the default instruction
-  SDNode *ResNode = SelectCode(N);
+  SDNode *ResNode = SelectCode(Node);
 
   DEBUG(errs().indent(Indent-2) << "=> ");
-  if (ResNode == NULL || ResNode == N.getNode())
-    DEBUG(N.getNode()->dump(CurDAG));
+  if (ResNode == NULL || ResNode == Node)
+    DEBUG(Node->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
   DEBUG(errs() << "\n");

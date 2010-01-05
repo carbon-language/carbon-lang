@@ -1302,43 +1302,43 @@ bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   return !isNonImmUse(Root, N, U);
 }
 
-SDNode *SelectionDAGISel::Select_INLINEASM(SDValue N) {
-  std::vector<SDValue> Ops(N.getNode()->op_begin(), N.getNode()->op_end());
+SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
+  std::vector<SDValue> Ops(N->op_begin(), N->op_end());
   SelectInlineAsmMemoryOperands(Ops);
     
   std::vector<EVT> VTs;
   VTs.push_back(MVT::Other);
   VTs.push_back(MVT::Flag);
-  SDValue New = CurDAG->getNode(ISD::INLINEASM, N.getDebugLoc(),
+  SDValue New = CurDAG->getNode(ISD::INLINEASM, N->getDebugLoc(),
                                 VTs, &Ops[0], Ops.size());
   return New.getNode();
 }
 
-SDNode *SelectionDAGISel::Select_UNDEF(const SDValue &N) {
-  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::IMPLICIT_DEF,
-                              N.getValueType());
+SDNode *SelectionDAGISel::Select_UNDEF(SDNode *N) {
+  return CurDAG->SelectNodeTo(N, TargetInstrInfo::IMPLICIT_DEF,
+                              N->getValueType(0));
 }
 
-SDNode *SelectionDAGISel::Select_EH_LABEL(const SDValue &N) {
-  SDValue Chain = N.getOperand(0);
+SDNode *SelectionDAGISel::Select_EH_LABEL(SDNode *N) {
+  SDValue Chain = N->getOperand(0);
   unsigned C = cast<LabelSDNode>(N)->getLabelID();
   SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);
-  return CurDAG->SelectNodeTo(N.getNode(), TargetInstrInfo::EH_LABEL,
+  return CurDAG->SelectNodeTo(N, TargetInstrInfo::EH_LABEL,
                               MVT::Other, Tmp, Chain);
 }
 
-void SelectionDAGISel::CannotYetSelect(SDValue N) {
+void SelectionDAGISel::CannotYetSelect(SDNode *N) {
   std::string msg;
   raw_string_ostream Msg(msg);
   Msg << "Cannot yet select: ";
-  N.getNode()->print(Msg, CurDAG);
+  N->print(Msg, CurDAG);
   llvm_report_error(Msg.str());
 }
 
-void SelectionDAGISel::CannotYetSelectIntrinsic(SDValue N) {
+void SelectionDAGISel::CannotYetSelectIntrinsic(SDNode *N) {
   errs() << "Cannot yet select: ";
   unsigned iid =
-    cast<ConstantSDNode>(N.getOperand(N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();
+    cast<ConstantSDNode>(N->getOperand(N->getOperand(0).getValueType() == MVT::Other))->getZExtValue();
   if (iid < Intrinsic::num_intrinsics)
     llvm_report_error("Cannot yet select: intrinsic %" + Intrinsic::getName((Intrinsic::ID)iid));
   else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())

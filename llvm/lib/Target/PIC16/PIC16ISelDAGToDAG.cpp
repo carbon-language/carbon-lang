@@ -36,7 +36,7 @@ void PIC16DAGToDAGISel::InstructionSelect() {
 
 /// Select - Select instructions not customized! Used for
 /// expanded, promoted and normal instructions.
-SDNode* PIC16DAGToDAGISel::Select(SDValue N) {
+SDNode* PIC16DAGToDAGISel::Select(SDNode *N) {
 
   // Select the default instruction.
   SDNode *ResNode = SelectCode(N);
@@ -47,7 +47,7 @@ SDNode* PIC16DAGToDAGISel::Select(SDValue N) {
 
 // SelectDirectAddr - Match a direct address for DAG. 
 // A direct address could be a globaladdress or externalsymbol.
-bool PIC16DAGToDAGISel::SelectDirectAddr(SDValue Op, SDValue N, 
+bool PIC16DAGToDAGISel::SelectDirectAddr(SDNode *Op, SDValue N, 
                                       SDValue &Address) {
   // Return true if TGA or ES.
   if (N.getOpcode() == ISD::TargetGlobalAddress

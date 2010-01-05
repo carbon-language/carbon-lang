@@ -51,8 +51,8 @@ namespace {
 #include "BlackfinGenDAGISel.inc"
 
   private:
-    SDNode *Select(SDValue Op);
-    bool SelectADDRspii(SDValue Op, SDValue Addr,
+    SDNode *Select(SDNode *N);
+    bool SelectADDRspii(SDNode *Op, SDValue Addr,
                         SDValue &Base, SDValue &Offset);
 
     // Walk the DAG after instruction selection, fixing register class issues.
@@ -82,8 +82,7 @@ void BlackfinDAGToDAGISel::InstructionSelect() {
   FixRegisterClasses(*CurDAG);
 }
 
-SDNode *BlackfinDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.getNode();
+SDNode *BlackfinDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -99,10 +98,10 @@ SDNode *BlackfinDAGToDAGISel::Select(SDValue Op) {
   }
   }
 
-  return SelectCode(Op);
+  return SelectCode(N);
 }
 
-bool BlackfinDAGToDAGISel::SelectADDRspii(SDValue Op,
+bool BlackfinDAGToDAGISel::SelectADDRspii(SDNode *Op,
                                           SDValue Addr,
                                           SDValue &Base,
                                           SDValue &Offset) {

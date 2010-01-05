@@ -157,7 +157,7 @@ namespace {
 
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDValue Op);
+    SDNode *Select(SDNode *N);
     
     /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -202,7 +202,7 @@ private:
 
     SDNode *getGlobalBaseReg();
     SDNode *getGlobalRetAddr();
-    void SelectCALL(SDValue Op);
+    void SelectCALL(SDNode *Op);
 
   };
 }
@@ -232,8 +232,7 @@ void AlphaDAGToDAGISel::InstructionSelect() {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.getNode();
+SDNode *AlphaDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
   }
@@ -242,7 +241,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
   switch (N->getOpcode()) {
   default: break;
   case AlphaISD::CALL:
-    SelectCALL(Op);
+    SelectCALL(N);
     return NULL;
 
   case ISD::FrameIndex: {
@@ -258,9 +257,9 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
   
   case AlphaISD::DivCall: {
     SDValue Chain = CurDAG->getEntryNode();
-    SDValue N0 = Op.getOperand(0);
-    SDValue N1 = Op.getOperand(1);
-    SDValue N2 = Op.getOperand(2);
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
     Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R24, N1, 
                                  SDValue(0,0));
     Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R25, N2, 
@@ -287,7 +286,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
     if (uval == 0) {
       SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                                 Alpha::R31, MVT::i64);
-      ReplaceUses(Op, Result);
+      ReplaceUses(SDValue(N, 0), Result);
       return NULL;
     }
 
@@ -415,13 +414,12 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
 
   }
 
-  return SelectCode(Op);
+  return SelectCode(N);
 }
 
-void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
+void AlphaDAGToDAGISel::SelectCALL(SDNode *N) {
   //TODO: add flag stuff to prevent nondeturministic breakage!
 
-  SDNode *N = Op.getNode();
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);
   SDValue InFlag = N->getOperand(N->getNumOperands() - 1);
@@ -442,8 +440,8 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
    }
    InFlag = Chain.getValue(1);
 
-  ReplaceUses(Op.getValue(0), Chain);
-  ReplaceUses(Op.getValue(1), InFlag);
+  ReplaceUses(SDValue(N, 0), Chain);
+  ReplaceUses(SDValue(N, 1), InFlag);
 }
 
 

@@ -95,7 +95,7 @@ namespace {
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDValue Op);
+    SDNode *Select(SDNode *N);
     
     SDNode *SelectBitfieldInsert(SDNode *N);
 
@@ -105,7 +105,7 @@ namespace {
 
     /// SelectAddrImm - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement [r+imm].
-    bool SelectAddrImm(SDValue Op, SDValue N, SDValue &Disp,
+    bool SelectAddrImm(SDNode *Op, SDValue N, SDValue &Disp,
                        SDValue &Base) {
       return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG);
     }
@@ -113,7 +113,7 @@ namespace {
     /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
     /// immediate field.  Because preinc imms have already been validated, just
     /// accept it.
-    bool SelectAddrImmOffs(SDValue Op, SDValue N, SDValue &Out) const {
+    bool SelectAddrImmOffs(SDNode *Op, SDValue N, SDValue &Out) const {
       Out = N;
       return true;
     }
@@ -121,14 +121,14 @@ namespace {
     /// SelectAddrIdx - Given the specified addressed, check to see if it can be
     /// represented as an indexed [r+r] operation.  Returns false if it can
     /// be represented by [r+imm], which are preferred.
-    bool SelectAddrIdx(SDValue Op, SDValue N, SDValue &Base,
+    bool SelectAddrIdx(SDNode *Op, SDValue N, SDValue &Base,
                        SDValue &Index) {
       return PPCLowering.SelectAddressRegReg(N, Base, Index, *CurDAG);
     }
     
     /// SelectAddrIdxOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
-    bool SelectAddrIdxOnly(SDValue Op, SDValue N, SDValue &Base,
+    bool SelectAddrIdxOnly(SDNode *Op, SDValue N, SDValue &Base,
                            SDValue &Index) {
       return PPCLowering.SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
     }
@@ -136,7 +136,7 @@ namespace {
     /// SelectAddrImmShift - Returns true if the address N can be represented by
     /// a base register plus a signed 14-bit displacement [r+imm*4].  Suitable
     /// for use by STD and friends.
-    bool SelectAddrImmShift(SDValue Op, SDValue N, SDValue &Disp,
+    bool SelectAddrImmShift(SDNode *Op, SDValue N, SDValue &Disp,
                             SDValue &Base) {
       return PPCLowering.SelectAddressRegImmShift(N, Disp, Base, *CurDAG);
     }
@@ -180,7 +180,7 @@ namespace {
 #include "PPCGenDAGISel.inc"
     
 private:
-    SDNode *SelectSETCC(SDValue Op);
+    SDNode *SelectSETCC(SDNode *N);
   };
 }
 
@@ -635,8 +635,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   return 0;
 }
 
-SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
-  SDNode *N = Op.getNode();
+SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   unsigned Imm;
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
@@ -756,9 +755,8 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDValue Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
-  SDNode *N = Op.getNode();
-  DebugLoc dl = Op.getDebugLoc();
+SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
+  DebugLoc dl = N->getDebugLoc();
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -841,18 +839,18 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   }
   
   case ISD::SETCC:
-    return SelectSETCC(Op);
+    return SelectSETCC(N);
   case PPCISD::GlobalBaseReg:
     return getGlobalBaseReg();
     
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    SDValue TFI = CurDAG->getTargetFrameIndex(FI, Op.getValueType());
-    unsigned Opc = Op.getValueType() == MVT::i32 ? PPC::ADDI : PPC::ADDI8;
+    SDValue TFI = CurDAG->getTargetFrameIndex(FI, N->getValueType(0));
+    unsigned Opc = N->getValueType(0) == MVT::i32 ? PPC::ADDI : PPC::ADDI8;
     if (N->hasOneUse())
-      return CurDAG->SelectNodeTo(N, Opc, Op.getValueType(), TFI,
+      return CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), TFI,
                                   getSmallIPtrImm(0));
-    return CurDAG->getMachineNode(Opc, dl, Op.getValueType(), TFI,
+    return CurDAG->getMachineNode(Opc, dl, N->getValueType(0), TFI,
                                   getSmallIPtrImm(0));
   }
 
@@ -899,7 +897,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
     
   case ISD::LOAD: {
     // Handle preincrement loads.
-    LoadSDNode *LD = cast<LoadSDNode>(Op);
+    LoadSDNode *LD = cast<LoadSDNode>(N);
     EVT LoadedVT = LD->getMemoryVT();
     
     // Normal loads are handled by code generated from the .td file.
@@ -1092,7 +1090,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
   }
   }
   
-  return SelectCode(Op);
+  return SelectCode(N);
 }
 
 

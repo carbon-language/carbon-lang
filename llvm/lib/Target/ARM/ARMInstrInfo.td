@@ -127,8 +127,8 @@ def IsThumb2  : Predicate<"Subtarget->isThumb2()">;
 def IsARM     : Predicate<"!Subtarget->isThumb()">;
 def IsDarwin    : Predicate<"Subtarget->isTargetDarwin()">;
 def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
-def CarryDefIsUnused : Predicate<"!N.getNode()->hasAnyUseOfValue(1)">;
-def CarryDefIsUsed   : Predicate<"N.getNode()->hasAnyUseOfValue(1)">;
+def CarryDefIsUnused : Predicate<"!N->hasAnyUseOfValue(1)">;
+def CarryDefIsUsed   : Predicate<"N->hasAnyUseOfValue(1)">;
 
 // FIXME: Eventually this will be just "hasV6T2Ops".
 def UseMovt   : Predicate<"Subtarget->useMovt()">;
