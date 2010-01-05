@@ -2,8 +2,8 @@
 target datalayout = "e-p:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:16:32"
 target triple = "msp430-generic-generic"
 
-@foo8 = external global i8;
-@bar8 = external global i8;
+@foo8 = external global i8
+@bar8 = external global i8
 
 define i8 @bitbrr(i8 %a, i8 %b) nounwind {
 	%t1 = and i8 %a, %b
@@ -83,8 +83,8 @@ define i8 @bitbmm() nounwind {
 ; CHECK: bitbmm:
 ; CHECK: bit.b	&bar8, &foo8
 
-@foo16 = external global i16;
-@bar16 = external global i16;
+@foo16 = external global i16
+@bar16 = external global i16
 
 define i16 @bitwrr(i16 %a, i16 %b) nounwind {
 	%t1 = and i16 %a, %b

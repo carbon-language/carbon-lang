@@ -83,7 +83,7 @@ define double @d_fnms_2(double %arg1, double %arg2, double %arg3) {
 ; FNMS: - (a * b - c) => c - (a * b)
 define <2 x double> @d_fnms_vec_1(<2 x double> %arg1, <2 x double> %arg2, <2 x double> %arg3) {
         %A = fmul <2 x double> %arg1,  %arg2
-        %B = fsub <2 x double> %arg3, %A ;
+        %B = fsub <2 x double> %arg3, %A
         ret <2 x double> %B
 }
 

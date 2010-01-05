@@ -6,7 +6,7 @@
 define void @select(i1 %c, <6 x i32>* %dst.addr, <6 x i32> %src1,<6 x i32> %src2) nounwind {
 entry:
 	%x = select i1 %c, <6 x i32> %src1, <6 x i32> %src2
-	%val = sub <6 x i32> %x, < i32 1, i32 1, i32 1, i32 1, i32 1, i32 1 >;
+	%val = sub <6 x i32> %x, < i32 1, i32 1, i32 1, i32 1, i32 1, i32 1 >
 	store <6 x i32> %val, <6 x i32>* %dst.addr
 	ret void
 }

@@ -3,7 +3,7 @@
 declare void @test1f()
 
 define void @test1(i32* noalias %p) {
-       store i32 1, i32* %p;
+       store i32 1, i32* %p
        call void @test1f()
        store i32 2, i32 *%p
        ret void

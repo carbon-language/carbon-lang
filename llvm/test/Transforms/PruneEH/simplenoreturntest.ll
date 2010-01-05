@@ -1,6 +1,6 @@
 ; RUN: opt < %s -prune-eh -S | not grep {ret i32}
 
-declare void @noreturn() noreturn;
+declare void @noreturn() noreturn
 
 define i32 @caller() {
 	call void @noreturn( )

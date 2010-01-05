@@ -19,6 +19,6 @@ return:
 	ret void
 }
 
-declare i1 @report__equal(i32 %x, i32 %y) nounwind;
+declare i1 @report__equal(i32 %x, i32 %y) nounwind
 
 declare void @abort()

@@ -29,7 +29,7 @@ define <2 x i64> @foo() {
 
 define <2 x i64> @bar() {
 	%t = alloca <2 x i64>
-        call void @kip(<2 x i64>* %t);
+        call void @kip(<2 x i64>* %t)
 	%tmp1 = load <2 x i64>* %t, align 1
 	ret <2 x i64> %tmp1
 }
@@ -59,7 +59,7 @@ define void @foo_store(<2 x i64> %y) {
 
 define void @bar_store(<2 x i64> %y) {
 	%t = alloca <2 x i64>
-        call void @kip(<2 x i64>* %t);
+        call void @kip(<2 x i64>* %t)
 	store <2 x i64> %y, <2 x i64>* %t, align 1
         ret void
 }

@@ -10,7 +10,7 @@ define void @test1(%t* noalias %stuff ) {
     call void @test1f(i8* null)
 
     %after = load i32* %p ; <--- This should be a dead load
-    %sum = add i32 %before, %after;
+    %sum = add i32 %before, %after
 
     store i32 %sum, i32* %p
     ret void

@@ -55,7 +55,7 @@ altret:
   ret void
 }
 
-declare i8* @choose(i8*, i8*);
+declare i8* @choose(i8*, i8*)
 
 ; BranchFolding should tail-duplicate the indirect jump to avoid
 ; redundant branching.

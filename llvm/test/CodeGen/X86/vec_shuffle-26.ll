@@ -20,10 +20,10 @@ entry:
 	%unpckhps11 = shufflevector <4 x float> %p1, <4 x float> %p3, <4 x i32> < i32 2, i32 6, i32 3, i32 7 >		; <<4 x float>> [#uses=2]
 	%unpcklps14 = shufflevector <4 x float> %unpcklps, <4 x float> %unpcklps8, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x float>> [#uses=1]
 	%unpckhps17 = shufflevector <4 x float> %unpcklps, <4 x float> %unpcklps8, <4 x i32> < i32 2, i32 6, i32 3, i32 7 >		; <<4 x float>> [#uses=1]
-        %r1 = shufflevector <4 x float> %unpcklps14,  <4 x float> %unpckhps17,  <8 x i32> < i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >; 
+        %r1 = shufflevector <4 x float> %unpcklps14,  <4 x float> %unpckhps17,  <8 x i32> < i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >
 	%unpcklps20 = shufflevector <4 x float> %unpckhps, <4 x float> %unpckhps11, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x float>> [#uses=1]
 	%unpckhps23 = shufflevector <4 x float> %unpckhps, <4 x float> %unpckhps11, <4 x i32> < i32 2, i32 6, i32 3, i32 7 >		; <<4 x float>> [#uses=1]
-        %r2 = shufflevector <4 x float> %unpcklps20,  <4 x float> %unpckhps23,  <8 x i32> < i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >;
+        %r2 = shufflevector <4 x float> %unpcklps20,  <4 x float> %unpckhps23,  <8 x i32> < i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >
 ;       %r3 = shufflevector <8 x float> %r1,  <8 x float> %r2,  <16 x i32> < i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15 >; 
-	ret <8 x float> %r2;
+	ret <8 x float> %r2
 }

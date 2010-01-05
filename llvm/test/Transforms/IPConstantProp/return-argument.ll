@@ -34,9 +34,9 @@ define void @caller(i1 %C) {
         ;; Call @foo twice, to prevent the arguments from propagating into the
         ;; function (so we can check the returned argument is properly
         ;; propagated per-caller).
-        %S1 = call { i32, i32 } @foo(i32 1, i32 2);
+        %S1 = call { i32, i32 } @foo(i32 1, i32 2)
         %X1 = extractvalue { i32, i32 } %S1, 0
-        %S2 = invoke { i32, i32 } @foo(i32 3, i32 4) to label %OK unwind label %RET;
+        %S2 = invoke { i32, i32 } @foo(i32 3, i32 4) to label %OK unwind label %RET
 OK:
         %X2 = extractvalue { i32, i32 } %S2, 0
         ;; Do some stuff with the returned values which we can grep for

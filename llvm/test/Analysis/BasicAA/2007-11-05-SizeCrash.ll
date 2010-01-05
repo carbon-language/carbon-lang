@@ -23,9 +23,9 @@ entry:
 cond_true34:            ; preds = %entry
         %tmp631 = getelementptr %struct.usb_hcd* %hcd, i32 0, i32 2, i64
 2305843009213693950            ; <i64*> [#uses=1]
-        %tmp70 = bitcast i64* %tmp631 to %struct.device**               ;
+        %tmp70 = bitcast i64* %tmp631 to %struct.device**
 
-        %tmp71 = load %struct.device** %tmp70, align 8          ;
+        %tmp71 = load %struct.device** %tmp70, align 8
 
         ret i32 undef
 

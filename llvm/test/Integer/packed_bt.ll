@@ -2,8 +2,8 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-@foo1 = external global <4 x float>;
-@foo2 = external global <2 x i10>;
+@foo1 = external global <4 x float>
+@foo2 = external global <2 x i10>
 
 
 define void @main() 

@@ -2,7 +2,7 @@
 
 %t = type { i32 }
 
-@g = global i32 42;
+@g = global i32 42
 
 define void @test1(%t* noalias %pp) {
   %p = getelementptr inbounds %t* %pp, i32 0, i32 0

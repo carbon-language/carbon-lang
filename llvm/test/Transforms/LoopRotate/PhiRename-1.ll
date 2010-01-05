@@ -73,7 +73,7 @@ cond_next:		; preds = %cond_true, %bb
 	br label %bb21
 
 bb21:		; preds = %cond_next, %entry
-        %l.in = phi %struct.list** [ @operators, %entry ], [ %tmp19, %cond_next ]  ;
+        %l.in = phi %struct.list** [ @operators, %entry ], [ %tmp19, %cond_next ]
 	%tmp22 = load %struct.list** %l.in		; <%struct.list*> [#uses=1]
 	icmp ne %struct.list* %tmp22, null		; <i1>:3 [#uses=1]
 	zext i1 %3 to i8		; <i8>:4 [#uses=1]

@@ -15,7 +15,7 @@ define private void @foo() nounwind {
         ret void
 }
 
-@baz = private global i32 4;
+@baz = private global i32 4
 
 define i32 @bar() nounwind {
         call void @foo()

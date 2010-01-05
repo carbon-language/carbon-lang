@@ -8,7 +8,7 @@ entry:
 	%n = call i1 @extern( )
 	br i1 %n, label %r, label %u
 r:
-	ret i32 0;
+	ret i32 0
 u:
 	unwind
 }

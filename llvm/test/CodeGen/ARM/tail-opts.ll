@@ -9,7 +9,7 @@ declare i1 @qux()
 
 @GHJK = global i32 0
 
-declare i8* @choose(i8*, i8*);
+declare i8* @choose(i8*, i8*)
 
 ; BranchFolding should tail-duplicate the indirect jump to avoid
 ; redundant branching.

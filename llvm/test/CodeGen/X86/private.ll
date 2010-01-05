@@ -11,7 +11,7 @@ define private void @foo() {
         ret void
 }
 
-@baz = private global i32 4;
+@baz = private global i32 4
 
 define i32 @bar() {
         call void @foo()

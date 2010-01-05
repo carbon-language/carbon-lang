@@ -34,8 +34,8 @@ entry:
 	br i1 %tmp2, label %if, label %else
 
 if:		; preds = %entry
-	store i32 1, i32* %a_arg;
-        ret i32 0;
+	store i32 1, i32* %a_arg
+        ret i32 0
 
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
@@ -53,7 +53,7 @@ entry:
 	br i1 %tmp2, label %if, label %else
 
 if:		; preds = %entry
-        ret i32 0;
+        ret i32 0
 
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
