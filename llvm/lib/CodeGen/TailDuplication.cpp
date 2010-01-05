@@ -139,8 +139,8 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
           }
         }
         if (!Found) {
-          errs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
-          errs() << "  missing input from predecessor BB#"
+          dbgs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
+          dbgs() << "  missing input from predecessor BB#"
                  << PredBB->getNumber() << '\n';
           llvm_unreachable(0);
         }
@@ -150,14 +150,14 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
         MachineBasicBlock *PHIBB = MI->getOperand(i+1).getMBB();
         if (CheckExtra && !Preds.count(PHIBB)) {
           // This is not a hard error.
-          errs() << "Warning: malformed PHI in BB#" << MBB->getNumber()
+          dbgs() << "Warning: malformed PHI in BB#" << MBB->getNumber()
                  << ": " << *MI;
-          errs() << "  extra input from predecessor BB#"
+          dbgs() << "  extra input from predecessor BB#"
                  << PHIBB->getNumber() << '\n';
         }
         if (PHIBB->getNumber() < 0) {
-          errs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
-          errs() << "  non-existing BB#" << PHIBB->getNumber() << '\n';
+          dbgs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
+          dbgs() << "  non-existing BB#" << PHIBB->getNumber() << '\n';
           llvm_unreachable(0);
         }
       }
@@ -173,7 +173,7 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
   bool MadeChange = false;
 
   if (PreRegAlloc && TailDupVerify) {
-    DEBUG(errs() << "\n*** Before tail-duplicating\n");
+    DEBUG(dbgs() << "\n*** Before tail-duplicating\n");
     VerifyPHIs(MF, true);
   }
 
@@ -481,7 +481,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   if (InstrCount > 1 && HasCall)
     return false;
 
-  DEBUG(errs() << "\n*** Tail-duplicating BB#" << TailBB->getNumber() << '\n');
+  DEBUG(dbgs() << "\n*** Tail-duplicating BB#" << TailBB->getNumber() << '\n');
 
   // Iterate through all the unique predecessors and tail-duplicate this
   // block into them, if possible. Copying the list ahead of time also
@@ -510,7 +510,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     if (PredBB->isLayoutSuccessor(TailBB) && PredBB->canFallThrough())
       continue;
 
-    DEBUG(errs() << "\nTail-duplicating into PredBB: " << *PredBB
+    DEBUG(dbgs() << "\nTail-duplicating into PredBB: " << *PredBB
                  << "From Succ: " << *TailBB);
 
     TDBBs.push_back(PredBB);
@@ -570,7 +570,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   if (!PriorUnAnalyzable && PriorCond.empty() && !PriorTBB &&
       TailBB->pred_size() == 1 && PrevBB->succ_size() == 1 &&
       !TailBB->hasAddressTaken()) {
-    DEBUG(errs() << "\nMerging into block: " << *PrevBB
+    DEBUG(dbgs() << "\nMerging into block: " << *PrevBB
           << "From MBB: " << *TailBB);
     if (PreRegAlloc) {
       DenseMap<unsigned, unsigned> LocalVRMap;
@@ -620,7 +620,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
 /// function, updating the CFG.
 void TailDuplicatePass::RemoveDeadBlock(MachineBasicBlock *MBB) {
   assert(MBB->pred_empty() && "MBB must be dead!");
-  DEBUG(errs() << "\nRemoving MBB: " << *MBB);
+  DEBUG(dbgs() << "\nRemoving MBB: " << *MBB);
 
   // Remove all successors.
   while (!MBB->succ_empty())
