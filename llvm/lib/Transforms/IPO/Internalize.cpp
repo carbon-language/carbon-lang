@@ -131,7 +131,7 @@ bool InternalizePass::runOnModule(Module &M) {
       if (ExternalNode) ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
       Changed = true;
       ++NumFunctions;
-      DEBUG(errs() << "Internalizing func " << I->getName() << "\n");
+      DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
     }
 
   // Never internalize the llvm.used symbol.  It is used to implement
@@ -160,7 +160,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumGlobals;
-      DEBUG(errs() << "Internalized gvar " << I->getName() << "\n");
+      DEBUG(dbgs() << "Internalized gvar " << I->getName() << "\n");
     }
 
   // Mark all aliases that are not in the api as internal as well.
@@ -171,7 +171,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumAliases;
-      DEBUG(errs() << "Internalized alias " << I->getName() << "\n");
+      DEBUG(dbgs() << "Internalized alias " << I->getName() << "\n");
     }
 
   return Changed;
