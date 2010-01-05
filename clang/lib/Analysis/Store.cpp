@@ -77,6 +77,7 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {
+    case MemRegion::CXXThisRegionKind:
     case MemRegion::GenericMemSpaceRegionKind:
     case MemRegion::StackLocalsSpaceRegionKind:
     case MemRegion::StackArgumentsSpaceRegionKind:
@@ -239,9 +240,4 @@ const GRState *StoreManager::InvalidateRegions(const GRState *state,
 SVal StoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL,
                                             const LocationContext *LC) {
   return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
-}
-
-Loc StoreManager::getThisObject(QualType T) {
-  const CXXObjectRegion *R = MRMgr.getCXXObjectRegion(T);
-  return loc::MemRegionVal(R);
 }

@@ -2711,8 +2711,13 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
 void GRExprEngine::VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred, 
                                     ExplodedNodeSet & Dst) {
   // Get the this object region from StoreManager.
-  Loc V = getStoreManager().getThisObject(TE->getType()->getPointeeType());
-  MakeNode(Dst, TE, Pred, GetState(Pred)->BindExpr(TE, V));
+  const MemRegion *R =
+    ValMgr.getRegionManager().getCXXThisRegion(TE->getType(),
+                                               Pred->getLocationContext());
+  
+  const GRState *state = GetState(Pred);
+  SVal V = state->getSVal(loc::MemRegionVal(R));
+  MakeNode(Dst, TE, Pred, state->BindExpr(TE, V));
 }
 
 void GRExprEngine::VisitAsmStmt(AsmStmt* A, ExplodedNode* Pred, 

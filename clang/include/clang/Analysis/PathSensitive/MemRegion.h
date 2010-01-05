@@ -65,6 +65,7 @@ public:
     BlockTextRegionKind,
     BlockDataRegionKind,
     CompoundLiteralRegionKind,
+    CXXThisRegionKind,
     StringRegionKind,
     ElementRegionKind,
     // Decl Regions.
@@ -99,17 +100,13 @@ public:
 
   const MemRegion *StripCasts() const;
 
-  bool hasStackStorage() const;
-
-  bool hasParametersStorage() const;
-
-  bool hasGlobalsStorage() const;
-
   bool hasGlobalsOrParametersStorage() const;
 
-  bool hasHeapStorage() const;
-
-  bool hasHeapOrStackStorage() const;
+  bool hasStackStorage() const;
+  
+  bool hasStackNonParametersStorage() const;
+  
+  bool hasStackParametersStorage() const;
 
   virtual void dumpToStream(llvm::raw_ostream& os) const;
 
@@ -634,6 +631,36 @@ public:
     return R->getKind() == VarRegionKind;
   }
 };
+  
+/// CXXThisRegion - Represents the region for the implicit 'this' parameter
+///  in a call to a C++ method.  This region doesn't represent the object
+///  referred to by 'this', but rather 'this' itself.
+class CXXThisRegion : public TypedRegion {
+  friend class MemRegionManager;
+  CXXThisRegion(const PointerType *thisPointerTy,
+                const MemRegion *sReg)
+    : TypedRegion(sReg, CXXThisRegionKind), ThisPointerTy(thisPointerTy) {}
+
+  static void ProfileRegion(llvm::FoldingSetNodeID &ID,
+                            const PointerType *PT,
+                            const MemRegion *sReg);
+
+  void Profile(llvm::FoldingSetNodeID &ID) const;
+
+public:  
+  QualType getValueType(ASTContext &C) const {
+    return QualType(ThisPointerTy, 0);
+  }
+  
+  void dumpToStream(llvm::raw_ostream& os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == CXXThisRegionKind;
+  }
+
+private:
+  const PointerType *ThisPointerTy;
+};
 
 class FieldRegion : public DeclRegion {
   friend class MemRegionManager;
@@ -824,6 +851,11 @@ public:
   const CompoundLiteralRegion*
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL,
                            const LocationContext *LC);
+  
+  /// getCXXThisRegion - Retrieve the [artifical] region associated with the
+  ///  parameter 'this'.
+  const CXXThisRegion *getCXXThisRegion(QualType thisPointerTy,
+                                        const LocationContext *LC);
 
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
   const SymbolicRegion* getSymbolicRegion(SymbolRef sym);

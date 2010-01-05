@@ -34,6 +34,10 @@ int test3(Test3_Derived x) {
   return test3_aux(x);
 }
 
+//===---------------------------------------------------------------------===//
+// Test CFG support for C++ condition variables.
+//===---------------------------------------------------------------------===//
+
 int test_init_in_condition_aux();
 int test_init_in_condition() {
   if (int x = test_init_in_condition_aux()) { // no-warning
@@ -89,3 +93,42 @@ int test_init_in_condition_for() {
   *p = 0xDEADBEEF; // no-warning
   return 0;
 }
+
+//===---------------------------------------------------------------------===//
+// Test handling of 'this' pointer.
+//===---------------------------------------------------------------------===//
+
+class TestHandleThis {
+  int x;
+
+  TestHandleThis();  
+  int foo();
+  int null_deref_negative();
+  int null_deref_positive();  
+};
+
+int TestHandleThis::foo() {
+  // Assume that 'x' is initialized.
+  return x + 1; // no-warning
+}
+
+int TestHandleThis::null_deref_negative() {
+  x = 10;
+  if (x == 10) {
+    return 1;
+  }
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+  return 0;  
+}
+
+int TestHandleThis::null_deref_positive() {
+  x = 10;
+  if (x == 9) {
+    return 1;
+  }
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{null pointer}}
+  return 0;  
+}
+

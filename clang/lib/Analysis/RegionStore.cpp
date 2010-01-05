@@ -28,7 +28,6 @@
 
 using namespace clang;
 
-#define HEAP_UNDEFINED 0
 #define USE_EXPLICIT_COMPOUND 0
 
 namespace {
@@ -723,6 +722,8 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
                                                            const MemRegion *R) {
 
   switch (R->getKind()) {
+    case MemRegion::CXXThisRegionKind:
+      assert(0 && "Cannot get size of 'this' region");      
     case MemRegion::GenericMemSpaceRegionKind:
     case MemRegion::StackLocalsSpaceRegionKind:
     case MemRegion::StackArgumentsSpaceRegionKind:
@@ -877,6 +878,9 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();
 
+    case MemRegion::CXXThisRegionKind:
+      assert(0 &&
+             "Cannot perform pointer arithmetic on implicit argument 'this'");
     case MemRegion::GenericMemSpaceRegionKind:
     case MemRegion::StackLocalsSpaceRegionKind:
     case MemRegion::StackArgumentsSpaceRegionKind:
@@ -1076,12 +1080,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
   // function/method.  These are either symbolic values or 'undefined'.
-
-#if HEAP_UNDEFINED
-  if (R->hasHeapOrStackStorage()) {
-#else
-  if (R->hasStackStorage()) {
-#endif
+  if (R->hasStackNonParametersStorage()) {
     // All stack variables are considered to have undefined values
     // upon creation.  All heap allocated blocks are considered to
     // have undefined values as well unless they are explicitly bound
@@ -1240,8 +1239,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(const GRState *state,
                          cast<FieldRegion>(lazyBindingRegion));
   }
 
-  if (R->hasStackStorage() && !R->hasParametersStorage()) {
-
+  if (R->hasStackNonParametersStorage()) {
     if (isa<ElementRegion>(R)) {
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.

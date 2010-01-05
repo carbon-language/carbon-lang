@@ -215,6 +215,18 @@ void CompoundLiteralRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
   ID.AddPointer(superRegion);
 }
 
+void CXXThisRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
+                                  const PointerType *PT,
+                                  const MemRegion *sRegion) {
+  ID.AddInteger((unsigned) CXXThisRegionKind);
+  ID.AddPointer(PT);
+  ID.AddPointer(sRegion);
+}
+
+void CXXThisRegion::Profile(llvm::FoldingSetNodeID &ID) const {
+  CXXThisRegion::ProfileRegion(ID, ThisPointerTy, superRegion);
+}
+                                  
 void DeclRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
                                const MemRegion* superRegion, Kind k) {
   ID.AddInteger((unsigned) k);
@@ -341,6 +353,10 @@ void BlockDataRegion::dumpToStream(llvm::raw_ostream& os) const {
 void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
   os << "{ " << (void*) CL <<  " }";
+}
+
+void CXXThisRegion::dumpToStream(llvm::raw_ostream &os) const {
+  os << "this";
 }
 
 void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
@@ -551,7 +567,7 @@ const SymbolicRegion *MemRegionManager::getSymbolicRegion(SymbolRef sym) {
   return getSubRegion<SymbolicRegion>(sym, getUnknownRegion());
 }
 
-const FieldRegion *
+const FieldRegion*
 MemRegionManager::getFieldRegion(const FieldDecl* d,
                                  const MemRegion* superRegion){
   return getSubRegion<FieldRegion>(d, superRegion);
@@ -563,9 +579,19 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
   return getSubRegion<ObjCIvarRegion>(d, superRegion);
 }
 
-const CXXObjectRegion *
+const CXXObjectRegion*
 MemRegionManager::getCXXObjectRegion(QualType T) {
   return getSubRegion<CXXObjectRegion>(T, getUnknownRegion());
+}
+
+const CXXThisRegion*
+MemRegionManager::getCXXThisRegion(QualType thisPointerTy,
+                                   const LocationContext *LC) {
+  const StackFrameContext *STC = LC->getCurrentStackFrame();
+  assert(STC);
+  const PointerType *PT = thisPointerTy->getAs<PointerType>();
+  assert(PT);
+  return getSubRegion<CXXThisRegion>(PT, getStackArgumentsRegion(STC));
 }
 
 const AllocaRegion*
@@ -592,20 +618,11 @@ bool MemRegion::hasStackStorage() const {
   return isa<StackSpaceRegion>(getMemorySpace());
 }
 
-bool MemRegion::hasHeapStorage() const {
-  return isa<HeapSpaceRegion>(getMemorySpace());
+bool MemRegion::hasStackNonParametersStorage() const {
+  return isa<StackLocalsSpaceRegion>(getMemorySpace());
 }
 
-bool MemRegion::hasHeapOrStackStorage() const {
-  const MemSpaceRegion *MS = getMemorySpace();
-  return isa<StackSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS);
-}
-
-bool MemRegion::hasGlobalsStorage() const {
-  return isa<GlobalsSpaceRegion>(getMemorySpace());
-}
-
-bool MemRegion::hasParametersStorage() const {
+bool MemRegion::hasStackParametersStorage() const {
   return isa<StackArgumentsSpaceRegion>(getMemorySpace());
 }
 
