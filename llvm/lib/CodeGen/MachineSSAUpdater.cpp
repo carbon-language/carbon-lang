@@ -210,7 +210,7 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
   // If the client wants to know about all new instructions, tell it.
   if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
 
-  DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+  DEBUG(dbgs() << "  Inserted PHI: " << *InsertedPHI << "\n");
   return InsertedPHI->getOperand(0).getReg();
 }
 
@@ -383,7 +383,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
     InsertedPHI->eraseFromParent();
     InsertedVal = ConstVal;
   } else {
-    DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+    DEBUG(dbgs() << "  Inserted PHI: " << *InsertedPHI << "\n");
 
     // If the client wants to know about all new instructions, tell it.
     if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
