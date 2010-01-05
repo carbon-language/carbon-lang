@@ -519,8 +519,8 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
   OS << Target;
   OS << "Subtarget::ParseSubtargetFeatures(const std::string &FS,\n"
      << "                                  const std::string &CPU) {\n"
-     << "  DEBUG(errs() << \"\\nFeatures:\" << FS);\n"
-     << "  DEBUG(errs() << \"\\nCPU:\" << CPU);\n"
+     << "  DEBUG(dbgs() << \"\\nFeatures:\" << FS);\n"
+     << "  DEBUG(dbgs() << \"\\nCPU:\" << CPU);\n"
      << "  SubtargetFeatures Features(FS);\n"
      << "  Features.setCPUIfNone(CPU);\n"
      << "  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
