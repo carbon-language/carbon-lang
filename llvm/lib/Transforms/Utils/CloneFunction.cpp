@@ -184,7 +184,6 @@ namespace {
     const char *NameSuffix;
     ClonedCodeInfo *CodeInfo;
     const TargetData *TD;
-    Value *DbgFnStart;
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
                           DenseMap<const Value*, Value*> &valueMap,
@@ -193,7 +192,7 @@ namespace {
                           ClonedCodeInfo *codeInfo,
                           const TargetData *td)
     : NewFunc(newFunc), OldFunc(oldFunc), ValueMap(valueMap), Returns(returns),
-      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td), DbgFnStart(NULL) {
+      NameSuffix(nameSuffix), CodeInfo(codeInfo), TD(td) {
     }
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
@@ -235,19 +234,6 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       continue;
     }
 
-    // Do not clone llvm.dbg.region.end. It will be adjusted by the inliner.
-    if (const DbgFuncStartInst *DFSI = dyn_cast<DbgFuncStartInst>(II)) {
-      if (DbgFnStart == NULL) {
-        DISubprogram SP(DFSI->getSubprogram());
-        if (SP.describes(BB->getParent()))
-          DbgFnStart = DFSI->getSubprogram();
-      }
-    } 
-    if (const DbgRegionEndInst *DREIS = dyn_cast<DbgRegionEndInst>(II)) {
-      if (DREIS->getContext() == DbgFnStart)
-        continue;
-    }
-      
     Instruction *NewInst = II->clone();
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);

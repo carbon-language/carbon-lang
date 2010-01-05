@@ -9,32 +9,26 @@
 
 define i32 @main() nounwind {
 entry:
-; CHECK:; (x.c:6:3)
   %retval = alloca i32                            ; <i32*> [#uses=3]
   %b = alloca %struct.foo, align 4                ; <%struct.foo*> [#uses=2]
 ; CHECK:; %b is variable b of type foo declared at x.c:7
   %a = alloca [4 x i32], align 4                  ; <[4 x i32]*> [#uses=1]
 ; CHECK:; %a is variable a of type  declared at x.c:8
   call void @llvm.dbg.func.start(metadata !3)
-; CHECK:; fully qualified function name: main return type: int at line 5
   store i32 0, i32* %retval
   call void @llvm.dbg.stoppoint(i32 6, i32 3, metadata !1)
-; CHECK:; x.c:7:3
   call void @llvm.dbg.stoppoint(i32 7, i32 3, metadata !1)
   %0 = bitcast %struct.foo* %b to { }*            ; <{ }*> [#uses=1]
   call void @llvm.dbg.declare({ }* %0, metadata !4)
 ; CHECK:; %0 is variable b of type foo declared at x.c:7
   call void @llvm.dbg.stoppoint(i32 8, i32 3, metadata !1)
-; CHECK:; x.c:8:3
   %1 = bitcast [4 x i32]* %a to { }*              ; <{ }*> [#uses=1]
   call void @llvm.dbg.declare({ }* %1, metadata !8)
 ; CHECK:; %1 is variable a of type  declared at x.c:8
   call void @llvm.dbg.stoppoint(i32 9, i32 3, metadata !1)
-; CHECK:; x.c:9:3
   %tmp = getelementptr inbounds %struct.foo* %b, i32 0, i32 0 ; <i32*> [#uses=1]
 ; CHECK:; %tmp is variable b of type foo declared at x.c:7
   store i32 5, i32* %tmp
-; CHECK:; x.c:10:3
   call void @llvm.dbg.stoppoint(i32 10, i32 3, metadata !1)
   %tmp1 = load i32* @main.c                       ; <i32> [#uses=1]
 ; CHECK:; @main.c is variable c of type int declared at x.c:6
@@ -43,7 +37,6 @@ entry:
 
 ; <label>:2                                       ; preds = %entry
   call void @llvm.dbg.stoppoint(i32 11, i32 1, metadata !1)
-; CHECK:; (x.c:11:1)
   call void @llvm.dbg.region.end(metadata !3)
   %3 = load i32* %retval                          ; <i32> [#uses=1]
   ret i32 %3

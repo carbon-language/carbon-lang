@@ -2921,7 +2921,6 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::setjmp:
           case Intrinsic::longjmp:
           case Intrinsic::prefetch:
-          case Intrinsic::dbg_stoppoint:
           case Intrinsic::powi:
           case Intrinsic::x86_sse_cmp_ss:
           case Intrinsic::x86_sse_cmp_ps:
@@ -3178,20 +3177,6 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << "0; *((void**)&" << GetValueName(&I)
         << ") = __builtin_stack_save()";
     return true;
-  case Intrinsic::dbg_stoppoint: {
-    // If we use writeOperand directly we get a "u" suffix which is rejected
-    // by gcc.
-    DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    std::string dir;
-    GetConstantStringInfo(SPI.getDirectory(), dir);
-    std::string file;
-    GetConstantStringInfo(SPI.getFileName(), file);
-    Out << "\n#line "
-        << SPI.getLine()
-        << " \""
-        << dir << '/' << file << "\"\n";
-    return true;
-  }
   case Intrinsic::x86_sse_cmp_ss:
   case Intrinsic::x86_sse_cmp_ps:
   case Intrinsic::x86_sse2_cmp_sd:

@@ -30,11 +30,7 @@ namespace llvm {
   class Module;
   class Type;
   class Value;
-  struct DbgStopPointInst;
   struct DbgDeclareInst;
-  struct DbgFuncStartInst;
-  struct DbgRegionStartInst;
-  struct DbgRegionEndInst;
   class DebugLoc;
   struct DebugLocTracker;
   class Instruction;
@@ -661,14 +657,6 @@ namespace llvm {
     Constant *GetTagConstant(unsigned TAG);
   };
 
-  /// Finds the stoppoint coressponding to this instruction, that is the
-  /// stoppoint that dominates this instruction
-  const DbgStopPointInst *findStopPoint(const Instruction *Inst);
-
-  /// Finds the stoppoint corresponding to first real (non-debug intrinsic)
-  /// instruction in this Basic Block, and returns the stoppoint for it.
-  const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB);
-
   /// Finds the dbg.declare intrinsic corresponding to this value if any.
   /// It looks through pointer casts too.
   const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts = true);
@@ -681,18 +669,8 @@ namespace llvm {
                        std::string &Dir);
 
   /// ExtractDebugLocation - Extract debug location information
-  /// from llvm.dbg.stoppoint intrinsic.
-  DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
-                                DebugLocTracker &DebugLocInfo);
-
-  /// ExtractDebugLocation - Extract debug location information
   /// from DILocation.
   DebugLoc ExtractDebugLocation(DILocation &Loc,
-                                DebugLocTracker &DebugLocInfo);
-
-  /// ExtractDebugLocation - Extract debug location information
-  /// from llvm.dbg.func_start intrinsic.
-  DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo);
 
   /// getDISubprogram - Find subprogram that is enclosing this scope.

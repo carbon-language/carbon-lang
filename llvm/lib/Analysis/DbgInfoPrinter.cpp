@@ -37,8 +37,6 @@ PrintDirectory("print-fullpath",
 namespace {
   class PrintDbgInfo : public FunctionPass {
     raw_ostream &Out;
-    void printStopPoint(const DbgStopPointInst *DSI);
-    void printFuncStart(const DbgFuncStartInst *FS);
     void printVariableDeclaration(const Value *V);
   public:
     static char ID; // Pass identification
@@ -74,27 +72,6 @@ void PrintDbgInfo::printVariableDeclaration(const Value *V) {
   Out << File << ":" << LineNo << "\n";
 }
 
-void PrintDbgInfo::printStopPoint(const DbgStopPointInst *DSI) {
-  if (PrintDirectory)
-    if (MDString *Str = dyn_cast<MDString>(DSI->getDirectory()))
-      Out << Str->getString() << '/';
-
-  if (MDString *Str = dyn_cast<MDString>(DSI->getFileName()))
-    Out << Str->getString();
-  Out << ':' << DSI->getLine();
-
-  if (unsigned Col = DSI->getColumn())
-    Out << ':' << Col;
-}
-
-void PrintDbgInfo::printFuncStart(const DbgFuncStartInst *FS) {
-  DISubprogram Subprogram(FS->getSubprogram());
-  Out << "; fully qualified function name: " << Subprogram.getDisplayName()
-      << " return type: " << Subprogram.getReturnTypeName()
-      << " at line " << Subprogram.getLineNumber()
-      << "\n\n";
-}
-
 bool PrintDbgInfo::runOnFunction(Function &F) {
   if (F.isDeclaration())
     return false;
@@ -108,57 +85,21 @@ bool PrintDbgInfo::runOnFunction(Function &F) {
       // Skip dead blocks.
       continue;
 
-    const DbgStopPointInst *DSI = findBBStopPoint(BB);
     Out << BB->getName();
     Out << ":";
 
-    if (DSI) {
-      Out << "; (";
-      printStopPoint(DSI);
-      Out << ")";
-    }
-
     Out << "\n";
 
-    // A dbgstoppoint's information is valid until we encounter a new one.
-    const DbgStopPointInst *LastDSP = DSI;
-    bool Printed = DSI != 0;
     for (BasicBlock::const_iterator i = BB->begin(), e = BB->end();
          i != e; ++i) {
-      if (isa<DbgInfoIntrinsic>(i)) {
-        if ((DSI = dyn_cast<DbgStopPointInst>(i))) {
-          if (DSI->getContext() == LastDSP->getContext() &&
-              DSI->getLineValue() == LastDSP->getLineValue() &&
-              DSI->getColumnValue() == LastDSP->getColumnValue())
-            // Don't print same location twice.
-            continue;
 
-          LastDSP = cast<DbgStopPointInst>(i);
-
-          // Don't print consecutive stoppoints, use a flag to know which one we
-          // printed.
-          Printed = false;
-        } else if (const DbgFuncStartInst *FS = dyn_cast<DbgFuncStartInst>(i)) {
-          printFuncStart(FS);
-        }
-      } else {
-        if (!Printed && LastDSP) {
-          Out << "; ";
-          printStopPoint(LastDSP);
-          Out << "\n";
-          Printed = true;
-        }
-
-        Out << *i << '\n';
         printVariableDeclaration(i);
 
         if (const User *U = dyn_cast<User>(i)) {
           for(unsigned i=0;i<U->getNumOperands();i++)
             printVariableDeclaration(U->getOperand(i));
         }
-      }
     }
   }
-
   return false;
 }

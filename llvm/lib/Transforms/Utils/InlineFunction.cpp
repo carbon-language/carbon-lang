@@ -210,34 +210,6 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   CallerNode->removeCallEdgeFor(CS);
 }
 
-/// findFnRegionEndMarker - This is a utility routine that is used by
-/// InlineFunction. Return llvm.dbg.region.end intrinsic that corresponds
-/// to the llvm.dbg.func.start of the function F. Otherwise return NULL.
-///
-static const DbgRegionEndInst *findFnRegionEndMarker(const Function *F) {
-
-  MDNode *FnStart = NULL;
-  const DbgRegionEndInst *FnEnd = NULL;
-  for (Function::const_iterator FI = F->begin(), FE =F->end(); FI != FE; ++FI) 
-    for (BasicBlock::const_iterator BI = FI->begin(), BE = FI->end(); BI != BE;
-         ++BI) {
-      if (FnStart == NULL)  {
-        if (const DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI)) {
-          DISubprogram SP(FSI->getSubprogram());
-          assert (SP.isNull() == false && "Invalid llvm.dbg.func.start");
-          if (SP.describes(F))
-            FnStart = SP.getNode();
-        }
-        continue;
-      }
-      
-      if (const DbgRegionEndInst *REI = dyn_cast<DbgRegionEndInst>(BI))
-        if (REI->getContext() == FnStart)
-          FnEnd = REI;
-    }
-  return FnEnd;
-}
-
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
 // call.  The program is still in a well defined state if this occurs though.
@@ -362,23 +334,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
       }
 
       ValueMap[I] = ActualArg;
-    }
-
-    // Adjust llvm.dbg.region.end. If the CalledFunc has region end
-    // marker then clone that marker after next stop point at the 
-    // call site. The function body cloner does not clone original
-    // region end marker from the CalledFunc. This will ensure that
-    // inlined function's scope ends at the right place. 
-    if (const DbgRegionEndInst *DREI = findFnRegionEndMarker(CalledFunc)) {
-      for (BasicBlock::iterator BI = TheCall, BE = TheCall->getParent()->end();
-           BI != BE; ++BI) {
-        if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BI)) {
-          if (DbgRegionEndInst *NewDREI = 
-                dyn_cast<DbgRegionEndInst>(DREI->clone()))
-            NewDREI->insertAfter(DSPI);
-          break;
-        }
-      }
     }
 
     // We want the inliner to prune the code as it copies.  We would LOVE to

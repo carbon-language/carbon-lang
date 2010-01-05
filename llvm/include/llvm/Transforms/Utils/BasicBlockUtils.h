@@ -65,11 +65,6 @@ void ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 //
 void ReplaceInstWithInst(Instruction *From, Instruction *To);
 
-/// CopyPrecedingStopPoint - If I is immediately preceded by a StopPoint,
-/// make a copy of the stoppoint before InsertPos (presumably before copying
-/// or moving I).
-void CopyPrecedingStopPoint(Instruction *I, BasicBlock::iterator InsertPos);
-
 /// FindAvailableLoadedValue - Scan the ScanBB block backwards (starting at the
 /// instruction before ScanFrom) checking to see if we have the value at the
 /// memory address *Ptr locally available within a small number of instructions.

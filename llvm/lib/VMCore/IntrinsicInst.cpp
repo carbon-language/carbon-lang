@@ -8,11 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements methods that make it really easy to deal with intrinsic
-// functions with the isa/dyncast family of functions.  In particular, this
-// allows you to do things like:
-//
-//     if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(Inst))
-//        ... SPI->getFileName() ... SPI->getDirectory() ...
+// functions.
 //
 // All intrinsic function calls are instances of the call instruction, so these
 // are all subclasses of the CallInst class.  Note that none of these classes
@@ -52,22 +48,6 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
         C = StripCast(CO);
   }
   return dyn_cast<GlobalVariable>(C);
-}
-
-//===----------------------------------------------------------------------===//
-/// DbgStopPointInst - This represents the llvm.dbg.stoppoint instruction.
-///
-
-Value *DbgStopPointInst::getFileName() const {
-  // Once the operand indices are verified, update this assert
-  assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
-  return getContext()->getOperand(3);
-}
-
-Value *DbgStopPointInst::getDirectory() const {
-  // Once the operand indices are verified, update this assert
-  assert(LLVMDebugVersion == (7 << 16) && "Verify operand indices");
-  return getContext()->getOperand(4);
 }
 
 //===----------------------------------------------------------------------===//

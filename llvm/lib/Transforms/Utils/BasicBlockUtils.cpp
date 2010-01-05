@@ -673,16 +673,3 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   return 0;
 }
 
-/// CopyPrecedingStopPoint - If I is immediately preceded by a StopPoint,
-/// make a copy of the stoppoint before InsertPos (presumably before copying
-/// or moving I).
-void llvm::CopyPrecedingStopPoint(Instruction *I, 
-                                  BasicBlock::iterator InsertPos) {
-  if (I != I->getParent()->begin()) {
-    BasicBlock::iterator BBI = I;  --BBI;
-    if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BBI)) {
-      CallInst *newDSPI = cast<CallInst>(DSPI->clone());
-      newDSPI->insertBefore(InsertPos);
-    }
-  }
-}

@@ -1658,13 +1658,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           Instruction *NewRet = RI->clone();
           Pred->getInstList().push_back(NewRet);
 
-          BasicBlock::iterator BBI = RI;
-          if (BBI != BB->begin()) {
-            // Move region end info into the predecessor.
-            if (DbgRegionEndInst *DREI = dyn_cast<DbgRegionEndInst>(--BBI))
-              DREI->moveBefore(NewRet);
-          }
-
           // If the return instruction returns a value, and if the value was a
           // PHI node in "BB", propagate the right value into the return.
           for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();

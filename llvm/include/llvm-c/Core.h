@@ -427,10 +427,6 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
         macro(IntrinsicInst)                \
           macro(DbgInfoIntrinsic)           \
             macro(DbgDeclareInst)           \
-            macro(DbgFuncStartInst)         \
-            macro(DbgRegionEndInst)         \
-            macro(DbgRegionStartInst)       \
-            macro(DbgStopPointInst)         \
           macro(EHSelectorInst)             \
           macro(MemIntrinsic)               \
             macro(MemCpyInst)               \

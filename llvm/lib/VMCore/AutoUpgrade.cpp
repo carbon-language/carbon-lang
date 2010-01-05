@@ -486,55 +486,35 @@ void llvm::CheckDebugInfoIntrinsics(Module *M) {
 
 
   if (Function *FuncStart = M->getFunction("llvm.dbg.func.start")) {
-    if (!FuncStart->use_empty()) {
-      DbgFuncStartInst *DFSI = cast<DbgFuncStartInst>(FuncStart->use_back());
-      if (!isa<MDNode>(DFSI->getOperand(1))) {
-        while (!FuncStart->use_empty()) {
-          CallInst *CI = cast<CallInst>(FuncStart->use_back());
-          CI->eraseFromParent();
-        }
-        FuncStart->eraseFromParent();
-      }
+    while (!FuncStart->use_empty()) {
+      CallInst *CI = cast<CallInst>(FuncStart->use_back());
+      CI->eraseFromParent();
     }
+    FuncStart->eraseFromParent();
   }
-
+  
   if (Function *StopPoint = M->getFunction("llvm.dbg.stoppoint")) {
-    if (!StopPoint->use_empty()) {
-      DbgStopPointInst *DSPI = cast<DbgStopPointInst>(StopPoint->use_back());
-      if (!isa<MDNode>(DSPI->getOperand(3))) {
-        while (!StopPoint->use_empty()) {
-          CallInst *CI = cast<CallInst>(StopPoint->use_back());
-          CI->eraseFromParent();
-        }
-        StopPoint->eraseFromParent();
-      }
+    while (!StopPoint->use_empty()) {
+      CallInst *CI = cast<CallInst>(StopPoint->use_back());
+      CI->eraseFromParent();
     }
+    StopPoint->eraseFromParent();
   }
 
   if (Function *RegionStart = M->getFunction("llvm.dbg.region.start")) {
-    if (!RegionStart->use_empty()) {
-      DbgRegionStartInst *DRSI = cast<DbgRegionStartInst>(RegionStart->use_back());
-      if (!isa<MDNode>(DRSI->getOperand(1))) {
-        while (!RegionStart->use_empty()) {
-          CallInst *CI = cast<CallInst>(RegionStart->use_back());
-          CI->eraseFromParent();
-        }
-        RegionStart->eraseFromParent();
-      }
+    while (!RegionStart->use_empty()) {
+      CallInst *CI = cast<CallInst>(RegionStart->use_back());
+      CI->eraseFromParent();
     }
+    RegionStart->eraseFromParent();
   }
 
   if (Function *RegionEnd = M->getFunction("llvm.dbg.region.end")) {
-    if (!RegionEnd->use_empty()) {
-      DbgRegionEndInst *DREI = cast<DbgRegionEndInst>(RegionEnd->use_back());
-      if (!isa<MDNode>(DREI->getOperand(1))) {
-        while (!RegionEnd->use_empty()) {
-          CallInst *CI = cast<CallInst>(RegionEnd->use_back());
-          CI->eraseFromParent();
-      }
-        RegionEnd->eraseFromParent();
-      }
+    while (!RegionEnd->use_empty()) {
+      CallInst *CI = cast<CallInst>(RegionEnd->use_back());
+      CI->eraseFromParent();
     }
+    RegionEnd->eraseFromParent();
   }
   
   if (Function *Declare = M->getFunction("llvm.dbg.declare")) {

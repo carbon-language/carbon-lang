@@ -1242,52 +1242,6 @@ bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   return true;
 }
 
-/// findStopPoint - Find the stoppoint coressponding to this instruction, that
-/// is the stoppoint that dominates this instruction.
-const DbgStopPointInst *llvm::findStopPoint(const Instruction *Inst) {
-  if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(Inst))
-    return DSI;
-
-  const BasicBlock *BB = Inst->getParent();
-  BasicBlock::const_iterator I = Inst, B;
-  while (BB) {
-    B = BB->begin();
-
-    // A BB consisting only of a terminator can't have a stoppoint.
-    while (I != B) {
-      --I;
-      if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
-        return DSI;
-    }
-
-    // This BB didn't have a stoppoint: if there is only one predecessor, look
-    // for a stoppoint there. We could use getIDom(), but that would require
-    // dominator info.
-    BB = I->getParent()->getUniquePredecessor();
-    if (BB)
-      I = BB->getTerminator();
-  }
-
-  return 0;
-}
-
-/// findBBStopPoint - Find the stoppoint corresponding to first real
-/// (non-debug intrinsic) instruction in this Basic Block, and return the
-/// stoppoint for it.
-const DbgStopPointInst *llvm::findBBStopPoint(const BasicBlock *BB) {
-  for(BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (const DbgStopPointInst *DSI = dyn_cast<DbgStopPointInst>(I))
-      return DSI;
-
-  // Fallback to looking for stoppoint of unique predecessor. Useful if this
-  // BB contains no stoppoints, but unique predecessor does.
-  BB = BB->getUniquePredecessor();
-  if (BB)
-    return findStopPoint(BB->getTerminator());
-
-  return 0;
-}
-
 Value *llvm::findDbgGlobalDeclare(GlobalVariable *V) {
   const Module *M = V->getParent();
   NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv");
@@ -1372,29 +1326,6 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
 }
 
 /// ExtractDebugLocation - Extract debug location information
-/// from llvm.dbg.stoppoint intrinsic.
-DebugLoc llvm::ExtractDebugLocation(DbgStopPointInst &SPI,
-                                    DebugLocTracker &DebugLocInfo) {
-  DebugLoc DL;
-  Value *Context = SPI.getContext();
-
-  // If this location is already tracked then use it.
-  DebugLocTuple Tuple(cast<MDNode>(Context), NULL, SPI.getLine(),
-                      SPI.getColumn());
-  DenseMap<DebugLocTuple, unsigned>::iterator II
-    = DebugLocInfo.DebugIdMap.find(Tuple);
-  if (II != DebugLocInfo.DebugIdMap.end())
-    return DebugLoc::get(II->second);
-
-  // Add a new location entry.
-  unsigned Id = DebugLocInfo.DebugLocations.size();
-  DebugLocInfo.DebugLocations.push_back(Tuple);
-  DebugLocInfo.DebugIdMap[Tuple] = Id;
-
-  return DebugLoc::get(Id);
-}
-
-/// ExtractDebugLocation - Extract debug location information
 /// from DILocation.
 DebugLoc llvm::ExtractDebugLocation(DILocation &Loc,
                                     DebugLocTracker &DebugLocInfo) {
@@ -1406,32 +1337,6 @@ DebugLoc llvm::ExtractDebugLocation(DILocation &Loc,
   // If this location is already tracked then use it.
   DebugLocTuple Tuple(Context, InlinedLoc, Loc.getLineNumber(),
                       Loc.getColumnNumber());
-  DenseMap<DebugLocTuple, unsigned>::iterator II
-    = DebugLocInfo.DebugIdMap.find(Tuple);
-  if (II != DebugLocInfo.DebugIdMap.end())
-    return DebugLoc::get(II->second);
-
-  // Add a new location entry.
-  unsigned Id = DebugLocInfo.DebugLocations.size();
-  DebugLocInfo.DebugLocations.push_back(Tuple);
-  DebugLocInfo.DebugIdMap[Tuple] = Id;
-
-  return DebugLoc::get(Id);
-}
-
-/// ExtractDebugLocation - Extract debug location information
-/// from llvm.dbg.func_start intrinsic.
-DebugLoc llvm::ExtractDebugLocation(DbgFuncStartInst &FSI,
-                                    DebugLocTracker &DebugLocInfo) {
-  DebugLoc DL;
-  Value *SP = FSI.getSubprogram();
-
-  DISubprogram Subprogram(cast<MDNode>(SP));
-  unsigned Line = Subprogram.getLineNumber();
-  DICompileUnit CU(Subprogram.getCompileUnit());
-
-  // If this location is already tracked then use it.
-  DebugLocTuple Tuple(CU.getNode(), NULL, Line, /* Column */ 0);
   DenseMap<DebugLocTuple, unsigned>::iterator II
     = DebugLocInfo.DebugIdMap.find(Tuple);
   if (II != DebugLocInfo.DebugIdMap.end())
