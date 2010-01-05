@@ -190,8 +190,7 @@ namespace {
     void report(const char *msg, const MachineOperand *MO, unsigned MONum);
 
     void markReachable(const MachineBasicBlock *MBB);
-    void calcMaxRegsPassed();
-    void calcMinRegsPassed();
+    void calcRegsPassed();
     void checkPHIOps(const MachineBasicBlock *MBB);
 
     void calcRegsRequired();
@@ -710,7 +709,7 @@ MachineVerifier::visitMachineBasicBlockAfter(const MachineBasicBlock *MBB) {
 // Calculate the largest possible vregsPassed sets. These are the registers that
 // can pass through an MBB live, but may not be live every time. It is assumed
 // that all vregsPassed sets are empty before the call.
-void MachineVerifier::calcMaxRegsPassed() {
+void MachineVerifier::calcRegsPassed() {
   // First push live-out regs to successors' vregsPassed. Remember the MBBs that
   // have any vregsPassed.
   DenseSet<const MachineBasicBlock*> todo;
@@ -745,45 +744,9 @@ void MachineVerifier::calcMaxRegsPassed() {
   }
 }
 
-// Calculate the minimum vregsPassed set. These are the registers that always
-// pass live through an MBB. The calculation assumes that calcMaxRegsPassed has
-// been called earlier.
-void MachineVerifier::calcMinRegsPassed() {
-  DenseSet<const MachineBasicBlock*> todo;
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI)
-    todo.insert(MFI);
-
-  while (!todo.empty()) {
-    const MachineBasicBlock *MBB = *todo.begin();
-    todo.erase(MBB);
-    BBInfo &MInfo = MBBInfoMap[MBB];
-
-    // Remove entries from vRegsPassed that are not live out from all
-    // reachable predecessors.
-    RegSet dead;
-    for (RegSet::iterator I = MInfo.vregsPassed.begin(),
-           E = MInfo.vregsPassed.end(); I != E; ++I) {
-      for (MachineBasicBlock::const_pred_iterator PrI = MBB->pred_begin(),
-             PrE = MBB->pred_end(); PrI != PrE; ++PrI) {
-        BBInfo &PrInfo = MBBInfoMap[*PrI];
-        if (PrInfo.reachable && !PrInfo.isLiveOut(*I)) {
-          dead.insert(*I);
-          break;
-        }
-      }
-    }
-    // If any regs removed, we need to recheck successors.
-    if (!dead.empty()) {
-      set_subtract(MInfo.vregsPassed, dead);
-      todo.insert(MBB->succ_begin(), MBB->succ_end());
-    }
-  }
-}
-
 // Calculate the set of virtual registers that must be passed through each basic
 // block in order to satisfy the requirements of successor blocks. This is very
-// similar to calcMaxRegsPassed, only backwards.
+// similar to calcRegsPassed, only backwards.
 void MachineVerifier::calcRegsRequired() {
   // First push live-in regs to predecessors' vregsRequired.
   DenseSet<const MachineBasicBlock*> todo;
@@ -817,7 +780,7 @@ void MachineVerifier::calcRegsRequired() {
 }
 
 // Check PHI instructions at the beginning of MBB. It is assumed that
-// calcMinRegsPassed has been run so BBInfo::isLiveOut is valid.
+// calcRegsPassed has been run so BBInfo::isLiveOut is valid.
 void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_iterator BBI = MBB->begin(), BBE = MBB->end();
        BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI) {
@@ -848,61 +811,8 @@ void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
 }
 
 void MachineVerifier::visitMachineFunctionAfter() {
-  calcMaxRegsPassed();
+  calcRegsPassed();
 
-  // With the maximal set of vregsPassed we can verify dead-in registers.
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI) {
-    BBInfo &MInfo = MBBInfoMap[MFI];
-
-    // Skip unreachable MBBs.
-    if (!MInfo.reachable)
-      continue;
-
-    for (MachineBasicBlock::const_pred_iterator PrI = MFI->pred_begin(),
-           PrE = MFI->pred_end(); PrI != PrE; ++PrI) {
-      BBInfo &PrInfo = MBBInfoMap[*PrI];
-      if (!PrInfo.reachable)
-        continue;
-
-      // Verify physical live-ins. EH landing pads have magic live-ins so we
-      // ignore them.
-      if (!MFI->isLandingPad()) {
-        for (MachineBasicBlock::const_livein_iterator I = MFI->livein_begin(),
-               E = MFI->livein_end(); I != E; ++I) {
-          if (TargetRegisterInfo::isPhysicalRegister(*I) &&
-              !isReserved (*I) && !PrInfo.isLiveOut(*I)) {
-            report("Live-in physical register is not live-out from predecessor",
-                   MFI);
-            *OS << "Register " << TRI->getName(*I)
-                << " is not live-out from BB#" << (*PrI)->getNumber()
-                << ".\n";
-          }
-        }
-      }
-
-
-      // Verify dead-in virtual registers.
-      if (!allowVirtDoubleDefs) {
-        for (RegMap::iterator I = MInfo.vregsDeadIn.begin(),
-               E = MInfo.vregsDeadIn.end(); I != E; ++I) {
-          // DeadIn register must be in neither regsLiveOut or vregsPassed of
-          // any predecessor.
-          if (PrInfo.isLiveOut(I->first)) {
-            report("Live-in virtual register redefined", I->second);
-            *OS << "Register %reg" << I->first
-                << " was live-out from predecessor MBB #"
-                << (*PrI)->getNumber() << ".\n";
-          }
-        }
-      }
-    }
-  }
-
-  calcMinRegsPassed();
-
-  // With the minimal set of vregsPassed we can verify live-in virtual
-  // registers, including PHI instructions.
   for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
        MFI != MFE; ++MFI) {
     BBInfo &MInfo = MBBInfoMap[MFI];
@@ -913,20 +823,24 @@ void MachineVerifier::visitMachineFunctionAfter() {
 
     checkPHIOps(MFI);
 
-    for (MachineBasicBlock::const_pred_iterator PrI = MFI->pred_begin(),
-           PrE = MFI->pred_end(); PrI != PrE; ++PrI) {
-      BBInfo &PrInfo = MBBInfoMap[*PrI];
-      if (!PrInfo.reachable)
-        continue;
+    // Verify dead-in virtual registers.
+    if (!allowVirtDoubleDefs) {
+      for (MachineBasicBlock::const_pred_iterator PrI = MFI->pred_begin(),
+             PrE = MFI->pred_end(); PrI != PrE; ++PrI) {
+        BBInfo &PrInfo = MBBInfoMap[*PrI];
+        if (!PrInfo.reachable)
+          continue;
 
-      for (RegMap::iterator I = MInfo.vregsLiveIn.begin(),
-             E = MInfo.vregsLiveIn.end(); I != E; ++I) {
-        if (!PrInfo.isLiveOut(I->first)) {
-          report("Used virtual register is not live-in", I->second);
-          *OS << "Register %reg" << I->first
-              << " is not live-out from predecessor MBB #"
-              << (*PrI)->getNumber()
-              << ".\n";
+        for (RegMap::iterator I = MInfo.vregsDeadIn.begin(),
+               E = MInfo.vregsDeadIn.end(); I != E; ++I) {
+          // DeadIn register must be in neither regsLiveOut or vregsPassed of
+          // any predecessor.
+          if (PrInfo.isLiveOut(I->first)) {
+            report("Live-in virtual register redefined", I->second);
+            *OS << "Register %reg" << I->first
+                << " was live-out from predecessor MBB #"
+                << (*PrI)->getNumber() << ".\n";
+          }
         }
       }
     }
