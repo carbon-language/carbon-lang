@@ -589,13 +589,6 @@ CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
   return extent;  
 }
 
-const char *clang_getDeclSource(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  FileEntry *FEnt = static_cast<FileEntry *>(clang_getDeclSourceFile(AnonDecl));
-  assert (FEnt && "Cannot find FileEntry for Decl");
-  return clang_getFileName(FEnt);
-}
-
 static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
                                                        SourceLocation SLoc) {
   FileID FID;
