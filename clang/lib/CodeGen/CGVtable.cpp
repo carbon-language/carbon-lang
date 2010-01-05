@@ -1513,12 +1513,13 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
   else if (KeyFunction)
     Linkage = llvm::GlobalVariable::WeakODRLinkage;
   else {
+    Linkage = llvm::GlobalVariable::WeakODRLinkage;
+    
     switch (RD->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
     case TSK_ExplicitSpecialization:
     case TSK_ImplicitInstantiation:
     case TSK_ExplicitInstantiationDefinition:
-      Linkage = llvm::GlobalVariable::WeakODRLinkage;
       break;
 
     case TSK_ExplicitInstantiationDeclaration:
