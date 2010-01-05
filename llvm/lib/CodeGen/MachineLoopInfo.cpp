@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 namespace llvm {
@@ -72,4 +73,8 @@ MachineBasicBlock *MachineLoop::getBottomBlock() {
     }
   }
   return BotMBB;
+}
+
+void MachineLoop::dump() const {
+  print(dbgs());
 }

@@ -478,7 +478,7 @@ public:
     for (iterator I = begin(), E = end(); I != E; ++I)
       (*I)->print(OS, Depth+2);
   }
-  
+
 protected:
   friend class LoopInfoBase<BlockT, LoopT>;
   explicit LoopBase(BlockT *BB) : ParentLoop(0) {
@@ -588,6 +588,8 @@ public:
   /// block, return that block. Otherwise return null.
   BasicBlock *getUniqueExitBlock() const;
 
+  void dump() const;
+  
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}

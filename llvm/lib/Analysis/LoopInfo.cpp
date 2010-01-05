@@ -21,6 +21,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
@@ -383,6 +384,10 @@ BasicBlock *Loop::getUniqueExitBlock() const {
   if (UniqueExitBlocks.size() == 1)
     return UniqueExitBlocks[0];
   return 0;
+}
+
+void Loop::dump() const {
+  print(dbgs());
 }
 
 //===----------------------------------------------------------------------===//
