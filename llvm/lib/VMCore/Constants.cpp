@@ -110,7 +110,7 @@ void Constant::destroyConstantImpl() {
     Value *V = use_back();
 #ifndef NDEBUG      // Only in -g mode...
     if (!isa<Constant>(V)) {
-      errs() << "While deleting: " << *this
+      dbgs() << "While deleting: " << *this
              << "\n\nUse still stuck around after Def is destroyed: "
              << *V << "\n\n";
     }
