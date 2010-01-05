@@ -628,7 +628,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   return 0;
 }
 
-
 Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   if (Instruction *Result = commonIntCastTransforms(CI))
     return Result;
@@ -644,41 +643,6 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Src = Builder->CreateAnd(Src, One, "tmp");
     Value *Zero = Constant::getNullValue(Src->getType());
     return new ICmpInst(ICmpInst::ICMP_NE, Src, Zero);
-  }
-
-  // Optimize trunc(lshr(x, c)) to pull the shift through the truncate.
-  ConstantInt *ShAmtV = 0;
-  Value *ShiftOp = 0;
-  if (Src->hasOneUse() &&
-      match(Src, m_LShr(m_Value(ShiftOp), m_ConstantInt(ShAmtV)))) {
-    uint32_t ShAmt = ShAmtV->getLimitedValue(SrcBitWidth);
-    
-    // Get a mask for the bits shifting in.
-    APInt Mask(APInt::getLowBitsSet(SrcBitWidth, ShAmt).shl(DestBitWidth));
-    if (MaskedValueIsZero(ShiftOp, Mask)) {
-      if (ShAmt >= DestBitWidth)        // All zeros.
-        return ReplaceInstUsesWith(CI, Constant::getNullValue(DestTy));
-      
-      // Okay, we can shrink this.  Truncate the input, then return a new
-      // shift.
-      Value *V1 = Builder->CreateTrunc(ShiftOp, DestTy, ShiftOp->getName());
-      Value *V2 = ConstantExpr::getTrunc(ShAmtV, DestTy);
-      return BinaryOperator::CreateLShr(V1, V2);
-    }
-  }
-  
-  // Transform trunc(shl(X, C)) -> shl(trunc(X), C)
-  if (Src->hasOneUse() &&
-      match(Src, m_Shl(m_Value(ShiftOp), m_ConstantInt(ShAmtV)))) {
-    uint32_t ShAmt = ShAmtV->getLimitedValue(SrcBitWidth);
-    if (ShAmt >= DestBitWidth)        // All zeros.
-      return ReplaceInstUsesWith(CI, Constant::getNullValue(DestTy));
-      
-    // Okay, we can shrink this.  Truncate the input, then return a new
-    // shift.
-    Value *V1 = Builder->CreateTrunc(ShiftOp, DestTy, ShiftOp->getName());
-    Value *V2 = ConstantExpr::getTrunc(ShAmtV, DestTy);
-    return BinaryOperator::CreateShl(V1, V2);
   }
 
   return 0;
