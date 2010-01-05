@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
@@ -2354,7 +2355,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   
   // No fusion 
   if (PrintFailedFusing)
-    errs() << "We failed to fuse operand " << i << " in " << *MI;
+    dbgs() << "We failed to fuse operand " << i << " in " << *MI;
   return NULL;
 }
 
