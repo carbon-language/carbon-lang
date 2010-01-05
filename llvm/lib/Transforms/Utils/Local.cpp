@@ -328,7 +328,8 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
       if (!PHIs.insert(cast<PHINode>(JP))) {
         // Break the cycle and delete the PHI and its operands.
         JP->replaceAllUsesWith(UndefValue::get(JP->getType()));
-        Changed |= RecursivelyDeleteTriviallyDeadInstructions(JP);
+        (void)RecursivelyDeleteTriviallyDeadInstructions(JP);
+        Changed = true;
         break;
       }
   return Changed;
