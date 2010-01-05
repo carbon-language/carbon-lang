@@ -1537,6 +1537,12 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       return ExprError();
     }
 
+    if (VD->getType()->isArrayType()) {
+      Diag(Loc, diag::err_ref_array_type);
+      Diag(D->getLocation(), diag::note_declared_at);
+      return ExprError();
+    }
+
     MarkDeclarationReferenced(Loc, VD);
     QualType ExprTy = VD->getType().getNonReferenceType();
     // The BlocksAttr indicates the variable is bound by-reference.

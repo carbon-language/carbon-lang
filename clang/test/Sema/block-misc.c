@@ -208,3 +208,11 @@ void test20() {
     (void)(vm+1);  // expected-error {{cannot refer to declaration with a variably modified type inside block}}
   }();
 }
+
+void test21() {
+  int a[7]; // expected-note {{declared at}}
+  a[1] = 1;
+  ^{
+    (void)a[1]; // expected-error {{cannot refer to declaration with an array type inside block}}
+  }();
+}
