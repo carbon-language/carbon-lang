@@ -544,7 +544,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
   if (NewGlobals.empty())
     return 0;
 
-  DEBUG(errs() << "PERFORMING GLOBAL SRA ON: " << *GV);
+  DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV);
 
   Constant *NullInt =Constant::getNullValue(Type::getInt32Ty(GV->getContext()));
 
@@ -771,14 +771,14 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
   }
 
   if (Changed) {
-    DEBUG(errs() << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
+    DEBUG(dbgs() << "OPTIMIZED LOADS FROM STORED ONCE POINTER: " << *GV);
     ++NumGlobUses;
   }
 
   // If we nuked all of the loads, then none of the stores are needed either,
   // nor is the global.
   if (AllNonStoreUsesGone) {
-    DEBUG(errs() << "  *** GLOBAL NOW DEAD!\n");
+    DEBUG(dbgs() << "  *** GLOBAL NOW DEAD!\n");
     CleanupConstantGlobalUsers(GV, 0);
     if (GV->use_empty()) {
       GV->eraseFromParent();
@@ -815,7 +815,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      const Type *AllocTy,
                                                      Value* NElems,
                                                      TargetData* TD) {
-  DEBUG(errs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
+  DEBUG(dbgs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
 
   const Type *IntPtrTy = TD->getIntPtrType(GV->getContext());
   
@@ -1268,7 +1268,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
                                             Value* NElems, TargetData *TD) {
-  DEBUG(errs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI << '\n');
+  DEBUG(dbgs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI << '\n');
   const Type* MAT = getMallocAllocatedType(CI);
   const StructType *STy = cast<StructType>(MAT);
 
@@ -1600,7 +1600,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
       return false;
   
-  DEBUG(errs() << "   *** SHRINKING TO BOOL: " << *GV);
+  DEBUG(dbgs() << "   *** SHRINKING TO BOOL: " << *GV);
   
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::getInt1Ty(GV->getContext()),
@@ -1681,7 +1681,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
-    DEBUG(errs() << "GLOBAL DEAD: " << *GV);
+    DEBUG(dbgs() << "GLOBAL DEAD: " << *GV);
     GV->eraseFromParent();
     ++NumDeleted;
     return true;
@@ -1689,26 +1689,26 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
   if (!AnalyzeGlobal(GV, GS, PHIUsers)) {
 #if 0
-    DEBUG(errs() << "Global: " << *GV);
-    DEBUG(errs() << "  isLoaded = " << GS.isLoaded << "\n");
-    DEBUG(errs() << "  StoredType = ");
+    DEBUG(dbgs() << "Global: " << *GV);
+    DEBUG(dbgs() << "  isLoaded = " << GS.isLoaded << "\n");
+    DEBUG(dbgs() << "  StoredType = ");
     switch (GS.StoredType) {
-    case GlobalStatus::NotStored: DEBUG(errs() << "NEVER STORED\n"); break;
-    case GlobalStatus::isInitializerStored: DEBUG(errs() << "INIT STORED\n");
+    case GlobalStatus::NotStored: DEBUG(dbgs() << "NEVER STORED\n"); break;
+    case GlobalStatus::isInitializerStored: DEBUG(dbgs() << "INIT STORED\n");
                                             break;
-    case GlobalStatus::isStoredOnce: DEBUG(errs() << "STORED ONCE\n"); break;
-    case GlobalStatus::isStored: DEBUG(errs() << "stored\n"); break;
+    case GlobalStatus::isStoredOnce: DEBUG(dbgs() << "STORED ONCE\n"); break;
+    case GlobalStatus::isStored: DEBUG(dbgs() << "stored\n"); break;
     }
     if (GS.StoredType == GlobalStatus::isStoredOnce && GS.StoredOnceValue)
-      DEBUG(errs() << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n");
+      DEBUG(dbgs() << "  StoredOnceValue = " << *GS.StoredOnceValue << "\n");
     if (GS.AccessingFunction && !GS.HasMultipleAccessingFunctions)
-      DEBUG(errs() << "  AccessingFunction = " << GS.AccessingFunction->getName()
+      DEBUG(dbgs() << "  AccessingFunction = " << GS.AccessingFunction->getName()
                   << "\n");
-    DEBUG(errs() << "  HasMultipleAccessingFunctions =  "
+    DEBUG(dbgs() << "  HasMultipleAccessingFunctions =  "
                  << GS.HasMultipleAccessingFunctions << "\n");
-    DEBUG(errs() << "  HasNonInstructionUser = " 
+    DEBUG(dbgs() << "  HasNonInstructionUser = " 
                  << GS.HasNonInstructionUser<<"\n");
-    DEBUG(errs() << "\n");
+    DEBUG(dbgs() << "\n");
 #endif
     
     // If this is a first class global and has only one accessing function
@@ -1726,7 +1726,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GS.AccessingFunction->getName() == "main" &&
         GS.AccessingFunction->hasExternalLinkage() &&
         GV->getType()->getAddressSpace() == 0) {
-      DEBUG(errs() << "LOCALIZING GLOBAL: " << *GV);
+      DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV);
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
       // FIXME: Pass Global's alignment when globals have alignment
@@ -1743,7 +1743,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // If the global is never loaded (but may be stored to), it is dead.
     // Delete it now.
     if (!GS.isLoaded) {
-      DEBUG(errs() << "GLOBAL NEVER LOADED: " << *GV);
+      DEBUG(dbgs() << "GLOBAL NEVER LOADED: " << *GV);
 
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
@@ -1758,7 +1758,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       return Changed;
 
     } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
-      DEBUG(errs() << "MARKING CONSTANT: " << *GV);
+      DEBUG(dbgs() << "MARKING CONSTANT: " << *GV);
       GV->setConstant(true);
 
       // Clean up any obviously simplifiable users now.
@@ -1766,7 +1766,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       // If the global is dead now, just nuke it.
       if (GV->use_empty()) {
-        DEBUG(errs() << "   *** Marking constant allowed us to simplify "
+        DEBUG(dbgs() << "   *** Marking constant allowed us to simplify "
                      << "all users and delete global!\n");
         GV->eraseFromParent();
         ++NumDeleted;
@@ -1794,7 +1794,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
           CleanupConstantGlobalUsers(GV, GV->getInitializer());
 
           if (GV->use_empty()) {
-            DEBUG(errs() << "   *** Substituting initializer allowed us to "
+            DEBUG(dbgs() << "   *** Substituting initializer allowed us to "
                          << "simplify all users and delete global!\n");
             GV->eraseFromParent();
             ++NumDeleted;
@@ -2402,7 +2402,7 @@ static bool EvaluateStaticConstructor(Function *F) {
                                       MutatedMemory, AllocaTmps);
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
-    DEBUG(errs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
+    DEBUG(dbgs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
           << F->getName() << "' to " << MutatedMemory.size()
           << " stores.\n");
     for (DenseMap<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
