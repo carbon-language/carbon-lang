@@ -2383,7 +2383,8 @@ QualType ASTContext::getUnqualifiedArrayType(QualType T,
   assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
   const ArrayType *AT = cast<ArrayType>(T);
   QualType Elt = AT->getElementType();
-  QualType UnqualElt = getUnqualifiedArrayType(getCanonicalType(Elt), Quals);
+  assert(Elt.isCanonical());
+  QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);
   if (Elt == UnqualElt)
     return T;
 
