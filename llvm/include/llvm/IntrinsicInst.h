@@ -58,7 +58,8 @@ namespace llvm {
 
   /// DbgInfoIntrinsic - This is the common base class for debug info intrinsics
   ///
-  struct DbgInfoIntrinsic : public IntrinsicInst {
+  class DbgInfoIntrinsic : public IntrinsicInst {
+  public:
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgInfoIntrinsic *) { return true; }
@@ -79,7 +80,8 @@ namespace llvm {
 
   /// DbgDeclareInst - This represents the llvm.dbg.declare instruction.
   ///
-  struct DbgDeclareInst : public DbgInfoIntrinsic {
+  class DbgDeclareInst : public DbgInfoIntrinsic {
+  public:
     Value *getAddress()  const { return getOperand(1); }
     MDNode *getVariable() const { return cast<MDNode>(getOperand(2)); }
 
@@ -95,7 +97,8 @@ namespace llvm {
 
   /// DbgValueInst - This represents the llvm.dbg.value instruction.
   ///
-  struct DbgValueInst : public DbgInfoIntrinsic {
+  class DbgValueInst : public DbgInfoIntrinsic {
+  public:
     Value *getValue() const;
     Value *getOffset() const { return getOperand(2); }
     MDNode *getVariable() const { return cast<MDNode>(getOperand(3)); }
@@ -112,7 +115,8 @@ namespace llvm {
 
   /// MemIntrinsic - This is the common base class for memset/memcpy/memmove.
   ///
-  struct MemIntrinsic : public IntrinsicInst {
+  class MemIntrinsic : public IntrinsicInst {
+  public:
     Value *getRawDest() const { return const_cast<Value*>(getOperand(1)); }
 
     Value *getLength() const { return const_cast<Value*>(getOperand(3)); }
@@ -169,7 +173,8 @@ namespace llvm {
 
   /// MemSetInst - This class wraps the llvm.memset intrinsic.
   ///
-  struct MemSetInst : public MemIntrinsic {
+  class MemSetInst : public MemIntrinsic {
+  public:
     /// get* - Return the arguments to the instruction.
     ///
     Value *getValue() const { return const_cast<Value*>(getOperand(2)); }
@@ -192,7 +197,8 @@ namespace llvm {
   
   /// MemTransferInst - This class wraps the llvm.memcpy/memmove intrinsics.
   ///
-  struct MemTransferInst : public MemIntrinsic {
+  class MemTransferInst : public MemIntrinsic {
+  public:
     /// get* - Return the arguments to the instruction.
     ///
     Value *getRawSource() const { return const_cast<Value*>(getOperand(2)); }
@@ -222,7 +228,8 @@ namespace llvm {
   
   /// MemCpyInst - This class wraps the llvm.memcpy intrinsic.
   ///
-  struct MemCpyInst : public MemTransferInst {
+  class MemCpyInst : public MemTransferInst {
+  public:
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemCpyInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
@@ -235,7 +242,8 @@ namespace llvm {
 
   /// MemMoveInst - This class wraps the llvm.memmove intrinsic.
   ///
-  struct MemMoveInst : public MemTransferInst {
+  class MemMoveInst : public MemTransferInst {
+  public:
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemMoveInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
@@ -248,7 +256,8 @@ namespace llvm {
 
   /// EHSelectorInst - This represents the llvm.eh.selector instruction.
   ///
-  struct EHSelectorInst : public IntrinsicInst {
+  class EHSelectorInst : public IntrinsicInst {
+  public:
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const EHSelectorInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
@@ -262,7 +271,8 @@ namespace llvm {
   /// MemoryUseIntrinsic - This is the common base class for the memory use
   /// marker intrinsics.
   ///
-  struct MemoryUseIntrinsic : public IntrinsicInst {
+  class MemoryUseIntrinsic : public IntrinsicInst {
+  public:
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const MemoryUseIntrinsic *) { return true; }
