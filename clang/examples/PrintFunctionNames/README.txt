@@ -6,5 +6,5 @@ TOOL_NO_EXPORT in the tools/clang Makefile).
 
 Once the plugin is built, you can run it using:
 --
-$ clang -cc1 -load path/to/PrintFunctionNames.so -plugin=print-fns some-input-file.c
+$ clang -cc1 -load path/to/PrintFunctionNames.so -plugin print-fns some-input-file.c
 --
