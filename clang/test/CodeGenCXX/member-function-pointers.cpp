@@ -128,3 +128,14 @@ namespace BoolMemberPointer {
   }
 }
 
+// PR5940
+namespace PR5940 {
+  class foo {
+  public:
+    virtual void baz(void);
+  };
+
+  void foo::baz(void) {
+       void (foo::*ptr)(void) = &foo::baz;
+  }
+}

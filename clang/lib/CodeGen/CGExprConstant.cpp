@@ -408,6 +408,8 @@ public:
   llvm::Constant *EmitMemberFunctionPointer(CXXMethodDecl *MD) {
     assert(MD->isInstance() && "Member function must not be static!");
     
+    MD = MD->getCanonicalDecl();
+
     const llvm::Type *PtrDiffTy = 
       CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
     

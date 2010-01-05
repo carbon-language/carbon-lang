@@ -313,7 +313,8 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
          "Unexpected member pointer type!");
   
   const DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
+  const CXXMethodDecl *MD = 
+    cast<CXXMethodDecl>(DRE->getDecl())->getCanonicalDecl();
 
   const llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
