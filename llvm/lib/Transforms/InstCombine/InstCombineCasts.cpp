@@ -456,123 +456,80 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   Instruction *Src = dyn_cast<Instruction>(CI.getOperand(0));
   if (!Src || !Src->hasOneUse())
     return 0;
-  
+
+  // Check to see if we can eliminate the cast by changing the entire
+  // computation chain to do the computation in the result type.
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
-  uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
-  uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-
-  // Attempt to propagate the cast into the instruction for int->int casts.
-  int NumCastsRemoved = 0;
+  
   // Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
-  if ((isa<VectorType>(DestTy) ||
-       ShouldChangeType(Src->getType(), DestTy)) &&
-      CanEvaluateInDifferentType(Src, DestTy,
-                                 CI.getOpcode(), NumCastsRemoved)) {
+  if (!isa<VectorType>(DestTy) && !ShouldChangeType(SrcTy, DestTy))
+    return 0;
+  
+  // Attempt to propagate the cast into the instruction for int->int casts.
+  int NumCastsRemoved = 0;
+  if (!CanEvaluateInDifferentType(Src, DestTy, CI.getOpcode(), NumCastsRemoved))
+    return 0;
+  
+  switch (CI.getOpcode()) {
+  default: assert(0 && "not an integer cast");
+  case Instruction::Trunc:
     // If this cast is a truncate, evaluting in a different type always
-    // eliminates the cast, so it is always a win.  If this is a zero-extension,
-    // we need to do an AND to maintain the clear top-part of the computation,
-    // so we require that the input have eliminated at least one cast.  If this
-    // is a sign extension, we insert two new casts (to do the extension) so we
-    // require that two casts have been eliminated.
-    bool DoXForm = false;
-    bool JustReplace = false;
-    switch (CI.getOpcode()) {
-    default:
-      // All the others use floating point so we shouldn't actually 
-      // get here because of the check above.
-      llvm_unreachable("Unknown cast type");
-    case Instruction::Trunc:
-      DoXForm = true;
-      break;
-    case Instruction::ZExt: {
-      DoXForm = NumCastsRemoved >= 1;
-      
-      if (!DoXForm && 0) {
-        // If it's unnecessary to issue an AND to clear the high bits, it's
-        // always profitable to do this xform.
-        Value *TryRes = EvaluateInDifferentType(Src, DestTy, false);
-        APInt Mask(APInt::getBitsSet(DestBitSize, SrcBitSize, DestBitSize));
-        if (MaskedValueIsZero(TryRes, Mask))
-          return ReplaceInstUsesWith(CI, TryRes);
-        
-        if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
-          if (TryI->use_empty())
-            EraseInstFromFunction(*TryI);
-      }
-      break;
-    }
-    case Instruction::SExt: {
-      DoXForm = NumCastsRemoved >= 2;
-      if (!DoXForm && !isa<TruncInst>(Src) && 0) {
-        // If we do not have to emit the truncate + sext pair, then it's always
-        // profitable to do this xform.
-        //
-        // It's not safe to eliminate the trunc + sext pair if one of the
-        // eliminated cast is a truncate. e.g.
-        // t2 = trunc i32 t1 to i16
-        // t3 = sext i16 t2 to i32
-        // !=
-        // i32 t1
-        Value *TryRes = EvaluateInDifferentType(Src, DestTy, true);
-        unsigned NumSignBits = ComputeNumSignBits(TryRes);
-        if (NumSignBits > (DestBitSize - SrcBitSize))
-          return ReplaceInstUsesWith(CI, TryRes);
-        
-        if (Instruction *TryI = dyn_cast<Instruction>(TryRes))
-          if (TryI->use_empty())
-            EraseInstFromFunction(*TryI);
-      }
-      break;
-    }
-    }
-    
-    if (DoXForm) {
-      DEBUG(errs() << "ICE: EvaluateInDifferentType converting expression type"
-            " to avoid cast: " << CI);
-      Value *Res = EvaluateInDifferentType(Src, DestTy, 
-                                           CI.getOpcode() == Instruction::SExt);
-      if (JustReplace)
-        // Just replace this cast with the result.
-        return ReplaceInstUsesWith(CI, Res);
-
-      assert(Res->getType() == DestTy);
-      switch (CI.getOpcode()) {
-      default: llvm_unreachable("Unknown cast type!");
-      case Instruction::Trunc:
-        // Just replace this cast with the result.
-        return ReplaceInstUsesWith(CI, Res);
-      case Instruction::ZExt: {
-        assert(SrcBitSize < DestBitSize && "Not a zext?");
-
-        // If the high bits are already zero, just replace this cast with the
-        // result.
-        APInt Mask(APInt::getBitsSet(DestBitSize, SrcBitSize, DestBitSize));
-        if (MaskedValueIsZero(Res, Mask))
-          return ReplaceInstUsesWith(CI, Res);
-
-        // We need to emit an AND to clear the high bits.
-        Constant *C = ConstantInt::get(CI.getContext(), 
-                                 APInt::getLowBitsSet(DestBitSize, SrcBitSize));
-        return BinaryOperator::CreateAnd(Res, C);
-      }
-      case Instruction::SExt: {
-        // If the high bits are already filled with sign bit, just replace this
-        // cast with the result.
-        unsigned NumSignBits = ComputeNumSignBits(Res);
-        if (NumSignBits > (DestBitSize - SrcBitSize))
-          return ReplaceInstUsesWith(CI, Res);
-
-        // We need to emit a cast to truncate, then a cast to sext.
-        return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
-      }
-      }
-    }
+    // eliminates the cast, so it is always a win.
+    break;
+  case Instruction::ZExt:
+    // If this is a zero-extension, we need to do an AND to maintain the clear
+    // top-part of the computation, so we require that the input have eliminated
+    // at least one cast.  
+    if (NumCastsRemoved < 1)
+      return 0;
+    break;
+  case Instruction::SExt:
+    // If this is a sign extension, we insert two new shifts (to do the
+    // extension) so we require that two casts have been eliminated.
+    if (NumCastsRemoved < 2)
+      return 0;
+    break;
   }
   
-  return 0;
+  DEBUG(errs() << "ICE: EvaluateInDifferentType converting expression type"
+        " to avoid cast: " << CI);
+  Value *Res = EvaluateInDifferentType(Src, DestTy, 
+                                       CI.getOpcode() == Instruction::SExt);
+  assert(Res->getType() == DestTy);
+
+  uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
+  uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+  switch (CI.getOpcode()) {
+  default: assert(0 && "Unknown cast type!");
+  case Instruction::Trunc:
+    // Just replace this cast with the result.
+    return ReplaceInstUsesWith(CI, Res);
+  case Instruction::ZExt: {
+    // If the high bits are already zero, just replace this cast with the
+    // result.
+    APInt Mask(APInt::getBitsSet(DestBitSize, SrcBitSize, DestBitSize));
+    if (MaskedValueIsZero(Res, Mask))
+      return ReplaceInstUsesWith(CI, Res);
+
+    // We need to emit an AND to clear the high bits.
+    Constant *C = ConstantInt::get(CI.getContext(), 
+                             APInt::getLowBitsSet(DestBitSize, SrcBitSize));
+    return BinaryOperator::CreateAnd(Res, C);
+  }
+  case Instruction::SExt: {
+    // If the high bits are already filled with sign bit, just replace this
+    // cast with the result.
+    unsigned NumSignBits = ComputeNumSignBits(Res);
+    if (NumSignBits > (DestBitSize - SrcBitSize))
+      return ReplaceInstUsesWith(CI, Res);
+
+    // We need to emit a cast to truncate, then a cast to sext.
+    return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
+  }
+  }
 }
 
 Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
