@@ -55,8 +55,8 @@ define i32 @test6(i64 %A) {
         %c1 = trunc i64 %A to i32               ; <i32> [#uses=1]
         %res = bitcast i32 %c1 to i32           ; <i32> [#uses=1]
         ret i32 %res
-; CHECK: %res = trunc i64 %A to i32
-; CHECK: ret i32 %res
+; CHECK:  trunc i64 %A to i32
+; CHECK-NEXT: ret i32
 }
 
 define i64 @test7(i1 %A) {
@@ -71,8 +71,8 @@ define i64 @test8(i8 %A) {
         %c1 = sext i8 %A to i64         ; <i64> [#uses=1]
         %res = bitcast i64 %c1 to i64           ; <i64> [#uses=1]
         ret i64 %res
-; CHECK: %res = sext i8 %A to i64
-; CHECK: ret i64 %res
+; CHECK: = sext i8 %A to i64
+; CHECK-NEXT: ret i64
 }
 
 define i16 @test9(i16 %A) {

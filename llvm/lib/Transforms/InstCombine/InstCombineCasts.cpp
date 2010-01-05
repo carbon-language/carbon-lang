@@ -439,59 +439,6 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   return 0;
 }
 
-/// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
-Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
-  Value *Src = CI.getOperand(0);
-  
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
-    // If casting the result of a getelementptr instruction with no offset, turn
-    // this into a cast of the original pointer!
-    if (GEP->hasAllZeroIndices()) {
-      // Changing the cast operand is usually not a good idea but it is safe
-      // here because the pointer operand is being replaced with another 
-      // pointer operand so the opcode doesn't need to change.
-      Worklist.Add(GEP);
-      CI.setOperand(0, GEP->getOperand(0));
-      return &CI;
-    }
-    
-    // If the GEP has a single use, and the base pointer is a bitcast, and the
-    // GEP computes a constant offset, see if we can convert these three
-    // instructions into fewer.  This typically happens with unions and other
-    // non-type-safe code.
-    if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0))) {
-      if (GEP->hasAllConstantIndices()) {
-        // We are guaranteed to get a constant from EmitGEPOffset.
-        ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(GEP));
-        int64_t Offset = OffsetV->getSExtValue();
-        
-        // Get the base pointer input of the bitcast, and the type it points to.
-        Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
-        const Type *GEPIdxTy =
-          cast<PointerType>(OrigBase->getType())->getElementType();
-        SmallVector<Value*, 8> NewIndices;
-        if (FindElementAtOffset(GEPIdxTy, Offset, NewIndices)) {
-          // If we were able to index down into an element, create the GEP
-          // and bitcast the result.  This eliminates one bitcast, potentially
-          // two.
-          Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
-            Builder->CreateInBoundsGEP(OrigBase,
-                                       NewIndices.begin(), NewIndices.end()) :
-            Builder->CreateGEP(OrigBase, NewIndices.begin(), NewIndices.end());
-          NGEP->takeName(GEP);
-          
-          if (isa<BitCastInst>(CI))
-            return new BitCastInst(NGEP, CI.getType());
-          assert(isa<PtrToIntInst>(CI));
-          return new PtrToIntInst(NGEP, CI.getType());
-        }
-      }      
-    }
-  }
-    
-  return commonCastTransforms(CI);
-}
-
 /// commonIntCastTransforms - This function implements the common transforms
 /// for trunc, zext, and sext.
 Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
@@ -634,8 +581,8 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   Value *Src = CI.getOperand(0);
   const Type *DestTy = CI.getType();
 
-  // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
-  if (DestTy->isInteger(1)) {
+  // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0), likewise for vector.
+  if (DestTy->getScalarSizeInBits() == 1) {
     Constant *One = ConstantInt::get(Src->getType(), 1);
     Src = Builder->CreateAnd(Src, One, "tmp");
     Value *Zero = Constant::getNullValue(Src->getType());
@@ -1072,24 +1019,6 @@ Instruction *InstCombiner::visitSIToFP(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
-Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
-  // If the destination integer type is smaller than the intptr_t type for
-  // this target, do a ptrtoint to intptr_t then do a trunc.  This allows the
-  // trunc to be exposed to other transforms.  Don't do this for extending
-  // ptrtoint's, because we don't know if the target sign or zero extends its
-  // pointers.
-  if (TD &&
-      CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
-    Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                       TD->getIntPtrType(CI.getContext()),
-                                       "tmp");
-    return new TruncInst(P, CI.getType());
-  }
-  
-  return commonPointerCastTransforms(CI);
-}
-
-
 Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // If the source integer type is larger than the intptr_t type for
   // this target, do a trunc to the intptr_t type, then inttoptr of it.  This
@@ -1109,21 +1038,81 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   return 0;
 }
 
+/// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
+Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
+  Value *Src = CI.getOperand(0);
+  
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
+    // If casting the result of a getelementptr instruction with no offset, turn
+    // this into a cast of the original pointer!
+    if (GEP->hasAllZeroIndices()) {
+      // Changing the cast operand is usually not a good idea but it is safe
+      // here because the pointer operand is being replaced with another 
+      // pointer operand so the opcode doesn't need to change.
+      Worklist.Add(GEP);
+      CI.setOperand(0, GEP->getOperand(0));
+      return &CI;
+    }
+    
+    // If the GEP has a single use, and the base pointer is a bitcast, and the
+    // GEP computes a constant offset, see if we can convert these three
+    // instructions into fewer.  This typically happens with unions and other
+    // non-type-safe code.
+    if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0)) &&
+        GEP->hasAllConstantIndices()) {
+      // We are guaranteed to get a constant from EmitGEPOffset.
+      ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(GEP));
+      int64_t Offset = OffsetV->getSExtValue();
+      
+      // Get the base pointer input of the bitcast, and the type it points to.
+      Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
+      const Type *GEPIdxTy =
+      cast<PointerType>(OrigBase->getType())->getElementType();
+      SmallVector<Value*, 8> NewIndices;
+      if (FindElementAtOffset(GEPIdxTy, Offset, NewIndices)) {
+        // If we were able to index down into an element, create the GEP
+        // and bitcast the result.  This eliminates one bitcast, potentially
+        // two.
+        Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
+        Builder->CreateInBoundsGEP(OrigBase,
+                                   NewIndices.begin(), NewIndices.end()) :
+        Builder->CreateGEP(OrigBase, NewIndices.begin(), NewIndices.end());
+        NGEP->takeName(GEP);
+        
+        if (isa<BitCastInst>(CI))
+          return new BitCastInst(NGEP, CI.getType());
+        assert(isa<PtrToIntInst>(CI));
+        return new PtrToIntInst(NGEP, CI.getType());
+      }      
+    }
+  }
+  
+  return commonCastTransforms(CI);
+}
+
+Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
+  // If the destination integer type is smaller than the intptr_t type for
+  // this target, do a ptrtoint to intptr_t then do a trunc.  This allows the
+  // trunc to be exposed to other transforms.  Don't do this for extending
+  // ptrtoint's, because we don't know if the target sign or zero extends its
+  // pointers.
+  if (TD &&
+      CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
+    Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
+                                       TD->getIntPtrType(CI.getContext()),
+                                       "tmp");
+    return new TruncInst(P, CI.getType());
+  }
+  
+  return commonPointerCastTransforms(CI);
+}
+
 Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   // If the operands are integer typed then apply the integer transforms,
   // otherwise just apply the common ones.
   Value *Src = CI.getOperand(0);
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
-
-  if (isa<PointerType>(SrcTy)) {
-    if (Instruction *I = commonPointerCastTransforms(CI))
-      return I;
-  } else {
-    if (Instruction *Result = commonCastTransforms(CI))
-      return Result;
-  }
-
 
   // Get rid of casts from one type to the same type. These are useless and can
   // be replaced by the operand.
@@ -1165,57 +1154,54 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     if (SrcElTy == DstElTy) {
       SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
       return GetElementPtrInst::CreateInBounds(Src, Idxs.begin(), Idxs.end(),"",
-                                               ((Instruction*) NULL));
+                                               ((Instruction*)NULL));
     }
   }
 
   if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
-    if (DestVTy->getNumElements() == 1) {
-      if (!isa<VectorType>(SrcTy)) {
-        Value *Elem = Builder->CreateBitCast(Src, DestVTy->getElementType());
-        return InsertElementInst::Create(UndefValue::get(DestTy), Elem,
+    if (DestVTy->getNumElements() == 1 && !isa<VectorType>(SrcTy)) {
+      Value *Elem = Builder->CreateBitCast(Src, DestVTy->getElementType());
+      return InsertElementInst::Create(UndefValue::get(DestTy), Elem,
                      Constant::getNullValue(Type::getInt32Ty(CI.getContext())));
-      }
       // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
     }
   }
 
   if (const VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy)) {
-    if (SrcVTy->getNumElements() == 1) {
-      if (!isa<VectorType>(DestTy)) {
-        Value *Elem = 
-          Builder->CreateExtractElement(Src,
-                     Constant::getNullValue(Type::getInt32Ty(CI.getContext())));
-        return CastInst::Create(Instruction::BitCast, Elem, DestTy);
-      }
+    if (SrcVTy->getNumElements() == 1 && !isa<VectorType>(DestTy)) {
+      Value *Elem = 
+        Builder->CreateExtractElement(Src,
+                   Constant::getNullValue(Type::getInt32Ty(CI.getContext())));
+      return CastInst::Create(Instruction::BitCast, Elem, DestTy);
     }
   }
 
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(Src)) {
-    if (SVI->hasOneUse()) {
-      // Okay, we have (bitconvert (shuffle ..)).  Check to see if this is
-      // a bitconvert to a vector with the same # elts.
-      if (isa<VectorType>(DestTy) && 
-          cast<VectorType>(DestTy)->getNumElements() ==
-                SVI->getType()->getNumElements() &&
-          SVI->getType()->getNumElements() ==
-            cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements()) {
-        CastInst *Tmp;
-        // If either of the operands is a cast from CI.getType(), then
-        // evaluating the shuffle in the casted destination's type will allow
-        // us to eliminate at least one cast.
-        if (((Tmp = dyn_cast<CastInst>(SVI->getOperand(0))) && 
-             Tmp->getOperand(0)->getType() == DestTy) ||
-            ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
-             Tmp->getOperand(0)->getType() == DestTy)) {
-          Value *LHS = Builder->CreateBitCast(SVI->getOperand(0), DestTy);
-          Value *RHS = Builder->CreateBitCast(SVI->getOperand(1), DestTy);
-          // Return a new shuffle vector.  Use the same element ID's, as we
-          // know the vector types match #elts.
-          return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
-        }
+    // Okay, we have (bitcast (shuffle ..)).  Check to see if this is
+    // a bitconvert to a vector with the same # elts.
+    if (SVI->hasOneUse() && isa<VectorType>(DestTy) && 
+        cast<VectorType>(DestTy)->getNumElements() ==
+              SVI->getType()->getNumElements() &&
+        SVI->getType()->getNumElements() ==
+          cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements()) {
+      BitCastInst *Tmp;
+      // If either of the operands is a cast from CI.getType(), then
+      // evaluating the shuffle in the casted destination's type will allow
+      // us to eliminate at least one cast.
+      if (((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(0))) && 
+           Tmp->getOperand(0)->getType() == DestTy) ||
+          ((Tmp = dyn_cast<BitCastInst>(SVI->getOperand(1))) && 
+           Tmp->getOperand(0)->getType() == DestTy)) {
+        Value *LHS = Builder->CreateBitCast(SVI->getOperand(0), DestTy);
+        Value *RHS = Builder->CreateBitCast(SVI->getOperand(1), DestTy);
+        // Return a new shuffle vector.  Use the same element ID's, as we
+        // know the vector types match #elts.
+        return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
       }
     }
   }
-  return 0;
+  
+  if (isa<PointerType>(SrcTy))
+    return commonPointerCastTransforms(CI);
+  return commonCastTransforms(CI);
 }
