@@ -103,23 +103,6 @@ bool InstCombiner::ShouldChangeType(const Type *From, const Type *To) const {
   return true;
 }
 
-/// getBitCastOperand - If the specified operand is a CastInst, a constant
-/// expression bitcast, or a GetElementPtrInst with all zero indices, return the
-/// operand value, otherwise return null.
-
-// FIXME: Value::stripPointerCasts
-static Value *getBitCastOperand(Value *V) {
-  if (Operator *O = dyn_cast<Operator>(V)) {
-    if (O->getOpcode() == Instruction::BitCast)
-      return O->getOperand(0);
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-      if (GEP->hasAllZeroIndices())
-        return GEP->getPointerOperand();
-  }
-  return 0;
-}
-
-
 
 // SimplifyCommutative - This performs a few simplifications for commutative
 // operators:
@@ -2925,8 +2908,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
 
     if (!Indices.empty())
-      return (cast<GEPOperator>(&GEP)->isInBounds() &&
-              Src->isInBounds()) ?
+      return (GEP.isInBounds() && Src->isInBounds()) ?
         GetElementPtrInst::CreateInBounds(Src->getOperand(0), Indices.begin(),
                                           Indices.end(), GEP.getName()) :
         GetElementPtrInst::Create(Src->getOperand(0), Indices.begin(),
@@ -2934,16 +2916,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   }
   
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
-  if (Value *X = getBitCastOperand(PtrOp)) {
-    assert(isa<PointerType>(X->getType()) && "Must be cast from pointer");
+  Value *StrippedPtr = PtrOp->stripPointerCasts();
+  if (StrippedPtr != PtrOp) {
+    const PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
 
-    // If the input bitcast is actually "bitcast(bitcast(x))", then we don't 
-    // want to change the gep until the bitcasts are eliminated.
-    if (getBitCastOperand(X)) {
-      Worklist.AddValue(PtrOp);
-      return 0;
-    }
-    
     bool HasZeroPointerIndex = false;
     if (ConstantInt *C = dyn_cast<ConstantInt>(GEP.getOperand(1)))
       HasZeroPointerIndex = C->isZero();
@@ -2957,21 +2933,21 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     // This occurs when the program declares an array extern like "int X[];"
     if (HasZeroPointerIndex) {
       const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
-      const PointerType *XTy = cast<PointerType>(X->getType());
       if (const ArrayType *CATy =
           dyn_cast<ArrayType>(CPTy->getElementType())) {
         // GEP (bitcast i8* X to [0 x i8]*), i32 0, ... ?
-        if (CATy->getElementType() == XTy->getElementType()) {
+        if (CATy->getElementType() == StrippedPtrTy->getElementType()) {
           // -> GEP i8* X, ...
-          SmallVector<Value*, 8> Indices(GEP.idx_begin()+1, GEP.idx_end());
-          return cast<GEPOperator>(&GEP)->isInBounds() ?
-            GetElementPtrInst::CreateInBounds(X, Indices.begin(), Indices.end(),
-                                              GEP.getName()) :
-            GetElementPtrInst::Create(X, Indices.begin(), Indices.end(),
-                                      GEP.getName());
+          SmallVector<Value*, 8> Idx(GEP.idx_begin()+1, GEP.idx_end());
+          GetElementPtrInst *Res =
+            GetElementPtrInst::Create(StrippedPtr, Idx.begin(),
+                                      Idx.end(), GEP.getName());
+          Res->setIsInBounds(GEP.isInBounds());
+          return Res;
         }
         
-        if (const ArrayType *XATy = dyn_cast<ArrayType>(XTy->getElementType())){
+        if (const ArrayType *XATy =
+              dyn_cast<ArrayType>(StrippedPtrTy->getElementType())){
           // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
           if (CATy->getElementType() == XATy->getElementType()) {
             // -> GEP [10 x i8]* X, i32 0, ...
@@ -2979,7 +2955,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // to an array of the same type as the destination pointer
             // array.  Because the array type is never stepped over (there
             // is a leading zero) we can fold the cast into this GEP.
-            GEP.setOperand(0, X);
+            GEP.setOperand(0, StrippedPtr);
             return &GEP;
           }
         }
@@ -2988,7 +2964,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Transform things like:
       // %t = getelementptr i32* bitcast ([2 x i32]* %str to i32*), i32 %V
       // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
-      const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
+      const Type *SrcElTy = StrippedPtrTy->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (TD && isa<ArrayType>(SrcElTy) &&
           TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
@@ -2996,9 +2972,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
         Idx[1] = GEP.getOperand(1);
-        Value *NewGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
-          Builder->CreateInBoundsGEP(X, Idx, Idx + 2, GEP.getName()) :
-          Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
+        Value *NewGEP = GEP.isInBounds() ?
+          Builder->CreateInBoundsGEP(StrippedPtr, Idx, Idx + 2, GEP.getName()) :
+          Builder->CreateGEP(StrippedPtr, Idx, Idx + 2, GEP.getName());
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(NewGEP, GEP.getType());
       }
@@ -3056,9 +3032,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Value *Idx[2];
           Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
           Idx[1] = NewIdx;
-          Value *NewGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
-            Builder->CreateInBoundsGEP(X, Idx, Idx + 2, GEP.getName()) :
-            Builder->CreateGEP(X, Idx, Idx + 2, GEP.getName());
+          Value *NewGEP = GEP.isInBounds() ?
+            Builder->CreateInBoundsGEP(StrippedPtr, Idx, Idx + 2,GEP.getName()):
+            Builder->CreateGEP(StrippedPtr, Idx, Idx + 2, GEP.getName());
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
         }
@@ -3106,7 +3082,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       const Type *InTy =
         cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
       if (FindElementAtOffset(InTy, Offset, NewIndices)) {
-        Value *NGEP = cast<GEPOperator>(&GEP)->isInBounds() ?
+        Value *NGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices.begin(),
                                      NewIndices.end()) :
           Builder->CreateGEP(BCI->getOperand(0), NewIndices.begin(),
