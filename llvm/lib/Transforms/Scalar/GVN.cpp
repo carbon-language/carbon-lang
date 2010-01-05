@@ -1022,7 +1022,7 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
   // FIXME: Study to see if/when this happens.
   if (LoadOffset == StoreOffset) {
 #if 0
-    errs() << "STORE/LOAD DEP WITH COMMON POINTER MISSED:\n"
+    dbgs() << "STORE/LOAD DEP WITH COMMON POINTER MISSED:\n"
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
@@ -1053,7 +1053,7 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
   }
   if (isAAFailure) {
 #if 0
-    errs() << "STORE LOAD DEP WITH COMMON BASE:\n"
+    dbgs() << "STORE LOAD DEP WITH COMMON BASE:\n"
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
@@ -1362,7 +1362,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallVector<NonLocalDepResult, 64> Deps;
   MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
                                    Deps);
-  //DEBUG(errs() << "INVESTIGATING NONLOCAL LOAD: "
+  //DEBUG(dbgs() << "INVESTIGATING NONLOCAL LOAD: "
   //             << Deps.size() << *LI << '\n');
 
   // If we had to process more than one hundred blocks to find the
@@ -1375,9 +1375,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // clobber in the current block.  Reject this early.
   if (Deps.size() == 1 && Deps[0].getResult().isClobber()) {
     DEBUG(
-      errs() << "GVN: non-local load ";
-      WriteAsOperand(errs(), LI);
-      errs() << " is clobbered by " << *Deps[0].getResult().getInst() << '\n';
+      dbgs() << "GVN: non-local load ";
+      WriteAsOperand(dbgs(), LI);
+      dbgs() << " is clobbered by " << *Deps[0].getResult().getInst() << '\n';
     );
     return false;
   }
@@ -1500,7 +1500,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // load, then it is fully redundant and we can use PHI insertion to compute
   // its value.  Insert PHIs and remove the fully redundant value now.
   if (UnavailableBlocks.empty()) {
-    DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
+    DEBUG(dbgs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
     
     // Perform PHI construction.
     Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
@@ -1614,7 +1614,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   // We don't currently handle critical edges :(
   if (UnavailablePred->getTerminator()->getNumSuccessors() != 1) {
-    DEBUG(errs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
+    DEBUG(dbgs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
                  << UnavailablePred->getName() << "': " << *LI << '\n');
     return false;
   }
@@ -1646,7 +1646,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // we fail PRE.
   if (LoadPtr == 0) {
     assert(NewInsts.empty() && "Shouldn't insert insts on failure");
-    DEBUG(errs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
+    DEBUG(dbgs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
                  << *LI->getOperand(0) << "\n");
     return false;
   }
@@ -1679,9 +1679,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.
-  DEBUG(errs() << "GVN REMOVING PRE LOAD: " << *LI << '\n');
+  DEBUG(dbgs() << "GVN REMOVING PRE LOAD: " << *LI << '\n');
   DEBUG(if (!NewInsts.empty())
-          errs() << "INSERTED " << NewInsts.size() << " INSTS: "
+          dbgs() << "INSERTED " << NewInsts.size() << " INSTS: "
                  << *NewInsts.back() << '\n');
   
   Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
@@ -1752,7 +1752,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     }
         
     if (AvailVal) {
-      DEBUG(errs() << "GVN COERCED INST:\n" << *Dep.getInst() << '\n'
+      DEBUG(dbgs() << "GVN COERCED INST:\n" << *Dep.getInst() << '\n'
             << *AvailVal << '\n' << *L << "\n\n\n");
       
       // Replace the load!
@@ -1766,10 +1766,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
         
     DEBUG(
       // fast print dep, using operator<< on instruction would be too slow
-      errs() << "GVN: load ";
-      WriteAsOperand(errs(), L);
+      dbgs() << "GVN: load ";
+      WriteAsOperand(dbgs(), L);
       Instruction *I = Dep.getInst();
-      errs() << " is clobbered by " << *I << '\n';
+      dbgs() << " is clobbered by " << *I << '\n';
     );
     return false;
   }
@@ -1793,7 +1793,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
         if (StoredVal == 0)
           return false;
         
-        DEBUG(errs() << "GVN COERCED STORE:\n" << *DepSI << '\n' << *StoredVal
+        DEBUG(dbgs() << "GVN COERCED STORE:\n" << *DepSI << '\n' << *StoredVal
                      << '\n' << *L << "\n\n\n");
       }
       else 
@@ -1822,7 +1822,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
         if (AvailableVal == 0)
           return false;
       
-        DEBUG(errs() << "GVN COERCED LOAD:\n" << *DepLI << "\n" << *AvailableVal
+        DEBUG(dbgs() << "GVN COERCED LOAD:\n" << *DepLI << "\n" << *AvailableVal
                      << "\n" << *L << "\n\n\n");
       }
       else 
@@ -1990,7 +1990,7 @@ bool GVN::runOnFunction(Function& F) {
   unsigned Iteration = 0;
 
   while (ShouldContinue) {
-    DEBUG(errs() << "GVN iteration: " << Iteration << "\n");
+    DEBUG(dbgs() << "GVN iteration: " << Iteration << "\n");
     ShouldContinue = iterateOnFunction(F);
     Changed |= ShouldContinue;
     ++Iteration;
@@ -2038,7 +2038,7 @@ bool GVN::processBlock(BasicBlock *BB) {
 
     for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
          E = toErase.end(); I != E; ++I) {
-      DEBUG(errs() << "GVN removed: " << **I << '\n');
+      DEBUG(dbgs() << "GVN removed: " << **I << '\n');
       if (MD) MD->removeInstruction(*I);
       (*I)->eraseFromParent();
       DEBUG(verifyRemoved(*I));
@@ -2196,7 +2196,7 @@ bool GVN::performPRE(Function &F) {
         MD->invalidateCachedPointerInfo(Phi);
       VN.erase(CurInst);
 
-      DEBUG(errs() << "GVN PRE removed: " << *CurInst << '\n');
+      DEBUG(dbgs() << "GVN PRE removed: " << *CurInst << '\n');
       if (MD) MD->removeInstruction(CurInst);
       CurInst->eraseFromParent();
       DEBUG(verifyRemoved(CurInst));
