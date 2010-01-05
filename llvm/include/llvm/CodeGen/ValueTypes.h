@@ -437,25 +437,17 @@ namespace llvm {
 
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
-      return isSimple() ?
-             ((V >= MVT::f32 && V <= MVT::ppcf128) ||
-              (V >= MVT::v2f32 && V <= MVT::v4f64)) : isExtendedFloatingPoint();
+      return isSimple() ? V.isFloatingPoint() : isExtendedFloatingPoint();
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
-      return isSimple() ?
-             ((V >= MVT::FIRST_INTEGER_VALUETYPE &&
-               V <= MVT::LAST_INTEGER_VALUETYPE) ||
-              (V >= MVT::v2i8 && V <= MVT::v4i64)) : isExtendedInteger();
+      return isSimple() ? V.isInteger() : isExtendedInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
     bool isVector() const {
-      return isSimple() ?
-             (V >= MVT::FIRST_VECTOR_VALUETYPE && V <= 
-                   MVT::LAST_VECTOR_VALUETYPE) :
-             isExtendedVector();
+      return isSimple() ? V.isVector() : isExtendedVector();
     }
 
     /// is64BitVector - Return true if this is a 64-bit vector type.
@@ -641,7 +633,7 @@ namespace llvm {
     static EVT getEVT(const Type *Ty, bool HandleUnknown = false);
 
     intptr_t getRawBits() {
-      if (V.SimpleTy <= MVT::LastSimpleValueType)
+      if (isSimple())
         return V.SimpleTy;
       else
         return (intptr_t)(LLVMTy);
