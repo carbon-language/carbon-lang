@@ -192,18 +192,18 @@ void SlotIndexes::renumberIndexes() {
 void SlotIndexes::dump() const {
   for (const IndexListEntry *itr = front(); itr != getTail();
        itr = itr->getNext()) {
-    errs() << itr->getIndex() << " ";
+    dbgs() << itr->getIndex() << " ";
 
     if (itr->getInstr() != 0) {
-      errs() << *itr->getInstr();
+      dbgs() << *itr->getInstr();
     } else {
-      errs() << "\n";
+      dbgs() << "\n";
     }
   }
 
   for (MBB2IdxMap::const_iterator itr = mbb2IdxMap.begin();
        itr != mbb2IdxMap.end(); ++itr) {
-    errs() << "MBB " << itr->first->getNumber() << " (" << itr->first << ") - ["
+    dbgs() << "MBB " << itr->first->getNumber() << " (" << itr->first << ") - ["
            << itr->second.first << ", " << itr->second.second << "]\n";
   }
 }
@@ -217,7 +217,7 @@ void SlotIndex::print(raw_ostream &os) const {
 
 // Dump a SlotIndex to stderr.
 void SlotIndex::dump() const {
-  print(errs());
-  errs() << "\n";
+  print(dbgs());
+  dbgs() << "\n";
 }
 
