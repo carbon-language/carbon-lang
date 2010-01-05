@@ -1022,7 +1022,7 @@ MachineInstr* PreAllocSplitting::FoldRestore(unsigned vreg,
 /// so it would not cross the barrier that's being processed. Shrink wrap
 /// (minimize) the live interval to the last uses.
 bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
-  DEBUG(errs() << "Pre-alloc splitting " << LI->reg << " for " << *Barrier
+  DEBUG(dbgs() << "Pre-alloc splitting " << LI->reg << " for " << *Barrier
                << "  result: ");
 
   CurrLI = LI;
@@ -1039,7 +1039,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 
   // If this would create a new join point, do not split.
   if (DefMI && createsNewJoin(LR, DefMI->getParent(), Barrier->getParent())) {
-    DEBUG(errs() << "FAILED (would create a new join point).\n");
+    DEBUG(dbgs() << "FAILED (would create a new join point).\n");
     return false;
   }
 
@@ -1056,13 +1056,13 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   MachineBasicBlock::iterator RestorePt =
     findRestorePoint(BarrierMBB, Barrier, LR->end, RefsInMBB);
   if (RestorePt == BarrierMBB->end()) {
-    DEBUG(errs() << "FAILED (could not find a suitable restore point).\n");
+    DEBUG(dbgs() << "FAILED (could not find a suitable restore point).\n");
     return false;
   }
 
   if (DefMI && LIs->isReMaterializable(*LI, ValNo, DefMI))
     if (Rematerialize(LI->reg, ValNo, DefMI, RestorePt, RefsInMBB)) {
-      DEBUG(errs() << "success (remat).\n");
+      DEBUG(dbgs() << "success (remat).\n");
       return true;
     }
 
@@ -1081,7 +1081,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       MachineBasicBlock::iterator SpillPt = 
         findSpillPoint(BarrierMBB, Barrier, NULL, RefsInMBB);
       if (SpillPt == BarrierMBB->begin()) {
-        DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
+        DEBUG(dbgs() << "FAILED (could not find a suitable spill point).\n");
         return false; // No gap to insert spill.
       }
       // Add spill.
@@ -1096,7 +1096,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     // If it's already split, just restore the value. There is no need to spill
     // the def again.
     if (!DefMI) {
-      DEBUG(errs() << "FAILED (def is dead).\n");
+      DEBUG(dbgs() << "FAILED (def is dead).\n");
       return false; // Def is dead. Do nothing.
     }
     
@@ -1111,13 +1111,13 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
         SpillPt = findSpillPoint(BarrierMBB, Barrier, DefMI,
                                  RefsInMBB);
         if (SpillPt == DefMBB->begin()) {
-          DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
+          DEBUG(dbgs() << "FAILED (could not find a suitable spill point).\n");
           return false; // No gap to insert spill.
         }
       } else {
         SpillPt = llvm::next(MachineBasicBlock::iterator(DefMI));
         if (SpillPt == DefMBB->end()) {
-          DEBUG(errs() << "FAILED (could not find a suitable spill point).\n");
+          DEBUG(dbgs() << "FAILED (could not find a suitable spill point).\n");
           return false; // No gap to insert spill.
         }
       }
@@ -1160,7 +1160,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   }
   
   ++NumSplits;
-  DEBUG(errs() << "success.\n");
+  DEBUG(dbgs() << "success.\n");
   return true;
 }
 
