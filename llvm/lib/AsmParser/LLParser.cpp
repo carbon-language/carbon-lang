@@ -548,7 +548,7 @@ bool LLParser::ParseStandaloneMetadata() {
       ParseType(Ty, TyLoc) ||
       ParseToken(lltok::exclaim, "Expected '!' here") ||
       ParseToken(lltok::lbrace, "Expected '{' here") ||
-      ParseMDNodeVector(Elts) ||
+      ParseMDNodeVector(Elts, NULL) ||
       ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
@@ -1885,7 +1885,7 @@ BasicBlock *LLParser::PerFunctionState::DefineBB(const std::string &Name,
 /// type implied.  For example, if we parse "4" we don't know what integer type
 /// it has.  The value will later be combined with its type and checked for
 /// sanity.
-bool LLParser::ParseValID(ValID &ID) {
+bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
   ID.Loc = Lex.getLoc();
   switch (Lex.getKind()) {
   default: return TokError("expected value token");
@@ -1911,7 +1911,7 @@ bool LLParser::ParseValID(ValID &ID) {
     
     if (EatIfPresent(lltok::lbrace)) {
       SmallVector<Value*, 16> Elts;
-      if (ParseMDNodeVector(Elts) ||
+      if (ParseMDNodeVector(Elts, PFS) ||
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
@@ -2444,9 +2444,10 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
 }
 
 /// ConvertGlobalOrMetadataValIDToValue - Apply a type to a ValID to get a fully
-/// resolved constant or metadata value.
+/// resolved constant, metadata, or function-local value
 bool LLParser::ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
-                                                   Value *&V) {
+                                                   Value *&V,
+                                                   PerFunctionState *PFS) {
   switch (ID.Kind) {
   case ValID::t_MDNode:
     if (!Ty->isMetadataTy())
@@ -2457,6 +2458,12 @@ bool LLParser::ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
     if (!Ty->isMetadataTy())
       return Error(ID.Loc, "metadata value must have metadata type");
     V = ID.MDStringVal;
+    return false;
+  case ValID::t_LocalID:
+  case ValID::t_LocalName:
+    if (!PFS)
+      return Error(ID.Loc, "invalid use of function-local name");
+    if (ConvertValIDToValue(Ty, ID, V, *PFS)) return true;
     return false;
   default:
     Constant *C;
@@ -2516,7 +2523,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     return false;
   }
   default:
-    return ConvertGlobalOrMetadataValIDToValue(Ty, ID, V);
+    return ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, &PFS);
   }
 
   return V == 0;
@@ -2525,7 +2532,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
 bool LLParser::ParseValue(const Type *Ty, Value *&V, PerFunctionState &PFS) {
   V = 0;
   ValID ID;
-  return ParseValID(ID) ||
+  return ParseValID(ID, &PFS) ||
          ConvertValIDToValue(Ty, ID, V, PFS);
 }
 
@@ -3842,7 +3849,8 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= Element (',' Element)*
 /// Element
 ///   ::= 'null' | TypeAndValue
-bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
+bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
+                                 PerFunctionState *PFS) {
   do {
     // Null is a special case since it is typeless.
     if (EatIfPresent(lltok::kw_null)) {
@@ -3853,8 +3861,8 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
     Value *V = 0;
     PATypeHolder Ty(Type::getVoidTy(Context));
     ValID ID;
-    if (ParseType(Ty) || ParseValID(ID) ||
-        ConvertGlobalOrMetadataValIDToValue(Ty, ID, V))
+    if (ParseType(Ty) || ParseValID(ID, PFS) ||
+        ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, PFS))
       return true;
     
     Elts.push_back(V);

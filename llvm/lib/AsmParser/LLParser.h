@@ -216,17 +216,6 @@ namespace llvm {
     bool ParseFunctionType(PATypeHolder &Result);
     PATypeHolder HandleUpRefs(const Type *Ty);
 
-    // Constants.
-    bool ParseValID(ValID &ID);
-    bool ConvertGlobalValIDToValue(const Type *Ty, ValID &ID, Constant *&V);
-    bool ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
-                                             Value *&V);
-    bool ParseGlobalValue(const Type *Ty, Constant *&V);
-    bool ParseGlobalTypeAndValue(Constant *&V);
-    bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
-    bool ParseMDNodeVector(SmallVectorImpl<Value*> &);
-
-
     // Function Semantic Analysis.
     class PerFunctionState {
       LLParser &P;
@@ -300,6 +289,16 @@ namespace llvm {
     };
     bool ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
                             PerFunctionState &PFS);
+
+    // Constant Parsing.
+    bool ParseValID(ValID &ID, PerFunctionState *PFS = NULL);
+    bool ConvertGlobalValIDToValue(const Type *Ty, ValID &ID, Constant *&V);
+    bool ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
+                                             Value *&V, PerFunctionState *PFS);
+    bool ParseGlobalValue(const Type *Ty, Constant *&V);
+    bool ParseGlobalTypeAndValue(Constant *&V);
+    bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
+    bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);
 
     // Function Parsing.
     struct ArgInfo {
