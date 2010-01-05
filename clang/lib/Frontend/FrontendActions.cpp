@@ -280,7 +280,9 @@ void PrintParseAction::ExecuteAction() {
 
 void PrintPreprocessedAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
-  llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, getCurrentFile());
+  // Output file needs to be set to 'Binary', to avoid converting Unix style
+  // line feeds (<LF>) to Microsoft style line feeds (<CR><LF>).
+  llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
   if (!OS) return;
 
   DoPrintPreprocessedInput(CI.getPreprocessor(), OS,
