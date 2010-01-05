@@ -279,13 +279,13 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 #endif // USE_LIBFFI
 
   if (F->getName() == "__main")
-    errs() << "Tried to execute an unknown external function: "
+    dbgs() << "Tried to execute an unknown external function: "
       << F->getType()->getDescription() << " __main\n";
   else
     llvm_report_error("Tried to execute an unknown external function: " +
                       F->getType()->getDescription() + " " +F->getName());
 #ifndef USE_LIBFFI
-  errs() << "Recompiling LLVM with --enable-libffi might help.\n";
+  dbgs() << "Recompiling LLVM with --enable-libffi might help.\n";
 #endif
   return GenericValue();
 }
@@ -397,7 +397,7 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
       case 's':
         sprintf(Buffer, FmtBuf, (char*)GVTOP(Args[ArgNo++])); break;
       default:
-        errs() << "<unknown printf code '" << *FmtStr << "'!>";
+        dbgs() << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
       strcpy(OutputBuffer, Buffer);
