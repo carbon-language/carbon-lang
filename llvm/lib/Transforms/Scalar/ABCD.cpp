@@ -451,7 +451,7 @@ bool ABCD::runOnFunction(Function &F) {
   modified = false;
   createSSI(F);
   executeABCD(F);
-  DEBUG(inequality_graph.printGraph(errs(), F));
+  DEBUG(inequality_graph.printGraph(dbgs(), F));
   removePhis();
 
   inequality_graph.clear();
