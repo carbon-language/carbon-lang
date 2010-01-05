@@ -288,23 +288,6 @@ static Constant *SubOne(ConstantInt *C) {
 }
 
 
-/// AssociativeOpt - Perform an optimization on an associative operator.  This
-/// function is designed to check a chain of associative operators for a
-/// potential to apply a certain optimization.  Since the optimization may be
-/// applicable if the expression was reassociated, this checks the chain, then
-/// reassociates the expression as necessary to expose the optimization
-/// opportunity.  This makes use of a special Functor, which must define
-/// 'shouldApply' and 'apply' methods.
-///
-template<typename Functor>
-static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
-  // Quick check, see if the immediate LHS matches...
-  if (F.shouldApply(Root.getOperand(0)))
-    return F.apply(Root);
-
-  return 0;
-}
-
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
   if (CastInst *CI = dyn_cast<CastInst>(&I))
@@ -2801,20 +2784,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-namespace {
-
-// XorSelf - Implements: X ^ X --> 0
-struct XorSelf {
-  Value *RHS;
-  XorSelf(Value *rhs) : RHS(rhs) {}
-  bool shouldApply(Value *LHS) const { return LHS == RHS; }
-  Instruction *apply(BinaryOperator &Xor) const {
-    return &Xor;
-  }
-};
-
-}
-
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -2827,11 +2796,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op1);  // X ^ undef -> undef
   }
 
-  // xor X, X = 0, even if X is nested in a sequence of Xor's.
-  if (Instruction *Result = AssociativeOpt(I, XorSelf(Op1))) {
-    assert(Result == &I && "AssociativeOpt didn't work?"); Result=Result;
+  // xor X, X = 0
+  if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  }
   
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
