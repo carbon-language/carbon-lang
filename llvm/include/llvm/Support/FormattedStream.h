@@ -144,6 +144,10 @@ formatted_raw_ostream &fouts();
 /// standard error.  Use it like: ferrs() << "foo" << "bar";
 formatted_raw_ostream &ferrs();
 
+/// fdbgs() - This returns a reference to a formatted_raw_ostream for
+/// debug output.  Use it like: fdbgs() << "foo" << "bar";
+formatted_raw_ostream &fdbgs();
+
 } // end llvm namespace
 
 
