@@ -35,20 +35,23 @@ static Constant *SubOne(ConstantInt *C) {
 // Otherwise, return null.
 //
 static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
-  if (V->hasOneUse() && V->getType()->isInteger())
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (I->getOpcode() == Instruction::Mul)
-        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
-          return I->getOperand(0);
-      if (I->getOpcode() == Instruction::Shl)
-        if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
-          // The multiplier is really 1 << CST.
-          uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-          uint32_t CSTVal = CST->getLimitedValue(BitWidth);
-          CST = ConstantInt::get(V->getType()->getContext(),
-                                 APInt(BitWidth, 1).shl(CSTVal));
-          return I->getOperand(0);
-        }
+  if (!V->hasOneUse() || !V->getType()->isInteger())
+    return 0;
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return 0;
+  
+  if (I->getOpcode() == Instruction::Mul)
+    if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
+      return I->getOperand(0);
+  if (I->getOpcode() == Instruction::Shl)
+    if ((CST = dyn_cast<ConstantInt>(I->getOperand(1)))) {
+      // The multiplier is really 1 << CST.
+      uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+      uint32_t CSTVal = CST->getLimitedValue(BitWidth);
+      CST = ConstantInt::get(V->getType()->getContext(),
+                             APInt(BitWidth, 1).shl(CSTVal));
+      return I->getOperand(0);
     }
   return 0;
 }
@@ -345,7 +348,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
         Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
-                                              RHSConv->getOperand(0), "addconv");
+                                             RHSConv->getOperand(0), "addconv");
         return new SExtInst(NewAdd, I.getType());
       }
     }
