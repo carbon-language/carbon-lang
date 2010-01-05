@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -26,7 +27,7 @@ namespace {
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:
     static char ID;
-    PrintModulePass() : ModulePass(&ID), Out(&errs()), 
+    PrintModulePass() : ModulePass(&ID), Out(&dbgs()), 
       DeleteStream(false) {}
     PrintModulePass(raw_ostream *o, bool DS)
       : ModulePass(&ID), Out(o), DeleteStream(DS) {}
@@ -51,7 +52,7 @@ namespace {
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:
     static char ID;
-    PrintFunctionPass() : FunctionPass(&ID), Banner(""), Out(&errs()), 
+    PrintFunctionPass() : FunctionPass(&ID), Banner(""), Out(&dbgs()), 
                           DeleteStream(false) {}
     PrintFunctionPass(const std::string &B, raw_ostream *o, bool DS)
       : FunctionPass(&ID), Banner(B), Out(o), DeleteStream(DS) {}
