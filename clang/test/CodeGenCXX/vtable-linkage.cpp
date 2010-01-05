@@ -30,6 +30,7 @@ void D::f() { }
 
 static struct : D { } e;
 
+// The destructor is the key function.
 template<typename T>
 struct E {
   virtual ~E();
@@ -37,6 +38,7 @@ struct E {
 
 template<typename T> E<T>::~E() { }
 
+// Anchor is the key function
 template<>
 struct E<char> {
   virtual void anchor();
@@ -52,6 +54,29 @@ void use_E() {
   (void)ei;
   E<long> el;
   (void)el;
+}
+
+// No key function
+template<typename T>
+struct F {
+  virtual void foo() { }
+};
+
+// No key function
+template<>
+struct F<char> {
+  virtual void foo() { }
+};
+
+template struct F<short>;
+extern template struct F<int>;
+
+void use_F(F<char> &fc) {
+  F<int> fi;
+  (void)fi;
+  F<long> fl;
+  (void)fl;
+  fc.foo();
 }
 
 // B has a key function that is not defined in this translation unit so its vtable
@@ -79,6 +104,10 @@ void use_E() {
 // weak_odr linkage.
 // CHECK: @_ZTV1EIsE = weak_odr constant
 
+// F<short> is an explicit template instantiation without a key
+// function, so its vtable should have weak_odr linkage
+// CHECK: @_ZTV1FIsE = weak_odr constant
+
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
@@ -89,6 +118,14 @@ void use_E() {
 // CHECK: @"_ZTS3$_0" = internal constant
 // CHECK: @"_ZTI3$_0" = internal constant
 // CHECK: @"_ZTV3$_0" = internal constant
+
+// F<long> is an implicit template instantiation with no key function,
+// so its vtable should have weak_odr linkage.
+// CHECK: @_ZTV1FIlE = weak_odr constant
+
+// F<int> is an explicit template instantiation declaration without a
+// key function, so its vtable should have weak_odr linkage.
+// CHECK: @_ZTV1FIiE = available_externally constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiation, so we should only reference

@@ -1501,16 +1501,31 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       break;
 
     case TSK_ImplicitInstantiation:
-    case TSK_ExplicitInstantiationDeclaration:
-      // FIXME: could an explicit instantiation declaration imply
-      // available_externally linkage?
     case TSK_ExplicitInstantiationDefinition:
       Linkage = llvm::GlobalVariable::WeakODRLinkage;
       break;
+
+    case TSK_ExplicitInstantiationDeclaration:
+      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
+      break;
     }
   }
-  else
+  else if (KeyFunction)
     Linkage = llvm::GlobalVariable::WeakODRLinkage;
+  else {
+    switch (RD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+    case TSK_ImplicitInstantiation:
+    case TSK_ExplicitInstantiationDefinition:
+      Linkage = llvm::GlobalVariable::WeakODRLinkage;
+      break;
+
+    case TSK_ExplicitInstantiationDeclaration:
+      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
+      break;
+    }
+  }
   
   // Emit the data.
   GenerateClassData(Linkage, RD);
