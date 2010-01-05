@@ -1,5 +1,6 @@
 ; RUN: opt < %s -instcombine -S | not grep sext
 ; XFAIL: *
+; rdar://6598839
 
 define zeroext i16 @t(i8 zeroext %on_off, i16* nocapture %puls) nounwind readonly {
 entry:
