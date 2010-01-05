@@ -32,17 +32,17 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Scalarize node result " << ResNo << ": ";
+  DEBUG(dbgs() << "Scalarize node result " << ResNo << ": ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
   SDValue R = SDValue();
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "ScalarizeVectorResult #" << ResNo << ": ";
+    dbgs() << "ScalarizeVectorResult #" << ResNo << ": ";
     N->dump(&DAG);
-    errs() << "\n";
+    dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to scalarize the result of this operator!");
 
@@ -278,18 +278,18 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
 //===----------------------------------------------------------------------===//
 
 bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(errs() << "Scalarize node operand " << OpNo << ": ";
+  DEBUG(dbgs() << "Scalarize node operand " << OpNo << ": ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
   SDValue Res = SDValue();
 
   if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
-      errs() << "ScalarizeVectorOperand Op #" << OpNo << ": ";
+      dbgs() << "ScalarizeVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG);
-      errs() << "\n";
+      dbgs() << "\n";
 #endif
       llvm_unreachable("Do not know how to scalarize this operator's operand!");
     case ISD::BIT_CONVERT:
@@ -382,17 +382,17 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
 /// legalization, we just know that (at least) one result needs vector
 /// splitting.
 void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Split node result: ";
+  DEBUG(dbgs() << "Split node result: ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
   SDValue Lo, Hi;
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "SplitVectorResult #" << ResNo << ": ";
+    dbgs() << "SplitVectorResult #" << ResNo << ": ";
     N->dump(&DAG);
-    errs() << "\n";
+    dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to split the result of this operator!");
 
@@ -945,18 +945,18 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N,
 /// result types of the node are known to be legal, but other operands of the
 /// node may need legalization as well as the specified one.
 bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(errs() << "Split node operand: ";
+  DEBUG(dbgs() << "Split node operand: ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
   SDValue Res = SDValue();
 
   if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
-      errs() << "SplitVectorOperand Op #" << OpNo << ": ";
+      dbgs() << "SplitVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG);
-      errs() << "\n";
+      dbgs() << "\n";
 #endif
       llvm_unreachable("Do not know how to split this operator's operand!");
 
@@ -1136,9 +1136,9 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
 //===----------------------------------------------------------------------===//
 
 void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Widen node result " << ResNo << ": ";
+  DEBUG(dbgs() << "Widen node result " << ResNo << ": ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
 
   // See if the target wants to custom widen this node.
   if (CustomWidenLowerNode(N, N->getValueType(ResNo)))
@@ -1148,9 +1148,9 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "WidenVectorResult #" << ResNo << ": ";
+    dbgs() << "WidenVectorResult #" << ResNo << ": ";
     N->dump(&DAG);
-    errs() << "\n";
+    dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to widen the result of this operator!");
 
@@ -1806,17 +1806,17 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
 // Widen Vector Operand
 //===----------------------------------------------------------------------===//
 bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
-  DEBUG(errs() << "Widen node operand " << ResNo << ": ";
+  DEBUG(dbgs() << "Widen node operand " << ResNo << ": ";
         N->dump(&DAG);
-        errs() << "\n");
+        dbgs() << "\n");
   SDValue Res = SDValue();
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    errs() << "WidenVectorOperand op #" << ResNo << ": ";
+    dbgs() << "WidenVectorOperand op #" << ResNo << ": ";
     N->dump(&DAG);
-    errs() << "\n";
+    dbgs() << "\n";
 #endif
     llvm_unreachable("Do not know how to widen this operator's operand!");
 
