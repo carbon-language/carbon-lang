@@ -5681,13 +5681,8 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
 }
 
-SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
-  assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
-  SDValue Op0 = Op.getOperand(0);
-  SDValue Op1 = Op.getOperand(1);
-  DebugLoc dl = Op.getDebugLoc();
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-
+static SDValue LowerToBT(SDValue Op0, SDValue Op1, ISD::CondCode CC,
+                         DebugLoc dl, SelectionDAG &DAG) {
   // Lower (X & (1 << N)) == 0 to BT(X, N).
   // Lower ((X >>u N) & 1) != 0 to BT(X, N).
   // Lower ((X >>s N) & 1) != 0 to BT(X, N).
@@ -5699,14 +5694,14 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
     SDValue LHS, RHS;
     if (Op0.getOperand(1).getOpcode() == ISD::SHL) {
       if (ConstantSDNode *Op010C =
-            dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
+          dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
         if (Op010C->getZExtValue() == 1) {
           LHS = Op0.getOperand(0);
           RHS = Op0.getOperand(1).getOperand(1);
         }
     } else if (Op0.getOperand(0).getOpcode() == ISD::SHL) {
       if (ConstantSDNode *Op000C =
-            dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
+          dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
         if (Op000C->getZExtValue() == 1) {
           LHS = Op0.getOperand(1);
           RHS = Op0.getOperand(0).getOperand(1);
@@ -5739,6 +5734,21 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
                          DAG.getConstant(Cond, MVT::i8), BT);
     }
   }
+
+  return SDValue();
+}
+
+SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+
+  // Optimize to BT if possible.
+  SDValue NewCond = LowerToBT(Op0, Op1, CC, dl, DAG);
+  if (NewCond.getNode())
+    return NewCond;
 
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
