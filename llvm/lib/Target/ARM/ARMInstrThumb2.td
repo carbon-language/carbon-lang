@@ -818,10 +818,10 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs GPR:$dst1, GPR:$dst2),
                         (ins t2addrmode_imm8s4:$addr),
-                        IIC_iLoadi, "ldrd", "\t$dst1, $dst2, $addr", []>;
+                        IIC_iLoadi, "ldrd", "\t$dst1, $addr", []>;
 def t2LDRDpci : T2Ii8s4<?, ?, 1, (outs GPR:$dst1, GPR:$dst2),
                         (ins i32imm:$addr), IIC_iLoadi,
-                       "ldrd", "\t$dst1, $dst2, $addr", []> {
+                       "ldrd", "\t$dst1, $addr", []> {
   let Inst{19-16} = 0b1111; // Rn
 }
 }
@@ -934,7 +934,7 @@ defm t2STRH  : T2I_st<0b01, "strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RH
 let mayLoad = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                        (ins GPR:$src1, GPR:$src2, t2addrmode_imm8s4:$addr),
-               IIC_iStorer, "strd", "\t$src1, $src2, $addr", []>;
+               IIC_iStorer, "strd", "\t$src1, $addr", []>;
 
 // Indexed stores
 def t2STR_PRE  : T2Iidxldst<0, 0b10, 0, 1, (outs GPR:$base_wb),
