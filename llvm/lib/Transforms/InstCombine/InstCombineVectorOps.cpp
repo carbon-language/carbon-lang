@@ -86,11 +86,12 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
   
   if (isa<UndefValue>(V))
     return UndefValue::get(PTy->getElementType());
-  else if (isa<ConstantAggregateZero>(V))
+  if (isa<ConstantAggregateZero>(V))
     return Constant::getNullValue(PTy->getElementType());
-  else if (ConstantVector *CP = dyn_cast<ConstantVector>(V))
+  if (ConstantVector *CP = dyn_cast<ConstantVector>(V))
     return CP->getOperand(EltNo);
-  else if (InsertElementInst *III = dyn_cast<InsertElementInst>(V)) {
+  
+  if (InsertElementInst *III = dyn_cast<InsertElementInst>(V)) {
     // If this is an insert to a variable element, we don't know what it is.
     if (!isa<ConstantInt>(III->getOperand(2))) 
       return 0;
@@ -104,7 +105,9 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     // Otherwise, the insertelement doesn't modify the value, recurse on its
     // vector input.
     return FindScalarElement(III->getOperand(0), EltNo);
-  } else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
+  }
+  
+  if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
     unsigned LHSWidth =
     cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements();
     unsigned InEl = getShuffleMask(SVI)[EltNo];
