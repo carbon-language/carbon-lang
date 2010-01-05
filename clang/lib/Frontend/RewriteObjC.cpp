@@ -4508,14 +4508,14 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   // {0, &ND, some_flag, __size=sizeof(struct __Block_byref_ND), 
   //  initializer-if-any};
   bool hasInit = (ND->getInit() != 0);
+  unsigned flags = 0;
+  if (HasCopyAndDispose)
+    flags |= BLOCK_HAS_COPY_DISPOSE;
   Name = ND->getNameAsString();
   ByrefType = "struct __Block_byref_" + Name;
   if (!hasInit) {
     ByrefType += " " + Name + " = ";
     ByrefType += "{0, &" + Name + ", ";
-    unsigned flags = 0;
-    if (HasCopyAndDispose)
-      flags |= BLOCK_HAS_COPY_DISPOSE;
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
@@ -4535,9 +4535,6 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ReplaceText(DeclLoc, endBuf-startBuf, 
                 ByrefType.c_str(), ByrefType.size());
     ByrefType = " = {0, &" + Name + ", ";
-    unsigned flags = 0;
-    if (HasCopyAndDispose)
-      flags |= BLOCK_HAS_COPY_DISPOSE;
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
