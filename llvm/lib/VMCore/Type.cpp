@@ -124,6 +124,11 @@ const Type *Type::getScalarType() const {
   return this;
 }
 
+/// isInteger - Return true if this is an IntegerType of the specified width.
+bool Type::isInteger(unsigned Bitwidth) const {
+  return isInteger() && cast<IntegerType>(this)->getBitWidth() == Bitwidth;
+}
+
 /// isIntOrIntVector - Return true if this is an integer type or a vector of
 /// integer types.
 ///

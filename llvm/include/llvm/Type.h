@@ -217,6 +217,9 @@ public:
   ///
   bool isInteger() const { return ID == IntegerTyID; } 
 
+  /// isInteger - Return true if this is an IntegerType of the specified width.
+  bool isInteger(unsigned Bitwidth) const;
+
   /// isIntOrIntVector - Return true if this is an integer type or a vector of
   /// integer types.
   ///
