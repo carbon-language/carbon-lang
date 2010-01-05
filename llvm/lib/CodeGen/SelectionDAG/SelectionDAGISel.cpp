@@ -162,7 +162,7 @@ MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                          MachineBasicBlock *MBB,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
 #ifndef NDEBUG
-  errs() << "If a target marks an instruction with "
+  dbgs() << "If a target marks an instruction with "
           "'usesCustomInserter', it must implement "
           "TargetLowering::EmitInstrWithCustomInserter!";
 #endif
@@ -325,7 +325,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   else
     GFI = 0;
   RegInfo = &MF->getRegInfo();
-  DEBUG(errs() << "\n\n\n=== " << Fn.getName() << "\n");
+  DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
 
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
@@ -504,7 +504,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     BlockName = MF->getFunction()->getNameStr() + ":" +
                 BB->getBasicBlock()->getNameStr();
 
-  DEBUG(errs() << "Initial selection DAG:\n");
+  DEBUG(dbgs() << "Initial selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   if (ViewDAGCombine1) CurDAG->viewGraph("dag-combine1 input for " + BlockName);
@@ -517,7 +517,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Combine(Unrestricted, *AA, OptLevel);
   }
 
-  DEBUG(errs() << "Optimized lowered selection DAG:\n");
+  DEBUG(dbgs() << "Optimized lowered selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   // Second step, hack on the DAG until it only uses operations and types that
@@ -533,7 +533,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     Changed = CurDAG->LegalizeTypes();
   }
 
-  DEBUG(errs() << "Type-legalized selection DAG:\n");
+  DEBUG(dbgs() << "Type-legalized selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   if (Changed) {
@@ -548,7 +548,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
     }
 
-    DEBUG(errs() << "Optimized type-legalized selection DAG:\n");
+    DEBUG(dbgs() << "Optimized type-legalized selection DAG:\n");
     DEBUG(CurDAG->dump());
   }
 
@@ -578,7 +578,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
     }
 
-    DEBUG(errs() << "Optimized vector-legalized selection DAG:\n");
+    DEBUG(dbgs() << "Optimized vector-legalized selection DAG:\n");
     DEBUG(CurDAG->dump());
   }
 
@@ -591,7 +591,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Legalize(OptLevel);
   }
 
-  DEBUG(errs() << "Legalized selection DAG:\n");
+  DEBUG(dbgs() << "Legalized selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   if (ViewDAGCombine2) CurDAG->viewGraph("dag-combine2 input for " + BlockName);
@@ -604,7 +604,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
   }
 
-  DEBUG(errs() << "Optimized legalized selection DAG:\n");
+  DEBUG(dbgs() << "Optimized legalized selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
@@ -621,7 +621,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     InstructionSelect();
   }
 
-  DEBUG(errs() << "Selected selection DAG:\n");
+  DEBUG(dbgs() << "Selected selection DAG:\n");
   DEBUG(CurDAG->dump());
 
   if (ViewSchedDAGs) CurDAG->viewGraph("scheduler input for " + BlockName);
@@ -654,7 +654,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     delete Scheduler;
   }
 
-  DEBUG(errs() << "Selected machine code:\n");
+  DEBUG(dbgs() << "Selected machine code:\n");
   DEBUG(BB->dump());
 }
 
@@ -699,7 +699,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
              I != E; ++I, ++j)
           if (Fn.paramHasAttr(j, Attribute::ByVal)) {
             if (EnableFastISelVerbose || EnableFastISelAbort)
-              errs() << "FastISel skips entry block due to byval argument\n";
+              dbgs() << "FastISel skips entry block due to byval argument\n";
             SuppressFastISel = true;
             break;
           }
@@ -765,7 +765,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
             ResetDebugLoc(SDB, FastIS);
             if (EnableFastISelVerbose || EnableFastISelAbort) {
-              errs() << "FastISel miss: ";
+              dbgs() << "FastISel miss: ";
               BI->dump();
             }
             assert(!EnableFastISelAbort &&
@@ -788,7 +788,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
           if (EnableFastISelVerbose || EnableFastISelAbort) {
-            errs() << "FastISel missed call: ";
+            dbgs() << "FastISel missed call: ";
             BI->dump();
           }
 
@@ -817,7 +817,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // For now, be a little lenient about non-branch terminators.
         if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
           if (EnableFastISelVerbose || EnableFastISelAbort) {
-            errs() << "FastISel miss: ";
+            dbgs() << "FastISel miss: ";
             BI->dump();
           }
           if (EnableFastISelAbort)
@@ -846,13 +846,13 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 void
 SelectionDAGISel::FinishBasicBlock() {
 
-  DEBUG(errs() << "Target-post-processed machine code:\n");
+  DEBUG(dbgs() << "Target-post-processed machine code:\n");
   DEBUG(BB->dump());
 
-  DEBUG(errs() << "Total amount of phi nodes to update: "
+  DEBUG(dbgs() << "Total amount of phi nodes to update: "
                << SDB->PHINodesToUpdate.size() << "\n");
   DEBUG(for (unsigned i = 0, e = SDB->PHINodesToUpdate.size(); i != e; ++i)
-          errs() << "Node " << i << " : ("
+          dbgs() << "Node " << i << " : ("
                  << SDB->PHINodesToUpdate[i].first
                  << ", " << SDB->PHINodesToUpdate[i].second << ")\n");
 
@@ -1336,7 +1336,7 @@ void SelectionDAGISel::CannotYetSelect(SDNode *N) {
 }
 
 void SelectionDAGISel::CannotYetSelectIntrinsic(SDNode *N) {
-  errs() << "Cannot yet select: ";
+  dbgs() << "Cannot yet select: ";
   unsigned iid =
     cast<ConstantSDNode>(N->getOperand(N->getOperand(0).getValueType() == MVT::Other))->getZExtValue();
   if (iid < Intrinsic::num_intrinsics)
