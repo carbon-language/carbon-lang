@@ -468,6 +468,16 @@ void CodeGenModule::EmitDeferred() {
     if (!CGRef->isDeclaration())
       continue;
 
+    // Skip available externally functions at -O0
+    // FIXME: these aren't instantiated yet, so we can't yet do this.
+    if (0 && getCodeGenOpts().OptimizationLevel == 0)
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D.getDecl())) {
+        GVALinkage Linkage = GetLinkageForFunction(getContext(), FD, Features);
+
+        if (Linkage == GVA_C99Inline)
+          continue;
+      }
+
     // Otherwise, emit the definition and move on to the next one.
     EmitGlobalDefinition(D);
   }
