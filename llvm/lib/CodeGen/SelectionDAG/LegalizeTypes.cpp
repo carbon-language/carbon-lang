@@ -123,42 +123,42 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         // another node that has not been seen by the LegalizeTypes machinery.
         if ((I->getNodeId() == NewNode && Mapped > 1) ||
             (I->getNodeId() != NewNode && Mapped != 0)) {
-          errs() << "Unprocessed value in a map!";
+          dbgs() << "Unprocessed value in a map!";
           Failed = true;
         }
       } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(I)) {
         if (Mapped > 1) {
-          errs() << "Value with legal type was transformed!";
+          dbgs() << "Value with legal type was transformed!";
           Failed = true;
         }
       } else {
         if (Mapped == 0) {
-          errs() << "Processed value not in any map!";
+          dbgs() << "Processed value not in any map!";
           Failed = true;
         } else if (Mapped & (Mapped - 1)) {
-          errs() << "Value in multiple maps!";
+          dbgs() << "Value in multiple maps!";
           Failed = true;
         }
       }
 
       if (Failed) {
         if (Mapped & 1)
-          errs() << " ReplacedValues";
+          dbgs() << " ReplacedValues";
         if (Mapped & 2)
-          errs() << " PromotedIntegers";
+          dbgs() << " PromotedIntegers";
         if (Mapped & 4)
-          errs() << " SoftenedFloats";
+          dbgs() << " SoftenedFloats";
         if (Mapped & 8)
-          errs() << " ScalarizedVectors";
+          dbgs() << " ScalarizedVectors";
         if (Mapped & 16)
-          errs() << " ExpandedIntegers";
+          dbgs() << " ExpandedIntegers";
         if (Mapped & 32)
-          errs() << " ExpandedFloats";
+          dbgs() << " ExpandedFloats";
         if (Mapped & 64)
-          errs() << " SplitVectors";
+          dbgs() << " SplitVectors";
         if (Mapped & 128)
-          errs() << " WidenedVectors";
-        errs() << "\n";
+          dbgs() << " WidenedVectors";
+        dbgs() << "\n";
         llvm_unreachable(0);
       }
     }
@@ -342,7 +342,7 @@ ScanOperands:
     }
 
     if (i == NumOperands) {
-      DEBUG(errs() << "Legally typed node: "; N->dump(&DAG); errs() << "\n");
+      DEBUG(dbgs() << "Legally typed node: "; N->dump(&DAG); dbgs() << "\n");
     }
     }
 NodeDone:
@@ -411,7 +411,7 @@ NodeDone:
     if (!IgnoreNodeResults(I))
       for (unsigned i = 0, NumVals = I->getNumValues(); i < NumVals; ++i)
         if (!isTypeLegal(I->getValueType(i))) {
-          errs() << "Result type " << i << " illegal!\n";
+          dbgs() << "Result type " << i << " illegal!\n";
           Failed = true;
         }
 
@@ -419,24 +419,24 @@ NodeDone:
     for (unsigned i = 0, NumOps = I->getNumOperands(); i < NumOps; ++i)
       if (!IgnoreNodeResults(I->getOperand(i).getNode()) &&
           !isTypeLegal(I->getOperand(i).getValueType())) {
-        errs() << "Operand type " << i << " illegal!\n";
+        dbgs() << "Operand type " << i << " illegal!\n";
         Failed = true;
       }
 
     if (I->getNodeId() != Processed) {
        if (I->getNodeId() == NewNode)
-         errs() << "New node not analyzed?\n";
+         dbgs() << "New node not analyzed?\n";
        else if (I->getNodeId() == Unanalyzed)
-         errs() << "Unanalyzed node not noticed?\n";
+         dbgs() << "Unanalyzed node not noticed?\n";
        else if (I->getNodeId() > 0)
-         errs() << "Operand not processed?\n";
+         dbgs() << "Operand not processed?\n";
        else if (I->getNodeId() == ReadyToProcess)
-         errs() << "Not added to worklist?\n";
+         dbgs() << "Not added to worklist?\n";
        Failed = true;
     }
 
     if (Failed) {
-      I->dump(&DAG); errs() << "\n";
+      I->dump(&DAG); dbgs() << "\n";
       llvm_unreachable(0);
     }
   }
