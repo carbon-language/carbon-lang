@@ -19,7 +19,10 @@ set( LLVM_LINK_COMPONENTS
   core
   )
 
-add_clang_library(CIndex CIndex.cpp)
+add_clang_library(CIndex
+  CIndex.cpp
+  CIndexer.cpp
+  CIndexCodeCompletion)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # FIXME: Deal with LLVM_SUBMIT_VERSION?
