@@ -1032,6 +1032,16 @@ DIE *DwarfDebug::constructEnumTypeDIE(DIEnumerator *ETy) {
   return Enumerator;
 }
 
+/// getRealLinkageName - If special LLVM prefix that is used to inform the asm 
+/// printer to not emit usual symbol prefix before the symbol name is used then
+/// return linkage name after skipping this special LLVM prefix.
+static StringRef getRealLinkageName(StringRef LinkageName) {
+  char One = '\1';
+  if (LinkageName.startswith(StringRef(&One, 1)))
+    return LinkageName.substr(1);
+  return LinkageName;
+}
+
 /// createGlobalVariableDIE - Create new DIE using GV.
 DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
   // If the global variable was optmized out then no need to create debug info
@@ -1044,16 +1054,10 @@ DIE *DwarfDebug::createGlobalVariableDIE(const DIGlobalVariable &GV) {
             GV.getDisplayName());
 
   StringRef LinkageName = GV.getLinkageName();
-  if (!LinkageName.empty()) {
-    // Skip special LLVM prefix that is used to inform the asm printer to not
-    // emit usual symbol prefix before the symbol name. This happens for
-    // Objective-C symbol names and symbol whose name is replaced using GCC's
-    // __asm__ attribute.
-    if (LinkageName[0] == 1)
-      LinkageName = LinkageName.substr(1);
+  if (!LinkageName.empty())
     addString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              LinkageName);
-  }
+              getRealLinkageName(LinkageName));
+
   addType(GVDie, GV.getType());
   if (!GV.isLocalToUnit())
     addUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
@@ -1130,16 +1134,10 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty()) {
-    // Skip special LLVM prefix that is used to inform the asm printer to not
-    // emit usual symbol prefix before the symbol name. This happens for
-    // Objective-C symbol names and symbol whose name is replaced using GCC's
-    // __asm__ attribute.
-    if (LinkageName[0] == 1)
-      LinkageName = LinkageName.substr(1);
+  if (!LinkageName.empty())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              LinkageName);
-  }
+              getRealLinkageName(LinkageName));
+
   addSourceLine(SPDie, &SP);
 
   // Add prototyped tag, if C or ObjC.
@@ -1393,16 +1391,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
     I->second.push_back(std::make_pair(StartID, ScopeDIE));
 
   StringPool.insert(InlinedSP.getName());
-  StringRef LinkageName = InlinedSP.getLinkageName();
-  if (!LinkageName.empty()) {
-    // Skip special LLVM prefix that is used to inform the asm printer to not
-    // emit usual symbol prefix before the symbol name. This happens for
-    // Objective-C symbol names and symbol whose name is replaced using GCC's
-    // __asm__ attribute.
-    if (LinkageName[0] == 1)
-      LinkageName = LinkageName.substr(1);
-  }
-  StringPool.insert(LinkageName);
+  StringPool.insert(getRealLinkageName(InlinedSP.getLinkageName()));
+
   DILocation DL(Scope->getInlinedAt());
   addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, ModuleCU->getID());
   addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
@@ -2937,17 +2927,10 @@ void DwarfDebug::emitDebugInlineInfo() {
 
     if (LName.empty())
       Asm->EmitString(Name);
-    else {
-      // Skip special LLVM prefix that is used to inform the asm printer to not
-      // emit usual symbol prefix before the symbol name. This happens for
-      // Objective-C symbol names and symbol whose name is replaced using GCC's
-      // __asm__ attribute.
-      if (LName[0] == 1)
-        LName = LName.substr(1);
+    else 
       EmitSectionOffset("string", "section_str",
-                        StringPool.idFor(LName), false, true);
+                        StringPool.idFor(getRealLinkageName(LName)), false, true);
 
-    }
     Asm->EOL("MIPS linkage name");
     EmitSectionOffset("string", "section_str",
                       StringPool.idFor(Name), false, true);
