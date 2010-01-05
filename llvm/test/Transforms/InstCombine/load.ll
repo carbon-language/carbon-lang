@@ -76,3 +76,12 @@ define double @test11(double* %p) {
   %x = load double* %t1
   ret double %x
 }
+
+define i32 @test12(i32* %P) {
+        %A = alloca i32
+        store i32 123, i32* %A
+        ; Cast the result of the load not the source
+        %Q = bitcast i32* %A to i32*
+        %V = load i32* %Q
+        ret i32 %V
+}
