@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -373,7 +374,7 @@ void TimerGroup::removeTimer() {
 
     TimersToPrint.clear();
 
-    if (OutStream != &errs() && OutStream != &outs())
+    if (OutStream != &errs() && OutStream != &outs() && OutStream != &dbgs())
       delete OutStream;   // Close the file...
   }
 }
