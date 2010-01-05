@@ -6,6 +6,8 @@ declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8)
 declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8)
 declare double @llvm.powi.f64(double, i32) nounwind readonly
 declare i32 @llvm.cttz.i32(i32) nounwind readnone
+declare i32 @llvm.ctlz.i32(i32) nounwind readnone
+declare i32 @llvm.ctpop.i32(i32) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8) nounwind readnone
 
 define i8 @test1(i8 %A, i8 %B) {
@@ -99,8 +101,7 @@ entry:
 ; CHECK: volatile store double %V
 }
 
-define i32 @cttz(i32 %a)
-{
+define i32 @cttz(i32 %a) {
 entry:
   %or = or i32 %a, 8
   %and = and i32 %or, -8
@@ -111,8 +112,7 @@ entry:
 ; CHECK-NEXT: ret i32 3
 }
 
-define i8 @ctlz(i8 %a)
-{
+define i8 @ctlz(i8 %a) {
 entry:
   %or = or i8 %a, 32
   %and = and i8 %or, 63
@@ -121,4 +121,26 @@ entry:
 ; CHECK: @ctlz
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: ret i8 2
+}
+
+define void @cmp.simplify(i32 %a, i32 %b, i1* %c) {
+entry:
+  %lz = tail call i32 @llvm.ctlz.i32(i32 %a) nounwind readnone
+  %lz.cmp = icmp eq i32 %lz, 32
+  volatile store i1 %lz.cmp, i1* %c
+  %tz = tail call i32 @llvm.cttz.i32(i32 %a) nounwind readnone
+  %tz.cmp = icmp ne i32 %tz, 32
+  volatile store i1 %tz.cmp, i1* %c
+  %pop = tail call i32 @llvm.ctpop.i32(i32 %b) nounwind readnone
+  %pop.cmp = icmp eq i32 %pop, 0
+  volatile store i1 %pop.cmp, i1* %c
+  ret void
+; CHECK: @cmp.simplify
+; CHECK-NEXT: entry:
+; CHECK-NEXT: %lz.cmp = icmp eq i32 %a, 0
+; CHECK-NEXT: volatile store i1 %lz.cmp, i1* %c
+; CHECK-NEXT: %tz.cmp = icmp ne i32 %a, 0
+; CHECK-NEXT: volatile store i1 %tz.cmp, i1* %c
+; CHECK-NEXT: %pop.cmp = icmp eq i32 %b, 0
+; CHECK-NEXT: volatile store i1 %pop.cmp, i1* %c
 }

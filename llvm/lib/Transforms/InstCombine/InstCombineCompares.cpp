@@ -1418,11 +1418,33 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       }
     } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(LHSI)) {
       // Handle icmp {eq|ne} <intrinsic>, intcst.
-      if (II->getIntrinsicID() == Intrinsic::bswap) {
+      switch (II->getIntrinsicID()) {
+      case Intrinsic::bswap:
         Worklist.Add(II);
         ICI.setOperand(0, II->getOperand(1));
         ICI.setOperand(1, ConstantInt::get(II->getContext(), RHSV.byteSwap()));
         return &ICI;
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz:
+        // ctz(A) == bitwidth(a)  ->  A == 0 and likewise for !=
+        if (RHSV == RHS->getType()->getBitWidth()) {
+          Worklist.Add(II);
+          ICI.setOperand(0, II->getOperand(1));
+          ICI.setOperand(1, ConstantInt::get(RHS->getType(), 0));
+          return &ICI;
+        }
+        break;
+      case Intrinsic::ctpop:
+        // popcount(A) == 0  ->  A == 0 and likewise for !=
+        if (RHS->isZero()) {
+          Worklist.Add(II);
+          ICI.setOperand(0, II->getOperand(1));
+          ICI.setOperand(1, RHS);
+          return &ICI;
+        }
+        break;
+      default:
+      	break;
       }
     }
   }
