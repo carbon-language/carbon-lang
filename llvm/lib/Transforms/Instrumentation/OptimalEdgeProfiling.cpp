@@ -61,7 +61,7 @@ ModulePass *llvm::createOptimalEdgeProfilerPass() {
 inline static void printEdgeCounter(ProfileInfo::Edge e,
                                     BasicBlock* b,
                                     unsigned i) {
-  DEBUG(errs() << "--Edge Counter for " << (e) << " in " \
+  DEBUG(dbgs() << "--Edge Counter for " << (e) << " in " \
                << ((b)?(b)->getNameStr():"0") << " (# " << (i) << ")\n");
 }
 
@@ -120,7 +120,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
   unsigned i = 0;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration()) continue;
-    DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
+    DEBUG(dbgs()<<"Working on "<<F->getNameStr()<<"\n");
 
     // Calculate a Maximum Spanning Tree with the edge weights determined by
     // ProfileEstimator. ProfileEstimator also assign weights to the virtual
