@@ -512,7 +512,7 @@ case "$enableval" in
             PIC16)       TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
             XCore)       TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
-            SystemZ)     TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
+            s390x)       TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
             Blackfin)    TARGETS_TO_BUILD="Blackfin $TARGETS_TO_BUILD" ;;
             *)       AC_MSG_ERROR([Can not set target to build]) ;;
           esac ;;
