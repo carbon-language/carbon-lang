@@ -1038,6 +1038,10 @@ namespace {
         return 0;
       return SethiUllmanNumbers[SU->NodeNum];
     }
+
+    unsigned getNodeOrdering(const SUnit *SU) const {
+      return scheduleDAG->DAG->GetOrdering(SU->getNode());
+    }
     
     unsigned size() const { return Queue.size(); }
 
@@ -1120,6 +1124,14 @@ static unsigned calcMaxScratches(const SUnit *SU) {
 
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+  unsigned LOrder = SPQ->getNodeOrdering(left);
+  unsigned ROrder = SPQ->getNodeOrdering(right);
+
+  // Prefer an ordering where the lower the non-zero order number, the higher
+  // the preference.
+  if ((LOrder || ROrder) && LOrder != ROrder)
+    return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
+
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority)
