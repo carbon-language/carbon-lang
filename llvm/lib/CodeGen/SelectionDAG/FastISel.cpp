@@ -188,7 +188,7 @@ unsigned FastISel::getRegForGEPIndex(Value *Idx) {
 /// SelectBinaryOp - Select and emit code for a binary operator instruction,
 /// which has an opcode which directly corresponds to the given ISD opcode.
 ///
-bool FastISel::SelectBinaryOp(User *I, ISD::NodeType ISDOpcode) {
+bool FastISel::SelectBinaryOp(User *I, unsigned ISDOpcode) {
   EVT VT = EVT::getEVT(I->getType(), /*HandleUnknown=*/true);
   if (VT == MVT::Other || !VT.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -418,7 +418,7 @@ bool FastISel::SelectCall(User *I) {
   return false;
 }
 
-bool FastISel::SelectCast(User *I, ISD::NodeType Opcode) {
+bool FastISel::SelectCast(User *I, unsigned Opcode) {
   EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   EVT DstVT = TLI.getValueType(I->getType());
     
@@ -736,44 +736,44 @@ FastISel::FastISel(MachineFunction &mf,
 FastISel::~FastISel() {}
 
 unsigned FastISel::FastEmit_(MVT, MVT,
-                             ISD::NodeType) {
+                             unsigned) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_r(MVT, MVT,
-                              ISD::NodeType, unsigned /*Op0*/) {
+                              unsigned, unsigned /*Op0*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_rr(MVT, MVT, 
-                               ISD::NodeType, unsigned /*Op0*/,
+                               unsigned, unsigned /*Op0*/,
                                unsigned /*Op0*/) {
   return 0;
 }
 
-unsigned FastISel::FastEmit_i(MVT, MVT, ISD::NodeType, uint64_t /*Imm*/) {
+unsigned FastISel::FastEmit_i(MVT, MVT, unsigned, uint64_t /*Imm*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_f(MVT, MVT,
-                              ISD::NodeType, ConstantFP * /*FPImm*/) {
+                              unsigned, ConstantFP * /*FPImm*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_ri(MVT, MVT,
-                               ISD::NodeType, unsigned /*Op0*/,
+                               unsigned, unsigned /*Op0*/,
                                uint64_t /*Imm*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_rf(MVT, MVT,
-                               ISD::NodeType, unsigned /*Op0*/,
+                               unsigned, unsigned /*Op0*/,
                                ConstantFP * /*FPImm*/) {
   return 0;
 }
 
 unsigned FastISel::FastEmit_rri(MVT, MVT,
-                                ISD::NodeType,
+                                unsigned,
                                 unsigned /*Op0*/, unsigned /*Op1*/,
                                 uint64_t /*Imm*/) {
   return 0;
@@ -783,7 +783,7 @@ unsigned FastISel::FastEmit_rri(MVT, MVT,
 /// to emit an instruction with an immediate operand using FastEmit_ri.
 /// If that fails, it materializes the immediate into a register and try
 /// FastEmit_rr instead.
-unsigned FastISel::FastEmit_ri_(MVT VT, ISD::NodeType Opcode,
+unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
                                 unsigned Op0, uint64_t Imm,
                                 MVT ImmType) {
   // First check if immediate type is legal. If not, we can't use the ri form.
@@ -800,7 +800,7 @@ unsigned FastISel::FastEmit_ri_(MVT VT, ISD::NodeType Opcode,
 /// to emit an instruction with a floating-point immediate operand using
 /// FastEmit_rf. If that fails, it materializes the immediate into a register
 /// and try FastEmit_rr instead.
-unsigned FastISel::FastEmit_rf_(MVT VT, ISD::NodeType Opcode,
+unsigned FastISel::FastEmit_rf_(MVT VT, unsigned Opcode,
                                 unsigned Op0, ConstantFP *FPImm,
                                 MVT ImmType) {
   // First check if immediate type is legal. If not, we can't use the rf form.

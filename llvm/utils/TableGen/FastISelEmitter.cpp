@@ -586,7 +586,7 @@ void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
     // on opcode and type.
     OS << "unsigned FastEmit_";
     Operands.PrintManglingSuffix(OS);
-    OS << "(MVT VT, MVT RetVT, ISD::NodeType Opcode";
+    OS << "(MVT VT, MVT RetVT, unsigned Opcode";
     if (!Operands.empty())
       OS << ", ";
     Operands.PrintParameters(OS);
