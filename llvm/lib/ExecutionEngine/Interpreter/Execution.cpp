@@ -56,7 +56,7 @@ static void executeFAddInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(+, Float);
     IMPLEMENT_BINARY_OPERATOR(+, Double);
   default:
-    errs() << "Unhandled type for FAdd instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FAdd instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 }
@@ -67,7 +67,7 @@ static void executeFSubInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(-, Float);
     IMPLEMENT_BINARY_OPERATOR(-, Double);
   default:
-    errs() << "Unhandled type for FSub instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FSub instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 }
@@ -78,7 +78,7 @@ static void executeFMulInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(*, Float);
     IMPLEMENT_BINARY_OPERATOR(*, Double);
   default:
-    errs() << "Unhandled type for FMul instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FMul instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 }
@@ -89,7 +89,7 @@ static void executeFDivInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(/, Float);
     IMPLEMENT_BINARY_OPERATOR(/, Double);
   default:
-    errs() << "Unhandled type for FDiv instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FDiv instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 }
@@ -104,7 +104,7 @@ static void executeFRemInst(GenericValue &Dest, GenericValue Src1,
     Dest.DoubleVal = fmod(Src1.DoubleVal, Src2.DoubleVal);
     break;
   default:
-    errs() << "Unhandled type for Rem instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for Rem instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 }
@@ -131,7 +131,7 @@ static GenericValue executeICMP_EQ(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(eq,Ty);
     IMPLEMENT_POINTER_ICMP(==);
   default:
-    errs() << "Unhandled type for ICMP_EQ predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_EQ predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -144,7 +144,7 @@ static GenericValue executeICMP_NE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(ne,Ty);
     IMPLEMENT_POINTER_ICMP(!=);
   default:
-    errs() << "Unhandled type for ICMP_NE predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_NE predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -157,7 +157,7 @@ static GenericValue executeICMP_ULT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(ult,Ty);
     IMPLEMENT_POINTER_ICMP(<);
   default:
-    errs() << "Unhandled type for ICMP_ULT predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_ULT predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -170,7 +170,7 @@ static GenericValue executeICMP_SLT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(slt,Ty);
     IMPLEMENT_POINTER_ICMP(<);
   default:
-    errs() << "Unhandled type for ICMP_SLT predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_SLT predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -183,7 +183,7 @@ static GenericValue executeICMP_UGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(ugt,Ty);
     IMPLEMENT_POINTER_ICMP(>);
   default:
-    errs() << "Unhandled type for ICMP_UGT predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_UGT predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -196,7 +196,7 @@ static GenericValue executeICMP_SGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(sgt,Ty);
     IMPLEMENT_POINTER_ICMP(>);
   default:
-    errs() << "Unhandled type for ICMP_SGT predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_SGT predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -209,7 +209,7 @@ static GenericValue executeICMP_ULE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(ule,Ty);
     IMPLEMENT_POINTER_ICMP(<=);
   default:
-    errs() << "Unhandled type for ICMP_ULE predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_ULE predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -222,7 +222,7 @@ static GenericValue executeICMP_SLE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(sle,Ty);
     IMPLEMENT_POINTER_ICMP(<=);
   default:
-    errs() << "Unhandled type for ICMP_SLE predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_SLE predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -235,7 +235,7 @@ static GenericValue executeICMP_UGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(uge,Ty);
     IMPLEMENT_POINTER_ICMP(>=);
   default:
-    errs() << "Unhandled type for ICMP_UGE predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_UGE predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -248,7 +248,7 @@ static GenericValue executeICMP_SGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_INTEGER_ICMP(sge,Ty);
     IMPLEMENT_POINTER_ICMP(>=);
   default:
-    errs() << "Unhandled type for ICMP_SGE predicate: " << *Ty << "\n";
+    dbgs() << "Unhandled type for ICMP_SGE predicate: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -273,7 +273,7 @@ void Interpreter::visitICmpInst(ICmpInst &I) {
   case ICmpInst::ICMP_UGE: R = executeICMP_UGE(Src1, Src2, Ty); break;
   case ICmpInst::ICMP_SGE: R = executeICMP_SGE(Src1, Src2, Ty); break;
   default:
-    errs() << "Don't know how to handle this ICmp predicate!\n-->" << I;
+    dbgs() << "Don't know how to handle this ICmp predicate!\n-->" << I;
     llvm_unreachable(0);
   }
  
@@ -292,7 +292,7 @@ static GenericValue executeFCMP_OEQ(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(==, Float);
     IMPLEMENT_FCMP(==, Double);
   default:
-    errs() << "Unhandled type for FCmp EQ instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp EQ instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -306,7 +306,7 @@ static GenericValue executeFCMP_ONE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(!=, Double);
 
   default:
-    errs() << "Unhandled type for FCmp NE instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp NE instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -319,7 +319,7 @@ static GenericValue executeFCMP_OLE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(<=, Float);
     IMPLEMENT_FCMP(<=, Double);
   default:
-    errs() << "Unhandled type for FCmp LE instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp LE instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -332,7 +332,7 @@ static GenericValue executeFCMP_OGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(>=, Float);
     IMPLEMENT_FCMP(>=, Double);
   default:
-    errs() << "Unhandled type for FCmp GE instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp GE instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -345,7 +345,7 @@ static GenericValue executeFCMP_OLT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(<, Float);
     IMPLEMENT_FCMP(<, Double);
   default:
-    errs() << "Unhandled type for FCmp LT instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp LT instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -358,7 +358,7 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(>, Float);
     IMPLEMENT_FCMP(>, Double);
   default:
-    errs() << "Unhandled type for FCmp GT instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled type for FCmp GT instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
   return Dest;
@@ -467,7 +467,7 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   case FCmpInst::FCMP_UGE:   R = executeFCMP_UGE(Src1, Src2, Ty); break;
   case FCmpInst::FCMP_OGE:   R = executeFCMP_OGE(Src1, Src2, Ty); break;
   default:
-    errs() << "Don't know how to handle this FCmp predicate!\n-->" << I;
+    dbgs() << "Don't know how to handle this FCmp predicate!\n-->" << I;
     llvm_unreachable(0);
   }
  
@@ -513,7 +513,7 @@ static GenericValue executeCmpInst(unsigned predicate, GenericValue Src1,
     return Result;
   }
   default:
-    errs() << "Unhandled Cmp predicate\n";
+    dbgs() << "Unhandled Cmp predicate\n";
     llvm_unreachable(0);
   }
 }
@@ -542,7 +542,7 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   case Instruction::Or:    R.IntVal = Src1.IntVal | Src2.IntVal; break;
   case Instruction::Xor:   R.IntVal = Src1.IntVal ^ Src2.IntVal; break;
   default:
-    errs() << "Don't know how to handle this binary operator!\n-->" << I;
+    dbgs() << "Don't know how to handle this binary operator!\n-->" << I;
     llvm_unreachable(0);
   }
 
@@ -744,7 +744,7 @@ void Interpreter::visitAllocaInst(AllocaInst &I) {
   // Allocate enough memory to hold the type...
   void *Memory = malloc(MemToAlloc);
 
-  DEBUG(errs() << "Allocated Type: " << *Ty << " (" << TypeSize << " bytes) x " 
+  DEBUG(dbgs() << "Allocated Type: " << *Ty << " (" << TypeSize << " bytes) x " 
                << NumElements << " (Total: " << MemToAlloc << ") at "
                << uintptr_t(Memory) << '\n');
 
@@ -794,7 +794,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
 
   GenericValue Result;
   Result.PointerVal = ((char*)getOperandValue(Ptr, SF).PointerVal) + Total;
-  DEBUG(errs() << "GEP Index " << Total << " bytes.\n");
+  DEBUG(dbgs() << "GEP Index " << Total << " bytes.\n");
   return Result;
 }
 
@@ -812,7 +812,7 @@ void Interpreter::visitLoadInst(LoadInst &I) {
   LoadValueFromMemory(Result, Ptr, I.getType());
   SetValue(&I, Result, SF);
   if (I.isVolatile() && PrintVolatile)
-    errs() << "Volatile load " << I;
+    dbgs() << "Volatile load " << I;
 }
 
 void Interpreter::visitStoreInst(StoreInst &I) {
@@ -822,7 +822,7 @@ void Interpreter::visitStoreInst(StoreInst &I) {
   StoreValueToMemory(Val, (GenericValue *)GVTOP(SRC),
                      I.getOperand(0)->getType());
   if (I.isVolatile() && PrintVolatile)
-    errs() << "Volatile store: " << I;
+    dbgs() << "Volatile store: " << I;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1164,7 +1164,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
     IMPLEMENT_VAARG(Float);
     IMPLEMENT_VAARG(Double);
   default:
-    errs() << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
+    dbgs() << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
     llvm_unreachable(0);
   }
 
@@ -1251,7 +1251,7 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     Dest.IntVal = Op0.IntVal.ashr(Op1.IntVal.getZExtValue());
     break;
   default:
-    errs() << "Unhandled ConstantExpr: " << *CE << "\n";
+    dbgs() << "Unhandled ConstantExpr: " << *CE << "\n";
     llvm_unreachable(0);
     return GenericValue();
   }
@@ -1324,24 +1324,24 @@ void Interpreter::run() {
     // Track the number of dynamic instructions executed.
     ++NumDynamicInsts;
 
-    DEBUG(errs() << "About to interpret: " << I);
+    DEBUG(dbgs() << "About to interpret: " << I);
     visit(I);   // Dispatch to one of the visit* methods...
 #if 0
     // This is not safe, as visiting the instruction could lower it and free I.
 DEBUG(
     if (!isa<CallInst>(I) && !isa<InvokeInst>(I) && 
         I.getType() != Type::VoidTy) {
-      errs() << "  --> ";
+      dbgs() << "  --> ";
       const GenericValue &Val = SF.Values[&I];
       switch (I.getType()->getTypeID()) {
       default: llvm_unreachable("Invalid GenericValue Type");
-      case Type::VoidTyID:    errs() << "void"; break;
-      case Type::FloatTyID:   errs() << "float " << Val.FloatVal; break;
-      case Type::DoubleTyID:  errs() << "double " << Val.DoubleVal; break;
-      case Type::PointerTyID: errs() << "void* " << intptr_t(Val.PointerVal);
+      case Type::VoidTyID:    dbgs() << "void"; break;
+      case Type::FloatTyID:   dbgs() << "float " << Val.FloatVal; break;
+      case Type::DoubleTyID:  dbgs() << "double " << Val.DoubleVal; break;
+      case Type::PointerTyID: dbgs() << "void* " << intptr_t(Val.PointerVal);
         break;
       case Type::IntegerTyID: 
-        errs() << "i" << Val.IntVal.getBitWidth() << " "
+        dbgs() << "i" << Val.IntVal.getBitWidth() << " "
                << Val.IntVal.toStringUnsigned(10)
                << " (0x" << Val.IntVal.toStringUnsigned(16) << ")\n";
         break;
