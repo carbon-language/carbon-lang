@@ -23,8 +23,7 @@ using namespace PatternMatch;
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
                                         int &Offset) {
-  assert(Val->getType() == Type::getInt32Ty(Val->getContext()) && 
-         "Unexpected allocation size type!");
+  assert(Val->getType()->isInteger(32) && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
     Scale  = 0;
@@ -935,7 +934,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   Value *Src = CI.getOperand(0);
   
   // Canonicalize sign-extend from i1 to a select.
-  if (Src->getType() == Type::getInt1Ty(CI.getContext()))
+  if (Src->getType()->isInteger(1))
     return SelectInst::Create(Src,
                               Constant::getAllOnesValue(CI.getType()),
                               Constant::getNullValue(CI.getType()));

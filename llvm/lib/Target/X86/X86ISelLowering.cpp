@@ -9515,7 +9515,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
       return LowerToBSwap(CI);
     }
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
-    if (CI->getType() == Type::getInt16Ty(CI->getContext()) &&
+    if (CI->getType()->isInteger(16) &&
         AsmPieces.size() == 3 &&
         AsmPieces[0] == "rorw" &&
         AsmPieces[1] == "$$8," &&
@@ -9525,7 +9525,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     }
     break;
   case 3:
-    if (CI->getType() == Type::getInt64Ty(CI->getContext()) &&
+    if (CI->getType()->isInteger(64) &&
         Constraints.size() >= 2 &&
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
         Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {

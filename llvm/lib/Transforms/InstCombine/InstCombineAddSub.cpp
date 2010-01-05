@@ -158,7 +158,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (I.getType() == Type::getInt1Ty(I.getContext()))
+  if (I.getType()->isInteger(1))
     return BinaryOperator::CreateXor(LHS, RHS);
 
   if (I.getType()->isInteger()) {
@@ -573,7 +573,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);    // X - undef -> undef
-  if (I.getType() == Type::getInt1Ty(I.getContext()))
+  if (I.getType()->isInteger(1))
     return BinaryOperator::CreateXor(Op0, Op1);
   
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {

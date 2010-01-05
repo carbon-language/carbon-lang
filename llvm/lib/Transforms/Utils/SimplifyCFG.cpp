@@ -1011,7 +1011,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     ConstantInt *CB;
     if ((CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i))) &&
-        CB->getType() == Type::getInt1Ty(BB->getContext())) {
+        CB->getType()->isInteger(1)) {
       // Okay, we now know that all edges from PredBB should be revectored to
       // branch to RealDest.
       BasicBlock *PredBB = PN->getIncomingBlock(i);

@@ -1689,7 +1689,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<VectorType>(Val->getType()) &&
          "Tried to create extractelement operation on non-vector type!");
-  assert(Idx->getType() == Type::getInt32Ty(Val->getContext()) &&
+  assert(Idx->getType()->isInteger(32) &&
          "Extractelement index must be i32 type!");
   return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
                              Val, Idx);
@@ -1716,7 +1716,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          "Tried to create insertelement operation on non-vector type!");
   assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
-  assert(Idx->getType() == Type::getInt32Ty(Val->getContext()) &&
+  assert(Idx->getType()->isInteger(32) &&
          "Insertelement index must be i32 type!");
   return getInsertElementTy(Val->getType(), Val, Elt, Idx);
 }

@@ -285,7 +285,7 @@ std::string Type::getDescription() const {
 
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require 32-bit integer constants.
-  if (V->getType() == Type::getInt32Ty(V->getContext()))
+  if (V->getType()->isInteger(32))
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
       return indexValid(CU->getZExtValue());
   return false;

@@ -1062,8 +1062,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
                                                 DIVariable D,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
-  assert(Offset->getType() == Type::getInt64Ty(V->getContext()) &&
-         "offset must be i64");
+  assert(Offset->getType()->isInteger(64) && "offset must be i64");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -1078,8 +1077,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
                                                 DIVariable D,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
-  assert(Offset->getType() == Type::getInt64Ty(V->getContext()) &&
-         "offset must be i64");
+  assert(Offset->getType()->isInteger(64) && "offset must be i64");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 

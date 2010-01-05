@@ -867,7 +867,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
   if (IsEqual || (isa<ConstantInt>(Val) &&
-      Val->getType() == Type::getInt1Ty(Val->getContext()))) {
+      Val->getType()->isInteger(1))) {
     Value *Replacement;
     if (IsEqual)
       Replacement = Val;
@@ -993,10 +993,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     case Instruction::And:
       if (isa<ConstantInt>(I->getOperand(0)) && 
           // constant -> RHS
-          I->getOperand(0)->getType() == Type::getInt1Ty(I->getContext()))   
+          I->getOperand(0)->getType()->isInteger(1))
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1))) 
-        if (CB->getType() == Type::getInt1Ty(I->getContext())) {
+        if (CB->getType()->isInteger(1)) {
           if (CB->isOne())      // X & 1 -> X
             ReplaceUsesOfWith(I, I->getOperand(0), Worklist, L, LPM);
           else                  // X & 0 -> 0
@@ -1007,10 +1007,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     case Instruction::Or:
       if (isa<ConstantInt>(I->getOperand(0)) &&
           // constant -> RHS
-          I->getOperand(0)->getType() == Type::getInt1Ty(I->getContext()))
+          I->getOperand(0)->getType()->isInteger(1))
         cast<BinaryOperator>(I)->swapOperands();
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(1)))
-        if (CB->getType() == Type::getInt1Ty(I->getContext())) {
+        if (CB->getType()->isInteger(1)) {
           if (CB->isOne())   // X | 1 -> 1
             ReplaceUsesOfWith(I, I->getOperand(1), Worklist, L, LPM);
           else                  // X | 0 -> X

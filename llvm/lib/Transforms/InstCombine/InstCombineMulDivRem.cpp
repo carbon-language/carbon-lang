@@ -157,7 +157,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   }
 
   /// i1 mul -> i1 and.
-  if (I.getType() == Type::getInt1Ty(I.getContext()))
+  if (I.getType()->isInteger(1))
     return BinaryOperator::CreateAnd(Op0, Op1);
 
   // X*(1 << Y) --> X << Y
@@ -386,7 +386,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // It can't be division by zero, hence it must be division by one.
-  if (I.getType() == Type::getInt1Ty(I.getContext()))
+  if (I.getType()->isInteger(1))
     return ReplaceInstUsesWith(I, Op0);
 
   if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {

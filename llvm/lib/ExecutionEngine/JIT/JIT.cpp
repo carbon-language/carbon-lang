@@ -414,7 +414,7 @@ GenericValue JIT::runFunction(Function *F,
   if (RetTy == Type::getInt32Ty(F->getContext()) || RetTy->isVoidTy()) {
     switch (ArgValues.size()) {
     case 3:
-      if (FTy->getParamType(0) == Type::getInt32Ty(F->getContext()) &&
+      if (FTy->getParamType(0)->isInteger(32) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
@@ -429,7 +429,7 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 2:
-      if (FTy->getParamType(0) == Type::getInt32Ty(F->getContext()) &&
+      if (FTy->getParamType(0)->isInteger(32) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
@@ -442,7 +442,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          FTy->getParamType(0) == Type::getInt32Ty(F->getContext())) {
+          FTy->getParamType(0)->isInteger(32)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));

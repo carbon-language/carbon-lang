@@ -833,7 +833,7 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType() == Type::getInt1Ty(CV->getContext())) {
+    if (CI->getType()->isInteger(1)) {
       Out << (CI->getZExtValue() ? "true" : "false");
       return;
     }

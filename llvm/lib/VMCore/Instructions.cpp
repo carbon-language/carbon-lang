@@ -787,7 +787,7 @@ BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
 
 void BranchInst::AssertOK() {
   if (isConditional())
-    assert(getCondition()->getType() == Type::getInt1Ty(getContext()) &&
+    assert(getCondition()->getType()->isInteger(1) &&
            "May only branch on boolean predicates!");
 }
 
@@ -892,7 +892,7 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");
-    assert(Amt->getType() == Type::getInt32Ty(Context) &&
+    assert(Amt->getType()->isInteger(32) &&
            "Allocation array size is not a 32-bit integer!");
   }
   return Amt;

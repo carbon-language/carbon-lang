@@ -1162,7 +1162,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
   }
 
   // i1 can be simplified in many cases.
-  if (C1->getType() == Type::getInt1Ty(Context)) {
+  if (C1->getType()->isInteger(1)) {
     switch (Opcode) {
     case Instruction::Add:
     case Instruction::Sub:
@@ -1587,7 +1587,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
   }
 
   // If the comparison is a comparison between two i1's, simplify it.
-  if (C1->getType() == Type::getInt1Ty(Context)) {
+  if (C1->getType()->isInteger(1)) {
     switch(pred) {
     case ICmpInst::ICMP_EQ:
       if (isa<ConstantInt>(C2))
