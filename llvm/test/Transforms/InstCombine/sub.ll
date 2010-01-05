@@ -223,8 +223,8 @@ define i32 @test23(i8* %P, i64 %A){
   %G = sub i32 %D, %F
   ret i32 %G
 ; CHECK: @test23
-; CHECK: %A1 = trunc i64 %A to i32
-; CHECK: ret i32 %A1
+; CHECK-NEXT: = trunc i64 %A to i32
+; CHECK-NEXT: ret i32
 }
 
 define i64 @test24(i8* %P, i64 %A){

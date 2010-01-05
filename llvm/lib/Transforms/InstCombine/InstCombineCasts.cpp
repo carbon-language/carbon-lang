@@ -680,32 +680,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
     Value *V2 = ConstantExpr::getTrunc(ShAmtV, DestTy);
     return BinaryOperator::CreateShl(V1, V2);
   }
-  
-  // If we are discarding information from a simple binop, rewrite.
-  if (Src->hasOneUse() && isa<Instruction>(Src)) {
-    Instruction *SrcI = cast<Instruction>(Src);
-    switch (SrcI->getOpcode()) {
-    default: break;
-    case Instruction::Add:
-    // TODO: SUB?
-    case Instruction::Mul:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor:
-      Value *Op0 = SrcI->getOperand(0);
-      Value *Op1 = SrcI->getOperand(1);
 
-      // Don't insert two casts unless at least one can be eliminated.
-      if (!ValueRequiresCast(Instruction::Trunc, Op1, DestTy) ||
-          !ValueRequiresCast(Instruction::Trunc, Op0, DestTy)) {
-        Op0 = Builder->CreateTrunc(Op0, DestTy, Op0->getName());
-        Op1 = Builder->CreateTrunc(Op1, DestTy, Op1->getName());
-        return BinaryOperator::Create(cast<BinaryOperator>(SrcI)->getOpcode(),
-                                      Op0, Op1);
-      }
-    }
-  }
- 
   return 0;
 }
 
