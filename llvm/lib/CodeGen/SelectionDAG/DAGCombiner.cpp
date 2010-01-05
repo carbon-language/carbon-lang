@@ -3322,7 +3322,9 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     DebugLoc dl = N->getDebugLoc();
     return DAG.getNode(N0.getOpcode(), dl, VT,
                        DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(0)),
-                       DAG.getNode(ISD::ZERO_EXTEND, dl, VT, N0.getOperand(1)));
+                       DAG.getNode(ISD::ZERO_EXTEND, dl,
+                                   N0.getOperand(1).getValueType(),
+                                   N0.getOperand(1)));
   }
 
   return SDValue();
