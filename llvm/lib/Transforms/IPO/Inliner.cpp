@@ -147,7 +147,7 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
       
       // Otherwise, we *can* reuse it, RAUW AI into AvailableAlloca and declare
       // success!
-      DEBUG(errs() << "    ***MERGED ALLOCA: " << *AI);
+      DEBUG(dbgs() << "    ***MERGED ALLOCA: " << *AI);
       
       AI->replaceAllUsesWith(AvailableAlloca);
       AI->eraseFromParent();
@@ -178,13 +178,13 @@ bool Inliner::shouldInline(CallSite CS) {
   InlineCost IC = getInlineCost(CS);
   
   if (IC.isAlways()) {
-    DEBUG(errs() << "    Inlining: cost=always"
+    DEBUG(dbgs() << "    Inlining: cost=always"
           << ", Call: " << *CS.getInstruction() << "\n");
     return true;
   }
   
   if (IC.isNever()) {
-    DEBUG(errs() << "    NOT Inlining: cost=never"
+    DEBUG(dbgs() << "    NOT Inlining: cost=never"
           << ", Call: " << *CS.getInstruction() << "\n");
     return false;
   }
@@ -200,7 +200,7 @@ bool Inliner::shouldInline(CallSite CS) {
   
   float FudgeFactor = getInlineFudgeFactor(CS);
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
-    DEBUG(errs() << "    NOT Inlining: cost=" << Cost
+    DEBUG(dbgs() << "    NOT Inlining: cost=" << Cost
           << ", Call: " << *CS.getInstruction() << "\n");
     return false;
   }
@@ -263,14 +263,14 @@ bool Inliner::shouldInline(CallSite CS) {
 
     if (outerCallsFound && someOuterCallWouldNotBeInlined && 
         TotalSecondaryCost < Cost) {
-      DEBUG(errs() << "    NOT Inlining: " << *CS.getInstruction() << 
+      DEBUG(dbgs() << "    NOT Inlining: " << *CS.getInstruction() << 
            " Cost = " << Cost << 
            ", outer Cost = " << TotalSecondaryCost << '\n');
       return false;
     }
   }
 
-  DEBUG(errs() << "    Inlining: cost=" << Cost
+  DEBUG(dbgs() << "    Inlining: cost=" << Cost
         << ", Call: " << *CS.getInstruction() << '\n');
   return true;
 }
@@ -280,11 +280,11 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
-  DEBUG(errs() << "Inliner visiting SCC:");
+  DEBUG(dbgs() << "Inliner visiting SCC:");
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
     if (F) SCCFunctions.insert(F);
-    DEBUG(errs() << " " << (F ? F->getName() : "INDIRECTNODE"));
+    DEBUG(dbgs() << " " << (F ? F->getName() : "INDIRECTNODE"));
   }
 
   // Scan through and identify all call sites ahead of time so that we only
@@ -314,7 +314,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       }
   }
 
-  DEBUG(errs() << ": " << CallSites.size() << " call sites.\n");
+  DEBUG(dbgs() << ": " << CallSites.size() << " call sites.\n");
 
   // Now that we have all of the call sites, move the ones to functions in the
   // current SCC to the end of the list.
@@ -346,7 +346,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       // size.  This happens because IPSCCP propagates the result out of the
       // call and then we're left with the dead call.
       if (isInstructionTriviallyDead(CS.getInstruction())) {
-        DEBUG(errs() << "    -> Deleting dead call: "
+        DEBUG(dbgs() << "    -> Deleting dead call: "
                      << *CS.getInstruction() << "\n");
         // Update the call graph by deleting the edge from Callee to Caller.
         CG[Caller]->removeCallEdgeFor(CS);
@@ -377,7 +377,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
           // callgraph references to the node, we cannot delete it yet, this
           // could invalidate the CGSCC iterator.
           CG[Callee]->getNumReferences() == 0) {
-        DEBUG(errs() << "    -> Deleting dead function: "
+        DEBUG(dbgs() << "    -> Deleting dead function: "
               << Callee->getName() << "\n");
         CallGraphNode *CalleeNode = CG[Callee];
         
