@@ -69,10 +69,10 @@ struct TrivialRewriter : public VirtRegRewriter {
 
   bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
                             LiveIntervals* LIs) {
-    DEBUG(errs() << "********** REWRITE MACHINE CODE **********\n");
-    DEBUG(errs() << "********** Function: " 
+    DEBUG(dbgs() << "********** REWRITE MACHINE CODE **********\n");
+    DEBUG(dbgs() << "********** Function: " 
           << MF.getFunction()->getName() << '\n');
-    DEBUG(errs() << "**** Machine Instrs"
+    DEBUG(dbgs() << "**** Machine Instrs"
           << "(NOTE! Does not include spills and reloads!) ****\n");
     DEBUG(MF.dump());
 
@@ -110,7 +110,7 @@ struct TrivialRewriter : public VirtRegRewriter {
       }
     }
     
-    DEBUG(errs() << "**** Post Machine Instrs ****\n");
+    DEBUG(dbgs() << "**** Post Machine Instrs ****\n");
     DEBUG(MF.dump());
     
     return changed;
@@ -191,11 +191,11 @@ public:
                                               (unsigned)CanClobber;
 
     if (SlotOrReMat > VirtRegMap::MAX_STACK_SLOT)
-      DEBUG(errs() << "Remembering RM#"
+      DEBUG(dbgs() << "Remembering RM#"
                    << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1);
     else
-      DEBUG(errs() << "Remembering SS#" << SlotOrReMat);
-    DEBUG(errs() << " in physreg " << TRI->getName(Reg) << "\n");
+      DEBUG(dbgs() << "Remembering SS#" << SlotOrReMat);
+    DEBUG(dbgs() << " in physreg " << TRI->getName(Reg) << "\n");
   }
 
   /// canClobberPhysRegForSS - Return true if the spiller is allowed to change
@@ -686,7 +686,7 @@ void AvailableSpills::disallowClobberPhysRegOnly(unsigned PhysReg) {
     assert((SpillSlotsOrReMatsAvailable[SlotOrReMat] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
     SpillSlotsOrReMatsAvailable[SlotOrReMat] &= ~1;
-    DEBUG(errs() << "PhysReg " << TRI->getName(PhysReg)
+    DEBUG(dbgs() << "PhysReg " << TRI->getName(PhysReg)
          << " copied, it is available for use but can no longer be modified\n");
   }
 }
@@ -711,12 +711,12 @@ void AvailableSpills::ClobberPhysRegOnly(unsigned PhysReg) {
     assert((SpillSlotsOrReMatsAvailable[SlotOrReMat] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
     SpillSlotsOrReMatsAvailable.erase(SlotOrReMat);
-    DEBUG(errs() << "PhysReg " << TRI->getName(PhysReg)
+    DEBUG(dbgs() << "PhysReg " << TRI->getName(PhysReg)
           << " clobbered, invalidating ");
     if (SlotOrReMat > VirtRegMap::MAX_STACK_SLOT)
-      DEBUG(errs() << "RM#" << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1 <<"\n");
+      DEBUG(dbgs() << "RM#" << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1 <<"\n");
     else
-      DEBUG(errs() << "SS#" << SlotOrReMat << "\n");
+      DEBUG(dbgs() << "SS#" << SlotOrReMat << "\n");
   }
 }
 
@@ -895,9 +895,9 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
 
         Spills.addAvailable(NewOp.StackSlotOrReMat, NewPhysReg);
         UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
-        DEBUG(errs() << '\t' << *prior(InsertLoc));
+        DEBUG(dbgs() << '\t' << *prior(InsertLoc));
         
-        DEBUG(errs() << "Reuse undone!\n");
+        DEBUG(dbgs() << "Reuse undone!\n");
         --NumReused;
         
         // Finally, PhysReg is now available, go ahead and use it.
@@ -1041,9 +1041,9 @@ public:
     TRI = MF.getTarget().getRegisterInfo();
     TII = MF.getTarget().getInstrInfo();
     AllocatableRegs = TRI->getAllocatableSet(MF);
-    DEBUG(errs() << "\n**** Local spiller rewriting function '"
+    DEBUG(dbgs() << "\n**** Local spiller rewriting function '"
           << MF.getFunction()->getName() << "':\n");
-    DEBUG(errs() << "**** Machine Instrs (NOTE! Does not include spills and"
+    DEBUG(dbgs() << "**** Machine Instrs (NOTE! Does not include spills and"
                     " reloads!) ****\n");
     DEBUG(MF.dump());
 
@@ -1095,7 +1095,7 @@ public:
       Spills.clear();
     }
 
-    DEBUG(errs() << "**** Post Machine Instrs ****\n");
+    DEBUG(dbgs() << "**** Post Machine Instrs ****\n");
     DEBUG(MF.dump());
 
     // Mark unused spill slots.
@@ -1467,11 +1467,11 @@ private:
     TII->storeRegToStackSlot(MBB, llvm::next(MII), PhysReg, true, StackSlot, RC);
     MachineInstr *StoreMI = prior(oldNextMII);
     VRM.addSpillSlotUse(StackSlot, StoreMI);
-    DEBUG(errs() << "Store:\t" << *StoreMI);
+    DEBUG(dbgs() << "Store:\t" << *StoreMI);
 
     // If there is a dead store to this stack slot, nuke it now.
     if (LastStore) {
-      DEBUG(errs() << "Removed dead store:\t" << *LastStore);
+      DEBUG(dbgs() << "Removed dead store:\t" << *LastStore);
       ++NumDSE;
       SmallVector<unsigned, 2> KillRegs;
       InvalidateKills(*LastStore, TRI, RegKills, KillOps, &KillRegs);
@@ -1599,7 +1599,7 @@ private:
                   AvailableSpills &Spills, BitVector &RegKills,
                   std::vector<MachineOperand*> &KillOps) {
 
-    DEBUG(errs() << "\n**** Local spiller rewriting MBB '"
+    DEBUG(dbgs() << "\n**** Local spiller rewriting MBB '"
           << MBB.getName() << "':\n");
 
     MachineFunction &MF = *MBB.getParent();
@@ -1699,11 +1699,11 @@ private:
             // If the value is already available in the expected register, save
             // a reload / remat.
             if (SSorRMId)
-              DEBUG(errs() << "Reusing RM#"
+              DEBUG(dbgs() << "Reusing RM#"
                            << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
             else
-              DEBUG(errs() << "Reusing SS#" << SSorRMId);
-            DEBUG(errs() << " from physreg "
+              DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
+            DEBUG(dbgs() << " from physreg "
                          << TRI->getName(InReg) << " for vreg"
                          << VirtReg <<" instead of reloading into physreg "
                          << TRI->getName(Phys) << '\n');
@@ -1711,11 +1711,11 @@ private:
             continue;
           } else if (InReg && InReg != Phys) {
             if (SSorRMId)
-              DEBUG(errs() << "Reusing RM#"
+              DEBUG(dbgs() << "Reusing RM#"
                            << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
             else
-              DEBUG(errs() << "Reusing SS#" << SSorRMId);
-            DEBUG(errs() << " from physreg "
+              DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
+            DEBUG(dbgs() << " from physreg "
                          << TRI->getName(InReg) << " for vreg"
                          << VirtReg <<" by copying it into physreg "
                          << TRI->getName(Phys) << '\n');
@@ -1742,7 +1742,7 @@ private:
             KillOpnd->setIsKill();
             UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
-            DEBUG(errs() << '\t' << *CopyMI);
+            DEBUG(dbgs() << '\t' << *CopyMI);
             ++NumCopified;
             continue;
           }
@@ -1769,7 +1769,7 @@ private:
           Spills.addAvailable(SSorRMId, Phys);
 
           UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
-          DEBUG(errs() << '\t' << *prior(MII));
+          DEBUG(dbgs() << '\t' << *prior(MII));
         }
       }
 
@@ -1789,7 +1789,7 @@ private:
           TII->storeRegToStackSlot(MBB, llvm::next(MII), Phys, isKill, StackSlot, RC);
           MachineInstr *StoreMI = prior(oldNextMII);
           VRM.addSpillSlotUse(StackSlot, StoreMI);
-          DEBUG(errs() << "Store:\t" << *StoreMI);
+          DEBUG(dbgs() << "Store:\t" << *StoreMI);
           VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
         }
         NextMII = llvm::next(MII);
@@ -1908,11 +1908,11 @@ private:
           if (CanReuse) {
             // If this stack slot value is already available, reuse it!
             if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
-              DEBUG(errs() << "Reusing RM#"
+              DEBUG(dbgs() << "Reusing RM#"
                            << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
             else
-              DEBUG(errs() << "Reusing SS#" << ReuseSlot);
-            DEBUG(errs() << " from physreg "
+              DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
+            DEBUG(dbgs() << " from physreg "
                          << TRI->getName(PhysReg) << " for vreg"
                          << VirtReg <<" instead of reloading into physreg "
                          << TRI->getName(VRM.getPhys(VirtReg)) << '\n');
@@ -1991,11 +1991,11 @@ private:
           if (DesignatedReg == PhysReg) {
             // If this stack slot value is already available, reuse it!
             if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
-              DEBUG(errs() << "Reusing RM#"
+              DEBUG(dbgs() << "Reusing RM#"
                     << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1);
             else
-              DEBUG(errs() << "Reusing SS#" << ReuseSlot);
-            DEBUG(errs() << " from physreg " << TRI->getName(PhysReg)
+              DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
+            DEBUG(dbgs() << " from physreg " << TRI->getName(PhysReg)
                          << " for vreg" << VirtReg
                          << " instead of reloading into same physreg.\n");
             unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
@@ -2029,7 +2029,7 @@ private:
             SubIdx ? TRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
           MI.getOperand(i).setReg(RReg);
           MI.getOperand(i).setSubReg(0);
-          DEBUG(errs() << '\t' << *prior(MII));
+          DEBUG(dbgs() << '\t' << *prior(MII));
           ++NumReused;
           continue;
         } // if (PhysReg)
@@ -2082,7 +2082,7 @@ private:
           }
 
           UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
-          DEBUG(errs() << '\t' << *prior(InsertLoc));
+          DEBUG(dbgs() << '\t' << *prior(InsertLoc));
         }
         unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
         MI.getOperand(i).setReg(RReg);
@@ -2096,7 +2096,7 @@ private:
         int PDSSlot = PotentialDeadStoreSlots[j];
         MachineInstr* DeadStore = MaybeDeadStores[PDSSlot];
         if (DeadStore) {
-          DEBUG(errs() << "Removed dead store:\t" << *DeadStore);
+          DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
           InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
           VRM.RemoveMachineInstrFromMaps(DeadStore);
           MBB.erase(DeadStore);
@@ -2106,7 +2106,7 @@ private:
       }
 
 
-      DEBUG(errs() << '\t' << MI);
+      DEBUG(dbgs() << '\t' << MI);
 
 
       // If we have folded references to memory operands, make sure we clear all
@@ -2116,7 +2116,7 @@ private:
       for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ) {
         unsigned VirtReg = I->second.first;
         VirtRegMap::ModRef MR = I->second.second;
-        DEBUG(errs() << "Folded vreg: " << VirtReg << "  MR: " << MR);
+        DEBUG(dbgs() << "Folded vreg: " << VirtReg << "  MR: " << MR);
 
         // MI2VirtMap be can updated which invalidate the iterator.
         // Increment the iterator first.
@@ -2125,7 +2125,7 @@ private:
         if (SS == VirtRegMap::NO_STACK_SLOT)
           continue;
         FoldedSS.insert(SS);
-        DEBUG(errs() << " - StackSlot: " << SS << "\n");
+        DEBUG(dbgs() << " - StackSlot: " << SS << "\n");
         
         // If this folded instruction is just a use, check to see if it's a
         // straight load from the virt reg slot.
@@ -2136,7 +2136,7 @@ private:
             // If this spill slot is available, turn it into a copy (or nothing)
             // instead of leaving it as a load!
             if (unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SS)) {
-              DEBUG(errs() << "Promoted Load To Copy: " << MI);
+              DEBUG(dbgs() << "Promoted Load To Copy: " << MI);
               if (DestReg != InReg) {
                 const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
                 TII->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
@@ -2160,7 +2160,7 @@ private:
 
                 BackTracked = true;
               } else {
-                DEBUG(errs() << "Removing now-noop copy: " << MI);
+                DEBUG(dbgs() << "Removing now-noop copy: " << MI);
                 // Unset last kill since it's being reused.
                 InvalidateKill(InReg, TRI, RegKills, KillOps);
                 Spills.disallowClobberPhysReg(InReg);
@@ -2230,7 +2230,7 @@ private:
 
           if (isDead) {  // Previous store is dead.
             // If we get here, the store is dead, nuke it now.
-            DEBUG(errs() << "Removed dead store:\t" << *DeadStore);
+            DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
             InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
             VRM.RemoveMachineInstrFromMaps(DeadStore);
             MBB.erase(DeadStore);
@@ -2301,7 +2301,7 @@ private:
           if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst &&
               !MI.findRegisterUseOperand(Src)->isUndef()) {
             ++NumDCE;
-            DEBUG(errs() << "Removing now-noop copy: " << MI);
+            DEBUG(dbgs() << "Removing now-noop copy: " << MI);
             SmallVector<unsigned, 2> KillRegs;
             InvalidateKills(MI, TRI, RegKills, KillOps, &KillRegs);
             if (MO.isDead() && !KillRegs.empty()) {
@@ -2389,7 +2389,7 @@ private:
             unsigned Src, Dst, SrcSR, DstSR;
             if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
               ++NumDCE;
-              DEBUG(errs() << "Removing now-noop copy: " << MI);
+              DEBUG(dbgs() << "Removing now-noop copy: " << MI);
               InvalidateKills(MI, TRI, RegKills, KillOps);
               VRM.RemoveMachineInstrFromMaps(&MI);
               MBB.erase(&MI);
