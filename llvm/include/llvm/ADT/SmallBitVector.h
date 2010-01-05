@@ -35,7 +35,7 @@ class SmallBitVector {
   PointerIntPair<BitVector *, 1, uintptr_t> X;
 
   // The number of bits in this class.
-  static const size_t NumBaseBits = sizeof(X) * CHAR_BIT;
+  static const size_t NumBaseBits = sizeof(uintptr_t) * CHAR_BIT;
 
   // One bit is used to discriminate between small and large mode. The
   // remaining bits are used for the small-mode representation.
