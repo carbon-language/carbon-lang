@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Threading.h"
@@ -62,11 +63,11 @@ void llvm_unreachable_internal(const char *msg, const char *file,
   // llvm_unreachable is intended to be used to indicate "impossible"
   // situations, and not legitimate runtime errors.
   if (msg)
-    errs() << msg << "\n";
-  errs() << "UNREACHABLE executed";
+    dbgs() << msg << "\n";
+  dbgs() << "UNREACHABLE executed";
   if (file)
-    errs() << " at " << file << ":" << line;
-  errs() << "!\n";
+    dbgs() << " at " << file << ":" << line;
+  dbgs() << "!\n";
   abort();
 }
 }
