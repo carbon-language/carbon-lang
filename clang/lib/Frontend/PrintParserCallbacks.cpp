@@ -394,7 +394,8 @@ namespace {
                                           MultiExprArg Exprs,
                                           ExprArg AsmString,
                                           MultiExprArg Clobbers,
-                                          SourceLocation RParenLoc) {
+                                          SourceLocation RParenLoc,
+                                          bool MSAsm) {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
