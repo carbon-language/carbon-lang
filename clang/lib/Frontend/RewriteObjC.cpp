@@ -4540,6 +4540,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   }
   else {
     SourceLocation startLoc = ND->getInit()->getLocStart();
+    startLoc = SM->getInstantiationLoc(startLoc);
     ByrefType += " " + Name;
     ReplaceText(DeclLoc, endBuf-startBuf, 
                 ByrefType.c_str(), ByrefType.size());
