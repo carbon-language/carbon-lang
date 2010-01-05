@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -31,8 +32,8 @@ void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCOperand::dump() const {
-  print(errs(), 0);
-  errs() << "\n";
+  print(dbgs(), 0);
+  dbgs() << "\n";
 }
 
 void MCInst::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
@@ -45,6 +46,6 @@ void MCInst::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCInst::dump() const {
-  print(errs(), 0);
-  errs() << "\n";
+  print(dbgs(), 0);
+  dbgs() << "\n";
 }
