@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -106,5 +107,5 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCSymbol::dump() const {
-  print(errs(), 0);
+  print(dbgs(), 0);
 }
