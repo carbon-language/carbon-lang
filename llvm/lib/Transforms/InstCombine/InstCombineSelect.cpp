@@ -1,4 +1,4 @@
-//===- InstCombineLoadStoreAlloca.cpp -------------------------------------===//
+//===- InstCombineSelect.cpp ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the visit functions for load, store and alloca.
+// This file implements the visitSelect function.
 //
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
-//#include "llvm/IntrinsicInst.h"
-//#include "llvm/Target/TargetData.h"
-//#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-//#include "llvm/Transforms/Utils/Local.h"
-//#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
