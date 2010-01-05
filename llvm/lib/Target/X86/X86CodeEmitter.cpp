@@ -135,7 +135,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
   
   do {
-    DEBUG(errs() << "JITTing function '" 
+    DEBUG(dbgs() << "JITTing function '" 
           << MF.getFunction()->getName() << "'\n");
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
@@ -477,7 +477,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
                                            const TargetInstrDesc *Desc) {
-  DEBUG(errs() << MI);
+  DEBUG(dbgs() << MI);
 
   MCE.processDebugLoc(MI.getDebugLoc(), true);
 
@@ -618,11 +618,11 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       
     const MachineOperand &MO = MI.getOperand(CurOp++);
 
-    DEBUG(errs() << "RawFrm CurOp " << CurOp << "\n");
-    DEBUG(errs() << "isMBB " << MO.isMBB() << "\n");
-    DEBUG(errs() << "isGlobal " << MO.isGlobal() << "\n");
-    DEBUG(errs() << "isSymbol " << MO.isSymbol() << "\n");
-    DEBUG(errs() << "isImm " << MO.isImm() << "\n");
+    DEBUG(dbgs() << "RawFrm CurOp " << CurOp << "\n");
+    DEBUG(dbgs() << "isMBB " << MO.isMBB() << "\n");
+    DEBUG(dbgs() << "isGlobal " << MO.isGlobal() << "\n");
+    DEBUG(dbgs() << "isSymbol " << MO.isSymbol() << "\n");
+    DEBUG(dbgs() << "isImm " << MO.isImm() << "\n");
 
     if (MO.isMBB()) {
       emitPCRelativeBlockAddress(MO.getMBB());
@@ -843,7 +843,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
 #ifndef NDEBUG
-    errs() << "Cannot encode all operands of: " << MI << "\n";
+    dbgs() << "Cannot encode all operands of: " << MI << "\n";
 #endif
     llvm_unreachable(0);
   }
@@ -1082,9 +1082,9 @@ public:
     }
 
     if (!OK) {
-      errs() << "couldn't convert inst '";
+      dbgs() << "couldn't convert inst '";
       MI.dump();
-      errs() << "' to machine instr:\n";
+      dbgs() << "' to machine instr:\n";
       Instr->dump();
     }
 
