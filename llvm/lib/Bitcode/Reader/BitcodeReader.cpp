@@ -789,9 +789,13 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<MDNode *, 8> Elts;
       for (unsigned i = 0; i != Size; ++i) {
-        Value *MD = MDValueList.getValueFwdRef(Record[i]);
-        if (MDNode *B = dyn_cast_or_null<MDNode>(MD))
-          Elts.push_back(B);
+        if (Record[i] == ~0U)
+          Elts.push_back(NULL);
+        else {
+          Value *MD = MDValueList.getValueFwdRef(Record[i]);
+          if (MDNode *B = dyn_cast_or_null<MDNode>(MD))
+            Elts.push_back(B);
+        }
       }
       Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(),
                                      Elts.size(), TheModule);

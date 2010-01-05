@@ -3,4 +3,4 @@
 ;; Simple NamedMDNode
 !0 = metadata !{i32 42}
 !1 = metadata !{metadata !"foo"}
-!llvm.stuff = !{!0, !1}
+!llvm.stuff = !{!0, !1, null}

@@ -540,7 +540,7 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
         if (NMD->getOperand(i))
           Record.push_back(VE.getValueID(NMD->getOperand(i)));
         else
-          Record.push_back(0);
+          Record.push_back(~0U);
       }
       Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
       Record.clear();

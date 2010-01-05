@@ -615,8 +615,7 @@ void SlotTracker::processModule() {
          E = TheModule->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      // FIXME: Change accessor to be type safe.
-      if (MDNode *MD = cast_or_null<MDNode>(NMD->getOperand(i)))
+      if (MDNode *MD = NMD->getOperand(i))
         CreateMetadataSlot(MD);
     }
   }
@@ -1370,10 +1369,10 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   Out << "!" << NMD->getName() << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
     if (i) Out << ", ";
-    // FIXME: Change accessor to be typesafe.
-    // FIXME: This doesn't handle null??
-    MDNode *MD = cast_or_null<MDNode>(NMD->getOperand(i));
-    Out << '!' << Machine.getMetadataSlot(MD);
+    if (MDNode *MD = NMD->getOperand(i))
+      Out << '!' << Machine.getMetadataSlot(MD);
+    else
+      Out << "null";
   }
   Out << "}\n";
 }

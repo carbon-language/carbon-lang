@@ -512,6 +512,12 @@ bool LLParser::ParseNamedMetadata() {
 
   SmallVector<MDNode *, 8> Elts;
   do {
+    // Null is a special case since it is typeless.
+    if (EatIfPresent(lltok::kw_null)) {
+      Elts.push_back(0);
+      continue;
+    }
+
     if (ParseToken(lltok::exclaim, "Expected '!' here"))
       return true;
     

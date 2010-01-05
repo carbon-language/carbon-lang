@@ -223,7 +223,8 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   
   if (const NamedMDNode *N = dyn_cast<NamedMDNode>(MD)) {
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      EnumerateValue(N->getOperand(i));
+      if (MDNode *E = N->getOperand(i))
+        EnumerateValue(E);
     MDValues.push_back(std::make_pair(MD, 1U));
     MDValueMap[MD] = Values.size();
     return;
