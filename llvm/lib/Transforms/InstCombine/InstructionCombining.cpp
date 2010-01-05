@@ -305,36 +305,6 @@ static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
   return 0;
 }
 
-namespace {
-
-// AddRHS - Implements: X + X --> X << 1
-struct AddRHS {
-  Value *RHS;
-  explicit AddRHS(Value *rhs) : RHS(rhs) {}
-  bool shouldApply(Value *LHS) const { return LHS == RHS; }
-  Instruction *apply(BinaryOperator &Add) const {
-    return BinaryOperator::CreateShl(Add.getOperand(0),
-                                     ConstantInt::get(Add.getType(), 1));
-  }
-};
-
-// AddMaskingAnd - Implements (A & C1)+(B & C2) --> (A & C1)|(B & C2)
-//                 iff C1&C2 == 0
-struct AddMaskingAnd {
-  Constant *C2;
-  explicit AddMaskingAnd(Constant *c) : C2(c) {}
-  bool shouldApply(Value *LHS) const {
-    ConstantInt *C1;
-    return match(LHS, m_And(m_Value(), m_ConstantInt(C1))) &&
-           ConstantExpr::getAnd(C1, C2)->isNullValue();
-  }
-  Instruction *apply(BinaryOperator &Add) const {
-    return BinaryOperator::CreateOr(Add.getOperand(0), Add.getOperand(1));
-  }
-};
-
-}
-
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
   if (CastInst *CI = dyn_cast<CastInst>(&I))
@@ -622,10 +592,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (I.getType() == Type::getInt1Ty(I.getContext()))
     return BinaryOperator::CreateXor(LHS, RHS);
 
-  // X + X --> X << 1
   if (I.getType()->isInteger()) {
-    if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS)))
-      return Result;
+    // X + X --> X << 1
+    if (LHS == RHS)
+      return BinaryOperator::CreateShl(LHS, ConstantInt::get(I.getType(), 1));
 
     if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
       if (RHSI->getOpcode() == Instruction::Sub)
@@ -679,11 +649,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
   
 
-  // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
-  if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
-    if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2)))
-      return R;
-  
   // A+B --> A|B iff A and B have no bits set in common.
   if (const IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
     APInt Mask = APInt::getAllOnesValue(IT->getBitWidth());
@@ -736,7 +701,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (Anded == CRHS) {
         // See if all bits from the first bit set in the Add RHS up are included
         // in the mask.  First, get the rightmost bit.
-        const APInt& AddRHSV = CRHS->getValue();
+        const APInt &AddRHSV = CRHS->getValue();
 
         // Form a mask of all bits from the lowest bit added through the top.
         APInt AddRHSHighBits(~((AddRHSV & -AddRHSV)-1));
