@@ -360,27 +360,12 @@ static llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty) {
     // If we're in an anonymous namespace, then we always want internal linkage.
     if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
       return llvm::GlobalVariable::InternalLinkage;
-    
+
+    // If this class does not have a vtable, we want weak linkage.
     if (!RD->isDynamicClass())
       return llvm::GlobalValue::WeakODRLinkage;
     
-    // Get the key function.
-    const CXXMethodDecl *KeyFunction = RD->getASTContext().getKeyFunction(RD);
-    if (!KeyFunction) {
-      // There is no key function, the RTTI descriptor is emitted with weak_odr
-      // linkage.
-      return llvm::GlobalValue::WeakODRLinkage;
-    }
-
-    // If the key function is defined, but inlined, then the RTTI descriptor is
-    // emitted with weak_odr linkage.
-    const FunctionDecl* KeyFunctionDefinition;
-    if (KeyFunction->getBody(KeyFunctionDefinition) &&
-        KeyFunctionDefinition->isInlined())
-      return llvm::GlobalValue::WeakODRLinkage;
-      
-    // Otherwise, the RTTI descriptor is emitted with external linkage.
-    return llvm::GlobalValue::ExternalLinkage;
+    return CodeGenModule::getVtableLinkage(RD);
   }
 
   case Type::Vector:

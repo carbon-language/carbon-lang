@@ -409,7 +409,8 @@ public:
 
   /// getVtableLinkage - Return the appropriate linkage for the vtable, VTT,
   /// and type information of the given class.
-  llvm::GlobalVariable::LinkageTypes getVtableLinkage(const CXXRecordDecl *RD);
+  static llvm::GlobalVariable::LinkageTypes 
+  getVtableLinkage(const CXXRecordDecl *RD);
   
 private:
   /// UniqueMangledName - Unique a name by (if necessary) inserting it into the
