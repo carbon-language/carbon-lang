@@ -1136,7 +1136,7 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
   // Expand the current designator into the set of replacement
   // designators, so we have a full subobject path down to where the
   // member of the anonymous struct/union is actually stored.
-  DIE->ExpandDesignator(DesigIdx, &Replacements[0],
+  DIE->ExpandDesignator(SemaRef.Context, DesigIdx, &Replacements[0],
                         &Replacements[0] + Replacements.size());
 
   // Update FieldIter/FieldIndex;

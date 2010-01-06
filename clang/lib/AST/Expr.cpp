@@ -2154,7 +2154,8 @@ IdentifierInfo *DesignatedInitExpr::Designator::getFieldName() {
     return getField()->getIdentifier();
 }
 
-DesignatedInitExpr::DesignatedInitExpr(QualType Ty, unsigned NumDesignators,
+DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty, 
+                                       unsigned NumDesignators,
                                        const Designator *Designators,
                                        SourceLocation EqualOrColonLoc,
                                        bool GNUSyntax,
@@ -2165,7 +2166,7 @@ DesignatedInitExpr::DesignatedInitExpr(QualType Ty, unsigned NumDesignators,
          Init->isTypeDependent(), Init->isValueDependent()),
     EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax),
     NumDesignators(NumDesignators), NumSubExprs(NumIndexExprs + 1) {
-  this->Designators = new Designator[NumDesignators];
+  this->Designators = new (C) Designator[NumDesignators];
 
   // Record the initializer itself.
   child_iterator Child = child_begin();
@@ -2210,7 +2211,7 @@ DesignatedInitExpr::Create(ASTContext &C, Designator *Designators,
                            bool UsesColonSyntax, Expr *Init) {
   void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
                          sizeof(Stmt *) * (NumIndexExprs + 1), 8);
-  return new (Mem) DesignatedInitExpr(C.VoidTy, NumDesignators, Designators,
+  return new (Mem) DesignatedInitExpr(C, C.VoidTy, NumDesignators, Designators,
                                       ColonOrEqualLoc, UsesColonSyntax,
                                       IndexExprs, NumIndexExprs, Init);
 }
@@ -2222,12 +2223,12 @@ DesignatedInitExpr *DesignatedInitExpr::CreateEmpty(ASTContext &C,
   return new (Mem) DesignatedInitExpr(NumIndexExprs + 1);
 }
 
-void DesignatedInitExpr::setDesignators(const Designator *Desigs,
+void DesignatedInitExpr::setDesignators(ASTContext &C,
+                                        const Designator *Desigs,
                                         unsigned NumDesigs) {
-  if (Designators)
-    delete [] Designators;
+  DestroyDesignators(C);
 
-  Designators = new Designator[NumDesigs];
+  Designators = new (C) Designator[NumDesigs];
   NumDesignators = NumDesigs;
   for (unsigned I = 0; I != NumDesigs; ++I)
     Designators[I] = Desigs[I];
@@ -2276,7 +2277,7 @@ Expr *DesignatedInitExpr::getArrayRangeEnd(const Designator& D) {
 
 /// \brief Replaces the designator at index @p Idx with the series
 /// of designators in [First, Last).
-void DesignatedInitExpr::ExpandDesignator(unsigned Idx,
+void DesignatedInitExpr::ExpandDesignator(ASTContext &C, unsigned Idx,
                                           const Designator *First,
                                           const Designator *Last) {
   unsigned NumNewDesignators = Last - First;
@@ -2292,19 +2293,26 @@ void DesignatedInitExpr::ExpandDesignator(unsigned Idx,
   }
 
   Designator *NewDesignators
-    = new Designator[NumDesignators - 1 + NumNewDesignators];
+    = new (C) Designator[NumDesignators - 1 + NumNewDesignators];
   std::copy(Designators, Designators + Idx, NewDesignators);
   std::copy(First, Last, NewDesignators + Idx);
   std::copy(Designators + Idx + 1, Designators + NumDesignators,
             NewDesignators + Idx + NumNewDesignators);
-  delete [] Designators;
+  DestroyDesignators(C);
   Designators = NewDesignators;
   NumDesignators = NumDesignators - 1 + NumNewDesignators;
 }
 
 void DesignatedInitExpr::DoDestroy(ASTContext &C) {
-  delete [] Designators;
+  DestroyDesignators(C);
   Expr::DoDestroy(C);
+}
+
+void DesignatedInitExpr::DestroyDesignators(ASTContext &C) {
+  for (unsigned I = 0; I != NumDesignators; ++I)
+    Designators[I].~Designator();
+  C.Deallocate(Designators);
+  Designators = 0;
 }
 
 ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,

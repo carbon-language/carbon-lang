@@ -2557,7 +2557,7 @@ private:
   unsigned NumSubExprs : 16;
 
 
-  DesignatedInitExpr(QualType Ty, unsigned NumDesignators,
+  DesignatedInitExpr(ASTContext &C, QualType Ty, unsigned NumDesignators,
                      const Designator *Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
                      Expr **IndexExprs, unsigned NumIndexExprs,
@@ -2570,6 +2570,8 @@ private:
 protected:
   virtual void DoDestroy(ASTContext &C);
 
+  void DestroyDesignators(ASTContext &C);
+  
 public:
   /// A field designator, e.g., ".x".
   struct FieldDesignator {
@@ -2737,7 +2739,8 @@ public:
 
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
 
-  void setDesignators(const Designator *Desigs, unsigned NumDesigs);
+  void setDesignators(ASTContext &C, const Designator *Desigs, 
+                      unsigned NumDesigs);
 
   Expr *getArrayIndex(const Designator& D);
   Expr *getArrayRangeStart(const Designator& D);
@@ -2784,7 +2787,7 @@ public:
 
   /// \brief Replaces the designator at index @p Idx with the series
   /// of designators in [First, Last).
-  void ExpandDesignator(unsigned Idx, const Designator *First,
+  void ExpandDesignator(ASTContext &C, unsigned Idx, const Designator *First,
                         const Designator *Last);
 
   virtual SourceRange getSourceRange() const;

@@ -616,7 +616,8 @@ unsigned PCHStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
     }
     }
   }
-  E->setDesignators(Designators.data(), Designators.size());
+  E->setDesignators(*Reader.getContext(), 
+                    Designators.data(), Designators.size());
 
   return NumSubExprs;
 }
