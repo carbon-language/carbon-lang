@@ -30,7 +30,7 @@ namespace llvm {
   class Module;
   class Type;
   class Value;
-  struct DbgDeclareInst;
+  class DbgDeclareInst;
   class DebugLoc;
   struct DebugLocTracker;
   class Instruction;
