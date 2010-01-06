@@ -25,6 +25,20 @@
 using namespace clang;
 using namespace idx;
 
+//===----------------------------------------------------------------------===//
+// Crash Reporting.
+//===----------------------------------------------------------------------===//
+
+#ifdef __APPLE__
+#include "clang/Analysis/Support/SaveAndRestore.h"
+// Integrate with crash reporter.
+extern "C" const char *__crashreporter_info__;
+#endif
+
+//===----------------------------------------------------------------------===//
+// Visitors.
+//===----------------------------------------------------------------------===//
+
 namespace {
 static enum CXCursorKind TranslateDeclRefExpr(DeclRefExpr *DRE) {
   NamedDecl *D = DRE->getDecl();
@@ -392,6 +406,46 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                 command_line_args + num_command_line_args);
 
     unsigned NumErrors = CXXIdx->getDiags().getNumErrors();
+    
+#ifdef __APPLE__
+    // Integrate with crash reporter.
+    static unsigned counter = 0;
+    static const char* reportStrings[16] = { 0 };
+    
+    llvm::SmallString<1028> CrashString;
+    {
+      llvm::raw_svector_ostream Out(CrashString);
+      Out << "ClangCIndex [createTranslationUnitFromSourceFile]: clang";
+      for (llvm::SmallVectorImpl<const char*>::iterator I=Args.begin(),
+           E=Args.end(); I!=E; ++I)
+        Out << ' ' << *I;
+    }
+
+    unsigned myCounter = counter;
+    counter = myCounter == 15 ? 0 : myCounter + 1;
+    
+    while (reportStrings[myCounter]) {
+      myCounter = counter;
+      counter = myCounter == 15 ? 0 : myCounter + 1;
+    }
+    
+    SaveAndRestore<const char*> OldCrashString(reportStrings[myCounter],
+                                               CrashString.c_str());
+
+    // We need to create an aggregate string because multiple threads
+    // may be in this method at one time.  The crash reporter string
+    // will attempt to overapproximate the set of in-flight invocations
+    // of this function.  Race conditions can still cause this goal
+    // to not be achieved.
+    llvm::SmallString<1028> AggregateString;
+    {
+      llvm::raw_svector_ostream Out(AggregateString);      
+      for (unsigned i = 0; i < 16; ++i)
+        if (reportStrings[i]) Out << reportStrings[i] << '\n';
+    }      
+    __crashreporter_info__ = AggregateString.c_str();
+#endif
+    
     llvm::OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
                                    CXXIdx->getDiags(),
