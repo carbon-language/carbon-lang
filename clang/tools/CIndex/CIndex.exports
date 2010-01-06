@@ -22,6 +22,7 @@ _clang_getCursorSource
 _clang_getCursorSourceFile
 _clang_getCursorSpelling
 _clang_getDeclColumn
+_clang_getDeclExtent
 _clang_getDeclLine
 _clang_getDeclExtent
 _clang_getDeclSourceFile
