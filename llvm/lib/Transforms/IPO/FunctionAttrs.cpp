@@ -79,16 +79,47 @@ Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 /// memory that is local to the function.  Global constants are considered
 /// local to all functions.
 bool FunctionAttrs::PointsToLocalMemory(Value *V) {
-  V = V->getUnderlyingObject();
-  // An alloca instruction defines local memory.
-  if (isa<AllocaInst>(V))
-    return true;
-  // A global constant counts as local memory for our purposes.
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return GV->isConstant();
-  // Could look through phi nodes and selects here, but it doesn't seem
-  // to be useful in practice.
-  return false;
+  SmallVector<Value*, 8> Worklist;
+  unsigned MaxLookup = 4;
+
+  Worklist.push_back(V);
+
+  do {
+    V = Worklist.pop_back_val()->getUnderlyingObject();
+
+    // An alloca instruction defines local memory.
+    if (isa<AllocaInst>(V))
+      continue;
+
+    // A global constant counts as local memory for our purposes.
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+      if (!GV->isConstant())
+        return false;
+      continue;
+    }
+
+    // If both select values point to local memory, then so does the select.
+    if (SelectInst *SI = dyn_cast<SelectInst>(V)) {
+      Worklist.push_back(SI->getTrueValue());
+      Worklist.push_back(SI->getFalseValue());
+      continue;
+    }
+
+    // If all values incoming to a phi node point to local memory, then so does
+    // the phi.
+    if (PHINode *PN = dyn_cast<PHINode>(V)) {
+      // Don't bother inspecting phi nodes with many operands.
+      if (PN->getNumIncomingValues() > MaxLookup)
+        return false;
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Worklist.push_back(PN->getIncomingValue(i));
+      continue;
+    }
+
+    return false;
+  } while (!Worklist.empty() && --MaxLookup);
+
+  return Worklist.empty();
 }
 
 /// AddReadAttrs - Deduce readonly/readnone attributes for the SCC.

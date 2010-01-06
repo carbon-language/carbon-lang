@@ -1648,36 +1648,7 @@ would delete the or instruction for us.
 
 //===---------------------------------------------------------------------===//
 
-FunctionAttrs is not marking this function as readnone (just readonly):
-$ clang t.c -emit-llvm -S -o - -O0 | opt -mem2reg -S -functionattrs
-
-int t(int a, int b, int c) {
- int *p;
- if (a)
-   p = &a;
- else
-   p = &c;
- return *p;
-}
-
-This is because we codegen this to:
-
-define i32 @t(i32 %a, i32 %b, i32 %c) nounwind readonly ssp {
-entry:
-  %a.addr = alloca i32                            ; <i32*> [#uses=3]
-  %c.addr = alloca i32                            ; <i32*> [#uses=2]
-...
-
-if.end:
-  %p.0 = phi i32* [ %a.addr, %if.then ], [ %c.addr, %if.else ]
-  %tmp2 = load i32* %p.0                          ; <i32> [#uses=1]
-  ret i32 %tmp2
-}
-
-And functionattrs doesn't realize that the p.0 load points to function local
-memory.
-
-Also, functionattrs doesn't know about memcpy/memset.  This function should be
+functionattrs doesn't know much about memcpy/memset.  This function should be
 marked readnone rather than readonly, since it only twiddles local memory, but
 functionattrs doesn't handle memset/memcpy/memmove aggressively:
 
