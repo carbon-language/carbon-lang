@@ -294,11 +294,13 @@ namespace llvm {
     bool ParseValID(ValID &ID, PerFunctionState *PFS = NULL);
     bool ConvertGlobalValIDToValue(const Type *Ty, ValID &ID, Constant *&V);
     bool ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
-                                             Value *&V, PerFunctionState *PFS);
+                                             Value *&V, PerFunctionState *PFS,
+                                             bool *isFunctionLocal);
     bool ParseGlobalValue(const Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
-    bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS);
+    bool ParseMDNodeVector(SmallVectorImpl<Value*> &, PerFunctionState *PFS,
+                           bool *isFunctionLocal);
 
     // Function Parsing.
     struct ArgInfo {
