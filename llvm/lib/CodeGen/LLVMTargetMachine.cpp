@@ -336,7 +336,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (OptLevel != CodeGenOpt::None &&
       !DisableTailDuplicate && PreAllocTailDup) {
     PM.add(createTailDuplicatePass(true));
-    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
+    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate",
+                   /* allowDoubleDefs= */ true);
   }
 
   // Run pre-ra passes.
