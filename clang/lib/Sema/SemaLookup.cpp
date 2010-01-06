@@ -2199,6 +2199,10 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
 bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
                        DeclContext *MemberContext, bool EnteringContext,
                        const ObjCObjectPointerType *OPT) {
+  
+  if (Diags.hasFatalErrorOccurred())
+    return false;
+  
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
   if (!Typo)
