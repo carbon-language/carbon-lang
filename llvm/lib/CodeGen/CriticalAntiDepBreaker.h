@@ -88,7 +88,8 @@ namespace llvm {
   private:
     void PrescanInstruction(MachineInstr *MI);
     void ScanInstruction(MachineInstr *MI, unsigned Count);
-    unsigned findSuitableFreeRegister(unsigned AntiDepReg,
+    unsigned findSuitableFreeRegister(MachineInstr *MI,
+                                      unsigned AntiDepReg,
                                       unsigned LastNewReg,
                                       const TargetRegisterClass *);
   };

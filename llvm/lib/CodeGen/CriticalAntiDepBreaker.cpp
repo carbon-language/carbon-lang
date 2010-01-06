@@ -288,7 +288,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 }
 
 unsigned
-CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
+CriticalAntiDepBreaker::findSuitableFreeRegister(MachineInstr *MI,
+                                                 unsigned AntiDepReg,
                                                  unsigned LastNewReg,
                                                  const TargetRegisterClass *RC)
 {
@@ -301,6 +302,10 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
     // an anti-dependence with this AntiDepReg, because that would
     // re-introduce that anti-dependence.
     if (NewReg == LastNewReg) continue;
+    // If the instruction already has a def of the NewReg, it's not suitable.
+    // For example, Instruction with multiple definitions can result in this
+    // condition.
+    if (MI->modifiesRegister(NewReg, TRI)) continue;
     // If NewReg is dead and NewReg's most recent def is not before
     // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
     assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u))
@@ -496,7 +501,7 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
     // TODO: Instead of picking the first free register, consider which might
     // be the best.
     if (AntiDepReg != 0) {
-      if (unsigned NewReg = findSuitableFreeRegister(AntiDepReg,
+      if (unsigned NewReg = findSuitableFreeRegister(MI, AntiDepReg,
                                                      LastNewReg[AntiDepReg],
                                                      RC)) {
         DEBUG(dbgs() << "Breaking anti-dependence edge on "
