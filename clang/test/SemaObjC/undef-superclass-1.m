@@ -13,7 +13,8 @@
 @interface INTF2 : INTF1
 @end
 
-@interface INTF3 : Y // expected-error {{cannot find interface declaration for 'Y', superclass of 'INTF3'}}
+@interface INTF3 : Y // expected-error {{cannot find interface declaration for 'Y', superclass of 'INTF3'}} \
+                     // expected-note{{'INTF3' declared here}}
 @end
 
 @interface INTF1  // expected-error {{duplicate interface definition for class 'INTF1'}}

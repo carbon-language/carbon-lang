@@ -115,6 +115,9 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
     if (!AcceptableLocation)
       return;
+  } else if (DiagLevel == Diagnostic::Note) {
+    // Don't apply fix-it modifications in notes.
+    return;
   }
 
   // Make sure that we can perform all of the modifications we

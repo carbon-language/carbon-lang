@@ -701,11 +701,17 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     LookupResult R(*this, ClassName, ClassLoc, LookupOrdinaryName);
     if (CorrectTypo(R, TUScope, 0) &&
         (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
-      // Suggest the (potentially) correct interface name. However, don't
+      // Suggest the (potentially) correct interface name. However, put the
+      // fix-it hint itself in a separate note, since changing the name in 
+      // the warning would make the fix-it change semantics.However, don't
       // provide a code-modification hint or use the typo name for recovery,
       // because this is just a warning. The program may actually be correct.
       Diag(ClassLoc, diag::warn_undef_interface_suggest)
         << ClassName << R.getLookupName();
+      Diag(IDecl->getLocation(), diag::note_previous_decl)
+        << R.getLookupName()
+        << CodeModificationHint::CreateReplacement(ClassLoc,
+                                               R.getLookupName().getAsString());
       IDecl = 0;
     } else {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
