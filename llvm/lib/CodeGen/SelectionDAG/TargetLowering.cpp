@@ -990,7 +990,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (TLO.ShrinkDemandedConstant(Op, ~KnownZero2 & NewMask))
       return true;
     // If the operation can be done in a smaller type, do so.
-    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+    if (TLO.ShrinkOps && TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
       return true;
 
     // Output known-1 bits are only known if set in both the LHS & RHS.
@@ -1024,7 +1024,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (TLO.ShrinkDemandedConstant(Op, NewMask))
       return true;
     // If the operation can be done in a smaller type, do so.
-    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+    if (TLO.ShrinkOps && TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
       return true;
 
     // Output known-0 bits are only known if clear in both the LHS & RHS.
@@ -1049,7 +1049,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if ((KnownZero2 & NewMask) == NewMask)
       return TLO.CombineTo(Op, Op.getOperand(1));
     // If the operation can be done in a smaller type, do so.
-    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+    if (TLO.ShrinkOps && TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
       return true;
 
     // If all of the unknown bits are known to be zero on one side or the other
@@ -1480,7 +1480,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                              KnownOne2, TLO, Depth+1))
       return true;
     // See if the operation should be performed at a smaller bit width.
-    if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
+    if (TLO.ShrinkOps && TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
       return true;
   }
   // FALL THROUGH
@@ -1876,7 +1876,9 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
 
     // Fold bit comparisons when we can.
     if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-        VT == N0.getValueType() && N0.getOpcode() == ISD::AND)
+        (VT == N0.getValueType() ||
+         (isTypeLegal(VT) && VT.bitsLE(N0.getValueType()))) &&
+        N0.getOpcode() == ISD::AND)
       if (ConstantSDNode *AndRHS =
                   dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
         EVT ShiftTy = DCI.isBeforeLegalize() ?
@@ -1884,16 +1886,18 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
           // Perform the xform if the AND RHS is a single bit.
           if (isPowerOf2_64(AndRHS->getZExtValue())) {
-            return DAG.getNode(ISD::SRL, dl, VT, N0,
+            return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                              DAG.getNode(ISD::SRL, dl, N0.getValueType(), N0,
                                 DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
-                                                ShiftTy));
+                                                ShiftTy)));
           }
         } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
           // (X & 8) == 8  -->  (X & 8) >> 3
           // Perform the xform if C1 is a single bit.
           if (C1.isPowerOf2()) {
-            return DAG.getNode(ISD::SRL, dl, VT, N0,
-                                DAG.getConstant(C1.logBase2(), ShiftTy));
+            return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                               DAG.getNode(ISD::SRL, dl, N0.getValueType(), N0,
+                                      DAG.getConstant(C1.logBase2(), ShiftTy)));
           }
         }
       }

@@ -5,8 +5,8 @@ target triple = "s390x-linux"
 
 define i32 @rotl(i32 %x, i32 %y, i32 %z) nounwind readnone {
 entry:
-	%shl = shl i32 %x, 0		; <i32> [#uses=1]
-	%sub = sub i32 32, 0		; <i32> [#uses=1]
+	%shl = shl i32 %x, 1		; <i32> [#uses=1]
+	%sub = sub i32 32, 1		; <i32> [#uses=1]
 	%shr = lshr i32 %x, %sub		; <i32> [#uses=1]
 	%or = or i32 %shr, %shl		; <i32> [#uses=1]
 	ret i32 %or

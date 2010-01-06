@@ -438,6 +438,75 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   SDB->clear();
 }
 
+void SelectionDAGISel::ShrinkDemandedOps() {
+  SmallVector<SDNode*, 128> Worklist;
+
+  // Add all the dag nodes to the worklist.
+  Worklist.reserve(CurDAG->allnodes_size());
+  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
+       E = CurDAG->allnodes_end(); I != E; ++I)
+    Worklist.push_back(I);
+
+  APInt Mask;
+  APInt KnownZero;
+  APInt KnownOne;
+
+  TargetLowering::TargetLoweringOpt TLO(*CurDAG, true);
+  while (!Worklist.empty()) {
+    SDNode *N = Worklist.back();
+    Worklist.pop_back();
+
+    if (N->use_empty() && N != CurDAG->getRoot().getNode()) {
+      CurDAG->DeleteNode(N);
+      continue;
+    }
+
+    // Run ShrinkDemandedOp on scalar binary operations.
+    if (N->getNumValues() == 1 &&
+        N->getValueType(0).isSimple() && N->getValueType(0).isInteger()) {
+      DebugLoc dl = N->getDebugLoc();
+      unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
+      APInt Demanded = APInt::getAllOnesValue(BitWidth);
+      APInt KnownZero, KnownOne;
+      if (TLI.SimplifyDemandedBits(SDValue(N, 0), Demanded,
+                                   KnownZero, KnownOne, TLO)) {
+        // Revisit the node.
+        Worklist.erase(std::remove(Worklist.begin(), Worklist.end(), N),
+                       Worklist.end());
+        Worklist.push_back(N);
+
+        // Replace the old value with the new one.
+        DEBUG(errs() << "\nReplacing "; 
+              TLO.Old.getNode()->dump(CurDAG);
+              errs() << "\nWith: ";
+              TLO.New.getNode()->dump(CurDAG);
+              errs() << '\n');
+
+        Worklist.push_back(TLO.New.getNode());
+        CurDAG->ReplaceAllUsesOfValueWith(TLO.Old, TLO.New);
+
+        if (TLO.Old.getNode()->use_empty()) {
+          for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands();
+               i != e; ++i) {
+            SDNode *OpNode = TLO.Old.getNode()->getOperand(i).getNode(); 
+            if (OpNode->hasOneUse()) {
+              Worklist.erase(std::remove(Worklist.begin(), Worklist.end(),
+                                         OpNode),
+                             Worklist.end());
+              Worklist.push_back(TLO.Old.getNode()->getOperand(i).getNode());
+            }
+          }
+
+          Worklist.erase(std::remove(Worklist.begin(), Worklist.end(),
+                                     TLO.Old.getNode()),
+                         Worklist.end());
+          CurDAG->DeleteNode(TLO.Old.getNode());
+        }
+      }
+    }
+  }
+}
+
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   SmallPtrSet<SDNode*, 128> VisitedNodes;
   SmallVector<SDNode*, 128> Worklist;
@@ -609,8 +678,10 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
 
-  if (OptLevel != CodeGenOpt::None)
+  if (OptLevel != CodeGenOpt::None) {
+    ShrinkDemandedOps();
     ComputeLiveOutVRegInfo();
+  }
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.

@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs
-; XFAIL: *
 
 ; An undef argument causes a setugt node to escape instruction selection.
 

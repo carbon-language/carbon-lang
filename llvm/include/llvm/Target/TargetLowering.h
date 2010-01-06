@@ -774,10 +774,12 @@ public:
   /// that want to combine 
   struct TargetLoweringOpt {
     SelectionDAG &DAG;
+    bool ShrinkOps;
     SDValue Old;
     SDValue New;
 
-    explicit TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
+    explicit TargetLoweringOpt(SelectionDAG &InDAG, bool Shrink = false) :
+      DAG(InDAG), ShrinkOps(Shrink) {}
     
     bool CombineTo(SDValue O, SDValue N) { 
       Old = O; 
@@ -1478,7 +1480,7 @@ public:
   }
 
   /// isZExtFree - Return true if any actual instruction that defines a
-  /// value of type Ty1 implicit zero-extends the value to Ty2 in the result
+  /// value of type Ty1 implicitly zero-extends the value to Ty2 in the result
   /// register. This does not necessarily include registers defined in
   /// unknown ways, such as incoming arguments, or copies from unknown
   /// virtual registers. Also, if isTruncateFree(Ty2, Ty1) is true, this

@@ -5681,58 +5681,51 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
 }
 
-static SDValue LowerToBT(SDValue Op0, SDValue Op1, ISD::CondCode CC,
+/// LowerToBT - Result of 'and' is compared against zero. Turn it into a BT node
+/// if it's possible.
+static SDValue LowerToBT(SDValue Op0, ISD::CondCode CC,
                          DebugLoc dl, SelectionDAG &DAG) {
-  // Lower (X & (1 << N)) == 0 to BT(X, N).
-  // Lower ((X >>u N) & 1) != 0 to BT(X, N).
-  // Lower ((X >>s N) & 1) != 0 to BT(X, N).
-  if (Op0.getOpcode() == ISD::AND &&
-      Op0.hasOneUse() &&
-      Op1.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(Op1)->getZExtValue() == 0 &&
-      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-    SDValue LHS, RHS;
-    if (Op0.getOperand(1).getOpcode() == ISD::SHL) {
-      if (ConstantSDNode *Op010C =
-          dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
-        if (Op010C->getZExtValue() == 1) {
-          LHS = Op0.getOperand(0);
-          RHS = Op0.getOperand(1).getOperand(1);
-        }
-    } else if (Op0.getOperand(0).getOpcode() == ISD::SHL) {
-      if (ConstantSDNode *Op000C =
-          dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
-        if (Op000C->getZExtValue() == 1) {
-          LHS = Op0.getOperand(1);
-          RHS = Op0.getOperand(0).getOperand(1);
-        }
-    } else if (Op0.getOperand(1).getOpcode() == ISD::Constant) {
-      ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
-      SDValue AndLHS = Op0.getOperand(0);
-      if (AndRHS->getZExtValue() == 1 && AndLHS.getOpcode() == ISD::SRL) {
-        LHS = AndLHS.getOperand(0);
-        RHS = AndLHS.getOperand(1);
+  SDValue LHS, RHS;
+  if (Op0.getOperand(1).getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *Op010C =
+        dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
+      if (Op010C->getZExtValue() == 1) {
+        LHS = Op0.getOperand(0);
+        RHS = Op0.getOperand(1).getOperand(1);
       }
+  } else if (Op0.getOperand(0).getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *Op000C =
+        dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
+      if (Op000C->getZExtValue() == 1) {
+        LHS = Op0.getOperand(1);
+        RHS = Op0.getOperand(0).getOperand(1);
+      }
+  } else if (Op0.getOperand(1).getOpcode() == ISD::Constant) {
+    ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
+    SDValue AndLHS = Op0.getOperand(0);
+    if (AndRHS->getZExtValue() == 1 && AndLHS.getOpcode() == ISD::SRL) {
+      LHS = AndLHS.getOperand(0);
+      RHS = AndLHS.getOperand(1);
     }
+  }
 
-    if (LHS.getNode()) {
-      // If LHS is i8, promote it to i16 with any_extend.  There is no i8 BT
-      // instruction.  Since the shift amount is in-range-or-undefined, we know
-      // that doing a bittest on the i16 value is ok.  We extend to i32 because
-      // the encoding for the i16 version is larger than the i32 version.
-      if (LHS.getValueType() == MVT::i8)
-        LHS = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, LHS);
+  if (LHS.getNode()) {
+    // If LHS is i8, promote it to i16 with any_extend.  There is no i8 BT
+    // instruction.  Since the shift amount is in-range-or-undefined, we know
+    // that doing a bittest on the i16 value is ok.  We extend to i32 because
+    // the encoding for the i16 version is larger than the i32 version.
+    if (LHS.getValueType() == MVT::i8)
+      LHS = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, LHS);
 
-      // If the operand types disagree, extend the shift amount to match.  Since
-      // BT ignores high bits (like shifts) we can use anyextend.
-      if (LHS.getValueType() != RHS.getValueType())
-        RHS = DAG.getNode(ISD::ANY_EXTEND, dl, LHS.getValueType(), RHS);
+    // If the operand types disagree, extend the shift amount to match.  Since
+    // BT ignores high bits (like shifts) we can use anyextend.
+    if (LHS.getValueType() != RHS.getValueType())
+      RHS = DAG.getNode(ISD::ANY_EXTEND, dl, LHS.getValueType(), RHS);
 
-      SDValue BT = DAG.getNode(X86ISD::BT, dl, MVT::i32, LHS, RHS);
-      unsigned Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
-      return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                         DAG.getConstant(Cond, MVT::i8), BT);
-    }
+    SDValue BT = DAG.getNode(X86ISD::BT, dl, MVT::i32, LHS, RHS);
+    unsigned Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
+    return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                       DAG.getConstant(Cond, MVT::i8), BT);
   }
 
   return SDValue();
@@ -5746,9 +5739,18 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
 
   // Optimize to BT if possible.
-  SDValue NewCond = LowerToBT(Op0, Op1, CC, dl, DAG);
-  if (NewCond.getNode())
-    return NewCond;
+  // Lower (X & (1 << N)) == 0 to BT(X, N).
+  // Lower ((X >>u N) & 1) != 0 to BT(X, N).
+  // Lower ((X >>s N) & 1) != 0 to BT(X, N).
+  if (Op0.getOpcode() == ISD::AND &&
+      Op0.hasOneUse() &&
+      Op1.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Op1)->getZExtValue() == 0 &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG);
+    if (NewSetCC.getNode())
+      return NewSetCC;
+  }
 
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
@@ -5947,6 +5949,23 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
   }
 
   if (addTest) {
+    // Look pass the truncate.
+    if (Cond.getOpcode() == ISD::TRUNCATE)
+      Cond = Cond.getOperand(0);
+
+    // We know the result of AND is compared against zero. Try to match
+    // it to BT.
+    if (Cond.getOpcode() == ISD::AND && Cond.hasOneUse()) { 
+      SDValue NewSetCC = LowerToBT(Cond, ISD::SETNE, dl, DAG);
+      if (NewSetCC.getNode()) {
+        CC = NewSetCC.getOperand(0);
+        Cond = NewSetCC.getOperand(1);
+        addTest = false;
+      }
+    }
+  }
+
+  if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
     Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
@@ -6100,6 +6119,23 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
       CC = DAG.getConstant(CCode, MVT::i8);
       Cond = Cond.getOperand(0).getOperand(1);
       addTest = false;
+    }
+  }
+
+  if (addTest) {
+    // Look pass the truncate.
+    if (Cond.getOpcode() == ISD::TRUNCATE)
+      Cond = Cond.getOperand(0);
+
+    // We know the result of AND is compared against zero. Try to match
+    // it to BT.
+    if (Cond.getOpcode() == ISD::AND && Cond.hasOneUse()) { 
+      SDValue NewSetCC = LowerToBT(Cond, ISD::SETNE, dl, DAG);
+      if (NewSetCC.getNode()) {
+        CC = NewSetCC.getOperand(0);
+        Cond = NewSetCC.getOperand(1);
+        addTest = false;
+      }
     }
   }
 

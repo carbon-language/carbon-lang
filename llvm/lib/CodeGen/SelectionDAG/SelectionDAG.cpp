@@ -2656,6 +2656,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     // size of the value, the shift/rotate count is guaranteed to be zero.
     if (VT == MVT::i1)
       return N1;
+    if (N2C && N2C->isNullValue())
+      return N1;
     break;
   case ISD::FP_ROUND_INREG: {
     EVT EVT = cast<VTSDNode>(N2)->getVT();

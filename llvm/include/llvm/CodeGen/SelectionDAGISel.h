@@ -131,6 +131,7 @@ private:
   void CodeGenAndEmitDAG();
   void LowerArguments(BasicBlock *BB);
   
+  void ShrinkDemandedOps();
   void ComputeLiveOutVRegInfo();
 
   void HandlePHINodesInSuccessorBlocks(BasicBlock *LLVMBB);
