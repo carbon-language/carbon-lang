@@ -1607,7 +1607,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   Params.push_back(PtrTy);
   llvm::Value *RethrowFn =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-          Params, false), "objc_exception_throw");
+          Params, false), "_Unwind_Resume");
 
   bool isTry = isa<ObjCAtTryStmt>(S);
   llvm::BasicBlock *TryBlock = CGF.createBasicBlock("try");
