@@ -1129,8 +1129,8 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
   // Prefer an ordering where the lower the non-zero order number, the higher
   // the preference.
-  if (LOrder && ROrder && LOrder != ROrder)
-    return LOrder < ROrder;
+  if ((LOrder || ROrder) && LOrder != ROrder)
+    return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
 
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
