@@ -1032,6 +1032,7 @@ public:
                          bool OnlyViable,
                          const char *Opc=0,
                          SourceLocation Loc=SourceLocation());
+  void NoteOverloadCandidate(FunctionDecl *Fn);
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);

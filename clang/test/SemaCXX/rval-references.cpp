@@ -67,8 +67,8 @@ struct MoveOnly {
   MoveOnly();
   MoveOnly(const MoveOnly&) = delete;	// expected-note {{candidate function}} \
   // expected-note 3{{explicitly marked deleted here}}
-  MoveOnly(MoveOnly&&);	// expected-note {{candidate function}}
-  MoveOnly(int&&);	// expected-note {{candidate function}}
+  MoveOnly(MoveOnly&&);	// expected-note {{candidate constructor}}
+  MoveOnly(int&&);	// expected-note {{candidate constructor}}
 };
 
 MoveOnly gmo;

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct NonDefaultConstructible {
-  NonDefaultConstructible(const NonDefaultConstructible&); // expected-note{{candidate function}}
+  NonDefaultConstructible(const NonDefaultConstructible&); // expected-note{{candidate constructor}}
 };
 
 template<typename T, typename U>

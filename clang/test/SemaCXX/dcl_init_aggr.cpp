@@ -40,9 +40,9 @@ char cv[4] = { 'a', 's', 'd', 'f', 0 }; // expected-error{{excess elements in ar
 struct TooFew { int a; char* b; int c; }; 
 TooFew too_few = { 1, "asdf" }; // okay
 
-struct NoDefaultConstructor { // expected-note 3 {{candidate function}} \
+struct NoDefaultConstructor { // expected-note 3 {{candidate is the implicit copy constructor}} \
                               // expected-note{{declared here}}
-  NoDefaultConstructor(int); // expected-note 3 {{candidate function}}
+  NoDefaultConstructor(int); // expected-note 3 {{candidate constructor}}
 };
 struct TooFewError { // expected-error{{implicit default constructor for}}
   int a;
@@ -115,7 +115,7 @@ B2 b2_2 = { 4, d2, 0 };
 B2 b2_3 = { c2, a2, a2 };
 
 // C++ [dcl.init.aggr]p15:
-union u { int a; char* b; }; // expected-note{{candidate function}}
+union u { int a; char* b; }; // expected-note{{candidate is the implicit copy constructor}}
 u u1 = { 1 }; 
 u u2 = u1; 
 u u3 = 1; // expected-error{{no viable conversion}}

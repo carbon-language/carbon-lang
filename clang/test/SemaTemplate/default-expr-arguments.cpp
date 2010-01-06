@@ -5,7 +5,7 @@ class C { C(int a0 = 0); };
 template<>
 C<char>::C(int a0);
 
-struct S { }; // expected-note 3 {{candidate function}}
+struct S { }; // expected-note 3 {{candidate is the implicit copy constructor}}
 
 template<typename T> void f1(T a, T b = 10) { } // expected-error{{no viable conversion}}
 

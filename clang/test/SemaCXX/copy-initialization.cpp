@@ -2,7 +2,7 @@
 class X {
 public:
   explicit X(const X&);
-  X(int*); // expected-note 2{{candidate function}}
+  X(int*); // expected-note 2{{candidate constructor}}
   explicit X(float*);
 };
 

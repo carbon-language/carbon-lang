@@ -48,8 +48,8 @@ template void X1<int>::f<>(int&, int*); // expected-note{{instantiation}}
 
 // Explicitly instantiate members of a class template
 struct Incomplete; // expected-note{{forward declaration}}
-struct NonDefaultConstructible { // expected-note{{candidate function}}
-  NonDefaultConstructible(int); // expected-note{{candidate function}}
+struct NonDefaultConstructible { // expected-note{{candidate is the implicit copy constructor}}
+  NonDefaultConstructible(int); // expected-note{{candidate constructor}}
 };
 
 template<typename T, typename U>

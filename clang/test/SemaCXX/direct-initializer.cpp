@@ -13,16 +13,16 @@ class Y {
   explicit Y(float);
 };
 
-class X { // expected-note{{candidate function}}
+class X { // expected-note{{candidate is the implicit copy constructor}}
 public:
-  explicit X(int); // expected-note{{candidate function}}
-  X(float, float, float); // expected-note{{candidate function}}
-  X(float, Y); // expected-note{{candidate function}}
+  explicit X(int); // expected-note{{candidate constructor}}
+  X(float, float, float); // expected-note{{candidate constructor}}
+  X(float, Y); // expected-note{{candidate constructor}}
 };
 
-class Z { // expected-note{{candidate function}}
+class Z { // expected-note{{candidate is the implicit copy constructor}}
 public:
-  Z(int); // expected-note{{candidate function}}
+  Z(int); // expected-note{{candidate constructor}}
 };
 
 void g() {

@@ -56,9 +56,9 @@ public:
 
 // This used to crash Clang.
 struct Flip;
-struct Flop { // expected-note{{candidate function}}
+struct Flop { // expected-note{{candidate is the implicit copy constructor}}
   Flop();
-  Flop(const Flip&); // expected-note{{candidate function}}
+  Flop(const Flip&); // expected-note{{candidate constructor}}
 };
 struct Flip {
   operator Flop() const; // expected-note{{candidate function}}

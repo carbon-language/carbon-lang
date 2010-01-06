@@ -4695,7 +4695,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         for (int j = Conversions.ConversionFunctionSet.size()-1; 
              j >= 0; j--) {
           FunctionDecl *Func = Conversions.ConversionFunctionSet[j];
-          Diag(Func->getLocation(), diag::err_ovl_candidate);
+          NoteOverloadCandidate(Func);
         }
       }
       else {

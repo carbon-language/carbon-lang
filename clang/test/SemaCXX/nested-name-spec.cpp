@@ -178,7 +178,7 @@ bool (foo_S::value);
 
 
 namespace somens {
-  struct a { }; // expected-note{{candidate function}}
+  struct a { }; // expected-note{{candidate is the implicit copy constructor}}
 }
 
 template <typename T>

@@ -895,18 +895,26 @@ def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1">;
-def err_ovl_candidate : Note<"candidate function">;
-def err_ovl_candidate_not_viable : Note<"function not viable because"
-                                        " of ambiguity in conversion of argument %0">;
+def note_ovl_candidate : Note<"candidate function">;
+def note_ovl_candidate_not_viable : Note<"function not viable because"
+                          " of ambiguity in conversion of argument %0">;
+def note_ovl_candidate_ctor : Note<"candidate constructor">;
+def note_ovl_candidate_implicit_copy_ctor : Note<
+    "candidate is the implicit copy constructor">;
+def note_ovl_candidate_implicit_default_ctor : Note<
+    "candidate is the implicit default constructor">;
+def note_ovl_candidate_meth : Note<"candidate function">;
+def note_ovl_candidate_implicit_copy_assign : Note<
+    "candidate is the implicit copy assignment operator">;
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion of %0 to %1">;
-def err_ovl_template_candidate : Note<
+def note_ovl_template_candidate : Note<
   "candidate function template specialization %0">;
-def err_ovl_candidate_deleted : Note<
+def note_ovl_candidate_deleted : Note<
   "candidate function has been explicitly %select{made unavailable|deleted}0">;
-def err_ovl_builtin_binary_candidate : Note<
+def note_ovl_builtin_binary_candidate : Note<
     "built-in candidate %0">;
-def err_ovl_builtin_unary_candidate : Note<
+def note_ovl_builtin_unary_candidate : Note<
     "built-in candidate %0">;
 def err_ovl_no_viable_function_in_init : Error<
   "no matching constructor for initialization of %0">;
@@ -927,7 +935,7 @@ def err_ovl_ambiguous_object_call : Error<
   "call to object of type %0 is ambiguous">;
 def err_ovl_deleted_object_call : Error<
   "call to %select{unavailable|deleted}0 function call operator in type %1">;
-def err_ovl_surrogate_cand : Note<"conversion candidate of type %0">;
+def note_ovl_surrogate_cand : Note<"conversion candidate of type %0">;
 def err_member_call_without_object : Error<
   "call to non-static member function without an object argument">;
 

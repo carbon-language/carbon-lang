@@ -921,7 +921,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
               << Type << Ex->getSourceRange();
         for (unsigned i= 0; i < ObjectPtrConversions.size(); i++) {
           CXXConversionDecl *Conv = ObjectPtrConversions[i];
-          Diag(Conv->getLocation(), diag::err_ovl_candidate);
+          NoteOverloadCandidate(Conv);
         }
         return ExprError();
       }

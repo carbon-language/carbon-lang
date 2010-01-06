@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-struct IntHolder { // expected-note{{here}} // expected-note 2{{candidate function}}
-  IntHolder(int); // expected-note 2{{candidate function}}
+struct IntHolder { // expected-note{{here}} // expected-note 2{{candidate is the implicit copy constructor}}
+  IntHolder(int); // expected-note 2{{candidate constructor}}
 };
 
 template<typename T, typename U>

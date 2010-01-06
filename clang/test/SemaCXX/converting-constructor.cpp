@@ -27,7 +27,7 @@ public:
   FromShort(short s);
 };
 
-class FromShortExplicitly { // expected-note{{candidate function}}
+class FromShortExplicitly { // expected-note{{candidate is the implicit copy constructor}}
 public:
   explicit FromShortExplicitly(short s);
 };

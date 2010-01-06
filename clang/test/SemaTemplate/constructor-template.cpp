@@ -52,8 +52,8 @@ template <> struct A<int>{A(const A<int>&);};
 struct B { A<int> x; B(B& a) : x(a.x) {} };
 
 struct X2 {
-  X2(); // expected-note{{candidate function}}
-  X2(X2&);	// expected-note {{candidate function}}
+  X2(); // expected-note{{candidate constructor}}
+  X2(X2&);	// expected-note {{candidate constructor}}
   template<typename T> X2(T);
 };
 
@@ -71,9 +71,9 @@ struct X3 {
 template<> X3::X3(X3); // expected-error{{must pass its first argument by reference}}
 
 struct X4 {
-  X4(); // expected-note{{candidate function}}
+  X4(); // expected-note{{candidate constructor}}
   ~X4();
-  X4(X4&);	// expected-note {{candidate function}}
+  X4(X4&);	// expected-note {{candidate constructor}}
   template<typename T> X4(const T&, int = 17);
 };
 

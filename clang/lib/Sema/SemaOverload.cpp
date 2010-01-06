@@ -4274,6 +4274,44 @@ OverloadingResult Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
   return OR_Success;
 }
 
+/// Notes the location of an overload candidate.
+void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
+
+  if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(Fn)) {
+    // At least call it a 'constructor'.
+    if (!Ctor->isImplicit()) {
+      Diag(Ctor->getLocation(), diag::note_ovl_candidate_ctor);
+      return;
+    }
+
+    CXXRecordDecl *Record = Ctor->getParent();
+    if (Ctor->isCopyConstructor()) {
+      Diag(Record->getLocation(), diag::note_ovl_candidate_implicit_copy_ctor);
+      return;
+    }
+
+    Diag(Record->getLocation(), diag::note_ovl_candidate_implicit_default_ctor);
+    return;
+  }
+
+  if (CXXMethodDecl *Meth = dyn_cast<CXXMethodDecl>(Fn)) {
+    // This actually gets spelled 'candidate function' for now, but
+    // it doesn't hurt to split it out.
+    if (!Meth->isImplicit()) {
+      Diag(Meth->getLocation(), diag::note_ovl_candidate_meth);
+      return;
+    }
+
+    assert(Meth->isCopyAssignment()
+           && "implicit method is not copy assignment operator?");
+    Diag(Meth->getParent()->getLocation(),
+         diag::note_ovl_candidate_implicit_copy_assign);
+    return;
+  }
+
+  Diag(Fn->getLocation(), diag::note_ovl_candidate);
+}
+
 /// PrintOverloadCandidates - When overload resolution fails, prints
 /// diagnostic messages containing the candidates in the candidate
 /// set. If OnlyViable is true, only viable candidates will be printed.
@@ -4291,13 +4329,13 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         if (Cand->Function->isDeleted() ||
             Cand->Function->getAttr<UnavailableAttr>()) {
           // Deleted or "unavailable" function.
-          Diag(Cand->Function->getLocation(), diag::err_ovl_candidate_deleted)
+          Diag(Cand->Function->getLocation(), diag::note_ovl_candidate_deleted)
             << Cand->Function->isDeleted();
         } else if (FunctionTemplateDecl *FunTmpl 
                      = Cand->Function->getPrimaryTemplate()) {
           // Function template specialization
           // FIXME: Give a better reason!
-          Diag(Cand->Function->getLocation(), diag::err_ovl_template_candidate)
+          Diag(Cand->Function->getLocation(), diag::note_ovl_template_candidate)
             << getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
                               *Cand->Function->getTemplateSpecializationArgs());
         } else {
@@ -4312,17 +4350,17 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                   Conversion.ConversionFunctionSet.size() == 0)
                 continue;
               Diag(Cand->Function->getLocation(), 
-                   diag::err_ovl_candidate_not_viable) << (i+1);
+                   diag::note_ovl_candidate_not_viable) << (i+1);
               errReported = true;
               for (int j = Conversion.ConversionFunctionSet.size()-1; 
                    j >= 0; j--) {
                 FunctionDecl *Func = Conversion.ConversionFunctionSet[j];
-                Diag(Func->getLocation(), diag::err_ovl_candidate);
+                NoteOverloadCandidate(Func);
               }
             }
           }
           if (!errReported)
-            Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+            NoteOverloadCandidate(Cand->Function);
         }
       } else if (Cand->IsSurrogate) {
         // Desugar the type of the surrogate down to a function type,
@@ -4352,7 +4390,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         if (isRValueReference) FnType = Context.getRValueReferenceType(FnType);
         if (isLValueReference) FnType = Context.getLValueReferenceType(FnType);
 
-        Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
+        Diag(Cand->Surrogate->getLocation(), diag::note_ovl_surrogate_cand)
           << FnType;
       } else if (OnlyViable) {
         assert(Cand->Conversions.size() <= 2 && 
@@ -4363,13 +4401,13 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         TypeStr += Cand->BuiltinTypes.ParamTypes[0].getAsString();
         if (Cand->Conversions.size() == 1) {
           TypeStr += ")";
-          Diag(OpLoc, diag::err_ovl_builtin_unary_candidate) << TypeStr;
+          Diag(OpLoc, diag::note_ovl_builtin_unary_candidate) << TypeStr;
         }
         else {
           TypeStr += ", ";
           TypeStr += Cand->BuiltinTypes.ParamTypes[1].getAsString();
           TypeStr += ")";
-          Diag(OpLoc, diag::err_ovl_builtin_binary_candidate) << TypeStr;
+          Diag(OpLoc, diag::note_ovl_builtin_binary_candidate) << TypeStr;
         }
       }
       else if (!Cand->Viable && !Reported) {
@@ -4393,7 +4431,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           for (unsigned j = 0; j < ICS.ConversionFunctionSet.size(); j++) {
             FunctionDecl *Func = 
               Cand->Conversions[ArgIdx].ConversionFunctionSet[j];
-            Diag(Func->getLocation(),diag::err_ovl_candidate);
+            NoteOverloadCandidate(Func);
           }
         }
         Reported = true;
@@ -4586,7 +4624,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                            PDiag(),
                            PDiag(diag::err_addr_ovl_ambiguous)
                                << TemplateMatches[0]->getDeclName(),
-                           PDiag(diag::err_ovl_template_candidate));
+                           PDiag(diag::note_ovl_template_candidate));
     MarkDeclarationReferenced(From->getLocStart(), Result);
     return Result;
   }
@@ -4611,7 +4649,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
     << RemainingMatches[0]->getDeclName();
   for (unsigned I = 0, N = RemainingMatches.size(); I != N; ++I)
-    Diag(RemainingMatches[I]->getLocation(), diag::err_ovl_candidate);
+    NoteOverloadCandidate(RemainingMatches[I]);
   return 0;
 }
 
