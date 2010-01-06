@@ -266,3 +266,11 @@ void test3() {
   if ((x > y ? x : y) > z)
     (void) 0;
 }
+
+// PR5961
+extern char *ptr4;
+void test4() {
+  long value;
+  if (value < (unsigned long) &ptr4) // expected-warning {{comparison of integers of different signs}}
+    return;
+}

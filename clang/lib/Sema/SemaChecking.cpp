@@ -1629,15 +1629,17 @@ IntRange GetValueRange(ASTContext &C, llvm::APSInt &value, unsigned MaxWidth) {
   return IntRange(value.getActiveBits(), true);
 }
 
-IntRange GetValueRange(ASTContext &C, APValue &result,
+IntRange GetValueRange(ASTContext &C, APValue &result, QualType Ty,
                        unsigned MaxWidth) {
   if (result.isInt())
     return GetValueRange(C, result.getInt(), MaxWidth);
 
   if (result.isVector()) {
-    IntRange R = GetValueRange(C, result.getVectorElt(0), MaxWidth);
-    for (unsigned i = 1, e = result.getVectorLength(); i != e; ++i)
-      R = IntRange::join(R, GetValueRange(C, result.getVectorElt(i), MaxWidth));
+    IntRange R = GetValueRange(C, result.getVectorElt(0), Ty, MaxWidth);
+    for (unsigned i = 1, e = result.getVectorLength(); i != e; ++i) {
+      IntRange El = GetValueRange(C, result.getVectorElt(i), Ty, MaxWidth);
+      R = IntRange::join(R, El);
+    }
     return R;
   }
 
@@ -1649,8 +1651,11 @@ IntRange GetValueRange(ASTContext &C, APValue &result,
 
   // This can happen with lossless casts to intptr_t of "based" lvalues.
   // Assume it might use arbitrary bits.
+  // FIXME: The only reason we need to pass the type in here is to get
+  // the sign right on this one case.  It would be nice if APValue
+  // preserved this.
   assert(result.isLValue());
-  return IntRange(MaxWidth, false);
+  return IntRange(MaxWidth, Ty->isUnsignedIntegerType());
 }
 
 /// Pseudo-evaluate the given integer expression, estimating the
@@ -1663,7 +1668,7 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   // Try a full evaluation first.
   Expr::EvalResult result;
   if (E->Evaluate(result, C))
-    return GetValueRange(C, result.Val, MaxWidth);
+    return GetValueRange(C, result.Val, E->getType(), MaxWidth);
 
   // I think we only want to look through implicit casts here; if the
   // user has an explicit widening cast, we should treat the value as
