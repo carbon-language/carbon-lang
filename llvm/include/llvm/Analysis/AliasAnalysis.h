@@ -197,6 +197,10 @@ public:
   virtual ModRefBehavior getModRefBehavior(Function *F,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
+  /// getModRefBehavior - Return the modref behavior of the intrinsic with the
+  /// given id.
+  static ModRefBehavior getModRefBehavior(unsigned iid);
+
   /// doesNotAccessMemory - If the specified call is known to never read or
   /// write memory, return true.  If the call only reads from known-constant
   /// memory, it is also legal to return true.  Calls that unwind the stack

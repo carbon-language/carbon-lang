@@ -1678,8 +1678,8 @@ And functionattrs doesn't realize that the p.0 load points to function local
 memory.
 
 Also, functionattrs doesn't know about memcpy/memset.  This function should be
-marked readnone, since it only twiddles local memory, but functionattrs doesn't
-handle memset/memcpy/memmove aggressively:
+marked readnone rather than readonly, since it only twiddles local memory, but
+functionattrs doesn't handle memset/memcpy/memmove aggressively:
 
 struct X { int *p; int *q; };
 int foo() {

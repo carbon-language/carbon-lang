@@ -136,6 +136,21 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
         // Ignore calls to functions in the same SCC.
         if (SCCNodes.count(CS.getCalledFunction()))
           continue;
+        // Ignore intrinsics that only access local memory.
+        if (unsigned id = CS.getCalledFunction()->getIntrinsicID())
+          if (AliasAnalysis::getModRefBehavior(id) ==
+              AliasAnalysis::AccessesArguments) {
+            // Check that all pointer arguments point to local memory.
+            for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+                 CI != CE; ++CI) {
+              Value *Arg = *CI;
+              if (isa<PointerType>(Arg->getType()) && !PointsToLocalMemory(Arg))
+                // Writes memory.  Just give up.
+                return false;
+            }
+            // Only reads and writes local memory.
+            continue;
+          }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore loads from local memory.
         if (PointsToLocalMemory(LI->getPointerOperand()))

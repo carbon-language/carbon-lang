@@ -522,7 +522,7 @@ void IntrinsicEmitter::
 EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
   OS << "// Determine intrinsic alias analysis mod/ref behavior.\n";
   OS << "#ifdef GET_INTRINSIC_MODREF_BEHAVIOR\n";
-  OS << "switch (id) {\n";
+  OS << "switch (iid) {\n";
   OS << "default:\n    return UnknownModRefBehavior;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     if (Ints[i].ModRef == CodeGenIntrinsic::WriteMem)
