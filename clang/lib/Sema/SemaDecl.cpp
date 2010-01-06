@@ -5098,6 +5098,16 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
   // Exit this scope of this tag's definition.
   PopDeclContext();
 
+  // If this is a polymorphic C++ class without a key function, we'll
+  // have to mark all of the virtual members to allow emission of a vtable
+  // in this translation unit.
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Tag)) {
+    if (!Record->isDependentContext() && Record->isDynamicClass() &&
+        !Context.getKeyFunction(Record))
+      ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record, 
+                                                                 RBraceLoc));
+  }
+
   // Notify the consumer that we've defined a tag.
   Consumer.HandleTagDeclDefinition(Tag);
 }

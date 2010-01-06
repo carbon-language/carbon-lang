@@ -2054,7 +2054,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 
   if (!Record->isDependentType())
     AddImplicitlyDeclaredMembersToClass(Record);
-
+  
   if (Record->isInvalidDecl())
     return;
 
@@ -5693,67 +5693,30 @@ void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
   if (!RD->isDynamicClass())
     return;
 
-  if (!MD->isOutOfLine()) {
-    // The only inline functions we care about are constructors. We also defer
-    // marking the virtual members as referenced until we've reached the end
-    // of the translation unit. We do this because we need to know the key
-    // function of the class in order to determine the key function.
-    if (isa<CXXConstructorDecl>(MD))
-      ClassesWithUnmarkedVirtualMembers.insert(std::make_pair(RD, Loc));
+  // Only out-of-line definitions matter.
+  if (!MD->isOutOfLine())
     return;
-  }
+  
+  const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
+  if (!KeyFunction || KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
+    return;
 
-  switch (RD->getTemplateSpecializationKind()) {
-  case TSK_Undeclared:
-  case TSK_ExplicitSpecialization: {
-    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-
-    if (!KeyFunction) {
-      // This record does not have a key function, so we assume that the vtable
-      // will be emitted when it's used by the constructor.
-      if (!isa<CXXConstructorDecl>(MD))
-        return;
-    } else if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl()) {
-      // We don't have the right key function.
-      return;
-    }
-    break;
-  }
-
-  case TSK_ImplicitInstantiation:
-  case TSK_ExplicitInstantiationDeclaration:
-  case TSK_ExplicitInstantiationDefinition:
-    // Always mark the virtual members of an instantiated template.
-    break;
-  }
-
-  // Mark the members as referenced.
-  MarkVirtualMembersReferenced(Loc, RD);
-  ClassesWithUnmarkedVirtualMembers.erase(RD);
+  // We will need to mark all of the virtual members as referenced to build the
+  // vtable.
+  ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
 }
 
 bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
   if (ClassesWithUnmarkedVirtualMembers.empty())
     return false;
   
-  for (std::map<CXXRecordDecl *, SourceLocation>::iterator i = 
-       ClassesWithUnmarkedVirtualMembers.begin(), 
-       e = ClassesWithUnmarkedVirtualMembers.end(); i != e; ++i) {
-    CXXRecordDecl *RD = i->first;
-    
-    const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
-    if (KeyFunction) {
-      // We know that the class has a key function. If the key function was
-      // declared in this translation unit, then it the class decl would not 
-      // have been in the ClassesWithUnmarkedVirtualMembers map.
-      continue;
-    }
-    
-    SourceLocation Loc = i->second;
+  while (!ClassesWithUnmarkedVirtualMembers.empty()) {
+    CXXRecordDecl *RD = ClassesWithUnmarkedVirtualMembers.back().first;
+    SourceLocation Loc = ClassesWithUnmarkedVirtualMembers.back().second;
+    ClassesWithUnmarkedVirtualMembers.pop_back();
     MarkVirtualMembersReferenced(Loc, RD);
   }
   
-  ClassesWithUnmarkedVirtualMembers.clear();
   return true;
 }
 

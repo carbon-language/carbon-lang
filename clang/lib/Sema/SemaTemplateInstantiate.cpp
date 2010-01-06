@@ -1060,6 +1060,13 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // Exit the scope of this instantiation.
   CurContext = PreviousContext;
 
+  // If this is a polymorphic C++ class without a key function, we'll
+  // have to mark all of the virtual members to allow emission of a vtable
+  // in this translation unit.
+  if (Instantiation->isDynamicClass() && !Context.getKeyFunction(Instantiation))
+      ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Instantiation,
+                                                       PointOfInstantiation));
+
   if (!Invalid)
     Consumer.HandleTagDeclDefinition(Instantiation);
 

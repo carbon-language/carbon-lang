@@ -2172,11 +2172,11 @@ public:
   void MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor);
 
   /// ClassesWithUnmarkedVirtualMembers - Contains record decls whose virtual
-  /// members might need to be marked as referenced. This is either done when
-  /// the key function definition is emitted (this is handled by by 
-  /// MaybeMarkVirtualMembersReferenced), or at the end of the translation unit
-  /// (done by ProcessPendingClassesWithUnmarkedVirtualMembers).
-  std::map<CXXRecordDecl *, SourceLocation> ClassesWithUnmarkedVirtualMembers;
+  /// members need to be marked as referenced at the end of the translation
+  /// unit. It will contain polymorphic classes that do not have a key
+  /// function or have a key function that has been defined.
+  llvm::SmallVector<std::pair<CXXRecordDecl *, SourceLocation>, 4>
+    ClassesWithUnmarkedVirtualMembers;
 
   /// MaybeMarkVirtualMembersReferenced - If the passed in method is the
   /// key function of the record decl, will mark virtual member functions as 
