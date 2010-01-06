@@ -50,6 +50,19 @@ void test_f2(int i, const int ci, volatile int vi) {
   A<volatile int> a2 = f2(vi);
 }
 
+// PR5913
+template <typename T, int N>
+void Foo(const T (&a)[N]) {
+  T x;
+  x = 0;
+}
+
+const int a[1] = { 0 };
+
+void Test() {
+  Foo(a);
+}
+
 //   - The transformed A can be another pointer or pointer to member type that 
 //     can be converted to the deduced A via a qualification conversion (4.4).
 template<typename T> A<T> f3(T * * const * const);
