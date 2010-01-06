@@ -438,6 +438,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
   SDB->clear();
 }
 
+/// ShrinkDemandedOps - A late transformation pass that shrink expressions
+/// using TargetLowering::TargetLoweringOpt::ShrinkDemandedOp. It converts
+/// x+y to (VT)((SmallVT)x+(SmallVT)y) if the casts are free.
 void SelectionDAGISel::ShrinkDemandedOps() {
   SmallVector<SDNode*, 128> Worklist;
 
