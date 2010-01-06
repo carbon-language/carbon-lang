@@ -550,50 +550,49 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   processDebugLoc(MI, true);
 
   // Check for slwi/srwi mnemonics.
+  bool useSubstituteMnemonic = false;
   if (MI->getOpcode() == PPC::RLWINM) {
-    bool FoundMnemonic = false;
     unsigned char SH = MI->getOperand(2).getImm();
     unsigned char MB = MI->getOperand(3).getImm();
     unsigned char ME = MI->getOperand(4).getImm();
     if (SH <= 31 && MB == 0 && ME == (31-SH)) {
-      O << "\tslwi "; FoundMnemonic = true;
+      O << "\tslwi "; useSubstituteMnemonic = true;
     }
     if (SH <= 31 && MB == (32-SH) && ME == 31) {
-      O << "\tsrwi "; FoundMnemonic = true;
+      O << "\tsrwi "; useSubstituteMnemonic = true;
       SH = 32-SH;
     }
-    if (FoundMnemonic) {
+    if (useSubstituteMnemonic) {
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << ", " << (unsigned int)SH << '\n';
-      return;
+      O << ", " << (unsigned int)SH;
     }
   } else if (MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) {
     if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+      useSubstituteMnemonic = true;
       O << "\tmr ";
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << '\n';
-      return;
     }
   } else if (MI->getOpcode() == PPC::RLDICR) {
     unsigned char SH = MI->getOperand(2).getImm();
     unsigned char ME = MI->getOperand(3).getImm();
     // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
     if (63-SH == ME) {
+      useSubstituteMnemonic = true;
       O << "\tsldi ";
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
-      O << ", " << (unsigned int)SH << '\n';
-      return;
+      O << ", " << (unsigned int)SH;
     }
   }
 
-  printInstruction(MI);
-  
+  if (!useSubstituteMnemonic)
+    printInstruction(MI);
+
   if (VerboseAsm)
     EmitComments(*MI);
   O << '\n';
