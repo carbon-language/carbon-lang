@@ -290,7 +290,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 unsigned
 CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
                                                  unsigned LastNewReg,
-                                                 const TargetRegisterClass *RC) {
+                                                 const TargetRegisterClass *RC)
+{
   for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
        RE = RC->allocation_order_end(MF); R != RE; ++R) {
     unsigned NewReg = *R;
@@ -302,10 +303,10 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(unsigned AntiDepReg,
     if (NewReg == LastNewReg) continue;
     // If NewReg is dead and NewReg's most recent def is not before
     // AntiDepReg's kill, it's safe to replace AntiDepReg with NewReg.
-    assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u)) &&
-           "Kill and Def maps aren't consistent for AntiDepReg!");
-    assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u)) &&
-           "Kill and Def maps aren't consistent for NewReg!");
+    assert(((KillIndices[AntiDepReg] == ~0u) != (DefIndices[AntiDepReg] == ~0u))
+           && "Kill and Def maps aren't consistent for AntiDepReg!");
+    assert(((KillIndices[NewReg] == ~0u) != (DefIndices[NewReg] == ~0u))
+           && "Kill and Def maps aren't consistent for NewReg!");
     if (KillIndices[NewReg] != ~0u ||
         Classes[NewReg] == reinterpret_cast<TargetRegisterClass *>(-1) ||
         KillIndices[AntiDepReg] > DefIndices[NewReg])

@@ -64,11 +64,12 @@ namespace llvm {
   public:
     CriticalAntiDepBreaker(MachineFunction& MFi);
     ~CriticalAntiDepBreaker();
-    
+
     /// Start - Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB);
 
-    /// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
+    /// BreakAntiDependencies - Identifiy anti-dependencies along the critical
+    /// path
     /// of the ScheduleDAG and break them by renaming registers.
     ///
     unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
