@@ -1490,7 +1490,8 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       return;
   }
 
-  llvm::GlobalVariable::LinkageTypes Linkage;
+  llvm::GlobalVariable::LinkageTypes Linkage =
+    llvm::GlobalVariable::InternalLinkage;
   if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
     Linkage = llvm::GlobalVariable::InternalLinkage;
   else if (KeyFunction && !MD->isInlined()) {
