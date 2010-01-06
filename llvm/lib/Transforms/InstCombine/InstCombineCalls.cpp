@@ -632,6 +632,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return EraseInstFromFunction(CI);
     break;
   }
+  case Intrinsic::objectsize: {
+    ConstantInt *Const = dyn_cast<ConstantInt>(II->getOperand(2));
+
+    if (!Const) return 0;
+
+    const Type *Ty = CI.getType();
+
+    if (Const->getZExtValue() == 0)
+      return ReplaceInstUsesWith(CI, Constant::getAllOnesValue(Ty));
+    else
+      return ReplaceInstUsesWith(CI, ConstantInt::get(Ty, 0));
+  }
   }
 
   return visitCallSite(II);

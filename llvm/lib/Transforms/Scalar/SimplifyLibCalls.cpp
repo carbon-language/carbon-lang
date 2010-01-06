@@ -1095,27 +1095,6 @@ struct MemSetOpt : public LibCallOptimization {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
-// 'object size'
-namespace {
-struct SizeOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // TODO: We can do more with this, but delaying to here should be no change
-    // in behavior.
-    ConstantInt *Const = dyn_cast<ConstantInt>(CI->getOperand(2));
-
-    if (!Const) return 0;
-
-    const Type *Ty = Callee->getFunctionType()->getReturnType();
-
-    if (Const->getZExtValue() == 0)
-      return Constant::getAllOnesValue(Ty);
-    else
-      return ConstantInt::get(Ty, 0);
-  }
-};
-}
-
-//===---------------------------------------===//
 // 'memcpy_chk' Optimizations
 
 struct MemCpyChkOpt : public LibCallOptimization {
@@ -1745,7 +1724,6 @@ namespace {
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
 
     // Object Size Checking
-    SizeOpt ObjectSize;
     MemCpyChkOpt MemCpyChk; MemSetChkOpt MemSetChk; MemMoveChkOpt MemMoveChk;
 
     bool Modified;  // This is only used by doInitialization.
@@ -1855,8 +1833,6 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["fprintf"] = &FPrintF;
 
   // Object Size Checking
-  Optimizations["llvm.objectsize.i32"] = &ObjectSize;
-  Optimizations["llvm.objectsize.i64"] = &ObjectSize;
   Optimizations["__memcpy_chk"] = &MemCpyChk;
   Optimizations["__memset_chk"] = &MemSetChk;
   Optimizations["__memmove_chk"] = &MemMoveChk;
