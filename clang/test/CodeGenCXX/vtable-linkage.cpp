@@ -125,7 +125,7 @@ void use_F(F<char> &fc) {
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have weak_odr linkage.
-// CHECK: @_ZTV1FIiE = available_externally constant
+// CHECK: @_ZTV1FIiE = weak_odr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiation, so we should only reference

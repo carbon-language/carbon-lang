@@ -1506,7 +1506,10 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       break;
 
     case TSK_ExplicitInstantiationDeclaration:
-      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
+      // FIXME: Use available_externally linkage. However, this currently
+      // breaks LLVM's build due to undefined symbols.
+      //      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
+      Linkage = llvm::GlobalVariable::WeakODRLinkage;
       break;
     }
   }
@@ -1523,7 +1526,9 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       break;
 
     case TSK_ExplicitInstantiationDeclaration:
-      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
+      // FIXME: Use available_externally linkage. However, this currently
+      // breaks LLVM's build due to undefined symbols.
+      // Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
       break;
     }
   }
