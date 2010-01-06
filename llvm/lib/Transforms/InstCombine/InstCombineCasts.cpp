@@ -162,7 +162,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 /// inst(trunc(x),trunc(y)), which only makes sense if x and y can be
 /// efficiently truncated.
 ///
-/// If CastOpc is zext, we are asking if the low bits of the value can bit
+/// If CastOpc is zext, we are asking if the low bits of the value can be
 /// computed in a larger type, which is then and'd to get the final result.
 static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
                                        unsigned CastOpc,
@@ -295,9 +295,9 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
 
 /// CanEvaluateSExtd - Return true if we can take the specified value
 /// and return it as type Ty without inserting any new casts and without
-/// changing the computed value of the common low bits.  This is used by code
-/// that tries to promote integer operations to a wider types will allow us to
-/// eliminate the extension.
+/// changing the value of the common low bits.  This is used by code that tries
+/// to promote integer operations to a wider types will allow us to eliminate
+/// the extension.
 ///
 /// This returns 0 if we can't do this or the number of sign bits that would be
 /// set if we can.  For example, CanEvaluateSExtd(i16 1, i64) would return 63,
@@ -622,14 +622,14 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     // Because this is a sign extension, we can always transform it by inserting
     // two new shifts (to do the extension).  However, this is only profitable
     // if we've eliminated two or more casts from the input.  If we know the
-    // result will be sign-extendy enough to not require these shifts, we can
+    // result will be sign-extended enough to not require these shifts, we can
     // always do the transformation.
     if (NumCastsRemoved < 2 &&
         NumBitsSExt <= DestBitSize-SrcBitSize)
       return 0;
     
     // Okay, we can transform this!  Insert the new expression now.
-    DEBUG(errs() << "ICE: EvaluateInDifferentType converting expression type"
+    DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
           " to avoid sign extend: " << CI);
     Value *Res = EvaluateInDifferentType(Src, DestTy, true);
     assert(Res->getType() == DestTy);
@@ -645,7 +645,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   }
   }
   
-  DEBUG(errs() << "ICE: EvaluateInDifferentType converting expression type"
+  DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
         " to avoid cast: " << CI);
   Value *Res = EvaluateInDifferentType(Src, DestTy, false);
   assert(Res->getType() == DestTy);
