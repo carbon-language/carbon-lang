@@ -344,11 +344,12 @@ typedef struct CXDeclExtent {
   CXSourceLineColumn end;
 } CXSourceExtent;
 
-/* clang_getDeclExtent() returns the physical extent of a declaration.  The beginning
- * line/column pair points to the start of the first token in the declaration, and the
- * ending line/column pair points the start of the last token in the declaration.
+/* clang_getDeclExtent() returns the physical extent of a declaration.  The
+ * beginning line/column pair points to the start of the first token in the
+ * declaration, and the ending line/column pair points the start of the last
+ * token in the declaration.
  */
-CXSourceExtent clang_getDeclExtent(CXDecl);
+CINDEX_LINKAGE CXSourceExtent clang_getDeclExtent(CXDecl);
 
 /*
  * CXCursor Operations.
