@@ -16,3 +16,14 @@ void f() {
   (void)new B;
   (void)new C;
 }
+
+// Make sure that the key-function computation is consistent when the
+// first virtual member function of a nested class has an inline body.
+struct Outer {
+  struct Inner {
+    virtual void f() { }
+    void g();
+  };
+};
+
+void Outer::Inner::g() { }

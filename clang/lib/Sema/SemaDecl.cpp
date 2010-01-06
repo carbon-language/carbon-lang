@@ -5086,6 +5086,29 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, DeclPtrTy TagD,
          "Broken injected-class-name");
 }
 
+// Traverses the class and any nested classes, making a note of any 
+// dynamic classes that have no key function so that we can mark all of
+// their virtual member functions as "used" at the end of the translation
+// unit. This ensures that all functions needed by the vtable will get
+// instantiated/synthesized.
+static void 
+RecordDynamicClassesWithNoKeyFunction(Sema &S, CXXRecordDecl *Record,
+                                      SourceLocation Loc) {
+  // We don't look at dependent or undefined classes.
+  if (Record->isDependentContext() || !Record->isDefinition())
+    return;
+  
+  if (Record->isDynamicClass() && !S.Context.getKeyFunction(Record))
+    S.ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record, Loc));
+  
+  for (DeclContext::decl_iterator D = Record->decls_begin(), 
+                               DEnd = Record->decls_end();
+       D != DEnd; ++D) {
+    if (CXXRecordDecl *Nested = dyn_cast<CXXRecordDecl>(*D))
+      RecordDynamicClassesWithNoKeyFunction(S, Nested, Loc);
+  }
+}
+
 void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
                                     SourceLocation RBraceLoc) {
   AdjustDeclIfTemplate(TagD);
@@ -5098,16 +5121,10 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
   // Exit this scope of this tag's definition.
   PopDeclContext();
 
-  // If this is a polymorphic C++ class without a key function, we'll
-  // have to mark all of the virtual members to allow emission of a vtable
-  // in this translation unit.
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Tag)) {
-    if (!Record->isDependentContext() && Record->isDynamicClass() &&
-        !Context.getKeyFunction(Record))
-      ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record, 
-                                                                 RBraceLoc));
-  }
-
+  if (isa<CXXRecordDecl>(Tag) && !Tag->getDeclContext()->isRecord())
+    RecordDynamicClassesWithNoKeyFunction(*this, cast<CXXRecordDecl>(Tag),
+                                          RBraceLoc);
+                                          
   // Notify the consumer that we've defined a tag.
   Consumer.HandleTagDeclDefinition(Tag);
 }
