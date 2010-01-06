@@ -1,4 +1,4 @@
-//===-- HeuristicSolver.h - Heuristic PBQP Solver --------------*- C++ --*-===//
+//===-- HeuristicSolver.h - Heuristic PBQP Solver ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

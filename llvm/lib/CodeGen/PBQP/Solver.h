@@ -1,4 +1,4 @@
-//===-- Solver.h ------- PBQP solver interface -----------------*- C++ --*-===//
+//===-- Solver.h ------- PBQP solver interface ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

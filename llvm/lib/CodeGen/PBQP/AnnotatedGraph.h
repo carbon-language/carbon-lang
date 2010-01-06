@@ -1,4 +1,4 @@
-//===-- AnnotatedGraph.h - Annotated PBQP Graph ----------------*- C++ --*-===//
+//===-- AnnotatedGraph.h - Annotated PBQP Graph -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

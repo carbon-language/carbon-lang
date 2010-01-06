@@ -1,4 +1,4 @@
-//===-- SimpleGraph.h - Simple PBQP Graph ----------------------*- C++ --*-===//
+//===-- SimpleGraph.h - Simple PBQP Graph -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

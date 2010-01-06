@@ -1,4 +1,4 @@
-//===-- ExhaustiveSolver.h - Brute Force PBQP Solver -----------*- C++ --*-===//
+//===-- ExhaustiveSolver.h - Brute Force PBQP Solver ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

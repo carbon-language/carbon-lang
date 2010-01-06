@@ -1,4 +1,4 @@
-//===-- GraphBase.h - Abstract Base PBQP Graph -----------------*- C++ --*-===//
+//===-- GraphBase.h - Abstract Base PBQP Graph ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
