@@ -22,6 +22,7 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   if (!is64Bit)
     Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
   AssemblerDialect = 1;           // New-Style mnemonics.
+  SupportsDebugInformation= true; // Debug information.
 }
 
 PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
