@@ -237,8 +237,8 @@ Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
 
   Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI, 3),
                                          Type::getInt32Ty(*Context),
-                                    Type::getInt8PtrTy(*Context),
-                                    Type::getInt8PtrTy(*Context),
+                                         Type::getInt8PtrTy(*Context),
+                                         Type::getInt8PtrTy(*Context),
                                          TD->getIntPtrType(*Context), NULL);
   CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
                                Len, "memcmp");
