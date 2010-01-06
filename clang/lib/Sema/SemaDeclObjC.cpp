@@ -1473,8 +1473,11 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                    property->getLocation());
 
   if (SetterMethod) {
-    if (Context.getCanonicalType(SetterMethod->getResultType())
-        != Context.VoidTy)
+    ObjCPropertyDecl::PropertyAttributeKind CAttr = 
+      property->getPropertyAttributes();
+    if ((!(CAttr & ObjCPropertyDecl::OBJC_PR_readonly)) &&
+        Context.getCanonicalType(SetterMethod->getResultType()) != 
+          Context.VoidTy)
       Diag(SetterMethod->getLocation(), diag::err_setter_type_void);
     if (SetterMethod->param_size() != 1 ||
         ((*SetterMethod->param_begin())->getType() != property->getType())) {

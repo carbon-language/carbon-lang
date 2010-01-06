@@ -84,3 +84,15 @@ typedef signed char BOOL;
   view.inEyeDropperMode = 1;
 }
 @end
+
+// radar 7427072
+@interface MyStyleIntf 
+{
+    int _myStyle;
+}
+
+@property(readonly) int myStyle;
+
+- (float)setMyStyle:(int)style;
+@end
+
