@@ -381,3 +381,14 @@ define i32 @test42(i32 %X) {
 ; CHECK: %Z = and i32 %X, 255
 }
 
+; rdar://6598839
+define zeroext i64 @test43(i8 zeroext %on_off) nounwind readonly {
+	%A = zext i8 %on_off to i32
+	%B = add i32 %A, -1
+	%C = sext i32 %B to i64
+	ret i64 %C  ;; Should be (add (zext i8 -> i64), -1)
+; CHECK: @test43
+; CHECK-NEXT: %A = zext i8 %on_off to i64
+; CHECK-NEXT: %B = add i64 %A, -1
+; CHECK-NEXT: ret i64 %B
+}
