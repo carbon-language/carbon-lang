@@ -887,6 +887,60 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
   EmitGlobalVarDefinition(D);
 }
 
+llvm::GlobalVariable::LinkageTypes 
+CodeGenModule::getVtableLinkage(const CXXRecordDecl *RD) {
+  // Get the key function.
+  const CXXMethodDecl *KeyFunction = getContext().getKeyFunction(RD);
+  
+  if (KeyFunction) {
+    const FunctionDecl *Def = 0;
+    if (KeyFunction->getBody(Def))
+      KeyFunction = cast<CXXMethodDecl>(Def);
+  }
+  
+  if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
+    return llvm::GlobalVariable::InternalLinkage;
+  else if (KeyFunction) {
+    switch (KeyFunction->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ExplicitSpecialization:
+        if (KeyFunction->isInlined())
+          return llvm::GlobalVariable::WeakODRLinkage;
+        
+        return llvm::GlobalVariable::ExternalLinkage;
+        
+      case TSK_ImplicitInstantiation:
+      case TSK_ExplicitInstantiationDefinition:
+        return llvm::GlobalVariable::WeakODRLinkage;
+        
+      case TSK_ExplicitInstantiationDeclaration:
+        // FIXME: Use available_externally linkage. However, this currently
+        // breaks LLVM's build due to undefined symbols.
+        //      return llvm::GlobalVariable::AvailableExternallyLinkage;
+        return llvm::GlobalVariable::WeakODRLinkage;
+    }
+  } else if (KeyFunction) {
+    return llvm::GlobalVariable::WeakODRLinkage;
+  } else {
+    switch (RD->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ExplicitSpecialization:
+      case TSK_ImplicitInstantiation:
+      case TSK_ExplicitInstantiationDefinition:
+        return llvm::GlobalVariable::WeakODRLinkage;
+        
+      case TSK_ExplicitInstantiationDeclaration:
+        // FIXME: Use available_externally linkage. However, this currently
+        // breaks LLVM's build due to undefined symbols.
+        //   return llvm::GlobalVariable::AvailableExternallyLinkage;
+        return llvm::GlobalVariable::WeakODRLinkage;
+    }
+  }
+  
+  // Silence GCC warning.
+  return llvm::GlobalVariable::WeakODRLinkage;
+}
+
 static CodeGenModule::GVALinkage
 GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
   // Everything located semantically within an anonymous namespace is

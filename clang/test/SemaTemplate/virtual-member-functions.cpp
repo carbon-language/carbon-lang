@@ -41,3 +41,15 @@ struct Derived : Base<T> {
 
 template struct Derived<int>; // expected-note{{instantiation}}
 
+template<typename T>
+struct HasOutOfLineKey {
+  HasOutOfLineKey() { } // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::f' requested here}}
+  virtual T *f(float *fp);
+};
+
+template<typename T>
+T *HasOutOfLineKey<T>::f(float *fp) {
+  return fp; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'float *'}}
+}
+
+HasOutOfLineKey<int> out_of_line;

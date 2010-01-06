@@ -1490,52 +1490,8 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       return;
   }
 
-  llvm::GlobalVariable::LinkageTypes Linkage =
-    llvm::GlobalVariable::InternalLinkage;
-  if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
-    Linkage = llvm::GlobalVariable::InternalLinkage;
-  else if (KeyFunction && !MD->isInlined()) {
-    switch (MD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      Linkage = llvm::GlobalVariable::ExternalLinkage;
-      break;
-
-    case TSK_ImplicitInstantiation:
-    case TSK_ExplicitInstantiationDefinition:
-      Linkage = llvm::GlobalVariable::WeakODRLinkage;
-      break;
-
-    case TSK_ExplicitInstantiationDeclaration:
-      // FIXME: Use available_externally linkage. However, this currently
-      // breaks LLVM's build due to undefined symbols.
-      //      Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
-      Linkage = llvm::GlobalVariable::WeakODRLinkage;
-      break;
-    }
-  }
-  else if (KeyFunction)
-    Linkage = llvm::GlobalVariable::WeakODRLinkage;
-  else {
-    Linkage = llvm::GlobalVariable::WeakODRLinkage;
-    
-    switch (RD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-    case TSK_ImplicitInstantiation:
-    case TSK_ExplicitInstantiationDefinition:
-      break;
-
-    case TSK_ExplicitInstantiationDeclaration:
-      // FIXME: Use available_externally linkage. However, this currently
-      // breaks LLVM's build due to undefined symbols.
-      // Linkage = llvm::GlobalVariable::AvailableExternallyLinkage;
-      break;
-    }
-  }
-  
   // Emit the data.
-  GenerateClassData(Linkage, RD);
+  GenerateClassData(CGM.getVtableLinkage(RD), RD);
 
   for (CXXRecordDecl::method_iterator i = RD->method_begin(),
        e = RD->method_end(); i != e; ++i) {
