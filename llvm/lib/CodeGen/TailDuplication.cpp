@@ -346,7 +346,7 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
                                      MachineBasicBlock *PredBB,
                                      MachineFunction &MF,
                                      DenseMap<unsigned, unsigned> &LocalVRMap) {
-  MachineInstr *NewMI = MF.CloneMachineInstr(MI);
+  MachineInstr *NewMI = TII->duplicate(MI, MF);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
     if (!MO.isReg())

@@ -150,6 +150,13 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
+MachineInstr *TargetInstrInfoImpl::duplicate(MachineInstr *Orig,
+                                             MachineFunction &MF) const {
+  assert(!Orig->getDesc().isNotDuplicable() &&
+         "Instruction cannot be duplicated");
+  return MF.CloneMachineInstr(Orig);
+}
+
 bool
 TargetInstrInfoImpl::isIdentical(const MachineInstr *MI,
                                  const MachineInstr *Other,

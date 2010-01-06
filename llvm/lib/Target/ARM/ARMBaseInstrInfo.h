@@ -287,6 +287,8 @@ public:
                              const MachineInstr *Orig,
                              const TargetRegisterInfo *TRI) const;
 
+  MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
+
   virtual bool isIdentical(const MachineInstr *MI, const MachineInstr *Other,
                            const MachineRegisterInfo *MRI) const;
 };
