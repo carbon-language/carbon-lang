@@ -2019,6 +2019,32 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
               Diag(AtLoc, diag::warn_property_attr_mismatch);
               Diag(PIDecl->getLocation(), diag::note_property_declare);
             }
+            DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
+            assert(DC && "ClassDecl is not a DeclContext");
+            DeclContext::lookup_result Found = 
+              DC->lookup(PIDecl->getDeclName());
+            bool PropertyInPrimaryClass = false;
+            for (; Found.first != Found.second; ++Found.first)
+              if (isa<ObjCPropertyDecl>(*Found.first)) {
+                PropertyInPrimaryClass = true;
+                break;
+              }
+            if (!PropertyInPrimaryClass) {
+              // Protocol is not in the primary class. Must build one for it.
+              ObjCDeclSpec ProtocolPropertyODS;
+              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind and
+              // ObjCPropertyDecl::PropertyAttributeKind have identical values.
+              // Should consolidate both into one enum type.
+              ProtocolPropertyODS.setPropertyAttributes(
+                (ObjCDeclSpec::ObjCPropertyAttributeKind)PIkind);
+              DeclPtrTy ProtocolPtrTy = 
+                ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS, 
+                              PIDecl->getGetterName(), 
+                              PIDecl->getSetterName(), 
+                              DeclPtrTy::make(CCPrimary), isOverridingProperty, 
+                              MethodImplKind);
+              PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
+            }
             PIDecl->makeitReadWriteAttribute();
             if (Attributes & ObjCDeclSpec::DQ_PR_retain)
               PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
