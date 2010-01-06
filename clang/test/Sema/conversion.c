@@ -235,3 +235,29 @@ extern void *test16_external;
 void test16(void) {
   int a = (unsigned long) &test16_external; // expected-warning {{implicit cast loses integer precision}}
 }
+
+// PR 5938
+void test17() {
+  union {
+    unsigned long long a : 8;
+    unsigned long long b : 32;
+    unsigned long long c;
+  } U;
+
+  unsigned int x;
+  x = U.a;
+  x = U.b;
+  x = U.c; // expected-warning {{implicit cast loses integer precision}} 
+}
+
+// PR 5939
+void test18() {
+  union {
+    unsigned long long a : 1;
+    unsigned long long b;
+  } U;
+
+  int x;
+  x = (U.a ? 0 : 1);
+  x = (U.b ? 0 : 1);
+}
