@@ -217,7 +217,8 @@ ARMBaseRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     ? DarwinCalleeSavedRegClasses : CalleeSavedRegClasses;
 }
 
-BitVector ARMBaseRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+BitVector ARMBaseRegisterInfo::
+getReservedRegs(const MachineFunction &MF) const {
   // FIXME: avoid re-calculating this everytime.
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
@@ -494,7 +495,8 @@ needsStackRealignment(const MachineFunction &MF) const {
           !MFI->hasVarSizedObjects());
 }
 
-bool ARMBaseRegisterInfo::cannotEliminateFrame(const MachineFunction &MF) const {
+bool ARMBaseRegisterInfo::
+cannotEliminateFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   if (NoFramePointerElim && MFI->hasCalls())
     return true;
@@ -560,7 +562,7 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
 
 void
 ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                          RegScavenger *RS) const {
+                                                       RegScavenger *RS) const {
   // This tells PEI to spill the FP as if it is any other callee-save register
   // to take advantage the eliminateFrameIndex machinery. This also ensures it
   // is spilled in the order specified by getCalleeSavedRegs() to make it easier
@@ -855,7 +857,7 @@ int ARMBaseRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
 }
 
 unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
-                                               const MachineFunction &MF) const {
+                                              const MachineFunction &MF) const {
   switch (Reg) {
   default: break;
   // Return 0 if either register of the pair is a special register.
