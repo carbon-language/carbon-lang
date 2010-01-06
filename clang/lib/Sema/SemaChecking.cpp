@@ -1607,7 +1607,13 @@ struct IntRange {
   // Returns the supremum of two ranges: i.e. their conservative merge.
   static IntRange join(const IntRange &L, const IntRange &R) {
     return IntRange(std::max(L.Width, R.Width),
-                        L.NonNegative && R.NonNegative);
+                    L.NonNegative && R.NonNegative);
+  }
+
+  // Returns the infinum of two ranges: i.e. their aggressive merge.
+  static IntRange meet(const IntRange &L, const IntRange &R) {
+    return IntRange(std::min(L.Width, R.Width),
+                    L.NonNegative || R.NonNegative);
   }
 };
 
@@ -1668,8 +1674,12 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
 
     IntRange OutputTypeRange = IntRange::forType(C, CE->getType());
 
+    bool isIntegerCast = (CE->getCastKind() == CastExpr::CK_IntegralCast);
+    if (!isIntegerCast && CE->getCastKind() == CastExpr::CK_Unknown)
+      isIntegerCast = CE->getSubExpr()->getType()->isIntegerType();
+
     // Assume that non-integer casts can span the full range of the type.
-    if (CE->getCastKind() != CastExpr::CK_IntegralCast)
+    if (!isIntegerCast)
       return OutputTypeRange;
 
     IntRange SubRange
@@ -1719,17 +1729,39 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BinaryOperator::PtrMemI:
       return IntRange::forType(C, E->getType());
 
+    // Bitwise-and uses the *infinum* of the two source ranges.
+    case BinaryOperator::And:
+      return IntRange::meet(GetExprRange(C, BO->getLHS(), MaxWidth),
+                            GetExprRange(C, BO->getRHS(), MaxWidth));
+
     // Left shift gets black-listed based on a judgement call.
     case BinaryOperator::Shl:
       return IntRange::forType(C, E->getType());
 
-    // Various special cases.
-    case BinaryOperator::Shr:
-      // TODO: if the RHS is constant, change the width as appropriate.
-      return GetExprRange(C, BO->getLHS(), MaxWidth);
+    // Right shift by a constant can narrow its left argument.
+    case BinaryOperator::Shr: {
+      IntRange L = GetExprRange(C, BO->getLHS(), MaxWidth);
+
+      // If the shift amount is a positive constant, drop the width by
+      // that much.
+      llvm::APSInt shift;
+      if (BO->getRHS()->isIntegerConstantExpr(shift, C) &&
+          shift.isNonNegative()) {
+        unsigned zext = shift.getZExtValue();
+        if (zext >= L.Width)
+          L.Width = (L.NonNegative ? 0 : 1);
+        else
+          L.Width -= zext;
+      }
+
+      return L;
+    }
+
+    // Comma acts as its right operand.
     case BinaryOperator::Comma:
       return GetExprRange(C, BO->getRHS(), MaxWidth);
 
+    // Black-list pointer subtractions.
     case BinaryOperator::Sub:
       if (BO->getLHS()->getType()->isPointerType())
         return IntRange::forType(C, E->getType());
