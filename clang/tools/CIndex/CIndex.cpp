@@ -16,6 +16,7 @@
 
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
 
@@ -627,19 +628,53 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl) {
 CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  SourceManager &SM = ND->getASTContext().getSourceManager();
   SourceRange R = ND->getSourceRange();
 
-  CXDeclExtent extent;
+  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
+  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
+
+  if (!Begin.isValid()) {
+    CXDeclExtent extent = { { 0, 0 }, { 0, 0 } };
+    return extent;
+  }
   
-  SourceLocation L = SourceMgr.getSpellingLoc(R.getBegin());
-  extent.begin.line = SourceMgr.getSpellingLineNumber(L);
-  extent.begin.column = SourceMgr.getSpellingColumnNumber(L);
+  // FIXME: This is largely copy-paste from
+  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
+  // what we want the two routines should be refactored.
   
-  L = SourceMgr.getSpellingLoc(R.getEnd());
-  extent.end.line = SourceMgr.getSpellingLineNumber(L);
-  extent.end.column = SourceMgr.getSpellingColumnNumber(L);
+  // If the End location and the start location are the same and are a macro
+  // location, then the range was something that came from a macro expansion
+  // or _Pragma.  If this is an object-like macro, the best we can do is to
+  // get the range.  If this is a function-like macro, we'd also like to
+  // get the arguments.
+  if (Begin == End && R.getEnd().isMacroID())
+    End = SM.getInstantiationRange(R.getEnd()).second;
+
+  assert(SM.getFileID(Begin) == SM.getFileID(End));
+  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);  
+  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
   
+  // Compute the column number of the start.  Keep the column based at 1.
+  unsigned StartColNo = SM.getInstantiationColumnNumber(Begin);
+  
+  // Compute the column number of the end.
+  unsigned EndColNo = SM.getInstantiationColumnNumber(End);
+  if (EndColNo) {
+    // Offset the end column by 1 so that we point to the last character
+    // in the last token.
+    --EndColNo;
+    
+    // Add in the length of the token, so that we cover multi-char tokens.
+    ASTContext &Ctx = ND->getTranslationUnitDecl()->getASTContext();
+    const LangOptions &LOpts = Ctx.getLangOptions();
+
+    EndColNo += Lexer::MeasureTokenLength(End, SM, LOpts);
+  }
+
+  // Package up the line/column data and return to the caller.
+  CXDeclExtent extent = { { StartLineNo, StartColNo },
+                          { EndLineNo, EndColNo } };
   return extent;  
 }
 
