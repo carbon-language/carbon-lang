@@ -523,7 +523,7 @@ static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
 
 /// estimateRSStackSizeLimit - Look at each instruction that references stack
 /// frames and return the stack size limit beyond which some of these
-/// instructions will require scratch register during their expansion later.
+/// instructions will require a scratch register during their expansion later.
 unsigned
 ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
   unsigned Limit = (1 << 12) - 1;
@@ -547,6 +547,9 @@ ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
           // When the stack offset is negative, we will end up using
           // the i8 instructions instead.
           return (1 << 8) - 1;
+
+        if (AddrMode == ARMII::AddrMode6)
+          return 0;
         break; // At most one FI per instruction
       }
     }
