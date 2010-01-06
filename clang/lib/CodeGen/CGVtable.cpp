@@ -825,7 +825,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], Class->getNameAsCString()));
       }
-      VCall[GD] = idx;
       int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
       int64_t VirtualAdjustment = 
         -((idx + extra + 2) * LLVMPointerWidth / 8);
@@ -842,6 +841,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
         SavedAdjustments.push_back(
             std::make_pair(GD, std::make_pair(OGD, ThisAdjustment)));
       }
+      VCall[GD] = idx;
       return true;
     }
 
