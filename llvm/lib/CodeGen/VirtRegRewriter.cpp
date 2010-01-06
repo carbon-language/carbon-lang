@@ -60,6 +60,33 @@ ScheduleSpills("schedule-spills",
 
 VirtRegRewriter::~VirtRegRewriter() {}
 
+/// substitutePhysReg - Replace virtual register in MachineOperand with a
+/// physical register. Do the right thing with the sub-register index.
+static void substitutePhysReg(MachineOperand &MO, unsigned Reg,
+                              const TargetRegisterInfo &TRI) {
+  if (unsigned SubIdx = MO.getSubReg()) {
+    // Insert the physical subreg and reset the subreg field.
+    MO.setReg(TRI.getSubReg(Reg, SubIdx));
+    MO.setSubReg(0);
+
+    // Any def, dead, and kill flags apply to the full virtual register, so they
+    // also apply to the full physical register. Add imp-def/dead and imp-kill
+    // as needed.
+    MachineInstr &MI = *MO.getParent();
+    if (MO.isDef())
+      if (MO.isDead())
+        MI.addRegisterDead(Reg, &TRI, /*AddIfNotFound=*/ true);
+      else
+        MI.addRegisterDefined(Reg, &TRI);
+    else if (!MO.isUndef() &&
+             (MO.isKill() ||
+              MI.isRegTiedToDefOperand(&MO-&MI.getOperand(0))))
+      MI.addRegisterKilled(Reg, &TRI, /*AddIfNotFound=*/ true);
+  } else {
+    MO.setReg(Reg);
+  }
+}
+
 namespace {
 
 /// This class is intended for use with the new spilling framework only. It
@@ -101,10 +128,7 @@ struct TrivialRewriter : public VirtRegRewriter {
           MachineOperand &mop = regItr.getOperand();
           assert(mop.isReg() && mop.getReg() == reg && "reg_iterator broken?");
           ++regItr;
-          unsigned subRegIdx = mop.getSubReg();
-          unsigned pRegOp = subRegIdx ? tri->getSubReg(pReg, subRegIdx) : pReg;
-          mop.setReg(pRegOp);
-          mop.setSubReg(0);
+          substitutePhysReg(mop, pReg, *tri);
           changed = true;
         }
       }
@@ -647,12 +671,9 @@ static void ReMaterialize(MachineBasicBlock &MBB,
     if (TargetRegisterInfo::isPhysicalRegister(VirtReg))
       continue;
     assert(MO.isUse());
-    unsigned SubIdx = MO.getSubReg();
     unsigned Phys = VRM.getPhys(VirtReg);
     assert(Phys && "Virtual register is not assigned a register?");
-    unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
-    MO.setReg(RReg);
-    MO.setSubReg(0);
+    substitutePhysReg(MO, Phys, *TRI);
   }
   ++NumReMats;
 }
@@ -1004,11 +1025,12 @@ static unsigned FindFreeRegister(MachineBasicBlock::iterator MII,
 }
 
 static
-void AssignPhysToVirtReg(MachineInstr *MI, unsigned VirtReg, unsigned PhysReg) {
+void AssignPhysToVirtReg(MachineInstr *MI, unsigned VirtReg, unsigned PhysReg,
+                         const TargetRegisterInfo &TRI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.getReg() == VirtReg)
-      MO.setReg(PhysReg);
+      substitutePhysReg(MO, PhysReg, TRI);
   }
 }
 
@@ -1175,7 +1197,7 @@ private:
     if (!TII->unfoldMemoryOperand(MF, &MI, VirtReg, false, false, NewMIs))
       llvm_unreachable("Unable unfold the load / store folding instruction!");
     assert(NewMIs.size() == 1);
-    AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
+    AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg, *TRI);
     VRM.transferRestorePts(&MI, NewMIs[0]);
     MII = MBB.insert(MII, NewMIs[0]);
     InvalidateKills(MI, TRI, RegKills, KillOps);
@@ -1191,7 +1213,7 @@ private:
       if (!TII->unfoldMemoryOperand(MF, &NextMI, VirtReg, false, false, NewMIs))
         llvm_unreachable("Unable unfold the load / store folding instruction!");
       assert(NewMIs.size() == 1);
-      AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
+      AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg, *TRI);
       VRM.transferRestorePts(&NextMI, NewMIs[0]);
       MBB.insert(NextMII, NewMIs[0]);
       InvalidateKills(NextMI, TRI, RegKills, KillOps);
@@ -1840,16 +1862,14 @@ private:
           RegInfo->setPhysRegUsed(Phys);
           if (MO.isDef())
             ReusedOperands.markClobbered(Phys);
-          unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
-          MI.getOperand(i).setReg(RReg);
-          MI.getOperand(i).setSubReg(0);
+          substitutePhysReg(MO, Phys, *TRI);
           if (VRM.isImplicitlyDefined(VirtReg))
             // FIXME: Is this needed?
             BuildMI(MBB, &MI, MI.getDebugLoc(),
-                    TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
+                    TII->get(TargetInstrInfo::IMPLICIT_DEF), Phys);
           continue;
         }
-        
+
         // This virtual register is now known to be a spilled value.
         if (!MO.isUse())
           continue;  // Handle defs in the loop below (handle use&def here though)

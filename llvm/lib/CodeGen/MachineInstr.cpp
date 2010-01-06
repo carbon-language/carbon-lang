@@ -1314,3 +1314,12 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
                                        true  /*IsDead*/));
   return true;
 }
+
+void MachineInstr::addRegisterDefined(unsigned IncomingReg,
+                                      const TargetRegisterInfo *RegInfo) {
+  MachineOperand *MO = findRegisterDefOperand(IncomingReg, false, RegInfo);
+  if (!MO || MO->getSubReg())
+    addOperand(MachineOperand::CreateReg(IncomingReg,
+                                         true  /*IsDef*/,
+                                         true  /*IsImp*/));
+}
