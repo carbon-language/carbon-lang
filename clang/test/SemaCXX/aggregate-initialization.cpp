@@ -26,3 +26,7 @@ NonAggr1 na1 = { 17 }; // expected-error{{non-aggregate type 'struct NonAggr1' c
 NonAggr2 na2 = { 17 }; // expected-error{{non-aggregate type 'struct NonAggr2' cannot be initialized with an initializer list}}
 NonAggr3 na3 = { 17 }; // expected-error{{non-aggregate type 'class NonAggr3' cannot be initialized with an initializer list}}
 NonAggr4 na4 = { 17 }; // expected-error{{non-aggregate type 'struct NonAggr4' cannot be initialized with an initializer list}}
+
+// PR5817
+typedef int type[][2];
+const type foo = {0};
