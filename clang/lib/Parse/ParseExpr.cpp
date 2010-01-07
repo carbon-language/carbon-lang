@@ -616,9 +616,17 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // Turn a potentially qualified name into a annot_typename or
     // annot_cxxscope if it would be valid.  This handles things like x::y, etc.
     if (getLang().CPlusPlus) {
-      // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
-      if (TryAnnotateTypeOrScopeToken())
-        return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
+      // Avoid the unnecessary parse-time lookup in the common case
+      // where the syntax forbids a type.
+      const Token &Next = NextToken();
+      if (Next.is(tok::coloncolon) ||
+          (!ColonIsSacred && Next.is(tok::colon)) ||
+          Next.is(tok::less) ||
+          Next.is(tok::l_paren)) {
+        // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
+        if (TryAnnotateTypeOrScopeToken())
+          return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
+      }
     }
 
     // Consume the identifier so that we can see if it is followed by a '(' or

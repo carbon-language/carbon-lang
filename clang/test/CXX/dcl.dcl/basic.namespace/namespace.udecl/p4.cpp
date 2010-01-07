@@ -166,7 +166,8 @@ namespace test3 {
 
   template <class T> struct C : A<T> {
     using typename A<T>::type;
-    using typename A<T>::hiding; // expected-error {{'typename' keyword used on a non-type}}
+    using typename A<T>::hiding; // expected-note {{declared at}} \
+                                 // expected-error {{'typename' keyword used on a non-type}}
     using typename A<T>::union_member; // expected-error {{'typename' keyword used on a non-type}}
     using typename A<T>::enumerator; // expected-error {{'typename' keyword used on a non-type}}
 
@@ -175,7 +176,7 @@ namespace test3 {
     }
 
     void test7() {
-      Opaque0 _ = hiding; // expected-error {{expected '(' for function-style cast or type construction}}
+      Opaque0 _ = hiding; // expected-error {{does not refer to a value}}
     }
   };
 
