@@ -1185,7 +1185,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
   ObjCIvarDecl *D = IV->getDecl();
   const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
-    if (IV->isArrow()) {
+    if (IV->isArrow() && isa<DeclRefExpr>(BaseExpr)) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
