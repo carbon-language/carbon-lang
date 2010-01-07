@@ -290,7 +290,6 @@ MachineInstr *LiveVariables::FindLastRefOrPartRef(unsigned Reg) {
 
   MachineInstr *LastRefOrPartRef = LastUse ? LastUse : LastDef;
   unsigned LastRefOrPartRefDist = DistanceMap[LastRefOrPartRef];
-  MachineInstr *LastPartDef = 0;
   unsigned LastPartDefDist = 0;
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
@@ -299,13 +298,9 @@ MachineInstr *LiveVariables::FindLastRefOrPartRef(unsigned Reg) {
       // There was a def of this sub-register in between. This is a partial
       // def, keep track of the last one.
       unsigned Dist = DistanceMap[Def];
-      if (Dist > LastPartDefDist) {
+      if (Dist > LastPartDefDist)
         LastPartDefDist = Dist;
-        LastPartDef = Def;
-      }
-      continue;
-    }
-    if (MachineInstr *Use = PhysRegUse[SubReg]) {
+    } else if (MachineInstr *Use = PhysRegUse[SubReg]) {
       unsigned Dist = DistanceMap[Use];
       if (Dist > LastRefOrPartRefDist) {
         LastRefOrPartRefDist = Dist;
