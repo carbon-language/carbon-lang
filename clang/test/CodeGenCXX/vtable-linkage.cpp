@@ -97,20 +97,28 @@ void use_F(F<char> &fc) {
 // E<char> is an explicit specialization with a key function defined
 // in this translation unit, so its vtable should have external
 // linkage.
+// CHECK: @_ZTS1EIcE = constant
+// CHECK: @_ZTI1EIcE = constant
 // CHECK: @_ZTV1EIcE = constant
 
 // E<short> is an explicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
+// CHECK: @_ZTS1EIsE = weak_odr constant
+// CHECK: @_ZTI1EIsE = weak_odr constant
 // CHECK: @_ZTV1EIsE = weak_odr constant
 
 // F<short> is an explicit template instantiation without a key
 // function, so its vtable should have weak_odr linkage
+// CHECK: @_ZTS1FIsE = weak_odr constant
+// CHECK: @_ZTI1FIsE = weak_odr constant
 // CHECK: @_ZTV1FIsE = weak_odr constant
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
+// CHECK: @_ZTS1EIlE = weak_odr constant
+// CHECK: @_ZTI1EIlE = weak_odr constant
 // CHECK: @_ZTV1EIlE = weak_odr constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
@@ -121,14 +129,18 @@ void use_F(F<char> &fc) {
 
 // F<long> is an implicit template instantiation with no key function,
 // so its vtable should have weak_odr linkage.
+// CHECK: @_ZTS1FIlE = weak_odr constant
+// CHECK: @_ZTI1FIlE = weak_odr constant
 // CHECK: @_ZTV1FIlE = weak_odr constant
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have weak_odr linkage.
+// CHECK: @_ZTS1FIiE = weak_odr constant
+// CHECK: @_ZTI1FIiE = weak_odr constant
 // CHECK: @_ZTV1FIiE = weak_odr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
-// key function that is not instantiation, so we should only reference
+// key function that is not instantiated, so we should only reference
 // its vtable, not define it.
 // CHECK: @_ZTV1EIiE = external constant
 
