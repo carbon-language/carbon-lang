@@ -784,7 +784,7 @@ private:
   llvm::SmallVector<DeclPtrTy, 4> PendingObjCImpDecl;
 
   DeclPtrTy ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
-  DeclPtrTy ParseObjCAtEndDeclaration(SourceLocation atLoc);
+  DeclPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);
   DeclPtrTy ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   DeclPtrTy ParseObjCPropertySynthesize(SourceLocation atLoc);
   DeclPtrTy ParseObjCPropertyDynamic(SourceLocation atLoc);

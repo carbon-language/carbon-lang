@@ -57,10 +57,10 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=7 start_col=1 end_line=7 end_col=6} ObjCInstanceMethodDecl=foo:7:1
 // CHECK: {start_line=7 start_col=7 end_line=7 end_col=7} ObjCInterfaceDecl=Foo:3:1
 // CHECK: {start_line=8 start_col=1 end_line=8 end_col=7} ObjCClassMethodDecl=fooC:8:1
-// CHECK: {start_line=8 start_col=8 end_line=10 end_col=1} ObjCInterfaceDecl=Foo:3:1
-// CHECK: {start_line=10 start_col=2 end_line=11 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=12 start_col=1 end_line=16 end_col=1} ObjCInterfaceDecl=Bar:12:1
-// CHECK: {start_line=16 start_col=2 end_line=17 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=8 start_col=8 end_line=10 end_col=4} ObjCInterfaceDecl=Foo:3:1
+// CHECK: {start_line=10 start_col=5 end_line=11 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=12 start_col=1 end_line=16 end_col=4} ObjCInterfaceDecl=Bar:12:1
+// CHECK: {start_line=16 start_col=5 end_line=17 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=18 start_col=1 end_line=18 end_col=24} ObjCCategoryDecl=FooCat:18:1
 // CHECK: {start_line=19 start_col=1 end_line=19 end_col=28} ObjCInstanceMethodDecl=catMethodWithFloat::19:1
 // CHECK: {start_line=19 start_col=29 end_line=19 end_col=33} ParmDecl=fArg:19:36
@@ -69,24 +69,24 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=19 start_col=40 end_line=19 end_col=40} ObjCInstanceMethodDecl=catMethodWithFloat::19:1
 // CHECK: {start_line=19 start_col=41 end_line=19 end_col=41} ObjCCategoryDecl=FooCat:18:1
 // CHECK: {start_line=20 start_col=1 end_line=20 end_col=22} ObjCInstanceMethodDecl=floatMethod:20:1
-// CHECK: {start_line=20 start_col=23 end_line=21 end_col=1} ObjCCategoryDecl=FooCat:18:1
-// CHECK: {start_line=21 start_col=2 end_line=22 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=20 start_col=23 end_line=21 end_col=4} ObjCCategoryDecl=FooCat:18:1
+// CHECK: {start_line=21 start_col=5 end_line=22 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=23 start_col=1 end_line=23 end_col=16} ObjCProtocolDecl=Proto:23:1
 // CHECK: {start_line=24 start_col=1 end_line=24 end_col=10} ObjCInstanceMethodDecl=pMethod:24:1
-// CHECK: {start_line=24 start_col=11 end_line=25 end_col=1} ObjCProtocolDecl=Proto:23:1
-// CHECK: {start_line=25 start_col=2 end_line=26 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=24 start_col=11 end_line=25 end_col=4} ObjCProtocolDecl=Proto:23:1
+// CHECK: {start_line=25 start_col=5 end_line=26 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=27 start_col=1 end_line=27 end_col=23} ObjCProtocolDecl=SubP:27:1
 // CHECK: {start_line=28 start_col=1 end_line=28 end_col=11} ObjCInstanceMethodDecl=spMethod:28:1
-// CHECK: {start_line=28 start_col=12 end_line=29 end_col=1} ObjCProtocolDecl=SubP:27:1
-// CHECK: {start_line=29 start_col=2 end_line=30 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=28 start_col=12 end_line=29 end_col=4} ObjCProtocolDecl=SubP:27:1
+// CHECK: {start_line=29 start_col=5 end_line=30 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=31 start_col=1 end_line=33 end_col=4} ObjCInterfaceDecl=Baz:31:1
 // CHECK: {start_line=33 start_col=5 end_line=33 end_col=7} Invalid Cursor => NotImplemented
 // CHECK: {start_line=33 start_col=8 end_line=33 end_col=8} ObjCInterfaceDecl=Baz:31:1
 // CHECK: {start_line=33 start_col=9 end_line=33 end_col=15} Invalid Cursor => NotImplemented
 // CHECK: {start_line=33 start_col=16 end_line=35 end_col=1} ObjCInterfaceDecl=Baz:31:1
 // CHECK: {start_line=36 start_col=1 end_line=36 end_col=20} ObjCInstanceMethodDecl=bazMethod:36:1
-// CHECK: {start_line=36 start_col=21 end_line=38 end_col=1} ObjCInterfaceDecl=Baz:31:1
-// CHECK: {start_line=38 start_col=2 end_line=39 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=36 start_col=21 end_line=38 end_col=4} ObjCInterfaceDecl=Baz:31:1
+// CHECK: {start_line=38 start_col=5 end_line=39 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=40 start_col=1 end_line=41 end_col=2} EnumDecl=:40:1
 // CHECK: {start_line=41 start_col=3 end_line=41 end_col=10} EnumConstantDecl=someEnum:41:3
 // CHECK: {start_line=41 start_col=11 end_line=42 end_col=1} EnumDecl=:40:1

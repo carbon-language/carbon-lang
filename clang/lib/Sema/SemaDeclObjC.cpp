@@ -1612,7 +1612,8 @@ void Sema::CompareMethodParamsInBaseAndSuper(Decl *ClassDecl,
 
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
-void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
+void Sema::ActOnAtEnd(SourceRange AtEnd,
+                      DeclPtrTy classDecl,
                       DeclPtrTy *allMethods, unsigned allNum,
                       DeclPtrTy *allProperties, unsigned pNum,
                       DeclGroupPtrTy *allTUVars, unsigned tuvNum) {
@@ -1629,9 +1630,13 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
 
-  if (!isInterfaceDeclKind && AtEndLoc.isInvalid()) {
-    AtEndLoc = ClassDecl->getLocation();
-    Diag(AtEndLoc, diag::warn_missing_atend);
+  if (!isInterfaceDeclKind && AtEnd.isInvalid()) {
+    // FIXME: This is wrong.  We shouldn't be pretending that there is
+    //  an '@end' in the declaration.
+    SourceLocation L = ClassDecl->getLocation();
+    AtEnd.setBegin(L);
+    AtEnd.setEnd(L);
+    Diag(L, diag::warn_missing_atend);
   }
   
   DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
@@ -1708,17 +1713,17 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
                                           E = CDecl->prop_end();
          I != E; ++I)
       ProcessPropertyDecl(*I, CDecl);
-    CDecl->setAtEndLoc(AtEndLoc);
+    CDecl->setAtEndRange(AtEnd);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
-    IC->setAtEndLoc(AtEndLoc);
+    IC->setAtEndRange(AtEnd);
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
       ImplMethodsVsClassMethods(IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
     }
   } else if (ObjCCategoryImplDecl* CatImplClass =
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
-    CatImplClass->setAtEndLoc(AtEndLoc);
+    CatImplClass->setAtEndRange(AtEnd);
 
     // Find category interface decl and then check that all methods declared
     // in this interface are implemented in the category @implementation.

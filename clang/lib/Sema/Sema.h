@@ -3344,10 +3344,11 @@ public:
   void MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
                                            ObjCProtocolDecl *PDecl);
 
-  virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
-                      DeclPtrTy *allMethods = 0, unsigned allNum = 0,
-                      DeclPtrTy *allProperties = 0, unsigned pNum = 0,
-                      DeclGroupPtrTy *allTUVars = 0, unsigned tuvNum = 0);
+  virtual void ActOnAtEnd(SourceRange AtEnd,
+                          DeclPtrTy classDecl,
+                          DeclPtrTy *allMethods = 0, unsigned allNum = 0,
+                          DeclPtrTy *allProperties = 0, unsigned pNum = 0,
+                          DeclGroupPtrTy *allTUVars = 0, unsigned tuvNum = 0);
 
   virtual DeclPtrTy ActOnProperty(Scope *S, SourceLocation AtLoc,
                                   FieldDeclarator &FD, ObjCDeclSpec &ODS,

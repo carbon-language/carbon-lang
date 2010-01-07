@@ -2177,7 +2177,7 @@ public:
   // protocols, categories), the parser passes all methods/properties.
   // For class implementations, these values default to 0. For implementations,
   // methods are processed incrementally (by ActOnMethodDeclaration above).
-  virtual void ActOnAtEnd(SourceLocation AtEndLoc,
+  virtual void ActOnAtEnd(SourceRange AtEnd,
                           DeclPtrTy classDecl,
                           DeclPtrTy *allMethods = 0,
                           unsigned allNum = 0,

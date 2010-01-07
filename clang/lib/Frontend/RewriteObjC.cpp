@@ -844,7 +844,7 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
+  ReplaceText(CatDecl->getAtEndRange().getBegin(), 0, "// ", 3);
 }
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
@@ -865,7 +865,7 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  SourceLocation LocEnd = PDecl->getAtEndLoc();
+  SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
   ReplaceText(LocEnd, 0, "// ", 3);
 
   // Must comment out @optional/@required
@@ -1102,7 +1102,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
+  ReplaceText(ClassDecl->getAtEndRange().getBegin(), 0, "// ", 3);
 }
 
 Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,

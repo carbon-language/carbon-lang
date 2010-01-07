@@ -162,6 +162,7 @@ public:
   void setEnd(SourceLocation e) { E = e; }
 
   bool isValid() const { return B.isValid() && E.isValid(); }
+  bool isInvalid() const { return !isValid(); }
 
   bool operator==(const SourceRange &X) const {
     return B == X.B && E == X.E;

@@ -289,7 +289,9 @@ struct ObjCMethodList {
 /// ObjCProtocolDecl, and ObjCImplDecl.
 ///
 class ObjCContainerDecl : public NamedDecl, public DeclContext {
-  SourceLocation AtEndLoc; // marks the end of the method container.
+  // These two locations in the range mark the end of the method container.
+  // The first points to the '@' token, and the second to the 'end' token.
+  SourceRange AtEnd;
 public:
 
   ObjCContainerDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -351,11 +353,15 @@ public:
                                             IdentifierInfo *PropertyId) const;
 
   // Marks the end of the container.
-  SourceLocation getAtEndLoc() const { return AtEndLoc; }
-  void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
+  SourceRange getAtEndRange() const {
+    return AtEnd;
+  }
+  void setAtEndRange(SourceRange atEnd) {
+    AtEnd = atEnd;
+  }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getLocation(), getAtEndLoc());
+    return SourceRange(getLocation(), getAtEndRange().getEnd());
   }
 
   // Implement isa/cast/dyncast/etc.

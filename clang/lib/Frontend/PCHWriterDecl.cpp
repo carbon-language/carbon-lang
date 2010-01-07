@@ -208,7 +208,9 @@ void PCHDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
 void PCHDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   VisitNamedDecl(D);
-  Writer.AddSourceLocation(D->getAtEndLoc(), Record);
+  SourceRange R = D->getAtEndRange();
+  Writer.AddSourceLocation(R.getBegin(), Record);
+  Writer.AddSourceLocation(R.getEnd(), Record);
   // Abstract class (no need to define a stable pch::DECL code).
 }
 

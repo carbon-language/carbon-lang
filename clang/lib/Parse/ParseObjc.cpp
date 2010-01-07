@@ -309,7 +309,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
   llvm::SmallVector<DeclGroupPtrTy, 8> allTUVariables;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
 
-  SourceLocation AtEndLoc;
+  SourceRange AtEnd;
 
   while (1) {
     // If this is a method prototype, parse it.
@@ -359,7 +359,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
     tok::ObjCKeywordKind DirectiveKind = Tok.getObjCKeywordID();
 
     if (DirectiveKind == tok::objc_end) { // @end -> terminate list
-      AtEndLoc = AtLoc;
+      AtEnd.setBegin(AtLoc);
+      AtEnd.setEnd(Tok.getLocation());
       break;
     }
 
@@ -422,7 +423,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
 
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
-  Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
+  Actions.ActOnAtEnd(AtEnd, interfaceDecl,
                      allMethods.data(), allMethods.size(),
                      allProperties.data(), allProperties.size(),
                      allTUVariables.data(), allTUVariables.size());
@@ -1197,18 +1198,20 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
   return DeclPtrTy();
 }
 
-Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
+Parser::DeclPtrTy Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
   DeclPtrTy Result = ObjCImpDecl;
   ConsumeToken(); // the "end" identifier
   if (ObjCImpDecl) {
-    Actions.ActOnAtEnd(atLoc, ObjCImpDecl);
+    Actions.ActOnAtEnd(atEnd, ObjCImpDecl);
     ObjCImpDecl = DeclPtrTy();
     PendingObjCImpDecl.pop_back();
   }
-  else
-    Diag(atLoc, diag::warn_expected_implementation); // missing @implementation
+  else {
+    // missing @implementation
+    Diag(atEnd.getBegin(), diag::warn_expected_implementation);
+  }
   return Result;
 }
 
@@ -1216,7 +1219,7 @@ Parser::DeclGroupPtrTy Parser::RetrievePendingObjCImpDecl() {
   if (PendingObjCImpDecl.empty())
     return Actions.ConvertDeclToDeclGroup(DeclPtrTy());
   DeclPtrTy ImpDecl = PendingObjCImpDecl.pop_back_val();
-  Actions.ActOnAtEnd(SourceLocation(), ImpDecl);
+  Actions.ActOnAtEnd(SourceRange(), ImpDecl);
   return Actions.ConvertDeclToDeclGroup(ImpDecl);
 }
 
