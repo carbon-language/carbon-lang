@@ -456,8 +456,7 @@ void SelectionDAGISel::ShrinkDemandedOps() {
 
   TargetLowering::TargetLoweringOpt TLO(*CurDAG, true);
   while (!Worklist.empty()) {
-    SDNode *N = Worklist.back();
-    Worklist.pop_back();
+    SDNode *N = Worklist.pop_back_val();
 
     if (N->use_empty() && N != CurDAG->getRoot().getNode()) {
       CurDAG->DeleteNode(N);
@@ -467,7 +466,6 @@ void SelectionDAGISel::ShrinkDemandedOps() {
     // Run ShrinkDemandedOp on scalar binary operations.
     if (N->getNumValues() == 1 &&
         N->getValueType(0).isSimple() && N->getValueType(0).isInteger()) {
-      DebugLoc dl = N->getDebugLoc();
       unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
       APInt Demanded = APInt::getAllOnesValue(BitWidth);
       APInt KnownZero, KnownOne;
@@ -520,9 +518,8 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
   APInt KnownZero;
   APInt KnownOne;
 
-  while (!Worklist.empty()) {
-    SDNode *N = Worklist.back();
-    Worklist.pop_back();
+  do {
+    SDNode *N = Worklist.pop_back_val();
 
     // If we've already seen this node, ignore it.
     if (!VisitedNodes.insert(N))
@@ -562,7 +559,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
       LOI.KnownOne = KnownOne;
       LOI.KnownZero = KnownZero;
     }
-  }
+  } while (!Worklist.empty());
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG() {
