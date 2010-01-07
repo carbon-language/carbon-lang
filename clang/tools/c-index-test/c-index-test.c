@@ -229,7 +229,7 @@ static void print_cursor_file_scan(CXCursor cursor,
                                    unsigned start_line, unsigned start_col,
                                    unsigned end_line, unsigned end_col,
                                    const char *prefix) {
-  printf("// CHECK");
+  printf("// %s: ", FileCheckPrefix);
   if (prefix)
     printf("-%s", prefix);
   printf("{start_line=%d start_col=%d end_line=%d end_col=%d} ",
