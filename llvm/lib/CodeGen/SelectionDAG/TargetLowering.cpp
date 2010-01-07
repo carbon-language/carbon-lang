@@ -1597,7 +1597,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     if (N0.getOpcode() == ISD::SRL && (C1 == 0 || C1 == 1) &&
         N0.getOperand(0).getOpcode() == ISD::CTLZ &&
         N0.getOperand(1).getOpcode() == ISD::Constant) {
-      unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+      const APInt &ShAmt
+        = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
       if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
           ShAmt == Log2_32(N0.getValueType().getSizeInBits())) {
         if ((C1 == 0) == (Cond == ISD::SETEQ)) {
@@ -1625,27 +1626,26 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         N0.getOperand(0).getNode()->hasOneUse() &&
         isa<ConstantSDNode>(N0.getOperand(1))) {
       LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
-      uint64_t bestMask = 0;
+      APInt bestMask;
       unsigned bestWidth = 0, bestOffset = 0;
-      if (!Lod->isVolatile() && Lod->isUnindexed() &&
-          // FIXME: This uses getZExtValue() below so it only works on i64 and
-          // below.
-          N0.getValueType().getSizeInBits() <= 64) {
+      if (!Lod->isVolatile() && Lod->isUnindexed()) {
         unsigned origWidth = N0.getValueType().getSizeInBits();
+        unsigned maskWidth = origWidth;
         // We can narrow (e.g.) 16-bit extending loads on 32-bit target to 
         // 8 bits, but have to be careful...
         if (Lod->getExtensionType() != ISD::NON_EXTLOAD)
           origWidth = Lod->getMemoryVT().getSizeInBits();
-        uint64_t Mask =cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+        const APInt &Mask =
+          cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
         for (unsigned width = origWidth / 2; width>=8; width /= 2) {
-          uint64_t newMask = (1ULL << width) - 1;
+          APInt newMask = APInt::getLowBitsSet(maskWidth, width);
           for (unsigned offset=0; offset<origWidth/width; offset++) {
             if ((newMask & Mask) == Mask) {
               if (!TD->isLittleEndian())
                 bestOffset = (origWidth/width - offset - 1) * (width/8);
               else
                 bestOffset = (uint64_t)offset * (width/8);
-              bestMask = Mask >> (offset * (width/8) * 8);
+              bestMask = Mask.lshr(offset * (width/8) * 8);
               bestWidth = width;
               break;
             }
@@ -1668,7 +1668,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                                         false, NewAlign);
           return DAG.getSetCC(dl, VT, 
                               DAG.getNode(ISD::AND, dl, newVT, NewLoad,
-                                          DAG.getConstant(bestMask, newVT)),
+                                      DAG.getConstant(bestMask.trunc(bestWidth),
+                                                      newVT)),
                               DAG.getConstant(0LL, newVT), Cond);
         }
       }
@@ -1760,7 +1761,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       
       // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
       if (N0.getOpcode() == ISD::SETCC) {
-        bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getZExtValue() != 1);
+        bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getAPIntValue() != 1);
         if (TrueWhenTrue)
           return N0;
         
@@ -1885,13 +1886,12 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           getPointerTy() : getShiftAmountTy();
         if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
           // Perform the xform if the AND RHS is a single bit.
-          if (isPowerOf2_64(AndRHS->getZExtValue())) {
+          if (AndRHS->getAPIntValue().isPowerOf2()) {
             return DAG.getNode(ISD::TRUNCATE, dl, VT,
                               DAG.getNode(ISD::SRL, dl, N0.getValueType(), N0,
-                                DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
-                                                ShiftTy)));
+                   DAG.getConstant(AndRHS->getAPIntValue().logBase2(), ShiftTy)));
           }
-        } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
+        } else if (Cond == ISD::SETEQ && C1 == AndRHS->getAPIntValue()) {
           // (X & 8) == 8  -->  (X & 8) >> 3
           // Perform the xform if C1 is a single bit.
           if (C1.isPowerOf2()) {
