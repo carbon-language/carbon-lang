@@ -1302,6 +1302,9 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
             << FieldName << CurrentObjectType << R.getLookupName()
             << CodeModificationHint::CreateReplacement(D->getFieldLoc(),
                                                R.getLookupName().getAsString());
+          SemaRef.Diag(ReplacementField->getLocation(), 
+                       diag::note_previous_decl)
+            << ReplacementField->getDeclName();
         } else {
           SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
             << FieldName << CurrentObjectType;

@@ -446,6 +446,10 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
           << Name << Found.getLookupName()
           << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
                                            Found.getLookupName().getAsString());
+      
+      if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
+        Diag(ND->getLocation(), diag::note_previous_decl)
+          << ND->getDeclName();
     } else
       Found.clear();
   }

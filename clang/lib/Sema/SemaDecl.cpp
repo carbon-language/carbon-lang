@@ -281,6 +281,9 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       else
         llvm_unreachable("could not have corrected a typo here");
 
+      Diag(Result->getLocation(), diag::note_previous_decl)
+        << Result->getDeclName();
+      
       SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS);
       return true;
     }
@@ -580,6 +583,9 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
         << Id << IDecl->getDeclName() 
         << CodeModificationHint::CreateReplacement(RecoverLoc, 
                                                    IDecl->getNameAsString());
+      Diag(IDecl->getLocation(), diag::note_previous_decl)
+        << IDecl->getDeclName();
+      
       Id = IDecl->getIdentifier();
     }
   }

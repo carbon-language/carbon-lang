@@ -219,6 +219,9 @@ void Sema::LookupTemplateName(LookupResult &Found,
             << Name << Found.getLookupName()
             << CodeModificationHint::CreateReplacement(Found.getNameLoc(),
                                           Found.getLookupName().getAsString());
+        if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
+          Diag(Template->getLocation(), diag::note_previous_decl)
+            << Template->getDeclName();
       } else
         Found.clear();
     } else {

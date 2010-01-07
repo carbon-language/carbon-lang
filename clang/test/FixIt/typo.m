@@ -12,24 +12,24 @@ void test() {
 }
 
 @protocol P1
-@property int *sprop;
+@property int *sprop; // expected-note{{'sprop' declared here}}
 @end
 
 @interface A
 {
-  int his_ivar;
+  int his_ivar; // expected-note 2{{'his_ivar' declared here}}
   float wibble;
 }
 
-@property int his_prop;
+@property int his_prop; // expected-note{{'his_prop' declared here}}
 @end
 
 @interface B : A <P1>
 {
-  int her_ivar;
+  int her_ivar; // expected-note 2{{'her_ivar' declared here}}
 }
 
-@property int her_prop;
+@property int her_prop; // expected-note{{'her_prop' declared here}}
 - (void)inst_method1:(int)a;
 + (void)class_method1;
 @end
@@ -60,13 +60,13 @@ void test_message_send(B* b) {
   [NSstring method:17]; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
 }
 
-@interface Collide
+@interface Collide // expected-note{{'Collide' declared here}}
 {
 @public
-  int value;
+  int value; // expected-note{{'value' declared here}}
 }
 
-@property int value;
+@property int value; // expected-note{{'value' declared here}}
 @end
 
 @implementation Collide
@@ -81,7 +81,7 @@ void test2(Collide *a) {
 @interface Derived : Collid // expected-error{{cannot find interface declaration for 'Collid', superclass of 'Derived'; did you mean 'Collide'?}}
 @end
 
-@protocol NetworkSocket
+@protocol NetworkSocket // expected-note{{'NetworkSocket' declared here}}
 - (int)send:(void*)buffer bytes:(int)bytes;
 @end
 

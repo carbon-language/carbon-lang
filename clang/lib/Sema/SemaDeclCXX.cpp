@@ -1072,6 +1072,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
               << MemberOrBase << true << R.getLookupName()
               << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                                R.getLookupName().getAsString());
+            Diag(Member->getLocation(), diag::note_previous_decl)
+              << Member->getDeclName();
 
             return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
                                           LParenLoc, RParenLoc);

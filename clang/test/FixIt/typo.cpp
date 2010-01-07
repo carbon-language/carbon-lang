@@ -1,15 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -fsyntax-only -fixit -o - %s | %clang_cc1 -fsyntax-only -pedantic -Werror -x c++ -
 namespace std {
-  template<typename T> class basic_string { 
-    int find(const char *substr);
-    static const int npos = -1;
+  template<typename T> class basic_string { // expected-note 2{{'basic_string' declared here}}
+    int find(const char *substr); // expected-note{{'find' declared here}}
+    static const int npos = -1; // expected-note{{'npos' declared here}}
   };
 
-  typedef basic_string<char> string;
+  typedef basic_string<char> string; // expected-note 2{{'string' declared here}}
 }
 
-namespace otherstd {
+namespace otherstd { // expected-note 2{{'otherstd' declared here}}
   using namespace std;
 }
 
@@ -36,7 +36,7 @@ bool test_string(std::string s) {
 
 struct Base { };
 struct Derived : public Base {
-  int member;
+  int member; // expected-note 3{{'member' declared here}}
 
   Derived() : base(), // expected-error{{initializer 'base' does not name a non-static data member or base class; did you mean the base class 'Base'?}}
               ember() { } // expected-error{{initializer 'ember' does not name a non-static data member or base class; did you mean the member 'member'?}}

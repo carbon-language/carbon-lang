@@ -943,7 +943,10 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, const CXXScopeSpec &SS,
           << SS.getRange()
           << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                               R.getLookupName().getAsString());
-
+      if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
+        Diag(ND->getLocation(), diag::note_previous_decl)
+          << ND->getDeclName();
+      
       // Tell the callee to try to recover.
       return false;
     }
@@ -2400,6 +2403,9 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
       << Name << DC << R.getLookupName() << SS.getRange()
       << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                          R.getLookupName().getAsString());
+    if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
+      SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
+        << ND->getDeclName();
     return false;
   } else {
     R.clear();
@@ -2881,6 +2887,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
             << IDecl->getDeclName() << MemberName << IV->getDeclName()
             << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                                        IV->getNameAsString());
+          Diag(IV->getLocation(), diag::note_previous_decl)
+            << IV->getDeclName();          
         }
       }
 
@@ -3060,6 +3068,10 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         << MemberName << BaseType << Res.getLookupName()
         << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                            Res.getLookupName().getAsString());
+      ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
+      Diag(Property->getLocation(), diag::note_previous_decl)
+        << Property->getDeclName();          
+
       return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS,
                               FirstQualifierInScope, ObjCImpDecl);
     }

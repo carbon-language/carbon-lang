@@ -142,6 +142,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
           (PrevDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
         Diag(SuperLoc, diag::err_undef_superclass_suggest)
           << SuperName << ClassName << PrevDecl->getDeclName();
+        Diag(PrevDecl->getLocation(), diag::note_previous_decl)
+          << PrevDecl->getDeclName();
       }
     }
 
@@ -335,6 +337,8 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
           (PDecl = R.getAsSingle<ObjCProtocolDecl>())) {
         Diag(ProtocolId[i].second, diag::err_undeclared_protocol_suggest)
           << ProtocolId[i].first << R.getLookupName();
+        Diag(PDecl->getLocation(), diag::note_previous_decl)
+          << PDecl->getDeclName();
       }
     }
 
