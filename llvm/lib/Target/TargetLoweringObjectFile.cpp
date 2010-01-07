@@ -922,7 +922,7 @@ const MCSection *
 TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind) const {
   // If this constant requires a relocation, we have to put it in the data
   // segment, not in the text segment.
-  if (Kind.isDataRel())
+  if (Kind.isDataRel() || Kind.isReadOnlyWithRel())
     return ConstDataSection;
 
   if (Kind.isMergeableConst4())
