@@ -179,7 +179,8 @@ Action::OwningExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
   if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
     if (MD->isInstance())
       return Owned(new (Context) CXXThisExpr(ThisLoc,
-                                             MD->getThisType(Context)));
+                                             MD->getThisType(Context),
+                                             /*isImplicit=*/false));
 
   return ExprError(Diag(ThisLoc, diag::err_invalid_this_use));
 }

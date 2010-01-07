@@ -324,17 +324,21 @@ public:
 /// @endcode
 class CXXThisExpr : public Expr {
   SourceLocation Loc;
-
+  bool Implicit : 1;
+  
 public:
-  CXXThisExpr(SourceLocation L, QualType Type)
+  CXXThisExpr(SourceLocation L, QualType Type, bool isImplicit)
     : Expr(CXXThisExprClass, Type,
            // 'this' is type-dependent if the class type of the enclosing
            // member function is dependent (C++ [temp.dep.expr]p2)
            Type->isDependentType(), Type->isDependentType()),
-      Loc(L) { }
+      Loc(L), Implicit(isImplicit) { }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
+  bool isImplicit() const { return Implicit; }
+  void setImplicit(bool I) { Implicit = I; }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXThisExprClass;
   }

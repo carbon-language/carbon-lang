@@ -6064,9 +6064,14 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                    MemExpr->getMemberLoc(),
                                    Fn->getType(),
                                    TemplateArgs);
-      } else
-        Base = new (Context) CXXThisExpr(SourceLocation(),
-                                         MemExpr->getBaseType());
+      } else {
+        SourceLocation Loc = MemExpr->getMemberLoc();
+        if (MemExpr->getQualifier())
+          Loc = MemExpr->getQualifierRange().getBegin();
+        Base = new (Context) CXXThisExpr(Loc,
+                                         MemExpr->getBaseType(),
+                                         /*isImplicit=*/true);
+      }
     } else
       Base = MemExpr->getBase()->Retain();
 

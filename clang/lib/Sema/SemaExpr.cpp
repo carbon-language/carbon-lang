@@ -565,7 +565,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
             IsDerivedFrom(ThisType, AnonFieldType)) {
           // Our base object expression is "this".
           BaseObjectExpr = new (Context) CXXThisExpr(Loc,
-                                                     MD->getThisType(Context));
+                                                     MD->getThisType(Context),
+                                                     /*isImplicit=*/true);
           BaseObjectIsPointer = true;
         }
       } else {
@@ -1366,7 +1367,10 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
   QualType ThisType = cast<CXXMethodDecl>(CurContext)->getThisType(Context);
   Expr *This = 0; // null signifies implicit access
   if (IsKnownInstance) {
-    This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
+    SourceLocation Loc = R.getNameLoc();
+    if (SS.getRange().isValid())
+      Loc = SS.getRange().getBegin();
+    This = new (Context) CXXThisExpr(Loc, ThisType, /*isImplicit=*/true);
   }
 
   return BuildMemberReferenceExpr(ExprArg(*this, This), ThisType,
@@ -2541,7 +2545,10 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     if (!IsInstanceMember(MemberDecl))
       return BuildDeclarationNameExpr(SS, R.getNameLoc(), MemberDecl);
 
-    BaseExpr = new (Context) CXXThisExpr(SourceLocation(), BaseExprType);
+    SourceLocation Loc = R.getNameLoc();
+    if (SS.getRange().isValid())
+      Loc = SS.getRange().getBegin();
+    BaseExpr = new (Context) CXXThisExpr(Loc, BaseExprType,/*isImplicit=*/true);
   }
 
   bool ShouldCheckUse = true;

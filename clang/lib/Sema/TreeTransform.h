@@ -1344,9 +1344,11 @@ public:
   /// semantic analysis. Subclasses may override this routine to provide
   /// different behavior.
   OwningExprResult RebuildCXXThisExpr(SourceLocation ThisLoc,
-                                      QualType ThisType) {
+                                      QualType ThisType,
+                                      bool isImplicit) {
     return getSema().Owned(
-                      new (getSema().Context) CXXThisExpr(ThisLoc, ThisType));
+                      new (getSema().Context) CXXThisExpr(ThisLoc, ThisType,
+                                                          isImplicit));
   }
 
   /// \brief Build a new C++ throw expression.
@@ -4386,7 +4388,7 @@ TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
       T == E->getType())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCXXThisExpr(E->getLocStart(), T);
+  return getDerived().RebuildCXXThisExpr(E->getLocStart(), T, E->isImplicit());
 }
 
 template<typename Derived>
