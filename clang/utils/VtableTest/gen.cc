@@ -124,7 +124,7 @@ void gs(int s) {
   for (int i = 0; i < n_funcs; ++i) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
-    g("  virtual void fun"); g(fn); g("(char *t) { mix((char *)this - t); mix("); g(++vfn); gl("); }");
+    g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++vfn); gl("); }");
     old_func = fn;
   }
 
@@ -132,16 +132,16 @@ void gs(int s) {
   gl("  void calc(char *t) {");
 
   // mix in the type number
-  g("    mix("); g(s); gl(");");
+  g("    mix(\"type num\", "); g(s); gl(");");
   // mix in the size
-  g("    mix(sizeof (s"); g(s); gl("));");
+  g("    mix(\"type size\", sizeof (s"); g(s); gl("));");
   // mix in the this offset
-  gl("    mix((char *)this - t);");
+  gl("    mix(\"subobject offset\", (char *)this - t);");
   if (n_funcs)
     polymorphic = true;
   if (polymorphic) {
     // mix in offset to the complete object under construction
-    gl("    mix(t - (char *)dynamic_cast<void*>(this));");
+    gl("    mix(\"real top v current top\", t - (char *)dynamic_cast<void*>(this));");
   }
 
   /* check base layout and overrides */
@@ -153,24 +153,24 @@ void gs(int s) {
     /* check dynamic_cast to each direct base */
     for (int i = 0; i < n_bases; ++i) {
       g("    if ((char *)dynamic_cast<s"); g(bases[i]); gl("*>(this))");
-      g("      mix(t - (char *)dynamic_cast<s"); g(bases[i]); gl("*>(this));");
-      gl("    else mix(666);");
+      g("      mix(\"base dyn cast\", t - (char *)dynamic_cast<s"); g(bases[i]); gl("*>(this));");
+      gl("    else mix(\"no dyncast\", 666);");
     }
   }
 
   /* check field layout */
   for (int i = 0; i < n_fields; ++i) {
-    g("    mix((char *)&field"); g(i); gl(" - (char *)this);");
+    g("    mix(\"field offset\", (char *)&field"); g(i); gl(" - (char *)this);");
   }
   if (n_fields == 0)
-    gl("    mix(42);");
+    gl("    mix(\"no fields\", 42);");
 
   /* check functions */
   for (int i = 0; i < n_funcs; ++i) {
     g("    fun"); g(funcs[i]); gl("(t);");
   }
   if (n_funcs == 0)
-    gl("    mix(13);");
+    gl("    mix(\"no funcs\", 13);");
 
   gl("  }");
 
@@ -204,10 +204,10 @@ main(int argc, char **argv) {
   gl("extern \"C\" int printf(const char *...);");
   gl("");
   gl("long long sum;");
-  gl("void mix(long long i) {");
+  gl("void mix(const char *desc, long long i) {");
   // If this ever becomes too slow, we can remove this after we improve the
   // mixing function
-  gl("  printf(\"%llx\\n\", i);");
+  gl("  printf(\"%s: %lld\\n\", desc, i);");
   gl("  sum += ((sum ^ i) << 3) + (sum<<1) - i;");
   gl("}");
   gl("");
