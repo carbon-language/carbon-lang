@@ -124,10 +124,9 @@ bool JumpThreading::runOnFunction(Function &F) {
   
   FindLoopHeaders(F);
   
-  bool AnotherIteration = true, EverChanged = false;
-  while (AnotherIteration) {
-    AnotherIteration = false;
-    bool Changed = false;
+  bool Changed, EverChanged = false;
+  do {
+    Changed = false;
     for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
       BasicBlock *BB = I;
       // Thread all of the branches we can over this block. 
@@ -176,9 +175,8 @@ bool JumpThreading::runOnFunction(Function &F) {
         }
       }
     }
-    AnotherIteration = Changed;
     EverChanged |= Changed;
-  }
+  } while (Changed);
   
   LoopHeaders.clear();
   return EverChanged;
