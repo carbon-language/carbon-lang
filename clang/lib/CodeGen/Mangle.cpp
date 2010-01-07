@@ -199,10 +199,13 @@ void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
     return;
   }
 
-  // <mangled-name> ::= _Z <encoding>
+  // <mangled-name> ::= _Z [L] <encoding>
   //            ::= <data name>
   //            ::= <special-name>
   Out << Prefix;
+  if (D->getLinkage() == NamedDecl::InternalLinkage) // match gcc behavior
+    Out << 'L';
+
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     mangleFunctionEncoding(FD);
   else

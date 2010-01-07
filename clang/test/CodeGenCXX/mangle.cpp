@@ -309,3 +309,8 @@ template class Alloc<char>;
 
 // CHECK: define void @_Z1fU13block_pointerFiiiE
 void f(int (^)(int, int)) { }
+
+// PR5869
+// CHECK: define internal void @_ZL2f2v
+static void f2() {}
+void f3() { f2(); }
