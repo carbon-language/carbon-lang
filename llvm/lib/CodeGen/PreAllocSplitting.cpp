@@ -481,31 +481,20 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     
     // Search for the use in this block that precedes the instruction we care 
     // about, going to the fallback case if we don't find it.    
-    if (UseI == MBB->begin())
-      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
-                                            Uses, NewVNs, LiveOut, Phis,
-                                            IsTopLevel, IsIntraBlock);
-    
     MachineBasicBlock::iterator Walker = UseI;
-    --Walker;
     bool found = false;
     while (Walker != MBB->begin()) {
+      --Walker;
       if (BlockUses.count(Walker)) {
         found = true;
         break;
       }
-      --Walker;
     }
-        
-    // Must check begin() too.
-    if (!found) {
-      if (BlockUses.count(Walker))
-        found = true;
-      else
-        return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
-                                              Uses, NewVNs, LiveOut, Phis,
-                                              IsTopLevel, IsIntraBlock);
-    }
+
+    if (!found)
+      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
+                                            Uses, NewVNs, LiveOut, Phis,
+                                            IsTopLevel, IsIntraBlock);
 
     SlotIndex UseIndex = LIs->getInstructionIndex(Walker);
     UseIndex = UseIndex.getUseIndex();
@@ -533,17 +522,11 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     // This case is basically a merging of the two preceding case, with the
     // special note that checking for defs must take precedence over checking
     // for uses, because of two-address instructions.
-    
-    if (UseI == MBB->begin())
-      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs, Uses,
-                                            NewVNs, LiveOut, Phis,
-                                            IsTopLevel, IsIntraBlock);
-    
     MachineBasicBlock::iterator Walker = UseI;
-    --Walker;
     bool foundDef = false;
     bool foundUse = false;
     while (Walker != MBB->begin()) {
+      --Walker;
       if (BlockDefs.count(Walker)) {
         foundDef = true;
         break;
@@ -551,20 +534,12 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
         foundUse = true;
         break;
       }
-      --Walker;
     }
-        
-    // Must check begin() too.
-    if (!foundDef && !foundUse) {
-      if (BlockDefs.count(Walker))
-        foundDef = true;
-      else if (BlockUses.count(Walker))
-        foundUse = true;
-      else
-        return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
-                                              Uses, NewVNs, LiveOut, Phis,
-                                              IsTopLevel, IsIntraBlock);
-    }
+
+    if (!foundDef && !foundUse)
+      return PerformPHIConstructionFallBack(UseI, MBB, LI, Visited, Defs,
+                                            Uses, NewVNs, LiveOut, Phis,
+                                            IsTopLevel, IsIntraBlock);
 
     SlotIndex StartIndex = LIs->getInstructionIndex(Walker);
     StartIndex = foundDef ? StartIndex.getDefIndex() : StartIndex.getUseIndex();
