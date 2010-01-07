@@ -124,7 +124,7 @@ void gs(int s) {
   for (int i = 0; i < n_funcs; ++i) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
-    g("  virtual void fun"); g(fn); g("(char *t) { mix((char *)this - t, "); g(++vfn); gl("); }");
+    g("  virtual void fun"); g(fn); g("(char *t) { mix((char *)this - t); mix("); g(++vfn); gl("); }");
     old_func = fn;
   }
 
@@ -210,7 +210,6 @@ main(int argc, char **argv) {
   gl("  printf(\"%llx\\n\", i);");
   gl("  sum += ((sum ^ i) << 3) + (sum<<1) - i;");
   gl("}");
-  gl("void mix(long long i1, long long i2) { mix(i1); mix(i2); }");
   gl("");
   // PARAM: Randomly size testcases or large testcases?
   int n_structs = /* random() % */ N_STRUCTS;
