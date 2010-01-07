@@ -191,7 +191,7 @@ namespace llvm {
 
     /// find - Search for the first character \arg C in the string.
     ///
-    /// \return - The index of the first occurence of \arg C, or npos if not
+    /// \return - The index of the first occurrence of \arg C, or npos if not
     /// found.
     size_t find(char C, size_t From = 0) const {
       for (size_t i = min(From, Length), e = Length; i != e; ++i)
@@ -202,13 +202,13 @@ namespace llvm {
 
     /// find - Search for the first string \arg Str in the string.
     ///
-    /// \return - The index of the first occurence of \arg Str, or npos if not
+    /// \return - The index of the first occurrence of \arg Str, or npos if not
     /// found.
     size_t find(StringRef Str, size_t From = 0) const;
 
     /// rfind - Search for the last character \arg C in the string.
     ///
-    /// \return - The index of the last occurence of \arg C, or npos if not
+    /// \return - The index of the last occurrence of \arg C, or npos if not
     /// found.
     size_t rfind(char C, size_t From = npos) const {
       From = min(From, Length);
@@ -223,7 +223,7 @@ namespace llvm {
 
     /// rfind - Search for the last string \arg Str in the string.
     ///
-    /// \return - The index of the last occurence of \arg Str, or npos if not
+    /// \return - The index of the last occurrence of \arg Str, or npos if not
     /// found.
     size_t rfind(StringRef Str) const;
 
@@ -313,7 +313,7 @@ namespace llvm {
       return StringRef(Data + Start, End - Start);
     }
 
-    /// split - Split into two substrings around the first occurence of a
+    /// split - Split into two substrings around the first occurrence of a
     /// separator character.
     ///
     /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
@@ -330,7 +330,7 @@ namespace llvm {
       return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
     }
 
-    /// split - Split into two substrings around the first occurence of a
+    /// split - Split into two substrings around the first occurrence of a
     /// separator string.
     ///
     /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
@@ -347,7 +347,7 @@ namespace llvm {
       return std::make_pair(slice(0, Idx), slice(Idx + Separator.size(), npos));
     }
 
-    /// split - Split into substrings around the occurences of a separator
+    /// split - Split into substrings around the occurrences of a separator
     /// string.
     ///
     /// Each substring is stored in \arg A. If \arg MaxSplit is >= 0, at most
@@ -366,7 +366,7 @@ namespace llvm {
                StringRef Separator, int MaxSplit = -1,
                bool KeepEmpty = true) const;
 
-    /// rsplit - Split into two substrings around the last occurence of a
+    /// rsplit - Split into two substrings around the last occurrence of a
     /// separator character.
     ///
     /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
