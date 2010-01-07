@@ -31,9 +31,78 @@ using namespace idx;
 //===----------------------------------------------------------------------===//
 
 #ifdef __APPLE__
+#ifndef NDEBUG
+#define USE_CRASHTRACER
 #include "clang/Analysis/Support/SaveAndRestore.h"
 // Integrate with crash reporter.
 extern "C" const char *__crashreporter_info__;
+#define NUM_CRASH_STRINGS 16
+static unsigned crashtracer_counter = 0;
+static const char *crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
+static const char *agg_crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
+
+static unsigned SetCrashTracerInfo(const char *str,
+                                   llvm::SmallString<1024> &AggStr) {
+  
+  unsigned slot = crashtracer_counter;
+  while (crashtracer_strings[slot]) {
+    if (++slot == NUM_CRASH_STRINGS)
+      slot = 0;
+  }
+  crashtracer_strings[slot] = str;
+  crashtracer_counter = slot;
+
+  // We need to create an aggregate string because multiple threads
+  // may be in this method at one time.  The crash reporter string
+  // will attempt to overapproximate the set of in-flight invocations
+  // of this function.  Race conditions can still cause this goal
+  // to not be achieved.
+  {
+    llvm::raw_svector_ostream Out(AggStr);      
+    for (unsigned i = 0; i < NUM_CRASH_STRINGS; ++i)
+      if (crashtracer_strings[i]) Out << crashtracer_strings[i] << '\n';
+  }
+  __crashreporter_info__ = agg_crashtracer_strings[slot] =  AggStr.c_str();
+  return slot;
+}
+
+static void ResetCrashTracerInfo(unsigned slot) {
+  agg_crashtracer_strings[slot] = crashtracer_strings[slot] = 0;
+  for (unsigned i = 0 ; i < NUM_CRASH_STRINGS; ++i) {
+    if (agg_crashtracer_strings[i]) {
+      __crashreporter_info__ = agg_crashtracer_strings[i];
+      return;
+    }
+  }
+  __crashreporter_info__ = 0;
+}
+
+namespace {
+class ArgsCrashTracerInfo {
+  llvm::SmallString<1024> CrashString;
+  llvm::SmallString<1024> AggregateString;
+  unsigned crashtracerSlot;
+public:
+  ArgsCrashTracerInfo(llvm::SmallVectorImpl<const char*> &Args)
+    : crashtracerSlot(0)
+  {
+    {
+      llvm::raw_svector_ostream Out(CrashString);
+      Out << "ClangCIndex [createTranslationUnitFromSourceFile]: clang";
+      for (llvm::SmallVectorImpl<const char*>::iterator I=Args.begin(),
+           E=Args.end(); I!=E; ++I)
+        Out << ' ' << *I;
+    }
+    crashtracerSlot = SetCrashTracerInfo(CrashString.c_str(),
+                                         AggregateString);
+  }
+  
+  ~ArgsCrashTracerInfo() {
+    ResetCrashTracerInfo(crashtracerSlot);
+  }
+};
+}
+#endif
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -408,43 +477,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
     unsigned NumErrors = CXXIdx->getDiags().getNumErrors();
     
-#ifdef __APPLE__
-    // Integrate with crash reporter.
-    static unsigned counter = 0;
-    static const char* reportStrings[16] = { 0 };
-    
-    llvm::SmallString<1028> CrashString;
-    {
-      llvm::raw_svector_ostream Out(CrashString);
-      Out << "ClangCIndex [createTranslationUnitFromSourceFile]: clang";
-      for (llvm::SmallVectorImpl<const char*>::iterator I=Args.begin(),
-           E=Args.end(); I!=E; ++I)
-        Out << ' ' << *I;
-    }
-
-    unsigned myCounter = counter;
-    counter = myCounter == 15 ? 0 : myCounter + 1;
-    
-    while (reportStrings[myCounter]) {
-      myCounter = counter;
-      counter = myCounter == 15 ? 0 : myCounter + 1;
-    }
-    
-    SaveAndRestore<const char*> OldCrashString(reportStrings[myCounter],
-                                               CrashString.c_str());
-
-    // We need to create an aggregate string because multiple threads
-    // may be in this method at one time.  The crash reporter string
-    // will attempt to overapproximate the set of in-flight invocations
-    // of this function.  Race conditions can still cause this goal
-    // to not be achieved.
-    llvm::SmallString<1028> AggregateString;
-    {
-      llvm::raw_svector_ostream Out(AggregateString);      
-      for (unsigned i = 0; i < 16; ++i)
-        if (reportStrings[i]) Out << reportStrings[i] << '\n';
-    }      
-    __crashreporter_info__ = AggregateString.c_str();
+#ifdef USE_CRASHTRACER
+    ArgsCrashTracerInfo ACTI(Args);
 #endif
     
     llvm::OwningPtr<ASTUnit> Unit(
@@ -453,7 +487,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
                                    /* UseBumpAllocator = */ true));
-
+    
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
     if (NumErrors != CXXIdx->getDiags().getNumErrors())
