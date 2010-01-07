@@ -160,7 +160,7 @@ inline unsigned CountLeadingZeros_32(uint32_t Value) {
 #else
   if (!Value) return 32;
   Count = 0;
-  // bisecton method for count leading zeros
+  // bisection method for count leading zeros
   for (unsigned Shift = 32 >> 1; Shift; Shift >>= 1) {
     uint32_t Tmp = Value >> Shift;
     if (Tmp) {
@@ -197,7 +197,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
   if (sizeof(long) == sizeof(int64_t)) {
     if (!Value) return 64;
     Count = 0;
-    // bisecton method for count leading zeros
+    // bisection method for count leading zeros
     for (unsigned Shift = 64 >> 1; Shift; Shift >>= 1) {
       uint64_t Tmp = Value >> Shift;
       if (Tmp) {
