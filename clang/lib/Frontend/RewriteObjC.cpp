@@ -3624,7 +3624,7 @@ void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
   int CatDefCount = CategoryImplementation.size();
 
   // This is needed for determining instance variable offsets.
-  Result += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((int) &((TYPE *)0)->MEMBER)\n";
+  Result += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long) &((TYPE *)0)->MEMBER)\n";
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjCClassMetaData(ClassImplementation[i], Result);
