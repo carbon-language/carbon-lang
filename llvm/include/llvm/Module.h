@@ -26,6 +26,7 @@ namespace llvm {
 
 class FunctionType;
 class LLVMContext;
+class MDSymbolTable;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
@@ -131,19 +132,20 @@ public:
 /// @name Member Variables
 /// @{
 private:
-  LLVMContext &Context;          ///< The LLVMContext from which types and
-                                 ///< constants are allocated.
-  GlobalListType GlobalList;     ///< The Global Variables in the module
-  FunctionListType FunctionList; ///< The Functions in the module
-  AliasListType AliasList;       ///< The Aliases in the module
-  LibraryListType LibraryList;   ///< The Libraries needed by the module
-  NamedMDListType NamedMDList;   ///< The named metadata in the module
-  std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
-  ValueSymbolTable *ValSymTab;   ///< Symbol table for values
-  TypeSymbolTable *TypeSymTab;   ///< Symbol table for types
-  std::string ModuleID;          ///< Human readable identifier for the module
-  std::string TargetTriple;      ///< Platform target triple Module compiled on
-  std::string DataLayout;        ///< Target data description
+  LLVMContext &Context;           ///< The LLVMContext from which types and
+                                  ///< constants are allocated.
+  GlobalListType GlobalList;      ///< The Global Variables in the module
+  FunctionListType FunctionList;  ///< The Functions in the module
+  AliasListType AliasList;        ///< The Aliases in the module
+  LibraryListType LibraryList;    ///< The Libraries needed by the module
+  NamedMDListType NamedMDList;    ///< The named metadata in the module
+  std::string GlobalScopeAsm;     ///< Inline Asm at global scope.
+  ValueSymbolTable *ValSymTab;    ///< Symbol table for values
+  TypeSymbolTable *TypeSymTab;    ///< Symbol table for types
+  std::string ModuleID;           ///< Human readable identifier for the module
+  std::string TargetTriple;       ///< Platform target triple Module compiled on
+  std::string DataLayout;         ///< Target data description
+  MDSymbolTable *NamedMDSymTab;   ///< NamedMDNode names.
 
   friend class Constant;
 
@@ -322,6 +324,10 @@ public:
   /// NamedMDNode with the specified name is not found.
   NamedMDNode *getOrInsertNamedMetadata(StringRef Name);
 
+  /// addMDNodeName - Insert an entry in the NamedMDNode symbol table mapping
+  /// Name to NMD. 
+  void addMDNodeName(StringRef Name, NamedMDNode *NMD);
+
 /// @}
 /// @name Type Accessors
 /// @{
@@ -379,6 +385,10 @@ public:
   const TypeSymbolTable  &getTypeSymbolTable() const  { return *TypeSymTab; }
   /// Get the Module's symbol table of types
   TypeSymbolTable        &getTypeSymbolTable()        { return *TypeSymTab; }
+  /// Get the symbol table of named metadata
+  const MDSymbolTable  &getMDSymbolTable() const      { return *NamedMDSymTab; }
+  /// Get the Module's symbol table of named metadata
+  MDSymbolTable        &getMDSymbolTable()            { return *NamedMDSymTab; }
 
 /// @}
 /// @name Global Variable Iteration

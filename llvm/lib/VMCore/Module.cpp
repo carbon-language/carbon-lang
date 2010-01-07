@@ -59,6 +59,7 @@ Module::Module(StringRef MID, LLVMContext& C)
   : Context(C), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
+  NamedMDSymTab = new MDSymbolTable();
 }
 
 Module::~Module() {
@@ -307,18 +308,23 @@ GlobalAlias *Module::getNamedAlias(StringRef Name) const {
 /// specified name. This method returns null if a NamedMDNode with the 
 //// specified name is not found.
 NamedMDNode *Module::getNamedMetadata(StringRef Name) const {
-  return dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
+  return NamedMDSymTab->lookup(Name);
 }
 
 /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
 /// with the specified name. This method returns a new NamedMDNode if a 
 /// NamedMDNode with the specified name is not found.
 NamedMDNode *Module::getOrInsertNamedMetadata(StringRef Name) {
-  NamedMDNode *NMD =
-    dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
+  NamedMDNode *NMD = NamedMDSymTab->lookup(Name);
   if (!NMD)
     NMD = NamedMDNode::Create(getContext(), Name, NULL, 0, this);
   return NMD;
+}
+
+/// addMDNodeName - Insert an entry in the NamedMDNode symbol table mapping
+/// Name to NMD. 
+void Module::addMDNodeName(StringRef Name, NamedMDNode *NMD) {
+  NamedMDSymTab->insert(Name, NMD);
 }
 
 //===----------------------------------------------------------------------===//

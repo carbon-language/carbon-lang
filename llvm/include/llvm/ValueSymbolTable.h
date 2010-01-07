@@ -26,7 +26,7 @@ namespace llvm {
   class NamedMDNode;
   class Module;
   class StringRef;
-  
+
 /// This class provides a symbol table of name/value pairs. It is essentially
 /// a std::map<std::string,Value*> but has a controlled interface provided by
 /// LLVM as well as ensuring uniqueness of names.
@@ -126,6 +126,84 @@ private:
   ValueMap vmap;                    ///< The map that holds the symbol table.
   mutable uint32_t LastUnique; ///< Counter for tracking unique names
 
+/// @}
+};
+
+/// This class provides a symbol table of name/NamedMDNode pairs. It is 
+/// essentially a StringMap wrapper.
+
+class MDSymbolTable {
+/// @name Types
+/// @{
+public:
+  /// @brief A mapping of names to metadata
+  typedef StringMap<NamedMDNode*> MDMap;
+
+  /// @brief An iterator over a ValueMap.
+  typedef MDMap::iterator iterator;
+
+  /// @brief A const_iterator over a ValueMap.
+  typedef MDMap::const_iterator const_iterator;
+
+/// @}
+/// @name Constructors
+/// @{
+public:
+
+  MDSymbolTable() : mmap(0) {}
+  ~MDSymbolTable();
+
+/// @}
+/// @name Accessors
+/// @{
+public:
+
+  /// This method finds the value with the given \p Name in the
+  /// the symbol table. 
+  /// @returns the NamedMDNode associated with the \p Name
+  /// @brief Lookup a named Value.
+  NamedMDNode *lookup(StringRef Name) const { return mmap.lookup(Name); }
+
+  /// @returns true iff the symbol table is empty
+  /// @brief Determine if the symbol table is empty
+  inline bool empty() const { return mmap.empty(); }
+
+  /// @brief The number of name/type pairs is returned.
+  inline unsigned size() const { return unsigned(mmap.size()); }
+
+/// @}
+/// @name Iteration
+/// @{
+public:
+  /// @brief Get an iterator that from the beginning of the symbol table.
+  inline iterator begin() { return mmap.begin(); }
+
+  /// @brief Get a const_iterator that from the beginning of the symbol table.
+  inline const_iterator begin() const { return mmap.begin(); }
+
+  /// @brief Get an iterator to the end of the symbol table.
+  inline iterator end() { return mmap.end(); }
+
+  /// @brief Get a const_iterator to the end of the symbol table.
+  inline const_iterator end() const { return mmap.end(); }
+  
+/// @}
+/// @name Mutators
+/// @{
+public:
+  /// insert - The method inserts a new entry into the stringmap.
+  void insert(StringRef Name,  NamedMDNode *Node) {
+    (void) mmap.GetOrCreateValue(Name, Node);
+  }
+  
+  /// This method removes a NamedMDNode from the symbol table.  
+  void remove(StringRef Name) { mmap.erase(Name); }
+
+/// @}
+/// @name Internal Data
+/// @{
+private:
+  MDMap mmap;                  ///< The map that holds the symbol table.
 /// @}
 };
 

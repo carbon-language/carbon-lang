@@ -528,10 +528,9 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       }
 
       // Write name.
-      std::string Str = NMD->getNameStr();
-      const char *StrBegin = Str.c_str();
-      for (unsigned i = 0, e = Str.length(); i != e; ++i)
-        Record.push_back(StrBegin[i]);
+      StringRef Str = NMD->getName();
+      for (unsigned i = 0, e = Str.size(); i != e; ++i)
+        Record.push_back(Str[i]);
       Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
       Record.clear();
 

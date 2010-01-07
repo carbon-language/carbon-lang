@@ -74,9 +74,10 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Enumerate types used by the type symbol table.
   EnumerateTypeSymbolTable(M->getTypeSymbolTable());
 
-  // Insert constants that are named at module level into the slot pool so that
-  // the module symbol table can refer to them...
+  // Insert constants and metadata  that are named at module level into the slot 
+  // pool so that the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());
+  EnumerateMDSymbolTable(M->getMDSymbolTable());
 
   SmallVector<std::pair<unsigned, MDNode*>, 8> MDs;
 
@@ -194,6 +195,14 @@ void ValueEnumerator::EnumerateValueSymbolTable(const ValueSymbolTable &VST) {
   for (ValueSymbolTable::const_iterator VI = VST.begin(), VE = VST.end();
        VI != VE; ++VI)
     EnumerateValue(VI->getValue());
+}
+
+/// EnumerateMDSymbolTable - Insert all of the values in the specified metadata
+/// table.
+void ValueEnumerator::EnumerateMDSymbolTable(const MDSymbolTable &MST) {
+  for (MDSymbolTable::const_iterator MI = MST.begin(), ME = MST.end();
+       MI != ME; ++MI)
+    EnumerateValue(MI->getValue());
 }
 
 void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {

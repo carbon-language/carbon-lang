@@ -175,15 +175,16 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
 
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
+  std::string Name;
   Module *Parent;
   void *Operands; // SmallVector<WeakVH<MDNode>, 4>
 
   void setParent(Module *M) { Parent = M; }
 protected:
-  explicit NamedMDNode(LLVMContext &C, const Twine &N, MDNode*const *Vals, 
+  explicit NamedMDNode(LLVMContext &C, StringRef N, MDNode*const *Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
-  static NamedMDNode *Create(LLVMContext &C, const Twine &N, 
+  static NamedMDNode *Create(LLVMContext &C, StringRef N,
                              MDNode *const *MDs, 
                              unsigned NumMDs, Module *M = 0) {
     return new NamedMDNode(C, N, MDs, NumMDs, M);
@@ -213,7 +214,13 @@ public:
 
   /// addOperand - Add metadata operand.
   void addOperand(MDNode *M);
-  
+
+  /// setName - Set the name of this named metadata.
+  void setName(StringRef Name);
+
+  /// getName - Return a constant reference to this named metadata's name.
+  StringRef getName() const;
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }
   static bool classof(const Value *V) {

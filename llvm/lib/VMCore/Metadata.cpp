@@ -214,20 +214,21 @@ static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
   return *(SmallVector<WeakVH, 4>*)Operands;
 }
 
-NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
+NamedMDNode::NamedMDNode(LLVMContext &C, StringRef N,
                          MDNode *const *MDs, 
                          unsigned NumMDs, Module *ParentModule)
   : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
-    
   Operands = new SmallVector<WeakVH, 4>();
     
   SmallVector<WeakVH, 4> &Node = getNMDOps(Operands);
   for (unsigned i = 0; i != NumMDs; ++i)
     Node.push_back(WeakVH(MDs[i]));
 
-  if (ParentModule)
+  if (ParentModule) {
     ParentModule->getNamedMDList().push_back(this);
+    ParentModule->addMDNodeName(N, this);
+  }
 }
 
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
@@ -265,6 +266,7 @@ void NamedMDNode::addOperand(MDNode *M) {
 /// eraseFromParent - Drop all references and remove the node from parent
 /// module.
 void NamedMDNode::eraseFromParent() {
+  getParent()->getMDSymbolTable().remove(getName());
   getParent()->getNamedMDList().erase(this);
 }
 
@@ -273,6 +275,16 @@ void NamedMDNode::dropAllReferences() {
   getNMDOps(Operands).clear();
 }
 
+/// setName - Set the name of this named metadata.
+void NamedMDNode::setName(StringRef N) {
+  if (!N.empty())
+    Name = N.str();
+}
+
+/// getName - Return a constant reference to this named metadata's name.
+StringRef NamedMDNode::getName() const {
+  return StringRef(Name);
+}
 
 //===----------------------------------------------------------------------===//
 // LLVMContext MDKind naming implementation.

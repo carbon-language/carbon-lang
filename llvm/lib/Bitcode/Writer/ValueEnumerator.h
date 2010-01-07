@@ -30,6 +30,7 @@ class MetadataBase;
 class AttrListPtr;
 class TypeSymbolTable;
 class ValueSymbolTable;
+class MDSymbolTable;
 
 class ValueEnumerator {
 public:
@@ -133,6 +134,7 @@ private:
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
+  void EnumerateMDSymbolTable(const MDSymbolTable &ST);
 };
 
 } // End llvm namespace
