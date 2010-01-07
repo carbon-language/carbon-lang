@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include <cstring>
+
 using namespace llvm;
 
 // MSVC emits references to this into the translation units which reference it.
@@ -51,13 +52,21 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
   size_type m = size();
   size_type n = Other.size();
 
-  SmallVector<unsigned, 32> previous(n+1, 0);
-  for (SmallVector<unsigned, 32>::size_type i = 0; i <= n; ++i) 
+  unsigned SmallPrevious[32];
+  unsigned SmallCurrent[32];
+  
+  unsigned *previous = SmallPrevious;
+  unsigned *current = SmallCurrent;
+  if (n + 1 > 32) {
+    previous = new unsigned [n+1];
+    current = new unsigned [n+1];
+  }
+  
+  for (unsigned i = 0; i <= n; ++i) 
     previous[i] = i;
 
-  SmallVector<unsigned, 32> current(n+1, 0);
   for (size_type y = 1; y <= m; ++y) {
-    current.assign(n+1, 0);
+    std::memset(current, 0, (n + 1) * sizeof(unsigned));
     current[0] = y;
     for (size_type x = 1; x <= n; ++x) {
       if (AllowReplacements) {
@@ -69,10 +78,19 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
         else current[x] = min(current[x-1], previous[x]) + 1;
       }
     }
-    current.swap(previous);
+    
+    unsigned *tmp = current;
+    current = previous;
+    previous = tmp;
   }
 
-  return previous[n];
+  unsigned Result = previous[n];
+  if (n + 1 > 32) {
+    delete [] previous;
+    delete [] current;
+  }
+  
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//
