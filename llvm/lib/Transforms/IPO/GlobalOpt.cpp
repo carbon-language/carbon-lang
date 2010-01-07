@@ -2091,8 +2091,8 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     return Val;
   }
   
+  std::vector<Constant*> Elts;
   if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
-    std::vector<Constant*> Elts;
 
     // Break up the constant into its elements.
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
@@ -2120,28 +2120,35 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
                                STy->isPacked());
   } else {
     ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
-    const ArrayType *ATy = cast<ArrayType>(Init->getType());
+    const SequentialType *InitTy = cast<SequentialType>(Init->getType());
 
+    uint64_t NumElts;
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(InitTy))
+      NumElts = ATy->getNumElements();
+    else
+      NumElts = cast<VectorType>(InitTy)->getNumElements();
+    
+    
     // Break up the array into elements.
-    std::vector<Constant*> Elts;
     if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
       for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
         Elts.push_back(cast<Constant>(*i));
     } else if (isa<ConstantAggregateZero>(Init)) {
-      Constant *Elt = Constant::getNullValue(ATy->getElementType());
-      Elts.assign(ATy->getNumElements(), Elt);
-    } else if (isa<UndefValue>(Init)) {
-      Constant *Elt = UndefValue::get(ATy->getElementType());
-      Elts.assign(ATy->getNumElements(), Elt);
+      Elts.assign(NumElts, Constant::getNullValue(InitTy->getElementType()));
     } else {
-      llvm_unreachable("This code is out of sync with "
+      assert(isa<UndefValue>(Init) && "This code is out of sync with "
              " ConstantFoldLoadThroughGEPConstantExpr");
+      Elts.assign(NumElts, UndefValue::get(InitTy->getElementType()));
     }
     
-    assert(CI->getZExtValue() < ATy->getNumElements());
+    assert(CI->getZExtValue() < NumElts);
     Elts[CI->getZExtValue()] =
       EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
-    return ConstantArray::get(ATy, Elts);
+    
+    if (isa<ArrayType>(Init->getType()))
+      return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
+    else
+      return ConstantVector::get(&Elts[0], Elts.size());
   }    
 }
 
@@ -2153,13 +2160,10 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
     GV->setInitializer(Val);
     return;
   }
-  
+
   ConstantExpr *CE = cast<ConstantExpr>(Addr);
   GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-  
-  Constant *Init = GV->getInitializer();
-  Init = EvaluateStoreInto(Init, Val, CE, 2);
-  GV->setInitializer(Init);
+  GV->setInitializer(EvaluateStoreInto(GV->getInitializer(), Val, CE, 2));
 }
 
 /// ComputeLoadResult - Return the value that would be computed by a load from
