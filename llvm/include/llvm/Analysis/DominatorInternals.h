@@ -347,15 +347,8 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   DT.IDoms.clear();
   DT.Info.clear();
   std::vector<typename GraphT::NodeType*>().swap(DT.Vertex);
-  
-  // FIXME: This does not work on PostDomTrees.  It seems likely that this is
-  // due to an error in the algorithm for post-dominators.  This really should
-  // be investigated and fixed at some point.
-  // DT.updateDFSNumbers();
 
-  // Start out with the DFS numbers being invalid.  Let them be computed if
-  // demanded.
-  DT.DFSInfoValid = false;
+  DT.updateDFSNumbers();
 }
 
 }

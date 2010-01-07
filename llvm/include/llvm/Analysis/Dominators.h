@@ -652,21 +652,17 @@ public:
   /// recalculate - compute a dominator tree for the given function
   template<class FT>
   void recalculate(FT& F) {
-    if (!this->IsPostDominators) {
-      reset();
+    reset();
+    this->Vertex.push_back(0);
 
-      // Initialize roots
+    if (!this->IsPostDominators) {
+      // Initialize root
       this->Roots.push_back(&F.front());
       this->IDoms[&F.front()] = 0;
       this->DomTreeNodes[&F.front()] = 0;
-      this->Vertex.push_back(0);
 
       Calculate<FT, NodeT*>(*this, F);
-
-      updateDFSNumbers();
     } else {
-      reset();     // Reset from the last time we were run...
-
       // Initialize the roots list
       for (typename FT::iterator I = F.begin(), E = F.end(); I != E; ++I) {
         if (std::distance(GraphTraits<FT*>::child_begin(I),
@@ -677,8 +673,6 @@ public:
         this->IDoms[I] = 0;
         this->DomTreeNodes[I] = 0;
       }
-
-      this->Vertex.push_back(0);
 
       Calculate<FT, Inverse<NodeT*> >(*this, F);
     }
