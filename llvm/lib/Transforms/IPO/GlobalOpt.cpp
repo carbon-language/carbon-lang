@@ -2133,6 +2133,9 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
       for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
         Elts.push_back(cast<Constant>(*i));
+    } else if (ConstantVector *CV = dyn_cast<ConstantVector>(Init)) {
+      for (User::op_iterator i = CV->op_begin(), e = CV->op_end(); i != e; ++i)
+        Elts.push_back(cast<Constant>(*i));
     } else if (isa<ConstantAggregateZero>(Init)) {
       Elts.assign(NumElts, Constant::getNullValue(InitTy->getElementType()));
     } else {
