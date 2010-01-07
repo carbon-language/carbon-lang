@@ -1183,10 +1183,11 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
 Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation OrigStart) {
   ObjCIvarDecl *D = IV->getDecl();
+  const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
-    if (const PointerType *pType = IV->getBase()->getType()->getAs<PointerType>()) {
+    if (IV->isArrow()) {
       ObjCInterfaceType *iFaceDecl =
-        dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
+        dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
       ObjCInterfaceDecl *clsDeclared = 0;
       iFaceDecl->getDecl()->lookupInstanceVariable(D->getIdentifier(),
