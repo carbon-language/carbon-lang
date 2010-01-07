@@ -97,13 +97,13 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   return EndOff-StartOff;
 }
 
-/// getRewritenText - Return the rewritten form of the text in the specified
+/// getRewrittenText - Return the rewritten form of the text in the specified
 /// range.  If the start or end of the range was unrewritable or if they are
 /// in different buffers, this returns an empty string.
 ///
 /// Note that this method is not particularly efficient.
 ///
-std::string Rewriter::getRewritenText(SourceRange Range) const {
+std::string Rewriter::getRewrittenText(SourceRange Range) const {
   if (!isRewritable(Range.getBegin()) ||
       !isRewritable(Range.getEnd()))
     return "";

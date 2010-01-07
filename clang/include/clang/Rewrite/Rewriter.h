@@ -146,13 +146,13 @@ public:
   /// are in the same file.  If not, this returns -1.
   int getRangeSize(SourceRange Range) const;
 
-  /// getRewritenText - Return the rewritten form of the text in the specified
+  /// getRewrittenText - Return the rewritten form of the text in the specified
   /// range.  If the start or end of the range was unrewritable or if they are
   /// in different buffers, this returns an empty string.
   ///
   /// Note that this method is not particularly efficient.
   ///
-  std::string getRewritenText(SourceRange Range) const;
+  std::string getRewrittenText(SourceRange Range) const;
 
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input

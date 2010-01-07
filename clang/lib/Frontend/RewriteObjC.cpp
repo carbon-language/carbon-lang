@@ -4779,7 +4779,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
 
     // Now we snarf the rewritten text and stash it away for later use.
-    std::string Str = Rewrite.getRewritenText(BE->getSourceRange());
+    std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
     RewrittenBlockExprs[BE] = Str;
 
     Stmt *blockTranscribed = SynthBlockInitExpr(BE);
