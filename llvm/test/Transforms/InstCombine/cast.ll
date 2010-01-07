@@ -392,3 +392,14 @@ define zeroext i64 @test43(i8 zeroext %on_off) nounwind readonly {
 ; CHECK-NEXT: %B = add i64 %A, -1
 ; CHECK-NEXT: ret i64 %B
 }
+
+define i64 @test44(i8 %T) {
+ %A = zext i8 %T to i16
+ %B = or i16 %A, 1234
+ %C = zext i16 %B to i64
+ ret i64 %C
+; CHECK: @test44
+; CHECK-NEXT: %A = zext i8 %T to i64
+; CHECK-NEXT: %B = or i64 %A, 1234
+; CHECK-NEXT: ret i64 %B
+}
