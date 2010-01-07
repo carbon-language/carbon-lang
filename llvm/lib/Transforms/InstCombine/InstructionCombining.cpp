@@ -1027,8 +1027,6 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
           continue;
         }
       
-      
-      
       if (TD) {
         // See if we can constant fold its operands.
         for (User::op_iterator i = Inst->op_begin(), e = Inst->op_end();
@@ -1047,7 +1045,6 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
           }
         }
       }
-      
 
       InstrsForInstCombineWorklist.push_back(Inst);
     }

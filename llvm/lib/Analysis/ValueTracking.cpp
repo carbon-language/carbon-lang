@@ -726,8 +726,7 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
       
     Tmp2 = ComputeNumSignBits(U->getOperand(1), TD, Depth+1);
     if (Tmp2 == 1) return 1;
-      return std::min(Tmp, Tmp2)-1;
-    break;
+    return std::min(Tmp, Tmp2)-1;
     
   case Instruction::Sub:
     Tmp2 = ComputeNumSignBits(U->getOperand(1), TD, Depth+1);
@@ -757,8 +756,24 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
     // is, at worst, one more bit than the inputs.
     Tmp = ComputeNumSignBits(U->getOperand(0), TD, Depth+1);
     if (Tmp == 1) return 1;  // Early out.
-      return std::min(Tmp, Tmp2)-1;
-    break;
+    return std::min(Tmp, Tmp2)-1;
+      
+  case Instruction::PHI: {
+    PHINode *PN = cast<PHINode>(U);
+    // Don't analyze large in-degree PHIs.
+    if (PN->getNumIncomingValues() > 4) break;
+    
+    // Take the minimum of all incoming values.  This can't infinitely loop
+    // because of our depth threshold.
+    Tmp = ComputeNumSignBits(PN->getIncomingValue(0), TD, Depth+1);
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
+      if (Tmp == 1) return Tmp;
+      Tmp = std::min(Tmp,
+                     ComputeNumSignBits(PN->getIncomingValue(1), TD, Depth+1));
+    }
+    return Tmp;
+  }
+
   case Instruction::Trunc:
     // FIXME: it's tricky to do anything useful for this, but it is an important
     // case for targets like X86.

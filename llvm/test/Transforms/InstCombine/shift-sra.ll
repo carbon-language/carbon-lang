@@ -19,3 +19,21 @@ define i32 @test2(i8 %tmp) {
 ; CHECK: @test2
 ; CHECK: lshr i32 %tmp4, 3
 }
+
+define i64 @test3(i1 %X, i64 %Y, i1 %Cond) {
+  br i1 %Cond, label %T, label %F
+T:
+  %X2 = sext i1 %X to i64
+  br label %C
+F:
+  %Y2 = ashr i64 %Y, 63
+  br label %C
+C:
+  %P = phi i64 [%X2, %T], [%Y2, %F] 
+  %S = ashr i64 %P, 12
+  ret i64 %S
+  
+; CHECK: @test3
+; CHECK: %P = phi i64
+; CHECK-NEXT: ret i64 %P
+}
