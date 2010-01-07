@@ -266,7 +266,6 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
 static void InitializePredefinedMacros(const TargetInfo &TI,
                                        const LangOptions &LangOpts,
                                        std::vector<char> &Buf) {
-  char MacroBuf[60];
   // Compiler version introspection macros.
   DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
   DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
@@ -415,6 +414,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
 
   // Define a __POINTER_WIDTH__ macro for stdint.h.
+  char MacroBuf[60];
   sprintf(MacroBuf, "__POINTER_WIDTH__=%d", (int)TI.getPointerWidth(0));
   DefineBuiltinMacro(Buf, MacroBuf);
 
