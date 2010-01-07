@@ -38,19 +38,20 @@ using namespace idx;
 extern "C" const char *__crashreporter_info__;
 #define NUM_CRASH_STRINGS 16
 static unsigned crashtracer_counter = 0;
+static unsigned crashtracer_counter_id[NUM_CRASH_STRINGS] = { 0 };
 static const char *crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
 static const char *agg_crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
 
 static unsigned SetCrashTracerInfo(const char *str,
                                    llvm::SmallString<1024> &AggStr) {
   
-  unsigned slot = crashtracer_counter;
+  unsigned slot = 0;
   while (crashtracer_strings[slot]) {
     if (++slot == NUM_CRASH_STRINGS)
       slot = 0;
   }
   crashtracer_strings[slot] = str;
-  crashtracer_counter = slot;
+  crashtracer_counter_id[slot] = ++crashtracer_counter;
 
   // We need to create an aggregate string because multiple threads
   // may be in this method at one time.  The crash reporter string
@@ -67,14 +68,19 @@ static unsigned SetCrashTracerInfo(const char *str,
 }
 
 static void ResetCrashTracerInfo(unsigned slot) {
-  agg_crashtracer_strings[slot] = crashtracer_strings[slot] = 0;
-  for (unsigned i = 0 ; i < NUM_CRASH_STRINGS; ++i) {
-    if (agg_crashtracer_strings[i]) {
-      __crashreporter_info__ = agg_crashtracer_strings[i];
-      return;
+  unsigned max_slot = 0;
+  unsigned max_value = 0;
+  
+  crashtracer_strings[slot] = agg_crashtracer_strings[slot] = 0;
+
+  for (unsigned i = 0 ; i < NUM_CRASH_STRINGS; ++i)
+    if (agg_crashtracer_strings[i] &&
+        crashtracer_counter_id[i] > max_value) {
+      max_slot = i;
+      max_value = crashtracer_counter_id[i];
     }
-  }
-  __crashreporter_info__ = 0;
+
+  __crashreporter_info__ = agg_crashtracer_strings[max_slot];
 }
 
 namespace {
