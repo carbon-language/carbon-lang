@@ -1,11 +1,12 @@
-; RUN: llc < %s -march=x86
+; RUN: llc < %s -march=x86 | FileCheck %s
 	%struct._obstack_chunk = type { i8*, %struct._obstack_chunk*, [4 x i8] }
 	%struct.obstack = type { i32, %struct._obstack_chunk*, i8*, i8*, i8*, i32, i32, %struct._obstack_chunk* (...)*, void (...)*, i8*, i8 }
 @stmt_obstack = external global %struct.obstack		; <%struct.obstack*> [#uses=1]
 
-define void @expand_start_bindings() {
+; This should just not crash.
+define void @test1() nounwind {
 entry:
-	br i1 false, label %cond_true, label %cond_next
+	br i1 true, label %cond_true, label %cond_next
 
 cond_true:		; preds = %entry
 	%new_size.0.i = select i1 false, i32 0, i32 0		; <i32> [#uses=1]
@@ -25,3 +26,22 @@ cond_false30.i:		; preds = %cond_true
 cond_next:		; preds = %entry
 	ret void
 }
+
+
+
+define i32 @test2(i16* %P, i16* %Q) nounwind {
+  %A = load i16* %P, align 4                      ; <i16> [#uses=11]
+  %C = zext i16 %A to i32                         ; <i32> [#uses=1]
+  %D = and i32 %C, 255                            ; <i32> [#uses=1]
+  br label %L
+L:
+
+  store i16 %A, i16* %Q
+  ret i32 %D
+  
+; CHECK: test2:
+; CHECK: 	movl	4(%esp), %eax
+; CHECK-NEXT:	movzwl	(%eax), %ecx
+
+}
+
