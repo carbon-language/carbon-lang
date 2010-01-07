@@ -390,6 +390,13 @@ public:
     if (A == 0 || B == 0)
       return false;
 
+    // Compare the result of the tree walk and the dfs numbers, if expensive
+    // checks are enabled.
+#ifdef XDEBUG
+    assert(!DFSInfoValid
+           || (dominatedBySlowTreeWalk(A, B) == B->DominatedBy(A)));
+#endif
+
     if (DFSInfoValid)
       return B->DominatedBy(A);
 
