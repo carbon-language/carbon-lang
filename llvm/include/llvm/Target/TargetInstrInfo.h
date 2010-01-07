@@ -235,6 +235,8 @@ public:
   /// duplicate - Create a duplicate of the Orig instruction in MF. This is like
   /// MachineFunction::CloneMachineInstr(), but the target may update operands
   /// that are required to be unique.
+  ///
+  /// The instruction must be duplicable as indicated by isNotDuplicable().
   virtual MachineInstr *duplicate(MachineInstr *Orig,
                                   MachineFunction &MF) const = 0;
 

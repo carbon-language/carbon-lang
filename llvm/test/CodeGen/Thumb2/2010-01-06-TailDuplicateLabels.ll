@@ -2,6 +2,8 @@
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 target triple = "thumbv7-apple-darwin10"
 
+; This function produces a duplicate LPC label unless special care is taken when duplicating a t2LDRpci_pic instruction.
+
 %struct.PlatformMutex = type { i32, [40 x i8] }
 %struct.SpinLock = type { %struct.PlatformMutex }
 %"struct.WTF::TCMalloc_ThreadCache" = type { i32, %struct._opaque_pthread_t*, i8, [68 x %"struct.WTF::TCMalloc_ThreadCache_FreeList"], i32, i32, %"struct.WTF::TCMalloc_ThreadCache"*, %"struct.WTF::TCMalloc_ThreadCache"* }

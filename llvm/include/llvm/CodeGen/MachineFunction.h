@@ -315,6 +315,8 @@ public:
   /// 'Orig' instruction, identical in all ways except the the instruction
   /// has no parent, prev, or next.
   ///
+  /// See also TargetInstrInfo::duplicate() for target-specific fixes to cloned
+  /// instructions.
   MachineInstr *CloneMachineInstr(const MachineInstr *Orig);
 
   /// DeleteMachineInstr - Delete the given MachineInstr.
