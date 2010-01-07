@@ -172,7 +172,7 @@ static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_xor_ps(__m128 a, __m128 b)
 {
   typedef int __v4si __attribute__((__vector_size__(16)));
-  return (__m128)((__v4si)a ^ ~(__v4si)b);
+  return (__m128)((__v4si)a ^ (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
