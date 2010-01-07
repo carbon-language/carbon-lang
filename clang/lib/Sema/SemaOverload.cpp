@@ -5449,16 +5449,17 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     }
 
     case OR_No_Viable_Function: {
-      // No viable function; try to create a built-in operation, which will
-      // produce an error. Then, show the non-viable candidates.
-      OwningExprResult Result =
-          CreateBuiltinArraySubscriptExpr(move(Base), LLoc, move(Idx), RLoc);
-      assert(Result.isInvalid() && 
-             "C++ subscript operator overloading is missing candidates!");
-      if (Result.isInvalid())
-        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false,
-                                "[]", LLoc);
-      return move(Result);
+      if (CandidateSet.empty())
+        Diag(LLoc, diag::err_ovl_no_oper)
+          << Args[0]->getType() << /*subscript*/ 0
+          << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      else
+        Diag(LLoc, diag::err_ovl_no_viable_subscript)
+          << Args[0]->getType()
+          << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false,
+                              "[]", LLoc);
+      return ExprError();
     }
 
     case OR_Ambiguous:
@@ -5712,9 +5713,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     break;
 
   case OR_No_Viable_Function:
-    Diag(Object->getSourceRange().getBegin(),
-         diag::err_ovl_no_viable_object_call)
-      << Object->getType() << Object->getSourceRange();
+    if (CandidateSet.empty())
+      Diag(Object->getSourceRange().getBegin(), diag::err_ovl_no_oper)
+        << Object->getType() << /*call*/ 1
+        << Object->getSourceRange();
+    else
+      Diag(Object->getSourceRange().getBegin(),
+           diag::err_ovl_no_viable_object_call)
+        << Object->getType() << Object->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     break;
 

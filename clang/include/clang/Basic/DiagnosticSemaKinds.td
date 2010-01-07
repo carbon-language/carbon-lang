@@ -928,6 +928,10 @@ def err_ovl_ambiguous_oper : Error<
 def err_ovl_no_viable_oper : Error<"no viable overloaded '%0'">;
 def err_ovl_deleted_oper : Error<
   "overload resolution selected %select{unavailable|deleted}0 operator '%1'">;
+def err_ovl_no_viable_subscript :
+    Error<"no viable overloaded operator[] for type %0">;
+def err_ovl_no_oper :
+    Error<"type %0 does not provide a %select{subscript|call}1 operator">;
 
 def err_ovl_no_viable_object_call : Error<
   "no matching function for call to object of type %0">;

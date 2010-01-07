@@ -324,3 +324,27 @@ namespace pr5512 {
     a += x;
   }
 }
+
+// PR5900
+namespace pr5900 {
+  struct NotAnArray {};
+  void test0() {
+    NotAnArray x;
+    x[0] = 0; // expected-error {{does not provide a subscript operator}}
+  }
+
+  struct NonConstArray {
+    int operator[](unsigned); // expected-note {{candidate}}
+  };
+  int test1() {
+    const NonConstArray x;
+    return x[0]; // expected-error {{no viable overloaded operator[] for type}}
+  }
+
+  // Not really part of this PR, but implemented at the same time.
+  struct NotAFunction {};
+  void test2() {
+    NotAFunction x;
+    x(); // expected-error {{does not provide a call operator}}
+  }
+}

@@ -16,7 +16,7 @@ struct ConvertibleToInt {
 template<typename T, typename U, typename Result>
 struct Subscript0 {
   void test(T t, U u) {
-    Result &result = t[u]; // expected-error{{subscripted value is not}}
+    Result &result = t[u]; // expected-error{{no viable overloaded operator[] for type}}
   }
 };
 
