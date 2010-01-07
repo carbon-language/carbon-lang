@@ -26,7 +26,7 @@ void g(int i) {
   printf("%d", i);
 }
 
-int vfn = 0;
+int uuid = 0;
 char base_present[N_STRUCTS][N_STRUCTS];
 
 bool is_ambiguous(int s, int base) {
@@ -119,12 +119,15 @@ void gs(int s) {
 
   /* Virtual functions */
   static int funcs[N_FUNCS];
-  int n_funcs = random() % N_FUNCS;
+  // PARAM: 1/2 of all structs should have no virtual functions
+  int n_funcs = random() % (N_FUNCS*2);
+  if (n_funcs > N_FUNCS)
+    n_funcs = 0;
   int old_func = -1;
   for (int i = 0; i < n_funcs; ++i) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
-    g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++vfn); gl("); }");
+    g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid); gl("); }");
     old_func = fn;
   }
 
@@ -154,7 +157,7 @@ void gs(int s) {
     for (int i = 0; i < n_bases; ++i) {
       g("    if ((char *)dynamic_cast<s"); g(bases[i]); gl("*>(this))");
       g("      mix(\"base dyn cast\", t - (char *)dynamic_cast<s"); g(bases[i]); gl("*>(this));");
-      gl("    else mix(\"no dyncast\", 666);");
+      g("    else mix(\"no dyncast\", "); g(++uuid); gl(");");
     }
   }
 
@@ -162,15 +165,17 @@ void gs(int s) {
   for (int i = 0; i < n_fields; ++i) {
     g("    mix(\"field offset\", (char *)&field"); g(i); gl(" - (char *)this);");
   }
-  if (n_fields == 0)
-    gl("    mix(\"no fields\", 42);");
+  if (n_fields == 0) {
+    g("    mix(\"no fields\", "); g(++uuid); gl(");");
+  }
 
   /* check functions */
   for (int i = 0; i < n_funcs; ++i) {
     g("    fun"); g(funcs[i]); gl("(t);");
   }
-  if (n_funcs == 0)
-    gl("    mix(\"no funcs\", 13);");
+  if (n_funcs == 0) {
+    g("    mix(\"no funcs\", "); g(++uuid); gl(");");
+  }
 
   gl("  }");
 
