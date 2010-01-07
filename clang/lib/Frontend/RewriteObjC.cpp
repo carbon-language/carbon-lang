@@ -114,6 +114,7 @@ namespace {
     llvm::raw_ostream* OutFile;
 
     bool SilenceRewriteMacroWarning;
+    bool objc_impl_method;
 
     std::string Preamble;
 
@@ -497,6 +498,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   PropParentMap = 0;
   CurrentBody = 0;
   DisableReplaceStmt = false;
+  objc_impl_method = false;
 
   // Get the ID and start/end of the main file.
   MainFileID = SM->getMainFileID();
@@ -2953,7 +2955,6 @@ void RewriteObjC::RewriteObjCMethodsMetaData(MethodIterator MethodBegin,
                                              std::string &Result) {
   if (MethodBegin == MethodEnd) return;
 
-  static bool objc_impl_method = false;
   if (!objc_impl_method) {
     /* struct _objc_method {
        SEL _cmd;
