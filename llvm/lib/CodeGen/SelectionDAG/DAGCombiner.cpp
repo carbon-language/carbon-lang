@@ -1903,71 +1903,51 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
 
         if (ExtVT == LoadedVT &&
             (!LegalOperations || TLI.isLoadExtLegal(ISD::ZEXTLOAD, ExtVT))) {
-          if (HasAnyExt) {
-            SDValue Load = 
-              DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(),
-                             LN0->getValueType(0),
-                             LN0->getChain(), LN0->getBasePtr(),
-                             LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                             ExtVT, LN0->isVolatile(), LN0->getAlignment());
-            AddToWorkList(N);
-            CombineTo(N0.getOperand(0).getNode(), Load, Load.getValue(1));
-            return SDValue(N, 0);   // Return N so it doesn't get rechecked!
-          } else {
-            SDValue Load =
-              DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(), VT,
-                             LN0->getChain(), LN0->getBasePtr(),
-                             LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                             ExtVT, LN0->isVolatile(), LN0->getAlignment());
-            AddToWorkList(N);
-            CombineTo(N0.getNode(), Load, Load.getValue(1));
-            return SDValue(N, 0);   // Return N so it doesn't get rechecked!
-          }
-        } else if (!LN0->isVolatile()) {
-          // Do not change the width of a volatile load.
-          // Do not generate loads of non-round integer types since these can
-          // be expensive (and would be wrong if the type is not byte sized).
-          if (LoadedVT.bitsGT(ExtVT) && ExtVT.isRound() &&
-              (!LegalOperations || TLI.isLoadExtLegal(ISD::ZEXTLOAD, ExtVT))) {
-            EVT PtrType = LN0->getOperand(1).getValueType();
+          EVT LoadResultTy = HasAnyExt ? LN0->getValueType(0) : VT;
+          
+          SDValue NewLoad = 
+            DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(), LoadResultTy,
+                           LN0->getChain(), LN0->getBasePtr(),
+                           LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                           ExtVT, LN0->isVolatile(), LN0->getAlignment());
+          AddToWorkList(N);
+          CombineTo(LN0, NewLoad, NewLoad.getValue(1));
+          return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+        }
+        
+        // Do not change the width of a volatile load.
+        // Do not generate loads of non-round integer types since these can
+        // be expensive (and would be wrong if the type is not byte sized).
+        if (!LN0->isVolatile() && LoadedVT.bitsGT(ExtVT) && ExtVT.isRound() &&
+            (!LegalOperations || TLI.isLoadExtLegal(ISD::ZEXTLOAD, ExtVT))) {
+          EVT PtrType = LN0->getOperand(1).getValueType();
 
-            // For big endian targets, we need to add an offset to the pointer
-            // to load the correct bytes.  For little endian systems, we merely
-            // need to read fewer bytes from the same pointer.
+          unsigned Alignment = LN0->getAlignment();
+          SDValue NewPtr = LN0->getBasePtr();
+
+          // For big endian targets, we need to add an offset to the pointer
+          // to load the correct bytes.  For little endian systems, we merely
+          // need to read fewer bytes from the same pointer.
+          if (TLI.isBigEndian()) {
             unsigned LVTStoreBytes = LoadedVT.getStoreSize();
             unsigned EVTStoreBytes = ExtVT.getStoreSize();
             unsigned PtrOff = LVTStoreBytes - EVTStoreBytes;
-            unsigned Alignment = LN0->getAlignment();
-            SDValue NewPtr = LN0->getBasePtr();
-
-            if (TLI.isBigEndian()) {
-              NewPtr = DAG.getNode(ISD::ADD, LN0->getDebugLoc(), PtrType,
-                                   NewPtr, DAG.getConstant(PtrOff, PtrType));
-              Alignment = MinAlign(Alignment, PtrOff);
-            }
-
-            AddToWorkList(NewPtr.getNode());
-            if (HasAnyExt) {
-              SDValue Load =
-                DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(),
-                               LN0->getValueType(0),
-                               LN0->getChain(), NewPtr,
-                               LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                               ExtVT, LN0->isVolatile(), Alignment);
-              AddToWorkList(N);
-              CombineTo(N0.getOperand(0).getNode(), Load, Load.getValue(1));
-              return SDValue(N, 0);   // Return N so it doesn't get rechecked!
-            } else {
-              SDValue Load =
-                DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(), VT,
-                               LN0->getChain(), NewPtr,
-                               LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                               ExtVT, LN0->isVolatile(), Alignment);
-              AddToWorkList(N);
-              CombineTo(N0.getNode(), Load, Load.getValue(1));
-              return SDValue(N, 0);   // Return N so it doesn't get rechecked!
-            }
+            NewPtr = DAG.getNode(ISD::ADD, LN0->getDebugLoc(), PtrType,
+                                 NewPtr, DAG.getConstant(PtrOff, PtrType));
+            Alignment = MinAlign(Alignment, PtrOff);
           }
+
+          AddToWorkList(NewPtr.getNode());
+          
+          EVT LoadResultTy = HasAnyExt ? LN0->getValueType(0) : VT;
+          SDValue Load =
+            DAG.getExtLoad(ISD::ZEXTLOAD, LN0->getDebugLoc(), LoadResultTy,
+                           LN0->getChain(), NewPtr,
+                           LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                           ExtVT, LN0->isVolatile(), Alignment);
+          AddToWorkList(N);
+          CombineTo(LN0, Load, Load.getValue(1));
+          return SDValue(N, 0);   // Return N so it doesn't get rechecked!
         }
       }
     }
