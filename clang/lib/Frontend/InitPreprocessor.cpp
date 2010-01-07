@@ -30,7 +30,7 @@ using namespace clang;
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
 static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
                                Diagnostic *Diags = 0) {
-  const char *Command = "#define ";
+  const char Command[] = "#define ";
   Buf.insert(Buf.end(), Command, Command+strlen(Command));
   if (const char *Equal = strchr(Macro, '=')) {
     // Turn the = into ' '.
@@ -61,7 +61,7 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
 // and we emit "#undef XXX".
 static void UndefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
   // Push "macroname".
-  const char *Command = "#undef ";
+  const char Command[] = "#undef ";
   Buf.insert(Buf.end(), Command, Command+strlen(Command));
   Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
   Buf.push_back('\n');
@@ -98,16 +98,16 @@ static void AddQuotedIncludePath(std::vector<char> &Buf,
 /// predefines buffer.
 static void AddImplicitInclude(std::vector<char> &Buf,
                                const std::string &File) {
-  const char *Inc = "#include ";
-  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
+  const char Command[] = "#include ";
+  Buf.insert(Buf.end(), Command, Command+strlen(Command));
   AddQuotedIncludePath(Buf, File);
   Buf.push_back('\n');
 }
 
 static void AddImplicitIncludeMacros(std::vector<char> &Buf,
                                      const std::string &File) {
-  const char *Inc = "#__include_macros ";
-  Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
+  const char Command[] = "#__include_macros ";
+  Buf.insert(Buf.end(), Command, Command+strlen(Command));
   AddQuotedIncludePath(Buf, File);
   Buf.push_back('\n');
   // Marker token to stop the __include_macros fetch loop.
