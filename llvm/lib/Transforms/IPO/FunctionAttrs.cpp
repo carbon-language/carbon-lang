@@ -79,8 +79,8 @@ Pass *llvm::createFunctionAttrsPass() { return new FunctionAttrs(); }
 /// memory that is local to the function.  Global constants are considered
 /// local to all functions.
 bool FunctionAttrs::PointsToLocalMemory(Value *V) {
-  SmallVector<Value*, 8> Worklist;
-  unsigned MaxLookup = 4;
+  SmallVector<Value*, 16> Worklist;
+  unsigned MaxLookup = 8;
 
   Worklist.push_back(V);
 
