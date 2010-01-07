@@ -1089,10 +1089,9 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
     addUInt(MemberDie, dwarf::DW_AT_bit_size, 0, DT.getSizeInBits());
 
     uint64_t Offset = DT.getOffsetInBits();
-    uint64_t FieldOffset = Offset;
     uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
     uint64_t HiMark = (Offset + FieldSize) & AlignMask;
-    FieldOffset = (HiMark - FieldSize);
+    uint64_t FieldOffset = (HiMark - FieldSize);
     Offset -= FieldOffset;
 
     // Maybe we need to work from the other end.
