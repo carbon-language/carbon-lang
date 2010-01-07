@@ -19,6 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/Constant.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
@@ -1652,6 +1653,12 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
     PICBase = X86::RIP;
   }
 
+  // If we've gotten here we need to make sure we don't have a constant
+  // that needs a relocation, because then we shouldn't put it into the
+  // constant pool.
+  if (C->getRelocationInfo() != Constant::NoRelocation)
+    return 0;
+  
   // Create the load from the constant pool.
   unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
   unsigned ResultReg = createResultReg(RC);
