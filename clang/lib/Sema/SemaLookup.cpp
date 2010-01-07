@@ -2000,6 +2000,19 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
   if (!S)
     return;
 
+  if (!S->getEntity() || !S->getParent() ||
+      ((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+    // Walk through the declarations in this Scope.
+    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+         D != DEnd; ++D) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
+        if (Result.isAcceptableDecl(ND)) {
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
+          Visited.add(ND);
+        }
+    }
+  }
+  
   DeclContext *Entity = 0;
   if (S->getEntity()) {
     // Look into this scope's declaration context, along with any of its
@@ -2041,22 +2054,11 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     // doing so would force the normal C++ name-lookup code to look into the
     // translation unit decl when the IdentifierInfo chains would suffice. 
     // Once we fix that problem (which is part of a more general "don't look
-    // in DeclContexts unless we have to" optimization), we can eliminate the
-    // TranslationUnit parameter entirely.
+    // in DeclContexts unless we have to" optimization), we can eliminate this.
     Entity = Result.getSema().Context.getTranslationUnitDecl();
     LookupVisibleDecls(Entity, Result, /*QualifiedNameLookup=*/false, 
                        Consumer, Visited);
-  } else {
-    // Walk through the declarations in this Scope.
-    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-         D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
-        if (Result.isAcceptableDecl(ND)) {
-          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
-          Visited.add(ND);
-        }
-    }
-  }
+  } 
   
   if (Entity) {
     // Lookup visible declarations in any namespaces found by using

@@ -21,8 +21,9 @@ tring str2; // expected-error{{unknown type name 'tring'; did you mean 'string'?
 
 ::other_std::string str3; // expected-error{{no member named 'other_std' in the global namespace; did you mean 'otherstd'?}}
 
-float area(float radius, float pi) {
-  return radious * pi; // expected-error{{use of undeclared identifier 'radious'; did you mean 'radius'?}}
+float area(float radius, // expected-note{{'radius' declared here}}
+           float pi) {
+  return radious * pi; // expected-error{{did you mean 'radius'?}}
 }
 
 bool test_string(std::string s) {
