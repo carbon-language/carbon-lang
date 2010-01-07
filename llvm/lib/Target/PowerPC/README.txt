@@ -7,6 +7,39 @@ TODO:
 
 ===-------------------------------------------------------------------------===
 
+On PPC64, this:
+
+long f2 (long x) { return 0xfffffff000000000UL; }
+long f3 (long x) { return 0x1ffffffffUL; }
+
+could compile into:
+
+_f2:
+	li r3,-1
+	rldicr r3,r3,0,27
+	blr
+_f3:
+	li r3,-1
+	rldicl r3,r3,0,31
+	blr
+
+we produce:
+
+_f2:
+	lis r2, 4095
+	ori r2, r2, 65535
+	sldi r3, r2, 36
+	blr 
+_f3:
+	li r2, 1
+	sldi r2, r2, 32
+	oris r2, r2, 65535
+	ori r3, r2, 65535
+	blr 
+
+
+===-------------------------------------------------------------------------===
+
 Support 'update' load/store instructions.  These are cracked on the G5, but are
 still a codesize win.
 
