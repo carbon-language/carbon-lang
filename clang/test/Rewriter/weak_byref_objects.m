@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -fobjc-gc -rewrite-objc %s -o -
+// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin9 -fobjc-gc -rewrite-objc %s -o -
 
 #define nil 0
 int main() {
