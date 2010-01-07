@@ -5611,13 +5611,21 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
       // because a TEST instruction will be better.
       bool NonFlagUse = false;
       for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-           UE = Op.getNode()->use_end(); UI != UE; ++UI)
-        if (UI->getOpcode() != ISD::BRCOND &&
-            (UI->getOpcode() != ISD::SELECT || UI.getOperandNo() != 0) &&
-            UI->getOpcode() != ISD::SETCC) {
+             UE = Op.getNode()->use_end(); UI != UE; ++UI) {
+        SDNode *User = *UI;
+        unsigned UOpNo = UI.getOperandNo();
+        if (User->getOpcode() == ISD::TRUNCATE && User->hasOneUse()) {
+          // Look pass truncate.
+          UOpNo = User->use_begin().getOperandNo();
+          User = *User->use_begin();
+        }
+        if (User->getOpcode() != ISD::BRCOND &&
+            User->getOpcode() != ISD::SETCC &&
+            (User->getOpcode() != ISD::SELECT || UOpNo != 0)) {
           NonFlagUse = true;
           break;
         }
+      }
       if (!NonFlagUse)
         break;
     }
