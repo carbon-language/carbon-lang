@@ -1091,7 +1091,14 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
               << MemberOrBase << false << R.getLookupName()
               << CodeModificationHint::CreateReplacement(R.getNameLoc(),
                                                R.getLookupName().getAsString());
-            
+
+            const CXXBaseSpecifier *BaseSpec = DirectBaseSpec? DirectBaseSpec 
+                                                             : VirtualBaseSpec;
+            Diag(BaseSpec->getSourceRange().getBegin(),
+                 diag::note_base_class_specified_here)
+              << BaseSpec->getType()
+              << BaseSpec->getSourceRange();
+
             TyD = Type;
           }
         }

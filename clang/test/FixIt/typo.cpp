@@ -35,7 +35,7 @@ bool test_string(std::string s) {
 }
 
 struct Base { };
-struct Derived : public Base {
+struct Derived : public Base { // expected-note{{base class 'struct Base' specified here}}
   int member; // expected-note 3{{'member' declared here}}
 
   Derived() : base(), // expected-error{{initializer 'base' does not name a non-static data member or base class; did you mean the base class 'Base'?}}
