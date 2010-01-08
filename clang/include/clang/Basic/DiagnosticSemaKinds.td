@@ -1563,7 +1563,9 @@ def warn_shift_gt_typewidth : Warning<
 def warn_precedence_bitwise_rel : Warning<
   "%0 has lower precedence than %1; %1 will be evaluated first">,
   InGroup<Parentheses>;
-
+def note_precedence_bitwise_first : Note<
+  "place parentheses around the %0 expression to evaluate it first">;
+  
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
@@ -1968,6 +1970,8 @@ def warn_condition_is_assignment : Warning<"using the result of an "
 def warn_condition_is_idiomatic_assignment : Warning<"using the result "
   "of an assignment as a condition without parentheses">,
   InGroup<DiagGroup<"idiomatic-parentheses">>, DefaultIgnore;
+def note_condition_assign_to_comparison : Note<
+  "use '==' to turn this assignment into an equality comparison">;
 
 def warn_value_always_zero : Warning<
   "%0 is always %select{zero|false|NULL}1 in this context">;

@@ -6150,8 +6150,9 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 /// ParenRange in parentheses.
 static void SuggestParentheses(Sema &Self, SourceLocation Loc,
                                const PartialDiagnostic &PD,
-                               SourceRange ParenRange)
-{
+                               SourceRange ParenRange,
+                      const PartialDiagnostic &SecondPD = PartialDiagnostic(0),
+                               SourceRange SecondParenRange = SourceRange()) {
   SourceLocation EndLoc = Self.PP.getLocForEndOfToken(ParenRange.getEnd());
   if (!ParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
     // We can't display the parentheses, so just dig the
@@ -6162,6 +6163,21 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
 
   Self.Diag(Loc, PD)
     << CodeModificationHint::CreateInsertion(ParenRange.getBegin(), "(")
+    << CodeModificationHint::CreateInsertion(EndLoc, ")");
+  
+  if (!SecondPD.getDiagID())
+    return;
+  
+  EndLoc = Self.PP.getLocForEndOfToken(SecondParenRange.getEnd());
+  if (!SecondParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
+    // We can't display the parentheses, so just dig the
+    // warning/error and return.
+    Self.Diag(Loc, SecondPD);
+    return;
+  }
+  
+  Self.Diag(Loc, SecondPD)
+    << CodeModificationHint::CreateInsertion(SecondParenRange.getBegin(), "(")
     << CodeModificationHint::CreateInsertion(EndLoc, ")");
 }
 
@@ -6194,12 +6210,18 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
       PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(lhs->getLocStart(), OpLoc)
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
+      lhs->getSourceRange(),
+      PDiag(diag::note_precedence_bitwise_first)
+          << BinOp::getOpcodeStr(Opc),
       SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
   else if (BinOp::isComparisonOp(rhsopc))
     SuggestParentheses(Self, OpLoc,
       PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(OpLoc, rhs->getLocEnd())
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
+      rhs->getSourceRange(),
+      PDiag(diag::note_precedence_bitwise_first)
+        << BinOp::getOpcodeStr(Opc),
       SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
 }
 
@@ -7251,6 +7273,8 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     << E->getSourceRange()
     << CodeModificationHint::CreateInsertion(Open, "(")
     << CodeModificationHint::CreateInsertion(Close, ")");
+  Diag(Loc, diag::note_condition_assign_to_comparison)
+    << CodeModificationHint::CreateReplacement(Loc, "==");
 }
 
 bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
