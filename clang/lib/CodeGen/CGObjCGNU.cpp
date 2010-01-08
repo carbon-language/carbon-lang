@@ -114,9 +114,11 @@ private:
   llvm::Constant *ExportUniqueString(const std::string &Str, const std::string
           prefix);
   llvm::Constant *MakeGlobal(const llvm::StructType *Ty,
-      std::vector<llvm::Constant*> &V, const std::string &Name="");
+    std::vector<llvm::Constant*> &V, const std::string &Name="",
+    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
   llvm::Constant *MakeGlobal(const llvm::ArrayType *Ty,
-      std::vector<llvm::Constant*> &V, const std::string &Name="");
+    std::vector<llvm::Constant*> &V, const std::string &Name="",
+    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
   llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
       const ObjCIvarDecl *Ivar);
   void EmitClassRef(const std::string &className);
@@ -257,6 +259,10 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
 llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *OID) {
   llvm::Value *ClassName = CGM.GetAddrOfConstantCString(OID->getNameAsString());
+  // With the incompatible ABI, this will need to be replaced with a direct
+  // reference to the class symbol.  For the compatible nonfragile ABI we are
+  // still performing this lookup at run time but emitting the symbol for the
+  // class externally so that we can make the switch later.
   EmitClassRef(OID->getNameAsString());
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
@@ -323,14 +329,16 @@ llvm::Constant *CGObjCGNU::ExportUniqueString(const std::string &Str,
 }
 
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name) {
+    std::vector<llvm::Constant*> &V, const std::string &Name,
+    llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
       llvm::GlobalValue::InternalLinkage, C, Name);
 }
 
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name) {
+    std::vector<llvm::Constant*> &V, const std::string &Name,
+    llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantArray::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
                                   llvm::GlobalValue::InternalLinkage, C, Name);
@@ -703,7 +711,10 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(IvarOffsets);
   Elements.push_back(Properties);
   // Create an instance of the structure
-  return MakeGlobal(ClassTy, Elements, SymbolNameForClass(Name));
+  // This is now an externally visible symbol, so that we can speed up class
+  // messages in the next ABI.
+  return MakeGlobal(ClassTy, Elements, SymbolNameForClass(Name),
+         llvm::GlobalValue::ExternalLinkage);
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
