@@ -7831,14 +7831,16 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   BuildMI(newMBB, dl, TII->get(X86::PHI), dest2Oper.getReg())
     .addReg(t2).addMBB(thisMBB).addReg(t4).addMBB(newMBB);
 
-  unsigned tt1 = F->getRegInfo().createVirtualRegister(RC);
-  unsigned tt2 = F->getRegInfo().createVirtualRegister(RC);
+  // The subsequent operations should be using the destination registers of
+  //the PHI instructions.
   if (invSrc) {
-    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), tt1).addReg(t1);
-    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), tt2).addReg(t2);
+    t1 = F->getRegInfo().createVirtualRegister(RC);
+    t2 = F->getRegInfo().createVirtualRegister(RC);
+    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t1).addReg(dest1Oper.getReg());
+    MIB = BuildMI(newMBB, dl, TII->get(NotOpc), t2).addReg(dest2Oper.getReg());
   } else {
-    tt1 = t1;
-    tt2 = t2;
+    t1 = dest1Oper.getReg();
+    t2 = dest2Oper.getReg();
   }
 
   int valArgIndx = lastAddrIndx + 1;
@@ -7852,7 +7854,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   else
     MIB = BuildMI(newMBB, dl, TII->get(immOpcL), t5);
   if (regOpcL != X86::MOV32rr)
-    MIB.addReg(tt1);
+    MIB.addReg(t1);
   (*MIB).addOperand(*argOpers[valArgIndx]);
   assert(argOpers[valArgIndx + 1]->isReg() ==
          argOpers[valArgIndx]->isReg());
@@ -7863,7 +7865,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   else
     MIB = BuildMI(newMBB, dl, TII->get(immOpcH), t6);
   if (regOpcH != X86::MOV32rr)
-    MIB.addReg(tt2);
+    MIB.addReg(t2);
   (*MIB).addOperand(*argOpers[valArgIndx + 1]);
 
   MIB = BuildMI(newMBB, dl, TII->get(copyOpc), X86::EAX);
