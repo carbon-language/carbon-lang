@@ -633,12 +633,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
   case Intrinsic::objectsize: {
-    ConstantInt *Const = dyn_cast<ConstantInt>(II->getOperand(2));
-
-    if (!Const) return 0;
-
+    ConstantInt *Const = cast<ConstantInt>(II->getOperand(2));
     const Type *Ty = CI.getType();
 
+    // 0 is maximum number of bytes left, 1 is minimum number of bytes left.
+    // TODO: actually add these values, the current return values are "don't
+    // know".
     if (Const->getZExtValue() == 0)
       return ReplaceInstUsesWith(CI, Constant::getAllOnesValue(Ty));
     else
