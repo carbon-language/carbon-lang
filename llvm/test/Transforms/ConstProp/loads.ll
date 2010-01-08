@@ -110,3 +110,13 @@ define i16 @test12() {
 ; CHECK: @test12
 ; CHECK: ret i16 98
 }
+
+
+; PR5978
+@g5 = constant i8 4
+define i1 @test13() {
+  %A = load i1* bitcast (i8* @g5 to i1*)
+  ret i1 %A
+; CHECK: @test13
+; CHECK: ret i1 false
+}

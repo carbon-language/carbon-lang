@@ -398,8 +398,8 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
                           BytesLoaded, TD))
     return 0;
 
-  APInt ResultVal(IntType->getBitWidth(), 0);
-  for (unsigned i = 0; i != BytesLoaded; ++i) {
+  APInt ResultVal = APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1]);
+  for (unsigned i = 1; i != BytesLoaded; ++i) {
     ResultVal <<= 8;
     ResultVal |= APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1-i]);
   }
