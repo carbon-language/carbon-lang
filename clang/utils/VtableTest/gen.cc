@@ -177,7 +177,7 @@ void gs(int s) {
         continue;
       }
 
-      printf("// Found we needed override for fun%d in s%d.\n", fn, s);
+      printf("  // Found we needed override for fun%d in s%d.\n", fn, s);
 
       // record the final override
       funcs[n_funcs++] = fn;
