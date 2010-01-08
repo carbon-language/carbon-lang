@@ -6,4 +6,3 @@
 
 // CHECK: "-analyze"
 // CHECK: "-target-feature" "+sse"
-// CHECK: "-fno-math-errno"

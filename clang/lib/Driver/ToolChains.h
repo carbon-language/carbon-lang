@@ -38,7 +38,6 @@ public:
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
-  virtual bool IsMathErrnoDefault() const;
   virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
@@ -136,7 +135,6 @@ public:
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
-  virtual bool IsMathErrnoDefault() const;
   virtual bool IsBlocksDefault() const {
     // Blocks default to on for 10.6 (darwin10) and beyond.
     return (DarwinVersion[0] > 9);

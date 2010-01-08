@@ -837,11 +837,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   }
 
-  // -fmath-errno is default.
-  if (!Args.hasFlag(options::OPT_fmath_errno,
+  // -fno-math-errno is default.
+  if (Args.hasFlag(options::OPT_fmath_errno,
                    options::OPT_fno_math_errno,
-                   getToolChain().IsMathErrnoDefault()))
-    CmdArgs.push_back("-fno-math-errno");
+                   false))
+    CmdArgs.push_back("-fmath-errno");
 
   Arg *Unsupported;
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||

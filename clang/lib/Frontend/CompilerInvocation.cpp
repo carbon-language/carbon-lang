@@ -479,8 +479,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fblocks");
   if (Opts.EmitAllDecls)
     Res.push_back("-femit-all-decls");
-  if (!Opts.MathErrno)
-    Res.push_back("-fno-math-errno");
+  if (Opts.MathErrno)
+    Res.push_back("-fmath-errno");
   if (Opts.OverflowChecking)
     Res.push_back("-ftrapv");
   if (Opts.HeinousExtensions)
@@ -1147,7 +1147,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.HeinousExtensions = Args.hasArg(OPT_fheinous_gnu_extensions);
   Opts.AccessControl = Args.hasArg(OPT_faccess_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
-  Opts.MathErrno = !Args.hasArg(OPT_fno_math_errno);
+  Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
   Opts.InstantiationDepth = getLastArgIntValue(Args, OPT_ftemplate_depth, 99,
                                                Diags);
   Opts.NeXTRuntime = !Args.hasArg(OPT_fgnu_runtime);

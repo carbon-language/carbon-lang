@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fno-math-errno %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 int foo(int X, int Y);
 
-double sqrt(double X);  // implicitly const because of -fno-math-errno!
+double sqrt(double X);  // implicitly const because of no -fmath-errno!
 
 void bar(volatile int *VP, int *P, int A,
          _Complex double C, volatile _Complex double VC) {
@@ -24,7 +24,7 @@ void bar(volatile int *VP, int *P, int A,
   __real__ C;          // expected-warning {{expression result unused}}
   __real__ VC;
   
-  // We know this can't change errno because of -fno-math-errno.
+  // We know this can't change errno because of no -fmath-errno.
   sqrt(A);  // expected-warning {{ignoring return value of function declared with const attribute}}
 }
 

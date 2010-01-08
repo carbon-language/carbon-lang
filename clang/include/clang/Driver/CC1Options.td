@@ -323,6 +323,8 @@ def fgnu_runtime : Flag<"-fgnu-runtime">,
   HelpText<"Generate output compatible with the standard GNU Objective-C runtime">;
 def std_EQ : Joined<"-std=">,
   HelpText<"Language standard to compile for">;
+def fmath_errno : Flag<"-fmath-errno">,
+  HelpText<"Require math functions to indicate errors by setting errno">;
 def fms_extensions : Flag<"-fms-extensions">,
   HelpText<"Accept some non-standard constructs used in Microsoft header files ">;
 def main_file_name : Separate<"-main-file-name">,
@@ -331,8 +333,6 @@ def fno_elide_constructors : Flag<"-fno-elide-constructors">,
   HelpText<"Disable C++ copy constructor elision">;
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">,
   HelpText<"Disallow implicit conversions between vectors with a different number of elements or different element types">;
-def fno_math_errno : Flag<"-fno-math-errno">,
-  HelpText<"Don't require math functions to respect errno">;
 def fno_signed_char : Flag<"-fno-signed-char">,
   HelpText<"Char is unsigned">;
 def fno_operator_names : Flag<"-fno-operator-names">,

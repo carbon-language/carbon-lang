@@ -87,10 +87,6 @@ public:
 
   // Platform defaults information
 
-  /// IsMathErrnoDefault - Does this tool chain set -fmath-errno by
-  /// default.
-  virtual bool IsMathErrnoDefault() const = 0;
-
   /// IsBlocksDefault - Does this tool chain enable -fblocks by default.
   virtual bool IsBlocksDefault() const { return false; }
 

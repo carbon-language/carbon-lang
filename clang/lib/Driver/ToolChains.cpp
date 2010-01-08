@@ -516,10 +516,6 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
   return DAL;
 }
 
-bool Darwin::IsMathErrnoDefault() const {
-  return false;
-}
-
 bool Darwin::IsUnwindTablesDefault() const {
   // FIXME: Gross; we should probably have some separate target
   // definition, possibly even reusing the one in clang.
@@ -597,10 +593,6 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
   }
 
   return *T;
-}
-
-bool Generic_GCC::IsMathErrnoDefault() const {
-  return true;
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
