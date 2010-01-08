@@ -332,6 +332,7 @@ CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
+CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 
 typedef struct CXSourceLineColumn {
