@@ -705,7 +705,7 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
   // so the values can never be equal.  Similiarly for all other "or equals"
   // operators.
   
-  // (X+1) <u X        --> X >u (MAXUINT-1)        --> X != 255
+  // (X+1) <u X        --> X >u (MAXUINT-1)        --> X == 255
   // (X+2) <u X        --> X >u (MAXUINT-2)        --> X > 253
   // (X+MAXUINT) <u X  --> X >u (MAXUINT-MAXUINT)  --> X != 0
   if (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_ULE) {
@@ -713,7 +713,8 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
     if (isNUW)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(X->getContext())); 
     
-    Value *R = ConstantExpr::getSub(ConstantInt::get(CI->getType(), -1ULL), CI);
+    Value *R = 
+      ConstantExpr::getSub(ConstantInt::getAllOnesValue(CI->getType()), CI);
     return new ICmpInst(ICmpInst::ICMP_UGT, X, R);
   }
   
