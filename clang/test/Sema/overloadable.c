@@ -37,9 +37,9 @@ void test_struct(struct X x, struct Y y) {
 
 double *f(int) __attribute__((overloadable)); // expected-error{{conflicting types for 'f'}}
 
-double promote(float) __attribute__((__overloadable__));
-double promote(double) __attribute__((__overloadable__));
-long double promote(long double) __attribute__((__overloadable__));
+double promote(float) __attribute__((__overloadable__)); // expected-note {{candidate}}
+double promote(double) __attribute__((__overloadable__)); // expected-note {{candidate}}
+long double promote(long double) __attribute__((__overloadable__)); // expected-note {{candidate}}
 
 void promote() __attribute__((__overloadable__)); // expected-error{{'overloadable' function 'promote' must have a prototype}}
 void promote(...) __attribute__((__overloadable__, __unavailable__)); // \

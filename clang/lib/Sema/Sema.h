@@ -1028,10 +1028,20 @@ public:
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
                                        SourceLocation Loc,
                                        OverloadCandidateSet::iterator& Best);
+
+  enum OverloadCandidateDisplayKind {
+    /// Requests that all candidates be shown.  Viable candidates will
+    /// be printed first.
+    OCD_AllCandidates,
+
+    /// Requests that only viable candidates be shown.
+    OCD_ViableCandidates
+  };
   void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
-                         bool OnlyViable,
-                         const char *Opc=0,
-                         SourceLocation Loc=SourceLocation());
+                               OverloadCandidateDisplayKind OCD,
+                               const char *Opc = 0,
+                               SourceLocation Loc = SourceLocation());
+
   void NoteOverloadCandidate(FunctionDecl *Fn);
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,

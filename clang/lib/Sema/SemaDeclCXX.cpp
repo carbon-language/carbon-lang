@@ -4193,7 +4193,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     else
       Diag(Loc, diag::err_ovl_no_viable_function_in_init)
         << ClassType << Range;
-    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
     return 0;
 
   case OR_Ambiguous:
@@ -4201,7 +4201,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
       Diag(Loc, diag::err_ovl_ambiguous_init) << InitEntity << Range;
     else
       Diag(Loc, diag::err_ovl_ambiguous_init) << ClassType << Range;
-    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates);
     return 0;
 
   case OR_Deleted:
@@ -4216,7 +4216,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
         << Best->Function->isDeleted()
         << RD->getDeclName() << Range;
     }
-    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
     return 0;
   }
 
@@ -4540,7 +4540,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       }
       Diag(DeclLoc, diag::err_ref_init_ambiguous) << DeclType << Init->getType()
             << Init->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates);
       return true;
 
     case OR_No_Viable_Function:

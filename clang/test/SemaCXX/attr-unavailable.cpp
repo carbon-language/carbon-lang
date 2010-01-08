@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-int &foo(int);
-double &foo(double);
+int &foo(int); // expected-note {{candidate}}
+double &foo(double); // expected-note {{candidate}}
 void foo(...) __attribute__((__unavailable__)); // expected-note {{candidate function}} \
 // expected-note{{function has been explicitly marked unavailable here}}
 

@@ -88,7 +88,7 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
       S.Diag(Init->getSourceRange().getBegin(),
              diag::err_typecheck_convert_ambiguous)
             << DeclType << Init->getType() << Init->getSourceRange();
-      S.PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates);
       return true;
     }
     return false;
@@ -3010,14 +3010,14 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     S.Diag(Loc, diag::err_temp_copy_no_viable)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, false);
+    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates);
     return S.ExprError();
       
   case OR_Ambiguous:
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, true);
+    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_ViableCandidates);
     return S.ExprError();
     
   case OR_Deleted:
@@ -3432,14 +3432,14 @@ bool InitializationSequence::Diagnose(Sema &S,
           << DestType << Args[0]->getType()
           << Args[0]->getSourceRange();
 
-      S.PrintOverloadCandidates(FailedCandidateSet, true);
+      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_ViableCandidates);
       break;
         
     case OR_No_Viable_Function:
       S.Diag(Kind.getLocation(), diag::err_typecheck_nonviable_condition)
         << Args[0]->getType() << DestType.getNonReferenceType()
         << Args[0]->getSourceRange();
-      S.PrintOverloadCandidates(FailedCandidateSet, false);
+      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates);
       break;
         
     case OR_Deleted: {
@@ -3541,13 +3541,14 @@ bool InitializationSequence::Diagnose(Sema &S,
       case OR_Ambiguous:
         S.Diag(Kind.getLocation(), diag::err_ovl_ambiguous_init)
           << DestType << ArgsRange;
-        S.PrintOverloadCandidates(FailedCandidateSet, true);
+        S.PrintOverloadCandidates(FailedCandidateSet,
+                                  Sema::OCD_ViableCandidates);
         break;
         
       case OR_No_Viable_Function:
         S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
           << DestType << ArgsRange;
-        S.PrintOverloadCandidates(FailedCandidateSet, false);
+        S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates);
         break;
         
       case OR_Deleted: {

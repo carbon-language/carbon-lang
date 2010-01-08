@@ -65,7 +65,7 @@ int&& should_not_warn(int&& i) { // But GCC 4.4 does
 // Test the return dance. This also tests IsReturnCopyElidable.
 struct MoveOnly {
   MoveOnly();
-  MoveOnly(const MoveOnly&) = delete;	// expected-note {{candidate function}} \
+  MoveOnly(const MoveOnly&) = delete;	// expected-note {{candidate constructor}} \
   // expected-note 3{{explicitly marked deleted here}}
   MoveOnly(MoveOnly&&);	// expected-note {{candidate constructor}}
   MoveOnly(int&&);	// expected-note {{candidate constructor}}

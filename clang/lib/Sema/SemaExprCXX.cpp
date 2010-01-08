@@ -673,20 +673,20 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_No_Viable_Function:
     Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
       << Name << Range;
-    PrintOverloadCandidates(Candidates, /*OnlyViable=*/false);
+    PrintOverloadCandidates(Candidates, OCD_AllCandidates);
     return true;
 
   case OR_Ambiguous:
     Diag(StartLoc, diag::err_ovl_ambiguous_call)
       << Name << Range;
-    PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
+    PrintOverloadCandidates(Candidates, OCD_ViableCandidates);
     return true;
 
   case OR_Deleted:
     Diag(StartLoc, diag::err_ovl_deleted_call)
       << Best->Function->isDeleted()
       << Name << Range;
-    PrintOverloadCandidates(Candidates, /*OnlyViable=*/true);
+    PrintOverloadCandidates(Candidates, OCD_AllCandidates);
     return true;
   }
   assert(false && "Unreachable, bad result from BestViableFunction");
