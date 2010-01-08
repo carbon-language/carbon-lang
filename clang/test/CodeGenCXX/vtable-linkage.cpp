@@ -121,12 +121,6 @@ void use_F(F<char> &fc) {
 // CHECK: @_ZTI1EIlE = weak_odr constant
 // CHECK: @_ZTV1EIlE = weak_odr constant
 
-// The anonymous struct for e has no linkage, so the vtable should have
-// internal linkage.
-// CHECK: @"_ZTS3$_0" = internal constant
-// CHECK: @"_ZTI3$_0" = internal constant
-// CHECK: @"_ZTV3$_0" = internal constant
-
 // F<long> is an implicit template instantiation with no key function,
 // so its vtable should have weak_odr linkage.
 // CHECK: @_ZTS1FIlE = weak_odr constant
@@ -143,6 +137,12 @@ void use_F(F<char> &fc) {
 // key function that is not instantiated, so we should only reference
 // its vtable, not define it.
 // CHECK: @_ZTV1EIiE = external constant
+
+// The anonymous struct for e has no linkage, so the vtable should have
+// internal linkage.
+// CHECK: @"_ZTS3$_0" = internal constant
+// CHECK: @"_ZTI3$_0" = internal constant
+// CHECK: @"_ZTV3$_0" = internal constant
 
 // The A vtable should have internal linkage since it is inside an anonymous 
 // namespace.

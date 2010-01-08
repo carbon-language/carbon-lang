@@ -1185,8 +1185,10 @@ public:
   /// GenerateCXXGlobalInitFunc - Generates code for initializing global
   /// variables.
   void GenerateCXXGlobalInitFunc(llvm::Function *Fn,
-                                 const VarDecl **Decls,
+                                 llvm::Constant **Decls,
                                  unsigned NumDecls);
+
+  void GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn, const VarDecl *D);
 
   void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
 

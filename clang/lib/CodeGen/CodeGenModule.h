@@ -153,7 +153,7 @@ class CodeGenModule : public BlockModule {
 
   /// CXXGlobalInits - Variables with global initializers that need to run
   /// before main.
-  std::vector<const VarDecl*> CXXGlobalInits;
+  std::vector<llvm::Constant*> CXXGlobalInits;
 
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
@@ -475,7 +475,9 @@ private:
 
   /// EmitCXXGlobalInitFunc - Emit a function that initializes C++ globals.
   void EmitCXXGlobalInitFunc();
-  
+
+  void EmitCXXGlobalVarDeclInitFunc(const VarDecl *D);
+
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function *Ctor, int Priority=65535);
   void AddGlobalDtor(llvm::Function *Dtor, int Priority=65535);

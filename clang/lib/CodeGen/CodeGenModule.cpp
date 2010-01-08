@@ -66,10 +66,8 @@ CodeGenModule::~CodeGenModule() {
 }
 
 void CodeGenModule::Release() {
-  // We need to call this first because it can add deferred declarations.
-  EmitCXXGlobalInitFunc();
-
   EmitDeferred();
+  EmitCXXGlobalInitFunc();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
@@ -971,6 +969,7 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
+  bool NonConstInit = false;
 
   if (D->getInit() == 0) {
     // This is a tentative definition; tentative definitions are
@@ -990,8 +989,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     if (!Init) {
       QualType T = D->getInit()->getType();
       if (getLangOptions().CPlusPlus) {
-        CXXGlobalInits.push_back(D);
+        EmitCXXGlobalVarDeclInitFunc(D);
         Init = EmitNullConstant(T);
+        NonConstInit = true;
       } else {
         ErrorUnsupported(D, "static initializer");
         Init = llvm::UndefValue::get(getTypes().ConvertType(T));
@@ -1052,7 +1052,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // If it is safe to mark the global 'constant', do so now.
   GV->setConstant(false);
-  if (DeclIsConstantGlobal(Context, D))
+  if (!NonConstInit && DeclIsConstantGlobal(Context, D))
     GV->setConstant(true);
 
   GV->setAlignment(getContext().getDeclAlignInBytes(D));

@@ -15,6 +15,9 @@ class C {
   virtual void bar3() __attribute__((aligned(1024)));
 } c;
 
+// CHECK:.align 1, 0x90
+// CHECK-NEXT:.globl __ZN1CC1Ev
+
 void C::bar1() { }
 
 // CHECK:.align 1, 0x90
