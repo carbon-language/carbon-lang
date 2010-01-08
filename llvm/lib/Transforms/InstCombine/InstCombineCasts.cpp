@@ -147,29 +147,16 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 }
 
 
-/// CanEvaluateInDifferentType - Return true if we can take the specified value
-/// and return it as type Ty without inserting any new casts and without
-/// changing the computed value.  This is used by code that tries to decide
-/// whether promoting or shrinking integer operations to wider or smaller types
-/// will allow us to eliminate a truncate or extend.
+/// CanEvaluateTruncated - Return true if we can evaluate the specified
+/// expression tree as type Ty instead of its larger type, and arrive with the
+/// same value.  This is used by code that tries to eliminate truncates.
 ///
-/// This is a truncation operation if Ty is smaller than V->getType(), or a zero
-/// extension operation if Ty is larger.
+/// Ty will always be a type smaller than V.  We should return true if trunc(V)
+/// can be computed by computing V in the smaller type.  If V is an instruction,
+/// then trunc(inst(x,y)) can be computed as inst(trunc(x),trunc(y)), which only
+/// makes sense if x and y can be efficiently truncated.
 ///
-/// If CastOpc is a truncation, then Ty will be a type smaller than V.  We
-/// should return true if trunc(V) can be computed by computing V in the smaller
-/// type.  If V is an instruction, then trunc(inst(x,y)) can be computed as
-/// inst(trunc(x),trunc(y)), which only makes sense if x and y can be
-/// efficiently truncated.
-///
-/// If CastOpc is zext, we are asking if the low bits of the value can be
-/// computed in a larger type, which is then and'd to get the final result.
-static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
-                                       unsigned CastOpc,
-                                       unsigned &NumCastsRemoved) {
-  // FIXME: Eliminate CastOpc
-  assert(CastOpc == Instruction::Trunc);
-  
+static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
   // We can always evaluate constants in another type.
   if (isa<Constant>(V))
     return true;
@@ -179,19 +166,10 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
   
   const Type *OrigTy = V->getType();
   
-  // If this is an extension or truncate, we can often eliminate it.
-  if (isa<TruncInst>(I) || isa<ZExtInst>(I) || isa<SExtInst>(I)) {
-    // If this is a cast from the destination type, we can trivially eliminate
-    // it, and this will remove a cast overall.
-    if (I->getOperand(0)->getType() == Ty) {
-      // If the first operand is itself a cast, and is eliminable, do not count
-      // this as an eliminable cast.  We would prefer to eliminate those two
-      // casts first.
-      if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
-        ++NumCastsRemoved;
-      return true;
-    }
-  }
+  // If this is an extension from the dest type, we can eliminate it.
+  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
+      I->getOperand(0)->getType() == Ty)
+    return true;
 
   // We can't extend or shrink something that has multiple uses: doing so would
   // require duplicating the instruction in general, which isn't profitable.
@@ -206,10 +184,8 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
   case Instruction::Or:
   case Instruction::Xor:
     // These operators can all arbitrarily be extended or truncated.
-    return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                      NumCastsRemoved) &&
-           CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
-                                      NumCastsRemoved);
+    return CanEvaluateTruncated(I->getOperand(0), Ty) &&
+           CanEvaluateTruncated(I->getOperand(1), Ty);
 
   case Instruction::UDiv:
   case Instruction::URem: {
@@ -220,10 +196,8 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
       APInt Mask = APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth);
       if (MaskedValueIsZero(I->getOperand(0), Mask) &&
           MaskedValueIsZero(I->getOperand(1), Mask)) {
-        return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                          NumCastsRemoved) &&
-               CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
-                                          NumCastsRemoved);
+        return CanEvaluateTruncated(I->getOperand(0), Ty) &&
+               CanEvaluateTruncated(I->getOperand(1), Ty);
       }
     }
     break;
@@ -233,10 +207,8 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
     // constant amount, we can always perform a SHL in a smaller type.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint32_t BitWidth = Ty->getScalarSizeInBits();
-      if (BitWidth < OrigTy->getScalarSizeInBits() &&
-          CI->getLimitedValue(BitWidth) < BitWidth)
-        return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                          NumCastsRemoved);
+      if (CI->getLimitedValue(BitWidth) < BitWidth)
+        return CanEvaluateTruncated(I->getOperand(0), Ty);
     }
     break;
   case Instruction::LShr:
@@ -246,34 +218,20 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
       uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
       uint32_t BitWidth = Ty->getScalarSizeInBits();
-      if (BitWidth < OrigBitWidth &&
-          MaskedValueIsZero(I->getOperand(0),
+      if (MaskedValueIsZero(I->getOperand(0),
             APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
           CI->getLimitedValue(BitWidth) < BitWidth) {
-        return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                          NumCastsRemoved);
+        return CanEvaluateTruncated(I->getOperand(0), Ty);
       }
     }
     break;
-  case Instruction::ZExt:
-  case Instruction::SExt:
   case Instruction::Trunc:
-    // If this is the same kind of case as our original (e.g. zext+zext), we
-    // can safely replace it.  Note that replacing it does not reduce the number
-    // of casts in the input.
-    if (Opc == CastOpc)
-      return true;
-
-    // sext (zext ty1), ty2 -> zext ty2
-    if (CastOpc == Instruction::SExt && Opc == Instruction::ZExt)
-      return true;
-    break;
+    // trunc(trunc(x)) -> trunc(x)
+    return true;
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
-    return CanEvaluateInDifferentType(SI->getTrueValue(), Ty, CastOpc,
-                                      NumCastsRemoved) &&
-           CanEvaluateInDifferentType(SI->getFalseValue(), Ty, CastOpc,
-                                      NumCastsRemoved);
+    return CanEvaluateTruncated(SI->getTrueValue(), Ty) &&
+           CanEvaluateTruncated(SI->getFalseValue(), Ty);
   }
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
@@ -281,8 +239,7 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateInDifferentType(PN->getIncomingValue(i), Ty, CastOpc,
-                                      NumCastsRemoved))
+      if (!CanEvaluateTruncated(PN->getIncomingValue(i), Ty))
         return false;
     return true;
   }
@@ -515,10 +472,11 @@ static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
 
 
 /// EvaluateInDifferentType - Given an expression that 
-/// CanEvaluateInDifferentType or CanEvaluateSExtd returns true for, actually
+/// CanEvaluateTruncated or CanEvaluateSExtd returns true for, actually
 /// insert the code to evaluate the expression.
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
                                              bool isSigned) {
+  // FIXME: use libanalysis constant folding.
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
 
@@ -699,8 +657,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   switch (CI.getOpcode()) {
   default: assert(0 && "not an integer cast");
   case Instruction::Trunc: {
-    if (!CanEvaluateInDifferentType(Src, DestTy,
-                                    Instruction::Trunc, NumCastsRemoved))
+    if (!CanEvaluateTruncated(Src, DestTy))
       return 0;
       
     // If this cast is a truncate, evaluting in a different type always
