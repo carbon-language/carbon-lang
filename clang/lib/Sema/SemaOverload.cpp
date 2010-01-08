@@ -4312,6 +4312,127 @@ void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
   Diag(Fn->getLocation(), diag::note_ovl_candidate);
 }
 
+namespace {
+
+void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
+  if (Cand->Function->isDeleted() ||
+      Cand->Function->getAttr<UnavailableAttr>()) {
+    // Deleted or "unavailable" function.
+    S.Diag(Cand->Function->getLocation(), diag::note_ovl_candidate_deleted)
+      << Cand->Function->isDeleted();
+    return;
+  } else if (FunctionTemplateDecl *FunTmpl 
+               = Cand->Function->getPrimaryTemplate()) {
+    // Function template specialization
+    // FIXME: Give a better reason!
+    S.Diag(Cand->Function->getLocation(), diag::note_ovl_template_candidate)
+      << S.getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
+                              *Cand->Function->getTemplateSpecializationArgs());
+    return;
+  }
+
+  // Normal function
+  bool errReported = false;
+  if (!Cand->Viable && Cand->Conversions.size() > 0) {
+    for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
+      const ImplicitConversionSequence &Conversion = 
+        Cand->Conversions[i];
+      if ((Conversion.ConversionKind != 
+             ImplicitConversionSequence::BadConversion) ||
+          Conversion.ConversionFunctionSet.size() == 0)
+        continue;
+      S.Diag(Cand->Function->getLocation(), 
+             diag::note_ovl_candidate_not_viable) << (i+1);
+      errReported = true;
+      for (int j = Conversion.ConversionFunctionSet.size()-1; 
+           j >= 0; j--) {
+        FunctionDecl *Func = Conversion.ConversionFunctionSet[j];
+        S.NoteOverloadCandidate(Func);
+      }
+    }
+  }
+
+  if (!errReported)
+    S.NoteOverloadCandidate(Cand->Function);
+}
+
+void NoteSurrogateCandidate(Sema &S, OverloadCandidate *Cand) {
+  // Desugar the type of the surrogate down to a function type,
+  // retaining as many typedefs as possible while still showing
+  // the function type (and, therefore, its parameter types).
+  QualType FnType = Cand->Surrogate->getConversionType();
+  bool isLValueReference = false;
+  bool isRValueReference = false;
+  bool isPointer = false;
+  if (const LValueReferenceType *FnTypeRef =
+        FnType->getAs<LValueReferenceType>()) {
+    FnType = FnTypeRef->getPointeeType();
+    isLValueReference = true;
+  } else if (const RValueReferenceType *FnTypeRef =
+               FnType->getAs<RValueReferenceType>()) {
+    FnType = FnTypeRef->getPointeeType();
+    isRValueReference = true;
+  }
+  if (const PointerType *FnTypePtr = FnType->getAs<PointerType>()) {
+    FnType = FnTypePtr->getPointeeType();
+    isPointer = true;
+  }
+  // Desugar down to a function type.
+  FnType = QualType(FnType->getAs<FunctionType>(), 0);
+  // Reconstruct the pointer/reference as appropriate.
+  if (isPointer) FnType = S.Context.getPointerType(FnType);
+  if (isRValueReference) FnType = S.Context.getRValueReferenceType(FnType);
+  if (isLValueReference) FnType = S.Context.getLValueReferenceType(FnType);
+
+  S.Diag(Cand->Surrogate->getLocation(), diag::note_ovl_surrogate_cand)
+    << FnType;
+}
+
+void NoteBuiltinOperatorCandidate(Sema &S,
+                                  const char *Opc,
+                                  SourceLocation OpLoc,
+                                  OverloadCandidate *Cand) {
+  assert(Cand->Conversions.size() <= 2 && "builtin operator is not binary");
+  std::string TypeStr("operator");
+  TypeStr += Opc;
+  TypeStr += "(";
+  TypeStr += Cand->BuiltinTypes.ParamTypes[0].getAsString();
+  if (Cand->Conversions.size() == 1) {
+    TypeStr += ")";
+    S.Diag(OpLoc, diag::note_ovl_builtin_unary_candidate) << TypeStr;
+  } else {
+    TypeStr += ", ";
+    TypeStr += Cand->BuiltinTypes.ParamTypes[1].getAsString();
+    TypeStr += ")";
+    S.Diag(OpLoc, diag::note_ovl_builtin_binary_candidate) << TypeStr;
+  }
+}
+
+void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
+                                  OverloadCandidate *Cand) {
+  unsigned NoOperands = Cand->Conversions.size();
+  for (unsigned ArgIdx = 0; ArgIdx < NoOperands; ++ArgIdx) {
+    const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
+    if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion ||
+        ICS.ConversionFunctionSet.empty())
+      continue;
+    if (CXXConversionDecl *Func = dyn_cast<CXXConversionDecl>(
+                     Cand->Conversions[ArgIdx].ConversionFunctionSet[0])) {
+      QualType FromTy = 
+        QualType(static_cast<Type*>(ICS.UserDefined.Before.FromTypePtr),0);
+      S.Diag(OpLoc, diag::note_ambiguous_type_conversion)
+        << FromTy << Func->getConversionType();
+    }
+    for (unsigned j = 0; j < ICS.ConversionFunctionSet.size(); j++) {
+      FunctionDecl *Func = 
+        Cand->Conversions[ArgIdx].ConversionFunctionSet[j];
+      S.NoteOverloadCandidate(Func);
+    }
+  }
+}
+
+} // end anonymous namespace
+
 /// PrintOverloadCandidates - When overload resolution fails, prints
 /// diagnostic messages containing the candidates in the candidate
 /// set. If OnlyViable is true, only viable candidates will be printed.
@@ -4320,122 +4441,32 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                               bool OnlyViable,
                               const char *Opc,
                               SourceLocation OpLoc) {
+  bool ReportedNonViableOperator = false;
+
   OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                              LastCand = CandidateSet.end();
-  bool Reported = false;
   for (; Cand != LastCand; ++Cand) {
-    if (Cand->Viable || !OnlyViable) {
-      if (Cand->Function) {
-        if (Cand->Function->isDeleted() ||
-            Cand->Function->getAttr<UnavailableAttr>()) {
-          // Deleted or "unavailable" function.
-          Diag(Cand->Function->getLocation(), diag::note_ovl_candidate_deleted)
-            << Cand->Function->isDeleted();
-        } else if (FunctionTemplateDecl *FunTmpl 
-                     = Cand->Function->getPrimaryTemplate()) {
-          // Function template specialization
-          // FIXME: Give a better reason!
-          Diag(Cand->Function->getLocation(), diag::note_ovl_template_candidate)
-            << getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
-                              *Cand->Function->getTemplateSpecializationArgs());
-        } else {
-          // Normal function
-          bool errReported = false;
-          if (!Cand->Viable && Cand->Conversions.size() > 0) {
-            for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
-              const ImplicitConversionSequence &Conversion = 
-                                                        Cand->Conversions[i];
-              if ((Conversion.ConversionKind != 
-                   ImplicitConversionSequence::BadConversion) ||
-                  Conversion.ConversionFunctionSet.size() == 0)
-                continue;
-              Diag(Cand->Function->getLocation(), 
-                   diag::note_ovl_candidate_not_viable) << (i+1);
-              errReported = true;
-              for (int j = Conversion.ConversionFunctionSet.size()-1; 
-                   j >= 0; j--) {
-                FunctionDecl *Func = Conversion.ConversionFunctionSet[j];
-                NoteOverloadCandidate(Func);
-              }
-            }
-          }
-          if (!errReported)
-            NoteOverloadCandidate(Cand->Function);
-        }
-      } else if (Cand->IsSurrogate) {
-        // Desugar the type of the surrogate down to a function type,
-        // retaining as many typedefs as possible while still showing
-        // the function type (and, therefore, its parameter types).
-        QualType FnType = Cand->Surrogate->getConversionType();
-        bool isLValueReference = false;
-        bool isRValueReference = false;
-        bool isPointer = false;
-        if (const LValueReferenceType *FnTypeRef =
-              FnType->getAs<LValueReferenceType>()) {
-          FnType = FnTypeRef->getPointeeType();
-          isLValueReference = true;
-        } else if (const RValueReferenceType *FnTypeRef =
-                     FnType->getAs<RValueReferenceType>()) {
-          FnType = FnTypeRef->getPointeeType();
-          isRValueReference = true;
-        }
-        if (const PointerType *FnTypePtr = FnType->getAs<PointerType>()) {
-          FnType = FnTypePtr->getPointeeType();
-          isPointer = true;
-        }
-        // Desugar down to a function type.
-        FnType = QualType(FnType->getAs<FunctionType>(), 0);
-        // Reconstruct the pointer/reference as appropriate.
-        if (isPointer) FnType = Context.getPointerType(FnType);
-        if (isRValueReference) FnType = Context.getRValueReferenceType(FnType);
-        if (isLValueReference) FnType = Context.getLValueReferenceType(FnType);
+    if (OnlyViable && !Cand->Viable)
+      continue;
 
-        Diag(Cand->Surrogate->getLocation(), diag::note_ovl_surrogate_cand)
-          << FnType;
-      } else if (OnlyViable) {
-        assert(Cand->Conversions.size() <= 2 && 
-               "builtin-binary-operator-not-binary");
-        std::string TypeStr("operator");
-        TypeStr += Opc;
-        TypeStr += "(";
-        TypeStr += Cand->BuiltinTypes.ParamTypes[0].getAsString();
-        if (Cand->Conversions.size() == 1) {
-          TypeStr += ")";
-          Diag(OpLoc, diag::note_ovl_builtin_unary_candidate) << TypeStr;
-        }
-        else {
-          TypeStr += ", ";
-          TypeStr += Cand->BuiltinTypes.ParamTypes[1].getAsString();
-          TypeStr += ")";
-          Diag(OpLoc, diag::note_ovl_builtin_binary_candidate) << TypeStr;
-        }
-      }
-      else if (!Cand->Viable && !Reported) {
-        // Non-viability might be due to ambiguous user-defined conversions,
-        // needed for built-in operators. Report them as well, but only once
-        // as we have typically many built-in candidates.
-        unsigned NoOperands = Cand->Conversions.size();
-        for (unsigned ArgIdx = 0; ArgIdx < NoOperands; ++ArgIdx) {
-          const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
-          if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion ||
-              ICS.ConversionFunctionSet.empty())
-            continue;
-          if (CXXConversionDecl *Func = dyn_cast<CXXConversionDecl>(
-                         Cand->Conversions[ArgIdx].ConversionFunctionSet[0])) {
-            QualType FromTy = 
-              QualType(
-                     static_cast<Type*>(ICS.UserDefined.Before.FromTypePtr),0);
-            Diag(OpLoc,diag::note_ambiguous_type_conversion)
-                  << FromTy << Func->getConversionType();
-          }
-          for (unsigned j = 0; j < ICS.ConversionFunctionSet.size(); j++) {
-            FunctionDecl *Func = 
-              Cand->Conversions[ArgIdx].ConversionFunctionSet[j];
-            NoteOverloadCandidate(Func);
-          }
-        }
-        Reported = true;
-      }
+    if (Cand->Function)
+      NoteFunctionCandidate(*this, Cand);
+    else if (Cand->IsSurrogate)
+      NoteSurrogateCandidate(*this, Cand);
+
+    // This a builtin candidate.  We do not, in general, want to list
+    // every possible builtin candidate.
+
+    // If 'OnlyViable' is true, there were viable candidates.
+    // This must be one of them because of the header condition.  List it.
+    else if (OnlyViable)
+      NoteBuiltinOperatorCandidate(*this, Opc, OpLoc, Cand);
+
+    // Otherwise, non-viability might be due to ambiguous user-defined
+    // conversions.  Report them exactly once.
+    else if (!Cand->Viable && !ReportedNonViableOperator) {
+      NoteAmbiguousUserConversions(*this, OpLoc, Cand);
+      ReportedNonViableOperator = true;
     }
   }
 }
