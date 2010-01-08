@@ -414,17 +414,28 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   if (Instruction *R = commonShiftTransforms(I))
     return R;
   
-  Value *Op0 = I.getOperand(0);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   
-  // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
-  if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
+  if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0)) {
+    // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
     if (CSI->isAllOnesValue())
       return ReplaceInstUsesWith(I, CSI);
+  }
+  
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+    // If the input is a SHL by the same constant (ashr (shl X, C), C), then we
+    // have a sign-extend idiom.  If the input value is known to already be sign
+    // extended enough, delete the extension.
+    Value *X;
+    if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
+        ComputeNumSignBits(X) > Op1C->getZExtValue())
+      return ReplaceInstUsesWith(I, X);
+  }            
   
   // See if we can turn a signed shr into an unsigned shr.
   if (MaskedValueIsZero(Op0,
                         APInt::getSignBit(I.getType()->getScalarSizeInBits())))
-    return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
+    return BinaryOperator::CreateLShr(Op0, Op1);
   
   // Arithmetic shifting an all-sign-bit value is a no-op.
   unsigned NumSignBits = ComputeNumSignBits(Op0);
