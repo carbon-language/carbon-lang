@@ -1221,7 +1221,8 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 
     do {
       nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1.Val.getInt()));
-      DefinedOrUnknownSVal Res = SVator.EvalEQ(DefaultSt, CondV, CaseVal);
+      DefinedOrUnknownSVal Res = SVator.EvalEQ(DefaultSt ? DefaultSt : state,
+                                               CondV, CaseVal);
             
       // Now "assume" that the case matches.
       if (const GRState* stateNew = state->Assume(Res, true)) {
@@ -1236,11 +1237,17 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 
       // Now "assume" that the case doesn't match.  Add this state
       // to the default state (if it is feasible).
-      if (const GRState *stateNew = DefaultSt->Assume(Res, false)) {
-        defaultIsFeasible = true;
-        DefaultSt = stateNew;
+      if (DefaultSt) {
+        if (const GRState *stateNew = DefaultSt->Assume(Res, false)) {
+          defaultIsFeasible = true;
+          DefaultSt = stateNew;
+        }
+        else {
+          defaultIsFeasible = false;
+          DefaultSt = NULL;
+        }
       }
-
+        
       // Concretize the next value in the range.
       if (V1.Val.getInt() == V2.Val.getInt())
         break;
