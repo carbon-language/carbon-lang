@@ -360,8 +360,8 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
                  opc, ".w\t$dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]> {
      let Inst{31-27} = 0b11101;
-     let Inst{24} = 1;
      let Inst{26-25} = 0b01;
+     let Inst{24} = 1;
      let Inst{23-21} = op23_21;
      let Inst{20} = 0; // The S bit.
    }
