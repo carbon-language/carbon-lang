@@ -476,9 +476,13 @@ static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
 /// insert the code to evaluate the expression.
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
                                              bool isSigned) {
-  // FIXME: use libanalysis constant folding.
-  if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    C = ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
+    // If we got a constantexpr back, try to simplify it with TD info.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+      C = ConstantFoldConstantExpression(CE, TD);
+    return C;
+  }
 
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
