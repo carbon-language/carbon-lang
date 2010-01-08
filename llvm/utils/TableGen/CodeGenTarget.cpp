@@ -337,6 +337,11 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
     throw "Could not find 'COPY_TO_REGCLASS' instruction!";
   const CodeGenInstruction *COPY_TO_REGCLASS = &I->second;
 
+  I = getInstructions().find("DEBUG_VALUE");
+  if (I == Instructions.end())
+    throw "Could not find 'DEBUG_VALUE' instruction!";
+  const CodeGenInstruction *DEBUG_VALUE = &I->second;
+
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
   NumberedInstructions.push_back(INLINEASM);
@@ -349,6 +354,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   NumberedInstructions.push_back(IMPLICIT_DEF);
   NumberedInstructions.push_back(SUBREG_TO_REG);
   NumberedInstructions.push_back(COPY_TO_REGCLASS);
+  NumberedInstructions.push_back(DEBUG_VALUE);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
     if (&II->second != PHI &&
         &II->second != INLINEASM &&
@@ -360,7 +366,8 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
         &II->second != INSERT_SUBREG &&
         &II->second != IMPLICIT_DEF &&
         &II->second != SUBREG_TO_REG &&
-        &II->second != COPY_TO_REGCLASS)
+        &II->second != COPY_TO_REGCLASS &&
+        &II->second != DEBUG_VALUE)
       NumberedInstructions.push_back(&II->second);
 }
 

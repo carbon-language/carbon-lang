@@ -88,7 +88,10 @@ public:
     /// only needed in cases where the register classes implied by the
     /// instructions are insufficient. The actual MachineInstrs to perform
     /// the copy are emitted with the TargetInstrInfo::copyRegToReg hook.
-    COPY_TO_REGCLASS = 10
+    COPY_TO_REGCLASS = 10,
+
+    // DEBUG_VALUE - a mapping of the llvm.dbg.value intrinsic
+    DEBUG_VALUE = 11
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }
