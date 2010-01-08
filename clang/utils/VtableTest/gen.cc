@@ -5,9 +5,7 @@
 #define N_FUNCS 128
 #define FUNCSPACING 10
 #define N_STRUCTS 300 /* 1280 */
-// FIXME: Need final overrider logic for 3 or more if we turn on virtual base
-//        class dups
-#define N_BASES 30 /* 30 */
+#define N_BASES 30
 
 const char *simple_types[] = { "bool", "char", "short", "int", "float",
 			       "double", "long double", "wchar_t", "void *",
@@ -28,12 +26,11 @@ void g(int i) {
 
 int uuid = 0;
 char base_present[N_STRUCTS][N_STRUCTS];
+char funcs_present[N_STRUCTS][N_FUNCS*FUNCSPACING];
 
 bool is_ambiguous(int s, int base) {
   for (int i = 0; i < N_STRUCTS; ++i) {
-    if ((base_present[base][i] & base_present[s][i])
-	// FIXME: todo this, we need final overrider additions
-	/*== 1 */)
+    if ((base_present[base][i] & base_present[s][i]) == 1)
       return true;
   }
   return false;
@@ -43,6 +40,10 @@ void add_bases(int s, int base) {
   for (int i = 0; i < N_STRUCTS; ++i)
     base_present[s][i] |= base_present[base][i];
 }
+
+// This contains the class that has the final override for
+// each class, for each function.
+short final_override[N_STRUCTS][N_FUNCS*FUNCSPACING];
 
 void gs(int s) {
   bool polymorphic = false;
@@ -62,11 +63,11 @@ void gs(int s) {
     g("class s");
   g(s);
   int old_base = -1;
-  if (s == 0)
+  if (s == 0 || s == 1)
     i_bases = 0;
   while (i_bases) {
     --i_bases;
-    int base = random() % s;
+    int base = random() % (s-1) + 1;
     if (!base_present[s][base]) {
       if (is_ambiguous(s, base))
 	continue;
@@ -79,7 +80,8 @@ void gs(int s) {
       if (random()%8 == 0) {
 	// PARAM: 1/8th the bases are virtual
 	g("virtual ");
-	polymorphic = true;
+        // We have a vtable and rtti, but technically we're not polymorphic
+	// polymorphic = true;
 	base_type = 3;
       }
       switch (random()%8) {
@@ -118,7 +120,7 @@ void gs(int s) {
   }
 
   /* Virtual functions */
-  static int funcs[N_FUNCS];
+  static int funcs[N_FUNCS*FUNCSPACING];
   // PARAM: 1/2 of all structs should have no virtual functions
   int n_funcs = random() % (N_FUNCS*2);
   if (n_funcs > N_FUNCS)
@@ -128,7 +130,63 @@ void gs(int s) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
     g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid); gl("); }");
+    funcs_present[s][fn] = 1;
+    final_override[s][fn] = s;
     old_func = fn;
+  }
+
+  // Add required overriders for correctness
+  for (int i = 0; i < n_bases; ++i) {
+    // For each base
+    int base = bases[i];
+    for (int fn = 0; fn < N_FUNCS*FUNCSPACING; ++fn) {
+      // For each possible function
+      int new_base = final_override[base][fn];
+      if (new_base == 0)
+        // If the base didn't have a final overrider, skip
+        continue;
+
+      int prev_base = final_override[s][fn];
+      if (prev_base == s)
+        // Skip functions defined in this class
+        continue;
+
+      // If we don't want to change the info, skip
+      if (prev_base == new_base)
+        continue;
+      
+      if (prev_base == 0) {
+        // record the final override
+        final_override[s][fn] = new_base;
+        continue;
+      }
+        
+      if (base_present[prev_base][new_base]) {
+        // The previous base dominates the new base, no update necessary
+        fprintf(stderr, "// No override for fun%d in s%d as s%d dominates s%d.\n",
+                fn, s, prev_base, new_base);
+        continue;
+      }
+
+      if (base_present[new_base][prev_base]) {
+        // The new base dominates the old base, no override necessary
+        fprintf(stderr, "// No override for fun%d in s%d as s%d dominates s%d.\n",
+                fn, s, new_base, prev_base);
+        // record the final override
+        final_override[s][fn] = new_base;
+        continue;
+      }
+
+      printf("// Found we needed override for fun%d in s%d.\n", fn, s);
+
+      // record the final override
+      funcs[n_funcs++] = fn;
+      if (n_funcs == (N_FUNCS*FUNCSPACING-1))
+        abort();
+      g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid); gl("); }");
+      funcs_present[s][fn] = 1;
+      final_override[s][fn] = s;
+    }
   }
 
   gl("public:");
@@ -218,7 +276,7 @@ main(int argc, char **argv) {
   gl("");
   // PARAM: Randomly size testcases or large testcases?
   int n_structs = /* random() % */ N_STRUCTS;
-  for (int i = 0; i < n_structs; ++i)
+  for (int i = 1; i < n_structs; ++i)
     gs(i);
   gl("int main() {");
   gl("  printf(\"%llx\\n\", sum);");

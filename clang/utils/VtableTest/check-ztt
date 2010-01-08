@@ -4,7 +4,7 @@ N_STRUCTS=300
 
 # Utility routine to "hand" check VTTs.
 
-let i=0;
+let i=1;
 while [ $i != $N_STRUCTS ]; do
   sed -n "/^__ZTT.*s$i:/,/\.[sg][el]/p" test-clang.s |
     grep -v '\.[sg][el]' | sed 's/(\([0-9][0-9]*\))/\1/' >test-clang-ztt
