@@ -86,6 +86,8 @@ struct foo {
   NSDate* f;
 };
 
+CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
+
 CFAbsoluteTime f4() {
   struct foo x;
   

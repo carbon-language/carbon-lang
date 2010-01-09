@@ -19,6 +19,9 @@ __attribute__((nonnull(1,3)));
 extern void func4 (void (^block1)(), void (^block2)()) __attribute__((nonnull(1)))
 __attribute__((nonnull(2)));
 
+void func6();
+void func7();
+
 void
 foo (int i1, int i2, int i3, void (^cp1)(), void (^cp2)(), void (^cp3)())
 {

@@ -22,7 +22,8 @@ void h() {
 }
 
 void f2() {
-  fprintf(0, "foo"); // expected-error{{implicit declaration of 'fprintf' requires inclusion of the header <stdio.h>}}
+  fprintf(0, "foo"); // expected-error{{implicit declaration of 'fprintf' requires inclusion of the header <stdio.h>}} \
+   expected-warning {{implicit declaration of function 'fprintf' is invalid in C99}}
 }
 
 // PR2892

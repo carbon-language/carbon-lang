@@ -76,6 +76,7 @@ static int funk(char *s) {
   else 
     return 0;
 }
+void next();
 void foo4() {
   int (^xx)(const char *s) = ^(char *s) { return 1; }; // expected-error {{incompatible block pointer types initializing 'int (^)(char *)', expected 'int (^)(char const *)'}}
   int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (char *)', expected 'int (*)(char const *)'}}

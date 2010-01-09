@@ -11,6 +11,8 @@ typedef __darwin_socklen_t socklen_t;
 struct sockaddr { sa_family_t sa_family; };
 struct sockaddr_storage {};
 
+void getsockname();
+
 void f(int sock) {
   struct sockaddr_storage storage;
   struct sockaddr* sockaddr = (struct sockaddr*)&storage;

@@ -8,6 +8,7 @@ int printf(const char *restrict, ...);
 int snprintf(char *restrict, size_t, const char *restrict, ...);
 int sprintf(char *restrict, const char *restrict, ...);
 int vasprintf(char **, const char *, va_list);
+int asprintf(char **, const char *, ...);
 int vfprintf(FILE *, const char *restrict, va_list);
 int vprintf(const char *restrict, va_list);
 int vsnprintf(char *, size_t, const char *, va_list);

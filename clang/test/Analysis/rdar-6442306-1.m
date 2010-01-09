@@ -13,6 +13,8 @@ typedef struct {
   QuxSize size;
 } __Request__SetPortalSize_t;
 
+double __Foo_READSWAP__double(double*);
+
 static __inline__ bar_return_t
 __Beeble_check__Request__SetPortalSize_t(__attribute__((__unused__)) __Request__SetPortalSize_t *In0P) {
   if (In0P->Foo.int_rep != Foo_record.int_rep) {

@@ -4,7 +4,7 @@
 
 
 
-
+int ec(int, int);
 
 
  void x() {

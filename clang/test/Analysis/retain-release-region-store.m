@@ -93,6 +93,8 @@ typedef unsigned long NSUInteger;
 // Test to see if we *issue* an error when we store the pointer
 // to a struct.  This differs from basic store.
 
+CFAbsoluteTime CFAbsoluteTimeGetCurrent(void);
+
 struct foo {
   NSDate* f;
 };

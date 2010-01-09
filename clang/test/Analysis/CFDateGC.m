@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -disable-free %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=basic %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -analyzer-constraints=range %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=basic -verify -fobjc-gc -disable-free %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify -fobjc-gc %s  -Wno-implicit-function-declaration
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify -fobjc-gc %s  -Wno-implicit-function-declaration
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -35,6 +35,8 @@ static __inline__ __attribute__((always_inline)) id NSMakeCollectable(CFTypeRef 
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
+
+CFAbsoluteTime CFAbsoluteTimeGetCurrent();
 
 CFAbsoluteTime f1_use_after_release() {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();

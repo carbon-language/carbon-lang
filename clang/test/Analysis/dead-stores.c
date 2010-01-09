@@ -17,6 +17,8 @@ void f2(void *b) {
  // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }
 
+int f();
+
 void f3() {
   int r;
   if ((r = f()) != 0) { // no-warning

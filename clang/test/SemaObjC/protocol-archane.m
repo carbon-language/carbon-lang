@@ -5,6 +5,7 @@
 - (void) bar;
 @end
 
+void bar();
 void foo(id x) {
   bar((short<SomeProtocol>)x); // expected-error {{expected ')'}} expected-note {{to match this '('}}
   bar((<SomeProtocol>)x);      // expected-warning {{protocol qualifiers without 'id' is archaic}}

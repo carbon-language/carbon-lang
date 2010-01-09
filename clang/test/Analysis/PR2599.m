@@ -53,6 +53,8 @@ extern NSString * const NSXMLParserErrorDomain ;
 
 static char *lorem = "fooBarBaz";
 
+void NSLog(NSString *, ...);
+
 int main (int argc, const char * argv[]) {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   NSString *tmp1 = NSSTRINGWRAPPER(lorem, 6); // no-warning

@@ -64,6 +64,7 @@ int test4(int argc) {  // rdar://6251437
 }
 
 
+void bar(void*);
 // rdar://6257721 - reference to static/global is byref by default.
 static int test5g;
 void test5() {
@@ -156,6 +157,8 @@ void test16(__block int i) { // expected-error {{__block attribute not allowed, 
   __block int a[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
   __block int (*ap)[size]; // expected-error {{__block attribute not allowed on declaration with a variably modified type}}
 }
+
+void f();
 
 void test17() {
   void (^bp)(int);

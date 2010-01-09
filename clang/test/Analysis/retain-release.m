@@ -881,6 +881,8 @@ void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, 
 // Test of handling objects whose references "escape" to containers.
 //===----------------------------------------------------------------------===//
 
+void CFDictionaryAddValue();
+
 // <rdar://problem/6539791>
 void rdar_6539791(CFMutableDictionaryRef y, void* key, void* val_key) {
   CFMutableDictionaryRef x = CFDictionaryCreateMutable(kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);

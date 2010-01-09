@@ -2,6 +2,8 @@
 
 static void (*fp0)(void) __attribute__((noreturn));
 
+void fatal();
+
 static void __attribute__((noreturn)) f0(void) {
   fatal();
 } // expected-warning {{function declared 'noreturn' should not return}}

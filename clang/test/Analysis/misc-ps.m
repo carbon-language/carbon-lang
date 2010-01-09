@@ -460,6 +460,8 @@ void test_block_cast() {
   (void (^)(void *))test_block_cast_aux(); // expected-warning{{expression result unused}}
 }
 
+int OSAtomicCompareAndSwap32Barrier();
+
 // Test comparison of 'id' instance variable to a null void* constant after
 // performing an OSAtomicCompareAndSwap32Barrier.
 // This previously was a crash in RegionStoreManager.
@@ -492,6 +494,8 @@ void test_invalidate_cast_int() {
   if (i < 0)
     return;
 }
+
+int ivar_getOffset();
 
 // Reduced from a crash involving the cast of an Objective-C symbolic region to
 // 'char *'

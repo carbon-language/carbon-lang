@@ -20,6 +20,7 @@ void f4() {
 // Test uninitialized value due to part of the structure being uninitialized.
 struct TestUninit { int x; int y; };
 struct TestUninit test_uninit_aux();
+void test_unit_aux2(int);
 void test_uninit_pos() {
   struct TestUninit v1 = { 0, 0 };
   struct TestUninit v2 = test_uninit_aux();
