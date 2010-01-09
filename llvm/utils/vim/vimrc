@@ -35,7 +35,7 @@ augroup END
 " Set a few indentation parameters. See the VIM help for cinoptions-values for
 " details.  These aren't absolute rules; they're just an approximation of
 " common style in LLVM source.
-set cinoptions=:0,g0,(0,Ws
+set cinoptions=:0,g0,(0,Ws,l1
 " Add and delete spaces in increments of `shiftwidth' for tabs
 set smarttab
 
