@@ -410,9 +410,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__SSP_ALL__", "2");
 
   // Get other target #defines.
-  std::vector<char> Buf;
-  TI.getTargetDefines(LangOpts, Buf);
-  Builder.append(llvm::StringRef(&Buf[0], Buf.size()));
+  TI.getTargetDefines(LangOpts, Builder);
 }
 
 // Initialize the remapping of files to alternative contents, e.g.,

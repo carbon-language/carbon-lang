@@ -30,6 +30,7 @@ class StringRef;
 namespace clang {
 class Diagnostic;
 class LangOptions;
+class MacroBuilder;
 class SourceLocation;
 class SourceManager;
 class TargetOptions;
@@ -209,7 +210,7 @@ public:
   /// getTargetDefines - Appends the target-specific #define values for this
   /// target set to the specified buffer.
   virtual void getTargetDefines(const LangOptions &Opts,
-                                std::vector<char> &DefineBuffer) const = 0;
+                                MacroBuilder &Builder) const = 0;
 
 
   /// getTargetBuiltins - Return information about target-specific builtins for
