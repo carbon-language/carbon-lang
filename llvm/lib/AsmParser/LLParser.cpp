@@ -2779,6 +2779,10 @@ bool LLParser::ParseFunctionBody(Function &Fn) {
   
   PerFunctionState PFS(*this, Fn, FunctionNumber);
 
+  // We need at least one basic block.
+  if (Lex.getKind() == lltok::rbrace || Lex.getKind() == lltok::kw_end)
+    return TokError("function body requires at least one basic block");
+  
   while (Lex.getKind() != lltok::rbrace && Lex.getKind() != lltok::kw_end)
     if (ParseBasicBlock(PFS)) return true;
 
