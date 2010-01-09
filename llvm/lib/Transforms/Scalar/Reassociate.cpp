@@ -792,6 +792,11 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
     Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
     SmallVector<Value*, 4> NewMulOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      // Only try to remove factors from expressions we're allowed to.
+      BinaryOperator *BOp = dyn_cast<BinaryOperator>(Ops[i].Op);
+      if (BOp == 0 || BOp->getOpcode() != Instruction::Mul || !BOp->use_empty())
+        continue;
+      
       if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
         NewMulOps.push_back(V);
         Ops.erase(Ops.begin()+i);
