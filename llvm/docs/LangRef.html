@@ -678,9 +678,9 @@ define i32 @main() {                                        <i>; i32()* </i>
       (e.g. by passing things in registers).  This calling convention allows the
       target to use whatever tricks it wants to produce fast code for the
       target, without having to conform to an externally specified ABI
-      (Application Binary Interface).  Implementations of this convention should
-      allow arbitrary <a href="CodeGenerator.html#tailcallopt">tail call
-      optimization</a> to be supported.  This calling convention does not
+      (Application Binary Interface).
+      <a href="CodeGenerator.html#tailcallopt">Tail calls can only be optimized
+      when this convention is used.</a>  This calling convention does not
       support varargs and requires the prototype of all callees to exactly match
       the prototype of the function definition.</dd>
 
@@ -4993,15 +4993,31 @@ Loop:       ; Infinite loop that counts from 0 on up...
 <p>This instruction requires several arguments:</p>
 
 <ol>
-  <li>The optional "tail" marker indicates whether the callee function accesses
-      any allocas or varargs in the caller.  If the "tail" marker is present,
-      the function call is eligible for tail call optimization.  Note that calls
-      may be marked "tail" even if they do not occur before
-      a <a href="#i_ret"><tt>ret</tt></a> instruction.</li>
+  <li>The optional "tail" marker indicates that the callee function does not
+      access any allocas or varargs in the caller.  Note that calls may be
+      marked "tail" even if they do not occur before
+      a <a href="#i_ret"><tt>ret</tt></a> instruction.  If the "tail" marker is
+      present, the function call is eligible for tail call optimization,
+      but <a href="CodeGenerator.html#tailcallopt">might not in fact be
+      optimized into a jump</a>.  As of this writing, the extra requirements for
+      a call to actually be optimized are:
+      <ul>
+        <li>Caller and callee both have the calling
+            convention <tt>fastcc</tt>.</li>
+        <li>The call is in tail position (ret immediately follows call and ret
+            uses value of call or is void).</li>
+        <li>Option <tt>-tailcallopt</tt> is enabled,
+            or <code>llvm::PerformTailCallOpt</code> is <code>true</code>.</li>
+        <li><a href="CodeGenerator.html#tailcallopt">Platform specific
+            constraints are met.</a></li>
+      </ul>
+  </li>
 
   <li>The optional "cconv" marker indicates which <a href="#callingconv">calling
       convention</a> the call should use.  If none is specified, the call
-      defaults to using C calling conventions.</li>
+      defaults to using C calling conventions.  The calling convention of the
+      call must match the calling convention of the target function, or else the
+      behavior is undefined.</li>
 
   <li>The optional <a href="#paramattrs">Parameter Attributes</a> list for
       return values. Only '<tt>zeroext</tt>', '<tt>signext</tt>', and
