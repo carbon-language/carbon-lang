@@ -29,6 +29,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
@@ -45,7 +46,7 @@ AggregateArgsOpt("aggregate-extracted-args", cl::Hidden,
 namespace {
   class CodeExtractor {
     typedef std::vector<Value*> Values;
-    std::set<BasicBlock*> BlocksToExtract;
+    SetVector<BasicBlock*> BlocksToExtract;
     DominatorTree* DT;
     bool AggregateArgs;
     unsigned NumExitBlocks;
@@ -135,7 +136,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // We only want to code extract the second block now, and it becomes the new
   // header of the region.
   BasicBlock *OldPred = Header;
-  BlocksToExtract.erase(OldPred);
+  BlocksToExtract.remove(OldPred);
   BlocksToExtract.insert(NewBB);
   Header = NewBB;
 
@@ -180,7 +181,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 }
 
 void CodeExtractor::splitReturnBlocks() {
-  for (std::set<BasicBlock*>::iterator I = BlocksToExtract.begin(),
+  for (SetVector<BasicBlock*>::iterator I = BlocksToExtract.begin(),
          E = BlocksToExtract.end(); I != E; ++I)
     if (ReturnInst *RI = dyn_cast<ReturnInst>((*I)->getTerminator())) {
       BasicBlock *New = (*I)->splitBasicBlock(RI, (*I)->getName()+".ret");
@@ -206,7 +207,7 @@ void CodeExtractor::splitReturnBlocks() {
 //
 void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
   std::set<BasicBlock*> ExitBlocks;
-  for (std::set<BasicBlock*>::const_iterator ci = BlocksToExtract.begin(),
+  for (SetVector<BasicBlock*>::const_iterator ci = BlocksToExtract.begin(),
        ce = BlocksToExtract.end(); ci != ce; ++ci) {
     BasicBlock *BB = *ci;
 
@@ -482,7 +483,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   std::map<BasicBlock*, BasicBlock*> ExitBlockMap;
 
   unsigned switchVal = 0;
-  for (std::set<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
+  for (SetVector<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
          e = BlocksToExtract.end(); i != e; ++i) {
     TerminatorInst *TI = (*i)->getTerminator();
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
@@ -633,7 +634,7 @@ void CodeExtractor::moveCodeToFunction(Function *newFunction) {
   Function::BasicBlockListType &oldBlocks = oldFunc->getBasicBlockList();
   Function::BasicBlockListType &newBlocks = newFunction->getBasicBlockList();
 
-  for (std::set<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
+  for (SetVector<BasicBlock*>::const_iterator i = BlocksToExtract.begin(),
          e = BlocksToExtract.end(); i != e; ++i) {
     // Delete the basic block from the old function, and the list of blocks
     oldBlocks.remove(*i);
