@@ -2078,10 +2078,10 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     assert(((Callee.getOpcode() == ISD::Register &&
                (cast<RegisterSDNode>(Callee)->getReg() == X86::EAX ||
-                cast<RegisterSDNode>(Callee)->getReg() == X86::R9)) ||
+                cast<RegisterSDNode>(Callee)->getReg() == X86::R11)) ||
               Callee.getOpcode() == ISD::TargetExternalSymbol ||
               Callee.getOpcode() == ISD::TargetGlobalAddress) &&
-             "Expecting an global address, external symbol, or register");
+           "Expecting a global address, external symbol, or scratch register");
 
     return DAG.getNode(X86ISD::TC_RETURN, dl,
                        NodeTys, &Ops[0], Ops.size());
