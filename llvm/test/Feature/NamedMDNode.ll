@@ -6,4 +6,4 @@
 !llvm.stuff = !{!0, !1, null}
 
 !samename = !{!0, !1}
-define void @samename() {}
+declare void @samename()
