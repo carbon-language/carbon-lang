@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include <algorithm>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
