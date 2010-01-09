@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze -disable-output | grep {Loop bb: backedge-taken count is (-1 + (-1 \\* %x) + %y)}
+; RUN: opt < %s -scalar-evolution -analyze -disable-output | grep {Loop %bb: backedge-taken count is (-1 + (-1 \\* %x) + %y)}
 ; PR1597
 
 define i32 @f(i32 %x, i32 %y) {

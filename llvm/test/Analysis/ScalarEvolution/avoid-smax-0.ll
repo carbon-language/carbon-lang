@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze -disable-output | grep {Loop bb3: backedge-taken count is (-1 + %n)}
+; RUN: opt < %s -scalar-evolution -analyze -disable-output | grep {Loop %bb3: backedge-taken count is (-1 + %n)}
 
 ; We don't want to use a max in the trip count expression in
 ; this testcase.

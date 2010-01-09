@@ -1,5 +1,5 @@
 ; RUN: opt < %s -disable-output -scalar-evolution -analyze \
-; RUN:  | grep { -->  (sext i. \{.\*,+,.\*\}<bb1> to i64)} | count 5
+; RUN:  | grep { -->  (sext i. \{.\*,+,.\*\}<%bb1> to i64)} | count 5
 
 ; Don't convert (sext {...,+,...}) to {sext(...),+,sext(...)} in cases
 ; where the trip count is not within range.

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output \
-; RUN:  | grep {Loop bb: Unpredictable backedge-taken count\\.}
+; RUN:  | grep {Loop %bb: Unpredictable backedge-taken count\\.}
 
 ; ScalarEvolution can't compute a trip count because it doesn't know if
 ; dividing by the stride will have a remainder. This could theoretically

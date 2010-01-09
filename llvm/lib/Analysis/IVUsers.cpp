@@ -128,8 +128,9 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
     if (!AddRecStride->properlyDominates(Header, DT))
       return false;
 
-    DEBUG(dbgs() << "[" << L->getHeader()->getName()
-                 << "] Variable stride: " << *AddRec << "\n");
+    DEBUG(dbgs() << "[";
+          WriteAsOperand(dbgs(), L->getHeader(), /*PrintType=*/false);
+          dbgs() << "] Variable stride: " << *AddRec << "\n");
   }
 
   Stride = AddRecStride;

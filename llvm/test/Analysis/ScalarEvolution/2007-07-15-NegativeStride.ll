@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {Loop bb: backedge-taken count is 100}
+; RUN:   -scalar-evolution-max-iterations=0 | grep {Loop %bb: backedge-taken count is 100}
 ; PR1533
 
 @array = weak global [101 x i32] zeroinitializer, align 32		; <[100 x i32]*> [#uses=1]

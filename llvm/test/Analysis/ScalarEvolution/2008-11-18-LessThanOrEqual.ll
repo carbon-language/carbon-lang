@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output |& \
-; RUN: grep {Loop bb: backedge-taken count is (7 + (-1 \\* %argc))}
+; RUN: grep {Loop %bb: backedge-taken count is (7 + (-1 \\* %argc))}
 ; XFAIL: *
 
 define i32 @main(i32 %argc, i8** %argv) nounwind {

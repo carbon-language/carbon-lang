@@ -316,7 +316,9 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << "{" << *Operands[0];
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
     OS << ",+," << *Operands[i];
-  OS << "}<" << L->getHeader()->getName() + ">";
+  OS << "}<";
+  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
+  OS << ">";
 }
 
 void SCEVFieldOffsetExpr::print(raw_ostream &OS) const {
@@ -5193,7 +5195,9 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     PrintLoopInfo(OS, SE, *I);
 
-  OS << "Loop " << L->getHeader()->getName() << ": ";
+  OS << "Loop ";
+  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
+  OS << ": ";
 
   SmallVector<BasicBlock *, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
@@ -5206,8 +5210,10 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
     OS << "Unpredictable backedge-taken count. ";
   }
 
-  OS << "\n";
-  OS << "Loop " << L->getHeader()->getName() << ": ";
+  OS << "\n"
+        "Loop ";
+  WriteAsOperand(OS, L->getHeader(), /*PrintType=*/false);
+  OS << ": ";
 
   if (!isa<SCEVCouldNotCompute>(SE->getMaxBackedgeTakenCount(L))) {
     OS << "max backedge-taken count is " << *SE->getMaxBackedgeTakenCount(L);
@@ -5227,7 +5233,9 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
   // const isn't dangerous.
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
-  OS << "Classifying expressions for: " << F->getName() << "\n";
+  OS << "Classifying expressions for: ";
+  WriteAsOperand(OS, F, /*PrintType=*/false);
+  OS << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isSCEVable(I->getType())) {
       OS << *I << '\n';
@@ -5256,7 +5264,9 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
       OS << "\n";
     }
 
-  OS << "Determining loop execution counts for: " << F->getName() << "\n";
+  OS << "Determining loop execution counts for: ";
+  WriteAsOperand(OS, F, /*PrintType=*/false);
+  OS << "\n";
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     PrintLoopInfo(OS, &SE, *I);
 }
