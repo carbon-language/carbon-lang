@@ -68,3 +68,10 @@ ComparatorBlock test_return_block_neg(void) {
   return b; // no-warning
 }
 
+// <rdar://problem/7523821>
+int *rdar_7523821_f2() {
+  int a[3];
+  return a; // expected-warning 2 {{ddress of stack memory associated with local variable 'a' returned}}
+};
+
+

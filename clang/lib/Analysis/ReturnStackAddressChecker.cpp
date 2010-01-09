@@ -67,6 +67,9 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
   llvm::raw_svector_ostream os(buf);
   SourceRange range;
   
+  // Get the base region, stripping away fields and elements.
+  R = R->getBaseRegion();
+  
   // Check if the region is a compound literal.
   if (const CompoundLiteralRegion* CR = dyn_cast<CompoundLiteralRegion>(R)) {    
     const CompoundLiteralExpr* CL = CR->getLiteralExpr();
@@ -92,13 +95,18 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
        << C.getSourceManager().getInstantiationLineNumber(L)
        << " returned to caller";
   }
-  else {
+  else if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
     os << "Address of stack memory associated with local variable '"
-        << R->getString() << "' returned.";
+       << VR->getString() << "' returned";
+    range = VR->getDecl()->getSourceRange();
+  }
+  else {
+    assert(false && "Invalid region in ReturnStackAddressChecker.");
+    return;
   }
 
   RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
-  report->addRange(RS->getSourceRange());
+  report->addRange(RetE->getSourceRange());
   if (range.isValid())
     report->addRange(range);
   
