@@ -793,8 +793,10 @@ bool BitcodeReader::ParseMetadata() {
           Elts.push_back(NULL);
         else {
           Value *MD = MDValueList.getValueFwdRef(Record[i]);
-          if (MDNode *B = dyn_cast_or_null<MDNode>(MD))
+          if (MDNode *B = dyn_cast<MDNode>(MD))
             Elts.push_back(B);
+          else
+            return Error("Malformed metadata record");
         }
       }
       Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(),
