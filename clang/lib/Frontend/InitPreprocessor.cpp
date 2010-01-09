@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
@@ -28,29 +29,32 @@ using namespace clang;
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
-static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
+static void DefineBuiltinMacro(std::vector<char> &Buf, llvm::StringRef Macro,
                                Diagnostic *Diags = 0) {
   const char Command[] = "#define ";
   Buf.insert(Buf.end(), Command, Command+strlen(Command));
-  if (const char *Equal = strchr(Macro, '=')) {
+  std::pair<llvm::StringRef, llvm::StringRef> MacroPair = Macro.split('=');
+  llvm::StringRef MacroName = MacroPair.first;
+  llvm::StringRef MacroBody = MacroPair.second;
+  if (!MacroBody.empty()) {
     // Turn the = into ' '.
-    Buf.insert(Buf.end(), Macro, Equal);
+    Buf.insert(Buf.end(), MacroName.begin(), MacroName.end());
     Buf.push_back(' ');
 
     // Per GCC -D semantics, the macro ends at \n if it exists.
-    const char *End = strpbrk(Equal, "\n\r");
+    const char *End = strpbrk(MacroBody.data(), "\n\r");
     if (End) {
       assert(Diags && "Unexpected macro with embedded newline!");
       Diags->Report(diag::warn_fe_macro_contains_embedded_newline)
-        << std::string(Macro, Equal);
+        << MacroName;
     } else {
-      End = Equal+strlen(Equal);
+      End = MacroBody.end();
     }
 
-    Buf.insert(Buf.end(), Equal+1, End);
+    Buf.insert(Buf.end(), MacroBody.begin(), End);
   } else {
     // Push "macroname 1".
-    Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
+    Buf.insert(Buf.end(), Macro.begin(), Macro.end());
     Buf.push_back(' ');
     Buf.push_back('1');
   }
