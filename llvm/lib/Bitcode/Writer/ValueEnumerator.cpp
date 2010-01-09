@@ -135,7 +135,7 @@ void ValueEnumerator::setInstructionID(const Instruction *I) {
 }
 
 unsigned ValueEnumerator::getValueID(const Value *V) const {
-  if (isa<MetadataBase>(V) || isa<NamedMDNode>(V)) {
+  if (isa<MetadataBase>(V)) {
     ValueMapType::const_iterator I = MDValueMap.find(V);
     assert(I != MDValueMap.end() && "Value not in slotcalculator!");
     return I->second-1;
