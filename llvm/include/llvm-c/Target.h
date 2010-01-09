@@ -96,7 +96,7 @@ char *LLVMCopyStringRepOfTargetData(LLVMTargetDataRef);
 /** Returns the byte order of a target, either LLVMBigEndian or
     LLVMLittleEndian.
     See the method llvm::TargetData::isLittleEndian. */
-LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef);
+enum LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef);
 
 /** Returns the pointer size in bytes for a target.
     See the method llvm::TargetData::getPointerSize. */
