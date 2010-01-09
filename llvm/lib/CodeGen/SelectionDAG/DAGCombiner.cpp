@@ -2577,10 +2577,14 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   // sext_inreg.
   if (N1C && N0.getOpcode() == ISD::SHL && N1 == N0.getOperand(1)) {
     unsigned LowBits = OpSizeInBits - (unsigned)N1C->getZExtValue();
-    EVT EVT = EVT::getIntegerVT(*DAG.getContext(), LowBits);
-    if ((!LegalOperations || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT)))
+    EVT ExtVT = EVT::getIntegerVT(*DAG.getContext(), LowBits);
+    if (VT.isVector())
+      ExtVT = EVT::getVectorVT(*DAG.getContext(),
+                               ExtVT, VT.getVectorNumElements());
+    if ((!LegalOperations ||
+         TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, ExtVT)))
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT,
-                         N0.getOperand(0), DAG.getValueType(EVT));
+                         N0.getOperand(0), DAG.getValueType(ExtVT));
   }
 
   // fold (sra (sra x, c1), c2) -> (sra x, (add c1, c2))
@@ -3064,9 +3068,9 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // See if the value being truncated is already sign extended.  If so, just
     // eliminate the trunc/sext pair.
     SDValue Op = N0.getOperand(0);
-    unsigned OpBits   = Op.getValueType().getSizeInBits();
-    unsigned MidBits  = N0.getValueType().getSizeInBits();
-    unsigned DestBits = VT.getSizeInBits();
+    unsigned OpBits   = Op.getValueType().getScalarType().getSizeInBits();
+    unsigned MidBits  = N0.getValueType().getScalarType().getSizeInBits();
+    unsigned DestBits = VT.getScalarType().getSizeInBits();
     unsigned NumSignBits = DAG.ComputeNumSignBits(Op);
 
     if (OpBits == DestBits) {
@@ -3089,12 +3093,12 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // fold (sext (truncate x)) -> (sextinreg x).
     if (!LegalOperations || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG,
                                                  N0.getValueType())) {
-      if (Op.getValueType().bitsLT(VT))
+      if (OpBits < DestBits)
         Op = DAG.getNode(ISD::ANY_EXTEND, N0.getDebugLoc(), VT, Op);
-      else if (Op.getValueType().bitsGT(VT))
+      else if (OpBits > DestBits)
         Op = DAG.getNode(ISD::TRUNCATE, N0.getDebugLoc(), VT, Op);
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, N->getDebugLoc(), VT, Op,
-                         DAG.getValueType(N0.getValueType().getScalarType()));
+                         DAG.getValueType(N0.getValueType()));
     }
   }
 
@@ -3547,7 +3551,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   if (VT.isVector())
     return SDValue();
 
-  // Special case: SIGN_EXTEND_INREG is basically truncating to EVT then
+  // Special case: SIGN_EXTEND_INREG is basically truncating to ExtVT then
   // extended to VT.
   if (Opc == ISD::SIGN_EXTEND_INREG) {
     ExtType = ISD::SEXTLOAD;
@@ -3621,7 +3625,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   EVT VT = N->getValueType(0);
   EVT EVT = cast<VTSDNode>(N1)->getVT();
   unsigned VTBits = VT.getScalarType().getSizeInBits();
-  unsigned EVTBits = EVT.getSizeInBits();
+  unsigned EVTBits = EVT.getScalarType().getSizeInBits();
 
   // fold (sext_in_reg c1) -> c1
   if (isa<ConstantSDNode>(N0) || N0.getOpcode() == ISD::UNDEF)

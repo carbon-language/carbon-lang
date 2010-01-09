@@ -2293,12 +2293,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
     EVT VT = Node->getValueType(0);
     EVT ShiftAmountTy = TLI.getShiftAmountTy();
-    if (VT.isVector()) {
+    if (VT.isVector())
       ShiftAmountTy = VT;
-      VT = VT.getVectorElementType();
-    }
-    unsigned BitsDiff = VT.getSizeInBits() -
-                        ExtraVT.getSizeInBits();
+    unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
+                        ExtraVT.getScalarType().getSizeInBits();
     SDValue ShiftCst = DAG.getConstant(BitsDiff, ShiftAmountTy);
     Tmp1 = DAG.getNode(ISD::SHL, dl, Node->getValueType(0),
                        Node->getOperand(0), ShiftCst);

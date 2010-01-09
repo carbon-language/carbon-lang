@@ -179,8 +179,11 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FRINT:
   case ISD::FNEARBYINT:
   case ISD::FFLOOR:
-  case ISD::SIGN_EXTEND_INREG:
     QueryType = Node->getValueType(0);
+    break;
+  case ISD::SIGN_EXTEND_INREG:
+  case ISD::FP_ROUND_INREG:
+    QueryType = cast<VTSDNode>(Node->getOperand(1))->getVT();
     break;
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
