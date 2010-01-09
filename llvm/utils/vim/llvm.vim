@@ -71,7 +71,8 @@ syn keyword llvmBoolean true false
 syn keyword llvmConstant zeroinitializer undef null
 syn match   llvmComment /;.*$/
 syn region  llvmString start=/"/ skip=/\\"/ end=/"/
-syn match   llvmLabel /[\-a-zA-Z\$._0-9]*:/
+syn match   llvmLabel /[-a-zA-Z$._][-a-zA-Z$._0-9]*:/
+syn match   llvmIdentifier /[%@][-a-zA-Z$._][-a-zA-Z$._0-9]*/
 
 " Syntax-highlight dejagnu test commands.
 syn match  llvmSpecialComment /;\s*RUN:.*$/
@@ -101,6 +102,7 @@ if version >= 508 || !exists("did_c_syn_inits")
   HiLink llvmConstant Constant
   HiLink llvmSpecialComment SpecialComment
   HiLink llvmError Error
+  HiLink llvmIdentifier Identifier
 
   delcommand HiLink
 endif
