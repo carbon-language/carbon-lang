@@ -2171,6 +2171,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new DarwinX86_64TargetInfo(T);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_64TargetInfo>(T);
+    case llvm::Triple::DragonFly:
+      return new DragonFlyBSDTargetInfo<X86_64TargetInfo>(T);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<X86_64TargetInfo>(T);
     case llvm::Triple::OpenBSD:

@@ -477,6 +477,9 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
                                 "i686-apple-darwin8", "", "", triple);
     break;
+  case llvm::Triple::DragonFly:
+    AddPath("/usr/include/c++/4.1", System, true, false, false);
+    break;
   case llvm::Triple::Linux:
     // Exherbo (2009-10-26)
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
@@ -553,9 +556,6 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
         "i686-pc-linux-gnu", "", "", triple);
     break;
   case llvm::Triple::FreeBSD:
-    // DragonFly
-    AddPath("/usr/include/c++/4.1", System, true, false, false);
-    // FreeBSD
     AddPath("/usr/include/c++/4.2", System, true, false, false);
     break;
   case llvm::Triple::Solaris:
