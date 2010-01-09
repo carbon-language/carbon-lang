@@ -36,12 +36,12 @@ typedef enum {
 /* Verifies that a module is valid, taking the specified action if not.
    Optionally returns a human-readable description of any invalid constructs.
    OutMessage must be disposed with LLVMDisposeMessage. */
-int LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
-                     char **OutMessage);
+LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
+                          char **OutMessage);
 
 /* Verifies that a single function is valid, taking the specified action. Useful
    for debugging. */
-int LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action);
+LLVMBool LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action);
 
 /* Open up a ghostview window that displays the CFG of the current function.
    Useful for debugging. */

@@ -36,7 +36,7 @@ typedef struct LLVMOpaqueExecutionEngine *LLVMExecutionEngineRef;
 
 LLVMGenericValueRef LLVMCreateGenericValueOfInt(LLVMTypeRef Ty,
                                                 unsigned long long N,
-                                                int IsSigned);
+                                                LLVMBool IsSigned);
 
 LLVMGenericValueRef LLVMCreateGenericValueOfPointer(void *P);
 
@@ -45,7 +45,7 @@ LLVMGenericValueRef LLVMCreateGenericValueOfFloat(LLVMTypeRef Ty, double N);
 unsigned LLVMGenericValueIntWidth(LLVMGenericValueRef GenValRef);
 
 unsigned long long LLVMGenericValueToInt(LLVMGenericValueRef GenVal,
-                                         int IsSigned);
+                                         LLVMBool IsSigned);
 
 void *LLVMGenericValueToPointer(LLVMGenericValueRef GenVal);
 
@@ -55,18 +55,18 @@ void LLVMDisposeGenericValue(LLVMGenericValueRef GenVal);
 
 /*===-- Operations on execution engines -----------------------------------===*/
 
-int LLVMCreateExecutionEngine(LLVMExecutionEngineRef *OutEE,
-                              LLVMModuleProviderRef MP,
-                              char **OutError);
+LLVMBool LLVMCreateExecutionEngine(LLVMExecutionEngineRef *OutEE,
+                                   LLVMModuleProviderRef MP,
+                                   char **OutError);
 
-int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
-                          LLVMModuleProviderRef MP,
-                          char **OutError);
+LLVMBool LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
+                               LLVMModuleProviderRef MP,
+                               char **OutError);
 
-int LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
-                          LLVMModuleProviderRef MP,
-                          unsigned OptLevel,
-                          char **OutError);
+LLVMBool LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
+                               LLVMModuleProviderRef MP,
+                               unsigned OptLevel,
+                               char **OutError);
 
 void LLVMDisposeExecutionEngine(LLVMExecutionEngineRef EE);
 
@@ -86,12 +86,12 @@ void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F);
 
 void LLVMAddModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP);
 
-int LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE,
-                             LLVMModuleProviderRef MP,
-                             LLVMModuleRef *OutMod, char **OutError);
+LLVMBool LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE,
+                                  LLVMModuleProviderRef MP,
+                                  LLVMModuleRef *OutMod, char **OutError);
 
-int LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
-                     LLVMValueRef *OutFn);
+LLVMBool LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
+                          LLVMValueRef *OutFn);
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE);
 

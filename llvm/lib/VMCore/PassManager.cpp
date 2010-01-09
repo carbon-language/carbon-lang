@@ -1699,19 +1699,19 @@ LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef P) {
   return wrap(new FunctionPassManager(unwrap(P)));
 }
 
-int LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M) {
+LLVMBool LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M) {
   return unwrap<PassManager>(PM)->run(*unwrap(M));
 }
 
-int LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM) {
+LLVMBool LLVMInitializeFunctionPassManager(LLVMPassManagerRef FPM) {
   return unwrap<FunctionPassManager>(FPM)->doInitialization();
 }
 
-int LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F) {
+LLVMBool LLVMRunFunctionPassManager(LLVMPassManagerRef FPM, LLVMValueRef F) {
   return unwrap<FunctionPassManager>(FPM)->run(*unwrap<Function>(F));
 }
 
-int LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM) {
+LLVMBool LLVMFinalizeFunctionPassManager(LLVMPassManagerRef FPM) {
   return unwrap<FunctionPassManager>(FPM)->doFinalization();
 }
 

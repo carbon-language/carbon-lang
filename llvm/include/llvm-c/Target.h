@@ -26,8 +26,7 @@
 extern "C" {
 #endif
 
-enum { LLVMBigEndian, LLVMLittleEndian };
-typedef int LLVMByteOrdering;
+enum LLVMByteOrdering { LLVMBigEndian, LLVMLittleEndian };
 
 typedef struct LLVMOpaqueTargetData *LLVMTargetDataRef;
 typedef struct LLVMStructLayout *LLVMStructLayoutRef;
@@ -62,7 +61,7 @@ static inline void LLVMInitializeAllTargets() {
 /** LLVMInitializeNativeTarget - The main program should call this function to
     initialize the native target corresponding to the host.  This is useful 
     for JIT applications to ensure that the target gets linked in correctly. */
-static inline int LLVMInitializeNativeTarget() {
+static inline LLVMBool LLVMInitializeNativeTarget() {
   /* If we have a native target, initialize it to ensure it is linked in. */
 #ifdef LLVM_NATIVE_ARCH
 #define DoInit2(TARG) \

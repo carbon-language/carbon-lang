@@ -34,7 +34,7 @@ char *LLVMCopyStringRepOfTargetData(LLVMTargetDataRef TD) {
 }
 
 LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef TD) {
-  return unwrap(TD)->isLittleEndian();
+  return unwrap(TD)->isLittleEndian() ? LLVMLittleEndian : LLVMBigEndian;
 }
 
 unsigned LLVMPointerSize(LLVMTargetDataRef TD) {

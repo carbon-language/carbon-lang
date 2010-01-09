@@ -29,24 +29,24 @@ extern "C" {
 /* Builds a module from the bitcode in the specified memory buffer, returning a
    reference to the module via the OutModule parameter. Returns 0 on success.
    Optionally returns a human-readable error message via OutMessage. */ 
-int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
-                     LLVMModuleRef *OutModule, char **OutMessage);
+LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
+                          LLVMModuleRef *OutModule, char **OutMessage);
 
-int LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
-                              LLVMMemoryBufferRef MemBuf,
-                              LLVMModuleRef *OutModule, char **OutMessage);
+LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
+                                   LLVMMemoryBufferRef MemBuf,
+                                   LLVMModuleRef *OutModule, char **OutMessage);
 
 /* Reads a module from the specified path, returning via the OutMP parameter
    a module provider which performs lazy deserialization. Returns 0 on success.
    Optionally returns a human-readable error message via OutMessage. */ 
-int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
-                                 LLVMModuleProviderRef *OutMP,
-                                 char **OutMessage);
+LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
+                                      LLVMModuleProviderRef *OutMP,
+                                      char **OutMessage);
 
-int LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
-                                          LLVMMemoryBufferRef MemBuf,
-                                          LLVMModuleProviderRef *OutMP,
-                                          char **OutMessage);
+LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
+                                               LLVMMemoryBufferRef MemBuf,
+                                               LLVMModuleProviderRef *OutMP,
+                                               char **OutMessage);
 
 
 #ifdef __cplusplus
