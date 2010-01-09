@@ -10,3 +10,7 @@ void test1() {
   char *xpto;
   while ( true && xpto[0] );
 }
+
+// PR5514
+int a;
+void test2() { ++a+=10; }

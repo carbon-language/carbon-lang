@@ -1120,8 +1120,16 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
                             MakeQualifiers(ExprTy));
   }
   case UnaryOperator::PreInc:
-  case UnaryOperator::PreDec:
-    return EmitUnsupportedLValue(E, "pre-inc/dec expression");
+  case UnaryOperator::PreDec: {
+    LValue LV = EmitLValue(E->getSubExpr());
+    bool isInc = E->getOpcode() == UnaryOperator::PreInc;
+    
+    if (E->getType()->isAnyComplexType())
+      EmitComplexPrePostIncDec(E, LV, isInc, true/*isPre*/);
+    else
+      EmitScalarPrePostIncDec(E, LV, isInc, true/*isPre*/);
+    return LV;
+  }
   }
 }
 
