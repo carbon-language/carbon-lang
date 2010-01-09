@@ -558,10 +558,17 @@ define i32 @main() {                                        <i>; i32()* </i>
 
   <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt></dt>
   <dd>Globals with "<tt>linkonce</tt>" linkage are merged with other globals of
-      the same name when linkage occurs.  This is typically used to implement
-      inline functions, templates, or other code which must be generated in each
-      translation unit that uses it.  Unreferenced <tt>linkonce</tt> globals are
-      allowed to be discarded.</dd>
+      the same name when linkage occurs.  This can be used to implement
+      some forms of inline functions, templates, or other code which must be
+      generated in each translation unit that uses it, but where the body may
+      be overridden with a more definitive definition later.  Unreferenced
+      <tt>linkonce</tt> globals are allowed to be discarded.  Note that
+      <tt>linkonce</tt> linkage does not actually allow the optimizer to
+      inline the body of this function into callers because it doesn't know if
+      this definition of the function is the definitive definition within the
+      program or whether it will be overridden by a stronger definition.
+      To enable inlining and other optimizations, use "<tt>linkonce_odr</tt>"
+      linkage.</dd>
 
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt></dt>
   <dd>"<tt>weak</tt>" linkage has the same merging semantics as
