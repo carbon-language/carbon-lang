@@ -354,7 +354,7 @@ static Option *HandlePrefixedOrGroupedOption(StringRef &Arg, StringRef &Value,
     // we don't need to pass argc/argv in.
     assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
            "Option can not be cl::Grouping AND cl::ValueRequired!");
-    int Dummy;
+    int Dummy = 0;
     ErrorParsing |= ProvideOption(PGOpt, OneArgName,
                                   StringRef(), 0, 0, Dummy);
 
