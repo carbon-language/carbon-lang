@@ -222,6 +222,10 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-verify");
   if (Opts.ShowOptionNames)
     Res.push_back("-fdiagnostics-show-option");
+  if (Opts.TabStop != 8) {
+    Res.push_back("-ftabstop");
+    Res.push_back(llvm::utostr(Opts.TabStop));
+  }
   if (Opts.MessageLength) {
     Res.push_back("-fmessage-length");
     Res.push_back(llvm::utostr(Opts.MessageLength));
@@ -804,6 +808,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
+  Opts.TabStop = getLastArgIntValue(Args, OPT_ftabstop, 8, Diags);
   Opts.MessageLength = getLastArgIntValue(Args, OPT_fmessage_length, 0, Diags);
   Opts.DumpBuildInformation = getLastArgValue(Args, OPT_dump_build_information);
   Opts.Warnings = getAllArgValues(Args, OPT_W);

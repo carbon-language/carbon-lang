@@ -378,9 +378,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     // Replace this tab with at least one space.
     SourceLine[i] = ' ';
 
+    unsigned TabStop = DiagOpts->TabStop > 0 ? DiagOpts->TabStop : 8;
     // Compute the number of spaces we need to insert.
-    unsigned NumSpaces = ((i+8)&~7) - (i+1);
-    assert(NumSpaces < 8 && "Invalid computation of space amt");
+    unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
+    assert(NumSpaces < TabStop && "Invalid computation of space amt");
 
     // Insert spaces into the SourceLine.
     SourceLine.insert(i+1, NumSpaces, ' ');

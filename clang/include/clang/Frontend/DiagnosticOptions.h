@@ -35,6 +35,9 @@ public:
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
 
+  /// The distance between tab stops.
+  unsigned TabStop;
+
   /// Column limit for formatting message diagnostics, or 0 if unused.
   unsigned MessageLength;
 
@@ -49,6 +52,7 @@ public:
 public:
   DiagnosticOptions() {
     IgnoreWarnings = 0;
+    TabStop = 8;
     MessageLength = 0;
     NoRewriteMacros = 0;
     Pedantic = 0;

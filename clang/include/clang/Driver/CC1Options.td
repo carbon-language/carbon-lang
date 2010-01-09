@@ -178,6 +178,8 @@ def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-rang
   HelpText<"Print source range spans in numeric form">;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
+def ftabstop : Separate<"-ftabstop">, MetaVarName<"<N>">,
+  HelpText<"Set the tab stop distance.">;
 def fmessage_length : Separate<"-fmessage-length">, MetaVarName<"<N>">,
   HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
 def fcolor_diagnostics : Flag<"-fcolor-diagnostics">,

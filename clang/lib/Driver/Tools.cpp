@@ -935,6 +935,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_ftabstop_EQ)) {
+    CmdArgs.push_back("-ftabstop");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
   // Pass -fmessage-length=.
   CmdArgs.push_back("-fmessage-length");
   if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {
