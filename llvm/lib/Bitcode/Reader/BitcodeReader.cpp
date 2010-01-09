@@ -789,18 +789,18 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<MDNode *, 8> Elts;
       for (unsigned i = 0; i != Size; ++i) {
-        if (Record[i] == ~0U)
+        if (Record[i] == ~0U) {
           Elts.push_back(NULL);
-        else {
-          Value *MD = MDValueList.getValueFwdRef(Record[i]);
-          if (MDNode *B = dyn_cast<MDNode>(MD))
-            Elts.push_back(B);
-          else
-            return Error("Malformed metadata record");
+          continue;
         }
+        MDNode *MD = dyn_cast<MDNode>(MDValueList.getValueFwdRef(Record[i]));
+        if (MD == 0)
+          return Error("Malformed metadata record");
+        Elts.push_back(MD);
       }
       Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(),
                                      Elts.size(), TheModule);
+      // FIXME: This shouldn't poke NextValueNo?
       MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
