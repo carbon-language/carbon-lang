@@ -4765,8 +4765,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     Stmts.push_back(S);
   else if (isa<ObjCForCollectionStmt>(S)) {
     Stmts.push_back(S);
-    ++BcLabelCount;
-    ObjCBcLabelNo.push_back(BcLabelCount);
+    ObjCBcLabelNo.push_back(++BcLabelCount);
   }
 
   SourceRange OrigStmtRange = S->getSourceRange();
