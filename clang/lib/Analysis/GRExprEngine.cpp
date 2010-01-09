@@ -47,10 +47,9 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 }
 
 
-static bool CalleeReturnsReference(const CallExpr *CE) { 
+static QualType GetCalleeReturnType(const CallExpr *CE) { 
   const Expr *Callee = CE->getCallee();
   QualType T = Callee->getType();
-  
   if (const PointerType *PT = T->getAs<PointerType>()) {
     const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>();
     T = FT->getResultType();
@@ -58,16 +57,35 @@ static bool CalleeReturnsReference(const CallExpr *CE) {
   else {
     const BlockPointerType *BT = T->getAs<BlockPointerType>();
     T = BT->getPointeeType()->getAs<FunctionType>()->getResultType();
-  }  
-  return T->isReferenceType();
+  }
+  return T;
+}
+
+static bool CalleeReturnsReference(const CallExpr *CE) { 
+  return (bool) GetCalleeReturnType(CE)->getAs<ReferenceType>();
 }
 
 static bool ReceiverReturnsReference(const ObjCMessageExpr *ME) {
   const ObjCMethodDecl *MD = ME->getMethodDecl();
   if (!MD)
     return false;
-  return MD->getResultType()->isReferenceType();
+  return MD->getResultType()->getAs<ReferenceType>();
 }
+
+#ifndef NDEBUG
+static bool ReceiverReturnsReferenceOrRecord(const ObjCMessageExpr *ME) {
+  const ObjCMethodDecl *MD = ME->getMethodDecl();
+  if (!MD)
+    return false;
+  QualType T = MD->getResultType();
+  return T->getAs<RecordType>() || T->getAs<ReferenceType>();
+}
+
+static bool CalleeReturnsReferenceOrRecord(const CallExpr *CE) {
+  QualType T = GetCalleeReturnType(CE);
+  return T->getAs<ReferenceType>() || T->getAs<RecordType>();
+}
+#endif
 
 //===----------------------------------------------------------------------===//
 // Batch auditor.  DEPRECATED.
@@ -825,7 +843,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass: {
       CallExpr *C = cast<CallExpr>(Ex);
-      assert(CalleeReturnsReference(C));
+      assert(CalleeReturnsReferenceOrRecord(C));
       VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, true);      
       break;
     }
@@ -856,7 +874,7 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       
     case Stmt::ObjCMessageExprClass: {
       ObjCMessageExpr *ME = cast<ObjCMessageExpr>(Ex);
-      assert(ReceiverReturnsReference(ME));
+      assert(ReceiverReturnsReferenceOrRecord(ME));
       VisitObjCMessageExpr(ME, Pred, Dst, true); 
       return;
     }

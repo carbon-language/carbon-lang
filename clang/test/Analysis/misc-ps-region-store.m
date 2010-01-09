@@ -684,3 +684,29 @@ void pr4358(struct pr4358 *pnt) {
   }
   pr4358_aux(uninit); // no-warning
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7526777>
+// Test handling fields of values returned from function calls or
+// message expressions.
+//===----------------------------------------------------------------------===//
+
+typedef struct testReturn_rdar_7526777 {
+  int x;
+  int y;
+} testReturn_rdar_7526777;
+
+@interface TestReturnStruct_rdar_7526777
+- (testReturn_rdar_7526777) foo;
+@end
+
+int test_return_struct(TestReturnStruct_rdar_7526777 *x) {
+  return [x foo].x;
+}
+
+testReturn_rdar_7526777 test_return_struct_2_aux_rdar_7526777();
+
+int test_return_struct_2_rdar_7526777() {
+  return test_return_struct_2_aux_rdar_7526777().x;
+}
+
