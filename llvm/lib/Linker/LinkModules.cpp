@@ -855,9 +855,14 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else {
       // No linking to be performed, simply create an identical version of the
       // alias over in the dest module...
-
+      Constant *Aliasee = DAliasee;
+      // Fixup aliases to bitcasts.  Note that aliases to GEPs are still broken
+      // by this, but aliases to GEPs are broken to a lot of other things, so
+      // it's less important.
+      if (SGA->getType() != DAliasee->getType())
+        Aliasee = ConstantExpr::getBitCast(DAliasee, SGA->getType());
       NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
-                              SGA->getName(), DAliasee, Dest);
+                              SGA->getName(), Aliasee, Dest);
       CopyGVAttributes(NewGA, SGA);
 
       // Proceed to 'common' steps
@@ -1223,9 +1228,15 @@ static bool LinkAppendingVars(Module *M,
 static bool ResolveAliases(Module *Dest) {
   for (Module::alias_iterator I = Dest->alias_begin(), E = Dest->alias_end();
        I != E; ++I)
-    if (const GlobalValue *GV = I->resolveAliasedGlobal())
-      if (GV != I && !GV->isDeclaration())
-        I->replaceAllUsesWith(const_cast<GlobalValue*>(GV));
+    // We can't sue resolveGlobalAlias here because we need to preserve
+    // bitcasts and GEPs.
+    if (const Constant *C = I->getAliasee()) {
+      while (dyn_cast<GlobalAlias>(C))
+        C = cast<GlobalAlias>(C)->getAliasee();
+      const GlobalValue *GV = dyn_cast<GlobalValue>(C);
+      if (C != I && !(GV && GV->isDeclaration()))
+        I->replaceAllUsesWith(const_cast<Constant*>(C));
+    }
 
   return false;
 }
