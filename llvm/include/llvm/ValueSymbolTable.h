@@ -135,10 +135,11 @@ private:
 class MDSymbolTable {
 /// @name Types
 /// @{
-public:
+private:
   /// @brief A mapping of names to metadata
   typedef StringMap<NamedMDNode*> MDMap;
 
+public:
   /// @brief An iterator over a ValueMap.
   typedef MDMap::iterator iterator;
 
@@ -150,6 +151,8 @@ public:
 /// @{
 public:
 
+  MDSymbolTable(const MDNode &);             // DO NOT IMPLEMENT
+  void operator=(const MDSymbolTable &);     // DO NOT IMPLEMENT
   MDSymbolTable() : mmap(0) {}
   ~MDSymbolTable();
 

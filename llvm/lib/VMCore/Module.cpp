@@ -71,6 +71,7 @@ Module::~Module() {
   NamedMDList.clear();
   delete ValSymTab;
   delete TypeSymTab;
+  delete NamedMDSymTab;
 }
 
 /// Target endian information...
