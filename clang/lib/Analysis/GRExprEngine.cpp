@@ -887,6 +887,11 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
     case Stmt::UnaryOperatorClass:
       VisitUnaryOperator(cast<UnaryOperator>(Ex), Pred, Dst, true);
       return;
+
+    // In C++, binding an rvalue to a reference requires to create an object.
+    case Stmt::IntegerLiteralClass:
+      CreateCXXTemporaryObject(Ex, Pred, Dst);
+      return;
       
     default:
       // Arbitrary subexpressions can return aggregate temporaries that
@@ -2990,6 +2995,26 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
   }
 
   CheckerVisit(B, Dst, Tmp3, false);
+}
+
+void GRExprEngine::CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred, 
+                                            ExplodedNodeSet &Dst) {
+  ExplodedNodeSet Tmp;
+  Visit(Ex, Pred, Tmp);
+  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I != E; ++I) {
+    const GRState *state = GetState(*I);
+    
+    // Bind the temporary object to the value of the expression. Then bind
+    // the expression to the location of the object.
+    SVal V = state->getSVal(Ex);
+
+    const MemRegion *R = 
+      ValMgr.getRegionManager().getCXXObjectRegion(Ex,
+                                                   Pred->getLocationContext());
+
+    state = state->bindLoc(loc::MemRegionVal(R), V);
+    MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, loc::MemRegionVal(R)));
+  }  
 }
 
 //===----------------------------------------------------------------------===//

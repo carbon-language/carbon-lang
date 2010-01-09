@@ -37,7 +37,12 @@ SVal Environment::GetSVal(const Stmt *E, ValueManager& ValMgr) const {
       }
 
       case Stmt::IntegerLiteralClass: {
-        return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
+        // In C++, this expression may have been bound to a temporary object.
+        SVal const *X = ExprBindings.lookup(E);
+        if (X)
+          return *X;
+        else
+          return ValMgr.makeIntVal(cast<IntegerLiteral>(E));
       }
 
       // Casts where the source and target type are the same

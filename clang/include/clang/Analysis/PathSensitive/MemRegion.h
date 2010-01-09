@@ -752,21 +752,21 @@ public:
   }
 };
 
+// C++ temporary object associated with an expression.
 class CXXObjectRegion : public TypedRegion {
   friend class MemRegionManager;
 
-  // T - The object type.
-  QualType T;
+  Expr const *Ex;
 
-  CXXObjectRegion(QualType t, const MemRegion *sReg) 
-    : TypedRegion(sReg, CXXObjectRegionKind), T(t) {}
+  CXXObjectRegion(Expr const *E, MemRegion const *sReg) 
+    : TypedRegion(sReg, CXXObjectRegionKind), Ex(E) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID &ID,
-                            QualType T, const MemRegion *sReg);
+                            Expr const *E, const MemRegion *sReg);
   
 public:
   QualType getValueType(ASTContext& C) const {
-    return T;
+    return Ex->getType();
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const;
@@ -901,7 +901,8 @@ public:
   const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                           const MemRegion* superRegion);
 
-  const CXXObjectRegion *getCXXObjectRegion(QualType T);
+  const CXXObjectRegion *getCXXObjectRegion(Expr const *Ex,
+                                            LocationContext const *LC);
 
   const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,

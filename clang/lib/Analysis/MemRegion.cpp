@@ -304,14 +304,14 @@ void BlockDataRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 void CXXObjectRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
-                                    QualType T, 
+                                    Expr const *Ex,
                                     const MemRegion *sReg) {
-  ID.AddPointer(T.getTypePtr());
+  ID.AddPointer(Ex);
   ID.AddPointer(sReg);
 }
 
 void CXXObjectRegion::Profile(llvm::FoldingSetNodeID &ID) const {
-  ProfileRegion(ID, T, getSuperRegion());
+  ProfileRegion(ID, Ex, getSuperRegion());
 }
 
 //===----------------------------------------------------------------------===//
@@ -580,8 +580,11 @@ MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
 }
 
 const CXXObjectRegion*
-MemRegionManager::getCXXObjectRegion(QualType T) {
-  return getSubRegion<CXXObjectRegion>(T, getUnknownRegion());
+MemRegionManager::getCXXObjectRegion(Expr const *E,
+                                     LocationContext const *LC) {
+  const StackFrameContext *SFC = LC->getCurrentStackFrame();
+  assert(SFC);
+  return getSubRegion<CXXObjectRegion>(E, getStackLocalsRegion(SFC));
 }
 
 const CXXThisRegion*
