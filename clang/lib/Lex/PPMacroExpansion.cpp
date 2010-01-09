@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "llvm/ADT/StringSwitch.h"
 #include <cstdio>
 #include <ctime>
 using namespace clang;
@@ -481,34 +482,17 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
 static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
   const LangOptions &LangOpts = PP.getLangOptions();
 
-  switch (II->getLength()) {
-  default: return false;
-  case 6:
-    if (II->isStr("blocks")) return LangOpts.Blocks;
-    return false;
-  case 8:
-    if (II->isStr("cxx_rtti")) return LangOpts.RTTI;
-    return false;
-  case 14:
-    if (II->isStr("cxx_exceptions")) return LangOpts.Exceptions;
-    return false;      
-  case 19:
-    if (II->isStr("objc_nonfragile_abi")) return LangOpts.ObjCNonFragileABI;
-    return false;
-  case 22:
-    if (II->isStr("attribute_overloadable")) return true;
-    return false;
-  case 25:
-    if (II->isStr("attribute_ext_vector_type")) return true;
-    return false;
-  case 27:
-    if (II->isStr("attribute_analyzer_noreturn")) return true;
-    return false;
-  case 29:
-    if (II->isStr("attribute_ns_returns_retained")) return true;
-    if (II->isStr("attribute_cf_returns_retained")) return true;
-    return false;
-  }
+  return llvm::StringSwitch<bool>(II->getName())
+           .Case("blocks", LangOpts.Blocks)
+           .Case("cxx_rtti", LangOpts.RTTI)
+           .Case("cxx_exceptions", LangOpts.Exceptions)
+           .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
+           .Case("attribute_overloadable", true)
+           .Case("attribute_ext_vector_type", true)
+           .Case("attribute_analyzer_noreturn", true)
+           .Case("attribute_ns_returns_retained", true)
+           .Case("attribute_cf_returns_retained", true)
+           .Default(false);
 }
 
 /// EvaluateHasIncludeCommon - Process a '__has_include("path")'
