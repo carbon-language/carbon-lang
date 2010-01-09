@@ -485,6 +485,14 @@ def DEBUG_VALUE : Instruction {
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;
 }
+def DEBUG_DECLARE : Instruction {
+  let OutOperandList = (ops);
+  let InOperandList = (ops unknown:$vbl, unknown:$meta);
+  let AsmString = "DEBUG_DECLARE";
+  let Namespace = "TargetInstrInfo";
+  let neverHasSideEffects = 1;
+  let isAsCheapAsAMove = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//

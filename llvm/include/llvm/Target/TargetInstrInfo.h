@@ -91,7 +91,10 @@ public:
     COPY_TO_REGCLASS = 10,
 
     // DEBUG_VALUE - a mapping of the llvm.dbg.value intrinsic
-    DEBUG_VALUE = 11
+    DEBUG_VALUE = 11,
+
+    // DEBUG_DECLARE - a mapping of the llvm.dbg.declare intrinsic
+    DEBUG_DECLARE = 12
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }
