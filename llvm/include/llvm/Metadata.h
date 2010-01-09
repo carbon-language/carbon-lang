@@ -31,7 +31,7 @@ template<typename ValueSubClass, typename ItemParentClass>
   
   
 //===----------------------------------------------------------------------===//
-// MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
+// MetadataBase  - A base class for MDNode and MDString.
 class MetadataBase : public Value {
 protected:
   MetadataBase(const Type *Ty, unsigned scid)
@@ -42,8 +42,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MetadataBase *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueID() == MDStringVal || V->getValueID() == MDNodeVal
-      || V->getValueID() == NamedMDNodeVal;
+    return V->getValueID() == MDStringVal || V->getValueID() == MDNodeVal;
   }
 };
 
@@ -169,7 +168,7 @@ private:
 //===----------------------------------------------------------------------===//
 /// NamedMDNode - a tuple of MDNodes.
 /// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
-class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
+class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
   friend class LLVMContextImpl;
 

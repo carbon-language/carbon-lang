@@ -135,7 +135,7 @@ void ValueEnumerator::setInstructionID(const Instruction *I) {
 }
 
 unsigned ValueEnumerator::getValueID(const Value *V) const {
-  if (isa<MetadataBase>(V)) {
+  if (isa<MetadataBase>(V) || isa<NamedMDNode>(V)) {
     ValueMapType::const_iterator I = MDValueMap.find(V);
     assert(I != MDValueMap.end() && "Value not in slotcalculator!");
     return I->second-1;
@@ -205,6 +205,25 @@ void ValueEnumerator::EnumerateMDSymbolTable(const MDSymbolTable &MST) {
     EnumerateValue(MI->getValue());
 }
 
+void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
+  // Check to see if it's already in!
+  unsigned &MDValueID = MDValueMap[MD];
+  if (MDValueID) {
+    // Increment use count.
+    MDValues[MDValueID-1].second++;
+    return;
+  }
+
+  // Enumerate the type of this value.
+  EnumerateType(MD->getType());
+
+  for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
+    if (MDNode *E = MD->getOperand(i))
+      EnumerateValue(E);
+  MDValues.push_back(std::make_pair(MD, 1U));
+  MDValueMap[MD] = Values.size();
+}
+
 void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[MD];
@@ -230,15 +249,6 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
     return;
   }
   
-  if (const NamedMDNode *N = dyn_cast<NamedMDNode>(MD)) {
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (MDNode *E = N->getOperand(i))
-        EnumerateValue(E);
-    MDValues.push_back(std::make_pair(MD, 1U));
-    MDValueMap[MD] = Values.size();
-    return;
-  }
-
   // Add the value.
   assert(isa<MDString>(MD) && "Unknown metadata kind");
   MDValues.push_back(std::make_pair(MD, 1U));
@@ -249,6 +259,8 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
   assert(!V->getType()->isVoidTy() && "Can't insert void values!");
   if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
     return EnumerateMetadata(MB);
+  else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
+    return EnumerateNamedMDNode(NMD);
 
   // Check to see if it's already in!
   unsigned &ValueID = ValueMap[V];

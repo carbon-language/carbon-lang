@@ -217,7 +217,7 @@ static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
 NamedMDNode::NamedMDNode(LLVMContext &C, StringRef N,
                          MDNode *const *MDs, 
                          unsigned NumMDs, Module *ParentModule)
-  : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
+  : Value(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
   Operands = new SmallVector<WeakVH, 4>();
     
