@@ -89,7 +89,7 @@ def warn_decl_in_param_list : Warning<
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultIgnore;
-def ext_implicit_function_decl : Extension<
+def ext_implicit_function_decl : ExtWarn<
   "implicit declaration of function %0 is invalid in C99">,
   InGroup<ImplicitFunctionDeclare>;
 
