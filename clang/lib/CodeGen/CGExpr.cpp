@@ -240,6 +240,132 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   EmitBlock(Cont);
 }
 
+
+llvm::Value *CodeGenFunction::
+EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
+                        bool isInc, bool isPre) {
+  QualType ValTy = E->getSubExpr()->getType();
+  llvm::Value *InVal = EmitLoadOfLValue(LV, ValTy).getScalarVal();
+  
+  int AmountVal = isInc ? 1 : -1;
+  
+  if (ValTy->isPointerType() &&
+      ValTy->getAs<PointerType>()->isVariableArrayType()) {
+    // The amount of the addition/subtraction needs to account for the VLA size
+    ErrorUnsupported(E, "VLA pointer inc/dec");
+  }
+  
+  llvm::Value *NextVal;
+  if (const llvm::PointerType *PT =
+      dyn_cast<llvm::PointerType>(InVal->getType())) {
+    llvm::Constant *Inc =
+    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), AmountVal);
+    if (!isa<llvm::FunctionType>(PT->getElementType())) {
+      QualType PTEE = ValTy->getPointeeType();
+      if (const ObjCInterfaceType *OIT =
+          dyn_cast<ObjCInterfaceType>(PTEE)) {
+        // Handle interface types, which are not represented with a concrete
+        // type.
+        int size = getContext().getTypeSize(OIT) / 8;
+        if (!isInc)
+          size = -size;
+        Inc = llvm::ConstantInt::get(Inc->getType(), size);
+        const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
+        InVal = Builder.CreateBitCast(InVal, i8Ty);
+        NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
+        llvm::Value *lhs = LV.getAddress();
+        lhs = Builder.CreateBitCast(lhs, llvm::PointerType::getUnqual(i8Ty));
+        LV = LValue::MakeAddr(lhs, MakeQualifiers(ValTy));
+      } else
+        NextVal = Builder.CreateInBoundsGEP(InVal, Inc, "ptrincdec");
+    } else {
+      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
+      NextVal = Builder.CreateBitCast(InVal, i8Ty, "tmp");
+      NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
+      NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
+    }
+  } else if (InVal->getType() == llvm::Type::getInt1Ty(VMContext) && isInc) {
+    // Bool++ is an interesting case, due to promotion rules, we get:
+    // Bool++ -> Bool = Bool+1 -> Bool = (int)Bool+1 ->
+    // Bool = ((int)Bool+1) != 0
+    // An interesting aspect of this is that increment is always true.
+    // Decrement does not have this property.
+    NextVal = llvm::ConstantInt::getTrue(VMContext);
+  } else if (isa<llvm::IntegerType>(InVal->getType())) {
+    NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
+    
+    // Signed integer overflow is undefined behavior.
+    if (ValTy->isSignedIntegerType())
+      NextVal = Builder.CreateNSWAdd(InVal, NextVal, isInc ? "inc" : "dec");
+    else
+      NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+  } else {
+    // Add the inc/dec to the real part.
+    if (InVal->getType()->isFloatTy())
+      NextVal =
+      llvm::ConstantFP::get(VMContext,
+                            llvm::APFloat(static_cast<float>(AmountVal)));
+    else if (InVal->getType()->isDoubleTy())
+      NextVal =
+      llvm::ConstantFP::get(VMContext,
+                            llvm::APFloat(static_cast<double>(AmountVal)));
+    else {
+      llvm::APFloat F(static_cast<float>(AmountVal));
+      bool ignored;
+      F.convert(Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero,
+                &ignored);
+      NextVal = llvm::ConstantFP::get(VMContext, F);
+    }
+    NextVal = Builder.CreateFAdd(InVal, NextVal, isInc ? "inc" : "dec");
+  }
+  
+  // Store the updated result through the lvalue.
+  if (LV.isBitfield())
+    EmitStoreThroughBitfieldLValue(RValue::get(NextVal), LV, ValTy, &NextVal);
+  else
+    EmitStoreThroughLValue(RValue::get(NextVal), LV, ValTy);
+  
+  // If this is a postinc, return the value read from memory, otherwise use the
+  // updated value.
+  return isPre ? NextVal : InVal;
+}
+
+
+CodeGenFunction::ComplexPairTy CodeGenFunction::
+EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
+                         bool isInc, bool isPre) {
+  ComplexPairTy InVal = LoadComplexFromAddr(LV.getAddress(),
+                                            LV.isVolatileQualified());
+  
+  llvm::Value *NextVal;
+  if (isa<llvm::IntegerType>(InVal.first->getType())) {
+    uint64_t AmountVal = isInc ? 1 : -1;
+    NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal, true);
+    
+    // Add the inc/dec to the real part.
+    NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
+  } else {
+    QualType ElemTy = E->getType()->getAs<ComplexType>()->getElementType();
+    llvm::APFloat FVal(getContext().getFloatTypeSemantics(ElemTy), 1);
+    if (!isInc)
+      FVal.changeSign();
+    NextVal = llvm::ConstantFP::get(getLLVMContext(), FVal);
+    
+    // Add the inc/dec to the real part.
+    NextVal = Builder.CreateFAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
+  }
+  
+  ComplexPairTy IncVal(NextVal, InVal.second);
+  
+  // Store the updated result through the lvalue.
+  StoreComplexToAddr(IncVal, LV.getAddress(), LV.isVolatileQualified());
+  
+  // If this is a postinc, return the value read from memory, otherwise use the
+  // updated value.
+  return isPre ? IncVal : InVal;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//

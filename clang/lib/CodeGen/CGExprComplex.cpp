@@ -145,7 +145,10 @@ public:
 
   // Operators.
   ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
-                                   bool isInc, bool isPre);
+                                   bool isInc, bool isPre) {
+    LValue LV = CGF.EmitLValue(E->getSubExpr());
+    return CGF.EmitComplexPrePostIncDec(E, LV, isInc, isPre);
+  }
   ComplexPairTy VisitUnaryPostDec(const UnaryOperator *E) {
     return VisitPrePostIncDec(E, false, false);
   }
@@ -353,40 +356,6 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
 
   // Return (realval, 0).
   return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));
-}
-
-ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
-                                                     bool isInc, bool isPre) {
-  LValue LV = CGF.EmitLValue(E->getSubExpr());
-  ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(),
-                                          LV.isVolatileQualified());
-
-  llvm::Value *NextVal;
-  if (isa<llvm::IntegerType>(InVal.first->getType())) {
-    uint64_t AmountVal = isInc ? 1 : -1;
-    NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal, true);
-
-    // Add the inc/dec to the real part.
-    NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
-  } else {
-    QualType ElemTy = E->getType()->getAs<ComplexType>()->getElementType();
-    llvm::APFloat FVal(CGF.getContext().getFloatTypeSemantics(ElemTy), 1);
-    if (!isInc)
-      FVal.changeSign();
-    NextVal = llvm::ConstantFP::get(CGF.getLLVMContext(), FVal);
-
-    // Add the inc/dec to the real part.
-    NextVal = Builder.CreateFAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
-  }
-
-  ComplexPairTy IncVal(NextVal, InVal.second);
-
-  // Store the updated result through the lvalue.
-  EmitStoreOfComplex(IncVal, LV.getAddress(), LV.isVolatileQualified());
-
-  // If this is a postinc, return the value read from memory, otherwise use the
-  // updated value.
-  return isPre ? IncVal : InVal;
 }
 
 ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {

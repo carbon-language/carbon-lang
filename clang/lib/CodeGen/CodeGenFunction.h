@@ -798,7 +798,7 @@ public:
                                  llvm::Value *NumElements,
                                  llvm::Value *This);
 
-  llvm::Constant * GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
+  llvm::Constant *GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
                                                 const ArrayType *Array,
                                                 llvm::Value *This);
 
@@ -819,6 +819,10 @@ public:
 
   void EmitCheck(llvm::Value *, unsigned Size);
 
+  llvm::Value *EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
+                                       bool isInc, bool isPre);
+  ComplexPairTy EmitComplexPrePostIncDec(const UnaryOperator *E, LValue LV,
+                                         bool isInc, bool isPre);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
