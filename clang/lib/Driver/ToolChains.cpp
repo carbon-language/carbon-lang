@@ -203,8 +203,8 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
         CmdArgs.push_back("-lgcc_s.10.5");
       }
     } else if (Args.hasArg(options::OPT_shared_libgcc) ||
-               // FIXME: -fexceptions -fno-exceptions means no exceptions
-               Args.hasArg(options::OPT_fexceptions) ||
+               Args.hasFlag(options::OPT_fexceptions,
+                            options::OPT_fno_exceptions) ||
                Args.hasArg(options::OPT_fgnu_runtime)) {
       // FIXME: This is probably broken on 10.3?
       if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
