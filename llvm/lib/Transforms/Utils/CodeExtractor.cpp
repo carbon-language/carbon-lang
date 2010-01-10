@@ -45,7 +45,7 @@ AggregateArgsOpt("aggregate-extracted-args", cl::Hidden,
 
 namespace {
   class CodeExtractor {
-    typedef std::vector<Value*> Values;
+    typedef SetVector<Value*> Values;
     SetVector<BasicBlock*> BlocksToExtract;
     DominatorTree* DT;
     bool AggregateArgs;
@@ -216,13 +216,13 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
       // instruction is used outside the region, it's an output.
       for (User::op_iterator O = I->op_begin(), E = I->op_end(); O != E; ++O)
         if (definedInCaller(*O))
-          inputs.push_back(*O);
+          inputs.insert(*O);
 
       // Consider uses of this instruction (outputs).
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
            UI != E; ++UI)
         if (!definedInRegion(*UI)) {
-          outputs.push_back(I);
+          outputs.insert(I);
           break;
         }
     } // for: insts
@@ -235,12 +235,6 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
   } // for: basic blocks
 
   NumExitBlocks = ExitBlocks.size();
-
-  // Eliminate duplicates.
-  std::sort(inputs.begin(), inputs.end());
-  inputs.erase(std::unique(inputs.begin(), inputs.end()), inputs.end());
-  std::sort(outputs.begin(), outputs.end());
-  outputs.erase(std::unique(outputs.begin(), outputs.end()), outputs.end());
 }
 
 /// constructFunction - make a function based on inputs and outputs, as follows:
