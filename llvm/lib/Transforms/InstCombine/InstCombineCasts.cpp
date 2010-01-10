@@ -302,19 +302,6 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   return 0;
 }
 
-/// commonIntCastTransforms - This function implements the common transforms
-/// for trunc, zext, and sext.
-Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
-  if (Instruction *Result = commonCastTransforms(CI))
-    return Result;
-
-  // See if we can simplify any instructions used by the LHS whose sole 
-  // purpose is to compute bits we don't care about.
-  if (SimplifyDemandedInstructionBits(CI))
-    return &CI;
-  return 0;
-}
-
 /// CanEvaluateTruncated - Return true if we can evaluate the specified
 /// expression tree as type Ty instead of its larger type, and arrive with the
 /// same value.  This is used by code that tries to eliminate truncates.
@@ -420,8 +407,13 @@ static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
 }
 
 Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
-  if (Instruction *Result = commonIntCastTransforms(CI))
+  if (Instruction *Result = commonCastTransforms(CI))
     return Result;
+  
+  // See if we can simplify any instructions used by the input whose sole 
+  // purpose is to compute bits we don't care about.
+  if (SimplifyDemandedInstructionBits(CI))
+    return &CI;
   
   Value *Src = CI.getOperand(0);
   const Type *DestTy = CI.getType(), *SrcTy = Src->getType();
@@ -690,11 +682,15 @@ static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
 
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // If one of the common conversion will work, do it.
-  if (Instruction *Result = commonIntCastTransforms(CI))
+  if (Instruction *Result = commonCastTransforms(CI))
     return Result;
 
-  Value *Src = CI.getOperand(0);
+  // See if we can simplify any instructions used by the input whose sole 
+  // purpose is to compute bits we don't care about.
+  if (SimplifyDemandedInstructionBits(CI))
+    return &CI;
   
+  Value *Src = CI.getOperand(0);
   const Type *SrcTy = Src->getType(), *DestTy = CI.getType();
   
   // Attempt to extend the entire input expression tree to the destination
@@ -941,8 +937,13 @@ static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
 }
 
 Instruction *InstCombiner::visitSExt(SExtInst &CI) {
-  if (Instruction *I = commonIntCastTransforms(CI))
+  if (Instruction *I = commonCastTransforms(CI))
     return I;
+  
+  // See if we can simplify any instructions used by the input whose sole 
+  // purpose is to compute bits we don't care about.
+  if (SimplifyDemandedInstructionBits(CI))
+    return &CI;
   
   Value *Src = CI.getOperand(0);
   const Type *SrcTy = Src->getType(), *DestTy = CI.getType();

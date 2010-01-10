@@ -150,7 +150,6 @@ public:
   Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                    BinaryOperator &I);
   Instruction *commonCastTransforms(CastInst &CI);
-  Instruction *commonIntCastTransforms(CastInst &CI);
   Instruction *commonPointerCastTransforms(CastInst &CI);
   Instruction *visitTrunc(TruncInst &CI);
   Instruction *visitZExt(ZExtInst &CI);
