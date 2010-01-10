@@ -437,8 +437,8 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   if (FE) {
     // Warn about normal quoted #include from framework headers.  Since
     // framework headers are published (both public and private ones) they
-    // should not do relative searches, they should do an include relative to
-    // their framework.
+    // should not do relative searches, they should do an include with the
+    // framework path included.
     if (!isAngled && CurDir && FilenameTokLoc.isValid() &&
         CurDir->isFramework() && CurDir == CurDirLookup)
       Diag(FilenameTokLoc, diag::warn_pp_relative_include_from_framework);
