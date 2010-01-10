@@ -575,122 +575,60 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
   return 0;
 }
 
-/// GetLeadingZeros - Compute the number of known-zero leading bits.
-static unsigned GetLeadingZeros(Value *V, const TargetData *TD) {
-  unsigned Bits = V->getType()->getScalarSizeInBits();
-  APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
-  ComputeMaskedBits(V, APInt::getAllOnesValue(Bits), KnownZero, KnownOne, TD);
-  return KnownZero.countLeadingOnes();
-}
-
 /// CanEvaluateZExtd - Determine if the specified value can be computed in the
 /// specified wider type and produce the same low bits.  If not, return -1.  If
 /// it is possible, return the number of high bits that are known to be zero in
 /// the promoted value.
-static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
-                            const TargetData *TD) {
-  const Type *OrigTy = V->getType();
-
-  if (isa<Constant>(V)) {
-    unsigned Extended = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
-
-    // Constants can always be zero ext'd, even if it requires a ConstantExpr.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return Extended + CI->getValue().countLeadingZeros();
-    return Extended;
-  }
+static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
+  if (isa<Constant>(V))
+    return true;
   
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return -1;
+  if (!I) return false;
   
   // If the input is a truncate from the destination type, we can trivially
-  // eliminate it, and this will remove a cast overall.
-  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty) {
-    // If the first operand is itself a cast, and is eliminable, do not count
-    // this as an eliminable cast.  We would prefer to eliminate those two
-    // casts first.
-    if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
-      ++NumCastsRemoved;
-    
-    // Figure out the number of known-zero bits coming in.
-    return GetLeadingZeros(I->getOperand(0), TD);
-  }
+  // eliminate it.
+  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
+    return true;
   
   // We can't extend or shrink something that has multiple uses: doing so would
   // require duplicating the instruction in general, which isn't profitable.
-  if (!I->hasOneUse()) return -1;
+  if (!I->hasOneUse()) return false;
   
-  int Tmp1, Tmp2;
   unsigned Opc = I->getOpcode();
   switch (Opc) {
   case Instruction::And:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == -1) return -1;
-    return std::max(Tmp1, Tmp2);
   case Instruction::Or:
   case Instruction::Xor:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    return std::min(Tmp1, Tmp2);
-
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == -1) return -1;
-    return 0; // TODO: Could be improved.
-      
   case Instruction::Shl:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-      
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1)))
-      return Tmp1 - CI->getZExtValue();
-
-    // Variable shift, no known zext bits.
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == -1) return -1;
-    return 0;
+    return CanEvaluateZExtd(I->getOperand(0), Ty, TD) &&
+           CanEvaluateZExtd(I->getOperand(1), Ty, TD);
       
   //case Instruction::LShr:
-  case Instruction::ZExt:
-    // zext(zext(x)) -> zext(x).  Since we're replacing it, it isn't eliminated.
-    Tmp1 = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
-    return GetLeadingZeros(I, TD)+Tmp1;
-      
-  case Instruction::SExt:
-    // zext(sext(x)) -> sext(x) with no upper bits known.
-    return 0;
-  //case Instruction::Trunc: -> Could turn into AND.
+  case Instruction::ZExt: // zext(zext(x)) -> zext(x).
+  case Instruction::SExt: // zext(sext(x)) -> sext(x).
+    return true;
       
   case Instruction::Select:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(2), Ty, NumCastsRemoved, TD);
-    return std::min(Tmp1, Tmp2);
+    return CanEvaluateZExtd(I->getOperand(1), Ty, TD) &&
+           CanEvaluateZExtd(I->getOperand(2), Ty, TD);
       
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    int Result = CanEvaluateZExtd(PN->getIncomingValue(0), Ty,
-                                  NumCastsRemoved, TD);
-    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
-      if (Result == -1) return -1;
-      Tmp1 = CanEvaluateZExtd(PN->getIncomingValue(i), Ty, NumCastsRemoved, TD);
-      Result = std::min(Result, Tmp1);
-    }
-    return Result;
+    if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, TD)) return false;
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, TD)) return false;
+    return true;
   }
   default:
     // TODO: Can handle more cases here.
-    return -1;
+    return false;
   }
 }
 
@@ -716,11 +654,8 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
-  if (isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) {
-    unsigned NumCastsRemoved = 0;
-    int BitsZExt = CanEvaluateZExtd(Src, DestTy, NumCastsRemoved, TD);
-    if (BitsZExt == -1) return 0;
-    
+  if ((isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) &&
+      CanEvaluateZExtd(Src, DestTy, TD)) { 
     // Okay, we can transform this!  Insert the new expression now.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
           " to avoid zero extend: " << CI);
@@ -731,8 +666,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     // cast with the result.
     uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
     uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-    if (unsigned(BitsZExt) >= DestBitSize-SrcBitSize ||
-        MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
+    if (MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
                                                      DestBitSize-SrcBitSize)))
       return ReplaceInstUsesWith(CI, Res);
     
