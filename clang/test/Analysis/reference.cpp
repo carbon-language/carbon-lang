@@ -3,4 +3,9 @@
 void f1() {
   int const &i = 3;
   int b = i;
+
+  int *p = 0;
+
+  if (b != 3)
+    *p = 1; // no-warning
 }
