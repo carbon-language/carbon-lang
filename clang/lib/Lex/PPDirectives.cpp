@@ -406,6 +406,7 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
 /// for system #include's or not (i.e. using <> instead of "").
 const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
                                           const char *FilenameEnd,
+                                          SourceLocation FilenameTokLoc,
                                           bool isAngled,
                                           const DirectoryLookup *FromDir,
                                           const DirectoryLookup *&CurDir) {
@@ -433,7 +434,16 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   const FileEntry *FE =
     HeaderInfo.LookupFile(FilenameStart, FilenameEnd,
                           isAngled, FromDir, CurDir, CurFileEnt);
-  if (FE) return FE;
+  if (FE) {
+    // Warn about normal quoted #include from framework headers.  Since
+    // framework headers are published (both public and private ones) they
+    // should not do relative searches, they should do an include relative to
+    // their framework.
+    if (!isAngled && CurDir && FilenameTokLoc.isValid() &&
+        CurDir->isFramework() && CurDir == CurDirLookup)
+      Diag(FilenameTokLoc, diag::warn_pp_relative_include_from_framework);
+    return FE;
+  }
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
@@ -1080,13 +1090,14 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // Search include directories.
   const DirectoryLookup *CurDir;
   const FileEntry *File = LookupFile(FilenameStart, FilenameEnd,
+                                     FilenameTok.getLocation(),
                                      isAngled, LookupFrom, CurDir);
   if (File == 0) {
     Diag(FilenameTok, diag::err_pp_file_not_found)
        << std::string(FilenameStart, FilenameEnd);
     return;
   }
-
+  
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
   if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport))
