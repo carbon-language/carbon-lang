@@ -458,7 +458,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     }
     // A binary exponent can appear with or with a '.'. If dotted, the
     // binary exponent is required.
-    if (*s == 'p' || *s == 'P') {
+    if ((*s == 'p' || *s == 'P') && !PP.getLangOptions().CPlusPlus0x) {
       const char *Exponent = s;
       s++;
       saw_exponent = true;
@@ -472,7 +472,12 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       }
       s = first_non_digit;
 
-      if (!PP.getLangOptions().HexFloats)
+      // In C++0x, we cannot support hexadecmial floating literals because
+      // they conflict with user-defined literals, so we warn in previous
+      // versions of C++ by default.
+      if (PP.getLangOptions().CPlusPlus)
+        PP.Diag(TokLoc, diag::ext_hexconstant_cplusplus);
+      else if (!PP.getLangOptions().HexFloats)
         PP.Diag(TokLoc, diag::ext_hexconstant_invalid);
     } else if (saw_period) {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
