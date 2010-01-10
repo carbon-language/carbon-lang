@@ -28,9 +28,9 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
-                           const llvm::TargetData &TD)
+                           const llvm::TargetData &TD, const ABIInfo &Info)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
-    TheABIInfo(0) {
+    TheABIInfo(Info) {
 }
 
 CodeGenTypes::~CodeGenTypes() {
@@ -44,7 +44,6 @@ CodeGenTypes::~CodeGenTypes() {
     while (I != E)
       delete &*I++;
   }
-  delete TheABIInfo;
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.

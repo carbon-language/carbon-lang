@@ -85,7 +85,7 @@ class CodeGenTypes {
   const TargetInfo &Target;
   llvm::Module& TheModule;
   const llvm::TargetData& TheTargetData;
-  mutable const ABIInfo* TheABIInfo;
+  const ABIInfo& TheABIInfo;
 
   llvm::SmallVector<std::pair<QualType,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
@@ -140,13 +140,14 @@ private:
   /// interface to convert type T into a llvm::Type.
   const llvm::Type *ConvertNewType(QualType T);
 public:
-  CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD);
+  CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
+               const ABIInfo &Info);
   ~CodeGenTypes();
 
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
-  const ABIInfo &getABIInfo() const;
+  const ABIInfo &getABIInfo() const { return TheABIInfo; }
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// ConvertType - Convert type T into a llvm::Type.

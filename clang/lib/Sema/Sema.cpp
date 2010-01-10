@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "TargetAttributesSema.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/APFloat.h"
 #include "clang/AST/ASTConsumer.h"
@@ -347,7 +348,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
            bool CompleteTranslationUnit,
            CodeCompleteConsumer *CodeCompleter)
-  : LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
+  : TheTargetAttributesSema(0),
+    LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
     CurBlock(0), PackContext(0), ParsingDeclDepth(0),
@@ -366,6 +368,11 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 
   ExprEvalContexts.push_back(
                   ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0));
+}
+
+Sema::~Sema() {
+  if (PackContext) FreePackedContext();
+  delete TheTargetAttributesSema;
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.

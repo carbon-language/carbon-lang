@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "TargetAttributesSema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -1959,7 +1960,10 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     // Just ignore
     break;
   default:
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    // Ask target about the attribute.
+    const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
+    if (!TargetAttrs.ProcessDeclAttribute(scope, D, Attr, S))
+      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
     break;
   }
 }

@@ -1,4 +1,4 @@
-//===---- TargetABIInfo.cpp - Encapsulate target ABI details ----*- C++ -*-===//
+//===---- TargetInfo.cpp - Encapsulate target details -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "TargetInfo.h"
 #include "ABIInfo.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/Type.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -49,6 +51,8 @@ void ABIArgInfo::dump() const {
   }
   OS << ")\n";
 }
+
+TargetCodeGenInfo::~TargetCodeGenInfo() { delete Info; }
 
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
@@ -251,6 +255,27 @@ class DefaultABIInfo : public ABIInfo {
                                  CodeGenFunction &CGF) const;
 };
 
+class DefaultTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  DefaultTargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {};
+};
+
+llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  return 0;
+}
+
+ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
+                                                ASTContext &Context,
+                                          llvm::LLVMContext &VMContext) const {
+  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    return ABIArgInfo::getIndirect(0);
+  } else {
+    return (Ty->isPromotableIntegerType() ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
+}
+
 /// X86_32ABIInfo - The X86-32 ABI information.
 class X86_32ABIInfo : public ABIInfo {
   ASTContext &Context;
@@ -291,8 +316,14 @@ public:
     : ABIInfo(), Context(Context), IsDarwinVectorABI(d),
       IsSmallStructInRegABI(p) {}
 };
-}
 
+class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  X86_32TargetCodeGenInfo(ASTContext &Context, bool d, bool p)
+    :TargetCodeGenInfo(new X86_32ABIInfo(Context, d, p)) {};
+};
+
+}
 
 /// shouldReturnTypeInRegister - Determine if the given type should be
 /// passed in a register (for the Darwin ABI).
@@ -585,6 +616,12 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 };
+
+class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  X86_64TargetCodeGenInfo():TargetCodeGenInfo(new X86_64ABIInfo()) {};
+};
+
 }
 
 X86_64ABIInfo::Class X86_64ABIInfo::merge(Class Accum,
@@ -1389,6 +1426,11 @@ class PIC16ABIInfo : public ABIInfo {
                                  CodeGenFunction &CGF) const;
 };
 
+class PIC16TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  PIC16TargetCodeGenInfo():TargetCodeGenInfo(new PIC16ABIInfo()) {};
+};
+
 }
 
 ABIArgInfo PIC16ABIInfo::classifyReturnType(QualType RetTy,
@@ -1446,6 +1488,12 @@ private:
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
+};
+
+class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  ARMTargetCodeGenInfo(ARMABIInfo::ABIKind K)
+    :TargetCodeGenInfo(new ARMABIInfo(K)) {};
 };
 
 }
@@ -1704,6 +1752,11 @@ class SystemZABIInfo : public ABIInfo {
                                  CodeGenFunction &CGF) const;
 };
 
+class SystemZTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  SystemZTargetCodeGenInfo():TargetCodeGenInfo(new SystemZABIInfo()) {};
+};
+
 }
 
 bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
@@ -1757,51 +1810,79 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty,
   }
 }
 
-ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
-                                                ASTContext &Context,
-                                          llvm::LLVMContext &VMContext) const {
-  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
-    return ABIArgInfo::getIndirect(0);
-  } else {
-    return (Ty->isPromotableIntegerType() ?
-            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+// MSP430 ABI Implementation
+
+namespace {
+
+class MSP430TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  MSP430TargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {};
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &M) const;
+};
+
+}
+
+void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
+                                                  llvm::GlobalValue *GV,
+                                             CodeGen::CodeGenModule &M) const {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (const MSP430InterruptAttr *attr = FD->getAttr<MSP430InterruptAttr>()) {
+      // Handle 'interrupt' attribute:
+      llvm::Function *F = cast<llvm::Function>(GV);
+
+      // Step 1: Set ISR calling convention.
+      F->setCallingConv(llvm::CallingConv::MSP430_INTR);
+
+      // Step 2: Add attributes goodness.
+      F->addFnAttr(llvm::Attribute::NoInline);
+
+      // Step 3: Emit ISR vector alias.
+      unsigned Num = attr->getNumber() + 0xffe0;
+      new llvm::GlobalAlias(GV->getType(), llvm::Function::ExternalLinkage,
+                            "vector_" +
+                            llvm::LowercaseString(llvm::utohexstr(Num)),
+                            GV, &M.getModule());
+    }
   }
 }
 
-llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                       CodeGenFunction &CGF) const {
-  return 0;
-}
+const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
+  if (TheTargetCodeGenInfo)
+    return *TheTargetCodeGenInfo;
 
-const ABIInfo &CodeGenTypes::getABIInfo() const {
-  if (TheABIInfo)
-    return *TheABIInfo;
-
-  // For now we just cache the ABIInfo in CodeGenTypes and don't free it.
+  // For now we just cache the TargetCodeGenInfo in CodeGenModule and don't
+  // free it.
 
   const llvm::Triple &Triple(getContext().Target.getTriple());
   switch (Triple.getArch()) {
   default:
-    return *(TheABIInfo = new DefaultABIInfo);
+    return *(TheTargetCodeGenInfo = new DefaultTargetCodeGenInfo);
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     // FIXME: We want to know the float calling convention as well.
     if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
-      return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::APCS));
+      return *(TheTargetCodeGenInfo =
+               new ARMTargetCodeGenInfo(ARMABIInfo::APCS));
 
-    return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::AAPCS));
+    return *(TheTargetCodeGenInfo =
+             new ARMTargetCodeGenInfo(ARMABIInfo::AAPCS));
 
   case llvm::Triple::pic16:
-    return *(TheABIInfo = new PIC16ABIInfo());
+    return *(TheTargetCodeGenInfo = new PIC16TargetCodeGenInfo());
 
   case llvm::Triple::systemz:
-    return *(TheABIInfo = new SystemZABIInfo());
+    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo());
+
+  case llvm::Triple::msp430:
+    return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo());
 
   case llvm::Triple::x86:
     switch (Triple.getOS()) {
     case llvm::Triple::Darwin:
-      return *(TheABIInfo = new X86_32ABIInfo(Context, true, true));
+      return *(TheTargetCodeGenInfo =
+               new X86_32TargetCodeGenInfo(Context, true, true));
     case llvm::Triple::Cygwin:
     case llvm::Triple::MinGW32:
     case llvm::Triple::MinGW64:
@@ -1809,13 +1890,15 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     case llvm::Triple::DragonFly:
     case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
-      return *(TheABIInfo = new X86_32ABIInfo(Context, false, true));
+      return *(TheTargetCodeGenInfo =
+               new X86_32TargetCodeGenInfo(Context, false, true));
 
     default:
-      return *(TheABIInfo = new X86_32ABIInfo(Context, false, false));
+      return *(TheTargetCodeGenInfo =
+               new X86_32TargetCodeGenInfo(Context, false, false));
     }
 
   case llvm::Triple::x86_64:
-    return *(TheABIInfo = new X86_64ABIInfo());
+    return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo());
   }
 }

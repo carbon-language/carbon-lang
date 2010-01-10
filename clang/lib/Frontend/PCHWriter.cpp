@@ -1739,9 +1739,12 @@ void PCHWriter::WriteIdentifierTable(Preprocessor &PP) {
 void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
   RecordData Record;
   for (; Attr; Attr = Attr->getNext()) {
-    Record.push_back(Attr->getKind()); // FIXME: stable encoding
+    Record.push_back(Attr->getKind()); // FIXME: stable encoding, target attrs
     Record.push_back(Attr->isInherited());
     switch (Attr->getKind()) {
+    default:
+      assert(0 && "Does not support PCH writing for this attribute yet!");
+      break;
     case Attr::Alias:
       AddString(cast<AliasAttr>(Attr)->getAliasee(), Record);
       break;

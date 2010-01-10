@@ -101,6 +101,7 @@ namespace clang {
   class InitializationKind;
   class InitializationSequence;
   class VisibleDeclConsumer;
+  class TargetAttributesSema;
 
 /// BlockSemaInfo - When a block is being parsed, this contains information
 /// about the block.  It is pointed to from Sema::CurBlock.
@@ -176,6 +177,7 @@ public:
 class Sema : public Action {
   Sema(const Sema&);           // DO NOT IMPLEMENT
   void operator=(const Sema&); // DO NOT IMPLEMENT
+  mutable const TargetAttributesSema* TheTargetAttributesSema;
 public:
   const LangOptions &LangOpts;
   Preprocessor &PP;
@@ -426,13 +428,12 @@ public:
   Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
        bool CompleteTranslationUnit = true,
        CodeCompleteConsumer *CompletionConsumer = 0);
-  ~Sema() {
-    if (PackContext) FreePackedContext();
-  }
+  ~Sema();
 
   const LangOptions &getLangOptions() const { return LangOpts; }
   Diagnostic &getDiagnostics() const { return Diags; }
   SourceManager &getSourceManager() const { return SourceMgr; }
+  const TargetAttributesSema &getTargetAttributesSema() const;
 
   /// \brief Helper class that creates diagnostics with optional
   /// template instantiation stacks.

@@ -55,8 +55,6 @@ public:
     Cleanup,
     Const,
     Constructor,
-    DLLExport,
-    DLLImport,
     Deprecated,
     Destructor,
     FastCall,
@@ -93,7 +91,12 @@ public:
     Visibility,
     WarnUnusedResult,
     Weak,
-    WeakImport
+    WeakImport,
+
+    FIRST_TARGET_ATTRIBUTE,
+    DLLExport,
+    DLLImport,
+    MSP430Interrupt
   };
 
 private:
@@ -456,8 +459,6 @@ public:
   static bool classof(const VisibilityAttr *A) { return true; }
 };
 
-DEF_SIMPLE_ATTR(DLLImport);
-DEF_SIMPLE_ATTR(DLLExport);
 DEF_SIMPLE_ATTR(FastCall);
 DEF_SIMPLE_ATTR(StdCall);
 DEF_SIMPLE_ATTR(CDecl);
@@ -565,6 +566,27 @@ DEF_SIMPLE_ATTR(NSReturnsRetained);
 DEF_SIMPLE_ATTR(BaseCheck);
 DEF_SIMPLE_ATTR(Hiding);
 DEF_SIMPLE_ATTR(Override);
+
+// Target-specific attributes
+DEF_SIMPLE_ATTR(DLLImport);
+DEF_SIMPLE_ATTR(DLLExport);
+
+class MSP430InterruptAttr : public Attr {
+  unsigned Number;
+
+public:
+  MSP430InterruptAttr(unsigned n) : Attr(MSP430Interrupt), Number(n) {}
+
+  unsigned getNumber() const { return Number; }
+
+  virtual Attr *clone(ASTContext &C) const {
+    return ::new (C) MSP430InterruptAttr(Number);
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == MSP430Interrupt; }
+  static bool classof(const MSP430InterruptAttr *A) { return true; }
+};
 
 #undef DEF_SIMPLE_ATTR
 

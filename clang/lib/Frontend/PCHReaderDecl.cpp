@@ -438,6 +438,9 @@ Attr *PCHReader::ReadAttributes() {
     bool IsInherited = Record[Idx++];
 
     switch (Kind) {
+    default:
+      assert(0 && "Unknown attribute!");
+      break;
     STRING_ATTR(Alias);
     UNSIGNED_ATTR(Aligned);
     SIMPLE_ATTR(AlwaysInline);

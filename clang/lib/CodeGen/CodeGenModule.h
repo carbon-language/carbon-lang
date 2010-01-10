@@ -43,6 +43,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class TargetCodeGenInfo;
   class ASTContext;
   class FunctionDecl;
   class IdentifierInfo;
@@ -85,6 +86,7 @@ class CodeGenModule : public BlockModule {
   const CodeGenOptions &CodeGenOpts;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
+  mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
   Diagnostic &Diags;
   CodeGenTypes Types;
   MangleContext MangleCtx;
@@ -191,6 +193,7 @@ public:
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
+  const TargetCodeGenInfo &getTargetCodeGenInfo() const;
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;
