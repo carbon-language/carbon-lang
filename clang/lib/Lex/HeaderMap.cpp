@@ -173,17 +173,6 @@ const char *HeaderMap::getString(unsigned StrTabIdx) const {
   return FileBuffer->getBufferStart()+StrTabIdx;
 }
 
-/// StringsEqualWithoutCase - Compare the specified two strings for case-
-/// insensitive equality, returning true if they are equal.  Both strings are
-/// known to have the same length.
-static bool StringsEqualWithoutCase(const char *S1, const char *S2,
-                                    unsigned Len) {
-  for (; Len; ++S1, ++S2, --Len)
-    if (tolower(*S1) != tolower(*S2))
-      return false;
-  return true;
-}
-
 //===----------------------------------------------------------------------===//
 // The Main Drivers
 //===----------------------------------------------------------------------===//
@@ -226,13 +215,7 @@ const FileEntry *HeaderMap::LookupFile(llvm::StringRef Filename,
     if (B.Key == HMAP_EmptyBucketKey) return 0; // Hash miss.
 
     // See if the key matches.  If not, probe on.
-    const char *Key = getString(B.Key);
-    unsigned BucketKeyLen = strlen(Key);
-    if (BucketKeyLen != unsigned(Filename.size()))
-      continue;
-
-    // See if the actual strings equal.
-    if (!StringsEqualWithoutCase(Filename.begin(), Key, BucketKeyLen))
+    if (!Filename.equals_lower(getString(B.Key)))
       continue;
 
     // If so, we have a match in the hash table.  Construct the destination
