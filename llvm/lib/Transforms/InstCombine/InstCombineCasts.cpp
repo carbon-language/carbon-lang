@@ -799,6 +799,10 @@ static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
   if (!I->hasOneUse()) return false;
 
   switch (I->getOpcode()) {
+  case Instruction::SExt:  // sext(sext(x)) -> sext(x)
+  case Instruction::ZExt:  // sext(zext(x)) -> zext(x)
+  case Instruction::Trunc: // sext(trunc(x)) -> trunc(x) or sext(x)
+    return true;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
@@ -813,9 +817,6 @@ static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
   //case Instruction::LShr:  TODO
   //case Instruction::Trunc: TODO
       
-  case Instruction::SExt: // sext(sext(x)) -> sext(x)
-  case Instruction::ZExt: // sext(zext(x)) -> zext(x)
-    return true;
   case Instruction::Select:
     return CanEvaluateSExtd(I->getOperand(1), Ty, TD) &&
            CanEvaluateSExtd(I->getOperand(2), Ty, TD);
