@@ -1035,20 +1035,17 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   //   %a = shl i32 %i, 30
   //   %d = ashr i32 %a, 30
   Value *A = 0;
-  // FIXME: GENERALIZE WITH SIGN BITS.
+  // TODO: Eventually this could be subsumed by EvaluateInDifferentType.
   ConstantInt *BA = 0, *CA = 0;
-  if (match(Src, m_AShr(m_Shl(m_Value(A), m_ConstantInt(BA)),
+  if (match(Src, m_AShr(m_Shl(m_Trunc(m_Value(A)), m_ConstantInt(BA)),
                         m_ConstantInt(CA))) &&
-      BA == CA && isa<TruncInst>(A)) {
-    Value *I = cast<TruncInst>(A)->getOperand(0);
-    if (I->getType() == CI.getType()) {
-      unsigned MidSize = Src->getType()->getScalarSizeInBits();
-      unsigned SrcDstSize = CI.getType()->getScalarSizeInBits();
-      unsigned ShAmt = CA->getZExtValue()+SrcDstSize-MidSize;
-      Constant *ShAmtV = ConstantInt::get(CI.getType(), ShAmt);
-      I = Builder->CreateShl(I, ShAmtV, CI.getName());
-      return BinaryOperator::CreateAShr(I, ShAmtV);
-    }
+      BA == CA && A->getType() == CI.getType()) {
+    unsigned MidSize = Src->getType()->getScalarSizeInBits();
+    unsigned SrcDstSize = CI.getType()->getScalarSizeInBits();
+    unsigned ShAmt = CA->getZExtValue()+SrcDstSize-MidSize;
+    Constant *ShAmtV = ConstantInt::get(CI.getType(), ShAmt);
+    A = Builder->CreateShl(A, ShAmtV, CI.getName());
+    return BinaryOperator::CreateAShr(A, ShAmtV);
   }
   
   return 0;
