@@ -2074,13 +2074,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_umbrella);
   Args.AddAllArgs(CmdArgs, options::OPT_undefined);
   Args.AddAllArgs(CmdArgs, options::OPT_unexported__symbols__list);
-
   Args.AddAllArgs(CmdArgs, options::OPT_weak__reference__mismatches);
-  if (!Args.hasArg(options::OPT_weak__reference__mismatches)) {
-    CmdArgs.push_back("-weak_reference_mismatches");
-    CmdArgs.push_back("non-weak");
-  }
-
   Args.AddLastArg(CmdArgs, options::OPT_X_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_y);
   Args.AddLastArg(CmdArgs, options::OPT_w);
