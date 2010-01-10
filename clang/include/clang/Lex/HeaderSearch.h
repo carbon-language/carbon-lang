@@ -150,8 +150,7 @@ public:
   /// search location.  This is used to implement #include_next.  CurFileEnt, if
   /// non-null, indicates where the #including file is, in case a relative
   /// search is needed.
-  const FileEntry *LookupFile(const char *FilenameStart,
-                              const char *FilenameEnd, bool isAngled,
+  const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt);
@@ -161,16 +160,14 @@ public:
   /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
   /// is a subframework within Carbon.framework.  If so, return the FileEntry
   /// for the designated file, otherwise return null.
-  const FileEntry *LookupSubframeworkHeader(const char *FilenameStart,
-                                            const char *FilenameEnd,
+  const FileEntry *LookupSubframeworkHeader(llvm::StringRef Filename,
                                             const FileEntry *RelativeFileEnt);
 
   /// LookupFrameworkCache - Look up the specified framework name in our
   /// framework cache, returning the DirectoryEntry it is in if we know,
   /// otherwise, return null.
-  const DirectoryEntry *&LookupFrameworkCache(const char *FWNameStart,
-                                              const char *FWNameEnd) {
-    return FrameworkMap.GetOrCreateValue(FWNameStart, FWNameEnd).getValue();
+  const DirectoryEntry *&LookupFrameworkCache(llvm::StringRef FWName) {
+    return FrameworkMap.GetOrCreateValue(FWName).getValue();
   }
 
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a

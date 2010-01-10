@@ -691,13 +691,12 @@ public:
   /// caller is expected to provide a buffer that is large enough to hold the
   /// spelling of the filename, but is also expected to handle the case when
   /// this method decides to use a different buffer.
-  bool GetIncludeFilenameSpelling(SourceLocation Loc,
-                                  const char *&BufStart, const char *&BufEnd);
+  bool GetIncludeFilenameSpelling(SourceLocation Loc,llvm::StringRef &Filename);
 
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// for system #include's or not (i.e. using <> instead of "").
-  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
+  const FileEntry *LookupFile(llvm::StringRef Filename,
                               SourceLocation FilenameTokLoc, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir);

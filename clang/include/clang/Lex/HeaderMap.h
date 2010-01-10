@@ -16,6 +16,7 @@
 
 namespace llvm {
   class MemoryBuffer;
+  class StringRef;
 }
 namespace clang {
   class FileEntry;
@@ -46,8 +47,7 @@ public:
 
   /// LookupFile - Check to see if the specified relative filename is located in
   /// this HeaderMap.  If so, open it and return its FileEntry.
-  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
-                              FileManager &FM) const;
+  const FileEntry *LookupFile(llvm::StringRef Filename, FileManager &FM) const;
 
   /// getFileName - Return the filename of the headermap.
   const char *getFileName() const;

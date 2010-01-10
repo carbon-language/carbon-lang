@@ -519,8 +519,8 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
   PP.getCurrentLexer()->LexIncludeFilename(Tok);
 
   // Reserve a buffer to get the spelling.
-  llvm::SmallVector<char, 128> FilenameBuffer;
-  const char *FilenameStart, *FilenameEnd;
+  llvm::SmallString<128> FilenameBuffer;
+  llvm::StringRef Filename;
 
   switch (Tok.getKind()) {
   case tok::eom:
@@ -530,9 +530,9 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
   case tok::angle_string_literal:
   case tok::string_literal: {
     FilenameBuffer.resize(Tok.getLength());
-    FilenameStart = &FilenameBuffer[0];
+    const char *FilenameStart = &FilenameBuffer[0];
     unsigned Len = PP.getSpelling(Tok, FilenameStart);
-    FilenameEnd = FilenameStart+Len;
+    Filename = llvm::StringRef(FilenameStart, Len);
     break;
   }
 
@@ -542,25 +542,22 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
     FilenameBuffer.push_back('<');
     if (PP.ConcatenateIncludeName(FilenameBuffer))
       return false;   // Found <eom> but no ">"?  Diagnostic already emitted.
-    FilenameStart = FilenameBuffer.data();
-    FilenameEnd = FilenameStart + FilenameBuffer.size();
+    Filename = FilenameBuffer.str();
     break;
   default:
     PP.Diag(Tok.getLocation(), diag::err_pp_expects_filename);
     return false;
   }
 
-  bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(),
-                                             FilenameStart, FilenameEnd);
+  bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.
-  if (FilenameStart == 0) {
+  if (Filename.empty())
     return false;
-  }
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = PP.LookupFile(FilenameStart, FilenameEnd,
+  const FileEntry *File = PP.LookupFile(Filename,
                                         SourceLocation(),// produce no warnings.
                                         isAngled, LookupFrom, CurDir);
 

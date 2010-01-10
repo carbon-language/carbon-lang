@@ -56,8 +56,9 @@ struct HMapHeader {
 /// HashHMapKey - This is the 'well known' hash function required by the file
 /// format, used to look up keys in the hash table.  The hash table uses simple
 /// linear probing based on this function.
-static inline unsigned HashHMapKey(const char *S, const char *End) {
+static inline unsigned HashHMapKey(llvm::StringRef Str) {
   unsigned Result = 0;
+  const char *S = Str.begin(), *End = Str.end();
 
   for (; S != End; S++)
     Result += tolower(*S) * 13;
@@ -209,8 +210,7 @@ void HeaderMap::dump() const {
 
 /// LookupFile - Check to see if the specified relative filename is located in
 /// this HeaderMap.  If so, open it and return its FileEntry.
-const FileEntry *HeaderMap::LookupFile(const char *FilenameStart,
-                                       const char *FilenameEnd,
+const FileEntry *HeaderMap::LookupFile(llvm::StringRef Filename,
                                        FileManager &FM) const {
   const HMapHeader &Hdr = getHeader();
   unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
@@ -221,18 +221,18 @@ const FileEntry *HeaderMap::LookupFile(const char *FilenameStart,
     return 0;
 
   // Linearly probe the hash table.
-  for (unsigned Bucket = HashHMapKey(FilenameStart, FilenameEnd);; ++Bucket) {
+  for (unsigned Bucket = HashHMapKey(Filename);; ++Bucket) {
     HMapBucket B = getBucket(Bucket & (NumBuckets-1));
     if (B.Key == HMAP_EmptyBucketKey) return 0; // Hash miss.
 
     // See if the key matches.  If not, probe on.
     const char *Key = getString(B.Key);
     unsigned BucketKeyLen = strlen(Key);
-    if (BucketKeyLen != unsigned(FilenameEnd-FilenameStart))
+    if (BucketKeyLen != unsigned(Filename.size()))
       continue;
 
     // See if the actual strings equal.
-    if (!StringsEqualWithoutCase(FilenameStart, Key, BucketKeyLen))
+    if (!StringsEqualWithoutCase(Filename.begin(), Key, BucketKeyLen))
       continue;
 
     // If so, we have a match in the hash table.  Construct the destination

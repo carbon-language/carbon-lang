@@ -16,6 +16,9 @@
 
 #include "clang/Basic/SourceManager.h"
 
+namespace llvm {
+  class StringRef;
+}
 namespace clang {
 class HeaderMap;
 class DirectoryEntry;
@@ -118,12 +121,10 @@ public:
 
   /// LookupFile - Lookup the specified file in this search path, returning it
   /// if it exists or returning null if not.
-  const FileEntry *LookupFile(const char *FilenameStart,
-                              const char *FilenameEnd, HeaderSearch &HS) const;
+  const FileEntry *LookupFile(llvm::StringRef Filename, HeaderSearch &HS) const;
 
 private:
-  const FileEntry *DoFrameworkLookup(const char *FilenameStart,
-                                     const char *FilenameEnd,
+  const FileEntry *DoFrameworkLookup(llvm::StringRef Filename,
                                      HeaderSearch &HS) const;
 
 };
