@@ -29,5 +29,5 @@ add_clang_library(clangCodeGen
   CodeGenTypes.cpp
   Mangle.cpp
   ModuleBuilder.cpp
-  TargetABIInfo.cpp
+  TargetInfo.cpp
   )
