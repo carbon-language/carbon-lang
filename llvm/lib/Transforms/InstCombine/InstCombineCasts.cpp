@@ -643,17 +643,31 @@ static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
     if (Tmp1 == -1) return -1;
     Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
     if (Tmp2 == -1) return -1;
+    return 0; // TODO: Could be improved.
+      
+  case Instruction::Shl:
+    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == -1) return -1;
+      
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1)))
+      return Tmp1 - CI->getZExtValue();
+
+    // Variable shift, no known zext bits.
+    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    if (Tmp2 == -1) return -1;
     return 0;
       
-  //case Instruction::Shl:
   //case Instruction::LShr:
   case Instruction::ZExt:
     // zext(zext(x)) -> zext(x).  Since we're replacing it, it isn't eliminated.
     Tmp1 = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
     return GetLeadingZeros(I, TD)+Tmp1;
       
-  //case Instruction::SExt:  zext(sext(x)) -> sext(x) with no upper bits known.
-  //case Instruction::Trunc:
+  case Instruction::SExt:
+    // zext(sext(x)) -> sext(x) with no upper bits known.
+    return 0;
+  //case Instruction::Trunc: -> Could turn into AND.
+      
   case Instruction::Select:
     Tmp1 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
     if (Tmp1 == -1) return -1;

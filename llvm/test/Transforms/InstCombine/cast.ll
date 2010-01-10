@@ -403,3 +403,31 @@ define i64 @test44(i8 %T) {
 ; CHECK-NEXT: %B = or i64 %A, 1234
 ; CHECK-NEXT: ret i64 %B
 }
+
+define i64 @test45(i8 %A, i64 %Q) {
+ %D = trunc i64 %Q to i32  ;; should be removed
+ %B = sext i8 %A to i32
+ %C = or i32 %B, %D
+ %E = zext i32 %C to i64 
+ ret i64 %E
+; CHECK: @test45
+; CHECK-NEXT: %B = sext i8 %A to i64
+; CHECK-NEXT: %C = or i64 %B, %Q
+; CHECK-NEXT: %E = and i64 %C, 4294967295
+; CHECK-NEXT: ret i64 %E
+}
+
+
+define i64 @test46(i64 %A) {
+ %B = trunc i64 %A to i32
+ %C = and i32 %B, 42
+ %D = shl i32 %C, 8
+ %E = zext i32 %D to i64 
+ ret i64 %E
+; CHECK: @test46
+; CHECK-NEXT: %C = shl i64 %A, 8
+; CHECK-NEXT: %D = and i64 %C, 10752
+; CHECK-NEXT: ret i64 %D
+}
+
+
