@@ -695,6 +695,11 @@ static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
 }
 
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
+  // If this zero extend is only used by a truncate, let the truncate by
+  // eliminated before we try to optimize this zext.
+  if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
+    return 0;
+  
   // If one of the common conversion will work, do it.
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
@@ -716,33 +721,25 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
     int BitsZExt = CanEvaluateZExtd(Src, DestTy, NumCastsRemoved, TD);
     if (BitsZExt == -1) return 0;
     
+    // Okay, we can transform this!  Insert the new expression now.
+    DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
+          " to avoid zero extend: " << CI);
+    Value *Res = EvaluateInDifferentType(Src, DestTy, false);
+    assert(Res->getType() == DestTy);
+    
+    // If the high bits are already filled with zeros, just replace this
+    // cast with the result.
     uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
     uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-
-    // If this is a zero-extension, we need to do an AND to maintain the clear
-    // top-part of the computation.  If we know the result will be zero 
-    // extended enough already, we don't need the and.
-    if (NumCastsRemoved >= 1 ||
-        unsigned(BitsZExt) >= DestBitSize-SrcBitSize) {
-      
-      // Okay, we can transform this!  Insert the new expression now.
-      DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
-            " to avoid zero extend: " << CI);
-      Value *Res = EvaluateInDifferentType(Src, DestTy, false);
-      assert(Res->getType() == DestTy);
-      
-      // If the high bits are already filled with zeros, just replace this
-      // cast with the result.
-      if (unsigned(BitsZExt) >= DestBitSize-SrcBitSize ||
-          MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
-                                                       DestBitSize-SrcBitSize)))
-        return ReplaceInstUsesWith(CI, Res);
-      
-      // We need to emit an AND to clear the high bits.
-      Constant *C = ConstantInt::get(CI.getContext(), 
-                                 APInt::getLowBitsSet(DestBitSize, SrcBitSize));
-      return BinaryOperator::CreateAnd(Res, C);
-    }
+    if (unsigned(BitsZExt) >= DestBitSize-SrcBitSize ||
+        MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
+                                                     DestBitSize-SrcBitSize)))
+      return ReplaceInstUsesWith(CI, Res);
+    
+    // We need to emit an AND to clear the high bits.
+    Constant *C = ConstantInt::get(CI.getContext(), 
+                               APInt::getLowBitsSet(DestBitSize, SrcBitSize));
+    return BinaryOperator::CreateAnd(Res, C);
   }
 
   // If this is a TRUNC followed by a ZEXT then we are dealing with integral
@@ -951,6 +948,11 @@ static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
 }
 
 Instruction *InstCombiner::visitSExt(SExtInst &CI) {
+  // If this sign extend is only used by a truncate, let the truncate by
+  // eliminated before we try to optimize this zext.
+  if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
+    return 0;
+  
   if (Instruction *I = commonCastTransforms(CI))
     return I;
   

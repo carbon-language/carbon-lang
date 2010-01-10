@@ -430,4 +430,30 @@ define i64 @test46(i64 %A) {
 ; CHECK-NEXT: ret i64 %D
 }
 
+define i64 @test47(i8 %A) {
+ %B = sext i8 %A to i32
+ %C = or i32 %B, 42
+ %E = zext i32 %C to i64 
+ ret i64 %E
+; CHECK: @test47
+; CHECK-NEXT:   %B = sext i8 %A to i64
+; CHECK-NEXT: %C = or i64 %B, 42
+; CHECK-NEXT:  %E = and i64 %C, 4294967295
+; CHECK-NEXT:  ret i64 %E
+}
+
+define i64 @test48(i8 %A, i8 %a) {
+  %b = zext i8 %a to i32
+  %B = zext i8 %A to i32
+  %C = shl i32 %B, 8
+  %D = or i32 %C, %b
+  %E = zext i32 %D to i64
+  ret i64 %E
+; CHECK: @test48
+; CHECK-NEXT: %b = zext i8 %a to i64
+; CHECK-NEXT: %B = zext i8 %A to i64
+; CHECK-NEXT: %C = shl i64 %B, 8
+; CHECK-NEXT: %D = or i64 %C, %b
+; CHECK-NEXT: ret i64 %D
+}
 
