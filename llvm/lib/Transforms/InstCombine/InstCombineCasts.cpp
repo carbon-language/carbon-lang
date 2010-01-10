@@ -623,7 +623,7 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
     PHINode *PN = cast<PHINode>(I);
     if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, TD)) return false;
     for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, TD)) return false;
+      if (!CanEvaluateZExtd(PN->getIncomingValue(i), Ty, TD)) return false;
     return true;
   }
   default:
