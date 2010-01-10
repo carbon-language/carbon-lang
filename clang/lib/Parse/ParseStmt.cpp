@@ -95,7 +95,7 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     }
 
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(CurScope);
+    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Statement);
     ConsumeToken();
     return ParseStatementOrDeclaration(OnlyStatement);
       
@@ -955,7 +955,9 @@ Parser::OwningStmtResult Parser::ParseForStatement(AttributeList *Attr) {
   DeclPtrTy SecondVar;
   
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(CurScope);
+    Actions.CodeCompleteOrdinaryName(CurScope, 
+                                     C99orCXXorObjC? Action::CCC_ForInit
+                                                   : Action::CCC_Expression);
     ConsumeToken();
   }
   

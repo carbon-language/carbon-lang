@@ -2340,11 +2340,40 @@ public:
   /// \todo Code completion for attributes.
   //@{
   
+  /// \brief Describes the context in which code completion occurs.
+  enum CodeCompletionContext {
+    /// \brief Code completion occurs at top-level or namespace context.
+    CCC_Namespace,
+    /// \brief Code completion occurs within a class, struct, or union.
+    CCC_Class,
+    /// \brief Code completion occurs following one or more template
+    /// headers.
+    CCC_Template,
+    /// \brief Code completion occurs following one or more template
+    /// headers within a class.
+    CCC_MemberTemplate,
+    /// \brief Code completion occurs within an expression.
+    CCC_Expression,
+    /// \brief Code completion occurs within a statement, which may
+    /// also be an expression or a declaration.
+    CCC_Statement,
+    /// \brief Code completion occurs at the beginning of the
+    /// initialization statement (or expression) in a for loop.
+    CCC_ForInit,
+    /// \brief Code completion ocurs within the condition of an if,
+    /// while, switch, or for statement.
+    CCC_Condition
+  };
+    
   /// \brief Code completion for an ordinary name that occurs within the given
   /// scope.
   ///
   /// \param S the scope in which the name occurs.
-  virtual void CodeCompleteOrdinaryName(Scope *S) { }
+  ///
+  /// \param CompletionContext the context in which code completion
+  /// occurs.
+  virtual void CodeCompleteOrdinaryName(Scope *S, 
+                                    CodeCompletionContext CompletionContext) { }
   
   /// \brief Code completion for a member access expression.
   ///

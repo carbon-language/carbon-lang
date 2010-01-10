@@ -585,6 +585,11 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 /// \returns true if there was a parsing, false otherwise.
 bool Parser::ParseCXXCondition(OwningExprResult &ExprResult,
                                DeclPtrTy &DeclResult) {
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Condition);
+    ConsumeToken();
+  }
+
   if (!isCXXConditionDeclaration()) {
     ExprResult = ParseExpression(); // expression
     DeclResult = DeclPtrTy();

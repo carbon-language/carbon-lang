@@ -378,6 +378,11 @@ clang_getCompletionChunkKindSpelling(enum CXCompletionChunkKind Kind) {
   case CXCompletionChunk_RightAngle: return "RightAngle";
   case CXCompletionChunk_Comma: return "Comma";
   case CXCompletionChunk_ResultType: return "ResultType";
+  case CXCompletionChunk_Colon: return "Colon";
+  case CXCompletionChunk_SemiColon: return "SemiColon";
+  case CXCompletionChunk_Equal: return "Equal";
+  case CXCompletionChunk_HorizontalSpace: return "HorizontalSpace";
+  case CXCompletionChunk_VerticalSpace: return "VerticalSpace";
   }
   
   return "Unknown";

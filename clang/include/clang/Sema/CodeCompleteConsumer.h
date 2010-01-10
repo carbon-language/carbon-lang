@@ -85,7 +85,18 @@ public:
     /// \brief A right angle bracket ('>').
     CK_RightAngle,
     /// \brief A comma separator (',').
-    CK_Comma
+    CK_Comma,
+    /// \brief A colon (':').
+    CK_Colon,
+    /// \brief A semicolon (';').
+    CK_SemiColon,
+    /// \brief An '=' sign.
+    CK_Equal,
+    /// \brief Horizontal whitespace (' ').
+    CK_HorizontalSpace,
+    /// \brief Verticle whitespace ('\n' or '\r\n', depending on the
+    /// platform).
+    CK_VerticalSpace
   };
   
   /// \brief One piece of the code completion string.

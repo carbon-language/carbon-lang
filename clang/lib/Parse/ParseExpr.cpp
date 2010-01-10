@@ -200,11 +200,6 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         expression ',' assignment-expression
 ///
 Parser::OwningExprResult Parser::ParseExpression() {
-  if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(CurScope);
-    ConsumeToken();
-  }
-
   OwningExprResult LHS(ParseAssignmentExpression());
   if (LHS.isInvalid()) return move(LHS);
 
@@ -248,6 +243,11 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
 Parser::OwningExprResult Parser::ParseAssignmentExpression() {
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Expression);
+    ConsumeToken();
+  }
+
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 

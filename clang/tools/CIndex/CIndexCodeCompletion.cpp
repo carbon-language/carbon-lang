@@ -62,6 +62,16 @@ clang_getCompletionChunkKind(CXCompletionString completion_string,
     return CXCompletionChunk_RightAngle;
   case CodeCompletionString::CK_Comma:
     return CXCompletionChunk_Comma;
+  case CodeCompletionString::CK_Colon:
+    return CXCompletionChunk_Colon;
+  case CodeCompletionString::CK_SemiColon:
+    return CXCompletionChunk_SemiColon;
+  case CodeCompletionString::CK_Equal:
+    return CXCompletionChunk_Equal;
+  case CodeCompletionString::CK_HorizontalSpace:
+    return CXCompletionChunk_HorizontalSpace;
+  case CodeCompletionString::CK_VerticalSpace:
+    return CXCompletionChunk_VerticalSpace;
   }
 
   // Should be unreachable, but let's be careful.
@@ -90,6 +100,11 @@ const char *clang_getCompletionChunkText(CXCompletionString completion_string,
   case CodeCompletionString::CK_RightAngle:
   case CodeCompletionString::CK_Comma:
   case CodeCompletionString::CK_ResultType:
+  case CodeCompletionString::CK_Colon:
+  case CodeCompletionString::CK_SemiColon:
+  case CodeCompletionString::CK_Equal:
+  case CodeCompletionString::CK_HorizontalSpace:
+  case CodeCompletionString::CK_VerticalSpace:
     return (*CCStr)[chunk_number].Text;
 
   case CodeCompletionString::CK_Optional:
@@ -124,6 +139,11 @@ clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
   case CodeCompletionString::CK_RightAngle:
   case CodeCompletionString::CK_Comma:
   case CodeCompletionString::CK_ResultType:
+  case CodeCompletionString::CK_Colon:
+  case CodeCompletionString::CK_SemiColon:
+  case CodeCompletionString::CK_Equal:
+  case CodeCompletionString::CK_HorizontalSpace:
+  case CodeCompletionString::CK_VerticalSpace:
     return 0;
 
   case CodeCompletionString::CK_Optional:

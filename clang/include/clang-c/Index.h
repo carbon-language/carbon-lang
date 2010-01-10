@@ -581,7 +581,28 @@ enum CXCompletionChunkKind {
    * the text buffer. Rather, it is meant to illustrate the type that an 
    * expression using the given completion string would have.
    */
-  CXCompletionChunk_ResultType
+  CXCompletionChunk_ResultType,
+  /**
+   * \brief A colon (':').
+   */
+  CXCompletionChunk_Colon,
+  /**
+   * \brief A semicolon (';').
+   */
+  CXCompletionChunk_SemiColon,
+  /**
+   * \brief An '=' sign.
+   */
+  CXCompletionChunk_Equal,
+  /**
+   * Horizontal space (' ').
+   */
+  CXCompletionChunk_HorizontalSpace,
+  /**
+   * Vertical space ('\n'), after which it is generally a good idea to
+   * perform indentation.
+   */
+  CXCompletionChunk_VerticalSpace
 };
   
 /**

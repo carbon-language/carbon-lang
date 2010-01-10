@@ -158,6 +158,7 @@ namespace {
     /// 
     //@{
     bool IsOrdinaryName(NamedDecl *ND) const;
+    bool IsOrdinaryNonValueName(NamedDecl *ND) const;
     bool IsNestedNameSpecifier(NamedDecl *ND) const;
     bool IsEnum(NamedDecl *ND) const;
     bool IsClassOrStruct(NamedDecl *ND) const;
@@ -517,6 +518,17 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
   return ND->getIdentifierNamespace() & IDNS;
 }
 
+/// \brief Determines whether this given declaration will be found by
+/// ordinary name lookup.
+bool ResultBuilder::IsOrdinaryNonValueName(NamedDecl *ND) const {
+  unsigned IDNS = Decl::IDNS_Ordinary;
+  if (SemaRef.getLangOptions().CPlusPlus)
+    IDNS |= Decl::IDNS_Tag;
+  
+  return (ND->getIdentifierNamespace() & IDNS) && 
+    !isa<ValueDecl>(ND) && !isa<FunctionTemplateDecl>(ND);
+}
+
 /// \brief Determines whether the given declaration is suitable as the 
 /// start of a C++ nested-name-specifier, e.g., a class or namespace.
 bool ResultBuilder::IsNestedNameSpecifier(NamedDecl *ND) const {
@@ -797,22 +809,32 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
   Results.MaybeAddResult(Result("enum", Rank));
   Results.MaybeAddResult(Result("struct", Rank));
   Results.MaybeAddResult(Result("union", Rank));
-  
+  Results.MaybeAddResult(Result("const", Rank));
+  Results.MaybeAddResult(Result("volatile", Rank));
+
   if (LangOpts.C99) {
     // C99-specific
     Results.MaybeAddResult(Result("_Complex", Rank));
     Results.MaybeAddResult(Result("_Imaginary", Rank));
     Results.MaybeAddResult(Result("_Bool", Rank));
+    Results.MaybeAddResult(Result("restrict", Rank));
   }
   
   if (LangOpts.CPlusPlus) {
     // C++-specific
     Results.MaybeAddResult(Result("bool", Rank));
     Results.MaybeAddResult(Result("class", Rank));
-    Results.MaybeAddResult(Result("typename", Rank));
     Results.MaybeAddResult(Result("wchar_t", Rank));
     
+    // typename qualified-id
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("typename");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("qualified-id");
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
     if (LangOpts.CPlusPlus0x) {
+      Results.MaybeAddResult(Result("auto", Rank));
       Results.MaybeAddResult(Result("char16_t", Rank));
       Results.MaybeAddResult(Result("char32_t", Rank));
       Results.MaybeAddResult(Result("decltype", Rank));
@@ -825,8 +847,485 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
     //    Results.MaybeAddResult(Result("_Decimal32", Rank));
     //    Results.MaybeAddResult(Result("_Decimal64", Rank));
     //    Results.MaybeAddResult(Result("_Decimal128", Rank));
-    Results.MaybeAddResult(Result("typeof", Rank));
+    
+    CodeCompletionString *Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("typeof");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("expression-or-type");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.MaybeAddResult(Result(Pattern, Rank));
   }
+}
+
+static void AddStorageSpecifiers(Action::CodeCompletionContext CCC,
+                                 const LangOptions &LangOpts, 
+                                 unsigned Rank, 
+                                 ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  // Note: we don't suggest either "auto" or "register", because both
+  // are pointless as storage specifiers. Elsewhere, we suggest "auto"
+  // in C++0x as a type specifier.
+  Results.MaybeAddResult(Result("extern", Rank));
+  Results.MaybeAddResult(Result("static", Rank));
+}
+
+static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
+                                  const LangOptions &LangOpts, 
+                                  unsigned Rank, 
+                                  ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  switch (CCC) {
+  case Action::CCC_Class:
+  case Action::CCC_MemberTemplate:
+    if (LangOpts.CPlusPlus) {
+      Results.MaybeAddResult(Result("explicit", Rank));
+      Results.MaybeAddResult(Result("friend", Rank));
+      Results.MaybeAddResult(Result("mutable", Rank));
+      Results.MaybeAddResult(Result("virtual", Rank));
+    }    
+    // Fall through
+
+  case Action::CCC_Namespace:
+  case Action::CCC_Template:
+    if (LangOpts.CPlusPlus || LangOpts.C99)
+      Results.MaybeAddResult(Result("inline", Rank));
+    break;
+
+  case Action::CCC_Expression:
+  case Action::CCC_Statement:
+  case Action::CCC_ForInit:
+  case Action::CCC_Condition:
+    break;
+  }
+}
+
+/// \brief Add language constructs that show up for "ordinary" names.
+static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
+                                   Scope *S,
+                                   Sema &SemaRef,
+                                   unsigned Rank, 
+                                   ResultBuilder &Results) {
+  typedef CodeCompleteConsumer::Result Result;
+  switch (CCC) {
+  case Action::CCC_Namespace:
+    if (SemaRef.getLangOptions().CPlusPlus) {
+      // namespace <identifier> { }
+      CodeCompletionString *Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("namespace");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("identifier");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+      Pattern->AddPlaceholderChunk("declarations");
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+      Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // namespace identifier = identifier ;
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("namespace");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("identifier");
+      Pattern->AddChunk(CodeCompletionString::CK_Equal);
+      Pattern->AddPlaceholderChunk("identifier");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // Using directives
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("using");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddTextChunk("namespace");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("identifier");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // asm(string-literal)      
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("asm");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("string-literal");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // Explicit template instantiation
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("template");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("declaration");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+    // Fall through
+
+  case Action::CCC_Class:
+    Results.MaybeAddResult(Result("typedef", Rank));
+    if (SemaRef.getLangOptions().CPlusPlus) {
+      // Using declaration
+      CodeCompletionString *Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("using");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("qualified-id");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+      
+      // using typename qualified-id; (only in a dependent context)
+      if (SemaRef.CurContext->isDependentContext()) {
+        Pattern = new CodeCompletionString;
+        Pattern->AddTypedTextChunk("using");
+        Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+        Pattern->AddTextChunk("typename");
+        Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+        Pattern->AddPlaceholderChunk("qualified-id");
+        Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+        Results.MaybeAddResult(Result(Pattern, Rank));
+      }
+
+      if (CCC == Action::CCC_Class) {
+        // public:
+        Pattern = new CodeCompletionString;
+        Pattern->AddTypedTextChunk("public");
+        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+        Results.MaybeAddResult(Result(Pattern, Rank));
+
+        // protected:
+        Pattern = new CodeCompletionString;
+        Pattern->AddTypedTextChunk("protected");
+        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+        Results.MaybeAddResult(Result(Pattern, Rank));
+
+        // private:
+        Pattern = new CodeCompletionString;
+        Pattern->AddTypedTextChunk("private");
+        Pattern->AddChunk(CodeCompletionString::CK_Colon);
+        Results.MaybeAddResult(Result(Pattern, Rank));
+      }
+    }
+    // Fall through
+
+  case Action::CCC_Template:
+  case Action::CCC_MemberTemplate:
+    if (SemaRef.getLangOptions().CPlusPlus) {
+      // template < parameters >
+      CodeCompletionString *Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("template");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
+      Pattern->AddPlaceholderChunk("parameters");
+      Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    break;
+
+  case Action::CCC_Statement: {
+    Results.MaybeAddResult(Result("typedef", Rank));
+
+    CodeCompletionString *Pattern = 0;
+    if (SemaRef.getLangOptions().CPlusPlus) {
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("try");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+      Pattern->AddPlaceholderChunk("statements");
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+      Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+      Pattern->AddTextChunk("catch");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("declaration");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+      Pattern->AddPlaceholderChunk("statements");
+      Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+      Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    // if (condition) { statements }
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("if");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    if (SemaRef.getLangOptions().CPlusPlus)
+      Pattern->AddPlaceholderChunk("condition");
+    else
+      Pattern->AddPlaceholderChunk("expression");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+    Pattern->AddPlaceholderChunk("statements");
+    Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
+    // switch (condition) { }
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("switch");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    if (SemaRef.getLangOptions().CPlusPlus)
+      Pattern->AddPlaceholderChunk("condition");
+    else
+      Pattern->AddPlaceholderChunk("expression");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+    Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
+    // Switch-specific statements.
+    if (!SemaRef.getSwitchStack().empty()) {
+      // case expression:
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("case");
+      Pattern->AddPlaceholderChunk("expression");
+      Pattern->AddChunk(CodeCompletionString::CK_Colon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // default:
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("default");
+      Pattern->AddChunk(CodeCompletionString::CK_Colon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    /// while (condition) { statements }
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("while");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    if (SemaRef.getLangOptions().CPlusPlus)
+      Pattern->AddPlaceholderChunk("condition");
+    else
+      Pattern->AddPlaceholderChunk("expression");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+    Pattern->AddPlaceholderChunk("statements");
+    Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
+    // do { statements } while ( expression );
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("do");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+    Pattern->AddPlaceholderChunk("statements");
+    Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    Pattern->AddTextChunk("while");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("expression");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
+    // for ( for-init-statement ; condition ; expression ) { statements }
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("for");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    if (SemaRef.getLangOptions().CPlusPlus || SemaRef.getLangOptions().C99)
+      Pattern->AddPlaceholderChunk("init-statement");
+    else
+      Pattern->AddPlaceholderChunk("init-expression");
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Pattern->AddPlaceholderChunk("condition");
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Pattern->AddPlaceholderChunk("inc-expression");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
+    Pattern->AddPlaceholderChunk("statements");
+    Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+    
+    if (S->getContinueParent()) {
+      // continue ;
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("continue");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    if (S->getBreakParent()) {
+      // break ;
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("break");
+      Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    // "return expression ;" or "return ;", depending on whether we
+    // know the function is void or not.
+    bool isVoid = false;
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(SemaRef.CurContext))
+      isVoid = Function->getResultType()->isVoidType();
+    else if (ObjCMethodDecl *Method
+                                 = dyn_cast<ObjCMethodDecl>(SemaRef.CurContext))
+      isVoid = Method->getResultType()->isVoidType();
+    else if (SemaRef.CurBlock && !SemaRef.CurBlock->ReturnType.isNull())
+      isVoid = SemaRef.CurBlock->ReturnType->isVoidType();
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("return");
+    if (!isVoid)
+      Pattern->AddPlaceholderChunk("expression");
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+
+    // goto identifier ;
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("goto");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("identifier");
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Results.MaybeAddResult(Result(Pattern, Rank));    
+
+    // Using directives
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("using");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddTextChunk("namespace");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("identifier");
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+  }
+
+  // Fall through (for statement expressions).
+  case Action::CCC_ForInit:
+  case Action::CCC_Condition:
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    // Fall through: conditions and statements can have expressions.
+
+  case Action::CCC_Expression: {
+    CodeCompletionString *Pattern = 0;
+    if (SemaRef.getLangOptions().CPlusPlus) {
+      // 'this', if we're in a non-static member function.
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(SemaRef.CurContext))
+        if (!Method->isStatic())
+          Results.MaybeAddResult(Result("this", Rank));
+      
+      // true, false
+      Results.MaybeAddResult(Result("true", Rank));
+      Results.MaybeAddResult(Result("false", Rank));
+
+      // dynamic_cast < type-id > ( expression )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("dynamic_cast");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expression");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+      
+      // static_cast < type-id > ( expression )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("static_cast");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expression");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // reinterpret_cast < type-id > ( expression )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("reinterpret_cast");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expression");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // const_cast < type-id > ( expression )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("const_cast");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expression");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // typeid ( expression-or-type )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("typeid");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expression-or-type");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // new T ( ... )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("new");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expressions");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // new T [ ] ( ... )
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("new");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("type-id");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBracket);
+      Pattern->AddPlaceholderChunk("size");
+      Pattern->AddChunk(CodeCompletionString::CK_RightBracket);
+      Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+      Pattern->AddPlaceholderChunk("expressions");
+      Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // delete expression
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("delete");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("expression");
+      Results.MaybeAddResult(Result(Pattern, Rank));      
+
+      // delete [] expression
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("delete");
+      Pattern->AddChunk(CodeCompletionString::CK_LeftBracket);
+      Pattern->AddChunk(CodeCompletionString::CK_RightBracket);
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("expression");
+      Results.MaybeAddResult(Result(Pattern, Rank));
+
+      // throw expression
+      Pattern = new CodeCompletionString;
+      Pattern->AddTypedTextChunk("throw");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Pattern->AddPlaceholderChunk("expression");
+      Results.MaybeAddResult(Result(Pattern, Rank));
+    }
+
+    if (SemaRef.getLangOptions().ObjC1) {
+      // Add "super", if we're in an Objective-C class with a superclass.
+      if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
+        if (Method->getClassInterface()->getSuperClass())
+          Results.MaybeAddResult(Result("super", Rank));
+    }
+
+    // sizeof expression
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk("sizeof");
+    Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
+    Pattern->AddPlaceholderChunk("expression-or-type");
+    Pattern->AddChunk(CodeCompletionString::CK_RightParen);
+    Results.MaybeAddResult(Result(Pattern, Rank));
+    break;
+  }
+  }
+
+  AddTypeSpecifierResults(SemaRef.getLangOptions(), Rank, Results);
+
+  if (SemaRef.getLangOptions().CPlusPlus)
+    Results.MaybeAddResult(Result("operator", Rank));
 }
 
 /// \brief If the given declaration has an associated type, add it as a result 
@@ -1422,22 +1921,35 @@ static void HandleCodeCompleteResults(Sema *S,
     Results[I].Destroy();
 }
 
-void Sema::CodeCompleteOrdinaryName(Scope *S) {
+void Sema::CodeCompleteOrdinaryName(Scope *S, 
+                                    CodeCompletionContext CompletionContext) {
   typedef CodeCompleteConsumer::Result Result;
-  ResultBuilder Results(*this, &ResultBuilder::IsOrdinaryName);
+  ResultBuilder Results(*this);
+
+  // Determine how to filter results, e.g., so that the names of
+  // values (functions, enumerators, function templates, etc.) are
+  // only allowed where we can have an expression.
+  switch (CompletionContext) {
+  case CCC_Namespace:
+  case CCC_Class:
+  case CCC_Template:
+  case CCC_MemberTemplate:
+    Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
+    break;
+
+  case CCC_Expression:
+  case CCC_Statement:
+  case CCC_ForInit:
+  case CCC_Condition:
+    Results.setFilter(&ResultBuilder::IsOrdinaryName);
+    break;
+  }
+
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                                            0, CurContext, Results);
 
   Results.EnterNewScope();
-  AddTypeSpecifierResults(getLangOptions(), NextRank, Results);
-  
-  if (getLangOptions().ObjC1) {
-    // Add the "super" keyword, if appropriate.
-    if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(CurContext))
-      if (Method->getClassInterface()->getSuperClass())
-        Results.MaybeAddResult(Result("super", NextRank));
-  }
-
+  AddOrdinaryNameResults(CompletionContext, S, *this, NextRank, Results);
   Results.ExitScope();
 
   if (CodeCompleter->includeMacros())
@@ -1561,9 +2073,6 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
                                               E = ObjCPtr->qual_end();
          I != E; ++I)
       AddObjCProperties(*I, true, CurContext, Results);
-    
-    // FIXME: We could (should?) also look for "implicit" properties, identified
-    // only by the presence of nullary and unary selectors.
   } else if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
              (!IsArrow && BaseType->isObjCInterfaceType())) {
     // Objective-C instance variable access.
@@ -1746,7 +2255,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   // Ignore type-dependent call expressions entirely.
   if (Fn->isTypeDependent() || 
       Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
-    CodeCompleteOrdinaryName(S);
+    CodeCompleteOrdinaryName(S, CCC_Expression);
     return;
   }
 
@@ -1784,7 +2293,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   }
 
   if (Results.empty())
-    CodeCompleteOrdinaryName(S);
+    CodeCompleteOrdinaryName(S, CCC_Expression);
   else
     CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
                                              Results.size());
@@ -1968,7 +2477,7 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
     // Since we have an interface or protocol, we can end it.
     Results.MaybeAddResult(Result("end", 0));
 
-    if (LangOpts.ObjC2) {
+    if (getLangOptions().ObjC2) {
       // @property
       Results.MaybeAddResult(Result("property", 0));
     }

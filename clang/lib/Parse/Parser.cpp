@@ -455,7 +455,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr)
     SingleDecl = ParseObjCMethodDefinition();
     break;
   case tok::code_completion:
-    Actions.CodeCompleteOrdinaryName(CurScope);
+    Actions.CodeCompleteOrdinaryName(CurScope, Action::CCC_Namespace);
     ConsumeToken();
     return ParseExternalDeclaration(Attr);
   case tok::kw_using:
