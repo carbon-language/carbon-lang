@@ -484,7 +484,9 @@ static void WriteMDNode(const MDNode *N,
       Record.push_back(0);
     }
   }
-  Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
+  unsigned MDCode = N->isFunctionLocal() ? bitc::METADATA_FN_NODE :
+                                           bitc::METADATA_NODE;
+  Stream.EmitRecord(MDCode, Record, 0);
   Record.clear();
 }
 

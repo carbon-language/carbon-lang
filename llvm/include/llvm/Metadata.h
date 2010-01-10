@@ -112,6 +112,13 @@ class MDNode : public MetadataBase, public FoldingSetNode {
     DestroyFlag      = 1 << 2
   };
   
+  // FunctionLocal enums.
+  enum FunctionLocalness {
+    FL_Unknown = -1,
+    FL_No = 0,
+    FL_Yes = 1
+  };
+  
   // Replace each instance of F from the operand list of this node with T.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
@@ -119,10 +126,17 @@ class MDNode : public MetadataBase, public FoldingSetNode {
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                   bool isFunctionLocal);
+  
+  static MDNode *getMDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
+                           FunctionLocalness FL);
 public:
   // Constructors and destructors.
-  static MDNode *get(LLVMContext &Context, Value *const *Vals, unsigned NumVals,
-                     bool isFunctionLocal = false);
+  static MDNode *get(LLVMContext &Context, Value *const *Vals,
+                     unsigned NumVals);
+  // getWhenValsUnresolved - Construct MDNode determining function-localness
+  // from isFunctionLocal argument, not by analyzing Vals.
+  static MDNode *getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
+                                       unsigned NumVals, bool isFunctionLocal);
   
   /// getOperand - Return specified operand.
   Value *getOperand(unsigned i) const;

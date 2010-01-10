@@ -548,7 +548,7 @@ bool LLParser::ParseStandaloneMetadata() {
       ParseType(Ty, TyLoc) ||
       ParseToken(lltok::exclaim, "Expected '!' here") ||
       ParseToken(lltok::lbrace, "Expected '{' here") ||
-      ParseMDNodeVector(Elts, NULL, NULL) ||
+      ParseMDNodeVector(Elts, NULL) ||
       ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
@@ -1884,7 +1884,9 @@ BasicBlock *LLParser::PerFunctionState::DefineBB(const std::string &Name,
 /// ParseValID - Parse an abstract value that doesn't necessarily have a
 /// type implied.  For example, if we parse "4" we don't know what integer type
 /// it has.  The value will later be combined with its type and checked for
-/// sanity.
+/// sanity.  PFS is used to convert function-local operands of metadata (since
+/// metadata operands are not just parsed here but also converted to values).
+/// PFS can be null when we are not parsing metadata values inside a function.
 bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
   ID.Loc = Lex.getLoc();
   switch (Lex.getKind()) {
@@ -1911,13 +1913,11 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     
     if (EatIfPresent(lltok::lbrace)) {
       SmallVector<Value*, 16> Elts;
-      bool isFunctionLocal = false;
-      if (ParseMDNodeVector(Elts, PFS, &isFunctionLocal) ||
+      if (ParseMDNodeVector(Elts, PFS) ||
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size(),
-                                 isFunctionLocal);
+      ID.MDNodeVal = MDNode::get(Context, Elts.data(), Elts.size());
       ID.Kind = ValID::t_MDNode;
       return false;
     }
@@ -2446,11 +2446,13 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
 }
 
 /// ConvertGlobalOrMetadataValIDToValue - Apply a type to a ValID to get a fully
-/// resolved constant, metadata, or function-local value
+/// resolved constant, metadata, or function-local value.  PFS is used to
+/// convert a function-local ValID and can be null when parsing a global or a 
+/// non-function-local metadata ValID.
+
 bool LLParser::ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
                                                    Value *&V,
-                                                   PerFunctionState *PFS,
-                                                   bool *isFunctionLocal) {
+                                                   PerFunctionState *PFS) {
   switch (ID.Kind) {
   case ValID::t_MDNode:
     if (!Ty->isMetadataTy())
@@ -2464,10 +2466,9 @@ bool LLParser::ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
     return false;
   case ValID::t_LocalID:
   case ValID::t_LocalName:
-    if (!PFS || !isFunctionLocal)
+    if (!PFS)
       return Error(ID.Loc, "invalid use of function-local name");
     if (ConvertValIDToValue(Ty, ID, V, *PFS)) return true;
-    *isFunctionLocal = true;
     return false;
   default:
     Constant *C;
@@ -2527,7 +2528,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     return false;
   }
   default:
-    return ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, &PFS, NULL);
+    return ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, &PFS);
   }
 
   return V == 0;
@@ -3858,7 +3859,7 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
 /// Element
 ///   ::= 'null' | TypeAndValue
 bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
-                                 PerFunctionState *PFS, bool *isFunctionLocal) {
+                                 PerFunctionState *PFS) {
   do {
     // Null is a special case since it is typeless.
     if (EatIfPresent(lltok::kw_null)) {
@@ -3870,7 +3871,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
     PATypeHolder Ty(Type::getVoidTy(Context));
     ValID ID;
     if (ParseType(Ty) || ParseValID(ID, PFS) ||
-        ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, PFS, isFunctionLocal))
+        ConvertGlobalOrMetadataValIDToValue(Ty, ID, V, PFS))
       return true;
     
     Elts.push_back(V);

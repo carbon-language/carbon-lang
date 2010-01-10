@@ -766,6 +766,7 @@ bool BitcodeReader::ParseMetadata() {
       continue;
     }
 
+    bool IsFunctionLocal = false;
     // Read a record.
     Record.clear();
     switch (Stream.ReadRecord(Code, Record)) {
@@ -804,6 +805,9 @@ bool BitcodeReader::ParseMetadata() {
       MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
+    case bitc::METADATA_FN_NODE:
+      IsFunctionLocal = true;
+      // fall-through
     case bitc::METADATA_NODE: {
       if (Record.empty() || Record.size() % 2 == 1)
         return Error("Invalid METADATA_NODE record");
@@ -819,7 +823,9 @@ bool BitcodeReader::ParseMetadata() {
         else
           Elts.push_back(NULL);
       }
-      Value *V = MDNode::get(Context, &Elts[0], Elts.size());
+      Value *V = MDNode::getWhenValsUnresolved(Context, &Elts[0], Elts.size(),
+                                               IsFunctionLocal);
+      IsFunctionLocal = false;
       MDValueList.AssignValue(V, NextValueNo++);
       break;
     }
