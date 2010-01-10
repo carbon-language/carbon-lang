@@ -2285,7 +2285,8 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
 CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
                                       bool isSigned, const Twine &Name,
                                       Instruction *InsertBefore) {
-  assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
+  assert(C->getType()->isIntOrIntVector() && Ty->isIntOrIntVector() &&
+         "Invalid integer cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();
   Instruction::CastOps opcode =
