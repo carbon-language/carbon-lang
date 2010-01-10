@@ -185,8 +185,8 @@ define i32 @test22(i32 %X) {
         %c2 = sext i8 %c1 to i32                ; <i32> [#uses=1]
         %RV = shl i32 %c2, 24           ; <i32> [#uses=1]
         ret i32 %RV
-; CHECK: %RV = shl i32 %X, 24
-; CHECK: ret i32 %RV
+; CHECK: shl i32 %X, 24
+; CHECK-NEXT: ret i32
 }
 
 define i32 @test23(i32 %X) {
@@ -455,5 +455,47 @@ define i64 @test48(i8 %A, i8 %a) {
 ; CHECK-NEXT: %C = shl i64 %B, 8
 ; CHECK-NEXT: %D = or i64 %C, %b
 ; CHECK-NEXT: ret i64 %D
+}
+
+define i64 @test49(i64 %A) {
+ %B = trunc i64 %A to i32
+ %C = or i32 %B, 1
+ %D = sext i32 %C to i64 
+ ret i64 %D
+; CHECK: @test49
+; CHECK-NEXT: %C = shl i64 %A, 32
+; CHECK-NEXT: ashr i64 %C, 32
+; CHECK-NEXT: %D = or i64 {{.*}}, 1
+; CHECK-NEXT: ret i64 %D
+}
+
+define i64 @test50(i64 %A) {
+  %a = lshr i64 %A, 2
+  %B = trunc i64 %a to i32
+  %D = add i32 %B, -1
+  %E = sext i32 %D to i64
+  ret i64 %E
+; CHECK: @test50
+; CHECK-NEXT: shl i64 %A, 30
+; CHECK-NEXT: add i64 {{.*}}, -4294967296
+; CHECK-NEXT: %E = ashr i64 {{.*}}, 32
+; CHECK-NEXT: ret i64 %E
+}
+
+define i64 @test51(i64 %A, i1 %cond) {
+  %B = trunc i64 %A to i32
+  %C = and i32 %B, -2
+  %D = or i32 %B, 1
+  %E = select i1 %cond, i32 %C, i32 %D
+  %F = sext i32 %E to i64
+  ret i64 %F
+; CHECK: @test51
+; CHECK-NEXT: %C = and i64 %A, 4294967294
+; CHECK-NEXT: %D = or i64 %A, 1
+; CHECK-NEXT: %E = select i1 %cond, i64 %C, i64 %D
+; CHECK-NEXT: %sext = shl i64 %E, 32
+; CHECK-NEXT: %F = ashr i64 %sext, 32
+; CHECK-NEXT: ret i64 %F
+
 }
 

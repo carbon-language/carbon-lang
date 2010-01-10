@@ -919,34 +919,25 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     if (NumBitsSExt == 0)
       return 0;
     
+    // Okay, we can transform this!  Insert the new expression now.
+    DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
+          " to avoid sign extend: " << CI);
+    Value *Res = EvaluateInDifferentType(Src, DestTy, true);
+    assert(Res->getType() == DestTy);
+
     uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
     uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+
+    // If the high bits are already filled with sign bit, just replace this
+    // cast with the result.
+    if (NumBitsSExt > DestBitSize - SrcBitSize ||
+        ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
+      return ReplaceInstUsesWith(CI, Res);
     
-    // Because this is a sign extension, we can always transform it by inserting
-    // two new shifts (to do the extension).  However, this is only profitable
-    // if we've eliminated two or more casts from the input.  If we know the
-    // result will be sign-extended enough to not require these shifts, we can
-    // always do the transformation.
-    if (NumCastsRemoved >= 2 ||
-        NumBitsSExt > DestBitSize-SrcBitSize) {
-      
-      // Okay, we can transform this!  Insert the new expression now.
-      DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
-            " to avoid sign extend: " << CI);
-      Value *Res = EvaluateInDifferentType(Src, DestTy, true);
-      assert(Res->getType() == DestTy);
-      
-      // If the high bits are already filled with sign bit, just replace this
-      // cast with the result.
-      if (NumBitsSExt > DestBitSize - SrcBitSize ||
-          ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
-        return ReplaceInstUsesWith(CI, Res);
-      
-      // We need to emit a shl + ashr to do the sign extend.
-      Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
-      return BinaryOperator::CreateAShr(Builder->CreateShl(Res, ShAmt, "sext"),
-                                        ShAmt);
-    }
+    // We need to emit a shl + ashr to do the sign extend.
+    Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
+    return BinaryOperator::CreateAShr(Builder->CreateShl(Res, ShAmt, "sext"),
+                                      ShAmt);
   }
 
   // If the input is a shl/ashr pair of a same constant, then this is a sign
