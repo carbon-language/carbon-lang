@@ -325,26 +325,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         return BinaryOperator::CreateAnd(X,
                                         ConstantInt::get(I.getContext(), Mask));
       }
-      // We can simplify ((X << C) >>s C) into a trunc + sext.
-      // NOTE: we could do this for any C, but that would make 'unusual' integer
-      // types.  For now, just stick to ones well-supported by the code
-      // generators.
-      const Type *SExtType = 0;
-      switch (Ty->getBitWidth() - ShiftAmt1) {
-      case 1  :
-      case 8  :
-      case 16 :
-      case 32 :
-      case 64 :
-      case 128:
-        SExtType = IntegerType::get(I.getContext(),
-                                    Ty->getBitWidth() - ShiftAmt1);
-        break;
-      default: break;
-      }
-      if (SExtType)
-        return new SExtInst(Builder->CreateTrunc(X, SExtType, "sext"), Ty);
-      // Otherwise, we can't handle it yet.
     } else if (ShiftAmt1 < ShiftAmt2) {
       uint32_t ShiftDiff = ShiftAmt2-ShiftAmt1;
       

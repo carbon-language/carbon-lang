@@ -680,6 +680,8 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // types and if the sizes are just right we can convert this into a logical
   // 'and' which will be much cheaper than the pair of casts.
   if (TruncInst *CSrc = dyn_cast<TruncInst>(Src)) {   // A->B->C cast
+    // TODO: Subsume this into EvaluateInDifferentType.
+    
     // Get the sizes of the types involved.  We know that the intermediate type
     // will be smaller than A or C, but don't know the relation between A and C.
     Value *A = CSrc->getOperand(0);
@@ -707,7 +709,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
       APInt AndValue(APInt::getLowBitsSet(DstSize, MidSize));
       return BinaryOperator::CreateAnd(Trunc, 
                                        ConstantInt::get(Trunc->getType(),
-                                                               AndValue));
+                                                        AndValue));
     }
   }
 
@@ -927,6 +929,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     // always do the transformation.
     if (NumCastsRemoved >= 2 ||
         NumBitsSExt > DestBitSize-SrcBitSize) {
+      
       // Okay, we can transform this!  Insert the new expression now.
       DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
             " to avoid sign extend: " << CI);
@@ -939,8 +942,10 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
           ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
         return ReplaceInstUsesWith(CI, Res);
       
-      // We need to emit a cast to truncate, then a cast to sext.
-      return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
+      // We need to emit a shl + ashr to do the sign extend.
+      Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
+      return BinaryOperator::CreateAShr(Builder->CreateShl(Res, ShAmt, "sext"),
+                                        ShAmt);
     }
   }
 

@@ -168,13 +168,6 @@ define i11 @test23(i44 %A) {
 	ret i11 %D
 }
 
-define i17 @test24(i17 %X) {
-	%Y = and i17 %X, -5		; <i17> [#uses=1]
-	%Z = shl i17 %Y, 9		; <i17> [#uses=1]
-	%Q = ashr i17 %Z, 9		; <i17> [#uses=1]
-	ret i17 %Q
-}
-
 define i37 @test25(i37 %tmp.2, i37 %AA) {
 	%x = lshr i37 %AA, 17		; <i37> [#uses=1]
 	%tmp.3 = lshr i37 %tmp.2, 17		; <i37> [#uses=1]
