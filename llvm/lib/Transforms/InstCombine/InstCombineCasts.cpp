@@ -192,7 +192,9 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
       return I->getOperand(0);
     
     // Otherwise, must be the same type of cast, so just reinsert a new one.
-    Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),Ty);
+    // This also handles the case of zext(trunc(x)) -> zext(x).
+    Res = CastInst::CreateIntegerCast(I->getOperand(0), Ty,
+                                      Opc == Instruction::SExt);
     break;
   case Instruction::Select: {
     Value *True = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
@@ -597,6 +599,10 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
   
   unsigned Opc = I->getOpcode();
   switch (Opc) {
+  case Instruction::ZExt:  // zext(zext(x)) -> zext(x).
+  case Instruction::SExt:  // zext(sext(x)) -> sext(x).
+  case Instruction::Trunc: // zext(trunc(x)) -> trunc(x) or zext(x)
+    return true;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
@@ -608,9 +614,6 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
            CanEvaluateZExtd(I->getOperand(1), Ty, TD);
       
   //case Instruction::LShr:
-  case Instruction::ZExt: // zext(zext(x)) -> zext(x).
-  case Instruction::SExt: // zext(sext(x)) -> sext(x).
-    return true;
       
   case Instruction::Select:
     return CanEvaluateZExtd(I->getOperand(1), Ty, TD) &&
@@ -671,7 +674,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
       return ReplaceInstUsesWith(CI, Res);
     
     // We need to emit an AND to clear the high bits.
-    Constant *C = ConstantInt::get(CI.getContext(), 
+    Constant *C = ConstantInt::get(Res->getType(),
                                APInt::getLowBitsSet(DestBitSize, SrcBitSize));
     return BinaryOperator::CreateAnd(Res, C);
   }
@@ -810,23 +813,20 @@ static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
   //case Instruction::LShr:  TODO
   //case Instruction::Trunc: TODO
       
-  case Instruction::SExt:
-  case Instruction::ZExt: {
-    // sext(sext(x)) -> sext(x)
-    // sext(zext(x)) -> zext(x)
+  case Instruction::SExt: // sext(sext(x)) -> sext(x)
+  case Instruction::ZExt: // sext(zext(x)) -> zext(x)
     return true;
-  }
   case Instruction::Select:
     return CanEvaluateSExtd(I->getOperand(1), Ty, TD) &&
            CanEvaluateSExtd(I->getOperand(2), Ty, TD);
+      
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!CanEvaluateSExtd(PN->getIncomingValue(i), Ty, TD)) return false;
-    }
     return true;
   }
   default:

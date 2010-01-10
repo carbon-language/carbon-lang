@@ -496,6 +496,30 @@ define i64 @test51(i64 %A, i1 %cond) {
 ; CHECK-NEXT: %sext = shl i64 %E, 32
 ; CHECK-NEXT: %F = ashr i64 %sext, 32
 ; CHECK-NEXT: ret i64 %F
-
 }
 
+define i32 @test52(i64 %A) {
+  %B = trunc i64 %A to i16
+  %C = or i16 %B, -32574
+  %D = and i16 %C, -25350
+  %E = zext i16 %D to i32
+  ret i32 %E
+; CHECK: @test52
+; CHECK-NEXT: %B = trunc i64 %A to i32
+; CHECK-NEXT: %C = or i32 %B, 32962
+; CHECK-NEXT: %D = and i32 %C, 40186
+; CHECK-NEXT: ret i32 %D
+}
+
+define i64 @test53(i32 %A) {
+  %B = trunc i32 %A to i16
+  %C = or i16 %B, -32574
+  %D = and i16 %C, -25350
+  %E = zext i16 %D to i64
+  ret i64 %E
+; CHECK: @test53
+; CHECK-NEXT: %B = zext i32 %A to i64
+; CHECK-NEXT: %C = or i64 %B, 32962
+; CHECK-NEXT: %D = and i64 %C, 40186
+; CHECK-NEXT: ret i64 %D
+}
