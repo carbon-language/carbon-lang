@@ -27,19 +27,16 @@ using namespace clang;
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
 // "#define XXX Y z W".  To get a #define with no value, use "XXX=".
 static void DefineBuiltinMacro(MacroBuilder &Builder, llvm::StringRef Macro,
-                               Diagnostic *Diags = 0) {
+                               Diagnostic &Diags) {
   std::pair<llvm::StringRef, llvm::StringRef> MacroPair = Macro.split('=');
   llvm::StringRef MacroName = MacroPair.first;
   llvm::StringRef MacroBody = MacroPair.second;
-  if (!MacroBody.empty()) {
+  if (MacroName.size() != Macro.size()) {
     // Per GCC -D semantics, the macro ends at \n if it exists.
     llvm::StringRef::size_type End = MacroBody.find_first_of("\n\r");
-    if (End != llvm::StringRef::npos) {
-      assert(Diags && "Unexpected macro with embedded newline!");
-      Diags->Report(diag::warn_fe_macro_contains_embedded_newline)
+    if (End != llvm::StringRef::npos)
+      Diags.Report(diag::warn_fe_macro_contains_embedded_newline)
         << MacroName;
-    }
-
     Builder.defineMacro(MacroName, MacroBody.substr(0, End));
   } else {
     // Push "macroname 1".
@@ -490,7 +487,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
       Builder.undefineMacro(InitOpts.Macros[i].first);
     else
       DefineBuiltinMacro(Builder, InitOpts.Macros[i].first,
-                         &PP.getDiagnostics());
+                         PP.getDiagnostics());
   }
 
   // If -imacros are specified, include them now.  These are processed before
