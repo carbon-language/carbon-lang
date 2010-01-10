@@ -147,329 +147,6 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 }
 
 
-/// CanEvaluateTruncated - Return true if we can evaluate the specified
-/// expression tree as type Ty instead of its larger type, and arrive with the
-/// same value.  This is used by code that tries to eliminate truncates.
-///
-/// Ty will always be a type smaller than V.  We should return true if trunc(V)
-/// can be computed by computing V in the smaller type.  If V is an instruction,
-/// then trunc(inst(x,y)) can be computed as inst(trunc(x),trunc(y)), which only
-/// makes sense if x and y can be efficiently truncated.
-///
-static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
-  // We can always evaluate constants in another type.
-  if (isa<Constant>(V))
-    return true;
-  
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return false;
-  
-  const Type *OrigTy = V->getType();
-  
-  // If this is an extension from the dest type, we can eliminate it.
-  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
-      I->getOperand(0)->getType() == Ty)
-    return true;
-
-  // We can't extend or shrink something that has multiple uses: doing so would
-  // require duplicating the instruction in general, which isn't profitable.
-  if (!I->hasOneUse()) return false;
-
-  unsigned Opc = I->getOpcode();
-  switch (Opc) {
-  case Instruction::Add:
-  case Instruction::Sub:
-  case Instruction::Mul:
-  case Instruction::And:
-  case Instruction::Or:
-  case Instruction::Xor:
-    // These operators can all arbitrarily be extended or truncated.
-    return CanEvaluateTruncated(I->getOperand(0), Ty) &&
-           CanEvaluateTruncated(I->getOperand(1), Ty);
-
-  case Instruction::UDiv:
-  case Instruction::URem: {
-    // UDiv and URem can be truncated if all the truncated bits are zero.
-    uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
-    uint32_t BitWidth = Ty->getScalarSizeInBits();
-    if (BitWidth < OrigBitWidth) {
-      APInt Mask = APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth);
-      if (MaskedValueIsZero(I->getOperand(0), Mask) &&
-          MaskedValueIsZero(I->getOperand(1), Mask)) {
-        return CanEvaluateTruncated(I->getOperand(0), Ty) &&
-               CanEvaluateTruncated(I->getOperand(1), Ty);
-      }
-    }
-    break;
-  }
-  case Instruction::Shl:
-    // If we are truncating the result of this SHL, and if it's a shift of a
-    // constant amount, we can always perform a SHL in a smaller type.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint32_t BitWidth = Ty->getScalarSizeInBits();
-      if (CI->getLimitedValue(BitWidth) < BitWidth)
-        return CanEvaluateTruncated(I->getOperand(0), Ty);
-    }
-    break;
-  case Instruction::LShr:
-    // If this is a truncate of a logical shr, we can truncate it to a smaller
-    // lshr iff we know that the bits we would otherwise be shifting in are
-    // already zeros.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
-      uint32_t BitWidth = Ty->getScalarSizeInBits();
-      if (MaskedValueIsZero(I->getOperand(0),
-            APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
-          CI->getLimitedValue(BitWidth) < BitWidth) {
-        return CanEvaluateTruncated(I->getOperand(0), Ty);
-      }
-    }
-    break;
-  case Instruction::Trunc:
-    // trunc(trunc(x)) -> trunc(x)
-    return true;
-  case Instruction::Select: {
-    SelectInst *SI = cast<SelectInst>(I);
-    return CanEvaluateTruncated(SI->getTrueValue(), Ty) &&
-           CanEvaluateTruncated(SI->getFalseValue(), Ty);
-  }
-  case Instruction::PHI: {
-    // We can change a phi if we can change all operands.  Note that we never
-    // get into trouble with cyclic PHIs here because we only consider
-    // instructions with a single use.
-    PHINode *PN = cast<PHINode>(I);
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateTruncated(PN->getIncomingValue(i), Ty))
-        return false;
-    return true;
-  }
-  default:
-    // TODO: Can handle more cases here.
-    break;
-  }
-  
-  return false;
-}
-
-/// GetLeadingZeros - Compute the number of known-zero leading bits.
-static unsigned GetLeadingZeros(Value *V, const TargetData *TD) {
-  unsigned Bits = V->getType()->getScalarSizeInBits();
-  APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
-  ComputeMaskedBits(V, APInt::getAllOnesValue(Bits), KnownZero, KnownOne, TD);
-  return KnownZero.countLeadingOnes();
-}
-
-/// CanEvaluateZExtd - Determine if the specified value can be computed in the
-/// specified wider type and produce the same low bits.  If not, return -1.  If
-/// it is possible, return the number of high bits that are known to be zero in
-/// the promoted value.
-static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
-                            const TargetData *TD) {
-  const Type *OrigTy = V->getType();
-
-  if (isa<Constant>(V)) {
-    unsigned Extended = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
-
-    // Constants can always be zero ext'd, even if it requires a ConstantExpr.
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return Extended + CI->getValue().countLeadingZeros();
-    return Extended;
-  }
-  
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return -1;
-  
-  // If the input is a truncate from the destination type, we can trivially
-  // eliminate it, and this will remove a cast overall.
-  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty) {
-    // If the first operand is itself a cast, and is eliminable, do not count
-    // this as an eliminable cast.  We would prefer to eliminate those two
-    // casts first.
-    if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
-      ++NumCastsRemoved;
-    
-    // Figure out the number of known-zero bits coming in.
-    return GetLeadingZeros(I->getOperand(0), TD);
-  }
-  
-  // We can't extend or shrink something that has multiple uses: doing so would
-  // require duplicating the instruction in general, which isn't profitable.
-  if (!I->hasOneUse()) return -1;
-  
-  int Tmp1, Tmp2;
-  unsigned Opc = I->getOpcode();
-  switch (Opc) {
-  case Instruction::And:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == -1) return -1;
-    return std::max(Tmp1, Tmp2);
-  case Instruction::Or:
-  case Instruction::Xor:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    return std::min(Tmp1, Tmp2);
-
-  case Instruction::Add:
-  case Instruction::Sub:
-  case Instruction::Mul:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == -1) return -1;
-    return 0;
-      
-  //case Instruction::Shl:
-  //case Instruction::LShr:
-  case Instruction::ZExt:
-    // zext(zext(x)) -> zext(x).  Since we're replacing it, it isn't eliminated.
-    Tmp1 = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
-    return GetLeadingZeros(I, TD)+Tmp1;
-      
-  //case Instruction::SExt:  zext(sext(x)) -> sext(x) with no upper bits known.
-  //case Instruction::Trunc:
-  case Instruction::Select:
-    Tmp1 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == -1) return -1;
-    Tmp2 = CanEvaluateZExtd(I->getOperand(2), Ty, NumCastsRemoved, TD);
-    return std::min(Tmp1, Tmp2);
-      
-  case Instruction::PHI: {
-    // We can change a phi if we can change all operands.  Note that we never
-    // get into trouble with cyclic PHIs here because we only consider
-    // instructions with a single use.
-    PHINode *PN = cast<PHINode>(I);
-    int Result = CanEvaluateZExtd(PN->getIncomingValue(0), Ty,
-                                  NumCastsRemoved, TD);
-    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
-      if (Result == -1) return -1;
-      Tmp1 = CanEvaluateZExtd(PN->getIncomingValue(i), Ty, NumCastsRemoved, TD);
-      Result = std::min(Result, Tmp1);
-    }
-    return Result;
-  }
-  default:
-    // TODO: Can handle more cases here.
-    return -1;
-  }
-}
-
-/// CanEvaluateSExtd - Return true if we can take the specified value
-/// and return it as type Ty without inserting any new casts and without
-/// changing the value of the common low bits.  This is used by code that tries
-/// to promote integer operations to a wider types will allow us to eliminate
-/// the extension.
-///
-/// This returns 0 if we can't do this or the number of sign bits that would be
-/// set if we can.  For example, CanEvaluateSExtd(i16 1, i64) would return 63,
-/// because the computation can be extended (to "i64 1") and the resulting
-/// computation has 63 equal sign bits.
-///
-/// This function works on both vectors and scalars.  For vectors, the result is
-/// the number of bits known sign extended in each element.
-///
-static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
-                                 unsigned &NumCastsRemoved, TargetData *TD) {
-  assert(V->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits() &&
-         "Can't sign extend type to a smaller type");
-  // If this is a constant, return the number of sign bits the extended version
-  // of it would have.
-  if (Constant *C = dyn_cast<Constant>(V))
-    return ComputeNumSignBits(ConstantExpr::getSExt(C, Ty), TD);
-  
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return 0;
-  
-  // If this is a truncate from the destination type, we can trivially eliminate
-  // it, and this will remove a cast overall.
-  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty) {
-    // If the operand of the truncate is itself a cast, and is eliminable, do
-    // not count this as an eliminable cast.  We would prefer to eliminate those
-    // two casts first.
-    if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
-      ++NumCastsRemoved;
-    return ComputeNumSignBits(I->getOperand(0), TD);
-  }
-  
-  // We can't extend or shrink something that has multiple uses: doing so would
-  // require duplicating the instruction in general, which isn't profitable.
-  if (!I->hasOneUse()) return 0;
-
-  const Type *OrigTy = V->getType();
-
-  unsigned Opc = I->getOpcode();
-  unsigned Tmp1, Tmp2;
-  switch (Opc) {
-  case Instruction::And:
-  case Instruction::Or:
-  case Instruction::Xor:
-    // These operators can all arbitrarily be extended or truncated.
-    Tmp1 = CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == 0) return 0;
-    Tmp2 = CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    return std::min(Tmp1, Tmp2);
-  case Instruction::Add:
-  case Instruction::Sub:
-    // Add/Sub can have at most one carry/borrow bit.
-    Tmp1 = CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == 0) return 0;
-    Tmp2 = CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
-    if (Tmp2 == 0) return 0;
-    return std::min(Tmp1, Tmp2)-1;
-  case Instruction::Mul:
-    // These operators can all arbitrarily be extended or truncated.
-    if (!CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD))
-      return 0;
-    if (!CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD))
-      return 0;
-    return 1; // IMPROVE?
-      
-  //case Instruction::Shl:   TODO
-  //case Instruction::LShr:  TODO
-  //case Instruction::Trunc: TODO
-      
-  case Instruction::SExt:
-  case Instruction::ZExt: {
-    // sext(sext(x)) -> sext(x)
-    // sext(zext(x)) -> zext(x)
-    // Note that replacing a cast does not reduce the number of casts in the
-    // input.
-    unsigned InSignBits = ComputeNumSignBits(I, TD);
-    unsigned ExtBits = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
-    // We'll end up extending it all the way out.
-    return InSignBits+ExtBits;
-  }
-  case Instruction::Select: {
-    SelectInst *SI = cast<SelectInst>(I);
-    Tmp1 = CanEvaluateSExtd(SI->getTrueValue(), Ty, NumCastsRemoved, TD);
-    if (Tmp1 == 0) return 0;
-    Tmp2 = CanEvaluateSExtd(SI->getFalseValue(), Ty, NumCastsRemoved,TD);
-    return std::min(Tmp1, Tmp2);
-  }
-  case Instruction::PHI: {
-    // We can change a phi if we can change all operands.  Note that we never
-    // get into trouble with cyclic PHIs here because we only consider
-    // instructions with a single use.
-    PHINode *PN = cast<PHINode>(I);
-    unsigned Result = ~0U;
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      Result = std::min(Result,
-                        CanEvaluateSExtd(PN->getIncomingValue(i), Ty,
-                                         NumCastsRemoved, TD));
-      if (Result == 0) return 0;
-    }
-    return Result;
-  }
-  default:
-    // TODO: Can handle more cases here.
-    break;
-  }
-  
-  return 0;
-}
-
 
 /// EvaluateInDifferentType - Given an expression that 
 /// CanEvaluateTruncated or CanEvaluateSExtd returns true for, actually
@@ -635,34 +312,126 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(CI))
     return &CI;
-  
-  // If the source isn't an instruction or has more than one use then we
-  // can't do anything more. 
-  Instruction *Src = dyn_cast<Instruction>(CI.getOperand(0));
-  if (!Src || !Src->hasOneUse())
-    return 0;
+  return 0;
+}
 
-  // Check to see if we can eliminate the cast by changing the entire
-  // computation chain to do the computation in the result type.
-  const Type *SrcTy = Src->getType();
-  const Type *DestTy = CI.getType();
+/// CanEvaluateTruncated - Return true if we can evaluate the specified
+/// expression tree as type Ty instead of its larger type, and arrive with the
+/// same value.  This is used by code that tries to eliminate truncates.
+///
+/// Ty will always be a type smaller than V.  We should return true if trunc(V)
+/// can be computed by computing V in the smaller type.  If V is an instruction,
+/// then trunc(inst(x,y)) can be computed as inst(trunc(x),trunc(y)), which only
+/// makes sense if x and y can be efficiently truncated.
+///
+static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
+  // We can always evaluate constants in another type.
+  if (isa<Constant>(V))
+    return true;
   
-  // Only do this if the dest type is a simple type, don't convert the
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;
+  
+  const Type *OrigTy = V->getType();
+  
+  // If this is an extension from the dest type, we can eliminate it.
+  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
+      I->getOperand(0)->getType() == Ty)
+    return true;
+
+  // We can't extend or shrink something that has multiple uses: doing so would
+  // require duplicating the instruction in general, which isn't profitable.
+  if (!I->hasOneUse()) return false;
+
+  unsigned Opc = I->getOpcode();
+  switch (Opc) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // These operators can all arbitrarily be extended or truncated.
+    return CanEvaluateTruncated(I->getOperand(0), Ty) &&
+           CanEvaluateTruncated(I->getOperand(1), Ty);
+
+  case Instruction::UDiv:
+  case Instruction::URem: {
+    // UDiv and URem can be truncated if all the truncated bits are zero.
+    uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
+    uint32_t BitWidth = Ty->getScalarSizeInBits();
+    if (BitWidth < OrigBitWidth) {
+      APInt Mask = APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth);
+      if (MaskedValueIsZero(I->getOperand(0), Mask) &&
+          MaskedValueIsZero(I->getOperand(1), Mask)) {
+        return CanEvaluateTruncated(I->getOperand(0), Ty) &&
+               CanEvaluateTruncated(I->getOperand(1), Ty);
+      }
+    }
+    break;
+  }
+  case Instruction::Shl:
+    // If we are truncating the result of this SHL, and if it's a shift of a
+    // constant amount, we can always perform a SHL in a smaller type.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      uint32_t BitWidth = Ty->getScalarSizeInBits();
+      if (CI->getLimitedValue(BitWidth) < BitWidth)
+        return CanEvaluateTruncated(I->getOperand(0), Ty);
+    }
+    break;
+  case Instruction::LShr:
+    // If this is a truncate of a logical shr, we can truncate it to a smaller
+    // lshr iff we know that the bits we would otherwise be shifting in are
+    // already zeros.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
+      uint32_t BitWidth = Ty->getScalarSizeInBits();
+      if (MaskedValueIsZero(I->getOperand(0),
+            APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth)) &&
+          CI->getLimitedValue(BitWidth) < BitWidth) {
+        return CanEvaluateTruncated(I->getOperand(0), Ty);
+      }
+    }
+    break;
+  case Instruction::Trunc:
+    // trunc(trunc(x)) -> trunc(x)
+    return true;
+  case Instruction::Select: {
+    SelectInst *SI = cast<SelectInst>(I);
+    return CanEvaluateTruncated(SI->getTrueValue(), Ty) &&
+           CanEvaluateTruncated(SI->getFalseValue(), Ty);
+  }
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (!CanEvaluateTruncated(PN->getIncomingValue(i), Ty))
+        return false;
+    return true;
+  }
+  default:
+    // TODO: Can handle more cases here.
+    break;
+  }
+  
+  return false;
+}
+
+Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
+  if (Instruction *Result = commonIntCastTransforms(CI))
+    return Result;
+  
+  Value *Src = CI.getOperand(0);
+  const Type *DestTy = CI.getType(), *SrcTy = Src->getType();
+  
+  // Attempt to truncate the entire input expression tree to the destination
+  // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
-  if (!isa<VectorType>(DestTy) && !ShouldChangeType(SrcTy, DestTy))
-    return 0;
-  
-  uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
-  uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-      
-  // Attempt to propagate the cast into the instruction for int->int casts.
-  unsigned NumCastsRemoved = 0;
-  switch (CI.getOpcode()) {
-  default: assert(0 && "not an integer cast");
-  case Instruction::Trunc: {
-    if (!CanEvaluateTruncated(Src, DestTy))
-      return 0;
+  if ((isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) &&
+      CanEvaluateTruncated(Src, DestTy)) {
       
     // If this cast is a truncate, evaluting in a different type always
     // eliminates the cast, so it is always a win.
@@ -672,76 +441,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     assert(Res->getType() == DestTy);
     return ReplaceInstUsesWith(CI, Res);
   }
-  case Instruction::ZExt: {
-    int BitsZExt = CanEvaluateZExtd(Src, DestTy, NumCastsRemoved, TD);
-    if (BitsZExt == -1) return 0;
-
-    // If this is a zero-extension, we need to do an AND to maintain the clear
-    // top-part of the computation.  If we know the result will be zero 
-    // extended enough already, we don't need the and.
-    if (NumCastsRemoved < 1 &&
-        unsigned(BitsZExt) < DestBitSize-SrcBitSize)
-      return 0;
-
-    // Okay, we can transform this!  Insert the new expression now.
-    DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
-          " to avoid zero extend: " << CI);
-    Value *Res = EvaluateInDifferentType(Src, DestTy, false);
-    assert(Res->getType() == DestTy);
-
-    // If the high bits are already filled with zeros, just replace this
-    // cast with the result.
-    if (unsigned(BitsZExt) >= DestBitSize-SrcBitSize ||
-        MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
-                                                     DestBitSize-SrcBitSize)))
-      return ReplaceInstUsesWith(CI, Res);
-
-    // We need to emit an AND to clear the high bits.
-    Constant *C = ConstantInt::get(CI.getContext(), 
-                             APInt::getLowBitsSet(DestBitSize, SrcBitSize));
-    return BinaryOperator::CreateAnd(Res, C);
-  }
-  case Instruction::SExt: {
-    // Check to see if we can do this transformation, and if so, how many bits
-    // of the promoted expression will be known copies of the sign bit in the
-    // result.
-    unsigned NumBitsSExt = CanEvaluateSExtd(Src, DestTy, NumCastsRemoved, TD);
-    if (NumBitsSExt == 0)
-      return 0;
-
-    // Because this is a sign extension, we can always transform it by inserting
-    // two new shifts (to do the extension).  However, this is only profitable
-    // if we've eliminated two or more casts from the input.  If we know the
-    // result will be sign-extended enough to not require these shifts, we can
-    // always do the transformation.
-    if (NumCastsRemoved < 2 &&
-        NumBitsSExt <= DestBitSize-SrcBitSize)
-      return 0;
-    
-    // Okay, we can transform this!  Insert the new expression now.
-    DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
-          " to avoid sign extend: " << CI);
-    Value *Res = EvaluateInDifferentType(Src, DestTy, true);
-    assert(Res->getType() == DestTy);
-    
-    // If the high bits are already filled with sign bit, just replace this
-    // cast with the result.
-    if (NumBitsSExt > DestBitSize - SrcBitSize ||
-        ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
-      return ReplaceInstUsesWith(CI, Res);
-    
-    // We need to emit a cast to truncate, then a cast to sext.
-    return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
-  }
-  }
-}
-
-Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
-  if (Instruction *Result = commonIntCastTransforms(CI))
-    return Result;
-  
-  Value *Src = CI.getOperand(0);
-  const Type *DestTy = CI.getType();
 
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0), likewise for vector.
   if (DestTy->getScalarSizeInBits() == 1) {
@@ -884,12 +583,157 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
   return 0;
 }
 
+/// GetLeadingZeros - Compute the number of known-zero leading bits.
+static unsigned GetLeadingZeros(Value *V, const TargetData *TD) {
+  unsigned Bits = V->getType()->getScalarSizeInBits();
+  APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
+  ComputeMaskedBits(V, APInt::getAllOnesValue(Bits), KnownZero, KnownOne, TD);
+  return KnownZero.countLeadingOnes();
+}
+
+/// CanEvaluateZExtd - Determine if the specified value can be computed in the
+/// specified wider type and produce the same low bits.  If not, return -1.  If
+/// it is possible, return the number of high bits that are known to be zero in
+/// the promoted value.
+static int CanEvaluateZExtd(Value *V, const Type *Ty,unsigned &NumCastsRemoved,
+                            const TargetData *TD) {
+  const Type *OrigTy = V->getType();
+
+  if (isa<Constant>(V)) {
+    unsigned Extended = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
+
+    // Constants can always be zero ext'd, even if it requires a ConstantExpr.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return Extended + CI->getValue().countLeadingZeros();
+    return Extended;
+  }
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return -1;
+  
+  // If the input is a truncate from the destination type, we can trivially
+  // eliminate it, and this will remove a cast overall.
+  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty) {
+    // If the first operand is itself a cast, and is eliminable, do not count
+    // this as an eliminable cast.  We would prefer to eliminate those two
+    // casts first.
+    if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
+      ++NumCastsRemoved;
+    
+    // Figure out the number of known-zero bits coming in.
+    return GetLeadingZeros(I->getOperand(0), TD);
+  }
+  
+  // We can't extend or shrink something that has multiple uses: doing so would
+  // require duplicating the instruction in general, which isn't profitable.
+  if (!I->hasOneUse()) return -1;
+  
+  int Tmp1, Tmp2;
+  unsigned Opc = I->getOpcode();
+  switch (Opc) {
+  case Instruction::And:
+    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == -1) return -1;
+    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    if (Tmp2 == -1) return -1;
+    return std::max(Tmp1, Tmp2);
+  case Instruction::Or:
+  case Instruction::Xor:
+    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == -1) return -1;
+    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    return std::min(Tmp1, Tmp2);
+
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+    Tmp1 = CanEvaluateZExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == -1) return -1;
+    Tmp2 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    if (Tmp2 == -1) return -1;
+    return 0;
+      
+  //case Instruction::Shl:
+  //case Instruction::LShr:
+  case Instruction::ZExt:
+    // zext(zext(x)) -> zext(x).  Since we're replacing it, it isn't eliminated.
+    Tmp1 = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
+    return GetLeadingZeros(I, TD)+Tmp1;
+      
+  //case Instruction::SExt:  zext(sext(x)) -> sext(x) with no upper bits known.
+  //case Instruction::Trunc:
+  case Instruction::Select:
+    Tmp1 = CanEvaluateZExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == -1) return -1;
+    Tmp2 = CanEvaluateZExtd(I->getOperand(2), Ty, NumCastsRemoved, TD);
+    return std::min(Tmp1, Tmp2);
+      
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
+    PHINode *PN = cast<PHINode>(I);
+    int Result = CanEvaluateZExtd(PN->getIncomingValue(0), Ty,
+                                  NumCastsRemoved, TD);
+    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
+      if (Result == -1) return -1;
+      Tmp1 = CanEvaluateZExtd(PN->getIncomingValue(i), Ty, NumCastsRemoved, TD);
+      Result = std::min(Result, Tmp1);
+    }
+    return Result;
+  }
+  default:
+    // TODO: Can handle more cases here.
+    return -1;
+  }
+}
+
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // If one of the common conversion will work, do it.
   if (Instruction *Result = commonIntCastTransforms(CI))
     return Result;
 
   Value *Src = CI.getOperand(0);
+  
+  const Type *SrcTy = Src->getType(), *DestTy = CI.getType();
+  
+  // Attempt to extend the entire input expression tree to the destination
+  // type.   Only do this if the dest type is a simple type, don't convert the
+  // expression tree to something weird like i93 unless the source is also
+  // strange.
+  if (isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) {
+    unsigned NumCastsRemoved = 0;
+    int BitsZExt = CanEvaluateZExtd(Src, DestTy, NumCastsRemoved, TD);
+    if (BitsZExt == -1) return 0;
+    
+    uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
+    uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+
+    // If this is a zero-extension, we need to do an AND to maintain the clear
+    // top-part of the computation.  If we know the result will be zero 
+    // extended enough already, we don't need the and.
+    if (NumCastsRemoved >= 1 ||
+        unsigned(BitsZExt) >= DestBitSize-SrcBitSize) {
+      
+      // Okay, we can transform this!  Insert the new expression now.
+      DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
+            " to avoid zero extend: " << CI);
+      Value *Res = EvaluateInDifferentType(Src, DestTy, false);
+      assert(Res->getType() == DestTy);
+      
+      // If the high bits are already filled with zeros, just replace this
+      // cast with the result.
+      if (unsigned(BitsZExt) >= DestBitSize-SrcBitSize ||
+          MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
+                                                       DestBitSize-SrcBitSize)))
+        return ReplaceInstUsesWith(CI, Res);
+      
+      // We need to emit an AND to clear the high bits.
+      Constant *C = ConstantInt::get(CI.getContext(), 
+                                 APInt::getLowBitsSet(DestBitSize, SrcBitSize));
+      return BinaryOperator::CreateAnd(Res, C);
+    }
+  }
 
   // If this is a TRUNC followed by a ZEXT then we are dealing with integral
   // types and if the sizes are just right we can convert this into a logical
@@ -982,12 +826,127 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   return 0;
 }
 
+/// CanEvaluateSExtd - Return true if we can take the specified value
+/// and return it as type Ty without inserting any new casts and without
+/// changing the value of the common low bits.  This is used by code that tries
+/// to promote integer operations to a wider types will allow us to eliminate
+/// the extension.
+///
+/// This returns 0 if we can't do this or the number of sign bits that would be
+/// set if we can.  For example, CanEvaluateSExtd(i16 1, i64) would return 63,
+/// because the computation can be extended (to "i64 1") and the resulting
+/// computation has 63 equal sign bits.
+///
+/// This function works on both vectors and scalars.  For vectors, the result is
+/// the number of bits known sign extended in each element.
+///
+static unsigned CanEvaluateSExtd(Value *V, const Type *Ty,
+                                 unsigned &NumCastsRemoved, TargetData *TD) {
+  assert(V->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits() &&
+         "Can't sign extend type to a smaller type");
+  // If this is a constant, return the number of sign bits the extended version
+  // of it would have.
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ComputeNumSignBits(ConstantExpr::getSExt(C, Ty), TD);
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return 0;
+  
+  // If this is a truncate from the destination type, we can trivially eliminate
+  // it, and this will remove a cast overall.
+  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty) {
+    // If the operand of the truncate is itself a cast, and is eliminable, do
+    // not count this as an eliminable cast.  We would prefer to eliminate those
+    // two casts first.
+    if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
+      ++NumCastsRemoved;
+    return ComputeNumSignBits(I->getOperand(0), TD);
+  }
+  
+  // We can't extend or shrink something that has multiple uses: doing so would
+  // require duplicating the instruction in general, which isn't profitable.
+  if (!I->hasOneUse()) return 0;
+
+  const Type *OrigTy = V->getType();
+
+  unsigned Opc = I->getOpcode();
+  unsigned Tmp1, Tmp2;
+  switch (Opc) {
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // These operators can all arbitrarily be extended or truncated.
+    Tmp1 = CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == 0) return 0;
+    Tmp2 = CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    return std::min(Tmp1, Tmp2);
+  case Instruction::Add:
+  case Instruction::Sub:
+    // Add/Sub can have at most one carry/borrow bit.
+    Tmp1 = CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == 0) return 0;
+    Tmp2 = CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD);
+    if (Tmp2 == 0) return 0;
+    return std::min(Tmp1, Tmp2)-1;
+  case Instruction::Mul:
+    // These operators can all arbitrarily be extended or truncated.
+    if (!CanEvaluateSExtd(I->getOperand(0), Ty, NumCastsRemoved, TD))
+      return 0;
+    if (!CanEvaluateSExtd(I->getOperand(1), Ty, NumCastsRemoved, TD))
+      return 0;
+    return 1; // IMPROVE?
+      
+  //case Instruction::Shl:   TODO
+  //case Instruction::LShr:  TODO
+  //case Instruction::Trunc: TODO
+      
+  case Instruction::SExt:
+  case Instruction::ZExt: {
+    // sext(sext(x)) -> sext(x)
+    // sext(zext(x)) -> zext(x)
+    // Note that replacing a cast does not reduce the number of casts in the
+    // input.
+    unsigned InSignBits = ComputeNumSignBits(I, TD);
+    unsigned ExtBits = Ty->getScalarSizeInBits()-OrigTy->getScalarSizeInBits();
+    // We'll end up extending it all the way out.
+    return InSignBits+ExtBits;
+  }
+  case Instruction::Select: {
+    SelectInst *SI = cast<SelectInst>(I);
+    Tmp1 = CanEvaluateSExtd(SI->getTrueValue(), Ty, NumCastsRemoved, TD);
+    if (Tmp1 == 0) return 0;
+    Tmp2 = CanEvaluateSExtd(SI->getFalseValue(), Ty, NumCastsRemoved,TD);
+    return std::min(Tmp1, Tmp2);
+  }
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.  Note that we never
+    // get into trouble with cyclic PHIs here because we only consider
+    // instructions with a single use.
+    PHINode *PN = cast<PHINode>(I);
+    unsigned Result = ~0U;
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Result = std::min(Result,
+                        CanEvaluateSExtd(PN->getIncomingValue(i), Ty,
+                                         NumCastsRemoved, TD));
+      if (Result == 0) return 0;
+    }
+    return Result;
+  }
+  default:
+    // TODO: Can handle more cases here.
+    break;
+  }
+  
+  return 0;
+}
+
 Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   if (Instruction *I = commonIntCastTransforms(CI))
     return I;
   
   Value *Src = CI.getOperand(0);
-  
+  const Type *SrcTy = Src->getType(), *DestTy = CI.getType();
+
   // Canonicalize sign-extend from i1 to a select.
   if (Src->getType()->isInteger(1))
     return SelectInst::Create(Src,
@@ -999,8 +958,8 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   if (Operator::getOpcode(Src) == Instruction::Trunc) {
     Value *Op = cast<User>(Src)->getOperand(0);
     unsigned OpBits   = Op->getType()->getScalarSizeInBits();
-    unsigned MidBits  = Src->getType()->getScalarSizeInBits();
-    unsigned DestBits = CI.getType()->getScalarSizeInBits();
+    unsigned MidBits  = SrcTy->getScalarSizeInBits();
+    unsigned DestBits = DestTy->getScalarSizeInBits();
     unsigned NumSignBits = ComputeNumSignBits(Op);
 
     if (OpBits == DestBits) {
@@ -1020,6 +979,46 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
         return new TruncInst(Op, CI.getType(), "tmp");
     }
   }
+  
+  // Attempt to extend the entire input expression tree to the destination
+  // type.   Only do this if the dest type is a simple type, don't convert the
+  // expression tree to something weird like i93 unless the source is also
+  // strange.
+  if (isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) {
+    unsigned NumCastsRemoved = 0;
+    // Check to see if we can do this transformation, and if so, how many bits
+    // of the promoted expression will be known copies of the sign bit in the
+    // result.
+    unsigned NumBitsSExt = CanEvaluateSExtd(Src, DestTy, NumCastsRemoved, TD);
+    if (NumBitsSExt == 0)
+      return 0;
+    
+    uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
+    uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+    
+    // Because this is a sign extension, we can always transform it by inserting
+    // two new shifts (to do the extension).  However, this is only profitable
+    // if we've eliminated two or more casts from the input.  If we know the
+    // result will be sign-extended enough to not require these shifts, we can
+    // always do the transformation.
+    if (NumCastsRemoved >= 2 ||
+        NumBitsSExt > DestBitSize-SrcBitSize) {
+      // Okay, we can transform this!  Insert the new expression now.
+      DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
+            " to avoid sign extend: " << CI);
+      Value *Res = EvaluateInDifferentType(Src, DestTy, true);
+      assert(Res->getType() == DestTy);
+      
+      // If the high bits are already filled with sign bit, just replace this
+      // cast with the result.
+      if (NumBitsSExt > DestBitSize - SrcBitSize ||
+          ComputeNumSignBits(Res) > DestBitSize - SrcBitSize)
+        return ReplaceInstUsesWith(CI, Res);
+      
+      // We need to emit a cast to truncate, then a cast to sext.
+      return new SExtInst(Builder->CreateTrunc(Res, Src->getType()), DestTy);
+    }
+  }
 
   // If the input is a shl/ashr pair of a same constant, then this is a sign
   // extension from a smaller value.  If we could trust arbitrary bitwidth
@@ -1035,6 +1034,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   //   %a = shl i32 %i, 30
   //   %d = ashr i32 %a, 30
   Value *A = 0;
+  // FIXME: GENERALIZE WITH SIGN BITS.
   ConstantInt *BA = 0, *CA = 0;
   if (match(Src, m_AShr(m_Shl(m_Value(A), m_ConstantInt(BA)),
                         m_ConstantInt(CA))) &&
