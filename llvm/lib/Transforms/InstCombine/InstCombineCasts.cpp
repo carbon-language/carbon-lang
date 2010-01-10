@@ -953,33 +953,6 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
     return SelectInst::Create(Src,
                               Constant::getAllOnesValue(CI.getType()),
                               Constant::getNullValue(CI.getType()));
-
-  // See if the value being truncated is already sign extended.  If so, just
-  // eliminate the trunc/sext pair.
-  if (Operator::getOpcode(Src) == Instruction::Trunc) {
-    Value *Op = cast<User>(Src)->getOperand(0);
-    unsigned OpBits   = Op->getType()->getScalarSizeInBits();
-    unsigned MidBits  = SrcTy->getScalarSizeInBits();
-    unsigned DestBits = DestTy->getScalarSizeInBits();
-    unsigned NumSignBits = ComputeNumSignBits(Op);
-
-    if (OpBits == DestBits) {
-      // Op is i32, Mid is i8, and Dest is i32.  If Op has more than 24 sign
-      // bits, it is already ready.
-      if (NumSignBits > DestBits-MidBits)
-        return ReplaceInstUsesWith(CI, Op);
-    } else if (OpBits < DestBits) {
-      // Op is i32, Mid is i8, and Dest is i64.  If Op has more than 24 sign
-      // bits, just sext from i32.
-      if (NumSignBits > OpBits-MidBits)
-        return new SExtInst(Op, CI.getType(), "tmp");
-    } else {
-      // Op is i64, Mid is i8, and Dest is i32.  If Op has more than 56 sign
-      // bits, just truncate to i32.
-      if (NumSignBits > OpBits-MidBits)
-        return new TruncInst(Op, CI.getType(), "tmp");
-    }
-  }
   
   // Attempt to extend the entire input expression tree to the destination
   // type.   Only do this if the dest type is a simple type, don't convert the
