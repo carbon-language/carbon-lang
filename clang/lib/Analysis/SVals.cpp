@@ -97,6 +97,10 @@ const MemRegion *SVal::getAsRegion() const {
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this))
     return X->getRegion();
 
+  if (const nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(this)) {
+    return X->getLoc().getAsRegion();
+  }
+
   return 0;
 }
 

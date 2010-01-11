@@ -388,3 +388,11 @@ void test_synchronized(id x) {
   }
 }
 @end
+
+void testOSCompareAndSwapXXBarrier_parameter(NSString **old) {
+  NSString *s = [[NSString alloc] init]; // no-warning
+  if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) old))
+    [s release];
+  else    
+    [*old release];
+}
