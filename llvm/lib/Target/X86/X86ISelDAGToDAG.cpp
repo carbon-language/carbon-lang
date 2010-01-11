@@ -1873,6 +1873,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
     unsigned LoReg, HiReg, ClrReg;
     unsigned ClrOpcode, SExtOpcode;
+    EVT ClrVT = NVT;
     switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
     case MVT::i8:
@@ -1882,7 +1883,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       break;
     case MVT::i16:
       LoReg = X86::AX;  HiReg = X86::DX;
-      ClrOpcode  = X86::MOV16r0; ClrReg = X86::DX;
+      ClrOpcode  = X86::MOV32r0;  ClrReg = X86::EDX;  ClrVT = MVT::i32;
       SExtOpcode = X86::CWD;
       break;
     case MVT::i32:
@@ -1892,7 +1893,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       break;
     case MVT::i64:
       LoReg = X86::RAX; ClrReg = HiReg = X86::RDX;
-      ClrOpcode  = X86::MOV64r0;
+      ClrOpcode  = ~0U; // NOT USED.
       SExtOpcode = X86::CQO;
       break;
     }
@@ -1931,8 +1932,24 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
           SDValue(CurDAG->getMachineNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
       } else {
         // Zero out the high part, effectively zero extending the input.
-        SDValue ClrNode =
-          SDValue(CurDAG->getMachineNode(ClrOpcode, dl, NVT), 0);
+        SDValue ClrNode;
+
+        if (NVT.getSimpleVT() == MVT::i64) {
+          ClrNode = SDValue(CurDAG->getMachineNode(X86::MOV32r0, dl, MVT::i32),
+                            0);
+          // We just did a 32-bit clear, insert it into a 64-bit register to
+          // clear the whole 64-bit reg.
+          SDValue Zero = CurDAG->getTargetConstant(0, MVT::i64);
+          SDValue SubRegNo =
+            CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
+          ClrNode =
+            SDValue(CurDAG->getMachineNode(TargetInstrInfo::SUBREG_TO_REG, dl,
+                                           MVT::i64, Zero, ClrNode, SubRegNo),
+                    0);
+        } else {
+          ClrNode = SDValue(CurDAG->getMachineNode(ClrOpcode, dl, ClrVT), 0);
+        }
+
         InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, ClrReg,
                                       ClrNode, InFlag).getValue(1);
       }
