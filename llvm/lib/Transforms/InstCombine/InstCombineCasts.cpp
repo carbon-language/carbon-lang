@@ -634,6 +634,20 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, unsigned &BitsToClear) {
     if (BitsToClear == 0 && Tmp == 0)
       return true;
       
+    // If the operation is an AND/OR/XOR and the bits to clear are zero in the
+    // other side, BitsToClear is ok.
+    if (Tmp == 0 &&
+        (Opc == Instruction::And || Opc == Instruction::Or ||
+         Opc == Instruction::Xor)) {
+      // We use MaskedValueIsZero here for generality, but the case we care
+      // about the most is constant RHS.
+      unsigned VSize = V->getType()->getScalarSizeInBits();
+      if (MaskedValueIsZero(I->getOperand(1),
+                            APInt::getHighBitsSet(VSize, BitsToClear)))
+        return true;
+    }
+      
+    // Otherwise, we don't know how to analyze this BitsToClear case yet.
     return false;
       
   case Instruction::LShr:
@@ -652,6 +666,8 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, unsigned &BitsToClear) {
   case Instruction::Select:
     if (!CanEvaluateZExtd(I->getOperand(1), Ty, Tmp) ||
         !CanEvaluateZExtd(I->getOperand(2), Ty, BitsToClear) ||
+        // TODO: If important, we could handle the case when the BitsToClear are
+        // known zero in the disagreeing side.
         Tmp != BitsToClear)
       return false;
     return true;
@@ -665,6 +681,8 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, unsigned &BitsToClear) {
       return false;
     for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
       if (!CanEvaluateZExtd(PN->getIncomingValue(i), Ty, Tmp) ||
+          // TODO: If important, we could handle the case when the BitsToClear
+          // are known zero in the disagreeing input.
           Tmp != BitsToClear)
         return false;
     return true;
