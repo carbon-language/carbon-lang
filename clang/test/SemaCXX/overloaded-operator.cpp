@@ -190,16 +190,23 @@ typedef INTREF Func1(FLOAT, double);
 typedef float& Func2(int, double);
 
 struct ConvertToFunc {
-  operator Func1*(); // expected-note{{conversion candidate of type 'INTREF (*)(FLOAT, double)'}}
-  operator Func2&(); // expected-note{{conversion candidate of type 'float &(&)(int, double)'}}
+  operator Func1*(); // expected-note 2{{conversion candidate of type 'INTREF (*)(FLOAT, double)'}}
+  operator Func2&(); // expected-note 2{{conversion candidate of type 'float &(&)(int, double)'}}
   void operator()();
 };
 
-void test_funcptr_call(ConvertToFunc ctf) {
+struct ConvertToFuncDerived : ConvertToFunc { };
+
+void test_funcptr_call(ConvertToFunc ctf, ConvertToFuncDerived ctfd) {
   int &i1 = ctf(1.0f, 2.0);
-  float &f2 = ctf((short int)1, 1.0f);
+  float &f1 = ctf((short int)1, 1.0f);
   ctf((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFunc' is ambiguous; candidates are:}}
   ctf();
+
+  int &i2 = ctfd(1.0f, 2.0);
+  float &f2 = ctfd((short int)1, 1.0f);
+  ctfd((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFuncDerived' is ambiguous; candidates are:}}
+  ctfd();
 }
 
 struct HasMember {

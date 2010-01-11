@@ -5741,9 +5741,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //   functions for each conversion function declared in an
   //   accessible base class provided the function is not hidden
   //   within T by another intervening declaration.
-  // FIXME: Look in base classes for more conversion operators!
   const UnresolvedSet *Conversions
-    = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+    = cast<CXXRecordDecl>(Record->getDecl())->getVisibleConversionFunctions();
   for (UnresolvedSet::iterator I = Conversions->begin(),
          E = Conversions->end(); I != E; ++I) {
     NamedDecl *D = *I;
