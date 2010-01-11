@@ -699,8 +699,8 @@ public:
                                       ObjCProtocolDecl *rProto);
 
   /// getObjCEncodingTypeSize returns size of type for objective-c encoding
-  /// purpose.
-  int getObjCEncodingTypeSize(QualType t);
+  /// purpose in characters.
+  CharUnits getObjCEncodingTypeSize(QualType t);
 
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.

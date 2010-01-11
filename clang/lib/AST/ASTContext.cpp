@@ -3137,7 +3137,7 @@ static bool isTypeTypedefedAsBOOL(QualType T) {
 
 /// getObjCEncodingTypeSize returns size of type for objective-c encoding
 /// purpose.
-int ASTContext::getObjCEncodingTypeSize(QualType type) {
+CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) {
   CharUnits sz = getTypeSizeInChars(type);
 
   // Make all integer and enum types at least as large as an int
@@ -3146,7 +3146,7 @@ int ASTContext::getObjCEncodingTypeSize(QualType type) {
   // Treat arrays as pointers, since that's how they're passed in.
   else if (type->isArrayType())
     sz = getTypeSizeInChars(VoidPtrTy);
-  return sz.getQuantity();
+  return sz;
 }
 
 static inline 
@@ -3172,7 +3172,7 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
-    CharUnits sz = CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    CharUnits sz = getObjCEncodingTypeSize(PType);
     assert (sz.isPositive() && "BlockExpr - Incomplete param type");
     ParmOffset += sz;
   }
@@ -3198,7 +3198,7 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
       PType = PVDecl->getType();
     getObjCEncodingForType(PType, S);
     S += charUnitsToString(ParmOffset);
-    ParmOffset += CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    ParmOffset += getObjCEncodingTypeSize(PType);
   }
 }
 
@@ -3222,7 +3222,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
-    CharUnits sz = CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    CharUnits sz = getObjCEncodingTypeSize(PType);
     assert (sz.isPositive() && 
         "getObjCEncodingForMethodDecl - Incomplete param type");
     ParmOffset += sz;
@@ -3250,7 +3250,7 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
     getObjCEncodingForTypeQualifier(PVDecl->getObjCDeclQualifier(), S);
     getObjCEncodingForType(PType, S);
     S += charUnitsToString(ParmOffset);
-    ParmOffset += CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    ParmOffset += getObjCEncodingTypeSize(PType);
   }
 }
 
