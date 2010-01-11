@@ -259,7 +259,7 @@ namespace llvm {
     };
 
     bool ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
-                             PerFunctionState &PFS);
+                             PerFunctionState *PFS);
 
     bool ParseValue(const Type *Ty, Value *&V, PerFunctionState &PFS);
     bool ParseValue(const Type *Ty, Value *&V, LocTy &Loc,
@@ -292,9 +292,6 @@ namespace llvm {
 
     // Constant Parsing.
     bool ParseValID(ValID &ID, PerFunctionState *PFS = NULL);
-    bool ConvertGlobalValIDToValue(const Type *Ty, ValID &ID, Constant *&V);
-    bool ConvertGlobalOrMetadataValIDToValue(const Type *Ty, ValID &ID,
-                                             Value *&V, PerFunctionState *PFS);
     bool ParseGlobalValue(const Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
