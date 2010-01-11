@@ -43,6 +43,7 @@
       <li><a href="#globalvars">Global Variables</a></li>
       <li><a href="#functionstructure">Functions</a></li>
       <li><a href="#aliasstructure">Aliases</a></li>
+      <li><a href="#namedmetadatastructure">Named Metadata</a></li>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#fnattrs">Function Attributes</a></li>
       <li><a href="#gc">Garbage Collector Names</a></li>
@@ -85,12 +86,12 @@
       <li><a href="#undefvalues">Undefined Values</a></li>
       <li><a href="#blockaddress">Addresses of Basic Blocks</a></li>
       <li><a href="#constantexprs">Constant Expressions</a></li>
-      <li><a href="#metadata">Embedded Metadata</a></li>
     </ol>
   </li>
   <li><a href="#othervalues">Other Values</a>
     <ol>
       <li><a href="#inlineasm">Inline Assembler Expressions</a></li>
+      <li><a href="#metadata">Metadata Nodes and Metadata Strings</a></li>
     </ol>
   </li>
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
@@ -498,14 +499,19 @@ define i32 @main() {                                        <i>; i32()* </i>
 
   <i>; Call puts function to write out the string to stdout.</i>
   <a href="#i_call">call</a> i32 @puts(i8 * %cast210)                             <i>; i32</i>
-  <a href="#i_ret">ret</a> i32 0<br>}<br>
+  <a href="#i_ret">ret</a> i32 0<br>}
+
+<i>; Named metadata</i>
+!1 = metadata !{i32 41}
+!foo = !{!1, null}
 </pre>
 </div>
 
 <p>This example is made up of a <a href="#globalvars">global variable</a> named
-   "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>" function, and
+   "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>" function,
    a <a href="#functionstructure">function definition</a> for
-   "<tt>main</tt>".</p>
+   "<tt>main</tt>" and <a href="#namedmetadatastructure">named metadata</a> 
+   "<tt>foo"</tt>.</p>
 
 <p>In general, a module is made up of a list of global values, where both
    functions and global variables are global values.  Global values are
@@ -906,6 +912,27 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 <div class="doc_code">
 <pre>
 @&lt;Name&gt; = alias [Linkage] [Visibility] &lt;AliaseeTy&gt; @&lt;Aliasee&gt;
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="namedmetadatastructure">Named Metadata</a>
+</div>
+
+<div class="doc_text">
+
+<p>Named metadata is a collection of metadata. <a href="#metadata"> Metadata </a>
+   node and null are the only valid named metadata operands. 
+   Metadata strings are not allowed as an named metadata operand.</p>
+
+<h5>Syntax:</h5>
+<div class="doc_code">
+<pre>
+!1 = metadata !{metadata !"one"}
+!name = !{null, !1}
 </pre>
 </div>
 
@@ -2314,12 +2341,12 @@ has undefined behavior.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="metadata">Embedded Metadata</a>
+<div class="doc_subsection"><a name="metadata">Metadata Nodes and Metadata Strings</a>
 </div>
 
 <div class="doc_text">
 
-<p>Embedded metadata provides a way to attach arbitrary data to the instruction
+<p>Metadata provides a way to attach arbitrary data to the instruction
    stream without affecting the behaviour of the program.  There are two
    metadata primitives, strings and nodes. All metadata has the
    <tt>metadata</tt> type and is identified in syntax by a preceding exclamation
@@ -2338,8 +2365,8 @@ has undefined behavior.</p>
    event that a value is deleted, it will be replaced with a typeless
    "<tt>null</tt>", such as "<tt>metadata !{null, i32 10}</tt>".</p>
 
-<p>A named metadata is a collection of metadata nodes. For example: "<tt>!foo =
-   metadata !{!4, !3}</tt>".
+<p>A <a href="#namedmetadatastructure">named metadata</a> is a collection of 
+   metadata nodes. For example: "<tt>!foo =  metadata !{!4, !3}</tt>".
 
 <p>Optimizations may rely on metadata to provide additional information about
    the program that isn't available in the instructions, or that isn't easily
