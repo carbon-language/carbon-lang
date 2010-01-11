@@ -20,6 +20,7 @@
 #include <cctype>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 namespace llvm {
 template<typename T> class SmallVectorImpl;
@@ -215,6 +216,11 @@ std::pair<StringRef, StringRef> getToken(StringRef Source,
 /// delimiters, appending the result fragments to the output list.
 void SplitString(StringRef Source,
                  SmallVectorImpl<StringRef> &OutFragments,
+                 StringRef Delimiters = " \t\n\v\f\r");
+
+// FIXME: remove when llvm-gcc doesn't use this anymore
+void SplitString(StringRef Source,
+                 std::vector<std::string> &OutFragments,
                  StringRef Delimiters = " \t\n\v\f\r");
 
 /// HashString - Hash funtion for strings.
