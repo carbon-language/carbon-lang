@@ -1892,7 +1892,7 @@ def OR32rm   : I<0x0B, MRMSrcMem , (outs GR32:$dst),
 def OR8ri    : Ii8 <0x80, MRM1r, (outs GR8 :$dst), 
                     (ins GR8 :$src1, i8imm:$src2),
                     "or{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (or_not_add GR8:$src1, imm:$src2)),
+                    [(set GR8:$dst, (or GR8:$src1, imm:$src2)),
                      (implicit EFLAGS)]>;
 def OR16ri   : Ii16<0x81, MRM1r, (outs GR16:$dst), 
                     (ins GR16:$src1, i16imm:$src2),
@@ -4663,9 +4663,6 @@ def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C32r)>;
 
 // (or x, c) -> (add x, c) if masked bits are known zero.
-def : Pat<(parallel (or_is_add GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (ADD8ri GR8:$src1, imm:$src2)>;
 def : Pat<(parallel (or_is_add GR16:$src1, imm:$src2),
                     (implicit EFLAGS)),
           (ADD16ri GR16:$src1, imm:$src2)>;
