@@ -320,3 +320,19 @@ entry:
 ; CHECK: %E = and i32 %B, -25350
 ; CHECK: ret i32 %E
 }
+
+; PR4216
+define i64 @test31(i64 %A) nounwind readnone ssp noredzone {
+  %B = or i64 %A, 194
+  %D = and i64 %B, 250
+
+  %C = or i64 %A, 32768
+  %E = and i64 %C, 4294941696
+
+  %F = or i64 %D, %E
+  ret i64 %F
+; CHECK: @test31
+; CHECK-NEXT: %bitfield = or i64 %A, 32962
+; CHECK-NEXT: %F = and i64 %bitfield, 4294941946
+; CHECK-NEXT: ret i64 %F
+}

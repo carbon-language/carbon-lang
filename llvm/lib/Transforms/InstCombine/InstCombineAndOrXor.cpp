@@ -1544,9 +1544,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         }
       }
       
-      // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
-      // iff (C1&C2) == 0 and (N&~C1) == 0
       if ((C1->getValue() & C2->getValue()) == 0) {
+        // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
+        // iff (C1&C2) == 0 and (N&~C1) == 0
         if (match(A, m_Or(m_Value(V1), m_Value(V2))) &&
             ((V1 == B && MaskedValueIsZero(V2, ~C1->getValue())) ||  // (V|N)
              (V2 == B && MaskedValueIsZero(V1, ~C1->getValue()))))   // (N|V)
@@ -1560,6 +1560,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           return BinaryOperator::CreateAnd(B,
                                ConstantInt::get(B->getContext(),
                                                 C1->getValue()|C2->getValue()));
+        
+        // ((V|C3)&C1) | ((V|C4)&C2) --> (V|C3|C4)&(C1|C2)
+        // iff (C1&C2) == 0 and (C3&~C1) == 0 and (C4&~C2) == 0.
+        ConstantInt *C3 = 0, *C4 = 0;
+        if (match(A, m_Or(m_Value(V1), m_ConstantInt(C3))) &&
+            (C3->getValue() & ~C1->getValue()) == 0 &&
+            match(B, m_Or(m_Specific(V1), m_ConstantInt(C4))) &&
+            (C4->getValue() & ~C2->getValue()) == 0) {
+          V2 = Builder->CreateOr(V1, ConstantExpr::getOr(C3, C4), "bitfield");
+          return BinaryOperator::CreateAnd(V2,
+                               ConstantInt::get(B->getContext(),
+                                                C1->getValue()|C2->getValue()));
+        }
       }
     }
     
