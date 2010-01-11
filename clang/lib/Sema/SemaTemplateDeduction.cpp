@@ -1473,8 +1473,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         return TDK_FailedOverloadResolution;
       }
       
-      // Get the type of the resolved argument.
+      // Get the type of the resolved argument, and adjust it per 
+      // C++0x [temp.deduct.call]p3.
       ArgType = ResolvedArg->getType();
+      if (!ParamWasReference && ArgType->isFunctionType())
+        ArgType = Context.getPointerType(ArgType);
       if (ArgType->isPointerType() || ArgType->isMemberPointerType())
         TDF |= TDF_IgnoreQualifiers;
       
