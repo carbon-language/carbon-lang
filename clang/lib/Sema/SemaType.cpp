@@ -651,8 +651,10 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     }
     T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
   }
-  // If this is not C99, extwarn about VLA's and C99 array size modifiers.
-  if (!getLangOptions().C99) {
+  // If this is not C99 or C++ with GNU extenisons, extwarn about VLA's and C99
+  // array size modifiers.
+  if (!getLangOptions().C99 && 
+      !(getLangOptions().CPlusPlus && getLangOptions().GNUMode)) {
     if (ArraySize && !ArraySize->isTypeDependent() &&
         !ArraySize->isValueDependent() &&
         !ArraySize->isIntegerConstantExpr(Context))
