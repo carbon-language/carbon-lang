@@ -549,3 +549,26 @@ define i64 @test55(i32 %A) {
 ; CHECK-NEXT: %D = and i64 %C, -25350
 ; CHECK-NEXT: ret i64 %D
 }
+
+define i64 @test56(i16 %A) nounwind {
+  %tmp353 = sext i16 %A to i32
+  %tmp354 = lshr i32 %tmp353, 5
+  %tmp355 = zext i32 %tmp354 to i64
+  ret i64 %tmp355
+; CHECK: @test56
+; CHECK-NEXT: %tmp353 = sext i16 %A to i64
+; CHECK-NEXT: %tmp354 = lshr i64 %tmp353, 5
+; CHECK-NEXT: %tmp355 = and i64 %tmp354, 134217727
+; CHECK-NEXT: ret i64 %tmp355
+}
+
+define i64 @test57(i64 %A) nounwind {
+ %B = trunc i64 %A to i32
+ %C = lshr i32 %B, 8
+ %E = zext i32 %C to i64
+ ret i64 %E
+; CHECK: @test57
+; CHECK-NEXT: %C = lshr i64 %A, 8 
+; CHECK-NEXT: %E = and i64 %C, 16777215
+; CHECK-NEXT: ret i64 %E
+}

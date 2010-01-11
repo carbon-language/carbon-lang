@@ -582,8 +582,23 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
 /// CanEvaluateZExtd - Determine if the specified value can be computed in the
 /// specified wider type and produce the same low bits.  If not, return false.
 ///
+/// If this function returns true, it can also return a non-zero number of bits
+/// (in BitsToClear) which indicates that the value it computes is correct for
+/// the zero extend, but that the additional BitsToClear bits need to be zero'd
+/// out.  For example, to promote something like:
+///
+///   %B = trunc i64 %A to i32
+///   %C = lshr i32 %B, 8
+///   %E = zext i32 %C to i64
+///
+/// CanEvaluateZExtd for the 'lshr' will return true, and BitsToClear will be
+/// set to 8 to indicate that the promoted value needs to have bits 24-31
+/// cleared in addition to bits 32-63.  Since an 'and' will be generated to
+/// clear the top bits anyway, doing this has no extra cost.
+///
 /// This function works on both vectors and scalars.
-static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
+static bool CanEvaluateZExtd(Value *V, const Type *Ty, unsigned &BitsToClear) {
+  BitsToClear = 0;
   if (isa<Constant>(V))
     return true;
   
@@ -599,7 +614,7 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
   // require duplicating the instruction in general, which isn't profitable.
   if (!I->hasOneUse()) return false;
   
-  unsigned Opc = I->getOpcode();
+  unsigned Opc = I->getOpcode(), Tmp;
   switch (Opc) {
   case Instruction::ZExt:  // zext(zext(x)) -> zext(x).
   case Instruction::SExt:  // zext(sext(x)) -> sext(x).
@@ -612,23 +627,46 @@ static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
   case Instruction::Sub:
   case Instruction::Mul:
   case Instruction::Shl:
-    return CanEvaluateZExtd(I->getOperand(0), Ty, TD) &&
-           CanEvaluateZExtd(I->getOperand(1), Ty, TD);
+    if (!CanEvaluateZExtd(I->getOperand(0), Ty, BitsToClear) ||
+        !CanEvaluateZExtd(I->getOperand(1), Ty, Tmp))
+      return false;
+    // These can all be promoted if neither operand has 'bits to clear'.
+    if (BitsToClear == 0 && Tmp == 0)
+      return true;
       
-  //case Instruction::LShr:
+    return false;
       
+  case Instruction::LShr:
+    // We can promote lshr(x, cst) if we can promote x.  This requires the
+    // ultimate 'and' to clear out the high zero bits we're clearing out though.
+    if (ConstantInt *Amt = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      if (!CanEvaluateZExtd(I->getOperand(0), Ty, BitsToClear))
+        return false;
+      BitsToClear += Amt->getZExtValue();
+      if (BitsToClear > V->getType()->getScalarSizeInBits())
+        BitsToClear = V->getType()->getScalarSizeInBits();
+      return true;
+    }
+    // Cannot promote variable LSHR.
+    return false;
   case Instruction::Select:
-    return CanEvaluateZExtd(I->getOperand(1), Ty, TD) &&
-           CanEvaluateZExtd(I->getOperand(2), Ty, TD);
+    if (!CanEvaluateZExtd(I->getOperand(1), Ty, Tmp) ||
+        !CanEvaluateZExtd(I->getOperand(2), Ty, BitsToClear) ||
+        Tmp != BitsToClear)
+      return false;
+    return true;
       
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, TD)) return false;
+    if (!CanEvaluateZExtd(PN->getIncomingValue(0), Ty, BitsToClear))
+      return false;
     for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateZExtd(PN->getIncomingValue(i), Ty, TD)) return false;
+      if (!CanEvaluateZExtd(PN->getIncomingValue(i), Ty, Tmp) ||
+          Tmp != BitsToClear)
+        return false;
     return true;
   }
   default:
@@ -659,25 +697,30 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
   // strange.
+  unsigned BitsToClear;
   if ((isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) &&
-      CanEvaluateZExtd(Src, DestTy, TD)) { 
+      CanEvaluateZExtd(Src, DestTy, BitsToClear)) { 
+    assert(BitsToClear < SrcTy->getScalarSizeInBits() &&
+           "Unreasonable BitsToClear");
+    
     // Okay, we can transform this!  Insert the new expression now.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
           " to avoid zero extend: " << CI);
     Value *Res = EvaluateInDifferentType(Src, DestTy, false);
     assert(Res->getType() == DestTy);
     
+    uint32_t SrcBitsKept = SrcTy->getScalarSizeInBits()-BitsToClear;
+    uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+    
     // If the high bits are already filled with zeros, just replace this
     // cast with the result.
-    uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
-    uint32_t DestBitSize = DestTy->getScalarSizeInBits();
     if (MaskedValueIsZero(Res, APInt::getHighBitsSet(DestBitSize,
-                                                     DestBitSize-SrcBitSize)))
+                                                     DestBitSize-SrcBitsKept)))
       return ReplaceInstUsesWith(CI, Res);
     
     // We need to emit an AND to clear the high bits.
     Constant *C = ConstantInt::get(Res->getType(),
-                               APInt::getLowBitsSet(DestBitSize, SrcBitSize));
+                               APInt::getLowBitsSet(DestBitSize, SrcBitsKept));
     return BinaryOperator::CreateAnd(Res, C);
   }
 
