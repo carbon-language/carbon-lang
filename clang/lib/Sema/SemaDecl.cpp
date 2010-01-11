@@ -803,13 +803,38 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
   if (getLangOptions().Microsoft)
     return;
 
-  // C++ [dcl.typedef]p2:
-  //   In a given non-class scope, a typedef specifier can be used to
-  //   redefine the name of any type declared in that scope to refer
-  //   to the type to which it already refers.
   if (getLangOptions().CPlusPlus) {
+    // C++ [dcl.typedef]p2:
+    //   In a given non-class scope, a typedef specifier can be used to
+    //   redefine the name of any type declared in that scope to refer
+    //   to the type to which it already refers.
     if (!isa<CXXRecordDecl>(CurContext))
       return;
+
+    // C++0x [dcl.typedef]p4:
+    //   In a given class scope, a typedef specifier can be used to redefine 
+    //   any class-name declared in that scope that is not also a typedef-name
+    //   to refer to the type to which it already refers.
+    //
+    // This wording came in via DR424, which was a correction to the
+    // wording in DR56, which accidentally banned code like:
+    //
+    //   struct S {
+    //     typedef struct A { } A;
+    //   };
+    //
+    // in the C++03 standard. We implement the C++0x semantics, which
+    // allow the above but disallow
+    //
+    //   struct S {
+    //     typedef int I;
+    //     typedef int I;
+    //   };
+    //
+    // since that was the intent of DR56.
+    if (New->getUnderlyingType()->getAs<ElaboratedType>())
+      return;
+
     Diag(New->getLocation(), diag::err_redefinition)
       << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
