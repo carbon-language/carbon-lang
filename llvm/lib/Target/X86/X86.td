@@ -23,6 +23,7 @@ include "llvm/Target/Target.td"
 def FeatureCMOV    : SubtargetFeature<"cmov","HasCMov", "true",
                                       "Enable conditional move instructions">;
 
+
 def FeatureMMX     : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                       "Enable MMX instructions">;
 def FeatureSSE1    : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
@@ -66,6 +67,9 @@ def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                      "Enable three-operand fused multiple-add">;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add">;
+def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
+                                          "HasVectorUAMem", "true",
+                 "Allow unaligned memory operands on vector/SIMD instructions">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.

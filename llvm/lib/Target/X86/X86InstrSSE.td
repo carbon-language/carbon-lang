@@ -131,11 +131,13 @@ def alignedloadv2i64 : PatFrag<(ops node:$ptr),
 
 // Like 'load', but uses special alignment checks suitable for use in
 // memory operands in most SSE instructions, which are required to
-// be naturally aligned on some targets but not on others.
-// FIXME: Actually implement support for targets that don't require the
-//        alignment. This probably wants a subtarget predicate.
+// be naturally aligned on some targets but not on others.  If the subtarget
+// allows unaligned accesses, match any load, though this may require
+// setting a feature bit in the processor (on startup, for example).
+// Opteron 10h and later implement such a feature.
 def memop : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return cast<LoadSDNode>(N)->getAlignment() >= 16;
+  return    Subtarget->hasVectorUAMem()
+         || cast<LoadSDNode>(N)->getAlignment() >= 16;
 }]>;
 
 def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
