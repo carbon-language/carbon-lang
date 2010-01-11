@@ -36,12 +36,12 @@ namespace clang {
   /// in character units.
   class CharUnits {
     public:
-      typedef int64_t RawType;
+      typedef int64_t QuantityType;
 
     private:
-      RawType Quantity;
+      QuantityType Quantity;
 
-      explicit CharUnits(RawType C) : Quantity(C) {}
+      explicit CharUnits(QuantityType C) : Quantity(C) {}
 
     public:
 
@@ -58,8 +58,8 @@ namespace clang {
         return CharUnits(1);
       }
 
-      /// fromRaw - Construct a CharUnits quantity from a raw integer type.
-      static CharUnits fromRaw(RawType Quantity) {
+      /// fromQuantity - Construct a CharUnits quantity from a raw integer type.
+      static CharUnits fromQuantity(QuantityType Quantity) {
         return CharUnits(Quantity); 
       }
 
@@ -103,26 +103,26 @@ namespace clang {
       /// isOne - Test whether the quantity equals one.
       bool isOne() const      { return Quantity == 1; }
 
-      /// isPositive - Test whether the quanity is greater than zero.
+      /// isPositive - Test whether the quantity is greater than zero.
       bool isPositive() const { return Quantity  > 0; }
 
       /// isNegative - Test whether the quantity is less than zero.
       bool isNegative() const { return Quantity  < 0; }
 
       // Arithmetic operators.
-      CharUnits operator* (RawType N) const {
+      CharUnits operator* (QuantityType N) const {
         return CharUnits(Quantity * N);
       }
-      CharUnits operator/ (RawType N) const {
+      CharUnits operator/ (QuantityType N) const {
         return CharUnits(Quantity / N);
       }
-      RawType operator/ (const CharUnits &Other) const {
+      QuantityType operator/ (const CharUnits &Other) const {
         return Quantity / Other.Quantity;
       }
-      CharUnits operator% (RawType N) const {
+      CharUnits operator% (QuantityType N) const {
         return CharUnits(Quantity % N);
       }
-      RawType operator% (const CharUnits &Other) const {
+      QuantityType operator% (const CharUnits &Other) const {
         return Quantity % Other.Quantity;
       }
       CharUnits operator+ (const CharUnits &Other) const {
@@ -134,14 +134,14 @@ namespace clang {
       
       // Conversions.
 
-      /// getRaw - Get the raw integer representation of this quantity.
-      RawType getRaw() const { return Quantity; }
+      /// getQuantity - Get the raw integer representation of this quantity.
+      QuantityType getQuantity() const { return Quantity; }
 
 
   }; // class CharUnit
 } // namespace clang
 
-inline clang::CharUnits operator* (clang::CharUnits::RawType Scale, 
+inline clang::CharUnits operator* (clang::CharUnits::QuantityType Scale, 
                                    const clang::CharUnits &CU) {
   return CU * Scale;
 }

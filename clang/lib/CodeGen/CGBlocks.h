@@ -20,6 +20,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -175,13 +176,13 @@ public:
 
   /// BlockOffset - The offset in bytes for the next allocation of an
   /// imported block variable.
-  uint64_t BlockOffset;
+  CharUnits BlockOffset;
   /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
   uint64_t BlockAlign;
 
   /// getBlockOffset - Allocate an offset for the ValueDecl from a
   /// BlockDeclRefExpr in a block literal (BlockExpr).
-  uint64_t getBlockOffset(const BlockDeclRefExpr *E);
+  CharUnits getBlockOffset(const BlockDeclRefExpr *E);
 
   /// BlockHasCopyDispose - True iff the block uses copy/dispose.
   bool BlockHasCopyDispose;
@@ -191,7 +192,7 @@ public:
   llvm::SmallVector<const Expr *, 8> BlockDeclRefDecls;
 
   /// BlockDecls - Offsets for all Decls in BlockDeclRefExprs.
-  std::map<const Decl*, uint64_t> BlockDecls;
+  std::map<const Decl*, CharUnits> BlockDecls;
 
   ImplicitParamDecl *BlockStructDecl;
   ImplicitParamDecl *getBlockStructDecl() { return BlockStructDecl; }

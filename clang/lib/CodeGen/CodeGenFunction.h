@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -463,7 +464,7 @@ public:
 
   llvm::Value *BuildBlockLiteralTmp(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(bool BlockHasCopyDispose,
-                                           uint64_t Size,
+                                           CharUnits Size,
                                            const llvm::StructType *,
                                            std::vector<HelperInfo> *);
 
@@ -471,14 +472,14 @@ public:
                                         const BlockInfo& Info,
                                         const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
-                                        uint64_t &Size, uint64_t &Align,
+                                        CharUnits &Size, uint64_t &Align,
                       llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                         bool &subBlockHasCopyDispose);
 
   void BlockForwardSelf();
   llvm::Value *LoadBlockStruct();
 
-  uint64_t AllocateBlockDecl(const BlockDeclRefExpr *E);
+  CharUnits AllocateBlockDecl(const BlockDeclRefExpr *E);
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
   const llvm::Type *BuildByRefType(const ValueDecl *D);
 

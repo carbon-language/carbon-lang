@@ -473,7 +473,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         llvm::IntegerType::get(VMContext, LLVMPointerWidth);
       llvm::Value *SizeVal =
         llvm::ConstantInt::get(IntPtr, 
-                               getContext().getTypeSizeInChars(Ty).getRaw());
+            getContext().getTypeSizeInChars(Ty).getQuantity());
 
       const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
       if (Loc->getType() != BP)

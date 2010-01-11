@@ -17,6 +17,7 @@
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/ValueManager.h"
 #include "clang/Analysis/PathSensitive/AnalysisContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/StmtVisitor.h"
 
 using namespace clang;
@@ -689,7 +690,7 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
 }
 
 RegionRawOffset ElementRegion::getAsRawOffset() const {
-  int64_t offset = 0;
+  CharUnits offset = CharUnits::Zero();
   const ElementRegion *ER = this;
   const MemRegion *superR = NULL;
   ASTContext &C = getContext();
@@ -714,7 +715,7 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
           break;
         }
 
-        int64_t size = (int64_t) (C.getTypeSize(elemType) / 8);
+        CharUnits size = C.getTypeSizeInChars(elemType);
         offset += (i * size);
       }
 
@@ -727,7 +728,7 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
   }
 
   assert(superR && "super region cannot be NULL");
-  return RegionRawOffset(superR, offset);
+  return RegionRawOffset(superR, offset.getQuantity());
 }
 
 //===----------------------------------------------------------------------===//

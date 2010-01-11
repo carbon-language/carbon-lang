@@ -1379,7 +1379,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   else
     Unit = llvm::DICompileUnit();
 
-  uint64_t offset = CGF->BlockDecls[Decl];
+  CharUnits offset = CGF->BlockDecls[Decl];
   llvm::SmallVector<llvm::Value *, 9> addr;
   llvm::LLVMContext &VMContext = CGM.getLLVMContext();
   addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
@@ -1387,22 +1387,24 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                         llvm::DIFactory::OpPlus));
   addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                        offset));
+                                        offset.getQuantity()));
   if (BDRE->isByRef()) {
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                           llvm::DIFactory::OpDeref));
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                           llvm::DIFactory::OpPlus));
-    offset = CGF->LLVMPointerWidth/8; // offset of __forwarding field
+    // offset of __forwarding field
+    offset = CharUnits::fromQuantity(CGF->LLVMPointerWidth/8);
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          offset));
+                                          offset.getQuantity()));
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                           llvm::DIFactory::OpDeref));
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                           llvm::DIFactory::OpPlus));
-    offset = XOffset/8;               // offset of x field
+    // offset of x field
+    offset = CharUnits::fromQuantity(XOffset/8);
     addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          offset));
+                                          offset.getQuantity()));
   }
 
   // Create the descriptor for the variable.

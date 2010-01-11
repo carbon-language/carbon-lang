@@ -1310,7 +1310,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (const ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(ElementType)) {
     llvm::Value *InterfaceSize =
       llvm::ConstantInt::get(Idx->getType(),
-                             CGF.getContext().getTypeSize(OIT) / 8);
+          CGF.getContext().getTypeSizeInChars(OIT).getQuantity());
     Idx = Builder.CreateMul(Idx, InterfaceSize);
     const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
@@ -1374,7 +1374,8 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
         dyn_cast<ObjCInterfaceType>(LHSElementType)) {
       llvm::Value *InterfaceSize =
         llvm::ConstantInt::get(Idx->getType(),
-                               CGF.getContext().getTypeSize(OIT) / 8);
+                               CGF.getContext().
+                                 getTypeSizeInChars(OIT).getQuantity());
       Idx = Builder.CreateMul(Idx, InterfaceSize);
       const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
       Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
@@ -1398,14 +1399,14 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     Value *LHS = Ops.LHS;
     Value *RHS = Ops.RHS;
 
-    uint64_t ElementSize;
+    CharUnits ElementSize;
 
     // Handle GCC extension for pointer arithmetic on void* and function pointer
     // types.
     if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
-      ElementSize = 1;
+      ElementSize = CharUnits::One();
     } else {
-      ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
+      ElementSize = CGF.getContext().getTypeSizeInChars(LHSElementType);
     }
 
     const llvm::Type *ResultType = ConvertType(Ops.Ty);
@@ -1414,13 +1415,14 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
 
     // Optimize out the shift for element size of 1.
-    if (ElementSize == 1)
+    if (ElementSize.isOne())
       return BytesBetween;
 
     // Otherwise, do a full sdiv. This uses the "exact" form of sdiv, since
     // pointer difference in C is only defined in the case where both operands
     // are pointing to elements of an array.
-    Value *BytesPerElt = llvm::ConstantInt::get(ResultType, ElementSize);
+    Value *BytesPerElt = 
+        llvm::ConstantInt::get(ResultType, ElementSize.getQuantity());
     return Builder.CreateExactSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
   }
 }

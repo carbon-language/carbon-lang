@@ -578,7 +578,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
         ElemSize = EmitVLASize(ElemTy);
       else
         ElemSize = llvm::ConstantInt::get(SizeTy,
-                                          getContext().getTypeSize(ElemTy) / 8);
+            getContext().getTypeSizeInChars(ElemTy).getQuantity());
 
       llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
       NumElements = Builder.CreateIntCast(NumElements, SizeTy, false, "tmp");

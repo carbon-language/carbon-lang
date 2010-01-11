@@ -24,7 +24,7 @@ using namespace clang;
 using namespace CodeGen;
 
 llvm::Constant *CodeGenFunction::
-BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
+BuildDescriptorBlockDecl(bool BlockHasCopyDispose, CharUnits Size,
                          const llvm::StructType* Ty,
                          std::vector<HelperInfo> *NoteForHelper) {
   const llvm::Type *UnsignedLongTy
@@ -40,7 +40,7 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
   // FIXME: What is the right way to say this doesn't fit?  We should give
   // a user diagnostic in that case.  Better fix would be to change the
   // API to size_t.
-  C = llvm::ConstantInt::get(UnsignedLongTy, Size);
+  C = llvm::ConstantInt::get(UnsignedLongTy, Size.getQuantity());
   Elts.push_back(C);
 
   if (BlockHasCopyDispose) {
@@ -176,7 +176,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // We run this first so that we set BlockHasCopyDispose from the entire
     // block literal.
     // __invoke
-    uint64_t subBlockSize, subBlockAlign;
+    CharUnits subBlockSize; 
+    uint64_t subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     bool subBlockHasCopyDispose = false;
     llvm::Function *Fn
@@ -321,13 +322,13 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             // compared to gcc by not grabbing the forwarding slot as this must
             // be done during Block_copy for us, and we can postpone the work
             // until then.
-            uint64_t offset = BlockDecls[BDRE->getDecl()];
+            CharUnits offset = BlockDecls[BDRE->getDecl()];
 
             llvm::Value *BlockLiteral = LoadBlockStruct();
 
             Loc = Builder.CreateGEP(BlockLiteral,
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                                           offset),
+                                                           offset.getQuantity()),
                                     "block.literal");
             Ty = llvm::PointerType::get(Ty, 0);
             Loc = Builder.CreateBitCast(Loc, Ty);
@@ -513,12 +514,12 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   return EmitCall(FnInfo, Func, ReturnValue, Args);
 }
 
-uint64_t CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
+CharUnits CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
   const ValueDecl *VD = E->getDecl();
-  uint64_t &offset = BlockDecls[VD];
+  CharUnits &offset = BlockDecls[VD];
 
   // See if we have already allocated an offset for this variable.
-  if (offset)
+  if (offset.isPositive())
     return offset;
 
   // Don't run the expensive check, unless we have to.
@@ -535,13 +536,13 @@ uint64_t CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   const ValueDecl *VD = E->getDecl();
-  uint64_t offset = AllocateBlockDecl(E);
+  CharUnits offset = AllocateBlockDecl(E);
   
 
   llvm::Value *BlockLiteral = LoadBlockStruct();
   llvm::Value *V = Builder.CreateGEP(BlockLiteral,
                        llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                                         offset),
+                                                         offset.getQuantity()),
                                      "block.literal");
   if (E->isByRef()) {
     const llvm::Type *PtrStructTy
@@ -594,10 +595,10 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   // Block literal size. For global blocks we just use the size of the generic
   // block literal struct.
-  uint64_t BlockLiteralSize =
-    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType()) / 8;
+  CharUnits BlockLiteralSize = CharUnits::fromQuantity(
+    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType()) / 8);
   DescriptorFields[1] =
-                      llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
+    llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize.getQuantity());
 
   llvm::Constant *DescriptorStruct =
     llvm::ConstantStruct::get(VMContext, &DescriptorFields[0], 2, false);
@@ -615,7 +616,8 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   std::vector<llvm::Constant*> LiteralFields(FieldCount);
 
   CodeGenFunction::BlockInfo Info(0, n);
-  uint64_t subBlockSize, subBlockAlign;
+  CharUnits subBlockSize; 
+  uint64_t subBlockAlign;
   llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
   bool subBlockHasCopyDispose = false;
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -677,7 +679,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                        const BlockInfo& Info,
                                        const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
-                                       uint64_t &Size,
+                                       CharUnits &Size,
                                        uint64_t &Align,
                        llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                        bool &subBlockHasCopyDispose) {
@@ -698,8 +700,9 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
       LocalDeclMap[VD] = i->second;
   }
 
-  BlockOffset = CGM.getTargetData()
-    .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
+  BlockOffset = CharUnits::fromQuantity(
+      CGM.getTargetData()
+        .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8);
   BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
@@ -799,7 +802,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   // The runtime needs a minimum alignment of a void *.
   uint64_t MinAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
-  BlockOffset = llvm::RoundUpToAlignment(BlockOffset, MinAlign);
+  BlockOffset = CharUnits::fromQuantity(
+      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), MinAlign));
 
   Size = BlockOffset;
   Align = BlockAlign;
@@ -808,30 +812,32 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   return Fn;
 }
 
-uint64_t BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
+CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
   const ValueDecl *D = dyn_cast<ValueDecl>(BDRE->getDecl());
 
-  uint64_t Size = getContext().getTypeSize(D->getType()) / 8;
+  CharUnits Size = getContext().getTypeSizeInChars(D->getType());
   uint64_t Align = getContext().getDeclAlignInBytes(D);
 
   if (BDRE->isByRef()) {
-    Size = getContext().getTypeSize(getContext().VoidPtrTy) / 8;
+    Size = getContext().getTypeSizeInChars(getContext().VoidPtrTy);
     Align = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
   }
 
   assert ((Align > 0) && "alignment must be 1 byte or more");
 
-  uint64_t OldOffset = BlockOffset;
+  CharUnits OldOffset = BlockOffset;
 
   // Ensure proper alignment, even if it means we have to have a gap
-  BlockOffset = llvm::RoundUpToAlignment(BlockOffset, Align);
+  BlockOffset = CharUnits::fromQuantity(
+      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), Align));
   BlockAlign = std::max(Align, BlockAlign);
 
-  uint64_t Pad = BlockOffset - OldOffset;
-  if (Pad) {
-    llvm::ArrayType::get(llvm::Type::getInt8Ty(VMContext), Pad);
+  CharUnits Pad = BlockOffset - OldOffset;
+  if (Pad.isPositive()) {
+    llvm::ArrayType::get(llvm::Type::getInt8Ty(VMContext), Pad.getQuantity());
     QualType PadTy = getContext().getConstantArrayType(getContext().CharTy,
-                                                       llvm::APInt(32, Pad),
+                                                       llvm::APInt(32, 
+                                                         Pad.getQuantity()),
                                                        ArrayType::Normal, 0);
     ValueDecl *PadDecl = VarDecl::Create(getContext(), 0, SourceLocation(),
                                          0, QualType(PadTy), 0, VarDecl::None);

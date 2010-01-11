@@ -17,6 +17,7 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
 #include "clang/Analysis/PathSensitive/Checker.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/Builtins.h"
@@ -2421,12 +2422,12 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
                                           ExplodedNode* Pred,
                                           ExplodedNodeSet& Dst) {
   QualType T = Ex->getTypeOfArgument();
-  uint64_t amt;
+  CharUnits amt;
 
   if (Ex->isSizeOf()) {
     if (T == getContext().VoidTy) {
       // sizeof(void) == 1 byte.
-      amt = 1;
+      amt = CharUnits::One();
     }
     else if (!T.getTypePtr()->isConstantSizeType()) {
       // FIXME: Add support for VLAs.
@@ -2440,14 +2441,15 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
     }
     else {
       // All other cases.
-      amt = getContext().getTypeSize(T) / 8;
+      amt = getContext().getTypeSizeInChars(T);
     }
   }
   else  // Get alignment of the type.
-    amt = getContext().getTypeAlign(T) / 8;
+    amt = CharUnits::fromQuantity(getContext().getTypeAlign(T) / 8);
 
   MakeNode(Dst, Ex, Pred,
-           GetState(Pred)->BindExpr(Ex, ValMgr.makeIntVal(amt, Ex->getType())));
+           GetState(Pred)->BindExpr(Ex, 
+              ValMgr.makeIntVal(amt.getQuantity(), Ex->getType())));
 }
 
 

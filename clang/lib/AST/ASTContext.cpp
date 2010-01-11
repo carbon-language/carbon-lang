@@ -814,10 +814,10 @@ ASTContext::getTypeInfo(const Type *T) {
 /// getTypeSizeInChars - Return the size of the specified type, in characters.
 /// This method does not work on incomplete types.
 CharUnits ASTContext::getTypeSizeInChars(QualType T) {
-  return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
+  return CharUnits::fromQuantity(getTypeSize(T) / getCharWidth());
 }
 CharUnits ASTContext::getTypeSizeInChars(const Type *T) {
-  return CharUnits::fromRaw(getTypeSize(T) / getCharWidth());
+  return CharUnits::fromQuantity(getTypeSize(T) / getCharWidth());
 }
 
 /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
@@ -3138,15 +3138,20 @@ static bool isTypeTypedefedAsBOOL(QualType T) {
 /// getObjCEncodingTypeSize returns size of type for objective-c encoding
 /// purpose.
 int ASTContext::getObjCEncodingTypeSize(QualType type) {
-  uint64_t sz = getTypeSize(type);
+  CharUnits sz = getTypeSizeInChars(type);
 
   // Make all integer and enum types at least as large as an int
-  if (sz > 0 && type->isIntegralType())
-    sz = std::max(sz, getTypeSize(IntTy));
+  if (sz.isPositive() && type->isIntegralType())
+    sz = std::max(sz, getTypeSizeInChars(IntTy));
   // Treat arrays as pointers, since that's how they're passed in.
   else if (type->isArrayType())
-    sz = getTypeSize(VoidPtrTy);
-  return sz / getTypeSize(CharTy);
+    sz = getTypeSizeInChars(VoidPtrTy);
+  return sz.getQuantity();
+}
+
+static inline 
+std::string charUnitsToString(const CharUnits &CU) {
+  return llvm::itostr(CU.getQuantity());
 }
 
 /// getObjCEncodingForBlockDecl - Return the encoded type for this method
@@ -3162,17 +3167,17 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
   SourceLocation Loc;
-  int PtrSize = getTypeSize(VoidPtrTy) / getTypeSize(CharTy);
-  int ParmOffset = PtrSize;
+  CharUnits PtrSize = getTypeSizeInChars(VoidPtrTy);
+  CharUnits ParmOffset = PtrSize;
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
-    int sz = getObjCEncodingTypeSize(PType);
-    assert (sz > 0 && "BlockExpr - Incomplete param type");
+    CharUnits sz = CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    assert (sz.isPositive() && "BlockExpr - Incomplete param type");
     ParmOffset += sz;
   }
   // Size of the argument frame
-  S += llvm::utostr(ParmOffset);
+  S += charUnitsToString(ParmOffset);
   // Block pointer and offset.
   S += "@?0";
   ParmOffset = PtrSize;
@@ -3192,8 +3197,8 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
     } else if (PType->isFunctionType())
       PType = PVDecl->getType();
     getObjCEncodingForType(PType, S);
-    S += llvm::utostr(ParmOffset);
-    ParmOffset += getObjCEncodingTypeSize(PType);
+    S += charUnitsToString(ParmOffset);
+    ParmOffset += CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
   }
 }
 
@@ -3210,20 +3215,21 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
   SourceLocation Loc;
-  int PtrSize = getTypeSize(VoidPtrTy) / getTypeSize(CharTy);
+  CharUnits PtrSize = getTypeSizeInChars(VoidPtrTy);
   // The first two arguments (self and _cmd) are pointers; account for
   // their size.
-  int ParmOffset = 2 * PtrSize;
+  CharUnits ParmOffset = 2 * PtrSize;
   for (ObjCMethodDecl::param_iterator PI = Decl->param_begin(),
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
-    int sz = getObjCEncodingTypeSize(PType);
-    assert (sz > 0 && "getObjCEncodingForMethodDecl - Incomplete param type");
+    CharUnits sz = CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
+    assert (sz.isPositive() && 
+        "getObjCEncodingForMethodDecl - Incomplete param type");
     ParmOffset += sz;
   }
-  S += llvm::utostr(ParmOffset);
+  S += charUnitsToString(ParmOffset);
   S += "@0:";
-  S += llvm::utostr(PtrSize);
+  S += charUnitsToString(PtrSize);
 
   // Argument types.
   ParmOffset = 2 * PtrSize;
@@ -3243,8 +3249,8 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
     // 'in', 'inout', etc.
     getObjCEncodingForTypeQualifier(PVDecl->getObjCDeclQualifier(), S);
     getObjCEncodingForType(PType, S);
-    S += llvm::utostr(ParmOffset);
-    ParmOffset += getObjCEncodingTypeSize(PType);
+    S += charUnitsToString(ParmOffset);
+    ParmOffset += CharUnits::fromQuantity(getObjCEncodingTypeSize(PType));
   }
 }
 

@@ -13,6 +13,7 @@
 
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/ASTDiagnostic.h"
@@ -325,11 +326,11 @@ APValue LValueExprEvaluator::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   if (!EvaluateInteger(E->getIdx(), Index, Info))
     return APValue();
 
-  uint64_t ElementSize = Info.Ctx.getTypeSize(E->getType()) / 8;
+  CharUnits ElementSize = Info.Ctx.getTypeSizeInChars(E->getType());
 
-  uint64_t Offset = Index.getSExtValue() * ElementSize;
+  CharUnits Offset = Index.getSExtValue() * ElementSize;
   Result.setLValue(Result.getLValueBase(),
-                   Result.getLValueOffset() + Offset);
+                   Result.getLValueOffset() + Offset.getQuantity());
   return Result;
 }
 
@@ -410,22 +411,22 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return APValue();
 
   QualType PointeeType = PExp->getType()->getAs<PointerType>()->getPointeeType();
-  uint64_t SizeOfPointee;
+  CharUnits SizeOfPointee;
 
   // Explicitly handle GNU void* and function pointer arithmetic extensions.
   if (PointeeType->isVoidType() || PointeeType->isFunctionType())
-    SizeOfPointee = 1;
+    SizeOfPointee = CharUnits::One();
   else
-    SizeOfPointee = Info.Ctx.getTypeSize(PointeeType) / 8;
+    SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType);
 
-  uint64_t Offset = ResultLValue.getLValueOffset();
+  CharUnits Offset = CharUnits::fromQuantity(ResultLValue.getLValueOffset());
 
   if (E->getOpcode() == BinaryOperator::Add)
     Offset += AdditionalOffset.getLimitedValue() * SizeOfPointee;
   else
     Offset -= AdditionalOffset.getLimitedValue() * SizeOfPointee;
 
-  return APValue(ResultLValue.getLValueBase(), Offset);
+  return APValue(ResultLValue.getLValueBase(), Offset.getQuantity());
 }
 
 APValue PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
@@ -977,13 +978,14 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
                 && VD->getType()->isObjectType()
                 && !VD->getType()->isVariablyModifiedType()
                 && !VD->getType()->isDependentType()) {
-              uint64_t Size = Info.Ctx.getTypeSize(VD->getType()) / 8;
-              uint64_t Offset = Base.Val.getLValueOffset();
-              if (Offset <= Size)
-                Size -= Base.Val.getLValueOffset();
+              CharUnits Size = Info.Ctx.getTypeSizeInChars(VD->getType());
+              CharUnits Offset = 
+                  CharUnits::fromQuantity(Base.Val.getLValueOffset());
+              if (!Offset.isNegative() && Offset <= Size)
+                Size -= Offset;
               else
-                Size = 0;
-              return Success(Size, E);
+                Size = CharUnits::Zero();
+              return Success(Size.getQuantity(), E);
             }
           }
         }
@@ -1175,7 +1177,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
         uint64_t D = LHSValue.getLValueOffset() - RHSValue.getLValueOffset();
         if (!ElementType->isVoidType() && !ElementType->isFunctionType())
-          D /= Info.Ctx.getTypeSize(ElementType) / 8;
+          D /= Info.Ctx.getTypeSizeInChars(ElementType).getQuantity();
 
         return Success(D, E);
       }
@@ -1335,8 +1337,7 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
     return false;
 
   // Get information about the size.
-  unsigned BitWidth = Info.Ctx.getTypeSize(SrcTy);
-  return Success(BitWidth / Info.Ctx.Target.getCharWidth(), E);
+  return Success(Info.Ctx.getTypeSizeInChars(SrcTy).getQuantity(), E);
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {

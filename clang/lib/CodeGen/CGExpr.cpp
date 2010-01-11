@@ -1273,16 +1273,16 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
     QualType BaseType = getContext().getBaseElementType(VAT);
 
-    uint64_t BaseTypeSize = getContext().getTypeSize(BaseType) / 8;
+    CharUnits BaseTypeSize = getContext().getTypeSizeInChars(BaseType);
     Idx = Builder.CreateUDiv(Idx,
                              llvm::ConstantInt::get(Idx->getType(),
-                                                    BaseTypeSize));
+                                 BaseTypeSize.getQuantity()));
     Address = Builder.CreateInBoundsGEP(Base, Idx, "arrayidx");
   } else if (const ObjCInterfaceType *OIT =
              dyn_cast<ObjCInterfaceType>(E->getType())) {
     llvm::Value *InterfaceSize =
       llvm::ConstantInt::get(Idx->getType(),
-                             getContext().getTypeSize(OIT) / 8);
+          getContext().getTypeSizeInChars(OIT).getQuantity());
 
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 

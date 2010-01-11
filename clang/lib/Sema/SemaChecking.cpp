@@ -14,6 +14,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -318,7 +319,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 
   // Determine the index of the size.
   unsigned SizeIndex;
-  switch (Context.getTypeSize(ValType)/8) {
+  switch (Context.getTypeSizeInChars(ValType).getQuantity()) {
   case 1: SizeIndex = 0; break;
   case 2: SizeIndex = 1; break;
   case 4: SizeIndex = 2; break;
