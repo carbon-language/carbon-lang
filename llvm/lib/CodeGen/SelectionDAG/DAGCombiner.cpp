@@ -5792,35 +5792,48 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
       if (LLD->getMemoryVT() == RLD->getMemoryVT()) {
         // FIXME: this discards src value information.  This is
         // over-conservative. It would be beneficial to be able to remember
-        // both potential memory locations.
+        // both potential memory locations.  Since we are discarding
+        // src value info, don't do the transformation if the memory
+        // locations are not in the default address space.
+        unsigned LLDAddrSpace = 0, RLDAddrSpace = 0;
+        if (const Value *LLDVal = LLD->getMemOperand()->getValue()) {
+          if (const PointerType *PT = dyn_cast<PointerType>(LLDVal->getType()))
+            LLDAddrSpace = PT->getAddressSpace();
+        }
+        if (const Value *RLDVal = RLD->getMemOperand()->getValue()) {
+          if (const PointerType *PT = dyn_cast<PointerType>(RLDVal->getType()))
+            RLDAddrSpace = PT->getAddressSpace();
+        }
         SDValue Addr;
-        if (TheSelect->getOpcode() == ISD::SELECT) {
-          // Check that the condition doesn't reach either load.  If so, folding
-          // this will induce a cycle into the DAG.
-          if ((!LLD->hasAnyUseOfValue(1) ||
-               !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
-              (!RLD->hasAnyUseOfValue(1) ||
-               !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
-            Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
-                               LLD->getBasePtr().getValueType(),
-                               TheSelect->getOperand(0), LLD->getBasePtr(),
-                               RLD->getBasePtr());
-          }
-        } else {
-          // Check that the condition doesn't reach either load.  If so, folding
-          // this will induce a cycle into the DAG.
-          if ((!LLD->hasAnyUseOfValue(1) ||
-               (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-                !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
-              (!RLD->hasAnyUseOfValue(1) ||
-               (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-                !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
-            Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
-                               LLD->getBasePtr().getValueType(),
-                               TheSelect->getOperand(0),
-                               TheSelect->getOperand(1),
-                               LLD->getBasePtr(), RLD->getBasePtr(),
-                               TheSelect->getOperand(4));
+        if (LLDAddrSpace == 0 && RLDAddrSpace == 0) {
+          if (TheSelect->getOpcode() == ISD::SELECT) {
+            // Check that the condition doesn't reach either load.  If so, folding
+            // this will induce a cycle into the DAG.
+            if ((!LLD->hasAnyUseOfValue(1) ||
+                 !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
+                (!RLD->hasAnyUseOfValue(1) ||
+                 !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
+              Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
+                                 LLD->getBasePtr().getValueType(),
+                                 TheSelect->getOperand(0), LLD->getBasePtr(),
+                                 RLD->getBasePtr());
+            }
+          } else {
+            // Check that the condition doesn't reach either load.  If so, folding
+            // this will induce a cycle into the DAG.
+            if ((!LLD->hasAnyUseOfValue(1) ||
+                 (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+                  !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
+                (!RLD->hasAnyUseOfValue(1) ||
+                 (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+                  !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
+              Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
+                                 LLD->getBasePtr().getValueType(),
+                                 TheSelect->getOperand(0),
+                                 TheSelect->getOperand(1),
+                                 LLD->getBasePtr(), RLD->getBasePtr(),
+                                 TheSelect->getOperand(4));
+            }
           }
         }
 
