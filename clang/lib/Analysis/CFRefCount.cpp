@@ -52,8 +52,8 @@ using namespace clang;
 //  not release it."
 //
 
-using llvm::CStrInCStrNoCase;
-using llvm::StringsEqualNoCase;
+using llvm::StrInStrNoCase;
+using llvm::StringRef;
 
 enum NamingConvention { NoConvention, CreateRule, InitRule };
 
@@ -122,20 +122,20 @@ static NamingConvention deriveNamingConvention(Selector S) {
       break;
     case 3:
       // Methods starting with 'new' follow the create rule.
-      if (AtBeginning && StringsEqualNoCase("new", s, len))
+      if (AtBeginning && StringRef(s, len).equals_lower("new"))
         C = CreateRule;
       break;
     case 4:
       // Methods starting with 'alloc' or contain 'copy' follow the
       // create rule
-      if (C == NoConvention && StringsEqualNoCase("copy", s, len))
+      if (C == NoConvention && StringRef(s, len).equals_lower("copy"))
         C = CreateRule;
       else // Methods starting with 'init' follow the init rule.
-        if (AtBeginning && StringsEqualNoCase("init", s, len))
+        if (AtBeginning && StringRef(s, len).equals_lower("init"))
           C = InitRule;
       break;
     case 5:
-      if (AtBeginning && StringsEqualNoCase("alloc", s, len))
+      if (AtBeginning && StringRef(s, len).equals_lower("alloc"))
         C = CreateRule;
       break;
     }
@@ -1372,11 +1372,11 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
         // "AppendValue", or "SetAttribute", then we assume that arguments may
         // "escape."  This means that something else holds on to the object,
         // allowing it be used even after its local retain count drops to 0.
-        ArgEffect E = (CStrInCStrNoCase(FName, "InsertValue") ||
-                       CStrInCStrNoCase(FName, "AddValue") ||
-                       CStrInCStrNoCase(FName, "SetValue") ||
-                       CStrInCStrNoCase(FName, "AppendValue") ||
-                       CStrInCStrNoCase(FName, "SetAttribute"))
+        ArgEffect E = (StrInStrNoCase(FName, "InsertValue") != StringRef::npos||
+                       StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
+                       StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
+                       StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
+                       StrInStrNoCase(FName, "SetAttribute")) != StringRef::npos
                       ? MayEscape : DoNothing;
 
         S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, E);
@@ -1555,7 +1555,8 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   if (S.isKeywordSelector()) {
     const std::string &str = S.getAsString();
     assert(!str.empty());
-    if (CStrInCStrNoCase(&str[0], "delegate:")) ReceiverEff = StopTracking;
+    if (StrInStrNoCase(str, "delegate:") != StringRef::npos)
+      ReceiverEff = StopTracking;
   }
 
   // Look for methods that return an owned object.
