@@ -102,7 +102,7 @@ namespace {
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
-    bool ProcessJumpOnPHI(PHINode *PN);
+    bool ProcessBranchOnPHI(PHINode *PN);
     
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
   };
@@ -550,11 +550,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   }  
     
   
-  // See if this is a phi node in the current block.
-  if (PHINode *PN = dyn_cast<PHINode>(CondInst))
-    if (PN->getParent() == BB)
-      return ProcessJumpOnPHI(PN);
-  
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst)) {
     if (!LVI &&
         (!isa<PHINode>(CondCmp->getOperand(0)) ||
@@ -583,8 +578,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // we see one, check to see if it's partially redundant.  If so, insert a PHI
   // which can then be used to thread the values.
   //
-  // This is particularly important because reg2mem inserts loads and stores all
-  // over the place, and this blocks jump threading if we don't zap them.
   Value *SimplifyValue = CondInst;
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(SimplifyValue))
     if (isa<Constant>(CondCmp->getOperand(1)))
@@ -604,9 +597,14 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   if (ProcessThreadableEdges(CondInst, BB))
     return true;
   
+  // If this is an otherwise-unfoldable branch on a phi node in the current
+  // block, see if we can simplify.
+  if (PHINode *PN = dyn_cast<PHINode>(CondInst))
+    if (PN->getParent() == BB && isa<BranchInst>(BB->getTerminator()))
+      return ProcessBranchOnPHI(PN);
   
   // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
-  // "(X == 4)" thread through this block.
+  // "(X == 4)", thread through this block.
   
   return false;
 }
@@ -1068,24 +1066,17 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
   return ThreadEdge(BB, PredsToFactor, MostPopularDest);
 }
 
-/// ProcessJumpOnPHI - We have a conditional branch or switch on a PHI node in
-/// the current block.  See if there are any simplifications we can do based on
-/// inputs to the phi node.
+/// ProcessBranchOnPHI - We have an otherwise unthreadable conditional branch on
+/// a PHI node in the current block.  See if there are any simplifications we
+/// can do based on inputs to the phi node.
 /// 
-bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
+bool JumpThreading::ProcessBranchOnPHI(PHINode *PN) {
   BasicBlock *BB = PN->getParent();
   
   // If any of the predecessor blocks end in an unconditional branch, we can
-  // *duplicate* the jump into that block in order to further encourage jump
-  // threading and to eliminate cases where we have branch on a phi of an icmp
-  // (branch on icmp is much better).
-
-  // We don't want to do this tranformation for switches, because we don't
-  // really want to duplicate a switch.
-  if (isa<SwitchInst>(BB->getTerminator()))
-    return false;
-  
-  // Look for unconditional branch predecessors.
+  // *duplicate* the conditional branch into that block in order to further
+  // encourage jump threading and to eliminate cases where we have branch on a
+  // phi of an icmp (branch on icmp is much better).
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     BasicBlock *PredBB = PN->getIncomingBlock(i);
     if (BranchInst *PredBr = dyn_cast<BranchInst>(PredBB->getTerminator()))
@@ -1097,7 +1088,6 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
 
   return false;
 }
-
 
 /// AddPHINodeEntriesForMappedBlock - We're adding 'NewPred' as a new
 /// predecessor to the PHIBB block.  If it has PHI nodes, add entries for
