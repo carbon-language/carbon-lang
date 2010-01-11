@@ -267,6 +267,9 @@ bool ScanReachableSymbols::scan(SVal val) {
   if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
     return scan(X->getRegion());
 
+  if (nonloc::LocAsInteger *X = dyn_cast<nonloc::LocAsInteger>(&val))
+    return scan(X->getLoc());
+
   if (SymbolRef Sym = val.getAsSymbol())
     return visitor.VisitSymbol(Sym);
 
