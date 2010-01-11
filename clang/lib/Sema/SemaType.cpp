@@ -743,7 +743,8 @@ QualType Sema::BuildFunctionType(QualType T,
                                  bool Variadic, unsigned Quals,
                                  SourceLocation Loc, DeclarationName Entity) {
   if (T->isArrayType() || T->isFunctionType()) {
-    Diag(Loc, diag::err_func_returning_array_function) << T;
+    Diag(Loc, diag::err_func_returning_array_function) 
+      << T->isFunctionType() << T;
     return QualType();
   }
 
@@ -1045,9 +1046,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
 
       // C99 6.7.5.3p1: The return type may not be a function or array type.
+      // For conversion functions, we'll diagnose this particular error later.
       if ((T->isArrayType() || T->isFunctionType()) &&
           (D.getName().getKind() != UnqualifiedId::IK_ConversionFunctionId)) {
-        Diag(DeclType.Loc, diag::err_func_returning_array_function) << T;
+        Diag(DeclType.Loc, diag::err_func_returning_array_function) 
+          << T->isFunctionType() << T;
         T = Context.IntTy;
         D.setInvalidType(true);
       }

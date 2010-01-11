@@ -1484,7 +1484,7 @@ def note_protected_by___block : Note<
   "jump bypasses setup of __block variable">;
 
 def err_func_returning_array_function : Error<
-  "function cannot return array or function type %0">;
+  "function cannot return %select{array|function}0 type %1">;
 def err_field_declared_as_function : Error<"field %0 declared as a function">;
 def err_field_incomplete : Error<"field has incomplete type %0">;
 def ext_variable_sized_type_in_struct : ExtWarn<
