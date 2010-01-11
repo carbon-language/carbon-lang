@@ -443,12 +443,12 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
 /// Optimize merged modules using various IPO passes
 void LTOCodeGenerator::setCodeGenDebugOptions(const char* options)
 {
-    std::string ops(options);
-    for (std::string o = getToken(ops); !o.empty(); o = getToken(ops)) {
+    for (std::pair<StringRef, StringRef> o = getToken(options);
+         !o.first.empty(); o = getToken(o.second)) {
         // ParseCommandLineOptions() expects argv[0] to be program name.
         // Lazily add that.
         if ( _codegenOptions.empty() ) 
             _codegenOptions.push_back("libLTO");
-        _codegenOptions.push_back(strdup(o.c_str()));
+        _codegenOptions.push_back(strdup(o.first.str().c_str()));
     }
 }

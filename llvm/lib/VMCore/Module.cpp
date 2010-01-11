@@ -76,11 +76,12 @@ Module::~Module() {
 
 /// Target endian information...
 Module::Endianness Module::getEndianness() const {
-  std::string temp = DataLayout;
+  StringRef temp = DataLayout;
   Module::Endianness ret = AnyEndianness;
   
   while (!temp.empty()) {
-    std::string token = getToken(temp, "-");
+    StringRef token = DataLayout;
+    tie(token, temp) = getToken(DataLayout, "-");
     
     if (token[0] == 'e') {
       ret = LittleEndian;
@@ -94,15 +95,17 @@ Module::Endianness Module::getEndianness() const {
 
 /// Target Pointer Size information...
 Module::PointerSize Module::getPointerSize() const {
-  std::string temp = DataLayout;
+  StringRef temp = DataLayout;
   Module::PointerSize ret = AnyPointerSize;
   
   while (!temp.empty()) {
-    std::string token = getToken(temp, "-");
-    char signal = getToken(token, ":")[0];
+    StringRef token, signalToken;
+    tie(token, temp) = getToken(temp, "-");
+    tie(signalToken, token) = getToken(token, ":");
     
-    if (signal == 'p') {
-      int size = atoi(getToken(token, ":").c_str());
+    if (signalToken[0] == 'p') {
+      int size = 0;
+      getToken(token, ":").first.getAsInteger(10, size);
       if (size == 32)
         ret = Pointer32;
       else if (size == 64)

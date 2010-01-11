@@ -14,6 +14,7 @@
 #include "CodeGenInstruction.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include <set>
 using namespace llvm;
 
@@ -224,7 +225,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   // Parse the DisableEncoding field.
   std::string DisableEncoding = R->getValueAsString("DisableEncoding");
   while (1) {
-    std::string OpName = getToken(DisableEncoding, " ,\t");
+    std::string OpName;
+    tie(OpName, DisableEncoding) = getToken(DisableEncoding, " ,\t");
     if (OpName.empty()) break;
 
     // Figure out which operand this is.

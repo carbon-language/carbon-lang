@@ -9538,7 +9538,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   std::string AsmStr = IA->getAsmString();
 
   // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
-  std::vector<std::string> AsmPieces;
+  SmallVector<StringRef, 4> AsmPieces;
   SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
 
   switch (AsmPieces.size()) {
@@ -9575,7 +9575,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
         Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
       // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
-      std::vector<std::string> Words;
+      SmallVector<StringRef, 4> Words;
       SplitString(AsmPieces[0], Words, " \t");
       if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%eax") {
         Words.clear();

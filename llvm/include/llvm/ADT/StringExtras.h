@@ -20,9 +20,9 @@
 #include <cctype>
 #include <cstdio>
 #include <string>
-#include <vector>
 
 namespace llvm {
+template<typename T> class SmallVectorImpl;
 
 /// hexdigit - Return the (uppercase) hexadecimal character for the
 /// given number \arg X (which should be less than 16).
@@ -206,16 +206,16 @@ static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
 /// leading characters that appear in the Delimiters string, and ending the
 /// token at any of the characters that appear in the Delimiters string.  If
 /// there are no tokens in the source string, an empty string is returned.
-/// The Source source string is updated in place to remove the returned string
-/// and any delimiter prefix from it.
-std::string getToken(std::string &Source,
-                     const char *Delimiters = " \t\n\v\f\r");
+/// The function returns a pair containing the extracted token and the
+/// remaining tail string.
+std::pair<StringRef, StringRef> getToken(StringRef Source,
+                                         StringRef Delimiters = " \t\n\v\f\r");
 
 /// SplitString - Split up the specified string according to the specified
 /// delimiters, appending the result fragments to the output list.
-void SplitString(const std::string &Source,
-                 std::vector<std::string> &OutFragments,
-                 const char *Delimiters = " \t\n\v\f\r");
+void SplitString(StringRef Source,
+                 SmallVectorImpl<StringRef> &OutFragments,
+                 StringRef Delimiters = " \t\n\v\f\r");
 
 /// HashString - Hash funtion for strings.
 ///

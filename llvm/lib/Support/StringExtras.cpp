@@ -11,50 +11,40 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include <cstring>
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 /// getToken - This function extracts one token from source, ignoring any
 /// leading characters that appear in the Delimiters string, and ending the
 /// token at any of the characters that appear in the Delimiters string.  If
 /// there are no tokens in the source string, an empty string is returned.
-/// The Source source string is updated in place to remove the returned string
-/// and any delimiter prefix from it.
-std::string llvm::getToken(std::string &Source, const char *Delimiters) {
-  size_t NumDelimiters = std::strlen(Delimiters);
-
+/// The function returns a pair containing the extracted token and the
+/// remaining tail string.
+std::pair<StringRef, StringRef> llvm::getToken(StringRef Source,
+                                               StringRef Delimiters) {
   // Figure out where the token starts.
-  std::string::size_type Start =
-    Source.find_first_not_of(Delimiters, 0, NumDelimiters);
-  if (Start == std::string::npos) Start = Source.size();
+  StringRef::size_type Start = Source.find_first_not_of(Delimiters);
+  if (Start == StringRef::npos) Start = Source.size();
 
-  // Find the next occurance of the delimiter.
-  std::string::size_type End =
-    Source.find_first_of(Delimiters, Start, NumDelimiters);
-  if (End == std::string::npos) End = Source.size();
+  // Find the next occurrence of the delimiter.
+  StringRef::size_type End = Source.find_first_of(Delimiters, Start);
+  if (End == StringRef::npos) End = Source.size();
 
-  // Create the return token.
-  std::string Result = std::string(Source.begin()+Start, Source.begin()+End);
-
-  // Erase the token that we read in.
-  Source.erase(Source.begin(), Source.begin()+End);
-
-  return Result;
+  return std::make_pair(Source.substr(Start, End), Source.substr(End));
 }
 
 /// SplitString - Split up the specified string according to the specified
 /// delimiters, appending the result fragments to the output list.
-void llvm::SplitString(const std::string &Source, 
-                       std::vector<std::string> &OutFragments,
-                       const char *Delimiters) {
-  std::string S = Source;
-  
-  std::string S2 = getToken(S, Delimiters);
+void llvm::SplitString(StringRef Source,
+                       SmallVectorImpl<StringRef> &OutFragments,
+                       StringRef Delimiters) {
+  StringRef S2, S;
+  tie(S2, S) = getToken(Source, Delimiters);
   while (!S2.empty()) {
     OutFragments.push_back(S2);
-    S2 = getToken(S, Delimiters);
+    tie(S2, S) = getToken(S, Delimiters);
   }
 }
 
