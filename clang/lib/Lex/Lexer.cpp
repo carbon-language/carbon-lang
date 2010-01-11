@@ -643,14 +643,17 @@ void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
   unsigned Size;
   unsigned char C = *CurPtr++;
-  while (isIdentifierBody(C)) {
+  while (isIdentifierBody(C))
     C = *CurPtr++;
-  }
+
   --CurPtr;   // Back up over the skipped character.
 
   // Fast path, no $,\,? in identifier found.  '\' might be an escaped newline
   // or UCN, and ? might be a trigraph for '\', an escaped newline or UCN.
   // FIXME: UCNs.
+  //
+  // TODO: Could merge these checks into a CharInfo flag to make the comparison
+  // cheaper
   if (C != '\\' && C != '?' && (C != '$' || !Features.DollarIdents)) {
 FinishIdentifier:
     const char *IdStart = BufferPtr;
