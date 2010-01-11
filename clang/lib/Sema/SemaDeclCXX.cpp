@@ -2746,11 +2746,14 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   if (Conversion->getPrimaryTemplate()) {
     // ignore specializations
   } else if (Conversion->getPreviousDeclaration()) {
-    const NamedDecl *ExpectedPrevDecl = Conversion->getPreviousDeclaration();
     if (FunctionTemplateDecl *ConversionTemplate
-          = Conversion->getDescribedFunctionTemplate())
-      ExpectedPrevDecl = ConversionTemplate->getPreviousDeclaration();
-    if (ClassDecl->replaceConversion(ExpectedPrevDecl, Conversion))
+                                  = Conversion->getDescribedFunctionTemplate()) {
+      if (ClassDecl->replaceConversion(
+                                   ConversionTemplate->getPreviousDeclaration(),
+                                       ConversionTemplate))
+        return DeclPtrTy::make(ConversionTemplate);
+    } else if (ClassDecl->replaceConversion(Conversion->getPreviousDeclaration(),
+                                            Conversion))
       return DeclPtrTy::make(Conversion);
     assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
   } else if (FunctionTemplateDecl *ConversionTemplate
