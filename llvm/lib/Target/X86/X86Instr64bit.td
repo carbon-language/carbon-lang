@@ -1093,7 +1093,7 @@ let isCommutable = 1 in
 def OR64rr   : RI<0x09, MRMDestReg, (outs GR64:$dst), 
                   (ins GR64:$src1, GR64:$src2),
                   "or{q}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR64:$dst, (or GR64:$src1, GR64:$src2)),
+                  [(set GR64:$dst, (or_not_add GR64:$src1, GR64:$src2)),
                    (implicit EFLAGS)]>;
 def OR64rr_REV : RI<0x0B, MRMSrcReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
@@ -2125,13 +2125,16 @@ def : Pat<(store (shld (loadi64 addr:$dst), (i8 imm:$amt1),
                        GR64:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHLD64mri8 addr:$dst, GR64:$src2, (i8 imm:$amt1))>;
 
-// (or x, c) -> (add x, c) if masked bits are known zero.
+// (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt8:$src2),
                     (implicit EFLAGS)),
           (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt32:$src2),
                     (implicit EFLAGS)),
           (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
+def : Pat<(parallel (or_is_add GR64:$src1, GR64:$src2),
+                    (implicit EFLAGS)),
+          (ADD64rr GR64:$src1, GR64:$src2)>;
 
 // X86 specific add which produces a flag.
 def : Pat<(addc GR64:$src1, GR64:$src2),

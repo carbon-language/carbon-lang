@@ -14,7 +14,7 @@ fast:
   %t1 = mul i32 %t0, %s
   %t2 = sub i32 %t1, %s
   %t3 = and i32 %t2, %s
-  %t4 = or i32 %t3, %s
+  %t4 = xor i32 %t3, 3
   %t5 = xor i32 %t4, %s
   %t6 = add i32 %t5, 2
   %t7 = getelementptr i32* %y, i32 1

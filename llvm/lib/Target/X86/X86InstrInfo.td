@@ -497,12 +497,28 @@ def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
 def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1)))
     return CurDAG->MaskedValueIsZero(N->getOperand(0), CN->getAPIntValue());
-  return false;
+  else {
+    unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
+    APInt Mask = APInt::getAllOnesValue(BitWidth);
+    APInt KnownZero0, KnownOne0;
+    CurDAG->ComputeMaskedBits(N->getOperand(0), Mask, KnownZero0, KnownOne0, 0);
+    APInt KnownZero1, KnownOne1;
+    CurDAG->ComputeMaskedBits(N->getOperand(1), Mask, KnownZero1, KnownOne1, 0);
+    return (~KnownZero0 & ~KnownZero1) == 0;
+  }
 }]>;
 def or_not_add : PatFrag<(ops node:$lhs, node:$rhs),(or node:$lhs, node:$rhs),[{
-  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1));
-  if (!CN) return true;
-  return !CurDAG->MaskedValueIsZero(N->getOperand(0), CN->getAPIntValue());
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1)))
+    return !CurDAG->MaskedValueIsZero(N->getOperand(0), CN->getAPIntValue());
+  else {
+    unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
+    APInt Mask = APInt::getAllOnesValue(BitWidth);
+    APInt KnownZero0, KnownOne0;
+    CurDAG->ComputeMaskedBits(N->getOperand(0), Mask, KnownZero0, KnownOne0, 0);
+    APInt KnownZero1, KnownOne1;
+    CurDAG->ComputeMaskedBits(N->getOperand(1), Mask, KnownZero1, KnownOne1, 0);
+    return (~KnownZero0 & ~KnownZero1) != 0;
+  }
 }]>;
 
 // 'shld' and 'shrd' instruction patterns. Note that even though these have
@@ -1853,12 +1869,12 @@ def OR8rr    : I<0x08, MRMDestReg, (outs GR8 :$dst),
 def OR16rr   : I<0x09, MRMDestReg, (outs GR16:$dst), 
                  (ins GR16:$src1, GR16:$src2),
                  "or{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (or GR16:$src1, GR16:$src2)),
+                 [(set GR16:$dst, (or_not_add GR16:$src1, GR16:$src2)),
                   (implicit EFLAGS)]>, OpSize;
 def OR32rr   : I<0x09, MRMDestReg, (outs GR32:$dst), 
                  (ins GR32:$src1, GR32:$src2),
                  "or{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (or GR32:$src1, GR32:$src2)),
+                 [(set GR32:$dst, (or_not_add GR32:$src1, GR32:$src2)),
                   (implicit EFLAGS)]>;
 }
 
@@ -4659,7 +4675,7 @@ def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
 def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C32r)>;
 
-// (or x, c) -> (add x, c) if masked bits are known zero.
+// (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 def : Pat<(parallel (or_is_add GR16:$src1, imm:$src2),
                     (implicit EFLAGS)),
           (ADD16ri GR16:$src1, imm:$src2)>;
@@ -4672,6 +4688,12 @@ def : Pat<(parallel (or_is_add GR16:$src1, i16immSExt8:$src2),
 def : Pat<(parallel (or_is_add GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
+def : Pat<(parallel (or_is_add GR16:$src1, GR16:$src2),
+                    (implicit EFLAGS)),
+          (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(parallel (or_is_add GR32:$src1, GR32:$src2),
+                    (implicit EFLAGS)),
+          (ADD32rr GR32:$src1, GR32:$src2)>;
 
 //===----------------------------------------------------------------------===//
 // EFLAGS-defining Patterns
