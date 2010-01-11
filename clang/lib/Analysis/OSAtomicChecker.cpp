@@ -103,19 +103,9 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
   SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type.
   QualType LoadTy;
-  if (const MemRegion *R = location.getAsRegion()) {
-    // We must be careful, as SymbolicRegions aren't typed.
-    const MemRegion *strippedR = R->StripCasts();
-    // FIXME: This isn't quite the right solution.  One test case in 'test/Analysis/NSString.m'
-    // is giving the wrong result.
-    const TypedRegion *typedR =
-      isa<SymbolicRegion>(strippedR) ? cast<TypedRegion>(R) :
-                                      dyn_cast<TypedRegion>(strippedR);
-    
-    if (typedR) {
-      LoadTy = typedR->getValueType(Ctx);
-      location = loc::MemRegionVal(typedR);
-    }
+  if (const TypedRegion *TR =
+      dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
+    LoadTy = TR->getValueType(Ctx);
   }
   Engine.EvalLoad(Tmp, const_cast<Expr *>(theValueExpr), C.getPredecessor(), 
                   state, location, OSAtomicLoadTag, LoadTy);
@@ -184,14 +174,22 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
            E2 = TmpStore.end(); I2 != E2; ++I2) {
         ExplodedNode *predNew = *I2;
         const GRState *stateNew = predNew->getState();
-        SVal Res = Engine.getValueManager().makeTruthVal(true, CE->getType());
+        // Check for 'void' return type if we have a bogus function prototype.
+        SVal Res = UnknownVal();
+        QualType T = CE->getType();
+        if (!T->isVoidType())
+          Res = Engine.getValueManager().makeTruthVal(true, T);
         C.GenerateNode(stateNew->BindExpr(CE, Res), predNew);
       }
     }
 
     // Were they not equal?
     if (const GRState *stateNotEqual = stateLoad->Assume(Cmp, false)) {
-      SVal Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
+      // Check for 'void' return type if we have a bogus function prototype.
+      SVal Res = UnknownVal();
+      QualType T = CE->getType();
+      if (!T->isVoidType())
+        Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
       C.GenerateNode(stateNotEqual->BindExpr(CE, Res), N);
     }
   }

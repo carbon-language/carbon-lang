@@ -710,3 +710,23 @@ int test_return_struct_2_rdar_7526777() {
   return test_return_struct_2_aux_rdar_7526777().x;
 }
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7527292> Assertion failed: (Op == BinaryOperator::Add || 
+//                                             Op == BinaryOperator::Sub)
+// This test case previously triggered an assertion failure due to a discrepancy
+// been the loaded/stored value in the array
+//===----------------------------------------------------------------------===//
+
+_Bool OSAtomicCompareAndSwapPtrBarrier( void *__oldValue, void *__newValue, void * volatile *__theValue );
+
+void rdar_7527292() {
+  static id Cache7527292[32];
+  for (signed long idx = 0;
+       idx < 32;
+       idx++) {
+    id v = Cache7527292[idx];
+    if (v && OSAtomicCompareAndSwapPtrBarrier(v, ((void*)0), (void * volatile *)(Cache7527292 + idx))) { 
+    }
+  }
+}
+

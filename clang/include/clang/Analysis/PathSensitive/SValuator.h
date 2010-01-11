@@ -28,8 +28,10 @@ class SValuator {
 protected:
   ValueManager &ValMgr;
 
+public:
+  // FIXME: Make these protected again one RegionStoreManager correctly
+  // handles loads from differening bound value types.
   virtual SVal EvalCastNL(NonLoc val, QualType castTy) = 0;
-
   virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
 
 public:

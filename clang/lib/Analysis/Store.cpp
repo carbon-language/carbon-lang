@@ -197,23 +197,29 @@ const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy)
 /// CastRetrievedVal - Used by subclasses of StoreManager to implement
 ///  implicit casts that arise from loads from regions that are reinterpreted
 ///  as another region.
-SVal  StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
-                                     QualType castTy) {
+SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
+                                    QualType castTy, bool performTestOnly) {
   
-#ifndef NDEBUG
   if (castTy.isNull())
     return V;
   
   ASTContext &Ctx = ValMgr.getContext();
-  QualType T = R->getValueType(Ctx);
 
-  // Automatically translate references to pointers.
-  if (const ReferenceType *RT = T->getAs<ReferenceType>())
-    T = Ctx.getPointerType(RT->getPointeeType());
-
-  assert(ValMgr.getContext().hasSameUnqualifiedType(castTy, T));
-#endif
-
+  if (performTestOnly) {  
+    // Automatically translate references to pointers.
+    QualType T = R->getValueType(Ctx);
+    if (const ReferenceType *RT = T->getAs<ReferenceType>())
+      T = Ctx.getPointerType(RT->getPointeeType());
+    
+    assert(ValMgr.getContext().hasSameUnqualifiedType(castTy, T));
+    return V;
+  }
+  
+  if (const Loc *L = dyn_cast<Loc>(&V))
+    return ValMgr.getSValuator().EvalCastL(*L, castTy);
+  else if (const NonLoc *NL = dyn_cast<NonLoc>(&V))
+    return ValMgr.getSValuator().EvalCastNL(*NL, castTy);
+  
   return V;
 }
 

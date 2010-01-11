@@ -87,8 +87,8 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& os, BindingVal V) {
 namespace {
   class BindingKey : public std::pair<const MemRegion*, uint64_t> {
 public:
-  explicit BindingKey(const MemRegion *r)
-    : std::pair<const MemRegion*,uint64_t>(r,0) {}
+  explicit BindingKey(const MemRegion *r, uint64_t offset)
+    : std::pair<const MemRegion*,uint64_t>(r, offset) { assert(r); }
   
   const MemRegion *getRegion() const { return first; }
   uint64_t getOffset() const { return second; }
@@ -97,6 +97,8 @@ public:
     ID.AddPointer(getRegion());
     ID.AddInteger(getOffset());
   }
+    
+  static BindingKey Make(const MemRegion *R);
 };    
 } // end anonymous namespace
 
@@ -1101,19 +1103,43 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
     return SValuator::CastResult(state, 
-                            CastRetrievedVal(RetrieveField(state, FR), FR, T));
+                                 CastRetrievedVal(RetrieveField(state, FR), FR,
+                                                  T, false));
 
-  if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
+  if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
+    // FIXME: Here we actually perform an implicit conversion from the loaded
+    // value to the element type.  Eventually we want to compose these values
+    // more intelligently.  For example, an 'element' can encompass multiple
+    // bound regions (e.g., several bound bytes), or could be a subset of
+    // a larger value.
     return SValuator::CastResult(state,
-                          CastRetrievedVal(RetrieveElement(state, ER), ER, T));
+                                 CastRetrievedVal(RetrieveElement(state, ER),
+                                                  ER, T, false));
+  }    
 
-  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
+    // FIXME: Here we actually perform an implicit conversion from the loaded
+    // value to the ivar type.  What we should model is stores to ivars
+    // that blow past the extent of the ivar.  If the address of the ivar is
+    // reinterpretted, it is possible we stored a different value that could
+    // fit within the ivar.  Either we need to cast these when storing them
+    // or reinterpret them lazily (as we do here).
     return SValuator::CastResult(state,
-                       CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T));
+                                 CastRetrievedVal(RetrieveObjCIvar(state, IVR),
+                                                  IVR, T, false));
+  }
 
-  if (const VarRegion *VR = dyn_cast<VarRegion>(R))
+  if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
+    // FIXME: Here we actually perform an implicit conversion from the loaded
+    // value to the variable type.  What we should model is stores to variables
+    // that blow past the extent of the variable.  If the address of the
+    // variable is reinterpretted, it is possible we stored a different value
+    // that could fit within the variable.  Either we need to cast these when
+    // storing them or reinterpret them lazily (as we do here).    
     return SValuator::CastResult(state,
-                              CastRetrievedVal(RetrieveVar(state, VR), VR, T));
+                                 CastRetrievedVal(RetrieveVar(state, VR), VR, T,
+                                                  false));
+  }
 
   RegionBindings B = GetRegionBindings(state->getStore());
   const BindingVal *V = Lookup(B, R);
@@ -1169,7 +1195,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
                                          const ElementRegion* R) {
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(state->getStore());
-  if (Optional<SVal> V = getDirectBinding(B, R))      
+  if (Optional<SVal> V = getDirectBinding(B, R))
     return *V;
 
   const MemRegion* superR = R->getSuperRegion();
@@ -1219,7 +1245,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     // Other cases: give up.
     return UnknownVal();
   }
-  
+    
   return RetrieveFieldOrElementCommon(state, R, R->getElementType(), superR);
 }
 
@@ -1413,13 +1439,9 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
 //===----------------------------------------------------------------------===//
 
 Store RegionStoreManager::Remove(Store store, Loc L) {
-  const MemRegion* R = 0;
-
   if (isa<loc::MemRegionVal>(L))
-    R = cast<loc::MemRegionVal>(L).getRegion();
-
-  if (R)
-    return Remove(store, BindingKey(R));
+    if (const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion())
+      return Remove(store, BindingKey::Make(R));
 
   return store;
 }
@@ -1695,6 +1717,20 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 // "Raw" retrievals and bindings.
 //===----------------------------------------------------------------------===//
 
+BindingKey BindingKey::Make(const MemRegion *R) {
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+    const RegionRawOffset &O = ER->getAsRawOffset();
+    
+    if (O.getRegion())
+      return BindingKey(O.getRegion(), O.getByteOffset());
+    
+    // FIXME: There are some ElementRegions for which we cannot compute
+    // raw offsets yet, including regions with symbolic offsets.
+  }
+  
+  return BindingKey(R, 0);
+}
+
 RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K,
                                        BindingVal V) {
   return RBFactory.Add(B, K, V);
@@ -1702,7 +1738,7 @@ RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K,
 
 RegionBindings RegionStoreManager::Add(RegionBindings B, const MemRegion *R,
                                        BindingVal V) {
-  return Add(B, BindingKey(R), V);
+  return Add(B, BindingKey::Make(R), V);
 }
 
 const BindingVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
@@ -1711,7 +1747,7 @@ const BindingVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
 
 const BindingVal *RegionStoreManager::Lookup(RegionBindings B,
                                              const MemRegion *R) {
-  return Lookup(B, BindingKey(R));
+  return Lookup(B, BindingKey::Make(R));
 }
 
 RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
@@ -1719,7 +1755,7 @@ RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
 }
 
 RegionBindings RegionStoreManager::Remove(RegionBindings B, const MemRegion *R){
-  return Remove(B, BindingKey(R));
+  return Remove(B, BindingKey::Make(R));
 }
 
 Store RegionStoreManager::Remove(Store store, BindingKey K) {
