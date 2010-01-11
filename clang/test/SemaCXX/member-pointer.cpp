@@ -80,7 +80,7 @@ void g() {
 
   void (HasMembers::*pmf)() = &HasMembers::f;
   void (*pnf)() = &Fake::f;
-  &hm.f; // FIXME: needs diagnostic expected-warning{{result unused}}
+  &hm.f; // expected-error {{must explicitly qualify}} expected-warning{{result unused}}
 
   void (HasMembers::*pmgv)() = &HasMembers::g;
   void (HasMembers::*pmgi)(int) = &HasMembers::g;
@@ -135,4 +135,16 @@ struct OverloadsPtrMem
 void i() {
   OverloadsPtrMem m;
   int foo = m->*"Awesome!";
+}
+
+namespace pr5985 {
+  struct c {
+    void h();
+    void f() {
+      void (c::*p)();
+      p = &h; // expected-error {{must explicitly qualify}}
+      p = &this->h; // expected-error {{must explicitly qualify}}
+      p = &(*this).h; // expected-error {{must explicitly qualify}}
+    }
+  };
 }

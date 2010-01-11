@@ -5872,7 +5872,22 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   NamedDecl *dcl = getPrimaryDecl(op);
   Expr::isLvalueResult lval = op->isLvalue(Context);
 
-  if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
+  MemberExpr *ME = dyn_cast<MemberExpr>(op);
+  if (lval == Expr::LV_MemberFunction && ME &&
+      isa<CXXMethodDecl>(ME->getMemberDecl())) {
+    ValueDecl *dcl = cast<MemberExpr>(op)->getMemberDecl();
+    // &f where f is a member of the current object, or &o.f, or &p->f
+    // All these are not allowed, and we need to catch them before the dcl
+    // branch of the if, below.
+    Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+        << dcl;
+    // FIXME: Improve this diagnostic and provide a fixit.
+
+    // Now recover by acting as if the function had been accessed qualified.
+    return Context.getMemberPointerType(op->getType(),
+                Context.getTypeDeclType(cast<RecordDecl>(dcl->getDeclContext()))
+                       .getTypePtr());
+  } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
     if (!op->getType()->isFunctionType()) {
