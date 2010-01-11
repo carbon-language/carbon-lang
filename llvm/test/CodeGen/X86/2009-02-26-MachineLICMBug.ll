@@ -6,13 +6,13 @@ target triple = "x86_64-apple-darwin10.0"
 	%struct.__Rec = type opaque
 	%struct.__vv = type {  }
 
-define %struct.__vv* @t(%struct.Key* %desc) nounwind ssp {
+define %struct.__vv* @t(%struct.Key* %desc, i64 %p) nounwind ssp {
 entry:
 	br label %bb4
 
 bb4:		; preds = %bb.i, %bb26, %bb4, %entry
 	%0 = call i32 (...)* @xxGetOffsetForCode(i32 undef) nounwind		; <i32> [#uses=0]
-	%ins = or i64 0, 0		; <i64> [#uses=1]
+	%ins = or i64 %p, 2097152		; <i64> [#uses=1]
 	%1 = call i32 (...)* @xxCalculateMidType(%struct.Key* %desc, i32 0) nounwind		; <i32> [#uses=1]
 	%cond = icmp eq i32 %1, 1		; <i1> [#uses=1]
 	br i1 %cond, label %bb26, label %bb4
