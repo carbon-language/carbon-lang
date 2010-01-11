@@ -327,9 +327,7 @@ static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
   
   // If this is an extension from the dest type, we can eliminate it, even if it
   // has multiple uses.
-  // FIXME: This is currently disabled until codegen can handle this without
-  // pessimizing code, PR5997.
-  if (0 && (isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
+  if ((isa<ZExtInst>(I) || isa<SExtInst>(I)) && 
       I->getOperand(0)->getType() == Ty)
     return true;
 
