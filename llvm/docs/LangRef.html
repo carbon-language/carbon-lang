@@ -1656,10 +1656,12 @@ Classifications</a> </div>
    underlying processor.  The elements of a structure may be any type that has a
    size.</p>
 
-<p>Structures are accessed using '<tt><a href="#i_load">load</a></tt> and
-   '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with
-   the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
-
+<p>Structures in memory are accessed using '<tt><a href="#i_load">load</a></tt>'
+   and '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field
+   with the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
+   Structures in registers are accessed using the
+   '<tt><a href="#i_extractvalue">extractvalue</a></tt>' and
+   '<tt><a href="#i_insertvalue">insertvalue</a></tt>' instructions.</p>
 <h5>Syntax:</h5>
 <pre>
   { &lt;type list&gt; }
@@ -3858,7 +3860,7 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;val&gt;, &lt;idx&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;elt&gt;, &lt;idx&gt;    <i>; yields &lt;aggregate type&gt;</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -3883,7 +3885,8 @@ Instruction</a> </div>
 
 <h5>Example:</h5>
 <pre>
-  &lt;result&gt; = insertvalue {i32, float} %agg, i32 1, 0    <i>; yields {i32, float}</i>
+  %agg1 = insertvalue {i32, float} undef, i32 1, 0         <i>; yields {i32 1, float undef}</i>
+  %agg2 = insertvalue {i32, float} %agg1, float %val, 1    <i>; yields {i32 1, float %val}</i>
 </pre>
 
 </div>
