@@ -832,7 +832,7 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
     //   };
     //
     // since that was the intent of DR56.
-    if (New->getUnderlyingType()->getAs<ElaboratedType>())
+    if (isa<ElaboratedType>(New->getUnderlyingType()))
       return;
 
     Diag(New->getLocation(), diag::err_redefinition)
