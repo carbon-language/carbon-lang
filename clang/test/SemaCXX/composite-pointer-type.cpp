@@ -43,3 +43,10 @@ int f2() {
   IntPtrPtr j = 0;
   return i != j;
 }
+
+// PR5763
+typedef double Matrix4[4][4];
+
+bool f(Matrix4 m1, const Matrix4 m2) {
+  return m1 != m2;
+}
