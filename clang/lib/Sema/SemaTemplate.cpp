@@ -80,6 +80,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
                                       TypeTy *ObjectTypePtr,
                                       bool EnteringContext,
                                       TemplateTy &TemplateResult) {
+  assert(getLangOptions().CPlusPlus && "No template names in C!");
+
   DeclarationName TName;
   
   switch (Name.getKind()) {

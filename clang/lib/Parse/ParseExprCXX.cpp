@@ -1153,6 +1153,13 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     IdentifierInfo *Id = Tok.getIdentifierInfo();
     SourceLocation IdLoc = ConsumeToken();
 
+    if (!getLang().CPlusPlus) {
+      // If we're not in C++, only identifiers matter. Record the
+      // identifier and return.
+      Result.setIdentifier(Id, IdLoc);
+      return false;
+    }
+
     if (AllowConstructorName && 
         Actions.isCurrentClassName(*Id, CurScope, &SS)) {
       // We have parsed a constructor name.
@@ -1207,7 +1214,8 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     return false;
   }
   
-  if ((AllowDestructorName || SS.isSet()) && Tok.is(tok::tilde)) {
+  if (getLang().CPlusPlus && 
+      (AllowDestructorName || SS.isSet()) && Tok.is(tok::tilde)) {
     // C++ [expr.unary.op]p10:
     //   There is an ambiguity in the unary-expression ~X(), where X is a 
     //   class-name. The ambiguity is resolved in favor of treating ~ as a 

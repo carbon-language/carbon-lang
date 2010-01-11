@@ -424,6 +424,8 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
 /// the innermost class.
 bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
                               const CXXScopeSpec *SS) {
+  assert(getLangOptions().CPlusPlus && "No class names in C!");
+
   CXXRecordDecl *CurDecl;
   if (SS && SS->isSet() && !SS->isInvalid()) {
     DeclContext *DC = computeDeclContext(*SS, true);
