@@ -787,9 +787,17 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   // as the class. As a convenience, we include the original declaration
   // as a comment.
   std::string typedefString;
-  typedefString += "// ";
-  typedefString.append(startBuf, semiPtr-startBuf+1);
-  typedefString += "\n";
+  typedefString += "// @class ";
+  for (ObjCClassDecl::iterator I = ClassDecl->begin(), E = ClassDecl->end();
+       I != E; ++I) {
+    ObjCInterfaceDecl *ForwardDecl = I->getInterface();
+    typedefString += ForwardDecl->getNameAsString();
+    if (I+1 != E)
+      typedefString += ", ";
+    else
+      typedefString += ";\n";
+  }
+  
   for (ObjCClassDecl::iterator I = ClassDecl->begin(), E = ClassDecl->end();
        I != E; ++I) {
     ObjCInterfaceDecl *ForwardDecl = I->getInterface();
