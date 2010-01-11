@@ -399,6 +399,14 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     OutMI.setOpcode(X86::MOVZX32rm16);
     lower_subreg32(&OutMI, 0);
     break;
+  case X86::MOV16r0:
+    OutMI.setOpcode(X86::MOV32r0);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOV64r0:
+    OutMI.setOpcode(X86::MOV32r0);
+    lower_subreg32(&OutMI, 0);
+    break;
   }
 }
 
