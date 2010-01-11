@@ -54,6 +54,10 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 /// DbgValueInst - This represents the llvm.dbg.value instruction.
 ///
 
-Value *DbgValueInst::getValue() const {
+const Value *DbgValueInst::getValue() const {
+  return cast<MDNode>(getOperand(1))->getOperand(0);
+}
+
+Value *DbgValueInst::getValue() {
   return cast<MDNode>(getOperand(1))->getOperand(0);
 }

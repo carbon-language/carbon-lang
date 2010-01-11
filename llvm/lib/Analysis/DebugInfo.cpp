@@ -1033,7 +1033,7 @@ DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
-                              Instruction *InsertBefore) {
+                                      Instruction *InsertBefore) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
   Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertBefore);
 
@@ -1046,7 +1046,7 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
-                              BasicBlock *InsertAtEnd) {
+                                      BasicBlock *InsertAtEnd) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
   Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertAtEnd);
 
@@ -1058,31 +1058,31 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 }
 
 /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
-Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
+Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
-  assert(Offset->getType()->isInteger(64) && "offset must be i64");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
   Value *Elts[] = { V };
-  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1), Offset,
+  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1),
+                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     D.getNode() };
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertBefore);
 }
 
 /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
-Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, Value *Offset,
+Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
-  assert(Offset->getType()->isInteger(64) && "offset must be i64");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
   Value *Elts[] = { V };
-  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1), Offset,
+  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1), 
+                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     D.getNode() };
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
 }

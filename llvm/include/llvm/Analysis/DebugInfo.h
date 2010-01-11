@@ -647,11 +647,11 @@ namespace llvm {
                                Instruction *InsertBefore);
 
     /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
-    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, llvm::Value *Offset,
+    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, uint64_t Offset,
                                          DIVariable D, BasicBlock *InsertAtEnd);
 
     /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
-    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, llvm::Value *Offset,
+    Instruction *InsertDbgValueIntrinsic(llvm::Value *V, uint64_t Offset,
                                        DIVariable D, Instruction *InsertBefore);
   private:
     Constant *GetTagConstant(unsigned TAG);

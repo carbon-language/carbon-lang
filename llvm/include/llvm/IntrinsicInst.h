@@ -99,9 +99,14 @@ namespace llvm {
   ///
   class DbgValueInst : public DbgInfoIntrinsic {
   public:
-    Value *getValue() const;
-    Value *getOffset() const { return getOperand(2); }
-    MDNode *getVariable() const { return cast<MDNode>(getOperand(3)); }
+    const Value *getValue() const;
+    Value *getValue();
+    uint64_t getOffset() const {
+      return cast<ConstantInt>(
+                             const_cast<Value*>(getOperand(2)))->getZExtValue();
+    }
+    const MDNode *getVariable() const { return cast<MDNode>(getOperand(3)); }
+    MDNode *getVariable() { return cast<MDNode>(getOperand(3)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgValueInst *) { return true; }
