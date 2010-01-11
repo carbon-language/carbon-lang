@@ -1017,8 +1017,7 @@ SelectionDAGISel::FinishBasicBlock() {
       for (unsigned j = 0, ej = SDB->BitTestCases[i].Cases.size();
            j != ej; ++j) {
         MachineBasicBlock* cBB = SDB->BitTestCases[i].Cases[j].ThisBB;
-        if (cBB->succ_end() !=
-            std::find(cBB->succ_begin(),cBB->succ_end(), PHIBB)) {
+        if (cBB->isSuccessor(PHIBB)) {
           PHI->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[pi].second,
                                                     false));
           PHI->addOperand(MachineOperand::CreateMBB(cBB));
@@ -1067,7 +1066,7 @@ SelectionDAGISel::FinishBasicBlock() {
           (MachineOperand::CreateMBB(SDB->JTCases[i].first.HeaderBB));
       }
       // JT BB. Just iterate over successors here
-      if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
+      if (BB->isSuccessor(PHIBB)) {
         PHI->addOperand
           (MachineOperand::CreateReg(SDB->PHINodesToUpdate[pi].second, false));
         PHI->addOperand(MachineOperand::CreateMBB(BB));
@@ -1113,17 +1112,23 @@ SelectionDAGISel::FinishBasicBlock() {
         SDB->EdgeMapping.find(BB);
       if (EI != SDB->EdgeMapping.end())
         ThisBB = EI->second;
-      for (MachineBasicBlock::iterator Phi = BB->begin();
-           Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI; ++Phi){
-        // This value for this PHI node is recorded in PHINodesToUpdate, get it.
-        for (unsigned pn = 0; ; ++pn) {
-          assert(pn != SDB->PHINodesToUpdate.size() &&
-                 "Didn't find PHI entry!");
-          if (SDB->PHINodesToUpdate[pn].first == Phi) {
-            Phi->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[pn].
-                                                      second, false));
-            Phi->addOperand(MachineOperand::CreateMBB(ThisBB));
-            break;
+
+      // BB may have been removed from the CFG if a branch was constant folded.
+      if (ThisBB->isSuccessor(BB)) {
+        for (MachineBasicBlock::iterator Phi = BB->begin();
+             Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI;
+             ++Phi) {
+          // This value for this PHI node is recorded in PHINodesToUpdate.
+          for (unsigned pn = 0; ; ++pn) {
+            assert(pn != SDB->PHINodesToUpdate.size() &&
+                   "Didn't find PHI entry!");
+            if (SDB->PHINodesToUpdate[pn].first == Phi) {
+              Phi->addOperand(MachineOperand::
+                              CreateReg(SDB->PHINodesToUpdate[pn].second,
+                                        false));
+              Phi->addOperand(MachineOperand::CreateMBB(ThisBB));
+              break;
+            }
           }
         }
       }
