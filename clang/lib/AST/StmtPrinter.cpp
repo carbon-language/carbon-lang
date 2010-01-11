@@ -739,9 +739,10 @@ void StmtPrinter::VisitCallExpr(CallExpr *Call) {
 void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   // FIXME: Suppress printing implicit bases (like "this")
   PrintExpr(Node->getBase());
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(Node->getMemberDecl()))
+    if (FD->isAnonymousStructOrUnion())
+      return;
   OS << (Node->isArrow() ? "->" : ".");
-  // FIXME: Suppress printing references to unnamed objects
-  // representing anonymous unions/structs
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
 
