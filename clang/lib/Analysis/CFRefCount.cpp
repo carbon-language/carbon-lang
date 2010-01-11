@@ -1376,7 +1376,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
                        StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
                        StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
                        StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
-                       StrInStrNoCase(FName, "SetAttribute")) != StringRef::npos
+                       StrInStrNoCase(FName, "SetAttribute") != StringRef::npos)
                       ? MayEscape : DoNothing;
 
         S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, E);
