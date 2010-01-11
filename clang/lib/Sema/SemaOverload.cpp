@@ -639,7 +639,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   } else if ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
            (ToType->isIntegralType() && !ToType->isEnumeralType())) {
     // Integral conversions (C++ 4.7).
-    // FIXME: isIntegralType shouldn't be true for enums in C++.
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
   } else if (FromType->isFloatingType() && ToType->isFloatingType()) {
@@ -656,7 +655,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
              ((FromType->isIntegralType() || FromType->isEnumeralType()) &&
               ToType->isFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
-    // FIXME: isIntegralType shouldn't be true for enums in C++.
     SCS.Second = ICK_Floating_Integral;
     FromType = ToType.getUnqualifiedType();
   } else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
@@ -2468,8 +2466,6 @@ void Sema::AddMethodCandidate(NamedDecl *Decl,
                               Expr **Args, unsigned NumArgs,
                               OverloadCandidateSet& CandidateSet,
                               bool SuppressUserConversions, bool ForceRValue) {
-
-  // FIXME: use this
   CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(Decl->getDeclContext());
 
   if (isa<UsingShadowDecl>(Decl))
@@ -4789,7 +4785,6 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
     //   resulting template argument list is used to generate a single
     //   function template specialization, which is added to the set of
     //   overloaded functions considered.
-    // FIXME: We don't really want to build the specialization here, do we?
     FunctionDecl *Specialization = 0;
     TemplateDeductionInfo Info(Context);
     if (TemplateDeductionResult Result
