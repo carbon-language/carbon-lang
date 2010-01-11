@@ -737,7 +737,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
 }
 
 bool BitcodeReader::ParseMetadata() {
-  unsigned NextValueNo = MDValueList.size();
+  unsigned NextMDValueNo = MDValueList.size();
 
   if (Stream.EnterSubBlock(bitc::METADATA_BLOCK_ID))
     return Error("Malformed block record");
@@ -801,8 +801,7 @@ bool BitcodeReader::ParseMetadata() {
       }
       Value *V = NamedMDNode::Create(Context, Name.str(), Elts.data(),
                                      Elts.size(), TheModule);
-      // FIXME: This shouldn't poke NextValueNo?
-      MDValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextMDValueNo++);
       break;
     }
     case bitc::METADATA_FN_NODE:
@@ -826,7 +825,7 @@ bool BitcodeReader::ParseMetadata() {
       Value *V = MDNode::getWhenValsUnresolved(Context, &Elts[0], Elts.size(),
                                                IsFunctionLocal);
       IsFunctionLocal = false;
-      MDValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextMDValueNo++);
       break;
     }
     case bitc::METADATA_STRING: {
@@ -837,7 +836,7 @@ bool BitcodeReader::ParseMetadata() {
         String[i] = Record[i];
       Value *V = MDString::get(Context,
                                StringRef(String.data(), String.size()));
-      MDValueList.AssignValue(V, NextValueNo++);
+      MDValueList.AssignValue(V, NextMDValueNo++);
       break;
     }
     case bitc::METADATA_KIND: {
