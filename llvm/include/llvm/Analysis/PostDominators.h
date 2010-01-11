@@ -36,19 +36,19 @@ struct PostDominatorTree : public FunctionPass {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
-  
+
   inline const std::vector<BasicBlock*> &getRoots() const {
     return DT->getRoots();
   }
-  
+
   inline DomTreeNode *getRootNode() const {
     return DT->getRootNode();
   }
-  
+
   inline DomTreeNode *operator[](BasicBlock *BB) const {
     return DT->getNode(BB);
   }
-  
+
   inline DomTreeNode *getNode(BasicBlock *BB) const {
     return DT->getNode(BB);
   }
@@ -64,7 +64,7 @@ struct PostDominatorTree : public FunctionPass {
   inline bool properlyDominates(const DomTreeNode* A, DomTreeNode* B) const {
     return DT->properlyDominates(A, B);
   }
-  
+
   inline bool properlyDominates(BasicBlock* A, BasicBlock* B) const {
     return DT->properlyDominates(A, B);
   }
@@ -101,7 +101,7 @@ template <> struct GraphTraits<PostDominatorTree*>
 ///
 struct PostDominanceFrontier : public DominanceFrontierBase {
   static char ID;
-  PostDominanceFrontier() 
+  PostDominanceFrontier()
     : DominanceFrontierBase(&ID, true) {}
 
   virtual bool runOnFunction(Function &) {
