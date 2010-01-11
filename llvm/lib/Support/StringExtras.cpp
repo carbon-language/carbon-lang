@@ -61,18 +61,6 @@ void llvm::SplitString(StringRef Source,
   }
 }
 
-// FIXME: remove when llvm-gcc doesn't use this anymore
-void llvm::SplitString(StringRef Source,
-                       std::vector<std::string> &OutFragments,
-                       StringRef Delimiters) {
-  StringRef S2, S;
-  tie(S2, S) = getToken(Source, Delimiters);
-  while (!S2.empty()) {
-    OutFragments.push_back(S2);
-    tie(S2, S) = getToken(S, Delimiters);
-  }
-}
-
 void llvm::StringRef::split(SmallVectorImpl<StringRef> &A,
                             StringRef Separators, int MaxSplit,
                             bool KeepEmpty) const {

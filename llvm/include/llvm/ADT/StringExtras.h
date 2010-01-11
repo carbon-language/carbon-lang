@@ -137,72 +137,6 @@ static inline std::string UppercaseString(const std::string &S) {
   return result;
 }
 
-/// StringsEqualNoCase - Return true if the two strings are equal, ignoring
-/// case.
-static inline bool StringsEqualNoCase(const std::string &LHS,
-                                      const std::string &RHS) {
-  if (LHS.size() != RHS.size()) return false;
-  for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i)
-    if (tolower(LHS[i]) != tolower(RHS[i])) return false;
-  return true;
-}
-
-/// StringsEqualNoCase - Return true if the two strings are equal, ignoring
-/// case.
-static inline bool StringsEqualNoCase(const std::string &LHS,
-                                      const char *RHS) {
-  for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i) {
-    if (RHS[i] == 0) return false;  // RHS too short.
-    if (tolower(LHS[i]) != tolower(RHS[i])) return false;
-  }
-  return RHS[LHS.size()] == 0;  // Not too long?
-}
-  
-/// StringsEqualNoCase - Return true if the two null-terminated C strings are
-///  equal, ignoring
-
-static inline bool StringsEqualNoCase(const char *LHS, const char *RHS,
-                                      unsigned len) {
-
-  for (unsigned i = 0; i < len; ++i) {
-    if (tolower(LHS[i]) != tolower(RHS[i]))
-      return false;
-    
-    // If RHS[i] == 0 then LHS[i] == 0 or otherwise we would have returned
-    // at the previous branch as tolower('\0') == '\0'.
-    if (RHS[i] == 0)
-      return true;
-  }
-  
-  return true;
-}
-
-/// CStrInCStrNoCase - Portable version of strcasestr.  Locates the first
-///  occurance of c-string 's2' in string 's1', ignoring case.  Returns
-///  NULL if 's2' cannot be found.
-static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
-
-  // Are either strings NULL or empty?
-  if (!s1 || !s2 || s1[0] == '\0' || s2[0] == '\0')
-    return 0;
-
-  if (s1 == s2)
-    return s1;
-
-  const char *I1=s1, *I2=s2;
-
-  while (*I1 != '\0' && *I2 != '\0' )
-    if (tolower(*I1) != tolower(*I2)) { // No match.  Start over.
-      ++s1; I1 = s1; I2 = s2;
-    }
-    else { // Character match.  Advance to the next character.
-      ++I1; ++I2;
-    }
-
-  // If we exhausted all of the characters in 's2', then 's2' appears in 's1'.
-  return *I2 == '\0' ? s1 : 0;
-}
-
 /// StrInStrNoCase - Portable version of strcasestr.  Locates the first
 /// occurrence of string 's1' in string 's2', ignoring case.  Returns
 /// the offset of s2 in s1 or npos if s2 cannot be found.
@@ -221,11 +155,6 @@ std::pair<StringRef, StringRef> getToken(StringRef Source,
 /// delimiters, appending the result fragments to the output list.
 void SplitString(StringRef Source,
                  SmallVectorImpl<StringRef> &OutFragments,
-                 StringRef Delimiters = " \t\n\v\f\r");
-
-// FIXME: remove when llvm-gcc doesn't use this anymore
-void SplitString(StringRef Source,
-                 std::vector<std::string> &OutFragments,
                  StringRef Delimiters = " \t\n\v\f\r");
 
 /// HashString - Hash funtion for strings.
