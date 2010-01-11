@@ -49,6 +49,10 @@ struct PostDominatorTree : public FunctionPass {
     return DT->getNode(BB);
   }
   
+  inline DomTreeNode *getNode(BasicBlock *BB) const {
+    return DT->getNode(BB);
+  }
+
   inline bool dominates(DomTreeNode* A, DomTreeNode* B) const {
     return DT->dominates(A, B);
   }
