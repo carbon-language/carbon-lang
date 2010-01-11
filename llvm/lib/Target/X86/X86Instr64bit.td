@@ -1106,13 +1106,13 @@ def OR64rm   : RI<0x0B, MRMSrcMem , (outs GR64:$dst),
 def OR64ri8  : RIi8<0x83, MRM1r, (outs GR64:$dst),
                     (ins GR64:$src1, i64i8imm:$src2),
                     "or{q}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR64:$dst, (or GR64:$src1, i64immSExt8:$src2)),
-                     (implicit EFLAGS)]>;
+                   [(set GR64:$dst, (or_not_add GR64:$src1, i64immSExt8:$src2)),
+                    (implicit EFLAGS)]>;
 def OR64ri32 : RIi32<0x81, MRM1r, (outs GR64:$dst),
                      (ins GR64:$src1, i64i32imm:$src2),
                      "or{q}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR64:$dst, (or GR64:$src1, i64immSExt32:$src2)),
-                      (implicit EFLAGS)]>;
+                  [(set GR64:$dst, (or_not_add GR64:$src1, i64immSExt32:$src2)),
+                    (implicit EFLAGS)]>;
 } // isTwoAddress
 
 def OR64mr : RI<0x09, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
@@ -2113,6 +2113,14 @@ def : Pat<(shld GR64:$src1, (i8 imm:$amt1), GR64:$src2, (i8 imm:$amt2)),
 def : Pat<(store (shld (loadi64 addr:$dst), (i8 imm:$amt1),
                        GR64:$src2, (i8 imm:$amt2)), addr:$dst),
           (SHLD64mri8 addr:$dst, GR64:$src2, (i8 imm:$amt1))>;
+
+// (or x, c) -> (add x, c) if masked bits are known zero.
+def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
 
 // X86 specific add which produces a flag.
 def : Pat<(addc GR64:$src1, GR64:$src2),
