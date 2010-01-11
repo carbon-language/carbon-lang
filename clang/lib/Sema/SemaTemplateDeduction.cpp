@@ -1312,19 +1312,17 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
 /// \param FunctionTemplate the function template for which we are performing
 /// template argument deduction.
 ///
-/// \param HasExplicitTemplateArgs whether any template arguments were
-/// explicitly specified.
-///
-/// \param ExplicitTemplateArguments when @p HasExplicitTemplateArgs is true,
-/// the explicitly-specified template arguments.
-///
-/// \param NumExplicitTemplateArguments when @p HasExplicitTemplateArgs is true,
-/// the number of explicitly-specified template arguments in
-/// @p ExplicitTemplateArguments. This value may be zero.
+/// \param ExplicitTemplateArguments the explicit template arguments provided
+/// for this call.
 ///
 /// \param Args the function call arguments
 ///
 /// \param NumArgs the number of arguments in Args
+///
+/// \param Name the name of the function being called. This is only significant
+/// when the function template is a conversion function template, in which
+/// case this routine will also perform template argument deduction based on
+/// the function to which 
 ///
 /// \param Specialization if template argument deduction was successful,
 /// this will be set to the function template specialization produced by
@@ -1336,7 +1334,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                              const TemplateArgumentListInfo *ExplicitTemplateArgs,
+                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
                               Expr **Args, unsigned NumArgs,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {

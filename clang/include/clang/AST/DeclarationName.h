@@ -190,6 +190,14 @@ public:
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
 
+  /// \brief Determines whether the name itself is dependent, e.g., because it 
+  /// involves a C++ type that is itself dependent.
+  ///
+  /// Note that this does not capture all of the notions of "dependent name",
+  /// because an identifier can be a dependent name if it is used as the 
+  /// callee in a call expression with dependent arguments.
+  bool isDependentName() const;
+  
   /// getName - Retrieve the human-readable string for this name.
   std::string getAsString() const;
 

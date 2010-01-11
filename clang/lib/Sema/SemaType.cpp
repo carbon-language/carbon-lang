@@ -897,11 +897,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
   case UnqualifiedId::IK_ConstructorName:
   case UnqualifiedId::IK_DestructorName:
-  case UnqualifiedId::IK_ConversionFunctionId:
     // Constructors and destructors don't have return types. Use
-    // "void" instead. Conversion operators will check their return
-    // types separately.
+    // "void" instead. 
     T = Context.VoidTy;
+    break;
+
+  case UnqualifiedId::IK_ConversionFunctionId:
+    // The result type of a conversion function is the type that it
+    // converts to.
+    T = GetTypeFromParser(D.getName().ConversionFunctionId);
     break;
   }
   
@@ -1041,7 +1045,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
 
       // C99 6.7.5.3p1: The return type may not be a function or array type.
-      if (T->isArrayType() || T->isFunctionType()) {
+      if ((T->isArrayType() || T->isFunctionType()) &&
+          (D.getName().getKind() != UnqualifiedId::IK_ConversionFunctionId)) {
         Diag(DeclType.Loc, diag::err_func_returning_array_function) << T;
         T = Context.IntTy;
         D.setInvalidType(true);

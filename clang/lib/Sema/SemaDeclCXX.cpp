@@ -2743,7 +2743,9 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
       << ClassType << ConvType;
   }
 
-  if (Conversion->getPreviousDeclaration()) {
+  if (Conversion->getPrimaryTemplate()) {
+    // ignore specializations
+  } else if (Conversion->getPreviousDeclaration()) {
     const NamedDecl *ExpectedPrevDecl = Conversion->getPreviousDeclaration();
     if (FunctionTemplateDecl *ConversionTemplate
           = Conversion->getDescribedFunctionTemplate())
@@ -2754,7 +2756,7 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   } else if (FunctionTemplateDecl *ConversionTemplate
                = Conversion->getDescribedFunctionTemplate())
     ClassDecl->addConversionFunction(ConversionTemplate);
-  else if (!Conversion->getPrimaryTemplate()) // ignore specializations
+  else 
     ClassDecl->addConversionFunction(Conversion);
 
   return DeclPtrTy::make(Conversion);

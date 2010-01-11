@@ -180,6 +180,11 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
   return Identifier;
 }
 
+bool DeclarationName::isDependentName() const {
+  QualType T = getCXXNameType();
+  return !T.isNull() && T->isDependentType();
+}
+
 std::string DeclarationName::getAsString() const {
   switch (getNameKind()) {
   case Identifier:

@@ -1178,8 +1178,14 @@ public:
     LookupObjCImplementationName
   };
 
+  /// \brief Specifies whether (or how) name lookup is being performed for a
+  /// redeclaration (vs. a reference).
   enum RedeclarationKind {
-    NotForRedeclaration,
+    /// \brief The lookup is a reference to this name that is not for the
+    /// purpose of redeclaring the name.
+    NotForRedeclaration = 0,
+    /// \brief The lookup results will be used for redeclaration of a name,
+    /// if an entity by that name already exists.
     ForRedeclaration
   };
 

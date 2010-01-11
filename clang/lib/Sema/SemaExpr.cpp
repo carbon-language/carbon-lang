@@ -1010,11 +1010,18 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
 
   // C++ [temp.dep.expr]p3:
   //   An id-expression is type-dependent if it contains:
+  //     -- an identifier that was declared with a dependent type,
+  //        (note: handled after lookup)
+  //     -- a template-id that is dependent,
+  //        (note: handled in BuildTemplateIdExpr)
+  //     -- a conversion-function-id that specifies a dependent type,
   //     -- a nested-name-specifier that contains a class-name that
   //        names a dependent type.
   // Determine whether this is a member of an unknown specialization;
   // we need to handle these differently.
-  if (SS.isSet() && IsDependentIdExpression(*this, SS)) {
+  if ((Name.getNameKind() == DeclarationName::CXXConversionFunctionName &&
+       Name.getCXXNameType()->isDependentType()) ||
+      (SS.isSet() && IsDependentIdExpression(*this, SS))) {
     return ActOnDependentIdExpression(SS, Name, NameLoc,
                                       isAddressOfOperand,
                                       TemplateArgs);
@@ -2281,7 +2288,7 @@ Sema::ActOnDependentMemberExpr(ExprArg Base, QualType BaseType,
     }
   }
 
-  assert(BaseType->isDependentType());
+  assert(BaseType->isDependentType() || Name.isDependentName());
 
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
   // must have pointer type, and the accessed type is the pointee.
@@ -3170,7 +3177,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
 
   Expr *Base = BaseArg.takeAs<Expr>();
   OwningExprResult Result(*this);
-  if (Base->getType()->isDependentType()) {
+  if (Base->getType()->isDependentType() || Name.isDependentName()) {
     Result = ActOnDependentMemberExpr(ExprArg(*this, Base), Base->getType(),
                                       IsArrow, OpLoc,
                                       SS, FirstQualifierInScope,

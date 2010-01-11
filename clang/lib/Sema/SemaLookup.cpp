@@ -444,10 +444,81 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
   DeclContext::lookup_const_iterator I, E;
-  for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I)
-    if (R.isAcceptableDecl(*I))
-      R.addDecl(*I), Found = true;
+  for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I) {
+    if (R.isAcceptableDecl(*I)) {
+      R.addDecl(*I);
+      Found = true;
+    }
+  }
 
+  if (R.getLookupName().getNameKind()
+        == DeclarationName::CXXConversionFunctionName &&
+      !R.getLookupName().getCXXNameType()->isDependentType() &&
+      isa<CXXRecordDecl>(DC)) {
+    // C++ [temp.mem]p6:
+    //   A specialization of a conversion function template is not found by 
+    //   name lookup. Instead, any conversion function templates visible in the
+    //   context of the use are considered. [...]
+    const CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
+    
+    const UnresolvedSet *Unresolved = Record->getConversionFunctions();
+    for (UnresolvedSet::iterator U = Unresolved->begin(), 
+                              UEnd = Unresolved->end();
+         U != UEnd; ++U) {
+      FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(*U);
+      if (!ConvTemplate)
+        continue;
+      
+      // When we're performing lookup for the purposes of redeclaration, just
+      // add the conversion function template. When we deduce template 
+      // arguments for specializations, we'll end up unifying the return 
+      // type of the new declaration with the type of the function template.
+      if (R.isForRedeclaration()) {
+        R.addDecl(ConvTemplate);
+        Found = true;
+        continue;
+      }
+      
+      // C++ [temp.mem]p6:
+      //   [...] For each such operator, if argument deduction succeeds 
+      //   (14.9.2.3), the resulting specialization is used as if found by 
+      //   name lookup.
+      //
+      // When referencing a conversion function for any purpose other than
+      // a redeclaration (such that we'll be building an expression with the
+      // result), perform template argument deduction and place the 
+      // specialization into the result set. We do this to avoid forcing all
+      // callers to perform special deduction for conversion functions.
+      Sema::TemplateDeductionInfo Info(R.getSema().Context);
+      FunctionDecl *Specialization = 0;
+      
+      const FunctionProtoType *ConvProto        
+        = ConvTemplate->getTemplatedDecl()->getType()
+                                                  ->getAs<FunctionProtoType>();
+      assert(ConvProto && "Nonsensical conversion function template type");
+
+      // Compute the type of the function that we would expect the conversion
+      // function to have, if it were to match the name given.
+      // FIXME: Calling convention!
+      QualType ExpectedType
+        = R.getSema().Context.getFunctionType(
+                                            R.getLookupName().getCXXNameType(),
+                                              0, 0, ConvProto->isVariadic(),
+                                              ConvProto->getTypeQuals(),
+                                              false, false, 0, 0,
+                                              ConvProto->getNoReturnAttr());
+      
+      // Perform template argument deduction against the type that we would
+      // expect the function to have.
+      if (R.getSema().DeduceTemplateArguments(ConvTemplate, 0, ExpectedType,
+                                              Specialization, Info)
+            == Sema::TDK_Success) {
+        R.addDecl(Specialization);
+        Found = true;
+      }
+    }
+  }
+  
   return Found;
 }
 

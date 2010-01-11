@@ -271,6 +271,10 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   
   S += ")";
 
+  if (T->getNoReturnAttr())
+    S += " __attribute__((noreturn))";
+
+  
   if (T->hasExceptionSpec()) {
     S += " throw(";
     if (T->hasAnyExceptionSpec())
@@ -287,10 +291,9 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
     S += ")";
   }
 
-  if (T->getNoReturnAttr())
-    S += " __attribute__((noreturn))";
-  Print(T->getResultType(), S);
+  AppendTypeQualList(S, T->getTypeQuals());
   
+  Print(T->getResultType(), S);
 }
 
 void TypePrinter::PrintFunctionNoProto(const FunctionNoProtoType *T, 

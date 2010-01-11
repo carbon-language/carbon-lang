@@ -2307,8 +2307,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
-  assert(!isa<CXXConversionDecl>(Function) &&
-         "Use AddConversionCandidate for conversion functions");
   assert(!Function->getDescribedFunctionTemplate() &&
          "Use AddTemplateOverloadCandidate for function templates");
 
@@ -2509,8 +2507,6 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Method->getType()->getAs<FunctionType>());
   assert(Proto && "Methods without a prototype cannot be overloaded");
-  assert(!isa<CXXConversionDecl>(Method) &&
-         "Use AddConversionCandidate for conversion functions");
   assert(!isa<CXXConstructorDecl>(Method) &&
          "Use AddOverloadCandidate for constructors");
 

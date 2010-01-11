@@ -4540,8 +4540,10 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Prev)) {
         if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
           Matches.clear();
+
           Matches.push_back(Method);
-          break;
+          if (Method->getTemplateSpecializationKind() == TSK_Undeclared)
+            break;
         }
       }
     }
@@ -4553,7 +4555,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     TemplateDeductionInfo Info(Context);
     FunctionDecl *Specialization = 0;
     if (TemplateDeductionResult TDK
-          = DeduceTemplateArguments(FunTmpl,
+          = DeduceTemplateArguments(FunTmpl, 
                                (HasExplicitTemplateArgs ? &TemplateArgs : 0),
                                     R, Specialization, Info)) {
       // FIXME: Keep track of almost-matches?
