@@ -10,7 +10,7 @@ entry:
   br i1 %0, label %bb.nph, label %return
 
 bb.nph:                                           ; preds = %entry
-; CHECK: movq _g@GOTPCREL(%rip), %rcx
+; CHECK: movq _g@GOTPCREL(%rip), [[REG:%[a-z]+]]
   %tmp = zext i32 %n to i64                       ; <i64> [#uses=1]
   br label %bb
 
