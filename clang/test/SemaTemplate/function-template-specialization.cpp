@@ -33,3 +33,11 @@ template<> void f2<double>(double (&array)[42]);
 template<> void f2<42>(double (&array)[42]);
 
 void f2<25>(double (&array)[25]); // expected-error{{specialization}} 
+
+// PR5833
+namespace PR5833 {
+  template <typename T> bool f0(T &t1);
+  template <> bool f0<float>(float &t1);
+}
+template <> bool PR5833::f0<float>(float &t1) {}
+
