@@ -1230,8 +1230,8 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       CC != CallingConv::X86_FastCall)
     return false;
 
-  // On X86, -tailcallopt changes the fastcc ABI. FastISel doesn't
-  // handle this for now.
+  // fastcc with -tailcallopt is intended to provide a guaranteed
+  // tail call optimization. Fastisel doesn't know how to do that.
   if (CC == CallingConv::Fast && PerformTailCallOpt)
     return false;
 
