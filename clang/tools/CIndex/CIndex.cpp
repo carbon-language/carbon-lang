@@ -628,10 +628,6 @@ void clang_loadDeclaration(CXDecl Dcl,
 // CXDecl Operations.
 //
 
-CXEntity clang_getEntityFromDecl(CXDecl) {
-  return 0;
-}
-
 CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);

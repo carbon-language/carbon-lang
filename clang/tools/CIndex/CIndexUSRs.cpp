@@ -30,17 +30,52 @@ extern "C" {
 //
 // module.m: static void Foo() { }
 //
-
-const char *clang_getDeclarationName(CXEntity) {
-  return "";
+  
+static inline Entity GetEntity(const CXEntity &E) {
+  return Entity::getFromOpaquePtr(E.data);
+}
+  
+static inline ASTUnit *GetTranslationUnit(CXTranslationUnit TU) {
+  return (ASTUnit*) TU;
 }
 
+static inline ASTContext &GetASTContext(CXTranslationUnit TU) {
+  return GetTranslationUnit(TU)->getASTContext();
+}
+
+static inline CXEntity NullCXEntity() {
+  CXEntity CE;
+  CE.index = NULL;
+  CE.data = NULL;
+  return CE;
+}
+  
+static inline CXEntity MakeEntity(CXIndex CIdx, const Entity &E) {
+  CXEntity CE;
+  CE.index = CIdx;
+  CE.data = E.getAsOpaquePtr();
+  return CE;
+}
+
+static inline Program &GetProgram(CXIndex CIdx) {
+  return ((CIndexer*) CIdx)->getProgram();
+}
+ 
+/// clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
+///  in a specified translation unit.
+CXDecl clang_getDeclaration(CXEntity CE, CXTranslationUnit TU) {
+  return (CXDecl) GetEntity(CE).getDecl(GetASTContext(TU));
+}
+
+  
+CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
+  if (Decl *D = (Decl *) CE)
+    return MakeEntity(CIdx, Entity::get(D, GetProgram(CIdx)));
+  return NullCXEntity();
+}
+  
 const char *clang_getUSR(CXEntity) {
   return "";
-}
-
-CXEntity clang_getEntity(const char *URI) {
-  return 0;
 }
 
 } // end extern "C"

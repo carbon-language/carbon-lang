@@ -142,7 +142,10 @@ typedef struct {
 } CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
-typedef void *CXEntity;
+typedef struct {
+  CXIndex index;
+  void *data;
+} CXEntity;
 
 /**
  * For functions returning a string that might or might not need
@@ -321,14 +324,17 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 /*
  * CXEntity Operations.
  */
-CINDEX_LINKAGE const char *clang_getDeclarationName(CXEntity);
+  
+/* clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
+ *  in a specified translation unit. */
+CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
+
 CINDEX_LINKAGE const char *clang_getUSR(CXEntity);
-CINDEX_LINKAGE CXEntity clang_getEntity(const char *USR);
 /*
  * CXDecl Operations.
  */
 CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
-CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXDecl);
+CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
