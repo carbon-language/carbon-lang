@@ -313,6 +313,8 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
 /// then trunc(inst(x,y)) can be computed as inst(trunc(x),trunc(y)), which only
 /// makes sense if x and y can be efficiently truncated.
 ///
+/// This function works on both vectors and scalars.
+///
 static bool CanEvaluateTruncated(Value *V, const Type *Ty) {
   // We can always evaluate constants in another type.
   if (isa<Constant>(V))
@@ -578,9 +580,9 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
 }
 
 /// CanEvaluateZExtd - Determine if the specified value can be computed in the
-/// specified wider type and produce the same low bits.  If not, return -1.  If
-/// it is possible, return the number of high bits that are known to be zero in
-/// the promoted value.
+/// specified wider type and produce the same low bits.  If not, return false.
+///
+/// This function works on both vectors and scalars.
 static bool CanEvaluateZExtd(Value *V, const Type *Ty, const TargetData *TD) {
   if (isa<Constant>(V))
     return true;
@@ -780,7 +782,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
 ///
 /// This function works on both vectors and scalars.
 ///
-static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
+static bool CanEvaluateSExtd(Value *V, const Type *Ty) {
   assert(V->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits() &&
          "Can't sign extend type to a smaller type");
   // If this is a constant, it can be trivially promoted.
@@ -810,16 +812,15 @@ static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
   case Instruction::Sub:
   case Instruction::Mul:
     // These operators can all arbitrarily be extended if their inputs can.
-    return CanEvaluateSExtd(I->getOperand(0), Ty, TD) &&
-           CanEvaluateSExtd(I->getOperand(1), Ty, TD);
+    return CanEvaluateSExtd(I->getOperand(0), Ty) &&
+           CanEvaluateSExtd(I->getOperand(1), Ty);
       
   //case Instruction::Shl:   TODO
   //case Instruction::LShr:  TODO
-  //case Instruction::Trunc: TODO
       
   case Instruction::Select:
-    return CanEvaluateSExtd(I->getOperand(1), Ty, TD) &&
-           CanEvaluateSExtd(I->getOperand(2), Ty, TD);
+    return CanEvaluateSExtd(I->getOperand(1), Ty) &&
+           CanEvaluateSExtd(I->getOperand(2), Ty);
       
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.  Note that we never
@@ -827,7 +828,7 @@ static bool CanEvaluateSExtd(Value *V, const Type *Ty, TargetData *TD) {
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateSExtd(PN->getIncomingValue(i), Ty, TD)) return false;
+      if (!CanEvaluateSExtd(PN->getIncomingValue(i), Ty)) return false;
     return true;
   }
   default:
@@ -866,7 +867,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   // expression tree to something weird like i93 unless the source is also
   // strange.
   if ((isa<VectorType>(DestTy) || ShouldChangeType(SrcTy, DestTy)) &&
-      CanEvaluateSExtd(Src, DestTy, TD)) {
+      CanEvaluateSExtd(Src, DestTy)) {
     // Okay, we can transform this!  Insert the new expression now.
     DEBUG(dbgs() << "ICE: EvaluateInDifferentType converting expression type"
           " to avoid sign extend: " << CI);
