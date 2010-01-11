@@ -1731,11 +1731,6 @@ define fastcc i32 @tailcaller(i32 %in1, i32 %in2) {
    (because one or more of above constraints are not met) to be followed by a
    readjustment of the stack. So performance might be worse in such cases.</p>
 
-<p>On x86 and x86-64 one register is reserved for indirect tail calls (e.g via a
-   function pointer). So there is one less register for integer argument
-   passing. For x86 this means 2 registers (if <tt>inreg</tt> parameter
-   attribute is used) and for x86-64 this means 5 register are used.</p>
-
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection">
