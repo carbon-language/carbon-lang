@@ -1966,6 +1966,17 @@ def : Pat<(add GR64:$src1, 0x0000000080000000),
 def : Pat<(store (add (loadi64 addr:$dst), 0x00000000800000000), addr:$dst),
           (SUB64mi32 addr:$dst, 0xffffffff80000000)>;
 
+// Use a 32-bit and with implicit zero-extension instead of a 64-bit and if it
+// has an immediate with at least 32 bits of leading zeros, to avoid needing to
+// materialize that immediate in a register first.
+def : Pat<(and GR64:$src, i64immZExt32:$imm),
+          (SUBREG_TO_REG
+            (i64 0),
+            (AND32ri
+              (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit),
+              imm:$imm),
+            x86_subreg_32bit)>;
+
 // r & (2^32-1) ==> movz
 def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
           (MOVZX64rr32 (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit))>;
