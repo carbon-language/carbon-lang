@@ -194,7 +194,8 @@ void Sema::LookupTemplateName(LookupResult &Found,
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
-    // We cannot look into a dependent object type or
+    // We cannot look into a dependent object type or nested nme
+    // specifier.
     return;
   } else {
     // Perform unqualified name lookup in the current scope.
@@ -205,7 +206,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
   assert(!Found.isAmbiguous() &&
          "Cannot handle template name-lookup ambiguities");
 
-  if (Found.empty()) {
+  if (Found.empty() && !isDependent) {
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
     if (CorrectTypo(Found, S, &SS, LookupCtx)) {
