@@ -383,11 +383,11 @@ return:
 }
 
 
-;;; Duplicate condition to avoid xor of cond.
-;;; TODO: Make this happen.
-define i32 @testXX(i1 %cond, i1 %cond2) {
+;; Duplicate condition to avoid xor of cond.
+;; rdar://7391699
+define i32 @test13(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @testXX
+; CHECK: @test13
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
@@ -396,7 +396,8 @@ F1:
 
 Merge:
 	%B = phi i1 [true, %Entry], [%cond2, %F1]
-        %M = icmp eq i32 %v1, 192
+        %C = phi i32 [192, %Entry], [%v1, %F1]
+        %M = icmp eq i32 %C, 192
         %N = xor i1 %B, %M
 	br i1 %N, label %T2, label %F2
 
@@ -405,6 +406,18 @@ T2:
 
 F2:
 	ret i32 %v1
+        
+;; FIXME: CONSTANT FOLD on clone and when phi gets eliminated.
+
+; CHECK:      Entry.Merge_crit_edge:
+; CHECK-NEXT:   %M1 = icmp eq i32 192, 192
+; CHECK-NEXT:   %N2 = xor i1 true, %M1
+; CHECK-NEXT:   br i1 %N2, label %T2, label %F2
+
+; CHECK:      Merge:
+; CHECK-NEXT:   %M = icmp eq i32 %v1, 192
+; CHECK-NEXT:   %N = xor i1 %cond2, %M
+; CHECK-NEXT:   br i1 %N, label %T2, label %F2
 }
 
 

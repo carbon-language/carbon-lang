@@ -89,7 +89,7 @@ namespace {
     bool ThreadEdge(BasicBlock *BB, const SmallVectorImpl<BasicBlock*> &PredBBs,
                     BasicBlock *SuccBB);
     bool DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
-                                          BasicBlock *PredBB);
+                                  const SmallVectorImpl<BasicBlock *> &PredBBs);
     
     typedef SmallVectorImpl<std::pair<ConstantInt*,
                                       BasicBlock*> > PredValueInfo;
@@ -103,6 +103,7 @@ namespace {
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
 
     bool ProcessBranchOnPHI(PHINode *PN);
+    bool ProcessBranchOnXOR(BinaryOperator *BO);
     
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
   };
@@ -603,6 +604,13 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     if (PN->getParent() == BB && isa<BranchInst>(BB->getTerminator()))
       return ProcessBranchOnPHI(PN);
   
+  
+  // If this is an otherwise-unfoldable branch on a XOR, see if we can simplify.
+  if (CondInst->getOpcode() == Instruction::Xor &&
+      CondInst->getParent() == BB && isa<BranchInst>(BB->getTerminator()))
+    return ProcessBranchOnXOR(cast<BinaryOperator>(CondInst));
+  
+  
   // TODO: If we have: "br (X > 0)"  and we have a predecessor where we know
   // "(X == 4)", thread through this block.
   
@@ -1073,6 +1081,11 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
 bool JumpThreading::ProcessBranchOnPHI(PHINode *PN) {
   BasicBlock *BB = PN->getParent();
   
+  // TODO: We could make use of this to do it once for blocks with common PHI
+  // values.
+  SmallVector<BasicBlock*, 1> PredBBs;
+  PredBBs.resize(1);
+  
   // If any of the predecessor blocks end in an unconditional branch, we can
   // *duplicate* the conditional branch into that block in order to further
   // encourage jump threading and to eliminate cases where we have branch on a
@@ -1080,14 +1093,95 @@ bool JumpThreading::ProcessBranchOnPHI(PHINode *PN) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     BasicBlock *PredBB = PN->getIncomingBlock(i);
     if (BranchInst *PredBr = dyn_cast<BranchInst>(PredBB->getTerminator()))
-      if (PredBr->isUnconditional() &&
-          // Try to duplicate BB into PredBB.
-          DuplicateCondBranchOnPHIIntoPred(BB, PredBB))
-        return true;
+      if (PredBr->isUnconditional()) {
+        PredBBs[0] = PredBB;
+        // Try to duplicate BB into PredBB.
+        if (DuplicateCondBranchOnPHIIntoPred(BB, PredBBs))
+          return true;
+      }
   }
 
   return false;
 }
+
+/// ProcessBranchOnXOR - We have an otherwise unthreadable conditional branch on
+/// a xor instruction in the current block.  See if there are any
+/// simplifications we can do based on inputs to the xor.
+/// 
+bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
+  BasicBlock *BB = BO->getParent();
+  
+  // If either the LHS or RHS of the xor is a constant, don't do this
+  // optimization.
+  if (isa<ConstantInt>(BO->getOperand(0)) ||
+      isa<ConstantInt>(BO->getOperand(1)))
+    return false;
+  
+  // If we have a xor as the branch input to this block, and we know that the
+  // LHS or RHS of the xor in any predecessor is true/false, then we can clone
+  // the condition into the predecessor and fix that value to true, saving some
+  // logical ops on that path and encouraging other paths to simplify.
+  //
+  // This copies something like this:
+  //
+  //  BB:
+  //    %X = phi i1 [1],  [%X']
+  //    %Y = icmp eq i32 %A, %B
+  //    %Z = xor i1 %X, %Y
+  //    br i1 %Z, ...
+  //
+  // Into:
+  //  BB':
+  //    %Y = icmp ne i32 %A, %B
+  //    br i1 %Z, ...
+
+  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> XorOpValues;
+  bool isLHS = true;
+  if (!ComputeValueKnownInPredecessors(BO->getOperand(0), BB, XorOpValues)) {
+    assert(XorOpValues.empty());
+    if (!ComputeValueKnownInPredecessors(BO->getOperand(1), BB, XorOpValues))
+      return false;
+    isLHS = false;
+  }
+  
+  assert(!XorOpValues.empty() &&
+         "ComputeValueKnownInPredecessors returned true with no values");
+
+  // Scan the information to see which is most popular: true or false.  The
+  // predecessors can be of the set true, false, or undef.
+  unsigned NumTrue = 0, NumFalse = 0;
+  for (unsigned i = 0, e = XorOpValues.size(); i != e; ++i) {
+    if (!XorOpValues[i].first) continue;  // Ignore undefs for the count.
+    if (XorOpValues[i].first->isZero())
+      ++NumFalse;
+    else
+      ++NumTrue;
+  }
+  
+  // Determine which value to split on, true, false, or undef if neither.
+  ConstantInt *SplitVal = 0;
+  if (NumTrue > NumFalse)
+    SplitVal = ConstantInt::getTrue(BB->getContext());
+  else if (NumTrue != 0 || NumFalse != 0)
+    SplitVal = ConstantInt::getFalse(BB->getContext());
+  
+  // Collect all of the blocks that this can be folded into so that we can
+  // factor this once and clone it once.
+  SmallVector<BasicBlock*, 8> BlocksToFoldInto;
+  for (unsigned i = 0, e = XorOpValues.size(); i != e; ++i) {
+    if (XorOpValues[i].first != SplitVal && XorOpValues[i].first != 0) continue;
+
+    BlocksToFoldInto.push_back(XorOpValues[i].second);
+  }
+  
+  // Try to duplicate BB into PredBB.
+  if (DuplicateCondBranchOnPHIIntoPred(BB, BlocksToFoldInto)) {
+//    errs() << "CLONE XOR COND: " << *BB << "Into PRED: " << *BlocksToFoldInto[0];
+    return true;
+  }
+  return false;
+}
+
 
 /// AddPHINodeEntriesForMappedBlock - We're adding 'NewPred' as a new
 /// predecessor to the PHIBB block.  If it has PHI nodes, add entries for
@@ -1277,13 +1371,15 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
 /// improves the odds that the branch will be on an analyzable instruction like
 /// a compare.
 bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
-                                                     BasicBlock *PredBB) {
+                                 const SmallVectorImpl<BasicBlock *> &PredBBs) {
+  assert(!PredBBs.empty() && "Can't handle an empty set");
+
   // If BB is a loop header, then duplicating this block outside the loop would
   // cause us to transform this into an irreducible loop, don't do this.
   // See the comments above FindLoopHeaders for justifications and caveats.
   if (LoopHeaders.count(BB)) {
     DEBUG(dbgs() << "  Not duplicating loop header '" << BB->getName()
-          << "' into predecessor block '" << PredBB->getName()
+          << "' into predecessor block '" << PredBBs[0]->getName()
           << "' - it might create an irreducible loop!\n");
     return false;
   }
@@ -1295,11 +1391,31 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     return false;
   }
   
+  // And finally, do it!  Start by factoring the predecessors is needed.
+  BasicBlock *PredBB;
+  if (PredBBs.size() == 1)
+    PredBB = PredBBs[0];
+  else {
+    DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
+          << " common predecessors.\n");
+    PredBB = SplitBlockPredecessors(BB, &PredBBs[0], PredBBs.size(),
+                                    ".thr_comm", this);
+  }
+  
   // Okay, we decided to do this!  Clone all the instructions in BB onto the end
   // of PredBB.
   DEBUG(dbgs() << "  Duplicating block '" << BB->getName() << "' into end of '"
         << PredBB->getName() << "' to eliminate branch on phi.  Cost: "
         << DuplicationCost << " block is:" << *BB << "\n");
+  
+  // Unless PredBB ends with an unconditional branch, split the edge so that we
+  // can just clone the bits from BB into the end of the new PredBB.
+  BranchInst *OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
+  
+  if (!OldPredBranch->isUnconditional()) {
+    PredBB = SplitEdge(PredBB, BB, this);
+    OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
+  }
   
   // We are going to have to map operands from the original BB block into the
   // PredBB block.  Evaluate PHI nodes in BB.
@@ -1308,8 +1424,6 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   BasicBlock::iterator BI = BB->begin();
   for (; PHINode *PN = dyn_cast<PHINode>(BI); ++BI)
     ValueMapping[PN] = PN->getIncomingValueForBlock(PredBB);
-  
-  BranchInst *OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
   
   // Clone the non-phi instructions of BB into PredBB, keeping track of the
   // mapping and using it to remap operands in the cloned instructions.
