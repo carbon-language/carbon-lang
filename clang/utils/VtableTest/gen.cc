@@ -27,7 +27,6 @@ void g(int i) {
 
 int uuid = 0;
 char base_present[N_STRUCTS][N_STRUCTS];
-char funcs_present[N_STRUCTS][N_FUNCS*FUNCSPACING];
 
 // The return type for each function when doing covariant testcase generation.
 short ret_types[N_STRUCTS][N_FUNCS*FUNCSPACING];
@@ -179,7 +178,6 @@ void gs(int s) {
       gl("); return 0; }");
     else
       gl("); }");
-    funcs_present[s][fn] = 1;
     final_override[s][fn] = s;
     old_func = fn;
   }
@@ -252,7 +250,6 @@ void gs(int s) {
         gl("); return 0; }");
       else
         gl("); }");
-      funcs_present[s][fn] = 1;
       final_override[s][fn] = s;
     }
   }
