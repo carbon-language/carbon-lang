@@ -145,15 +145,12 @@ ImplicitConversionRank StandardConversionSequence::getRank() const {
 /// used as part of the ranking of standard conversion sequences
 /// (C++ 13.3.3.2p4).
 bool StandardConversionSequence::isPointerConversionToBool() const {
-  QualType FromType = QualType::getFromOpaquePtr(FromTypePtr);
-  QualType ToType = QualType::getFromOpaquePtr(ToTypePtr);
-
   // Note that FromType has not necessarily been transformed by the
   // array-to-pointer or function-to-pointer implicit conversions, so
   // check for their presence as well as checking whether FromType is
   // a pointer.
-  if (ToType->isBooleanType() &&
-      (FromType->isPointerType() || FromType->isBlockPointerType() ||
+  if (getToType()->isBooleanType() &&
+      (getFromType()->isPointerType() || getFromType()->isBlockPointerType() ||
        First == ICK_Array_To_Pointer || First == ICK_Function_To_Pointer))
     return true;
 
@@ -167,8 +164,8 @@ bool StandardConversionSequence::isPointerConversionToBool() const {
 bool
 StandardConversionSequence::
 isPointerConversionToVoidPointer(ASTContext& Context) const {
-  QualType FromType = QualType::getFromOpaquePtr(FromTypePtr);
-  QualType ToType = QualType::getFromOpaquePtr(ToTypePtr);
+  QualType FromType = getFromType();
+  QualType ToType = getToType();
 
   // Note that FromType has not necessarily been transformed by the
   // array-to-pointer implicit conversion, so check for its presence
@@ -250,6 +247,9 @@ void ImplicitConversionSequence::DebugPrint() const {
   case EllipsisConversion:
     fprintf(stderr, "Ellipsis conversion");
     break;
+  case AmbiguousConversion:
+    fprintf(stderr, "Ambiguous conversion");
+    break;
   case BadConversion:
     fprintf(stderr, "Bad conversion");
     break;
@@ -257,6 +257,22 @@ void ImplicitConversionSequence::DebugPrint() const {
 
   fprintf(stderr, "\n");
 }
+
+void AmbiguousConversionSequence::construct() {
+  new (&conversions()) ConversionSet();
+}
+
+void AmbiguousConversionSequence::destruct() {
+  conversions().~ConversionSet();
+}
+
+void
+AmbiguousConversionSequence::copyFrom(const AmbiguousConversionSequence &O) {
+  FromTypePtr = O.FromTypePtr;
+  ToTypePtr = O.ToTypePtr;
+  new (&conversions()) ConversionSet(O.conversions());
+}
+
 
 // IsOverload - Determine whether the given New declaration is an
 // overload of the declarations in Old. This routine returns false if
@@ -432,14 +448,14 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
   OverloadCandidateSet Conversions;
   OverloadingResult UserDefResult = OR_Success;
   if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard))
-    ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    ICS.setStandard();
   else if (getLangOptions().CPlusPlus &&
            (UserDefResult = IsUserDefinedConversion(From, ToType, 
                                    ICS.UserDefined,
                                    Conversions,
                                    !SuppressUserConversions, AllowExplicit,
 				   ForceRValue, UserCast)) == OR_Success) {
-    ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
+    ICS.setUserDefined();
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
     //   type is given Exact Match rank, and a conversion of an
@@ -456,10 +472,10 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
           (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon))) {
         // Turn this into a "standard" conversion sequence, so that it
         // gets ranked with standard conversion sequences.
-        ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+        ICS.setStandard();
         ICS.Standard.setAsIdentityConversion();
-        ICS.Standard.FromTypePtr = From->getType().getAsOpaquePtr();
-        ICS.Standard.ToTypePtr = ToType.getAsOpaquePtr();
+        ICS.Standard.setFromType(From->getType());
+        ICS.Standard.setToType(ToType);
         ICS.Standard.CopyConstructor = Constructor;
         if (ToCanon != FromCanon)
           ICS.Standard.Second = ICK_Derived_To_Base;
@@ -473,17 +489,18 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
     //   13.3.1.6 in all cases, only standard conversion sequences and
     //   ellipsis conversion sequences are allowed.
-    if (SuppressUserConversions &&
-        ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion)
-      ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+    if (SuppressUserConversions && ICS.isUserDefined())
+      ICS.setBad();
+  } else if (UserDefResult == OR_Ambiguous) {
+    ICS.setAmbiguous();
+    ICS.Ambiguous.setFromType(From->getType());
+    ICS.Ambiguous.setToType(ToType);
+    for (OverloadCandidateSet::iterator Cand = Conversions.begin();
+         Cand != Conversions.end(); ++Cand)
+      if (Cand->Viable)
+        ICS.Ambiguous.addConversion(Cand->Function);
   } else {
-    ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-    if (UserDefResult == OR_Ambiguous) {
-      for (OverloadCandidateSet::iterator Cand = Conversions.begin();
-           Cand != Conversions.end(); ++Cand)
-        if (Cand->Viable)
-          ICS.ConversionFunctionSet.push_back(Cand->Function);
-    }
+    ICS.setBad();
   }
 
   return ICS;
@@ -524,7 +541,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   SCS.setAsIdentityConversion();
   SCS.Deprecated = false;
   SCS.IncompatibleObjC = false;
-  SCS.FromTypePtr = FromType.getAsOpaquePtr();
+  SCS.setFromType(FromType);
   SCS.CopyConstructor = 0;
 
   // There are no standard conversions for class types in C++, so
@@ -573,7 +590,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
       // conversion (4.4). (C++ 4.2p2)
       SCS.Second = ICK_Identity;
       SCS.Third = ICK_Qualification;
-      SCS.ToTypePtr = ToType.getAsOpaquePtr();
+      SCS.setToType(ToType);
       return true;
     }
   } else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
@@ -724,7 +741,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
   if (CanonFrom != CanonTo)
     return false;
 
-  SCS.ToTypePtr = FromType.getAsOpaquePtr();
+  SCS.setToType(FromType);
   return true;
 }
 
@@ -1544,8 +1561,7 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         //   the argument of the constructor.
         //
         QualType ThisType = Constructor->getThisType(Context);
-        if (Best->Conversions[0].ConversionKind == 
-            ImplicitConversionSequence::EllipsisConversion)
+        if (Best->Conversions[0].isEllipsis())
           User.EllipsisConversion = true;
         else {
           User.Before = Best->Conversions[0].Standard;
@@ -1553,9 +1569,9 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         }
         User.ConversionFunction = Constructor;
         User.After.setAsIdentityConversion();
-        User.After.FromTypePtr
-          = ThisType->getAs<PointerType>()->getPointeeType().getAsOpaquePtr();
-        User.After.ToTypePtr = ToType.getAsOpaquePtr();
+        User.After.setFromType(
+          ThisType->getAs<PointerType>()->getPointeeType());
+        User.After.setToType(ToType);
         return OR_Success;
       } else if (CXXConversionDecl *Conversion
                    = dyn_cast<CXXConversionDecl>(Best->Function)) {
@@ -1635,18 +1651,28 @@ Sema::CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
   //      conversion sequence than an ellipsis conversion sequence
   //      (13.3.3.1.3).
   //
-  if (ICS1.ConversionKind < ICS2.ConversionKind)
-    return ImplicitConversionSequence::Better;
-  else if (ICS2.ConversionKind < ICS1.ConversionKind)
-    return ImplicitConversionSequence::Worse;
+  // C++0x [over.best.ics]p10:
+  //   For the purpose of ranking implicit conversion sequences as
+  //   described in 13.3.3.2, the ambiguous conversion sequence is
+  //   treated as a user-defined sequence that is indistinguishable
+  //   from any other user-defined conversion sequence.
+  if (ICS1.getKind() < ICS2.getKind()) {
+    if (!(ICS1.isUserDefined() && ICS2.isAmbiguous()))
+      return ImplicitConversionSequence::Better;
+  } else if (ICS2.getKind() < ICS1.getKind()) {
+    if (!(ICS2.isUserDefined() && ICS1.isAmbiguous()))
+      return ImplicitConversionSequence::Worse;
+  }
+
+  if (ICS1.isAmbiguous() || ICS2.isAmbiguous())
+    return ImplicitConversionSequence::Indistinguishable;
 
   // Two implicit conversion sequences of the same form are
   // indistinguishable conversion sequences unless one of the
   // following rules apply: (C++ 13.3.3.2p3):
-  if (ICS1.ConversionKind == ImplicitConversionSequence::StandardConversion)
+  if (ICS1.isStandard())
     return CompareStandardConversionSequences(ICS1.Standard, ICS2.Standard);
-  else if (ICS1.ConversionKind ==
-             ImplicitConversionSequence::UserDefinedConversion) {
+  else if (ICS1.isUserDefined()) {
     // User-defined conversion sequence U1 is a better conversion
     // sequence than another user-defined conversion sequence U2 if
     // they contain the same user-defined conversion function or
@@ -1739,8 +1765,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     // Both conversion sequences are conversions to void
     // pointers. Compare the source types to determine if there's an
     // inheritance relationship in their sources.
-    QualType FromType1 = QualType::getFromOpaquePtr(SCS1.FromTypePtr);
-    QualType FromType2 = QualType::getFromOpaquePtr(SCS2.FromTypePtr);
+    QualType FromType1 = SCS1.getFromType();
+    QualType FromType2 = SCS2.getFromType();
 
     // Adjust the types we're converting from via the array-to-pointer
     // conversion, if we need to.
@@ -1796,8 +1822,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     //      top-level cv-qualifiers, and the type to which the reference
     //      initialized by S2 refers is more cv-qualified than the type
     //      to which the reference initialized by S1 refers.
-    QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
-    QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+    QualType T1 = SCS1.getToType();
+    QualType T2 = SCS2.getToType();
     T1 = Context.getCanonicalType(T1);
     T2 = Context.getCanonicalType(T2);
     Qualifiers T1Quals, T2Quals;
@@ -1927,10 +1953,10 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
 ImplicitConversionSequence::CompareKind
 Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                       const StandardConversionSequence& SCS2) {
-  QualType FromType1 = QualType::getFromOpaquePtr(SCS1.FromTypePtr);
-  QualType ToType1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
-  QualType FromType2 = QualType::getFromOpaquePtr(SCS2.FromTypePtr);
-  QualType ToType2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+  QualType FromType1 = SCS1.getFromType();
+  QualType ToType1 = SCS1.getToType();
+  QualType FromType2 = SCS2.getFromType();
+  QualType ToType2 = SCS2.getToType();
 
   // Adjust the types we're converting from via the array-to-pointer
   // conversion, if we need to.
@@ -2175,7 +2201,7 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
   // to exit early.
   ImplicitConversionSequence ICS;
   ICS.Standard.setAsIdentityConversion();
-  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  ICS.setBad();
 
   // We need to have an object of class type.
   if (const PointerType *PT = FromType->getAs<PointerType>())
@@ -2211,9 +2237,9 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
     return ICS;
 
   // Success. Mark this as a reference binding.
-  ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
-  ICS.Standard.FromTypePtr = FromType.getAsOpaquePtr();
-  ICS.Standard.ToTypePtr = ImplicitParamType.getAsOpaquePtr();
+  ICS.setStandard();
+  ICS.Standard.setFromType(FromType);
+  ICS.Standard.setToType(ImplicitParamType);
   ICS.Standard.ReferenceBinding = true;
   ICS.Standard.DirectBinding = true;
   ICS.Standard.RRefBinding = false;
@@ -2242,7 +2268,7 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
   ImplicitConversionSequence ICS
     = TryObjectArgumentInitialization(From->getType(), Method,
                                       Method->getParent());
-  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
+  if (ICS.isBad())
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_implicit_object_parameter_init)
        << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
@@ -2274,8 +2300,8 @@ ImplicitConversionSequence Sema::TryContextuallyConvertToBool(Expr *From) {
 /// of the expression From to bool (C++0x [conv]p3).
 bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
   ImplicitConversionSequence ICS = TryContextuallyConvertToBool(From);
-  if (!PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting))
-    return false;
+  if (!ICS.isBad())
+    return PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting);
   
   if (!DiagnoseMultipleUserDefinedConversion(From, Context.BoolTy))
     return  Diag(From->getSourceRange().getBegin(),
@@ -2388,35 +2414,15 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
         = TryCopyInitialization(Args[ArgIdx], ParamType,
                                 SuppressUserConversions, ForceRValue,
                                 /*InOverloadResolution=*/true);
-      if (Candidate.Conversions[ArgIdx].ConversionKind
-            == ImplicitConversionSequence::BadConversion) {
-      // 13.3.3.1-p10 If several different sequences of conversions exist that 
-      // each convert the argument to the parameter type, the implicit conversion 
-      // sequence associated with the parameter is defined to be the unique conversion 
-      // sequence designated the ambiguous conversion sequence. For the purpose of 
-      // ranking implicit conversion sequences as described in 13.3.3.2, the ambiguous 
-      // conversion sequence is treated as a user-defined sequence that is 
-      // indistinguishable from any other user-defined conversion sequence
-        if (!Candidate.Conversions[ArgIdx].ConversionFunctionSet.empty()) {
-          Candidate.Conversions[ArgIdx].ConversionKind =
-            ImplicitConversionSequence::UserDefinedConversion;
-          // Set the conversion function to one of them. As due to ambiguity,
-          // they carry the same weight and is needed for overload resolution
-          // later.
-          Candidate.Conversions[ArgIdx].UserDefined.ConversionFunction =
-            Candidate.Conversions[ArgIdx].ConversionFunctionSet[0];
-        }
-        else {
-          Candidate.Viable = false;
-          break;
-        }
+      if (Candidate.Conversions[ArgIdx].isBad()) {
+        Candidate.Viable = false;
+        break;
       }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
       // argument for which there is no corresponding parameter is
       // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
-      Candidate.Conversions[ArgIdx].ConversionKind
-        = ImplicitConversionSequence::EllipsisConversion;
+      Candidate.Conversions[ArgIdx].setEllipsis();
     }
   }
 }
@@ -2552,8 +2558,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
     // parameter.
     Candidate.Conversions[0]
       = TryObjectArgumentInitialization(ObjectType, Method, ActingContext);
-    if (Candidate.Conversions[0].ConversionKind
-          == ImplicitConversionSequence::BadConversion) {
+    if (Candidate.Conversions[0].isBad()) {
       Candidate.Viable = false;
       return;
     }
@@ -2572,8 +2577,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
         = TryCopyInitialization(Args[ArgIdx], ParamType,
                                 SuppressUserConversions, ForceRValue,
                                 /*InOverloadResolution=*/true);
-      if (Candidate.Conversions[ArgIdx + 1].ConversionKind
-            == ImplicitConversionSequence::BadConversion) {
+      if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         break;
       }
@@ -2581,8 +2585,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
       // argument for which there is no corresponding parameter is
       // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
-      Candidate.Conversions[ArgIdx + 1].ConversionKind
-        = ImplicitConversionSequence::EllipsisConversion;
+      Candidate.Conversions[ArgIdx + 1].setEllipsis();
     }
   }
 }
@@ -2706,9 +2709,8 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
   Candidate.FinalConversion.setAsIdentityConversion();
-  Candidate.FinalConversion.FromTypePtr
-    = Conversion->getConversionType().getAsOpaquePtr();
-  Candidate.FinalConversion.ToTypePtr = ToType.getAsOpaquePtr();
+  Candidate.FinalConversion.setFromType(Conversion->getConversionType());
+  Candidate.FinalConversion.setToType(ToType);
 
   // Determine the implicit conversion sequence for the implicit
   // object parameter.
@@ -2722,8 +2724,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // in overload resolution. 
   if (Candidate.Conversions[0].Standard.Second == ICK_Derived_To_Base)
     Candidate.Conversions[0].Standard.Second = ICK_Identity;
-  if (Candidate.Conversions[0].ConversionKind
-      == ImplicitConversionSequence::BadConversion) {
+  if (Candidate.Conversions[0].isBad()) {
     Candidate.Viable = false;
     return;
   }
@@ -2766,7 +2767,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                           /*ForceRValue=*/false,
                           /*InOverloadResolution=*/false);
 
-  switch (ICS.ConversionKind) {
+  switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
     Candidate.FinalConversion = ICS.Standard;
     break;
@@ -2844,7 +2845,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // object parameter.
   ImplicitConversionSequence ObjectInit
     = TryObjectArgumentInitialization(ObjectType, Conversion, ActingContext);
-  if (ObjectInit.ConversionKind == ImplicitConversionSequence::BadConversion) {
+  if (ObjectInit.isBad()) {
     Candidate.Viable = false;
     return;
   }
@@ -2852,8 +2853,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // The first conversion is actually a user-defined conversion whose
   // first conversion is ObjectInit's standard conversion (which is
   // effectively a reference binding). Record it as such.
-  Candidate.Conversions[0].ConversionKind
-    = ImplicitConversionSequence::UserDefinedConversion;
+  Candidate.Conversions[0].setUserDefined();
   Candidate.Conversions[0].UserDefined.Before = ObjectInit.Standard;
   Candidate.Conversions[0].UserDefined.EllipsisConversion = false;
   Candidate.Conversions[0].UserDefined.ConversionFunction = Conversion;
@@ -2894,8 +2894,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
                                 /*SuppressUserConversions=*/false,
                                 /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
-      if (Candidate.Conversions[ArgIdx + 1].ConversionKind
-            == ImplicitConversionSequence::BadConversion) {
+      if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
         break;
       }
@@ -2903,8 +2902,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
       // argument for which there is no corresponding parameter is
       // considered to ""match the ellipsis" (C+ 13.3.3.1.3).
-      Candidate.Conversions[ArgIdx + 1].ConversionKind
-        = ImplicitConversionSequence::EllipsisConversion;
+      Candidate.Conversions[ArgIdx + 1].setEllipsis();
     }
   }
 }
@@ -3038,8 +3036,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
                                 /*ForceRValue=*/false,
                                 /*InOverloadResolution=*/false);
     }
-    if (Candidate.Conversions[ArgIdx].ConversionKind
-        == ImplicitConversionSequence::BadConversion) {
+    if (Candidate.Conversions[ArgIdx].isBad()) {
       Candidate.Viable = false;
       break;
     }
@@ -4304,10 +4301,21 @@ void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
   Diag(Fn->getLocation(), diag::note_ovl_candidate);
 }
 
-namespace {
-
-void NoteDeletedCandidate(Sema &S, OverloadCandidate *Cand) {
+/// Diagnoses an ambiguous conversion.  The partial diagnostic is the
+/// "lead" diagnostic; it will be given two arguments, the source and
+/// target types of the conversion.
+void Sema::DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
+                                       SourceLocation CaretLoc,
+                                       const PartialDiagnostic &PDiag) {
+  Diag(CaretLoc, PDiag)
+    << ICS.Ambiguous.getFromType() << ICS.Ambiguous.getToType();
+  for (AmbiguousConversionSequence::const_iterator
+         I = ICS.Ambiguous.begin(), E = ICS.Ambiguous.end(); I != E; ++I) {
+    NoteOverloadCandidate(*I);
+  }
 }
+
+namespace {
 
 void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
   // Note deleted candidates, but only if they're viable.
@@ -4335,18 +4343,13 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
     for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
       const ImplicitConversionSequence &Conversion = 
         Cand->Conversions[i];
-      if ((Conversion.ConversionKind != 
-             ImplicitConversionSequence::BadConversion) ||
-          Conversion.ConversionFunctionSet.size() == 0)
+
+      if (!Conversion.isAmbiguous())
         continue;
-      S.Diag(Cand->Function->getLocation(), 
-             diag::note_ovl_candidate_not_viable) << (i+1);
+
+      S.DiagnoseAmbiguousConversion(Conversion, Cand->Function->getLocation(),
+                         PDiag(diag::note_ovl_candidate_not_viable) << (i+1));
       errReported = true;
-      for (int j = Conversion.ConversionFunctionSet.size()-1; 
-           j >= 0; j--) {
-        FunctionDecl *Func = Conversion.ConversionFunctionSet[j];
-        S.NoteOverloadCandidate(Func);
-      }
     }
   }
 
@@ -4411,21 +4414,11 @@ void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
   unsigned NoOperands = Cand->Conversions.size();
   for (unsigned ArgIdx = 0; ArgIdx < NoOperands; ++ArgIdx) {
     const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
-    if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion ||
-        ICS.ConversionFunctionSet.empty())
-      continue;
-    if (CXXConversionDecl *Func = dyn_cast<CXXConversionDecl>(
-                     Cand->Conversions[ArgIdx].ConversionFunctionSet[0])) {
-      QualType FromTy = 
-        QualType(static_cast<Type*>(ICS.UserDefined.Before.FromTypePtr),0);
-      S.Diag(OpLoc, diag::note_ambiguous_type_conversion)
-        << FromTy << Func->getConversionType();
-    }
-    for (unsigned j = 0; j < ICS.ConversionFunctionSet.size(); j++) {
-      FunctionDecl *Func = 
-        Cand->Conversions[ArgIdx].ConversionFunctionSet[j];
-      S.NoteOverloadCandidate(Func);
-    }
+    if (ICS.isBad()) break; // all meaningless after first invalid
+    if (!ICS.isAmbiguous()) continue;
+
+    S.DiagnoseAmbiguousConversion(ICS, OpLoc,
+                              PDiag(diag::note_ambiguous_type_conversion));
   }
 }
 
@@ -4479,7 +4472,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
       Cands.push_back(Cand);
   std::sort(Cands.begin(), Cands.end(), CompareOverloadCandidates(SourceMgr));
   
-  bool ReportedNonViableOperator = false;
+  bool ReportedAmbiguousConversions = false;
 
   llvm::SmallVectorImpl<OverloadCandidate*>::iterator I, E;
   for (I = Cands.begin(), E = Cands.end(); I != E; ++I) {
@@ -4492,16 +4485,20 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
 
     // This a builtin candidate.  We do not, in general, want to list
     // every possible builtin candidate.
+    else if (Cand->Viable) {
+      // Generally we only see ambiguities including viable builtin
+      // operators if overload resolution got screwed up by an
+      // ambiguous user-defined conversion.
+      //
+      // FIXME: It's quite possible for different conversions to see
+      // different ambiguities, though.
+      if (!ReportedAmbiguousConversions) {
+        NoteAmbiguousUserConversions(*this, OpLoc, Cand);
+        ReportedAmbiguousConversions = true;
+      }
 
-    // If this is a viable builtin, print it.
-    else if (Cand->Viable)
+      // If this is a viable builtin, print it.
       NoteBuiltinOperatorCandidate(*this, Opc, OpLoc, Cand);
-
-    // Otherwise, non-viability might be due to ambiguous user-defined
-    // conversions.  Report them exactly once.
-    else if (!ReportedNonViableOperator) {
-      NoteAmbiguousUserConversions(*this, OpLoc, Cand);
-      ReportedNonViableOperator = true;
     }
   }
 }
@@ -5414,7 +5411,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
       return ExprError();
-    }
+  }
 
   // We matched a built-in operator; build it.
   return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);

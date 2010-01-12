@@ -1044,6 +1044,9 @@ public:
                                SourceLocation Loc = SourceLocation());
 
   void NoteOverloadCandidate(FunctionDecl *Fn);
+  void DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
+                                   SourceLocation CaretLoc,
+                                   const PartialDiagnostic &PDiag);
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);

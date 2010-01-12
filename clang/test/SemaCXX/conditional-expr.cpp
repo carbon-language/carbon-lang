@@ -7,8 +7,8 @@
 struct ToBool { explicit operator bool(); };
 
 struct B;
-struct A { A(); A(const B&); };
-struct B { operator A() const; };
+struct A { A(); A(const B&); }; // expected-note 2 {{candidate constructor}}
+struct B { operator A() const; }; // expected-note 2 {{candidate function}}
 struct I { operator int(); };
 struct J { operator I(); };
 struct K { operator double(); };
@@ -50,8 +50,8 @@ struct MixedFieldsDerived : MixedFields {
 enum Enum { EVal };
 
 struct Ambig {
-  operator short();
-  operator signed char();
+  operator short(); // expected-note 2 {{candidate function}}
+  operator signed char(); // expected-note 2 {{candidate function}}
 };
 
 void test()
@@ -129,10 +129,10 @@ void test()
   vfn pfn = i1 ? F() : test;
   pfn = i1 ? test : F();
   // these are ambiguous - better messages would be nice
-  (void)(i1 ? A() : B()); // expected-error {{incompatible operand types}}
-  (void)(i1 ? B() : A()); // expected-error {{incompatible operand types}}
-  (void)(i1 ? 1 : Ambig()); // expected-error {{incompatible operand types}}
-  (void)(i1 ? Ambig() : 1); // expected-error {{incompatible operand types}}
+  (void)(i1 ? A() : B()); // expected-error {{conversion from 'struct B' to 'struct A' is ambiguous}}
+  (void)(i1 ? B() : A()); // expected-error {{conversion from 'struct B' to 'struct A' is ambiguous}}
+  (void)(i1 ? 1 : Ambig()); // expected-error {{conversion from 'struct Ambig' to 'int' is ambiguous}}
+  (void)(i1 ? Ambig() : 1); // expected-error {{conversion from 'struct Ambig' to 'int' is ambiguous}}
   // By the way, this isn't an lvalue:
   &(i1 ? i1 : i2); // expected-error {{address expression must be an lvalue or a function designator}}
 

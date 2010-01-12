@@ -893,7 +893,7 @@ TryStaticImplicitCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                                /*InOverloadResolution=*/false,
                                /*one of user provided casts*/true);
 
-  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
+  if (ICS.isBad())
     return TC_NotApplicable;
 
   // The conversion is possible, so commit to it.

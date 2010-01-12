@@ -149,6 +149,15 @@ namespace clang {
     /// conversions.
     CXXConstructorDecl *CopyConstructor;
 
+    void setFromType(QualType T) { FromTypePtr = T.getAsOpaquePtr(); }
+    void setToType(QualType T) { ToTypePtr = T.getAsOpaquePtr(); }
+    QualType getFromType() const {
+      return QualType::getFromOpaquePtr(FromTypePtr);
+    }
+    QualType getToType() const {
+      return QualType::getFromOpaquePtr(ToTypePtr);
+    }
+
     void setAsIdentityConversion();
     ImplicitConversionRank getRank() const;
     bool isPointerConversionToBool() const;
@@ -190,6 +199,48 @@ namespace clang {
     void DebugPrint() const;
   };
 
+  /// Represents an ambiguous user-defined conversion sequence.
+  struct AmbiguousConversionSequence {
+    typedef llvm::SmallVector<FunctionDecl*, 4> ConversionSet;
+
+    void *FromTypePtr;
+    void *ToTypePtr;
+    char Buffer[sizeof(ConversionSet)];
+
+    QualType getFromType() const {
+      return QualType::getFromOpaquePtr(FromTypePtr);
+    }
+    QualType getToType() const {
+      return QualType::getFromOpaquePtr(ToTypePtr);
+    }
+    void setFromType(QualType T) { FromTypePtr = T.getAsOpaquePtr(); }
+    void setToType(QualType T) { ToTypePtr = T.getAsOpaquePtr(); }
+
+    ConversionSet &conversions() {
+      return *reinterpret_cast<ConversionSet*>(Buffer);
+    }
+
+    const ConversionSet &conversions() const {
+      return *reinterpret_cast<const ConversionSet*>(Buffer);
+    }
+
+    void addConversion(FunctionDecl *D) {
+      conversions().push_back(D);
+    }
+
+    typedef ConversionSet::iterator iterator;
+    iterator begin() { return conversions().begin(); }
+    iterator end() { return conversions().end(); }
+
+    typedef ConversionSet::const_iterator const_iterator;
+    const_iterator begin() const { return conversions().begin(); }
+    const_iterator end() const { return conversions().end(); }
+
+    void construct();
+    void destruct();
+    void copyFrom(const AmbiguousConversionSequence &);
+  };
+
   /// ImplicitConversionSequence - Represents an implicit conversion
   /// sequence, which may be a standard conversion sequence
   /// (C++ 13.3.3.1.1), user-defined conversion sequence (C++ 13.3.3.1.2),
@@ -197,18 +248,26 @@ namespace clang {
   struct ImplicitConversionSequence {
     /// Kind - The kind of implicit conversion sequence. BadConversion
     /// specifies that there is no conversion from the source type to
-    /// the target type. The enumerator values are ordered such that
-    /// better implicit conversions have smaller values.
+    /// the target type.  AmbiguousConversion represents the unique
+    /// ambiguous conversion (C++0x [over.best.ics]p10).
     enum Kind {
       StandardConversion = 0,
       UserDefinedConversion,
+      AmbiguousConversion,
       EllipsisConversion,
       BadConversion
     };
 
+  private:
     /// ConversionKind - The kind of implicit conversion sequence.
     Kind ConversionKind;
 
+    void setKind(Kind K) {
+      if (isAmbiguous()) Ambiguous.destruct();
+      ConversionKind = K;
+    }
+
+  public:
     union {
       /// When ConversionKind == StandardConversion, provides the
       /// details of the standard conversion sequence.
@@ -217,12 +276,54 @@ namespace clang {
       /// When ConversionKind == UserDefinedConversion, provides the
       /// details of the user-defined conversion sequence.
       UserDefinedConversionSequence UserDefined;
+
+      /// When ConversionKind == AmbiguousConversion, provides the
+      /// details of the ambiguous conversion.
+      AmbiguousConversionSequence Ambiguous;
     };
+
+    ImplicitConversionSequence() : ConversionKind(BadConversion) {}
+    ~ImplicitConversionSequence() {
+      if (isAmbiguous()) Ambiguous.destruct();
+    }
+    ImplicitConversionSequence(const ImplicitConversionSequence &Other)
+      : ConversionKind(Other.ConversionKind)
+    {
+      switch (ConversionKind) {
+      case StandardConversion: Standard = Other.Standard; break;
+      case UserDefinedConversion: UserDefined = Other.UserDefined; break;
+      case AmbiguousConversion: Ambiguous.copyFrom(Other.Ambiguous); break;
+      case EllipsisConversion: break;
+      case BadConversion: break;
+      }
+    }
+
+    ImplicitConversionSequence &
+        operator=(const ImplicitConversionSequence &Other) {
+      if (isAmbiguous()) Ambiguous.destruct();
+      new (this) ImplicitConversionSequence(Other);
+      return *this;
+    }
     
-    /// When ConversionKind == BadConversion due to multiple conversion
-    /// functions, this will list those functions.
-    llvm::SmallVector<FunctionDecl*, 4> ConversionFunctionSet;
-    
+    Kind getKind() const { return ConversionKind; }
+    bool isBad() const { return ConversionKind == BadConversion; }
+    bool isStandard() const { return ConversionKind == StandardConversion; }
+    bool isEllipsis() const { return ConversionKind == EllipsisConversion; }
+    bool isAmbiguous() const { return ConversionKind == AmbiguousConversion; }
+    bool isUserDefined() const {
+      return ConversionKind == UserDefinedConversion;
+    }
+
+    void setBad() { setKind(BadConversion); }
+    void setStandard() { setKind(StandardConversion); }
+    void setEllipsis() { setKind(EllipsisConversion); }
+    void setUserDefined() { setKind(UserDefinedConversion); }
+    void setAmbiguous() {
+      if (isAmbiguous()) return;
+      ConversionKind = AmbiguousConversion;
+      Ambiguous.construct();
+    }
+
     // The result of a comparison between implicit conversion
     // sequences. Use Sema::CompareImplicitConversionSequences to
     // actually perform the comparison.
@@ -280,6 +381,16 @@ namespace clang {
     /// after the call to the overload candidate to convert the result
     /// of calling the conversion function to the required type.
     StandardConversionSequence FinalConversion;
+
+    /// hasAmbiguousConversion - Returns whether this overload
+    /// candidate requires an ambiguous conversion or not.
+    bool hasAmbiguousConversion() const {
+      for (llvm::SmallVectorImpl<ImplicitConversionSequence>::const_iterator
+             I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
+        if (I->isAmbiguous()) return true;
+      }
+      return false;
+    }
   };
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++

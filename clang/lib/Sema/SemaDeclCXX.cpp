@@ -4389,8 +4389,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     = CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
   // Most paths end in a failed conversion.
-  if (ICS)
-    ICS->ConversionKind = ImplicitConversionSequence::BadConversion;
+  if (ICS) ICS->setBad();
 
   // C++ [dcl.init.ref]p5:
   //   A reference to type "cv1 T1" is initialized by an expression
@@ -4428,7 +4427,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       //   has a type that is a derived class of the parameter type,
       //   in which case the implicit conversion sequence is a
       //   derived-to-base Conversion (13.3.3.1).
-      ICS->ConversionKind = ImplicitConversionSequence::StandardConversion;
+      ICS->setStandard();
       ICS->Standard.First = ICK_Identity;
       ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
       ICS->Standard.Third = ICK_Identity;
@@ -4513,7 +4512,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         //   conversion or, if the conversion function returns an
         //   entity of a type that is a derived class of the parameter
         //   type, a derived-to-base Conversion.
-        ICS->ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
+        ICS->setUserDefined();
         ICS->UserDefined.Before = Best->Conversions[0].Standard;
         ICS->UserDefined.After = Best->FinalConversion;
         ICS->UserDefined.ConversionFunction = Best->Function;
@@ -4539,10 +4538,11 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
 
     case OR_Ambiguous:
       if (ICS) {
+        ICS->setAmbiguous();
         for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
              Cand != CandidateSet.end(); ++Cand)
           if (Cand->Viable)
-            ICS->ConversionFunctionSet.push_back(Cand->Function);
+            ICS->Ambiguous.addConversion(Cand->Function);
         break;
       }
       Diag(DeclLoc, diag::err_ref_init_ambiguous) << DeclType << Init->getType()
@@ -4616,7 +4616,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   if (InitLvalue != Expr::LV_Valid && T2->isRecordType() &&
       RefRelationship >= Ref_Compatible_With_Added_Qualification) {
     if (ICS) {
-      ICS->ConversionKind = ImplicitConversionSequence::StandardConversion;
+      ICS->setStandard();
       ICS->Standard.First = ICK_Identity;
       ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
       ICS->Standard.Third = ICK_Identity;
@@ -4688,29 +4688,26 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                                  /*InOverloadResolution=*/false);
 
     // Of course, that's still a reference binding.
-    if (ICS->ConversionKind == ImplicitConversionSequence::StandardConversion) {
+    if (ICS->isStandard()) {
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.RRefBinding = isRValRef;
-    } else if (ICS->ConversionKind ==
-              ImplicitConversionSequence::UserDefinedConversion) {
+    } else if (ICS->isUserDefined()) {
       ICS->UserDefined.After.ReferenceBinding = true;
       ICS->UserDefined.After.RRefBinding = isRValRef;
     }
-    return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
+    return ICS->isBad();
   } else {
     ImplicitConversionSequence Conversions;
     bool badConversion = PerformImplicitConversion(Init, T1, AA_Initializing, 
                                                    false, false, 
                                                    Conversions);
     if (badConversion) {
-      if ((Conversions.ConversionKind  == 
-            ImplicitConversionSequence::BadConversion)
-          && !Conversions.ConversionFunctionSet.empty()) {
+      if (Conversions.isAmbiguous()) {
         Diag(DeclLoc, 
              diag::err_lvalue_to_rvalue_ambig_ref) << Init->getSourceRange();
-        for (int j = Conversions.ConversionFunctionSet.size()-1; 
+        for (int j = Conversions.Ambiguous.conversions().size()-1; 
              j >= 0; j--) {
-          FunctionDecl *Func = Conversions.ConversionFunctionSet[j];
+          FunctionDecl *Func = Conversions.Ambiguous.conversions()[j];
           NoteOverloadCandidate(Func);
         }
       }

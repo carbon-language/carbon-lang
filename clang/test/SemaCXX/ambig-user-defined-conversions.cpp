@@ -21,6 +21,13 @@ namespace test0 {
     func(b1, f()); // expected-error {{call to 'func' is ambiguous}}
     return f(); // expected-error {{conversion from 'struct test0::B' to 'int const' is ambiguous}}
   }
+
+  // This used to crash when comparing the two operands.
+  void func2(const char cc); // expected-note {{candidate function}}
+  void func2(const int ci); // expected-note {{candidate function}}
+  void Test2() {
+    func2(b1); // expected-error {{call to 'func2' is ambiguous}}
+  }
 }
 
 namespace test1 {

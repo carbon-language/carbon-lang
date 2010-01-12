@@ -40,7 +40,7 @@ void foo1(C1 c1, int A::* pmf) {
 }
 
 void foo1(C1 c1, int E::* pmf) {
-        // FIXME. Error reporting needs much improvement here.
-        int i = c1->*pmf;	// expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct C1'}} \
-                                // expected-note {{because of ambiguity in conversion of 'struct C1' to 'struct E *'}}
+        int i = c1->*pmf;	// expected-error {{use of overloaded operator '->*' is ambiguous}} \
+                                // expected-note {{because of ambiguity in conversion of 'struct C1' to 'struct E *'}} \
+                                // expected-note 4 {{built-in candidate operator}}
 }

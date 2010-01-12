@@ -1075,7 +1075,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 AssignmentAction Action, bool AllowExplicit,
                                 bool Elidable,
                                 ImplicitConversionSequence& ICS) {
-  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  ICS.setBad();
   if (Elidable && getLangOptions().CPlusPlus0x) {
     ICS = TryImplicitConversion(From, ToType,
                                 /*SuppressUserConversions=*/false,
@@ -1083,7 +1083,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 /*ForceRValue=*/true,
                                 /*InOverloadResolution=*/false);
   }
-  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
+  if (ICS.isBad()) {
     ICS = TryImplicitConversion(From, ToType,
                                 /*SuppressUserConversions=*/false,
                                 AllowExplicit,
@@ -1103,7 +1103,7 @@ bool
 Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const ImplicitConversionSequence &ICS,
                                 AssignmentAction Action, bool IgnoreBaseAccess) {
-  switch (ICS.ConversionKind) {
+  switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
     if (PerformImplicitConversion(From, ToType, ICS.Standard, Action,
                                   IgnoreBaseAccess))
@@ -1157,6 +1157,12 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
                                        AA_Converting, IgnoreBaseAccess);
   }
+
+  case ImplicitConversionSequence::AmbiguousConversion:
+    DiagnoseAmbiguousConversion(ICS, From->getExprLoc(),
+                          PDiag(diag::err_typecheck_ambiguous_condition)
+                            << From->getSourceRange());
+     return true;
       
   case ImplicitConversionSequence::EllipsisConversion:
     assert(false && "Cannot perform an ellipsis conversion");
@@ -1474,14 +1480,18 @@ QualType Sema::CheckPointerToMemberOperands(
 
 /// \brief Get the target type of a standard or user-defined conversion.
 static QualType TargetType(const ImplicitConversionSequence &ICS) {
-  assert((ICS.ConversionKind ==
-              ImplicitConversionSequence::StandardConversion ||
-          ICS.ConversionKind ==
-              ImplicitConversionSequence::UserDefinedConversion) &&
-         "function only valid for standard or user-defined conversions");
-  if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion)
-    return QualType::getFromOpaquePtr(ICS.Standard.ToTypePtr);
-  return QualType::getFromOpaquePtr(ICS.UserDefined.After.ToTypePtr);
+  switch (ICS.getKind()) {
+  case ImplicitConversionSequence::StandardConversion:
+    return ICS.Standard.getToType();
+  case ImplicitConversionSequence::UserDefinedConversion:
+    return ICS.UserDefined.After.getToType();
+  case ImplicitConversionSequence::AmbiguousConversion:
+    return ICS.Ambiguous.getToType();
+  case ImplicitConversionSequence::EllipsisConversion:
+  case ImplicitConversionSequence::BadConversion:
+    llvm_unreachable("function not valid for ellipsis or bad conversions");
+  }
+  return QualType(); // silence warnings
 }
 
 /// \brief Try to convert a type to another according to C++0x 5.16p3.
@@ -1511,19 +1521,16 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
                                  /*ForceRValue=*/false,
                                  &ICS))
     {
-      assert((ICS.ConversionKind ==
-                  ImplicitConversionSequence::StandardConversion ||
-              ICS.ConversionKind ==
-                  ImplicitConversionSequence::UserDefinedConversion) &&
+      assert((ICS.isStandard() || ICS.isUserDefined()) &&
              "expected a definite conversion");
       bool DirectBinding =
-        ICS.ConversionKind == ImplicitConversionSequence::StandardConversion ?
-        ICS.Standard.DirectBinding : ICS.UserDefined.After.DirectBinding;
+        ICS.isStandard() ? ICS.Standard.DirectBinding
+                         : ICS.UserDefined.After.DirectBinding;
       if (DirectBinding)
         return false;
     }
   }
-  ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+  ICS.setBad();
   //   -- If E2 is an rvalue, or if the conversion above cannot be done:
   //      -- if E1 and E2 have class type, and the underlying class types are
   //         the same or one is a base class of the other:
@@ -1619,8 +1626,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
 /// handles the reference binding specially.
 static bool ConvertForConditional(Sema &Self, Expr *&E,
                                   const ImplicitConversionSequence &ICS) {
-  if (ICS.ConversionKind == ImplicitConversionSequence::StandardConversion &&
-      ICS.Standard.ReferenceBinding) {
+  if (ICS.isStandard() && ICS.Standard.ReferenceBinding) {
     assert(ICS.Standard.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
     // FIXME: CheckReferenceInit should be able to reuse the ICS instead of
@@ -1632,8 +1638,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false);
   }
-  if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion &&
-      ICS.UserDefined.After.ReferenceBinding) {
+  if (ICS.isUserDefined() && ICS.UserDefined.After.ReferenceBinding) {
     assert(ICS.UserDefined.After.DirectBinding &&
            "TryClassUnification should never generate indirect ref bindings");
     return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
@@ -1721,10 +1726,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     if (TryClassUnification(*this, RHS, LHS, QuestionLoc, ICSRightToLeft))
       return QualType();
 
-    bool HaveL2R = ICSLeftToRight.ConversionKind !=
-      ImplicitConversionSequence::BadConversion;
-    bool HaveR2L = ICSRightToLeft.ConversionKind !=
-      ImplicitConversionSequence::BadConversion;
+    bool HaveL2R = !ICSLeftToRight.isBad();
+    bool HaveR2L = !ICSRightToLeft.isBad();
     //   If both can be converted, [...] the program is ill-formed.
     if (HaveL2R && HaveR2L) {
       Diag(QuestionLoc, diag::err_conditional_ambiguous)
@@ -1938,8 +1941,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
                           /*InOverloadResolution=*/false);
 
   ImplicitConversionSequence E1ToC2, E2ToC2;
-  E1ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
-  E2ToC2.ConversionKind = ImplicitConversionSequence::BadConversion;
+  E1ToC2.setBad();
+  E2ToC2.setBad();
   if (Context.getCanonicalType(Composite1) !=
       Context.getCanonicalType(Composite2)) {
     E1ToC2 = TryImplicitConversion(E1, Composite2,
@@ -1954,14 +1957,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
                                    /*InOverloadResolution=*/false);
   }
 
-  bool ToC1Viable = E1ToC1.ConversionKind !=
-                      ImplicitConversionSequence::BadConversion
-                 && E2ToC1.ConversionKind !=
-                      ImplicitConversionSequence::BadConversion;
-  bool ToC2Viable = E1ToC2.ConversionKind !=
-                      ImplicitConversionSequence::BadConversion
-                 && E2ToC2.ConversionKind !=
-                      ImplicitConversionSequence::BadConversion;
+  bool ToC1Viable = !E1ToC1.isBad() && !E2ToC1.isBad();
+  bool ToC2Viable = !E1ToC2.isBad() && !E2ToC2.isBad();
   if (ToC1Viable && !ToC2Viable) {
     if (!PerformImplicitConversion(E1, Composite1, E1ToC1, Sema::AA_Converting) &&
         !PerformImplicitConversion(E2, Composite1, E2ToC1, Sema::AA_Converting))

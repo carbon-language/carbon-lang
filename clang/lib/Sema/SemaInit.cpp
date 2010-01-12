@@ -670,7 +670,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
                                         /*ForceRValue=*/false,
                                         /*InOverloadResolution=*/false);
 
-      if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion) {
+      if (!ICS.isBad()) {
         if (SemaRef.PerformImplicitConversion(expr, ElemType, ICS,
                                               Sema::AA_Initializing))
           hadError = true;
@@ -2300,6 +2300,11 @@ static void TryReferenceInitialization(Sema &S,
                                                        Sequence);
       if (ConvOvlResult == OR_Success)
         return;
+      if (ConvOvlResult != OR_No_Viable_Function) {
+        Sequence.SetOverloadFailure(
+                      InitializationSequence::FK_ReferenceInitOverloadFailed,
+                                    ConvOvlResult);
+      }
     }
   }
   
@@ -2384,7 +2389,7 @@ static void TryReferenceInitialization(Sema &S,
                               /*FIXME:InOverloadResolution=*/false,
                               /*UserCast=*/Kind.isExplicitCast());
             
-  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
+  if (ICS.isBad()) {
     // FIXME: Use the conversion function set stored in ICS to turn
     // this into an overloading ambiguity diagnostic. However, we need
     // to keep that set as an OverloadCandidateSet rather than as some
@@ -2685,14 +2690,14 @@ static void TryUserDefinedConversion(Sema &S,
   
   // Perform overload resolution. If it fails, return the failed result.  
   OverloadCandidateSet::iterator Best;
-  if (OverloadingResult Result 
+  if (OverloadingResult Result
         = S.BestViableFunction(CandidateSet, DeclLoc, Best)) {
     Sequence.SetOverloadFailure(
                         InitializationSequence::FK_UserConversionOverloadFailed, 
                                 Result);
     return;
   }
-  
+
   FunctionDecl *Function = Best->Function;
   
   if (isa<CXXConstructorDecl>(Function)) {
@@ -2711,7 +2716,7 @@ static void TryUserDefinedConversion(Sema &S,
   if (Best->FinalConversion.First || Best->FinalConversion.Second ||
       Best->FinalConversion.Third) {
     ImplicitConversionSequence ICS;
-    ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
+    ICS.setStandard();
     ICS.Standard = Best->FinalConversion;
     Sequence.AddConversionSequenceStep(ICS, DestType);
   }
@@ -2732,7 +2737,7 @@ static void TryImplicitConversion(Sema &S,
                               /*FIXME:InOverloadResolution=*/false,
                               /*UserCast=*/Kind.isExplicitCast());
   
-  if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion) {
+  if (ICS.isBad()) {
     Sequence.SetFailed(InitializationSequence::FK_ConversionFailed);
     return;
   }
