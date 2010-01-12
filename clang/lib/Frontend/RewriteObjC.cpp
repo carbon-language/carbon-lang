@@ -1757,10 +1757,10 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
         sawIdTypedCatch = true;
-      } else if (const PointerType *pType = t->getAs<PointerType>()) {
-        ObjCInterfaceType *cls; // Should be a pointer to a class.
-
-        cls = dyn_cast<ObjCInterfaceType>(pType->getPointeeType().getTypePtr());
+      } else if (t->isObjCObjectPointerType()) {
+        QualType InterfaceTy = t->getPointeeType();
+        const ObjCInterfaceType *cls = // Should be a pointer to a class.
+          InterfaceTy->getAs<ObjCInterfaceType>();
         if (cls) {
           buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
           buf += cls->getDecl()->getNameAsString();
