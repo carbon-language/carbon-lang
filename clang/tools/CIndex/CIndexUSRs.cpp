@@ -12,11 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "clang/AST/DeclVisitor.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/raw_ostream.h";
-#include "clang/AST/DeclVisitor.h";
-
-extern "C" {
+#include "llvm/Support/raw_ostream.h"
 
 // Some notes on CXEntity:
 //
@@ -63,7 +61,9 @@ static inline CXEntity MakeEntity(CXIndex CIdx, const Entity &E) {
 static inline Program &GetProgram(CXIndex CIdx) {
   return ((CIndexer*) CIdx)->getProgram();
 }
- 
+
+extern "C" {
+
 /// clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
 ///  in a specified translation unit.
 CXDecl clang_getDeclaration(CXEntity CE, CXTranslationUnit TU) {
