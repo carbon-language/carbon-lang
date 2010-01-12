@@ -87,15 +87,29 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
 public:
   USRGenerator(llvm::raw_ostream &out) : Out(out) {}
 
+  void VisitNamedDecl(NamedDecl *D);
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
   void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
 };
 } // end anonymous namespace
 
+
+void USRGenerator::VisitNamedDecl(NamedDecl *D) {
+  DeclContext *DC = D->getDeclContext();
+  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC)) {
+    Visit(DCN);
+    Out << '_';
+  }
+  else {
+    Out << '_';
+  }
+  Out << D->getName();
+}
+  
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
-  Out << (D->isInstanceMethod() ? "_IM_" : "_CM_");
+  Out << (D->isInstanceMethod() ? "(im)" : "(cm)");
   Out << DeclarationName(D->getSelector());
 }
   
@@ -105,29 +119,29 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
       assert(false && "Invalid ObjC container.");
     case Decl::ObjCInterface:
     case Decl::ObjCImplementation:
-      Out << "objc_class_" << D->getName();
+      Out << "objc(cs)" << D->getName();
       break;
     case Decl::ObjCCategory: {
       ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      Out << "objc_cat_" << CD->getClassInterface()->getName()
+      Out << "objc(cy)" << CD->getClassInterface()->getName()
           << '_' << CD->getName();
       break;
     }
     case Decl::ObjCCategoryImpl: {
       ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
-      Out << "objc_cat_" << CD->getClassInterface()->getName()
+      Out << "objc(cy)" << CD->getClassInterface()->getName()
           << '_' << CD->getName();
       break;
     }
     case Decl::ObjCProtocol:
-      Out << "objc_prot_" << cast<ObjCProtocolDecl>(D)->getName();
+      Out << "objc(pl)" << cast<ObjCProtocolDecl>(D)->getName();
       break;
   }
 }
   
 void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
-  Out << "_prop_" << D->getName();
+  Out << "(py)" << D->getName();
 }
   
 // FIXME: This is a skeleton implementation.  It will be overhauled.
