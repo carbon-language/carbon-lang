@@ -329,7 +329,7 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
  *  in a specified translation unit. */
 CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
 
-CINDEX_LINKAGE const char *clang_getUSR(CXEntity);
+CINDEX_LINKAGE CXString clang_getUSR(CXEntity);
 /*
  * CXDecl Operations.
  */

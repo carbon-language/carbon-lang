@@ -74,8 +74,8 @@ CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
   return NullCXEntity();
 }
   
-const char *clang_getUSR(CXEntity) {
-  return "";
+CXString clang_getUSR(CXEntity) {
+  return CIndexer::createCXString("");
 }
 
 } // end extern "C"
