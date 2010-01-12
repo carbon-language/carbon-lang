@@ -4263,42 +4263,62 @@ OverloadingResult Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
   return OR_Success;
 }
 
-/// Notes the location of an overload candidate.
-void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
+namespace {
+
+enum OverloadCandidateKind {
+  oc_function,
+  oc_method,
+  oc_constructor,
+  oc_implicit_default_constructor,
+  oc_implicit_copy_constructor,
+  oc_implicit_copy_assignment,
+  oc_template_specialization // function, constructor, or conversion template
+};
+
+OverloadCandidateKind ClassifyOverloadCandidate(FunctionDecl *Fn) {
+  if (Fn->getPrimaryTemplate())
+    return oc_template_specialization;
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(Fn)) {
-    // At least call it a 'constructor'.
-    if (!Ctor->isImplicit()) {
-      Diag(Ctor->getLocation(), diag::note_ovl_candidate_ctor);
-      return;
-    }
+    if (!Ctor->isImplicit())
+      return oc_constructor;
 
-    CXXRecordDecl *Record = Ctor->getParent();
-    if (Ctor->isCopyConstructor()) {
-      Diag(Record->getLocation(), diag::note_ovl_candidate_implicit_copy_ctor);
-      return;
-    }
-
-    Diag(Record->getLocation(), diag::note_ovl_candidate_implicit_default_ctor);
-    return;
+    return Ctor->isCopyConstructor() ? oc_implicit_copy_constructor
+                                     : oc_implicit_default_constructor;
   }
 
   if (CXXMethodDecl *Meth = dyn_cast<CXXMethodDecl>(Fn)) {
     // This actually gets spelled 'candidate function' for now, but
     // it doesn't hurt to split it out.
-    if (!Meth->isImplicit()) {
-      Diag(Meth->getLocation(), diag::note_ovl_candidate_meth);
-      return;
-    }
+    if (!Meth->isImplicit())
+      return oc_method;
 
     assert(Meth->isCopyAssignment()
            && "implicit method is not copy assignment operator?");
-    Diag(Meth->getParent()->getLocation(),
-         diag::note_ovl_candidate_implicit_copy_assign);
+    return oc_implicit_copy_assignment;
+  }
+
+  return oc_function;
+}
+
+std::string DescribeFunctionTemplate(Sema &S, FunctionDecl *Fn) {
+  FunctionTemplateDecl *FunTmpl = Fn->getPrimaryTemplate();
+  return S.getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
+                                       *Fn->getTemplateSpecializationArgs());
+}
+
+} // end anonymous namespace
+
+// Notes the location of an overload candidate.
+void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
+  OverloadCandidateKind K = ClassifyOverloadCandidate(Fn);
+  if (K == oc_template_specialization) {
+    Diag(Fn->getLocation(), diag::note_ovl_template_candidate)
+      << DescribeFunctionTemplate(*this, Fn);
     return;
   }
 
-  Diag(Fn->getLocation(), diag::note_ovl_candidate);
+  Diag(Fn->getLocation(), diag::note_ovl_candidate) << (unsigned) K;
 }
 
 /// Diagnoses an ambiguous conversion.  The partial diagnostic is the
@@ -4318,26 +4338,23 @@ void Sema::DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
 namespace {
 
 void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
+  FunctionDecl *Fn = Cand->Function;
+
   // Note deleted candidates, but only if they're viable.
-  if (Cand->Viable &&
-      (Cand->Function->isDeleted() ||
-       Cand->Function->hasAttr<UnavailableAttr>())) {
-    S.Diag(Cand->Function->getLocation(), diag::note_ovl_candidate_deleted)
-      << Cand->Function->isDeleted();
+  if (Cand->Viable && (Fn->isDeleted() || Fn->hasAttr<UnavailableAttr>())) {
+    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(Fn);
+
+    if (FnKind == oc_template_specialization) {
+      S.Diag(Fn->getLocation(), diag::note_ovl_template_candidate_deleted)
+        << DescribeFunctionTemplate(S, Fn) << Fn->isDeleted();
+      return;
+    }
+
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_deleted)
+      << FnKind << Fn->isDeleted();
     return;
   }
 
-  if (FunctionTemplateDecl *FunTmpl 
-               = Cand->Function->getPrimaryTemplate()) {
-    // Function template specialization
-    // FIXME: Give a better reason!
-    S.Diag(Cand->Function->getLocation(), diag::note_ovl_template_candidate)
-      << S.getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
-                              *Cand->Function->getTemplateSpecializationArgs());
-    return;
-  }
-
-  // Normal function
   bool errReported = false;
   if (!Cand->Viable && Cand->Conversions.size() > 0) {
     for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
@@ -4347,14 +4364,14 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
       if (!Conversion.isAmbiguous())
         continue;
 
-      S.DiagnoseAmbiguousConversion(Conversion, Cand->Function->getLocation(),
+      S.DiagnoseAmbiguousConversion(Conversion, Fn->getLocation(),
                          PDiag(diag::note_ovl_candidate_not_viable) << (i+1));
       errReported = true;
     }
   }
 
   if (!errReported)
-    S.NoteOverloadCandidate(Cand->Function);
+    S.NoteOverloadCandidate(Fn);
 }
 
 void NoteSurrogateCandidate(Sema &S, OverloadCandidate *Cand) {

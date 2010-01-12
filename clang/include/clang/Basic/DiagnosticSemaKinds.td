@@ -895,23 +895,23 @@ def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1">;
-def note_ovl_candidate : Note<"candidate function">;
-def note_ovl_candidate_not_viable : Note<"function not viable because"
-                          " of ambiguity in conversion of argument %0">;
-def note_ovl_candidate_ctor : Note<"candidate constructor">;
-def note_ovl_candidate_implicit_copy_ctor : Note<
-    "candidate is the implicit copy constructor">;
-def note_ovl_candidate_implicit_default_ctor : Note<
-    "candidate is the implicit default constructor">;
-def note_ovl_candidate_meth : Note<"candidate function">;
-def note_ovl_candidate_implicit_copy_assign : Note<
-    "candidate is the implicit copy assignment operator">;
-def note_ambiguous_type_conversion: Note<
-    "because of ambiguity in conversion of %0 to %1">;
+def note_ovl_candidate : Note<"candidate "
+    "%select{function|function|constructor|"
+    "is the implicit default constructor|"
+    "is the implicit copy constructor|"
+    "is the implicit copy assignment operator}0">;
 def note_ovl_template_candidate : Note<
   "candidate function template specialization %0">;
 def note_ovl_candidate_deleted : Note<
-  "candidate function has been explicitly %select{made unavailable|deleted}0">;
+  "candidate %select{function|function|constructor}0 has been explicitly "
+  "%select{made unavailable|deleted}1">;
+def note_ovl_template_candidate_deleted : Note<
+  "candidate function template specialization %0 has been explicit "
+  "&select{made unavailable|deleted}1">;
+def note_ovl_candidate_not_viable : Note<"function not viable because"
+                          " of ambiguity in conversion of argument %0">;
+def note_ambiguous_type_conversion: Note<
+    "because of ambiguity in conversion of %0 to %1">;
 def note_ovl_builtin_binary_candidate : Note<
     "built-in candidate %0">;
 def note_ovl_builtin_unary_candidate : Note<

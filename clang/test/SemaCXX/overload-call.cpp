@@ -301,3 +301,13 @@ namespace PR5756 {
     (void)ir;
   }
 }
+
+// Tests the exact text used to note the candidates
+namespace test1 {
+  template <class T> void foo(T t, unsigned N); // expected-note {{candidate function template specialization [with T = int]}}
+  void foo(int n, char N); // expected-note {{candidate function}} 
+
+  void test() {
+    foo(4, "hello"); //expected-error {{no matching function for call to 'foo'}}
+  }
+}
