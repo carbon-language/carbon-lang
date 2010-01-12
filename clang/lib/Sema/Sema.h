@@ -1481,7 +1481,8 @@ public:
 
   OwningExprResult LookupInObjCMethod(LookupResult &R,
                                       Scope *S,
-                                      IdentifierInfo *II);
+                                      IdentifierInfo *II,
+                                      bool AllowBuiltinCreation=false);
 
   OwningExprResult ActOnDependentIdExpression(const CXXScopeSpec &SS,
                                               DeclarationName Name,

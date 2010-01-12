@@ -1033,12 +1033,13 @@ Sema::OwningExprResult Sema::ActOnIdExpression(Scope *S,
     // Just re-use the lookup done by isTemplateName.
     DecomposeTemplateName(R, Id);
   } else {
-    LookupParsedName(R, S, &SS, true);
+    bool IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
+    LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
 
     // If this reference is in an Objective-C method, then we need to do
     // some special Objective-C lookup, too.
-    if (!SS.isSet() && II && getCurMethodDecl()) {
-      OwningExprResult E(LookupInObjCMethod(R, S, II));
+    if (IvarLookupFollowUp) {
+      OwningExprResult E(LookupInObjCMethod(R, S, II, true));
       if (E.isInvalid())
         return ExprError();
 
@@ -1218,7 +1219,8 @@ Sema::BuildQualifiedDeclarationNameExpr(const CXXScopeSpec &SS,
 /// Returns a null sentinel to indicate trivial success.
 Sema::OwningExprResult
 Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
-                         IdentifierInfo *II) {
+                         IdentifierInfo *II,
+                         bool AllowBuiltinCreation) {
   SourceLocation Loc = Lookup.getNameLoc();
 
   // There are two cases to handle here.  1) scoped lookup could have failed,
@@ -1299,7 +1301,18 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       T = Context.getObjCClassType();
     return Owned(new (Context) ObjCSuperExpr(Loc, T));
   }
-
+  if (Lookup.empty() && II && AllowBuiltinCreation) {
+    // FIXME. Consolidate this with similar code in LookupName.
+    if (unsigned BuiltinID = II->getBuiltinID()) {
+      if (!(getLangOptions().CPlusPlus &&
+            Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))) {
+        NamedDecl *D = LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
+                                           S, Lookup.isForRedeclaration(),
+                                           Lookup.getNameLoc());
+        if (D) Lookup.addDecl(D);
+      }
+    }
+  }
   // Sentinel value saying that we didn't do anything special.
   return Owned((Expr*) 0);
 }
