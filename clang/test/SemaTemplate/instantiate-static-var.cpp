@@ -2,7 +2,7 @@
 template<typename T, T Divisor>
 class X {
 public:
-  static const T value = 10 / Divisor; // expected-error{{in-class initializer is not an integral constant expression}} expected-warning {{division by zero is undefined}}
+  static const T value = 10 / Divisor; // expected-error{{in-class initializer is not an integral constant expression}}
 };
 
 int array1[X<int, 2>::value == 5? 1 : -1];

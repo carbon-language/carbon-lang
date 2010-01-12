@@ -120,5 +120,7 @@ void test17(int x) {
   x = x % 0;  // expected-warning {{remainder by zero is undefined}}
   x /= 0;  // expected-warning {{division by zero is undefined}}
   x %= 0;  // expected-warning {{remainder by zero is undefined}}
+  
+  x = sizeof(x/0);  // no warning.
 }
 

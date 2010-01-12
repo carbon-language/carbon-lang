@@ -35,8 +35,7 @@ void test_BitfieldMinus() {
 template<int I, int J>
 struct BitfieldDivide {
   int bitfield : I / J; // expected-error{{expression is not an integer constant expression}} \
-                        // expected-note{{division by zero}} \
-                        // expected-warning {{division by zero is undefined}}
+                        // expected-note{{division by zero}}
 };
 
 void test_BitfieldDivide() {

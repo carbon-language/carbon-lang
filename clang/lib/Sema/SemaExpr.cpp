@@ -4868,7 +4868,8 @@ QualType Sema::CheckMultiplyDivideOperands(
   // Check for division by zero.
   if (isDiv &&
       rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
-    Diag(Loc, diag::warn_division_by_zero) << rex->getSourceRange();
+    DiagRuntimeBehavior(Loc, PDiag(diag::warn_division_by_zero) 
+                                     << rex->getSourceRange());
   
   return compType;
 }
@@ -4888,7 +4889,8 @@ QualType Sema::CheckRemainderOperands(
   
   // Check for remainder by zero.
   if (rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
-    Diag(Loc, diag::warn_remainder_by_zero) << rex->getSourceRange();
+    DiagRuntimeBehavior(Loc, PDiag(diag::warn_remainder_by_zero)
+                                 << rex->getSourceRange());
   
   return compType;
 }
