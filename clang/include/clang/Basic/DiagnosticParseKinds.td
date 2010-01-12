@@ -261,6 +261,8 @@ def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 
 /// C++ Templates
 def err_expected_template : Error<"expected template">;
+def err_unknown_template_name : Error<
+  "unknown template name %0">;
 def err_expected_comma_greater : Error<
   "expected ',' or '>' in template-parameter-list">;
 def err_expected_type_id_after : Error<"expected type-id after '%0'">;

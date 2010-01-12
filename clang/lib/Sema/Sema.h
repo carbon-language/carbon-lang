@@ -2367,6 +2367,14 @@ public:
                                           TypeTy *ObjectType,
                                           bool EnteringContext,
                                           TemplateTy &Template);
+  
+  virtual bool DiagnoseUnknownTemplateName(const IdentifierInfo &II, 
+                                           SourceLocation IILoc,
+                                           Scope *S,
+                                           const CXXScopeSpec *SS,
+                                           TemplateTy &SuggestedTemplate,
+                                           TemplateNameKind &SuggestedKind);
+    
   bool DiagnoseTemplateParameterShadow(SourceLocation Loc, Decl *PrevDecl);
   TemplateDecl *AdjustDeclIfTemplate(DeclPtrTy &Decl);
 

@@ -1309,6 +1309,8 @@ def err_template_kw_refers_to_class_template : Error<
     "'%0%1' instantiated to a class template, not a function template">;
 def note_referenced_class_template : Error<
     "class template declared here">;
+def err_template_kw_missing : Error<
+  "missing 'template' keyword prior to dependent template name '%0%1'">;
 
 // C++0x Variadic Templates
 def err_template_param_pack_default_arg : Error<

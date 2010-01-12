@@ -143,6 +143,30 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
   return TemplateKind;
 }
 
+bool Sema::DiagnoseUnknownTemplateName(const IdentifierInfo &II, 
+                                       SourceLocation IILoc,
+                                       Scope *S,
+                                       const CXXScopeSpec *SS,
+                                       TemplateTy &SuggestedTemplate,
+                                       TemplateNameKind &SuggestedKind) {
+  // We can't recover unless there's a dependent scope specifier preceding the
+  // template name.
+  if (!SS || !SS->isSet() || !isDependentScopeSpecifier(*SS) ||
+      computeDeclContext(*SS))
+    return false;
+  
+  // The code is missing a 'template' keyword prior to the dependent template
+  // name.
+  NestedNameSpecifier *Qualifier = (NestedNameSpecifier*)SS->getScopeRep();
+  Diag(IILoc, diag::err_template_kw_missing)
+    << Qualifier << II.getName()
+    << CodeModificationHint::CreateInsertion(IILoc, "template ");
+  SuggestedTemplate 
+    = TemplateTy::make(Context.getDependentTemplateName(Qualifier, &II));
+  SuggestedKind = TNK_Dependent_template_name;
+  return true;
+}
+
 void Sema::LookupTemplateName(LookupResult &Found,
                               Scope *S, const CXXScopeSpec &SS,
                               QualType ObjectType,

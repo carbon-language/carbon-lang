@@ -291,6 +291,42 @@ public:
                                           bool EnteringContext,
                                           TemplateTy &Template) = 0;
 
+  /// \brief Action called as part of error recovery when the parser has 
+  /// determined that the given name must refer to a template, but 
+  /// \c isTemplateName() did not return a result.
+  ///
+  /// This callback permits the action to give a detailed diagnostic when an
+  /// unknown template name is encountered and, potentially, to try to recover
+  /// by producing a new template in \p SuggestedTemplate.
+  ///
+  /// \param II the name that should be a template.
+  ///
+  /// \param IILoc the location of the name in the source.
+  ///
+  /// \param S the scope in which name lookup was performed.
+  ///
+  /// \param SS the C++ scope specifier that preceded the name.
+  ///
+  /// \param SuggestedTemplate if the action sets this template to a non-NULL,
+  /// template, the parser will recover by consuming the template name token
+  /// and the template argument list that follows.
+  ///
+  /// \param SuggestedTemplateKind as input, the kind of template that we
+  /// expect (e.g., \c TNK_Type_template or \c TNK_Function_template). If the
+  /// action provides a suggested template, this should be set to the kind of
+  /// template.
+  ///
+  /// \returns true if a diagnostic was emitted, false otherwise. When false,
+  /// the parser itself will emit a generic "unknown template name" diagnostic.
+  virtual bool DiagnoseUnknownTemplateName(const IdentifierInfo &II, 
+                                           SourceLocation IILoc,
+                                           Scope *S,
+                                           const CXXScopeSpec *SS,
+                                           TemplateTy &SuggestedTemplate,
+                                           TemplateNameKind &SuggestedKind) {
+    return false;
+  }
+  
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,

@@ -490,18 +490,57 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
     return true;
   }
 
+  IdentifierInfo *Id = Tok.getIdentifierInfo();
+  SourceLocation IdLoc = ConsumeToken();
+
+  if (Tok.is(tok::less)) {
+    // It looks the user intended to write a template-id here, but the
+    // template-name was wrong. Try to fix that.
+    TemplateNameKind TNK = TNK_Type_template;
+    TemplateTy Template;
+    if (!Actions.DiagnoseUnknownTemplateName(*Id, IdLoc, CurScope,
+                                             SS, Template, TNK)) {
+      Diag(IdLoc, diag::err_unknown_template_name)
+        << Id;
+    }
+    
+    if (!Template)
+      return true;
+
+    // Form the template name 
+    UnqualifiedId TemplateName;
+    TemplateName.setIdentifier(Id, IdLoc);
+    
+    // Parse the full template-id, then turn it into a type.
+    if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName,
+                                SourceLocation(), true))
+      return true;
+    if (TNK == TNK_Dependent_template_name)
+      AnnotateTemplateIdTokenAsType(SS);
+    
+    // If we didn't end up with a typename token, there's nothing more we
+    // can do.
+    if (Tok.isNot(tok::annot_typename))
+      return true;
+    
+    // Retrieve the type from the annotation token, consume that token, and
+    // return.
+    EndLocation = Tok.getAnnotationEndLoc();
+    TypeTy *Type = Tok.getAnnotationValue();
+    ConsumeToken();
+    return Type;
+  }
+
   // We have an identifier; check whether it is actually a type.
-  TypeTy *Type = Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                     Tok.getLocation(), CurScope, SS,
-                                     true);
-  if (!Type) {
-    Diag(Tok, DestrExpected ? diag::err_destructor_class_name
+  TypeTy *Type = Actions.getTypeName(*Id, IdLoc, CurScope, SS, true);
+  if (!Type) {    
+    Diag(IdLoc, DestrExpected ? diag::err_destructor_class_name
                             : diag::err_expected_class_name);
     return true;
   }
 
   // Consume the identifier.
-  EndLocation = ConsumeToken();
+  EndLocation = IdLoc;
   return Type;
 }
 
