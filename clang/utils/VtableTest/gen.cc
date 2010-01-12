@@ -3,9 +3,10 @@
 
 #define N_FIELDS 7
 #define N_FUNCS 128
-#define FUNCSPACING 10
-#define N_STRUCTS 300 /* 1280 */
-#define N_BASES 30
+#define FUNCSPACING 20
+#define N_STRUCTS 180 /* 1280 */
+#define N_BASES 6
+#define COVARIANT 0
 
 const char *simple_types[] = { "bool", "char", "short", "int", "float",
 			       "double", "long double", "wchar_t", "void *",
@@ -84,15 +85,19 @@ void gs(int s) {
 	// polymorphic = true;
 	base_type = 3;
       }
-      switch (random()%8) {
+      // PARAM: 1/4 are public, 1/8 are privare, 1/8 are protected, the reset, default
+      int base_protection = 0;
+      if (!COVARIANT)
+        base_protection = random()%8;
+      switch (base_protection) {
       case 0:
       case 1:
+	g("public "); break;
       case 2:
       case 3:
-	break;
       case 4:
       case 5:
-	g("public "); break;
+	break;
       case 6:
 	g("private "); break;
       case 7:
@@ -129,7 +134,18 @@ void gs(int s) {
   for (int i = 0; i < n_funcs; ++i) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
-    g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid); gl("); }");
+    int rettype = 0;
+    if (COVARIANT)
+      rettype = s;
+    if (rettype) {
+      g("  virtual s"); g(rettype); g("* fun");
+    } else
+      g("  virtual void fun");
+    g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid);
+    if (rettype)
+      gl("); return 0; }");
+    else
+      gl("); }");
     funcs_present[s][fn] = 1;
     final_override[s][fn] = s;
     old_func = fn;
@@ -183,7 +199,18 @@ void gs(int s) {
       funcs[n_funcs++] = fn;
       if (n_funcs == (N_FUNCS*FUNCSPACING-1))
         abort();
-      g("  virtual void fun"); g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid); gl("); }");
+      int rettype = 0;
+      if (COVARIANT)
+        rettype = s;
+      if (rettype) {
+        g("  virtual s"); g(rettype); g("* fun");
+      } else
+        g("  virtual void fun");
+      g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid);
+      if (rettype)
+        gl("); return 0; }");
+      else
+        gl("); }");
       funcs_present[s][fn] = 1;
       final_override[s][fn] = s;
     }
