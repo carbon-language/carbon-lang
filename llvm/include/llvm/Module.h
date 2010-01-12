@@ -57,6 +57,7 @@ template<> struct ilist_traits<GlobalAlias>
   static GlobalAlias *createSentinel();
   static void destroySentinel(GlobalAlias *GA) { delete GA; }
 };
+
 template<> struct ilist_traits<NamedMDNode>
   : public SymbolTableListTraits<NamedMDNode, Module> {
   // createSentinel is used to get hold of a node that marks the end of
@@ -69,6 +70,8 @@ template<> struct ilist_traits<NamedMDNode>
   NamedMDNode *provideInitialHead() const { return createSentinel(); }
   NamedMDNode *ensureHead(NamedMDNode*) const { return createSentinel(); }
   static void noteHead(NamedMDNode*, NamedMDNode*) {}
+  void addNodeToList(NamedMDNode *N);
+  void removeNodeFromList(NamedMDNode *N);
 private:
   mutable ilist_node<NamedMDNode> Sentinel;
 };
@@ -323,10 +326,6 @@ public:
   /// with the specified name. This method returns a new NamedMDNode if a 
   /// NamedMDNode with the specified name is not found.
   NamedMDNode *getOrInsertNamedMetadata(StringRef Name);
-
-  /// addMDNodeName - Insert an entry in the NamedMDNode symbol table mapping
-  /// Name to NMD. 
-  void addMDNodeName(StringRef Name, NamedMDNode *NMD);
 
 /// @}
 /// @name Type Accessors

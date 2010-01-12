@@ -239,6 +239,26 @@ void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
 //===----------------------------------------------------------------------===//
 // NamedMDNode implementation.
 //
+
+namespace llvm {
+// SymbolTableListTraits specialization for MDSymbolTable.
+void ilist_traits<NamedMDNode>
+::addNodeToList(NamedMDNode *N) {
+  assert(N->getParent() == 0 && "Value already in a container!!");
+  Module *Owner = getListOwner();
+  N->setParent(Owner);
+  MDSymbolTable &ST = Owner->getMDSymbolTable();
+  ST.insert(N->getName(), N);
+}
+
+void ilist_traits<NamedMDNode>::removeNodeFromList(NamedMDNode *N) {
+  N->setParent(0);
+  Module *Owner = getListOwner();
+  MDSymbolTable &ST = Owner->getMDSymbolTable();
+  ST.remove(N->getName());
+}
+}
+
 static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
   return *(SmallVector<WeakVH, 4>*)Operands;
 }
@@ -254,10 +274,8 @@ NamedMDNode::NamedMDNode(LLVMContext &C, StringRef N,
   for (unsigned i = 0; i != NumMDs; ++i)
     Node.push_back(WeakVH(MDs[i]));
 
-  if (ParentModule) {
+  if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
-    ParentModule->addMDNodeName(N, this);
-  }
 }
 
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
@@ -295,7 +313,6 @@ void NamedMDNode::addOperand(MDNode *M) {
 /// eraseFromParent - Drop all references and remove the node from parent
 /// module.
 void NamedMDNode::eraseFromParent() {
-  getParent()->getMDSymbolTable().remove(getName());
   getParent()->getNamedMDList().erase(this);
 }
 
@@ -306,8 +323,10 @@ void NamedMDNode::dropAllReferences() {
 
 /// setName - Set the name of this named metadata.
 void NamedMDNode::setName(StringRef N) {
-  if (!N.empty())
-    Name = N.str();
+  assert (!N.empty() && "Invalid named metadata name!");
+  Name = N.str();
+  if (Parent)
+    Parent->getMDSymbolTable().insert(N, this);
 }
 
 /// getName - Return a constant reference to this named metadata's name.

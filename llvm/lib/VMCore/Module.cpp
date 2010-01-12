@@ -325,12 +325,6 @@ NamedMDNode *Module::getOrInsertNamedMetadata(StringRef Name) {
   return NMD;
 }
 
-/// addMDNodeName - Insert an entry in the NamedMDNode symbol table mapping
-/// Name to NMD. 
-void Module::addMDNodeName(StringRef Name, NamedMDNode *NMD) {
-  NamedMDSymTab->insert(Name, NMD);
-}
-
 //===----------------------------------------------------------------------===//
 // Methods for easy access to the types in the module.
 //

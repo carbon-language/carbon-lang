@@ -17,6 +17,7 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/ilist_node.h"
 
 namespace llvm {
   template<typename ValueSubClass, typename ItemParentClass>
@@ -39,7 +40,6 @@ class ValueSymbolTable {
   friend class SymbolTableListTraits<Function, Module>;
   friend class SymbolTableListTraits<GlobalVariable, Module>;
   friend class SymbolTableListTraits<GlobalAlias, Module>;
-  friend class SymbolTableListTraits<NamedMDNode, Module>;
 /// @name Types
 /// @{
 public:
@@ -133,6 +133,7 @@ private:
 /// essentially a StringMap wrapper.
 
 class MDSymbolTable {
+  friend class SymbolTableListTraits<NamedMDNode, Module>;
 /// @name Types
 /// @{
 private:
