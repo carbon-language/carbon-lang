@@ -335,6 +335,30 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
   return Changed;
 }
 
+/// SimplifyInstructionsInBlock - Scan the specified basic block and try to
+/// simplify any instructions in it and recursively delete dead instructions.
+///
+/// This returns true if it changed the code, note that it can delete
+/// instructions in other blocks as well in this block.
+bool llvm::SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD) {
+  bool MadeChange = false;
+  for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
+    Instruction *Inst = BI++;
+    
+    if (Value *V = SimplifyInstruction(Inst, TD)) {
+      WeakVH BIHandle(BI);
+      ReplaceAndSimplifyAllUses(Inst, V, TD);
+      MadeChange = true;
+      if (BIHandle == 0)
+        BI = BB->begin();
+      continue;
+    }
+    
+    MadeChange |= RecursivelyDeleteTriviallyDeadInstructions(Inst);
+  }
+  return MadeChange;
+}
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring.
 //

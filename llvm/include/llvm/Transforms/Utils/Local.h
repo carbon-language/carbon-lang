@@ -74,6 +74,14 @@ bool RecursivelyDeleteTriviallyDeadInstructions(Value *V);
 /// too, recursively.  Return true if the PHI node is actually deleted.
 bool RecursivelyDeleteDeadPHINode(PHINode *PN);
 
+  
+/// SimplifyInstructionsInBlock - Scan the specified basic block and try to
+/// simplify any instructions in it and recursively delete dead instructions.
+///
+/// This returns true if it changed the code, note that it can delete
+/// instructions in other blocks as well in this block.
+bool SimplifyInstructionsInBlock(BasicBlock *BB, const TargetData *TD = 0);
+    
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring.
 //
