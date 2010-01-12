@@ -1175,11 +1175,7 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
   }
   
   // Try to duplicate BB into PredBB.
-  if (DuplicateCondBranchOnPHIIntoPred(BB, BlocksToFoldInto)) {
-//    errs() << "CLONE XOR COND: " << *BB << "Into PRED: " << *BlocksToFoldInto[0];
-    return true;
-  }
-  return false;
+  return DuplicateCondBranchOnPHIIntoPred(BB, BlocksToFoldInto);
 }
 
 
