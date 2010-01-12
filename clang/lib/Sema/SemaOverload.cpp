@@ -4422,28 +4422,36 @@ void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
   }
 }
 
-struct CompareOverloadCandidates {
-  SourceManager &SM;
-  CompareOverloadCandidates(SourceManager &SM) : SM(SM) {}
+struct CompareOverloadCandidatesForDisplay {
+  Sema &S;
+  CompareOverloadCandidatesForDisplay(Sema &S) : S(S) {}
 
   bool operator()(const OverloadCandidate *L,
                   const OverloadCandidate *R) {
     // Order first by viability.
-    if (L->Viable != R->Viable)
-      return L->Viable;
+    if (L->Viable) {
+      if (!R->Viable) return true;
+
+      // TODO: introduce a tri-valued comparison for overload
+      // candidates.  Would be more worthwhile if we had a sort
+      // that could exploit it.
+      if (S.isBetterOverloadCandidate(*L, *R)) return true;
+      if (S.isBetterOverloadCandidate(*R, *L)) return false;
+    } else if (R->Viable)
+      return false;
 
     // Put declared functions first.
     if (L->Function) {
       if (!R->Function) return true;
-      return SM.isBeforeInTranslationUnit(L->Function->getLocation(),
-                                          R->Function->getLocation());
+      return S.SourceMgr.isBeforeInTranslationUnit(L->Function->getLocation(),
+                                                   R->Function->getLocation());
     } else if (R->Function) return false;
 
     // Then surrogates.
     if (L->IsSurrogate) {
       if (!R->IsSurrogate) return true;
-      return SM.isBeforeInTranslationUnit(L->Surrogate->getLocation(),
-                                          R->Surrogate->getLocation());
+      return S.SourceMgr.isBeforeInTranslationUnit(L->Surrogate->getLocation(),
+                                                   R->Surrogate->getLocation());
     } else if (R->IsSurrogate) return false;
 
     // And builtins just come in a jumble.
@@ -4470,7 +4478,8 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
        Cand != LastCand; ++Cand)
     if (Cand->Viable || OCD == OCD_AllCandidates)
       Cands.push_back(Cand);
-  std::sort(Cands.begin(), Cands.end(), CompareOverloadCandidates(SourceMgr));
+  std::sort(Cands.begin(), Cands.end(),
+            CompareOverloadCandidatesForDisplay(*this));
   
   bool ReportedAmbiguousConversions = false;
 
