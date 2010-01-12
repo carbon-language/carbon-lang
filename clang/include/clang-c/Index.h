@@ -329,7 +329,6 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
  *  in a specified translation unit. */
 CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
 
-CINDEX_LINKAGE CXString clang_getUSR(CXEntity);
 /*
  * CXDecl Operations.
  */
@@ -338,6 +337,7 @@ CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
+CINDEX_LINKAGE CXString clang_getDeclUSR(CXDecl);
 CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 

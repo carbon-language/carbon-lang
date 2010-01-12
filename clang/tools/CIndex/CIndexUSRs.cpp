@@ -62,6 +62,93 @@ static inline Program &GetProgram(CXIndex CIdx) {
   return ((CIndexer*) CIdx)->getProgram();
 }
 
+//===----------------------------------------------------------------------===//
+// USR generation.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  class USRGenerator : public DeclVisitor<USRGenerator> {
+    llvm::raw_ostream &Out;
+  public:
+    USRGenerator(llvm::raw_ostream &out) : Out(out) {}
+    
+    void VisitNamedDecl(NamedDecl *D);
+    void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
+    void VisitObjCMethodDecl(ObjCMethodDecl *MD);
+    void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+    void VisitRecordDecl(RecordDecl *D);
+    void VisitTypedefDecl(TypedefDecl *D);
+  };
+} // end anonymous namespace
+
+
+void USRGenerator::VisitNamedDecl(NamedDecl *D) {
+  DeclContext *DC = D->getDeclContext();
+  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
+    Visit(DCN);
+  
+  const std::string &s = D->getNameAsString();
+  assert(!s.empty());
+  Out << '@' << s;
+}
+
+void USRGenerator::VisitRecordDecl(RecordDecl *D) {
+  DeclContext *DC = D->getDeclContext();
+  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
+    Visit(DCN);
+  
+  Out << "@struct^";
+  const std::string &s = D->getNameAsString();
+  if (s.empty())
+    Out << "^anon";
+  else
+    Out << s;
+}
+
+void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  Visit(cast<Decl>(D->getDeclContext()));
+  Out << (D->isInstanceMethod() ? "(im)" : "(cm)");
+  Out << DeclarationName(D->getSelector()).getAsString();
+}
+
+void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
+  switch (D->getKind()) {
+    default:
+      assert(false && "Invalid ObjC container.");
+    case Decl::ObjCInterface:
+    case Decl::ObjCImplementation:
+      Out << "objc(cs)" << D->getName();
+      break;
+    case Decl::ObjCCategory: {
+      ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
+      Out << "objc(cy)" << CD->getClassInterface()->getName()
+      << '_' << CD->getName();
+      break;
+    }
+    case Decl::ObjCCategoryImpl: {
+      ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
+      Out << "objc(cy)" << CD->getClassInterface()->getName()
+      << '_' << CD->getName();
+      break;
+    }
+    case Decl::ObjCProtocol:
+      Out << "objc(pl)" << cast<ObjCProtocolDecl>(D)->getName();
+      break;
+  }
+}
+
+void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+  Visit(cast<Decl>(D->getDeclContext()));
+  Out << "(py)" << D->getName();
+}
+
+void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
+  DeclContext *DC = D->getDeclContext();
+  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
+    Visit(DCN);  
+  Out << "typedef@" << D->getName();
+}
+
 extern "C" {
 
 /// clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
@@ -76,91 +163,15 @@ CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
     return MakeEntity(CIdx, Entity::get(D, GetProgram(CIdx)));
   return NullCXEntity();
 }
-  
-//===----------------------------------------------------------------------===//
-// USR generation.
-//===----------------------------------------------------------------------===//
-
-namespace {
-class USRGenerator : public DeclVisitor<USRGenerator> {
-  llvm::raw_ostream &Out;
-public:
-  USRGenerator(llvm::raw_ostream &out) : Out(out) {}
-
-  void VisitNamedDecl(NamedDecl *D);
-  void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
-  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
-  void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-};
-} // end anonymous namespace
-
-
-void USRGenerator::VisitNamedDecl(NamedDecl *D) {
-  DeclContext *DC = D->getDeclContext();
-  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC)) {
-    Visit(DCN);
-    Out << '_';
-  }
-  else {
-    Out << '_';
-  }
-  Out << D->getName();
-}
-  
-void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
-  Visit(cast<Decl>(D->getDeclContext()));
-  Out << (D->isInstanceMethod() ? "(im)" : "(cm)");
-  Out << DeclarationName(D->getSelector());
-}
-  
-void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
-  switch (D->getKind()) {
-    default:
-      assert(false && "Invalid ObjC container.");
-    case Decl::ObjCInterface:
-    case Decl::ObjCImplementation:
-      Out << "objc(cs)" << D->getName();
-      break;
-    case Decl::ObjCCategory: {
-      ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      Out << "objc(cy)" << CD->getClassInterface()->getName()
-          << '_' << CD->getName();
-      break;
-    }
-    case Decl::ObjCCategoryImpl: {
-      ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
-      Out << "objc(cy)" << CD->getClassInterface()->getName()
-          << '_' << CD->getName();
-      break;
-    }
-    case Decl::ObjCProtocol:
-      Out << "objc(pl)" << cast<ObjCProtocolDecl>(D)->getName();
-      break;
-  }
-}
-  
-void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
-  Visit(cast<Decl>(D->getDeclContext()));
-  Out << "(py)" << D->getName();
-}
-  
+    
 // FIXME: This is a skeleton implementation.  It will be overhauled.
-CXString clang_getUSR(CXEntity CE) {
-  const Entity &E = GetEntity(CE);
-  
-  // FIXME: Support cross-translation unit CXEntities.  
-  if (!E.isInternalToTU())
-    return CIndexer::createCXString(NULL);
-  
-  Decl *D = E.getInternalDecl();
-  if (!D)
-    return CIndexer::createCXString(NULL);
-
+CXString clang_getDeclUSR(CXDecl D) {
+  assert(D && "Null CXDecl passed to clang_getDeclUSR()");
   llvm::SmallString<1024> StrBuf;
   {
     llvm::raw_svector_ostream Out(StrBuf);
     USRGenerator UG(Out);
-    UG.Visit(D);
+    UG.Visit(static_cast<Decl*>(D));
   }
   
   if (StrBuf.empty())
@@ -168,6 +179,6 @@ CXString clang_getUSR(CXEntity CE) {
 
   // Return a copy of the string that must be disposed by the caller.
   return CIndexer::createCXString(StrBuf.c_str(), true);
-}
+}  
 
 } // end extern "C"
