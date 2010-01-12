@@ -160,9 +160,9 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 }
 
 static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
-                             const char *filter, const char *prefix) {
+                             const char *filter, const char *prefix,
+                             CXTranslationUnitIterator Visitor) {
   enum CXCursorKind K = CXCursor_NotImplemented;
-  CXTranslationUnitIterator Visitor = TranslationUnitVisitor;
   enum CXCursorKind *ck = &K;
 
   if (prefix)
@@ -187,7 +187,8 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
 }
 
 int perform_test_load_tu(const char *file, const char *filter,
-                         const char *prefix) {
+                         const char *prefix,
+                         CXTranslationUnitIterator Visitor) {
   CXIndex Idx;
   CXTranslationUnit TU;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
@@ -197,10 +198,11 @@ int perform_test_load_tu(const char *file, const char *filter,
   if (!CreateTranslationUnit(Idx, file, &TU))
     return 1;
 
-  return perform_test_load(Idx, TU, filter, prefix);
+  return perform_test_load(Idx, TU, filter, prefix, Visitor);
 }
 
-int perform_test_load_source(int argc, const char **argv, const char *filter) {
+int perform_test_load_source(int argc, const char **argv, const char *filter,
+                             CXTranslationUnitIterator Visitor) {
   const char *UseExternalASTs =
     getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
@@ -218,7 +220,7 @@ int perform_test_load_source(int argc, const char **argv, const char *filter) {
     return 1;
   }
 
-  return perform_test_load(Idx, TU, filter, NULL);
+  return perform_test_load(Idx, TU, filter, NULL, Visitor);
 }
 
 /******************************************************************************/
@@ -582,9 +584,11 @@ int main(int argc, const char **argv) {
     return perform_code_completion(argc, argv);
   if (argc >= 4 && strcmp(argv[1], "-test-load-tu") == 0)
     return perform_test_load_tu(argv[2], argv[3],
-                                argc >= 5 ? argv[4] : 0);
+                                argc >= 5 ? argv[4] : 0,
+                                TranslationUnitVisitor);
   if (argc >= 4 && strcmp(argv[1], "-test-load-source") == 0)
-    return perform_test_load_source(argc - 3, argv + 3, argv[2]);
+    return perform_test_load_source(argc - 3, argv + 3, argv[2],
+                                    TranslationUnitVisitor);
   if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
     return perform_file_scan(argv[2], argv[3],
                              argc >= 5 ? argv[4] : 0);
