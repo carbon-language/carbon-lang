@@ -1195,7 +1195,8 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
   ObjCIvarDecl *D = IV->getDecl();
   const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
-    if (IV->isArrow() && isa<DeclRefExpr>(BaseExpr)) {
+    if (BaseExpr->getType()->isObjCObjectPointerType() && 
+        isa<DeclRefExpr>(BaseExpr)) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
@@ -1243,7 +1244,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
 
     // Explicit ivar refs need to have a cast inserted.
     // FIXME: consider sharing some of this code with the code above.
-    if (IV->isArrow()) {
+    if (BaseExpr->getType()->isObjCObjectPointerType()) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
