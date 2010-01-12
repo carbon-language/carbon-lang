@@ -31,3 +31,8 @@ int compare_enum() {
   enum { A };
   return A == A; // no-warning
 }
+
+// Don't complain in unevaluated contexts.
+int compare_sizeof(int x) {
+  return sizeof(x == x); // no-warning
+}

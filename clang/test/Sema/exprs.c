@@ -87,6 +87,10 @@ int test12(const char *X) {
   return X == "foo";  // expected-warning {{comparison against a string literal is unspecified}}
 }
 
+int test12b(const char *X) {
+  return sizeof(X == "foo"); // no-warning
+}
+
 // rdar://6719156
 void test13(
             void (^P)()) { // expected-error {{blocks support disabled - compile with -fblocks}}

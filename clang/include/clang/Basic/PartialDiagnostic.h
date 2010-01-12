@@ -26,7 +26,8 @@ class DeclarationName;
   
 class PartialDiagnostic {
   struct Storage {
-    Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
+    Storage() : NumDiagArgs(0), NumDiagRanges(0), NumCodeModificationHints(0) {
+    }
 
     enum {
         /// MaxArguments - The maximum number of arguments we can hold. We 
@@ -42,6 +43,10 @@ class PartialDiagnostic {
     /// NumDiagRanges - This is the number of ranges in the DiagRanges array.
     unsigned char NumDiagRanges;
 
+    /// \brief The number of code modifications hints in the
+    /// CodeModificationHints array.
+    unsigned char NumCodeModificationHints;
+    
     /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
     /// values, with one for each argument.  This specifies whether the argument
     /// is in DiagArgumentsStr or in DiagArguments.
@@ -56,6 +61,12 @@ class PartialDiagnostic {
     /// DiagRanges - The list of ranges added to this diagnostic.  It currently
     /// only support 10 ranges, could easily be extended if needed.
     SourceRange DiagRanges[10];
+    
+    enum { MaxCodeModificationHints = 3 };
+    
+    /// CodeModificationHints - If valid, provides a hint with some code
+    /// to insert, remove, or modify at a particular position.
+    CodeModificationHint CodeModificationHints[MaxCodeModificationHints];    
   };
 
   /// DiagID - The diagnostic ID.
@@ -84,6 +95,20 @@ class PartialDiagnostic {
     DiagStorage->DiagRanges[DiagStorage->NumDiagRanges++] = R;
   }  
 
+  void AddCodeModificationHint(const CodeModificationHint &Hint) const {
+    if (Hint.isNull())
+      return;
+    
+    if (!DiagStorage)
+      DiagStorage = new Storage;
+
+    assert(DiagStorage->NumCodeModificationHints < 
+             Storage::MaxCodeModificationHints &&
+           "Too many code modification hints!");
+    DiagStorage->CodeModificationHints[DiagStorage->NumCodeModificationHints++]
+      = Hint;
+  }
+  
 public:
   PartialDiagnostic(unsigned DiagID)
     : DiagID(DiagID), DiagStorage(0) { }
@@ -130,6 +155,10 @@ public:
     // Add all ranges.
     for (unsigned i = 0, e = DiagStorage->NumDiagRanges; i != e; ++i)
       DB.AddSourceRange(DiagStorage->DiagRanges[i]);
+    
+    // Add all code modification hints
+    for (unsigned i = 0, e = DiagStorage->NumCodeModificationHints; i != e; ++i)
+      DB.AddCodeModificationHint(DiagStorage->CodeModificationHints[i]);
   }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
@@ -165,6 +194,13 @@ public:
 
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              DeclarationName N);
+  
+  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                             const CodeModificationHint &Hint) {
+    PD.AddCodeModificationHint(Hint);
+    return PD;
+  }
+  
 };
 
 inline PartialDiagnostic PDiag(unsigned DiagID = 0) {

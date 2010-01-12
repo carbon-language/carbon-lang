@@ -5196,7 +5196,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped))
         if (DRL->getDecl() == DRR->getDecl() &&
             !isa<EnumConstantDecl>(DRL->getDecl()))
-          Diag(Loc, diag::warn_selfcomparison);
+          DiagRuntimeBehavior(Loc, PDiag(diag::warn_selfcomparison));
 
     if (isa<CastExpr>(LHSStripped))
       LHSStripped = LHSStripped->IgnoreParenCasts();
@@ -5231,15 +5231,17 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       case BinaryOperator::NE: resultComparison = ") != 0"; break;
       default: assert(false && "Invalid comparison operator");
       }
-      Diag(Loc, diag::warn_stringcompare)
-        << isa<ObjCEncodeExpr>(literalStringStripped)
-        << literalString->getSourceRange()
-        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
-        << CodeModificationHint::CreateInsertion(lex->getLocStart(),
-                                                 "strcmp(")
-        << CodeModificationHint::CreateInsertion(
-                                       PP.getLocForEndOfToken(rex->getLocEnd()),
-                                       resultComparison);
+      
+      DiagRuntimeBehavior(Loc,
+        PDiag(diag::warn_stringcompare)
+          << isa<ObjCEncodeExpr>(literalStringStripped)
+          << literalString->getSourceRange()
+          << CodeModificationHint::CreateReplacement(SourceRange(Loc), ", ")
+          << CodeModificationHint::CreateInsertion(lex->getLocStart(),
+                                                   "strcmp(")
+          << CodeModificationHint::CreateInsertion(
+                                         PP.getLocForEndOfToken(rex->getLocEnd()),
+                                         resultComparison));
     }
   }
 
@@ -5503,7 +5505,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
         if (DRL->getDecl() == DRR->getDecl())
-          Diag(Loc, diag::warn_selfcomparison);
+          DiagRuntimeBehavior(Loc, PDiag(diag::warn_selfcomparison));
   }
 
   // Check for comparisons of floating point operands using != and ==.
