@@ -683,6 +683,8 @@ def err_attribute_not_string : Error<
   "argument to %0 attribute was not a string literal">;
 def err_attribute_section_invalid_for_target : Error<
   "argument to 'section' attribute is not valid for this target: %0">;
+def err_attribute_section_local_variable : Error<
+  "'section' attribute is not valid on local variables">;
 def err_attribute_aligned_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<

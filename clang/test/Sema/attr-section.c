@@ -8,3 +8,8 @@ int x __attribute__((section(
 int y __attribute__((section(
    "sadf"))); // expected-error {{mach-o section specifier requires a segment and section separated by a comma}}
 
+// PR6007
+void test() {
+  __attribute__((section("NEAR,x"))) int n1; // expected-error {{'section' attribute is not valid on local variables}}
+  __attribute__((section("NEAR,x"))) static int n2; // ok.
+}

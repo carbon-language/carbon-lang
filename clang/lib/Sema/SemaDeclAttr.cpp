@@ -926,14 +926,19 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // If the target wants to validate the section specifier, make it happen.
   std::string Error = S.Context.Target.isValidSectionSpecifier(SE->getString());
-  if (Error.empty()) {
-    D->addAttr(::new (S.Context) SectionAttr(SE->getString()));
+  if (!Error.empty()) {
+    S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
+    << Error;
     return;
   }
 
-  S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
-    << Error;
-
+  // This attribute cannot be applied to local variables.
+  if (isa<VarDecl>(D) && cast<VarDecl>(D)->hasLocalStorage()) {
+    S.Diag(SE->getLocStart(), diag::err_attribute_section_local_variable);
+    return;
+  }
+  
+  D->addAttr(::new (S.Context) SectionAttr(SE->getString()));
 }
 
 static void HandleCDeclAttr(Decl *d, const AttributeList &Attr, Sema &S) {
