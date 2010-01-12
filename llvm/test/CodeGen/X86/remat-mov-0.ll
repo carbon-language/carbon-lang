@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=x86-64 | grep {xorl	%edi, %edi} | count 4
-; XFAIL: *
 
 ; CodeGen should remat the zero instead of spilling it.
 

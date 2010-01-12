@@ -1598,17 +1598,21 @@ def SLDT64m : RI<0x00, MRM0m, (outs i16mem:$dst), (ins),
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 
-// Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's
-// equivalent due to implicit zero-extending, and it sometimes has a smaller
-// encoding.
+// We want to rewrite MOV64r0 in terms of MOV32r0, because it's sometimes a
+// smaller encoding, but doing so at isel time interferes with rematerialization
+// in the current register allocator. For now, this is rewritten when the
+// instruction is lowered to an MCInst.
 // FIXME: AddedComplexity gives this a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let AddedComplexity = 1 in
-def : Pat<(i64 0),
-          (SUBREG_TO_REG (i64 0), (MOV32r0), x86_subreg_32bit)>;
+let Defs = [EFLAGS],
+    AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins),
+                 "",
+                 [(set GR64:$dst, 0)]>;
 
-
-// Materialize i64 constant where top 32-bits are zero.
+// Materialize i64 constant where top 32-bits are zero. This could theoretically
+// use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however
+// that would make it more difficult to rematerialize.
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "", [(set GR64:$dst, i64immZExt32:$src)]>;
