@@ -104,8 +104,6 @@ private:
 
   bool X86SelectBranch(Instruction *I);
 
-  bool X86SelectOR(Instruction *I);
-
   bool X86SelectShift(Instruction *I);
 
   bool X86SelectSelect(Instruction *I);
@@ -947,44 +945,6 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   return true;
 }
 
-bool X86FastISel::X86SelectOR(Instruction *I) {
-  // FIXME: This is necessary because tablegen stopped generate fastisel
-  // patterns after 93152 and 93191 (which turns OR to ADD if the set
-  // bits in the source operands are known not to overlap).
-  const TargetRegisterClass *RC = NULL;
-  unsigned OpReg = 0, OpImm = 0;
-  if (I->getType()->isInteger(16)) {
-    RC = X86::GR16RegisterClass;
-    OpReg = X86::OR16rr; OpImm = X86::OR16ri;
-  } else if (I->getType()->isInteger(32)) {
-    RC = X86::GR32RegisterClass;
-    OpReg = X86::OR32rr; OpImm = X86::OR32ri;
-  } else if (I->getType()->isInteger(64)) {
-    RC = X86::GR64RegisterClass;
-    OpReg = X86::OR32rr; OpImm = X86::OR32ri;
-  } else
-    return false;
-
-  unsigned Op0Reg = getRegForValue(I->getOperand(0));
-  if (Op0Reg == 0) return false;
-  
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-    unsigned ResultReg = createResultReg(RC);
-    BuildMI(MBB, DL, TII.get(OpImm), ResultReg).addReg(Op0Reg)
-      .addImm(CI->getZExtValue());
-    UpdateValueMap(I, ResultReg);
-    return true;
-  }
-
-  unsigned Op1Reg = getRegForValue(I->getOperand(1));
-  if (Op1Reg == 0) return false;
-
-  unsigned ResultReg = createResultReg(RC);
-  BuildMI(MBB, DL, TII.get(OpReg), ResultReg).addReg(Op0Reg).addReg(Op1Reg);
-  UpdateValueMap(I, ResultReg);
-  return true;
-}
-
 bool X86FastISel::X86SelectShift(Instruction *I) {
   unsigned CReg = 0, OpReg = 0, OpImm = 0;
   const TargetRegisterClass *RC = NULL;
@@ -1574,8 +1534,6 @@ X86FastISel::TargetSelectInstruction(Instruction *I)  {
     return X86SelectBranch(I);
   case Instruction::Call:
     return X86SelectCall(I);
-  case Instruction::Or:
-    return X86SelectOR(I);
   case Instruction::LShr:
   case Instruction::AShr:
   case Instruction::Shl:
