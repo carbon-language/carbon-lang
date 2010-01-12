@@ -1631,7 +1631,7 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
     << From->getType() << ToType << From->getSourceRange();
   else
     return false;
-  PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+  PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, &From, 1);
   return true;  
 }
 
@@ -4484,6 +4484,7 @@ struct CompareOverloadCandidatesForDisplay {
 void
 Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                               OverloadCandidateDisplayKind OCD,
+                              Expr **Args, unsigned NumArgs,
                               const char *Opc,
                               SourceLocation OpLoc) {
   // Sort the candidates by viability and position.  Sorting directly would
@@ -5032,13 +5033,13 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
     Diag(Fn->getSourceRange().getBegin(),
          diag::err_ovl_no_viable_function_in_call)
       << ULE->getName() << Fn->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
     break;
 
   case OR_Ambiguous:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
       << ULE->getName() << Fn->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, NumArgs);
     break;
 
   case OR_Deleted:
@@ -5046,7 +5047,7 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
       << Best->Function->isDeleted()
       << ULE->getName()
       << Fn->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
     break;
   }
 
@@ -5201,7 +5202,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << UnaryOperator::getOpcodeStr(Opc)
           << Input->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, 
+      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, NumArgs,
                               UnaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();
 
@@ -5210,7 +5211,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
         << Best->Function->isDeleted()
         << UnaryOperator::getOpcodeStr(Opc)
         << Input->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
       return ExprError();
     }
 
@@ -5417,7 +5418,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       assert(Result.isInvalid() && 
              "C++ binary operator overloading is missing candidates!");
       if (Result.isInvalid())
-        PrintOverloadCandidates(CandidateSet, OCD_AllCandidates,
+        PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, 2,
                                 BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return move(Result);
     }
@@ -5426,7 +5427,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << BinaryOperator::getOpcodeStr(Opc)
           << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates,
+      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, 2,
                               BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();
 
@@ -5435,7 +5436,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         << Best->Function->isDeleted()
         << BinaryOperator::getOpcodeStr(Opc)
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, 2);
       return ExprError();
   }
 
@@ -5545,7 +5546,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         Diag(LLoc, diag::err_ovl_no_viable_subscript)
           << Args[0]->getType()
           << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates,
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, 2,
                               "[]", LLoc);
       return ExprError();
     }
@@ -5553,7 +5554,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     case OR_Ambiguous:
       Diag(LLoc,  diag::err_ovl_ambiguous_oper)
           << "[]" << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates,
+      PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, 2,
                               "[]", LLoc);
       return ExprError();
 
@@ -5561,7 +5562,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
       Diag(LLoc, diag::err_ovl_deleted_oper)
         << Best->Function->isDeleted() << "[]"
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates,
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, 2,
                               "[]", LLoc);
       return ExprError();
     }
@@ -5646,14 +5647,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       Diag(UnresExpr->getMemberLoc(),
            diag::err_ovl_no_viable_member_function_in_call)
         << DeclName << MemExprE->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
       // FIXME: Leaking incoming expressions!
       return ExprError();
 
     case OR_Ambiguous:
       Diag(UnresExpr->getMemberLoc(), diag::err_ovl_ambiguous_member_call)
         << DeclName << MemExprE->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
       // FIXME: Leaking incoming expressions!
       return ExprError();
 
@@ -5661,7 +5662,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       Diag(UnresExpr->getMemberLoc(), diag::err_ovl_deleted_member_call)
         << Best->Function->isDeleted()
         << DeclName << MemExprE->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+      PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
       // FIXME: Leaking incoming expressions!
       return ExprError();
     }
@@ -5809,14 +5810,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       Diag(Object->getSourceRange().getBegin(),
            diag::err_ovl_no_viable_object_call)
         << Object->getType() << Object->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
     break;
 
   case OR_Ambiguous:
     Diag(Object->getSourceRange().getBegin(),
          diag::err_ovl_ambiguous_object_call)
       << Object->getType() << Object->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, NumArgs);
     break;
 
   case OR_Deleted:
@@ -5824,7 +5825,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
          diag::err_ovl_deleted_object_call)
       << Best->Function->isDeleted()
       << Object->getType() << Object->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
     break;
   }
 
@@ -6005,20 +6006,20 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
     else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)
         << "operator->" << Base->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, &Base, 1);
     return ExprError();
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
       << "->" << Base->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, &Base, 1);
     return ExprError();
 
   case OR_Deleted:
     Diag(OpLoc,  diag::err_ovl_deleted_oper)
       << Best->Function->isDeleted()
       << "->" << Base->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates);
+    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, &Base, 1);
     return ExprError();
   }
 

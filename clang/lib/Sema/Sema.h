@@ -1040,6 +1040,7 @@ public:
   };
   void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                                OverloadCandidateDisplayKind OCD,
+                               Expr **Args, unsigned NumArgs,
                                const char *Opc = 0,
                                SourceLocation Loc = SourceLocation());
 

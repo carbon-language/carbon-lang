@@ -88,7 +88,7 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
       S.Diag(Init->getSourceRange().getBegin(),
              diag::err_typecheck_convert_ambiguous)
             << DeclType << Init->getType() << Init->getSourceRange();
-      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates);
+      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, &Init, 1);
       return true;
     }
     return false;
@@ -3015,14 +3015,16 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     S.Diag(Loc, diag::err_temp_copy_no_viable)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates);
+    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates,
+                              &CurInitExpr, 1);
     return S.ExprError();
       
   case OR_Ambiguous:
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_ViableCandidates);
+    S.PrintOverloadCandidates(CandidateSet, Sema::OCD_ViableCandidates,
+                              &CurInitExpr, 1);
     return S.ExprError();
     
   case OR_Deleted:
@@ -3437,14 +3439,16 @@ bool InitializationSequence::Diagnose(Sema &S,
           << DestType << Args[0]->getType()
           << Args[0]->getSourceRange();
 
-      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_ViableCandidates);
+      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_ViableCandidates,
+                                Args, NumArgs);
       break;
         
     case OR_No_Viable_Function:
       S.Diag(Kind.getLocation(), diag::err_typecheck_nonviable_condition)
         << Args[0]->getType() << DestType.getNonReferenceType()
         << Args[0]->getSourceRange();
-      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates);
+      S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates,
+                                Args, NumArgs);
       break;
         
     case OR_Deleted: {
@@ -3547,13 +3551,14 @@ bool InitializationSequence::Diagnose(Sema &S,
         S.Diag(Kind.getLocation(), diag::err_ovl_ambiguous_init)
           << DestType << ArgsRange;
         S.PrintOverloadCandidates(FailedCandidateSet,
-                                  Sema::OCD_ViableCandidates);
+                                  Sema::OCD_ViableCandidates, Args, NumArgs);
         break;
         
       case OR_No_Viable_Function:
         S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
           << DestType << ArgsRange;
-        S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates);
+        S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates,
+                                  Args, NumArgs);
         break;
         
       case OR_Deleted: {
