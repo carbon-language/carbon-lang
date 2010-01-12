@@ -29,6 +29,9 @@ int uuid = 0;
 char base_present[N_STRUCTS][N_STRUCTS];
 char funcs_present[N_STRUCTS][N_FUNCS*FUNCSPACING];
 
+// The return type for each function when doing covariant testcase generation.
+short ret_types[N_STRUCTS][N_FUNCS*FUNCSPACING];
+
 bool is_ambiguous(int s, int base) {
   for (int i = 0; i < N_STRUCTS; ++i) {
     if ((base_present[base][i] & base_present[s][i]) == 1)
@@ -40,6 +43,24 @@ bool is_ambiguous(int s, int base) {
 void add_bases(int s, int base) {
   for (int i = 0; i < N_STRUCTS; ++i)
     base_present[s][i] |= base_present[base][i];
+  if (!COVARIANT)
+    return;
+  for (int i = 0; i < N_FUNCS*FUNCSPACING; ++i) {
+    if (!ret_types[base][i])
+      continue;
+    if (!ret_types[s][i]) {
+      ret_types[s][i] = ret_types[base][i];
+      continue;
+    }
+    if (base_present[ret_types[base][i]][ret_types[s][i]])
+      // If the return type of the function from this base dominates
+      ret_types[s][i] = ret_types[base][i];
+    if (base_present[ret_types[s][i]][ret_types[base][i]])
+      // If a previous base dominates
+      continue;
+    // If neither dominates, we'll use this class.
+    ret_types[s][i] = s;
+  }
 }
 
 // This contains the class that has the final override for
@@ -134,15 +155,27 @@ void gs(int s) {
   for (int i = 0; i < n_funcs; ++i) {
     int fn = old_func + random() % FUNCSPACING + 1;
     funcs[i] = fn;
-    int rettype = 0;
-    if (COVARIANT)
-      rettype = s;
-    if (rettype) {
-      g("  virtual s"); g(rettype); g("* fun");
+    int ret_type = 0;
+    if (COVARIANT) {
+      ret_type = random() % s + 1;
+      if (!base_present[s][ret_type]
+          || !base_present[ret_type][ret_types[s][fn]])
+        if (ret_types[s][fn]) {
+          printf("  // Found one for s%d for s%d* fun%d.\n", s,
+                 ret_types[s][fn], fn);
+          ret_type = ret_types[s][fn];
+        } else
+          ret_type = s;
+      else
+        printf("  // Wow found one for s%d for fun%d.\n", s, fn);
+      ret_types[s][fn] = ret_type;
+    }
+    if (ret_type) {
+      g("  virtual s"); g(ret_type); g("* fun");
     } else
       g("  virtual void fun");
     g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid);
-    if (rettype)
+    if (ret_type)
       gl("); return 0; }");
     else
       gl("); }");
@@ -179,15 +212,15 @@ void gs(int s) {
         
       if (base_present[prev_base][new_base]) {
         // The previous base dominates the new base, no update necessary
-        fprintf(stderr, "// No override for fun%d in s%d as s%d dominates s%d.\n",
-                fn, s, prev_base, new_base);
+        printf("  // No override for fun%d in s%d as s%d dominates s%d.\n",
+               fn, s, prev_base, new_base);
         continue;
       }
 
       if (base_present[new_base][prev_base]) {
         // The new base dominates the old base, no override necessary
-        fprintf(stderr, "// No override for fun%d in s%d as s%d dominates s%d.\n",
-                fn, s, new_base, prev_base);
+        printf("  // No override for fun%d in s%d as s%d dominates s%d.\n",
+               fn, s, new_base, prev_base);
         // record the final override
         final_override[s][fn] = new_base;
         continue;
@@ -199,15 +232,23 @@ void gs(int s) {
       funcs[n_funcs++] = fn;
       if (n_funcs == (N_FUNCS*FUNCSPACING-1))
         abort();
-      int rettype = 0;
-      if (COVARIANT)
-        rettype = s;
-      if (rettype) {
-        g("  virtual s"); g(rettype); g("* fun");
+      int ret_type = 0;
+      if (COVARIANT) {
+        if (!ret_types[s][fn]) {
+          ret_types[s][fn] = ret_type = s;
+        } else {
+          ret_type = ret_types[s][fn];
+          if (ret_type != s)
+            printf("  // Calculated return type in s%d as s%d* fun%d.\n",
+                   s, ret_type, fn);
+        }
+      }
+      if (ret_type) {
+        g("  virtual s"); g(ret_type); g("* fun");
       } else
         g("  virtual void fun");
       g(fn); g("(char *t) { mix(\"vfn this offset\", (char *)this - t); mix(\"vfn uuid\", "); g(++uuid);
-      if (rettype)
+      if (ret_type)
         gl("); return 0; }");
       else
         gl("); }");
