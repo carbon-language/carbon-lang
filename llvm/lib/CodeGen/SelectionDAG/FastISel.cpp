@@ -78,7 +78,7 @@ unsigned FastISel::getRegForValue(Value *V) {
   // Look up the value to see if we already have a register for it. We
   // cache values defined by Instructions across blocks, and other values
   // only locally. This is because Instructions already have the SSA
-  // def-dominatess-use requirement enforced.
+  // def-dominates-use requirement enforced.
   if (ValueMap.count(V))
     return ValueMap[V];
   unsigned Reg = LocalValueMap[V];
