@@ -28,6 +28,7 @@ _clang_getDeclExtent
 _clang_getDeclSource
 _clang_getDeclSourceFile
 _clang_getDeclSpelling
+_clang_getDeclUSR
 _clang_getDeclaration
 _clang_getDefinitionSpellingAndExtent
 _clang_getEntityFromDecl
@@ -36,7 +37,6 @@ _clang_getFileTime
 _clang_getNullCursor
 _clang_getNumCompletionChunks
 _clang_getTranslationUnitSpelling
-_clang_getUSR
 _clang_isDeclaration
 _clang_isDefinition
 _clang_isInvalid
