@@ -1341,20 +1341,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   // At this point, the IR is fully up to date and consistent.  Do a quick scan
   // over the new instructions and zap any that are constants or dead.  This
   // frequently happens because of phi translation.
-  BI = NewBB->begin();
-  for (BasicBlock::iterator E = NewBB->end(); BI != E; ) {
-    Instruction *Inst = BI++;
-    
-    if (Value *V = SimplifyInstruction(Inst, TD)) {
-      WeakVH BIHandle(BI);
-      ReplaceAndSimplifyAllUses(Inst, V, TD);
-      if (BIHandle == 0)
-        BI = NewBB->begin();
-      continue;
-    }
-    
-    RecursivelyDeleteTriviallyDeadInstructions(Inst);
-  }
+  SimplifyInstructionsInBlock(NewBB, TD);
   
   // Threaded an edge!
   ++NumThreads;
@@ -1425,9 +1412,6 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   // mapping and using it to remap operands in the cloned instructions.
   for (; BI != BB->end(); ++BI) {
     Instruction *New = BI->clone();
-    New->setName(BI->getName());
-    PredBB->getInstList().insert(OldPredBranch, New);
-    ValueMapping[BI] = New;
     
     // Remap operands to patch up intra-block references.
     for (unsigned i = 0, e = New->getNumOperands(); i != e; ++i)
@@ -1436,6 +1420,19 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
         if (I != ValueMapping.end())
           New->setOperand(i, I->second);
       }
+
+    // If this instruction can be simplified after the operands are updated,
+    // just use the simplified value instead.  This frequently happens due to
+    // phi translation.
+    if (Value *IV = SimplifyInstruction(New, TD)) {
+      delete New;
+      ValueMapping[BI] = IV;
+    } else {
+      // Otherwise, insert the new instruction into the block.
+      New->setName(BI->getName());
+      PredBB->getInstList().insert(OldPredBranch, New);
+      ValueMapping[BI] = New;
+    }
   }
   
   // Check to see if the targets of the branch had PHI nodes. If so, we need to

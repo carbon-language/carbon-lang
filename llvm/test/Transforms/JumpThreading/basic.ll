@@ -407,12 +407,7 @@ T2:
 F2:
 	ret i32 %v1
         
-;; FIXME: CONSTANT FOLD on clone and when phi gets eliminated.
-
-; CHECK:      Entry.Merge_crit_edge:
-; CHECK-NEXT:   %M1 = icmp eq i32 192, 192
-; CHECK-NEXT:   %N2 = xor i1 true, %M1
-; CHECK-NEXT:   br i1 %N2, label %T2, label %F2
+; CHECK:   br i1 %cond, label %F2, label %Merge
 
 ; CHECK:      Merge:
 ; CHECK-NEXT:   %M = icmp eq i32 %v1, 192
