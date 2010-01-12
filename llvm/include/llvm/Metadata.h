@@ -184,7 +184,7 @@ private:
 /// NamedMDNode is always named. All NamedMDNode operand has a type of metadata.
 class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
   friend class SymbolTableListTraits<NamedMDNode, Module>;
-  friend class ilist_traits<NamedMDNode>;
+  friend struct ilist_traits<NamedMDNode>;
   friend class LLVMContextImpl;
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
