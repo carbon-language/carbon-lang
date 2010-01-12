@@ -688,6 +688,11 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Record.clear();
       continue;
     }
+
+    // Ignore all values in ValueList except for Constants.
+    if (V && (isa<Instruction>(V) || isa<Argument>(V)))
+      continue;
+
     const Constant *C = cast<Constant>(V);
     unsigned Code = -1U;
     unsigned AbbrevToUse = 0;
