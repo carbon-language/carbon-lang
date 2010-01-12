@@ -994,6 +994,10 @@ public:
     DefineStd(Builder, "WIN32", Opts);
     DefineStd(Builder, "WINNT", Opts);
     Builder.defineMacro("_X86_");
+    if (Opts.ObjC1)
+      // __weak is always defined, for use in blocks and with objc pointers,
+      // even for i686-pc-win32 targets.
+      Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
   }
 };
 } // end anonymous namespace
