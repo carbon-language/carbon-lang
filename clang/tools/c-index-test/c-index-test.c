@@ -159,6 +159,36 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
   }
 }
 
+/******************************************************************************/
+/* USR testing.                                                               */
+/******************************************************************************/
+
+static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
+  if (!Filter || (C.kind == *(enum CXCursorKind *)Filter)) {
+    CXString USR = clang_getDeclUSR(C.decl);
+    if (!USR.Spelling) {
+      clang_disposeString(USR);
+      return;
+    }
+    printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C), USR.Spelling);
+    PrintDeclExtent(C.decl);
+    printf("\n");
+    clang_disposeString(USR);
+  }
+}
+
+static void USRVisitor(CXTranslationUnit Unit, CXCursor Cursor,
+                       CXClientData Filter) {  
+  if (Cursor.decl) {
+    /* USRDeclVisitor(Unit, Cursor.decl, Cursor, Filter);*/
+    clang_loadDeclaration(Cursor.decl, USRDeclVisitor, 0);
+  }
+}
+
+/******************************************************************************/
+/* Loading ASTs/source.                                                       */
+/******************************************************************************/
+
 static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
                              const char *filter, const char *prefix,
                              CXTranslationUnitIterator Visitor) {
@@ -560,6 +590,14 @@ int perform_code_completion(int argc, const char **argv) {
 /* Command line processing.                                                   */
 /******************************************************************************/
 
+static CXTranslationUnitIterator GetVisitor(const char *s) {
+  if (s[0] == '\0')
+    return TranslationUnitVisitor;
+  if (strcmp(s, "-usrs") == 0)
+    return USRVisitor;
+  return NULL;
+}
+
 static void print_usage(void) {
   fprintf(stderr,
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
@@ -567,8 +605,11 @@ static void print_usage(void) {
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter> "
           "[FileCheck prefix]\n"
-    "       c-index-test -test-load-source <symbol filter> {<args>}*\n\n"
-    " <symbol filter> options for -test-load-tu and -test-load-source:\n%s",
+    "       c-index-test -test-load-tu-usrs <AST file> <symbol filter> "
+           "[FileCheck prefix]\n"
+    "       c-index-test -test-load-source <symbol filter> {<args>}*\n"
+    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n\n"
+    " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
     "   category - only load ObjC categories (non-PCH)\n"
@@ -582,14 +623,17 @@ static void print_usage(void) {
 int main(int argc, const char **argv) {
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv);
-  if (argc >= 4 && strcmp(argv[1], "-test-load-tu") == 0)
-    return perform_test_load_tu(argv[2], argv[3],
-                                argc >= 5 ? argv[4] : 0,
-                                TranslationUnitVisitor);
-  if (argc >= 4 && strcmp(argv[1], "-test-load-source") == 0)
-    return perform_test_load_source(argc - 3, argv + 3, argv[2],
-                                    TranslationUnitVisitor);
-  if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
+  else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
+    CXTranslationUnitIterator I = GetVisitor(argv[1] + 13);
+    if (I)
+      return perform_test_load_tu(argv[2], argv[3], argc >= 5 ? argv[4] : 0, I);
+  }
+  else if (argc >= 4 && strncmp(argv[1], "-test-load-source", 17) == 0) {
+    CXTranslationUnitIterator I = GetVisitor(argv[1] + 17);
+    if (I)
+      return perform_test_load_source(argc - 3, argv + 3, argv[2], I);
+  }
+  else if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
     return perform_file_scan(argv[2], argv[3],
                              argc >= 5 ? argv[4] : 0);
 
