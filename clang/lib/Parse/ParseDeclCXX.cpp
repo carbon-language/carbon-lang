@@ -468,7 +468,8 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-    if (TemplateId->Kind == TNK_Type_template) {
+    if (TemplateId->Kind == TNK_Type_template ||
+        TemplateId->Kind == TNK_Dependent_template_name) {
       AnnotateTemplateIdTokenAsType(SS);
 
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
@@ -1527,12 +1528,12 @@ Parser::MemInitResult Parser::ParseMemInitializer(DeclPtrTy ConstructorDecl) {
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId
       = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-    if (TemplateId->Kind == TNK_Type_template) {
+    if (TemplateId->Kind == TNK_Type_template ||
+        TemplateId->Kind == TNK_Dependent_template_name) {
       AnnotateTemplateIdTokenAsType(&SS);
       assert(Tok.is(tok::annot_typename) && "template-id -> type failed");
       TemplateTypeTy = Tok.getAnnotationValue();
     }
-    // FIXME. May need to check for TNK_Dependent_template as well.
   }
   if (!TemplateTypeTy && Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_member_or_base_name);
