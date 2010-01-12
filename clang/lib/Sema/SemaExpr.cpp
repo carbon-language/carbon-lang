@@ -4793,8 +4793,7 @@ QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   return QualType();
 }
 
-inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
-                                                              Expr *&rex) {
+QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   // For conversion purposes, we ignore any qualifiers.
   // For example, "const float" and "float" are equivalent.
   QualType lhsType =
@@ -4855,19 +4854,26 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
   return QualType();
 }
 
-inline QualType Sema::CheckMultiplyDivideOperands(
-  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) {
+QualType Sema::CheckMultiplyDivideOperands(
+  Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign, bool isDiv) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(Loc, lex, rex);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
 
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    return compType;
-  return InvalidOperands(Loc, lex, rex);
+  if (!lex->getType()->isArithmeticType() ||
+      !rex->getType()->isArithmeticType())
+    return InvalidOperands(Loc, lex, rex);
+  
+  // Check for division by zero.
+  if (isDiv &&
+      rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
+    Diag(Loc, diag::warn_division_by_zero) << rex->getSourceRange();
+  
+  return compType;
 }
 
-inline QualType Sema::CheckRemainderOperands(
+QualType Sema::CheckRemainderOperands(
   Expr *&lex, Expr *&rex, SourceLocation Loc, bool isCompAssign) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
     if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
@@ -4877,12 +4883,17 @@ inline QualType Sema::CheckRemainderOperands(
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
 
-  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
-    return compType;
-  return InvalidOperands(Loc, lex, rex);
+  if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
+    return InvalidOperands(Loc, lex, rex);
+  
+  // Check for remainder by zero.
+  if (rex->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
+    Diag(Loc, diag::warn_remainder_by_zero) << rex->getSourceRange();
+  
+  return compType;
 }
 
-inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
+QualType Sema::CheckAdditionOperands( // C99 6.5.6
   Expr *&lex, Expr *&rex, SourceLocation Loc, QualType* CompLHSTy) {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType()) {
     QualType compType = CheckVectorOperands(Loc, lex, rex);
@@ -6082,7 +6093,8 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BinaryOperator::Mul:
   case BinaryOperator::Div:
-    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc);
+    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, false,
+                                           Opc == BinaryOperator::Div);
     break;
   case BinaryOperator::Rem:
     ResultTy = CheckRemainderOperands(lhs, rhs, OpLoc);
@@ -6118,7 +6130,8 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BinaryOperator::MulAssign:
   case BinaryOperator::DivAssign:
-    CompResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true);
+    CompResultTy = CheckMultiplyDivideOperands(lhs, rhs, OpLoc, true,
+                                              Opc == BinaryOperator::DivAssign);
     CompLHSTy = CompResultTy;
     if (!CompResultTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, CompResultTy);

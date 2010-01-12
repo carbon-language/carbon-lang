@@ -91,16 +91,16 @@ void r6268365() {
 
 void divzeroassume(unsigned x, unsigned j) {  
   x /= j;  
-  if (j == 0) x /= 0;     // no-warning
-  if (j == 0) x /= j;     // no-warning
-  if (j == 0) x = x / 0;  // no-warning
+  if (j == 0) x /= 0;     // no static-analyzer warning    expected-warning {{division by zero is undefined}}
+  if (j == 0) x /= j;     // no static-analyzer warning
+  if (j == 0) x = x / 0;  // no static-analyzer warning    expected-warning {{division by zero is undefined}}
 }
 
 void divzeroassumeB(unsigned x, unsigned j) {  
   x = x / j;  
-  if (j == 0) x /= 0;     // no-warning
-  if (j == 0) x /= j;     // no-warning
-  if (j == 0) x = x / 0;  // no-warning
+  if (j == 0) x /= 0;     // no static-analyzer warning     expected-warning {{division by zero is undefined}}
+  if (j == 0) x /= j;     // no static-analyzer warning
+  if (j == 0) x = x / 0;  // no static-analyzer warning     expected-warning {{division by zero is undefined}}
 }
 
 // InitListExpr processing

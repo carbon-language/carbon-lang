@@ -1557,10 +1557,10 @@ def warn_floatingpoint_eq : Warning<
   "comparing floating point with == or != is unsafe">,
   InGroup<DiagGroup<"float-equal">>, DefaultIgnore;
 
-def warn_shift_negative : Warning<
-  "shift count is negative">;
-def warn_shift_gt_typewidth : Warning<
-  "shift count >= width of type">;
+def warn_division_by_zero : Warning<"division by zero is undefined">;
+def warn_remainder_by_zero : Warning<"remainder by zero is undefined">;
+def warn_shift_negative : Warning<"shift count is negative">;
+def warn_shift_gt_typewidth : Warning<"shift count >= width of type">;
 
 def warn_precedence_bitwise_rel : Warning<
   "%0 has lower precedence than %1; %1 will be evaluated first">,

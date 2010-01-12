@@ -3644,7 +3644,8 @@ public:
   QualType CheckPointerToMemberOperands( // C++ 5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isIndirect);
   QualType CheckMultiplyDivideOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign,
+                                       bool isDivide);
   QualType CheckRemainderOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckAdditionOperands( // C99 6.5.6
