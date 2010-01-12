@@ -416,7 +416,7 @@ static SourceLocation getLocationFromCursor(CXCursor C,
   }
 }
 
-static CXString createCXString(const char *String, bool DupString = false) {
+CXString CIndexer::CIndexer::createCXString(const char *String, bool DupString){
   CXString Str;
   if (DupString) {
     Str.Spelling = strdup(String);
@@ -579,7 +579,8 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  return createCXString(CXXUnit->getOriginalSourceFileName().c_str(), true);
+  return CIndexer::createCXString(CXXUnit->getOriginalSourceFileName().c_str(),
+                                  true);
 }
 
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
@@ -633,18 +634,19 @@ CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
 
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
-    return createCXString(OMD->getSelector().getAsString().c_str(), true);
+    return CIndexer::createCXString(OMD->getSelector().getAsString().c_str(),
+                                    true);
 
   if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
     // and returns different names. NamedDecl returns the class name and
     // ObjCCategoryImplDecl returns the category name.
-    return createCXString(CIMP->getIdentifier()->getNameStart());
+    return CIndexer::createCXString(CIMP->getIdentifier()->getNameStart());
 
   if (ND->getIdentifier())
-    return createCXString(ND->getIdentifier()->getNameStart());
+    return CIndexer::createCXString(ND->getIdentifier()->getNameStart());
 
-  return createCXString("");
+  return CIndexer::createCXString("");
 }
 
 unsigned clang_getDeclLine(CXDecl AnonDecl) {
@@ -759,28 +761,29 @@ CXString clang_getCursorSpelling(CXCursor C) {
     case CXCursor_ObjCSuperClassRef: {
       ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
       assert(OID && "clang_getCursorLine(): Missing interface decl");
-      return createCXString(OID->getSuperClass()->getIdentifier()
-                            ->getNameStart());
+      return CIndexer::createCXString(OID->getSuperClass()->getIdentifier()
+                                      ->getNameStart());
     }
     case CXCursor_ObjCClassRef: {
       if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND))
-        return createCXString(OID->getIdentifier()->getNameStart());
+        return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
 
       ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(ND);
       assert(OCD && "clang_getCursorLine(): Missing category decl");
-      return createCXString(OCD->getClassInterface()->getIdentifier()
+      return CIndexer::createCXString(OCD->getClassInterface()->getIdentifier()
                             ->getNameStart());
     }
     case CXCursor_ObjCProtocolRef: {
       ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
       assert(OID && "clang_getCursorLine(): Missing protocol decl");
-      return createCXString(OID->getIdentifier()->getNameStart());
+      return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCSelectorRef: {
       ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
         static_cast<Stmt *>(C.stmt));
       assert(OME && "clang_getCursorLine(): Missing message expr");
-      return createCXString(OME->getSelector().getAsString().c_str(), true);
+      return CIndexer::createCXString(OME->getSelector().getAsString().c_str(),
+                                      true);
     }
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
@@ -788,10 +791,11 @@ CXString clang_getCursorSpelling(CXCursor C) {
       DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
         static_cast<Stmt *>(C.stmt));
       assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-      return createCXString(DRE->getDecl()->getIdentifier()->getNameStart());
+      return CIndexer::createCXString(DRE->getDecl()->getIdentifier()
+                                      ->getNameStart());
     }
     default:
-      return createCXString("<not implemented>");
+      return CIndexer::createCXString("<not implemented>");
     }
   }
   return clang_getDeclSpelling(C.decl);
@@ -1049,8 +1053,9 @@ CXFile clang_getCursorSourceFile(CXCursor C) {
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
 
-  return (void *)getFileEntryFromSourceLocation(SourceMgr,
-                                                getLocationFromCursor(C,SourceMgr, ND));
+  return (void *)
+    getFileEntryFromSourceLocation(SourceMgr, getLocationFromCursor(C,SourceMgr,
+                                                                    ND));
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C,

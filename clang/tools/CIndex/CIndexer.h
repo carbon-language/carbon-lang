@@ -81,6 +81,8 @@ public:
   
   /// \brief Get the path of the clang resource files.
   std::string getClangResourcesPath();
+
+  static CXString createCXString(const char *String, bool DupString = false);
 };
 
 #endif
