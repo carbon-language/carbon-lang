@@ -128,7 +128,6 @@ void test()
   // "the type [it] woud have if E2 were converted to an rvalue"
   vfn pfn = i1 ? F() : test;
   pfn = i1 ? test : F();
-  // these are ambiguous - better messages would be nice
   (void)(i1 ? A() : B()); // expected-error {{conversion from 'struct B' to 'struct A' is ambiguous}}
   (void)(i1 ? B() : A()); // expected-error {{conversion from 'struct B' to 'struct A' is ambiguous}}
   (void)(i1 ? 1 : Ambig()); // expected-error {{conversion from 'struct Ambig' to 'int' is ambiguous}}
