@@ -460,7 +460,9 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
     //   name lookup. Instead, any conversion function templates visible in the
     //   context of the use are considered. [...]
     const CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
-    
+    if (!Record->isDefinition())
+      return Found;
+
     const UnresolvedSet *Unresolved = Record->getConversionFunctions();
     for (UnresolvedSet::iterator U = Unresolved->begin(), 
                               UEnd = Unresolved->end();
