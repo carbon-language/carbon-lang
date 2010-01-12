@@ -6,7 +6,7 @@
 @end
 
 // RUN: c-index-test -code-completion-at=%s:2:2 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: {TypedText class}{HorizontalSpace  }{Placeholder identifier}{Text ;}
+// CHECK-CC1: {TypedText class}{HorizontalSpace  }{Placeholder identifier}{SemiColon ;}
 // CHECK-CC1: {TypedText compatibility_alias}{HorizontalSpace  }{Placeholder alias}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC1: {TypedText implementation}{HorizontalSpace  }{Placeholder class}
 // CHECK-CC1: {TypedText interface}{HorizontalSpace  }{Placeholder class}
