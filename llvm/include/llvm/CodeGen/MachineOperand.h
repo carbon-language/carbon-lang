@@ -26,6 +26,7 @@ class GlobalValue;
 class MachineInstr;
 class TargetMachine;
 class MachineRegisterInfo;
+class MDNode;
 class raw_ostream;
   
 /// MachineOperand class - Representation of each machine instruction operand.
@@ -42,7 +43,8 @@ public:
     MO_JumpTableIndex,         ///< Address of indexed Jump Table for switch
     MO_ExternalSymbol,         ///< Name of external global symbol
     MO_GlobalAddress,          ///< Address of a global value
-    MO_BlockAddress            ///< Address of a basic block
+    MO_BlockAddress,           ///< Address of a basic block
+    MO_Metadata                ///< Metadata reference (for debug info)
   };
 
 private:
@@ -94,6 +96,7 @@ private:
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
     const ConstantFP *CFP;    // For MO_FPImmediate.
     int64_t ImmVal;           // For MO_Immediate.
+    MDNode *MD;               // For MO_Metadata.
 
     struct {                  // For MO_Register.
       unsigned RegNo;
@@ -158,6 +161,8 @@ public:
   bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
   /// isBlockAddress - Tests if this is a MO_BlockAddress operand.
   bool isBlockAddress() const { return OpKind == MO_BlockAddress; }
+  /// isMetadata - Tests if this is a MO_Metadata operand.
+  bool isMetadata() const { return OpKind == MO_Metadata; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -311,6 +316,11 @@ public:
     assert(isSymbol() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.SymbolName;
   }
+
+  MDNode *getMetadata() const {
+    assert(isMetadata() && "Wrong MachineOperand accessor");
+    return Contents.MD;
+  }
   
   //===--------------------------------------------------------------------===//
   // Mutators for various operand types.
@@ -440,6 +450,13 @@ public:
     MachineOperand Op(MachineOperand::MO_BlockAddress);
     Op.Contents.OffsetedInfo.Val.BA = BA;
     Op.setOffset(0); // Offset is always 0.
+    Op.setTargetFlags(TargetFlags);
+    return Op;
+  }
+  static MachineOperand CreateMetadata(MDNode *Meta,
+                                       unsigned char TargetFlags = 0) {
+    MachineOperand Op(MachineOperand::MO_Metadata);
+    Op.Contents.MD = Meta;
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
