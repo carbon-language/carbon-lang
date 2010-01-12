@@ -416,7 +416,7 @@ static SourceLocation getLocationFromCursor(CXCursor C,
   }
 }
 
-CXString CIndexer::CIndexer::createCXString(const char *String, bool DupString){
+CXString CIndexer::createCXString(const char *String, bool DupString){
   CXString Str;
   if (DupString) {
     Str.Spelling = strdup(String);
