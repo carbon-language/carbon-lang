@@ -194,10 +194,10 @@ class NamedMDNode : public Value, public ilist_node<NamedMDNode> {
 
   void setParent(Module *M) { Parent = M; }
 protected:
-  explicit NamedMDNode(LLVMContext &C, StringRef N, MDNode*const *Vals, 
+  explicit NamedMDNode(LLVMContext &C, const Twine &N, MDNode*const *Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
-  static NamedMDNode *Create(LLVMContext &C, StringRef N,
+  static NamedMDNode *Create(LLVMContext &C, const Twine &N,
                              MDNode *const *MDs, 
                              unsigned NumMDs, Module *M = 0) {
     return new NamedMDNode(C, N, MDs, NumMDs, M);
@@ -229,7 +229,7 @@ public:
   void addOperand(MDNode *M);
 
   /// setName - Set the name of this named metadata.
-  void setName(StringRef Name);
+  void setName(const Twine &NewName);
 
   /// getName - Return a constant reference to this named metadata's name.
   StringRef getName() const;

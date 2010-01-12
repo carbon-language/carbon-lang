@@ -18,6 +18,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/Support/ValueHandle.h"
 using namespace llvm;
@@ -263,7 +264,7 @@ static SmallVector<WeakVH, 4> &getNMDOps(void *Operands) {
   return *(SmallVector<WeakVH, 4>*)Operands;
 }
 
-NamedMDNode::NamedMDNode(LLVMContext &C, StringRef N,
+NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
                          MDNode *const *MDs,
                          unsigned NumMDs, Module *ParentModule)
   : Value(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
@@ -322,11 +323,23 @@ void NamedMDNode::dropAllReferences() {
 }
 
 /// setName - Set the name of this named metadata.
-void NamedMDNode::setName(StringRef N) {
-  assert (!N.empty() && "Invalid named metadata name!");
-  Name = N.str();
+void NamedMDNode::setName(const Twine &NewName) {
+  assert (!NewName.isTriviallyEmpty() && "Invalid named metadata name!");
+
+  SmallString<256> NameData;
+  NewName.toVector(NameData);
+
+  const char *NameStr = NameData.data();
+  unsigned NameLen = NameData.size();
+
+  StringRef NameRef = StringRef(NameStr, NameLen);
+  // Name isn't changing?
+  if (getName() == NameRef)
+    return;
+
+  Name = NameRef.str();
   if (Parent)
-    Parent->getMDSymbolTable().insert(N, this);
+    Parent->getMDSymbolTable().insert(NameRef, this);
 }
 
 /// getName - Return a constant reference to this named metadata's name.
