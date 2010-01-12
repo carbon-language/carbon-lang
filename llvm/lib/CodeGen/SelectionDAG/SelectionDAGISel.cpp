@@ -865,7 +865,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 
         SetDebugLoc(MDDbgKind, BI, SDB, FastIS, &MF);
 
-        // First try normal tablegen-generated "fast" selection.
+        // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(BI)) {
           ResetDebugLoc(SDB, FastIS);
           continue;
