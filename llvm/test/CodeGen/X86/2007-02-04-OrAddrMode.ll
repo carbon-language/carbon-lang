@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=x86 | grep {leal	3(,%eax,8)}
 
 ;; This example can't fold the or into an LEA.
-define i32 @test(float ** %tmp2, i32 %tmp12) {
+define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
 	%tmp3 = load float** %tmp2
 	%tmp132 = shl i32 %tmp12, 2		; <i32> [#uses=1]
 	%tmp4 = bitcast float* %tmp3 to i8*		; <i8*> [#uses=1]
@@ -14,7 +14,7 @@ define i32 @test(float ** %tmp2, i32 %tmp12) {
 
 
 ;; This can!
-define i32 @test2(i32 %a, i32 %b) {
+define i32 @test2(i32 %a, i32 %b) nounwind {
 	%c = shl i32 %a, 3
 	%d = or i32 %c, 3
 	ret i32 %d
