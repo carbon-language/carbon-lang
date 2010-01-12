@@ -149,6 +149,19 @@ public:
     return false;
   }
 
+  /// isCoalescableInstr - Return true if the instruction is "coalescable". That
+  /// is, it's like a copy where it's legal for the source to overlap the
+  /// destination. e.g. X86::MOVSX64rr32.
+  virtual bool isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
+                               unsigned &SrcReg, unsigned &DstReg,
+                               unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
+    if (isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
+      isCopy = true;
+      return true;
+    }
+    return false;
+  }
+
   /// isIdentityCopy - Return true if the instruction is a copy (or
   /// extract_subreg, insert_subreg, subreg_to_reg) where the source and
   /// destination registers are the same.

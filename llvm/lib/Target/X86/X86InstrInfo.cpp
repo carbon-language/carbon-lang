@@ -712,6 +712,59 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   }
 }
 
+bool
+X86InstrInfo::isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
+                               unsigned &SrcReg, unsigned &DstReg,
+                               unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
+  switch (MI.getOpcode()) {
+  default: break;
+  case X86::MOVSX16rr8:
+  case X86::MOVZX16rr8:
+  case X86::MOVSX32rr8:
+  case X86::MOVZX32rr8:
+  case X86::MOVSX64rr8:
+  case X86::MOVZX64rr8:
+  case X86::MOVSX32rr16:
+  case X86::MOVZX32rr16:
+  case X86::MOVSX64rr16:
+  case X86::MOVZX64rr16:
+  case X86::MOVSX64rr32:
+  case X86::MOVZX64rr32: {
+    if (MI.getOperand(0).getSubReg() || MI.getOperand(1).getSubReg())
+      // Be conservative.
+      return false;
+    isCopy = false;
+    SrcReg = MI.getOperand(1).getReg();
+    DstReg = MI.getOperand(0).getReg();
+    DstSubIdx = 0;
+    switch (MI.getOpcode()) {
+    default:
+      llvm_unreachable(0);
+      break;
+    case X86::MOVSX16rr8:
+    case X86::MOVZX16rr8:
+    case X86::MOVSX32rr8:
+    case X86::MOVZX32rr8:
+    case X86::MOVSX64rr8:
+    case X86::MOVZX64rr8:
+      SrcSubIdx = 1;
+      break;
+    case X86::MOVSX32rr16:
+    case X86::MOVZX32rr16:
+    case X86::MOVSX64rr16:
+    case X86::MOVZX64rr16:
+      SrcSubIdx = 3;
+      break;
+    case X86::MOVSX64rr32:
+    case X86::MOVZX64rr32:
+      SrcSubIdx = 4;
+      break;
+    }
+  }
+  }
+  return isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
+}
+
 /// isFrameOperand - Return true and the FrameIndex if the specified
 /// operand and follow operands form a reference to the stack frame.
 bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,

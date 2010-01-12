@@ -448,6 +448,14 @@ public:
                            unsigned &SrcReg, unsigned &DstReg,
                            unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
+  /// isCoalescableInstr - Return true if the instruction is "coalescable". That
+  /// is, it's like a copy where it's legal for the source to overlap the
+  /// destination. e.g. X86::MOVSX64rr32.
+  virtual bool isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
+                                unsigned &SrcReg, unsigned &DstReg,
+                                unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
+
+
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
   /// isLoadFromStackSlotPostFE - Check for post-frame ptr elimination
   /// stack locations as well.  This uses a heuristic so it isn't
