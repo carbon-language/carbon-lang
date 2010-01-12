@@ -110,7 +110,7 @@ void gs(int s) {
   gl(" {");
 
   /* Fields */
-  int n_fields = random() % (N_FIELDS*4);
+  int n_fields = N_FIELDS == 0 ? 0 : random() % (N_FIELDS*4);
   // PARAM: 3/4 of all structs should have no members
   if (n_fields >= N_FIELDS)
     n_fields = 0;
