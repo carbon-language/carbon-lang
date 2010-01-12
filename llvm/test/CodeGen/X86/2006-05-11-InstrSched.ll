@@ -10,9 +10,8 @@ entry:
 cond_true:		; preds = %cond_true, %entry
 	%indvar = phi i32 [ 0, %entry ], [ %indvar.next, %cond_true ]		; <i32> [#uses=2]
 	%tmp. = shl i32 %indvar, 2		; <i32> [#uses=1]
-	%tmp.10 = add i32 %tmp., 1		; <i32> [#uses=2]
-	%k.0.0 = bitcast i32 %tmp.10 to i32		; <i32> [#uses=2]
-	%tmp31 = add i32 %k.0.0, -1		; <i32> [#uses=4]
+	%tmp.10 = add nsw i32 %tmp., 1		; <i32> [#uses=2]
+	%tmp31 = add nsw i32 %tmp.10, -1		; <i32> [#uses=4]
 	%tmp32 = getelementptr i32* %mpp, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp34 = bitcast i32* %tmp32 to <16 x i8>*		; <i8*> [#uses=1]
 	%tmp = load <16 x i8>* %tmp34, align 1
@@ -37,14 +36,13 @@ cond_true:		; preds = %cond_true, %entry
 	%tmp111 = and <2 x i64> %tmp110, %tmp55.upgrd.2		; <<2 x i64>> [#uses=1]
 	%tmp121 = and <2 x i64> %tmp99.upgrd.5, %tmp88.upgrd.4		; <<2 x i64>> [#uses=1]
 	%tmp131 = or <2 x i64> %tmp121, %tmp111		; <<2 x i64>> [#uses=1]
-	%gep.upgrd.6 = zext i32 %tmp.10 to i64		; <i64> [#uses=1]
-	%tmp137 = getelementptr i32* %mc, i64 %gep.upgrd.6		; <i32*> [#uses=1]
+	%tmp137 = getelementptr i32* %mc, i32 %tmp.10		; <i32*> [#uses=1]
 	%tmp137.upgrd.7 = bitcast i32* %tmp137 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
 	store <2 x i64> %tmp131, <2 x i64>* %tmp137.upgrd.7
-	%tmp147 = add i32 %k.0.0, 8		; <i32> [#uses=1]
-	%tmp.upgrd.8 = icmp sgt i32 %tmp147, %M		; <i1> [#uses=1]
+	%tmp147 = add nsw i32 %tmp.10, 8		; <i32> [#uses=1]
+	%tmp.upgrd.8 = icmp slt i32 %tmp147, %M		; <i1> [#uses=1]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
-	br i1 %tmp.upgrd.8, label %return, label %cond_true
+	br i1 %tmp.upgrd.8, label %cond_true, label %return
 
 return:		; preds = %cond_true, %entry
 	ret void

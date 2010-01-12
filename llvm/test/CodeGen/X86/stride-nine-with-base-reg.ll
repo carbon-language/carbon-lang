@@ -7,6 +7,7 @@
 @B = external global [1000 x i8], align 32
 @A = external global [1000 x i8], align 32
 @P = external global [1000 x i8], align 32
+@Q = external global [1000 x i8], align 32
 
 define void @foo(i32 %m, i32 %p) nounwind {
 entry:
@@ -24,6 +25,8 @@ bb:
         %tmp0 = add i32 %tmp8, %p
 	%tmp10 = getelementptr [1000 x i8]* @P, i32 0, i32 %tmp0
 	store i8 17, i8* %tmp10, align 4
+	%tmp11 = getelementptr [1000 x i8]* @Q, i32 0, i32 %tmp0
+	store i8 19, i8* %tmp11, align 4
 	%indvar.next = add i32 %i.019.0, 1
 	%exitcond = icmp eq i32 %indvar.next, %m
 	br i1 %exitcond, label %return, label %bb
