@@ -2374,13 +2374,11 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
 
 QualType ASTContext::getUnqualifiedArrayType(QualType T,
                                              Qualifiers &Quals) {
-  assert(T.isCanonical() && "Only operates on canonical types");
+  Quals = T.getQualifiers();
   if (!isa<ArrayType>(T)) {
-    Quals = T.getLocalQualifiers();
-    return T.getLocalUnqualifiedType();
+    return T.getUnqualifiedType();
   }
 
-  assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
   const ArrayType *AT = cast<ArrayType>(T);
   QualType Elt = AT->getElementType();
   QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);

@@ -2227,9 +2227,11 @@ static void TryReferenceInitialization(Sema &S,
   
   QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
-  QualType T1 = cv1T1.getUnqualifiedType();
+  Qualifiers T1Quals;
+  QualType T1 = S.Context.getUnqualifiedArrayType(cv1T1, T1Quals);
   QualType cv2T2 = Initializer->getType();
-  QualType T2 = cv2T2.getUnqualifiedType();
+  Qualifiers T2Quals;
+  QualType T2 = S.Context.getUnqualifiedArrayType(cv2T2, T2Quals);
   SourceLocation DeclLoc = Initializer->getLocStart();
   
   // If the initializer is the address of an overloaded function, try
@@ -2279,9 +2281,9 @@ static void TryReferenceInitialization(Sema &S,
       // can occur. This property will be checked by PerformInitialization.
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
-                         S.Context.getQualifiedType(T1, cv2T2.getQualifiers()), 
+                         S.Context.getQualifiedType(T1, T2Quals), 
                          /*isLValue=*/true);
-      if (cv1T1.getQualifiers() != cv2T2.getQualifiers())
+      if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1, /*IsLValue=*/true);
       Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/false);
       return;
@@ -2312,7 +2314,7 @@ static void TryReferenceInitialization(Sema &S,
   //       non-volatile const type (i.e., cv1 shall be const), or the reference
   //       shall be an rvalue reference and the initializer expression shall 
   //       be an rvalue.
-  if (!((isLValueRef && cv1T1.getCVRQualifiers() == Qualifiers::Const) ||
+  if (!((isLValueRef && T1Quals.hasConst()) ||
         (isRValueRef && InitLvalue != Expr::LV_Valid))) {
     if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
       Sequence.SetOverloadFailure(
@@ -2339,9 +2341,9 @@ static void TryReferenceInitialization(Sema &S,
         RefRelationship >= Sema::Ref_Compatible_With_Added_Qualification) {
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
-                         S.Context.getQualifiedType(T1, cv2T2.getQualifiers()), 
+                         S.Context.getQualifiedType(T1, T2Quals), 
                          /*isLValue=*/false);
-      if (cv1T1.getQualifiers() != cv2T2.getQualifiers())
+      if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1, /*IsLValue=*/false);
       Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/true);
       return;
@@ -2406,8 +2408,10 @@ static void TryReferenceInitialization(Sema &S,
   //        [...] If T1 is reference-related to T2, cv1 must be the
   //        same cv-qualification as, or greater cv-qualification
   //        than, cv2; otherwise, the program is ill-formed.
+  unsigned T1CVRQuals = T1Quals.getCVRQualifiers();
+  unsigned T2CVRQuals = T2Quals.getCVRQualifiers();
   if (RefRelationship == Sema::Ref_Related && 
-      !cv1T1.isAtLeastAsQualifiedAs(cv2T2)) {
+      (T1CVRQuals | T2CVRQuals) != T1CVRQuals) {
     Sequence.SetFailed(InitializationSequence::FK_ReferenceInitDropsQualifiers);
     return;
   }

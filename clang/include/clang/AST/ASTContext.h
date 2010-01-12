@@ -898,17 +898,18 @@ public:
     return getCanonicalType(T1) == getCanonicalType(T2);
   }
 
-  /// \brief Returns this type as a completely-unqualified array type, capturing
-  /// the qualifiers in Quals. This only operates on canonical types in order
-  /// to ensure the ArrayType doesn't itself have qualifiers.
+  /// \brief Returns this type as a completely-unqualified array type,
+  /// capturing the qualifiers in Quals. This will remove the minimal amount of
+  /// sugaring from the types, similar to the behavior of
+  /// QualType::getUnqualifiedType().
   ///
-  /// \param T is the canonicalized QualType, which may be an ArrayType
+  /// \param T is the qualified type, which may be an ArrayType
   ///
   /// \param Quals will receive the full set of qualifiers that were
-  /// applied to the element type of the array.
+  /// applied to the array.
   ///
   /// \returns if this is an array type, the completely unqualified array type
-  /// that corresponds to it. Otherwise, returns this->getUnqualifiedType().
+  /// that corresponds to it. Otherwise, returns T.getUnqualifiedType().
   QualType getUnqualifiedArrayType(QualType T, Qualifiers &Quals);
 
   /// \brief Determine whether the given types are equivalent after

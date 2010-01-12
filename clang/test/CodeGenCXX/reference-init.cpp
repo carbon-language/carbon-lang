@@ -7,3 +7,10 @@ struct nsXPTParamInfo {
 void a(XPTParamDescriptor *params) {
   const nsXPTParamInfo& paramInfo = params[0];
 }
+
+// CodeGen of reference initialized const arrays.
+namespace PR5911 {
+  template <typename T, int N> int f(const T (&a)[N]) { return N; }
+  int iarr[] = { 1 };
+  int test() { return f(iarr); }
+}
