@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h";
+#include "clang/AST/DeclVisitor.h";
 
 extern "C" {
 
@@ -74,8 +77,83 @@ CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
   return NullCXEntity();
 }
   
-CXString clang_getUSR(CXEntity) {
-  return CIndexer::createCXString("");
+//===----------------------------------------------------------------------===//
+// USR generation.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class USRGenerator : public DeclVisitor<USRGenerator> {
+  llvm::raw_ostream &Out;
+public:
+  USRGenerator(llvm::raw_ostream &out) : Out(out) {}
+
+  void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
+  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
+  void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+};
+} // end anonymous namespace
+
+void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  Visit(cast<Decl>(D->getDeclContext()));
+  Out << (D->isInstanceMethod() ? "_IM_" : "_CM_");
+  Out << DeclarationName(D->getSelector());
+}
+  
+void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
+  switch (D->getKind()) {
+    default:
+      assert(false && "Invalid ObjC container.");
+    case Decl::ObjCInterface:
+    case Decl::ObjCImplementation:
+      Out << "objc_class_" << D->getName();
+      break;
+    case Decl::ObjCCategory: {
+      ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
+      Out << "objc_cat_" << CD->getClassInterface()->getName()
+          << '_' << CD->getName();
+      break;
+    }
+    case Decl::ObjCCategoryImpl: {
+      ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
+      Out << "objc_cat_" << CD->getClassInterface()->getName()
+          << '_' << CD->getName();
+      break;
+    }
+    case Decl::ObjCProtocol:
+      Out << "objc_prot_" << cast<ObjCProtocolDecl>(D)->getName();
+      break;
+  }
+}
+  
+void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+  Visit(cast<Decl>(D->getDeclContext()));
+  Out << "_prop_" << D->getName();
+}
+  
+// FIXME: This is a skeleton implementation.  It will be overhauled.
+CXString clang_getUSR(CXEntity CE) {
+  const Entity &E = GetEntity(CE);
+  
+  // FIXME: Support cross-translation unit CXEntities.  
+  if (!E.isInternalToTU())
+    return CIndexer::createCXString(NULL);
+  
+  Decl *D = E.getInternalDecl();
+  if (!D)
+    return CIndexer::createCXString(NULL);
+
+  llvm::SmallString<1024> StrBuf;
+  {
+    llvm::raw_svector_ostream Out(StrBuf);
+    USRGenerator UG(Out);
+    UG.Visit(D);
+  }
+  
+  if (StrBuf.empty())
+    return CIndexer::createCXString(NULL);
+
+  // Return a copy of the string that must be disposed by the caller.
+  return CIndexer::createCXString(StrBuf.c_str(), true);
 }
 
 } // end extern "C"
