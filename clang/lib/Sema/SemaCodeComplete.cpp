@@ -1677,7 +1677,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
       if (Idx > 0) {
         std::string Keyword;
         if (Idx > StartParameter)
-          Keyword = " ";
+          Result->AddChunk(CodeCompletionString::CK_HorizontalSpace);
         if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(Idx))
           Keyword += II->getName().str();
         Keyword += ":";
@@ -2462,14 +2462,14 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
       // @dynamic
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("dynamic");
-      Pattern->AddTextChunk(" ");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("property");
       Results.MaybeAddResult(Result(Pattern, 0));
 
       // @synthesize
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("synthesize");
-      Pattern->AddTextChunk(" ");
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("property");
       Results.MaybeAddResult(Result(Pattern, 0));
     }
@@ -2493,9 +2493,9 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
     // @class name ;
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("class");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("identifier");
-    Pattern->AddTextChunk(";"); // add ';' chunk
+    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.MaybeAddResult(Result(Pattern, 0));
 
     // @interface name 
@@ -2503,30 +2503,35 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
     // such.
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("interface");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
     Pattern->AddPlaceholderChunk("class");
     Results.MaybeAddResult(Result(Pattern, 0));
 
     // @protocol name
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("protocol");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
     Pattern->AddPlaceholderChunk("protocol");
     Results.MaybeAddResult(Result(Pattern, 0));
 
     // @implementation name
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("implementation");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
     Pattern->AddPlaceholderChunk("class");
     Results.MaybeAddResult(Result(Pattern, 0));
 
     // @compatibility_alias name
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("compatibility_alias");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
     Pattern->AddPlaceholderChunk("alias");
-    Pattern->AddTextChunk(" ");
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
     Pattern->AddPlaceholderChunk("class");
     Results.MaybeAddResult(Result(Pattern, 0));
   }
@@ -2593,15 +2598,17 @@ void Sema::CodeCompleteObjCAtStatement(Scope *S) {
   // @throw
   Pattern = new CodeCompletionString;
   Pattern->AddTypedTextChunk("throw");
-  Pattern->AddTextChunk(" ");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
   Pattern->AddPlaceholderChunk("expression");
-  Pattern->AddTextChunk(";");
-  Results.MaybeAddResult(Result(Pattern, 0)); // FIXME: add ';' chunk
+  Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+  Results.MaybeAddResult(Result(Pattern, 0));
 
   // @synchronized ( expression ) { statements }
   Pattern = new CodeCompletionString;
   Pattern->AddTypedTextChunk("synchronized");
-  Pattern->AddTextChunk(" ");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("expression");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);

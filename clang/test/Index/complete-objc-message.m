@@ -105,7 +105,7 @@ void f(Ellipsis *e) {
 
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
-// CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{Text  withKeyword:}{Placeholder (int)b}
+// CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)a}{HorizontalSpace  }{Text withKeyword:}{Placeholder (int)b}
 // CHECK-CC1: {TypedText classMethod2}
 // CHECK-CC1: {TypedText new}
 // CHECK-CC1: {TypedText protocolClassMethod}
@@ -117,10 +117,10 @@ void f(Ellipsis *e) {
 // CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyClassMethod:}{Placeholder (id)obj}
 // CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyPrivateMethod}
 // RUN: c-index-test -code-completion-at=%s:65:16 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{HorizontalSpace  }{Text second:}{Placeholder (id)y}
 // CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyPrivateInstMethod}
 // RUN: c-index-test -code-completion-at=%s:74:9 %s | FileCheck -check-prefix=CHECK-CC5 %s
-// CHECK-CC5: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{Text  second:}{Placeholder (id)y}
+// CHECK-CC5: ObjCInstanceMethodDecl:{ResultType int}{TypedText MyInstMethod:}{Placeholder (id)x}{HorizontalSpace  }{Text second:}{Placeholder (id)y}
 // CHECK-CC5: ObjCInstanceMethodDecl:{ResultType int}{TypedText MySubInstMethod}
 // RUN: c-index-test -code-completion-at=%s:82:8 %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: ObjCInstanceMethodDecl:{ResultType id}{TypedText protocolInstanceMethod:}{Placeholder (int)value}
@@ -128,15 +128,15 @@ void f(Ellipsis *e) {
 // RUN: c-index-test -code-completion-at=%s:95:8 %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method}
 // CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}
-// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
-// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{Text  SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{Text  Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (float)f}{HorizontalSpace  }{Text SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CC7: ObjCInstanceMethodDecl:{ResultType int}{TypedText OtherMethod:}{Placeholder (float)f}{HorizontalSpace  }{Text Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
 // RUN: c-index-test -code-completion-at=%s:95:17 %s | FileCheck -check-prefix=CHECK-CC8 %s
 // CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText }
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  Arg2:}{Placeholder (int)i2}
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
-// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)i1}{Text  OtherArg:}{Placeholder (id)obj}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text Arg2:}{Placeholder (int)i2}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText Arg1:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
+// CHECK-CC8: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{TypedText SomeArg:}{Placeholder (int)i1}{HorizontalSpace  }{Text OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:95:24 %s | FileCheck -check-prefix=CHECK-CC9 %s
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText Arg2:}{Placeholder (int)i2}
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
