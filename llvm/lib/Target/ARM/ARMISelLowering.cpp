@@ -3155,7 +3155,7 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   default: llvm_unreachable("unsupported size for AtomicCmpSwap!");
   case 1:
     ldrOpc = isThumb2 ? ARM::t2LDREXB : ARM::LDREXB;
-    strOpc = isThumb2 ? ARM::t2LDREXB : ARM::STREXB;
+    strOpc = isThumb2 ? ARM::t2STREXB : ARM::STREXB;
     break;
   case 2:
     ldrOpc = isThumb2 ? ARM::t2LDREXH : ARM::LDREXH;
