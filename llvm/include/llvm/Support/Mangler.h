@@ -108,6 +108,19 @@ public:
   std::string getMangledName(const GlobalValue *V, const char *Suffix = "",
                              bool ForcePrivate = false);
 
+  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+  /// and the specified global variable's name.  If the global variable doesn't
+  /// have a name, this fills in a unique name for the global.
+  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
+                         bool isImplicitlyPrivate);
+  
+  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+  /// and the specified name as the global variable name.  GVName must not be
+  /// empty.
+  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
+                         ManglerPrefixTy PrefixTy = Mangler::Default);
+
+private:
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",
   /// "s_", and "D_", respectively. This is a very simple mangling that
@@ -122,17 +135,6 @@ public:
                       const Twine &Name,
                       ManglerPrefixTy PrefixTy = Mangler::Default);
   
-  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
-  /// and the specified global variable's name.  If the global variable doesn't
-  /// have a name, this fills in a unique name for the global.
-  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
-                         bool isImplicitlyPrivate);
-  
-  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
-  /// and the specified name as the global variable name.  GVName must not be
-  /// empty.
-  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
-                         ManglerPrefixTy PrefixTy = Mangler::Default);
 };
 
 } // End llvm namespace
