@@ -724,6 +724,10 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
   case X86::MOVZX32rr8:
   case X86::MOVSX64rr8:
   case X86::MOVZX64rr8:
+    if (!TM.getSubtarget<X86Subtarget>().is64Bit())
+      // It's not always legal to reference the low 8-bit of the larger
+      // register in 32-bit mode.
+      return false;
   case X86::MOVSX32rr16:
   case X86::MOVZX32rr16:
   case X86::MOVSX64rr16:
