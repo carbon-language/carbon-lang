@@ -916,3 +916,23 @@ cheaper to do fld1 than load from a constant pool for example, so
 "load, add 1.0, store" is better done in the fp stack, etc.
 
 //===---------------------------------------------------------------------===//
+
+The X86 backend should be able to if-convert SSE comparisons like "ucomisd" to
+"cmpsd".  For example, this code:
+
+double d1(double x) { return x == x ? x : x + x; }
+
+Compiles into:
+
+_d1:
+	ucomisd	%xmm0, %xmm0
+	jnp	LBB1_2
+	addsd	%xmm0, %xmm0
+	ret
+LBB1_2:
+	ret
+
+Also, the 'ret's should be shared.  This is PR6032.
+
+//===---------------------------------------------------------------------===//
+
