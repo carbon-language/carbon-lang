@@ -35,6 +35,7 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
@@ -343,31 +344,11 @@ namespace {
 char CWriter::ID = 0;
 
 
-static bool isAcceptableChar(char C) {
-  if ((C < 'a' || C > 'z') && (C < 'A' || C > 'Z') &&
-      (C < '0' || C > '9') && C != '_' && C != '$' && C != '@')
-    return false;
-  return true;
-}
-
-static char HexDigit(int V) {
-  return V < 10 ? V+'0' : V+'A'-10;
-}
-
 static std::string Mangle(const std::string &S) {
   std::string Result;
-  
-  for (unsigned i = 0, e = S.size(); i != e; ++i)
-    if (isAcceptableChar(S[i]))
-      Result += S[i];
-    else {
-      Result += '_';
-      Result += HexDigit((S[i] >> 4) & 15);
-      Result += HexDigit(S[i] & 15);
-      Result += '_';
-    }      
-  
-  return Result;
+  raw_string_ostream OS(Result);
+  MCSymbol::printMangledName(S, OS, 0);
+  return OS.str();
 }
 
 
