@@ -93,7 +93,7 @@ class SuccIterator : public std::iterator<std::bidirectional_iterator_tag,
 public:
   typedef SuccIterator<Term_, BB_> _Self;
   typedef typename super::pointer pointer;
-  // TODO: This can be random access iterator, need operator+ and stuff tho
+  // TODO: This can be random access iterator, only operator[] missing.
 
   inline SuccIterator(Term_ T) : Term(T), idx(0) {         // begin iterator
     assert(T && "getTerminator returned null!");
@@ -109,6 +109,10 @@ public:
     return *this;
   }
 
+  inline bool index_is_valid (int idx) {
+    return idx >= 0 && (unsigned) idx < Term->getNumSuccessors();
+  }
+
   /// getSuccessorIndex - This is used to interface between code that wants to
   /// operate on terminator instructions directly.
   unsigned getSuccessorIndex() const { return idx; }
@@ -120,6 +124,7 @@ public:
   inline pointer operator->() const { return operator*(); }
 
   inline _Self& operator++() { ++idx; return *this; } // Preincrement
+
   inline _Self operator++(int) { // Postincrement
     _Self tmp = *this; ++*this; return tmp;
   }
@@ -128,6 +133,62 @@ public:
   inline _Self operator--(int) { // Postdecrement
     _Self tmp = *this; --*this; return tmp;
   }
+
+  inline bool operator<(const _Self& x) const {
+    assert(Term == x.Term && "Cannot compare iterators of different blocks!");
+    return idx < x.idx;
+  }
+
+  inline bool operator<=(const _Self& x) const {
+    assert(Term == x.Term && "Cannot compare iterators of different blocks!");
+    return idx <= x.idx;
+  }
+  inline bool operator>=(const _Self& x) const {
+    assert(Term == x.Term && "Cannot compare iterators of different blocks!");
+    return idx >= x.idx;
+  }
+
+  inline bool operator>(const _Self& x) const {
+    return idx > x.idx;
+    assert(Term == x.Term && "Cannot compare iterators of different blocks!");
+  }
+
+  inline _Self& operator+=(int Right) {
+    unsigned new_idx = idx + Right;
+    assert(index_is_valid(new_idx) && "Iterator index out of bound");
+    idx = new_idx;
+    return *this;
+  }
+
+  inline _Self operator+(int Right) {
+    _Self tmp = *this;
+    tmp += Right;
+    return tmp;
+  }
+
+  inline _Self& operator-=(int Right) {
+    return operator+=(-Right);
+  }
+
+  inline _Self operator-(int Right) {
+    return operator+(-Right);
+  }
+
+  inline int operator-(const _Self& x) {
+    assert(Term == x.Term && "Cannot work on iterators of different blocks!");
+    int distance = idx - x.idx;
+    return distance;
+  }
+
+  // This works for read access, however write access is difficult as changes
+  // to Term are only possible with Term->setSuccessor(idx). Pointers that can
+  // be modified are not available.
+  //
+  // inline pointer operator[](int offset) {
+  //  _Self tmp = *this;
+  //  tmp += offset;
+  //  return tmp.operator*();
+  // }
 };
 
 typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
