@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "SemaInit.h"
 #include "Lookup.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -1305,30 +1306,10 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   New->setPreviousDeclaration(Old);
 }
 
-/// CheckFallThrough - Check that we don't fall off the end of a
-/// Statement that should return a value.
-///
-/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
-/// MaybeFallThrough iff we might or might not fall off the end,
-/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
-/// return.  We assume NeverFallThrough iff we never fall off the end of the
-/// statement but we may return.  We assume that functions not marked noreturn
-/// will return.
-Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
-  // FIXME: Eventually share this CFG object when we have other warnings based
-  // of the CFG.  This can be done using AnalysisContext.
-  llvm::OwningPtr<CFG> cfg (CFG::buildCFG(Root, &Context));
-
-  // FIXME: They should never return 0, fix that, delete this code.
-  if (cfg == 0)
-    // FIXME: This should be NeverFallThrough
-    return NeverFallThroughOrReturn;
-  // The CFG leaves in dead things, and we don't want to dead code paths to
-  // confuse us, so we mark all live things first.
+static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
   std::queue<CFGBlock*> workq;
-  llvm::BitVector live(cfg->getNumBlockIDs());
   // Prep work queue
-  workq.push(&cfg->getEntry());
+  workq.push(e);
   // Solve
   while (!workq.empty()) {
     CFGBlock *item = workq.front();
@@ -1344,6 +1325,54 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
       }
     }
   }
+}
+
+/// CheckUnreachable - Check for unreachable code.
+void Sema::CheckUnreachable(AnalysisContext &AC) {
+  if (Diags.getDiagnosticLevel(diag::warn_unreachable) == Diagnostic::Ignored)
+    return;
+
+  CFG *cfg = AC.getCFG();
+  // FIXME: They should never return 0, fix that, delete this code.
+  if (cfg == 0)
+    return;
+  
+  llvm::BitVector live(cfg->getNumBlockIDs());
+  // Mark all live things first.
+  MarkLive(&cfg->getEntry(), live);
+
+  for (unsigned i = 0; i < cfg->getNumBlockIDs(); ++i) {
+    if (!live[i]) {
+      CFGBlock &b = *(cfg->begin()[i]);
+      if (!b.empty())
+        Diag(b[0].getStmt()->getLocStart(), diag::warn_unreachable);
+      // Avoid excessive errors by marking everything reachable from here
+      MarkLive(&b, live);
+    }
+  }
+}
+
+/// CheckFallThrough - Check that we don't fall off the end of a
+/// Statement that should return a value.
+///
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end,
+/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
+/// return.  We assume NeverFallThrough iff we never fall off the end of the
+/// statement but we may return.  We assume that functions not marked noreturn
+/// will return.
+Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
+  CFG *cfg = AC.getCFG();
+  // FIXME: They should never return 0, fix that, delete this code.
+  if (cfg == 0)
+    // FIXME: This should be NeverFallThrough
+    return NeverFallThroughOrReturn;
+
+  // The CFG leaves in dead things, and we don't want to dead code paths to
+  // confuse us, so we mark all live things first.
+  std::queue<CFGBlock*> workq;
+  llvm::BitVector live(cfg->getNumBlockIDs());
+  MarkLive(&cfg->getEntry(), live);
 
   // Now we know what is live, we check the live precessors of the exit block
   // and look for fall through paths, being careful to ignore normal returns,
@@ -1419,7 +1448,8 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
 /// function that should return a value.  Check that we don't fall off the end
 /// of a noreturn function.  We assume that functions and blocks not marked
 /// noreturn will return.
-void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
+void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body,
+                                          AnalysisContext &AC) {
   // FIXME: Would be nice if we had a better way to control cascading errors,
   // but for now, avoid them.  The problem is that when Parse sees:
   //   int foo() { return a; }
@@ -1457,7 +1487,7 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
     return;
   // FIXME: Function try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
-    switch (CheckFallThrough(Body)) {
+    switch (CheckFallThrough(AC)) {
     case MaybeFallThrough:
       if (HasNoReturn)
         Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
@@ -1484,7 +1514,8 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
 /// that should return a value.  Check that we don't fall off the end of a
 /// noreturn block.  We assume that functions and blocks not marked noreturn
 /// will return.
-void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
+void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body,
+                                    AnalysisContext &AC) {
   // FIXME: Would be nice if we had a better way to control cascading errors,
   // but for now, avoid them.  The problem is that when Parse sees:
   //   int foo() { return a; }
@@ -1510,7 +1541,7 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
     return;
   // FIXME: Funtion try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
-    switch (CheckFallThrough(Body)) {
+    switch (CheckFallThrough(AC)) {
     case MaybeFallThrough:
       if (HasNoReturn)
         Diag(Compound->getRBracLoc(), diag::err_noreturn_block_has_return_expr);
@@ -4330,6 +4361,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Decl *dcl = D.getAs<Decl>();
   Stmt *Body = BodyArg.takeAs<Stmt>();
 
+  AnalysisContext AC(dcl);
   FunctionDecl *FD = 0;
   FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(dcl);
   if (FunTmpl)
@@ -4344,7 +4376,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);
     else
-      CheckFallThroughForFunctionDef(FD, Body);
+      CheckFallThroughForFunctionDef(FD, Body, AC);
 
     if (!FD->isInvalidDecl())
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
@@ -4356,7 +4388,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
-    CheckFallThroughForFunctionDef(MD, Body);
+    CheckFallThroughForFunctionDef(MD, Body, AC);
     MD->setEndLoc(Body->getLocEnd());
 
     if (!MD->isInvalidDecl())
@@ -4413,6 +4445,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   FunctionLabelMap.clear();
 
   if (!Body) return D;
+
+  CheckUnreachable(AC);
 
   // Verify that that gotos and switch cases don't jump into scopes illegally.
   if (CurFunctionNeedsScopeChecking)

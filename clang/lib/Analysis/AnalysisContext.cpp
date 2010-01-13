@@ -18,6 +18,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Support/BumpVector.h"
@@ -38,6 +39,9 @@ Stmt *AnalysisContext::getBody() {
     return MD->getBody();
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getBody();
+  else if (const FunctionTemplateDecl *FunTmpl
+           = dyn_cast_or_null<FunctionTemplateDecl>(D))
+    return FunTmpl->getTemplatedDecl()->getBody();
 
   llvm_unreachable("unknown code decl");
 }

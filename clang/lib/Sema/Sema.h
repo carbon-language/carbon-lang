@@ -42,6 +42,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class AnalysisContext;
   class ASTContext;
   class ASTConsumer;
   class CodeCompleteConsumer;
@@ -1097,6 +1098,9 @@ public:
   OwningExprResult BuildOverloadedArrowExpr(Scope *S, ExprArg Base,
                                             SourceLocation OpLoc);
 
+  /// CheckUnreachable - Check for unreachable code.
+  void CheckUnreachable(AnalysisContext &);
+
   /// CheckCallReturnType - Checks that a call expression's return type is
   /// complete. Returns true on failure. The location passed in is the location
   /// that best represents the call.
@@ -1104,14 +1108,14 @@ public:
                            CallExpr *CE, FunctionDecl *FD);
                            
   /// Helpers for dealing with blocks and functions.
-  void CheckFallThroughForFunctionDef(Decl *D, Stmt *Body);
-  void CheckFallThroughForBlock(QualType BlockTy, Stmt *Body);
+  void CheckFallThroughForFunctionDef(Decl *D, Stmt *Body, AnalysisContext &);
+  void CheckFallThroughForBlock(QualType BlockTy, Stmt *, AnalysisContext &);
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
   enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
                          AlwaysFallThrough = 2, NeverFallThroughOrReturn = 3 };
-  ControlFlowKind CheckFallThrough(Stmt *);
+  ControlFlowKind CheckFallThrough(AnalysisContext &);
 
   Scope *getNonFieldDeclScope(Scope *S);
 
