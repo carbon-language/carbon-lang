@@ -1260,39 +1260,34 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
     else
       Val = RawData[i];
 
-    if (MAI->getData64bitsDirective(AddrSpace))
+    if (MAI->getData64bitsDirective(AddrSpace)) {
       O << MAI->getData64bitsDirective(AddrSpace) << Val << '\n';
-    else if (TD->isBigEndian()) {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant half of i64 " << Val;
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant half of i64 " << Val;
-      }
-      O << '\n';
-    } else {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant half of i64 " << Val;
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(Val >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant half of i64 " << Val;
-      }
-      O << '\n';
+      continue;
     }
+
+    // Emit two 32-bit chunks, order depends on endianness.
+    unsigned FirstChunk = unsigned(Val), SecondChunk = unsigned(Val >> 32);
+    const char *FirstName = " least", *SecondName = " most";
+    if (TD->isBigEndian()) {
+      std::swap(FirstChunk, SecondChunk);
+      std::swap(FirstName, SecondName);
+    }
+    
+    O << MAI->getData32bitsDirective(AddrSpace) << FirstChunk;
+    if (VerboseAsm) {
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString()
+        << FirstName << " significant half of i64 " << Val;
+    }
+    O << '\n';
+    
+    O << MAI->getData32bitsDirective(AddrSpace) << SecondChunk;
+    if (VerboseAsm) {
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString()
+        << SecondName << " significant half of i64 " << Val;
+    }
+    O << '\n';
   }
 }
 
