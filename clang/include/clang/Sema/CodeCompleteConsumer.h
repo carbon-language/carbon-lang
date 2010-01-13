@@ -281,10 +281,6 @@ public:
       IdentifierInfo *Macro;
     };
     
-    /// \brief Describes how good this result is, with zero being the best
-    /// result and progressively higher numbers representing poorer results.
-    unsigned Rank;
-    
     /// \brief Specifiers which parameter (of a function, Objective-C method,
     /// macro, etc.) we should start with when formatting the result.
     unsigned StartParameter;
@@ -309,32 +305,32 @@ public:
     NestedNameSpecifier *Qualifier;
     
     /// \brief Build a result that refers to a declaration.
-    Result(NamedDecl *Declaration, unsigned Rank, 
+    Result(NamedDecl *Declaration, 
            NestedNameSpecifier *Qualifier = 0,
            bool QualifierIsInformative = false)
-      : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
+      : Kind(RK_Declaration), Declaration(Declaration), 
         StartParameter(0), Hidden(false), 
         QualifierIsInformative(QualifierIsInformative),
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
-    Result(const char *Keyword, unsigned Rank)
-      : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), StartParameter(0),
+    Result(const char *Keyword)
+      : Kind(RK_Keyword), Keyword(Keyword), StartParameter(0),
         Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         Qualifier(0) { }
     
     /// \brief Build a result that refers to a macro.
-    Result(IdentifierInfo *Macro, unsigned Rank)
-     : Kind(RK_Macro), Macro(Macro), Rank(Rank), StartParameter(0), 
+    Result(IdentifierInfo *Macro)
+     : Kind(RK_Macro), Macro(Macro), StartParameter(0), 
        Hidden(false), QualifierIsInformative(0), 
        StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
        Qualifier(0) { }
 
     /// \brief Build a result that refers to a pattern.
-    Result(CodeCompletionString *Pattern, unsigned Rank)
-      : Kind(RK_Pattern), Pattern(Pattern), Rank(Rank), StartParameter(0), 
+    Result(CodeCompletionString *Pattern)
+      : Kind(RK_Pattern), Pattern(Pattern), StartParameter(0), 
         Hidden(false), QualifierIsInformative(0), 
         StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
         Qualifier(0) { }

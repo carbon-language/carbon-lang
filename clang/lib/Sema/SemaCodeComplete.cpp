@@ -346,8 +346,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
       
   // Look through using declarations.
   if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration))
-    MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
-                   CurContext);
+    MaybeAddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext);
   
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
@@ -406,9 +405,6 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     if (ND->getCanonicalDecl() == CanonDecl) {
       // This is a redeclaration. Always pick the newer declaration.
       Results[Index].Declaration = R.Declaration;
-      
-      // Pick the best rank of the two.
-      Results[Index].Rank = std::min(Results[Index].Rank, R.Rank);
       
       // We're done.
       return;
@@ -610,8 +606,6 @@ static DeclContext *findOuterContext(Scope *S) {
 ///
 /// \param Ctx the declaration context from which we will gather results.
 ///
-/// \param Rank the rank given to results in this declaration context.
-///
 /// \param Visited the set of declaration contexts that have already been
 /// visited. Declaration contexts will only be visited once.
 ///
@@ -619,18 +613,14 @@ static DeclContext *findOuterContext(Scope *S) {
 /// found within this declaration context (and, for a C++ class, its bases).
 ///
 /// \param InBaseClass whether we are in a base class.
-///
-/// \returns the next higher rank value, after considering all of the
-/// names within this declaration context.
-static unsigned CollectMemberLookupResults(DeclContext *Ctx, 
-                                           unsigned Rank,
-                                           DeclContext *CurContext,
+static void CollectMemberLookupResults(DeclContext *Ctx, 
+                                       DeclContext *CurContext,
                                  llvm::SmallPtrSet<DeclContext *, 16> &Visited,
-                                           ResultBuilder &Results,
-                                           bool InBaseClass = false) {
+                                       ResultBuilder &Results,
+                                       bool InBaseClass = false) {
   // Make sure we don't visit the same context twice.
   if (!Visited.insert(Ctx->getPrimaryContext()))
-    return Rank;
+    return;
   
   // Enumerate all of the results in this context.
   typedef CodeCompleteConsumer::Result Result;
@@ -641,12 +631,12 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
                                  DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        Results.MaybeAddResult(Result(ND, Rank, 0, InBaseClass), CurContext);
+        Results.MaybeAddResult(Result(ND, 0, InBaseClass), CurContext);
       
       // Visit transparent contexts inside this context.
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
         if (InnerCtx->isTransparentContext())
-          CollectMemberLookupResults(InnerCtx, Rank, CurContext, Visited,
+          CollectMemberLookupResults(InnerCtx, CurContext, Visited,
                                      Results, InBaseClass);
       }
     }
@@ -687,7 +677,7 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
       //   c->A::member
       
       // Collect results from this base class (and its bases).
-      CollectMemberLookupResults(Record->getDecl(), Rank, CurContext, Visited,
+      CollectMemberLookupResults(Record->getDecl(), CurContext, Visited,
                                  Results, /*InBaseClass=*/true);
     }
   }
@@ -695,7 +685,6 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
   // FIXME: Look into base classes in Objective-C!
   
   Results.ExitScope();
-  return Rank + 1;
 }
 
 /// \brief Collect the results of searching for members within the given
@@ -703,22 +692,13 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
 ///
 /// \param Ctx the declaration context from which we will gather results.
 ///
-/// \param InitialRank the initial rank given to results in this declaration
-/// context. Larger rank values will be used for, e.g., members found in
-/// base classes.
-///
 /// \param Results the result set that will be extended with any results
 /// found within this declaration context (and, for a C++ class, its bases).
-///
-/// \returns the next higher rank value, after considering all of the
-/// names within this declaration context.
-static unsigned CollectMemberLookupResults(DeclContext *Ctx, 
-                                           unsigned InitialRank, 
-                                           DeclContext *CurContext,
-                                           ResultBuilder &Results) {
+static void CollectMemberLookupResults(DeclContext *Ctx, 
+                                       DeclContext *CurContext,
+                                       ResultBuilder &Results) {
   llvm::SmallPtrSet<DeclContext *, 16> Visited;
-  return CollectMemberLookupResults(Ctx, InitialRank, CurContext, Visited, 
-                                    Results);
+  CollectMemberLookupResults(Ctx, CurContext, Visited, Results);
 }
 
 /// \brief Collect the results of searching for declarations within the given
@@ -726,23 +706,18 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
 ///
 /// \param S the scope in which we will start looking for declarations.
 ///
-/// \param InitialRank the initial rank given to results in this scope.
-/// Larger rank values will be used for results found in parent scopes.
-///
 /// \param CurContext the context from which lookup results will be found.
 ///
 /// \param Results the builder object that will receive each result.
-static unsigned CollectLookupResults(Scope *S, 
-                                     TranslationUnitDecl *TranslationUnit,
-                                     unsigned InitialRank,
-                                     DeclContext *CurContext,
-                                     ResultBuilder &Results) {
+static void CollectLookupResults(Scope *S, 
+                                 TranslationUnitDecl *TranslationUnit,
+                                 DeclContext *CurContext,
+                                 ResultBuilder &Results) {
   if (!S)
-    return InitialRank;
+    return;
   
   // FIXME: Using directives!
   
-  unsigned NextRank = InitialRank;
   Results.EnterNewScope();
   if (S->getEntity() && 
       !((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
@@ -757,8 +732,7 @@ static unsigned CollectLookupResults(Scope *S,
       if (Ctx->isFunctionOrMethod())
         continue;
       
-      NextRank = CollectMemberLookupResults(Ctx, NextRank + 1, CurContext,
-                                            Results);
+      CollectMemberLookupResults(Ctx, CurContext, Results);
     }
   } else if (!S->getParent()) {
     // Look into the translation unit scope. We walk through the translation
@@ -771,117 +745,108 @@ static unsigned CollectLookupResults(Scope *S,
     // Once we fix that problem (which is part of a more general "don't look
     // in DeclContexts unless we have to" optimization), we can eliminate the
     // TranslationUnit parameter entirely.
-    NextRank = CollectMemberLookupResults(TranslationUnit, NextRank + 1, 
-                                          CurContext, Results);
+    CollectMemberLookupResults(TranslationUnit, CurContext, Results);
   } else {
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
-        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, NextRank),
-                               CurContext);        
+        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND), CurContext);        
     }
-    
-    NextRank = NextRank + 1;
   }
   
   // Lookup names in the parent scope.
-  NextRank = CollectLookupResults(S->getParent(), TranslationUnit, NextRank, 
-                                  CurContext, Results);
+  CollectLookupResults(S->getParent(), TranslationUnit, CurContext, Results);
   Results.ExitScope();
-  
-  return NextRank;
 }
 
 /// \brief Add type specifiers for the current language as keyword results.
-static void AddTypeSpecifierResults(const LangOptions &LangOpts, unsigned Rank,
+static void AddTypeSpecifierResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
-  Results.MaybeAddResult(Result("short", Rank));
-  Results.MaybeAddResult(Result("long", Rank));
-  Results.MaybeAddResult(Result("signed", Rank));
-  Results.MaybeAddResult(Result("unsigned", Rank));
-  Results.MaybeAddResult(Result("void", Rank));
-  Results.MaybeAddResult(Result("char", Rank));
-  Results.MaybeAddResult(Result("int", Rank));
-  Results.MaybeAddResult(Result("float", Rank));
-  Results.MaybeAddResult(Result("double", Rank));
-  Results.MaybeAddResult(Result("enum", Rank));
-  Results.MaybeAddResult(Result("struct", Rank));
-  Results.MaybeAddResult(Result("union", Rank));
-  Results.MaybeAddResult(Result("const", Rank));
-  Results.MaybeAddResult(Result("volatile", Rank));
+  Results.MaybeAddResult(Result("short"));
+  Results.MaybeAddResult(Result("long"));
+  Results.MaybeAddResult(Result("signed"));
+  Results.MaybeAddResult(Result("unsigned"));
+  Results.MaybeAddResult(Result("void"));
+  Results.MaybeAddResult(Result("char"));
+  Results.MaybeAddResult(Result("int"));
+  Results.MaybeAddResult(Result("float"));
+  Results.MaybeAddResult(Result("double"));
+  Results.MaybeAddResult(Result("enum"));
+  Results.MaybeAddResult(Result("struct"));
+  Results.MaybeAddResult(Result("union"));
+  Results.MaybeAddResult(Result("const"));
+  Results.MaybeAddResult(Result("volatile"));
 
   if (LangOpts.C99) {
     // C99-specific
-    Results.MaybeAddResult(Result("_Complex", Rank));
-    Results.MaybeAddResult(Result("_Imaginary", Rank));
-    Results.MaybeAddResult(Result("_Bool", Rank));
-    Results.MaybeAddResult(Result("restrict", Rank));
+    Results.MaybeAddResult(Result("_Complex"));
+    Results.MaybeAddResult(Result("_Imaginary"));
+    Results.MaybeAddResult(Result("_Bool"));
+    Results.MaybeAddResult(Result("restrict"));
   }
   
   if (LangOpts.CPlusPlus) {
     // C++-specific
-    Results.MaybeAddResult(Result("bool", Rank));
-    Results.MaybeAddResult(Result("class", Rank));
-    Results.MaybeAddResult(Result("wchar_t", Rank));
+    Results.MaybeAddResult(Result("bool"));
+    Results.MaybeAddResult(Result("class"));
+    Results.MaybeAddResult(Result("wchar_t"));
     
     // typename qualified-id
     CodeCompletionString *Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("typename");
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("qualified-id");
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     if (LangOpts.CPlusPlus0x) {
-      Results.MaybeAddResult(Result("auto", Rank));
-      Results.MaybeAddResult(Result("char16_t", Rank));
-      Results.MaybeAddResult(Result("char32_t", Rank));
-      Results.MaybeAddResult(Result("decltype", Rank));
+      Results.MaybeAddResult(Result("auto"));
+      Results.MaybeAddResult(Result("char16_t"));
+      Results.MaybeAddResult(Result("char32_t"));
+      Results.MaybeAddResult(Result("decltype"));
     }
   }
   
   // GNU extensions
   if (LangOpts.GNUMode) {
     // FIXME: Enable when we actually support decimal floating point.
-    //    Results.MaybeAddResult(Result("_Decimal32", Rank));
-    //    Results.MaybeAddResult(Result("_Decimal64", Rank));
-    //    Results.MaybeAddResult(Result("_Decimal128", Rank));
+    //    Results.MaybeAddResult(Result("_Decimal32"));
+    //    Results.MaybeAddResult(Result("_Decimal64"));
+    //    Results.MaybeAddResult(Result("_Decimal128"));
     
     CodeCompletionString *Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("typeof");
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("expression-or-type");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
   }
 }
 
 static void AddStorageSpecifiers(Action::CodeCompletionContext CCC,
                                  const LangOptions &LangOpts, 
-                                 unsigned Rank, 
                                  ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
   // Note: we don't suggest either "auto" or "register", because both
   // are pointless as storage specifiers. Elsewhere, we suggest "auto"
   // in C++0x as a type specifier.
-  Results.MaybeAddResult(Result("extern", Rank));
-  Results.MaybeAddResult(Result("static", Rank));
+  Results.MaybeAddResult(Result("extern"));
+  Results.MaybeAddResult(Result("static"));
 }
 
 static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
                                   const LangOptions &LangOpts, 
-                                  unsigned Rank, 
                                   ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
   switch (CCC) {
   case Action::CCC_Class:
   case Action::CCC_MemberTemplate:
     if (LangOpts.CPlusPlus) {
-      Results.MaybeAddResult(Result("explicit", Rank));
-      Results.MaybeAddResult(Result("friend", Rank));
-      Results.MaybeAddResult(Result("mutable", Rank));
-      Results.MaybeAddResult(Result("virtual", Rank));
+      Results.MaybeAddResult(Result("explicit"));
+      Results.MaybeAddResult(Result("friend"));
+      Results.MaybeAddResult(Result("mutable"));
+      Results.MaybeAddResult(Result("virtual"));
     }    
     // Fall through
 
@@ -890,7 +855,7 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
   case Action::CCC_Namespace:
   case Action::CCC_Template:
     if (LangOpts.CPlusPlus || LangOpts.C99)
-      Results.MaybeAddResult(Result("inline", Rank));
+      Results.MaybeAddResult(Result("inline"));
     break;
 
   case Action::CCC_ObjCInstanceVariableList:
@@ -902,30 +867,23 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
   }
 }
 
-static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
-                                     bool NeedAt);
-static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
-                                    bool NeedAt);
-static void AddObjCVisibilityResults(unsigned Rank, 
-                                     const LangOptions &LangOpts,
+static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt);
+static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt);
+static void AddObjCVisibilityResults(const LangOptions &LangOpts,
                                      ResultBuilder &Results,
                                      bool NeedAt);  
-static void AddObjCImplementationResults(unsigned Rank, 
-                                         const LangOptions &LangOpts,
+static void AddObjCImplementationResults(const LangOptions &LangOpts,
                                          ResultBuilder &Results,
                                          bool NeedAt);
-static void AddObjCInterfaceResults(unsigned Rank, 
-                                    const LangOptions &LangOpts,
+static void AddObjCInterfaceResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results,
                                     bool NeedAt);
-static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
-                                   bool NeedAt);
+static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt);
 
 /// \brief Add language constructs that show up for "ordinary" names.
 static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
                                    Scope *S,
                                    Sema &SemaRef,
-                                   unsigned Rank, 
                                    ResultBuilder &Results) {
   typedef CodeCompleteConsumer::Result Result;
   switch (CCC) {
@@ -940,7 +898,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddPlaceholderChunk("declarations");
       Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // namespace identifier = identifier ;
       Pattern = new CodeCompletionString;
@@ -950,7 +908,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_Equal);
       Pattern->AddPlaceholderChunk("identifier");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // Using directives
       Pattern = new CodeCompletionString;
@@ -960,7 +918,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("identifier");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // asm(string-literal)      
       Pattern = new CodeCompletionString;
@@ -969,7 +927,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddPlaceholderChunk("string-literal");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // Explicit template instantiation
       Pattern = new CodeCompletionString;
@@ -977,16 +935,16 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("declaration");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
       
     if (SemaRef.getLangOptions().ObjC1)
-      AddObjCTopLevelResults(Rank, Results, true);
+      AddObjCTopLevelResults(Results, true);
       
     // Fall through
 
   case Action::CCC_Class:
-    Results.MaybeAddResult(Result("typedef", Rank));
+    Results.MaybeAddResult(Result("typedef"));
     if (SemaRef.getLangOptions().CPlusPlus) {
       // Using declaration
       CodeCompletionString *Pattern = new CodeCompletionString;
@@ -994,7 +952,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("qualified-id");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
       
       // using typename qualified-id; (only in a dependent context)
       if (SemaRef.CurContext->isDependentContext()) {
@@ -1005,7 +963,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
         Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
         Pattern->AddPlaceholderChunk("qualified-id");
         Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-        Results.MaybeAddResult(Result(Pattern, Rank));
+        Results.MaybeAddResult(Result(Pattern));
       }
 
       if (CCC == Action::CCC_Class) {
@@ -1013,19 +971,19 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
         Pattern = new CodeCompletionString;
         Pattern->AddTypedTextChunk("public");
         Pattern->AddChunk(CodeCompletionString::CK_Colon);
-        Results.MaybeAddResult(Result(Pattern, Rank));
+        Results.MaybeAddResult(Result(Pattern));
 
         // protected:
         Pattern = new CodeCompletionString;
         Pattern->AddTypedTextChunk("protected");
         Pattern->AddChunk(CodeCompletionString::CK_Colon);
-        Results.MaybeAddResult(Result(Pattern, Rank));
+        Results.MaybeAddResult(Result(Pattern));
 
         // private:
         Pattern = new CodeCompletionString;
         Pattern->AddTypedTextChunk("private");
         Pattern->AddChunk(CodeCompletionString::CK_Colon);
-        Results.MaybeAddResult(Result(Pattern, Rank));
+        Results.MaybeAddResult(Result(Pattern));
       }
     }
     // Fall through
@@ -1039,31 +997,31 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftAngle);
       Pattern->AddPlaceholderChunk("parameters");
       Pattern->AddChunk(CodeCompletionString::CK_RightAngle);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
 
-    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
-    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
 
   case Action::CCC_ObjCInterface:
-    AddObjCInterfaceResults(Rank, SemaRef.getLangOptions(), Results, true);
-    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
-    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddObjCInterfaceResults(SemaRef.getLangOptions(), Results, true);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
       
   case Action::CCC_ObjCImplementation:
-    AddObjCImplementationResults(Rank, SemaRef.getLangOptions(), Results, true);
-    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
-    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddObjCImplementationResults(SemaRef.getLangOptions(), Results, true);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     break;
       
   case Action::CCC_ObjCInstanceVariableList:
-    AddObjCVisibilityResults(Rank, SemaRef.getLangOptions(), Results, true);
+    AddObjCVisibilityResults(SemaRef.getLangOptions(), Results, true);
     break;
       
   case Action::CCC_Statement: {
-    Results.MaybeAddResult(Result("typedef", Rank));
+    Results.MaybeAddResult(Result("typedef"));
 
     CodeCompletionString *Pattern = 0;
     if (SemaRef.getLangOptions().CPlusPlus) {
@@ -1081,10 +1039,10 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddPlaceholderChunk("statements");
       Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
     if (SemaRef.getLangOptions().ObjC1)
-      AddObjCStatementResults(Rank, Results, true);
+      AddObjCStatementResults(Results, true);
     
     // if (condition) { statements }
     Pattern = new CodeCompletionString;
@@ -1099,7 +1057,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddPlaceholderChunk("statements");
     Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
     Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     // switch (condition) { }
     Pattern = new CodeCompletionString;
@@ -1113,7 +1071,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
     Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
     Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     // Switch-specific statements.
     if (!SemaRef.getSwitchStack().empty()) {
@@ -1122,13 +1080,13 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddTypedTextChunk("case");
       Pattern->AddPlaceholderChunk("expression");
       Pattern->AddChunk(CodeCompletionString::CK_Colon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // default:
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("default");
       Pattern->AddChunk(CodeCompletionString::CK_Colon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
 
     /// while (condition) { statements }
@@ -1144,7 +1102,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddPlaceholderChunk("statements");
     Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
     Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     // do { statements } while ( expression );
     Pattern = new CodeCompletionString;
@@ -1158,7 +1116,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddPlaceholderChunk("expression");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
     Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     // for ( for-init-statement ; condition ; expression ) { statements }
     Pattern = new CodeCompletionString;
@@ -1177,14 +1135,14 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddPlaceholderChunk("statements");
     Pattern->AddChunk(CodeCompletionString::CK_VerticalSpace);
     Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
     
     if (S->getContinueParent()) {
       // continue ;
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("continue");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
 
     if (S->getBreakParent()) {
@@ -1192,7 +1150,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("break");
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
 
     // "return expression ;" or "return ;", depending on whether we
@@ -1210,7 +1168,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     if (!isVoid)
       Pattern->AddPlaceholderChunk("expression");
     Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
 
     // goto identifier ;
     Pattern = new CodeCompletionString;
@@ -1218,7 +1176,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("identifier");
     Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-    Results.MaybeAddResult(Result(Pattern, Rank));    
+    Results.MaybeAddResult(Result(Pattern));    
 
     // Using directives
     Pattern = new CodeCompletionString;
@@ -1228,13 +1186,13 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("identifier");
     Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
   }
 
   // Fall through (for statement expressions).
   case Action::CCC_ForInit:
   case Action::CCC_Condition:
-    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Results);
     // Fall through: conditions and statements can have expressions.
 
   case Action::CCC_Expression: {
@@ -1243,11 +1201,11 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       // 'this', if we're in a non-static member function.
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(SemaRef.CurContext))
         if (!Method->isStatic())
-          Results.MaybeAddResult(Result("this", Rank));
+          Results.MaybeAddResult(Result("this"));
       
       // true, false
-      Results.MaybeAddResult(Result("true", Rank));
-      Results.MaybeAddResult(Result("false", Rank));
+      Results.MaybeAddResult(Result("true"));
+      Results.MaybeAddResult(Result("false"));
 
       // dynamic_cast < type-id > ( expression )
       Pattern = new CodeCompletionString;
@@ -1258,7 +1216,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expression");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
       
       // static_cast < type-id > ( expression )
       Pattern = new CodeCompletionString;
@@ -1269,7 +1227,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expression");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // reinterpret_cast < type-id > ( expression )
       Pattern = new CodeCompletionString;
@@ -1280,7 +1238,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expression");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // const_cast < type-id > ( expression )
       Pattern = new CodeCompletionString;
@@ -1291,7 +1249,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expression");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // typeid ( expression-or-type )
       Pattern = new CodeCompletionString;
@@ -1299,7 +1257,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expression-or-type");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // new T ( ... )
       Pattern = new CodeCompletionString;
@@ -1309,7 +1267,7 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expressions");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // new T [ ] ( ... )
       Pattern = new CodeCompletionString;
@@ -1322,14 +1280,14 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
       Pattern->AddPlaceholderChunk("expressions");
       Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // delete expression
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("delete");
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("expression");
-      Results.MaybeAddResult(Result(Pattern, Rank));      
+      Results.MaybeAddResult(Result(Pattern));      
 
       // delete [] expression
       Pattern = new CodeCompletionString;
@@ -1338,23 +1296,23 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_RightBracket);
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("expression");
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
 
       // throw expression
       Pattern = new CodeCompletionString;
       Pattern->AddTypedTextChunk("throw");
       Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("expression");
-      Results.MaybeAddResult(Result(Pattern, Rank));
+      Results.MaybeAddResult(Result(Pattern));
     }
 
     if (SemaRef.getLangOptions().ObjC1) {
       // Add "super", if we're in an Objective-C class with a superclass.
       if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
         if (Method->getClassInterface()->getSuperClass())
-          Results.MaybeAddResult(Result("super", Rank));
+          Results.MaybeAddResult(Result("super"));
       
-      AddObjCExpressionResults(Rank, Results, true);
+      AddObjCExpressionResults(Results, true);
     }
 
     // sizeof expression
@@ -1363,15 +1321,15 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
     Pattern->AddPlaceholderChunk("expression-or-type");
     Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-    Results.MaybeAddResult(Result(Pattern, Rank));
+    Results.MaybeAddResult(Result(Pattern));
     break;
   }
   }
 
-  AddTypeSpecifierResults(SemaRef.getLangOptions(), Rank, Results);
+  AddTypeSpecifierResults(SemaRef.getLangOptions(), Results);
 
   if (SemaRef.getLangOptions().CPlusPlus)
-    Results.MaybeAddResult(Result("operator", Rank));
+    Results.MaybeAddResult(Result("operator"));
 }
 
 /// \brief If the given declaration has an associated type, add it as a result 
@@ -1946,13 +1904,12 @@ namespace {
   };
 }
 
-static void AddMacroResults(Preprocessor &PP, unsigned Rank, 
-                            ResultBuilder &Results) {
+static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results) {
   Results.EnterNewScope();
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
        M != MEnd; ++M)
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(M->first, Rank));
+    Results.MaybeAddResult(M->first);
   Results.ExitScope();
 }
 
@@ -1960,7 +1917,6 @@ static void HandleCodeCompleteResults(Sema *S,
                                       CodeCompleteConsumer *CodeCompleter,
                                      CodeCompleteConsumer::Result *Results,
                                      unsigned NumResults) {
-  // Sort the results by rank/kind/etc.
   std::stable_sort(Results, Results + NumResults, SortCodeCompleteResult());
 
   if (CodeCompleter)
@@ -1997,15 +1953,15 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
     break;
   }
 
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext, 
+                       Results);
 
   Results.EnterNewScope();
-  AddOrdinaryNameResults(CompletionContext, S, *this, NextRank, Results);
+  AddOrdinaryNameResults(CompletionContext, S, *this, Results);
   Results.ExitScope();
 
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2077,13 +2033,10 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   }
   
   ResultBuilder Results(*this, &ResultBuilder::IsMember);
-  unsigned NextRank = 0;
-
   Results.EnterNewScope();
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
     // Access to a C/C++ class, struct, or union.
-    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank,
-                                          Record->getDecl(), Results);
+    CollectMemberLookupResults(Record->getDecl(), Record->getDecl(), Results);
 
     if (getLangOptions().CPlusPlus) {
       if (!Results.empty()) {
@@ -2100,7 +2053,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
         }
 
         if (IsDependent)
-          Results.MaybeAddResult(Result("template", NextRank++));
+          Results.MaybeAddResult(Result("template"));
       }
 
       // We could have the start of a nested-name-specifier. Add those
@@ -2108,7 +2061,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
       // FIXME: We should really walk base classes to produce
       // nested-name-specifiers so that we produce more-precise results.
       Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-      CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank,
+      CollectLookupResults(S, Context.getTranslationUnitDecl(), 
                            CurContext, Results);
     }
   } else if (!IsArrow && BaseType->getAsObjCInterfacePointerType()) {
@@ -2150,7 +2103,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
 
   // Add macros
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
 
   // Hand off the results found for code completion.
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
@@ -2182,19 +2135,18 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   }
   
   ResultBuilder Results(*this, Filter);
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   
   if (getLangOptions().CPlusPlus) {
     // We could have the start of a nested-name-specifier. Add those
     // results as well.
     Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-    NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                    NextRank, CurContext, Results);
+    CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext, 
+                         Results);
   }
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2268,12 +2220,12 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, 0, Qualifier));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, Qualifier));
   }
   Results.ExitScope();
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, 1, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2366,16 +2318,16 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
     return;
 
   ResultBuilder Results(*this);
-  unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Ctx, Results);
+  CollectMemberLookupResults(Ctx, Ctx, Results);
   
   // The "template" keyword can follow "::" in the grammar, but only
   // put it into the grammar if the nested-name-specifier is dependent.
   NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
   if (!Results.empty() && NNS->isDependent())
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("template", NextRank));
+    Results.MaybeAddResult("template");
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank + 1, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2388,16 +2340,15 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   // If we aren't in class scope, we could see the "namespace" keyword.
   if (!S->isClassScope())
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("namespace", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("namespace"));
   
   // After "using", we can see anything that would start a 
   // nested-name-specifier.
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   Results.ExitScope();
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2409,11 +2360,10 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   // alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
   Results.EnterNewScope();
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   Results.ExitScope();
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2449,7 +2399,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
   }
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, 1, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2459,10 +2409,9 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   
   // After "namespace", we expect to see a namespace or alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
@@ -2477,37 +2426,34 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   // Add the names of overloadable operators.
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)      \
   if (std::strcmp(Spelling, "?"))                                                  \
-    Results.MaybeAddResult(Result(Spelling, 0));
+    Results.MaybeAddResult(Result(Spelling));
 #include "clang/Basic/OperatorKinds.def"
   
   // Add any type names visible from the current scope
-  unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   
   // Add any type specifiers
-  AddTypeSpecifierResults(getLangOptions(), 0, Results);
+  AddTypeSpecifierResults(getLangOptions(), Results);
   
   // Add any nested-name-specifiers
   Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-  NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                  NextRank + 1, CurContext, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   Results.ExitScope();
   
   if (CodeCompleter->includeMacros())
-    AddMacroResults(PP, NextRank, Results);
+    AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
 // Macro that expands to @Keyword or Keyword, depending on whether NeedAt is
 // true or false.
 #define OBJC_AT_KEYWORD_NAME(NeedAt,Keyword) NeedAt? "@" #Keyword : #Keyword
-static void AddObjCImplementationResults(unsigned Rank, 
-                                         const LangOptions &LangOpts,
+static void AddObjCImplementationResults(const LangOptions &LangOpts,
                                          ResultBuilder &Results,
                                          bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   // Since we have an implementation, we can end it.
-  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end), 0));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
   
   CodeCompletionString *Pattern = 0;
   if (LangOpts.ObjC2) {
@@ -2516,40 +2462,38 @@ static void AddObjCImplementationResults(unsigned Rank,
     Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,dynamic));
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("property");
-    Results.MaybeAddResult(Result(Pattern, 0));
+    Results.MaybeAddResult(Result(Pattern));
     
     // @synthesize
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,synthesize));
     Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Pattern->AddPlaceholderChunk("property");
-    Results.MaybeAddResult(Result(Pattern, 0));
+    Results.MaybeAddResult(Result(Pattern));
   }  
 }
 
-static void AddObjCInterfaceResults(unsigned Rank, 
-                                    const LangOptions &LangOpts,
+static void AddObjCInterfaceResults(const LangOptions &LangOpts,
                                     ResultBuilder &Results,
                                     bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   
   // Since we have an interface or protocol, we can end it.
-  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end), 0));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
   
   if (LangOpts.ObjC2) {
     // @property
-    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,property), 0));
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,property)));
   
     // @required
-    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,required), 0));
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,required)));
   
     // @optional
-    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,optional), 0));
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,optional)));
   }
 }
 
-static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
-                                   bool NeedAt) {
+static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   CodeCompletionString *Pattern = 0;
   
@@ -2559,7 +2503,7 @@ static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("identifier");
   Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @interface name 
   // FIXME: Could introduce the whole pattern, including superclasses and 
@@ -2568,21 +2512,21 @@ static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,interface));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("class");
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @protocol name
   Pattern = new CodeCompletionString;
   Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("protocol");
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @implementation name
   Pattern = new CodeCompletionString;
   Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,implementation));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("class");
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @compatibility_alias name
   Pattern = new CodeCompletionString;
@@ -2591,7 +2535,7 @@ static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddPlaceholderChunk("alias");
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("class");
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
 }
 
 void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
@@ -2600,17 +2544,16 @@ void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   if (ObjCImpDecl)
-    AddObjCImplementationResults(0, getLangOptions(), Results, false);
+    AddObjCImplementationResults(getLangOptions(), Results, false);
   else if (InInterface)
-    AddObjCInterfaceResults(0, getLangOptions(), Results, false);
+    AddObjCInterfaceResults(getLangOptions(), Results, false);
   else
-    AddObjCTopLevelResults(0, Results, false);
+    AddObjCTopLevelResults(Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
-static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
-                                     bool NeedAt) {
+static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   CodeCompletionString *Pattern = 0;
 
@@ -2620,7 +2563,7 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("type-name");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-  Results.MaybeAddResult(Result(Pattern, Rank));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @protocol ( protocol-name )
   Pattern = new CodeCompletionString;
@@ -2628,7 +2571,7 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("protocol-name");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-  Results.MaybeAddResult(Result(Pattern, Rank));
+  Results.MaybeAddResult(Result(Pattern));
 
   // @selector ( selector )
   Pattern = new CodeCompletionString;
@@ -2636,11 +2579,10 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("selector");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
-  Results.MaybeAddResult(Result(Pattern, Rank));
+  Results.MaybeAddResult(Result(Pattern));
 }
 
-static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
-                                    bool NeedAt) {
+static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   CodeCompletionString *Pattern = 0;
   
@@ -2662,7 +2604,7 @@ static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
   Pattern->AddPlaceholderChunk("statements");
   Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @throw
   Pattern = new CodeCompletionString;
@@ -2670,7 +2612,7 @@ static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Pattern->AddPlaceholderChunk("expression");
   Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
   
   // @synchronized ( expression ) { statements }
   Pattern = new CodeCompletionString;
@@ -2682,25 +2624,24 @@ static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
   Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
   Pattern->AddPlaceholderChunk("statements");
   Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-  Results.MaybeAddResult(Result(Pattern, 0));
+  Results.MaybeAddResult(Result(Pattern));
 }
 
-static void AddObjCVisibilityResults(unsigned Rank, 
-                                     const LangOptions &LangOpts,
+static void AddObjCVisibilityResults(const LangOptions &LangOpts,
                                      ResultBuilder &Results,
                                      bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
-  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,private), Rank));
-  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,protected), Rank));
-  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,public), Rank));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,private)));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,protected)));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,public)));
   if (LangOpts.ObjC2)
-    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,package), Rank));    
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,package)));    
 }
 
 void Sema::CodeCompleteObjCAtVisibility(Scope *S) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCVisibilityResults(0, getLangOptions(), Results, false);
+  AddObjCVisibilityResults(getLangOptions(), Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
@@ -2708,8 +2649,8 @@ void Sema::CodeCompleteObjCAtVisibility(Scope *S) {
 void Sema::CodeCompleteObjCAtStatement(Scope *S) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCStatementResults(0, Results, false);
-  AddObjCExpressionResults(0, Results, false);
+  AddObjCStatementResults(Results, false);
+  AddObjCExpressionResults(Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
@@ -2717,7 +2658,7 @@ void Sema::CodeCompleteObjCAtStatement(Scope *S) {
 void Sema::CodeCompleteObjCAtExpression(Scope *S) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCExpressionResults(0, Results, false);
+  AddObjCExpressionResults(Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
@@ -2762,30 +2703,30 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readonly))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("readonly", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("readonly"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_assign))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("assign", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("assign"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readwrite))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("readwrite", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("readwrite"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_retain))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("retain", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("retain"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_copy))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("copy", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("copy"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_nonatomic))
-    Results.MaybeAddResult(CodeCompleteConsumer::Result("nonatomic", 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("nonatomic"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_setter)) {
     CodeCompletionString *Setter = new CodeCompletionString;
     Setter->AddTypedTextChunk("setter");
     Setter->AddTextChunk(" = ");
     Setter->AddPlaceholderChunk("method");
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(Setter, 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(Setter));
   }
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_getter)) {
     CodeCompletionString *Getter = new CodeCompletionString;
     Getter->AddTypedTextChunk("getter");
     Getter->AddTextChunk(" = ");
     Getter->AddPlaceholderChunk("method");
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(Getter, 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(Getter));
   }
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
