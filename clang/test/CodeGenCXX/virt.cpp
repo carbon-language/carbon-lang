@@ -153,7 +153,7 @@ void test12_foo() {
 // CHECK-LPLL64:  call void %
 // CHECK-LPLL64:  call void %
 // CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void @_ZN8test12_A3fooEv(%class.test14* %tmp11)
+// CHECK-LPLL64:  call void @_ZN8test12_A3fooEv(%class.test14* %{{.*}})
 
 
 struct test6_B2 { virtual void funcB2(); char b[1000]; };
@@ -769,55 +769,53 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // FIXME: This is the wrong thunk, but until these issues are fixed, better
 // than nothing.
 // CHECK-LPLL64:define weak %class.test8_D* @_ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
-// CHECK-LPLL64:entry:
-// CHECK-LPLL64:  %retval = alloca %class.test8_D*
+// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
 // CHECK-LPLL64:  %.addr = alloca %class.test8_D*
 // CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
-// CHECK-LPLL64:  %this = load %class.test8_D** %.addr
-// CHECK-LPLL64:  %1 = bitcast %class.test8_D* %this to i8*
-// CHECK-LPLL64:  %2 = getelementptr inbounds i8* %1, i64 -16
-// CHECK-LPLL64:  %3 = bitcast i8* %2 to %class.test8_D*
-// CHECK-LPLL64:  %4 = bitcast %class.test8_D* %3 to i8*
-// CHECK-LPLL64:  %5 = bitcast %class.test8_D* %3 to i64**
-// CHECK-LPLL64:  %vtable = load i64** %5
-// CHECK-LPLL64:  %6 = getelementptr inbounds i64* %vtable, i64 -9
-// CHECK-LPLL64:  %7 = load i64* %6
-// CHECK-LPLL64:  %8 = getelementptr i8* %4, i64 %7
-// CHECK-LPLL64:  %9 = bitcast i8* %8 to %class.test8_D*
-// CHECK-LPLL64:  %call = call %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D* %9)
-// CHECK-LPLL64:  store %class.test8_D* %call, %class.test8_D** %retval
-// CHECK-LPLL64:  %10 = load %class.test8_D** %retval
-// CHECK-LPLL64:  ret %class.test8_D* %10
+// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{1|4}} = bitcast %class.test8_D* %{{this|3}} to i8*
+// CHECK-LPLL64:  %{{2|5}} = getelementptr inbounds i8* %{{1|4}}, i64 -16
+// CHECK-LPLL64:  %{{3|6}} = bitcast i8* %{{2|5}} to %class.test8_D*
+// CHECK-LPLL64:  %{{4|7}} = bitcast %class.test8_D* %{{3|6}} to i8*
+// CHECK-LPLL64:  %{{5|8}} = bitcast %class.test8_D* %3 to i64**
+// CHECK-LPLL64:  %{{vtable|9}} = load i64** %{{5|8}}
+// CHECK-LPLL64:  %{{6|10}} = getelementptr inbounds i64* %{{vtable|9}}, i64 -9
+// CHECK-LPLL64:  %{{7|11}} = load i64* %{{6|10}}
+// CHECK-LPLL64:  %{{8|12}} = getelementptr i8* %{{4|7}}, i64 %{{7|11}}
+// CHECK-LPLL64:  %{{9|13}} = bitcast i8* %{{8|12}} to %class.test8_D*
+// CHECK-LPLL64:  %{{call|14}} = call %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D* %{{9|13}})
+// CHECK-LPLL64:  store %class.test8_D* %{{call|14}}, %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  %{{10|15}} = load %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  ret %class.test8_D* %{{10|15}}
 // CHECK-LPLL64:}
 
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
-// CHECK-LPLL64:entry:
-// CHECK-LPLL64:  %retval = alloca %class.test8_D*
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%{{class.test8_D|.*}}*)
+// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
 // CHECK-LPLL64:  %.addr = alloca %class.test8_D*
 // CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
-// CHECK-LPLL64:  %this = load %class.test8_D** %.addr
-// CHECK-LPLL64:  %call = call %class.test8_D* @_ZN8test16_D4foo1Ev(%class.test8_D* %this)
-// CHECK-LPLL64:  %1 = icmp ne %class.test8_D* %call, null
-// CHECK-LPLL64:  br i1 %1, label %2, label %12
-// CHECK-LPLL64:; <label>:2
-// CHECK-LPLL64:  %3 = bitcast %class.test8_D* %call to i8*
-// CHECK-LPLL64:  %4 = getelementptr inbounds i8* %3, i64 16
-// CHECK-LPLL64:  %5 = bitcast i8* %4 to %class.test8_D*
-// CHECK-LPLL64:  %6 = bitcast %class.test8_D* %5 to i8*
-// CHECK-LPLL64:  %7 = bitcast %class.test8_D* %5 to i64**
-// CHECK-LPLL64:  %vtable = load i64** %7
-// CHECK-LPLL64:  %8 = getelementptr inbounds i64* %vtable, i64 -4
-// CHECK-LPLL64:  %9 = load i64* %8
-// CHECK-LPLL64:  %10 = getelementptr i8* %6, i64 %9
-// CHECK-LPLL64:  %11 = bitcast i8* %10 to %class.test8_D*
-// CHECK-LPLL64:  br label %13
-// CHECK-LPLL64:; <label>:12
-// CHECK-LPLL64:  br label %13
-// CHECK-LPLL64:; <label>:13
-// CHECK-LPLL64:  %14 = phi %class.test8_D* [ %11, %2 ], [ %call, %12 ]
-// CHECK-LPLL64:  store %class.test8_D* %14, %class.test8_D** %retval
-// CHECK-LPLL64:  %15 = load %class.test8_D** %retval
-// CHECK-LPLL64:  ret %class.test8_D* %15
+// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{call|4}} = call %class.test8_D* @_ZN8test16_D4foo1Ev(%class.test8_D* %{{this|3}})
+// CHECK-LPLL64:  %{{1|5}} = icmp ne %class.test8_D* %{{call|4}}, null
+// CHECK-LPLL64:  br i1 %{{1|5}}, label %{{2|6}}, label %{{12|17}}
+// CHECK-LPLL64:; <label>:{{2|6}}
+// CHECK-LPLL64:  %{{3|7}} = bitcast %class.test8_D* %{{call|4}} to i8*
+// CHECK-LPLL64:  %{{4|8}} = getelementptr inbounds i8* %{{3|7}}, i64 16
+// CHECK-LPLL64:  %{{5|9}} = bitcast i8* %4 to %class.test8_D*
+// CHECK-LPLL64:  %{{6|10}} = bitcast %class.test8_D* %{{5|9}} to i8*
+// CHECK-LPLL64:  %{{7|11}} = bitcast %class.test8_D* %{{5|9}} to i64**
+// CHECK-LPLL64:  %{{vtable|12}} = load i64** %{{7|11}}
+// CHECK-LPLL64:  %{{8|13}} = getelementptr inbounds i64* %vtable, i64 -4
+// CHECK-LPLL64:  %{{9|14}} = load i64* %{{8|13}}
+// CHECK-LPLL64:  %{{10|15}} = getelementptr i8* %{{6|10}}, i64 %{{9|14}}
+// CHECK-LPLL64:  %{{11|16}} = bitcast i8* %{{10|15}} to %class.test8_D*
+// CHECK-LPLL64:  br label %{{13|18}}
+// CHECK-LPLL64:; <label>:{{12|17}}
+// CHECK-LPLL64:  br label %{{13|18}}
+// CHECK-LPLL64:; <label>:{{13|18}}
+// CHECK-LPLL64:  %{{14|19}} = phi %class.test8_D* [ %{{11|16}}, %{{2|6}} ], [ %{{call|4}}, %{{12|17}} ]
+// CHECK-LPLL64:  store %class.test8_D* %{{14|19}}, %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  %{{15|20}} = load %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  ret %class.test8_D* %{{15|20}}
 // CHECK-LPLL64:}
 
 
