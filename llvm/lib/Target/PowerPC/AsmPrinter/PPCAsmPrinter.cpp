@@ -69,6 +69,8 @@ namespace {
       void Init(const GlobalValue *GV, Mangler *Mang) {
         // Already initialized.
         if (!StubName.empty()) return;
+
+        // Get the names.
         StubName = Mang->getMangledName(GV, "$stub", true);
         LazyPtrName = Mang->getMangledName(GV, "$lazy_ptr", true);
         AnonSymbolName = Mang->getMangledName(GV, "$stub$tmp", true);
@@ -81,13 +83,13 @@ namespace {
         SmallString<128> TmpStr;
         Mang->getNameWithPrefix(TmpStr, GVName + "$stub", Mangler::Private);
         StubSym = Ctx.GetOrCreateSymbol(TmpStr.str());
-        TmpStr.clear();
-        
-        Mang->getNameWithPrefix(TmpStr, GVName + "$lazy_ptr", Mangler::Private);
+        TmpStr.erase(TmpStr.end()-5, TmpStr.end()); // Remove $stub
+
+        TmpStr += "$lazy_ptr";
         LazyPtrSym = Ctx.GetOrCreateSymbol(TmpStr.str());
-        TmpStr.clear();
+        TmpStr.erase(TmpStr.end()-9, TmpStr.end()); // Remove $lazy_ptr
         
-        Mang->getNameWithPrefix(TmpStr, GVName + "$stub$tmp", Mangler::Private);
+        TmpStr += "$stub$tmp";
         AnonSymbolSym = Ctx.GetOrCreateSymbol(TmpStr.str());
       }
       
