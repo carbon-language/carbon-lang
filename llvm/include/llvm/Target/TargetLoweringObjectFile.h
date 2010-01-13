@@ -352,7 +352,7 @@ public:
 
   /// getCOFFSection - Return the MCSection for the specified COFF section.
   /// FIXME: Switch this to a semantic view eventually.
-  const MCSection *getCOFFSection(const char *Name, bool isDirective,
+  const MCSection *getCOFFSection(StringRef Name, bool isDirective,
                                   SectionKind K) const;
 };
 

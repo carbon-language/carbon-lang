@@ -175,16 +175,16 @@ namespace {
       printDataDirective(MCPV->getType());
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
-      std::string Name;
+      SmallString<128> TmpNameStr;
 
       if (ACPV->isLSDA()) {
-        SmallString<16> LSDAName;
-        raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
+        raw_svector_ostream(TmpNameStr) << MAI->getPrivateGlobalPrefix() <<
           "_LSDA_" << getFunctionNumber();
-        Name = LSDAName.str();
+        O << TmpNameStr.str();
       } else if (ACPV->isBlockAddress()) {
-        Name = GetBlockAddressSymbol(ACPV->getBlockAddress())->getName();
+        O << GetBlockAddressSymbol(ACPV->getBlockAddress())->getName();
       } else if (ACPV->isGlobalValue()) {
+        std::string Name;
         GlobalValue *GV = ACPV->getGV();
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
@@ -201,16 +201,16 @@ namespace {
             GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
                                         MMIMachO.getGVStubEntry(Sym);
           if (StubSym == 0) {
-            SmallString<128> NameStr;
-            Mang->getNameWithPrefix(NameStr, GV, false);
-            StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+            Mang->getNameWithPrefix(TmpNameStr, GV, false);
+            StubSym = OutContext.GetOrCreateSymbol(TmpNameStr.str());
           }
         }
+        O << Name;
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        Name = Mang->makeNameProper(ACPV->getSymbol());
+        Mang->makeNameProper(TmpNameStr, ACPV->getSymbol());
+        O << TmpNameStr.str();
       }
-      O << Name;
 
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
@@ -392,9 +392,10 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    std::string Name = Mang->makeNameProper(MO.getSymbolName());
+    SmallString<128> NameStr;
+    Mang->makeNameProper(NameStr, MO.getSymbolName());
 
-    O << Name;
+    O << NameStr.str();
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";

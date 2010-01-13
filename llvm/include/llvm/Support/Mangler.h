@@ -112,8 +112,9 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
-  std::string makeNameProper(const Twine &Name,
-                             ManglerPrefixTy PrefixTy = Mangler::Default);
+  void makeNameProper(SmallVectorImpl<char> &OutName,
+                      const Twine &Name,
+                      ManglerPrefixTy PrefixTy = Mangler::Default);
   
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't

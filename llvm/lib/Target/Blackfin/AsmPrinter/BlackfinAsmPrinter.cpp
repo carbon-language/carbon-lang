@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
@@ -179,9 +180,12 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << Mang->getMangledName(MO.getGlobal());
     printOffset(MO.getOffset());
     break;
-  case MachineOperand::MO_ExternalSymbol:
-    O << Mang->makeNameProper(MO.getSymbolName());
+  case MachineOperand::MO_ExternalSymbol: {
+    SmallString<60> NameStr;
+    Mang->makeNameProper(NameStr, MO.getSymbolName());
+    O << NameStr.str();
     break;
+  }
   case MachineOperand::MO_ConstantPoolIndex:
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getIndex();

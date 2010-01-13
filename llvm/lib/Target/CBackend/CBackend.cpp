@@ -25,6 +25,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
@@ -2207,12 +2208,17 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // If there are no type names, exit early.
   if (I == End) return;
 
+  SmallString<128> TempName;
+
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I) {
-    std::string Name = "struct l_" + Mang->makeNameProper(I->first);
-    Out << Name << ";\n";
-    TypeNames.insert(std::make_pair(I->second, Name));
+    const char *Prefix = "struct l_";
+    TempName.append(Prefix, Prefix+strlen(Prefix));
+    Mang->makeNameProper(TempName, I->first);
+    Out << TempName.str() << ";\n";
+    TypeNames.insert(std::make_pair(I->second, TempName.str()));
+    TempName.clear();
   }
 
   Out << '\n';
@@ -2221,10 +2227,14 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // for struct or opaque types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    std::string Name = "l_" + Mang->makeNameProper(I->first);
+    const char *Prefix = "l_";
+    TempName.append(Prefix, Prefix+strlen(Prefix));
+    Mang->makeNameProper(TempName, I->first);
+    
     Out << "typedef ";
-    printType(Out, I->second, false, Name);
+    printType(Out, I->second, false, TempName.str());
     Out << ";\n";
+    TempName.clear();
   }
 
   Out << '\n';

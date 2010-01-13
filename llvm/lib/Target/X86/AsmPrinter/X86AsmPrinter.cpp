@@ -201,6 +201,7 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// jump tables, constant pools, global address and external symbols, all of
 /// which print to a label with various suffixes for relocation types etc.
 void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
+  SmallString<128> TempNameStr;
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
@@ -236,41 +237,38 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
-      SmallString<128> NameStr;
-      Mang->getNameWithPrefix(NameStr, GV, true);
-      NameStr += "$non_lazy_ptr";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      Mang->getNameWithPrefix(TempNameStr, GV, true);
+      TempNameStr += "$non_lazy_ptr";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       
       const MCSymbol *&StubSym = 
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
       if (StubSym == 0) {
-        NameStr.clear();
-        Mang->getNameWithPrefix(NameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+        TempNameStr.clear();
+        Mang->getNameWithPrefix(TempNameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       }
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      SmallString<128> NameStr;
-      Mang->getNameWithPrefix(NameStr, GV, true);
-      NameStr += "$non_lazy_ptr";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      Mang->getNameWithPrefix(TempNameStr, GV, true);
+      TempNameStr += "$non_lazy_ptr";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
       if (StubSym == 0) {
-        NameStr.clear();
-        Mang->getNameWithPrefix(NameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+        TempNameStr.clear();
+        Mang->getNameWithPrefix(TempNameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       }
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      SmallString<128> NameStr;
-      Mang->getNameWithPrefix(NameStr, GV, true);
-      NameStr += "$stub";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      Mang->getNameWithPrefix(TempNameStr, GV, true);
+      TempNameStr += "$stub";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
-        NameStr.clear();
-        Mang->getNameWithPrefix(NameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+        TempNameStr.clear();
+        Mang->getNameWithPrefix(TempNameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       }
     }
     
@@ -285,24 +283,24 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    std::string Name = Mang->makeNameProper(MO.getSymbolName());
+    Mang->makeNameProper(TempNameStr, MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      Name += "$stub";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(StringRef(Name));
+      TempNameStr += "$stub";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
-        Name.erase(Name.end()-5, Name.end());
-        StubSym = OutContext.GetOrCreateSymbol(StringRef(Name));
+        TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
+        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       }
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
     // to avoid having it look like an integer immediate to the assembler.
-    if (Name[0] == '$') 
-      O << '(' << Name << ')';
+    if (TempNameStr[0] == '$') 
+      O << '(' << TempNameStr << ')';
     else
-      O << Name;
+      O << TempNameStr;
     break;
   }
   }

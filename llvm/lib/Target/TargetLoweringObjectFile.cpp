@@ -492,16 +492,15 @@ getELFKindForNamedSection(const char *Name, SectionKind K) {
 }
 
 
-static unsigned
-getELFSectionType(const char *Name, SectionKind K) {
+static unsigned getELFSectionType(StringRef Name, SectionKind K) {
 
-  if (strcmp(Name, ".init_array") == 0)
+  if (Name == ".init_array")
     return MCSectionELF::SHT_INIT_ARRAY;
 
-  if (strcmp(Name, ".fini_array") == 0)
+  if (Name == ".fini_array")
     return MCSectionELF::SHT_FINI_ARRAY;
 
-  if (strcmp(Name, ".preinit_array") == 0)
+  if (Name == ".preinit_array")
     return MCSectionELF::SHT_PREINIT_ARRAY;
 
   if (K.isBSS() || K.isThreadBSS())
@@ -577,10 +576,12 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    std::string Name = Mang->makeNameProper(GV->getNameStr());
+    SmallString<128> Name;
+    Name.append(Prefix, Prefix+strlen(Prefix));
+    Mang->makeNameProper(Name, GV->getName());
 
-    return getELFSection((Prefix+Name).c_str(),
-                         getELFSectionType((Prefix+Name).c_str(), Kind),
+    return getELFSection(Name.str(),
+                         getELFSectionType(Name.str(), Kind),
                          getELFSectionFlags(Kind),
                          Kind);
   }
@@ -983,7 +984,7 @@ TargetLoweringObjectFileCOFF::~TargetLoweringObjectFileCOFF() {
 
 
 const MCSection *TargetLoweringObjectFileCOFF::
-getCOFFSection(const char *Name, bool isDirective, SectionKind Kind) const {
+getCOFFSection(StringRef Name, bool isDirective, SectionKind Kind) const {
   // Create the map if it doesn't already exist.
   if (UniquingMap == 0)
     UniquingMap = new MachOUniqueMapTy();
@@ -1078,8 +1079,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
-    std::string Name = Mang->makeNameProper(GV->getNameStr());
-    return getCOFFSection((Prefix+Name).c_str(), false, Kind);
+    SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
+    Mang->makeNameProper(Name, GV->getNameStr());
+    return getCOFFSection(Name.str(), false, Kind);
   }
 
   if (Kind.isText())

@@ -24,59 +24,54 @@ static char HexDigit(int V) {
   return V < 10 ? V+'0' : V+'A'-10;
 }
 
-static std::string MangleLetter(unsigned char C) {
-  char Result[] = { '_', HexDigit(C >> 4), HexDigit(C & 15), '_', 0 };
-  return Result;
+static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
+  OutName.push_back('_');
+  OutName.push_back(HexDigit(C >> 4));
+  OutName.push_back(HexDigit(C & 15));
+  OutName.push_back('_');
 }
 
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(const Twine &TheName,
-                                    ManglerPrefixTy PrefixTy) {
+void Mangler::makeNameProper(SmallVectorImpl<char> &OutName,
+                             const Twine &TheName,
+                             ManglerPrefixTy PrefixTy) {
   SmallString<256> TmpData;
   TheName.toVector(TmpData);
   StringRef X = TmpData.str();
   assert(!X.empty() && "Cannot mangle empty strings");
   
   if (!UseQuotes) {
-    std::string Result;
-
     // If X does not start with (char)1, add the prefix.
-    bool NeedPrefix = true;
     StringRef::iterator I = X.begin();
     if (*I == 1) {
-      NeedPrefix = false;
-      ++I;  // Skip over the marker.
+      ++I;  // Skip over the no-prefix marker.
+    } else {
+      if (PrefixTy == Mangler::Private)
+        OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
+      else if (PrefixTy == Mangler::LinkerPrivate)
+        OutName.append(LinkerPrivatePrefix,
+                       LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));
+      OutName.append(Prefix, Prefix+strlen(Prefix));
     }
     
     // Mangle the first letter specially, don't allow numbers unless the target
     // explicitly allows them.
     if (!SymbolsCanStartWithDigit && *I >= '0' && *I <= '9')
-      Result += MangleLetter(*I++);
+      MangleLetter(OutName, *I++);
 
     for (StringRef::iterator E = X.end(); I != E; ++I) {
       if (!isCharAcceptable(*I))
-        Result += MangleLetter(*I);
+        MangleLetter(OutName, *I);
       else
-        Result += *I;
+        OutName.push_back(*I);
     }
-
-    if (NeedPrefix) {
-      Result = Prefix + Result;
-
-      if (PrefixTy == Mangler::Private)
-        Result = PrivatePrefix + Result;
-      else if (PrefixTy == Mangler::LinkerPrivate)
-        Result = LinkerPrivatePrefix + Result;
-    }
-
-    return Result;
+    return;
   }
 
   bool NeedPrefix = true;
   bool NeedQuotes = false;
-  std::string Result;    
   StringRef::iterator I = X.begin();
   if (*I == 1) {
     NeedPrefix = false;
@@ -98,43 +93,57 @@ std::string Mangler::makeNameProper(const Twine &TheName,
     
   // In the common case, we don't need quotes.  Handle this quickly.
   if (!NeedQuotes) {
-    if (!NeedPrefix)
-      return X.substr(1);   // Strip off the \001.
-    
-    Result = Prefix + X.str();
+    if (!NeedPrefix) {
+      OutName.append(X.begin()+1, X.end());   // Strip off the \001.
+      return;
+    }
 
     if (PrefixTy == Mangler::Private)
-      Result = PrivatePrefix + Result;
+      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
     else if (PrefixTy == Mangler::LinkerPrivate)
-      Result = LinkerPrivatePrefix + Result;
-
-    return Result;
+      OutName.append(LinkerPrivatePrefix,
+                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));
+    
+    if (Prefix[0] == 0)
+      ; // Common noop, no prefix.
+    else if (Prefix[1] == 0)
+      OutName.push_back(Prefix[0]);  // Common, one character prefix.
+    else
+      OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary prefix.
+    OutName.append(X.begin(), X.end());
+    return;
   }
 
-  if (NeedPrefix)
-    Result = X.substr(0, I-X.begin()).str();
-    
+  // Add leading quote.
+  OutName.push_back('"');
+  
+  // Add prefixes unless disabled.
+  if (NeedPrefix) {
+    if (PrefixTy == Mangler::Private)
+      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
+    else if (PrefixTy == Mangler::LinkerPrivate)
+      OutName.append(LinkerPrivatePrefix,
+                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));
+    OutName.append(Prefix, Prefix+strlen(Prefix));
+  }
+  
+  // Add the piece that we already scanned through.
+  OutName.append(X.begin(), I);
+  
   // Otherwise, construct the string the expensive way.
   for (StringRef::iterator E = X.end(); I != E; ++I) {
-    if (*I == '"')
-      Result += "_QQ_";
-    else if (*I == '\n')
-      Result += "_NL_";
-    else
-      Result += *I;
+    if (*I == '"') {
+      const char *Quote = "_QQ_";
+      OutName.append(Quote, Quote+4);
+    } else if (*I == '\n') {
+      const char *Newline = "_NL_";
+      OutName.append(Newline, Newline+4);
+    } else
+      OutName.push_back(*I);
   }
 
-  if (NeedPrefix) {
-    Result = Prefix + Result;
-
-    if (PrefixTy == Mangler::Private)
-      Result = PrivatePrefix + Result;
-    else if (PrefixTy == Mangler::LinkerPrivate)
-      Result = LinkerPrivatePrefix + Result;
-  }
-
-  Result = '"' + Result + '"';
-  return Result;
+  // Add trailing quote.
+  OutName.push_back('"');
 }
 
 /// getMangledName - Returns the mangled name of V, an LLVM Value,
@@ -151,8 +160,11 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
     (GV->hasPrivateLinkage() || ForcePrivate) ? Mangler::Private :
       GV->hasLinkerPrivateLinkage() ? Mangler::LinkerPrivate : Mangler::Default;
 
-  if (GV->hasName())
-    return makeNameProper(GV->getNameStr() + Suffix, PrefixTy);
+  SmallString<128> Result;
+  if (GV->hasName()) {
+    makeNameProper(Result, GV->getNameStr() + Suffix, PrefixTy);
+    return Result.str().str();
+  }
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
@@ -160,7 +172,8 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
   if (ID == 0) ID = NextAnonGlobalID++;
   
   // Must mangle the global into a unique ID.
-  return makeNameProper("__unnamed_" + utostr(ID) + Suffix, PrefixTy);
+  makeNameProper(Result, "__unnamed_" + utostr(ID) + Suffix, PrefixTy);
+  return Result.str().str();
 }
 
 

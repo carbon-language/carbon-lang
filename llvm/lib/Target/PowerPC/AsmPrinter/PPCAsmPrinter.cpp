@@ -49,6 +49,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -69,15 +70,20 @@ namespace {
         AnonSymbol = Mang->getMangledName(GV, "$stub$tmp", true);
       }
 
-      void Init(const std::string &GV, Mangler *Mang) {
+      void Init(StringRef GVName, Mangler *Mang) {
         // Already initialized.
         if (!Stub.empty()) return;
-        Stub = Mang->makeNameProper(GV + "$stub",
-                                    Mangler::Private);
-        LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr",
-                                       Mangler::Private);
-        AnonSymbol = Mang->makeNameProper(GV + "$stub$tmp",
-                                          Mangler::Private);
+        SmallString<128> TmpStr;
+        Mang->makeNameProper(TmpStr, GVName + "$stub", Mangler::Private);
+        Stub = TmpStr.str();
+        TmpStr.clear();
+        
+        Mang->makeNameProper(TmpStr, GVName + "$lazy_ptr", Mangler::Private);
+        LazyPtr = TmpStr.str();
+        TmpStr.clear();
+        
+        Mang->makeNameProper(TmpStr, GVName + "$stub$tmp", Mangler::Private);
+        AnonSymbol = TmpStr.str();
       }
     };
     
@@ -230,7 +236,9 @@ namespace {
           }
         }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
-          FnStubInfo &FnInfo =FnStubs[Mang->makeNameProper(MO.getSymbolName())];
+          SmallString<128> MangledName;
+          Mang->makeNameProper(MangledName, MO.getSymbolName());
+          FnStubInfo &FnInfo = FnStubs[MangledName.str()];
           FnInfo.Init(MO.getSymbolName(), Mang);
           O << FnInfo.Stub;
           return;
