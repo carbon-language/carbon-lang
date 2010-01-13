@@ -781,6 +781,11 @@ public:
   /// formal arguments into the %0 slots.  The result is appended onto the Str
   /// array.
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
+
+  /// FormatDiagnostic - Format the given format-string into the
+  /// output buffer using the arguments stored in this diagnostic.
+  void FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
+                        llvm::SmallVectorImpl<char> &OutStr) const;
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of

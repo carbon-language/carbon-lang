@@ -546,7 +546,7 @@ static bool ModifierIs(const char *Modifier, unsigned ModifierLen,
 /// "%2" has a value from 0-2.  If the value is 0, the diagnostic prints 'foo'.
 /// If the value is 1, it prints 'bar'.  If it has the value 2, it prints 'baz'.
 /// This is very useful for certain classes of variant diagnostics.
-static void HandleSelectModifier(unsigned ValNo,
+static void HandleSelectModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
                                  const char *Argument, unsigned ArgumentLen,
                                  llvm::SmallVectorImpl<char> &OutStr) {
   const char *ArgumentEnd = Argument+ArgumentLen;
@@ -562,8 +562,9 @@ static void HandleSelectModifier(unsigned ValNo,
 
   // Get the end of the value.  This is either the } or the |.
   const char *EndPtr = std::find(Argument, ArgumentEnd, '|');
-  // Add the value to the output string.
-  OutStr.append(Argument, EndPtr);
+
+  // Recursively format the result of the select clause into the output string.
+  DInfo.FormatDiagnostic(Argument, EndPtr, OutStr);
 }
 
 /// HandleIntegerSModifier - Handle the integer 's' modifier.  This adds the
@@ -702,6 +703,13 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
   const char *DiagStr = getDiags()->getDescription(getID());
   const char *DiagEnd = DiagStr+strlen(DiagStr);
 
+  FormatDiagnostic(DiagStr, DiagEnd, OutStr);
+}
+
+void DiagnosticInfo::
+FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
+                 llvm::SmallVectorImpl<char> &OutStr) const {
+
   /// FormattedArgs - Keep track of all of the arguments formatted by
   /// ConvertArgToString and pass them into subsequent calls to
   /// ConvertArgToString, allowing the implementation to avoid redundancies in
@@ -781,7 +789,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       int Val = getArgSInt(ArgNo);
 
       if (ModifierIs(Modifier, ModifierLen, "select")) {
-        HandleSelectModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+        HandleSelectModifier(*this, (unsigned)Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
@@ -796,7 +804,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
       unsigned Val = getArgUInt(ArgNo);
 
       if (ModifierIs(Modifier, ModifierLen, "select")) {
-        HandleSelectModifier(Val, Argument, ArgumentLen, OutStr);
+        HandleSelectModifier(*this, Val, Argument, ArgumentLen, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "s")) {
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
