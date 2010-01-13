@@ -664,7 +664,7 @@ public:
   /// frame indices from instructions which may use them.  The instruction
   /// referenced by the iterator contains an MO_FrameIndex operand which must be
   /// eliminated by this method.  This method may modify or replace the
-  /// specified instruction, as long as it keeps the iterator pointing the the
+  /// specified instruction, as long as it keeps the iterator pointing at the
   /// finished product. SPAdj is the SP adjustment due to call frame setup
   /// instruction.
   ///
