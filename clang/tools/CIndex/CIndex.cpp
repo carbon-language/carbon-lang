@@ -1065,7 +1065,7 @@ const char *clang_getCString(CXString string) {
 }
 
 void clang_disposeString(CXString string) {
-  if (string.MustFreeString)
+  if (string.MustFreeString && string.Spelling)
     free((void*)string.Spelling);
 }
 
