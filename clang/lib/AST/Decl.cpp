@@ -1039,6 +1039,15 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
     return OO_None;
 }
 
+/// getLiteralIdentifier - The literal suffix identifier this function
+/// represents, if any.
+const IdentifierInfo *FunctionDecl::getLiteralIdentifier() const {
+  if (getDeclName().getNameKind() == DeclarationName::CXXLiteralOperatorName)
+    return getDeclName().getCXXLiteralIdentifier();
+  else
+    return 0;
+}
+
 FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {
   if (MemberSpecializationInfo *Info = getMemberSpecializationInfo())
     return cast<FunctionDecl>(Info->getInstantiatedFrom());

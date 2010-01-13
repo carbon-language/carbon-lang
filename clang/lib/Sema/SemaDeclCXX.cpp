@@ -5006,6 +5006,88 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   return false;
 }
 
+/// CheckLiteralOperatorDeclaration - Check whether the declaration
+/// of this literal operator function is well-formed. If so, returns
+/// false; otherwise, emits appropriate diagnostics and returns true.
+bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
+  DeclContext *DC = FnDecl->getDeclContext();
+  Decl::Kind Kind = DC->getDeclKind();
+  if (Kind != Decl::TranslationUnit && Kind != Decl::Namespace &&
+      Kind != Decl::LinkageSpec) {
+    Diag(FnDecl->getLocation(), diag::err_literal_operator_outside_namespace)
+      << FnDecl->getDeclName();
+    return true;
+  }
+
+  bool Valid = false;
+
+  // FIXME: Check for the one valid template signature
+  // template <char...> type operator "" name();
+
+  if (FunctionDecl::param_iterator Param = FnDecl->param_begin()) {
+    // Check the first parameter
+    QualType T = (*Param)->getType();
+
+    // unsigned long long int and long double are allowed, but only
+    // alone.
+    // We also allow any character type; their omission seems to be a bug
+    // in n3000
+    if (Context.hasSameType(T, Context.UnsignedLongLongTy) ||
+        Context.hasSameType(T, Context.LongDoubleTy) ||
+        Context.hasSameType(T, Context.CharTy) ||
+        Context.hasSameType(T, Context.WCharTy) ||
+        Context.hasSameType(T, Context.Char16Ty) ||
+        Context.hasSameType(T, Context.Char32Ty)) {
+      if (++Param == FnDecl->param_end())
+        Valid = true;
+      goto FinishedParams;
+    }
+
+    // Otherwise it must be a pointer to const; let's strip those.
+    const PointerType *PT = T->getAs<PointerType>();
+    if (!PT)
+      goto FinishedParams;
+    T = PT->getPointeeType();
+    if (!T.isConstQualified())
+      goto FinishedParams;
+    T = T.getUnqualifiedType();
+
+    // Move on to the second parameter;
+    ++Param;
+
+    // If there is no second parameter, the first must be a const char *
+    if (Param == FnDecl->param_end()) {
+      if (Context.hasSameType(T, Context.CharTy))
+        Valid = true;
+      goto FinishedParams;
+    }
+
+    // const char *, const wchar_t*, const char16_t*, and const char32_t*
+    // are allowed as the first parameter to a two-parameter function
+    if (!(Context.hasSameType(T, Context.CharTy) ||
+          Context.hasSameType(T, Context.WCharTy) ||
+          Context.hasSameType(T, Context.Char16Ty) ||
+          Context.hasSameType(T, Context.Char32Ty)))
+      goto FinishedParams;
+
+    // The second and final parameter must be an std::size_t
+    T = (*Param)->getType().getUnqualifiedType();
+    if (Context.hasSameType(T, Context.getSizeType()) &&
+        ++Param == FnDecl->param_end())
+      Valid = true;
+  }
+
+  // FIXME: This diagnostic is absolutely terrible.
+FinishedParams:
+  if (!Valid) {
+    Diag(FnDecl->getLocation(), diag::err_literal_operator_params)
+      << FnDecl->getDeclName();
+    return true;
+  }
+
+  return false;
+}
+
 /// ActOnStartLinkageSpecification - Parsed the beginning of a C++
 /// linkage specification, including the language and (if present)
 /// the '{'. ExternLoc is the location of the 'extern', LangLoc is

@@ -56,9 +56,14 @@ public:
 /// This identifier is stored here rather than directly in DeclarationName so as
 /// to allow Objective-C selectors, which are about a million times more common,
 /// to consume minimal memory.
-class CXXLiteralOperatorIdName : public DeclarationNameExtra {
+class CXXLiteralOperatorIdName
+  : public DeclarationNameExtra, public llvm::FoldingSetNode {
 public:
   IdentifierInfo *ID;
+
+  void Profile(llvm::FoldingSetNodeID &FSID) {
+    FSID.AddPointer(ID);
+  }
 };
 
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
@@ -358,6 +363,7 @@ void DeclarationName::dump() const {
 
 DeclarationNameTable::DeclarationNameTable() {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
+  CXXLiteralOperatorNames = new llvm::FoldingSet<CXXLiteralOperatorIdName>;
 
   // Initialize the overloaded operator names.
   CXXOperatorNames = new CXXOperatorIdName[NUM_OVERLOADED_OPERATORS];
@@ -369,16 +375,30 @@ DeclarationNameTable::DeclarationNameTable() {
 }
 
 DeclarationNameTable::~DeclarationNameTable() {
-  llvm::FoldingSet<CXXSpecialName> *set =
+  llvm::FoldingSet<CXXSpecialName> *SpecialNames =
     static_cast<llvm::FoldingSet<CXXSpecialName>*>(CXXSpecialNamesImpl);
-  llvm::FoldingSetIterator<CXXSpecialName> I = set->begin(), E = set->end();
+  llvm::FoldingSetIterator<CXXSpecialName>
+                           SI = SpecialNames->begin(), SE = SpecialNames->end();
 
-  while (I != E) {
-    CXXSpecialName *n = &*I++;
+  while (SI != SE) {
+    CXXSpecialName *n = &*SI++;
     delete n;
   }
 
-  delete set;
+
+  llvm::FoldingSet<CXXLiteralOperatorIdName> *LiteralNames
+    = static_cast<llvm::FoldingSet<CXXLiteralOperatorIdName>*>
+                                                      (CXXLiteralOperatorNames);
+  llvm::FoldingSetIterator<CXXLiteralOperatorIdName>
+                           LI = LiteralNames->begin(), LE = LiteralNames->end();
+
+  while (LI != LE) {
+    CXXLiteralOperatorIdName *n = &*LI++;
+    delete n;
+  }
+
+  delete SpecialNames;
+  delete LiteralNames;
   delete [] CXXOperatorNames;
 }
 
@@ -433,9 +453,23 @@ DeclarationNameTable::getCXXOperatorName(OverloadedOperatorKind Op) {
 
 DeclarationName
 DeclarationNameTable::getCXXLiteralOperatorName(IdentifierInfo *II) {
+  llvm::FoldingSet<CXXLiteralOperatorIdName> *LiteralNames
+    = static_cast<llvm::FoldingSet<CXXLiteralOperatorIdName>*>
+                                                      (CXXLiteralOperatorNames);
+
+  llvm::FoldingSetNodeID ID;
+  ID.AddPointer(II);
+
+  void *InsertPos = 0;
+  if (CXXLiteralOperatorIdName *Name =
+                               LiteralNames->FindNodeOrInsertPos(ID, InsertPos))
+    return DeclarationName (Name);
+  
   CXXLiteralOperatorIdName *LiteralName = new CXXLiteralOperatorIdName;
   LiteralName->ExtraKindOrNumArgs = DeclarationNameExtra::CXXLiteralOperator;
   LiteralName->ID = II;
+
+  LiteralNames->InsertNode(LiteralName, InsertPos);
   return DeclarationName(LiteralName);
 }
 

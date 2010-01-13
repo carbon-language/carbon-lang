@@ -309,6 +309,7 @@ inline bool operator>=(DeclarationName LHS, DeclarationName RHS) {
 class DeclarationNameTable {
   void *CXXSpecialNamesImpl; // Actually a FoldingSet<CXXSpecialName> *
   CXXOperatorIdName *CXXOperatorNames; // Operator names
+  void *CXXLiteralOperatorNames; // Actually a FoldingSet<...> *
 
   DeclarationNameTable(const DeclarationNameTable&);            // NONCOPYABLE
   DeclarationNameTable& operator=(const DeclarationNameTable&); // NONCOPYABLE

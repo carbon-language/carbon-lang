@@ -2360,6 +2360,8 @@ public:
 
   bool CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl);
 
+  bool CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl);
+
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //

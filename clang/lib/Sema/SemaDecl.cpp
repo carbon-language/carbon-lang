@@ -3487,7 +3487,12 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     if (NewFD->isOverloadedOperator() &&
         CheckOverloadedOperatorDeclaration(NewFD))
       return NewFD->setInvalidDecl();
-    
+
+    // Extra checking for C++0x literal operators (C++0x [over.literal]).
+    if (NewFD->getLiteralIdentifier() &&
+        CheckLiteralOperatorDeclaration(NewFD))
+      return NewFD->setInvalidDecl();
+
     // In C++, check default arguments now that we have merged decls. Unless
     // the lexical context is the class, because in this case this is done
     // during delayed parsing anyway.

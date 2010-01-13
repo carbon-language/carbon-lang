@@ -1184,6 +1184,8 @@ public:
 
   OverloadedOperatorKind getOverloadedOperator() const;
 
+  const IdentifierInfo *getLiteralIdentifier() const;
+
   /// \brief If this function is an instantiation of a member function
   /// of a class template specialization, retrieves the function from
   /// which it was instantiated.

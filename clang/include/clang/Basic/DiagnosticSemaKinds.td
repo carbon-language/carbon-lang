@@ -2341,6 +2341,13 @@ def err_operator_delete_dependent_param_type : Error<
 def err_operator_delete_param_type : Error<
   "%0 takes type %1 as first parameter">;
 
+// C++ literal operators
+def err_literal_operator_outside_namespace : Error<
+  "literal operator %0 must be in a namespace or global scope">;
+// FIXME: This diagnostic sucks
+def err_literal_operator_params : Error<
+  "parameter declaration for literal operator %0 is not valid">;
+
 // C++ conversion functions
 def err_conv_function_not_member : Error<
   "conversion function must be a non-static member function">;
