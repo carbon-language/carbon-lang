@@ -249,8 +249,11 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
       Diags.Report(diag::err_fe_unable_to_load_plugin) << Path << Error;
   }
 
+  // Create the frontend action.
+  llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(Clang));
+
   // If there were any errors in processing arguments, exit now.
-  if (Clang.getDiagnostics().getNumErrors())
+  if (!Act || Clang.getDiagnostics().getNumErrors())
     return 1;
 
   // Create the target instance.
@@ -259,13 +262,13 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   if (!Clang.hasTarget())
     return 1;
 
-  // Inform the target of the language options
+  // Inform the target of the language options.
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
   Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
 
-  // Validate/process some options
+  // Validate/process some options.
   if (Clang.getHeaderSearchOpts().Verbose)
     llvm::errs() << "clang -cc1 version " CLANG_VERSION_STRING
                  << " based upon " << PACKAGE_STRING
@@ -297,10 +300,6 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
       // Create the preprocessor.
       Clang.createPreprocessor();
     }
-
-    llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(Clang));
-    if (!Act)
-      break;
 
     if (Act->BeginSourceFile(Clang, InFile, IsAST)) {
       Act->Execute();
