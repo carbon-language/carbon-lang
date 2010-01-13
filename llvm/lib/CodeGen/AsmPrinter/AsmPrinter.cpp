@@ -1677,14 +1677,15 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
   // This code must use the function name itself, and not the function number,
   // since it must be possible to generate the label name from within other
   // functions.
-  std::string FuncName = Mang->getMangledName(F);
+  SmallString<60> FnName;
+  Mang->getNameWithPrefix(FnName, F, false);
 
+  // FIXME: THIS IS BROKEN IF THE LLVM BASIC BLOCK DOESN'T HAVE A NAME!
   SmallString<60> NameResult;
-  raw_svector_ostream(NameResult) << MAI->getPrivateGlobalPrefix() << "BA"
-    << FuncName.size() << '_' << FuncName << '_';
-  Mang->getNameWithPrefix(NameResult, BB->getName());
-  if (Suffix[0])
-    NameResult += Suffix;
+  Mang->getNameWithPrefix(NameResult,
+                          StringRef("BA") + Twine((unsigned)FnName.size()) + 
+                          "_" + FnName.str() + "_" + BB->getName() + Suffix, 
+                          Mangler::Private);
 
   return OutContext.GetOrCreateSymbol(NameResult.str());
 }

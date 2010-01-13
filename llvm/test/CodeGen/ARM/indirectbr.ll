@@ -55,6 +55,6 @@ L1:                                               ; preds = %L2, %bb2
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
 }
-; ARM: .long LBA4__foo__L5-(LPC{{.*}}+8)
-; THUMB: .long LBA4__foo__L5-(LPC{{.*}}+4)
-; THUMB2: .long LBA4__foo__L5
+; ARM: .long L_BA4__foo_L5-(LPC{{.*}}+8)
+; THUMB: .long L_BA4__foo_L5-(LPC{{.*}}+4)
+; THUMB2: .long L_BA4__foo_L5

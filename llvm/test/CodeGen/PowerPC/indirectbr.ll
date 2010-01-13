@@ -43,12 +43,12 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; PIC: addis r4, r2, ha16(LBA4__foo__L5-"L1$pb")
-; PIC: li r5, lo16(LBA4__foo__L5-"L1$pb")
+; PIC: addis r4, r2, ha16(L_BA4__foo_L5-"L1$pb")
+; PIC: li r5, lo16(L_BA4__foo_L5-"L1$pb")
 ; PIC: add r4, r4, r5
 ; PIC: stw r4
-; STATIC: li r2, lo16(LBA4__foo__L5)
-; STATIC: addis r2, r2, ha16(LBA4__foo__L5)
+; STATIC: li r2, lo16(L_BA4__foo_L5)
+; STATIC: addis r2, r2, ha16(L_BA4__foo_L5)
 ; STATIC: stw r2
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
