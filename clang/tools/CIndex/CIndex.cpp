@@ -482,7 +482,6 @@ CXString CIndexer::createCXString(const char *String, bool DupString){
 }
 
 extern "C" {
-
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
   CIndexer *CIdxr = new CIndexer(new Program());
@@ -677,11 +676,23 @@ void clang_loadDeclaration(CXDecl Dcl,
                       static_cast<Decl *>(Dcl)->getPCHLevel());
   DVisit.Visit(static_cast<Decl *>(Dcl));
 }
+} // end: extern "C"
 
-//
+//===----------------------------------------------------------------------===//
 // CXDecl Operations.
-//
+//===----------------------------------------------------------------------===//
 
+static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
+                                                       SourceLocation SLoc) {
+  FileID FID;
+  if (SLoc.isFileID())
+    FID = SMgr.getFileID(SLoc);
+  else
+    FID = SMgr.getDecomposedSpellingLoc(SLoc).first;
+  return SMgr.getFileEntryForID(FID);
+}
+
+extern "C" {
 CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
@@ -776,15 +787,6 @@ const char *clang_getDeclSource(CXDecl AnonDecl) {
   return clang_getFileName(FEnt);
 }
 
-static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
-                                                       SourceLocation SLoc) {
-  FileID FID;
-  if (SLoc.isFileID())
-    FID = SMgr.getFileID(SLoc);
-  else
-    FID = SMgr.getDecomposedSpellingLoc(SLoc).first;
-  return SMgr.getFileEntryForID(FID);
-}
 
 CXFile clang_getDeclSourceFile(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
@@ -792,7 +794,13 @@ CXFile clang_getDeclSourceFile(CXDecl AnonDecl) {
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   return (void *)getFileEntryFromSourceLocation(SourceMgr, ND->getLocation());
 }
+} // end: extern "C"
 
+//===----------------------------------------------------------------------===//
+// CXFile Operations.
+//===----------------------------------------------------------------------===//
+
+extern "C" {
 const char *clang_getFileName(CXFile SFile) {
   assert(SFile && "Passed null CXFile");
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
@@ -804,7 +812,67 @@ time_t clang_getFileTime(CXFile SFile) {
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getModificationTime();
 }
+} // end: extern "C"
 
+//===----------------------------------------------------------------------===//
+// CXCursor Operations.
+//===----------------------------------------------------------------------===//
+
+static enum CXCursorKind TranslateKind(Decl *D) {
+  switch (D->getKind()) {
+    case Decl::Function: return CXCursor_FunctionDecl;
+    case Decl::Typedef: return CXCursor_TypedefDecl;
+    case Decl::Enum: return CXCursor_EnumDecl;
+    case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
+    case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
+    case Decl::Field: return CXCursor_FieldDecl;
+    case Decl::Var: return CXCursor_VarDecl;
+    case Decl::ParmVar: return CXCursor_ParmDecl;
+    case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
+    case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
+    case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
+    case Decl::ObjCMethod: {
+      ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
+      if (MD->isInstanceMethod())
+        return CXCursor_ObjCInstanceMethodDecl;
+      return CXCursor_ObjCClassMethodDecl;
+    }
+    default: break;
+  }
+  return CXCursor_NotImplemented;
+}
+
+
+static CXCursor MakeCXCursor(CXCursorKind K, Decl *D) {
+  CXCursor C = { K, D, 0, 0 };
+  return C;  
+}
+
+static CXCursor MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S) {
+  assert(clang_isReference(K));
+  CXCursor C = { K, D, S, 0 };
+  return C;  
+}
+
+static Decl *getDeclFromExpr(Stmt *E) {
+  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
+    return RefExpr->getDecl();
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    return ME->getMemberDecl();
+  if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
+    return RE->getDecl();
+  
+  if (CallExpr *CE = dyn_cast<CallExpr>(E))
+    return getDeclFromExpr(CE->getCallee());
+  if (CastExpr *CE = dyn_cast<CastExpr>(E))
+    return getDeclFromExpr(CE->getSubExpr());
+  if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
+    return OME->getMethodDecl();
+  
+  return 0;
+}
+
+extern "C" {
 CXString clang_getCursorSpelling(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
@@ -895,33 +963,6 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   }
 }
 
-static enum CXCursorKind TranslateKind(Decl *D) {
-  switch (D->getKind()) {
-  case Decl::Function: return CXCursor_FunctionDecl;
-  case Decl::Typedef: return CXCursor_TypedefDecl;
-  case Decl::Enum: return CXCursor_EnumDecl;
-  case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
-  case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
-  case Decl::Field: return CXCursor_FieldDecl;
-  case Decl::Var: return CXCursor_VarDecl;
-  case Decl::ParmVar: return CXCursor_ParmDecl;
-  case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
-  case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
-  case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
-  case Decl::ObjCMethod: {
-    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
-    if (MD->isInstanceMethod())
-      return CXCursor_ObjCInstanceMethodDecl;
-    return CXCursor_ObjCClassMethodDecl;
-  }
-  default: break;
-  }
-  return CXCursor_NotImplemented;
-}
-//
-// CXCursor Operations.
-//
-
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
                          unsigned line, unsigned column) {
   assert(CTUnit && "Passed null CXTranslationUnit");
@@ -950,13 +991,10 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   Stmt *Stm = ALoc.dyn_AsStmt();
   if (Dcl) {
     if (Stm) {
-      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Stm)) {
-        CXCursor C = { TranslateDeclRefExpr(DRE), Dcl, Stm, 0 };
-        return C;
-      } else if (ObjCMessageExpr *MExp = dyn_cast<ObjCMessageExpr>(Stm)) {
-        CXCursor C = { CXCursor_ObjCSelectorRef, Dcl, MExp, 0 };
-        return C;
-      }
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Stm))
+        return MakeCXCursor(TranslateDeclRefExpr(DRE), Dcl, Stm);
+      else if (ObjCMessageExpr *MExp = dyn_cast<ObjCMessageExpr>(Stm))
+        return MakeCXCursor(CXCursor_ObjCSelectorRef, Dcl, MExp);
       // Fall through...treat as a decl, not a ref.
     }
     if (ALoc.isNamedRef()) {
@@ -969,31 +1007,24 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
         return C;
       }
     }
-    CXCursor C = { TranslateKind(Dcl), Dcl, 0, 0 };
-    return C;
+    return MakeCXCursor(TranslateKind(Dcl), Dcl);
   }
-  CXCursor C = { CXCursor_NoDeclFound, 0, 0, 0 };
-  return C;
+  return MakeCXCursor(CXCursor_NoDeclFound, 0);
 }
 
 CXCursor clang_getNullCursor(void) {
-  CXCursor C;
-  C.kind = CXCursor_InvalidFile;
-  C.decl = NULL;
-  C.stmt = NULL;
-  return C;
+  return MakeCXCursor(CXCursor_InvalidFile, 0);
 }
 
 unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
-  return X.kind == Y.kind && X.decl == Y.decl && X.stmt == Y.stmt;
+  return X.kind == Y.kind && X.decl == Y.decl && X.stmt == Y.stmt &&
+         X.referringDecl == Y.referringDecl;
 }
 
 CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-
-  CXCursor C = { TranslateKind(ND), ND, 0, 0 };
-  return C;
+  return MakeCXCursor(TranslateKind(ND), ND);
 }
 
 unsigned clang_isInvalid(enum CXCursorKind K) {
@@ -1014,24 +1045,6 @@ unsigned clang_isDefinition(enum CXCursorKind K) {
 
 CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
-}
-
-static Decl *getDeclFromExpr(Stmt *E) {
-  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
-    return RefExpr->getDecl();
-  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    return ME->getMemberDecl();
-  if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
-    return RE->getDecl();
-
-  if (CallExpr *CE = dyn_cast<CallExpr>(E))
-    return getDeclFromExpr(CE->getCallee());
-  if (CastExpr *CE = dyn_cast<CastExpr>(E))
-    return getDeclFromExpr(CE->getSubExpr());
-  if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
-    return OME->getMethodDecl();
-
-  return 0;
 }
 
 CXDecl clang_getCursorDecl(CXCursor C) {
@@ -1059,21 +1072,12 @@ unsigned clang_getCursorLine(CXCursor C) {
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingLineNumber(SLoc);
 }
-
-const char *clang_getCString(CXString string) {
-  return string.Spelling;
-}
-
-void clang_disposeString(CXString string) {
-  if (string.MustFreeString && string.Spelling)
-    free((void*)string.Spelling);
-}
-
+  
 unsigned clang_getCursorColumn(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-
+  
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
   return SourceMgr.getSpellingColumnNumber(SLoc);
 }
@@ -1082,22 +1086,22 @@ const char *clang_getCursorSource(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-
+  
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-
+  
   if (SLoc.isFileID()) {
     const char *bufferName = SourceMgr.getBufferName(SLoc);
     return bufferName[0] == '<' ? NULL : bufferName;
   }
-
+  
   // Retrieve the file in which the macro was instantiated, then provide that
   // buffer name.
   // FIXME: Do we want to give specific macro-instantiation information?
   const llvm::MemoryBuffer *Buffer
-    = SourceMgr.getBuffer(SourceMgr.getDecomposedSpellingLoc(SLoc).first);
+  = SourceMgr.getBuffer(SourceMgr.getDecomposedSpellingLoc(SLoc).first);
   if (!Buffer)
     return 0;
-
+  
   return Buffer->getBufferIdentifier();
 }
 
@@ -1105,10 +1109,10 @@ CXFile clang_getCursorSourceFile(CXCursor C) {
   assert(C.decl && "CXCursor has null decl");
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-
+  
   return (void *)
-    getFileEntryFromSourceLocation(SourceMgr, getLocationFromCursor(C,SourceMgr,
-                                                                    ND));
+  getFileEntryFromSourceLocation(SourceMgr, getLocationFromCursor(C,SourceMgr,
+                                                                  ND));
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
@@ -1122,7 +1126,7 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
   FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
   CompoundStmt *Body = dyn_cast<CompoundStmt>(FD->getBody());
-
+  
   SourceManager &SM = FD->getASTContext().getSourceManager();
   *startBuf = SM.getCharacterData(Body->getLBracLoc());
   *endBuf = SM.getCharacterData(Body->getRBracLoc());
@@ -1131,5 +1135,20 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *endLine = SM.getSpellingLineNumber(Body->getRBracLoc());
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
 }
+  
+} // end: extern "C"
 
-} // end extern "C"
+//===----------------------------------------------------------------------===//
+// CXString Operations.
+//===----------------------------------------------------------------------===//
+
+extern "C" {
+const char *clang_getCString(CXString string) {
+  return string.Spelling;
+}
+
+void clang_disposeString(CXString string) {
+  if (string.MustFreeString && string.Spelling)
+    free((void*)string.Spelling);
+}
+} // end: extern "C"
