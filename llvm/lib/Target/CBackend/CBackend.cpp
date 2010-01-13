@@ -342,6 +342,35 @@ namespace {
 
 char CWriter::ID = 0;
 
+
+static bool isAcceptableChar(char C) {
+  if ((C < 'a' || C > 'z') && (C < 'A' || C > 'Z') &&
+      (C < '0' || C > '9') && C != '_' && C != '$' && C != '@')
+    return false;
+  return true;
+}
+
+static char HexDigit(int V) {
+  return V < 10 ? V+'0' : V+'A'-10;
+}
+
+static std::string Mangle(const std::string &S) {
+  std::string Result;
+  
+  for (unsigned i = 0, e = S.size(); i != e; ++i)
+    if (isAcceptableChar(S[i]))
+      Result += S[i];
+    else {
+      Result += '_';
+      Result += HexDigit((S[i] >> 4) & 15);
+      Result += HexDigit(S[i] & 15);
+      Result += '_';
+    }      
+  
+  return Result;
+}
+
+
 /// This method inserts names for any unnamed structure types that are used by
 /// the program, and removes names from structure types that are not used by the
 /// program.
@@ -1432,8 +1461,11 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 
 std::string CWriter::GetValueName(const Value *Operand) {
   // Mangle globals with the standard mangler interface for LLC compatibility.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand))
-    return Mang->getMangledName(GV);
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand)) {
+    SmallString<128> Str;
+    Mang->getNameWithPrefix(Str, GV, false);
+    return Mangle(Str.str().str());
+  }
     
   std::string Name = Operand->getName();
     
@@ -1858,7 +1890,6 @@ bool CWriter::doInitialization(Module &M) {
 
   // Ensure that all structure types have names...
   Mang = new Mangler(M);
-  Mang->markCharUnacceptable('.');
 
   // Keep track of which functions are static ctors/dtors so they can have
   // an attribute added to their prototypes.
@@ -2208,17 +2239,12 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // If there are no type names, exit early.
   if (I == End) return;
 
-  SmallString<128> TempName;
-
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I) {
-    const char *Prefix = "struct l_";
-    TempName.append(Prefix, Prefix+strlen(Prefix));
-    Mang->makeNameProper(TempName, I->first);
-    Out << TempName.str() << ";\n";
-    TypeNames.insert(std::make_pair(I->second, TempName.str()));
-    TempName.clear();
+    std::string Name = "struct " + Mangle("l_"+I->first);
+    Out << Name << ";\n";
+    TypeNames.insert(std::make_pair(I->second, Name));
   }
 
   Out << '\n';
@@ -2227,14 +2253,10 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // for struct or opaque types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    const char *Prefix = "l_";
-    TempName.append(Prefix, Prefix+strlen(Prefix));
-    Mang->makeNameProper(TempName, I->first);
-    
+    std::string Name = Mangle("l_"+I->first);
     Out << "typedef ";
-    printType(Out, I->second, false, TempName.str());
+    printType(Out, I->second, false, Name);
     Out << ";\n";
-    TempName.clear();
   }
 
   Out << '\n';
