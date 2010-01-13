@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -182,8 +183,8 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     break;
   case MachineOperand::MO_ExternalSymbol: {
     SmallString<60> NameStr;
-    Mang->makeNameProper(NameStr, MO.getSymbolName());
-    O << NameStr.str();
+    Mang->getNameWithPrefix(NameStr, MO.getSymbolName());
+    OutContext.GetOrCreateSymbol(NameStr.str())->print(O, MAI);
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:
