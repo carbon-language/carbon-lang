@@ -1084,7 +1084,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    Mang->getNameWithPrefix(Name, GV->getName());
+    Mang->getNameWithPrefix(Name, GV, false);
     return getCOFFSection(Name.str(), false, Kind);
   }
 
