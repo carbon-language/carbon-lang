@@ -208,8 +208,8 @@ namespace {
         O << Name;
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        Mang->makeNameProper(TmpNameStr, ACPV->getSymbol());
-        O << TmpNameStr.str();
+        Mang->getNameWithPrefix(TmpNameStr, ACPV->getSymbol());
+        OutContext.GetOrCreateSymbol(TmpNameStr.str())->print(O, MAI);
       }
 
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
@@ -393,9 +393,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     SmallString<128> NameStr;
-    Mang->makeNameProper(NameStr, MO.getSymbolName());
-
-    O << NameStr.str();
+    Mang->getNameWithPrefix(NameStr, MO.getSymbolName());
+    OutContext.GetOrCreateSymbol(NameStr.str())->print(O, MAI);
+    
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
