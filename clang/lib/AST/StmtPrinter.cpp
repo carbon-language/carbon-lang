@@ -1121,6 +1121,13 @@ void StmtPrinter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
 }
 
 void StmtPrinter::VisitCXXConstructExpr(CXXConstructExpr *E) {
+  // FIXME. For now we just print a trivial constructor call expression,
+  // constructing its first argument object.
+  if (E->getNumArgs() == 1) {
+    CXXConstructorDecl *CD = E->getConstructor();
+    if (CD->isTrivial())
+      PrintExpr(E->getArg(0));
+  }
   // Nothing to print.
 }
 
