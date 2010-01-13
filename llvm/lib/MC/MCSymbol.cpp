@@ -52,11 +52,14 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   return false;
 }
 
-static void PrintMangledName(raw_ostream &OS, StringRef Str,
-                             const MCAsmInfo &MAI) {
+/// printMangledName - Print the specified string in mangled form if it uses
+/// any unusual characters.
+void MCSymbol::printMangledName(StringRef Str, raw_ostream &OS,
+                                const MCAsmInfo *MAI) {
   // The first character is not allowed to be a number unless the target
   // explicitly allows it.
-  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9') {
+  if ((MAI == 0 || !MAI->doesAllowNameToStartWithDigit()) &&
+      Str[0] >= '0' && Str[0] <= '9') {
     MangleLetter(OS, Str[0]);
     Str = Str.substr(1);
   }
@@ -95,7 +98,7 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
   // On systems that do not allow quoted names, print with mangling.
   if (!MAI->doesAllowQuotesInName())
-    return PrintMangledName(OS, getName(), *MAI);
+    return printMangledName(getName(), OS, MAI);
 
   // If the string contains a double quote or newline, we still have to mangle
   // it.

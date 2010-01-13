@@ -136,6 +136,11 @@ namespace llvm {
 
     /// dump - Print the value to stderr.
     void dump() const;
+    
+    /// printMangledName - Print the specified string in mangled form if it uses
+    /// any unusual characters.
+    static void printMangledName(StringRef Str, raw_ostream &OS,
+                                 const MCAsmInfo *MAI);
   };
 
 } // end namespace llvm
