@@ -317,7 +317,7 @@ public:
     return Contents.OffsetedInfo.Val.SymbolName;
   }
 
-  MDNode *getMetadata() const {
+  const MDNode *getMetadata() const {
     assert(isMetadata() && "Wrong MachineOperand accessor");
     return Contents.MD;
   }

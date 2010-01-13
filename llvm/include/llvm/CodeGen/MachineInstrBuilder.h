@@ -22,6 +22,7 @@
 namespace llvm {
 
 class TargetInstrDesc;
+class MDNode;
 
 namespace RegState {
   enum {
@@ -121,6 +122,11 @@ public:
 
   const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
     MI->addOperand(MO);
+    return *this;
+  }
+
+  const MachineInstrBuilder &addMetadata(MDNode *MD) const {
+    MI->addOperand(MachineOperand::CreateMetadata(MD));
     return *this;
   }
 };

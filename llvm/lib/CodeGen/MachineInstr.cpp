@@ -34,6 +34,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Metadata.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -278,8 +279,13 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '>';
     break;
   case MachineOperand::MO_BlockAddress:
-    OS << "<";
+    OS << '<';
     WriteAsOperand(OS, getBlockAddress(), /*PrintType=*/false);
+    OS << '>';
+    break;
+  case MachineOperand::MO_Metadata:
+    OS << '<';
+    WriteAsOperand(OS, getMetadata(), /*PrintType=*/false);
     OS << '>';
     break;
   default:

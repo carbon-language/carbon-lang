@@ -564,6 +564,9 @@ static SlotTracker *createSlotTracker(const Value *V) {
   if (const Function *Func = dyn_cast<Function>(V))
     return new SlotTracker(Func);
 
+  if (isa<MDNode>(V))
+    return new SlotTracker((Function *)0);
+
   return 0;
 }
 
@@ -1136,6 +1139,8 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       return;
     }
   
+    if (!Machine)
+      Machine = createSlotTracker(V);
     Out << '!' << Machine->getMetadataSlot(N);
     return;
   }
