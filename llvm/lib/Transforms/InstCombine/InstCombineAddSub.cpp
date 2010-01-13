@@ -736,16 +736,5 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   if (Value *V = dyn_castFNegVal(Op1))
     return BinaryOperator::CreateFAdd(Op0, V);
 
-  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
-    if (Op1I->getOpcode() == Instruction::FAdd) {
-      if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
-        return BinaryOperator::CreateFNeg(Op1I->getOperand(1),
-                                          I.getName());
-      else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
-        return BinaryOperator::CreateFNeg(Op1I->getOperand(0),
-                                          I.getName());
-    }
-  }
-
   return 0;
 }
