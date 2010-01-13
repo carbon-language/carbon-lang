@@ -493,7 +493,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
       ICS.setBad();
       ICS.Bad.init(BadConversionSequence::suppressed_user, From, ToType);
     }
-  } else if (UserDefResult == OR_Ambiguous) {
+  } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
     ICS.setAmbiguous();
     ICS.Ambiguous.setFromType(From->getType());
     ICS.Ambiguous.setToType(ToType);

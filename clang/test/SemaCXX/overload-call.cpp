@@ -317,3 +317,19 @@ namespace test1 {
   }
 }
 
+// PR 6014
+namespace test2 {
+  struct QFixed {
+    QFixed(int i);
+    QFixed(long i);
+  };
+
+  bool operator==(const QFixed &f, int i);
+
+  class qrgb666 {
+    inline operator unsigned int () const;
+
+    inline bool operator==(const qrgb666 &v) const;
+    inline bool operator!=(const qrgb666 &v) const { return !(*this == v); }
+  };
+}
