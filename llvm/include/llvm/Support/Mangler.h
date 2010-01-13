@@ -102,6 +102,9 @@ public:
   /// specified suffix.  If 'ForcePrivate' is specified, the label is specified
   /// to have a private label prefix.
   ///
+  /// FIXME: This is deprecated, new code should use getNameWithPrefix and use
+  /// MCSymbol printing to handle quotes or not etc.
+  ///
   std::string getMangledName(const GlobalValue *V, const char *Suffix = "",
                              bool ForcePrivate = false);
 
@@ -112,6 +115,9 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
+  /// FIXME: This is deprecated, new code should use getNameWithPrefix and use
+  /// MCSymbol printing to handle quotes or not etc.
+  ///
   void makeNameProper(SmallVectorImpl<char> &OutName,
                       const Twine &Name,
                       ManglerPrefixTy PrefixTy = Mangler::Default);
@@ -121,6 +127,12 @@ public:
   /// have a name, this fills in a unique name for the global.
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
                          bool isImplicitlyPrivate);
+  
+  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+  /// and the specified name as the global variable name.  GVName must not be
+  /// empty.
+  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
+                         ManglerPrefixTy PrefixTy = Mangler::Default);
 };
 
 } // End llvm namespace

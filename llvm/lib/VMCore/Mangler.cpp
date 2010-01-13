@@ -34,6 +34,9 @@ static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
+/// FIXME: This is deprecated, new code should use getNameWithPrefix and use
+/// MCSymbol printing to handle quotes or not etc.
+///
 void Mangler::makeNameProper(SmallVectorImpl<char> &OutName,
                              const Twine &TheName,
                              ManglerPrefixTy PrefixTy) {
@@ -151,6 +154,9 @@ void Mangler::makeNameProper(SmallVectorImpl<char> &OutName,
 /// specified suffix.  If 'ForcePrivate' is specified, the label is specified
 /// to have a private label prefix.
 ///
+/// FIXME: This is deprecated, new code should use getNameWithPrefix and use
+/// MCSymbol printing to handle quotes or not etc.
+///
 std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
                                     bool ForcePrivate) {
   assert((!isa<Function>(GV) || !cast<Function>(GV)->isIntrinsic()) &&
@@ -176,6 +182,37 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
   return Result.str().str();
 }
 
+/// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+/// and the specified name as the global variable name.  GVName must not be
+/// empty.
+void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                                const Twine &GVName, ManglerPrefixTy PrefixTy) {
+  SmallString<256> TmpData;
+  GVName.toVector(TmpData);
+  StringRef Name = TmpData.str();
+  assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
+  
+  // If the global name is not led with \1, add the appropriate prefixes.
+  if (Name[0] != '\1') {
+    if (PrefixTy == Mangler::Private)
+      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
+    else if (PrefixTy == Mangler::LinkerPrivate)
+      OutName.append(LinkerPrivatePrefix,
+                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));
+    
+    if (Prefix[0] == 0)
+      ; // Common noop, no prefix.
+    else if (Prefix[1] == 0)
+      OutName.push_back(Prefix[0]);  // Common, one character prefix.
+    else
+      OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary prefix.
+  } else {
+    Name = Name.substr(1);
+  }
+  
+  OutName.append(Name.begin(), Name.end());
+}
+
 
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
 /// and the specified global variable's name.  If the global variable doesn't
@@ -183,32 +220,27 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
                                 const GlobalValue *GV,
                                 bool isImplicitlyPrivate) {
-   
-  // If the global is anonymous or not led with \1, then add the appropriate
-  // prefix.
-  if (!GV->hasName() || GV->getName()[0] != '\1') {
-    if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
-      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
-    else if (GV->hasLinkerPrivateLinkage())
-      OutName.append(LinkerPrivatePrefix,
-                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));;
-    OutName.append(Prefix, Prefix+strlen(Prefix));
-  }
-
-  // If the global has a name, just append it now.
+  // If this global has a name, handle it simply.
   if (GV->hasName()) {
-    StringRef Name = GV->getName();
+    ManglerPrefixTy PrefixTy = Mangler::Default;
+    if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+      PrefixTy = Mangler::Private;
+    else if (GV->hasLinkerPrivateLinkage())
+      PrefixTy = Mangler::LinkerPrivate;
     
-    // Strip off the prefix marker if present.
-    if (Name[0] != '\1')
-      OutName.append(Name.begin(), Name.end());
-    else
-      OutName.append(Name.begin()+1, Name.end());
-    return;
+    return getNameWithPrefix(OutName, GV->getName(), PrefixTy);
   }
   
   // If the global variable doesn't have a name, return a unique name for the
   // global based on a numbering.
+  
+  // Anonymous names always get prefixes.
+  if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+    OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
+  else if (GV->hasLinkerPrivateLinkage())
+    OutName.append(LinkerPrivatePrefix,
+                   LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));;
+  OutName.append(Prefix, Prefix+strlen(Prefix));
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
