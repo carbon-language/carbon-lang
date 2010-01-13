@@ -807,130 +807,145 @@ void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
 void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
-  if (CV->isNullValue() || isa<UndefValue>(CV))
+  if (CV->isNullValue() || isa<UndefValue>(CV)) {
     O << '0';
-  else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    return;
+  }
+
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     O << CI->getZExtValue();
-  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+    return;
+  }
+  
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value.
     O << Mang->getMangledName(GV);
-  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    const TargetData *TD = TM.getTargetData();
-    unsigned Opcode = CE->getOpcode();    
-    switch (Opcode) {
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-      llvm_unreachable("FIXME: Don't support this constant cast expr");
-    case Instruction::GetElementPtr: {
-      // generate a symbolic expression for the byte address
-      const Constant *ptrVal = CE->getOperand(0);
-      SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
-      if (int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
-                                                idxVec.size())) {
-        // Truncate/sext the offset to the pointer size.
-        if (TD->getPointerSizeInBits() != 64) {
-          int SExtAmount = 64-TD->getPointerSizeInBits();
-          Offset = (Offset << SExtAmount) >> SExtAmount;
-        }
-        
-        if (Offset)
-          O << '(';
-        EmitConstantValueOnly(ptrVal);
-        if (Offset > 0)
-          O << ") + " << Offset;
-        else if (Offset < 0)
-          O << ") - " << -Offset;
-      } else {
-        EmitConstantValueOnly(ptrVal);
-      }
-      break;
-    }
-    case Instruction::BitCast:
-      return EmitConstantValueOnly(CE->getOperand(0));
-
-    case Instruction::IntToPtr: {
-      // Handle casts to pointers by changing them into casts to the appropriate
-      // integer type.  This promotes constant folding and simplifies this code.
-      Constant *Op = CE->getOperand(0);
-      Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(CV->getContext()),
-                                        false/*ZExt*/);
-      return EmitConstantValueOnly(Op);
-    }
-      
-    case Instruction::PtrToInt: {
-      // Support only foldable casts to/from pointers that can be eliminated by
-      // changing the pointer to the appropriately sized integer type.
-      Constant *Op = CE->getOperand(0);
-      const Type *Ty = CE->getType();
-
-      // We can emit the pointer value into this slot if the slot is an
-      // integer slot greater or equal to the size of the pointer.
-      if (TD->getTypeAllocSize(Ty) == TD->getTypeAllocSize(Op->getType()))
-        return EmitConstantValueOnly(Op);
-
-      O << "((";
-      EmitConstantValueOnly(Op);
-      APInt ptrMask =
-        APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Op->getType()));
-      
-      SmallString<40> S;
-      ptrMask.toStringUnsigned(S);
-      O << ") & " << S.str() << ')';
-      break;
-    }
-        
-    case Instruction::Trunc:
-      // We emit the value and depend on the assembler to truncate the generated
-      // expression properly.  This is important for differences between
-      // blockaddress labels.  Since the two labels are in the same function, it
-      // is reasonable to treat their delta as a 32-bit value.
-      return EmitConstantValueOnly(CE->getOperand(0));
-        
-    case Instruction::Add:
-    case Instruction::Sub:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor:
-      O << '(';
-      EmitConstantValueOnly(CE->getOperand(0));
-      O << ')';
-      switch (Opcode) {
-      case Instruction::Add:
-       O << " + ";
-       break;
-      case Instruction::Sub:
-       O << " - ";
-       break;
-      case Instruction::And:
-       O << " & ";
-       break;
-      case Instruction::Or:
-       O << " | ";
-       break;
-      case Instruction::Xor:
-       O << " ^ ";
-       break;
-      default:
-       break;
-      }
-      O << '(';
-      EmitConstantValueOnly(CE->getOperand(1));
-      O << ')';
-      break;
-    default:
-      llvm_unreachable("Unsupported operator!");
-    }
-  } else if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
+    return;
+  }
+  
+  if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
     GetBlockAddressSymbol(BA)->print(O, MAI);
-  } else {
+    return;
+  }
+  
+  const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
+  if (CE == 0) {
     llvm_unreachable("Unknown constant value!");
+    O << '0';
+    return;
+  }
+  
+  switch (CE->getOpcode()) {
+  case Instruction::ZExt:
+  case Instruction::SExt:
+  case Instruction::FPTrunc:
+  case Instruction::FPExt:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
+  case Instruction::FPToUI:
+  case Instruction::FPToSI:
+  default:
+    llvm_unreachable("FIXME: Don't support this constant cast expr");
+  case Instruction::GetElementPtr: {
+    // generate a symbolic expression for the byte address
+    const TargetData *TD = TM.getTargetData();
+    const Constant *ptrVal = CE->getOperand(0);
+    SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
+    int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
+                                          idxVec.size());
+    if (Offset == 0)
+      return EmitConstantValueOnly(ptrVal);
+    
+    // Truncate/sext the offset to the pointer size.
+    if (TD->getPointerSizeInBits() != 64) {
+      int SExtAmount = 64-TD->getPointerSizeInBits();
+      Offset = (Offset << SExtAmount) >> SExtAmount;
+    }
+    
+    if (Offset)
+      O << '(';
+    EmitConstantValueOnly(ptrVal);
+    if (Offset > 0)
+      O << ") + " << Offset;
+    else
+      O << ") - " << -Offset;
+    return;
+  }
+  case Instruction::BitCast:
+    return EmitConstantValueOnly(CE->getOperand(0));
+
+  case Instruction::IntToPtr: {
+    // Handle casts to pointers by changing them into casts to the appropriate
+    // integer type.  This promotes constant folding and simplifies this code.
+    const TargetData *TD = TM.getTargetData();
+    Constant *Op = CE->getOperand(0);
+    Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(CV->getContext()),
+                                      false/*ZExt*/);
+    return EmitConstantValueOnly(Op);
+  }
+    
+  case Instruction::PtrToInt: {
+    // Support only foldable casts to/from pointers that can be eliminated by
+    // changing the pointer to the appropriately sized integer type.
+    Constant *Op = CE->getOperand(0);
+    const Type *Ty = CE->getType();
+    const TargetData *TD = TM.getTargetData();
+
+    // We can emit the pointer value into this slot if the slot is an
+    // integer slot greater or equal to the size of the pointer.
+    if (TD->getTypeAllocSize(Ty) == TD->getTypeAllocSize(Op->getType()))
+      return EmitConstantValueOnly(Op);
+
+    O << "((";
+    EmitConstantValueOnly(Op);
+    APInt ptrMask =
+      APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Op->getType()));
+    
+    SmallString<40> S;
+    ptrMask.toStringUnsigned(S);
+    O << ") & " << S.str() << ')';
+    return;
+  }
+      
+  case Instruction::Trunc:
+    // We emit the value and depend on the assembler to truncate the generated
+    // expression properly.  This is important for differences between
+    // blockaddress labels.  Since the two labels are in the same function, it
+    // is reasonable to treat their delta as a 32-bit value.
+    return EmitConstantValueOnly(CE->getOperand(0));
+      
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    O << '(';
+    EmitConstantValueOnly(CE->getOperand(0));
+    O << ')';
+    switch (CE->getOpcode()) {
+    case Instruction::Add:
+     O << " + ";
+     break;
+    case Instruction::Sub:
+     O << " - ";
+     break;
+    case Instruction::And:
+     O << " & ";
+     break;
+    case Instruction::Or:
+     O << " | ";
+     break;
+    case Instruction::Xor:
+     O << " ^ ";
+     break;
+    default:
+     break;
+    }
+    O << '(';
+    EmitConstantValueOnly(CE->getOperand(1));
+    O << ')';
+    break;
   }
 }
 
