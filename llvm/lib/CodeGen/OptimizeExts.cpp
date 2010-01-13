@@ -110,6 +110,11 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       MachineInstr *UseMI = &*UI;
       if (UseMI == MI)
         continue;
+      if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
+        ExtendLife = false;
+        continue;
+      }
+
       MachineBasicBlock *UseMBB = UseMI->getParent();
       if (UseMBB == MBB) {
         // Local uses that come after the extension.
@@ -117,7 +122,7 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
           Uses.push_back(&UseMO);
       } else if (ReachedBBs.count(UseMBB))
         // Non-local uses where the result of extension is used. Always
-        // replace these.
+        // replace these unless it's a PHI.
         Uses.push_back(&UseMO);
       else if (Aggressive && DT->dominates(MBB, UseMBB))
         // We may want to extend live range of the extension result in order
