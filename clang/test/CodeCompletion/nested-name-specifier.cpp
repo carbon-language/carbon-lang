@@ -11,7 +11,7 @@ namespace N {
 
 N::
 // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:12:4 %s -o - | FileCheck -check-prefix=CC1 %s
-// CHECK-CC1: A : 0
-// CHECK-CC1: B : 0
-// CHECK-CC1: M : 0
+// CHECK-CC1: A
+// CHECK-CC1: B
+// CHECK-CC1: M
 

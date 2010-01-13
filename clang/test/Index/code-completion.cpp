@@ -34,20 +34,20 @@ void test_overloaded() {
 }
 
 // CHECK-MEMBER: FieldDecl:{ResultType double}{TypedText member}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
-// CHECK-MEMBER: EnumConstantDecl:{ResultType enum X::E}{Informative E::}{TypedText Val1}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
-// CHECK-MEMBER: FunctionDecl:{ResultType struct Z &}{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
 // CHECK-MEMBER: FieldDecl:{ResultType int}{Text X::}{TypedText member}
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
+// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
+// CHECK-MEMBER: FunctionDecl:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
+// CHECK-MEMBER: FunctionDecl:{ResultType struct Z &}{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{ResultType struct X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder struct X const &}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{ResultType struct Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder struct Y const &}{RightParen )}
+// CHECK-MEMBER: EnumConstantDecl:{ResultType enum X::E}{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Z}{Text ::}
+// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: FunctionDecl:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
 
 // CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text struct Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}

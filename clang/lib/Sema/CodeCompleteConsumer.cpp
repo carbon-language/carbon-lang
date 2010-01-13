@@ -426,8 +426,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     OS << "COMPLETION: ";
     switch (Results[I].Kind) {
     case Result::RK_Declaration:
-      OS << Results[I].Declaration->getNameAsString() << " : " 
-         << Results[I].Rank;
+      OS << Results[I].Declaration->getNameAsString() ;
       if (Results[I].Hidden)
         OS << " (Hidden)";
       if (CodeCompletionString *CCS 
@@ -440,13 +439,13 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
       break;
       
     case Result::RK_Keyword:
-      OS << Results[I].Keyword << " : " << Results[I].Rank << '\n';
+      OS << Results[I].Keyword << '\n';
       break;
         
     case Result::RK_Macro: {
-      OS << Results[I].Macro->getName() << " : " << Results[I].Rank;
+      OS << Results[I].Macro->getName();
       if (CodeCompletionString *CCS 
-          = Results[I].CreateCodeCompletionString(SemaRef)) {
+            = Results[I].CreateCodeCompletionString(SemaRef)) {
         OS << " : " << CCS->getAsString();
         delete CCS;
       }
@@ -455,7 +454,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     }
         
     case Result::RK_Pattern: {
-      OS << "Pattern : " << Results[I].Rank << " : " 
+      OS << "Pattern : " 
          << Results[I].Pattern->getAsString() << '\n';
       break;
     }

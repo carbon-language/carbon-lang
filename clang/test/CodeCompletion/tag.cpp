@@ -16,10 +16,12 @@ namespace N {
   void test() {
     class
     // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:17:10 %s -o - | FileCheck -check-prefix=CC1 %s
-    // CHECK-CC1: Y : 2
-    // CHECK-CC1: Z : 2
-    // CHECK-CC1: A : 4
-    // CHECK-CC1: X : 4
-    // CHECK-CC1: Y : 4
-    // CHECK-CC1: M : 9 : M::
-    // CHECK-CC1: N : 9 : N::
+    // FIXME: the redundant Y is really annoying... it needs qualification to 
+    // actually be useful. Here, it just looks redundant :(
+    // CHECK-CC1: A
+    // CHECK-CC1: M : M::
+    // CHECK-CC1: N : N::
+    // CHECK-CC1: X
+    // CHECK-CC1: Y
+    // CHECK-CC1: Y
+    // CHECK-CC1: Z

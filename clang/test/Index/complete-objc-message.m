@@ -142,7 +142,6 @@ void f(Ellipsis *e) {
 // CHECK-CC9: ObjCInstanceMethodDecl:{ResultType int}{Informative Method:}{Informative Arg1:}{TypedText OtherArg:}{Placeholder (id)obj}
 // RUN: c-index-test -code-completion-at=%s:61:11 %s | FileCheck -check-prefix=CHECK-CCA %s
 // CHECK-CCA: {ResultType SEL}{TypedText _cmd}
-// CHECK-CCA: {ResultType Class}{TypedText self}
 // CHECK-CCA: TypedefDecl:{TypedText Class}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText Foo}
 // CHECK-CCA: FunctionDecl:{ResultType void}{TypedText func}{LeftParen (}{RightParen )}
@@ -150,6 +149,7 @@ void f(Ellipsis *e) {
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CCA: ObjCInterfaceDecl:{TypedText MySubClass}
 // CHECK-CCA: TypedefDecl:{TypedText SEL}
+// CHECK-CCA: {ResultType Class}{TypedText self}
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}{Placeholder , ...}

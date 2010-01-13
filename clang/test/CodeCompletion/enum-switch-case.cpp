@@ -20,9 +20,9 @@ void test(enum N::Color color) {
     
   case 
     // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:21:8 %s -o - | FileCheck -check-prefix=CC1 %s
-    // CHECK-CC1: Blue : 0 : [#enum N::Color#]N::Blue
-    // CHECK-CC1-NEXT: Green : 0 : [#enum N::Color#]N::Green
-    // CHECK-CC1-NEXT: Indigo : 0 : [#enum N::Color#]N::Indigo
-    // CHECK-CC1-NEXT: Orange : 0 : [#enum N::Color#]N::Orange
-    // CHECK-CC1-NEXT: Violet : 0 : [#enum N::Color#]N::Violet
+    // CHECK-CC1: Blue : [#enum N::Color#]N::Blue
+    // CHECK-CC1-NEXT: Green : [#enum N::Color#]N::Green
+    // CHECK-CC1-NEXT: Indigo : [#enum N::Color#]N::Indigo
+    // CHECK-CC1-NEXT: Orange : [#enum N::Color#]N::Orange
+    // CHECK-CC1-NEXT: Violet : [#enum N::Color#]N::Violet
     

@@ -1889,29 +1889,49 @@ namespace {
                                                  Y.getAsString()) < 0;
     }
     
-    bool operator()(const Result &X, const Result &Y) const {
-      // Sort first by rank.
-      if (X.Rank < Y.Rank)
-        return true;
-      else if (X.Rank > Y.Rank)
-        return false;
-      
-      // We use a special ordering for keywords and patterns, based on the
-      // typed text.
-      if ((X.Kind == Result::RK_Keyword || X.Kind == Result::RK_Pattern) &&
-          (Y.Kind == Result::RK_Keyword || Y.Kind == Result::RK_Pattern)) {
-        const char *XStr = (X.Kind == Result::RK_Keyword)? X.Keyword 
-                                                   : X.Pattern->getTypedText();
-        const char *YStr = (Y.Kind == Result::RK_Keyword)? Y.Keyword 
-                                                   : Y.Pattern->getTypedText();
-        return llvm::StringRef(XStr).compare_lower(YStr) < 0;
+    /// \brief Retrieve the name that should be used to order a result.
+    ///
+    /// If the name needs to be constructed as a string, that string will be
+    /// saved into Saved and the returned StringRef will refer to it.
+    static llvm::StringRef getOrderedName(const Result &R,
+                                          std::string &Saved) {
+      switch (R.Kind) {
+      case Result::RK_Keyword:
+        return R.Keyword;
+          
+      case Result::RK_Pattern:
+        return R.Pattern->getTypedText();
+          
+      case Result::RK_Macro:
+        return R.Macro->getName();
+          
+      case Result::RK_Declaration:
+        // Handle declarations below.
+        break;
       }
+            
+      DeclarationName Name = R.Declaration->getDeclName();
       
-      // Result kinds are ordered by decreasing importance.
-      if (X.Kind < Y.Kind)
-        return true;
-      else if (X.Kind > Y.Kind)
-        return false;
+      // If the name is a simple identifier (by far the common case), or a
+      // zero-argument selector, just return a reference to that identifier.
+      if (IdentifierInfo *Id = Name.getAsIdentifierInfo())
+        return Id->getName();
+      if (Name.isObjCZeroArgSelector())
+        if (IdentifierInfo *Id
+                          = Name.getObjCSelector().getIdentifierInfoForSlot(0))
+          return Id->getName();
+      
+      Saved = Name.getAsString();
+      return Saved;
+    }
+    
+    bool operator()(const Result &X, const Result &Y) const {
+      std::string XSaved, YSaved;
+      llvm::StringRef XStr = getOrderedName(X, XSaved);
+      llvm::StringRef YStr = getOrderedName(Y, YSaved);
+      int cmp = XStr.compare_lower(YStr);
+      if (cmp)
+        return cmp < 0;
       
       // Non-hidden names precede hidden names.
       if (X.Hidden != Y.Hidden)
@@ -1921,23 +1941,6 @@ namespace {
       if (X.StartsNestedNameSpecifier != Y.StartsNestedNameSpecifier)
         return !X.StartsNestedNameSpecifier;
       
-      // Ordering depends on the kind of result.
-      switch (X.Kind) {
-        case Result::RK_Declaration:
-          // Order based on the declaration names.
-          return isEarlierDeclarationName(X.Declaration->getDeclName(),
-                                          Y.Declaration->getDeclName());
-          
-        case Result::RK_Macro:
-          return X.Macro->getName().compare_lower(Y.Macro->getName()) < 0;
-          
-        case Result::RK_Keyword:
-        case Result::RK_Pattern:
-          llvm_unreachable("Result kinds handled above");
-          break;
-      }
-      
-      // Silence GCC warning.
       return false;
     }
   };

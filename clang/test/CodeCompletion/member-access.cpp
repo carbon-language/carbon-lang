@@ -28,15 +28,15 @@ public:
 void test(const Proxy &p) {
   p->
   // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:29:6 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
-  // CHECK-CC1: member1 : 0 : [#int#][#Base1::#]member1
-  // CHECK-CC1: member1 : 0 : [#int#][#Base2::#]member1
-  // CHECK-CC1: member2 : 0 : [#float#][#Base1::#]member2
-  // CHECK-CC1: member3 : 0
-  // CHECK-CC1: member4 : 0
-  // CHECK-CC1: memfun1 : 0 : [#void#][#Base3::#]memfun1(<#float#>)
-  // CHECK-CC1: memfun1 : 0 : [#void#][#Base3::#]memfun1(<#double#>)[# const#]
-  // CHECK-CC1: memfun2 : 0 : [#void#][#Base3::#]memfun2(<#int#>)
-  // CHECK-CC1: memfun3 : 0 : [#int#]memfun3(<#int#>)
-  // CHECK-CC1: memfun1 : 0 (Hidden) : [#void#]Base2::memfun1(<#int#>)
-  // CHECK-CC1: Base1 : 3 : Base1::
+  // CHECK-CC1: Base1 : Base1::
+  // CHECK-CC1: member1 : [#int#][#Base1::#]member1
+  // CHECK-CC1: member1 : [#int#][#Base2::#]member1
+  // CHECK-CC1: member2 : [#float#][#Base1::#]member2
+  // CHECK-CC1: member3
+  // CHECK-CC1: member4
+  // CHECK-CC1: memfun1 : [#void#][#Base3::#]memfun1(<#float#>)
+  // CHECK-CC1: memfun1 : [#void#][#Base3::#]memfun1(<#double#>)[# const#]
+  // CHECK-CC1: memfun1 (Hidden) : [#void#]Base2::memfun1(<#int#>)
+  // CHECK-CC1: memfun2 : [#void#][#Base3::#]memfun2(<#int#>)
+  // CHECK-CC1: memfun3 : [#int#]memfun3(<#int#>)
   

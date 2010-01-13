@@ -24,12 +24,12 @@ void func() {
   [obj xx];
 }
 // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:23:19 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: categoryClassMethod : 0
-// CHECK-CC1: classMethod1:withKeyword: : 0
-// CHECK-CC1: classMethod2 : 0
-// CHECK-CC1: new : 0
-// CHECK-CC1: protocolClassMethod : 0
+// CHECK-CC1: categoryClassMethod
+// CHECK-CC1: classMethod1:withKeyword:
+// CHECK-CC1: classMethod2
+// CHECK-CC1: new
+// CHECK-CC1: protocolClassMethod
 // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:24:8 %s -o - | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: categoryInstanceMethod : 0
-// CHECK-CC2: instanceMethod1 : 0
-// CHECK-CC2: protocolInstanceMethod : 0
+// CHECK-CC2: categoryInstanceMethod
+// CHECK-CC2: instanceMethod1
+// CHECK-CC2: protocolInstanceMethod
