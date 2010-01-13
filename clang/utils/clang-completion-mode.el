@@ -144,12 +144,21 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
          ))))
 
 (defun clang-complete ()
-  (let ((ccstring (concat (buffer-file-name)
-                          ":"
-                          (number-to-string (+ 1 (current-line)))
-                          ":"
-                          (number-to-string (+ 1 (current-column)))))
-        (cc-buffer-name (concat "*Clang Completion for " (buffer-name) "*")))
+  (let* ((cc-point (concat (buffer-file-name)
+                           ":"
+                           (number-to-string (+ 1 (current-line)))
+                           ":"
+                           (number-to-string (+ 1 (current-column)))))
+         (cc-pch (if (equal clang-completion-prefix-header "") nil
+                   (list "-include-pch"
+                         (concat clang-completion-prefix-header ".pch"))))
+         (cc-flags (if (listp clang-flags) clang-flags nil))
+         (cc-command (append `(,clang "-cc1" "-fsyntax-only")
+                             cc-flags
+                             cc-pch
+                             `("-code-completion-at" ,cc-point)
+                             (list (buffer-file-name))))
+         (cc-buffer-name (concat "*Clang Completion for " (buffer-name) "*")))
     ;; Start the code-completion process
     (if (buffer-file-name)
         (progn
@@ -162,18 +171,9 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
           (setq clang-result-string "")
           (setq clang-completion-buffer cc-buffer-name)
             
-          (let ((cc-proc
-                 (if (equal clang-completion-prefix-header "")
-                     (start-process "Clang Code-Completion" cc-buffer-name
-                                    clang "-cc1" "-fsyntax-only" 
-                                    "-code-completion-at" ccstring 
-                                    (buffer-file-name))
-                     (start-process "Clang Code-Completion" cc-buffer-name
-                                    clang "-cc1" "-fsyntax-only" 
-                                    "-code-completion-at" ccstring 
-                                    "-include-pch" 
-                                    (concat clang-completion-prefix-header ".pch")
-                                    (buffer-file-name)))))
+          (let ((cc-proc (apply 'start-process
+                                (append (list "Clang Code-Completion" cc-buffer-name)
+                                        cc-command))))
             (set-process-filter cc-proc 'clang-completion-stash-filter)
             (set-process-sentinel cc-proc 'clang-completion-sentinel)
             )))))
