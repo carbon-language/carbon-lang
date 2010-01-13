@@ -270,18 +270,18 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     ParmVarDecl *NewParam = New->getParamDecl(p);
 
     if (OldParam->hasDefaultArg() && NewParam->hasDefaultArg()) {
-      // FIXME: If the parameter doesn't have an identifier then the location
-      // points to the '=' which means that the fixit hint won't remove any
-      // extra spaces between the type and the '='.
-      SourceLocation Begin = NewParam->getLocation();
-      if (NewParam->getIdentifier())
-        Begin = PP.getLocForEndOfToken(Begin);
-        
+      // FIXME: If we knew where the '=' was, we could easily provide a fix-it 
+      // hint here. Alternatively, we could walk the type-source information
+      // for NewParam to find the last source location in the type... but it
+      // isn't worth the effort right now. This is the kind of test case that
+      // is hard to get right:
+      
+      //   int f(int);
+      //   void g(int (*fp)(int) = f);
+      //   void g(int (*fp)(int) = &f);
       Diag(NewParam->getLocation(),
            diag::err_param_default_argument_redefinition)
-        << NewParam->getDefaultArgRange()
-        << CodeModificationHint::CreateRemoval(SourceRange(Begin,
-                                                        NewParam->getLocEnd()));
+        << NewParam->getDefaultArgRange();
       
       // Look for the function declaration where the default argument was
       // actually written, which may be a declaration prior to Old.
