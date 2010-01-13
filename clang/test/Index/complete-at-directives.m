@@ -1,5 +1,5 @@
 /* Run lines are at the end, since line/column matter in this test. */
-@interface MyClass { }
+@interface MyClass { @public }
 @end
 
 @implementation MyClass
@@ -44,3 +44,16 @@
 // CHECK-CC5: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CC5: TypedefDecl:{TypedText SEL}
 // CHECK-CC5: NotImplemented:{TypedText _Bool}
+
+// RUN: c-index-test -code-completion-at=%s:2:23 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: NotImplemented:{TypedText package}
+// CHECK-CC6: NotImplemented:{TypedText private}
+// CHECK-CC6: NotImplemented:{TypedText protected}
+// CHECK-CC6: NotImplemented:{TypedText public}
+
+// RUN: c-index-test -code-completion-at=%s:2:22 %s | FileCheck -check-prefix=CHECK-CC7 %s
+// CHECK-CC7: NotImplemented:{TypedText @package}
+// CHECK-CC7: NotImplemented:{TypedText @private}
+// CHECK-CC7: NotImplemented:{TypedText @protected}
+// CHECK-CC7: NotImplemented:{TypedText @public}
+// CHECK-CC7: NotImplemented:{TypedText _Bool}

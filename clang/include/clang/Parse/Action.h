@@ -2388,7 +2388,9 @@ public:
     /// \brief Code completion occurs within an Objective-C implementation or
     /// category implementation
     CCC_ObjCImplementation,
-    /// \brief Code completion occurs within 
+    /// \brief Code completion occurs within the list of instance variables
+    /// in an Objective-C interface, protocol, category, or implementation.
+    CCC_ObjCInstanceVariableList,
     /// \brief Code completion occurs following one or more template
     /// headers.
     CCC_Template,
@@ -2531,6 +2533,9 @@ public:
   virtual void CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
                                            bool InInterface) { }
 
+  /// \brief Code completion after the '@' in the list of instance variables.
+  virtual void CodeCompleteObjCAtVisibility(Scope *S) { }
+  
   /// \brief Code completion after the '@' in a statement.
   virtual void CodeCompleteObjCAtStatement(Scope *S) { }
 

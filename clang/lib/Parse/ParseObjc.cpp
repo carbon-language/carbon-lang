@@ -973,6 +973,12 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
     // Set the default visibility to private.
     if (Tok.is(tok::at)) { // parse objc-visibility-spec
       ConsumeToken(); // eat the @ sign
+      
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteObjCAtVisibility(CurScope);
+        ConsumeToken();
+      }
+      
       switch (Tok.getObjCKeywordID()) {
       case tok::objc_private:
       case tok::objc_public:
@@ -987,6 +993,12 @@ void Parser::ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
       }
     }
 
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteOrdinaryName(CurScope, 
+                                       Action::CCC_ObjCInstanceVariableList);
+      ConsumeToken();
+    }
+    
     struct ObjCIvarCallback : FieldCallback {
       Parser &P;
       DeclPtrTy IDecl;

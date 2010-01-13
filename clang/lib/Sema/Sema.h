@@ -3851,6 +3851,7 @@ public:
   
   virtual void CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
                                            bool InInterface);
+  virtual void CodeCompleteObjCAtVisibility(Scope *S);
   virtual void CodeCompleteObjCAtStatement(Scope *S);
   virtual void CodeCompleteObjCAtExpression(Scope *S);
   virtual void CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS);

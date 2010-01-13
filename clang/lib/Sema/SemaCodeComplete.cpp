@@ -893,6 +893,7 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
       Results.MaybeAddResult(Result("inline", Rank));
     break;
 
+  case Action::CCC_ObjCInstanceVariableList:
   case Action::CCC_Expression:
   case Action::CCC_Statement:
   case Action::CCC_ForInit:
@@ -905,6 +906,10 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
                                      bool NeedAt);
 static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
                                     bool NeedAt);
+static void AddObjCVisibilityResults(unsigned Rank, 
+                                     const LangOptions &LangOpts,
+                                     ResultBuilder &Results,
+                                     bool NeedAt);  
 static void AddObjCImplementationResults(unsigned Rank, 
                                          const LangOptions &LangOpts,
                                          ResultBuilder &Results,
@@ -1051,6 +1056,10 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     AddObjCImplementationResults(Rank, SemaRef.getLangOptions(), Results, true);
     AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
     AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    break;
+      
+  case Action::CCC_ObjCInstanceVariableList:
+    AddObjCVisibilityResults(Rank, SemaRef.getLangOptions(), Results, true);
     break;
       
   case Action::CCC_Statement: {
@@ -1971,6 +1980,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   case CCC_Class:
   case CCC_ObjCInterface:
   case CCC_ObjCImplementation:
+  case CCC_ObjCInstanceVariableList:
   case CCC_Template:
   case CCC_MemberTemplate:
     Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
@@ -2672,8 +2682,27 @@ static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
   Results.MaybeAddResult(Result(Pattern, 0));
 }
 
-void Sema::CodeCompleteObjCAtStatement(Scope *S) {
+static void AddObjCVisibilityResults(unsigned Rank, 
+                                     const LangOptions &LangOpts,
+                                     ResultBuilder &Results,
+                                     bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,private), Rank));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,protected), Rank));
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,public), Rank));
+  if (LangOpts.ObjC2)
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,package), Rank));    
+}
+
+void Sema::CodeCompleteObjCAtVisibility(Scope *S) {
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  AddObjCVisibilityResults(0, getLangOptions(), Results, false);
+  Results.ExitScope();
+  HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
+}
+
+void Sema::CodeCompleteObjCAtStatement(Scope *S) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
   AddObjCStatementResults(0, Results, false);
