@@ -1,5 +1,4 @@
-# This file is intended to be included from each subdirectory
-# makefile.
+# This file is intended to be included from each subdirectory makefile.
 
 ifeq ($(Dir),)
   $(error "No Dir variable defined.")
@@ -10,6 +9,7 @@ ifeq ($(DebugMake),1)
 endif
 
 # Expand template for each configuration and architecture.
+#
 # FIXME: This level of logic should be in primary Makefile?
 ifeq ($(OnlyConfigs),)
   ConfigsToTraverse := $(Configs)
@@ -35,8 +35,7 @@ $(foreach config,$(ConfigsToTraverse), \
 ###
 # Include child makefile fragments
 
-# Evaluate this now so we do not have to worry about order of
-# evaluation.
+# Evaluate this now so we do not have to worry about order of evaluation.
 SubDirsList := $(SubDirs:%=$(Dir)/%)
 ifeq ($(SubDirsList),)
 else

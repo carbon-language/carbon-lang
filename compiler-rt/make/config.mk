@@ -3,9 +3,8 @@
 
 OS := $(shell uname)
 
-# Assume make is always run from top-level of source directory. Note
-# than an Apple style build overrides these variables later in the
-# makefile.
+# Assume make is always run from top-level of source directory. Note than an
+# Apple style build overrides these variables later in the makefile.
 ProjSrcRoot := $(shell pwd)
 ProjObjRoot := $(ProjSrcRoot)
 
@@ -73,7 +72,7 @@ CP := cp
 ifndef VERBOSE
   Verb := @
 else
-  Verb := 
+  Verb :=
 endif
 
 Echo := @echo

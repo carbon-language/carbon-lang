@@ -5,9 +5,8 @@ all::
 
 include make/config.mk
 include make/util.mk
-# If SRCROOT is defined, assume we are doing an Apple style build. We
-# should be able to use RC_XBS for this but that is unused during
-# "make installsrc".
+# If SRCROOT is defined, assume we are doing an Apple style build. We should be
+# able to use RC_XBS for this but that is unused during "make installsrc".
 ifdef SRCROOT
   include make/AppleBI.mk
 endif
@@ -75,7 +74,7 @@ clean:: $(ActiveObjPath)/.remove
 endef
 
 # Template: CNA_template Config Arch
-# 
+#
 # This template is used once per Config/Arch at the top-level.
 define CNA_template
 $(call Set,ActiveConfig,$1)
@@ -84,10 +83,9 @@ $(call Set,ActiveObjPath,$(ProjObjRoot)/$(ActiveConfig)/$(ActiveArch))
 $(call Set,ActiveLibGen,$(ActiveObjPath)/libcompiler_rt.Generic.a)
 $(call Set,ActiveLibOpt,$(ActiveObjPath)/libcompiler_rt.Optimized.a)
 
-# Initialize inputs lists. This are extended by the CNA_subdir
-# template. The one tricky bit is that we need to use these quoted,
-# because they are not complete until the entire makefile has been
-# processed.
+# Initialize inputs lists. This are extended by the CNA_subdir template. The one
+# tricky bit is that we need to use these quoted, because they are not complete
+# until the entire makefile has been processed.
 $(call Set,GenericInputs.$(ActiveConfig).$(ActiveArch),)
 $(call Set,OptimizedInputs.$(ActiveConfig).$(ActiveArch),)
 # Final.Inputs is created once we have loaded all the subdirectories
@@ -124,10 +122,10 @@ $(foreach config,$(Configs), \
 ###
 # How to build things.
 
-# Define rules for building on each configuration & architecture. This
-# is not exactly obvious, but variables inside the template are being
-# expanded during the make processing, so automatic variables must be
-# quoted and normal assignment cannot be used.
+# Define rules for building on each configuration & architecture. This is not
+# exactly obvious, but variables inside the template are being expanded during
+# the make processing, so automatic variables must be quoted and normal
+# assignment cannot be used.
 
 # Template: CNA_template Config Arch Dir
 #   Uses: GetArgs, Dependencies, ObjNames
@@ -143,8 +141,7 @@ $(call Set,ActiveObjPath,$(ProjObjRoot)/$(ActiveDir)/$(ActiveConfig)/$(ActiveArc
 $(call Set,ActiveFlags,$(call GetArgs,$(ActiveConfig),$(ActiveArch)))
 $(call Set,ActiveObjects,$(ObjNames:%=$(ActiveObjPath)/%))
 
-# Add to the input list for the appropriate library and update the
-# dependency.
+# Add to the input list for the appropriate library and update the dependency.
 $(call Append,$(Target).Inputs.$(ActiveConfig).$(ActiveArch),$(ActiveObjects))
 $(ProjObjRoot)/$(ActiveConfig)/$(ActiveArch)/libcompiler_rt.$(Target).a: $(ActiveObjects)
 

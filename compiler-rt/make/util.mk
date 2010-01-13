@@ -22,8 +22,8 @@ Append = $(eval $(1) += $(2))
 ###
 # Debugging
 
-# General debugging rule, use 'make print-XXX' to print the
-# definition, value and origin of XXX.
-print-%: 
+# General debugging rule, use 'make print-XXX' to print the definition, value
+# and origin of XXX.
+make-print-%:
 	$(error PRINT: $(value $*) = "$($*)" (from $(origin $*)))
 
