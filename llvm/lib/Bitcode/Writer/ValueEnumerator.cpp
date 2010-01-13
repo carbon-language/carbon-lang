@@ -92,7 +92,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
              OI != E; ++OI)
-          EnumerateOperandType(*OI);
+          EnumerateOperandType(*OI, true);
         EnumerateType(I->getType());
         if (const CallInst *CI = dyn_cast<CallInst>(I))
           EnumerateAttributes(CI->getAttributes());
@@ -103,7 +103,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
         MDs.clear();
         I->getAllMetadata(MDs);
         for (unsigned i = 0, e = MDs.size(); i != e; ++i)
-          EnumerateMetadata(MDs[i].second);
+          EnumerateMetadata(MDs[i].second, true);
       }
   }
 
@@ -224,7 +224,7 @@ void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
   MDValueMap[MD] = Values.size();
 }
 
-void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
+void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD, bool isGlobal) {
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[MD];
   if (MDValueID) {
@@ -237,14 +237,18 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   EnumerateType(MD->getType());
 
   if (const MDNode *N = dyn_cast<MDNode>(MD)) {
-    MDValues.push_back(std::make_pair(MD, 1U));
-    MDValueMap[MD] = MDValues.size();
-    MDValueID = MDValues.size();
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {    
-      if (Value *V = N->getOperand(i))
-        EnumerateValue(V);
-      else
-        EnumerateType(Type::getVoidTy(MD->getContext()));
+    if ((isGlobal && !N->isFunctionLocal()) ||
+        (!isGlobal && N->isFunctionLocal())) {
+      MDValues.push_back(std::make_pair(MD, 1U));
+      MDValueMap[MD] = MDValues.size();
+      MDValueID = MDValues.size();
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {    
+        if (Value *V = N->getOperand(i))
+          EnumerateValue(V);
+        else
+          EnumerateType(Type::getVoidTy(MD->getContext()));
+      }
+      return;
     }
     return;
   }
@@ -255,10 +259,10 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
   MDValueID = MDValues.size();
 }
 
-void ValueEnumerator::EnumerateValue(const Value *V) {
+void ValueEnumerator::EnumerateValue(const Value *V, bool isGlobal) {
   assert(!V->getType()->isVoidTy() && "Can't insert void values!");
   if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
-    return EnumerateMetadata(MB);
+    return EnumerateMetadata(MB, isGlobal);
   else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
     return EnumerateNamedMDNode(NMD);
 
@@ -292,7 +296,7 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
            I != E; ++I)
         if (!isa<BasicBlock>(*I)) // Don't enumerate BB operand to BlockAddress.
-          EnumerateValue(*I);
+          EnumerateValue(*I, isGlobal);
 
       // Finally, add the value.  Doing this could make the ValueID reference be
       // dangling, don't reuse it.
@@ -329,8 +333,14 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
 
 // Enumerate the types for the specified value.  If the value is a constant,
 // walk through it, enumerating the types of the constant.
-void ValueEnumerator::EnumerateOperandType(const Value *V) {
+void ValueEnumerator::EnumerateOperandType(const Value *V, bool isGlobal) {
   EnumerateType(V->getType());
+  
+  // During function-incorporation, only enumerate metadata operands.
+  if (!isGlobal)
+    if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
+      return EnumerateMetadata(MB, isGlobal);
+
   if (const Constant *C = dyn_cast<Constant>(V)) {
     // If this constant is already enumerated, ignore it, we know its type must
     // be enumerated.
@@ -345,13 +355,13 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
       // blockaddress.
       if (isa<BasicBlock>(Op)) continue;
       
-      EnumerateOperandType(cast<Constant>(Op));
+      EnumerateOperandType(cast<Constant>(Op), isGlobal);
     }
 
     if (const MDNode *N = dyn_cast<MDNode>(V)) {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
         if (Value *Elem = N->getOperand(i))
-          EnumerateOperandType(Elem);
+          EnumerateOperandType(Elem, isGlobal);
     }
   } else if (isa<MDString>(V) || isa<MDNode>(V))
     EnumerateValue(V);
@@ -404,6 +414,10 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
+      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
+           OI != E; ++OI) {
+        EnumerateOperandType(*OI, false);
+      }
       if (!I->getType()->isVoidTy())
         EnumerateValue(I);
     }

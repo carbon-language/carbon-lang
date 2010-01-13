@@ -105,6 +105,7 @@ public:
   
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
+  ValueList getMDValues() { return MDValues; }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
@@ -127,11 +128,11 @@ public:
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
-  void EnumerateMetadata(const MetadataBase *MD);
+  void EnumerateMetadata(const MetadataBase *MD, bool isGlobal);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
-  void EnumerateValue(const Value *V);
+  void EnumerateValue(const Value *V, bool isGlobal = true);
   void EnumerateType(const Type *T);
-  void EnumerateOperandType(const Value *V);
+  void EnumerateOperandType(const Value *V, bool isGlobal);
   void EnumerateAttributes(const AttrListPtr &PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
