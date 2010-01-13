@@ -19,7 +19,7 @@
 #include <string>
 
 namespace llvm {
-class StringRef;
+class Twine;
 class Type;
 class Module;
 class Value;
@@ -112,7 +112,7 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
-  std::string makeNameProper(StringRef x,
+  std::string makeNameProper(const Twine &Name,
                              ManglerPrefixTy PrefixTy = Mangler::Default);
   
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix

@@ -16,7 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -32,8 +32,11 @@ static std::string MangleLetter(unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(StringRef X,
+std::string Mangler::makeNameProper(const Twine &TheName,
                                     ManglerPrefixTy PrefixTy) {
+  SmallString<256> TmpData;
+  TheName.toVector(TmpData);
+  StringRef X = TmpData.str();
   assert(!X.empty() && "Cannot mangle empty strings");
   
   if (!UseQuotes) {
