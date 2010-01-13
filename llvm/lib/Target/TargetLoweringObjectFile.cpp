@@ -21,11 +21,13 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -576,16 +578,16 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    SmallString<128> Name;
+    SmallString<128> Name, MangledName;
     Name.append(Prefix, Prefix+strlen(Prefix));
-    // FIXME: This will fail for weak globals with no names, this also depends
-    // on the mangling behavior of makeNameProper to mangle the section name
-    // before construction.  Instead, this should use getNameWithPrefix on the
-    // global variable and the MCSection printing code should do the mangling.
-    Mang->makeNameProper(Name, GV->getName());
-
-    return getELFSection(Name.str(),
-                         getELFSectionType(Name.str(), Kind),
+    Mang->getNameWithPrefix(Name, GV, false);
+    
+    raw_svector_ostream OS(MangledName);
+    MCSymbol::printMangledName(Name, OS, 0);
+    OS.flush();
+    
+    return getELFSection(MangledName.str(),
+                         getELFSectionType(MangledName.str(), Kind),
                          getELFSectionFlags(Kind),
                          Kind);
   }
