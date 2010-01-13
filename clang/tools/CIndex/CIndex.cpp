@@ -188,7 +188,7 @@ private:
     if (ND->isImplicit())
       return;
 
-    CXCursor C = { CK, ND, 0 };
+    CXCursor C = { CK, ND, 0, 0 };
     Callback(Root, C, CData);
   }
 
@@ -289,7 +289,7 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
     if (ND->getPCHLevel() > MaxPCHLevel)
       return;
 
-    CXCursor C = { CK, ND, 0 };
+    CXCursor C = { CK, ND, 0, 0 };
     Callback(CDecl, C, CData);
   }
 public:
@@ -931,7 +931,7 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   const FileEntry *File = FMgr.getFile(source_name,
                                        source_name+strlen(source_name));
   if (!File) {
-    CXCursor C = { CXCursor_InvalidFile, 0, 0 };
+    CXCursor C = { CXCursor_InvalidFile, 0, 0, 0 };
     return C;
   }
   SourceLocation SLoc =
@@ -951,28 +951,28 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   if (Dcl) {
     if (Stm) {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Stm)) {
-        CXCursor C = { TranslateDeclRefExpr(DRE), Dcl, Stm };
+        CXCursor C = { TranslateDeclRefExpr(DRE), Dcl, Stm, 0 };
         return C;
       } else if (ObjCMessageExpr *MExp = dyn_cast<ObjCMessageExpr>(Stm)) {
-        CXCursor C = { CXCursor_ObjCSelectorRef, Dcl, MExp };
+        CXCursor C = { CXCursor_ObjCSelectorRef, Dcl, MExp, 0 };
         return C;
       }
       // Fall through...treat as a decl, not a ref.
     }
     if (ALoc.isNamedRef()) {
       if (isa<ObjCInterfaceDecl>(Dcl)) {
-        CXCursor C = { CXCursor_ObjCClassRef, Dcl, ALoc.getParentDecl() };
+        CXCursor C = { CXCursor_ObjCClassRef, Dcl, ALoc.getParentDecl(), 0 };
         return C;
       }
       if (isa<ObjCProtocolDecl>(Dcl)) {
-        CXCursor C = { CXCursor_ObjCProtocolRef, Dcl, ALoc.getParentDecl() };
+        CXCursor C = { CXCursor_ObjCProtocolRef, Dcl, ALoc.getParentDecl(), 0 };
         return C;
       }
     }
-    CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
+    CXCursor C = { TranslateKind(Dcl), Dcl, 0, 0 };
     return C;
   }
-  CXCursor C = { CXCursor_NoDeclFound, 0, 0 };
+  CXCursor C = { CXCursor_NoDeclFound, 0, 0, 0 };
   return C;
 }
 
@@ -992,7 +992,7 @@ CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
 
-  CXCursor C = { TranslateKind(ND), ND, 0 };
+  CXCursor C = { TranslateKind(ND), ND, 0, 0 };
   return C;
 }
 

@@ -139,6 +139,7 @@ typedef struct {
   enum CXCursorKind kind;
   CXDecl decl;
   CXStmt stmt; /* expression reference */
+  CXDecl referringDecl;
 } CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
