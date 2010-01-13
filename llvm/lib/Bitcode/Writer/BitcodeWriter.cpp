@@ -570,7 +570,7 @@ static void WriteFunctionLocalMetadata(const ValueEnumerator &VE,
           StartedMetadataBlock = true;
         }
         WriteMDNode(N, VE, Stream, Record);
-        // Remove function-local MD, since it is used outside of function.
+        // Remove function-local MD, since it is not used outside of function.
         it = Vals.erase(it);
         end = Vals.end();
         continue;
