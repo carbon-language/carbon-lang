@@ -16,6 +16,7 @@
 #define LLVM_CLANG_SEMA_OVERLOAD_H
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -241,6 +242,51 @@ namespace clang {
     void copyFrom(const AmbiguousConversionSequence &);
   };
 
+  /// BadConversionSequence - Records information about an invalid
+  /// conversion sequence.
+  struct BadConversionSequence {
+    enum FailureKind {
+      no_conversion,
+      unrelated_class,
+      suppressed_user,
+      bad_qualifiers
+    };
+
+    // This can be null, e.g. for implicit object arguments.
+    Expr *FromExpr;
+
+    FailureKind Kind;
+
+  private:
+    // The type we're converting from (an opaque QualType).
+    void *FromTy;
+
+    // The type we're converting to (an opaque QualType).
+    void *ToTy;
+
+  public:
+    void init(FailureKind K, Expr *From, QualType To) {
+      init(K, From->getType(), To);
+      FromExpr = From;
+    }
+    void init(FailureKind K, QualType From, QualType To) {
+      Kind = K;
+      FromExpr = 0;
+      setFromType(From);
+      setToType(To);
+    }
+
+    QualType getFromType() const { return QualType::getFromOpaquePtr(FromTy); }
+    QualType getToType() const { return QualType::getFromOpaquePtr(ToTy); }
+
+    void setFromExpr(Expr *E) {
+      FromExpr = E;
+      setFromType(E->getType());
+    }
+    void setFromType(QualType T) { FromTy = T.getAsOpaquePtr(); }
+    void setToType(QualType T) { ToTy = T.getAsOpaquePtr(); }
+  };
+
   /// ImplicitConversionSequence - Represents an implicit conversion
   /// sequence, which may be a standard conversion sequence
   /// (C++ 13.3.3.1.1), user-defined conversion sequence (C++ 13.3.3.1.2),
@@ -280,6 +326,10 @@ namespace clang {
       /// When ConversionKind == AmbiguousConversion, provides the
       /// details of the ambiguous conversion.
       AmbiguousConversionSequence Ambiguous;
+
+      /// When ConversionKind == BadConversion, provides the details
+      /// of the bad conversion.
+      BadConversionSequence Bad;
     };
 
     ImplicitConversionSequence() : ConversionKind(BadConversion) {}
@@ -294,7 +344,7 @@ namespace clang {
       case UserDefinedConversion: UserDefined = Other.UserDefined; break;
       case AmbiguousConversion: Ambiguous.copyFrom(Other.Ambiguous); break;
       case EllipsisConversion: break;
-      case BadConversion: break;
+      case BadConversion: Bad = Other.Bad; break;
       }
     }
 
@@ -336,6 +386,13 @@ namespace clang {
     void DebugPrint() const;
   };
 
+  enum OverloadFailureKind {
+    ovl_fail_too_many_arguments,
+    ovl_fail_too_few_arguments,
+    ovl_fail_bad_conversion,
+    ovl_fail_bad_deduction
+  };
+
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
     /// Function - The actual function that this candidate
@@ -375,6 +432,10 @@ namespace clang {
     /// non-static member function when the call doesn't have an
     /// object argument.
     bool IgnoreObjectArgument;
+
+    /// FailureKind - The reason why this candidate is not viable.
+    /// Actually an OverloadFailureKind.
+    unsigned char FailureKind;
 
     /// FinalConversion - For a conversion function (where Function is
     /// a CXXConversionDecl), the standard conversion that occurs

@@ -4389,7 +4389,10 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     = CompareReferenceRelationship(DeclLoc, T1, T2, DerivedToBase);
 
   // Most paths end in a failed conversion.
-  if (ICS) ICS->setBad();
+  if (ICS) {
+    ICS->setBad();
+    ICS->Bad.init(BadConversionSequence::no_conversion, Init, DeclType);
+  }
 
   // C++ [dcl.init.ref]p5:
   //   A reference to type "cv1 T1" is initialized by an expression

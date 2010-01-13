@@ -66,3 +66,22 @@ void test_X2(X2 *x2p, const X2 *cx2p) {
   int &ir = x2p->member();
   float &fr = cx2p->member();
 }
+
+// Tests the exact text used to note the candidates
+namespace test1 {
+  class A {
+    template <class T> void foo(T t, unsigned N); // expected-note {{candidate function [with T = int] not viable: no known conversion from 'char const [6]' to 'unsigned int' for argument 2}}
+    void foo(int n, char N); // expected-note {{candidate function not viable: no known conversion from 'char const [6]' to 'char' for argument 2}} 
+    void foo(int n); // expected-note {{candidate function not viable: requires 1 argument, but 2 were provided}}
+    void foo(unsigned n = 10); // expected-note {{candidate function not viable: requires at most 1 argument, but 2 were provided}}
+    void foo(int n, const char *s, int t); // expected-note {{candidate function not viable: requires 3 arguments, but 2 were provided}}
+    void foo(int n, const char *s, int t, ...); // expected-note {{candidate function not viable: requires at least 3 arguments, but 2 were provided}}
+    void foo(int n, const char *s, int t, int u = 0); // expected-note {{candidate function not viable: requires at least 3 arguments, but 2 were provided}}
+  };
+
+  void test() {
+    A a;
+    a.foo(4, "hello"); //expected-error {{no matching member function for call to 'foo'}}
+  }
+}
+

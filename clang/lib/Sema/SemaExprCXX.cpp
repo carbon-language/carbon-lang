@@ -1076,6 +1076,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 bool Elidable,
                                 ImplicitConversionSequence& ICS) {
   ICS.setBad();
+  ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
   if (Elidable && getLangOptions().CPlusPlus0x) {
     ICS = TryImplicitConversion(From, ToType,
                                 /*SuppressUserConversions=*/false,
@@ -1942,7 +1943,7 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
 
   ImplicitConversionSequence E1ToC2, E2ToC2;
   E1ToC2.setBad();
-  E2ToC2.setBad();
+  E2ToC2.setBad();  
   if (Context.getCanonicalType(Composite1) !=
       Context.getCanonicalType(Composite2)) {
     E1ToC2 = TryImplicitConversion(E1, Composite2,

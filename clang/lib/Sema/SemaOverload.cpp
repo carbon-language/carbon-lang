@@ -489,8 +489,10 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
     //   13.3.1.6 in all cases, only standard conversion sequences and
     //   ellipsis conversion sequences are allowed.
-    if (SuppressUserConversions && ICS.isUserDefined())
+    if (SuppressUserConversions && ICS.isUserDefined()) {
       ICS.setBad();
+      ICS.Bad.init(BadConversionSequence::suppressed_user, From, ToType);
+    }
   } else if (UserDefResult == OR_Ambiguous) {
     ICS.setAmbiguous();
     ICS.Ambiguous.setFromType(From->getType());
@@ -501,6 +503,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
         ICS.Ambiguous.addConversion(Cand->Function);
   } else {
     ICS.setBad();
+    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
   }
 
   return ICS;
@@ -2129,6 +2132,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
                             bool InOverloadResolution) {
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
+    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
     CheckReferenceInit(From, ToType,
                        /*FIXME:*/From->getLocStart(),
                        SuppressUserConversions,
@@ -2223,8 +2227,10 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
   QualType FromTypeCanon = Context.getCanonicalType(FromType);
   if (ImplicitParamType.getCVRQualifiers() 
                                     != FromTypeCanon.getLocalCVRQualifiers() &&
-      !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon))
+      !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon)) {
+    ICS.Bad.init(BadConversionSequence::bad_qualifiers, FromType, ImplicitParamType);
     return ICS;
+  }
 
   // Check that we have either the same type or a derived type. It
   // affects the conversion rank.
@@ -2233,8 +2239,10 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
     ICS.Standard.Second = ICK_Identity;
   else if (IsDerivedFrom(FromType, ClassType))
     ICS.Standard.Second = ICK_Derived_To_Base;
-  else
+  else {
+    ICS.Bad.init(BadConversionSequence::unrelated_class, FromType, ImplicitParamType);
     return ICS;
+  }
 
   // Success. Mark this as a reference binding.
   ICS.setStandard();
@@ -2385,6 +2393,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   if ((NumArgs + (PartialOverloading && NumArgs)) > NumArgsInProto && 
       !Proto->isVariadic()) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_many_arguments;
     return;
   }
 
@@ -2397,6 +2406,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   if (NumArgs < MinRequiredArgs && !PartialOverloading) {
     // Not enough arguments.
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_few_arguments;
     return;
   }
 
@@ -2416,6 +2426,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
+        Candidate.FailureKind = ovl_fail_bad_conversion;
         break;
       }
     } else {
@@ -2532,6 +2543,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
   // list (8.3.5).
   if (NumArgs > NumArgsInProto && !Proto->isVariadic()) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_many_arguments;
     return;
   }
 
@@ -2544,6 +2556,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
   if (NumArgs < MinRequiredArgs) {
     // Not enough arguments.
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_few_arguments;
     return;
   }
 
@@ -2560,6 +2573,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
       = TryObjectArgumentInitialization(ObjectType, Method, ActingContext);
     if (Candidate.Conversions[0].isBad()) {
       Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_bad_conversion;
       return;
     }
   }
@@ -2579,6 +2593,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, CXXRecordDecl *ActingContext,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
+        Candidate.FailureKind = ovl_fail_bad_conversion;
         break;
       }
     } else {
@@ -2670,6 +2685,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     OverloadCandidate &Candidate = CandidateSet.back();
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
     return;
@@ -2726,6 +2742,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     Candidate.Conversions[0].Standard.Second = ICK_Identity;
   if (Candidate.Conversions[0].isBad()) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_conversion;
     return;
   }
   
@@ -2737,6 +2754,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   QualType ToCanon = Context.getCanonicalType(ToType).getUnqualifiedType();
   if (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon)) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_conversion;
     return;
   }
   
@@ -2774,6 +2792,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
 
   case ImplicitConversionSequence::BadConversion:
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_conversion;
     break;
 
   default:
@@ -2847,6 +2866,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
     = TryObjectArgumentInitialization(ObjectType, Conversion, ActingContext);
   if (ObjectInit.isBad()) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_bad_conversion;
     return;
   }
 
@@ -2869,6 +2889,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // list (8.3.5).
   if (NumArgs > NumArgsInProto && !Proto->isVariadic()) {
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_many_arguments;
     return;
   }
 
@@ -2877,6 +2898,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   if (NumArgs < NumArgsInProto) {
     // Not enough arguments.
     Candidate.Viable = false;
+    Candidate.FailureKind = ovl_fail_too_few_arguments;
     return;
   }
 
@@ -2896,6 +2918,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
                                 /*InOverloadResolution=*/false);
       if (Candidate.Conversions[ArgIdx + 1].isBad()) {
         Candidate.Viable = false;
+        Candidate.FailureKind = ovl_fail_bad_conversion;
         break;
       }
     } else {
@@ -3038,6 +3061,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
     }
     if (Candidate.Conversions[ArgIdx].isBad()) {
       Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_bad_conversion;
       break;
     }
   }
@@ -4336,36 +4360,69 @@ void Sema::DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
 
 namespace {
 
-void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I,
-                           Expr **Args, unsigned NumArgs) {
+void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
+  const ImplicitConversionSequence &Conv = Cand->Conversions[I];
+  assert(Conv.isBad());
   assert(Cand->Function && "for now, candidate must be a function");
   FunctionDecl *Fn = Cand->Function;
 
   // There's a conversion slot for the object argument if this is a
   // non-constructor method.  Note that 'I' corresponds the
   // conversion-slot index.
+  bool isObjectArgument = false;
   if (isa<CXXMethodDecl>(Fn) && !isa<CXXConstructorDecl>(Fn)) {
-    // FIXME: talk usefully about bad conversions for object arguments.
-    if (I == 0) return S.NoteOverloadCandidate(Fn);
-    else I--;
+    if (I == 0)
+      isObjectArgument = true;
+    else
+      I--;
   }
-
-  // FIXME: can we have a bad conversion on an ellipsis parameter?
-  assert(I < NumArgs && "index exceeds number of formal arguments");
-  assert(I < Fn->getType()->getAs<FunctionProtoType>()->getNumArgs() &&
-         "index exceeds number of formal parameters");
 
   std::string FnDesc;
   OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
 
-  QualType FromTy = Args[I]->getType();
-  QualType ToTy = Fn->getType()->getAs<FunctionProtoType>()->getArgType(I);
+  Expr *FromExpr = Conv.Bad.FromExpr;
+  QualType FromTy = Conv.Bad.getFromType();
+  QualType ToTy = Conv.Bad.getToType();
 
   // TODO: specialize based on the kind of mismatch
   S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv)
     << (unsigned) FnKind << FnDesc
-    << Args[I]->getSourceRange() << FromTy << ToTy
-    << I+1;
+    << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+    << FromTy << ToTy << I+1;
+}
+
+void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
+                           unsigned NumFormalArgs) {
+  // TODO: treat calls to a missing default constructor as a special case
+
+  FunctionDecl *Fn = Cand->Function;
+  const FunctionProtoType *FnTy = Fn->getType()->getAs<FunctionProtoType>();
+
+  unsigned MinParams = Fn->getMinRequiredArguments();
+  
+  // at least / at most / exactly
+  unsigned mode, modeCount;
+  if (NumFormalArgs < MinParams) {
+    assert(Cand->FailureKind == ovl_fail_too_few_arguments);
+    if (MinParams != FnTy->getNumArgs() || FnTy->isVariadic())
+      mode = 0; // "at least"
+    else
+      mode = 2; // "exactly"
+    modeCount = MinParams;
+  } else {
+    assert(Cand->FailureKind == ovl_fail_too_many_arguments);
+    if (MinParams != FnTy->getNumArgs())
+      mode = 1; // "at most"
+    else
+      mode = 2; // "exactly"
+    modeCount = FnTy->getNumArgs();
+  }
+
+  std::string Description;
+  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
+
+  S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
+    << (unsigned) FnKind << Description << mode << modeCount << NumFormalArgs;
 }
 
 void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
@@ -4388,52 +4445,24 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     return;
   }
 
-  // Diagnose arity mismatches.
-  // TODO: treat calls to a missing default constructor as a special case
-  unsigned NumFormalArgs = NumArgs;
-  if (isa<CXXMethodDecl>(Fn) && !isa<CXXConstructorDecl>(Fn))
-    NumFormalArgs--;
-  const FunctionProtoType *FnTy = Fn->getType()->getAs<FunctionProtoType>();
-  unsigned MinParams = Fn->getMinRequiredArguments();
-  if (NumFormalArgs < MinParams ||
-      (NumFormalArgs > FnTy->getNumArgs() && !FnTy->isVariadic())) {
-    std::string Description;
-    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
+  switch (Cand->FailureKind) {
+  case ovl_fail_too_many_arguments:
+  case ovl_fail_too_few_arguments:
+    return DiagnoseArityMismatch(S, Cand, NumArgs);
 
-    // at least / at most / exactly
-    unsigned mode, modeCount;
-    if (NumFormalArgs < MinParams) {
-      if (MinParams != FnTy->getNumArgs())
-        mode = 0; // "at least"
-      else
-        mode = 2; // "exactly"
-      modeCount = MinParams;
-    } else {
-      if (MinParams != FnTy->getNumArgs())
-        mode = 1; // "at most"
-      else
-        mode = 2; // "exactly"
-      modeCount = FnTy->getNumArgs();
-    }
+  case ovl_fail_bad_deduction:
+    return S.NoteOverloadCandidate(Fn);
 
-    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
-      << (unsigned) FnKind << Description << mode << modeCount << NumFormalArgs;
-    return;
+  case ovl_fail_bad_conversion:
+    for (unsigned I = 0, N = Cand->Conversions.size(); I != N; ++I)
+      if (Cand->Conversions[I].isBad())
+        return DiagnoseBadConversion(S, Cand, I);
+    
+    // FIXME: this currently happens when we're called from SemaInit
+    // when user-conversion overload fails.  Figure out how to handle
+    // those conditions and diagnose them well.
+    return S.NoteOverloadCandidate(Fn);
   }
-
-  // Look for bad conversions.
-  if (!Cand->Conversions.empty()) {
-    for (unsigned I = 0, N = Cand->Conversions.size(); I != N; ++I) {
-      if (!Cand->Conversions[I].isBad())
-        continue;
-
-      DiagnoseBadConversion(S, Cand, I, Args, NumArgs);
-      return;
-    }
-  }
-
-  // Give up and give the generic message.
-  S.NoteOverloadCandidate(Fn);
 }
 
 void NoteSurrogateCandidate(Sema &S, OverloadCandidate *Cand) {
