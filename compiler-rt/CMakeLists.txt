@@ -19,8 +19,9 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
  "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
  )
 
-INCLUDE( ConfigureChecks.cmake )
-CONFIGURE_FILE( config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+INCLUDE( ${CMAKE_SOURCE_DIR}/cmake/ConfigureChecks.cmake )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/cmake/config.h.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
 INCLUDE_DIRECTORIES(
  ${CMAKE_CURRENT_BINARY_DIR}
@@ -46,7 +47,7 @@ IF( BUILD_BLOCKS_RUNTIME )
 ELSE( BUILD_BLOCKS_RUNTIME )
   MESSAGE(STATUS "No suitable atomic operation routines detected, skipping Blocks Runtime")
 ENDIF( BUILD_BLOCKS_RUNTIME )
- 
+
 ADD_SUBDIRECTORY( lib )
 
 # Enable Test Suit:
