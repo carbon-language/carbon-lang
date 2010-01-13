@@ -297,83 +297,113 @@ public:
                unsigned MaxPCHLevel) :
     CDecl(C), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
 
-  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-    // Issue callbacks for the containing class.
-    Call(CXCursor_ObjCClassRef, ND);
-    // FIXME: Issue callbacks for protocol refs.
-    VisitDeclContext(dyn_cast<DeclContext>(ND));
-  }
-  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
-    // Issue callbacks for super class.
-    if (D->getSuperClass())
-      Call(CXCursor_ObjCSuperClassRef, D);
-
-    for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
-           E = D->protocol_end(); I != E; ++I)
-      Call(CXCursor_ObjCProtocolRef, *I);
-    VisitDeclContext(dyn_cast<DeclContext>(D));
-  }
-  void VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
-    for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
-           E = PID->protocol_end(); I != E; ++I)
-      Call(CXCursor_ObjCProtocolRef, *I);
-
-    VisitDeclContext(dyn_cast<DeclContext>(PID));
-  }
-  void VisitTagDecl(TagDecl *D) {
-    VisitDeclContext(dyn_cast<DeclContext>(D));
-  }
-  void VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
-    VisitDeclContext(dyn_cast<DeclContext>(D));
-  }
-  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
-    VisitDeclContext(dyn_cast<DeclContext>(D));
-  }
-  void VisitDeclContext(DeclContext *DC) {
-    for (DeclContext::decl_iterator
-           I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
-      Visit(*I);
-  }
-  void VisitEnumConstantDecl(EnumConstantDecl *ND) {
-    Call(CXCursor_EnumConstantDecl, ND);
-  }
-  void VisitFieldDecl(FieldDecl *ND) {
-    Call(CXCursor_FieldDecl, ND);
-  }
-  void VisitVarDecl(VarDecl *ND) {
-    Call(CXCursor_VarDecl, ND);
-  }
-  void VisitParmVarDecl(ParmVarDecl *ND) {
-    Call(CXCursor_ParmDecl, ND);
-  }
-  void VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
-    Call(CXCursor_ObjCPropertyDecl, ND);
-  }
-  void VisitObjCIvarDecl(ObjCIvarDecl *ND) {
-    Call(CXCursor_ObjCIvarDecl, ND);
-  }
-  void VisitFunctionDecl(FunctionDecl *ND) {
-    if (ND->isThisDeclarationADefinition()) {
-      VisitDeclContext(dyn_cast<DeclContext>(ND));
-#if 0
-      // Not currently needed.
-      CompoundStmt *Body = dyn_cast<CompoundStmt>(ND->getBody());
-      CRefVisitor RVisit(CDecl, Callback, CData);
-      RVisit.Visit(Body);
-#endif
-    }
-  }
-  void VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-    if (ND->getBody()) {
-      Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
-                                  : CXCursor_ObjCClassMethodDefn, ND);
-      VisitDeclContext(dyn_cast<DeclContext>(ND));
-    } else
-      Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
-                                  : CXCursor_ObjCClassMethodDecl, ND);
-  }
+  void VisitDeclContext(DeclContext *DC);
+  void VisitEnumConstantDecl(EnumConstantDecl *ND);
+  void VisitFieldDecl(FieldDecl *ND);
+  void VisitFunctionDecl(FunctionDecl *ND);
+  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
+  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
+  void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+  void VisitObjCIvarDecl(ObjCIvarDecl *ND);
+  void VisitObjCMethodDecl(ObjCMethodDecl *ND);
+  void VisitObjCPropertyDecl(ObjCPropertyDecl *ND);
+  void VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
+  void VisitParmVarDecl(ParmVarDecl *ND);
+  void VisitTagDecl(TagDecl *D);
+  void VisitVarDecl(VarDecl *ND);
 };
 } // end anonymous namespace
+
+void CDeclVisitor::VisitDeclContext(DeclContext *DC) {
+  for (DeclContext::decl_iterator
+       I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
+    Visit(*I);
+}
+
+void CDeclVisitor::VisitEnumConstantDecl(EnumConstantDecl *ND) {
+  Call(CXCursor_EnumConstantDecl, ND);
+}
+
+void CDeclVisitor::VisitFieldDecl(FieldDecl *ND) {
+  Call(CXCursor_FieldDecl, ND);
+}
+
+void CDeclVisitor::VisitFunctionDecl(FunctionDecl *ND) {
+  if (ND->isThisDeclarationADefinition()) {
+    VisitDeclContext(dyn_cast<DeclContext>(ND));
+#if 0
+    // Not currently needed.
+    CompoundStmt *Body = dyn_cast<CompoundStmt>(ND->getBody());
+    CRefVisitor RVisit(CDecl, Callback, CData);
+    RVisit.Visit(Body);
+#endif
+  }
+}  
+
+void CDeclVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
+  // Issue callbacks for the containing class.
+  Call(CXCursor_ObjCClassRef, ND);
+  // FIXME: Issue callbacks for protocol refs.
+  VisitDeclContext(dyn_cast<DeclContext>(ND));
+}
+
+void CDeclVisitor::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+  VisitDeclContext(dyn_cast<DeclContext>(D));
+}
+
+void CDeclVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+  VisitDeclContext(dyn_cast<DeclContext>(D));
+}
+
+void CDeclVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+  // Issue callbacks for super class.
+  if (D->getSuperClass())
+    Call(CXCursor_ObjCSuperClassRef, D);
+  
+  for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
+       E = D->protocol_end(); I != E; ++I)
+    Call(CXCursor_ObjCProtocolRef, *I);
+  VisitDeclContext(dyn_cast<DeclContext>(D));
+}
+
+void CDeclVisitor::VisitObjCIvarDecl(ObjCIvarDecl *ND) {
+  Call(CXCursor_ObjCIvarDecl, ND);
+}
+
+void CDeclVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
+  if (ND->getBody()) {
+    Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
+         : CXCursor_ObjCClassMethodDefn, ND);
+    VisitDeclContext(dyn_cast<DeclContext>(ND));
+  } else
+    Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
+         : CXCursor_ObjCClassMethodDecl, ND);
+}
+
+void CDeclVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
+  Call(CXCursor_ObjCPropertyDecl, ND);
+}
+
+void CDeclVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+  for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
+       E = PID->protocol_end(); I != E; ++I)
+    Call(CXCursor_ObjCProtocolRef, *I);
+  
+  VisitDeclContext(dyn_cast<DeclContext>(PID));
+}
+
+void CDeclVisitor::VisitParmVarDecl(ParmVarDecl *ND) {
+  Call(CXCursor_ParmDecl, ND);
+}
+
+void CDeclVisitor::VisitTagDecl(TagDecl *D) {
+  VisitDeclContext(dyn_cast<DeclContext>(D));
+}
+
+void CDeclVisitor::VisitVarDecl(VarDecl *ND) {
+  Call(CXCursor_VarDecl, ND);
+}
 
 static SourceLocation getLocationFromCursor(CXCursor C,
                                             SourceManager &SourceMgr,
