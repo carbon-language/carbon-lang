@@ -189,6 +189,11 @@ public:
   //  tmp += offset;
   //  return tmp.operator*();
   // }
+
+  /// Get the source BB of this iterator.
+  inline BB_ *getSource() {
+      return Term->getParent();
+  }
 };
 
 typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
