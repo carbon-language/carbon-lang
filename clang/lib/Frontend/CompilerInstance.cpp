@@ -158,7 +158,8 @@ void CompilerInstance::createPreprocessor() {
   PP.reset(createPreprocessor(getDiagnostics(), getLangOpts(),
                               getPreprocessorOpts(), getHeaderSearchOpts(),
                               getDependencyOutputOpts(), getTarget(),
-                              getSourceManager(), getFileManager()));
+                              getFrontendOpts(), getSourceManager(),
+                              getFileManager()));
 }
 
 Preprocessor *
@@ -168,6 +169,7 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
                                      const HeaderSearchOptions &HSOpts,
                                      const DependencyOutputOptions &DepOpts,
                                      const TargetInfo &Target,
+                                     const FrontendOptions &FEOpts,
                                      SourceManager &SourceMgr,
                                      FileManager &FileMgr) {
   // Create a PTH manager if we are using some form of a token cache.
@@ -189,7 +191,7 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     PP->setPTHManager(PTHMgr);
   }
 
-  InitializePreprocessor(*PP, PPOpts, HSOpts);
+  InitializePreprocessor(*PP, PPOpts, HSOpts, FEOpts);
 
   // Handle generating dependencies, if requested.
   if (!DepOpts.OutputFile.empty())

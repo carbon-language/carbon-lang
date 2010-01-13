@@ -488,6 +488,7 @@ public:
                                           const HeaderSearchOptions &,
                                           const DependencyOutputOptions &,
                                           const TargetInfo &,
+                                          const FrontendOptions &,
                                           SourceManager &, FileManager &);
 
   /// Create the AST context.

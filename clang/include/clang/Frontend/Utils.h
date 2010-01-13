@@ -39,6 +39,7 @@ class PreprocessorOutputOptions;
 class SourceManager;
 class Stmt;
 class TargetInfo;
+class FrontendOptions;
 
 class MacroBuilder {
   llvm::raw_ostream &Out;
@@ -76,7 +77,8 @@ void ApplyHeaderSearchOptions(HeaderSearch &HS,
 /// environment ready to process a single file.
 void InitializePreprocessor(Preprocessor &PP,
                             const PreprocessorOptions &PPOpts,
-                            const HeaderSearchOptions &HSOpts);
+                            const HeaderSearchOptions &HSOpts,
+                            const FrontendOptions &FEOpts);
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.

@@ -14,6 +14,7 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
@@ -202,6 +203,7 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
 
 static void InitializePredefinedMacros(const TargetInfo &TI,
                                        const LangOptions &LangOpts,
+                                       const FrontendOptions &FEOpts,
                                        MacroBuilder &Builder) {
   // Compiler version introspection macros.
   Builder.defineMacro("__llvm__");  // LLVM Backend
@@ -406,6 +408,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   else if (LangOpts.getStackProtectorMode() == LangOptions::SSPReq)
     Builder.defineMacro("__SSP_ALL__", "2");
 
+  if (FEOpts.ProgramAction == frontend::RewriteObjC)
+    Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }
@@ -461,7 +465,8 @@ static void InitializeFileRemapping(Diagnostic &Diags,
 ///
 void clang::InitializePreprocessor(Preprocessor &PP,
                                    const PreprocessorOptions &InitOpts,
-                                   const HeaderSearchOptions &HSOpts) {
+                                   const HeaderSearchOptions &HSOpts,
+                                   const FrontendOptions &FEOpts) {
   std::string PredefineBuffer;
   PredefineBuffer.reserve(4080);
   llvm::raw_string_ostream Predefines(PredefineBuffer);
@@ -475,7 +480,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   if (InitOpts.UsePredefines)
     InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
-                               Builder);
+                               FEOpts, Builder);
 
   // Add on the predefines from the driver.  Wrap in a #line directive to report
   // that they come from the command line.
