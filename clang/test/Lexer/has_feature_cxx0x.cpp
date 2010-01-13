@@ -12,7 +12,7 @@ int no_lambdas();
 
 
 #if __has_feature(cxx_nullptr)
-int nullptr();
+int has_nullptr();
 #else
 int no_nullptr();
 #endif
@@ -32,12 +32,12 @@ int no_concepts();
 
 
 #if __has_feature(cxx_decltype)
-int decltype();
+int has_decltype();
 #else
 int no_decltype();
 #endif
 
-// CHECK-0X: decltype
+// CHECK-0X: has_decltype
 // CHECK-NO-0X: no_decltype
 
 
@@ -62,12 +62,12 @@ int no_attributes();
 
 
 #if __has_feature(cxx_static_assert)
-int static_assert();
+int has_static_assert();
 #else
 int no_static_assert();
 #endif
 
-// CHECK-0X: static_assert
+// CHECK-0X: has_static_assert
 // CHECK-NO-0X: no_static_assert
 
 
