@@ -329,6 +329,22 @@ namespace llvm {
     bool isTriviallyEmpty() const {
       return isNullary();
     }
+    
+    /// isSingleStringRef - Return true if this twine can be dynamically
+    /// accessed as a single StringRef value with getSingleStringRef().
+    bool isSingleStringRef() const {
+      if (getRHSKind() != EmptyKind) return false;
+      
+      switch (getLHSKind()) {
+      case EmptyKind:
+      case CStringKind:
+      case StdStringKind:
+      case StringRefKind:
+        return true;
+      default:
+        return false;
+      }
+    }
 
     /// @}
     /// @name String Operations
@@ -347,6 +363,20 @@ namespace llvm {
     /// SmallVector.
     void toVector(SmallVectorImpl<char> &Out) const;
 
+    /// getSingleStringRef - This returns the twine as a single StringRef.  This
+    /// method is only valid if isSingleStringRef() is true.
+    StringRef getSingleStringRef() const {
+      assert(isSingleStringRef() &&"This cannot be had as a single stringref!");
+      switch (getLHSKind()) {
+      default: assert(0 && "Out of sync with isSingleStringRef");
+      case EmptyKind:      return StringRef();
+      case CStringKind:    return StringRef((const char*)LHS);
+      case StdStringKind:  return StringRef(*(const std::string*)LHS);
+      case StringRefKind:  return *(const StringRef*)LHS;
+      }
+    }
+    
+    
     /// print - Write the concatenated string represented by this twine to the
     /// stream \arg OS.
     void print(raw_ostream &OS) const;
