@@ -1972,6 +1972,30 @@ DeclarationName Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
                                                   Context.getCanonicalType(Ty));
     }
       
+    case UnqualifiedId::IK_ConstructorTemplateId: {
+      // In well-formed code, we can only have a constructor
+      // template-id that refers to the current context, so go there
+      // to find the actual type being constructed.
+      CXXRecordDecl *CurClass = dyn_cast<CXXRecordDecl>(CurContext);
+      if (!CurClass || CurClass->getIdentifier() != Name.TemplateId->Name)
+        return DeclarationName();
+
+      // Determine the type of the class being constructed.
+      QualType CurClassType;
+      if (ClassTemplateDecl *ClassTemplate
+            = CurClass->getDescribedClassTemplate())
+        CurClassType = ClassTemplate->getInjectedClassNameType(Context);
+      else
+        CurClassType = Context.getTypeDeclType(CurClass);
+
+      // FIXME: Check two things: that the template-id names the same type as
+      // CurClassType, and that the template-id does not occur when the name
+      // was qualified.
+
+      return Context.DeclarationNames.getCXXConstructorName(
+                                       Context.getCanonicalType(CurClassType));
+    }
+
     case UnqualifiedId::IK_DestructorName: {
       QualType Ty = GetTypeFromParser(Name.DestructorName);
       if (Ty.isNull())

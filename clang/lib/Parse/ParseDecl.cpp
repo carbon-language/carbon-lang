@@ -356,7 +356,8 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   ParsingDeclSpec DS(*this);
   if (Attr)
     DS.AddAttributes(Attr);
-  ParseDeclarationSpecifiers(DS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS_none,
+                            getDeclSpecContextFromDeclaratorContext(Context));
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
@@ -786,6 +787,20 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   return false;
 }
 
+/// \brief Determine the declaration specifier context from the declarator
+/// context.
+///
+/// \param Context the declarator context, which is one of the
+/// Declarator::TheContext enumerator values.
+Parser::DeclSpecContext 
+Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
+  if (Context == Declarator::MemberContext)
+    return DSC_class;
+  if (Context == Declarator::FileContext)
+    return DSC_top_level;
+  return DSC_normal;
+}
+
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers[opt]
@@ -861,6 +876,47 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue())
             ->Kind == TNK_Type_template) {
         // We have a qualified template-id, e.g., N::A<int>
+
+        // C++ [class.qual]p2:
+        //   In a lookup in which the constructor is an acceptable lookup
+        //   result and the nested-name-specifier nominates a class C:
+        //
+        //     - if the name specified after the
+        //       nested-name-specifier, when looked up in C, is the
+        //       injected-class-name of C (Clause 9), or
+        //
+        //     - if the name specified after the nested-name-specifier
+        //       is the same as the identifier or the
+        //       simple-template-id's template-name in the last
+        //       component of the nested-name-specifier,
+        //
+        //   the name is instead considered to name the constructor of
+        //   class C.
+        // 
+        // Thus, if the template-name is actually the constructor
+        // name, then the code is ill-formed; this interpretation is
+        // reinforced by the NAD status of core issue 635. 
+        TemplateIdAnnotation *TemplateId
+          = static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue());
+        if (DSContext == DSC_top_level && TemplateId->Name &&
+            Actions.isCurrentClassName(*TemplateId->Name, CurScope, &SS)) {
+          if (isConstructorDeclarator()) {
+            // The user meant this to be an out-of-line constructor
+            // definition, but template arguments are not allowed
+            // there.  Just allow this as a constructor; we'll
+            // complain about it later.
+            goto DoneWithDeclSpec;
+          }
+
+          // The user meant this to name a type, but it actually names
+          // a constructor with some extraneous template
+          // arguments. Complain, then parse it as a type as the user
+          // intended.
+          Diag(TemplateId->TemplateNameLoc,
+               diag::err_out_of_line_template_id_names_constructor)
+            << TemplateId->Name;
+        }
+
         DS.getTypeSpecScope() = SS;
         ConsumeToken(); // The C++ scope.
         assert(Tok.is(tok::annot_template_id) &&
@@ -885,13 +941,23 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (Next.isNot(tok::identifier))
         goto DoneWithDeclSpec;
 
-      // If the next token is the name of the class type that the C++ scope
-      // denotes, followed by a '(', then this is a constructor declaration.
-      // We're done with the decl-specifiers.
-      if (Actions.isCurrentClassName(*Next.getIdentifierInfo(),
-                                     CurScope, &SS) &&
-          GetLookAheadToken(2).is(tok::l_paren))
-        goto DoneWithDeclSpec;
+      // If we're in a context where the identifier could be a class name,
+      // check whether this is a constructor declaration.
+      if (DSContext == DSC_top_level &&
+          Actions.isCurrentClassName(*Next.getIdentifierInfo(), CurScope, 
+                                     &SS)) {
+        if (isConstructorDeclarator())
+          goto DoneWithDeclSpec;
+
+        // As noted in C++ [class.qual]p2 (cited above), when the name
+        // of the class is qualified in a context where it could name
+        // a constructor, its a constructor name. However, we've
+        // looked at the declarator, and the user probably meant this
+        // to be a type. Complain that it isn't supposed to be treated
+        // as a type, then proceed to parse it as a type.
+        Diag(Next.getLocation(), diag::err_out_of_line_type_names_constructor)
+          << Next.getIdentifierInfo();
+      }
 
       TypeTy *TypeRep = Actions.getTypeName(*Next.getIdentifierInfo(),
                                             Next.getLocation(), CurScope, &SS);
@@ -972,16 +1038,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
       }
 
-      // C++: If the identifier is actually the name of the class type
-      // being defined and the next token is a '(', then this is a
-      // constructor declaration. We're done with the decl-specifiers
-      // and will treat this token as an identifier.
-      if (getLang().CPlusPlus &&
-          (CurScope->isClassScope() ||
-           (CurScope->isTemplateParamScope() &&
-            CurScope->getParent()->isClassScope())) &&
+      // If we're in a context where the identifier could be a class name,
+      // check whether this is a constructor declaration.
+      if (getLang().CPlusPlus && DSContext == DSC_class &&
           Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) &&
-          NextToken().getKind() == tok::l_paren)
+          isConstructorDeclarator())
         goto DoneWithDeclSpec;
 
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
@@ -1023,6 +1084,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // done with the type-specifiers.
         goto DoneWithDeclSpec;
       }
+
+      // If we're in a context where the template-id could be a
+      // constructor name or specialization, check whether this is a
+      // constructor declaration.
+      if (getLang().CPlusPlus && DSContext == DSC_class &&
+          Actions.isCurrentClassName(*TemplateId->Name, CurScope) &&
+          isConstructorDeclarator())
+        goto DoneWithDeclSpec;
 
       // Turn the template-id annotation token into a type annotation
       // token, then try again to parse it as a type-specifier.
@@ -2089,6 +2158,48 @@ bool Parser::isDeclarationSpecifier() {
   }
 }
 
+bool Parser::isConstructorDeclarator() {
+  TentativeParsingAction TPA(*this);
+
+  // Parse the C++ scope specifier.
+  CXXScopeSpec SS;
+  ParseOptionalCXXScopeSpecifier(SS, 0, true);
+
+  // Parse the constructor name.
+  if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
+    // We already know that we have a constructor name; just consume
+    // the token.
+    ConsumeToken();
+  } else {
+    TPA.Revert();
+    return false;
+  }
+
+  // Current class name must be followed by a left parentheses.
+  if (Tok.isNot(tok::l_paren)) {
+    TPA.Revert();
+    return false;
+  }
+  ConsumeParen();
+
+  // A right parentheses or ellipsis signals that we have a constructor.
+  if (Tok.is(tok::r_paren) || Tok.is(tok::ellipsis)) {
+    TPA.Revert();
+    return true;
+  }
+
+  // If we need to, enter the specified scope.
+  DeclaratorScopeObj DeclScopeObj(*this, SS);
+  if (SS.isSet() && Actions.ShouldEnterDeclaratorScope(CurScope, SS))
+    DeclScopeObj.EnterDeclaratorScope();
+
+  // Check whether the next token(s) are part of a declaration
+  // specifier, in which case we have the start of a parameter and,
+  // therefore, we know that this is a constructor.
+  bool IsConstructor = isDeclarationSpecifier();
+  TPA.Revert();
+  return IsConstructor;
+}
 
 /// ParseTypeQualifierListOpt
 ///       type-qualifier-list: [C99 6.7.5]
@@ -2373,10 +2484,16 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
       // We found something that indicates the start of an unqualified-id.
       // Parse that unqualified-id.
+      bool AllowConstructorName
+        = ((D.getCXXScopeSpec().isSet() && 
+            D.getContext() == Declarator::FileContext) ||
+           (!D.getCXXScopeSpec().isSet() &&
+            D.getContext() == Declarator::MemberContext)) &&
+        !D.getDeclSpec().hasTypeSpecifier();
       if (ParseUnqualifiedId(D.getCXXScopeSpec(), 
                              /*EnteringContext=*/true, 
                              /*AllowDestructorName=*/true, 
-                   /*AllowConstructorName=*/!D.getDeclSpec().hasTypeSpecifier(),
+                             AllowConstructorName,
                              /*ObjectType=*/0,
                              D.getName())) {
         D.SetIdentifier(0, Tok.getLocation());
@@ -2403,6 +2520,16 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // direct-declarator: '(' attributes declarator ')'
     // Example: 'char (*X)'   or 'int (*XX)(void)'
     ParseParenDeclarator(D);
+
+    // If the declarator was parenthesized, we entered the declarator
+    // scope when parsing the parenthesized declarator, then exited
+    // the scope already. Re-enter the scope, if we need to.
+    if (D.getCXXScopeSpec().isSet()) {
+      if (Actions.ShouldEnterDeclaratorScope(CurScope, D.getCXXScopeSpec()))
+        // Change the declaration context for name lookup, until this function
+        // is exited (and the declarator has been parsed).
+        DeclScopeObj.EnterDeclaratorScope();
+    }
   } else if (D.mayOmitIdentifier()) {
     // This could be something simple like "int" (in which case the declarator
     // portion is empty), if an abstract-declarator is allowed.

@@ -3002,6 +3002,7 @@ Sema::DeclPtrTy Sema::ActOnUsingDeclaration(Scope *S,
     break;
       
   case UnqualifiedId::IK_ConstructorName:
+  case UnqualifiedId::IK_ConstructorTemplateId:
     // C++0x inherited constructors.
     if (getLangOptions().CPlusPlus0x) break;
 

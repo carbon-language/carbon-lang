@@ -493,6 +493,8 @@ public:
     IK_LiteralOperatorId,
     /// \brief A constructor name.
     IK_ConstructorName,
+    /// \brief A constructor named via a template-id.
+    IK_ConstructorTemplateId,
     /// \brief A destructor name.
     IK_DestructorName,
     /// \brief A template-id, e.g., f<int>.
@@ -534,8 +536,9 @@ public:
     /// class-name.
     ActionBase::TypeTy *DestructorName;
     
-    /// \brief When Kind == IK_TemplateId, the template-id annotation that
-    /// contains the template name and template arguments.
+    /// \brief When Kind == IK_TemplateId or IK_ConstructorTemplateId,
+    /// the template-id annotation that contains the template name and
+    /// template arguments.
     TemplateIdAnnotation *TemplateId;
   };
   
@@ -647,6 +650,14 @@ public:
     EndLocation = EndLoc;
     ConstructorName = ClassType;
   }
+
+  /// \brief Specify that this unqualified-id was parsed as a
+  /// template-id that names a constructor.
+  ///
+  /// \param TemplateId the template-id annotation that describes the parsed
+  /// template-id. This UnqualifiedId instance will take ownership of the
+  /// \p TemplateId and will free it on destruction.
+  void setConstructorTemplateId(TemplateIdAnnotation *TemplateId);
 
   /// \brief Specify that this unqualified-id was parsed as a destructor name.
   ///

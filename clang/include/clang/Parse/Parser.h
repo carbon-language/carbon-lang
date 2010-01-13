@@ -1037,7 +1037,8 @@ private:
   /// would be best implemented in the parser.
   enum DeclSpecContext {
     DSC_normal, // normal context
-    DSC_class   // class context, enables 'friend'
+    DSC_class,  // class context, enables 'friend'
+    DSC_top_level // top-level/namespace declaration context
   };
 
   DeclGroupPtrTy ParseDeclaration(unsigned Context, SourceLocation &DeclEnd,
@@ -1056,6 +1057,7 @@ private:
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,
                         AccessSpecifier AS);
+  DeclSpecContext getDeclSpecContextFromDeclaratorContext(unsigned Context);
   void ParseDeclarationSpecifiers(DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                   AccessSpecifier AS = AS_none,
@@ -1108,6 +1110,11 @@ private:
       return isCXXSimpleDeclaration();
     return isDeclarationSpecifier();
   }
+
+  /// \brief Starting with a scope specifier, identifier, or
+  /// template-id that refers to the current class, determine whether
+  /// this is a constructor declarator.
+  bool isConstructorDeclarator();
 
   /// \brief Specifies the context in which type-id/expression
   /// disambiguation will occur.

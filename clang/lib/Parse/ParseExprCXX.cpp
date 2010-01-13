@@ -1182,12 +1182,41 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
   // unqualified-id:
   //   template-id (already parsed and annotated)
   if (Tok.is(tok::annot_template_id)) {
-    // FIXME: Could this be a constructor name???
-    
+    TemplateIdAnnotation *TemplateId
+      = static_cast<TemplateIdAnnotation*>(Tok.getAnnotationValue());
+
+    // If the template-name names the current class, then this is a constructor 
+    if (AllowConstructorName && TemplateId->Name &&
+        Actions.isCurrentClassName(*TemplateId->Name, CurScope, &SS)) {
+      if (SS.isSet()) {
+        // C++ [class.qual]p2 specifies that a qualified template-name
+        // is taken as the constructor name where a constructor can be
+        // declared. Thus, the template arguments are extraneous, so
+        // complain about them and remove them entirely.
+        Diag(TemplateId->TemplateNameLoc, 
+             diag::err_out_of_line_constructor_template_id)
+          << TemplateId->Name
+          << CodeModificationHint::CreateRemoval(
+                    SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc));
+        Result.setConstructorName(Actions.getTypeName(*TemplateId->Name,
+                                                  TemplateId->TemplateNameLoc, 
+                                                      CurScope,
+                                                      &SS, false),
+                                  TemplateId->TemplateNameLoc, 
+                                  TemplateId->RAngleLoc);
+        TemplateId->Destroy();
+        ConsumeToken();
+        return false;
+      }
+
+      Result.setConstructorTemplateId(TemplateId);
+      ConsumeToken();
+      return false;
+    }
+
     // We have already parsed a template-id; consume the annotation token as
     // our unqualified-id.
-    Result.setTemplateId(
-                  static_cast<TemplateIdAnnotation*>(Tok.getAnnotationValue()));
+    Result.setTemplateId(TemplateId);
     ConsumeToken();
     return false;
   }

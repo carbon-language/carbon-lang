@@ -291,6 +291,16 @@ def err_explicit_instantiation_with_definition : Error<
     "definition is meant to be an explicit specialization, add '<>' after the "
     "'template' keyword">;
 
+// Constructor template diagnostics.
+def err_out_of_line_constructor_template_id : Error<
+  "out-of-line constructor for %0 cannot have template arguments">;
+def err_out_of_line_template_id_names_constructor : Error<
+  "qualified reference to %0 is a constructor name rather than a "
+  "template name wherever a constructor can be declared">;
+def err_out_of_line_type_names_constructor : Error<
+  "qualified reference to %0 is a constructor name rather than a "
+  "type wherever a constructor can be declared">;
+
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;
 def err_typename_refers_to_non_type_template : Error<

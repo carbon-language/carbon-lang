@@ -11,11 +11,7 @@ struct X<int***> {
   typedef X<int***> *ptr;
 };
 
-// FIXME: EDG rejects this in their strict-conformance mode, but I
-// don't see any wording making this ill-formed.  Actually,
-// [temp.local]p2 might make it ill-formed. Are we "in the scope of
-// the class template specialization?"
-X<float>::X<int> xi = x;
+X<float>::X<int> xi = x; // expected-error{{qualified reference to 'X' is a constructor name rather than a template name wherever a constructor can be declared}}
 
 // [temp.local]p1:
 

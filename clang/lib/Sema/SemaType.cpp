@@ -897,6 +897,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     break;
 
   case UnqualifiedId::IK_ConstructorName:
+  case UnqualifiedId::IK_ConstructorTemplateId:
   case UnqualifiedId::IK_DestructorName:
     // Constructors and destructors don't have return types. Use
     // "void" instead. 

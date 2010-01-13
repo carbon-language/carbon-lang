@@ -196,7 +196,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
   if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
     DS.AddAttributes(ParseCXX0XAttributes().AttrList);
 
-  ParseDeclarationSpecifiers(DS, TemplateInfo, AS);
+  ParseDeclarationSpecifiers(DS, TemplateInfo, AS,
+                             getDeclSpecContextFromDeclaratorContext(Context));
 
   if (Tok.is(tok::semi)) {
     DeclEnd = ConsumeToken();

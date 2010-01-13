@@ -541,7 +541,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
   if (Attr)
     DS.AddAttributes(Attr);
 
-  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS);
+  ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC_top_level);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'

@@ -36,6 +36,14 @@ void UnqualifiedId::setTemplateId(TemplateIdAnnotation *TemplateId) {
   EndLocation = TemplateId->RAngleLoc;
 }
 
+void UnqualifiedId::setConstructorTemplateId(TemplateIdAnnotation *TemplateId) {
+  assert(TemplateId && "NULL template-id annotation?");
+  Kind = IK_ConstructorTemplateId;
+  this->TemplateId = TemplateId;
+  StartLocation = TemplateId->TemplateNameLoc;
+  EndLocation = TemplateId->RAngleLoc;
+}
+
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
 /// "TheDeclarator" is the declarator that this will be added to.
 DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
