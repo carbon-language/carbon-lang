@@ -131,7 +131,7 @@ void Mangler::makeNameProper(SmallVectorImpl<char> &OutName,
   }
   
   // Add the piece that we already scanned through.
-  OutName.append(X.begin(), I);
+  OutName.append(X.begin()+!NeedPrefix, I);
   
   // Otherwise, construct the string the expensive way.
   for (StringRef::iterator E = X.end(); I != E; ++I) {
