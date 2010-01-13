@@ -371,15 +371,17 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     CaretLine.push_back('^');
 
   // Scan the source line, looking for tabs.  If we find any, manually expand
-  // them to 8 characters and update the CaretLine to match.
+  // them to spaces and update the CaretLine to match.
   for (unsigned i = 0; i != SourceLine.size(); ++i) {
     if (SourceLine[i] != '\t') continue;
 
     // Replace this tab with at least one space.
     SourceLine[i] = ' ';
 
-    unsigned TabStop = DiagOpts->TabStop > 0 ? DiagOpts->TabStop : 8;
     // Compute the number of spaces we need to insert.
+    unsigned TabStop = DiagOpts->TabStop;
+    assert(0 < TabStop && TabStop <= DiagnosticOptions::MaxTabStop &&
+           "Invalid -ftabstop value");
     unsigned NumSpaces = ((i+TabStop)/TabStop * TabStop) - (i+1);
     assert(NumSpaces < TabStop && "Invalid computation of space amt");
 

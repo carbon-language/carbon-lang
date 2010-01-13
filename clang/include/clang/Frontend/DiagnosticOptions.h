@@ -37,6 +37,7 @@ public:
 
   /// The distance between tab stops.
   unsigned TabStop;
+  enum { DefaultTabStop = 8, MaxTabStop = 100 };
 
   /// Column limit for formatting message diagnostics, or 0 if unused.
   unsigned MessageLength;
@@ -52,7 +53,7 @@ public:
 public:
   DiagnosticOptions() {
     IgnoreWarnings = 0;
-    TabStop = 8;
+    TabStop = DefaultTabStop;
     MessageLength = 0;
     NoRewriteMacros = 0;
     Pedantic = 0;
