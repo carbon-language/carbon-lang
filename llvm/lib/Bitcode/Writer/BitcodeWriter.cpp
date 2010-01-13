@@ -499,11 +499,13 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
 
     if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
-      if (!StartedMetadataBlock) {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
+      if (!N->isFunctionLocal()) {
+        if (!StartedMetadataBlock) {
+          Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+          StartedMetadataBlock = true;
+        }
+        WriteMDNode(N, VE, Stream, Record);
       }
-      WriteMDNode(N, VE, Stream, Record);
     } else if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
       if (!StartedMetadataBlock)  {
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
@@ -546,6 +548,35 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
       Record.clear();
     }
+  }
+
+  if (StartedMetadataBlock)
+    Stream.ExitBlock();
+}
+
+static void WriteFunctionLocalMetadata(const ValueEnumerator &VE,
+                                       BitstreamWriter &Stream) {
+  bool StartedMetadataBlock = false;
+  SmallVector<uint64_t, 64> Record;
+  ValueEnumerator::ValueList Vals = VE.getMDValues();
+  ValueEnumerator::ValueList::iterator it = Vals.begin();
+  ValueEnumerator::ValueList::iterator end = Vals.end();
+
+  while (it != end) {
+    if (const MDNode *N = dyn_cast<MDNode>((*it).first)) {
+      if (N->isFunctionLocal()) {
+        if (!StartedMetadataBlock) {
+          Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+          StartedMetadataBlock = true;
+        }
+        WriteMDNode(N, VE, Stream, Record);
+        // Remove function-local MD, since it is used outside of function.
+        it = Vals.erase(it);
+        end = Vals.end();
+        continue;
+      }
+    }
+    ++it;
   }
 
   if (StartedMetadataBlock)
@@ -1210,6 +1241,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   // Emit names for all the instructions etc.
   WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);
 
+  WriteFunctionLocalMetadata(VE, Stream);
   WriteMetadataAttachment(F, VE, Stream);
   VE.purgeFunction();
   Stream.ExitBlock();
