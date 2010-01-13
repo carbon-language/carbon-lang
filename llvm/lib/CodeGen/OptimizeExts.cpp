@@ -6,6 +6,16 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This pass performs optimization of sign / zero extension instructions. It
+// may be extended to handle other instructions of similar property.
+//
+// On some targets, some instructions, e.g. X86 sign / zero extension, may
+// leave the source value in the lower part of the result. This pass will
+// replace (some) uses of the pre-extension value with uses of the sub-register
+// of the results.
+//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ext-opt"
 #include "llvm/CodeGen/Passes.h"
@@ -40,9 +50,15 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
-      AU.addRequired<MachineDominatorTree>();
-      AU.addPreserved<MachineDominatorTree>();
+      if (Aggressive) {
+        AU.addRequired<MachineDominatorTree>();
+        AU.addPreserved<MachineDominatorTree>();
+      }
     }
+
+  private:
+    bool OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
+                       SmallPtrSet<MachineInstr*, 8> &LocalMIs);
   };
 }
 
@@ -52,96 +68,111 @@ X("opt-exts", "Optimize sign / zero extensions");
 
 FunctionPass *llvm::createOptimizeExtsPass() { return new OptimizeExts(); }
 
+/// OptimizeInstr - If instruction is a copy-like instruction, i.e. it reads
+/// a single register and writes a single register and it does not modify
+/// the source, and if the source value is preserved as a sub-register of
+/// the result, then replace all reachable uses of the source with the subreg
+/// of the result.
+bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
+                                 SmallPtrSet<MachineInstr*, 8> &LocalMIs) {
+  bool Changed = false;
+  LocalMIs.insert(MI);
+
+  unsigned SrcReg, DstReg, SubIdx;
+  if (TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx)) {
+    if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
+        TargetRegisterInfo::isPhysicalRegister(SrcReg))
+      return false;
+
+    MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg);
+    if (++UI == MRI->use_end())
+      // No other uses.
+      return false;
+
+    // Ok, the source has other uses. See if we can replace the other uses
+    // with use of the result of the extension.
+    SmallPtrSet<MachineBasicBlock*, 4> ReachedBBs;
+    UI = MRI->use_begin(DstReg);
+    for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
+         ++UI)
+      ReachedBBs.insert(UI->getParent());
+
+    bool ExtendLife = true;
+    // Uses that are in the same BB of uses of the result of the instruction.
+    SmallVector<MachineOperand*, 8> Uses;
+    // Uses that the result of the instruction can reach.
+    SmallVector<MachineOperand*, 8> ExtendedUses;
+
+    UI = MRI->use_begin(SrcReg);
+    for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
+         ++UI) {
+      MachineOperand &UseMO = UI.getOperand();
+      MachineInstr *UseMI = &*UI;
+      if (UseMI == MI)
+        continue;
+      MachineBasicBlock *UseMBB = UseMI->getParent();
+      if (UseMBB == MBB) {
+        // Local uses that come after the extension.
+        if (!LocalMIs.count(UseMI))
+          Uses.push_back(&UseMO);
+      } else if (ReachedBBs.count(UseMBB))
+        // Non-local uses where the result of extension is used. Always
+        // replace these.
+        Uses.push_back(&UseMO);
+      else if (Aggressive && DT->dominates(MBB, UseMBB))
+        // We may want to extend live range of the extension result in order
+        // to replace these uses.
+        ExtendedUses.push_back(&UseMO);
+      else {
+        // Both will be live out of the def MBB anyway. Don't extend live
+        // range of the extension result.
+        ExtendLife = false;
+        break;
+      }
+    }
+
+    if (ExtendLife && !ExtendedUses.empty())
+      // Ok, we'll extend the liveness of the extension result.
+      std::copy(ExtendedUses.begin(), ExtendedUses.end(),
+                std::back_inserter(Uses));
+
+    // Now replace all uses.
+    if (!Uses.empty()) {
+      const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
+      for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
+        MachineOperand *UseMO = Uses[i];
+        MachineInstr *UseMI = UseMO->getParent();
+        MachineBasicBlock *UseMBB = UseMI->getParent();
+        unsigned NewVR = MRI->createVirtualRegister(RC);
+        BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
+                TII->get(TargetInstrInfo::EXTRACT_SUBREG), NewVR)
+          .addReg(DstReg).addImm(SubIdx);
+        UseMO->setReg(NewVR);
+        ++NumReuse;
+        Changed = true;
+      }
+    }
+  }
+
+  return Changed;
+}
+
 bool OptimizeExts::runOnMachineFunction(MachineFunction &MF) {
   TM = &MF.getTarget();
   TII = TM->getInstrInfo();
   MRI = &MF.getRegInfo();
-  DT = &getAnalysis<MachineDominatorTree>();
+  DT = Aggressive ? &getAnalysis<MachineDominatorTree>() : 0;
 
   bool Changed = false;
 
   SmallPtrSet<MachineInstr*, 8> LocalMIs;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
+    LocalMIs.clear();
     for (MachineBasicBlock::iterator MII = I->begin(), ME = I->end(); MII != ME;
          ++MII) {
       MachineInstr *MI = &*MII;
-      LocalMIs.insert(MI);
-
-      unsigned SrcReg, DstReg, SubIdx;
-      if (TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx)) {
-        if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
-            TargetRegisterInfo::isPhysicalRegister(SrcReg))
-          continue;
-
-        MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg);
-        if (++UI == MRI->use_end())
-          // No other uses.
-          continue;
-
-        // Ok, the source has other uses. See if we can replace the other uses
-        // with use of the result of the extension.
-        
-        SmallPtrSet<MachineBasicBlock*, 4> ReachedBBs;
-        UI = MRI->use_begin(DstReg);
-        for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
-             ++UI)
-          ReachedBBs.insert(UI->getParent());
-
-        bool ExtendLife = true;
-        SmallVector<MachineOperand*, 8> Uses;
-        SmallVector<MachineOperand*, 8> ExtendedUses;
-
-        UI = MRI->use_begin(SrcReg);
-        for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
-             ++UI) {
-          MachineOperand &UseMO = UI.getOperand();
-          MachineInstr *UseMI = &*UI;
-          if (UseMI == MI)
-            continue;
-          MachineBasicBlock *UseMBB = UseMI->getParent();
-          if (UseMBB == MBB) {
-            // Local uses that come after the extension.
-            if (!LocalMIs.count(UseMI))
-              Uses.push_back(&UseMO);
-          } else if (ReachedBBs.count(UseMBB))
-            // Non-local uses where the result of extension is used. Always
-            // replace these.
-            Uses.push_back(&UseMO);
-          else if (Aggressive && DT->dominates(MBB, UseMBB))
-            // We may want to extend live range of the extension result in order
-            // to replace these uses.
-            ExtendedUses.push_back(&UseMO);
-          else {
-            // Both will be live out of the def MBB anyway. Don't extend live
-            // range of the extension result.
-            ExtendLife = false;
-            break;
-          }
-        }
-
-        if (ExtendLife && !ExtendedUses.empty())
-          // Ok, we'll extend the liveness of the extension result.
-          std::copy(ExtendedUses.begin(), ExtendedUses.end(),
-                    std::back_inserter(Uses));
-
-        // Now replace all uses.
-        if (!Uses.empty()) {
-          const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
-          for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
-            MachineOperand *UseMO = Uses[i];
-            MachineInstr *UseMI = UseMO->getParent();
-            MachineBasicBlock *UseMBB = UseMI->getParent();
-            unsigned NewVR = MRI->createVirtualRegister(RC);
-            BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
-                    TII->get(TargetInstrInfo::EXTRACT_SUBREG), NewVR)
-              .addReg(DstReg).addImm(SubIdx);
-            UseMO->setReg(NewVR);
-            ++NumReuse;
-            Changed = true;
-          }
-        }
-      }
+      Changed |= OptimizeInstr(MI, MBB, LocalMIs);
     }
   }
 
