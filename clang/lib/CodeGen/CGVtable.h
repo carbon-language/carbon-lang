@@ -61,6 +61,31 @@ public:
   ThunkAdjustment ReturnAdjustment;
 };
 
+// BaseSubobject - Uniquely identifies a direct or indirect base class. 
+// Stores both the base class decl and the offset from the most derived class to
+// the base class.
+class BaseSubobject {
+  /// Base - The base class declaration.
+  const CXXRecordDecl *Base;
+  
+  /// BaseOffset - The offset from the most derived class to the base class.
+  uint64_t BaseOffset;
+  
+public:
+  BaseSubobject(const CXXRecordDecl *Base, uint64_t BaseOffset)
+    : Base(Base), BaseOffset(BaseOffset) { }
+  
+  /// getBase - Returns the base class declaration.
+  const CXXRecordDecl *getBase() const { return Base; }
+
+  /// getBaseOffset - Returns the base class offset.
+  uint64_t getBaseOffset() const { return BaseOffset; }
+  
+  friend bool operator==(const BaseSubobject &LHS, const BaseSubobject &RHS) {
+    return LHS.Base == RHS.Base && LHS.BaseOffset == RHS.BaseOffset;
+ }
+};
+  
 class CGVtableInfo {
 public:
   typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
