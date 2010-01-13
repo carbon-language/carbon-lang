@@ -194,6 +194,7 @@ private:
 
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
+  SourceRange TypeofParensRange;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
   SourceLocation FriendLoc, ConstexprLoc;
@@ -256,6 +257,9 @@ public:
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
   SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
   SourceLocation getTypeSpecTypeLoc() const { return TSTLoc; }
+
+  SourceRange getTypeofParensRange() const { return TypeofParensRange; }
+  void setTypeofParensRange(SourceRange range) { TypeofParensRange = range; }
 
   /// getSpecifierName - Turn a type-specifier-type into a string like "_Bool"
   /// or "union".

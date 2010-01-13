@@ -1360,6 +1360,20 @@ namespace {
         cast<TemplateSpecializationTypeLoc>(TInfo->getTypeLoc());
       TL.copy(OldTL);
     }
+    void VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
+      assert(DS.getTypeSpecType() == DeclSpec::TST_typeofExpr);
+      TL.setTypeofLoc(DS.getTypeSpecTypeLoc());
+      TL.setParensRange(DS.getTypeofParensRange());
+    }
+    void VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
+      assert(DS.getTypeSpecType() == DeclSpec::TST_typeofType);
+      TL.setTypeofLoc(DS.getTypeSpecTypeLoc());
+      TL.setParensRange(DS.getTypeofParensRange());
+      assert(DS.getTypeRep());
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
+      TL.setUnderlyingTInfo(TInfo);
+    }
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
       TL.initialize(DS.getTypeSpecTypeLoc());

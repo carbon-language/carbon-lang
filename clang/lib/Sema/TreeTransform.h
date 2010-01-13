@@ -2619,18 +2619,16 @@ QualType TreeTransform<Derived>::TransformTypedefType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypeOfExprType(TypeLocBuilder &TLB,
                                                       TypeOfExprTypeLoc TL) {
-  TypeOfExprType *T = TL.getTypePtr();
-
   // typeof expressions are not potentially evaluated contexts
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
 
-  Sema::OwningExprResult E = getDerived().TransformExpr(T->getUnderlyingExpr());
+  Sema::OwningExprResult E = getDerived().TransformExpr(TL.getUnderlyingExpr());
   if (E.isInvalid())
     return QualType();
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
-      E.get() != T->getUnderlyingExpr()) {
+      E.get() != TL.getUnderlyingExpr()) {
     Result = getDerived().RebuildTypeOfExprType(move(E));
     if (Result.isNull())
       return QualType();
@@ -2638,7 +2636,9 @@ QualType TreeTransform<Derived>::TransformTypeOfExprType(TypeLocBuilder &TLB,
   else E.take();
 
   TypeOfExprTypeLoc NewTL = TLB.push<TypeOfExprTypeLoc>(Result);
-  NewTL.setNameLoc(TL.getNameLoc());
+  NewTL.setTypeofLoc(TL.getTypeofLoc());
+  NewTL.setLParenLoc(TL.getLParenLoc());
+  NewTL.setRParenLoc(TL.getRParenLoc());
 
   return Result;
 }
@@ -2646,23 +2646,23 @@ QualType TreeTransform<Derived>::TransformTypeOfExprType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypeOfType(TypeLocBuilder &TLB,
                                                      TypeOfTypeLoc TL) {
-  TypeOfType *T = TL.getTypePtr();
-
-  // FIXME: should be an inner type, or at least have a TypeSourceInfo.
-  QualType Underlying = getDerived().TransformType(T->getUnderlyingType());
-  if (Underlying.isNull())
+  TypeSourceInfo* Old_Under_TI = TL.getUnderlyingTInfo();
+  TypeSourceInfo* New_Under_TI = getDerived().TransformType(Old_Under_TI);
+  if (!New_Under_TI)
     return QualType();
 
   QualType Result = TL.getType();
-  if (getDerived().AlwaysRebuild() ||
-      Underlying != T->getUnderlyingType()) {
-    Result = getDerived().RebuildTypeOfType(Underlying);
+  if (getDerived().AlwaysRebuild() || New_Under_TI != Old_Under_TI) {
+    Result = getDerived().RebuildTypeOfType(New_Under_TI->getType());
     if (Result.isNull())
       return QualType();
   }
 
   TypeOfTypeLoc NewTL = TLB.push<TypeOfTypeLoc>(Result);
-  NewTL.setNameLoc(TL.getNameLoc());
+  NewTL.setTypeofLoc(TL.getTypeofLoc());
+  NewTL.setLParenLoc(TL.getLParenLoc());
+  NewTL.setRParenLoc(TL.getRParenLoc());
+  NewTL.setUnderlyingTInfo(New_Under_TI);
 
   return Result;
 }

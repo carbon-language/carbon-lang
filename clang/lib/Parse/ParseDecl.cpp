@@ -3154,6 +3154,8 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   Token OpTok = Tok;
   SourceLocation StartLoc = ConsumeToken();
 
+  const bool hasParens = Tok.is(tok::l_paren);
+
   bool isCastExpr;
   TypeTy *CastTy;
   SourceRange CastRange;
@@ -3161,6 +3163,8 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
                                                                isCastExpr,
                                                                CastTy,
                                                                CastRange);
+  if (hasParens)
+    DS.setTypeofParensRange(CastRange);
 
   if (CastRange.getEnd().isInvalid())
     // FIXME: Not accurate, the range gets one token more than it should.

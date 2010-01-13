@@ -13,6 +13,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/AST/Expr.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -122,4 +123,15 @@ namespace {
 bool TypeSpecTypeLoc::classof(const TypeLoc *TL) {
   if (TL->getType().hasLocalQualifiers()) return false;
   return TSTChecker().Visit(*TL);
+}
+
+// Reimplemented to account for GNU/C++ extension
+//     typeof unary-expression
+// where there are no parentheses.
+SourceRange TypeOfExprTypeLoc::getSourceRange() const {
+  if (getRParenLoc().isValid())
+    return SourceRange(getTypeofLoc(), getRParenLoc());
+  else
+    return SourceRange(getTypeofLoc(),
+                       getUnderlyingExpr()->getSourceRange().getEnd());
 }

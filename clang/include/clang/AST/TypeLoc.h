@@ -1029,18 +1029,88 @@ class ComplexTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                         ComplexType> {
 };
 
-// FIXME: location of the 'typeof' and parens (the expression is
-// carried by the type).
-class TypeOfExprTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                           TypeOfExprTypeLoc,
-                                                           TypeOfExprType> {
+struct TypeofLocInfo {
+  SourceLocation TypeofLoc;
+  SourceLocation LParenLoc;
+  SourceLocation RParenLoc;
 };
 
-// FIXME: location of the 'typeof' and parens; also the TypeSourceInfo
-// for the inner type, or (maybe) just express that inline to the TypeLoc.
-class TypeOfTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                       TypeOfTypeLoc,
-                                                       TypeOfType> {
+struct TypeOfExprTypeLocInfo : public TypeofLocInfo {
+};
+
+struct TypeOfTypeLocInfo : public TypeofLocInfo {
+  TypeSourceInfo* UnderlyingTInfo;
+};
+
+template <class Derived, class TypeClass, class LocalData = TypeofLocInfo>
+class TypeofLikeTypeLoc
+  : public ConcreteTypeLoc<UnqualTypeLoc, Derived, TypeClass, LocalData> {
+public:
+  SourceLocation getTypeofLoc() const {
+    return this->getLocalData()->TypeofLoc;
+  }
+  void setTypeofLoc(SourceLocation Loc) {
+    this->getLocalData()->TypeofLoc = Loc;
+  }
+
+  SourceLocation getLParenLoc() const {
+    return this->getLocalData()->LParenLoc;
+  }
+  void setLParenLoc(SourceLocation Loc) {
+    this->getLocalData()->LParenLoc = Loc;
+  }
+
+  SourceLocation getRParenLoc() const {
+    return this->getLocalData()->RParenLoc;
+  }
+  void setRParenLoc(SourceLocation Loc) {
+    this->getLocalData()->RParenLoc = Loc;
+  }
+
+  SourceRange getParensRange() const {
+    return SourceRange(getLParenLoc(), getRParenLoc());
+  }
+  void setParensRange(SourceRange range) {
+      setLParenLoc(range.getBegin());
+      setRParenLoc(range.getEnd());
+  }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getTypeofLoc(), getRParenLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setTypeofLoc(Loc);
+    setLParenLoc(Loc);
+    setRParenLoc(Loc);
+  }
+};
+
+class TypeOfExprTypeLoc : public TypeofLikeTypeLoc<TypeOfExprTypeLoc,
+                                                   TypeOfExprType,
+                                                   TypeOfExprTypeLocInfo> {
+public:
+  Expr* getUnderlyingExpr() const {
+    return getTypePtr()->getUnderlyingExpr();
+  }
+  // Reimplemented to account for GNU/C++ extension
+  //     typeof unary-expression
+  // where there are no parentheses.
+  SourceRange getSourceRange() const;
+};
+
+class TypeOfTypeLoc
+  : public TypeofLikeTypeLoc<TypeOfTypeLoc, TypeOfType, TypeOfTypeLocInfo> {
+public:
+  QualType getUnderlyingType() const {
+    return this->getTypePtr()->getUnderlyingType();
+  }
+  TypeSourceInfo* getUnderlyingTInfo() const {
+    return this->getLocalData()->UnderlyingTInfo;
+  }
+  void setUnderlyingTInfo(TypeSourceInfo* TI) const {
+    this->getLocalData()->UnderlyingTInfo = TI;
+  }
 };
 
 // FIXME: location of the 'decltype' and parens.

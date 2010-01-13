@@ -2111,10 +2111,15 @@ void TypeLocReader::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setTypeofLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setTypeofLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setUnderlyingTInfo(Reader.GetTypeSourceInfo(Record, Idx));
 }
 void TypeLocReader::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
