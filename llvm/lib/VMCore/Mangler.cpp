@@ -32,7 +32,7 @@ static std::string MangleLetter(unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(const std::string &X,
+std::string Mangler::makeNameProper(StringRef X,
                                     ManglerPrefixTy PrefixTy) {
   assert(!X.empty() && "Cannot mangle empty strings");
   
@@ -41,7 +41,7 @@ std::string Mangler::makeNameProper(const std::string &X,
 
     // If X does not start with (char)1, add the prefix.
     bool NeedPrefix = true;
-    std::string::const_iterator I = X.begin();
+    StringRef::iterator I = X.begin();
     if (*I == 1) {
       NeedPrefix = false;
       ++I;  // Skip over the marker.
@@ -52,7 +52,7 @@ std::string Mangler::makeNameProper(const std::string &X,
     if (!SymbolsCanStartWithDigit && *I >= '0' && *I <= '9')
       Result += MangleLetter(*I++);
 
-    for (std::string::const_iterator E = X.end(); I != E; ++I) {
+    for (StringRef::iterator E = X.end(); I != E; ++I) {
       if (!isCharAcceptable(*I))
         Result += MangleLetter(*I);
       else
@@ -74,7 +74,7 @@ std::string Mangler::makeNameProper(const std::string &X,
   bool NeedPrefix = true;
   bool NeedQuotes = false;
   std::string Result;    
-  std::string::const_iterator I = X.begin();
+  StringRef::iterator I = X.begin();
   if (*I == 1) {
     NeedPrefix = false;
     ++I;  // Skip over the marker.
@@ -87,7 +87,7 @@ std::string Mangler::makeNameProper(const std::string &X,
   // Do an initial scan of the string, checking to see if we need quotes or
   // to escape a '"' or not.
   if (!NeedQuotes)
-    for (std::string::const_iterator E = X.end(); I != E; ++I)
+    for (StringRef::iterator E = X.end(); I != E; ++I)
       if (!isCharAcceptable(*I)) {
         NeedQuotes = true;
         break;
@@ -98,7 +98,7 @@ std::string Mangler::makeNameProper(const std::string &X,
     if (!NeedPrefix)
       return X.substr(1);   // Strip off the \001.
     
-    Result = Prefix + X;
+    Result = Prefix + X.str();
 
     if (PrefixTy == Mangler::Private)
       Result = PrivatePrefix + Result;
@@ -109,10 +109,10 @@ std::string Mangler::makeNameProper(const std::string &X,
   }
 
   if (NeedPrefix)
-    Result = X.substr(0, I-X.begin());
+    Result = X.substr(0, I-X.begin()).str();
     
   // Otherwise, construct the string the expensive way.
-  for (std::string::const_iterator E = X.end(); I != E; ++I) {
+  for (StringRef::iterator E = X.end(); I != E; ++I) {
     if (*I == '"')
       Result += "_QQ_";
     else if (*I == '\n')

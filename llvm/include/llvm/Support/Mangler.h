@@ -19,6 +19,7 @@
 #include <string>
 
 namespace llvm {
+class StringRef;
 class Type;
 class Module;
 class Value;
@@ -111,7 +112,7 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
-  std::string makeNameProper(const std::string &x,
+  std::string makeNameProper(StringRef x,
                              ManglerPrefixTy PrefixTy = Mangler::Default);
   
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
