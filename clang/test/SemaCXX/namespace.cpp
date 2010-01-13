@@ -9,7 +9,7 @@ int A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 class A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 
 class B {}; // expected-note {{previous definition is here}} \
-            // expected-note{{candidate is the implicit copy assignment operator}}
+            // expected-note{{candidate function (the implicit copy assignment operator)}}
 
 void C(); // expected-note {{previous definition is here}}
 namespace C {} // expected-error {{redefinition of 'C' as different kind of symbol}}

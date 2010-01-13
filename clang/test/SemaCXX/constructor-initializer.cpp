@@ -97,7 +97,7 @@ struct Current : Derived {
                                                   // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
 };
 
-struct M {              // expected-note 2 {{candidate is the implicit copy constructor}} \
+struct M {              // expected-note 2 {{candidate constructor (the implicit copy constructor)}} \
                         // expected-note {{declared here}} \
                         // expected-note {{declared here}}
   M(int i, int j);      // expected-note 2 {{candidate constructor}}

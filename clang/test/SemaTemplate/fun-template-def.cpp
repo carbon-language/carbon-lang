@@ -8,7 +8,7 @@
 // Fake typeid, lacking a typeinfo header.
 namespace std { class type_info {}; }
 
-struct dummy {}; // expected-note 3 {{candidate is the implicit copy constructor}}
+struct dummy {}; // expected-note 3 {{candidate constructor (the implicit copy constructor)}}
 
 template<typename T>
 int f0(T x) {

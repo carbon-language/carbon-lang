@@ -25,7 +25,7 @@ T X0<T>::value; // expected-error{{no matching constructor}}
 
 template int X0<int>::value;
 
-struct NotDefaultConstructible { // expected-note{{candidate is the implicit copy constructor}}
+struct NotDefaultConstructible { // expected-note{{candidate constructor (the implicit copy constructor)}}
   NotDefaultConstructible(int); // expected-note{{candidate constructor}}
 };
 

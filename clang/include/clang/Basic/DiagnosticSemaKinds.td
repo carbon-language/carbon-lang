@@ -899,19 +899,29 @@ def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1">;
 def note_ovl_candidate : Note<"candidate "
     "%select{function|function|constructor|"
+    "function |function |constructor |"
     "is the implicit default constructor|"
     "is the implicit copy constructor|"
-    "is the implicit copy assignment operator}0">;
-def note_ovl_template_candidate : Note<
-  "candidate function template specialization %0">;
+    "is the implicit copy assignment operator}0%1">;
+// Note that we don't treat templates differently for this diagnostic.
+def note_ovl_candidate_arity : Note<"candidate "
+    "%select{function|function|constructor|function|function|constructor|"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0 not viable: requires"
+    "%select{ at least| at most|}2 %3 argument%s3, but %4 %plural{1:was|:were}4 "
+    "provided">;
 def note_ovl_candidate_deleted : Note<
-  "candidate %select{function|function|constructor}0 has been explicitly "
-  "%select{made unavailable|deleted}1">;
-def note_ovl_template_candidate_deleted : Note<
-  "candidate function template specialization %0 has been explicit "
-  "&select{made unavailable|deleted}1">;
-def note_ovl_candidate_not_viable : Note<"function not viable because"
-                          " of ambiguity in conversion of argument %0">;
+  "candidate %select{function|function|constructor|"
+  "function |function |constructor |||}0%1 "
+  "has been explicitly %select{made unavailable|deleted}2">;
+def note_ovl_candidate_bad_conv : Note<"candidate "
+    "%select{function|function|constructor|"
+    "function |function |constructor |"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0%1"
+    " not viable: no known conversion from %2 to %3 for argument %4">;
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion of %0 to %1">;
 def note_ovl_builtin_binary_candidate : Note<

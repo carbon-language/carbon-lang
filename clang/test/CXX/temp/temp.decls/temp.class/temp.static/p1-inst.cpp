@@ -14,7 +14,7 @@ struct InitOkay {
   InitOkay(int) { }
 };
 
-struct CannotInit { }; // expected-note{{candidate is the implicit copy constructor}}
+struct CannotInit { }; // expected-note{{candidate constructor (the implicit copy constructor) not viable}}
 
 int &returnInt() { return X<int>::value; }
 float &returnFloat() { return X<float>::value; }

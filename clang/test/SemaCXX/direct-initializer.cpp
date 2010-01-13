@@ -13,14 +13,14 @@ class Y {
   explicit Y(float);
 };
 
-class X { // expected-note{{candidate is the implicit copy constructor}}
+class X { // expected-note{{candidate constructor (the implicit copy constructor)}}
 public:
   explicit X(int); // expected-note{{candidate constructor}}
   X(float, float, float); // expected-note{{candidate constructor}}
   X(float, Y); // expected-note{{candidate constructor}}
 };
 
-class Z { // expected-note{{candidate is the implicit copy constructor}}
+class Z { // expected-note{{candidate constructor (the implicit copy constructor)}}
 public:
   Z(int); // expected-note{{candidate constructor}}
 };

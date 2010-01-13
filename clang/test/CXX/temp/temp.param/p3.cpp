@@ -15,7 +15,7 @@ template<template<class T> class Y> struct X1 {
 // could be interpreted as either a non-type template-parameter or a
 // type-parameter (because its identifier is the name of an already
 // existing class) is taken as a type-parameter. For example, 
-class T { /* ... */ };  // expected-note{{candidate is the implicit copy constructor}}
+class T { /* ... */ };  // expected-note{{candidate constructor (the implicit copy constructor) not viable}}
 int i; 
 
 template<class T, T i> struct X2 {

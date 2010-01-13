@@ -10,7 +10,7 @@ struct InitViaConstructor {
   InitViaConstructor(int i = 7);
 };
 
-struct NoValueInit { // expected-note 2 {{candidate is the implicit copy constructor}} 
+struct NoValueInit { // expected-note 2 {{candidate constructor (the implicit copy constructor)}} 
   NoValueInit(int i, int j); // expected-note 2 {{candidate constructor}}
 };
 

@@ -304,7 +304,7 @@ namespace PR5756 {
 
 // Tests the exact text used to note the candidates
 namespace test1 {
-  template <class T> void foo(T t, unsigned N); // expected-note {{candidate function template specialization [with T = int]}}
+  template <class T> void foo(T t, unsigned N); // expected-note {{candidate function [with T = int]}}
   void foo(int n, char N); // expected-note {{candidate function}} 
 
   void test() {

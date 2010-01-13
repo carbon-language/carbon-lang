@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct Base { }; // expected-note{{candidate is the implicit copy constructor}}
-struct Derived : Base { }; // expected-note{{candidate is the implicit copy constructor}}
+struct Derived : Base { }; // expected-note{{candidate constructor (the implicit copy constructor) not viable}}
 struct Unrelated { };
 struct Derived2 : Base { };
 struct Diamond : Derived, Derived2 { };

@@ -4269,19 +4269,28 @@ enum OverloadCandidateKind {
   oc_function,
   oc_method,
   oc_constructor,
+  oc_function_template,
+  oc_method_template,
+  oc_constructor_template,
   oc_implicit_default_constructor,
   oc_implicit_copy_constructor,
-  oc_implicit_copy_assignment,
-  oc_template_specialization // function, constructor, or conversion template
+  oc_implicit_copy_assignment
 };
 
-OverloadCandidateKind ClassifyOverloadCandidate(FunctionDecl *Fn) {
-  if (Fn->getPrimaryTemplate())
-    return oc_template_specialization;
+OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
+                                                FunctionDecl *Fn,
+                                                std::string &Description) {
+  bool isTemplate = false;
+
+  if (FunctionTemplateDecl *FunTmpl = Fn->getPrimaryTemplate()) {
+    isTemplate = true;
+    Description = S.getTemplateArgumentBindingsText(
+      FunTmpl->getTemplateParameters(), *Fn->getTemplateSpecializationArgs());
+  }
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(Fn)) {
     if (!Ctor->isImplicit())
-      return oc_constructor;
+      return isTemplate ? oc_constructor_template : oc_constructor;
 
     return Ctor->isCopyConstructor() ? oc_implicit_copy_constructor
                                      : oc_implicit_default_constructor;
@@ -4291,34 +4300,24 @@ OverloadCandidateKind ClassifyOverloadCandidate(FunctionDecl *Fn) {
     // This actually gets spelled 'candidate function' for now, but
     // it doesn't hurt to split it out.
     if (!Meth->isImplicit())
-      return oc_method;
+      return isTemplate ? oc_method_template : oc_method;
 
     assert(Meth->isCopyAssignment()
            && "implicit method is not copy assignment operator?");
     return oc_implicit_copy_assignment;
   }
 
-  return oc_function;
-}
-
-std::string DescribeFunctionTemplate(Sema &S, FunctionDecl *Fn) {
-  FunctionTemplateDecl *FunTmpl = Fn->getPrimaryTemplate();
-  return S.getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
-                                       *Fn->getTemplateSpecializationArgs());
+  return isTemplate ? oc_function_template : oc_function;
 }
 
 } // end anonymous namespace
 
 // Notes the location of an overload candidate.
 void Sema::NoteOverloadCandidate(FunctionDecl *Fn) {
-  OverloadCandidateKind K = ClassifyOverloadCandidate(Fn);
-  if (K == oc_template_specialization) {
-    Diag(Fn->getLocation(), diag::note_ovl_template_candidate)
-      << DescribeFunctionTemplate(*this, Fn);
-    return;
-  }
-
-  Diag(Fn->getLocation(), diag::note_ovl_candidate) << (unsigned) K;
+  std::string FnDesc;
+  OverloadCandidateKind K = ClassifyOverloadCandidate(*this, Fn, FnDesc);
+  Diag(Fn->getLocation(), diag::note_ovl_candidate)
+    << (unsigned) K << FnDesc;
 }
 
 /// Diagnoses an ambiguous conversion.  The partial diagnostic is the
@@ -4337,41 +4336,104 @@ void Sema::DiagnoseAmbiguousConversion(const ImplicitConversionSequence &ICS,
 
 namespace {
 
-void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand) {
+void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I,
+                           Expr **Args, unsigned NumArgs) {
+  assert(Cand->Function && "for now, candidate must be a function");
+  FunctionDecl *Fn = Cand->Function;
+
+  // There's a conversion slot for the object argument if this is a
+  // non-constructor method.  Note that 'I' corresponds the
+  // conversion-slot index.
+  if (isa<CXXMethodDecl>(Fn) && !isa<CXXConstructorDecl>(Fn)) {
+    // FIXME: talk usefully about bad conversions for object arguments.
+    if (I == 0) return S.NoteOverloadCandidate(Fn);
+    else I--;
+  }
+
+  // FIXME: can we have a bad conversion on an ellipsis parameter?
+  assert(I < NumArgs && "index exceeds number of formal arguments");
+  assert(I < Fn->getType()->getAs<FunctionProtoType>()->getNumArgs() &&
+         "index exceeds number of formal parameters");
+
+  std::string FnDesc;
+  OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
+
+  QualType FromTy = Args[I]->getType();
+  QualType ToTy = Fn->getType()->getAs<FunctionProtoType>()->getArgType(I);
+
+  // TODO: specialize based on the kind of mismatch
+  S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv)
+    << (unsigned) FnKind << FnDesc
+    << Args[I]->getSourceRange() << FromTy << ToTy
+    << I+1;
+}
+
+void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
+                           Expr **Args, unsigned NumArgs) {
   FunctionDecl *Fn = Cand->Function;
 
   // Note deleted candidates, but only if they're viable.
   if (Cand->Viable && (Fn->isDeleted() || Fn->hasAttr<UnavailableAttr>())) {
-    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(Fn);
-
-    if (FnKind == oc_template_specialization) {
-      S.Diag(Fn->getLocation(), diag::note_ovl_template_candidate_deleted)
-        << DescribeFunctionTemplate(S, Fn) << Fn->isDeleted();
-      return;
-    }
+    std::string FnDesc;
+    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
 
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_deleted)
-      << FnKind << Fn->isDeleted();
+      << FnKind << FnDesc << Fn->isDeleted();
     return;
   }
 
-  bool errReported = false;
-  if (!Cand->Viable && Cand->Conversions.size() > 0) {
-    for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
-      const ImplicitConversionSequence &Conversion = 
-        Cand->Conversions[i];
+  // We don't really have anything else to say about viable candidates.
+  if (Cand->Viable) {
+    S.NoteOverloadCandidate(Fn);
+    return;
+  }
 
-      if (!Conversion.isAmbiguous())
+  // Diagnose arity mismatches.
+  // TODO: treat calls to a missing default constructor as a special case
+  unsigned NumFormalArgs = NumArgs;
+  if (isa<CXXMethodDecl>(Fn) && !isa<CXXConstructorDecl>(Fn))
+    NumFormalArgs--;
+  const FunctionProtoType *FnTy = Fn->getType()->getAs<FunctionProtoType>();
+  unsigned MinParams = Fn->getMinRequiredArguments();
+  if (NumFormalArgs < MinParams ||
+      (NumFormalArgs > FnTy->getNumArgs() && !FnTy->isVariadic())) {
+    std::string Description;
+    OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
+
+    // at least / at most / exactly
+    unsigned mode, modeCount;
+    if (NumFormalArgs < MinParams) {
+      if (MinParams != FnTy->getNumArgs())
+        mode = 0; // "at least"
+      else
+        mode = 2; // "exactly"
+      modeCount = MinParams;
+    } else {
+      if (MinParams != FnTy->getNumArgs())
+        mode = 1; // "at most"
+      else
+        mode = 2; // "exactly"
+      modeCount = FnTy->getNumArgs();
+    }
+
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
+      << (unsigned) FnKind << Description << mode << modeCount << NumFormalArgs;
+    return;
+  }
+
+  // Look for bad conversions.
+  if (!Cand->Conversions.empty()) {
+    for (unsigned I = 0, N = Cand->Conversions.size(); I != N; ++I) {
+      if (!Cand->Conversions[I].isBad())
         continue;
 
-      S.DiagnoseAmbiguousConversion(Conversion, Fn->getLocation(),
-                         PDiag(diag::note_ovl_candidate_not_viable) << (i+1));
-      errReported = true;
+      DiagnoseBadConversion(S, Cand, I, Args, NumArgs);
+      return;
     }
   }
 
-  if (!errReported)
-    S.NoteOverloadCandidate(Fn);
+  // Give up and give the generic message.
+  S.NoteOverloadCandidate(Fn);
 }
 
 void NoteSurrogateCandidate(Sema &S, OverloadCandidate *Cand) {
@@ -4506,7 +4568,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
     OverloadCandidate *Cand = *I;
 
     if (Cand->Function)
-      NoteFunctionCandidate(*this, Cand);
+      NoteFunctionCandidate(*this, Cand, Args, NumArgs);
     else if (Cand->IsSurrogate)
       NoteSurrogateCandidate(*this, Cand);
 
@@ -4714,7 +4776,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                            PDiag(),
                            PDiag(diag::err_addr_ovl_ambiguous)
                                << TemplateMatches[0]->getDeclName(),
-                           PDiag(diag::note_ovl_template_candidate));
+                           PDiag(diag::note_ovl_candidate)
+                               << (unsigned) oc_function_template);
     MarkDeclarationReferenced(From->getLocStart(), Result);
     return Result;
   }
