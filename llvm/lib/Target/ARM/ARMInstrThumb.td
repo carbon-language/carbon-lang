@@ -113,7 +113,7 @@ def t_addrmode_s1 : Operand<i32>,
 def t_addrmode_sp : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeSP", []> {
   let PrintMethod = "printThumbAddrModeSPOperand";
-  let MIOperandInfo = (ops JustSP:$base, i32imm:$offsimm);
+  let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
 //===----------------------------------------------------------------------===//
