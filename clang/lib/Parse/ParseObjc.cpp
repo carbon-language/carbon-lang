@@ -334,6 +334,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
     if (Tok.is(tok::eof))
       break;
 
+    // Code completion within an Objective-C interface.
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteOrdinaryName(CurScope, 
+                                  ObjCImpDecl? Action::CCC_ObjCImplementation
+                                             : Action::CCC_ObjCInterface);
+      ConsumeToken();
+    }
+    
     // If we don't have an @ directive, parse it as a function definition.
     if (Tok.isNot(tok::at)) {
       // The code below does not consume '}'s because it is afraid of eating the

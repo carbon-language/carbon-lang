@@ -885,6 +885,8 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
     }    
     // Fall through
 
+  case Action::CCC_ObjCInterface:
+  case Action::CCC_ObjCImplementation:
   case Action::CCC_Namespace:
   case Action::CCC_Template:
     if (LangOpts.CPlusPlus || LangOpts.C99)
@@ -898,6 +900,21 @@ static void AddFunctionSpecifiers(Action::CodeCompletionContext CCC,
     break;
   }
 }
+
+static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
+                                     bool NeedAt);
+static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
+                                    bool NeedAt);
+static void AddObjCImplementationResults(unsigned Rank, 
+                                         const LangOptions &LangOpts,
+                                         ResultBuilder &Results,
+                                         bool NeedAt);
+static void AddObjCInterfaceResults(unsigned Rank, 
+                                    const LangOptions &LangOpts,
+                                    ResultBuilder &Results,
+                                    bool NeedAt);
+static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
+                                   bool NeedAt);
 
 /// \brief Add language constructs that show up for "ordinary" names.
 static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
@@ -957,6 +974,10 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
       Results.MaybeAddResult(Result(Pattern, Rank));
     }
+      
+    if (SemaRef.getLangOptions().ObjC1)
+      AddObjCTopLevelResults(Rank, Results, true);
+      
     // Fall through
 
   case Action::CCC_Class:
@@ -1020,6 +1041,18 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
     AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
     break;
 
+  case Action::CCC_ObjCInterface:
+    AddObjCInterfaceResults(Rank, SemaRef.getLangOptions(), Results, true);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    break;
+      
+  case Action::CCC_ObjCImplementation:
+    AddObjCImplementationResults(Rank, SemaRef.getLangOptions(), Results, true);
+    AddStorageSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    AddFunctionSpecifiers(CCC, SemaRef.getLangOptions(), Rank, Results);
+    break;
+      
   case Action::CCC_Statement: {
     Results.MaybeAddResult(Result("typedef", Rank));
 
@@ -1041,7 +1074,9 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
       Results.MaybeAddResult(Result(Pattern, Rank));
     }
-
+    if (SemaRef.getLangOptions().ObjC1)
+      AddObjCStatementResults(Rank, Results, true);
+    
     // if (condition) { statements }
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("if");
@@ -1309,6 +1344,8 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
         if (Method->getClassInterface()->getSuperClass())
           Results.MaybeAddResult(Result("super", Rank));
+      
+      AddObjCExpressionResults(Rank, Results, true);
     }
 
     // sizeof expression
@@ -1932,6 +1969,8 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   switch (CompletionContext) {
   case CCC_Namespace:
   case CCC_Class:
+  case CCC_ObjCInterface:
+  case CCC_ObjCImplementation:
   case CCC_Template:
   case CCC_MemberTemplate:
     Results.setFilter(&ResultBuilder::IsOrdinaryNonValueName);
@@ -2446,106 +2485,125 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
+// Macro that expands to @Keyword or Keyword, depending on whether NeedAt is
+// true or false.
+#define OBJC_AT_KEYWORD_NAME(NeedAt,Keyword) NeedAt? "@" #Keyword : #Keyword
+static void AddObjCImplementationResults(unsigned Rank, 
+                                         const LangOptions &LangOpts,
+                                         ResultBuilder &Results,
+                                         bool NeedAt) {
+  typedef CodeCompleteConsumer::Result Result;
+  // Since we have an implementation, we can end it.
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end), 0));
+  
+  CodeCompletionString *Pattern = 0;
+  if (LangOpts.ObjC2) {
+    // @dynamic
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,dynamic));
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("property");
+    Results.MaybeAddResult(Result(Pattern, 0));
+    
+    // @synthesize
+    Pattern = new CodeCompletionString;
+    Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,synthesize));
+    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Pattern->AddPlaceholderChunk("property");
+    Results.MaybeAddResult(Result(Pattern, 0));
+  }  
+}
+
+static void AddObjCInterfaceResults(unsigned Rank, 
+                                    const LangOptions &LangOpts,
+                                    ResultBuilder &Results,
+                                    bool NeedAt) {
+  typedef CodeCompleteConsumer::Result Result;
+  
+  // Since we have an interface or protocol, we can end it.
+  Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end), 0));
+  
+  if (LangOpts.ObjC2) {
+    // @property
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,property), 0));
+  
+    // @required
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,required), 0));
+  
+    // @optional
+    Results.MaybeAddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,optional), 0));
+  }
+}
+
+static void AddObjCTopLevelResults(unsigned Rank, ResultBuilder &Results,
+                                   bool NeedAt) {
+  typedef CodeCompleteConsumer::Result Result;
+  CodeCompletionString *Pattern = 0;
+  
+  // @class name ;
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,class));
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("identifier");
+  Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
+  Results.MaybeAddResult(Result(Pattern, 0));
+  
+  // @interface name 
+  // FIXME: Could introduce the whole pattern, including superclasses and 
+  // such.
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,interface));
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("class");
+  Results.MaybeAddResult(Result(Pattern, 0));
+  
+  // @protocol name
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("protocol");
+  Results.MaybeAddResult(Result(Pattern, 0));
+  
+  // @implementation name
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,implementation));
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("class");
+  Results.MaybeAddResult(Result(Pattern, 0));
+  
+  // @compatibility_alias name
+  Pattern = new CodeCompletionString;
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,compatibility_alias));
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("alias");
+  Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Pattern->AddPlaceholderChunk("class");
+  Results.MaybeAddResult(Result(Pattern, 0));
+}
+
 void Sema::CodeCompleteObjCAtDirective(Scope *S, DeclPtrTy ObjCImpDecl,
                                        bool InInterface) {
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  if (ObjCImpDecl) {
-    // Since we have an implementation, we can end it.
-    Results.MaybeAddResult(Result("end", 0));
-
-    CodeCompletionString *Pattern = 0;
-    Decl *ImpDecl = ObjCImpDecl.getAs<Decl>();
-    if (isa<ObjCImplementationDecl>(ImpDecl) || 
-        isa<ObjCCategoryImplDecl>(ImpDecl)) {
-      // @dynamic
-      Pattern = new CodeCompletionString;
-      Pattern->AddTypedTextChunk("dynamic");
-      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-      Pattern->AddPlaceholderChunk("property");
-      Results.MaybeAddResult(Result(Pattern, 0));
-
-      // @synthesize
-      Pattern = new CodeCompletionString;
-      Pattern->AddTypedTextChunk("synthesize");
-      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-      Pattern->AddPlaceholderChunk("property");
-      Results.MaybeAddResult(Result(Pattern, 0));
-    }
-  } else if (InInterface) {
-    // Since we have an interface or protocol, we can end it.
-    Results.MaybeAddResult(Result("end", 0));
-
-    if (getLangOptions().ObjC2) {
-      // @property
-      Results.MaybeAddResult(Result("property", 0));
-    }
-
-    // @required
-    Results.MaybeAddResult(Result("required", 0));
-
-    // @optional
-    Results.MaybeAddResult(Result("optional", 0));
-  } else {
-    CodeCompletionString *Pattern = 0;
-
-    // @class name ;
-    Pattern = new CodeCompletionString;
-    Pattern->AddTypedTextChunk("class");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-    Pattern->AddPlaceholderChunk("identifier");
-    Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
-    Results.MaybeAddResult(Result(Pattern, 0));
-
-    // @interface name 
-    // FIXME: Could introduce the whole pattern, including superclasses and 
-    // such.
-    Pattern = new CodeCompletionString;
-    Pattern->AddTypedTextChunk("interface");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
-    Pattern->AddPlaceholderChunk("class");
-    Results.MaybeAddResult(Result(Pattern, 0));
-
-    // @protocol name
-    Pattern = new CodeCompletionString;
-    Pattern->AddTypedTextChunk("protocol");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
-    Pattern->AddPlaceholderChunk("protocol");
-    Results.MaybeAddResult(Result(Pattern, 0));
-
-    // @implementation name
-    Pattern = new CodeCompletionString;
-    Pattern->AddTypedTextChunk("implementation");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
-    Pattern->AddPlaceholderChunk("class");
-    Results.MaybeAddResult(Result(Pattern, 0));
-
-    // @compatibility_alias name
-    Pattern = new CodeCompletionString;
-    Pattern->AddTypedTextChunk("compatibility_alias");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
-    Pattern->AddPlaceholderChunk("alias");
-    Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
-    Pattern->AddPlaceholderChunk("class");
-    Results.MaybeAddResult(Result(Pattern, 0));
-  }
+  if (ObjCImpDecl)
+    AddObjCImplementationResults(0, getLangOptions(), Results, false);
+  else if (InInterface)
+    AddObjCInterfaceResults(0, getLangOptions(), Results, false);
+  else
+    AddObjCTopLevelResults(0, Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
 
-static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results) {
+static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results,
+                                     bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
   CodeCompletionString *Pattern = 0;
 
   // @encode ( type-name )
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("encode");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,encode));
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("type-name");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
@@ -2553,7 +2611,7 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results) {
   
   // @protocol ( protocol-name )
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("protocol");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("protocol-name");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
@@ -2561,24 +2619,22 @@ static void AddObjCExpressionResults(unsigned Rank, ResultBuilder &Results) {
 
   // @selector ( selector )
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("selector");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,selector));
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("selector");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
   Results.MaybeAddResult(Result(Pattern, Rank));
 }
 
-void Sema::CodeCompleteObjCAtStatement(Scope *S) {
+static void AddObjCStatementResults(unsigned Rank, ResultBuilder &Results,
+                                    bool NeedAt) {
   typedef CodeCompleteConsumer::Result Result;
-  ResultBuilder Results(*this);
-  Results.EnterNewScope();
-
   CodeCompletionString *Pattern = 0;
-
+  
   // @try { statements } @catch ( declaration ) { statements } @finally
   //   { statements }
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("try");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,try));
   Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
   Pattern->AddPlaceholderChunk("statements");
   Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
@@ -2594,30 +2650,34 @@ void Sema::CodeCompleteObjCAtStatement(Scope *S) {
   Pattern->AddPlaceholderChunk("statements");
   Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
   Results.MaybeAddResult(Result(Pattern, 0));
-
+  
   // @throw
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("throw");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,throw));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
   Pattern->AddPlaceholderChunk("expression");
   Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
   Results.MaybeAddResult(Result(Pattern, 0));
-
+  
   // @synchronized ( expression ) { statements }
   Pattern = new CodeCompletionString;
-  Pattern->AddTypedTextChunk("synchronized");
+  Pattern->AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,synchronized));
   Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
-
   Pattern->AddChunk(CodeCompletionString::CK_LeftParen);
   Pattern->AddPlaceholderChunk("expression");
   Pattern->AddChunk(CodeCompletionString::CK_RightParen);
   Pattern->AddChunk(CodeCompletionString::CK_LeftBrace);
   Pattern->AddPlaceholderChunk("statements");
   Pattern->AddChunk(CodeCompletionString::CK_RightBrace);
-  Results.MaybeAddResult(Result(Pattern, 0)); // FIXME: add ';' chunk
+  Results.MaybeAddResult(Result(Pattern, 0));
+}
 
-  AddObjCExpressionResults(0, Results);
+void Sema::CodeCompleteObjCAtStatement(Scope *S) {
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  AddObjCStatementResults(0, Results, false);
+  AddObjCExpressionResults(0, Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }
@@ -2625,7 +2685,7 @@ void Sema::CodeCompleteObjCAtStatement(Scope *S) {
 void Sema::CodeCompleteObjCAtExpression(Scope *S) {
   ResultBuilder Results(*this);
   Results.EnterNewScope();
-  AddObjCExpressionResults(0, Results);
+  AddObjCExpressionResults(0, Results, false);
   Results.ExitScope();
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
 }

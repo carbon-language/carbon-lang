@@ -835,7 +835,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                   : Action::CCC_Template;
     else if (DSContext == DSC_class)
       CCC = Action::CCC_Class;
-
+    else if (ObjCImpDecl)
+      CCC = Action::CCC_ObjCImplementation;
+    
     Actions.CodeCompleteOrdinaryName(CurScope, CCC);
     ConsumeToken();
   }

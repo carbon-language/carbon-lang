@@ -2382,6 +2382,13 @@ public:
     CCC_Namespace,
     /// \brief Code completion occurs within a class, struct, or union.
     CCC_Class,
+    /// \brief Code completion occurs within an Objective-C interface, protocol,
+    /// or category.
+    CCC_ObjCInterface,
+    /// \brief Code completion occurs within an Objective-C implementation or
+    /// category implementation
+    CCC_ObjCImplementation,
+    /// \brief Code completion occurs within 
     /// \brief Code completion occurs following one or more template
     /// headers.
     CCC_Template,
