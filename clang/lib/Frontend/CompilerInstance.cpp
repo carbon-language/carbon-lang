@@ -14,10 +14,12 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Version.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
 #include "clang/Frontend/ChainedDiagnosticClient.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/PCHReader.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -28,6 +30,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 using namespace clang;
@@ -409,3 +412,87 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
 
   return true;
 }
+
+// High-Level Operations
+
+bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
+  assert(hasDiagnostics() && "Diagnostics engine is not initialized!");
+  assert(!getFrontendOpts().ShowHelp && "Client must handle '-help'!");
+  assert(!getFrontendOpts().ShowVersion && "Client must handle '-version'!");
+
+  // FIXME: Take this as an argument, once all the APIs we used have moved to
+  // taking it as an input instead of hard-coding llvm::errs.
+  llvm::raw_ostream &OS = llvm::errs();
+
+  // Create the target instance.
+  setTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), getTargetOpts()));
+  if (!hasTarget())
+    return false;
+
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  getTarget().setForcedLangOptions(getLangOpts());
+
+  // Validate/process some options.
+  if (getHeaderSearchOpts().Verbose)
+    OS << "clang -cc1 version " CLANG_VERSION_STRING
+       << " based upon " << PACKAGE_STRING
+       << " hosted on " << llvm::sys::getHostTriple() << "\n";
+
+  if (getFrontendOpts().ShowTimers)
+    createFrontendTimer();
+
+  for (unsigned i = 0, e = getFrontendOpts().Inputs.size(); i != e; ++i) {
+    const std::string &InFile = getFrontendOpts().Inputs[i].second;
+
+    // If we aren't using an AST file, setup the file and source managers and
+    // the preprocessor.
+    bool IsAST = getFrontendOpts().Inputs[i].first == FrontendOptions::IK_AST;
+    if (!IsAST) {
+      if (!i) {
+        // Create a file manager object to provide access to and cache the
+        // filesystem.
+        createFileManager();
+
+        // Create the source manager.
+        createSourceManager();
+      } else {
+        // Reset the ID tables if we are reusing the SourceManager.
+        getSourceManager().clearIDTables();
+      }
+
+      // Create the preprocessor.
+      createPreprocessor();
+    }
+
+    if (Act.BeginSourceFile(*this, InFile, IsAST)) {
+      Act.Execute();
+      Act.EndSourceFile();
+    }
+  }
+
+  if (getDiagnosticOpts().ShowCarets)
+    if (unsigned NumDiagnostics = getDiagnostics().getNumDiagnostics())
+      OS << NumDiagnostics << " diagnostic"
+         << (NumDiagnostics == 1 ? "" : "s")
+         << " generated.\n";
+
+  if (getFrontendOpts().ShowStats) {
+    getFileManager().PrintStats();
+    OS << "\n";
+  }
+
+  // Return the appropriate status when verifying diagnostics.
+  //
+  // FIXME: If we could make getNumErrors() do the right thing, we wouldn't need
+  // this.
+  if (getDiagnosticOpts().VerifyDiagnostics)
+    return !static_cast<VerifyDiagnosticsClient&>(
+      getDiagnosticClient()).HadErrors();
+
+  return !getDiagnostics().getNumErrors();
+}
+
+

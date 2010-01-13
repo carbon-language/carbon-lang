@@ -32,6 +32,7 @@ class Diagnostic;
 class DiagnosticClient;
 class ExternalASTSource;
 class FileManager;
+class FrontendAction;
 class Preprocessor;
 class Source;
 class SourceManager;
@@ -103,6 +104,42 @@ public:
                    bool _OwnsLLVMContext = true);
   ~CompilerInstance();
 
+  /// @name High-Level Operations
+  /// {
+
+  /// ExecuteAction - Execute the provided action against the compiler's
+  /// CompilerInvocation object.
+  ///
+  /// This function makes the following assumptions:
+  ///
+  ///  - The invocation options should be initialized. This function does not
+  ///    handle the '-help' or '-version' options, clients should handle those
+  ///    directly.
+  ///
+  ///  - The diagnostics engine should have already been created by the client.
+  ///
+  ///  - No other CompilerInstance state should have been initialized (this is
+  ///    an unchecked error).
+  ///
+  ///  - Clients should have initialized any LLVM target features that may be
+  ///    required.
+  ///
+  ///  - Clients should eventually call llvm_shutdown() upon the completion of
+  ///    this routine to ensure that any managed objects are properly destroyed.
+  ///
+  /// Note that this routine may write output to 'stderr'.
+  ///
+  /// \param Act - The action to execute.
+  /// \return - True on success.
+  //
+  // FIXME: This function should take the stream to write any debugging /
+  // verbose output to as an argument.
+  //
+  // FIXME: Eliminate the llvm_shutdown requirement, that should either be part
+  // of the context or else not CompilerInstance specific.
+  bool ExecuteAction(FrontendAction &Act);
+
+  /// }
   /// @name LLVM Context
   /// {
 
