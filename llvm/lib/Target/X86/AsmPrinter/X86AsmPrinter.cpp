@@ -283,24 +283,32 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    Mang->makeNameProper(TempNameStr, MO.getSymbolName());
+    const MCSymbol *SymToPrint;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      TempNameStr += "$stub";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      Mang->getNameWithPrefix(TempNameStr,
+                              StringRef(MO.getSymbolName())+"$stub");
+      const MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
         TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
         StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
       }
+      SymToPrint = StubSym;
+    } else {
+      Mang->getNameWithPrefix(TempNameStr, MO.getSymbolName());
+      SymToPrint = OutContext.GetOrCreateSymbol(TempNameStr.str());
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
     // to avoid having it look like an integer immediate to the assembler.
-    if (TempNameStr[0] == '$') 
-      O << '(' << TempNameStr << ')';
-    else
-      O << TempNameStr;
+    if (SymToPrint->getName()[0] != '$') 
+      SymToPrint->print(O, MAI);
+    else {
+      O << '(';
+      SymToPrint->print(O, MAI);
+      O << '(';
+    }
     break;
   }
   }

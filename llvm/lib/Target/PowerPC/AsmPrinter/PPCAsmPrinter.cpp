@@ -71,18 +71,19 @@ namespace {
       }
 
       void Init(StringRef GVName, Mangler *Mang) {
-        // Already initialized.
-        if (!Stub.empty()) return;
+        assert(!GVName.empty());
+        if (!Stub.empty()) return; // Already initialized.
+        // Get the names for the external symbol name.
         SmallString<128> TmpStr;
-        Mang->makeNameProper(TmpStr, GVName + "$stub", Mangler::Private);
+        Mang->getNameWithPrefix(TmpStr, GVName + "$stub", Mangler::Private);
         Stub = TmpStr.str();
         TmpStr.clear();
         
-        Mang->makeNameProper(TmpStr, GVName + "$lazy_ptr", Mangler::Private);
+        Mang->getNameWithPrefix(TmpStr, GVName + "$lazy_ptr", Mangler::Private);
         LazyPtr = TmpStr.str();
         TmpStr.clear();
         
-        Mang->makeNameProper(TmpStr, GVName + "$stub$tmp", Mangler::Private);
+        Mang->getNameWithPrefix(TmpStr, GVName + "$stub$tmp", Mangler::Private);
         AnonSymbol = TmpStr.str();
       }
     };
@@ -237,7 +238,7 @@ namespace {
         }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
           SmallString<128> MangledName;
-          Mang->makeNameProper(MangledName, MO.getSymbolName());
+          Mang->getNameWithPrefix(MangledName, MO.getSymbolName());
           FnStubInfo &FnInfo = FnStubs[MangledName.str()];
           FnInfo.Init(MO.getSymbolName(), Mang);
           O << FnInfo.Stub;
