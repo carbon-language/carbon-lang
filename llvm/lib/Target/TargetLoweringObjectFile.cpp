@@ -578,6 +578,10 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name;
     Name.append(Prefix, Prefix+strlen(Prefix));
+    // FIXME: This will fail for weak globals with no names, this also depends
+    // on the mangling behavior of makeNameProper to mangle the section name
+    // before construction.  Instead, this should use getNameWithPrefix on the
+    // global variable and the MCSection printing code should do the mangling.
     Mang->makeNameProper(Name, GV->getName());
 
     return getELFSection(Name.str(),
