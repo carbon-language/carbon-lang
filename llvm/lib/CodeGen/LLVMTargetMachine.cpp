@@ -62,6 +62,10 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
+#if 1
+static cl::opt<bool> XX("xx", cl::Hidden);
+#endif
+
 // Enable or disable FastISel. Both options are needed, because
 // FastISel is enabled by default with -fast, and we wish to be
 // able to enable or disable fast-isel independently from -O0.
@@ -324,6 +328,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                  /* allowDoubleDefs= */ true);
 
   if (OptLevel != CodeGenOpt::None) {
+    PM.add(createOptimizeExtsPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
     if (!DisableMachineSink)

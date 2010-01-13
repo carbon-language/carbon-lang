@@ -448,13 +448,15 @@ public:
                            unsigned &SrcReg, unsigned &DstReg,
                            unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
 
-  /// isCoalescableInstr - Return true if the instruction is "coalescable". That
-  /// is, it's like a copy where it's legal for the source to overlap the
-  /// destination. e.g. X86::MOVSX64rr32.
-  virtual bool isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
-                                unsigned &SrcReg, unsigned &DstReg,
-                                unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
-
+  /// isCoalescableExtInstr - Return true if the instruction is a "coalescable"
+  /// extension instruction. That is, it's like a copy where it's legal for the
+  /// source to overlap the destination. e.g. X86::MOVSX64rr32. If this returns
+  /// true, then it's expected the pre-extension value is available as a subreg
+  /// of the result register. This also returns the sub-register index in
+  /// SubIdx.
+  virtual bool isCoalescableExtInstr(const MachineInstr &MI,
+                                     unsigned &SrcReg, unsigned &DstReg,
+                                     unsigned &SubIdx) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
   /// isLoadFromStackSlotPostFE - Check for post-frame ptr elimination

@@ -713,9 +713,9 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
 }
 
 bool
-X86InstrInfo::isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
-                               unsigned &SrcReg, unsigned &DstReg,
-                               unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
+X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
+                                    unsigned &SrcReg, unsigned &DstReg,
+                                    unsigned &SubIdx) const {
   switch (MI.getOpcode()) {
   default: break;
   case X86::MOVSX16rr8:
@@ -733,10 +733,8 @@ X86InstrInfo::isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
     if (MI.getOperand(0).getSubReg() || MI.getOperand(1).getSubReg())
       // Be conservative.
       return false;
-    isCopy = false;
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
-    DstSubIdx = 0;
     switch (MI.getOpcode()) {
     default:
       llvm_unreachable(0);
@@ -747,22 +745,23 @@ X86InstrInfo::isCoalescableInstr(const MachineInstr &MI, bool &isCopy,
     case X86::MOVZX32rr8:
     case X86::MOVSX64rr8:
     case X86::MOVZX64rr8:
-      SrcSubIdx = 1;
+      SubIdx = 1;
       break;
     case X86::MOVSX32rr16:
     case X86::MOVZX32rr16:
     case X86::MOVSX64rr16:
     case X86::MOVZX64rr16:
-      SrcSubIdx = 3;
+      SubIdx = 3;
       break;
     case X86::MOVSX64rr32:
     case X86::MOVZX64rr32:
-      SrcSubIdx = 4;
+      SubIdx = 4;
       break;
     }
+    return true;
   }
   }
-  return isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
+  return false;
 }
 
 /// isFrameOperand - Return true and the FrameIndex if the specified

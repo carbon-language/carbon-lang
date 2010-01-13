@@ -170,6 +170,10 @@ namespace llvm {
   /// instructions.
   FunctionPass *createMachineSinkingPass();
 
+  /// createOptimizeExtsPass - This pass performs sign / zero extension
+  /// optimization by increasing uses of extended values.
+  FunctionPass *createOptimizeExtsPass();
+
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
   FunctionPass *createStackSlotColoringPass(bool);
 
