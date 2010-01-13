@@ -1246,8 +1246,7 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
                                             unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   unsigned BitWidth = CI->getBitWidth();
-  assert(isPowerOf2_32(BitWidth) &&
-         "Non-power-of-2-sized integers not handled!");
+  assert((BitWidth & 63) == 0 && "only support multiples of 64-bits");
 
   // We don't expect assemblers to support integer data directives
   // for more than 64 bits, so we emit the data in at most 64-bit
