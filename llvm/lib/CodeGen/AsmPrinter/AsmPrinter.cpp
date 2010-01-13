@@ -1305,22 +1305,39 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
     EmitZeros(Size, AddrSpace);
     return;
-  } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
+  }
+  
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     EmitGlobalConstantArray(CVA , AddrSpace);
     return;
-  } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
+  }
+  
+  if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     EmitGlobalConstantStruct(CVS, AddrSpace);
     return;
-  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
+  }
+
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     EmitGlobalConstantFP(CFP, AddrSpace);
     return;
-  } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+  }
+  
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    // If we can directly emit an 8-byte constant, do it.
+    if (Size == 8)
+      if (const char *Data64Dir = MAI->getData64bitsDirective(AddrSpace)) {
+        O << Data64Dir << CI->getZExtValue() << '\n';
+        return;
+      }
+
     // Small integers are handled below; large integers are handled here.
     if (Size > 4) {
       EmitGlobalConstantLargeInt(CI, AddrSpace);
       return;
     }
-  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
+  }
+  
+  if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     EmitGlobalConstantVector(CP);
     return;
   }
