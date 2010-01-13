@@ -110,6 +110,12 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
     if (isa<VectorType>(Underlying))
       break;
 
+    // Don't desugar through the primary typedef of an anonymous type.
+    if (isa<TagType>(Underlying) && isa<TypedefType>(QT))
+      if (cast<TagType>(Underlying)->getDecl()->getTypedefForAnonDecl() ==
+          cast<TypedefType>(QT)->getDecl())
+        break;
+
     // Otherwise, we're tearing through something opaque; note that
     // we'll eventually need an a.k.a. clause and keep going.
     AKA = true;

@@ -96,3 +96,9 @@ struct s2 {
     int a;
   }
 }; // expected-error{{expected member name or ';' after declaration specifiers}}
+
+// Make sure we don't a.k.a. anonymous structs.
+typedef struct {
+  int x;
+} a_struct;
+int tmp = (a_struct) { .x = 0 }; // expected-error {{incompatible type initializing 'a_struct', expected 'int'}}

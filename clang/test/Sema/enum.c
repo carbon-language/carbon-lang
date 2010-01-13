@@ -84,3 +84,11 @@ enum e1 { YES, NO };
 static enum e1 badfunc(struct s1 *q) {
   return q->bar();
 }
+
+
+// Make sure we don't a.k.a. anonymous enums.
+typedef enum {
+  an_enumerator = 20
+} an_enum;
+// FIXME: why is this only a warning?
+char * s = (an_enum) an_enumerator; // expected-warning {{incompatible integer to pointer conversion initializing 'an_enum', expected 'char *'}}
