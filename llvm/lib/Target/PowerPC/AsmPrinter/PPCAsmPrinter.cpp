@@ -59,57 +59,42 @@ namespace {
   class PPCAsmPrinter : public AsmPrinter {
   protected:
     struct FnStubInfo {
-      std::string StubName, LazyPtrName, AnonSymbolName;
-      MCSymbol *StubSym, *LazyPtrSym, *AnonSymbolSym;
+      MCSymbol *Stub, *LazyPtr, *AnonSymbol;
       
       FnStubInfo() {
-        StubSym = LazyPtrSym = AnonSymbolSym = 0;
+        Stub = LazyPtr = AnonSymbol = 0;
       }
       
-      void Init(const GlobalValue *GV, Mangler *Mang) {
+      void Init(const GlobalValue *GV, Mangler *Mang, MCContext &Ctx) {
         // Already initialized.
-        if (!StubName.empty()) return;
+        if (Stub != 0) return;
 
         // Get the names.
-        StubName = Mang->getMangledName(GV, "$stub", true);
-        LazyPtrName = Mang->getMangledName(GV, "$lazy_ptr", true);
-        AnonSymbolName = Mang->getMangledName(GV, "$stub$tmp", true);
+        SmallString<128> TmpStr;
+        Mang->getNameWithPrefix(TmpStr, GV, true);
+        MakeSymbols(TmpStr, Ctx);
       }
 
       void Init(StringRef GVName, Mangler *Mang, MCContext &Ctx) {
-        assert(!GVName.empty());
-        if (StubSym != 0) return; // Already initialized.
+        assert(!GVName.empty() && "external symbol name shouldn't be empty");
+        if (Stub != 0) return; // Already initialized.
         // Get the names for the external symbol name.
         SmallString<128> TmpStr;
-        Mang->getNameWithPrefix(TmpStr, GVName + "$stub", Mangler::Private);
-        StubSym = Ctx.GetOrCreateSymbol(TmpStr.str());
+        Mang->getNameWithPrefix(TmpStr, GVName, Mangler::Private);
+        MakeSymbols(TmpStr, Ctx);
+      }
+      
+      void MakeSymbols(SmallString<128> &TmpStr, MCContext &Ctx) {
+        TmpStr += "$stub";
+        Stub = Ctx.GetOrCreateSymbol(TmpStr.str());
         TmpStr.erase(TmpStr.end()-5, TmpStr.end()); // Remove $stub
 
         TmpStr += "$lazy_ptr";
-        LazyPtrSym = Ctx.GetOrCreateSymbol(TmpStr.str());
+        LazyPtr = Ctx.GetOrCreateSymbol(TmpStr.str());
         TmpStr.erase(TmpStr.end()-9, TmpStr.end()); // Remove $lazy_ptr
         
         TmpStr += "$stub$tmp";
-        AnonSymbolSym = Ctx.GetOrCreateSymbol(TmpStr.str());
-      }
-      
-      void printStub(raw_ostream &OS, const MCAsmInfo *MAI) const {
-        if (StubSym)
-          StubSym->print(OS, MAI);
-        else
-          OS << StubName;
-      }
-      void printLazyPtr(raw_ostream &OS, const MCAsmInfo *MAI) const {
-        if (LazyPtrSym)
-          LazyPtrSym->print(OS, MAI);
-        else
-          OS << LazyPtrName;
-      }
-      void printAnonSymbol(raw_ostream &OS, const MCAsmInfo *MAI) const {
-        if (AnonSymbolSym)
-          AnonSymbolSym->print(OS, MAI);
-        else
-          OS << AnonSymbolName;
+        AnonSymbol = Ctx.GetOrCreateSymbol(TmpStr.str());
       }
     };
     
@@ -256,8 +241,8 @@ namespace {
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
             FnStubInfo &FnInfo = FnStubs[Mang->getMangledName(GV)];
-            FnInfo.Init(GV, Mang);
-            FnInfo.printStub(O, MAI);
+            FnInfo.Init(GV, Mang, OutContext);
+            FnInfo.Stub->print(O, MAI);
             return;
           }
         }
@@ -266,7 +251,7 @@ namespace {
           Mang->getNameWithPrefix(MangledName, MO.getSymbolName());
           FnStubInfo &FnInfo = FnStubs[MangledName.str()];
           FnInfo.Init(MO.getSymbolName(), Mang, OutContext);
-          FnInfo.printStub(O, MAI);
+          FnInfo.Stub->print(O, MAI);
           return;
         }
       }
@@ -1076,32 +1061,32 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
-      Info.printStub(O, MAI);
+      Info.Stub->print(O, MAI);
       O << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << "\tmflr r0\n";
       O << "\tbcl 20,31,";
-      Info.printAnonSymbol(O, MAI);
+      Info.AnonSymbol->print(O, MAI);
       O << '\n';
-      Info.printAnonSymbol(O, MAI);
+      Info.AnonSymbol->print(O, MAI);
       O << ":\n";
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(";
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << '-';
-      Info.printAnonSymbol(O, MAI);
+      Info.AnonSymbol->print(O, MAI);
       O << ")\n";
       O << "\tmtlr r0\n";
       O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(";
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << '-';
-      Info.printAnonSymbol(O, MAI);
+      Info.AnonSymbol->print(O, MAI);
       O << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
       OutStreamer.SwitchSection(LSPSection);
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
@@ -1118,19 +1103,19 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
-      Info.printStub(O, MAI);
+      Info.Stub->print(O, MAI);
       O << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << "\tlis r11,ha16(";
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << ")\n";
       O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(";
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       OutStreamer.SwitchSection(LSPSection);
-      Info.printLazyPtr(O, MAI);
+      Info.LazyPtr->print(O, MAI);
       O << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
