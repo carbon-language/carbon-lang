@@ -41,8 +41,7 @@ void Mangler::makeNameProper(SmallVectorImpl<char> &OutName,
                              const Twine &TheName,
                              ManglerPrefixTy PrefixTy) {
   SmallString<256> TmpData;
-  TheName.toVector(TmpData);
-  StringRef X = TmpData.str();
+  StringRef X = TheName.toStringRef(TmpData);
   assert(!X.empty() && "Cannot mangle empty strings");
   
   if (!UseQuotes) {
@@ -188,13 +187,7 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
                                 const Twine &GVName, ManglerPrefixTy PrefixTy) {
   SmallString<256> TmpData;
-  StringRef Name;
-  if (GVName.isSingleStringRef())
-    Name = GVName.getSingleStringRef();
-  else {
-    GVName.toVector(TmpData);
-    Name = TmpData.str();
-  }
+  StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
   
   // If the global name is not led with \1, add the appropriate prefixes.

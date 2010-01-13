@@ -15,13 +15,19 @@ using namespace llvm;
 
 std::string Twine::str() const {
   SmallString<256> Vec;
-  toVector(Vec);
-  return std::string(Vec.begin(), Vec.end());
+  return toStringRef(Vec).str();
 }
 
 void Twine::toVector(SmallVectorImpl<char> &Out) const {
   raw_svector_ostream OS(Out);
   print(OS);
+}
+
+StringRef Twine::toStringRef(SmallVectorImpl<char> &Out) const {
+  if (isSingleStringRef())
+    return getSingleStringRef();
+  toVector(Out);
+  return StringRef(Out.data(), Out.size());
 }
 
 void Twine::printOneChild(raw_ostream &OS, const void *Ptr, 

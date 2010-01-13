@@ -327,12 +327,8 @@ void NamedMDNode::setName(const Twine &NewName) {
   assert (!NewName.isTriviallyEmpty() && "Invalid named metadata name!");
 
   SmallString<256> NameData;
-  NewName.toVector(NameData);
+  StringRef NameRef = NewName.toStringRef(NameData);
 
-  const char *NameStr = NameData.data();
-  unsigned NameLen = NameData.size();
-
-  StringRef NameRef = StringRef(NameStr, NameLen);
   // Name isn't changing?
   if (getName() == NameRef)
     return;

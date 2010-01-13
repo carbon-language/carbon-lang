@@ -170,13 +170,10 @@ void Value::setName(const Twine &NewName) {
     return;
 
   SmallString<256> NameData;
-  NewName.toVector(NameData);
-
-  const char *NameStr = NameData.data();
-  unsigned NameLen = NameData.size();
+  StringRef NameRef = NewName.toStringRef(NameData);
 
   // Name isn't changing?
-  if (getName() == StringRef(NameStr, NameLen))
+  if (getName() == NameRef)
     return;
 
   assert(!getType()->isVoidTy() && "Cannot assign a name to void values!");
@@ -187,7 +184,7 @@ void Value::setName(const Twine &NewName) {
     return;  // Cannot set a name on this value (e.g. constant).
 
   if (!ST) { // No symbol table to update?  Just do the change.
-    if (NameLen == 0) {
+    if (NameRef.empty()) {
       // Free the name for this value.
       Name->Destroy();
       Name = 0;
@@ -201,7 +198,7 @@ void Value::setName(const Twine &NewName) {
     // then reallocated.
 
     // Create the new name.
-    Name = ValueName::Create(NameStr, NameStr+NameLen);
+    Name = ValueName::Create(NameRef.begin(), NameRef.end());
     Name->setValue(this);
     return;
   }
@@ -214,12 +211,12 @@ void Value::setName(const Twine &NewName) {
     Name->Destroy();
     Name = 0;
 
-    if (NameLen == 0)
+    if (NameRef.empty())
       return;
   }
 
   // Name is changing to something new.
-  Name = ST->createValueName(StringRef(NameStr, NameLen), this);
+  Name = ST->createValueName(NameRef, this);
 }
 
 
