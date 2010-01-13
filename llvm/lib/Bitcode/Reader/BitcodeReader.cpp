@@ -1657,6 +1657,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       case bitc::METADATA_ATTACHMENT_ID:
         if (ParseMetadataAttachment()) return true;
         break;
+      case bitc::METADATA_BLOCK_ID:
+        if (ParseMetadata()) return true;
+        break;
       }
       continue;
     }
