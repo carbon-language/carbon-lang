@@ -1682,7 +1682,7 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
   SmallString<60> NameResult;
   raw_svector_ostream(NameResult) << MAI->getPrivateGlobalPrefix() << "BA"
     << FuncName.size() << '_' << FuncName << '_';
-  Mang->makeNameProper(NameResult, BB->getName());
+  Mang->getNameWithPrefix(NameResult, BB->getName());
   if (Suffix[0])
     NameResult += Suffix;
 
