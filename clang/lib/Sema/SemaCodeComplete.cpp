@@ -212,6 +212,7 @@ namespace {
     bool IsNamespaceOrAlias(NamedDecl *ND) const;
     bool IsType(NamedDecl *ND) const;
     bool IsMember(NamedDecl *ND) const;
+    bool IsObjCIvar(NamedDecl *ND) const;
     //@}    
   };  
 }
@@ -710,6 +711,12 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
 
   return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
     isa<ObjCPropertyDecl>(ND);
+}
+
+/// \rief Determines whether the given declaration is an Objective-C
+/// instance variable.
+bool ResultBuilder::IsObjCIvar(NamedDecl *ND) const {
+  return isa<ObjCIvarDecl>(ND);
 }
 
 namespace {
@@ -2052,11 +2059,10 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
       Class = BaseType->getAs<ObjCInterfaceType>()->getDecl();
     
     // Add all ivars from this class and its superclasses.
-    for (; Class; Class = Class->getSuperClass()) {
-      for (ObjCInterfaceDecl::ivar_iterator IVar = Class->ivar_begin(), 
-                                         IVarEnd = Class->ivar_end();
-           IVar != IVarEnd; ++IVar)
-        Results.MaybeAddResult(Result(*IVar, 0), CurContext);
+    if (Class) {
+      CodeCompletionDeclConsumer Consumer(Results, CurContext);
+      Results.setFilter(&ResultBuilder::IsObjCIvar);
+      LookupVisibleDecls(Class, LookupMemberName, Consumer);
     }
   }
   
