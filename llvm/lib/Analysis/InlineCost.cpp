@@ -167,10 +167,15 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
       ++NumVectorInsts; 
     
-    // Noop casts, including ptr <-> int,  don't count.
     if (const CastInst *CI = dyn_cast<CastInst>(II)) {
+      // Noop casts, including ptr <-> int,  don't count.
       if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || 
           isa<PtrToIntInst>(CI))
+        continue;
+      // Result of a cmp instruction is often extended (to be used by other
+      // cmp instructions, logical or return instructions). These are usually
+      // nop on most sane targets.
+      if (isa<CmpInst>(CI->getOperand(0)))
         continue;
     } else if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(II)){
       // If a GEP has all constant indices, it will probably be folded with
