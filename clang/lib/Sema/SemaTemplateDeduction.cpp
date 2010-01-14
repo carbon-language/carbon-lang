@@ -2174,7 +2174,7 @@ MarkUsedTemplateParameters(Sema &SemaRef,
   // FIXME: if !OnlyDeduced, we have to walk the whole subexpression to 
   // find other occurrences of template parameters.
   const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
-  if (!E)
+  if (!DRE)
     return;
 
   const NonTypeTemplateParmDecl *NTTP
