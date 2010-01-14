@@ -102,6 +102,32 @@ unsigned InlineCostAnalyzer::FunctionInfo::
   return Reduction;
 }
 
+// callIsSmall - If a call will lower to a single selection DAG node, or
+// is otherwise deemed small return true.
+// TODO: Perhaps calls like memcpy, strcpy, etc?
+static bool callIsSmall(const Function *F) {
+  if (F && !F->hasLocalLinkage() && F->hasName()) {
+    StringRef Name = F->getName();
+    
+    // These will all likely lower to a single selection DAG node.
+    if (Name == "copysign" || Name == "copysignf" ||
+        Name == "fabs" || Name == "fabsf" || Name == "fabsl" ||
+        Name == "sin" || Name == "sinf" || Name == "sinl" ||
+        Name == "cos" || Name == "cosf" || Name == "cosl" ||
+        Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl" )
+      return true;
+    
+    // These are all likely to be optimized into something smaller.
+    if (Name == "pow" || Name == "powf" || Name == "powl" ||
+        Name == "exp2" || Name == "exp2l" || Name == "exp2f" ||
+        Name == "floor" || Name == "floorf" || Name == "ceil" ||
+        Name == "round" || Name == "ffs" || Name == "ffsl" ||
+        Name == "abs" || Name == "labs" || Name == "llabs")
+      return true;
+  }
+  return false;
+}
+
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
@@ -129,7 +155,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
 
       // Calls often compile into many machine instructions.  Bump up their
       // cost to reflect this.
-      if (!isa<IntrinsicInst>(II))
+      if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction()))
         NumInsts += InlineConstants::CallPenalty;
     }
     
