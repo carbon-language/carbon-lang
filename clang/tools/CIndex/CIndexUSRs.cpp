@@ -67,37 +67,56 @@ static inline Program &GetProgram(CXIndex CIdx) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class USRGenerator : public DeclVisitor<USRGenerator> {
-    llvm::raw_ostream &Out;
-  public:
-    USRGenerator(llvm::raw_ostream &out) : Out(out) {}
-    
-    void VisitNamedDecl(NamedDecl *D);
-    void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
-    void VisitObjCMethodDecl(ObjCMethodDecl *MD);
-    void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-    void VisitRecordDecl(RecordDecl *D);
-    void VisitTypedefDecl(TypedefDecl *D);
-  };
+class USRGenerator : public DeclVisitor<USRGenerator> {
+  llvm::raw_ostream &Out;
+public:
+  USRGenerator(llvm::raw_ostream &out) : Out(out) {}
+  
+  void VisitBlockDecl(BlockDecl *D);
+  void VisitDeclContext(DeclContext *D);
+  void VisitFunctionDecl(FunctionDecl *D);
+  void VisitNamedDecl(NamedDecl *D);
+  void VisitNamespaceDecl(NamespaceDecl *D);
+  void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
+  void VisitObjCMethodDecl(ObjCMethodDecl *MD);
+  void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+  void VisitRecordDecl(RecordDecl *D);
+  void VisitTypedefDecl(TypedefDecl *D);
+};
 } // end anonymous namespace
 
+void USRGenerator::VisitBlockDecl(BlockDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  // FIXME: Better support for anonymous blocks.
+  Out << "@B^anon";
+}
+
+void USRGenerator::VisitDeclContext(DeclContext *DC) {
+  if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
+    Visit(D);
+}
+
+void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  Out << "@F^" << D->getNameAsString();
+}
 
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
-  DeclContext *DC = D->getDeclContext();
-  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
-    Visit(DCN);
-  
+  VisitDeclContext(D->getDeclContext());
   const std::string &s = D->getNameAsString();
   assert(!s.empty());
-  Out << '@' << s;
+  Out << "@^" << s;
+}
+
+void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  Out << "@N^" << D->getNameAsString();
 }
 
 void USRGenerator::VisitRecordDecl(RecordDecl *D) {
-  DeclContext *DC = D->getDeclContext();
-  if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
-    Visit(DCN);
-  
-  Out << "@struct^";
+  VisitDeclContext(D->getDeclContext());
+  Out << "@S^";
+  // FIXME: Better support for anonymous structures. 
   const std::string &s = D->getNameAsString();
   if (s.empty())
     Out << "^anon";
