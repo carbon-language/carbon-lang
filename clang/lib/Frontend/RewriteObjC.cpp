@@ -126,6 +126,7 @@ namespace {
     // Block related declarations.
     llvm::SmallPtrSet<ValueDecl *, 8> BlockByCopyDecls;
     llvm::SmallPtrSet<ValueDecl *, 8> BlockByRefDecls;
+    llvm::DenseMap<ValueDecl *, unsigned> BlockByRefDeclNo;
     llvm::SmallPtrSet<ValueDecl *, 8> ImportedBlockDecls;
 
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
@@ -252,6 +253,8 @@ namespace {
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(Decl *Dcl);
     void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
+    void RewriteByRefString(std::string &ResultStr, const std::string &Name,
+                            ValueDecl *VD);
     void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
@@ -3760,6 +3763,15 @@ void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
   }
 }
 
+void RewriteObjC::RewriteByRefString(std::string &ResultStr, 
+                                     const std::string &Name,
+                                     ValueDecl *VD) {
+  assert(BlockByRefDeclNo.count(VD) && 
+         "RewriteByRefString: ByRef decl missing");
+  ResultStr += "struct __Block_byref_" + Name + 
+    "_" + utostr(BlockByRefDeclNo[VD]) ;
+}
+
 std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
                                                    const char *funcName,
                                                    std::string Tag) {
@@ -3805,7 +3817,9 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
        E = BlockByRefDecls.end(); I != E; ++I) {
     S += "  ";
     std::string Name = (*I)->getNameAsString();
-    std::string TypeString = "struct __Block_byref_" + Name + " *";
+    std::string TypeString;
+    RewriteByRefString(TypeString, Name, (*I));
+    TypeString += " *";
     Name = TypeString + Name;
     S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by ref\n";
   }
@@ -3940,7 +3954,8 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
-        std::string TypeString = "struct __Block_byref_" + FieldName;
+        std::string TypeString;
+        RewriteByRefString(TypeString, FieldName, (*I));
         TypeString += " *";
         FieldName = TypeString + FieldName;
         ArgName = TypeString + ArgName;
@@ -4521,11 +4536,12 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   X = SM->getInstantiationLoc(X);
   const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
-  std::string ByrefType = "struct __Block_byref_";
-  ByrefType += Name;
+  std::string ByrefType;
+  RewriteByRefString(ByrefType, Name, ND);
   ByrefType += " {\n";
   ByrefType += "  void *__isa;\n";
-  ByrefType += " struct __Block_byref_" + Name + " *__forwarding;\n";
+  RewriteByRefString(ByrefType, Name, ND);
+  ByrefType += " *__forwarding;\n";
   ByrefType += " int __flags;\n";
   ByrefType += " int __size;\n";
   // Add void *__Block_byref_id_object_copy; 
@@ -4570,14 +4586,17 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   if (HasCopyAndDispose)
     flags |= BLOCK_HAS_COPY_DISPOSE;
   Name = ND->getNameAsString();
-  ByrefType = "struct __Block_byref_" + Name;
+  ByrefType.clear();
+  RewriteByRefString(ByrefType, Name, ND);
   if (!hasInit) {
     ByrefType += " " + Name + " = {(void*)";
     ByrefType += utostr(isa);
     ByrefType += ", &" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
-    ByrefType += "sizeof(struct __Block_byref_" + Name + ")";
+    ByrefType += "sizeof(";
+    RewriteByRefString(ByrefType, Name, ND);
+    ByrefType += ")";
     if (HasCopyAndDispose) {
       ByrefType += ", __Block_byref_id_object_copy_";
       ByrefType += utostr(flag);
@@ -4599,7 +4618,9 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += ", &" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
-    ByrefType += "sizeof(struct __Block_byref_" + Name + "), ";
+    ByrefType += "sizeof(";
+    RewriteByRefString(ByrefType, Name, ND);
+    ByrefType += "), ";
     if (HasCopyAndDispose) {
       ByrefType += "__Block_byref_id_object_copy_";
       ByrefType += utostr(flag);
@@ -4971,8 +4992,13 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
         else if (ND->getType()->isFunctionPointerType())
           CheckFunctionPointerDecl(ND->getType(), ND);
         if (VarDecl *VD = dyn_cast<VarDecl>(SD)) 
-          if (VD->hasAttr<BlocksAttr>())
+          if (VD->hasAttr<BlocksAttr>()) {
+            static unsigned uniqueByrefDeclCount = 0;
+            assert(!BlockByRefDeclNo.count(ND) &&
+              "RewriteFunctionBodyOrGlobalInitializer: Duplicate byref decl");
+            BlockByRefDeclNo[ND] = uniqueByrefDeclCount++;
             RewriteByRefVar(VD);
+          }
       }
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
         if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
