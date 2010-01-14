@@ -36,7 +36,7 @@ PREFIX = /usr/local
 
 # Unless assertions are forced on in the GMAKE command line, enable them.
 ifndef ENABLE_ASSERTIONS
-LLVM_ASSERTIONS := yes
+ENABLE_ASSERTIONS := yes
 endif
 
 # Default is optimized build.
@@ -59,7 +59,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) \
-	    $(LLVM_ASSERTIONS) $(LLVM_OPTIMIZED) \
+	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 
