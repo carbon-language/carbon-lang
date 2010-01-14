@@ -242,13 +242,11 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD, bool isGlobal) {
       MDValues.push_back(std::make_pair(MD, 1U));
       MDValueMap[MD] = MDValues.size();
       MDValueID = MDValues.size();
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {    
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
         if (Value *V = N->getOperand(i))
           EnumerateValue(V);
         else
           EnumerateType(Type::getVoidTy(MD->getContext()));
-      }
-      return;
     }
     return;
   }
