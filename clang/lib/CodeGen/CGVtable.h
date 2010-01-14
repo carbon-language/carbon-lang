@@ -80,12 +80,47 @@ public:
 
   /// getBaseOffset - Returns the base class offset.
   uint64_t getBaseOffset() const { return BaseOffset; }
-  
+
   friend bool operator==(const BaseSubobject &LHS, const BaseSubobject &RHS) {
     return LHS.Base == RHS.Base && LHS.BaseOffset == RHS.BaseOffset;
  }
 };
-  
+
+} // end namespace CodeGen
+} // end namespace clang
+
+namespace llvm {
+
+template<> struct DenseMapInfo<clang::CodeGen::BaseSubobject> {
+  static clang::CodeGen::BaseSubobject getEmptyKey() {
+    return clang::CodeGen::BaseSubobject(
+      DenseMapInfo<const clang::CXXRecordDecl *>::getEmptyKey(),
+      DenseMapInfo<uint64_t>::getEmptyKey());
+  }
+
+  static clang::CodeGen::BaseSubobject getTombstoneKey() {
+    return clang::CodeGen::BaseSubobject(
+      DenseMapInfo<const clang::CXXRecordDecl *>::getTombstoneKey(),
+      DenseMapInfo<uint64_t>::getTombstoneKey());
+  }
+
+  static unsigned getHashValue(const clang::CodeGen::BaseSubobject &Base) {
+    return 
+      DenseMapInfo<const clang::CXXRecordDecl *>::getHashValue(Base.getBase()) ^
+      DenseMapInfo<uint64_t>::getHashValue(Base.getBaseOffset());
+  }
+
+  static bool isEqual(const clang::CodeGen::BaseSubobject &LHS, 
+                      const clang::CodeGen::BaseSubobject &RHS) {
+    return LHS == RHS;
+  }
+};
+
+}
+
+namespace clang {
+namespace CodeGen {
+
 class CGVtableInfo {
 public:
   typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
