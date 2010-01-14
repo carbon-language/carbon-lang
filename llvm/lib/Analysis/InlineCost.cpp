@@ -102,11 +102,15 @@ unsigned InlineCostAnalyzer::FunctionInfo::
   return Reduction;
 }
 
-// callIsSmall - If a call will lower to a single selection DAG node, or
+// callIsSmall - If a call is likely to lower to a single target instruction, or
 // is otherwise deemed small return true.
 // TODO: Perhaps calls like memcpy, strcpy, etc?
 static bool callIsSmall(const Function *F) {
-  if (F && !F->hasLocalLinkage() && F->hasName()) {
+  if (!F) return false;
+  
+  if (F->hasLocalLinkage()) return false;
+  
+  if (F->hasName()) {
     StringRef Name = F->getName();
     
     // These will all likely lower to a single selection DAG node.
