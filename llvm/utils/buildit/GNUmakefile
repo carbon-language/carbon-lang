@@ -37,8 +37,6 @@ PREFIX = /usr/local
 # Unless assertions are forced on in the GMAKE command line, enable them.
 ifndef ENABLE_ASSERTIONS
 LLVM_ASSERTIONS := yes
-else
-LLVM_ASSERTIONS := no
 endif
 
 # Default is optimized build.
