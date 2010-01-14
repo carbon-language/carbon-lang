@@ -217,8 +217,11 @@ static std::string SymbolNameForClass(const std::string &ClassName) {
 static std::string SymbolNameForMethod(const std::string &ClassName, const
   std::string &CategoryName, const std::string &MethodName, bool isClassMethod)
 {
-  return "_OBJC_METHOD_" + ClassName + "("+CategoryName+")"+
-            (isClassMethod ? "+" : "-") + MethodName;
+  std::string MethodNameColonStripped = MethodName;
+  std::replace(MethodNameColonStripped.begin(), MethodNameColonStripped.end(),
+      ':', '_');
+  return std::string(isClassMethod ? "_c_" : "_i_") + ClassName + "_" +
+    CategoryName + "_" + MethodNameColonStripped;
 }
 
 CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
