@@ -144,6 +144,19 @@ CXXRecordDecl::setBases(ASTContext &C,
   }
 }
 
+/// Callback function for CXXRecordDecl::forallBases that acknowledges
+/// that it saw a base class.
+static bool SawBase(const CXXRecordDecl *, void *) {
+  return true;
+}
+
+bool CXXRecordDecl::hasAnyDependentBases() const {
+  if (!isDependentContext())
+    return false;
+
+  return !forallBases(SawBase, 0);
+}
+
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
   return getCopyConstructor(Context, Qualifiers::Const) != 0;
 }

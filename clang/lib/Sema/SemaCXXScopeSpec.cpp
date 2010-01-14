@@ -210,6 +210,28 @@ bool Sema::isUnknownSpecialization(const CXXScopeSpec &SS) {
   return getCurrentInstantiationOf(NNS) == 0;
 }
 
+/// \brief Determine whether the given scope specifier refers to a
+/// current instantiation that has any dependent base clases.
+///
+/// This check is typically used when we've performed lookup into the
+/// current instantiation of a template, but that lookup failed. When
+/// there are dependent bases present, however, the lookup needs to be
+/// delayed until template instantiation time.
+bool Sema::isCurrentInstantiationWithDependentBases(const CXXScopeSpec &SS) {
+  if (!SS.isSet())
+    return false;
+
+  NestedNameSpecifier *NNS = (NestedNameSpecifier*)SS.getScopeRep();
+  if (!NNS->isDependent())
+    return false;
+
+  CXXRecordDecl *CurrentInstantiation = getCurrentInstantiationOf(NNS);
+  if (!CurrentInstantiation)
+    return false;
+
+  return CurrentInstantiation->hasAnyDependentBases();
+}
+
 /// \brief If the given nested name specifier refers to the current
 /// instantiation, return the declaration that corresponds to that
 /// current instantiation (C++0x [temp.dep.type]p1).

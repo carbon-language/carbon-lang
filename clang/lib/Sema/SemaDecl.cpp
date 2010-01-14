@@ -4785,8 +4785,18 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     if (Previous.isAmbiguous())
       return DeclPtrTy();
 
-    // A tag 'foo::bar' must already exist.
     if (Previous.empty()) {
+      // Name lookup did not find anything. However, if the
+      // nested-name-specifier refers to the current instantiation,
+      // and that current instantiation has any dependent base
+      // classes, we might find something at instantiation time: treat
+      // this as a dependent elaborated-type-specifier.
+      if (isCurrentInstantiationWithDependentBases(SS)) {
+        IsDependent = true;
+        return DeclPtrTy();
+      }
+
+      // A tag 'foo::bar' must already exist.
       Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
       Name = 0;
       Invalid = true;

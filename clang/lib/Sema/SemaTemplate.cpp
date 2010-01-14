@@ -1608,15 +1608,19 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     TemplateTy Template;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
                                           EnteringContext, Template);
-    if (TNK == TNK_Non_template) {
+    if (TNK == TNK_Non_template && 
+        isCurrentInstantiationWithDependentBases(SS)) {
+      // This is a dependent template.
+    } else if (TNK == TNK_Non_template) {
       Diag(Name.getSourceRange().getBegin(), 
            diag::err_template_kw_refers_to_non_template)
         << GetNameFromUnqualifiedId(Name)
         << Name.getSourceRange();
       return TemplateTy();
+    } else {
+      // We found something; return it.
+      return Template;
     }
-
-    return Template;
   }
 
   NestedNameSpecifier *Qualifier
@@ -4765,6 +4769,14 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
   Decl *Referenced = 0;
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
+    if (CurrentInstantiation && CurrentInstantiation->hasAnyDependentBases()) {
+      // We performed a lookup in the current instantiation and didn't
+      // find anything. However, this current instantiation has
+      // dependent bases, so we might be able to find something at
+      // instantiation time: just build a TypenameType and move on.
+      return Context.getTypenameType(NNS, &II);
+    }
+
     DiagID = diag::err_typename_nested_not_found;
     break;
 

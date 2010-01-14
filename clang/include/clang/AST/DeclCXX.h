@@ -393,6 +393,9 @@ public:
     return reverse_base_class_const_iterator(vbases_begin());
  }
 
+  /// \brief Determine whether this class has any dependent base classes.
+  bool hasAnyDependentBases() const;
+
   /// Iterator access to method members.  The method iterator visits
   /// all method members of the class, including non-instance methods,
   /// special methods, etc.
