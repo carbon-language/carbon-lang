@@ -127,11 +127,11 @@ public:
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
-  void EnumerateMetadata(const MetadataBase *MD, bool isGlobal);
+  void EnumerateMetadata(const MetadataBase *MD);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
-  void EnumerateValue(const Value *V, bool isGlobal = true);
+  void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
-  void EnumerateOperandType(const Value *V, bool isGlobal);
+  void EnumerateOperandType(const Value *V);
   void EnumerateAttributes(const AttrListPtr &PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
