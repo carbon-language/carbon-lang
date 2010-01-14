@@ -2191,7 +2191,7 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 /// parameter of the given member function (@c Method) from the
 /// expression @p From.
 ImplicitConversionSequence
-Sema::TryObjectArgumentInitialization(QualType FromType,
+Sema::TryObjectArgumentInitialization(QualType OrigFromType,
                                       CXXMethodDecl *Method,
                                       CXXRecordDecl *ActingContext) {
   QualType ClassType = Context.getTypeDeclType(ActingContext);
@@ -2208,6 +2208,7 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
   ICS.setBad();
 
   // We need to have an object of class type.
+  QualType FromType = OrigFromType;
   if (const PointerType *PT = FromType->getAs<PointerType>())
     FromType = PT->getPointeeType();
 
@@ -2228,7 +2229,8 @@ Sema::TryObjectArgumentInitialization(QualType FromType,
   if (ImplicitParamType.getCVRQualifiers() 
                                     != FromTypeCanon.getLocalCVRQualifiers() &&
       !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon)) {
-    ICS.Bad.init(BadConversionSequence::bad_qualifiers, FromType, ImplicitParamType);
+    ICS.Bad.init(BadConversionSequence::bad_qualifiers,
+                 OrigFromType, ImplicitParamType);
     return ICS;
   }
 
@@ -4384,7 +4386,57 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   QualType FromTy = Conv.Bad.getFromType();
   QualType ToTy = Conv.Bad.getToType();
 
-  // TODO: specialize based on the kind of mismatch
+  // Do some hand-waving analysis to see if the non-viability is due to a
+  CanQualType CFromTy = S.Context.getCanonicalType(FromTy);
+  CanQualType CToTy = S.Context.getCanonicalType(ToTy);
+  if (CanQual<ReferenceType> RT = CToTy->getAs<ReferenceType>())
+    CToTy = RT->getPointeeType();
+  else {
+    // TODO: detect and diagnose the full richness of const mismatches.
+    if (CanQual<PointerType> FromPT = CFromTy->getAs<PointerType>())
+      if (CanQual<PointerType> ToPT = CToTy->getAs<PointerType>())
+        CFromTy = FromPT->getPointeeType(), CToTy = ToPT->getPointeeType();
+  }
+
+  if (CToTy.getUnqualifiedType() == CFromTy.getUnqualifiedType() &&
+      !CToTy.isAtLeastAsQualifiedAs(CFromTy)) {
+    // It is dumb that we have to do this here.
+    while (isa<ArrayType>(CFromTy))
+      CFromTy = CFromTy->getAs<ArrayType>()->getElementType();
+    while (isa<ArrayType>(CToTy))
+      CToTy = CFromTy->getAs<ArrayType>()->getElementType();
+
+    Qualifiers FromQs = CFromTy.getQualifiers();
+    Qualifiers ToQs = CToTy.getQualifiers();
+
+    if (FromQs.getAddressSpace() != ToQs.getAddressSpace()) {
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_addrspace)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << FromTy
+        << FromQs.getAddressSpace() << ToQs.getAddressSpace()
+        << (unsigned) isObjectArgument << I+1;
+      return;
+    }
+
+    unsigned CVR = FromQs.getCVRQualifiers() & ~ToQs.getCVRQualifiers();
+    assert(CVR && "unexpected qualifiers mismatch");
+
+    if (isObjectArgument) {
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_cvr_this)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << FromTy << (CVR - 1);
+    } else {
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_cvr)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << FromTy << (CVR - 1) << I+1;
+    }
+    return;
+  }
+
+  // TODO: specialize more based on the kind of mismatch
   S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv)
     << (unsigned) FnKind << FnDesc
     << (FromExpr ? FromExpr->getSourceRange() : SourceRange())

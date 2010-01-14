@@ -78,8 +78,11 @@ namespace test1 {
     void foo(int n, const char *s, int t, ...); // expected-note {{candidate function not viable: requires at least 3 arguments, but 2 were provided}}
     void foo(int n, const char *s, int t, int u = 0); // expected-note {{candidate function not viable: requires at least 3 arguments, but 2 were provided}}
 
-    void bar(double d); //expected-note {{candidate function not viable: no known conversion from 'class test1::A const' to 'class test1::A' for object argument}}
-    void bar(int i); //expected-note {{candidate function not viable: no known conversion from 'class test1::A const' to 'class test1::A' for object argument}}
+    void bar(double d); //expected-note {{candidate function not viable: 'this' argument has type 'class test1::A const', but method is not marked const}}
+    void bar(int i); //expected-note {{candidate function not viable: 'this' argument has type 'class test1::A const', but method is not marked const}}
+
+    void baz(A &d); // expected-note {{candidate function not viable: 1st argument ('class test1::A const') would lose const qualifier}}
+    void baz(int i); // expected-note {{candidate function not viable: no known conversion from 'class test1::A const' to 'int' for 1st argument}} 
   };
 
   void test() {
@@ -88,6 +91,8 @@ namespace test1 {
 
     const A b;
     b.bar(0); //expected-error {{no matching member function for call to 'bar'}}
+
+    a.baz(b); //expected-error {{no matching member function for call to 'baz'}}
   }
 }
 

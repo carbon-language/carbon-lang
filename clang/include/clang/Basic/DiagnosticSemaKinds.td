@@ -925,6 +925,30 @@ def note_ovl_candidate_bad_conv : Note<"candidate "
     "function (the implicit copy assignment operator)}0%1"
     " not viable: no known conversion from %2 to %3 for "
     "%select{%ordinal5 argument|object argument}4">;
+def note_ovl_candidate_bad_addrspace : Note<"candidate "
+    "%select{function|function|constructor|"
+    "function |function |constructor |"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0%1 not viable: "
+    "%select{%ordinal6|'this'}5 argument (%2) is in "
+    "address space %3, but parameter must be in address space %4">;
+def note_ovl_candidate_bad_cvr_this : Note<"candidate "
+    "%select{|function|||function||||"
+    "function (the implicit copy assignment operator)}0 not viable: "
+    "'this' argument has type %2, but method is not marked "
+    "%select{const|volatile|const or volatile|restrict|const or restrict|"
+    "volatile or restrict|const, volatile, or restrict}3">;
+def note_ovl_candidate_bad_cvr : Note<"candidate "
+    "%select{function|function|constructor|"
+    "function |function |constructor |"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0%1 not viable: "
+    "%ordinal4 argument (%2) would lose "
+    "%select{const|volatile|const and volatile|restrict|const and restrict|"
+    "volatile and restrict|const, volatile, and restrict}3 qualifier"
+    "%select{||s||s|s|s}3">;
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion of %0 to %1">;
 def note_ovl_builtin_binary_candidate : Note<
