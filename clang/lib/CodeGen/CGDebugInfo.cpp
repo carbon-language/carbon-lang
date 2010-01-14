@@ -1001,10 +1001,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   const Decl *D = GD.getDecl();
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     Name = getFunctionName(FD);
+    if (Name[0] == '\01')
+      Name = Name.substr(1);
     // Use mangled name as linkage name for c/c++ functions.
-    llvm::StringRef MangledName(CGM.getMangledName(GD));
-    if (!Name.equals(MangledName))
-      LinkageName = MangledName;
+    LinkageName = CGM.getMangledName(GD);
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
