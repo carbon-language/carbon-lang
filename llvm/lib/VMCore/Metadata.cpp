@@ -121,6 +121,40 @@ MDNode::~MDNode() {
     Op->~MDNodeOperand();
 }
 
+static Function *getFunctionHelper(const MDNode *N,
+                                   SmallPtrSet<const MDNode *, 32> &Visited) {
+  assert(N->isFunctionLocal() && "Should only be called on function-local MD");
+  Function *F = NULL;
+  // Only visit each MDNode once.
+  if (!Visited.insert(N)) return F;
+  
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    Value *V = N->getOperand(i);
+    if (!V) continue;
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      F = I->getParent()->getParent();
+    else if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
+      F = BB->getParent();
+    else if (Argument *A = dyn_cast<Argument>(V))
+      F = A->getParent();
+    else if (MDNode *MD = dyn_cast<MDNode>(V))
+      if (MD->isFunctionLocal())
+        F = getFunctionHelper(MD, Visited);
+    if (F) break;
+  }
+  
+  return F;
+}
+
+// getFunction - If this metadata is function-local and recursively has a
+// function-local operand, return the first such operand's parent function.
+// Otherwise, return null. 
+Function *MDNode::getFunction() const {
+  if (!isFunctionLocal()) return NULL;
+  SmallPtrSet<const MDNode *, 32> Visited;
+  return getFunctionHelper(this, Visited);
+}
+
 // destroy - Delete this node.  Only when there are no uses.
 void MDNode::destroy() {
   setValueSubclassData(getSubclassDataFromValue() | DestroyFlag);

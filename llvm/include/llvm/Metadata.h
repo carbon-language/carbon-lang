@@ -151,6 +151,11 @@ public:
   bool isFunctionLocal() const {
     return (getSubclassDataFromValue() & FunctionLocalBit) != 0;
   }
+  
+  // getFunction - If this metadata is function-local and recursively has a
+  // function-local operand, return the first such operand's parent function.
+  // Otherwise, return null. 
+  Function *getFunction() const;
 
   // destroy - Delete this node.  Only when there are no uses.
   void destroy();
