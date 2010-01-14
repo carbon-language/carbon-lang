@@ -541,6 +541,33 @@ static bool ModifierIs(const char *Modifier, unsigned ModifierLen,
   return StrLen-1 == ModifierLen && !memcmp(Modifier, Str, StrLen-1);
 }
 
+/// ScanForward - Scans forward, looking for the given character, skipping
+/// nested clauses and escaped characters.
+static const char *ScanFormat(const char *I, const char *E, char Target) {
+  unsigned Depth = 0;
+
+  for ( ; I != E; ++I) {
+    if (Depth == 0 && *I == Target) return I;
+    if (Depth != 0 && *I == '}') Depth--;
+
+    if (*I == '%') {
+      I++;
+      if (I == E) break;
+
+      // Escaped characters get implicitly skipped here.
+
+      // Format specifier.
+      if (!isdigit(*I) && !ispunct(*I)) {
+        for (I++; I != E && !isdigit(*I) && *I != '{'; I++) ;
+        if (I == E) break;
+        if (*I == '{')
+          Depth++;
+      }
+    }
+  }
+  return E;
+}
+
 /// HandleSelectModifier - Handle the integer 'select' modifier.  This is used
 /// like this:  %select{foo|bar|baz}2.  This means that the integer argument
 /// "%2" has a value from 0-2.  If the value is 0, the diagnostic prints 'foo'.
@@ -553,7 +580,7 @@ static void HandleSelectModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
 
   // Skip over 'ValNo' |'s.
   while (ValNo) {
-    const char *NextVal = std::find(Argument, ArgumentEnd, '|');
+    const char *NextVal = ScanFormat(Argument, ArgumentEnd, '|');
     assert(NextVal != ArgumentEnd && "Value for integer select modifier was"
            " larger than the number of options in the diagnostic string!");
     Argument = NextVal+1;  // Skip this string.
@@ -561,7 +588,7 @@ static void HandleSelectModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
   }
 
   // Get the end of the value.  This is either the } or the |.
-  const char *EndPtr = std::find(Argument, ArgumentEnd, '|');
+  const char *EndPtr = ScanFormat(Argument, ArgumentEnd, '|');
 
   // Recursively format the result of the select clause into the output string.
   DInfo.FormatDiagnostic(Argument, EndPtr, OutStr);
@@ -717,11 +744,11 @@ static void HandlePluralModifier(unsigned ValNo,
     }
     if (EvalPluralExpr(ValNo, Argument, ExprEnd)) {
       Argument = ExprEnd + 1;
-      ExprEnd = std::find(Argument, ArgumentEnd, '|');
+      ExprEnd = ScanFormat(Argument, ArgumentEnd, '|');
       OutStr.append(Argument, ExprEnd);
       return;
     }
-    Argument = std::find(Argument, ArgumentEnd - 1, '|') + 1;
+    Argument = ScanFormat(Argument, ArgumentEnd - 1, '|') + 1;
   }
 }
 
@@ -754,8 +781,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       OutStr.append(DiagStr, StrEnd);
       DiagStr = StrEnd;
       continue;
-    } else if (DiagStr[1] == '%') {
-      OutStr.push_back('%');  // %% -> %.
+    } else if (ispunct(DiagStr[1])) {
+      OutStr.push_back(DiagStr[1]);  // %% -> %.
       DiagStr += 2;
       continue;
     }
@@ -784,8 +811,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         ++DiagStr; // Skip {.
         Argument = DiagStr;
 
-        for (; DiagStr[0] != '}'; ++DiagStr)
-          assert(DiagStr[0] && "Mismatched {}'s in diagnostic string!");
+        DiagStr = ScanFormat(DiagStr, DiagEnd, '}');
+        assert(DiagStr != DiagEnd && "Mismatched {}'s in diagnostic string!");
         ArgumentLen = DiagStr-Argument;
         ++DiagStr;  // Skip }.
       }
