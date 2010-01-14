@@ -971,17 +971,17 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   FileManager &FMgr = CXXUnit->getFileManager();
   const FileEntry *File = FMgr.getFile(source_name,
                                        source_name+strlen(source_name));
-  if (!File) {
-    CXCursor C = { CXCursor_InvalidFile, 0, 0, 0 };
-    return C;
-  }
+  if (!File)
+    return clang_getNullCursor();
+
   SourceLocation SLoc =
     CXXUnit->getSourceManager().getLocation(File, line, column);
 
   ASTLocation LastLoc = CXXUnit->getLastASTLocation();
-
   ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc,
                                           &LastLoc);
+  
+  // FIXME: This doesn't look thread-safe.
   if (ALoc.isValid())
     CXXUnit->setLastASTLocation(ALoc);
 
