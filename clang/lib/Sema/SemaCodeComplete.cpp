@@ -664,6 +664,9 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
   if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(ND))
     ND = Using->getTargetDecl();
 
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(ND))
+    return Record->isInjectedClassName();
+    
   return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
     isa<ObjCPropertyDecl>(ND);
 }
@@ -2148,14 +2151,6 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
         if (IsDependent)
           Results.MaybeAddResult(Result("template"));
       }
-
-      // We could have the start of a nested-name-specifier. Add those
-      // results as well.
-      // FIXME: We should really walk base classes to produce
-      // nested-name-specifiers so that we produce more-precise results.
-      Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-      CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                           CurContext, Results);
     }
   } else if (!IsArrow && BaseType->getAsObjCInterfacePointerType()) {
     // Objective-C property reference.
