@@ -1045,6 +1045,7 @@ MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
     .addReg(SrcReg).addMBB(BB)
     .addReg(ShiftReg2).addMBB(LoopBB);
 
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return RemBB;
 }
 
