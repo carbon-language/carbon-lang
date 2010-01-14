@@ -95,7 +95,8 @@ public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser)
     : TargetAsmParser(T), Parser(_Parser) {}
 
-  virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst);
+  virtual bool ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+                                MCInst &Inst);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
@@ -579,7 +580,8 @@ bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
 }
 
 /// Parse an arm instruction mnemonic followed by its operands.
-bool ARMAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
+bool ARMAsmParser::ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+                                    MCInst &Inst) {
   SmallVector<ARMOperand, 7> Operands;
 
   Operands.push_back(ARMOperand::CreateToken(Name));

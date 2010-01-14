@@ -18,8 +18,8 @@ namespace llvm {
 /// between parsing an asm instruction and recognizing it.
 class MCParsedAsmOperand {
 public:  
-  MCParsedAsmOperand();
-  virtual ~MCParsedAsmOperand() = 0;
+  MCParsedAsmOperand() {}
+  virtual ~MCParsedAsmOperand() {}
   // TODO: Out of line vfun.
 };
 

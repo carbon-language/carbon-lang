@@ -60,7 +60,8 @@ public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser)
     : TargetAsmParser(T), Parser(_Parser) {}
 
-  virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst);
+  virtual bool ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+                                MCInst &Inst);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
@@ -401,7 +402,8 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   return false;
 }
 
-bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
+bool X86ATTAsmParser::ParseInstruction(const StringRef &Name,
+                                       SMLoc NameLoc, MCInst &Inst) {
   SmallVector<X86Operand, 8> Operands;
 
   Operands.push_back(X86Operand::CreateToken(Name));

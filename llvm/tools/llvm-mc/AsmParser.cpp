@@ -711,7 +711,7 @@ bool AsmParser::ParseStatement() {
   }
 
   MCInst Inst;
-  if (getTargetParser().ParseInstruction(IDVal, Inst))
+  if (getTargetParser().ParseInstruction(IDVal, IDLoc, Inst))
     return true;
   
   if (Lexer.isNot(AsmToken::EndOfStatement))

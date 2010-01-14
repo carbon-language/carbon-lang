@@ -10,13 +10,13 @@
 #ifndef LLVM_TARGET_TARGETPARSER_H
 #define LLVM_TARGET_TARGETPARSER_H
 
-#include "llvm/MC/MCAsmLexer.h"
-
 namespace llvm {
 class MCAsmParser;
 class MCInst;
 class StringRef;
 class Target;
+class SMLoc;
+class AsmToken;
 
 /// TargetAsmParser - Generic interface to target specific assembly parsers.
 class TargetAsmParser {
@@ -45,7 +45,8 @@ public:
   /// \param Name - The instruction name.
   /// \param Inst [out] - On success, the parsed instruction.
   /// \return True on failure.
-  virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst) = 0;
+  virtual bool ParseInstruction(const StringRef &Name, SMLoc NameLoc,
+                                MCInst &Inst) = 0;
 
   /// ParseDirective - Parse a target specific assembler directive
   ///

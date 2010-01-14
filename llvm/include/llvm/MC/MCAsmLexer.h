@@ -20,7 +20,8 @@ class SMLoc;
 class Target;
 
 /// AsmToken - Target independent representation for an assembler token.
-struct AsmToken {
+class AsmToken {
+public:
   enum TokenKind {
     // Markers
     Eof, Error,
