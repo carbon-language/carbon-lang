@@ -4258,10 +4258,10 @@ std::pair<unsigned, const TargetRegisterClass*>
 ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                 EVT VT) const {
   if (Constraint.size() == 1) {
-    // GCC RS6000 Constraint Letters
+    // GCC ARM Constraint Letters
     switch (Constraint[0]) {
     case 'l':
-      if (Subtarget->isThumb1Only())
+      if (Subtarget->isThumb())
         return std::make_pair(0U, ARM::tGPRRegisterClass);
       else
         return std::make_pair(0U, ARM::GPRRegisterClass);
