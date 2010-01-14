@@ -1330,7 +1330,7 @@ static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
   // We avoid checking when there are errors, as the CFG won't faithfully match
-  // the users code.
+  // the user's code.
   if (getDiagnostics().hasErrorOccurred())
     return;
   if (Diags.getDiagnosticLevel(diag::warn_unreachable) == Diagnostic::Ignored)
