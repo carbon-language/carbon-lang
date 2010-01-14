@@ -1916,6 +1916,9 @@ VisibleDeclsRecord::ShadowMapEntry::end() {
 }
 
 NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
+  // Look through using declarations.
+  ND = ND->getUnderlyingDecl();
+  
   unsigned IDNS = ND->getIdentifierNamespace();
   std::list<ShadowMap>::reverse_iterator SM = ShadowMaps.rbegin();
   for (std::list<ShadowMap>::reverse_iterator SMEnd = ShadowMaps.rend();
