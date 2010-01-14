@@ -1649,7 +1649,7 @@ void AsmPrinter::printLabel(unsigned Id) const {
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
-/// overried this to format as appropriate.
+/// override this to format as appropriate.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                  unsigned AsmVariant, const char *ExtraCode) {
   // Target doesn't support this yet!
