@@ -289,7 +289,7 @@ Clang:</p>
 <tr><td>Example:</td><td><tt>"must be a %select{unary|binary|unary or binary}2
      operator"</tt></td></tr>
 <tr><td>Class:</td><td>Integers</td></tr>
-<tr><td>Description:</td><td>This format specifier is used to merge multiple
+<tr><td>Description:</td><td><p>This format specifier is used to merge multiple
     related diagnostics together into one common one, without requiring the
     difference to be specified as an English string argument.  Instead of
     specifying the string, the diagnostic gets an integer argument and the
@@ -298,7 +298,8 @@ Clang:</p>
     it is 1 it prints 'binary' if it is 2, it prints 'unary or binary'.  This
     allows other language translations to substitute reasonable words (or entire
     phrases) based on the semantics of the diagnostic instead of having to do
-    things textually.</td></tr>
+    things textually.</p>
+    <p>The selected string does undergo formatting.</p></td></tr>
 
 <tr><td colspan="2"><b>"plural" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"you have %1 %plural{1:mouse|:mice}1 connected to
@@ -329,6 +330,15 @@ Clang:</p>
 	<p>The parser is very unforgiving. A syntax error, even whitespace, will
 	abort, as will a failure to match the argument against any
 	expression.</p></td></tr>
+
+<tr><td colspan="2"><b>"ordinal" format</b></td></tr>
+<tr><td>Example:</td><td><tt>"ambiguity in %ordinal0 argument"</tt></td></tr>
+<tr><td>Class:</td><td>Integers</td></tr>
+<tr><td>Description:</td><td><p>This is a formatter which represents the
+    argument number as an ordinal:  the value <tt>1</tt> becomes <tt>1st</tt>,
+    <tt>3</tt> becomes <tt>3rd</tt>, and so on.  Values less than <tt>1</tt>
+    are not supported.</p>
+    <p>This formatter is currently hard-coded to use English ordinals.</p></td></tr>
 
 <tr><td colspan="2"><b>"objcclass" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"method %objcclass0 not found"</tt></td></tr>
