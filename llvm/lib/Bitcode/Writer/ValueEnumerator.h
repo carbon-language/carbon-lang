@@ -105,7 +105,6 @@ public:
   
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
-  ValueList getMDValues() { return MDValues; }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 

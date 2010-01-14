@@ -554,30 +554,22 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
     Stream.ExitBlock();
 }
 
-static void WriteFunctionLocalMetadata(const ValueEnumerator &VE,
+static void WriteFunctionLocalMetadata(const Function &F,
+                                       const ValueEnumerator &VE,
                                        BitstreamWriter &Stream) {
   bool StartedMetadataBlock = false;
   SmallVector<uint64_t, 64> Record;
-  ValueEnumerator::ValueList Vals = VE.getMDValues();
-  ValueEnumerator::ValueList::iterator it = Vals.begin();
-  ValueEnumerator::ValueList::iterator end = Vals.end();
-
-  while (it != end) {
-    if (const MDNode *N = dyn_cast<MDNode>((*it).first)) {
-      if (N->isFunctionLocal()) {
+  const ValueEnumerator::ValueList &Vals = VE.getMDValues();
+  
+  for (unsigned i = 0, e = Vals.size(); i != e; ++i)
+    if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first))
+      if (N->getFunction() == &F) {
         if (!StartedMetadataBlock) {
           Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
           StartedMetadataBlock = true;
         }
         WriteMDNode(N, VE, Stream, Record);
-        // Remove function-local MD, since it is not used outside of function.
-        it = Vals.erase(it);
-        end = Vals.end();
-        continue;
       }
-    }
-    ++it;
-  }
 
   if (StartedMetadataBlock)
     Stream.ExitBlock();
@@ -1227,7 +1219,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   WriteConstants(CstStart, CstEnd, VE, Stream, false);
 
   // If there is function-local metadata, emit it now.
-  WriteFunctionLocalMetadata(VE, Stream);
+  WriteFunctionLocalMetadata(F, VE, Stream);
 
   // Keep a running idea of what the instruction ID is.
   unsigned InstID = CstEnd;
