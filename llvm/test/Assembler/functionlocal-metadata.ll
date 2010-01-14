@@ -17,6 +17,12 @@ entry:
 ; CHECK: metadata !{i32 %a, metadata !"foo"}
   call void @llvm.dbg.declare({ }* %three, metadata !{metadata !0, i32 %two})
 
+  call void @llvm.dbg.value(metadata !{ i32 %a }, i64 0, metadata !1)
+  call void @llvm.dbg.value(metadata !{ i32 %0 }, i64 25, metadata !0)
+  call void @llvm.dbg.value(metadata !{ i32* %1 }, i64 16, metadata !"foo")
+; CHECK: call void @llvm.dbg.value(metadata !{i32* %1}, i64 16, metadata !"foo")
+  call void @llvm.dbg.value(metadata !{ { }* %three }, i64 12, metadata !"bar")
+
   ret void, !foo !0, !bar !1
 ; CHECK: ret void, !foo !0, !bar !1
 }
@@ -25,6 +31,7 @@ entry:
 !1 = metadata !{i32 4, metadata !"foo"}
 
 declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
+declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !foo = !{ !0 }
 !bar = !{ !1 }
