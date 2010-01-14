@@ -341,16 +341,28 @@ def tLDR : T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                [(set tGPR:$dst, (load t_addrmode_s4:$addr))]>,
            T1LdSt<0b100>;
+def tLDRi: T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr, 
+               "ldr", "\t$dst, $addr",
+               []>,
+           T1LdSt4Imm<{1,?,?}>;
 
 def tLDRB : T1pI1<(outs tGPR:$dst), (ins t_addrmode_s1:$addr), IIC_iLoadr,
                 "ldrb", "\t$dst, $addr",
                 [(set tGPR:$dst, (zextloadi8 t_addrmode_s1:$addr))]>,
             T1LdSt<0b110>;
+def tLDRBi: T1pI1<(outs tGPR:$dst), (ins t_addrmode_s1:$addr), IIC_iLoadr,
+                "ldrb", "\t$dst, $addr",
+                []>,
+            T1LdSt1Imm<{1,?,?}>;
 
 def tLDRH : T1pI2<(outs tGPR:$dst), (ins t_addrmode_s2:$addr), IIC_iLoadr,
                 "ldrh", "\t$dst, $addr",
                 [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>,
             T1LdSt<0b101>;
+def tLDRHi: T1pI2<(outs tGPR:$dst), (ins t_addrmode_s2:$addr), IIC_iLoadr,
+                "ldrh", "\t$dst, $addr",
+                []>,
+            T1LdSt2Imm<{1,?,?}>;
 
 let AddedComplexity = 10 in
 def tLDRSB : T1pI1<(outs tGPR:$dst), (ins t_addrmode_rr:$addr), IIC_iLoadr,
@@ -396,16 +408,28 @@ def tSTR : T1pI4<(outs), (ins tGPR:$src, t_addrmode_s4:$addr), IIC_iStorer,
                "str", "\t$src, $addr",
                [(store tGPR:$src, t_addrmode_s4:$addr)]>,
            T1LdSt<0b000>;
+def tSTRi: T1pI4<(outs), (ins tGPR:$src, t_addrmode_s4:$addr), IIC_iStorer,
+               "str", "\t$src, $addr",
+               []>,
+           T1LdSt4Imm<{0,?,?}>;
 
 def tSTRB : T1pI1<(outs), (ins tGPR:$src, t_addrmode_s1:$addr), IIC_iStorer,
                  "strb", "\t$src, $addr",
                  [(truncstorei8 tGPR:$src, t_addrmode_s1:$addr)]>,
             T1LdSt<0b010>;
+def tSTRBi: T1pI1<(outs), (ins tGPR:$src, t_addrmode_s1:$addr), IIC_iStorer,
+                 "strb", "\t$src, $addr",
+                 []>,
+            T1LdSt1Imm<{0,?,?}>;
 
 def tSTRH : T1pI2<(outs), (ins tGPR:$src, t_addrmode_s2:$addr), IIC_iStorer,
                  "strh", "\t$src, $addr",
                  [(truncstorei16 tGPR:$src, t_addrmode_s2:$addr)]>,
             T1LdSt<0b001>;
+def tSTRHi: T1pI2<(outs), (ins tGPR:$src, t_addrmode_s2:$addr), IIC_iStorer,
+                 "strh", "\t$src, $addr",
+                 []>,
+            T1LdSt2Imm<{0,?,?}>;
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
                    "str", "\t$src, $addr",
