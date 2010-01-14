@@ -34,8 +34,8 @@ DSTROOT = $(OBJROOT)/../dst
 
 PREFIX = /usr/local
 
-# Unless assertions are forced on in the GMAKE command line, disable them.
-ifdef ENABLE_ASSERTIONS
+# Unless assertions are forced on in the GMAKE command line, enable them.
+ifndef ENABLE_ASSERTIONS
 LLVM_ASSERTIONS := yes
 else
 LLVM_ASSERTIONS := no
