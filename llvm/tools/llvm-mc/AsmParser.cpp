@@ -29,6 +29,11 @@
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
+/// getStartLoc - Get the location of the first token of this operand.
+SMLoc MCParsedAsmOperand::getStartLoc() const { return SMLoc(); }
+SMLoc MCParsedAsmOperand::getEndLoc() const { return SMLoc(); }
+
+
 // Mach-O section uniquing.
 //
 // FIXME: Figure out where this should live, it should be shared by

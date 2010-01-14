@@ -20,7 +20,11 @@ class MCParsedAsmOperand {
 public:  
   MCParsedAsmOperand() {}
   virtual ~MCParsedAsmOperand() {}
-  // TODO: Out of line vfun.
+  
+  /// getStartLoc - Get the location of the first token of this operand.
+  virtual SMLoc getStartLoc() const;
+  /// getEndLoc - Get the location of the last token of this operand.
+  virtual SMLoc getEndLoc() const;
 };
 
 } // end namespace llvm.
