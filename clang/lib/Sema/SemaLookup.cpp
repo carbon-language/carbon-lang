@@ -1942,6 +1942,12 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
           (*I)->getIdentifierNamespace() != IDNS)
         continue;
 
+      // Functions and function templates overload rather than hide.
+      // FIXME: Look for hiding based on function signatures!
+      if ((*I)->isFunctionOrFunctionTemplate() &&
+          ND->isFunctionOrFunctionTemplate())
+        continue;
+          
       // We've found a declaration that hides this one.
       return *I;
     }

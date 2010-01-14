@@ -2354,7 +2354,8 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
     return;
 
   ResultBuilder Results(*this);
-  CollectMemberLookupResults(Ctx, Ctx, Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(Ctx, LookupOrdinaryName, Consumer);
   
   // The "template" keyword can follow "::" in the grammar, but only
   // put it into the grammar if the nested-name-specifier is dependent.
