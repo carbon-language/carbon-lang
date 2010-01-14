@@ -18,6 +18,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCParsedAsmOperand.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -710,15 +711,33 @@ bool AsmParser::ParseStatement() {
     return false;
   }
 
-  MCInst Inst;
-  if (getTargetParser().ParseInstruction(IDVal, IDLoc, Inst))
+  
+  SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
+  if (getTargetParser().ParseInstruction(IDVal, IDLoc, ParsedOperands))
+    // FIXME: Leaking ParsedOperands on failure.
     return true;
   
   if (Lexer.isNot(AsmToken::EndOfStatement))
+    // FIXME: Leaking ParsedOperands on failure.
     return TokError("unexpected token in argument list");
 
   // Eat the end of statement marker.
   Lexer.Lex();
+  
+
+  MCInst Inst;
+
+  bool MatchFail = getTargetParser().MatchInstruction(ParsedOperands, Inst);
+
+  // Free any parsed operands.
+  for (unsigned i = 0, e = ParsedOperands.size(); i != e; ++i)
+    delete ParsedOperands[i];
+
+  if (MatchFail) {
+    // FIXME: We should give nicer diagnostics about the exact failure.
+    Error(IDLoc, "unrecognized instruction");
+    return true;
+  }
   
   // Instruction is good, process it.
   Out.EmitInstruction(Inst);

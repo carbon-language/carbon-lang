@@ -44,7 +44,7 @@ void AsmLexer::PrintMessage(SMLoc Loc, const std::string &Msg,
 /// ReturnError - Set the error to the specified string at the specified
 /// location.  This is defined to always return AsmToken::Error.
 AsmToken AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
-  SrcMgr.PrintMessage(SMLoc::getFromPointer(Loc), Msg, "error");
+  PrintMessage(SMLoc::getFromPointer(Loc), Msg, "error");
   return AsmToken(AsmToken::Error, StringRef(Loc, 0));
 }
 

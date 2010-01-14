@@ -961,8 +961,8 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
   CvtOS << "static bool ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
-        << "                            SmallVectorImpl<"
-        << Target.getName() << "Operand> &Operands) {\n";
+        << "                      const SmallVectorImpl<MCParsedAsmOperand*"
+        << "> &Operands) {\n";
   CvtOS << "  Inst.setOpcode(Opcode);\n";
   CvtOS << "  switch (Kind) {\n";
   CvtOS << "  default:\n";
@@ -971,6 +971,9 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
   OS << "// Unified function for converting operants to MCInst instances.\n\n";
   OS << "enum ConversionKind {\n";
+  
+  // TargetOperandClass - This is the target's operand class, like X86Operand.
+  std::string TargetOperandClass = Target.getName() + "Operand";
   
   for (std::vector<InstructionInfo*>::const_iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
@@ -1050,8 +1053,9 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
         CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
 
-      CvtOS << "    Operands[" << MIOperandList[i].second 
-         << "]." << Op.Class->RenderMethod 
+      CvtOS << "    ((" << TargetOperandClass << "*)Operands["
+         << MIOperandList[i].second 
+         << "])->" << Op.Class->RenderMethod 
          << "(Inst, " << Op.OperandInfo->MINumOperands << ");\n";
       CurIndex += Op.OperandInfo->MINumOperands;
     }
@@ -1111,8 +1115,9 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
 static void EmitClassifyOperand(CodeGenTarget &Target,
                                 AsmMatcherInfo &Info,
                                 raw_ostream &OS) {
-  OS << "static MatchClassKind ClassifyOperand("
-     << Target.getName() << "Operand &Operand) {\n";
+  OS << "static MatchClassKind ClassifyOperand(MCParsedAsmOperand *GOp) {\n"
+     << "  " << Target.getName() << "Operand &Operand = *("
+     << Target.getName() << "Operand*)GOp;\n";
 
   // Classify tokens.
   OS << "  if (Operand.isToken())\n";
@@ -1467,9 +1472,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     MaxNumOperands = std::max(MaxNumOperands, (*it)->Operands.size());
   
   OS << "bool " << Target.getName() << ClassName
-     << "::MatchInstruction(" 
-     << "SmallVectorImpl<" << Target.getName() << "Operand> &Operands, "
-     << "MCInst &Inst) {\n";
+     << "::\nMatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> "
+        "&Operands,\n                 MCInst &Inst) {\n";
 
   // Emit the static match table; unused classes get initalized to 0 which is
   // guaranteed to be InvalidMatchClass.
