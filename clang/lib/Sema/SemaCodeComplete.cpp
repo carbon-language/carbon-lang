@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -150,10 +151,20 @@ namespace {
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
     ///
-    /// \param R the result to add (if it is unique).
+    /// \param CurContext the result to add (if it is unique).
     ///
     /// \param R the context in which this result will be named.
     void MaybeAddResult(Result R, DeclContext *CurContext = 0);
+    
+    /// \brief Add a new result to this result set, where we already know
+    /// the hiding declation (if any).
+    ///
+    /// \param R the result to add (if it is unique).
+    ///
+    /// \param CurContext the context in which this result will be named.
+    ///
+    /// \param Hiding the declaration that hides the result.
+    void AddResult(Result R, DeclContext *CurContext, NamedDecl *Hiding);
     
     /// \brief Enter into a new scope.
     void EnterNewScope();
@@ -505,6 +516,52 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   Results.push_back(R);
 }
 
+void ResultBuilder::AddResult(Result R, DeclContext *CurContext, 
+                              NamedDecl *Hiding) {
+  assert(R.Kind == Result::RK_Declaration &&
+         "Only declaration results are supported");
+  
+  // Look through using declarations.
+  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration)) {
+    AddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext, Hiding);
+    return;
+  }
+  
+  if (!isInterestingDecl(R.Declaration))
+    return;
+  
+  if (Hiding && CheckHiddenResult(R, CurContext, Hiding))
+    return;
+      
+  // Make sure that any given declaration only shows up in the result set once.
+  if (!AllDeclsFound.insert(R.Declaration->getCanonicalDecl()))
+    return;
+  
+  // If the filter is for nested-name-specifiers, then this result starts a
+  // nested-name-specifier.
+  if ((Filter == &ResultBuilder::IsNestedNameSpecifier) ||
+      (Filter == &ResultBuilder::IsMember &&
+       isa<CXXRecordDecl>(R.Declaration) &&
+       cast<CXXRecordDecl>(R.Declaration)->isInjectedClassName()))
+    R.StartsNestedNameSpecifier = true;
+  
+  // If this result is supposed to have an informative qualifier, add one.
+  if (R.QualifierIsInformative && !R.Qualifier &&
+      !R.StartsNestedNameSpecifier) {
+    DeclContext *Ctx = R.Declaration->getDeclContext();
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Ctx))
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
+    else if (TagDecl *Tag = dyn_cast<TagDecl>(Ctx))
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, false, 
+                                                SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
+    else
+      R.QualifierIsInformative = false;
+  }
+  
+  // Insert this result into the set of results.
+  Results.push_back(R);
+}
+
 /// \brief Enter into a new scope.
 void ResultBuilder::EnterNewScope() {
   ShadowMaps.push_back(ShadowMap());
@@ -527,7 +584,9 @@ bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
   unsigned IDNS = Decl::IDNS_Ordinary;
   if (SemaRef.getLangOptions().CPlusPlus)
     IDNS |= Decl::IDNS_Tag;
-  
+  else if (SemaRef.getLangOptions().ObjC1 && isa<ObjCIvarDecl>(ND))
+    return true;
+
   return ND->getIdentifierNamespace() & IDNS;
 }
 
@@ -607,6 +666,23 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
 
   return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
     isa<ObjCPropertyDecl>(ND);
+}
+
+namespace {
+  /// \brief Visible declaration consumer that adds a code-completion result
+  /// for each visible declaration.
+  class CodeCompletionDeclConsumer : public VisibleDeclConsumer {
+    ResultBuilder &Results;
+    DeclContext *CurContext;
+    
+  public:
+    CodeCompletionDeclConsumer(ResultBuilder &Results, DeclContext *CurContext)
+      : Results(Results), CurContext(CurContext) { }
+    
+    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
+      Results.AddResult(ND, CurContext, Hiding);
+    }
+  };
 }
 
 // Find the next outer declaration context corresponding to this scope.
@@ -1970,8 +2046,8 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
     break;
   }
 
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext, 
-                       Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
 
   Results.EnterNewScope();
   AddOrdinaryNameResults(CompletionContext, S, *this, Results);

@@ -1,6 +1,6 @@
 /* The run lines are below, because this test is line- and
    column-number sensitive. */
-@interface MyClass { }
+@interface MyClass { int ivar; }
 - (int)myMethod:(int)arg;
 @end
 
@@ -31,6 +31,7 @@
 // CHECK-CC3: ParmDecl:{ResultType int}{TypedText arg}
 // CHECK-CC3: TypedefDecl:{TypedText Class}
 // CHECK-CC3: TypedefDecl:{TypedText id}
+// CHECK-CC3: ObjCIvarDecl:{ResultType int}{TypedText ivar}
 // CHECK-CC3: ObjCInterfaceDecl:{TypedText MyClass}
 // CHECK-CC3: TypedefDecl:{TypedText SEL}
 // CHECK-CC3: NotImplemented:{ResultType MyClass *}{TypedText self}
