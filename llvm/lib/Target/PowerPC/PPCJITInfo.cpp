@@ -308,6 +308,7 @@ extern "C" void *PPCCompilationCallbackC(unsigned *StubCallAddrPlus4,
   // Rewrite the stub with an unconditional branch to the target, for any users
   // who took the address of the stub.
   EmitBranchToAt((intptr_t)StubCallAddr, (intptr_t)Target, false, is64Bit);
+  sys::Memory::InvalidateInstructionCache(StubCallAddr, 7*4);
 
   // Put the address of the target function to call and the address to return to
   // after calling the target function in a place that is easy to get on the
@@ -441,4 +442,5 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
 
 void PPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   EmitBranchToAt((intptr_t)Old, (intptr_t)New, false, is64Bit);
+  sys::Memory::InvalidateInstructionCache(Old, 7*4);
 }
