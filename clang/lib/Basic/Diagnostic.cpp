@@ -576,6 +576,37 @@ static void HandleIntegerSModifier(unsigned ValNo,
     OutStr.push_back('s');
 }
 
+/// HandleOrdinalModifier - Handle the integer 'ord' modifier.  This
+/// prints the ordinal form of the given integer, with 1 corresponding
+/// to the first ordinal.  Currently this is hard-coded to use the
+/// English form.
+static void HandleOrdinalModifier(unsigned ValNo,
+                                  llvm::SmallVectorImpl<char> &OutStr) {
+  assert(ValNo != 0 && "ValNo must be strictly positive!");
+
+  llvm::raw_svector_ostream Out(OutStr);
+
+  // We could use text forms for the first N ordinals, but the numeric
+  // forms are actually nicer in diagnostics because they stand out.
+  Out << ValNo;
+
+  // It is critically important that we do this perfectly for
+  // user-written sequences with over 100 elements.
+  switch (ValNo % 100) {
+  case 11:
+  case 12:
+  case 13:
+    Out << "th"; return;
+  default:
+    switch (ValNo % 10) {
+    case 1: Out << "st"; return;
+    case 2: Out << "nd"; return;
+    case 3: Out << "rd"; return;
+    default: Out << "th"; return;
+    }
+  }
+}
+
 
 /// PluralNumber - Parse an unsigned integer and advance Start.
 static unsigned PluralNumber(const char *&Start, const char *End) {
@@ -794,6 +825,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
+        HandleOrdinalModifier((unsigned)Val, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
         llvm::raw_svector_ostream(OutStr) << Val;
@@ -809,6 +842,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
         HandleIntegerSModifier(Val, OutStr);
       } else if (ModifierIs(Modifier, ModifierLen, "plural")) {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
+      } else if (ModifierIs(Modifier, ModifierLen, "ordinal")) {
+        HandleOrdinalModifier(Val, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
         llvm::raw_svector_ostream(OutStr) << Val;
