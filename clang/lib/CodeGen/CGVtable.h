@@ -116,6 +116,11 @@ template<> struct DenseMapInfo<clang::CodeGen::BaseSubobject> {
   }
 };
 
+// It's OK to treat BaseSubobject as a POD type.
+template <> struct isPodLike<clang::CodeGen::BaseSubobject> {
+  static const bool value = true;
+};
+
 }
 
 namespace clang {
@@ -130,6 +135,8 @@ public:
   typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
   typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
   llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
+
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 
 private:
   CodeGenModule &CGM;
@@ -178,7 +185,8 @@ private:
   llvm::GlobalVariable *
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                  bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
-                 const CXXRecordDecl *RD, uint64_t Offset);
+                 const CXXRecordDecl *RD, uint64_t Offset,
+                 AddressPointsMapTy& AddressPoints);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
                                     bool GenerateDefinition,
@@ -218,15 +226,26 @@ public:
   uint64_t getVtableAddressPoint(const CXXRecordDecl *RD);
   
   llvm::GlobalVariable *getVtable(const CXXRecordDecl *RD);
-  llvm::GlobalVariable *getCtorVtable(const CXXRecordDecl *RD,
-                                      const CXXRecordDecl *Class, 
-                                      uint64_t Offset);
+  
+  /// CtorVtableInfo - Information about a constructor vtable.
+  struct CtorVtableInfo {
+    /// Vtable - The vtable itself.
+    llvm::GlobalVariable *Vtable;
+  
+    /// AddressPoints - The address points in this constructor vtable.
+    AddressPointsMapTy AddressPoints;
+    
+    CtorVtableInfo() : Vtable(0) { }
+  };
+  
+  CtorVtableInfo getCtorVtable(const CXXRecordDecl *RD, 
+                               const BaseSubobject &Base);
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   
   void MaybeEmitVtable(GlobalDecl GD);
 };
 
-}
-}
+} // end namespace CodeGen
+} // end namespace clang
 #endif

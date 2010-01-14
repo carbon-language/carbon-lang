@@ -160,6 +160,9 @@ private:
   // vtable for use in computing the initializers for the VTT.
   llvm::DenseMap<CtorVtable_t, int64_t> &subAddressPoints;
 
+  /// AddressPoints - Address points for this vtable.
+  CGVtableInfo::AddressPointsMapTy& AddressPoints;
+  
   typedef CXXRecordDecl::method_iterator method_iter;
   const uint32_t LLVMPointerWidth;
   Index_t extra;
@@ -192,13 +195,15 @@ private:
 public:
   VtableBuilder(const CXXRecordDecl *MostDerivedClass,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm,
-                bool build)
+                bool build, CGVtableInfo::AddressPointsMapTy& AddressPoints)
     : BuildVtable(build), MostDerivedClass(MostDerivedClass), LayoutClass(l),
       LayoutOffset(lo), BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(0), VMContext(cgm.getModule().getContext()),CGM(cgm),
       PureVirtualFn(0),
       subAddressPoints(AllocAddressPoint(cgm, l, MostDerivedClass)),
-      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
+      AddressPoints(AddressPoints),
+      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0))
+      {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
     if (BuildVtable) {
       QualType ClassType = CGM.getContext().getTagDeclType(MostDerivedClass);
@@ -461,6 +466,7 @@ public:
               RD->getNameAsCString(), Class->getNameAsCString(),
               LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
     subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+    AddressPoints[BaseSubobject(RD, Offset)] = AddressPoint;
 
     // Now also add the address point for all our primary bases.
     while (1) {
@@ -477,6 +483,7 @@ public:
                 RD->getNameAsCString(), Class->getNameAsCString(),
                 LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
       subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
+      AddressPoints[BaseSubobject(RD, Offset)] = AddressPoint;
     }
   }
 
@@ -1088,7 +1095,8 @@ CGVtableInfo::getAdjustments(GlobalDecl GD) {
   if (!SavedAdjustmentRecords.insert(RD).second)
     return 0;
 
-  VtableBuilder b(RD, RD, 0, CGM, false);
+  AddressPointsMapTy AddressPoints;
+  VtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -1116,7 +1124,8 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
-  VtableBuilder b(RD, RD, 0, CGM, false);
+  AddressPointsMapTy AddressPoints;
+  VtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -1146,7 +1155,8 @@ llvm::GlobalVariable *
 CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              bool GenerateDefinition,
                              const CXXRecordDecl *LayoutClass,
-                             const CXXRecordDecl *RD, uint64_t Offset) {
+                             const CXXRecordDecl *RD, uint64_t Offset,
+                             AddressPointsMapTy& AddressPoints) {
   llvm::SmallString<256> OutName;
   if (LayoutClass != RD)
     CGM.getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset / 8, 
@@ -1158,7 +1168,8 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
   if (GV == 0 || CGM.getVtableInfo().AddressPoints[LayoutClass] == 0 || 
       GV->isDeclaration()) {
-    VtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition);
+    VtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition,
+                    AddressPoints);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
     // First comes the vtables for all the non-virtual bases...
@@ -1213,6 +1224,42 @@ class VTTBuilder {
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> SubVTTIndicies;
   
   bool GenerateDefinition;
+
+  llvm::DenseMap<BaseSubobject, llvm::Constant *> CtorVtables;
+  llvm::DenseMap<std::pair<const CXXRecordDecl *, BaseSubobject>, uint64_t> 
+    CtorVtableAddressPoints;
+  
+  llvm::Constant *getCtorVtable(const BaseSubobject &Base) {
+    if (!GenerateDefinition)
+      return 0;
+
+    llvm::Constant *&CtorVtable = CtorVtables[Base];
+    if (!CtorVtable) {
+      // Build the vtable.
+      CGVtableInfo::CtorVtableInfo Info
+        = CGM.getVtableInfo().getCtorVtable(Class, Base);
+      
+      CtorVtable = Info.Vtable;
+      
+      // Add the address points for this base.
+      for (CGVtableInfo::AddressPointsMapTy::const_iterator I =
+           Info.AddressPoints.begin(), E = Info.AddressPoints.end(); 
+           I != E; ++I) {
+        uint64_t &AddressPoint = 
+          CtorVtableAddressPoints[std::make_pair(Base.getBase(), I->first)];
+        
+        // Check if we already have the address points for this base.
+        if (AddressPoint)
+          break;
+
+        // Otherwise, insert it.
+        AddressPoint = I->second;
+      }      
+    }
+    
+    return CtorVtable;
+  }
+  
   
   /// BuildVtablePtr - Build up a referene to the given secondary vtable
   llvm::Constant *BuildVtablePtr(llvm::Constant *Vtable,
@@ -1277,7 +1324,7 @@ class VTTBuilder {
             BuildVtablePtr(vtbl, VtblClass, RD, Offset) : 0;
         else {
           init = GenerateDefinition ?
-            CGM.getVtableInfo().getCtorVtable(Class, Base, BaseOffset) : 0;
+            getCtorVtable(BaseSubobject(Base, BaseOffset)) : 0;
           
           subvtbl = init;
           subVtblClass = Base;
@@ -1306,7 +1353,7 @@ class VTTBuilder {
       VtableClass = Class;
     } else {
       Vtable = GenerateDefinition ? 
-        CGM.getVtableInfo().getCtorVtable(Class, RD, Offset) : 0;
+        getCtorVtable(BaseSubobject(RD, Offset)) : 0;
       VtableClass = RD;
     }
     
@@ -1444,28 +1491,37 @@ void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
     return;
   }
   
-  Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0);
+  AddressPointsMapTy AddressPoints;
+  Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
+                          AddressPoints);
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);  
 }
 
 llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
   llvm::GlobalVariable *Vtable = Vtables.lookup(RD);
   
-  if (!Vtable)
+  if (!Vtable) {
+    AddressPointsMapTy AddressPoints;
     Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, 
-                            /*GenerateDefinition=*/false, RD, RD, 0);
+                            /*GenerateDefinition=*/false, RD, RD, 0,
+                            AddressPoints);
+  }
 
   return Vtable;
 }
 
-llvm::GlobalVariable *
-CGVtableInfo::getCtorVtable(const CXXRecordDecl *LayoutClass,
-                            const CXXRecordDecl *RD, uint64_t Offset) {
-  return GenerateVtable(llvm::GlobalValue::InternalLinkage, 
-                        /*GenerateDefinition=*/true,
-                        LayoutClass, RD, Offset);
+CGVtableInfo::CtorVtableInfo 
+CGVtableInfo::getCtorVtable(const CXXRecordDecl *RD, 
+                            const BaseSubobject &Base) {
+  CtorVtableInfo Info;
+  
+  Info.Vtable = GenerateVtable(llvm::GlobalValue::InternalLinkage,
+                               /*GenerateDefinition=*/true,
+                               RD, Base.getBase(), Base.getBaseOffset(),
+                               Info.AddressPoints);
+  return Info;
 }
-
+ 
 llvm::GlobalVariable *CGVtableInfo::getVTT(const CXXRecordDecl *RD) {
   return GenerateVTT(llvm::GlobalValue::ExternalLinkage, 
                      /*GenerateDefinition=*/false, RD);
