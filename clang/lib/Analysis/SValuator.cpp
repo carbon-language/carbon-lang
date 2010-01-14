@@ -66,6 +66,9 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
     if (C.hasSameUnqualifiedType(castTy, originalTy))
       return CastResult(state, val);
 
+  if (castTy->isIntegerType() && originalTy->isIntegerType())
+    return CastResult(state, EvalCastNL(cast<NonLoc>(val), castTy));
+
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::IsLocType(originalTy))
     return CastResult(state, EvalCastL(cast<Loc>(val), castTy));

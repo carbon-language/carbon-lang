@@ -57,3 +57,14 @@ void doit(char *data, int len) {
         memcpy(buf, data, len);
     }
 }
+
+struct pcm_feeder {
+  void *data;
+};
+// Test cast a pointer to long and then to int does not crash SValuator.
+void feed_swaplr (struct pcm_feeder *f)
+{
+  int bps;
+  bps = (long) f->data;
+  (void) bps;
+}
