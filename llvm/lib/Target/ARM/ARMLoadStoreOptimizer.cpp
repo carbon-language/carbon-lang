@@ -740,6 +740,18 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
 /// isMemoryOp - Returns true if instruction is a memory operations (that this
 /// pass is capable of operating on).
 static bool isMemoryOp(const MachineInstr *MI) {
+  if (MI->hasOneMemOperand()) {
+    const MachineMemOperand *MMO = *MI->memoperands_begin();
+
+    // Don't touch volatile memory accesses - we may be changing their order.
+    if (MMO->isVolatile())
+      return false;
+
+    // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is not.
+    if (MMO->getAlignment() < 4)
+      return false;
+  }
+
   int Opcode = MI->getOpcode();
   switch (Opcode) {
   default: break;
