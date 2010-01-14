@@ -1657,7 +1657,8 @@ namespace {
     MSP430TargetInfo(const std::string& triple) : TargetInfo(triple) {
       TLSSupported = false;
       IntWidth = 16;
-      LongWidth = LongLongWidth = 32;
+      LongWidth = 32;
+      LongLongWidth = 64;
       PointerWidth = 16;
       IntAlign = 8;
       LongAlign = LongLongAlign = 8;
