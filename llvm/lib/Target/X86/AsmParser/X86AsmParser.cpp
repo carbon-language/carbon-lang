@@ -15,6 +15,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCParsedAsmOperand.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -71,7 +72,7 @@ namespace {
 
 /// X86Operand - Instances of this class represent a parsed X86 machine
 /// instruction.
-struct X86Operand {
+struct X86Operand : public MCParsedAsmOperand {
   enum {
     Token,
     Register,
