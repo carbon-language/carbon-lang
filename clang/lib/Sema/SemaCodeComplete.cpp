@@ -133,6 +133,10 @@ namespace {
     unsigned size() const { return Results.size(); }
     bool empty() const { return Results.empty(); }
     
+    /// \brief Determine whether the given declaration is at all interesting
+    /// as a code-completion result.
+    bool isInterestingDecl(NamedDecl *ND) const;
+        
     /// \brief Add a new result to this result set (if it isn't already in one
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
@@ -331,45 +335,34 @@ getRequiredQualification(ASTContext &Context,
   return Result;
 }
 
-void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
-  assert(!ShadowMaps.empty() && "Must enter into a results scope");
-  
-  if (R.Kind != Result::RK_Declaration) {
-    // For non-declaration results, just add the result.
-    Results.push_back(R);
-    return;
-  }
+bool ResultBuilder::isInterestingDecl(NamedDecl *ND) const {
+  ND = ND->getUnderlyingDecl();
+  unsigned IDNS = ND->getIdentifierNamespace();
 
   // Skip unnamed entities.
-  if (!R.Declaration->getDeclName())
-    return;
-      
-  // Look through using declarations.
-  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration))
-    MaybeAddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext);
-  
-  Decl *CanonDecl = R.Declaration->getCanonicalDecl();
-  unsigned IDNS = CanonDecl->getIdentifierNamespace();
+  if (!ND->getDeclName())
+    return false;
   
   // Friend declarations and declarations introduced due to friends are never
   // added as results.
-  if (isa<FriendDecl>(CanonDecl) || 
+  if (isa<FriendDecl>(ND) || 
       (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend)))
-    return;
-
+    return false;
+  
   // Class template (partial) specializations are never added as results.
-  if (isa<ClassTemplateSpecializationDecl>(CanonDecl) ||
-      isa<ClassTemplatePartialSpecializationDecl>(CanonDecl))
-    return;
+  if (isa<ClassTemplateSpecializationDecl>(ND) ||
+      isa<ClassTemplatePartialSpecializationDecl>(ND))
+    return false;
   
   // Using declarations themselves are never added as results.
-  if (isa<UsingDecl>(CanonDecl))
-    return;
-
-  if (const IdentifierInfo *Id = R.Declaration->getIdentifier()) {
+  if (isa<UsingDecl>(ND))
+    return false;
+  
+  // Some declarations have reserved names that we don't want to ever show.
+  if (const IdentifierInfo *Id = ND->getIdentifier()) {
     // __va_list_tag is a freak of nature. Find it and skip it.
     if (Id->isStr("__va_list_tag") || Id->isStr("__builtin_va_list"))
-      return;
+      return false;
     
     // Filter out names reserved for the implementation (C99 7.1.3, 
     // C++ [lib.global.names]). Users don't need to see those.
@@ -379,18 +372,43 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
       const char *Name = Id->getNameStart();
       if (Name[0] == '_' &&
           (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z')))
-        return;
+        return false;
     }
   }
-  
+ 
   // C++ constructors are never found by name lookup.
-  if (isa<CXXConstructorDecl>(CanonDecl))
-    return;
+  if (isa<CXXConstructorDecl>(ND))
+    return false;
   
   // Filter out any unwanted results.
-  if (Filter && !(this->*Filter)(R.Declaration))
-    return;
+  if (Filter && !(this->*Filter)(ND))
+    return false;
   
+  // ... then it must be interesting!
+  return true;
+}
+
+void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
+  assert(!ShadowMaps.empty() && "Must enter into a results scope");
+  
+  if (R.Kind != Result::RK_Declaration) {
+    // For non-declaration results, just add the result.
+    Results.push_back(R);
+    return;
+  }
+
+  // Look through using declarations.
+  if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(R.Declaration)) {
+    MaybeAddResult(Result(Using->getTargetDecl(), R.Qualifier), CurContext);
+    return;
+  }
+  
+  Decl *CanonDecl = R.Declaration->getCanonicalDecl();
+  unsigned IDNS = CanonDecl->getIdentifierNamespace();
+
+  if (!isInterestingDecl(R.Declaration))
+    return;
+      
   ShadowMap &SMap = ShadowMaps.back();
   ShadowMapEntry::iterator I, IEnd;
   ShadowMap::iterator NamePos = SMap.find(R.Declaration->getDeclName());
