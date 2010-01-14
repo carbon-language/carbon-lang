@@ -142,6 +142,7 @@ namespace {
     llvm::DenseMap<Stmt *, Stmt *> ReplacedNodes;
 
     FunctionDecl *CurFunctionDef;
+    FunctionDecl *CurFunctionDeclToDeclareForBlock;
     VarDecl *GlobalVarDecl;
 
     bool DisableReplaceStmt;
@@ -257,6 +258,7 @@ namespace {
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
     void RewriteProperty(ObjCPropertyDecl *prop);
     void RewriteFunctionDecl(FunctionDecl *FD);
+    void RewriteBlockLiteralFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
     bool needToScanForQualifiers(QualType T);
@@ -367,7 +369,7 @@ namespace {
                                           unsigned hasCopy);
     Stmt *SynthesizeBlockCall(CallExpr *Exp, const Expr* BlockExp);
     void SynthesizeBlockLiterals(SourceLocation FunLocStart,
-                                   const char *FunName);
+                                 const char *FunName);
     void RewriteRecordBody(RecordDecl *RD);
 
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
@@ -488,6 +490,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   NSStringRecord = 0;
   CurMethodDef = 0;
   CurFunctionDef = 0;
+  CurFunctionDeclToDeclareForBlock = 0;
   GlobalVarDecl = 0;
   SuperStructDecl = 0;
   ProtocolTypeDecl = 0;
@@ -2113,6 +2116,30 @@ void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
     return;
   }
   RewriteObjCQualifiedInterfaceTypes(FD);
+}
+
+void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
+  SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
+  const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
+  const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(funcType);
+  if (!proto)
+    return;
+  QualType Type = proto->getResultType();
+  std::string FdStr = Type.getAsString();
+  FdStr += " ";
+  FdStr += FD->getNameAsCString();
+  FdStr +=  "(";
+  unsigned numArgs = proto->getNumArgs();
+  for (unsigned i = 0; i < numArgs; i++) {
+    QualType ArgType = proto->getArgType(i);
+    FdStr += ArgType.getAsString();
+    
+    if (i+1 < numArgs)
+      FdStr += ", ";
+  }
+  FdStr +=  ");\n";
+  InsertText(FunLocStart, FdStr.c_str(), FdStr.size());
+  CurFunctionDeclToDeclareForBlock = 0;
 }
 
 // SynthSuperContructorFunctionDecl - id objc_super(id obj, id super);
@@ -3999,7 +4026,10 @@ std::string RewriteObjC::SynthesizeBlockDescriptor(std::string DescTag,
 }
 
 void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
-                                                const char *FunName) {
+                                          const char *FunName) {
+  // Insert declaration for the function in which block literal is used.
+  if (CurFunctionDeclToDeclareForBlock)
+    RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
 
@@ -4479,6 +4509,10 @@ std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
 ///
 ///
 void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
+  // Insert declaration for the function in which block literal is
+  // used.
+  if (CurFunctionDeclToDeclareForBlock)
+    RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   int flag = 0;
   int isa = 0;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
@@ -5027,6 +5061,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     // FIXME: If this should support Obj-C++, support CXXTryStmt
     if (CompoundStmt *Body = FD->getCompoundBody()) {
       CurFunctionDef = FD;
+      CurFunctionDeclToDeclareForBlock = FD;
       CollectPropertySetters(Body);
       CurrentBody = Body;
       Body =
@@ -5041,6 +5076,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       // and any copy/dispose helper functions.
       InsertBlockLiteralsWithinFunction(FD);
       CurFunctionDef = 0;
+      CurFunctionDeclToDeclareForBlock = 0;
     }
     return;
   }
