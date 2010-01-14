@@ -190,15 +190,9 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   QualType FnType = getContext().getFunctionType(RetTy, 0, 0, false, 0);
 
   // Emit subprogram debug descriptor.
-  // FIXME: The cast here is a huge hack.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(StartLoc);
-    if (isa<FunctionDecl>(D)) {
-      DI->EmitFunctionStart(CGM.getMangledName(GD), FnType, CurFn, Builder);
-    } else {
-      // Just use LLVM function name.
-      DI->EmitFunctionStart(Fn->getName(), FnType, CurFn, Builder);
-    }
+    DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
   }
 
   // FIXME: Leaked.

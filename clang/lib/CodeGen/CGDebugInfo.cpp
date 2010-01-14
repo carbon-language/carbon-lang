@@ -65,6 +65,25 @@ llvm::DIDescriptor CGDebugInfo::getContext(const VarDecl *Decl,
   return CompileUnit;
 }
 
+/// getFunctionName - Get function name for the given FunctionDecl. If the
+/// name is constructred on demand (e.g. C++ destructor) then the name
+/// is stored on the side.
+llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
+  assert (FD && "Invalid FunctionDecl!");
+  IdentifierInfo *FII = FD->getIdentifier();
+  if (FII)
+    return FII->getName();
+
+  // Otherwise construct human readable name for debug info.
+  std::string NS = FD->getNameAsString();
+
+  // Copy this name on the side and use its reference.
+  unsigned Length = NS.length() + 1;
+  char *StrPtr = FunctionNames.Allocate<char>(Length);
+  strncpy(StrPtr, NS.c_str(), Length);
+  return llvm::StringRef(StrPtr);
+}
+
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
 /// one if necessary. This returns null for invalid source locations.
 llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
@@ -972,16 +991,28 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
-void CGDebugInfo::EmitFunctionStart(llvm::StringRef Name, QualType FnType,
+void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
-  llvm::StringRef LinkageName(Name);
 
-  // Skip the asm prefix if it exists.
-  //
-  // FIXME: This should probably be the unmangled name?
-  if (Name[0] == '\01')
-    Name = Name.substr(1);
+  llvm::StringRef Name;
+  llvm::StringRef LinkageName;
+
+  const Decl *D = GD.getDecl();
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    Name = getFunctionName(FD);
+    // Use mangled name as linkage name for c/c++ functions.
+    llvm::StringRef MangledName(CGM.getMangledName(GD));
+    if (!Name.equals(MangledName))
+      LinkageName = MangledName;
+  } else {
+    // Use llvm function name as linkage name.
+    Name = Fn->getName();
+    // Skip the asm prefix if it exists.
+    if (Name[0] == '\01')
+      Name = Name.substr(1);
+    LinkageName = Name;
+  }
 
   // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
