@@ -136,7 +136,16 @@ namespace {
     /// \brief Determine whether the given declaration is at all interesting
     /// as a code-completion result.
     bool isInterestingDecl(NamedDecl *ND) const;
-        
+    
+    /// \brief Check whether the result is hidden by the Hiding declaration.
+    ///
+    /// \returns true if the result is hidden and cannot be found, false if
+    /// the hidden result could still be found. When false, \p R may be
+    /// modified to describe how the result can be found (e.g., via extra
+    /// qualification).
+    bool CheckHiddenResult(Result &R, DeclContext *CurContext,
+                           NamedDecl *Hiding);
+    
     /// \brief Add a new result to this result set (if it isn't already in one
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
@@ -264,31 +273,6 @@ ResultBuilder::ShadowMapEntry::end() const {
   return iterator(DeclOrVector.get<DeclIndexPairVector *>()->end());
 }
 
-/// \brief Determines whether the given hidden result could be found with
-/// some extra work, e.g., by qualifying the name.
-///
-/// \param Hidden the declaration that is hidden by the currenly \p Visible
-/// declaration.
-///
-/// \param Visible the declaration with the same name that is already visible.
-///
-/// \returns true if the hidden result can be found by some mechanism,
-/// false otherwise.
-static bool canHiddenResultBeFound(const LangOptions &LangOpts, 
-                                   NamedDecl *Hidden, NamedDecl *Visible) {
-  // In C, there is no way to refer to a hidden name.
-  if (!LangOpts.CPlusPlus)
-    return false;
-  
-  DeclContext *HiddenCtx = Hidden->getDeclContext()->getLookupContext();
-  
-  // There is no way to qualify a name declared in a function or method.
-  if (HiddenCtx->isFunctionOrMethod())
-    return false;
-  
-  return HiddenCtx != Visible->getDeclContext()->getLookupContext();
-}
-
 /// \brief Compute the qualification required to get from the current context
 /// (\p CurContext) to the target context (\p TargetContext).
 ///
@@ -388,6 +372,34 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND) const {
   return true;
 }
 
+bool ResultBuilder::CheckHiddenResult(Result &R, DeclContext *CurContext,
+                                      NamedDecl *Hiding) {
+  // In C, there is no way to refer to a hidden name.
+  // FIXME: This isn't true; we can find a tag name hidden by an ordinary
+  // name if we introduce the tag type.
+  if (!SemaRef.getLangOptions().CPlusPlus)
+    return true;
+  
+  DeclContext *HiddenCtx = R.Declaration->getDeclContext()->getLookupContext();
+  
+  // There is no way to qualify a name declared in a function or method.
+  if (HiddenCtx->isFunctionOrMethod())
+    return true;
+  
+  if (HiddenCtx == Hiding->getDeclContext()->getLookupContext())
+    return true;
+  
+  // We can refer to the result with the appropriate qualification. Do it.
+  R.Hidden = true;
+  R.QualifierIsInformative = false;
+  
+  if (!R.Qualifier)
+    R.Qualifier = getRequiredQualification(SemaRef.Context, 
+                                           CurContext, 
+                                           R.Declaration->getDeclContext());
+  return false;
+}
+
 void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   assert(!ShadowMaps.empty() && "Must enter into a results scope");
   
@@ -455,21 +467,8 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
         continue;
       
       // The newly-added result is hidden by an entry in the shadow map.
-      if (canHiddenResultBeFound(SemaRef.getLangOptions(), R.Declaration, 
-                                 I->first)) {
-        // Note that this result was hidden.
-        R.Hidden = true;
-        R.QualifierIsInformative = false;
-        
-        if (!R.Qualifier)
-          R.Qualifier = getRequiredQualification(SemaRef.Context, 
-                                                 CurContext, 
-                                              R.Declaration->getDeclContext());
-      } else {
-        // This result was hidden and cannot be found; don't bother adding
-        // it.
+      if (CheckHiddenResult(R, CurContext, I->first))
         return;
-      }
       
       break;
     }
