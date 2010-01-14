@@ -2183,7 +2183,8 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, Qualifier));
+    Results.AddResult(CodeCompleteConsumer::Result(*E, Qualifier),
+                      CurContext, 0, false);
   }
   Results.ExitScope();
   
@@ -2359,8 +2360,8 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
          NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
-      Results.MaybeAddResult(CodeCompleteConsumer::Result(NS->second, 0),
-                             CurContext);
+      Results.AddResult(CodeCompleteConsumer::Result(NS->second, 0),
+                        CurContext, 0, false);
     Results.ExitScope();
   }
   
@@ -3036,7 +3037,7 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
     // Record any protocols we find.
     if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
       if (!OnlyForwardDeclarations || Proto->isForwardDecl())
-        Results.MaybeAddResult(Result(Proto, 0), CurContext);
+        Results.AddResult(Result(Proto, 0), CurContext, 0, false);
 
     // Record any forward-declared protocols we find.
     if (ObjCForwardProtocolDecl *Forward
@@ -3046,7 +3047,7 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
              PEnd = Forward->protocol_end();
            P != PEnd; ++P)
         if (!OnlyForwardDeclarations || (*P)->isForwardDecl())
-          Results.MaybeAddResult(Result(*P, 0), CurContext);
+          Results.AddResult(Result(*P, 0), CurContext, 0, false);
     }
   }
 }
@@ -3097,7 +3098,7 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
     if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
       if ((!OnlyForwardDeclarations || Class->isForwardDecl()) &&
           (!OnlyUnimplemented || !Class->getImplementation()))
-        Results.MaybeAddResult(Result(Class, 0), CurContext);
+        Results.AddResult(Result(Class, 0), CurContext, 0, false);
 
     // Record any forward-declared interfaces we find.
     if (ObjCClassDecl *Forward = dyn_cast<ObjCClassDecl>(*D)) {
@@ -3105,7 +3106,8 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
            C != CEnd; ++C)
         if ((!OnlyForwardDeclarations || C->getInterface()->isForwardDecl()) &&
             (!OnlyUnimplemented || !C->getInterface()->getImplementation()))
-          Results.MaybeAddResult(Result(C->getInterface(), 0), CurContext);
+          Results.AddResult(Result(C->getInterface(), 0), CurContext,
+                            0, false);
     }
   }
 }
@@ -3176,7 +3178,7 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
        D != DEnd; ++D) 
     if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(*D))
       if (CategoryNames.insert(Category->getIdentifier()))
-          Results.MaybeAddResult(Result(Category, 0), CurContext);
+        Results.AddResult(Result(Category, 0), CurContext, 0, false);
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());  
@@ -3208,7 +3210,7 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
          Category = Category->getNextClassCategory())
       if ((!IgnoreImplemented || !Category->getImplementation()) &&
           CategoryNames.insert(Category->getIdentifier()))
-        Results.MaybeAddResult(Result(Category, 0), CurContext);
+        Results.AddResult(Result(Category, 0), CurContext, 0, false);
     
     Class = Class->getSuperClass();
     IgnoreImplemented = false;
@@ -3282,7 +3284,7 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
     for (ObjCInterfaceDecl::ivar_iterator IVar = Class->ivar_begin(),
                                        IVarEnd = Class->ivar_end();
          IVar != IVarEnd; ++IVar) 
-      Results.MaybeAddResult(Result(*IVar, 0), CurContext);
+      Results.AddResult(Result(*IVar, 0), CurContext, 0, false);
   }
   Results.ExitScope();
   
