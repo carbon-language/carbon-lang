@@ -1344,9 +1344,9 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   // Mark all live things first.
   MarkLive(&cfg->getEntry(), live);
 
-  for (unsigned i = 0; i < cfg->getNumBlockIDs(); ++i) {
-    if (!live[i]) {
-      CFGBlock &b = *(cfg->begin()[i]);
+  for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+    CFGBlock &b = **I;
+    if (!live[b.getBlockID()]) {
       if (!b.empty())
         Diag(b[0].getStmt()->getLocStart(), diag::warn_unreachable);
       // Avoid excessive errors by marking everything reachable from here
