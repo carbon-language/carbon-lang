@@ -1014,7 +1014,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     LinkageName = Name;
   }
 
-  // FIXME: Why is this using CurLoc???
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   SourceManager &SM = CGM.getContext().getSourceManager();
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
