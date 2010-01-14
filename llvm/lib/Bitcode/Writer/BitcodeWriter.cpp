@@ -1226,6 +1226,9 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   VE.getFunctionConstantRange(CstStart, CstEnd);
   WriteConstants(CstStart, CstEnd, VE, Stream, false);
 
+  // If there is function-local metadata, emit it now.
+  WriteFunctionLocalMetadata(VE, Stream);
+
   // Keep a running idea of what the instruction ID is.
   unsigned InstID = CstEnd;
 
@@ -1241,7 +1244,6 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   // Emit names for all the instructions etc.
   WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);
 
-  WriteFunctionLocalMetadata(VE, Stream);
   WriteMetadataAttachment(F, VE, Stream);
   VE.purgeFunction();
   Stream.ExitBlock();
