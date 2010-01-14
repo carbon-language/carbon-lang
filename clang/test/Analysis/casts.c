@@ -59,13 +59,9 @@ void doit(char *data, int len) {
     }
 }
 
-// PR 6035 - Test that a cast of a pointer to long and then to int does not crash SValuator.
-struct pr6035 {
-  void *data;
-};
-
-void pr6035_test (struct pr6035 *f) {
-  int x;
-  x = (long) f->data;
-  (void) x;
+// PR 6013 and 6035 - Test that a cast of a pointer to long and then to int does not crash SValuator.
+void pr6013_6035_test(void *p) {
+  unsigned int foo;
+  foo = ((long)(p));
+  (void) foo;
 }
