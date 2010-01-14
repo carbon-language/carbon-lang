@@ -1014,6 +1014,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     LinkageName = Name;
   }
 
+  // It is expected that CurLoc is set before using EmitFunctionStart.
+  // Usually, CurLoc points to the left bracket location of compound
+  // statement representing function body.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   SourceManager &SM = CGM.getContext().getSourceManager();
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
