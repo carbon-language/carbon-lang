@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -checker-cfref -analyzer-store=region -verify %s
 
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 
@@ -58,13 +59,13 @@ void doit(char *data, int len) {
     }
 }
 
-struct pcm_feeder {
+// PR 6035 - Test that a cast of a pointer to long and then to int does not crash SValuator.
+struct pr6035 {
   void *data;
 };
-// Test cast a pointer to long and then to int does not crash SValuator.
-void feed_swaplr (struct pcm_feeder *f)
-{
-  int bps;
-  bps = (long) f->data;
-  (void) bps;
+
+void pr6035_test (struct pr6035 *f) {
+  int x;
+  x = (long) f->data;
+  (void) x;
 }
