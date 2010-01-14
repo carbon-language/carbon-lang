@@ -923,7 +923,8 @@ def note_ovl_candidate_bad_conv : Note<"candidate "
     "constructor (the implicit default constructor)|"
     "constructor (the implicit copy constructor)|"
     "function (the implicit copy assignment operator)}0%1"
-    " not viable: no known conversion from %2 to %3 for argument %4">;
+    " not viable: no known conversion from %2 to %3 for "
+    "%select{%ordinal5 argument|object argument}4">;
 def note_ambiguous_type_conversion: Note<
     "because of ambiguity in conversion of %0 to %1">;
 def note_ovl_builtin_binary_candidate : Note<

@@ -4388,7 +4388,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv)
     << (unsigned) FnKind << FnDesc
     << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
-    << FromTy << ToTy << I+1;
+    << FromTy << ToTy << (unsigned) isObjectArgument << I+1;
 }
 
 void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
