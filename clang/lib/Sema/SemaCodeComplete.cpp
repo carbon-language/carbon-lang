@@ -112,14 +112,18 @@ namespace {
     /// \brief If non-NULL, a filter function used to remove any code-completion
     /// results that are not desirable.
     LookupFilter Filter;
-    
+
+    /// \brief Whether we should allow declarations as
+    /// nested-name-specifiers that would otherwise be filtered out.
+    bool AllowNestedNameSpecifiers;
+
     /// \brief A list of shadow maps, which is used to model name hiding at
     /// different levels of, e.g., the inheritance hierarchy.
     std::list<ShadowMap> ShadowMaps;
     
   public:
     explicit ResultBuilder(Sema &SemaRef, LookupFilter Filter = 0)
-      : SemaRef(SemaRef), Filter(Filter) { }
+      : SemaRef(SemaRef), Filter(Filter), AllowNestedNameSpecifiers(false) { }
     
     /// \brief Set the filter used for code-completion results.
     void setFilter(LookupFilter Filter) {
@@ -134,9 +138,19 @@ namespace {
     unsigned size() const { return Results.size(); }
     bool empty() const { return Results.empty(); }
     
+    /// \brief Specify whether nested-name-specifiers are allowed.
+    void allowNestedNameSpecifiers(bool Allow = true) {
+      AllowNestedNameSpecifiers = Allow;
+    }
+
     /// \brief Determine whether the given declaration is at all interesting
     /// as a code-completion result.
-    bool isInterestingDecl(NamedDecl *ND) const;
+    ///
+    /// \param ND the declaration that we are inspecting.
+    ///
+    /// \param AsNestedNameSpecifier will be set true if this declaration is
+    /// only interesting when it is a nested-name-specifier.
+    bool isInterestingDecl(NamedDecl *ND, bool &AsNestedNameSpecifier) const;
     
     /// \brief Check whether the result is hidden by the Hiding declaration.
     ///
@@ -330,7 +344,10 @@ getRequiredQualification(ASTContext &Context,
   return Result;
 }
 
-bool ResultBuilder::isInterestingDecl(NamedDecl *ND) const {
+bool ResultBuilder::isInterestingDecl(NamedDecl *ND, 
+                                      bool &AsNestedNameSpecifier) const {
+  AsNestedNameSpecifier = false;
+
   ND = ND->getUnderlyingDecl();
   unsigned IDNS = ND->getIdentifierNamespace();
 
@@ -376,8 +393,19 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND) const {
     return false;
   
   // Filter out any unwanted results.
-  if (Filter && !(this->*Filter)(ND))
+  if (Filter && !(this->*Filter)(ND)) {
+    // Check whether it is interesting as a nested-name-specifier.
+    if (AllowNestedNameSpecifiers && SemaRef.getLangOptions().CPlusPlus && 
+        IsNestedNameSpecifier(ND) &&
+        (Filter != &ResultBuilder::IsMember ||
+         (isa<CXXRecordDecl>(ND) && 
+          cast<CXXRecordDecl>(ND)->isInjectedClassName()))) {
+      AsNestedNameSpecifier = true;
+      return true;
+    }
+
     return false;
+  }
   
   // ... then it must be interesting!
   return true;
@@ -429,7 +457,8 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
 
-  if (!isInterestingDecl(R.Declaration))
+  bool AsNestedNameSpecifier = false;
+  if (!isInterestingDecl(R.Declaration, AsNestedNameSpecifier))
     return;
       
   ShadowMap &SMap = ShadowMaps.back();
@@ -491,10 +520,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
-  if ((Filter == &ResultBuilder::IsNestedNameSpecifier) ||
-      (Filter == &ResultBuilder::IsMember &&
-       isa<CXXRecordDecl>(R.Declaration) &&
-       cast<CXXRecordDecl>(R.Declaration)->isInjectedClassName()))
+  if (AsNestedNameSpecifier)
     R.StartsNestedNameSpecifier = true;
   
   // If this result is supposed to have an informative qualifier, add one.
@@ -527,7 +553,8 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
     return;
   }
   
-  if (!isInterestingDecl(R.Declaration))
+  bool AsNestedNameSpecifier = false;
+  if (!isInterestingDecl(R.Declaration, AsNestedNameSpecifier))
     return;
   
   if (Hiding && CheckHiddenResult(R, CurContext, Hiding))
@@ -539,10 +566,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   
   // If the filter is for nested-name-specifiers, then this result starts a
   // nested-name-specifier.
-  if ((Filter == &ResultBuilder::IsNestedNameSpecifier) ||
-      (Filter == &ResultBuilder::IsMember &&
-       isa<CXXRecordDecl>(R.Declaration) &&
-       cast<CXXRecordDecl>(R.Declaration)->isInjectedClassName()))
+  if (AsNestedNameSpecifier)
     R.StartsNestedNameSpecifier = true;
   
   // If this result is supposed to have an informative qualifier, add one.
@@ -553,7 +577,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
       R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
     else if (TagDecl *Tag = dyn_cast<TagDecl>(Ctx))
       R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, false, 
-                                                SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
+                            SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
     else
       R.QualifierIsInformative = false;
   }
@@ -664,9 +688,6 @@ bool ResultBuilder::IsMember(NamedDecl *ND) const {
   if (UsingShadowDecl *Using = dyn_cast<UsingShadowDecl>(ND))
     ND = Using->getTargetDecl();
 
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(ND))
-    return Record->isInjectedClassName();
-    
   return isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND) ||
     isa<ObjCPropertyDecl>(ND);
 }
@@ -2132,6 +2153,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   Results.EnterNewScope();
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
     // Access to a C/C++ class, struct, or union.
+    Results.allowNestedNameSpecifiers();
     CollectMemberLookupResults(Record->getDecl(), Record->getDecl(), Results);
 
     if (getLangOptions().CPlusPlus) {
@@ -2223,15 +2245,8 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   }
   
   ResultBuilder Results(*this, Filter);
+  Results.allowNestedNameSpecifiers();
   CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
-  
-  if (getLangOptions().CPlusPlus) {
-    // We could have the start of a nested-name-specifier. Add those
-    // results as well.
-    Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-    CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext, 
-                         Results);
-  }
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
@@ -2518,14 +2533,11 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 #include "clang/Basic/OperatorKinds.def"
   
   // Add any type names visible from the current scope
+  Results.allowNestedNameSpecifiers();
   CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   
   // Add any type specifiers
   AddTypeSpecifierResults(getLangOptions(), Results);
-  
-  // Add any nested-name-specifiers
-  Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
   Results.ExitScope();
   
   if (CodeCompleter->includeMacros())
