@@ -280,6 +280,11 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   {
   case ExceptionHandling::SjLj:
     // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
+    // Dwarf EH prepare needs to be run after SjLj prepare. Otherwise,
+    // catch info can get misplaced when a selector ends up more than one block
+    // removed from the parent invoke(s). This could happen when a landing
+    // pad is shared by multiple invokes and is also a target of a normal
+    // edge from elsewhere.
     PM.add(createSjLjEHPass(getTargetLowering()));
     PM.add(createDwarfEHPass(getTargetLowering(), OptLevel==CodeGenOpt::None));
     break;
