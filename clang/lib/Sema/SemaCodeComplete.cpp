@@ -709,15 +709,6 @@ namespace {
   };
 }
 
-// Find the next outer declaration context corresponding to this scope.
-static DeclContext *findOuterContext(Scope *S) {
-  for (S = S->getParent(); S; S = S->getParent())
-    if (S->getEntity())
-      return static_cast<DeclContext *>(S->getEntity())->getPrimaryContext();
-  
-  return 0;
-}
-
 /// \brief Collect the results of searching for members within the given
 /// declaration context.
 ///
@@ -816,65 +807,6 @@ static void CollectMemberLookupResults(DeclContext *Ctx,
                                        ResultBuilder &Results) {
   llvm::SmallPtrSet<DeclContext *, 16> Visited;
   CollectMemberLookupResults(Ctx, CurContext, Visited, Results);
-}
-
-/// \brief Collect the results of searching for declarations within the given
-/// scope and its parent scopes.
-///
-/// \param S the scope in which we will start looking for declarations.
-///
-/// \param CurContext the context from which lookup results will be found.
-///
-/// \param Results the builder object that will receive each result.
-static void CollectLookupResults(Scope *S, 
-                                 TranslationUnitDecl *TranslationUnit,
-                                 DeclContext *CurContext,
-                                 ResultBuilder &Results) {
-  if (!S)
-    return;
-  
-  // FIXME: Using directives!
-  
-  Results.EnterNewScope();
-  if (S->getEntity() && 
-      !((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
-    // Look into this scope's declaration context, along with any of its
-    // parent lookup contexts (e.g., enclosing classes), up to the point
-    // where we hit the context stored in the next outer scope.
-    DeclContext *Ctx = (DeclContext *)S->getEntity();
-    DeclContext *OuterCtx = findOuterContext(S);
-    
-    for (; Ctx && Ctx->getPrimaryContext() != OuterCtx;
-         Ctx = Ctx->getLookupParent()) {
-      if (Ctx->isFunctionOrMethod())
-        continue;
-      
-      CollectMemberLookupResults(Ctx, CurContext, Results);
-    }
-  } else if (!S->getParent()) {
-    // Look into the translation unit scope. We walk through the translation
-    // unit's declaration context, because the Scope itself won't have all of
-    // the declarations if we loaded a precompiled header.
-    // FIXME: We would like the translation unit's Scope object to point to the
-    // translation unit, so we don't need this special "if" branch. However,
-    // doing so would force the normal C++ name-lookup code to look into the
-    // translation unit decl when the IdentifierInfo chains would suffice. 
-    // Once we fix that problem (which is part of a more general "don't look
-    // in DeclContexts unless we have to" optimization), we can eliminate the
-    // TranslationUnit parameter entirely.
-    CollectMemberLookupResults(TranslationUnit, CurContext, Results);
-  } else {
-    // Walk through the declarations in this Scope.
-    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-         D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
-        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND), CurContext);        
-    }
-  }
-  
-  // Lookup names in the parent scope.
-  CollectLookupResults(S->getParent(), TranslationUnit, CurContext, Results);
-  Results.ExitScope();
 }
 
 /// \brief Add type specifiers for the current language as keyword results.
@@ -2246,7 +2178,8 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   
   ResultBuilder Results(*this, Filter);
   Results.allowNestedNameSpecifiers();
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupTagName, Consumer);
   
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
@@ -2447,7 +2380,8 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   // After "using", we can see anything that would start a 
   // nested-name-specifier.
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   Results.ExitScope();
   
   if (CodeCompleter->includeMacros())
@@ -2463,7 +2397,8 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   // alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
   Results.EnterNewScope();
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   Results.ExitScope();
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
@@ -2512,7 +2447,8 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   
   // After "namespace", we expect to see a namespace or alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   if (CodeCompleter->includeMacros())
     AddMacroResults(PP, Results);
   HandleCodeCompleteResults(this, CodeCompleter, Results.data(),Results.size());
@@ -2534,7 +2470,8 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   
   // Add any type names visible from the current scope
   Results.allowNestedNameSpecifiers();
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), CurContext,Results);
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer);
   
   // Add any type specifiers
   AddTypeSpecifierResults(getLangOptions(), Results);
