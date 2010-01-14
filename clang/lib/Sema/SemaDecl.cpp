@@ -1329,11 +1329,14 @@ static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
 
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
+  // We avoid checking when there are errors, as the CFG won't faithfully match
+  // the users code.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
   if (Diags.getDiagnosticLevel(diag::warn_unreachable) == Diagnostic::Ignored)
     return;
 
   CFG *cfg = AC.getCFG();
-  // FIXME: They should never return 0, fix that, delete this code.
   if (cfg == 0)
     return;
   
@@ -1363,7 +1366,6 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
 /// will return.
 Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
   CFG *cfg = AC.getCFG();
-  // FIXME: They should never return 0, fix that, delete this code.
   if (cfg == 0)
     // FIXME: This should be NeverFallThrough
     return NeverFallThroughOrReturn;
