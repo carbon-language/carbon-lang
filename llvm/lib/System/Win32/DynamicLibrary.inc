@@ -79,7 +79,7 @@ extern "C" {
         // Mingw32 uses msvcrt.dll by default. Don't ignore it.
         // Otherwise, user should be aware, what he's doing :)
         stricmp(ModuleName, "msvcrt") != 0 &&
-#endif        
+#endif
         stricmp(ModuleName, "msvcrt20") != 0 &&
         stricmp(ModuleName, "msvcrt40") != 0) {
       OpenedHandles.push_back((HMODULE)ModuleBase);
@@ -119,24 +119,24 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
     extern "C" { extern void *SYM; }
 
   #if defined(__MINGW32__)
-    EXPLICIT_SYMBOL_DEF(_alloca);
-    EXPLICIT_SYMBOL_DEF(__main);
-    EXPLICIT_SYMBOL_DEF(__ashldi3);
-    EXPLICIT_SYMBOL_DEF(__ashrdi3);
-    EXPLICIT_SYMBOL_DEF(__cmpdi2);
-    EXPLICIT_SYMBOL_DEF(__divdi3);
-    EXPLICIT_SYMBOL_DEF(__fixdfdi);
-    EXPLICIT_SYMBOL_DEF(__fixsfdi);
-    EXPLICIT_SYMBOL_DEF(__fixunsdfdi);
-    EXPLICIT_SYMBOL_DEF(__fixunssfdi);
-    EXPLICIT_SYMBOL_DEF(__floatdidf);
-    EXPLICIT_SYMBOL_DEF(__floatdisf);
-    EXPLICIT_SYMBOL_DEF(__lshrdi3);
-    EXPLICIT_SYMBOL_DEF(__moddi3);
-    EXPLICIT_SYMBOL_DEF(__udivdi3);
-    EXPLICIT_SYMBOL_DEF(__umoddi3);
+    EXPLICIT_SYMBOL_DEF(_alloca)
+    EXPLICIT_SYMBOL_DEF(__main)
+    EXPLICIT_SYMBOL_DEF(__ashldi3)
+    EXPLICIT_SYMBOL_DEF(__ashrdi3)
+    EXPLICIT_SYMBOL_DEF(__cmpdi2)
+    EXPLICIT_SYMBOL_DEF(__divdi3)
+    EXPLICIT_SYMBOL_DEF(__fixdfdi)
+    EXPLICIT_SYMBOL_DEF(__fixsfdi)
+    EXPLICIT_SYMBOL_DEF(__fixunsdfdi)
+    EXPLICIT_SYMBOL_DEF(__fixunssfdi)
+    EXPLICIT_SYMBOL_DEF(__floatdidf)
+    EXPLICIT_SYMBOL_DEF(__floatdisf)
+    EXPLICIT_SYMBOL_DEF(__lshrdi3)
+    EXPLICIT_SYMBOL_DEF(__moddi3)
+    EXPLICIT_SYMBOL_DEF(__udivdi3)
+    EXPLICIT_SYMBOL_DEF(__umoddi3)
   #elif defined(_MSC_VER)
-    EXPLICIT_SYMBOL_DEF(_alloca_probe);
+    EXPLICIT_SYMBOL_DEF(_alloca_probe)
   #endif
 #endif
 
@@ -181,7 +181,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     EXPLICIT_SYMBOL2(alloca, _alloca);
 #undef EXPLICIT_SYMBOL
 #undef EXPLICIT_SYMBOL2
-#undef EXPLICIT_SYMBOL_DEF    
+#undef EXPLICIT_SYMBOL_DEF
   }
 #elif defined(_MSC_VER)
   {
@@ -189,8 +189,8 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     EXPLICIT_SYMBOL2(_alloca, _alloca_probe);
 #undef EXPLICIT_SYMBOL
 #undef EXPLICIT_SYMBOL2
-#undef EXPLICIT_SYMBOL_DEF    
-  }  
+#undef EXPLICIT_SYMBOL_DEF
+  }
 #endif
 
   return 0;
