@@ -12,6 +12,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -101,7 +102,7 @@ public:
   
 /// ARMOperand - Instances of this class represent a parsed ARM machine
 /// instruction.
-struct ARMOperand {
+struct ARMOperand : public MCParsedAsmOperand {
   enum {
     Token,
     Register,
