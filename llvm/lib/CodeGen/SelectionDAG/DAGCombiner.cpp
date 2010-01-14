@@ -1684,6 +1684,9 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   EVT VT = N0.getValueType();
   assert(N0.getOpcode() == N1.getOpcode() && "Bad input!");
 
+  // Bail early if none of these transforms apply.
+  if (N0.getNode()->getNumOperands() == 0) return SDValue();
+
   // For each of OP in AND/OR/XOR:
   // fold (OP (zext x), (zext y)) -> (zext (OP x, y))
   // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
