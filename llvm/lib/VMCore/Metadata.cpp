@@ -121,9 +121,39 @@ MDNode::~MDNode() {
     Op->~MDNodeOperand();
 }
 
+#ifndef NDEBUG
+static Function *assertLocalFunction(const MDNode *N,
+                                     SmallPtrSet<const MDNode *, 32> &Visited) {
+  Function *F = NULL;
+  // Only visit each MDNode once.
+  if (!Visited.insert(N)) return F;
+  
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    Value *V = N->getOperand(i);
+    Function *NewF = NULL;
+    if (!V) continue;
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      NewF = I->getParent()->getParent();
+    else if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
+      NewF = BB->getParent();
+    else if (Argument *A = dyn_cast<Argument>(V))
+      NewF = A->getParent();
+    else if (MDNode *MD = dyn_cast<MDNode>(V))
+      if (MD->isFunctionLocal())
+        NewF = assertLocalFunction(MD, Visited);
+    if (F && NewF) assert(F == NewF && "inconsistent function-local metadata");
+    if (!F) F = NewF;
+  }
+  return F;
+}
+#endif
+
 static Function *getFunctionHelper(const MDNode *N,
                                    SmallPtrSet<const MDNode *, 32> &Visited) {
   assert(N->isFunctionLocal() && "Should only be called on function-local MD");
+#ifndef NDEBUG
+  return assertLocalFunction(N, Visited);
+#endif
   Function *F = NULL;
   // Only visit each MDNode once.
   if (!Visited.insert(N)) return F;
@@ -142,7 +172,6 @@ static Function *getFunctionHelper(const MDNode *N,
         F = getFunctionHelper(MD, Visited);
     if (F) break;
   }
-  
   return F;
 }
 
