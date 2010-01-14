@@ -524,7 +524,11 @@ private:
     ///
     /// \param Hiding a declaration that hides the declaration \p ND,
     /// or NULL if no such declaration exists.
-    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding) = 0;
+    ///
+    /// \param InBaseClass whether this declaration was found in base
+    /// class of the context we searched.
+    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, 
+                           bool InBaseClass) = 0;
   };
 }
 

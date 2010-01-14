@@ -1942,10 +1942,12 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
           (*I)->getIdentifierNamespace() != IDNS)
         continue;
 
-      // Functions and function templates overload rather than hide.
-      // FIXME: Look for hiding based on function signatures!
+      // Functions and function templates in the same scope overload
+      // rather than hide.  FIXME: Look for hiding based on function
+      // signatures!
       if ((*I)->isFunctionOrFunctionTemplate() &&
-          ND->isFunctionOrFunctionTemplate())
+          ND->isFunctionOrFunctionTemplate() &&
+          SM == ShadowMaps.rbegin())
         continue;
           
       // We've found a declaration that hides this one.
@@ -1958,6 +1960,7 @@ NamedDecl *VisibleDeclsRecord::checkHidden(NamedDecl *ND) {
 
 static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
                                bool QualifiedNameLookup,
+                               bool InBaseClass,
                                VisibleDeclConsumer &Consumer,
                                VisibleDeclsRecord &Visited) {
   // Make sure we don't visit the same context twice.
@@ -1972,14 +1975,14 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
         if (Result.isAcceptableDecl(ND)) {
-          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND), InBaseClass);
           Visited.add(ND);
         }
 
       // Visit transparent contexts inside this context.
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
         if (InnerCtx->isTransparentContext())
-          LookupVisibleDecls(InnerCtx, Result, QualifiedNameLookup, 
+          LookupVisibleDecls(InnerCtx, Result, QualifiedNameLookup, InBaseClass,
                              Consumer, Visited);
       }
     }
@@ -1991,7 +1994,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     DeclContext::udir_iterator I, E;
     for (llvm::tie(I, E) = Ctx->getUsingDirectives(); I != E; ++I) {
       LookupVisibleDecls((*I)->getNominatedNamespace(), Result, 
-                         QualifiedNameLookup, Consumer, Visited);
+                         QualifiedNameLookup, InBaseClass, Consumer, Visited);
     }
   }
 
@@ -2033,7 +2036,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
       // Find results in this base class (and its bases).
       ShadowContextRAII Shadow(Visited);
       LookupVisibleDecls(Record->getDecl(), Result, QualifiedNameLookup,
-                         Consumer, Visited);
+                         true, Consumer, Visited);
     }
   }
   
@@ -2043,34 +2046,37 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     for (ObjCCategoryDecl *Category = IFace->getCategoryList();
          Category; Category = Category->getNextClassCategory()) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(Category, Result, QualifiedNameLookup, Consumer, 
-                         Visited);
+      LookupVisibleDecls(Category, Result, QualifiedNameLookup, false, 
+                         Consumer, Visited);
     }
 
     // Traverse protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
          E = IFace->protocol_end(); I != E; ++I) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer, 
+                         Visited);
     }
 
     // Traverse the superclass.
     if (IFace->getSuperClass()) {
       ShadowContextRAII Shadow(Visited);
       LookupVisibleDecls(IFace->getSuperClass(), Result, QualifiedNameLookup,
-                         Consumer, Visited);
+                         true, Consumer, Visited);
     }
   } else if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Ctx)) {
     for (ObjCProtocolDecl::protocol_iterator I = Protocol->protocol_begin(),
            E = Protocol->protocol_end(); I != E; ++I) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer, 
+                         Visited);
     }
   } else if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Ctx)) {
     for (ObjCCategoryDecl::protocol_iterator I = Category->protocol_begin(),
            E = Category->protocol_end(); I != E; ++I) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(*I, Result, QualifiedNameLookup, Consumer, Visited);
+      LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer, 
+                         Visited);
     }
   }
 }
@@ -2089,7 +2095,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
         if (Result.isAcceptableDecl(ND)) {
-          Consumer.FoundDecl(ND, Visited.checkHidden(ND));
+          Consumer.FoundDecl(ND, Visited.checkHidden(ND), false);
           Visited.add(ND);
         }
     }
@@ -2112,7 +2118,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
                                   Result.getNameLoc(), Sema::LookupMemberName);
           ObjCInterfaceDecl *IFace = Method->getClassInterface();
           LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false, 
-                             Consumer, Visited);
+                             /*InBaseClass=*/false, Consumer, Visited);
         }
 
         // We've already performed all of the name lookup that we need
@@ -2125,7 +2131,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
         continue;
       
       LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/false, 
-                         Consumer, Visited);
+                         /*InBaseClass=*/false, Consumer, Visited);
     }
   } else if (!S->getParent()) {
     // Look into the translation unit scope. We walk through the translation
@@ -2139,7 +2145,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     // in DeclContexts unless we have to" optimization), we can eliminate this.
     Entity = Result.getSema().Context.getTranslationUnitDecl();
     LookupVisibleDecls(Entity, Result, /*QualifiedNameLookup=*/false, 
-                       Consumer, Visited);
+                       /*InBaseClass=*/false, Consumer, Visited);
   } 
   
   if (Entity) {
@@ -2149,8 +2155,8 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(Entity);
     for (; UI != UEnd; ++UI)
       LookupVisibleDecls(const_cast<DeclContext *>(UI->getNominatedNamespace()),
-                         Result, /*QualifiedNameLookup=*/false, Consumer, 
-                         Visited);
+                         Result, /*QualifiedNameLookup=*/false, 
+                         /*InBaseClass=*/false, Consumer, Visited);
   }
 
   // Lookup names in the parent scope.
@@ -2185,8 +2191,8 @@ void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
   LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
   VisibleDeclsRecord Visited;
   ShadowContextRAII Shadow(Visited);
-  ::LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/true, Consumer, 
-                       Visited);
+  ::LookupVisibleDecls(Ctx, Result, /*QualifiedNameLookup=*/true, 
+                       /*InBaseClass=*/false, Consumer, Visited);
 }
 
 //----------------------------------------------------------------------------
@@ -2209,7 +2215,7 @@ public:
   explicit TypoCorrectionConsumer(IdentifierInfo *Typo)
     : Typo(Typo->getName()) { }
 
-  virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding);
+  virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass);
 
   typedef llvm::SmallVector<NamedDecl *, 4>::const_iterator iterator;
   iterator begin() const { return BestResults.begin(); }
@@ -2221,7 +2227,8 @@ public:
 
 }
 
-void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
+void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding, 
+                                       bool InBaseClass) {
   // Don't consider hidden names for typo correction.
   if (Hiding)
     return;

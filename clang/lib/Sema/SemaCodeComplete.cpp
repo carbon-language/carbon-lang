@@ -178,7 +178,11 @@ namespace {
     /// \param CurContext the context in which this result will be named.
     ///
     /// \param Hiding the declaration that hides the result.
-    void AddResult(Result R, DeclContext *CurContext, NamedDecl *Hiding);
+    ///
+    /// \param InBaseClass whether the result was found in a base
+    /// class of the searched context.
+    void AddResult(Result R, DeclContext *CurContext, NamedDecl *Hiding,
+                   bool InBaseClass);
     
     /// \brief Enter into a new scope.
     void EnterNewScope();
@@ -543,7 +547,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
 }
 
 void ResultBuilder::AddResult(Result R, DeclContext *CurContext, 
-                              NamedDecl *Hiding) {
+                              NamedDecl *Hiding, bool InBaseClass = false) {
   assert(R.Kind == Result::RK_Declaration &&
          "Only declaration results are supported");
   
@@ -568,7 +572,11 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   // nested-name-specifier.
   if (AsNestedNameSpecifier)
     R.StartsNestedNameSpecifier = true;
-  
+  else if (Filter == &ResultBuilder::IsMember && !R.Qualifier && InBaseClass &&
+           isa<CXXRecordDecl>(R.Declaration->getDeclContext()
+                                                  ->getLookupContext()))
+    R.QualifierIsInformative = true;
+
   // If this result is supposed to have an informative qualifier, add one.
   if (R.QualifierIsInformative && !R.Qualifier &&
       !R.StartsNestedNameSpecifier) {
@@ -703,110 +711,10 @@ namespace {
     CodeCompletionDeclConsumer(ResultBuilder &Results, DeclContext *CurContext)
       : Results(Results), CurContext(CurContext) { }
     
-    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding) {
-      Results.AddResult(ND, CurContext, Hiding);
+    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass) {
+      Results.AddResult(ND, CurContext, Hiding, InBaseClass);
     }
   };
-}
-
-/// \brief Collect the results of searching for members within the given
-/// declaration context.
-///
-/// \param Ctx the declaration context from which we will gather results.
-///
-/// \param Visited the set of declaration contexts that have already been
-/// visited. Declaration contexts will only be visited once.
-///
-/// \param Results the result set that will be extended with any results
-/// found within this declaration context (and, for a C++ class, its bases).
-///
-/// \param InBaseClass whether we are in a base class.
-static void CollectMemberLookupResults(DeclContext *Ctx, 
-                                       DeclContext *CurContext,
-                                 llvm::SmallPtrSet<DeclContext *, 16> &Visited,
-                                       ResultBuilder &Results,
-                                       bool InBaseClass = false) {
-  // Make sure we don't visit the same context twice.
-  if (!Visited.insert(Ctx->getPrimaryContext()))
-    return;
-  
-  // Enumerate all of the results in this context.
-  typedef CodeCompleteConsumer::Result Result;
-  Results.EnterNewScope();
-  for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
-       CurCtx = CurCtx->getNextContext()) {
-    for (DeclContext::decl_iterator D = CurCtx->decls_begin(), 
-                                 DEnd = CurCtx->decls_end();
-         D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        Results.MaybeAddResult(Result(ND, 0, InBaseClass), CurContext);
-      
-      // Visit transparent contexts inside this context.
-      if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
-        if (InnerCtx->isTransparentContext())
-          CollectMemberLookupResults(InnerCtx, CurContext, Visited,
-                                     Results, InBaseClass);
-      }
-    }
-  }
-  
-  // Traverse the contexts of inherited classes.
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
-    for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
-                                         BEnd = Record->bases_end();
-         B != BEnd; ++B) {
-      QualType BaseType = B->getType();
-      
-      // Don't look into dependent bases, because name lookup can't look
-      // there anyway.
-      if (BaseType->isDependentType())
-        continue;
-      
-      const RecordType *Record = BaseType->getAs<RecordType>();
-      if (!Record)
-        continue;
-      
-      // FIXME: It would be nice to be able to determine whether referencing
-      // a particular member would be ambiguous. For example, given
-      //
-      //   struct A { int member; };
-      //   struct B { int member; };
-      //   struct C : A, B { };
-      //
-      //   void f(C *c) { c->### }
-      // accessing 'member' would result in an ambiguity. However, code
-      // completion could be smart enough to qualify the member with the
-      // base class, e.g.,
-      //
-      //   c->B::member
-      //
-      // or
-      //
-      //   c->A::member
-      
-      // Collect results from this base class (and its bases).
-      CollectMemberLookupResults(Record->getDecl(), CurContext, Visited,
-                                 Results, /*InBaseClass=*/true);
-    }
-  }
-  
-  // FIXME: Look into base classes in Objective-C!
-  
-  Results.ExitScope();
-}
-
-/// \brief Collect the results of searching for members within the given
-/// declaration context.
-///
-/// \param Ctx the declaration context from which we will gather results.
-///
-/// \param Results the result set that will be extended with any results
-/// found within this declaration context (and, for a C++ class, its bases).
-static void CollectMemberLookupResults(DeclContext *Ctx, 
-                                       DeclContext *CurContext,
-                                       ResultBuilder &Results) {
-  llvm::SmallPtrSet<DeclContext *, 16> Visited;
-  CollectMemberLookupResults(Ctx, CurContext, Visited, Results);
 }
 
 /// \brief Add type specifiers for the current language as keyword results.
@@ -2086,7 +1994,8 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
     // Access to a C/C++ class, struct, or union.
     Results.allowNestedNameSpecifiers();
-    CollectMemberLookupResults(Record->getDecl(), Record->getDecl(), Results);
+    CodeCompletionDeclConsumer Consumer(Results, CurContext);
+    LookupVisibleDecls(Record->getDecl(), LookupMemberName, Consumer);
 
     if (getLangOptions().CPlusPlus) {
       if (!Results.empty()) {
