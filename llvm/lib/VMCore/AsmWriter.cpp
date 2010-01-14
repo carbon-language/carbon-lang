@@ -2062,8 +2062,9 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
     else
       W.printAlias(cast<GlobalAlias>(GV));
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
-    SlotTracker SlotTable((Function*)0);
-    AssemblyWriter W(OS, SlotTable, 0, AAW);
+    Function *F = N->getFunction();
+    SlotTracker SlotTable(F);
+    AssemblyWriter W(OS, SlotTable, getModuleFromVal(F), AAW);
     W.printMDNodeBody(N);
   } else if (const NamedMDNode *N = dyn_cast<NamedMDNode>(this)) {
     SlotTracker SlotTable(N->getParent());
