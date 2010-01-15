@@ -279,10 +279,10 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
   }
   case AsmToken::Dollar: {
     // $42 -> immediate.
+    SMLoc Start = getLexer().getTok().getLoc(), End;
     getLexer().Lex();
     const MCExpr *Val;
-    SMLoc Start, End;
-    if (getParser().ParseExpression(Val, Start, End))
+    if (getParser().ParseExpression(Val, End))
       return 0;
     return X86Operand::CreateImm(Val, Start, End);
   }
@@ -302,15 +302,15 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   // it.
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getLexer().isNot(AsmToken::LParen)) {
-    SMLoc ExprStart, ExprEnd;
-    if (getParser().ParseExpression(Disp, MemStart, ExprEnd)) return 0;
+    SMLoc ExprEnd;
+    if (getParser().ParseExpression(Disp, ExprEnd)) return 0;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
     if (getLexer().isNot(AsmToken::LParen)) {
       // Unless we have a segment register, treat this as an immediate.
       if (SegReg == 0)
-        return X86Operand::CreateImm(Disp, ExprStart, ExprEnd);
+        return X86Operand::CreateImm(Disp, MemStart, ExprEnd);
       return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
     }
     

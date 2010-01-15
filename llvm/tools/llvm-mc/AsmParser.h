@@ -80,8 +80,7 @@ public:
   virtual bool Error(SMLoc L, const Twine &Msg);
 
   bool ParseExpression(const MCExpr *&Res);
-  virtual bool ParseExpression(const MCExpr *&Res,
-                               SMLoc &StartLoc, SMLoc &EndLoc);
+  virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 

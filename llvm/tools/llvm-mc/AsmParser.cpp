@@ -271,8 +271,8 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 }
 
 bool AsmParser::ParseExpression(const MCExpr *&Res) {
-  SMLoc L;
-  return ParseExpression(Res, L, L);
+  SMLoc EndLoc;
+  return ParseExpression(Res, EndLoc);
 }
 
 /// ParseExpression - Parse an expression and return it.
@@ -282,9 +282,7 @@ bool AsmParser::ParseExpression(const MCExpr *&Res) {
 ///  expr ::= expr *,/,%,<<,>> expr  -> highest.
 ///  expr ::= primaryexpr
 ///
-bool AsmParser::ParseExpression(const MCExpr *&Res,
-                                SMLoc &StartLoc, SMLoc &EndLoc) {
-  StartLoc = Lexer.getLoc();
+bool AsmParser::ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
   Res = 0;
   return ParsePrimaryExpr(Res, EndLoc) ||
          ParseBinOpRHS(1, Res, EndLoc);
