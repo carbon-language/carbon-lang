@@ -41,7 +41,6 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include <set>
 using namespace llvm;
 
 namespace {
@@ -50,7 +49,6 @@ namespace {
   const std::string bss_section(".bss");
 
   class SPUAsmPrinter : public AsmPrinter {
-    std::set<std::string> FnStubs, GVStubs;
   public:
     explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const MCAsmInfo *T, bool V) :
@@ -332,7 +330,6 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     // Computing the address of an external symbol, not calling it.
     if (TM.getRelocationModel() != Reloc::Static) {
       std::string Name(MAI->getGlobalPrefix()); Name += MO.getSymbolName();
-      GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
       return;
     }
@@ -348,7 +345,6 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     if (TM.getRelocationModel() != Reloc::Static) {
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
-        GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
         return;
       }
