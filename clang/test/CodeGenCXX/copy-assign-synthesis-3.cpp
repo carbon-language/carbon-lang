@@ -1,18 +1,24 @@
 // RUN: %clang_cc1 -emit-llvm-only -verify %s
 
 struct A {
-  A& operator=(const A&);
+  A& operator=(A&);
 };
 
 struct B {
-  A a;
-  float b;
-  int (A::*c)();
-  _Complex float d;
-  int e[10];
-  A f[2];
+  void operator=(B);
 };
-void a(B& x, B& y) {
+
+struct C {
+  A a;
+  B b;
+  float c;
+  int (A::*d)();
+  _Complex float e;
+  int f[10];
+  A g[2];
+  B h[2];
+};
+void a(C& x, C& y) {
   x = y;
 }
 

@@ -394,10 +394,8 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
   if (BitwiseAssign)
     EmitAggregateCopy(Dest, Src, Ty);
   else {
-    bool hasCopyAssign = BaseClassDecl->hasConstCopyAssignment(getContext(),
-                                                               MD);
-    assert(hasCopyAssign && "EmitClassAggrCopyAssignment - No user assign");
-    (void)hasCopyAssign;
+    BaseClassDecl->hasConstCopyAssignment(getContext(), MD);
+    assert(MD && "EmitClassAggrCopyAssignment - No user assign");
     const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
     const llvm::Type *LTy =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
@@ -410,8 +408,10 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                       MD->getThisType(getContext())));
 
     // Push the Src ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                      MD->getParamDecl(0)->getType()));
+    QualType SrcTy = MD->getParamDecl(0)->getType();
+    RValue SrcValue = SrcTy->isReferenceType() ? RValue::get(Src) :
+                                                 RValue::getAggregate(Src);
+    CallArgs.push_back(std::make_pair(SrcValue, SrcTy));
     QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
              Callee, ReturnValueSlot(), CallArgs, MD);
@@ -531,10 +531,8 @@ void CodeGenFunction::EmitClassCopyAssignment(
   }
 
   const CXXMethodDecl *MD = 0;
-  bool ConstCopyAssignOp = BaseClassDecl->hasConstCopyAssignment(getContext(),
-                                                                 MD);
-  assert(ConstCopyAssignOp && "EmitClassCopyAssignment - missing copy assign");
-  (void)ConstCopyAssignOp;
+  BaseClassDecl->hasConstCopyAssignment(getContext(), MD);
+  assert(MD && "EmitClassCopyAssignment - missing copy assign");
 
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::Type *LTy =
@@ -548,8 +546,10 @@ void CodeGenFunction::EmitClassCopyAssignment(
                                     MD->getThisType(getContext())));
 
   // Push the Src ptr.
-  CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                    MD->getParamDecl(0)->getType()));
+  QualType SrcTy = MD->getParamDecl(0)->getType();
+  RValue SrcValue = SrcTy->isReferenceType() ? RValue::get(Src) :
+                                               RValue::getAggregate(Src);
+  CallArgs.push_back(std::make_pair(SrcValue, SrcTy));
   QualType ResultType =
     MD->getType()->getAs<FunctionType>()->getResultType();
   EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
