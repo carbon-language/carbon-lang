@@ -1237,11 +1237,10 @@ public:
                                             SourceLocation LParenLoc,
                                             ExprArg SubExpr,
                                             SourceLocation RParenLoc) {
-    return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_static_cast,
-                                       LAngleLoc,
-                                       TInfo->getType().getAsOpaquePtr(),
-                                       RAngleLoc,
-                                       LParenLoc, move(SubExpr), RParenLoc);
+    return getSema().BuildCXXNamedCast(OpLoc, tok::kw_static_cast,
+                                       TInfo, move(SubExpr),
+                                       SourceRange(LAngleLoc, RAngleLoc),
+                                       SourceRange(LParenLoc, RParenLoc));
   }
 
   /// \brief Build a new C++ dynamic_cast expression.
@@ -1255,11 +1254,10 @@ public:
                                              SourceLocation LParenLoc,
                                              ExprArg SubExpr,
                                              SourceLocation RParenLoc) {
-    return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_dynamic_cast,
-                                       LAngleLoc,
-                                       TInfo->getType().getAsOpaquePtr(),
-                                       RAngleLoc,
-                                       LParenLoc, move(SubExpr), RParenLoc);
+    return getSema().BuildCXXNamedCast(OpLoc, tok::kw_dynamic_cast,
+                                       TInfo, move(SubExpr),
+                                       SourceRange(LAngleLoc, RAngleLoc),
+                                       SourceRange(LParenLoc, RParenLoc));
   }
 
   /// \brief Build a new C++ reinterpret_cast expression.
@@ -1273,11 +1271,10 @@ public:
                                                  SourceLocation LParenLoc,
                                                  ExprArg SubExpr,
                                                  SourceLocation RParenLoc) {
-    return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_reinterpret_cast,
-                                       LAngleLoc,
-                                       TInfo->getType().getAsOpaquePtr(),
-                                       RAngleLoc,
-                                       LParenLoc, move(SubExpr), RParenLoc);
+    return getSema().BuildCXXNamedCast(OpLoc, tok::kw_reinterpret_cast,
+                                       TInfo, move(SubExpr),
+                                       SourceRange(LAngleLoc, RAngleLoc),
+                                       SourceRange(LParenLoc, RParenLoc));
   }
 
   /// \brief Build a new C++ const_cast expression.
@@ -1291,11 +1288,10 @@ public:
                                            SourceLocation LParenLoc,
                                            ExprArg SubExpr,
                                            SourceLocation RParenLoc) {
-    return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_const_cast,
-                                       LAngleLoc,
-                                       TInfo->getType().getAsOpaquePtr(),
-                                       RAngleLoc,
-                                       LParenLoc, move(SubExpr), RParenLoc);
+    return getSema().BuildCXXNamedCast(OpLoc, tok::kw_const_cast,
+                                       TInfo, move(SubExpr),
+                                       SourceRange(LAngleLoc, RAngleLoc),
+                                       SourceRange(LParenLoc, RParenLoc));
   }
 
   /// \brief Build a new C++ functional-style cast expression.

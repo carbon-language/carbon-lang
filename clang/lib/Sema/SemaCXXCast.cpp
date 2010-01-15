@@ -116,13 +116,26 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation RAngleBracketLoc,
                         SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {
-  Expr *Ex = E.takeAs<Expr>();
+  
   TypeSourceInfo *DestTInfo;
   QualType DestType = GetTypeFromParser(Ty, &DestTInfo);
   if (!DestTInfo)
     DestTInfo = Context.getTrivialTypeSourceInfo(DestType, SourceLocation());
-  SourceRange OpRange(OpLoc, RParenLoc);
-  SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
+
+  return BuildCXXNamedCast(OpLoc, Kind, DestTInfo, move(E),
+                           SourceRange(LAngleBracketLoc, RAngleBracketLoc),
+                           SourceRange(LParenLoc, RParenLoc));
+}
+
+Action::OwningExprResult
+Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
+                        TypeSourceInfo *DestTInfo, ExprArg E,
+                        SourceRange AngleBrackets, SourceRange Parens) {
+  Expr *Ex = E.takeAs<Expr>();
+  QualType DestType = DestTInfo->getType();
+
+  SourceRange OpRange(OpLoc, Parens.getEnd());
+  SourceRange DestRange = AngleBrackets;
 
   // If the type is dependent, we won't do the semantic analysis now.
   // FIXME: should we check this in a more fine-grained manner?

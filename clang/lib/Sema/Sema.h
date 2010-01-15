@@ -1925,6 +1925,13 @@ public:
                                              ExprArg E,
                                              SourceLocation RParenLoc);
 
+  OwningExprResult BuildCXXNamedCast(SourceLocation OpLoc,
+                                     tok::TokenKind Kind,
+                                     TypeSourceInfo *Ty,
+                                     ExprArg E,
+                                     SourceRange AngleBrackets,
+                                     SourceRange Parens);
+
   /// ActOnCXXTypeid - Parse typeid( something ).
   virtual OwningExprResult ActOnCXXTypeid(SourceLocation OpLoc,
                                           SourceLocation LParenLoc, bool isType,
