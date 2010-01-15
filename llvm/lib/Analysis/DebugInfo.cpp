@@ -599,7 +599,9 @@ void DIVariable::dump() const {
 //===----------------------------------------------------------------------===//
 
 DIFactory::DIFactory(Module &m)
-  : M(m), VMContext(M.getContext()), DeclareFn(0) {}
+  : M(m), VMContext(M.getContext()), DeclareFn(0) {
+  EmptyStructPtr = PointerType::getUnqual(StructType::get(VMContext));
+}
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
@@ -1032,22 +1034,26 @@ DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       Instruction *InsertBefore) {
+  // Cast the storage to a {}* for the call to llvm.dbg.declare.
+  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertBefore);
+
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Elts[] = { Storage };
-  Value *Args[] = { MDNode::get(Storage->getContext(), Elts, 1), D.getNode() };
+  Value *Args[] = { Storage, D.getNode() };
   return CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       BasicBlock *InsertAtEnd) {
+  // Cast the storage to a {}* for the call to llvm.dbg.declare.
+  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertAtEnd);
+
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Elts[] = { Storage };
-  Value *Args[] = { MDNode::get(Storage->getContext(), Elts, 1), D.getNode() };
+  Value *Args[] = { Storage, D.getNode() };
   return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
 }
 
@@ -1252,24 +1258,25 @@ Value *llvm::findDbgGlobalDeclare(GlobalVariable *V) {
 
 /// Finds the llvm.dbg.declare intrinsic corresponding to this value if any.
 /// It looks through pointer casts too.
-const DbgDeclareInst *llvm::findDbgDeclare(const Value *V) {
-  V = V->stripPointerCasts();
-  
-  if (!isa<Instruction>(V) && !isa<Argument>(V))
+const DbgDeclareInst *llvm::findDbgDeclare(const Value *V, bool stripCasts) {
+  if (stripCasts) {
+    V = V->stripPointerCasts();
+
+    // Look for the bitcast.
+    for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
+          I != E; ++I)
+      if (isa<BitCastInst>(I)) {
+        const DbgDeclareInst *DDI = findDbgDeclare(*I, false);
+        if (DDI) return DDI;
+      }
     return 0;
-    
-  const Function *F = NULL;
-  if (const Instruction *I = dyn_cast<Instruction>(V))
-    F = I->getParent()->getParent();
-  else if (const Argument *A = dyn_cast<Argument>(V))
-    F = A->getParent();
-  
-  for (Function::const_iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-    for (BasicBlock::const_iterator BI = (*FI).begin(), BE = (*FI).end();
-         BI != BE; ++BI)
-      if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
-        if (DDI->getAddress() == V)
-          return DDI;
+  }
+
+  // Find llvm.dbg.declare among uses of the instruction.
+  for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
+        I != E; ++I)
+    if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I))
+      return DDI;
 
   return 0;
 }

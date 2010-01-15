@@ -25,7 +25,6 @@
 #define LLVM_INTRINSICINST_H
 
 #include "llvm/Constants.h"
-#include "llvm/Metadata.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
@@ -83,12 +82,7 @@ namespace llvm {
   ///
   class DbgDeclareInst : public DbgInfoIntrinsic {
   public:
-    Value *getAddress() const {
-      if (MDNode* MD = dyn_cast<MDNode>(getOperand(1)))
-      	return MD->getOperand(0);
-      else
-      	return NULL;
-    }
+    Value *getAddress()  const { return getOperand(1); }
     MDNode *getVariable() const { return cast<MDNode>(getOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:

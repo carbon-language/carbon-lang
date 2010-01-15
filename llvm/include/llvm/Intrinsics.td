@@ -283,7 +283,7 @@ let Properties = [IntrNoMem] in {
 // places.
 let Properties = [IntrNoMem] in {
   def int_dbg_declare      : Intrinsic<[llvm_void_ty],
-                                       [llvm_metadata_ty, llvm_metadata_ty]>;
+                                       [llvm_descriptor_ty, llvm_metadata_ty]>;
   def int_dbg_value  	   : Intrinsic<[llvm_void_ty],
                                        [llvm_metadata_ty, llvm_i64_ty,
                                         llvm_metadata_ty]>;
