@@ -591,15 +591,6 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(i).getIndex();
   unsigned BasePtr;
 
-  // DEBUG_VALUE has a special representation, and is only robust enough to
-  // represent SP(or BP) +- offset addressing modes.  We rewrite the
-  // FrameIndex to be a constant; implicitly positive constants are relative
-  // to ESP and negative ones to EBP.
-  if (MI.getOpcode()==TargetInstrInfo::DEBUG_VALUE) {
-    MI.getOperand(i).ChangeToImmediate(getFrameIndexOffset(MF, FrameIndex));
-    return 0;
-  }
-
   if (needsStackRealignment(MF))
     BasePtr = (FrameIndex < 0 ? FramePtr : StackPtr);
   else
