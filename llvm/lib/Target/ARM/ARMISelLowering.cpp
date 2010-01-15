@@ -3130,6 +3130,9 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //  exitMBB:
   //   ...
   BB = exitMBB;
+
+  MF->DeleteMachineInstr(MI);   // The instruction is gone now.
+
   return BB;
 }
 
