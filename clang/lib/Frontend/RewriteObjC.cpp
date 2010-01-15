@@ -4043,7 +4043,7 @@ std::string RewriteObjC::SynthesizeBlockDescriptor(std::string DescTag,
 void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                           const char *FunName) {
   // Insert declaration for the function in which block literal is used.
-  if (CurFunctionDeclToDeclareForBlock)
+  if (CurFunctionDeclToDeclareForBlock && !Blocks.empty())
     RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
