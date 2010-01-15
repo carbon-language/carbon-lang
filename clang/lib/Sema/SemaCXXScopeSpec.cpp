@@ -30,9 +30,9 @@ getCurrentInstantiationOf(ASTContext &Context, DeclContext *CurContext,
   if (T.isNull())
     return 0;
   
-  T = Context.getCanonicalType(T);
+  T = Context.getCanonicalType(T).getUnqualifiedType();
   
-  for (DeclContext *Ctx = CurContext; Ctx; Ctx = Ctx->getParent()) {
+  for (DeclContext *Ctx = CurContext; Ctx; Ctx = Ctx->getLookupParent()) {
     // If we've hit a namespace or the global scope, then the
     // nested-name-specifier can't refer to the current instantiation.
     if (Ctx->isFileContext())

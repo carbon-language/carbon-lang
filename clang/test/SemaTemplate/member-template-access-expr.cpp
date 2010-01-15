@@ -103,3 +103,23 @@ struct X5 {
     this->f<T*>();
   }
 };
+
+namespace PR6021 {
+  template< class T1, class T2 >
+  class Outer
+  {
+  public: // Range operations
+    template< class X > X tmpl( const X* = 0 ) const;
+
+    struct Inner
+    {
+      const Outer& o;
+
+      template< class X >
+      operator X() const
+      {
+        return o.tmpl<X>();
+      }
+    };
+  };
+}
