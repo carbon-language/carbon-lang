@@ -453,11 +453,9 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateMetadata(MDNode *Meta,
-                                       unsigned char TargetFlags = 0) {
+  static MachineOperand CreateMetadata(MDNode *Meta) {
     MachineOperand Op(MachineOperand::MO_Metadata);
     Op.Contents.MD = Meta;
-    Op.setTargetFlags(TargetFlags);
     return Op;
   }
 
