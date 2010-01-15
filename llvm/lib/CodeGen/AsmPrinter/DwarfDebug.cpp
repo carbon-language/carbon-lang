@@ -1653,8 +1653,11 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   ModuleCU->insertDIE(N, VariableDie);
 
   // Add to context owner.
-  if (DI_GV.isDefinition() 
-      && !DI_GV.getContext().isCompileUnit()) {
+  DIDescriptor GVContext = DI_GV.getContext();
+  // Do not create specification DIE if context is either compile unit
+  // or a subprogram.
+  if (DI_GV.isDefinition() && !GVContext.isCompileUnit()
+      && !GVContext.isSubprogram()) {
     // Create specification DIE.
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
@@ -1672,7 +1675,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
                    Asm->Mang->getMangledName(DI_GV.getGlobal()));
     addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
   }
-  addToContextOwner(VariableDie, DI_GV.getContext());
+  addToContextOwner(VariableDie, GVContext);
   
   // Expose as global. FIXME - need to check external flag.
   ModuleCU->addGlobal(DI_GV.getName(), VariableDie);
