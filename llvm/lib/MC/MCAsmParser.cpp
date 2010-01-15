@@ -20,7 +20,7 @@ MCAsmParser::~MCAsmParser() {
 
 bool MCAsmParser::ParseExpression(const MCExpr *&Res) {
   SMLoc L;
-  return ParseExpression(Res, L, L);
+  return ParseExpression(Res, L);
 }
 
 
