@@ -17,6 +17,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetOptions.h"
@@ -115,12 +116,11 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
       return FileModel::Error;
     return FileModel::AsmFile;
   case TargetMachine::ObjectFile:
-    if (getMachOWriterInfo())
+    if (!addObjectFileEmitter(PM, OptLevel, Out))
       return FileModel::MachOFile;
     else if (getELFWriterInfo())
-      return FileModel::ElfFile;
+      return FileModel::ElfFile; 
   }
-
   return FileModel::Error;
 }
 
@@ -134,6 +134,17 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
     return true;
 
   PM.add(Printer);
+  return false;
+}
+
+bool LLVMTargetMachine::addObjectFileEmitter(PassManagerBase &PM,
+                                             CodeGenOpt::Level OptLevel,
+                                             formatted_raw_ostream &Out) {
+  MCCodeEmitter *Emitter = getTarget().createCodeEmitter(*this);
+  if (!Emitter)
+    return true;
+  
+  PM.add(createMachOWriter(Out, *this, getMCAsmInfo(), Emitter));
   return false;
 }
 

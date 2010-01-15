@@ -366,9 +366,7 @@ int main(int argc, char **argv) {
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
     case FileModel::AsmFile:
-      break;
     case FileModel::MachOFile:
-      OCE = AddMachOWriter(Passes, *Out, Target);
       break;
     case FileModel::ElfFile:
       OCE = AddELFWriter(Passes, *Out, Target);
