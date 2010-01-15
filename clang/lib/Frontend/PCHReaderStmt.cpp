@@ -513,7 +513,7 @@ unsigned PCHStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 
 unsigned PCHStmtReader::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   VisitCastExpr(E);
-  E->setTypeAsWritten(Reader.GetType(Record[Idx++]));
+  E->setTypeInfoAsWritten(Reader.GetTypeSourceInfo(Record, Idx));
   return 1;
 }
 

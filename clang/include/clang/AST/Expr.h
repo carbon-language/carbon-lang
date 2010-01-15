@@ -1712,24 +1712,28 @@ public:
 /// expression will be an lvalue. The reference type, however, will
 /// not be used as the type of the expression.
 class ExplicitCastExpr : public CastExpr {
-  /// TypeAsWritten - The type that this expression is casting to, as
-  /// written in the source code.
-  QualType TypeAsWritten;
+  /// TInfo - Source type info for the (written) type
+  /// this expression is casting to.
+  TypeSourceInfo *TInfo;
 
 protected:
   ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
-                   Expr *op, QualType writtenTy)
-    : CastExpr(SC, exprTy, kind, op), TypeAsWritten(writtenTy) {}
+                   Expr *op, TypeSourceInfo *writtenTy)
+    : CastExpr(SC, exprTy, kind, op), TInfo(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell)
     : CastExpr(SC, Shell) { }
 
 public:
+  /// getTypeInfoAsWritten - Returns the type source info for the type
+  /// that this expression is casting to.
+  TypeSourceInfo *getTypeInfoAsWritten() const { return TInfo; }
+  void setTypeInfoAsWritten(TypeSourceInfo *writtenTy) { TInfo = writtenTy; }
+
   /// getTypeAsWritten - Returns the type that this expression is
   /// casting to, as written in the source code.
-  QualType getTypeAsWritten() const { return TypeAsWritten; }
-  void setTypeAsWritten(QualType T) { TypeAsWritten = T; }
+  QualType getTypeAsWritten() const { return TInfo->getType(); }
 
   static bool classof(const Stmt *T) {
     StmtClass SC = T->getStmtClass();
@@ -1750,8 +1754,9 @@ class CStyleCastExpr : public ExplicitCastExpr {
   SourceLocation LPLoc; // the location of the left paren
   SourceLocation RPLoc; // the location of the right paren
 public:
-  CStyleCastExpr(QualType exprTy, CastKind kind, Expr *op, QualType writtenTy,
-                    SourceLocation l, SourceLocation r) :
+  CStyleCastExpr(QualType exprTy, CastKind kind, Expr *op,
+                 TypeSourceInfo *writtenTy,
+                 SourceLocation l, SourceLocation r) :
     ExplicitCastExpr(CStyleCastExprClass, exprTy, kind, op, writtenTy),
     LPLoc(l), RPLoc(r) {}
 

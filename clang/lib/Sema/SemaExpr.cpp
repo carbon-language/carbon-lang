@@ -3912,8 +3912,10 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
          "ActOnCastExpr(): missing type or expr");
 
   Expr *castExpr = (Expr *)Op.get();
-  //FIXME: Preserve type source info.
-  QualType castType = GetTypeFromParser(Ty);
+  TypeSourceInfo *castTInfo;
+  QualType castType = GetTypeFromParser(Ty, &castTInfo);
+  if (!castTInfo)
+    castTInfo = Context.getTrivialTypeSourceInfo(castType, SourceLocation());
 
   // If the Expr being casted is a ParenListExpr, handle it specially.
   if (isa<ParenListExpr>(castExpr))
@@ -3936,7 +3938,7 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   }
 
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
-                                            Kind, castExpr, castType,
+                                            Kind, castExpr, castTInfo,
                                             LParenLoc, RParenLoc));
 }
 

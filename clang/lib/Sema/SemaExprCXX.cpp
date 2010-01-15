@@ -196,8 +196,10 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                 SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
   assert(TypeRep && "Missing type!");
-  // FIXME: Preserve type source info.
-  QualType Ty = GetTypeFromParser(TypeRep);
+  TypeSourceInfo *TInfo;
+  QualType Ty = GetTypeFromParser(TypeRep, &TInfo);
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(Ty, SourceLocation());
   unsigned NumExprs = exprs.size();
   Expr **Exprs = (Expr**)exprs.get();
   SourceLocation TyBeginLoc = TypeRange.getBegin();
@@ -252,7 +254,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
     }
 
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
-                                                     Ty, TyBeginLoc, Kind,
+                                                     TInfo, TyBeginLoc, Kind,
                                                      Exprs[0], RParenLoc));
   }
 

@@ -118,7 +118,7 @@ private:
 
 protected:
   CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op,
-                   QualType writtenTy, SourceLocation l)
+                   TypeSourceInfo *writtenTy, SourceLocation l)
     : ExplicitCastExpr(SC, ty, kind, op, writtenTy), Loc(l) {}
 
 public:
@@ -154,7 +154,7 @@ public:
 class CXXStaticCastExpr : public CXXNamedCastExpr {
 public:
   CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op,
-                    QualType writtenTy, SourceLocation l)
+                    TypeSourceInfo *writtenTy, SourceLocation l)
     : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) {
@@ -171,8 +171,8 @@ public:
 /// @c dynamic_cast<Derived*>(BasePtr).
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
 public:
-  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op, QualType writtenTy,
-                     SourceLocation l)
+  CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op,
+                     TypeSourceInfo *writtenTy, SourceLocation l)
     : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) {
@@ -190,7 +190,7 @@ public:
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
 public:
   CXXReinterpretCastExpr(QualType ty, CastKind kind, Expr *op, 
-                         QualType writtenTy, SourceLocation l)
+                         TypeSourceInfo *writtenTy, SourceLocation l)
     : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op,
                        writtenTy, l) {}
 
@@ -207,7 +207,7 @@ public:
 /// @c const_cast<char*>(PtrToConstChar).
 class CXXConstCastExpr : public CXXNamedCastExpr {
 public:
-  CXXConstCastExpr(QualType ty, Expr *op, QualType writtenTy,
+  CXXConstCastExpr(QualType ty, Expr *op, TypeSourceInfo *writtenTy,
                    SourceLocation l)
     : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, writtenTy, l) {}
 
@@ -625,7 +625,7 @@ class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 public:
-  CXXFunctionalCastExpr(QualType ty, QualType writtenTy,
+  CXXFunctionalCastExpr(QualType ty, TypeSourceInfo *writtenTy,
                         SourceLocation tyBeginLoc, CastKind kind,
                         Expr *castExpr, SourceLocation rParenLoc) 
     : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, 

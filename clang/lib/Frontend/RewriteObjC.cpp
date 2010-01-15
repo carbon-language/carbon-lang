@@ -420,6 +420,14 @@ namespace {
       }
     }
   };
+
+  // Helper function: create a CStyleCastExpr with trivial type source info.
+  CStyleCastExpr* NoTypeInfoCStyleCastExpr(ASTContext *Ctx, QualType Ty,
+                                           CastExpr::CastKind Kind, Expr *E) {
+    TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
+    return new (Ctx) CStyleCastExpr(Ty, Kind, E, TInfo,
+                                    SourceLocation(), SourceLocation());
+  }
 }
 
 void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
@@ -1219,11 +1227,9 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new (Context) CStyleCastExpr(castT,
-                                                        CastExpr::CK_Unknown,
-                                                        IV->getBase(),
-                                                        castT,SourceLocation(),
-                                                        SourceLocation());
+      CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
+                                                    CastExpr::CK_Unknown,
+                                                    IV->getBase());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
                                                IV->getBase()->getLocEnd(),
@@ -1267,11 +1273,9 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = new (Context) CStyleCastExpr(castT,
-                                                        CastExpr::CK_Unknown,
-                                                        IV->getBase(),
-                                                        castT, SourceLocation(),
-                                                        SourceLocation());
+      CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
+                                                    CastExpr::CK_Unknown,
+                                                    IV->getBase());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
                                     IV->getBase()->getLocEnd(), castExpr);
@@ -1584,12 +1588,9 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   
   std::string syncBuf;
   syncBuf += " objc_sync_exit(";
-  Expr *syncExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                                CastExpr::CK_Unknown,
-                                                S->getSynchExpr(),
-                                                Context->getObjCIdType(),
-                                                SourceLocation(),
-                                                SourceLocation());
+  Expr *syncExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                            CastExpr::CK_Unknown,
+                                            S->getSynchExpr());
   std::string syncExprBufS;
   llvm::raw_string_ostream syncExprBuf(syncExprBufS);
   syncExpr->printPretty(syncExprBuf, *Context, 0,
@@ -2332,11 +2333,8 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                  Context->getPointerType(DRE->getType()),
                                  SourceLocation());
   // cast to NSConstantString *
-  CastExpr *cast = new (Context) CStyleCastExpr(Exp->getType(),
-                                                CastExpr::CK_Unknown,
-                                                Unop, Exp->getType(),
-                                                SourceLocation(),
-                                                SourceLocation());
+  CastExpr *cast = NoTypeInfoCStyleCastExpr(Context, Exp->getType(),
+                                            CastExpr::CK_Unknown, Unop);
   ReplaceStmt(Exp, cast);
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
   return cast;
@@ -2465,13 +2463,12 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
 
       // set the receiver to self, the first argument to all methods.
       InitExprs.push_back(
-        new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                     CastExpr::CK_Unknown,
+        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                 CastExpr::CK_Unknown,
                      new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
                                      Context->getObjCIdType(),
-                                     SourceLocation()),
-                     Context->getObjCIdType(),
-                     SourceLocation(), SourceLocation())); // set the 'receiver'.
+                                     SourceLocation()))
+                          ); // set the 'receiver'.
 
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
@@ -2484,10 +2481,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                                    ClsExprs.size());
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back( // set 'super class', using objc_getClass().
-        new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                     CastExpr::CK_Unknown,
-                              Cls, Context->getObjCIdType(),
-                              SourceLocation(), SourceLocation()));
+                          NoTypeInfoCStyleCastExpr(Context,
+                                                   Context->getObjCIdType(),
+                                                   CastExpr::CK_Unknown, Cls));
       // struct objc_super
       QualType superType = getSuperStructType();
       Expr *SuperRep;
@@ -2509,10 +2505,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                  Context->getPointerType(SuperRep->getType()),
                                  SourceLocation());
-        SuperRep = new (Context) CStyleCastExpr(Context->getPointerType(superType),
-                                 CastExpr::CK_Unknown, SuperRep,
-                                 Context->getPointerType(superType),
-                                 SourceLocation(), SourceLocation());
+        SuperRep = NoTypeInfoCStyleCastExpr(Context,
+                                            Context->getPointerType(superType),
+                                            CastExpr::CK_Unknown, SuperRep);
       } else {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
@@ -2551,13 +2546,12 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 4> InitExprs;
 
       InitExprs.push_back(
-        new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                     CastExpr::CK_Unknown,
+        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                 CastExpr::CK_Unknown,
                      new (Context) DeclRefExpr(CurMethodDef->getSelfDecl(),
                                      Context->getObjCIdType(),
-                                     SourceLocation()),
-                     Context->getObjCIdType(),
-                     SourceLocation(), SourceLocation())); // set the 'receiver'.
+                                     SourceLocation()))
+                          ); // set the 'receiver'.
 
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
@@ -2571,9 +2565,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
         // set 'super class', using objc_getClass().
-        new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                     CastExpr::CK_Unknown,
-        Cls, Context->getObjCIdType(), SourceLocation(), SourceLocation()));
+        NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                 CastExpr::CK_Unknown, Cls));
       // struct objc_super
       QualType superType = getSuperStructType();
       Expr *SuperRep;
@@ -2595,10 +2588,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                  Context->getPointerType(SuperRep->getType()),
                                  SourceLocation());
-        SuperRep = new (Context) CStyleCastExpr(Context->getPointerType(superType),
-                                 CastExpr::CK_Unknown,
-                                 SuperRep, Context->getPointerType(superType),
-                                 SourceLocation(), SourceLocation());
+        SuperRep = NoTypeInfoCStyleCastExpr(Context,
+                                 Context->getPointerType(superType),
+                                 CastExpr::CK_Unknown, SuperRep);
       } else {
         // (struct objc_super) { <exprs from above> }
         InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
@@ -2612,10 +2604,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       // Foo<Proto> *.
       while (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(recExpr))
         recExpr = CE->getSubExpr();
-      recExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                      CastExpr::CK_Unknown, recExpr,
-                                      Context->getObjCIdType(),
-                                      SourceLocation(), SourceLocation());
+      recExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                         CastExpr::CK_Unknown, recExpr);
       MsgExprs.push_back(recExpr);
     }
   }
@@ -2639,19 +2629,16 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       QualType type = ICE->getType()->isObjCQualifiedIdType()
                                 ? Context->getObjCIdType()
                                 : ICE->getType();
-      userExpr = new (Context) CStyleCastExpr(type, CastExpr::CK_Unknown,
-                                              userExpr, type, SourceLocation(),
-                                              SourceLocation());
+      userExpr = NoTypeInfoCStyleCastExpr(Context, type, CastExpr::CK_Unknown,
+                                          userExpr);
     }
     // Make id<P...> cast into an 'id' cast.
     else if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(userExpr)) {
       if (CE->getType()->isObjCQualifiedIdType()) {
         while ((CE = dyn_cast<CStyleCastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
-        userExpr = new (Context) CStyleCastExpr(Context->getObjCIdType(),
-                                                CastExpr::CK_Unknown,
-                                userExpr, Context->getObjCIdType(),
-                                SourceLocation(), SourceLocation());
+        userExpr = NoTypeInfoCStyleCastExpr(Context, Context->getObjCIdType(),
+                                            CastExpr::CK_Unknown, userExpr);
       }
     }
     MsgExprs.push_back(userExpr);
@@ -2701,10 +2688,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // If we don't do this cast, we get the following bizarre warning/note:
   // xx.m:13: warning: function called through a non-compatible type
   // xx.m:13: note: if this code is reached, the program will abort
-  cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy),
-                                      CastExpr::CK_Unknown, DRE,
-                               Context->getPointerType(Context->VoidTy),
-                               SourceLocation(), SourceLocation());
+  cast = NoTypeInfoCStyleCastExpr(Context,
+                                  Context->getPointerType(Context->VoidTy),
+                                  CastExpr::CK_Unknown, DRE);
 
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType,
@@ -2712,9 +2698,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // If we don't have a method decl, force a variadic cast.
     Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0);
   castType = Context->getPointerType(castType);
-  cast = new (Context) CStyleCastExpr(castType, CastExpr::CK_Unknown, cast,
-                                      castType, SourceLocation(),
-                                      SourceLocation());
+  cast = NoTypeInfoCStyleCastExpr(Context, castType, CastExpr::CK_Unknown,
+                                  cast);
 
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
@@ -2734,17 +2719,16 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     DeclRefExpr *STDRE = new (Context) DeclRefExpr(MsgSendStretFlavor, msgSendType,
                                          SourceLocation());
     // Need to cast objc_msgSend_stret to "void *" (see above comment).
-    cast = new (Context) CStyleCastExpr(Context->getPointerType(Context->VoidTy),
-                                        CastExpr::CK_Unknown, STDRE,
-                                 Context->getPointerType(Context->VoidTy),
-                                 SourceLocation(), SourceLocation());
+    cast = NoTypeInfoCStyleCastExpr(Context,
+                                    Context->getPointerType(Context->VoidTy),
+                                    CastExpr::CK_Unknown, STDRE);
     // Now do the "normal" pointer to function cast.
     castType = Context->getFunctionType(returnType,
       &ArgTypes[0], ArgTypes.size(),
       Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0);
     castType = Context->getPointerType(castType);
-    cast = new (Context) CStyleCastExpr(castType, CastExpr::CK_Unknown,
-                                        cast, castType, SourceLocation(), SourceLocation());
+    cast = NoTypeInfoCStyleCastExpr(Context, castType, CastExpr::CK_Unknown,
+                                    cast);
 
     // Don't forget the parens to enforce the proper binding.
     PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
@@ -2819,10 +2803,9 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   Expr *DerefExpr = new (Context) UnaryOperator(DRE, UnaryOperator::AddrOf,
                              Context->getPointerType(DRE->getType()),
                              SourceLocation());
-  CastExpr *castExpr = new (Context) CStyleCastExpr(DerefExpr->getType(),
-                                                    CastExpr::CK_Unknown,
-                                          DerefExpr, DerefExpr->getType(),
-                                          SourceLocation(), SourceLocation());
+  CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, DerefExpr->getType(),
+                                                CastExpr::CK_Unknown,
+                                                DerefExpr);
   ReplaceStmt(Exp, castExpr);
   ProtocolExprDecls.insert(Exp->getProtocol());
   // delete Exp; leak for now, see RewritePropertySetter() usage for more info.
@@ -4204,11 +4187,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
 
   PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
 
-  CastExpr *BlkCast = new (Context) CStyleCastExpr(PtrBlock,
-                                                   CastExpr::CK_Unknown,
-                                                   const_cast<Expr*>(BlockExp),
-                                                   PtrBlock, SourceLocation(),
-                                                   SourceLocation());
+  CastExpr *BlkCast = NoTypeInfoCStyleCastExpr(Context, PtrBlock,
+                                               CastExpr::CK_Unknown,
+                                               const_cast<Expr*>(BlockExp));
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(),
                                           BlkCast);
@@ -4220,11 +4201,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType());
 
-  CastExpr *FunkCast = new (Context) CStyleCastExpr(PtrToFuncCastType,
-                                                    CastExpr::CK_Unknown, ME,
-                                                    PtrToFuncCastType,
-                                                    SourceLocation(),
-                                                    SourceLocation());
+  CastExpr *FunkCast = NoTypeInfoCStyleCastExpr(Context, PtrToFuncCastType,
+                                                CastExpr::CK_Unknown, ME);
   PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), FunkCast);
 
   llvm::SmallVector<Expr*, 8> BlkExprs;
@@ -4719,10 +4697,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   FD = SynthBlockInitFunctionDecl(Func.c_str());
   DeclRefExpr *Arg = new (Context) DeclRefExpr(FD, FD->getType(),
                                                SourceLocation());
-  CastExpr *castExpr = new (Context) CStyleCastExpr(Context->VoidPtrTy,
-                                          CastExpr::CK_Unknown, Arg,
-                                          Context->VoidPtrTy, SourceLocation(),
-                                                    SourceLocation());
+  CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
+                                                CastExpr::CK_Unknown, Arg);
   InitExprs.push_back(castExpr);
 
   // Initialize the block descriptor.
@@ -4753,11 +4729,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
       } else if (isTopLevelBlockPointerType((*I)->getType())) {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Arg = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
-        Exp = new (Context) CStyleCastExpr(Context->VoidPtrTy,
-                                           CastExpr::CK_Unknown, Arg,
-                                           Context->VoidPtrTy,
-                                           SourceLocation(),
-                                           SourceLocation());
+        Exp = NoTypeInfoCStyleCastExpr(Context, Context->VoidPtrTy,
+                                       CastExpr::CK_Unknown, Arg);
       } else {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
@@ -4789,9 +4762,8 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
   NewRep = new (Context) UnaryOperator(NewRep, UnaryOperator::AddrOf,
                              Context->getPointerType(NewRep->getType()),
                              SourceLocation());
-  NewRep = new (Context) CStyleCastExpr(FType, CastExpr::CK_Unknown, NewRep,
-                                        FType, SourceLocation(),
-                                        SourceLocation());
+  NewRep = NoTypeInfoCStyleCastExpr(Context, FType, CastExpr::CK_Unknown,
+                                    NewRep);
   BlockDeclRefs.clear();
   BlockByRefDecls.clear();
   BlockByCopyDecls.clear();

@@ -117,8 +117,10 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                         SourceLocation LParenLoc, ExprArg E,
                         SourceLocation RParenLoc) {
   Expr *Ex = E.takeAs<Expr>();
-  // FIXME: Preserve type source info.
-  QualType DestType = GetTypeFromParser(Ty);
+  TypeSourceInfo *DestTInfo;
+  QualType DestType = GetTypeFromParser(Ty, &DestTInfo);
+  if (!DestTInfo)
+    DestTInfo = Context.getTrivialTypeSourceInfo(DestType, SourceLocation());
   SourceRange OpRange(OpLoc, RParenLoc);
   SourceRange DestRange(LAngleBracketLoc, RAngleBracketLoc);
 
@@ -133,14 +135,14 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     if (!TypeDependent)
       CheckConstCast(*this, Ex, DestType, OpRange, DestRange);
     return Owned(new (Context) CXXConstCastExpr(DestType.getNonReferenceType(),
-                                                Ex, DestType, OpLoc));
+                                                Ex, DestTInfo, OpLoc));
 
   case tok::kw_dynamic_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (!TypeDependent)
       CheckDynamicCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
-                                                 Kind, Ex, DestType, OpLoc));
+                                                 Kind, Ex, DestTInfo, OpLoc));
   }
   case tok::kw_reinterpret_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
@@ -148,7 +150,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context) CXXReinterpretCastExpr(
                                   DestType.getNonReferenceType(),
-                                  Kind, Ex, DestType, OpLoc));
+                                  Kind, Ex, DestTInfo, OpLoc));
   }
   case tok::kw_static_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
@@ -169,7 +171,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     }
     
     return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
-                                                 Kind, Ex, DestType, OpLoc));
+                                                 Kind, Ex, DestTInfo, OpLoc));
   }
   }
 

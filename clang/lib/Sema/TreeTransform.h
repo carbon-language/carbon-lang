@@ -1014,13 +1014,13 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildCStyleCaseExpr(SourceLocation LParenLoc,
-                                         QualType ExplicitTy,
+  OwningExprResult RebuildCStyleCastExpr(SourceLocation LParenLoc,
+                                         TypeSourceInfo *TInfo,
                                          SourceLocation RParenLoc,
                                          ExprArg SubExpr) {
     return getSema().ActOnCastExpr(/*Scope=*/0,
                                    LParenLoc,
-                                   ExplicitTy.getAsOpaquePtr(),
+                                   TInfo->getType().getAsOpaquePtr(),
                                    RParenLoc,
                                    move(SubExpr));
   }
@@ -1194,30 +1194,30 @@ public:
   OwningExprResult RebuildCXXNamedCastExpr(SourceLocation OpLoc,
                                            Stmt::StmtClass Class,
                                            SourceLocation LAngleLoc,
-                                           QualType T,
+                                           TypeSourceInfo *TInfo,
                                            SourceLocation RAngleLoc,
                                            SourceLocation LParenLoc,
                                            ExprArg SubExpr,
                                            SourceLocation RParenLoc) {
     switch (Class) {
     case Stmt::CXXStaticCastExprClass:
-      return getDerived().RebuildCXXStaticCastExpr(OpLoc, LAngleLoc, T,
+      return getDerived().RebuildCXXStaticCastExpr(OpLoc, LAngleLoc, TInfo,
                                                    RAngleLoc, LParenLoc,
                                                    move(SubExpr), RParenLoc);
 
     case Stmt::CXXDynamicCastExprClass:
-      return getDerived().RebuildCXXDynamicCastExpr(OpLoc, LAngleLoc, T,
+      return getDerived().RebuildCXXDynamicCastExpr(OpLoc, LAngleLoc, TInfo,
                                                     RAngleLoc, LParenLoc,
                                                     move(SubExpr), RParenLoc);
 
     case Stmt::CXXReinterpretCastExprClass:
-      return getDerived().RebuildCXXReinterpretCastExpr(OpLoc, LAngleLoc, T,
+      return getDerived().RebuildCXXReinterpretCastExpr(OpLoc, LAngleLoc, TInfo,
                                                         RAngleLoc, LParenLoc,
                                                         move(SubExpr),
                                                         RParenLoc);
 
     case Stmt::CXXConstCastExprClass:
-      return getDerived().RebuildCXXConstCastExpr(OpLoc, LAngleLoc, T,
+      return getDerived().RebuildCXXConstCastExpr(OpLoc, LAngleLoc, TInfo,
                                                    RAngleLoc, LParenLoc,
                                                    move(SubExpr), RParenLoc);
 
@@ -1235,13 +1235,15 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXStaticCastExpr(SourceLocation OpLoc,
                                             SourceLocation LAngleLoc,
-                                            QualType T,
+                                            TypeSourceInfo *TInfo,
                                             SourceLocation RAngleLoc,
                                             SourceLocation LParenLoc,
                                             ExprArg SubExpr,
                                             SourceLocation RParenLoc) {
     return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_static_cast,
-                                       LAngleLoc, T.getAsOpaquePtr(), RAngleLoc,
+                                       LAngleLoc,
+                                       TInfo->getType().getAsOpaquePtr(),
+                                       RAngleLoc,
                                        LParenLoc, move(SubExpr), RParenLoc);
   }
 
@@ -1251,13 +1253,15 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXDynamicCastExpr(SourceLocation OpLoc,
                                              SourceLocation LAngleLoc,
-                                             QualType T,
+                                             TypeSourceInfo *TInfo,
                                              SourceLocation RAngleLoc,
                                              SourceLocation LParenLoc,
                                              ExprArg SubExpr,
                                              SourceLocation RParenLoc) {
     return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_dynamic_cast,
-                                       LAngleLoc, T.getAsOpaquePtr(), RAngleLoc,
+                                       LAngleLoc,
+                                       TInfo->getType().getAsOpaquePtr(),
+                                       RAngleLoc,
                                        LParenLoc, move(SubExpr), RParenLoc);
   }
 
@@ -1267,13 +1271,15 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXReinterpretCastExpr(SourceLocation OpLoc,
                                                  SourceLocation LAngleLoc,
-                                                 QualType T,
+                                                 TypeSourceInfo *TInfo,
                                                  SourceLocation RAngleLoc,
                                                  SourceLocation LParenLoc,
                                                  ExprArg SubExpr,
                                                  SourceLocation RParenLoc) {
     return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_reinterpret_cast,
-                                       LAngleLoc, T.getAsOpaquePtr(), RAngleLoc,
+                                       LAngleLoc,
+                                       TInfo->getType().getAsOpaquePtr(),
+                                       RAngleLoc,
                                        LParenLoc, move(SubExpr), RParenLoc);
   }
 
@@ -1283,13 +1289,15 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXConstCastExpr(SourceLocation OpLoc,
                                            SourceLocation LAngleLoc,
-                                           QualType T,
+                                           TypeSourceInfo *TInfo,
                                            SourceLocation RAngleLoc,
                                            SourceLocation LParenLoc,
                                            ExprArg SubExpr,
                                            SourceLocation RParenLoc) {
     return getSema().ActOnCXXNamedCast(OpLoc, tok::kw_const_cast,
-                                       LAngleLoc, T.getAsOpaquePtr(), RAngleLoc,
+                                       LAngleLoc,
+                                       TInfo->getType().getAsOpaquePtr(),
+                                       RAngleLoc,
                                        LParenLoc, move(SubExpr), RParenLoc);
   }
 
@@ -1298,13 +1306,13 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCXXFunctionalCastExpr(SourceRange TypeRange,
-                                                QualType T,
+                                                TypeSourceInfo *TInfo,
                                                 SourceLocation LParenLoc,
                                                 ExprArg SubExpr,
                                                 SourceLocation RParenLoc) {
     void *Sub = SubExpr.takeAs<Expr>();
     return getSema().ActOnCXXTypeConstructExpr(TypeRange,
-                                               T.getAsOpaquePtr(),
+                                               TInfo->getType().getAsOpaquePtr(),
                                                LParenLoc,
                                          Sema::MultiExprArg(getSema(), &Sub, 1),
                                                /*CommaLocs=*/0,
@@ -3815,15 +3823,17 @@ TreeTransform<Derived>::TransformExplicitCastExpr(ExplicitCastExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
-  QualType T;
+  TypeSourceInfo *OldT;
+  TypeSourceInfo *NewT;
   {
     // FIXME: Source location isn't quite accurate.
     SourceLocation TypeStartLoc
       = SemaRef.PP.getLocForEndOfToken(E->getLParenLoc());
     TemporaryBase Rebase(*this, TypeStartLoc, DeclarationName());
 
-    T = getDerived().TransformType(E->getTypeAsWritten());
-    if (T.isNull())
+    OldT = E->getTypeInfoAsWritten();
+    NewT = getDerived().TransformType(OldT);
+    if (!NewT)
       return SemaRef.ExprError();
   }
 
@@ -3833,11 +3843,12 @@ TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getTypeAsWritten() &&
+      OldT == NewT &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCStyleCaseExpr(E->getLParenLoc(), T,
+  return getDerived().RebuildCStyleCastExpr(E->getLParenLoc(),
+                                            NewT,
                                             E->getRParenLoc(),
                                             move(SubExpr));
 }
@@ -4237,15 +4248,17 @@ TreeTransform<Derived>::TransformCXXMemberCallExpr(CXXMemberCallExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
-  QualType ExplicitTy;
+  TypeSourceInfo *OldT;
+  TypeSourceInfo *NewT;
   {
     // FIXME: Source location isn't quite accurate.
     SourceLocation TypeStartLoc
       = SemaRef.PP.getLocForEndOfToken(E->getOperatorLoc());
     TemporaryBase Rebase(*this, TypeStartLoc, DeclarationName());
 
-    ExplicitTy = getDerived().TransformType(E->getTypeAsWritten());
-    if (ExplicitTy.isNull())
+    OldT = E->getTypeInfoAsWritten();
+    NewT = getDerived().TransformType(OldT);
+    if (!NewT)
       return SemaRef.ExprError();
   }
 
@@ -4255,7 +4268,7 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      ExplicitTy == E->getTypeAsWritten() &&
+      OldT == NewT &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
@@ -4269,7 +4282,7 @@ TreeTransform<Derived>::TransformCXXNamedCastExpr(CXXNamedCastExpr *E) {
   return getDerived().RebuildCXXNamedCastExpr(E->getOperatorLoc(),
                                               E->getStmtClass(),
                                               FakeLAngleLoc,
-                                              ExplicitTy,
+                                              NewT,
                                               FakeRAngleLoc,
                                               FakeRAngleLoc,
                                               move(SubExpr),
@@ -4305,12 +4318,14 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
                                                      CXXFunctionalCastExpr *E) {
-  QualType ExplicitTy;
+  TypeSourceInfo *OldT;
+  TypeSourceInfo *NewT;
   {
     TemporaryBase Rebase(*this, E->getTypeBeginLoc(), DeclarationName());
 
-    ExplicitTy = getDerived().TransformType(E->getTypeAsWritten());
-    if (ExplicitTy.isNull())
+    OldT = E->getTypeInfoAsWritten();
+    NewT = getDerived().TransformType(OldT);
+    if (!NewT)
       return SemaRef.ExprError();
   }
 
@@ -4320,14 +4335,14 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      ExplicitTy == E->getTypeAsWritten() &&
+      OldT == NewT &&
       SubExpr.get() == E->getSubExpr())
     return SemaRef.Owned(E->Retain());
 
   // FIXME: The end of the type's source range is wrong
   return getDerived().RebuildCXXFunctionalCastExpr(
                                   /*FIXME:*/SourceRange(E->getTypeBeginLoc()),
-                                                   ExplicitTy,
+                                                   NewT,
                                       /*FIXME:*/E->getSubExpr()->getLocStart(),
                                                    move(SubExpr),
                                                    E->getRParenLoc());

@@ -477,7 +477,7 @@ void PCHStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
 
 void PCHStmtWriter::VisitExplicitCastExpr(ExplicitCastExpr *E) {
   VisitCastExpr(E);
-  Writer.AddTypeRef(E->getTypeAsWritten(), Record);
+  Writer.AddTypeSourceInfo(E->getTypeInfoAsWritten(), Record);
 }
 
 void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
