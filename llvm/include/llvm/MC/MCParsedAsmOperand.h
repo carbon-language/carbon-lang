@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASMOPERAND_H
 
 namespace llvm {
+class SMLoc;
 
 /// MCParsedAsmOperand - This abstract class represents a source-level assembly
 /// instruction operand.  It should be subclassed by target-specific code.  This
