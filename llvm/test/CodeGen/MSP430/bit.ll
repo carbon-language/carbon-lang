@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=msp430 | FileCheck %s
+; XFAIL: *
 target datalayout = "e-p:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:16:32"
 target triple = "msp430-generic-generic"
 
