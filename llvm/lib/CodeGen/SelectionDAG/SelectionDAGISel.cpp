@@ -819,10 +819,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       // information is provided by an intrinsic (eh.selector) that can be moved
       // to unexpected places by the optimizers: if the unwind edge is critical,
       // then breaking it can result in the intrinsics being in the successor of
-      // the landing pad, not the landing pad itself.  This results in exceptions
-      // not being caught because no typeids are associated with the invoke.
-      // This may not be the only way things can go wrong, but it is the only way
-      // we try to work around for the moment.
+      // the landing pad, not the landing pad itself.  This results
+      // in exceptions not being caught because no typeids are associated with
+      // the invoke.  This may not be the only way things can go wrong, but it
+      // is the only way we try to work around for the moment.
       BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
 
       if (Br && Br->isUnconditional()) { // Critical edge?
@@ -1005,11 +1005,11 @@ SelectionDAGISel::FinishBasicBlock() {
       // This is "default" BB. We have two jumps to it. From "header" BB and
       // from last "case" BB.
       if (PHIBB == SDB->BitTestCases[i].Default) {
-        PHI->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[pi].second,
-                                                  false));
+        PHI->addOperand(MachineOperand::
+                        CreateReg(SDB->PHINodesToUpdate[pi].second, false));
         PHI->addOperand(MachineOperand::CreateMBB(SDB->BitTestCases[i].Parent));
-        PHI->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[pi].second,
-                                                  false));
+        PHI->addOperand(MachineOperand::
+                        CreateReg(SDB->PHINodesToUpdate[pi].second, false));
         PHI->addOperand(MachineOperand::CreateMBB(SDB->BitTestCases[i].Cases.
                                                   back().ThisBB));
       }
@@ -1018,8 +1018,8 @@ SelectionDAGISel::FinishBasicBlock() {
            j != ej; ++j) {
         MachineBasicBlock* cBB = SDB->BitTestCases[i].Cases[j].ThisBB;
         if (cBB->isSuccessor(PHIBB)) {
-          PHI->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[pi].second,
-                                                    false));
+          PHI->addOperand(MachineOperand::
+                          CreateReg(SDB->PHINodesToUpdate[pi].second, false));
           PHI->addOperand(MachineOperand::CreateMBB(cBB));
         }
       }
@@ -1433,9 +1433,11 @@ void SelectionDAGISel::CannotYetSelect(SDNode *N) {
 void SelectionDAGISel::CannotYetSelectIntrinsic(SDNode *N) {
   dbgs() << "Cannot yet select: ";
   unsigned iid =
-    cast<ConstantSDNode>(N->getOperand(N->getOperand(0).getValueType() == MVT::Other))->getZExtValue();
+    cast<ConstantSDNode>(N->getOperand(N->getOperand(0).getValueType() ==
+                                       MVT::Other))->getZExtValue();
   if (iid < Intrinsic::num_intrinsics)
-    llvm_report_error("Cannot yet select: intrinsic %" + Intrinsic::getName((Intrinsic::ID)iid));
+    llvm_report_error("Cannot yet select: intrinsic %" +
+                      Intrinsic::getName((Intrinsic::ID)iid));
   else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())
     llvm_report_error(Twine("Cannot yet select: target intrinsic %") +
                       tii->getName(iid));
