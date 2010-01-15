@@ -381,9 +381,6 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       I->eraseFromParent();
     }
 
-
-
-
     // The entry block changes to have the eh.sjlj.setjmp, with a conditional
     // branch to a dispatch block for non-zero returns. If we return normally,
     // we're not handling an exception and just register the function context
@@ -397,13 +394,15 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // Insert a load in the Catch block, and a switch on its value.  By default,
     // we go to a block that just does an unwind (which is the correct action
     // for a standard call).
-    BasicBlock *UnwindBlock = BasicBlock::Create(F.getContext(), "unwindbb", &F);
+    BasicBlock *UnwindBlock =
+      BasicBlock::Create(F.getContext(), "unwindbb", &F);
     Unwinds.push_back(new UnwindInst(F.getContext(), UnwindBlock));
 
     Value *DispatchLoad = new LoadInst(CallSite, "invoke.num", true,
                                        DispatchBlock);
     SwitchInst *DispatchSwitch =
-      SwitchInst::Create(DispatchLoad, UnwindBlock, Invokes.size(), DispatchBlock);
+      SwitchInst::Create(DispatchLoad, UnwindBlock, Invokes.size(),
+                         DispatchBlock);
     // Split the entry block to insert the conditional branch for the setjmp.
     BasicBlock *ContBlock = EntryBB->splitBasicBlock(EntryBB->getTerminator(),
                                                      "eh.sjlj.setjmp.cont");
