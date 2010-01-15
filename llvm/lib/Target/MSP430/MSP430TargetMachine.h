@@ -55,6 +55,7 @@ public:
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 }; // MSP430TargetMachine.
 
 } // end namespace llvm

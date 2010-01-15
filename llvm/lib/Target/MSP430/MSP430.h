@@ -39,6 +39,8 @@ namespace llvm {
   FunctionPass *createMSP430ISelDag(MSP430TargetMachine &TM,
                                     CodeGenOpt::Level OptLevel);
 
+  FunctionPass *createMSP430BranchSelectionPass();
+
   extern Target TheMSP430Target;
 
 } // end namespace llvm;

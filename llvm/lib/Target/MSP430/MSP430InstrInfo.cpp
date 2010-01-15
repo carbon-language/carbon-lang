@@ -344,3 +344,45 @@ MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
   return Count;
 }
+
+/// GetInstSize - Return the number of bytes of code the specified
+/// instruction may be.  This returns the maximum number of bytes.
+///
+unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
+  const TargetInstrDesc &Desc = MI->getDesc();
+
+  switch (Desc.TSFlags & MSP430II::SizeMask) {
+  default:
+    switch (Desc.getOpcode()) {
+    default:
+      assert(0 && "Unknown instruction size!");
+    case TargetInstrInfo::DBG_LABEL:
+    case TargetInstrInfo::EH_LABEL:
+    case TargetInstrInfo::IMPLICIT_DEF:
+    case TargetInstrInfo::KILL:
+      return 0;
+    case TargetInstrInfo::INLINEASM: {
+      const MachineFunction *MF = MI->getParent()->getParent();
+      const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+      return TII.getInlineAsmLength(MI->getOperand(0).getSymbolName(),
+                                    *MF->getTarget().getMCAsmInfo());
+    }
+    }
+  case MSP430II::SizeSpecial:
+    switch (MI->getOpcode()) {
+    default:
+      assert(0 && "Unknown instruction size!");
+    case MSP430::SAR8r1c:
+    case MSP430::SAR16r1c:
+      return 4;
+    }
+  case MSP430II::Size2Bytes:
+    return 2;
+  case MSP430II::Size4Bytes:
+    return 4;
+  case MSP430II::Size6Bytes:
+    return 6;
+  }
+
+  return 6;
+}

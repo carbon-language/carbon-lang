@@ -167,11 +167,18 @@ let isBranch = 1, isTerminator = 1 in {
 // FIXME: expand opcode & cond field for branches!
 
 // Direct branch
-let isBarrier = 1 in
+let isBarrier = 1 in {
+  // Short branch
   def JMP : CJForm<0, 0,
                    (outs), (ins brtarget:$dst),
                    "jmp\t$dst",
                    [(br bb:$dst)]>;
+  // Long branch
+  def B   : I16ri<0,
+                  (outs), (ins brtarget:$dst),
+                  "br\t$dst",
+                  []>;
+}
 
 // Conditional branches
 let Uses = [SRW] in

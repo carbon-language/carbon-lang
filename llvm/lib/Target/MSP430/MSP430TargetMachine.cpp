@@ -44,3 +44,9 @@ bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,
   return false;
 }
 
+bool MSP430TargetMachine::addPreEmitPass(PassManagerBase &PM,
+                                         CodeGenOpt::Level OptLevel) {
+  // Must run branch selection immediately preceding the asm printer.
+  PM.add(createMSP430BranchSelectionPass());
+  return false;
+}
