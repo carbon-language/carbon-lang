@@ -801,3 +801,13 @@ void test_bad_msg(TestBadArg *p) {
   [p testBadArg:y]; // expected-warning{{Pass-by-value argument in message expression is undefined}}
 }
 
+//===----------------------------------------------------------------------===//
+// PR 6033 - Test emitting the correct output in a warning where we use '%'
+//  with operands that are undefined.
+//===----------------------------------------------------------------------===//
+
+int pr6033(int x) {
+  int y;
+  return x % y; // expected-warning{{The right operand of '%' is a garbage value}}
+}
+

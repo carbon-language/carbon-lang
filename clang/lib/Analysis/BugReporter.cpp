@@ -1818,8 +1818,23 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   R->getRanges(Beg, End);
   Diagnostic& Diag = getDiagnostic();
   FullSourceLoc L(R->getLocation(), getSourceManager());
-  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                            R->getShortDescription());
+  
+  // Search the description for '%', as that will be interpretted as a
+  // format character by FormatDiagnostics.
+  llvm::StringRef desc = R->getShortDescription();
+  unsigned ErrorDiag;
+  {
+    llvm::SmallString<512> TmpStr;
+    llvm::raw_svector_ostream Out(TmpStr);
+    for (llvm::StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I)
+      if (*I == '%')
+        Out << "%%";
+      else
+        Out << *I;
+    
+    Out.flush();
+    ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, TmpStr);
+  }        
 
   switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
