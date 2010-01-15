@@ -521,7 +521,7 @@ void llvm::CheckDebugInfoIntrinsics(Module *M) {
   if (Function *Declare = M->getFunction("llvm.dbg.declare")) {
     if (!Declare->use_empty()) {
       DbgDeclareInst *DDI = cast<DbgDeclareInst>(Declare->use_back());
-      if (!isa<MDNode>(DDI->getOperand(2))) {
+      if (!isa<MDNode>(DDI->getOperand(1)) ||!isa<MDNode>(DDI->getOperand(2))) {
         while (!Declare->use_empty()) {
           CallInst *CI = cast<CallInst>(Declare->use_back());
           CI->eraseFromParent();

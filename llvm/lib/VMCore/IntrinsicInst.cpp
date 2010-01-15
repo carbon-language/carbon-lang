@@ -51,6 +51,17 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 }
 
 //===----------------------------------------------------------------------===//
+/// DbgDeclareInst - This represents the llvm.dbg.declare instruction.
+///
+
+Value *DbgDeclareInst::getAddress() const {
+  if (MDNode* MD = cast_or_null<MDNode>(getOperand(1)))
+    return MD->getOperand(0);
+  else
+    return NULL;
+}
+
+//===----------------------------------------------------------------------===//
 /// DbgValueInst - This represents the llvm.dbg.value instruction.
 ///
 

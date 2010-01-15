@@ -82,7 +82,7 @@ namespace llvm {
   ///
   class DbgDeclareInst : public DbgInfoIntrinsic {
   public:
-    Value *getAddress()  const { return getOperand(1); }
+    Value *getAddress() const;
     MDNode *getVariable() const { return cast<MDNode>(getOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
