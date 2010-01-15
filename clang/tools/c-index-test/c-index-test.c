@@ -111,11 +111,11 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           basename(clang_getCString(string)));
     clang_disposeString(string);
     
-    PrintDeclExtent(Cursor.decl);
+    PrintDeclExtent(Cursor.data[0]);
 
     printf("\n");
     
-    clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
+    clang_loadDeclaration(Cursor.data[0], DeclVisitor, 0);
   }
 }
 
@@ -152,7 +152,7 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
       printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
              curLine, curColumn);
       PrintCursor(Ref);
-      string = clang_getDeclSpelling(Ref.decl);
+      string = clang_getDeclSpelling(Ref.data[0]);
       printf(" [Context:%s]\n", clang_getCString(string));
       clang_disposeString(string);
     }
@@ -166,13 +166,13 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 
 static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
   if (!Filter || (C.kind == *(enum CXCursorKind *)Filter)) {
-    CXString USR = clang_getDeclUSR(C.decl);
+    CXString USR = clang_getDeclUSR(C.data[0]);
     if (!USR.Spelling) {
       clang_disposeString(USR);
       return;
     }
     printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C), USR.Spelling);
-    PrintDeclExtent(C.decl);
+    PrintDeclExtent(C.data[0]);
     printf("\n");
     clang_disposeString(USR);
   }
@@ -180,9 +180,9 @@ static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
 
 static void USRVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                        CXClientData Filter) {  
-  if (Cursor.decl) {
+  if (Cursor.data[0]) {
     /* USRDeclVisitor(Unit, Cursor.decl, Cursor, Filter);*/
-    clang_loadDeclaration(Cursor.decl, USRDeclVisitor, 0);
+    clang_loadDeclaration(Cursor.data[0], USRDeclVisitor, 0);
   }
 }
 

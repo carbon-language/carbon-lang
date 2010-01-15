@@ -19,12 +19,26 @@
 namespace clang {
 
 class Decl;
+class Expr;
+class NamedDecl;
 class Stmt;
 
 namespace cxcursor {
   
 CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D);  
 CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D, clang::Stmt *S);
+
+Decl *getCursorDecl(CXCursor Cursor);
+Expr *getCursorExpr(CXCursor Cursor);
+Stmt *getCursorStmt(CXCursor Cursor);
+Decl *getCursorReferringDecl(CXCursor Cursor);
+NamedDecl *getCursorInterfaceParent(CXCursor Cursor);
+  
+bool operator==(CXCursor X, CXCursor Y);
+  
+inline bool operator!=(CXCursor X, CXCursor Y) {
+  return !(X == Y);
+}
 
 }} // end namespace: clang::cxcursor
 

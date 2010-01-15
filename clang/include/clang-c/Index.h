@@ -137,9 +137,7 @@ struct CXUnsavedFile {
 
 typedef struct {
   enum CXCursorKind kind;
-  CXDecl decl;
-  CXStmt stmt; /* expression reference */
-  CXDecl referringDecl;
+  void *data[3];
 } CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
