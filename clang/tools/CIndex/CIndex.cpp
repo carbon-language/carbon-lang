@@ -409,6 +409,10 @@ static SourceLocation getLocationFromCursor(CXCursor C,
                                             SourceManager &SourceMgr,
                                             NamedDecl *ND) {
   if (clang_isReference(C.kind)) {
+    
+    if (Decl *D = static_cast<Decl*>(C.referringDecl))
+      return D->getLocation();
+    
     switch (C.kind) {
     case CXCursor_ObjCClassRef: {
       if (isa<ObjCInterfaceDecl>(ND)) {
