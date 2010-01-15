@@ -491,8 +491,22 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 /// @brief Get a GenericValue for a Constant*
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   // If its undefined, return the garbage.
-  if (isa<UndefValue>(C)) 
-    return GenericValue();
+  if (isa<UndefValue>(C)) {
+    GenericValue Result;
+    switch (C->getType()->getTypeID()) {
+    case Type::IntegerTyID:
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      // Although the value is undefined, we still have to construct an APInt
+      // with the correct bit width.
+      Result.IntVal = APInt(C->getType()->getPrimitiveSizeInBits(), 0);
+      break;
+    default:
+      break;
+    }
+    return Result;
+  }
 
   // If the value is a ConstantExpr
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
