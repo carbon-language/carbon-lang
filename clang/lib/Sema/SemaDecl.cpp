@@ -138,6 +138,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   NamedDecl *IIDecl = 0;
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
+  case LookupResult::NotFoundInCurrentInstantiation:
   case LookupResult::FoundOverloaded:
   case LookupResult::FoundUnresolvedValue:
     return 0;
@@ -4791,7 +4792,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // and that current instantiation has any dependent base
       // classes, we might find something at instantiation time: treat
       // this as a dependent elaborated-type-specifier.
-      if (isCurrentInstantiationWithDependentBases(SS)) {
+      if (Previous.wasNotFoundInCurrentInstantiation()) {
         IsDependent = true;
         return DeclPtrTy();
       }

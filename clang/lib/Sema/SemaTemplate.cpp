@@ -4769,16 +4769,12 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
   Decl *Referenced = 0;
   switch (Result.getResultKind()) {
   case LookupResult::NotFound:
-    if (CurrentInstantiation && CurrentInstantiation->hasAnyDependentBases()) {
-      // We performed a lookup in the current instantiation and didn't
-      // find anything. However, this current instantiation has
-      // dependent bases, so we might be able to find something at
-      // instantiation time: just build a TypenameType and move on.
-      return Context.getTypenameType(NNS, &II);
-    }
-
     DiagID = diag::err_typename_nested_not_found;
     break;
+      
+  case LookupResult::NotFoundInCurrentInstantiation:
+    // Okay, it's a member of an unknown instantiation.
+    return Context.getTypenameType(NNS, &II);
 
   case LookupResult::Found:
     if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {

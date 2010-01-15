@@ -63,3 +63,22 @@ namespace PR6031 {
     }
   };
 }
+
+namespace Ambig {
+  template<typename T>
+  struct Base1 {
+    typedef int type; // expected-note{{member found by ambiguous name lookup}}
+  };
+
+  struct Base2 {
+    typedef float type; // expected-note{{member found by ambiguous name lookup}}
+  };
+
+  template<typename T>
+  struct Derived : Base1<T>, Base2 {
+    typedef typename Derived::type type; // expected-error{{member 'type' found in multiple base classes of different types}}
+    type *foo(float *fp) { return fp; }
+  };
+
+  Derived<int> di; // expected-note{{instantiation of}}
+}

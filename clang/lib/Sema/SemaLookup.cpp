@@ -623,7 +623,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
         // example, inside a class without any base classes, we never need to
         // perform qualified lookup because all of the members are on top of the
         // identifier chain.
-        if (LookupQualifiedName(R, Ctx))
+        if (LookupQualifiedName(R, Ctx, /*InUnqualifiedLookup=*/true))
           return true;
       }
     }
@@ -927,11 +927,11 @@ static bool LookupQualifiedNameInUsingDirectives(LookupResult &R,
   return Found;
 }
 
-/// @brief Perform qualified name lookup into a given context.
+/// \brief Perform qualified name lookup into a given context.
 ///
 /// Qualified name lookup (C++ [basic.lookup.qual]) is used to find
 /// names when the context of those names is explicit specified, e.g.,
-/// "std::vector" or "x->member".
+/// "std::vector" or "x->member", or as part of unqualified name lookup.
 ///
 /// Different lookup criteria can find different names. For example, a
 /// particular scope can have both a struct and a function of the same
@@ -939,25 +939,18 @@ static bool LookupQualifiedNameInUsingDirectives(LookupResult &R,
 /// information about lookup criteria, see the documentation for the
 /// class LookupCriteria.
 ///
-/// @param LookupCtx The context in which qualified name lookup will
+/// \param R captures both the lookup criteria and any lookup results found.
+///
+/// \param LookupCtx The context in which qualified name lookup will
 /// search. If the lookup criteria permits, name lookup may also search
 /// in the parent contexts or (for C++ classes) base classes.
 ///
-/// @param Name     The name of the entity that we are searching for.
+/// \param InUnqualifiedLookup true if this is qualified name lookup that 
+/// occurs as part of unqualified name lookup.
 ///
-/// @param Criteria The criteria that this routine will use to
-/// determine which names are visible and which names will be
-/// found. Note that name lookup will find a name that is visible by
-/// the given criteria, but the entity itself may not be semantically
-/// correct or even the kind of entity expected based on the
-/// lookup. For example, searching for a nested-name-specifier name
-/// might result in an EnumDecl, which is visible but is not permitted
-/// as a nested-name-specifier in C++03.
-///
-/// @returns The result of name lookup, which includes zero or more
-/// declarations and possibly additional information used to diagnose
-/// ambiguities.
-bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx) {
+/// \returns true if lookup succeeded, false if it failed.
+bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
+                               bool InUnqualifiedLookup) {
   assert(LookupCtx && "Sema::LookupQualifiedName requires a lookup context");
 
   if (!R.getLookupName())
@@ -995,11 +988,22 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx) {
 
   // If this isn't a C++ class, we aren't allowed to look into base
   // classes, we're done.
-  if (!isa<CXXRecordDecl>(LookupCtx))
+  CXXRecordDecl *LookupRec = dyn_cast<CXXRecordDecl>(LookupCtx);
+  if (!LookupRec)
     return false;
 
+  // If we're performing qualified name lookup into a dependent class,
+  // then we are actually looking into a current instantiation. If we have any
+  // dependent base classes, then we either have to delay lookup until 
+  // template instantiation time (at which point all bases will be available)
+  // or we have to fail.
+  if (!InUnqualifiedLookup && LookupRec->isDependentContext() &&
+      LookupRec->hasAnyDependentBases()) {
+    R.setNotFoundInCurrentInstantiation();
+    return false;
+  }
+    
   // Perform lookup into our base classes.
-  CXXRecordDecl *LookupRec = cast<CXXRecordDecl>(LookupCtx);
   CXXBasePaths Paths;
   Paths.setOrigin(LookupRec);
 

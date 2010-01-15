@@ -32,6 +32,11 @@ public:
     /// @brief No entity found met the criteria.
     NotFound = 0,
 
+    /// @brief No entity found met the criteria within the current 
+    /// instantiation,, but there were dependent base classes of the 
+    /// current instantiation that could not be searched.
+    NotFoundInCurrentInstantiation,
+    
     /// @brief Name lookup found a single declaration that met the
     /// criteria.  getFoundDecl() will return this declaration.
     Found,
@@ -268,6 +273,19 @@ public:
     Decls.set_size(N);
   }
 
+  /// \brief Determine whether no result was found because we could not
+  /// search into dependent base classes of the current instantiation.
+  bool wasNotFoundInCurrentInstantiation() const {
+    return ResultKind == NotFoundInCurrentInstantiation;
+  }
+  
+  /// \brief Note that while no result was found in the current instantiation,
+  /// there were dependent base classes that could not be searched.
+  void setNotFoundInCurrentInstantiation() {
+    assert(ResultKind == NotFound && Decls.empty());
+    ResultKind = NotFoundInCurrentInstantiation;
+  }
+  
   /// \brief Resolves the result kind of the lookup, possibly hiding
   /// decls.
   ///
@@ -278,9 +296,10 @@ public:
   /// \brief Re-resolves the result kind of the lookup after a set of
   /// removals has been performed.
   void resolveKindAfterFilter() {
-    if (Decls.empty())
-      ResultKind = NotFound;
-    else {
+    if (Decls.empty()) {
+      if (ResultKind != NotFoundInCurrentInstantiation)
+        ResultKind = NotFound;
+    } else {
       ResultKind = Found;
       resolveKind();
     }

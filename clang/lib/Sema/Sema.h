@@ -1212,7 +1212,8 @@ public:
                                 = NotForRedeclaration);
   bool LookupName(LookupResult &R, Scope *S,
                   bool AllowBuiltinCreation = false);
-  bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx);
+  bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
+                           bool InUnqualifiedLookup = false);
   bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
                         bool AllowBuiltinCreation = false,
                         bool EnteringContext = false);
