@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code
+// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value
 
 int halt() __attribute__((noreturn));
 int live();
@@ -35,9 +35,9 @@ void test2() {
       dead();   // expected-warning {{will never be executed}}
 
   case 3:
-    live(),
-      halt();
-    dead();     // expected-warning {{will never be executed}}
+  live()
+    + halt();
+  dead();     // expected-warning {{will never be executed}}
 
   case 4:
   a4:

@@ -1339,24 +1339,21 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b) {
 
   switch (S->getStmtClass()) {
   case Expr::BinaryOperatorClass: {
-    BinaryOperator *Op = cast<BinaryOperator>(S);
-    if (Op->getOpcode() == BinaryOperator::Comma) {
-      if (b.size() < 2) {
-        CFGBlock *n = &b;
-        while (1) {
-          if (n->getTerminator())
-            return n->getTerminator()->getLocStart();
-          if (n->succ_size() != 1)
-            return SourceLocation();
-          n = n[0].succ_begin()[0];
-          if (n->pred_size() != 1)
-            return SourceLocation();
-          if (!n->empty())
-            return n[0][0].getStmt()->getLocStart();
-        }
+    if (b.size() < 2) {
+      CFGBlock *n = &b;
+      while (1) {
+        if (n->getTerminator())
+          return n->getTerminator()->getLocStart();
+        if (n->succ_size() != 1)
+          return SourceLocation();
+        n = n[0].succ_begin()[0];
+        if (n->pred_size() != 1)
+          return SourceLocation();
+        if (!n->empty())
+          return n[0][0].getStmt()->getLocStart();
       }
-      return b[1].getStmt()->getLocStart();
     }
+    return b[1].getStmt()->getLocStart();
   }
   default: ;
   }
