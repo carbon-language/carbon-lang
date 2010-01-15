@@ -1328,14 +1328,47 @@ static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
   }
 }
 
+static SourceLocation GetUnreachableLoc(CFGBlock &b) {
+  Stmt *S;
+  if (!b.empty())
+    S = b[0].getStmt();
+  else if (b.getTerminator())
+    S = b.getTerminator();
+  else
+    return SourceLocation();
+
+  switch (S->getStmtClass()) {
+  case Expr::BinaryOperatorClass: {
+    BinaryOperator *Op = cast<BinaryOperator>(S);
+    if (Op->getOpcode() == BinaryOperator::Comma) {
+      if (b.size() < 2) {
+        CFGBlock *n = &b;
+        while (1) {
+          if (n->getTerminator())
+            return n->getTerminator()->getLocStart();
+          if (n->succ_size() != 1)
+            return SourceLocation();
+          n = n[0].succ_begin()[0];
+          if (n->pred_size() != 1)
+            return SourceLocation();
+          if (!n->empty())
+            return n[0][0].getStmt()->getLocStart();
+        }
+      }
+      return b[1].getStmt()->getLocStart();
+    }
+  }
+  default: ;
+  }
+  return S->getLocStart();
+}
+
 static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
                                SourceManager &SM) {
   std::queue<CFGBlock*> workq;
   // Prep work queue
   workq.push(e);
-  SourceLocation top;
-  if (!e->empty())
-    top = e[0][0].getStmt()->getLocStart();
+  SourceLocation top = GetUnreachableLoc(*e);
   bool FromMainFile = false;
   bool FromSystemHeader = false;
   bool TopValid = false;
@@ -1348,11 +1381,7 @@ static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
   while (!workq.empty()) {
     CFGBlock *item = workq.front();
     workq.pop();
-    SourceLocation c;
-    if (!item->empty())
-      c = item[0][0].getStmt()->getLocStart();
-    else if (item->getTerminator())
-      c = item->getTerminator()->getLocStart();
+    SourceLocation c = GetUnreachableLoc(*item);
     if (c.isValid()
         && (!TopValid
             || (SM.isFromMainFile(c) && !FromMainFile)
@@ -1412,10 +1441,14 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
     CFGBlock &b = **I;
     if (!live[b.getBlockID()]) {
       if (b.pred_begin() == b.pred_end()) {
-        if (!b.empty())
-          lines.push_back(b[0].getStmt()->getLocStart());
-        else if (b.getTerminator())
-          lines.push_back(b.getTerminator()->getLocStart());
+        SourceLocation c = GetUnreachableLoc(b);
+        if (!c.isValid()) {
+          // Blocks without a location can't produce a warning, so don't mark
+          // reachable blocks from here as live.
+          live.set(b.getBlockID());
+          continue;
+        }
+        lines.push_back(c);
         // Avoid excessive errors by marking everything reachable from here
         MarkLive(&b, live);
       }
