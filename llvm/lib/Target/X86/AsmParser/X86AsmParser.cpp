@@ -106,7 +106,7 @@ struct X86Operand : public MCParsedAsmOperand {
     } Mem;
   };
 
-  X86Operand(KindTy K, SMLoc Start = SMLoc(), SMLoc End = SMLoc())
+  X86Operand(KindTy K, SMLoc Start, SMLoc End)
     : Kind(K), StartLoc(Start), EndLoc(End) {}
   
   /// getStartLoc - Get the location of the first token of this operand.
@@ -222,14 +222,14 @@ struct X86Operand : public MCParsedAsmOperand {
 
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
-                               unsigned Scale) {
+                               unsigned Scale, SMLoc StartLoc, SMLoc EndLoc) {
     // We should never just have a displacement, that would be an immediate.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
 
     // The scale should always be one of {1,2,4,8}.
     assert(((Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8)) &&
            "Invalid scale!");
-    X86Operand *Res = new X86Operand(Memory);
+    X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = SegReg;
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = BaseReg;
@@ -291,6 +291,8 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
 
 /// ParseMemOperand: segment: disp(basereg, indexreg, scale)
 X86Operand *X86ATTAsmParser::ParseMemOperand() {
+  SMLoc MemStart = getLexer().getTok().getLoc();
+  
   // FIXME: If SegReg ':'  (e.g. %gs:), eat and remember.
   unsigned SegReg = 0;
   
@@ -301,7 +303,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getLexer().isNot(AsmToken::LParen)) {
     SMLoc ExprStart, ExprEnd;
-    if (getParser().ParseExpression(Disp, ExprStart, ExprEnd)) return 0;
+    if (getParser().ParseExpression(Disp, MemStart, ExprEnd)) return 0;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
@@ -309,7 +311,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
       // Unless we have a segment register, treat this as an immediate.
       if (SegReg == 0)
         return X86Operand::CreateImm(Disp, ExprStart, ExprEnd);
-      return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
+      return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
     }
     
     // Eat the '('.
@@ -336,7 +338,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
         // Unless we have a segment register, treat this as an immediate.
         if (SegReg == 0)
           return X86Operand::CreateImm(Disp, LParenLoc, ExprEnd);
-        return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
+        return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
       }
       
       // Eat the '('.
@@ -410,9 +412,11 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     Error(getLexer().getTok().getLoc(), "unexpected token in memory operand");
     return 0;
   }
+  SMLoc MemEnd = getLexer().getTok().getLoc();
   getLexer().Lex(); // Eat the ')'.
   
-  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale);
+  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
+                               MemStart, MemEnd);
 }
 
 bool X86ATTAsmParser::
