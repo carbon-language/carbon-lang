@@ -4582,6 +4582,14 @@ void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
   }
 }
 
+SourceLocation GetLocationForCandidate(const OverloadCandidate *Cand) {
+  if (Cand->Function)
+    return Cand->Function->getLocation();
+  if (Cand->Surrogate)
+    return Cand->Surrogate->getLocation();
+  return SourceLocation();
+}
+
 struct CompareOverloadCandidatesForDisplay {
   Sema &S;
   CompareOverloadCandidatesForDisplay(Sema &S) : S(S) {}
@@ -4600,22 +4608,30 @@ struct CompareOverloadCandidatesForDisplay {
     } else if (R->Viable)
       return false;
 
-    // Put declared functions first.
-    if (L->Function) {
-      if (!R->Function) return true;
-      return S.SourceMgr.isBeforeInTranslationUnit(L->Function->getLocation(),
-                                                   R->Function->getLocation());
-    } else if (R->Function) return false;
+    assert(L->Viable == R->Viable);
 
-    // Then surrogates.
-    if (L->IsSurrogate) {
-      if (!R->IsSurrogate) return true;
-      return S.SourceMgr.isBeforeInTranslationUnit(L->Surrogate->getLocation(),
-                                                   R->Surrogate->getLocation());
-    } else if (R->IsSurrogate) return false;
+    // Criteria by which we can sort non-viable candidates:
+    if (!L->Viable) {
+      // 1. Arity mismatches come after other candidates.
+      if (L->FailureKind == ovl_fail_too_many_arguments ||
+          L->FailureKind == ovl_fail_too_few_arguments)
+        return false;
+      if (R->FailureKind == ovl_fail_too_many_arguments ||
+          R->FailureKind == ovl_fail_too_few_arguments)
+        return true;
 
-    // And builtins just come in a jumble.
-    return false;
+      // TODO: others?
+    }
+
+    // Sort everything else by location.
+    SourceLocation LLoc = GetLocationForCandidate(L);
+    SourceLocation RLoc = GetLocationForCandidate(R);
+
+    // Put candidates without locations (e.g. builtins) at the end.
+    if (LLoc.isInvalid()) return false;
+    if (RLoc.isInvalid()) return true;
+
+    return S.SourceMgr.isBeforeInTranslationUnit(LLoc, RLoc);
   }
 };
 
