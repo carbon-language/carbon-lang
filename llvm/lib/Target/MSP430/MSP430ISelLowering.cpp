@@ -967,6 +967,31 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+bool MSP430TargetLowering::isTruncateFree(const Type *Ty1,
+                                          const Type *Ty2) const {
+  if (!Ty1->isInteger() || !Ty2->isInteger())
+    return false;
+
+  return (Ty1->getPrimitiveSizeInBits() > Ty2->getPrimitiveSizeInBits());
+}
+
+bool MSP430TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
+  if (!VT1.isInteger() || !VT2.isInteger())
+    return false;
+
+  return (VT1.getSizeInBits() > VT2.getSizeInBits());
+}
+
+bool MSP430TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
+  // MSP430 implicitly zero-extends 8-bit results in 16-bit registers.
+  return 0 && Ty1->isInteger(8) && Ty2->isInteger(16);
+}
+
+bool MSP430TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
+  // MSP430 implicitly zero-extends 8-bit results in 16-bit registers.
+  return 0 && VT1 == MVT::i8 && VT2 == MVT::i16;
+}
+
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
