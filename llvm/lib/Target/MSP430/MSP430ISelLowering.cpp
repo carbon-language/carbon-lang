@@ -755,6 +755,8 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   // If we are doing an AND and testing against zero, then the CMP
   // will not be generated.  The AND (or BIT) will generate the condition codes,
   // but they are different from CMP.
+  // FIXME: since we're doing a post-processing, use a pseudoinstr here, so
+  // lowering & isel wouldn't diverge.
   bool andCC = false;
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS)) {
     if (RHSC->isNullValue() && LHS.hasOneUse() &&
@@ -782,11 +784,11 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
    case MSP430CC::COND_HS:
      // Res = SRW & 1, no processing is required
      break;
-    case MSP430CC::COND_LO:
+   case MSP430CC::COND_LO:
      // Res = ~(SRW & 1)
      Invert = true;
      break;
-    case MSP430CC::COND_NE:
+   case MSP430CC::COND_NE:
      if (andCC) {
        // C = ~Z, thus Res = SRW & 1, no processing is required
      } else {
@@ -794,7 +796,7 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
        Shift = true;
      }
      break;
-    case MSP430CC::COND_E:
+   case MSP430CC::COND_E:
      if (andCC) {
        // C = ~Z, thus Res = ~(SRW & 1)
      } else {
@@ -808,7 +810,7 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue One  = DAG.getConstant(1, VT);
   if (Convert) {
     SDValue SR = DAG.getCopyFromReg(DAG.getEntryNode(), dl, MSP430::SRW,
-                                     MVT::i16, Flag);
+                                    MVT::i16, Flag);
     if (Shift)
       // FIXME: somewhere this is turned into a SRL, lower it MSP specific?
       SR = DAG.getNode(ISD::SRA, dl, MVT::i16, SR, One);
