@@ -11,12 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+
+static bool isArc4RandomAvailable(const ASTContext &Ctx) {
+  const llvm::Triple &T = Ctx.Target.getTriple();
+  return T.getVendor() == llvm::Triple::Apple ||
+         T.getOS() == llvm::Triple::FreeBSD;
+}
 
 namespace {
 class WalkAST : public StmtVisitor<WalkAST> {
@@ -29,11 +36,14 @@ class WalkAST : public StmtVisitor<WalkAST> {
   IdentifierInfo *II_random;
   enum { num_setids = 6 };
   IdentifierInfo *II_setid[num_setids];
+  
+  const bool CheckRand;
 
 public:
   WalkAST(BugReporter &br) : BR(br),
 			     II_gets(0), II_getpw(0), II_mktemp(0),
-			     II_rand(), II_random(0), II_setid() {}
+			     II_rand(), II_random(0), II_setid(),
+                 CheckRand(isArc4RandomAvailable(BR.getContext())) {}
 
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
@@ -83,8 +93,10 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     CheckCall_gets(CE, FD);
     CheckCall_getpw(CE, FD);
     CheckCall_mktemp(CE, FD);
-    CheckCall_rand(CE, FD);
-    CheckCall_random(CE, FD);
+    if (CheckRand) {
+      CheckCall_rand(CE, FD);
+      CheckCall_random(CE, FD);
+    }
   }
 
   // Recurse and check children.
