@@ -130,42 +130,6 @@ static enum CXCursorKind TranslateDeclRefExpr(DeclRefExpr *DRE) {
     return CXCursor_NotImplemented;
 }
 
-#if 0
-// Will be useful one day.
-class CRefVisitor : public StmtVisitor<CRefVisitor> {
-  CXDecl CDecl;
-  CXDeclIterator Callback;
-  CXClientData CData;
-
-  void Call(enum CXCursorKind CK, Stmt *SRef) {
-    CXCursor C = { CK, CDecl, SRef };
-    Callback(CDecl, C, CData);
-  }
-
-public:
-  CRefVisitor(CXDecl C, CXDeclIterator cback, CXClientData D) :
-    CDecl(C), Callback(cback), CData(D) {}
-
-  void VisitStmt(Stmt *S) {
-    for (Stmt::child_iterator C = S->child_begin(), CEnd = S->child_end();
-         C != CEnd; ++C)
-      Visit(*C);
-  }
-  void VisitDeclRefExpr(DeclRefExpr *Node) {
-    Call(TranslateDeclRefExpr(Node), Node);
-  }
-  void VisitMemberExpr(MemberExpr *Node) {
-    Call(CXCursor_MemberRef, Node);
-  }
-  void VisitObjCMessageExpr(ObjCMessageExpr *Node) {
-    Call(CXCursor_ObjCSelectorRef, Node);
-  }
-  void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
-    Call(CXCursor_ObjCIvarRef, Node);
-  }
-};
-#endif
-
 // Translation Unit Visitor.
 
 class TUVisitor : public DeclVisitor<TUVisitor> {
