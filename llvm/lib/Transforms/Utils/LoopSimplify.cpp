@@ -232,7 +232,7 @@ ReprocessLoop:
       PN->eraseFromParent();
     }
 
-  // If this loop has muliple exits and the exits all go to the same
+  // If this loop has multiple exits and the exits all go to the same
   // block, attempt to merge the exits. This helps several passes, such
   // as LoopRotation, which do not support loops with multiple exits.
   // SimplifyCFG also does this (and this code uses the same utility
