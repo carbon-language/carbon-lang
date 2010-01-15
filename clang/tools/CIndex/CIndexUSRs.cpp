@@ -129,8 +129,12 @@ void USRGenerator::VisitRecordDecl(RecordDecl *D) {
   Out << "@S^";
   // FIXME: Better support for anonymous structures. 
   const std::string &s = D->getNameAsString();
-  if (s.empty())
-    Out << "^anon";
+  if (s.empty()) {
+    if (TypedefDecl *TD = D->getTypedefForAnonDecl())
+      Out << "^anontd^" << TD->getNameAsString();    
+    else
+      Out << "^anon";
+  }
   else
     Out << s;
 }
