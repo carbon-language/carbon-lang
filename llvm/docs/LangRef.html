@@ -924,9 +924,9 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 
 <div class="doc_text">
 
-<p>Named metadata is a collection of metadata. <a href="#metadata"> Metadata </a>
-   node and null are the only valid named metadata operands. 
-   Metadata strings are not allowed as an named metadata operand.</p>
+<p>Named metadata is a collection of metadata. <a href="#metadata">Metadata
+   nodes</a> (but not metadata strings) and null are the only valid operands for
+   a named metadata.</p>
 
 <h5>Syntax:</h5>
 <div class="doc_code">
@@ -2335,41 +2335,6 @@ has undefined behavior.</p>
 
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="metadata">Metadata Nodes and Metadata Strings</a>
-</div>
-
-<div class="doc_text">
-
-<p>Metadata provides a way to attach arbitrary data to the instruction
-   stream without affecting the behaviour of the program.  There are two
-   metadata primitives, strings and nodes. All metadata has the
-   <tt>metadata</tt> type and is identified in syntax by a preceding exclamation
-   point ('<tt>!</tt>').</p>
-
-<p>A metadata string is a string surrounded by double quotes.  It can contain
-   any character by escaping non-printable characters with "\xx" where "xx" is
-   the two digit hex code.  For example: "<tt>!"test\00"</tt>".</p>
-
-<p>Metadata nodes are represented with notation similar to structure constants
-   (a comma separated list of elements, surrounded by braces and preceded by an
-   exclamation point).  For example: "<tt>!{ metadata !"test\00", i32
-   10}</tt>".</p>
-
-<p>A metadata node will attempt to track changes to the values it holds. In the
-   event that a value is deleted, it will be replaced with a typeless
-   "<tt>null</tt>", such as "<tt>metadata !{null, i32 10}</tt>".</p>
-
-<p>A <a href="#namedmetadatastructure">named metadata</a> is a collection of 
-   metadata nodes. For example: "<tt>!foo =  metadata !{!4, !3}</tt>".
-
-<p>Optimizations may rely on metadata to provide additional information about
-   the program that isn't available in the instructions, or that isn't easily
-   computable. Similarly, the code generator may expect a certain metadata
-   format to be used to express debugging information.</p>
-
-</div>
-
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="othervalues">Other Values</a> </div>
 <!-- *********************************************************************** -->
@@ -2436,6 +2401,35 @@ call void asm alignstack "eieio", ""()
    documented here.  Constraints on what can be done (e.g. duplication, moving,
    etc need to be documented).  This is probably best done by reference to
    another document that covers inline asm from a holistic perspective.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="metadata">Metadata Nodes and Metadata
+  Strings</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM IR allows metadata to be attached to instructions in the program that
+   can convey extra information about the code to the optimizers and code
+   generator.  One example application of metadata is source-level debug
+   information.  There are two metadata primitives: strings and nodes. All
+   metadata has the <tt>metadata</tt> type and is identified in syntax by a
+   preceding exclamation point ('<tt>!</tt>').</p>
+
+<p>A metadata string is a string surrounded by double quotes.  It can contain
+   any character by escaping non-printable characters with "\xx" where "xx" is
+   the two digit hex code.  For example: "<tt>!"test\00"</tt>".</p>
+
+<p>Metadata nodes are represented with notation similar to structure constants
+   (a comma separated list of elements, surrounded by braces and preceded by an
+   exclamation point).  For example: "<tt>!{ metadata !"test\00", i32
+   10}</tt>".  Metadata nodes can have any values as their operand.</p>
+
+<p>A <a href="#namedmetadatastructure">named metadata</a> is a collection of 
+   metadata nodes, which can be looked up in the module symbol table. For
+   example: "<tt>!foo =  metadata !{!4, !3}</tt>".
 
 </div>
 
