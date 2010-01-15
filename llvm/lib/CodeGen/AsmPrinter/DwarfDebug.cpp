@@ -165,6 +165,7 @@ public:
 class DbgScope {
   DbgScope *Parent;                   // Parent to this scope.
   DIDescriptor Desc;                  // Debug info descriptor for scope.
+  // FIXME : Use of WeakVH may be expensive here.
   WeakVH InlinedAtLocation;           // Location at which scope is inlined.
   bool AbstractScope;                 // Abstract Scope
   unsigned StartLabelID;              // Label ID of the beginning of scope.
