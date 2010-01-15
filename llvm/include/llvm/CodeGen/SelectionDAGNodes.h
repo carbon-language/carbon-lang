@@ -1297,9 +1297,17 @@ public:
   ///
   void printWithFullDepth(raw_ostream &O, const SelectionDAG *G = 0,
                           unsigned indent = 0) const;
+  /// dump - Dump this node, for debugging.
   void dump() const;
+  /// dumpr - Dump (recursively) this node and its use-def subgraph.
   void dumpr() const;
+  /// dump - Dump this node, for debugging.
+  /// The given SelectionDAG allows target-specific nodes to be printed
+  /// in human-readable form.
   void dump(const SelectionDAG *G) const;
+  /// dumpr - Dump (recursively) this node and its use-def subgraph.
+  /// The given SelectionDAG allows target-specific nodes to be printed
+  /// in human-readable form.
   void dumpr(const SelectionDAG *G) const;
   /// dumpWithDepth - printWithDepth to dbgs().
   ///
