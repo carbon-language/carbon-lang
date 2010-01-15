@@ -317,7 +317,7 @@ void LookupResult::resolveKind() {
  
   // Fast case: no possible ambiguity.
   if (N == 0) {
-    assert(ResultKind == NotFound);
+    assert(ResultKind == NotFound || ResultKind == NotFoundInCurrentInstantiation);
     return;
   }
 
