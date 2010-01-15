@@ -112,9 +112,9 @@ CAMLprim LLVMContextRef llvm_global_context(value Unit) {
 
 /*===-- Modules -----------------------------------------------------------===*/
 
-/* string -> llmodule */
-CAMLprim LLVMModuleRef llvm_create_module(value ModuleID) {
-  return LLVMModuleCreateWithName(String_val(ModuleID));
+/* llcontext -> string -> llmodule */
+CAMLprim LLVMModuleRef llvm_create_module(LLVMContextRef C, value ModuleID) {
+  return LLVMModuleCreateWithNameInContext(String_val(ModuleID), C);
 }
 
 /* llmodule -> unit */
