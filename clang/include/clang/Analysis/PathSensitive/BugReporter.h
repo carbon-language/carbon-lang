@@ -103,9 +103,9 @@ public:
   // BugReporter.
   const Stmt* getStmt() const;
 
-  const std::string& getDescription() const { return Description; }
+  const llvm::StringRef getDescription() const { return Description; }
 
-  const std::string& getShortDescription() const {
+  const llvm::StringRef getShortDescription() const {
     return ShortDescription.empty() ? Description : ShortDescription;
   }
 
@@ -443,7 +443,7 @@ public:
   // FIXME: Move out-of-line (virtual function).
   SourceLocation getLocation() const { return L; }
 
-  void addString(const std::string& s) { Strs.push_back(s); }
+  void addString(llvm::StringRef s) { Strs.push_back(s); }
 
   typedef std::list<std::string>::const_iterator str_iterator;
   str_iterator str_begin() const { return Strs.begin(); }

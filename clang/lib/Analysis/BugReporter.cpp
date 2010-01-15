@@ -1819,7 +1819,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   Diagnostic& Diag = getDiagnostic();
   FullSourceLoc L(R->getLocation(), getSourceManager());
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                            R->getShortDescription().c_str());
+                                            R->getShortDescription());
 
   switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
