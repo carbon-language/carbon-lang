@@ -98,10 +98,12 @@ void DeclRefExpr::computeDependence() {
   //         initialized with an expression that is value-dependent.
   else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (Var->getType()->isIntegralType() &&
-        Var->getType().getCVRQualifiers() == Qualifiers::Const &&
-        Var->getInit() &&
-        Var->getInit()->isValueDependent())
-    ValueDependent = true;
+        Var->getType().getCVRQualifiers() == Qualifiers::Const) {
+      const VarDecl *Def = 0;
+      if (const Expr *Init = Var->getDefinition(Def))
+        if (Init->isValueDependent())
+          ValueDependent = true;
+    }
   }
   //  (TD)  - a nested-name-specifier or a qualified-id that names a
   //          member of an unknown specialization.
