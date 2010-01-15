@@ -618,6 +618,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#undef __OBJC_RW_DLLIMPORT\n";
     Preamble += "#undef __OBJC_RW_STATICIMPORT\n";
     Preamble += "#define __attribute__(X)\n";
+    Preamble += "#define __weak\n";
   }
   else {
     Preamble += "#define __block\n";
