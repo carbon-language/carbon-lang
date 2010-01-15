@@ -339,6 +339,14 @@ namespace llvm {
     /// EmitComments - Pretty-print comments for basic blocks
     void EmitComments(const MachineBasicBlock &MBB) const;
 
+    /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
+    /// value.
+    MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
+
+    /// GetExternalSymbolSymbol - Return the MCSymbol for the specified
+    /// ExternalSymbol.
+    MCSymbol *GetExternalSymbolSymbol(StringRef Sym) const;
+    
     /// GetMBBSymbol - Return the MCSymbol corresponding to the specified basic
     /// block label.
     MCSymbol *GetMBBSymbol(unsigned MBBID) const;

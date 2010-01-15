@@ -1698,6 +1698,22 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
+/// GetGlobalValueSymbol - Return the MCSymbol for the specified global
+/// value.
+MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
+  SmallString<60> NameStr;
+  Mang->getNameWithPrefix(NameStr, GV, false);
+  return OutContext.GetOrCreateSymbol(NameStr.str());
+}
+
+/// GetExternalSymbolSymbol - Return the MCSymbol for the specified
+/// ExternalSymbol.
+MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
+  SmallString<60> NameStr;
+  Mang->getNameWithPrefix(NameStr, Sym);
+  return OutContext.GetOrCreateSymbol(NameStr.str());
+}  
+
 
 /// EmitBasicBlockStart - This method prints the label for the specified
 /// MachineBasicBlock, an alignment (if present) and a comment describing

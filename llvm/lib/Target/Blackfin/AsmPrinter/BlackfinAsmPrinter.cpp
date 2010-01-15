@@ -181,12 +181,9 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << Mang->getMangledName(MO.getGlobal());
     printOffset(MO.getOffset());
     break;
-  case MachineOperand::MO_ExternalSymbol: {
-    SmallString<60> NameStr;
-    Mang->getNameWithPrefix(NameStr, MO.getSymbolName());
-    OutContext.GetOrCreateSymbol(NameStr.str())->print(O, MAI);
+  case MachineOperand::MO_ExternalSymbol:
+    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
     break;
-  }
   case MachineOperand::MO_ConstantPoolIndex:
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
       << MO.getIndex();

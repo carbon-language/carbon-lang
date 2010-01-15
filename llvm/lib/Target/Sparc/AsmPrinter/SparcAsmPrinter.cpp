@@ -198,7 +198,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

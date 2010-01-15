@@ -201,15 +201,13 @@ namespace {
             GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
                                         MMIMachO.getGVStubEntry(Sym);
           if (StubSym == 0) {
-            Mang->getNameWithPrefix(TmpNameStr, GV, false);
-            StubSym = OutContext.GetOrCreateSymbol(TmpNameStr.str());
+            StubSym = GetGlobalValueSymbol(GV);
           }
         }
         O << Name;
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        Mang->getNameWithPrefix(TmpNameStr, ACPV->getSymbol());
-        OutContext.GetOrCreateSymbol(TmpNameStr.str())->print(O, MAI);
+        GetExternalSymbolSymbol(ACPV->getSymbol())->print(O, MAI);
       }
 
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
