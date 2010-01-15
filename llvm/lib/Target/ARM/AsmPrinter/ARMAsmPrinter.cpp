@@ -49,7 +49,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
 using namespace llvm;
@@ -1186,9 +1185,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string Name = Mang->getMangledName(GVar);
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-
   
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -1196,7 +1193,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
   bool isDarwin = Subtarget->isTargetDarwin();
 
-  printVisibility(Name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   if (Subtarget->isTargetELF()) {
     O << "\t.type ";

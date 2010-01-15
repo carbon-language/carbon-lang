@@ -1856,6 +1856,23 @@ void AsmPrinter::printVisibility(const std::string& Name,
   }
 }
 
+void AsmPrinter::printVisibility(const MCSymbol *Sym,
+                                 unsigned Visibility) const {
+  if (Visibility == GlobalValue::HiddenVisibility) {
+    if (const char *Directive = MAI->getHiddenDirective()) {
+      O << Directive;
+      Sym->print(O, MAI);
+      O << '\n';
+    }
+  } else if (Visibility == GlobalValue::ProtectedVisibility) {
+    if (const char *Directive = MAI->getProtectedDirective()) {
+      O << Directive;
+      Sym->print(O, MAI);
+      O << '\n';
+    }
+  }
+}
+
 void AsmPrinter::printOffset(int64_t Offset) const {
   if (Offset > 0)
     O << '+' << Offset;

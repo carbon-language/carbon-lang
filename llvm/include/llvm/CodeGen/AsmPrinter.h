@@ -418,6 +418,9 @@ namespace llvm {
 
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
+    void printVisibility(const MCSymbol *Sym, unsigned Visibility) const;
+    
+    // FIXME: This is deprecated and should be removed.
     void printVisibility(const std::string& Name, unsigned Visibility) const;
 
     /// printOffset - This is just convenient handler for printing offsets.
