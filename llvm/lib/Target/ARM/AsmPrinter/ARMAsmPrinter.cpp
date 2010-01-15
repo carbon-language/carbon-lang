@@ -387,9 +387,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    SmallString<128> NameStr;
-    Mang->getNameWithPrefix(NameStr, MO.getSymbolName());
-    OutContext.GetOrCreateSymbol(NameStr.str())->print(O, MAI);
+    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
     
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
@@ -1188,17 +1186,23 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string name = Mang->getMangledName(GVar);
+  std::string Name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
+
+  
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
   bool isDarwin = Subtarget->isTargetDarwin();
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(Name, GVar->getVisibility());
 
-  if (Subtarget->isTargetELF())
-    O << "\t.type " << name << ",%object\n";
+  if (Subtarget->isTargetELF()) {
+    O << "\t.type ";
+    GVarSym->print(O, MAI);
+    O << ",%object\n";
+  }
 
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
@@ -1210,9 +1214,12 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = MAI->getZeroFillDirective()) {
-        O << "\t.globl\t" << name << "\n";
-        O << Directive << "__DATA, __common, " << name << ", "
-          << Size << ", " << Align << "\n";
+        O << "\t.globl\t";
+        GVarSym->print(O, MAI);
+        O << "\n";
+        O << Directive << "__DATA, __common, ";
+        GVarSym->print(O, MAI);
+        O << ", " << Size << ", " << Align << "\n";
         return;
       }
     }
@@ -1222,17 +1229,23 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
       if (isDarwin) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective() << name << ',' << Size
-            << ',' << Align;
+          O << MAI->getLCOMMDirective();
+          GVarSym->print(O, MAI);
+          O << ',' << Size << ',' << Align;
         } else if (GVar->hasCommonLinkage()) {
-          O << MAI->getCOMMDirective() << name << ',' << Size
-            << ',' << Align;
+          O << MAI->getCOMMDirective();
+          GVarSym->print(O, MAI);
+          O << ',' << Size << ',' << Align;
         } else {
           OutStreamer.SwitchSection(TheSection);
-          O << "\t.globl " << name << '\n'
-            << MAI->getWeakDefDirective() << name << '\n';
+          O << "\t.globl ";
+          GVarSym->print(O, MAI);
+          O << '\n' << MAI->getWeakDefDirective();
+          GVarSym->print(O, MAI);
+          O << '\n';
           EmitAlignment(Align, GVar);
-          O << name << ":";
+          GVarSym->print(O, MAI);
+          O << ":";
           if (VerboseAsm) {
             O.PadToColumn(MAI->getCommentColumn());
             O << MAI->getCommentString() << ' ';
@@ -1244,16 +1257,25 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
         }
       } else if (MAI->getLCOMMDirective() != NULL) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective() << name << "," << Size;
+          O << MAI->getLCOMMDirective();
+          GVarSym->print(O, MAI);
+          O << "," << Size;
         } else {
-          O << MAI->getCOMMDirective()  << name << "," << Size;
+          O << MAI->getCOMMDirective();
+          GVarSym->print(O, MAI);
+          O << "," << Size;
           if (MAI->getCOMMDirectiveTakesAlignment())
             O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
-        if (GVar->hasLocalLinkage())
-          O << "\t.local\t" << name << "\n";
-        O << MAI->getCOMMDirective()  << name << "," << Size;
+        if (GVar->hasLocalLinkage()) {
+          O << "\t.local\t";
+          GVarSym->print(O, MAI);
+          O << '\n';
+        }
+        O << MAI->getCOMMDirective();
+        GVarSym->print(O, MAI);
+        O << "," << Size;
         if (MAI->getCOMMDirectiveTakesAlignment())
           O << "," << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
@@ -1275,17 +1297,24 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (isDarwin) {
-      O << "\t.globl " << name << "\n"
-        << "\t.weak_definition " << name << "\n";
+      O << "\t.globl ";
+      GVarSym->print(O, MAI);
+      O << "\n\t.weak_definition ";
+      GVarSym->print(O, MAI);
+      O << "\n";
     } else {
-      O << "\t.weak " << name << "\n";
+      O << "\t.weak ";
+      GVarSym->print(O, MAI);
+      O << "\n";
     }
     break;
   case GlobalValue::AppendingLinkage:
   // FIXME: appending linkage variables should go into a section of
   // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
-    O << "\t.globl " << name << "\n";
+    O << "\t.globl ";
+    GVarSym->print(O, MAI);
+    O << "\n";
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
@@ -1295,15 +1324,19 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":";
+  GVarSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << "\n";
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size " << name << ", " << Size << "\n";
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size ";
+    GVarSym->print(O, MAI);
+    O << ", " << Size << "\n";
+  }
 
   EmitGlobalConstant(C);
   O << '\n';
