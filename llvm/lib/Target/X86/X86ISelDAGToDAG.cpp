@@ -384,8 +384,11 @@ static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
 /// 
 static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
                       SDValue &Load) {
-  if (N.getOpcode() == ISD::BIT_CONVERT)
+  if (N.getOpcode() == ISD::BIT_CONVERT) {
+    if (!N.hasOneUse())
+      return false;
     N = N.getOperand(0);
+  }
 
   LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
   if (!LD || LD->isVolatile())
