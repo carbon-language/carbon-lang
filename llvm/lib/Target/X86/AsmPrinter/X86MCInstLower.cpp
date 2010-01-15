@@ -422,11 +422,13 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     printLabel(MI);
     return;
   case TargetInstrInfo::DEBUG_VALUE: {
+    // FIXME: if this is implemented for another target before it goes
+    // away completely, the common part should be moved into AsmPrinter.
     if (!VerboseAsm)
       return;
     O << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
     unsigned NOps = MI->getNumOperands();
-    // cast away const; DIetc do not take const operands for some reason
+    // cast away const; DIetc do not take const operands for some reason.
     DIVariable V((MDNode*)(MI->getOperand(NOps-1).getMetadata()));
     O << V.getName();
     O << " <- ";
@@ -435,7 +437,7 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
       printOperand(MI, 0);
     } else {
-      // Frame address.  Currently handles ESP or ESP + offset only
+      // Frame address.  Currently handles register +- offset only.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
       assert(MI->getOperand(3).getType()==MachineOperand::MO_Immediate);
       O << '['; printOperand(MI, 0); O << '+'; printOperand(MI, 3); O << ']';
