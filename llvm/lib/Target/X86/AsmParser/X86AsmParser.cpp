@@ -37,7 +37,7 @@ private:
 
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
-  bool ParseRegister(X86Operand &Op);
+  bool ParseRegister(unsigned &RegNo);
 
   bool ParseOperand(X86Operand &Op);
 
@@ -237,7 +237,8 @@ struct X86Operand : public MCParsedAsmOperand {
 } // end anonymous namespace.
 
 
-bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
+bool X86ATTAsmParser::ParseRegister(unsigned &RegNo) {
+  RegNo = 0;
   const AsmToken &TokPercent = getLexer().getTok();
   (void)TokPercent; // Avoid warning when assertions are disabled.
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
@@ -249,13 +250,10 @@ bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
-  unsigned RegNo;
-
   RegNo = MatchRegisterName(Tok.getString());
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
-  Op = X86Operand::CreateReg(RegNo);
   getLexer().Lex(); // Eat identifier token.
 
   return false;
@@ -265,10 +263,14 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
   switch (getLexer().getKind()) {
   default:
     return ParseMemOperand(Op);
-  case AsmToken::Percent:
+  case AsmToken::Percent: {
     // FIXME: if a segment register, this could either be just the seg reg, or
     // the start of a memory operand.
-    return ParseRegister(Op);
+    unsigned RegNo;
+    if (ParseRegister(RegNo)) return true;
+    Op = X86Operand::CreateReg(RegNo);
+    return false;
+  }
   case AsmToken::Dollar: {
     // $42 -> immediate.
     getLexer().Lex();
@@ -340,11 +342,8 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   
-  if (getLexer().is(AsmToken::Percent)) {
-    if (ParseRegister(Op))
-      return true;
-    BaseReg = Op.getReg();
-  }
+  if (getLexer().is(AsmToken::Percent))
+    if (ParseRegister(BaseReg)) return true;
   
   if (getLexer().is(AsmToken::Comma)) {
     getLexer().Lex(); // Eat the comma.
@@ -356,9 +355,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
     // Not that even though it would be completely consistent to support syntax
     // like "1(%eax,,1)", the assembler doesn't.
     if (getLexer().is(AsmToken::Percent)) {
-      if (ParseRegister(Op))
-        return true;
-      IndexReg = Op.getReg();
+      if (ParseRegister(IndexReg)) return true;
     
       if (getLexer().isNot(AsmToken::RParen)) {
         // Parse the scale amount:
