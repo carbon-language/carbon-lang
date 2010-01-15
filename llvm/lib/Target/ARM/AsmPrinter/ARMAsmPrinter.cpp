@@ -184,27 +184,24 @@ namespace {
       } else if (ACPV->isBlockAddress()) {
         O << GetBlockAddressSymbol(ACPV->getBlockAddress())->getName();
       } else if (ACPV->isGlobalValue()) {
-        std::string Name;
         GlobalValue *GV = ACPV->getGV();
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
-          Name = Mang->getMangledName(GV);
+          GetGlobalValueSymbol(GV)->print(O, MAI);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
-          Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
-          MCSymbol *Sym = OutContext.GetOrCreateSymbol(StringRef(Name));
+          MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+          Sym->print(O, MAI);
           
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
           const MCSymbol *&StubSym =
             GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
                                         MMIMachO.getGVStubEntry(Sym);
-          if (StubSym == 0) {
+          if (StubSym == 0)
             StubSym = GetGlobalValueSymbol(GV);
-          }
         }
-        O << Name;
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
         GetExternalSymbolSymbol(ACPV->getSymbol())->print(O, MAI);
@@ -217,9 +214,9 @@ namespace {
           << "+" << (unsigned)ACPV->getPCAdjustment();
          if (ACPV->mustAddCurrentAddress())
            O << "-.";
-         O << ")";
+         O << ')';
       }
-      O << "\n";
+      O << '\n';
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -379,7 +376,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    O << Mang->getMangledName(GV);
+    GetGlobalValueSymbol(GV)->print(O, MAI);
 
     printOffset(MO.getOffset());
 
@@ -1225,10 +1222,10 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
       if (isDarwin) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective()  << name << "," << Size
+          O << MAI->getLCOMMDirective() << name << ',' << Size
             << ',' << Align;
         } else if (GVar->hasCommonLinkage()) {
-          O << MAI->getCOMMDirective()  << name << "," << Size
+          O << MAI->getCOMMDirective() << name << ',' << Size
             << ',' << Align;
         } else {
           OutStreamer.SwitchSection(TheSection);
