@@ -142,8 +142,10 @@ void BumpPtrAllocator::PrintStats() const {
          << " (includes alignment, etc)\n";
 }
 
-MallocSlabAllocator BumpPtrAllocator::DefaultSlabAllocator =
-  MallocSlabAllocator();
+MallocSlabAllocator &BumpPtrAllocator::GetDefaultSlabAllocator() {
+  static MallocSlabAllocator DefaultSlabAllocator;
+  return DefaultSlabAllocator;
+}
 
 SlabAllocator::~SlabAllocator() { }
 
