@@ -48,8 +48,14 @@ include "MSP430CallingConv.td"
 
 include "MSP430InstrInfo.td"
 
-def MSP430InstrInfo : InstrInfo {} 
-
+def MSP430InstrInfo : InstrInfo {
+  // Define how we want to layout our TargetSpecific information field... This
+  // should be kept up-to-date with the fields in the MSP430InstrInfo.h file.
+  let TSFlagsFields = ["FormBits",
+                       "Size"];
+  let TSFlagsShifts = [0,
+                       2];
+}
 
 def MSP430InstPrinter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
