@@ -21,7 +21,6 @@ add_llvm_library(LLVMCodeGen
   LiveStackAnalysis.cpp
   LiveVariables.cpp
   LowerSubregs.cpp
-  MachOCodeEmitter.cpp
   MachOWriter.cpp
   MachineBasicBlock.cpp
   MachineDominators.cpp
