@@ -1596,13 +1596,13 @@ public:
                                             QualType BaseType,
                                             SourceLocation OpLoc, bool IsArrow,
                                             const CXXScopeSpec &SS,
+                                            NamedDecl *FirstQualifierInScope,
                                             LookupResult &R,
                                  const TemplateArgumentListInfo *TemplateArgs);
 
   OwningExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
                                     bool &IsArrow, SourceLocation OpLoc,
                                     const CXXScopeSpec &SS,
-                                    NamedDecl *FirstQualifierInScope,
                                     DeclPtrTy ObjCImpDecl);
 
   bool CheckQualifiedMemberReference(Expr *BaseExpr, QualType BaseType,

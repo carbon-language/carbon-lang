@@ -975,12 +975,15 @@ public:
 
     QualType BaseType = ((Expr*) Base.get())->getType();
 
-    // FIXME: wait, this is re-performing lookup?
+    LookupResult R(getSema(), Member->getDeclName(), MemberLoc,
+                   Sema::LookupMemberName);
+    R.addDecl(Member);
+    R.resolveKind();
+
     return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
                                               OpLoc, isArrow,
                                               SS, FirstQualifierInScope,
-                                              Member->getDeclName(), MemberLoc,
-                                              ExplicitTemplateArgs);
+                                              R, ExplicitTemplateArgs);
   }
 
   /// \brief Build a new binary operator expression.
@@ -1561,6 +1564,7 @@ public:
                                                bool IsArrow,
                                                NestedNameSpecifier *Qualifier,
                                                SourceRange QualifierRange,
+                                               NamedDecl *FirstQualifierInScope,
                                                LookupResult &R,
                                 const TemplateArgumentListInfo *TemplateArgs) {
     CXXScopeSpec SS;
@@ -1569,7 +1573,8 @@ public:
 
     return SemaRef.BuildMemberReferenceExpr(move(BaseE), BaseType,
                                             OperatorLoc, IsArrow,
-                                            SS, R, TemplateArgs);
+                                            SS, FirstQualifierInScope,
+                                            R, TemplateArgs);
   }
 
   /// \brief Build a new Objective-C @encode expression.
@@ -3713,6 +3718,12 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   SourceLocation FakeOperatorLoc
     = SemaRef.PP.getLocForEndOfToken(E->getBase()->getSourceRange().getEnd());
 
+  // FIXME: to do this check properly, we will need to preserve the
+  // first-qualifier-in-scope here, just in case we had a dependent
+  // base (and therefore couldn't do the check) and a
+  // nested-name-qualifier (and therefore could do the lookup).
+  NamedDecl *FirstQualifierInScope = 0;
+
   return getDerived().RebuildMemberExpr(move(Base), FakeOperatorLoc,
                                         E->isArrow(),
                                         Qualifier,
@@ -3721,7 +3732,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
                                         Member,
                                         (E->hasExplicitTemplateArgumentList()
                                            ? &TransArgs : 0),
-                                        0);
+                                        FirstQualifierInScope);
 }
 
 template<typename Derived>
@@ -5029,6 +5040,12 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
       TransArgs.addArgument(Loc);
     }
   }
+
+  // FIXME: to do this check properly, we will need to preserve the
+  // first-qualifier-in-scope here, just in case we had a dependent
+  // base (and therefore couldn't do the check) and a
+  // nested-name-qualifier (and therefore could do the lookup).
+  NamedDecl *FirstQualifierInScope = 0;
   
   return getDerived().RebuildUnresolvedMemberExpr(move(Base),
                                                   BaseType,
@@ -5036,6 +5053,7 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
                                                   Old->isArrow(),
                                                   Qualifier,
                                                   Old->getQualifierRange(),
+                                                  FirstQualifierInScope,
                                                   R,
                                               (Old->hasExplicitTemplateArgs()
                                                   ? &TransArgs : 0));

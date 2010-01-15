@@ -1397,7 +1397,9 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
   return BuildMemberReferenceExpr(ExprArg(*this, This), ThisType,
                                   /*OpLoc*/ SourceLocation(),
                                   /*IsArrow*/ true,
-                                  SS, R, TemplateArgs);
+                                  SS,
+                                  /*FirstQualifierInScope*/ 0,
+                                  R, TemplateArgs);
 }
 
 bool Sema::UseArgumentDependentLookup(const CXXScopeSpec &SS,
@@ -2471,8 +2473,7 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
   } else {
     OwningExprResult Result =
       LookupMemberExpr(R, Base, IsArrow, OpLoc,
-                       SS, FirstQualifierInScope,
-                       /*ObjCImpDecl*/ DeclPtrTy());
+                       SS, /*ObjCImpDecl*/ DeclPtrTy());
 
     if (Result.isInvalid()) {
       Owned(Base);
@@ -2484,13 +2485,15 @@ Sema::BuildMemberReferenceExpr(ExprArg BaseArg, QualType BaseType,
   }
 
   return BuildMemberReferenceExpr(ExprArg(*this, Base), BaseType,
-                                  OpLoc, IsArrow, SS, R, TemplateArgs);
+                                  OpLoc, IsArrow, SS, FirstQualifierInScope,
+                                  R, TemplateArgs);
 }
 
 Sema::OwningExprResult
 Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
                                SourceLocation OpLoc, bool IsArrow,
                                const CXXScopeSpec &SS,
+                               NamedDecl *FirstQualifierInScope,
                                LookupResult &R,
                          const TemplateArgumentListInfo *TemplateArgs) {
   Expr *BaseExpr = Base.takeAs<Expr>();
@@ -2520,11 +2523,17 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     return ExprError();
   }
 
-  // Diagnose qualified lookups that find only declarations from a
-  // non-base type.  Note that it's okay for lookup to find
-  // declarations from a non-base type as long as those aren't the
-  // ones picked by overload resolution.
-  if (SS.isSet() && CheckQualifiedMemberReference(BaseExpr, BaseType, SS, R))
+  // Diagnose lookups that find only declarations from a non-base
+  // type.  This is possible for either qualified lookups (which may
+  // have been qualified with an unrelated type) or implicit member
+  // expressions (which were found with unqualified lookup and thus
+  // may have come from an enclosing scope).  Note that it's okay for
+  // lookup to find declarations from a non-base type as long as those
+  // aren't the ones picked by overload resolution.
+  if ((SS.isSet() || !BaseExpr ||
+       (isa<CXXThisExpr>(BaseExpr) &&
+        cast<CXXThisExpr>(BaseExpr)->isImplicit())) &&
+      CheckQualifiedMemberReference(BaseExpr, BaseType, SS, R))
     return ExprError();
 
   // Construct an unresolved result if we in fact got an unresolved
@@ -2666,7 +2675,6 @@ Sema::OwningExprResult
 Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                        bool &IsArrow, SourceLocation OpLoc,
                        const CXXScopeSpec &SS,
-                       NamedDecl *FirstQualifierInScope,
                        DeclPtrTy ObjCImpDecl) {
   assert(BaseExpr && "no base expression");
 
@@ -3101,7 +3109,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         << Property->getDeclName();          
 
       return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS,
-                              FirstQualifierInScope, ObjCImpDecl);
+                              ObjCImpDecl);
     }
 
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
@@ -3204,8 +3212,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
       DecomposeTemplateName(R, Id);
     } else {
       Result = LookupMemberExpr(R, Base, IsArrow, OpLoc,
-                                SS, FirstQualifierInScope,
-                                ObjCImpDecl);
+                                SS, ObjCImpDecl);
 
       if (Result.isInvalid()) {
         Owned(Base);
@@ -3226,7 +3233,8 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
     }
 
     Result = BuildMemberReferenceExpr(ExprArg(*this, Base), Base->getType(),
-                                      OpLoc, IsArrow, SS, R, TemplateArgs);
+                                      OpLoc, IsArrow, SS, FirstQualifierInScope,
+                                      R, TemplateArgs);
   }
 
   return move(Result);
