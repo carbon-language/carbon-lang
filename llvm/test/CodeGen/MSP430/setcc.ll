@@ -1,5 +1,4 @@
 ; RUN: llc -march=msp430 < %s | FileCheck %s
-; XFAIL: *
 target datalayout = "e-p:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:16:32"
 target triple = "msp430-generic-generic"
 
@@ -32,7 +31,7 @@ define i16 @sccwne(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccwne:
-; CHECK:	cmp.w	r15, r14
+; CHECK:	cmp.w	r14, r15
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	rra.w	r15
 ; CHECK-NEXT:	and.w	#1, r15
@@ -43,7 +42,7 @@ define i16 @sccweq(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccweq:
-; CHECK:	cmp.w	r15, r14
+; CHECK:	cmp.w	r14, r15
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	rra.w	r15
 ; CHECK-NEXT:	and.w	#1, r15
@@ -55,7 +54,7 @@ define i16 @sccwugt(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccwugt:
-; CHECK:	cmp.w	r14, r15
+; CHECK:	cmp.w	r15, r14
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	and.w	#1, r15
 ; CHECK-NEXT:	xor.w	#1, r15
@@ -66,7 +65,7 @@ define i16 @sccwuge(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccwuge:
-; CHECK:	cmp.w	r15, r14
+; CHECK:	cmp.w	r14, r15
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	and.w	#1, r15
 
@@ -76,7 +75,7 @@ define i16 @sccwult(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccwult:
-; CHECK:	cmp.w	r15, r14
+; CHECK:	cmp.w	r14, r15
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	and.w	#1, r15
 ; CHECK-NEXT:	xor.w	#1, r15
@@ -87,7 +86,7 @@ define i16 @sccwule(i16 %a, i16 %b) nounwind {
 	ret i16 %t2
 }
 ; CHECK:sccwule:
-; CHECK:	cmp.w	r14, r15
+; CHECK:	cmp.w	r15, r14
 ; CHECK-NEXT:	mov.w	r2, r15
 ; CHECK-NEXT:	and.w	#1, r15
 
