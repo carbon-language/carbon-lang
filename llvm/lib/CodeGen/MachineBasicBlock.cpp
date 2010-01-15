@@ -378,7 +378,7 @@ bool MachineBasicBlock::canFallThrough() {
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
   const TargetInstrInfo *TII = getParent()->getTarget().getInstrInfo();
-  if (TII->AnalyzeBranch(*this, TBB, FBB, Cond, true)) {
+  if (TII->AnalyzeBranch(*this, TBB, FBB, Cond)) {
     // If we couldn't analyze the branch, examine the last instruction.
     // If the block doesn't end in a known control barrier, assume fallthrough
     // is possible. The isPredicable check is needed because this code can be
