@@ -74,7 +74,7 @@ namespace {
 /// X86Operand - Instances of this class represent a parsed X86 machine
 /// instruction.
 struct X86Operand : public MCParsedAsmOperand {
-  enum {
+  enum KindTy {
     Token,
     Register,
     Immediate,
@@ -105,6 +105,14 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned Scale;
     } Mem;
   };
+
+  X86Operand(KindTy K, SMLoc Start = SMLoc(), SMLoc End = SMLoc())
+    : Kind(K), StartLoc(Start), EndLoc(End) {}
+  
+  /// getStartLoc - Get the location of the first token of this operand.
+  SMLoc getStartLoc() const { return StartLoc; }
+  /// getEndLoc - Get the location of the last token of this operand.
+  SMLoc getEndLoc() const { return EndLoc; }
 
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");
@@ -194,25 +202,20 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   static X86Operand *CreateToken(StringRef Str) {
-    X86Operand *Res = new X86Operand();
-    Res->Kind = Token;
+    X86Operand *Res = new X86Operand(Token);
     Res->Tok.Data = Str.data();
     Res->Tok.Length = Str.size();
     return Res;
   }
 
   static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc) {
-    X86Operand *Res = new X86Operand();
-    Res->Kind = Register;
+    X86Operand *Res = new X86Operand(Register, StartLoc, EndLoc);
     Res->Reg.RegNo = RegNo;
-    Res->StartLoc = StartLoc;
-    Res->EndLoc = EndLoc;
     return Res;
   }
 
   static X86Operand *CreateImm(const MCExpr *Val) {
-    X86Operand *Res = new X86Operand();
-    Res->Kind = Immediate;
+    X86Operand *Res = new X86Operand(Immediate);
     Res->Imm.Val = Val;
     return Res;
   }
@@ -226,8 +229,7 @@ struct X86Operand : public MCParsedAsmOperand {
     // The scale should always be one of {1,2,4,8}.
     assert(((Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8)) &&
            "Invalid scale!");
-    X86Operand *Res = new X86Operand();
-    Res->Kind = Memory;
+    X86Operand *Res = new X86Operand(Memory);
     Res->Mem.SegReg   = SegReg;
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = BaseReg;
