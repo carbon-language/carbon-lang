@@ -55,15 +55,17 @@ public:
   /// @param Res - The value of the expression. The result is undefined
   /// on error.
   /// @result - False on success.
-  virtual bool ParseExpression(const MCExpr *&Res) = 0;
-
+  virtual bool ParseExpression(const MCExpr *&Res,
+                               SMLoc &StartLoc, SMLoc &EndLoc) = 0;
+  bool ParseExpression(const MCExpr *&Res);
+  
   /// ParseParenExpression - Parse an arbitrary expression, assuming that an
   /// initial '(' has already been consumed.
   ///
   /// @param Res - The value of the expression. The result is undefined
   /// on error.
   /// @result - False on success.
-  virtual bool ParseParenExpression(const MCExpr *&Res) = 0;
+  virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) = 0;
 
   /// ParseAbsoluteExpression - Parse an expression which must evaluate to an
   /// absolute value.

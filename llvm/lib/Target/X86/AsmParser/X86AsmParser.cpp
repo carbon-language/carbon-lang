@@ -201,8 +201,8 @@ struct X86Operand : public MCParsedAsmOperand {
       Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
-  static X86Operand *CreateToken(StringRef Str) {
-    X86Operand *Res = new X86Operand(Token);
+  static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
+    X86Operand *Res = new X86Operand(Token, Loc, Loc);
     Res->Tok.Data = Str.data();
     Res->Tok.Length = Str.size();
     return Res;
@@ -214,8 +214,8 @@ struct X86Operand : public MCParsedAsmOperand {
     return Res;
   }
 
-  static X86Operand *CreateImm(const MCExpr *Val) {
-    X86Operand *Res = new X86Operand(Immediate);
+  static X86Operand *CreateImm(const MCExpr *Val, SMLoc StartLoc, SMLoc EndLoc){
+    X86Operand *Res = new X86Operand(Immediate, StartLoc, EndLoc);
     Res->Imm.Val = Val;
     return Res;
   }
@@ -281,9 +281,10 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
     // $42 -> immediate.
     getLexer().Lex();
     const MCExpr *Val;
-    if (getParser().ParseExpression(Val))
+    SMLoc Start, End;
+    if (getParser().ParseExpression(Val, Start, End))
       return 0;
-    return X86Operand::CreateImm(Val);
+    return X86Operand::CreateImm(Val, Start, End);
   }
   }
 }
@@ -299,14 +300,15 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   // it.
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getLexer().isNot(AsmToken::LParen)) {
-    if (getParser().ParseExpression(Disp)) return 0;
+    SMLoc ExprStart, ExprEnd;
+    if (getParser().ParseExpression(Disp, ExprStart, ExprEnd)) return 0;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
     if (getLexer().isNot(AsmToken::LParen)) {
       // Unless we have a segment register, treat this as an immediate.
       if (SegReg == 0)
-        return X86Operand::CreateImm(Disp);
+        return X86Operand::CreateImm(Disp, ExprStart, ExprEnd);
       return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
     }
     
@@ -315,14 +317,17 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   } else {
     // Okay, we have a '('.  We don't know if this is an expression or not, but
     // so we have to eat the ( to see beyond it.
+    SMLoc LParenLoc = getLexer().getTok().getLoc();
     getLexer().Lex(); // Eat the '('.
     
     if (getLexer().is(AsmToken::Percent) || getLexer().is(AsmToken::Comma)) {
       // Nothing to do here, fall into the code below with the '(' part of the
       // memory operand consumed.
     } else {
+      SMLoc ExprEnd;
+      
       // It must be an parenthesized expression, parse it now.
-      if (getParser().ParseParenExpression(Disp))
+      if (getParser().ParseParenExpression(Disp, ExprEnd))
         return 0;
       
       // After parsing the base expression we could either have a parenthesized
@@ -330,7 +335,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
       if (getLexer().isNot(AsmToken::LParen)) {
         // Unless we have a segment register, treat this as an immediate.
         if (SegReg == 0)
-          return X86Operand::CreateImm(Disp);
+          return X86Operand::CreateImm(Disp, LParenLoc, ExprEnd);
         return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
       }
       
@@ -414,15 +419,15 @@ bool X86ATTAsmParser::
 ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
-  Operands.push_back(X86Operand::CreateToken(Name));
+  Operands.push_back(X86Operand::CreateToken(Name, NameLoc));
 
-  SMLoc Loc = getLexer().getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
     // Parse '*' modifier.
     if (getLexer().is(AsmToken::Star)) {
+      SMLoc Loc = getLexer().getTok().getLoc();
+      Operands.push_back(X86Operand::CreateToken("*", Loc));
       getLexer().Lex(); // Eat the star.
-      Operands.push_back(X86Operand::CreateToken("*"));
     }
 
     // Read the first operand.

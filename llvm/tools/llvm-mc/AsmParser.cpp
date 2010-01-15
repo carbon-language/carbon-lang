@@ -29,11 +29,6 @@
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
-/// getStartLoc - Get the location of the first token of this operand.
-SMLoc MCParsedAsmOperand::getStartLoc() const { return SMLoc(); }
-SMLoc MCParsedAsmOperand::getEndLoc() const { return SMLoc(); }
-
-
 // Mach-O section uniquing.
 //
 // FIXME: Figure out where this should live, it should be shared by
@@ -193,10 +188,11 @@ void AsmParser::EatToEndOfStatement() {
 ///
 /// parenexpr ::= expr)
 ///
-bool AsmParser::ParseParenExpr(const MCExpr *&Res) {
+bool AsmParser::ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   if (ParseExpression(Res)) return true;
   if (Lexer.isNot(AsmToken::RParen))
     return TokError("expected ')' in parentheses expression");
+  EndLoc = Lexer.getLoc();
   Lexer.Lex();
   return false;
 }
@@ -217,13 +213,13 @@ MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
 ///  primaryexpr ::= symbol
 ///  primaryexpr ::= number
 ///  primaryexpr ::= ~,+,- primaryexpr
-bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
+bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   switch (Lexer.getKind()) {
   default:
     return TokError("unknown token in expression");
   case AsmToken::Exclaim:
     Lexer.Lex(); // Eat the operator.
-    if (ParsePrimaryExpr(Res))
+    if (ParsePrimaryExpr(Res, EndLoc))
       return true;
     Res = MCUnaryExpr::CreateLNot(Res, getContext());
     return false;
@@ -231,6 +227,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
   case AsmToken::Identifier: {
     // This is a symbol reference.
     MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
+    EndLoc = Lexer.getLoc();
     Lexer.Lex(); // Eat identifier.
 
     // If this is an absolute variable reference, substitute it now to preserve
@@ -246,30 +243,36 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
   }
   case AsmToken::Integer:
     Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), getContext());
+    EndLoc = Lexer.getLoc();
     Lexer.Lex(); // Eat token.
     return false;
   case AsmToken::LParen:
     Lexer.Lex(); // Eat the '('.
-    return ParseParenExpr(Res);
+    return ParseParenExpr(Res, EndLoc);
   case AsmToken::Minus:
     Lexer.Lex(); // Eat the operator.
-    if (ParsePrimaryExpr(Res))
+    if (ParsePrimaryExpr(Res, EndLoc))
       return true;
     Res = MCUnaryExpr::CreateMinus(Res, getContext());
     return false;
   case AsmToken::Plus:
     Lexer.Lex(); // Eat the operator.
-    if (ParsePrimaryExpr(Res))
+    if (ParsePrimaryExpr(Res, EndLoc))
       return true;
     Res = MCUnaryExpr::CreatePlus(Res, getContext());
     return false;
   case AsmToken::Tilde:
     Lexer.Lex(); // Eat the operator.
-    if (ParsePrimaryExpr(Res))
+    if (ParsePrimaryExpr(Res, EndLoc))
       return true;
     Res = MCUnaryExpr::CreateNot(Res, getContext());
     return false;
   }
+}
+
+bool AsmParser::ParseExpression(const MCExpr *&Res) {
+  SMLoc L;
+  return ParseExpression(Res, L, L);
 }
 
 /// ParseExpression - Parse an expression and return it.
@@ -279,14 +282,16 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
 ///  expr ::= expr *,/,%,<<,>> expr  -> highest.
 ///  expr ::= primaryexpr
 ///
-bool AsmParser::ParseExpression(const MCExpr *&Res) {
+bool AsmParser::ParseExpression(const MCExpr *&Res,
+                                SMLoc &StartLoc, SMLoc &EndLoc) {
+  StartLoc = Lexer.getLoc();
   Res = 0;
-  return ParsePrimaryExpr(Res) ||
-         ParseBinOpRHS(1, Res);
+  return ParsePrimaryExpr(Res, EndLoc) ||
+         ParseBinOpRHS(1, Res, EndLoc);
 }
 
-bool AsmParser::ParseParenExpression(const MCExpr *&Res) {
-  if (ParseParenExpr(Res))
+bool AsmParser::ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
+  if (ParseParenExpr(Res, EndLoc))
     return true;
 
   return false;
@@ -381,7 +386,8 @@ static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
 
 /// ParseBinOpRHS - Parse all binary operators with precedence >= 'Precedence'.
 /// Res contains the LHS of the expression on input.
-bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res) {
+bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
+                              SMLoc &EndLoc) {
   while (1) {
     MCBinaryExpr::Opcode Kind = MCBinaryExpr::Add;
     unsigned TokPrec = getBinOpPrecedence(Lexer.getKind(), Kind);
@@ -395,14 +401,14 @@ bool AsmParser::ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res) {
     
     // Eat the next primary expression.
     const MCExpr *RHS;
-    if (ParsePrimaryExpr(RHS)) return true;
+    if (ParsePrimaryExpr(RHS, EndLoc)) return true;
     
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
     MCBinaryExpr::Opcode Dummy;
     unsigned NextTokPrec = getBinOpPrecedence(Lexer.getKind(), Dummy);
     if (TokPrec < NextTokPrec) {
-      if (ParseBinOpRHS(Precedence+1, RHS)) return true;
+      if (ParseBinOpRHS(Precedence+1, RHS, EndLoc)) return true;
     }
 
     // Merge LHS and RHS according to operator.
