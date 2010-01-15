@@ -18,6 +18,7 @@
 #include "llvm/ADT/APFloat.h"
 
 namespace clang {
+  class CharUnits;
   class Expr;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
@@ -47,10 +48,6 @@ private:
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
   };
 
-  struct LV {
-    Expr* Base;
-    uint64_t Offset;
-  };
   struct Vec {
     APValue *Elts;
     unsigned NumElts;
@@ -88,9 +85,11 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
-  APValue(Expr* B, uint64_t O) : Kind(Uninitialized) {
+  APValue(Expr* B, const CharUnits &O) : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O);
   }
+  APValue(Expr* B);
+
   ~APValue() {
     MakeUninit();
   }
@@ -164,14 +163,8 @@ public:
     return const_cast<APValue*>(this)->getComplexFloatImag();
   }
 
-  Expr* getLValueBase() const {
-    assert(isLValue() && "Invalid accessor");
-    return ((const LV*)(const void*)Data)->Base;
-  }
-  uint64_t getLValueOffset() const {
-    assert(isLValue() && "Invalid accessor");
-    return ((const LV*)(const void*)Data)->Offset;
-  }
+  Expr* getLValueBase() const;
+  CharUnits getLValueOffset() const;
 
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
@@ -202,11 +195,7 @@ public:
     ((ComplexAPFloat*)(char*)Data)->Real = R;
     ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
-  void setLValue(Expr *B, uint64_t O) {
-    assert(isLValue() && "Invalid accessor");
-    ((LV*)(char*)Data)->Base = B;
-    ((LV*)(char*)Data)->Offset = O;
-  }
+  void setLValue(Expr *B, const CharUnits &O);
 
   const APValue &operator=(const APValue &RHS);
 
@@ -237,11 +226,7 @@ private:
     new ((void*)(char*)Data) ComplexAPFloat();
     Kind = ComplexFloat;
   }
-  void MakeLValue() {
-    assert(isUninit() && "Bad state change");
-    new ((void*)(char*)Data) LV();
-    Kind = LValue;
-  }
+  void MakeLValue();
 };
 
 inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const APValue &V) {

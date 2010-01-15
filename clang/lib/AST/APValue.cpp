@@ -12,9 +12,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/APValue.h"
+#include "clang/AST/CharUnits.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
+namespace {
+  struct LV {
+    Expr* Base;
+    CharUnits Offset;
+  };
+}
+
+APValue::APValue(Expr* B) : Kind(Uninitialized) {
+  MakeLValue(); setLValue(B, CharUnits::Zero());
+}
 
 const APValue &APValue::operator=(const APValue &RHS) {
   if (Kind != RHS.Kind) {
@@ -104,5 +115,27 @@ void APValue::print(llvm::raw_ostream &OS) const {
     OS << "LValue: <todo>";
     return;
   }
+}
+
+Expr* APValue::getLValueBase() const {
+  assert(isLValue() && "Invalid accessor");
+  return ((const LV*)(const void*)Data)->Base;
+}
+
+CharUnits APValue::getLValueOffset() const {
+    assert(isLValue() && "Invalid accessor");
+    return ((const LV*)(const void*)Data)->Offset;
+}
+
+void APValue::setLValue(Expr *B, const CharUnits &O) {
+  assert(isLValue() && "Invalid accessor");
+  ((LV*)(char*)Data)->Base = B;
+  ((LV*)(char*)Data)->Offset = O;
+}
+
+void APValue::MakeLValue() {
+  assert(isUninit() && "Bad state change");
+  new ((void*)(char*)Data) LV();
+  Kind = LValue;
 }
 

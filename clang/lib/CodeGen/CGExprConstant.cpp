@@ -810,7 +810,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset =
         llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                               Result.Val.getLValueOffset());
+                               Result.Val.getLValueOffset().getQuantity());
 
       llvm::Constant *C;
       if (const Expr *LVBase = Result.Val.getLValueBase()) {
