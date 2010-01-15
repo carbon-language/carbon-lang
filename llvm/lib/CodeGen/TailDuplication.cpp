@@ -108,12 +108,8 @@ bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
 
   bool MadeChange = false;
-  bool MadeChangeThisIteration = true;
-  while (MadeChangeThisIteration) {
-    MadeChangeThisIteration = false;
-    MadeChangeThisIteration |= TailDuplicateBlocks(MF);
-    MadeChange |= MadeChangeThisIteration;
-  }
+  while (TailDuplicateBlocks(MF))
+    MadeChange = true;
 
   return MadeChange;
 }
