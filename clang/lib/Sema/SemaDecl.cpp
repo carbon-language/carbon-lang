@@ -1328,6 +1328,66 @@ static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
   }
 }
 
+static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
+                               SourceManager &SM) {
+  std::queue<CFGBlock*> workq;
+  // Prep work queue
+  workq.push(e);
+  SourceLocation top;
+  if (!e->empty())
+    top = e[0][0].getStmt()->getLocStart();
+  bool FromMainFile = false;
+  bool FromSystemHeader = false;
+  bool TopValid = false;
+  if (top.isValid()) {
+    FromMainFile = SM.isFromMainFile(top);
+    FromSystemHeader = SM.isInSystemHeader(top);
+    TopValid = true;
+  }
+  // Solve
+  while (!workq.empty()) {
+    CFGBlock *item = workq.front();
+    workq.pop();
+    SourceLocation c;
+    if (!item->empty())
+      c = item[0][0].getStmt()->getLocStart();
+    else if (item->getTerminator())
+      c = item->getTerminator()->getLocStart();
+    if (c.isValid()
+        && (!TopValid
+            || (SM.isFromMainFile(c) && !FromMainFile)
+            || (FromSystemHeader && !SM.isInSystemHeader(c))
+            || SM.isBeforeInTranslationUnit(c, top))) {
+      top = c;
+      FromMainFile = SM.isFromMainFile(top);
+      FromSystemHeader = SM.isInSystemHeader(top);
+    }
+    live.set(item->getBlockID());
+    for (CFGBlock::succ_iterator I=item->succ_begin(),
+           E=item->succ_end();
+         I != E;
+         ++I) {
+      if ((*I) && !live[(*I)->getBlockID()]) {
+        live.set((*I)->getBlockID());
+        workq.push(*I);
+      }
+    }
+  }
+  return top;
+}
+
+namespace {
+class LineCmp {
+  SourceManager &SM;
+public:
+  LineCmp(SourceManager &sm) : SM(sm) {
+  }
+  bool operator () (SourceLocation l1, SourceLocation l2) {
+    return l1 < l2;
+  }
+};
+}
+
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
   // We avoid checking when there are errors, as the CFG won't faithfully match
@@ -1345,15 +1405,38 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   // Mark all live things first.
   MarkLive(&cfg->getEntry(), live);
 
+  llvm::SmallVector<SourceLocation, 24> lines;
+  // First, give warnings for blocks with no predecessors, as they
+  // can't be part of a loop.
   for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
     CFGBlock &b = **I;
     if (!live[b.getBlockID()]) {
-      if (!b.empty())
-        Diag(b[0].getStmt()->getLocStart(), diag::warn_unreachable);
-      // Avoid excessive errors by marking everything reachable from here
-      MarkLive(&b, live);
+      if (b.pred_begin() == b.pred_end()) {
+        if (!b.empty())
+          lines.push_back(b[0].getStmt()->getLocStart());
+        else if (b.getTerminator())
+          lines.push_back(b.getTerminator()->getLocStart());
+        // Avoid excessive errors by marking everything reachable from here
+        MarkLive(&b, live);
+      }
     }
   }
+
+  // And then give warnings for the tops of loops.
+  for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+    CFGBlock &b = **I;
+    if (!live[b.getBlockID()])
+      // Avoid excessive errors by marking everything reachable from here
+      lines.push_back(MarkLiveTop(&b, live, Context.getSourceManager()));
+  }
+
+  std::sort(lines.begin(), lines.end(), LineCmp(Context.getSourceManager()));
+  for (llvm::SmallVector<SourceLocation, 24>::iterator I = lines.begin(),
+         E = lines.end();
+       I != E;
+       ++I)
+    if (I->isValid())
+      Diag(*I, diag::warn_unreachable);
 }
 
 /// CheckFallThrough - Check that we don't fall off the end of a
