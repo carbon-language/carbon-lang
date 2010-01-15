@@ -25,6 +25,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Analysis/DebugInfo.h"
 using namespace llvm;
 
 
@@ -420,6 +421,29 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case TargetInstrInfo::GC_LABEL:
     printLabel(MI);
     return;
+  case TargetInstrInfo::DEBUG_VALUE: {
+    if (!VerboseAsm)
+      return;
+    O << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
+    unsigned NOps = MI->getNumOperands();
+    // cast away const; DIetc do not take const operands for some reason
+    DIVariable V((MDNode*)(MI->getOperand(NOps-1).getMetadata()));
+    O << V.getName();
+    O << " <- ";
+    if (NOps==3) {
+      // Variable is in register
+      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
+      printOperand(MI, 0);
+    } else {
+      // Frame address.  Currently handles ESP or ESP + offset only
+      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
+      assert(MI->getOperand(3).getType()==MachineOperand::MO_Immediate);
+      O << '['; printOperand(MI, 0); O << '+'; printOperand(MI, 3); O << ']';
+    }
+    O << "+";
+    printOperand(MI, NOps-2);
+    return;
+  }
   case TargetInstrInfo::INLINEASM:
     printInlineAsm(MI);
     return;

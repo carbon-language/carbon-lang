@@ -479,7 +479,7 @@ def COPY_TO_REGCLASS : Instruction {
 }
 def DEBUG_VALUE : Instruction {
   let OutOperandList = (ops);
-  let InOperandList = (ops unknown:$value, i64imm:$offset, unknown:$meta);
+  let InOperandList = (ops variable_ops);
   let AsmString = "DEBUG_VALUE";
   let Namespace = "TargetInstrInfo";
   let isAsCheapAsAMove = 1;
