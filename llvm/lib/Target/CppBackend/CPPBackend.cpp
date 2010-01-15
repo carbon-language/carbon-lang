@@ -472,7 +472,6 @@ namespace {
         HANDLE_ATTR(Nest);
         HANDLE_ATTR(ReadNone);
         HANDLE_ATTR(ReadOnly);
-        HANDLE_ATTR(InlineHint);
         HANDLE_ATTR(NoInline);
         HANDLE_ATTR(AlwaysInline);
         HANDLE_ATTR(OptimizeForSize);

@@ -58,8 +58,6 @@ const Attributes NoRedZone = 1<<22; /// disable redzone
 const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
                                           /// instructions.
 const Attributes Naked           = 1<<24; ///< Naked function
-const Attributes InlineHint      = 1<<25; ///< source said inlining was
-                                          ///desirable
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
@@ -68,7 +66,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 /// be used on return values or function parameters.
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
-  NoRedZone | NoImplicitFloat | Naked | InlineHint;
+  NoRedZone | NoImplicitFloat | Naked;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;

@@ -93,7 +93,6 @@ module Attribute = struct
   | Noredzone
   | Noimplicitfloat
   | Naked
-  | Inlinehint
 end
 
 module Icmp = struct
@@ -848,7 +847,7 @@ module ModuleProvider = struct
                   = "LLVMCreateModuleProviderForExistingModule"
   external dispose : llmoduleprovider -> unit = "llvm_dispose_module_provider"
 end
-  
+
 
 (*===-- Memory buffers ----------------------------------------------------===*)
 

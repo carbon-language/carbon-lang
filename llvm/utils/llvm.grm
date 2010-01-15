@@ -161,7 +161,6 @@ FuncAttr      ::= noreturn
  | signext
  | readnone
  | readonly
- | inlinehint
  | noinline
  | alwaysinline
  | optsize
