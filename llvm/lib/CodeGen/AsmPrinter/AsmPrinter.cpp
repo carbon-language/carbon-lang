@@ -224,6 +224,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getMangledName(MF.getFunction());
+  CurrentFnSym = GetGlobalValueSymbol(MF.getFunction());
   IncrementFunctionNumber();
 
   if (VerboseAsm)

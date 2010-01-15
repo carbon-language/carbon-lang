@@ -437,18 +437,27 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.global\t" << CurrentFnName << "\n"
-      << "\t.type\t" << CurrentFnName << ", @function\n";
+    O << "\t.global\t";
+    CurrentFnSym->print(O, MAI);
+    O << "\n" << "\t.type\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", @function\n";
     break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << "\t.global\t" << CurrentFnName << "\n";
-    O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    O << "\t.global\t";
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
+    O << "\t.weak_definition\t";
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
     break;
   }
-  O << CurrentFnName << ":\n";
+  
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
@@ -467,7 +476,11 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size\t" << CurrentFnName << ",.-" << CurrentFnName << "\n";
+  O << "\t.size\t";
+  CurrentFnSym->print(O, MAI);
+  O << ",.-";
+  CurrentFnSym->print(O, MAI);
+  O << "\n";
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);

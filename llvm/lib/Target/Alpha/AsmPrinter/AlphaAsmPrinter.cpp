@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -108,7 +107,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
     return;
 
   case MachineOperand::MO_JumpTableIndex:
@@ -208,7 +207,7 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
@@ -218,38 +217,47 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
                                                                   TM));
 
   // 1: Check visibility
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   // 2: Kind
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonLinkage:
-    O << MAI->getWeakRefDirective() << name << '\n';
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::CommonLinkage:
+    O << MAI->getWeakRefDirective();
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
-   case GlobalValue::AppendingLinkage:
-   case GlobalValue::ExternalLinkage:
-      O << MAI->getGlobalDirective() << name << "\n";
-      break;
-    case GlobalValue::InternalLinkage:
-    case GlobalValue::PrivateLinkage:
-    case GlobalValue::LinkerPrivateLinkage:
-      break;
-    default:
-      llvm_unreachable("Unknown linkage type!");
-    }
+  case GlobalValue::AppendingLinkage:
+  case GlobalValue::ExternalLinkage:
+    O << MAI->getGlobalDirective();
+    GVarSym->print(O, MAI);
+    O << '\n';
+    break;
+  case GlobalValue::InternalLinkage:
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+    break;
+  default:
+    llvm_unreachable("Unknown linkage type!");
+  }
 
   // 3: Type, Size, Align
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type\t" << name << ", @object\n";
-    O << "\t.size\t" << name << ", " << Size << "\n";
+    O << "\t.type\t";
+    GVarSym->print(O, MAI);
+    O << ", @object\n";
+    O << "\t.size\t";
+    GVarSym->print(O, MAI);
+    O << ", " << Size << "\n";
   }
 
   EmitAlignment(Align, GVar);
-
-  O << name << ":\n";
+  
+  GVarSym->print(O, MAI);
+  O << ":\n";
 
   EmitGlobalConstant(C);
   O << '\n';
