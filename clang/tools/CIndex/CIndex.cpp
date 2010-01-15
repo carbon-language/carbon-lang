@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "CXCursor.h"
 
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
@@ -24,6 +25,7 @@
 #include <cstdio>
 
 using namespace clang;
+using namespace clang::cxcursor;
 using namespace idx;
 
 //===----------------------------------------------------------------------===//
@@ -844,18 +846,6 @@ static enum CXCursorKind TranslateKind(Decl *D) {
     default: break;
   }
   return CXCursor_NotImplemented;
-}
-
-
-static CXCursor MakeCXCursor(CXCursorKind K, Decl *D) {
-  CXCursor C = { K, D, 0, 0 };
-  return C;  
-}
-
-static CXCursor MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S) {
-  assert(clang_isReference(K));
-  CXCursor C = { K, D, S, 0 };
-  return C;  
 }
 
 static Decl *getDeclFromExpr(Stmt *E) {

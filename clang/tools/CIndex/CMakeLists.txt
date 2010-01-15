@@ -24,6 +24,7 @@ add_clang_library(CIndex
   CIndexCodeCompletion.cpp
   CIndexUSRs.cpp
   CIndexer.cpp
+  CXCursor.cpp
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
