@@ -2840,6 +2840,9 @@ IfUnequal:
    block to the "normal" label. If the callee unwinds then no return value is
    available.</p>
 
+<p>Note that the code generator does not yet completely support unwind, and
+that the invoke/unwind semantics are likely to change in future versions.</p>
+
 <h5>Example:</h5>
 <pre>
   %retval = invoke i32 @Test(i32 15) to label %Continue
@@ -2875,6 +2878,9 @@ Instruction</a> </div>
    Once found, execution continues at the "exceptional" destination block
    specified by the <tt>invoke</tt> instruction.  If there is no <tt>invoke</tt>
    instruction in the dynamic call chain, undefined behavior results.</p>
+
+<p>Note that the code generator does not yet completely support unwind, and
+that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
