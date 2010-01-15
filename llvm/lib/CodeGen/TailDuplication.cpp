@@ -253,7 +253,7 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
         SSAUpdateVals.clear();
       }
 
-      // Eliminate some of the copies inserted tail duplication to maintain
+      // Eliminate some of the copies inserted by tail duplication to maintain
       // SSA form.
       for (unsigned i = 0, e = Copies.size(); i != e; ++i) {
         MachineInstr *Copy = Copies[i];
@@ -437,8 +437,11 @@ bool
 TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
                                  SmallVector<MachineBasicBlock*, 8> &TDBBs,
                                  SmallVector<MachineInstr*, 16> &Copies) {
-  // Don't try to tail-duplicate single-block loops.
-  if (TailBB->isSuccessor(TailBB))
+  // Pre-regalloc tail duplication hurts compile time and doesn't help
+  // much except for indirect branches.
+  bool hasIndirectBranch = (!TailBB->empty() &&
+                            TailBB->back().getDesc().isIndirectBranch());
+  if (PreRegAlloc && !hasIndirectBranch)
     return false;
 
   // Set the limit on the number of instructions to duplicate, with a default
@@ -446,7 +449,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
   unsigned MaxDuplicateCount;
-  if (!TailBB->empty() && TailBB->back().getDesc().isIndirectBranch())
+  if (hasIndirectBranch)
     // If the target has hardware branch prediction that can handle indirect
     // branches, duplicating them can often make them predictable when there
     // are common paths through the code.  The limit needs to be high enough
@@ -456,6 +459,10 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     MaxDuplicateCount = 1;
   else
     MaxDuplicateCount = TailDuplicateSize;
+
+  // Don't try to tail-duplicate single-block loops.
+  if (TailBB->isSuccessor(TailBB))
+    return false;
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
