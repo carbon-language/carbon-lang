@@ -74,6 +74,7 @@ public:
   
   void VisitBlockDecl(BlockDecl *D);
   void VisitDeclContext(DeclContext *D);
+  void VisitEnumDecl(EnumDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
@@ -94,6 +95,16 @@ void USRGenerator::VisitBlockDecl(BlockDecl *D) {
 void USRGenerator::VisitDeclContext(DeclContext *DC) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
     Visit(D);
+}
+
+void USRGenerator::VisitEnumDecl(EnumDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  Out << "@E^";
+  const std::string &s = D->getNameAsString();
+  if (s.empty())
+    Out << "anon";
+  else
+    Out << s;
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
