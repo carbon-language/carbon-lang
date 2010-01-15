@@ -37,7 +37,7 @@ private:
 
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
-  bool ParseRegister(unsigned &RegNo);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
   X86Operand *ParseOperand();
   X86Operand *ParseMemOperand();
@@ -81,6 +81,8 @@ struct X86Operand : public MCParsedAsmOperand {
     Memory
   } Kind;
 
+  SMLoc StartLoc, EndLoc;
+  
   union {
     struct {
       const char *Data;
@@ -191,26 +193,28 @@ struct X86Operand : public MCParsedAsmOperand {
       Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
-  static X86Operand CreateToken(StringRef Str) {
-    X86Operand Res;
-    Res.Kind = Token;
-    Res.Tok.Data = Str.data();
-    Res.Tok.Length = Str.size();
+  static X86Operand *CreateToken(StringRef Str) {
+    X86Operand *Res = new X86Operand();
+    Res->Kind = Token;
+    Res->Tok.Data = Str.data();
+    Res->Tok.Length = Str.size();
     return Res;
   }
 
-  static X86Operand *CreateReg(unsigned RegNo) {
-    X86Operand Res;
-    Res.Kind = Register;
-    Res.Reg.RegNo = RegNo;
-    return new X86Operand(Res);
+  static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc) {
+    X86Operand *Res = new X86Operand();
+    Res->Kind = Register;
+    Res->Reg.RegNo = RegNo;
+    Res->StartLoc = StartLoc;
+    Res->EndLoc = EndLoc;
+    return Res;
   }
 
   static X86Operand *CreateImm(const MCExpr *Val) {
-    X86Operand Res;
-    Res.Kind = Immediate;
-    Res.Imm.Val = Val;
-    return new X86Operand(Res);
+    X86Operand *Res = new X86Operand();
+    Res->Kind = Immediate;
+    Res->Imm.Val = Val;
+    return Res;
   }
 
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
@@ -222,25 +226,26 @@ struct X86Operand : public MCParsedAsmOperand {
     // The scale should always be one of {1,2,4,8}.
     assert(((Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8)) &&
            "Invalid scale!");
-    X86Operand Res;
-    Res.Kind = Memory;
-    Res.Mem.SegReg   = SegReg;
-    Res.Mem.Disp     = Disp;
-    Res.Mem.BaseReg  = BaseReg;
-    Res.Mem.IndexReg = IndexReg;
-    Res.Mem.Scale    = Scale;
-    return new X86Operand(Res);
+    X86Operand *Res = new X86Operand();
+    Res->Kind = Memory;
+    Res->Mem.SegReg   = SegReg;
+    Res->Mem.Disp     = Disp;
+    Res->Mem.BaseReg  = BaseReg;
+    Res->Mem.IndexReg = IndexReg;
+    Res->Mem.Scale    = Scale;
+    return Res;
   }
 };
 
 } // end anonymous namespace.
 
 
-bool X86ATTAsmParser::ParseRegister(unsigned &RegNo) {
+bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
+                                    SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
   const AsmToken &TokPercent = getLexer().getTok();
-  (void)TokPercent; // Avoid warning when assertions are disabled.
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
+  StartLoc = TokPercent.getLoc();
   getLexer().Lex(); // Eat percent token.
 
   const AsmToken &Tok = getLexer().getTok();
@@ -253,8 +258,8 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo) {
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
+  EndLoc = Tok.getLoc();
   getLexer().Lex(); // Eat identifier token.
-
   return false;
 }
 
@@ -266,8 +271,9 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
     // FIXME: if a segment register, this could either be just the seg reg, or
     // the start of a memory operand.
     unsigned RegNo;
-    if (ParseRegister(RegNo)) return 0;
-    return X86Operand::CreateReg(RegNo);
+    SMLoc Start, End;
+    if (ParseRegister(RegNo, Start, End)) return 0;
+    return X86Operand::CreateReg(RegNo, Start, End);
   }
   case AsmToken::Dollar: {
     // $42 -> immediate.
@@ -335,8 +341,10 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   
-  if (getLexer().is(AsmToken::Percent))
-    if (ParseRegister(BaseReg)) return 0;
+  if (getLexer().is(AsmToken::Percent)) {
+    SMLoc L;
+    if (ParseRegister(BaseReg, L, L)) return 0;
+  }
   
   if (getLexer().is(AsmToken::Comma)) {
     getLexer().Lex(); // Eat the comma.
@@ -348,7 +356,8 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     // Not that even though it would be completely consistent to support syntax
     // like "1(%eax,,1)", the assembler doesn't.
     if (getLexer().is(AsmToken::Percent)) {
-      if (ParseRegister(IndexReg)) return 0;
+      SMLoc L;
+      if (ParseRegister(IndexReg, L, L)) return 0;
     
       if (getLexer().isNot(AsmToken::RParen)) {
         // Parse the scale amount:
@@ -403,7 +412,7 @@ bool X86ATTAsmParser::
 ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
-  Operands.push_back(new X86Operand(X86Operand::CreateToken(Name)));
+  Operands.push_back(X86Operand::CreateToken(Name));
 
   SMLoc Loc = getLexer().getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
@@ -411,7 +420,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     // Parse '*' modifier.
     if (getLexer().is(AsmToken::Star)) {
       getLexer().Lex(); // Eat the star.
-      Operands.push_back(new X86Operand(X86Operand::CreateToken("*")));
+      Operands.push_back(X86Operand::CreateToken("*"));
     }
 
     // Read the first operand.
