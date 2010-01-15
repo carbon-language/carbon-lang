@@ -491,7 +491,6 @@ namespace llvm {
     Module &M;
     LLVMContext& VMContext;
 
-    const Type *EmptyStructPtr; // "{}*".
     Function *DeclareFn;     // llvm.dbg.declare
     Function *ValueFn;       // llvm.dbg.value
 
@@ -659,7 +658,7 @@ namespace llvm {
 
   /// Finds the dbg.declare intrinsic corresponding to this value if any.
   /// It looks through pointer casts too.
-  const DbgDeclareInst *findDbgDeclare(const Value *V, bool stripCasts = true);
+  const DbgDeclareInst *findDbgDeclare(const Value *V);
 
   /// Find the debug info descriptor corresponding to this global variable.
   Value *findDbgGlobalDeclare(GlobalVariable *V);

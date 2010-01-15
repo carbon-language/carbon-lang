@@ -9,8 +9,7 @@ entry:
   br label %do.body, !dbg !0
 
 do.body:                                          ; preds = %entry
-  %0 = bitcast i32* %count_ to { }*               ; <{ }*> [#uses=1]
-  call void @llvm.dbg.declare({ }* %0, metadata !4)
+  call void @llvm.dbg.declare(metadata !{i32* %count_}, metadata !4)
   %conv = ptrtoint i32* %count_ to i32, !dbg !0   ; <i32> [#uses=1]
   %call = call i32 @foo(i32 %conv) ssp, !dbg !0   ; <i32> [#uses=0]
   br label %do.end, !dbg !0
@@ -19,7 +18,7 @@ do.end:                                           ; preds = %do.body
   ret void, !dbg !7
 }
 
-declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 declare i32 @foo(i32) ssp
 

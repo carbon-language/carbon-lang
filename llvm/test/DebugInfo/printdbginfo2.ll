@@ -19,11 +19,11 @@ entry:
   call void @llvm.dbg.stoppoint(i32 6, i32 3, metadata !1)
   call void @llvm.dbg.stoppoint(i32 7, i32 3, metadata !1)
   %0 = bitcast %struct.foo* %b to { }*            ; <{ }*> [#uses=1]
-  call void @llvm.dbg.declare({ }* %0, metadata !4)
+  call void @llvm.dbg.declare(metadata !{%struct.foo* %b}, metadata !4)
 ; CHECK:; %0 is variable b of type foo declared at x.c:7
   call void @llvm.dbg.stoppoint(i32 8, i32 3, metadata !1)
   %1 = bitcast [4 x i32]* %a to { }*              ; <{ }*> [#uses=1]
-  call void @llvm.dbg.declare({ }* %1, metadata !8)
+  call void @llvm.dbg.declare(metadata !{[4 x i32]* %a}, metadata !8)
 ; CHECK:; %1 is variable a of type  declared at x.c:8
   call void @llvm.dbg.stoppoint(i32 9, i32 3, metadata !1)
   %tmp = getelementptr inbounds %struct.foo* %b, i32 0, i32 0 ; <i32*> [#uses=1]
@@ -46,7 +46,7 @@ declare void @llvm.dbg.func.start(metadata) nounwind readnone
 
 declare void @llvm.dbg.stoppoint(i32, i32, metadata) nounwind readnone
 
-declare void @llvm.dbg.declare({ }*, metadata) nounwind readnone
+declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 declare void @llvm.dbg.region.end(metadata) nounwind readnone
 
