@@ -1285,10 +1285,29 @@ public:
   void print_details(raw_ostream &OS, const SelectionDAG *G) const;
   void print(raw_ostream &OS, const SelectionDAG *G = 0) const;
   void printr(raw_ostream &OS, const SelectionDAG *G = 0) const;
+  /// printWithDepth - Print a SelectionDAG node and children up to
+  /// depth "depth."  "limit" controls whether a message should be
+  /// printed if we hit depth "depth."
+  ///
+  void printWithDepth(raw_ostream &O, const SelectionDAG *G = 0,
+                      unsigned depth = -1, unsigned indent = 0,
+                      bool limit = false) const;
+  /// printWithFullDepth - Print a SelectionDAG node and all children
+  /// down to the leaves.
+  ///
+  void printWithFullDepth(raw_ostream &O, const SelectionDAG *G = 0,
+                          unsigned indent = 0) const;
   void dump() const;
   void dumpr() const;
   void dump(const SelectionDAG *G) const;
   void dumpr(const SelectionDAG *G) const;
+  /// dumpWithDepth - printWithDepth to dbgs().
+  ///
+  void dumpWithDepth(const SelectionDAG *G = 0, unsigned depth = 1,
+                     unsigned indent = 0, bool limit = false) const;
+  /// dumpWithFullDepth - printWithFullDepth to dbgs().
+  ///
+  void dumpWithFullDepth(const SelectionDAG *G = 0, unsigned indent = 0) const;
 
   static bool classof(const SDNode *) { return true; }
 

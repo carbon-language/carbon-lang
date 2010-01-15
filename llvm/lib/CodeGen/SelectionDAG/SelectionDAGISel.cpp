@@ -1426,7 +1426,7 @@ void SelectionDAGISel::CannotYetSelect(SDNode *N) {
   std::string msg;
   raw_string_ostream Msg(msg);
   Msg << "Cannot yet select: ";
-  N->print(Msg, CurDAG);
+  N->printWithFullDepth(Msg, CurDAG);
   llvm_report_error(Msg.str());
 }
 

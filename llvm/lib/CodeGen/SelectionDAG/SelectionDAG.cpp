@@ -5893,6 +5893,49 @@ void SDNode::print(raw_ostream &OS, const SelectionDAG *G) const {
   print_details(OS, G);
 }
 
+void SDNode::printWithDepth(raw_ostream &OS, const SelectionDAG *G,
+                            unsigned depth, unsigned indent,
+                            bool limit) const {
+  if (depth == 0) {
+    if (limit)
+      OS << "*** <max depth> - Cycle? ***\n";
+    return;
+  }
+
+  int myindent = indent;
+
+  while (myindent--) {
+    OS << ' ';
+  }
+
+  print(OS, G);
+
+  if (depth > 1) {
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      OS << '\n';
+      getOperand(i).getNode()->printWithDepth(OS, G,
+                                              depth > 0 ? depth-1 : depth,
+                                              indent+2);
+    }
+  }
+} 
+
+void SDNode::printWithFullDepth(raw_ostream &OS, const SelectionDAG *G,
+                                unsigned indent) const {
+  // Don't print impossibly deep things.
+  printWithDepth(OS, G, 100, indent, true);
+} 
+
+void SDNode::dumpWithDepth(const SelectionDAG *G, unsigned depth,
+                           unsigned indent, bool limit) const {
+  printWithDepth(dbgs(), G, depth, indent, limit);
+}
+
+void SDNode::dumpWithFullDepth(const SelectionDAG *G, unsigned indent) const {
+  // Don't print impossibly deep things.
+  dumpWithDepth(G, 100, indent, true);
+} 
+
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (N->getOperand(i).getNode()->hasOneUse())
