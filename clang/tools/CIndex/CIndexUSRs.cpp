@@ -82,6 +82,7 @@ public:
   void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
   void VisitRecordDecl(RecordDecl *D);
+  void VisitTagDeclCommon(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
 };
 } // end anonymous namespace
@@ -100,11 +101,7 @@ void USRGenerator::VisitDeclContext(DeclContext *DC) {
 void USRGenerator::VisitEnumDecl(EnumDecl *D) {
   VisitDeclContext(D->getDeclContext());
   Out << "@E^";
-  const std::string &s = D->getNameAsString();
-  if (s.empty())
-    Out << "anon";
-  else
-    Out << s;
+  VisitTagDeclCommon(D);
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
@@ -127,16 +124,7 @@ void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
 void USRGenerator::VisitRecordDecl(RecordDecl *D) {
   VisitDeclContext(D->getDeclContext());
   Out << "@S^";
-  // FIXME: Better support for anonymous structures. 
-  const std::string &s = D->getNameAsString();
-  if (s.empty()) {
-    if (TypedefDecl *TD = D->getTypedefForAnonDecl())
-      Out << "^anontd^" << TD->getNameAsString();    
-    else
-      Out << "^anon";
-  }
-  else
-    Out << s;
+  VisitTagDeclCommon(D);
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -174,6 +162,19 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
   Out << "(py)" << D->getName();
+}
+
+void USRGenerator::VisitTagDeclCommon(TagDecl *D) {
+  // FIXME: Better support for anonymous structures and enums.
+  const std::string &s = D->getNameAsString();
+  if (s.empty()) {
+    if (TypedefDecl *TD = D->getTypedefForAnonDecl())
+      Out << "^anontd^" << TD->getNameAsString();    
+    else
+      Out << "^anon";
+  }
+  else
+    Out << s;
 }
 
 void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
