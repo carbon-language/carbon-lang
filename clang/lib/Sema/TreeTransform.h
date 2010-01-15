@@ -1018,11 +1018,8 @@ public:
                                          TypeSourceInfo *TInfo,
                                          SourceLocation RParenLoc,
                                          ExprArg SubExpr) {
-    return getSema().ActOnCastExpr(/*Scope=*/0,
-                                   LParenLoc,
-                                   TInfo->getType().getAsOpaquePtr(),
-                                   RParenLoc,
-                                   move(SubExpr));
+    return getSema().BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc,
+                                         move(SubExpr));
   }
 
   /// \brief Build a new compound literal expression.

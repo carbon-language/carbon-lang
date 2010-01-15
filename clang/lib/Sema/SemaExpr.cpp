@@ -3906,28 +3906,38 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr,
 Action::OwningExprResult
 Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
                     SourceLocation RParenLoc, ExprArg Op) {
-  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-
   assert((Ty != 0) && (Op.get() != 0) &&
          "ActOnCastExpr(): missing type or expr");
 
-  Expr *castExpr = (Expr *)Op.get();
   TypeSourceInfo *castTInfo;
   QualType castType = GetTypeFromParser(Ty, &castTInfo);
   if (!castTInfo)
     castTInfo = Context.getTrivialTypeSourceInfo(castType, SourceLocation());
 
   // If the Expr being casted is a ParenListExpr, handle it specially.
+  // FIXME: preserve type source info.
+  Expr *castExpr = (Expr *)Op.get();
   if (isa<ParenListExpr>(castExpr))
     return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),castType);
+
+  return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, move(Op));
+}
+
+Action::OwningExprResult
+Sema::BuildCStyleCastExpr(SourceLocation LParenLoc, TypeSourceInfo *Ty,
+                          SourceLocation RParenLoc, ExprArg Op) {
+  Expr *castExpr = static_cast<Expr*>(Op.get());
+
   CXXMethodDecl *Method = 0;
-  if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr,
+  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+  if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), Ty->getType(), castExpr,
                      Kind, Method))
     return ExprError();
 
   if (Method) {
-    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, castType, Kind,
-                                                    Method, move(Op));
+    // FIXME: preserve type source info here
+    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, Ty->getType(),
+                                                    Kind, Method, move(Op));
 
     if (CastArg.isInvalid())
       return ExprError();
@@ -3937,8 +3947,8 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
     Op.release();
   }
 
-  return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
-                                            Kind, castExpr, castTInfo,
+  return Owned(new (Context) CStyleCastExpr(Ty->getType().getNonReferenceType(),
+                                            Kind, castExpr, Ty,
                                             LParenLoc, RParenLoc));
 }
 
