@@ -15,23 +15,25 @@ struct S {
   int field_var;
 };
 
-
 // RUN: %clang_cc1 -emit-pch %s -o %t.ast
-// RUN: index-test %t.ast -point-at %s:3:8 | grep top_var
-// RUN: index-test %t.ast -point-at %s:5:15 | grep top_func_decl
-// RUN: index-test %t.ast -point-at %s:5:25 | grep param1
-// RUN: index-test %t.ast -point-at %s:7:17 | grep top_func_def
-// RUN: index-test %t.ast -point-at %s:7:23 | grep param2
-// RUN: index-test %t.ast -point-at %s:8:10 | grep local_var1
-// RUN: index-test %t.ast -point-at %s:9:15 | grep for_var
+// RUN: c-index-test \
+// RUN:   -cursor-at=%s:3:8 -cursor-at=%s:5:15 -cursor-at=%s:5:25 \
+// RUN:   -cursor-at=%s:7:17 -cursor-at=%s:7:23 -cursor-at=%s:8:10 \
+// RUN:   -cursor-at=%s:9:15 -cursor-at=%s:10:9 -cursor-at=%s:15:10 \
+// RUN: %s | FileCheck %s
+// CHECK: VarDecl=top_var
+// CHECK: FunctionDecl=top_func_decl
+// CHECK: ParmDecl=param1
+// CHECK: FunctionDecl=top_func_def
+// CHECK: ParmDecl=param2
+// CHECK: VarDecl=local_var1
+// CHECK: VarDecl=for_var
+// CHECK: VarDecl=local_var2
+// CHECK: FieldDecl=field_var
 
+// FIXME: Eliminate these once clang_getCursor supports them.
 // RUN: index-test %t.ast -point-at %s:9:43 > %t
 // RUN: grep '++for_var' %t
 
-// RUN: index-test %t.ast -point-at %s:10:9 | grep local_var2
-
 // RUN: index-test %t.ast -point-at %s:10:30 > %t
 // RUN: grep 'for_var + 1' %t
-
-// fields test.
-// RUN: index-test %t.ast -point-at %s:15:10 | grep field_var

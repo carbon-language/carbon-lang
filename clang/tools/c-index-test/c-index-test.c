@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 /******************************************************************************/
 /* Utility functions.                                                         */
@@ -586,6 +587,71 @@ int perform_code_completion(int argc, const char **argv) {
   return 0;
 }
 
+typedef struct {
+  char *filename;
+  unsigned line;
+  unsigned column;
+} CursorSourceLocation;
+
+int inspect_cursor_at(int argc, const char **argv) {
+  CXIndex CIdx;
+  int errorCode;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  CXTranslationUnit TU;
+  CXCursor Cursor;
+  CursorSourceLocation *Locations = 0;
+  unsigned NumLocations = 0, Loc;
+  
+  /* Count the number of locations. */ 
+  while (strstr(argv[NumLocations+1], "-cursor-at=") == argv[NumLocations+1])
+    ++NumLocations;
+  
+  /* Parse the locations. */
+  assert(NumLocations > 0 && "Unable to count locations?");
+  Locations = (CursorSourceLocation *)malloc(
+                                  NumLocations * sizeof(CursorSourceLocation));
+  for (Loc = 0; Loc < NumLocations; ++Loc) {
+    const char *input = argv[Loc + 1] + strlen("-cursor-at=");
+    if ((errorCode = parse_file_line_column(input, &Locations[Loc].filename, 
+                                            &Locations[Loc].line, 
+                                            &Locations[Loc].column)))
+      return errorCode;
+  }
+  
+  if (parse_remapped_files(argc, argv, NumLocations + 1, &unsaved_files, 
+                           &num_unsaved_files))
+    return -1;
+  
+  if (num_unsaved_files > 0) {
+    fprintf(stderr, "cannot remap files when looking for a cursor\n");
+    return -1;
+  }
+  
+  CIdx = clang_createIndex(0, 1);
+  TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
+                                  argc - num_unsaved_files - 2 - NumLocations,
+                                   argv + num_unsaved_files + 1 + NumLocations);
+  if (!TU) {
+    fprintf(stderr, "unable to parse input\n");
+    return -1;
+  }
+  
+  for (Loc = 0; Loc < NumLocations; ++Loc) {
+    Cursor = clang_getCursor(TU, Locations[Loc].filename, 
+                             Locations[Loc].line, Locations[Loc].column);  
+    PrintCursor(Cursor);
+    printf("\n");
+    free(Locations[Loc].filename);
+  }
+  
+  clang_disposeTranslationUnit(TU);
+  clang_disposeIndex(CIdx);
+  free(Locations);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  return 0;
+}
+
 /******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
@@ -601,6 +667,7 @@ static CXTranslationUnitIterator GetVisitor(const char *s) {
 static void print_usage(void) {
   fprintf(stderr,
     "usage: c-index-test -code-completion-at=<site> <compiler arguments>\n"
+    "       c-index-test -cursor-at=<site> <compiler arguments>\n"
     "       c-index-test -test-file-scan <AST file> <source file> "
           "[FileCheck prefix]\n"
     "       c-index-test -test-load-tu <AST file> <symbol filter> "
@@ -608,7 +675,8 @@ static void print_usage(void) {
     "       c-index-test -test-load-tu-usrs <AST file> <symbol filter> "
            "[FileCheck prefix]\n"
     "       c-index-test -test-load-source <symbol filter> {<args>}*\n"
-    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n\n"
+    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n\n");
+  fprintf(stderr,
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
@@ -623,6 +691,8 @@ static void print_usage(void) {
 int main(int argc, const char **argv) {
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv);
+  if (argc > 2 && strstr(argv[1], "-cursor-at=") == argv[1])
+    return inspect_cursor_at(argc, argv);
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
     CXTranslationUnitIterator I = GetVisitor(argv[1] + 13);
     if (I)

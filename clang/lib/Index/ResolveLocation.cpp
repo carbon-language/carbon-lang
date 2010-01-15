@@ -264,7 +264,7 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
     return ASTLocation(D);
 
   // Second, search through the declarations that are part of the function.
-  // If we find he location there, we won't have to search through its body.
+  // If we find the location there, we won't have to search through its body.
 
   for (DeclContext::decl_iterator
          I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
