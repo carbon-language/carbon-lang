@@ -102,6 +102,17 @@ bool Decl::isFunctionOrFunctionTemplate() const {
   return isa<FunctionDecl>(this) || isa<FunctionTemplateDecl>(this);
 }
 
+bool Decl::isDefinedOutsideFunctionOrMethod() const {
+  for (const DeclContext *DC = getDeclContext(); 
+       DC && !DC->isTranslationUnit(); 
+       DC = DC->getParent())
+    if (DC->isFunctionOrMethod())
+      return false;
+
+  return true;
+}
+
+
 //===----------------------------------------------------------------------===//
 // PrettyStackTraceDecl Implementation
 //===----------------------------------------------------------------------===//

@@ -717,7 +717,10 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       return Info->Function;
   }
 
-  Sema::LocalInstantiationScope Scope(SemaRef, TemplateParams != 0);
+  bool MergeWithParentScope = (TemplateParams != 0) ||
+    !(isa<Decl>(Owner) && 
+      cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
+  Sema::LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = SubstFunctionType(D, Params);
@@ -844,7 +847,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       return Info->Function;
   }
 
-  Sema::LocalInstantiationScope Scope(SemaRef, TemplateParams != 0);
+  bool MergeWithParentScope = (TemplateParams != 0) ||
+    !(isa<Decl>(Owner) && 
+      cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
+  Sema::LocalInstantiationScope Scope(SemaRef, MergeWithParentScope);
 
   llvm::SmallVector<ParmVarDecl *, 4> Params;
   QualType T = SubstFunctionType(D, Params);

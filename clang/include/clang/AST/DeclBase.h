@@ -1017,13 +1017,8 @@ private:
 };
 
 inline bool Decl::isTemplateParameter() const {
-  return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm;
-}
-
-inline bool Decl::isDefinedOutsideFunctionOrMethod() const {
-  if (getDeclContext())
-    return !getDeclContext()->getLookupContext()->isFunctionOrMethod();
-  return true;
+  return getKind() == TemplateTypeParm || getKind() == NonTypeTemplateParm ||
+         getKind() == TemplateTemplateParm;
 }
 
 } // end clang.
