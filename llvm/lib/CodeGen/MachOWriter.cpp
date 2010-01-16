@@ -72,12 +72,6 @@ bool MachOWriter::doInitialization(Module &M) {
   Mang = new Mangler(M, MAI->getGlobalPrefix(), MAI->getPrivateGlobalPrefix(),
                      MAI->getLinkerPrivateGlobalPrefix());
   
-  if (MAI->doesAllowQuotesInName())
-    Mang->setUseQuotes(true);
-  
-  if (MAI->doesAllowNameToStartWithDigit())
-    Mang->setSymbolsCanStartWithDigit(true);
-  
   // Initialize TargetLoweringObjectFile.
   TM.getTargetLowering()->getObjFileLowering().Initialize(OutContext, TM);
 

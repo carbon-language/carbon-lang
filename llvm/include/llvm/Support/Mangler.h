@@ -47,15 +47,6 @@ private:
   /// "linker_private" linkage.
   const char *LinkerPrivatePrefix;
 
-  /// UseQuotes - If this is set, the target accepts global names in quotes,
-  /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
-  /// the space character.  By default, this is false.
-  bool UseQuotes;
-
-  /// SymbolsCanStartWithDigit - If this is set, the target allows symbols to
-  /// start with digits (e.g., "0x0021").  By default, this is false.
-  bool SymbolsCanStartWithDigit;
-
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
   /// ones.
@@ -66,47 +57,11 @@ private:
   ///
   unsigned NextAnonGlobalID;
 
-  /// AcceptableChars - This bitfield contains a one for each character that is
-  /// allowed to be part of an unmangled name.
-  unsigned AcceptableChars[256 / 32];
-
 public:
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
   Mangler(Module &M, const char *Prefix = "", const char *privatePrefix = "",
           const char *linkerPrivatePrefix = "");
-
-  /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
-  /// strings for assembler labels.
-  void setUseQuotes(bool Val) { UseQuotes = Val; }
-
-  /// setSymbolsCanStartWithDigit - If SymbolsCanStartWithDigit is set to true,
-  /// this target allows symbols to start with digits.
-  void setSymbolsCanStartWithDigit(bool Val) { SymbolsCanStartWithDigit = Val; }
-
-  /// Acceptable Characters - This allows the target to specify which characters
-  /// are acceptable to the assembler without being mangled.  By default we
-  /// allow letters, numbers, '_', '$', '.', which is what GAS accepts, and '@'.
-  void markCharAcceptable(unsigned char X) {
-    AcceptableChars[X/32] |= 1 << (X&31);
-  }
-  void markCharUnacceptable(unsigned char X) {
-    AcceptableChars[X/32] &= ~(1 << (X&31));
-  }
-  bool isCharAcceptable(unsigned char X) const {
-    return (AcceptableChars[X/32] & (1 << (X&31))) != 0;
-  }
-
-  /// getMangledName - Returns the mangled name of V, an LLVM Value,
-  /// in the current module.  If 'Suffix' is specified, the name ends with the
-  /// specified suffix.  If 'ForcePrivate' is specified, the label is specified
-  /// to have a private label prefix.
-  ///
-  /// FIXME: This is deprecated, new code should use getNameWithPrefix and use
-  /// MCSymbol printing to handle quotes or not etc.
-  ///
-  std::string getMangledName(const GlobalValue *V, const char *Suffix = "",
-                             bool ForcePrivate = false);
 
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't
@@ -125,22 +80,6 @@ public:
   /// have a name, this fills in a unique name for the global.
   std::string getNameWithPrefix(const GlobalValue *GV,
                                 bool isImplicitlyPrivate = false);
-  
-private:
-  /// makeNameProper - We don't want identifier names with ., space, or
-  /// - in them, so we mangle these characters into the strings "d_",
-  /// "s_", and "D_", respectively. This is a very simple mangling that
-  /// doesn't guarantee unique names for values. getValueName already
-  /// does this for you, so there's no point calling it on the result
-  /// from getValueName.
-  ///
-  /// FIXME: This is deprecated, new code should use getNameWithPrefix and use
-  /// MCSymbol printing to handle quotes or not etc.
-  ///
-  void makeNameProper(SmallVectorImpl<char> &OutName,
-                      const Twine &Name,
-                      ManglerPrefixTy PrefixTy = Mangler::Default);
-  
 };
 
 } // End llvm namespace
