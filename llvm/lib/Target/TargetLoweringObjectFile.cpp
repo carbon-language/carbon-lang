@@ -956,7 +956,7 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
     // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
     // this horrible hack can go away.
     SmallString<64> Name;
-    Mang->getNameWithPrefix(NameTmp, GV, false);
+    Mang->getNameWithPrefix(Name, GV, false);
     if (Name[0] == 'L' || Name[0] == 'l')
       return false;
   }
