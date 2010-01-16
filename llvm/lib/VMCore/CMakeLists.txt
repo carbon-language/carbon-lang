@@ -16,7 +16,6 @@ add_llvm_library(LLVMCore
   IRBuilder.cpp
   LLVMContext.cpp
   LeakDetector.cpp
-  Mangler.cpp
   Metadata.cpp
   Module.cpp
   ModuleProvider.cpp
