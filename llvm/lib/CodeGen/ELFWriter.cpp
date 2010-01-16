@@ -54,7 +54,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 char ELFWriter::ID = 0;
@@ -906,9 +906,11 @@ void ELFWriter::EmitStringTable(const std::string &ModuleName) {
     ELFSym &Sym = *(*I);
 
     std::string Name;
-    if (Sym.isGlobalValue())
-      Name.append(Mang->getMangledName(Sym.getGlobalValue()));
-    else if (Sym.isExternalSym())
+    if (Sym.isGlobalValue()) {
+      SmallString<40> NameStr;
+      Mang->getNameWithPrefix(NameStr, Sym.getGlobalValue(), false);
+      Name.append(NameStr.begin(), NameStr.end());
+    } else if (Sym.isExternalSym())
       Name.append(Sym.getExternalSymbol());
     else if (Sym.isFileType())
       Name.append(ModuleName);

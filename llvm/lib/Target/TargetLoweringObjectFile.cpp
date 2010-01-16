@@ -955,7 +955,8 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
     // FIXME: ObjC metadata is currently emitted as internal symbols that have
     // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
     // this horrible hack can go away.
-    const std::string &Name = Mang->getMangledName(GV);
+    SmallString<64> Name;
+    Mang->getNameWithPrefix(NameTmp, GV, false);
     if (Name[0] == 'L' || Name[0] == 'l')
       return false;
   }
