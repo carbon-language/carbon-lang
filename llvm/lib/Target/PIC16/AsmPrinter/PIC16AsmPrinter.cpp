@@ -82,7 +82,7 @@ static int getFunctionColor(const Function *F) {
 
 // Color the Auto section of the given function. 
 void PIC16AsmPrinter::ColorAutoSection(const Function *F) {
-  std::string SectionName = PAN::getAutosSectionName(CurrentFnName);
+  std::string SectionName = PAN::getAutosSectionName(CurrentFnSym->getName());
   PIC16Section* Section = PTOF->findPIC16Section(SectionName);
   if (Section != NULL) {
     int Color = getFunctionColor(F);
@@ -103,11 +103,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // of runOnMachineFunction.
   SetupMachineFunction(MF);
 
-  // Get the mangled name.
-  const Function *F = MF.getFunction();
-  CurrentFnName = Mang->getMangledName(F);
-
   // Put the color information from function to its auto section.
+  const Function *F = MF.getFunction();
   ColorAutoSection(F);
 
   // Emit the function frame (args and temps).
@@ -117,15 +114,15 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Now emit the instructions of function in its code section.
   const MCSection *fCodeSection 
-    = getObjFileLowering().SectionForCode(CurrentFnName);
+    = getObjFileLowering().SectionForCode(CurrentFnSym->getName());
 
   // Start the Code Section.
   O <<  "\n";
   OutStreamer.SwitchSection(fCodeSection);
 
   // Emit the frame address of the function at the beginning of code.
-  O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
-  O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
+  O << "\tretlw  low(" << PAN::getFrameLabel(CurrentFnSym->getName()) << ")\n";
+  O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnSym->getName()) << ")\n";
 
   // Emit function start label.
   CurrentFnSym->print(O, MAI);
@@ -402,13 +399,13 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   
   PIC16Section *fPDataSection =
     const_cast<PIC16Section *>(getObjFileLowering().
-                                SectionForFrame(CurrentFnName));
+                                SectionForFrame(CurrentFnSym->getName()));
  
   fPDataSection->setColor(getFunctionColor(F)); 
   OutStreamer.SwitchSection(fPDataSection);
   
   // Emit function frame label
-  O << PAN::getFrameLabel(CurrentFnName) << ":\n";
+  O << PAN::getFrameLabel(CurrentFnSym->getName()) << ":\n";
 
   const Type *RetType = F->getReturnType();
   unsigned RetSize = 0; 
@@ -420,9 +417,10 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   // we will need to avoid printing a global directive for Retval label
   // in emitExternandGloblas.
   if(RetSize > 0)
-     O << PAN::getRetvalLabel(CurrentFnName) << " RES " << RetSize << "\n";
+     O << PAN::getRetvalLabel(CurrentFnSym->getName())
+       << " RES " << RetSize << "\n";
   else
-     O << PAN::getRetvalLabel(CurrentFnName) << ": \n";
+     O << PAN::getRetvalLabel(CurrentFnSym->getName()) << ": \n";
    
   // Emit variable to hold the space for function arguments 
   unsigned ArgSize = 0;
@@ -432,12 +430,13 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
     ArgSize += TD->getTypeAllocSize(Ty);
    }
 
-  O << PAN::getArgsLabel(CurrentFnName) << " RES " << ArgSize << "\n";
+  O << PAN::getArgsLabel(CurrentFnSym->getName()) << " RES " << ArgSize << "\n";
 
   // Emit temporary space
   int TempSize = PTLI->GetTmpSize();
   if (TempSize > 0)
-    O << PAN::getTempdataLabel(CurrentFnName) << " RES  " << TempSize << '\n';
+    O << PAN::getTempdataLabel(CurrentFnSym->getName()) << " RES  "
+      << TempSize << '\n';
 }
 
 
