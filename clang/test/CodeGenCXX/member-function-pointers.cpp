@@ -139,3 +139,14 @@ namespace PR5940 {
        void (foo::*ptr)(void) = &foo::baz;
   }
 }
+
+namespace MemberPointerImpCast {
+  struct A {
+    int x;
+  };
+  struct B : public A {
+  };
+  void f(B* obj, void (A::*method)()) {
+    (obj->*method)();
+  }
+}

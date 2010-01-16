@@ -1450,12 +1450,14 @@ QualType Sema::CheckPointerToMemberOperands(
     // overkill?
     if (!IsDerivedFrom(LType, Class, Paths) ||
         Paths.isAmbiguous(Context.getCanonicalType(Class))) {
-      const char *ReplaceStr = isIndirect ? ".*" : "->*";
       Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
-        << (int)isIndirect << lex->getType() <<
-          CodeModificationHint::CreateReplacement(SourceRange(Loc), ReplaceStr);
+        << (int)isIndirect << lex->getType();
       return QualType();
     }
+    // Cast LHS to type of use.
+    QualType UseType = isIndirect ? Context.getPointerType(Class) : Class;
+    bool isLValue = !isIndirect && lex->isLvalue(Context) == Expr::LV_Valid;
+    ImpCastExprToType(lex, UseType, CastExpr::CK_DerivedToBase, isLValue);
   }
 
   if (isa<CXXZeroInitValueExpr>(rex->IgnoreParens())) {
