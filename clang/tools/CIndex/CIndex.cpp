@@ -145,16 +145,18 @@ private:
   // be suppressed.
   unsigned MaxPCHLevel;
 
-  void Call(enum CXCursorKind CK, NamedDecl *ND) {
-    // Filter any declarations that have a PCH level greater than what we allow.
-    if (ND->getPCHLevel() > MaxPCHLevel)
-      return;
+  void Call(const CXCursor &C) {
+    if (const Decl *D = getCursorDecl(C)) {
+      // Filter any declarations that have a PCH level greater than what 
+      // we allow.
+      if (D->getPCHLevel() > MaxPCHLevel)
+        return;
 
-    // Filter any implicit declarations (since the source info will be bogus).
-    if (ND->isImplicit())
-      return;
+      // Filter any implicit declarations (since the source info will be bogus).
+      if (D->isImplicit())
+        return;
+    }
 
-    CXCursor C = { CK, { ND, 0, 0 } };
     Callback(Root, C, CData);
   }
 
@@ -162,77 +164,26 @@ public:
   TUVisitor(void *root, Iterator cback, CXClientData D, unsigned MaxPCHLevel) :
     Root(root), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
 
+  void VisitDecl(Decl *D);
+  void VisitObjCClassDecl(ObjCClassDecl *D) {
+    // FIXME: Do something.
+  }
   void VisitDeclContext(DeclContext *DC);
-  void VisitFunctionDecl(FunctionDecl *ND);
-  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
-  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *ND);
-  void VisitObjCImplementationDecl(ObjCImplementationDecl *ND);
-  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND);
-  void VisitObjCProtocolDecl(ObjCProtocolDecl *ND);
-  void VisitTagDecl(TagDecl *ND);
   void VisitTranslationUnitDecl(TranslationUnitDecl *D);
-  void VisitTypedefDecl(TypedefDecl *ND);
-  void VisitVarDecl(VarDecl *ND);
 };
 
+void TUVisitor::VisitDecl(Decl *D) {
+  Call(MakeCXCursor(D));
+}
+  
 void TUVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
        I != E; ++I)
     Visit(*I);
 }
-  
-void TUVisitor::VisitFunctionDecl(FunctionDecl *ND) {
-  Call(ND->isThisDeclarationADefinition() ? CXCursor_FunctionDefn
-       : CXCursor_FunctionDecl, ND);
-}
-  
-void TUVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-  Call(CXCursor_ObjCCategoryDecl, ND);
-}
-
-void TUVisitor::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *ND) {
-  Call(CXCursor_ObjCCategoryDefn, ND);
-}
-
-void TUVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *ND) {
-  Call(CXCursor_ObjCClassDefn, ND);
-}
-  
-void TUVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ND) {
-  Call(CXCursor_ObjCInterfaceDecl, ND);
-}  
-
-void TUVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *ND) {
-  Call(CXCursor_ObjCProtocolDecl, ND);
-}
-  
-void TUVisitor::VisitTagDecl(TagDecl *ND) {
-  switch (ND->getTagKind()) {
-    case TagDecl::TK_struct:
-      Call(CXCursor_StructDecl, ND);
-      break;
-    case TagDecl::TK_class:
-      Call(CXCursor_ClassDecl, ND);
-      break;
-    case TagDecl::TK_union:
-      Call(CXCursor_UnionDecl, ND);
-      break;
-    case TagDecl::TK_enum:
-      Call(CXCursor_EnumDecl, ND);
-      break;
-  }
-}
-  
+    
 void TUVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   VisitDeclContext(dyn_cast<DeclContext>(D));
-}
-  
-void TUVisitor::VisitTypedefDecl(TypedefDecl *ND) {
-  Call(CXCursor_TypedefDecl, ND);
-}
-
-void TUVisitor::VisitVarDecl(VarDecl *ND) {
-  Call(CXCursor_VarDecl, ND);
 }
 
 // Declaration visitor.

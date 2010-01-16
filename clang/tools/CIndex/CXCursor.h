@@ -27,6 +27,7 @@ namespace cxcursor {
   
 CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D);  
 CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D, clang::Stmt *S);
+CXCursor MakeCXCursor(clang::Decl *D);
 
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
