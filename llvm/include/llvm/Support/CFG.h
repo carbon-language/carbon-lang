@@ -149,8 +149,8 @@ public:
   }
 
   inline bool operator>(const _Self& x) const {
-    return idx > x.idx;
     assert(Term == x.Term && "Cannot compare iterators of different blocks!");
+    return idx > x.idx;
   }
 
   inline _Self& operator+=(int Right) {
