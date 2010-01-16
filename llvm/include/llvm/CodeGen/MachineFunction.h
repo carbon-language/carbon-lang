@@ -368,8 +368,8 @@ public:
   // Debug location.
   //
 
-  /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
-  DebugLocTuple getDebugLocTuple(DebugLoc DL) const;
+  /// getDILocation - Get the DILocation for a given DebugLoc object.
+  DILocation getDILocation(DebugLoc DL) const;
 
   /// getDefaultDebugLoc - Get the default debug location for the machine
   /// function.

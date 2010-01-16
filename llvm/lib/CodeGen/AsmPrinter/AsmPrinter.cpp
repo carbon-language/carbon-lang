@@ -61,8 +61,7 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     // FIXME: Pass instprinter to streamer.
     OutStreamer(*createAsmStreamer(OutContext, O, *T, 0)),
 
-    LastMI(0), LastFn(0), Counter(~0U),
-    PrevDLT(0, 0, ~0U, ~0U) {
+    LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;
@@ -1406,14 +1405,15 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
   DebugLoc DL = MI->getDebugLoc();
   if (DL.isUnknown())
     return;
-  DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
-  if (CurDLT.Scope == 0)
+  DILocation CurDLT = MF->getDILocation(DL);
+  if (CurDLT.getScope().isNull())
     return;
 
   if (BeforePrintingInsn) {
-    if (CurDLT != PrevDLT) {
-      unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
-                                        CurDLT.Scope);
+    if (CurDLT.getNode() != PrevDLT.getNode()) {
+      unsigned L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
+                                        CurDLT.getColumnNumber(),
+                                        CurDLT.getScope().getNode());
       printLabel(L);
       O << '\n';
       DW->BeginScope(MI, L);
@@ -1910,20 +1910,20 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   bool Newline = false;
 
   if (!MI.getDebugLoc().isUnknown()) {
-    DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+    DILocation DLT = MF->getDILocation(MI.getDebugLoc());
 
     // Print source line info.
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
-    DIScope Scope(DLT.Scope);
+    DIScope Scope = DLT.getScope();
     // Omit the directory, because it's likely to be long and uninteresting.
     if (!Scope.isNull())
       O << Scope.getFilename();
     else
       O << "<unknown>";
-    O << ':' << DLT.Line;
-    if (DLT.Col != 0)
-      O << ':' << DLT.Col;
+    O << ':' << DLT.getLineNumber();
+    if (DLT.getColumnNumber() != 0)
+      O << ':' << DLT.getColumnNumber();
     Newline = true;
   }
 

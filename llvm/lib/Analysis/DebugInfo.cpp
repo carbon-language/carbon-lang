@@ -1320,23 +1320,15 @@ bool llvm::getLocationInfo(const Value *V, std::string &DisplayName,
 /// from DILocation.
 DebugLoc llvm::ExtractDebugLocation(DILocation &Loc,
                                     DebugLocTracker &DebugLocInfo) {
-  DebugLoc DL;
-  MDNode *Context = Loc.getScope().getNode();
-  MDNode *InlinedLoc = NULL;
-  if (!Loc.getOrigLocation().isNull())
-    InlinedLoc = Loc.getOrigLocation().getNode();
-  // If this location is already tracked then use it.
-  DebugLocTuple Tuple(Context, InlinedLoc, Loc.getLineNumber(),
-                      Loc.getColumnNumber());
-  DenseMap<DebugLocTuple, unsigned>::iterator II
-    = DebugLocInfo.DebugIdMap.find(Tuple);
+  DenseMap<MDNode *, unsigned>::iterator II
+    = DebugLocInfo.DebugIdMap.find(Loc.getNode());
   if (II != DebugLocInfo.DebugIdMap.end())
     return DebugLoc::get(II->second);
 
   // Add a new location entry.
   unsigned Id = DebugLocInfo.DebugLocations.size();
-  DebugLocInfo.DebugLocations.push_back(Tuple);
-  DebugLocInfo.DebugIdMap[Tuple] = Id;
+  DebugLocInfo.DebugLocations.push_back(Loc.getNode());
+  DebugLocInfo.DebugIdMap[Loc.getNode()] = Id;
 
   return DebugLoc::get(Id);
 }

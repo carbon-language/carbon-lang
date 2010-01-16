@@ -2001,13 +2001,14 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
       MIIndexMap[MInsn] = MIIndex++;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
-      DebugLocTuple DLT = MF->getDebugLocTuple(DL);
-      if (!DLT.Scope) continue;
+      DILocation DLT = MF->getDILocation(DL);
+      DIScope DLTScope = DLT.getScope();
+      if (DLTScope.isNull()) continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
-      if (DIDescriptor(DLT.Scope).isCompileUnit()) continue;
-      createDbgScope(DLT.Scope, DLT.InlinedAtLoc);
+      if (DLTScope.isCompileUnit()) continue;
+      createDbgScope(DLTScope.getNode(), DLT.getOrigLocation().getNode());
     }
   }
 
@@ -2020,13 +2021,15 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
       const MachineInstr *MInsn = II;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown())  continue;
-      DebugLocTuple DLT = MF->getDebugLocTuple(DL);
-      if (!DLT.Scope)  continue;
+      DILocation DLT = MF->getDILocation(DL);
+      DIScope DLTScope = DLT.getScope();
+      if (DLTScope.isNull())  continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
-      if (DIDescriptor(DLT.Scope).isCompileUnit()) continue;
-      DbgScope *Scope = getUpdatedDbgScope(DLT.Scope, MInsn, DLT.InlinedAtLoc);
+      if (DLTScope.isCompileUnit()) continue;
+      DbgScope *Scope = getUpdatedDbgScope(DLTScope.getNode(), MInsn, 
+                                           DLT.getOrigLocation().getNode());
       Scope->setLastInsn(MInsn);
     }
   }
@@ -2091,13 +2094,16 @@ void DwarfDebug::beginFunction(MachineFunction *MF) {
   // function.
   DebugLoc FDL = MF->getDefaultDebugLoc();
   if (!FDL.isUnknown()) {
-    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
+    DILocation DLT = MF->getDILocation(FDL);
     unsigned LabelID = 0;
-    DISubprogram SP = getDISubprogram(DLT.Scope);
+    DISubprogram SP = getDISubprogram(DLT.getScope().getNode());
     if (!SP.isNull())
-      LabelID = recordSourceLine(SP.getLineNumber(), 0, DLT.Scope);
+      LabelID = recordSourceLine(SP.getLineNumber(), 0, 
+                                 DLT.getScope().getNode());
     else
-      LabelID = recordSourceLine(DLT.Line, DLT.Col, DLT.Scope);
+      LabelID = recordSourceLine(DLT.getLineNumber(), 
+                                 DLT.getColumnNumber(), 
+                                 DLT.getScope().getNode());
     Asm->printLabel(LabelID);
     O << '\n';
   }

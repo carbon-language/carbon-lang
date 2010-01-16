@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_ASMPRINTER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
@@ -151,7 +152,7 @@ namespace llvm {
     mutable unsigned Counter;
     
     // Private state for processDebugLoc()
-    mutable DebugLocTuple PrevDLT;
+    mutable DILocation PrevDLT;
 
   protected:
     explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
