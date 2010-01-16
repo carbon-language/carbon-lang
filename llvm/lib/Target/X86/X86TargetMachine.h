@@ -62,6 +62,8 @@ public:
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
 
+  virtual DwarfLSDAEncoding::Encoding getLSDAEncoding() const;
+
   // Set up the pass pipeline.
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

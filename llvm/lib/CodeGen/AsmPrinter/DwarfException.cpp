@@ -283,17 +283,28 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     if (MMI->getPersonalities()[0] != NULL) {
       bool is4Byte = TD->getPointerSize() == sizeof(int32_t);
 
-      Asm->EmitULEB128Bytes(is4Byte ? 4 : 8);
-      Asm->EOL("Augmentation size");
+      if (Asm->TM.getLSDAEncoding() == DwarfLSDAEncoding::FourByte) {
+        Asm->EmitULEB128Bytes(4);
+        Asm->EOL("Augmentation size");
 
-      if (EHFrameInfo.hasLandingPads)
-        EmitReference("exception", EHFrameInfo.Number, true, false);
-      else {
-        if (is4Byte)
-          Asm->EmitInt32((int)0);
+        if (EHFrameInfo.hasLandingPads)
+          EmitReference("exception", EHFrameInfo.Number, true, true);
         else
-          Asm->EmitInt64((int)0);
+          Asm->EmitInt32((int)0);
+      } else {
+        Asm->EmitULEB128Bytes(is4Byte ? 4 : 8);
+        Asm->EOL("Augmentation size");
+
+        if (EHFrameInfo.hasLandingPads) {
+          EmitReference("exception", EHFrameInfo.Number, true, false);
+        } else {
+          if (is4Byte)
+            Asm->EmitInt32((int)0);
+          else
+            Asm->EmitInt64((int)0);
+        }
       }
+
       Asm->EOL("Language Specific Data Area");
     } else {
       Asm->EmitULEB128Bytes(0);

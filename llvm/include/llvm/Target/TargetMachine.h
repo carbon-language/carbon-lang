@@ -81,6 +81,14 @@ namespace CodeGenOpt {
   };
 }
 
+// Specify if we should encode the LSDA pointer in the FDE as 4- or 8-bytes.
+namespace DwarfLSDAEncoding {
+  enum Encoding {
+    Default,
+    FourByte,
+    EightByte
+  };
+}
 
 //===----------------------------------------------------------------------===//
 ///
@@ -191,6 +199,12 @@ public:
   /// setAsmVerbosityDefault - Set the default value of asm verbosity. Default
   /// is false.
   static void setAsmVerbosityDefault(bool);
+
+  /// getLSDAEncoding - Returns the LSDA pointer encoding. The choices are
+  /// 4-byte, 8-byte, and target default.
+  virtual DwarfLSDAEncoding::Encoding getLSDAEncoding() const {
+    return DwarfLSDAEncoding::Default;
+  }
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit.
