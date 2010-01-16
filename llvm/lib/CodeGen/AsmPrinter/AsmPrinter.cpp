@@ -1719,13 +1719,14 @@ MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
   return OutContext.GetOrCreateSymbol(NameStr.str());
 }
 
-/// GetPrivateGlobalValueSymbolStub - Return the MCSymbol for a symbol with
+/// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
 /// global value name as its base, with the specified suffix, and where the
-/// symbol is forced to have private linkage.
-MCSymbol *AsmPrinter::GetPrivateGlobalValueSymbolStub(const GlobalValue *GV,
-                                                      StringRef Suffix) const {
+/// symbol is forced to have private linkage if ForcePrivate is true.
+MCSymbol *AsmPrinter::GetSymbolWithGlobalValueBase(const GlobalValue *GV,
+                                                   StringRef Suffix,
+                                                   bool ForcePrivate) const {
   SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, GV, true);
+  Mang->getNameWithPrefix(NameStr, GV, ForcePrivate);
   NameStr.append(Suffix.begin(), Suffix.end());
   return OutContext.GetOrCreateSymbol(NameStr.str());
 }

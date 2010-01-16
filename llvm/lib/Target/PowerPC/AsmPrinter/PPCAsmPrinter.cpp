@@ -70,9 +70,9 @@ namespace {
         if (Stub != 0) return;
 
         // Get the names.
-        Stub = Printer->GetPrivateGlobalValueSymbolStub(GV, "$stub");
-        LazyPtr = Printer->GetPrivateGlobalValueSymbolStub(GV, "$lazy_ptr");
-        AnonSymbol = Printer->GetPrivateGlobalValueSymbolStub(GV, "$stub$tmp");
+        Stub = Printer->GetSymbolWithGlobalValueBase(GV, "$stub");
+        LazyPtr = Printer->GetSymbolWithGlobalValueBase(GV, "$lazy_ptr");
+        AnonSymbol = Printer->GetSymbolWithGlobalValueBase(GV, "$stub$tmp");
       }
 
       void Init(StringRef GVName, Mangler *Mang, MCContext &Ctx) {
@@ -450,11 +450,11 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     if (TM.getRelocationModel() != Reloc::Static &&
         (GV->isDeclaration() || GV->isWeakForLinker())) {
       if (!GV->hasHiddenVisibility()) {
-        SymToPrint = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+        SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         GVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
-        SymToPrint = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+        SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         HiddenGVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
       } else {
         SymToPrint = GetGlobalValueSymbol(GV);
@@ -1200,7 +1200,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
          E = Personalities.end(); I != E; ++I) {
       if (*I)
         GVStubs[GetGlobalValueSymbol(*I)] =
-          GetPrivateGlobalValueSymbolStub(*I, "$non_lazy_ptr");
+          GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
     }
   }
 

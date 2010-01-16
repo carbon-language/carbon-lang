@@ -344,11 +344,12 @@ namespace llvm {
     /// value.
     MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
 
-    /// GetPrivateGlobalValueSymbolStub - Return the MCSymbol for a symbol with
+    /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
     /// global value name as its base, with the specified suffix, and where the
-    /// symbol is forced to have private linkage.
-    MCSymbol *GetPrivateGlobalValueSymbolStub(const GlobalValue *GV,
-                                              StringRef Suffix) const;
+    /// symbol is forced to have private linkage if ForcePrivate is true.
+    MCSymbol *GetSymbolWithGlobalValueBase(const GlobalValue *GV,
+                                           StringRef Suffix,
+                                           bool ForcePrivate = true) const;
     
     /// GetExternalSymbolSymbol - Return the MCSymbol for the specified
     /// ExternalSymbol.

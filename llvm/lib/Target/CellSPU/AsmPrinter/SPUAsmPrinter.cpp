@@ -341,7 +341,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
       GlobalValue *GV = MO.getGlobal();
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
-        GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr")->print(O, MAI);
+        GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr")->print(O, MAI);
         return;
       }
     }

@@ -238,11 +238,11 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     
     const MCSymbol *GVSym;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-      GVSym = GetPrivateGlobalValueSymbolStub(GV, "$stub");
+      GVSym = GetSymbolWithGlobalValueBase(GV, "$stub");
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-      GVSym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+      GVSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
     else
       GVSym = GetGlobalValueSymbol(GV);
 
@@ -258,7 +258,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
-      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+      MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       
       const MCSymbol *&StubSym = 
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
@@ -266,13 +266,13 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
         StubSym = GetGlobalValueSymbol(GV);
       
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+      MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
       if (StubSym == 0)
         StubSym = GetGlobalValueSymbol(GV);
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$stub");
+      MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0)

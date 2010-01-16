@@ -190,7 +190,7 @@ namespace {
           GetGlobalValueSymbol(GV)->print(O, MAI);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
-          MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+          MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
           Sym->print(O, MAI);
           
           MachineModuleInfoMachO &MMIMachO =

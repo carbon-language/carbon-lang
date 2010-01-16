@@ -22,6 +22,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -230,17 +231,26 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
   if (!TheFunc->hasLocalLinkage())
-    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective())
-      O << GlobalEHDirective << EHFrameInfo.FnName << '\n';
+    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective()) {
+      O << GlobalEHDirective;
+      EHFrameInfo.FunctionEHSym->print(O, MAI);
+      O << '\n';
+    }
 
   // If corresponding function is weak definition, this should be too.
-  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
-    O << MAI->getWeakDefDirective() << EHFrameInfo.FnName << '\n';
+  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective()) {
+    O << MAI->getWeakDefDirective();
+    EHFrameInfo.FunctionEHSym->print(O, MAI);
+    O << '\n';
+  }
 
   // If corresponding function is hidden, this should be too.
   if (TheFunc->hasHiddenVisibility())
-    if (const char *HiddenDirective = MAI->getHiddenDirective())
-      O << HiddenDirective << EHFrameInfo.FnName << '\n' ;
+    if (const char *HiddenDirective = MAI->getHiddenDirective()) {
+      O << HiddenDirective;
+      EHFrameInfo.FunctionEHSym->print(O, MAI);
+      O << '\n';
+    }
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If
@@ -250,14 +260,19 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       (!TheFunc->isWeakForLinker() ||
        !MAI->getWeakDefDirective() ||
        MAI->getSupportsWeakOmittedEHFrame())) {
-    O << EHFrameInfo.FnName << " = 0\n";
+    EHFrameInfo.FunctionEHSym->print(O, MAI);
+    O << " = 0\n";
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
-    if (const char *UsedDirective = MAI->getUsedDirective())
-      O << UsedDirective << EHFrameInfo.FnName << "\n\n";
+    if (const char *UsedDirective = MAI->getUsedDirective()) {
+      O << UsedDirective;
+      EHFrameInfo.FunctionEHSym->print(O, MAI);
+      O << "\n\n";
+    }
   } else {
-    O << EHFrameInfo.FnName << ":\n";
+    EHFrameInfo.FunctionEHSym->print(O, MAI);
+    O << ":\n";
 
     // EH frame header.
     EmitDifference("eh_frame_end", EHFrameInfo.Number,
@@ -328,8 +343,11 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
-      if (const char *UsedDirective = MAI->getUsedDirective())
-        O << UsedDirective << EHFrameInfo.FnName << "\n\n";
+      if (const char *UsedDirective = MAI->getUsedDirective()) {
+        O << UsedDirective;
+        EHFrameInfo.FunctionEHSym->print(O, MAI);
+        O << "\n\n";
+      }
   }
 
   Asm->EOL();
@@ -928,7 +946,7 @@ void DwarfException::EmitExceptionTable() {
     PrintRelDirective();
 
     if (GV) {
-      O << Asm->Mang->getMangledName(GV);
+      Asm->GetGlobalValueSymbol(GV)->print(O, MAI);
     } else {
       O << "0x0";
     }
@@ -1019,12 +1037,12 @@ void DwarfException::EndFunction() {
   EmitLabel("eh_func_end", SubprogramCount);
   EmitExceptionTable();
 
-  std::string FunctionEHName =
-    Asm->Mang->getMangledName(MF->getFunction(), ".eh",
-                              Asm->MAI->is_EHSymbolPrivate());
+  const MCSymbol *FunctionEHSym =
+    Asm->GetSymbolWithGlobalValueBase(MF->getFunction(), ".eh",
+                                      Asm->MAI->is_EHSymbolPrivate());
   
   // Save EH frame information
-  EHFrames.push_back(FunctionEHFrameInfo(FunctionEHName, SubprogramCount,
+  EHFrames.push_back(FunctionEHFrameInfo(FunctionEHSym, SubprogramCount,
                                          MMI->getPersonalityIndex(),
                                          MF->getFrameInfo()->hasCalls(),
                                          !MMI->getLandingPads().empty(),
