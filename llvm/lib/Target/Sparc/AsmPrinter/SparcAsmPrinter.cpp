@@ -170,8 +170,9 @@ void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // Function is weak
-    O << "\t.weak\t";CurrentFnSym->print(O, MAI);
-    O << '\n' ;
+    O << "\t.weak\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   }
   

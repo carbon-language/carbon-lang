@@ -15,6 +15,8 @@
 #include "X86MachineFunctionInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
@@ -23,7 +25,6 @@ using namespace llvm;
 X86COFFMachineModuleInfo::X86COFFMachineModuleInfo(const MachineModuleInfo &) {
 }
 X86COFFMachineModuleInfo::~X86COFFMachineModuleInfo() {
-  
 }
 
 void X86COFFMachineModuleInfo::AddFunctionInfo(const Function *F,
@@ -114,10 +115,12 @@ void X86COFFMachineModuleInfo::DecorateCygMingName(SmallVectorImpl<char> &Name,
 
 /// DecorateCygMingName - Query FunctionInfoMap and use this information for
 /// various name decorations for Cygwin and MingW.
-void X86COFFMachineModuleInfo::DecorateCygMingName(std::string &Name,
+void X86COFFMachineModuleInfo::DecorateCygMingName(const MCSymbol *&Name,
+                                                   MCContext &Ctx,
                                                    const GlobalValue *GV,
                                                    const TargetData &TD) {
-  SmallString<128> NameStr(Name.begin(), Name.end());
+  SmallString<128> NameStr(Name->getName().begin(), Name->getName().end());
   DecorateCygMingName(NameStr, GV, TD);
-  Name.assign(NameStr.begin(), NameStr.end());
+  
+  Name = Ctx.GetOrCreateSymbol(NameStr.str());
 }

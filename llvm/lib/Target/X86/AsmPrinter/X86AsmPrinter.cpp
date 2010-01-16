@@ -71,8 +71,8 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   if (Subtarget->isTargetCygMing()) {
     X86COFFMachineModuleInfo &COFFMMI = 
       MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-    COFFMMI.DecorateCygMingName(CurrentFnName, F, *TM.getTargetData());
-    CurrentFnSym = OutContext.GetOrCreateSymbol(StringRef(CurrentFnName));
+    COFFMMI.DecorateCygMingName(CurrentFnSym, OutContext, F,
+                                *TM.getTargetData());
   }
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
@@ -238,24 +238,25 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
     
-    const char *Suffix = "";
+    const MCSymbol *GVSym;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-      Suffix = "$stub";
+      GVSym = GetPrivateGlobalValueSymbolStub(GV, "$stub");
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-      Suffix = "$non_lazy_ptr";
-    
-    std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
+      GVSym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
+    else
+      GVSym = GetGlobalValueSymbol(GV);
+
     if (Subtarget->isTargetCygMing()) {
       X86COFFMachineModuleInfo &COFFMMI =
         MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-      COFFMMI.DecorateCygMingName(Name, GV, *TM.getTargetData());
+      COFFMMI.DecorateCygMingName(GVSym, OutContext, GV, *TM.getTargetData());
     }
     
     // Handle dllimport linkage.
     if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      Name = "__imp_" + Name;
+      GVSym = OutContext.GetOrCreateSymbol(Twine("__imp_") + GVSym->getName());
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
@@ -296,11 +297,13 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
     // to avoid having it look like an integer immediate to the assembler.
-    if (Name[0] == '$') 
-      O << '(' << Name << ')';
-    else
-      O << Name;
-    
+    if (GVSym->getName()[0] != '$')
+      GVSym->print(O, MAI);
+    else {
+      O << '(';
+      GVSym->print(O, MAI);
+      O << ')';
+    }
     printOffset(MO.getOffset());
     break;
   }
@@ -916,36 +919,39 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
     if (Subtarget->isTargetCygMing()) {
       // Necessary for dllexport support
-      std::vector<std::string> DLLExportedFns, DLLExportedGlobals;
+      std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
       TargetLoweringObjectFileCOFF &TLOFCOFF =
         static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
 
       for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (I->hasDLLExportLinkage()) {
-          std::string Name = Mang->getMangledName(I);
-          COFFMMI.DecorateCygMingName(Name, I, *TM.getTargetData());
-          DLLExportedFns.push_back(Name);
+          const MCSymbol *Sym = GetGlobalValueSymbol(I);
+          COFFMMI.DecorateCygMingName(Sym, OutContext, I, *TM.getTargetData());
+          DLLExportedFns.push_back(Sym);
         }
 
       for (Module::const_global_iterator I = M.global_begin(),
              E = M.global_end(); I != E; ++I)
-        if (I->hasDLLExportLinkage()) {
-          std::string Name = Mang->getMangledName(I);
-          COFFMMI.DecorateCygMingName(Name, I, *TM.getTargetData());
-          DLLExportedGlobals.push_back(Mang->getMangledName(I));
-        }
+        if (I->hasDLLExportLinkage())
+          DLLExportedGlobals.push_back(GetGlobalValueSymbol(I));
 
       // Output linker support code for dllexported globals on windows.
       if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
         OutStreamer.SwitchSection(TLOFCOFF.getCOFFSection(".section .drectve",
                                                           true,
                                                    SectionKind::getMetadata()));
-        for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
-          O << "\t.ascii \" -export:" << DLLExportedGlobals[i] << ",data\"\n";
+        for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i) {
+          O << "\t.ascii \" -export:";
+          DLLExportedGlobals[i]->print(O, MAI);
+          O << ",data\"\n";
+        }
 
-        for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
-          O << "\t.ascii \" -export:" << DLLExportedFns[i] << "\"\n";
+        for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i) {
+          O << "\t.ascii \" -export:";
+          DLLExportedFns[i]->print(O, MAI);
+          O << "\"\n";
+        }
       }
     }
   }
