@@ -163,13 +163,17 @@ bool AsmPrinter::doFinalization(Module &M) {
     // Print out module-level global variables here.
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
-      if (I->hasExternalWeakLinkage())
-        O << MAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+      if (!I->hasExternalWeakLinkage()) continue;
+      O << MAI->getWeakRefDirective();
+      GetGlobalValueSymbol(I)->print(O, MAI);
+      O << '\n';
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      if (I->hasExternalWeakLinkage())
-        O << MAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+      if (!I->hasExternalWeakLinkage()) continue;
+      O << MAI->getWeakRefDirective();
+      GetGlobalValueSymbol(I)->print(O, MAI);
+      O << '\n';
     }
   }
 
@@ -828,7 +832,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value.
-    O << Mang->getMangledName(GV);
+    GetGlobalValueSymbol(GV)->print(O, MAI);
     return;
   }
   
