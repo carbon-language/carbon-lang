@@ -121,6 +121,9 @@ protected:
                    TypeSourceInfo *writtenTy, SourceLocation l)
     : ExplicitCastExpr(SC, ty, kind, op, writtenTy), Loc(l) {}
 
+  explicit CXXNamedCastExpr(StmtClass SC, EmptyShell Shell)
+    : ExplicitCastExpr(SC, Shell) { }
+
 public:
   const char *getCastName() const;
 
@@ -157,6 +160,9 @@ public:
                     TypeSourceInfo *writtenTy, SourceLocation l)
     : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, writtenTy, l) {}
 
+  explicit CXXStaticCastExpr(EmptyShell Empty)
+    : CXXNamedCastExpr(CXXStaticCastExprClass, Empty) { }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXStaticCastExprClass;
   }
@@ -174,6 +180,9 @@ public:
   CXXDynamicCastExpr(QualType ty, CastKind kind, Expr *op,
                      TypeSourceInfo *writtenTy, SourceLocation l)
     : CXXNamedCastExpr(CXXDynamicCastExprClass, ty, kind, op, writtenTy, l) {}
+
+  explicit CXXDynamicCastExpr(EmptyShell Empty)
+    : CXXNamedCastExpr(CXXDynamicCastExprClass, Empty) { }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDynamicCastExprClass;
@@ -194,6 +203,9 @@ public:
     : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op,
                        writtenTy, l) {}
 
+  explicit CXXReinterpretCastExpr(EmptyShell Empty)
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, Empty) { }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXReinterpretCastExprClass;
   }
@@ -210,6 +222,9 @@ public:
   CXXConstCastExpr(QualType ty, Expr *op, TypeSourceInfo *writtenTy,
                    SourceLocation l)
     : CXXNamedCastExpr(CXXConstCastExprClass, ty, CK_NoOp, op, writtenTy, l) {}
+
+  explicit CXXConstCastExpr(EmptyShell Empty)
+    : CXXNamedCastExpr(CXXConstCastExprClass, Empty) { }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstCastExprClass;
@@ -632,8 +647,13 @@ public:
                        writtenTy),
       TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
+  explicit CXXFunctionalCastExpr(EmptyShell Shell)
+    : ExplicitCastExpr(CXXFunctionalCastExprClass, Shell) { }
+
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
+  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(TyBeginLoc, RParenLoc);

@@ -117,6 +117,12 @@ namespace {
 
     unsigned VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     unsigned VisitCXXConstructExpr(CXXConstructExpr *E);
+    unsigned VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
+    unsigned VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
+    unsigned VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
+    unsigned VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
+    unsigned VisitCXXConstCastExpr(CXXConstCastExpr *E);
+    unsigned VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
   };
 }
 
@@ -868,6 +874,35 @@ unsigned PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   return E->getNumArgs();
 }
 
+unsigned PCHStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
+  unsigned num = VisitExplicitCastExpr(E);
+  E->setOperatorLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return num;
+}
+
+unsigned PCHStmtReader::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+unsigned PCHStmtReader::VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+unsigned PCHStmtReader::VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+unsigned PCHStmtReader::VisitCXXConstCastExpr(CXXConstCastExpr *E) {
+  return VisitCXXNamedCastExpr(E);
+}
+
+unsigned PCHStmtReader::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
+  unsigned num = VisitExplicitCastExpr(E);
+  E->setTypeBeginLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return num;
+}
+
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
 // expression they are stored in. To evaluate expressions, we
@@ -1176,6 +1211,28 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) CXXConstructExpr(Empty, *Context,
                                       Record[PCHStmtReader::NumExprFields + 2]);
       break;
+
+    case pch::EXPR_CXX_STATIC_CAST:
+      S = new (Context) CXXStaticCastExpr(Empty);
+      break;
+
+    case pch::EXPR_CXX_DYNAMIC_CAST:
+      S = new (Context) CXXDynamicCastExpr(Empty);
+      break;
+
+    case pch::EXPR_CXX_REINTERPRET_CAST:
+      S = new (Context) CXXReinterpretCastExpr(Empty);
+      break;
+
+    case pch::EXPR_CXX_CONST_CAST:
+      S = new (Context) CXXConstCastExpr(Empty);
+      break;
+
+    case pch::EXPR_CXX_FUNCTIONAL_CAST:
+      S = new (Context) CXXFunctionalCastExpr(Empty);
+      break;
+
+
     }
 
     // We hit a STMT_STOP, so we're done with this expression.

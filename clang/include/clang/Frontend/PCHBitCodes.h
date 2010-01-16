@@ -676,7 +676,17 @@ namespace clang {
       /// \brief A CXXOperatorCallExpr record.
       EXPR_CXX_OPERATOR_CALL,
       /// \brief A CXXConstructExpr record.
-      EXPR_CXX_CONSTRUCT
+      EXPR_CXX_CONSTRUCT,
+      // \brief A CXXStaticCastExpr record.
+      EXPR_CXX_STATIC_CAST,
+      // \brief A CXXDynamicCastExpr record.
+      EXPR_CXX_DYNAMIC_CAST,
+      // \brief A CXXReinterpretCastExpr record.
+      EXPR_CXX_REINTERPRET_CAST,
+      // \brief A CXXConstCastExpr record.
+      EXPR_CXX_CONST_CAST,
+      // \brief A CXXFunctionalCastExpr record.
+      EXPR_CXX_FUNCTIONAL_CAST
     };
 
     /// \brief The kinds of designators that can occur in a
