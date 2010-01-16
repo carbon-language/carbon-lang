@@ -440,14 +440,6 @@ void LTOModule::lazyParseSymbols()
         
         // Use mangler to add GlobalPrefix to names to match linker names.
         Mangler mangler(*_module, _target->getMCAsmInfo()->getGlobalPrefix());
-        // add chars used in ObjC method names so method names aren't mangled
-        mangler.markCharAcceptable('[');
-        mangler.markCharAcceptable(']');
-        mangler.markCharAcceptable('(');
-        mangler.markCharAcceptable(')');
-        mangler.markCharAcceptable('-');
-        mangler.markCharAcceptable('+');
-        mangler.markCharAcceptable(' ');
 
         // add functions
         for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {
