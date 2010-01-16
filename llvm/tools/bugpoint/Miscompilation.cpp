@@ -251,13 +251,13 @@ static void DisambiguateGlobalSymbols(Module *M) {
        I != E; ++I) {
     // Don't mangle asm names.
     if (!I->hasName() || I->getName()[0] != 1)
-      I->setName(Mang.getMangledName(I));
+      I->setName(Mang.getNameWithPrefix(I));
   }
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
     // Don't mangle asm names or intrinsics.
     if ((!I->hasName() || I->getName()[0] != 1) &&
         I->getIntrinsicID() == 0)
-      I->setName(Mang.getMangledName(I));
+      I->setName(Mang.getNameWithPrefix(I));
   }
 }
 

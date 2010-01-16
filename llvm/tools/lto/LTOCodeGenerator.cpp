@@ -329,7 +329,7 @@ void LTOCodeGenerator::applyScopeRestrictions()
             for (Module::iterator f = mergedModule->begin(), 
                                         e = mergedModule->end(); f != e; ++f) {
                 if ( !f->isDeclaration() 
-                  && _mustPreserveSymbols.count(mangler.getMangledName(f)) )
+                  && _mustPreserveSymbols.count(mangler.getNameWithPrefix(f)) )
                   mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
             }
             for (Module::global_iterator v = mergedModule->global_begin(), 
