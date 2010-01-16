@@ -91,9 +91,9 @@ int main (int argc, const char * argv[]) {
   main(someEnum, (const char **)bee);
 }
 
-// CHECK: c-index-api-fn-scan.m:84:2: ObjCClassRef=Baz:84:8 [Context:Baz]
-// CHECK: c-index-api-fn-scan.m:84:3: ObjCClassRef=Baz:84:8 [Context:Baz]
-// CHECK: c-index-api-fn-scan.m:84:4: ObjCClassRef=Baz:84:8 [Context:Baz]
+// CHECK: c-index-api-fn-scan.m:84:2: ObjCClassRef=Baz:48:1 [Context:Baz]
+// CHECK: c-index-api-fn-scan.m:84:3: ObjCClassRef=Baz:48:1 [Context:Baz]
+// CHECK: c-index-api-fn-scan.m:84:4: ObjCClassRef=Baz:48:1 [Context:Baz]
 // CHECK: c-index-api-fn-scan.m:84:6: VarDecl=bee:84:8 [Context:bee]
 // CHECK: c-index-api-fn-scan.m:84:8: VarDecl=bee:84:8 [Context:bee]
 // CHECK: c-index-api-fn-scan.m:84:9: VarDecl=bee:84:8 [Context:bee]

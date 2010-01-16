@@ -17,14 +17,14 @@ void function(Foo * arg)
 
 // CHECK-scan: {start_line=1 start_col=1 end_line=7 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} Invalid Cursor => NotImplemented
-// CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:8:1
+// CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:10:1
 // CHECK-scan: {start_line=8 start_col=11 end_line=9 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK-scan: {start_line=10 start_col=1 end_line=11 end_col=4} ObjCInterfaceDecl=Foo:10:1
 // CHECK-scan: {start_line=11 start_col=5 end_line=12 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK-scan: {start_line=13 start_col=1 end_line=13 end_col=4} FunctionDefn=function:13:6
 // CHECK-scan: {start_line=13 start_col=5 end_line=13 end_col=5} Invalid Cursor => NoDeclFound
 // CHECK-scan: {start_line=13 start_col=6 end_line=13 end_col=14} FunctionDefn=function:13:6
-// CHECK-scan: {start_line=13 start_col=15 end_line=13 end_col=17} ObjCClassRef=Foo:13:21
+// CHECK-scan: {start_line=13 start_col=15 end_line=13 end_col=17} ObjCClassRef=Foo:10:1
 // CHECK-scan: {start_line=13 start_col=18 end_line=13 end_col=18} FunctionDefn=function:13:6
 // CHECK-scan: {start_line=13 start_col=19 end_line=13 end_col=19} ParmDecl=arg:13:21
 // CHECK-scan: {start_line=13 start_col=20 end_line=13 end_col=20} FunctionDefn=function:13:6

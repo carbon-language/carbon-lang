@@ -104,7 +104,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=44 start_col=33 end_line=44 end_col=33} FunctionDefn=main:44:5
 // CHECK: {start_line=44 start_col=34 end_line=44 end_col=39} ParmDecl=argv:44:34
 // CHECK: {start_line=44 start_col=40 end_line=45 end_col=1} FunctionDefn=main:44:5
-// CHECK: {start_line=45 start_col=2 end_line=45 end_col=4} ObjCClassRef=Baz:45:8
+// CHECK: {start_line=45 start_col=2 end_line=45 end_col=4} ObjCClassRef=Baz:31:1
 // CHECK: {start_line=45 start_col=5 end_line=45 end_col=5} FunctionDefn=main:44:5
 // CHECK: {start_line=45 start_col=6 end_line=45 end_col=6} VarDecl=bee:45:8
 // CHECK: {start_line=45 start_col=7 end_line=45 end_col=7} FunctionDefn=main:44:5

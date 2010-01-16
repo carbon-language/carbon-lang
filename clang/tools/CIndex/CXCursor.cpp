@@ -105,6 +105,21 @@ cxcursor::getCursorObjCProtocolRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
+CXCursor cxcursor::MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, 
+                                         SourceLocation Loc) {
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_ObjCClassRef, { Class, RawLoc, 0 } };
+  return C;    
+}
+
+std::pair<ObjCInterfaceDecl *, SourceLocation> 
+cxcursor::getCursorObjCClassRef(CXCursor C) {
+  assert(C.kind == CXCursor_ObjCClassRef);
+  return std::make_pair(static_cast<ObjCInterfaceDecl *>(C.data[0]),
+           SourceLocation::getFromRawEncoding(
+                                      reinterpret_cast<uintptr_t>(C.data[1])));
+}
+
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
   return (Decl *)Cursor.data[0];
 }
@@ -115,7 +130,8 @@ Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
 
 Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
   if (Cursor.kind == CXCursor_ObjCSuperClassRef ||
-      Cursor.kind == CXCursor_ObjCProtocolRef)
+      Cursor.kind == CXCursor_ObjCProtocolRef ||
+      Cursor.kind == CXCursor_ObjCClassRef)
     return 0;
 
   return (Stmt *)Cursor.data[1];
@@ -123,13 +139,6 @@ Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
 
 Decl *cxcursor::getCursorReferringDecl(CXCursor Cursor) {
   return (Decl *)Cursor.data[2];
-}
-
-NamedDecl *cxcursor::getCursorInterfaceParent(CXCursor Cursor) {
-  assert(Cursor.kind == CXCursor_ObjCClassRef);
-  assert(isa<ObjCInterfaceDecl>(getCursorDecl(Cursor)));
-  // FIXME: This is a hack (storing the parent decl in the stmt slot).
-  return static_cast<NamedDecl *>(Cursor.data[1]);
 }
 
 bool cxcursor::operator==(CXCursor X, CXCursor Y) {

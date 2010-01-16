@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -emit-pch -x objective-c %s -o %t.ast
 // RUN: c-index-test -test-load-tu %t.ast all | FileCheck %s
-// XFAIL: *
+
 @interface Foo 
 {
 }
@@ -58,8 +58,8 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:9:1: ObjCClassMethodDecl=fooC:9:1 [Context=Foo] [Extent=9:1:9:7]
 // CHECK: c-index-api-loadTU-test.m:13:12: ObjCInterfaceDecl=Bar:13:1 [Context=c-index-api-loadTU-test.m] [Extent=13:1:17:4]
 // CHECK: c-index-api-loadTU-test.m:13:18: ObjCSuperClassRef=Foo:4:1 [Context=Bar] [Extent=4:1:11:4]
-// CHECK: c-index-api-loadTU-test.m:19:1: ObjCCategoryDecl=FooCat:19:1 [Context=c-index-api-loadTU-test.m] [Extent=19:1:22:4]
-// CHECK: c-index-api-loadTU-test.m:4:1: ObjCClassRef=Foo:19:1 [Context=FooCat] [Extent=19:1:22:4]
+// CHECK: c-index-api-loadTU-test.m:19:12: ObjCCategoryDecl=FooCat:19:12 [Context=c-index-api-loadTU-test.m] [Extent=19:1:22:4]
+// CHECK: c-index-api-loadTU-test.m:19:12: ObjCClassRef=Foo:4:1 [Context=FooCat] [Extent=4:1:11:4]
 // CHECK: c-index-api-loadTU-test.m:20:1: ObjCInstanceMethodDecl=catMethodWithFloat::20:1 [Context=FooCat] [Extent=20:1:20:40]
 // CHECK: c-index-api-loadTU-test.m:21:1: ObjCInstanceMethodDecl=floatMethod:21:1 [Context=FooCat] [Extent=21:1:21:22]
 // CHECK: c-index-api-loadTU-test.m:24:1: ObjCProtocolDecl=Proto:24:1 [Context=c-index-api-loadTU-test.m] [Extent=24:1:26:4]

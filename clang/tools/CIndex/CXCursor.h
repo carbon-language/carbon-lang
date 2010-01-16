@@ -50,11 +50,18 @@ CXCursor MakeCursorObjCProtocolRef(ObjCProtocolDecl *Proto, SourceLocation Loc);
 std::pair<ObjCProtocolDecl *, SourceLocation> 
   getCursorObjCProtocolRef(CXCursor C);
 
+/// \brief Create an Objective-C class reference at the given location.
+CXCursor MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, SourceLocation Loc);
+
+/// \brief Unpack an ObjCClassRef cursor into the class it references
+/// and optionally the location where the reference occurred.
+std::pair<ObjCInterfaceDecl *, SourceLocation> 
+  getCursorObjCClassRef(CXCursor C);
+
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);
 Decl *getCursorReferringDecl(CXCursor Cursor);
-NamedDecl *getCursorInterfaceParent(CXCursor Cursor);
   
 bool operator==(CXCursor X, CXCursor Y);
   
