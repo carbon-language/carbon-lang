@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines routines for manipulating CXCursors.
+// This file defines routines for manipulating CXCursors. It should be the
+// only file that has internal knowledge of the encoding of the data in
+// CXCursor.
 //
 //===----------------------------------------------------------------------===//
 
@@ -73,6 +75,21 @@ CXCursor cxcursor::MakeCXCursor(Decl *D) {
   return MakeCXCursor(GetCursorKind(D), D);
 }
 
+CXCursor cxcursor::MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super, 
+                                         SourceLocation Loc) {
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_ObjCSuperClassRef, { Super, RawLoc, 0 } };
+  return C;    
+}
+
+std::pair<ObjCInterfaceDecl *, SourceLocation> 
+cxcursor::getCursorObjCSuperClassRef(CXCursor C) {
+  assert(C.kind == CXCursor_ObjCSuperClassRef);
+  return std::make_pair(static_cast<ObjCInterfaceDecl *>(C.data[0]),
+           SourceLocation::getFromRawEncoding(
+                                      reinterpret_cast<uintptr_t>(C.data[1])));
+}
+
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
   return (Decl *)Cursor.data[0];
 }
@@ -82,6 +99,9 @@ Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
 }
 
 Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
+  if (Cursor.kind == CXCursor_ObjCSuperClassRef)
+    return 0;
+
   return (Stmt *)Cursor.data[1];
 }
 

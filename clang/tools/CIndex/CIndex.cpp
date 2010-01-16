@@ -209,6 +209,7 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
     CXCursor C = { CK, { ND, 0, 0 } };
     Callback(CDecl, C, CData);
   }
+
 public:
   CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D,
                unsigned MaxPCHLevel) :
@@ -276,7 +277,10 @@ void CDeclVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 void CDeclVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   // Issue callbacks for super class.
   if (D->getSuperClass())
-    Call(CXCursor_ObjCSuperClassRef, D);
+    Callback(CDecl, 
+             MakeCursorObjCSuperClassRef(D->getSuperClass(),
+                                         D->getSuperClassLoc()), 
+             CData);
   
   for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
        E = D->protocol_end(); I != E; ++I)
@@ -340,11 +344,9 @@ static SourceLocation getLocationFromCursor(CXCursor C,
       assert(OID && "clang_getCursorLine(): Missing category decl");
       return OID->getClassInterface()->getLocation();
     }
-    case CXCursor_ObjCSuperClassRef: {
-      ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
-      assert(OID && "clang_getCursorLine(): Missing interface decl");
-      return OID->getSuperClassLoc();
-    }
+    case CXCursor_ObjCSuperClassRef:
+      return getCursorObjCSuperClassRef(C).second;
+
     case CXCursor_ObjCProtocolRef: {
       ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
       assert(OID && "clang_getCursorLine(): Missing protocol decl");
@@ -761,10 +763,8 @@ CXString clang_getCursorSpelling(CXCursor C) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
-      ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
-      assert(OID && "clang_getCursorLine(): Missing interface decl");
-      return CIndexer::createCXString(OID->getSuperClass()->getIdentifier()
-                                      ->getNameStart());
+      ObjCInterfaceDecl *Super = getCursorObjCSuperClassRef(C).first;
+      return CIndexer::createCXString(Super->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCClassRef: {
       if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND))
