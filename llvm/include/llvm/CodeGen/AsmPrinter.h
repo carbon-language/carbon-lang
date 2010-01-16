@@ -131,10 +131,9 @@ namespace llvm {
     ///
     Mangler *Mang;
 
-    /// Cache of mangled name for current function. This is recalculated at the
+    /// The symbol for the current function. This is recalculated at the
     /// beginning of each call to runOnMachineFunction().
     ///
-    std::string CurrentFnName;  // FIXME: REMOVE.
     const MCSymbol *CurrentFnSym;
     
     /// getCurrentSection() - Return the current section we are emitting to.
