@@ -22,7 +22,6 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
@@ -235,29 +234,18 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   return TestFn(BD, ToOptimize, ToNotOptimize);
 }
 
-/// DisambiguateGlobalSymbols - Mangle symbols to guarantee uniqueness by
-/// modifying predominantly internal symbols rather than external ones.
+/// DisambiguateGlobalSymbols - Give anonymous global values names.
 ///
 static void DisambiguateGlobalSymbols(Module *M) {
-  // Try not to cause collisions by minimizing chances of renaming an
-  // already-external symbol, so take in external globals and functions as-is.
-  // The code should work correctly without disambiguation (assuming the same
-  // mangler is used by the two code generators), but having symbols with the
-  // same name causes warnings to be emitted by the code generator.
-  Mangler Mang(*M);
-  // Agree with the CBE on symbol naming
-  Mang.markCharUnacceptable('.');
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I) {
     // Don't mangle asm names.
-    if (!I->hasName() || I->getName()[0] != 1)
-      I->setName(Mang.getNameWithPrefix(I));
+    if (!I->hasName())
+      I->setName("anon_global");
   }
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    // Don't mangle asm names or intrinsics.
-    if ((!I->hasName() || I->getName()[0] != 1) &&
-        I->getIntrinsicID() == 0)
-      I->setName(Mang.getNameWithPrefix(I));
+    if (!I->hasName())
+      I->setName("anon_fn");
   }
 }
 
@@ -548,10 +536,6 @@ DebugAMiscompilation(BugDriver &BD,
       ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some loops and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
-
-    // Loop extraction can introduce functions with the same name (foo_code).
-    // Make sure to disambiguate the symbols so that when the program is split
-    // apart that we can link it back together again.
     DisambiguateGlobalSymbols(BD.getProgram());
 
     // Do the reduction...
@@ -569,10 +553,6 @@ DebugAMiscompilation(BugDriver &BD,
       ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some blocks and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
-
-    // Block extraction can introduce functions with the same name (foo_code).
-    // Make sure to disambiguate the symbols so that when the program is split
-    // apart that we can link it back together again.
     DisambiguateGlobalSymbols(BD.getProgram());
 
     // Do the reduction...
