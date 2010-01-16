@@ -120,6 +120,11 @@ public:
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const Twine &GVName,
                          ManglerPrefixTy PrefixTy = Mangler::Default);
 
+  /// getNameWithPrefix - Return the name of the appropriate prefix
+  /// and the specified global variable's name.  If the global variable doesn't
+  /// have a name, this fills in a unique name for the global.
+  std::string getNameWithPrefix(const GlobalValue *GV,bool isImplicitlyPrivate);
+  
 private:
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",

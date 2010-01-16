@@ -249,6 +249,16 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   raw_svector_ostream(OutName) << "__unnamed_" << ID;
 }
 
+/// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+/// and the specified global variable's name.  If the global variable doesn't
+/// have a name, this fills in a unique name for the global.
+std::string Mangler::getNameWithPrefix(const GlobalValue *GV,
+                                       bool isImplicitlyPrivate) {
+  SmallString<64> Buf;
+  getNameWithPrefix(Buf, GV, isImplicitlyPrivate);
+  return std::string(Buf.begin(), Buf.end());
+}
+  
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
                  const char *linkerPrivatePrefix)
