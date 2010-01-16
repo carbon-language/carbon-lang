@@ -146,6 +146,9 @@ private:
   unsigned MaxPCHLevel;
 
   void Call(const CXCursor &C) {
+    if (clang_isInvalid(C.kind))
+      return;
+    
     if (const Decl *D = getCursorDecl(C)) {
       // Filter any declarations that have a PCH level greater than what 
       // we allow.
@@ -165,9 +168,6 @@ public:
     Root(root), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
 
   void VisitDecl(Decl *D);
-  void VisitObjCClassDecl(ObjCClassDecl *D) {
-    // FIXME: Do something.
-  }
   void VisitDeclContext(DeclContext *DC);
   void VisitTranslationUnitDecl(TranslationUnitDecl *D);
 };
@@ -736,30 +736,6 @@ time_t clang_getFileTime(CXFile SFile) {
 // CXCursor Operations.
 //===----------------------------------------------------------------------===//
 
-static enum CXCursorKind TranslateKind(Decl *D) {
-  switch (D->getKind()) {
-    case Decl::Function: return CXCursor_FunctionDecl;
-    case Decl::Typedef: return CXCursor_TypedefDecl;
-    case Decl::Enum: return CXCursor_EnumDecl;
-    case Decl::EnumConstant: return CXCursor_EnumConstantDecl;
-    case Decl::Record: return CXCursor_StructDecl; // FIXME: union/class
-    case Decl::Field: return CXCursor_FieldDecl;
-    case Decl::Var: return CXCursor_VarDecl;
-    case Decl::ParmVar: return CXCursor_ParmDecl;
-    case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
-    case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
-    case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
-    case Decl::ObjCMethod: {
-      ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
-      if (MD->isInstanceMethod())
-        return CXCursor_ObjCInstanceMethodDecl;
-      return CXCursor_ObjCClassMethodDecl;
-    }
-    default: break;
-  }
-  return CXCursor_NotImplemented;
-}
-
 static Decl *getDeclFromExpr(Stmt *E) {
   if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
     return RefExpr->getDecl();
@@ -910,7 +886,7 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
         return C;
       }
     }
-    return MakeCXCursor(TranslateKind(Dcl), Dcl);
+    return MakeCXCursor(Dcl);
   }
   return MakeCXCursor(CXCursor_NoDeclFound, 0);
 }
@@ -926,7 +902,7 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
 CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  return MakeCXCursor(TranslateKind(ND), ND);
+  return MakeCXCursor(ND);
 }
 
 unsigned clang_isInvalid(enum CXCursorKind K) {
@@ -950,7 +926,7 @@ CXCursorKind clang_getCursorKind(CXCursor C) {
 }
 
 CXDecl clang_getCursorDecl(CXCursor C) {
-  if (clang_isDeclaration(C.kind))
+  if (clang_isDeclaration(C.kind) || clang_isDefinition(C.kind))
     return getCursorDecl(C);
 
   if (clang_isReference(C.kind)) {

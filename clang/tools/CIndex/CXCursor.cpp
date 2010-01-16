@@ -32,14 +32,25 @@ CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S) {
 
 static CXCursorKind GetCursorKind(Decl *D) {
   switch (D->getKind()) {
+    case Decl::Enum:               return CXCursor_EnumDecl;
+    case Decl::EnumConstant:       return CXCursor_EnumConstantDecl;
+    case Decl::Field:              return CXCursor_FieldDecl;
     case Decl::Function:  
       return cast<FunctionDecl>(D)->isThisDeclarationADefinition()
               ? CXCursor_FunctionDefn : CXCursor_FunctionDecl;
     case Decl::ObjCCategory:       return CXCursor_ObjCCategoryDecl;
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryDefn;
+    case Decl::ObjCClass:
+      // FIXME
+      return CXCursor_NotImplemented;
     case Decl::ObjCImplementation: return CXCursor_ObjCClassDefn;
     case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
+    case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
+    case Decl::ObjCMethod:
+      return cast<ObjCMethodDecl>(D)->isInstanceMethod()
+              ? CXCursor_ObjCInstanceMethodDecl : CXCursor_ObjCClassMethodDecl;
     case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
+    case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::Var:                return CXCursor_VarDecl;
     default:

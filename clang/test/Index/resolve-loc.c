@@ -24,7 +24,7 @@ struct S {
 // CHECK: VarDecl=top_var
 // CHECK: FunctionDecl=top_func_decl
 // CHECK: ParmDecl=param1
-// CHECK: FunctionDecl=top_func_def
+// CHECK: FunctionDefn=top_func_def
 // CHECK: ParmDecl=param2
 // CHECK: VarDecl=local_var1
 // CHECK: VarDecl=for_var

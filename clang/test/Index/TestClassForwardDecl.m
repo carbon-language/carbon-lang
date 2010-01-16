@@ -16,15 +16,15 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} Invalid Cursor => NotImplemented
 // CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:8:1
 // CHECK-scan: {start_line=8 start_col=11 end_line=9 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=10 start_col=1 end_line=10 end_col=4} FunctionDecl=function:10:6
+// CHECK-scan: {start_line=10 start_col=1 end_line=10 end_col=4} FunctionDefn=function:10:6
 // CHECK-scan: {start_line=10 start_col=5 end_line=10 end_col=5} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=10 start_col=6 end_line=10 end_col=14} FunctionDecl=function:10:6
+// CHECK-scan: {start_line=10 start_col=6 end_line=10 end_col=14} FunctionDefn=function:10:6
 // CHECK-scan: {start_line=10 start_col=15 end_line=10 end_col=17} ObjCClassRef=Foo:10:21
-// CHECK-scan: {start_line=10 start_col=18 end_line=10 end_col=18} FunctionDecl=function:10:6
+// CHECK-scan: {start_line=10 start_col=18 end_line=10 end_col=18} FunctionDefn=function:10:6
 // CHECK-scan: {start_line=10 start_col=19 end_line=10 end_col=19} ParmDecl=arg:10:21
-// CHECK-scan: {start_line=10 start_col=20 end_line=10 end_col=20} FunctionDecl=function:10:6
+// CHECK-scan: {start_line=10 start_col=20 end_line=10 end_col=20} FunctionDefn=function:10:6
 // CHECK-scan: {start_line=10 start_col=21 end_line=10 end_col=23} ParmDecl=arg:10:21
-// CHECK-scan: {start_line=10 start_col=24 end_line=13 end_col=1} FunctionDecl=function:10:6
+// CHECK-scan: {start_line=10 start_col=24 end_line=13 end_col=1} FunctionDefn=function:10:6
 // CHECK-scan: {start_line=13 start_col=2 end_line=46 end_col=1} Invalid Cursor => NoDeclFound
 
 
@@ -41,6 +41,6 @@ void function(Foo * arg)
 
 
 
-// CHECK-load: TestClassForwardDecl.m:10:6: FunctionDefn=function [Context=TestClassForwardDecl.m]
+// CHECK-load: TestClassForwardDecl.m:10:6: FunctionDefn=function:10:6 [Context=TestClassForwardDecl.m]
 // CHECK-load: TestClassForwardDecl.m:10:21: ParmDecl=arg:10:21 [Context=function]
 

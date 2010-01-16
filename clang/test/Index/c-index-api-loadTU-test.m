@@ -74,7 +74,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:37:1: ObjCInstanceMethodDecl=bazMethod:37:1 [Context=Baz] [Extent=37:1:37:20]
 // CHECK: c-index-api-loadTU-test.m:41:1: EnumDecl=:41:1 [Context=c-index-api-loadTU-test.m] [Extent=41:1:43:1]
 // CHECK: c-index-api-loadTU-test.m:42:3: EnumConstantDecl=someEnum:42:3 [Context=] [Extent=42:3:42:10]
-// CHECK: c-index-api-loadTU-test.m:45:5: FunctionDefn=main [Context=c-index-api-loadTU-test.m] [Extent=45:5:54:1]
+// CHECK: c-index-api-loadTU-test.m:45:5: FunctionDefn=main:45:5 [Context=c-index-api-loadTU-test.m] [Extent=45:5:54:1]
 // CHECK: c-index-api-loadTU-test.m:45:15: ParmDecl=argc:45:15 [Context=main] [Extent=45:15:45:18]
 // CHECK: c-index-api-loadTU-test.m:45:34: ParmDecl=argv:45:34 [Context=main] [Extent=45:34:45:37]
 // CHECK: c-index-api-loadTU-test.m:46:8: VarDecl=bee:46:8 [Context=main] [Extent=46:8:46:10]

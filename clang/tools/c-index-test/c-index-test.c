@@ -74,7 +74,10 @@ static const char* GetCursorSource(CXCursor Cursor) {
 static const char *FileCheckPrefix = "CHECK";
 
 static void PrintDeclExtent(CXDecl Dcl) {
-  CXSourceExtent extent = clang_getDeclExtent(Dcl);
+  CXSourceExtent extent; 
+  if (!Dcl)
+    return;
+  extent = clang_getDeclExtent(Dcl);
   printf(" [Extent=%d:%d:%d:%d]", extent.begin.line, extent.begin.column,
          extent.end.line, extent.end.column);
 }
@@ -101,6 +104,7 @@ static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
 static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
+    CXDecl D;
     CXString string;
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), clang_getCursorLine(Cursor),
@@ -111,11 +115,15 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           basename(clang_getCString(string)));
     clang_disposeString(string);
     
-    PrintDeclExtent(Cursor.data[0]);
-
-    printf("\n");
+    D = clang_getCursorDecl(Cursor);
+    if (!D) {
+      printf("\n");
+      return;
+    }
     
-    clang_loadDeclaration(Cursor.data[0], DeclVisitor, 0);
+    PrintDeclExtent(D);
+    printf("\n");    
+    clang_loadDeclaration(D, DeclVisitor, 0);
   }
 }
 
@@ -179,10 +187,11 @@ static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
 }
 
 static void USRVisitor(CXTranslationUnit Unit, CXCursor Cursor,
-                       CXClientData Filter) {  
-  if (Cursor.data[0]) {
+                       CXClientData Filter) {
+  CXDecl D = clang_getCursorDecl(Cursor);
+  if (D) {
     /* USRDeclVisitor(Unit, Cursor.decl, Cursor, Filter);*/
-    clang_loadDeclaration(Cursor.data[0], USRDeclVisitor, 0);
+    clang_loadDeclaration(D, USRDeclVisitor, 0);
   }
 }
 
