@@ -34,7 +34,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
 #include <cstring>
@@ -299,12 +298,12 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignment(GVar);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -314,10 +313,15 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
         (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasLocalLinkage())
-        O << "\t.local " << name << '\n';
+      if (GVar->hasLocalLinkage()) {
+        O << "\t.local ";
+        GVarSym->print(O, MAI);
+        O << '\n';
+      }
 
-      O << MAI->getCOMMDirective() << name << ',' << Size;
+      O << MAI->getCOMMDirective();
+      GVarSym->print(O, MAI);
+      O << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
@@ -333,14 +337,18 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
    case GlobalValue::WeakAnyLinkage: // FIXME: Verify correct for weak.
    case GlobalValue::WeakODRLinkage: // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak " << name << '\n';
+    O << "\t.weak ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective() << name << '\n';
+    O << MAI->getGlobalDirective();
+    GVarSym->print(O, MAI);
+    O << '\n';
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -359,11 +367,16 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
 
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << name << ",#object\n";
-    O << "\t.size " << name << ',' << Size << '\n';
+    O << "\t.type ";
+    GVarSym->print(O, MAI);
+    O << ",#object\n";
+    O << "\t.size ";
+    GVarSym->print(O, MAI);
+    O << ',' << Size << '\n';
   }
 
-  O << name << ":\n";
+  GVarSym->print(O, MAI);
+  O  << ":\n";
   EmitGlobalConstant(C);
 }
 

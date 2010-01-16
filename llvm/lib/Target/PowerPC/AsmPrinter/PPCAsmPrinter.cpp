@@ -729,9 +729,9 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -748,14 +748,23 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
-        O << "\t.global " << name << '\n';
-        O << "\t.type " << name << ", @object\n";
-        O << name << ":\n";
+        O << "\t.global ";
+        GVarSym->print(O, MAI);
+        O << '\n';
+        O << "\t.type ";
+        GVarSym->print(O, MAI);
+        O << ", @object\n";
+        GVarSym->print(O, MAI);
+        O  << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << name << ',' << Size;
+        O << MAI->getLCOMMDirective();
+        GVarSym->print(O, MAI);
+        O << ',' << Size;
       } else {
-        O << ".comm " << name << ',' << Size;
+        O << ".comm ";
+        GVarSym->print(O, MAI);
+        O  << ',' << Size;
       }
       if (VerboseAsm) {
         O << "\t\t" << MAI->getCommentString() << " '";
@@ -773,17 +782,24 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakODRLinkage:
    case GlobalValue::CommonLinkage:
    case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.global " << name << '\n'
-      << "\t.type " << name << ", @object\n"
-      << "\t.weak " << name << '\n';
+    O << "\t.global ";
+    GVarSym->print(O, MAI);
+    O << "\n\t.type ";
+    GVarSym->print(O, MAI);
+    O << ", @object\n\t.weak ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.global " << name << '\n'
-      << "\t.type " << name << ", @object\n";
+    O << "\t.global ";
+    GVarSym->print(O, MAI);
+    O << "\n\t.type ";
+    GVarSym->print(O, MAI);
+    O << ", @object\n";
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
@@ -793,7 +809,8 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":";
+  GVarSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -967,8 +984,8 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
   }
 
-  std::string name = Mang->getMangledName(GVar);
-  printVisibility(name, GVar->getVisibility());
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
+  printVisibility(GVarSym, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -989,16 +1006,25 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (GVar->hasExternalLinkage()) {
-      O << "\t.globl " << name << '\n';
-      O << "\t.zerofill __DATA, __common, " << name << ", "
-        << Size << ", " << Align;
+      O << "\t.globl ";
+      GVarSym->print(O, MAI);
+      O << '\n';
+      O << "\t.zerofill __DATA, __common, ";
+      GVarSym->print(O, MAI);
+      O << ", " << Size << ", " << Align;
     } else if (GVar->hasLocalLinkage()) {
-      O << MAI->getLCOMMDirective() << name << ',' << Size << ',' << Align;
+      O << MAI->getLCOMMDirective();
+      GVarSym->print(O, MAI);
+      O << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
-      O << "\t.globl " << name << '\n'
-        << MAI->getWeakDefDirective() << name << '\n';
+      O << "\t.globl ";
+      GVarSym->print(O, MAI);
+      O << '\n' << MAI->getWeakDefDirective();
+      GVarSym->print(O, MAI);
+      O << '\n';
       EmitAlignment(Align, GVar);
-      O << name << ":";
+      GVarSym->print(O, MAI);
+      O << ":";
       if (VerboseAsm) {
         O << "\t\t\t\t" << MAI->getCommentString() << " ";
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -1007,7 +1033,9 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       EmitGlobalConstant(C);
       return;
     } else {
-      O << ".comm " << name << ',' << Size;
+      O << ".comm ";
+      GVarSym->print(O, MAI);
+      O << ',' << Size;
       // Darwin 9 and above support aligned common data.
       if (Subtarget.isDarwin9())
         O << ',' << Align;
@@ -1022,31 +1050,37 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.globl " << name << '\n'
-      << "\t.weak_definition " << name << '\n';
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+    O << "\t.globl ";
+    GVarSym->print(O, MAI);
+    O << "\n\t.weak_definition ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
-   case GlobalValue::AppendingLinkage:
+  case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
+  case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << name << '\n';
+    O << "\t.globl ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     // FALL THROUGH
-   case GlobalValue::InternalLinkage:
-   case GlobalValue::PrivateLinkage:
+  case GlobalValue::InternalLinkage:
+  case GlobalValue::PrivateLinkage:
     break;
-   default:
+  default:
     llvm_unreachable("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":";
+  GVarSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());

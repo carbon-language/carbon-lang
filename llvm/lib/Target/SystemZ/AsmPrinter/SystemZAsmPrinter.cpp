@@ -36,7 +36,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -326,14 +325,16 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = std::max(1U, TD->getPreferredAlignmentLog(GVar));
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
-  O << "\t.type\t" << name << ",@object\n";
+  O << "\t.type\t";
+  GVarSym->print(O, MAI);
+  O << ",@object\n";
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -344,10 +345,15 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasLocalLinkage())
-      O << "\t.local\t" << name << '\n';
+    if (GVar->hasLocalLinkage()) {
+      O << "\t.local\t";
+      GVarSym->print(O, MAI);
+      O << '\n';
+    }
 
-    O << MAI->getCOMMDirective()  << name << ',' << Size;
+    O << MAI->getCOMMDirective();
+    GVarSym->print(O, MAI);
+    O << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
       O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
 
@@ -365,7 +371,9 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << "\t.weak\t" << name << '\n';
+    O << "\t.weak\t";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -373,7 +381,9 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << name << '\n';
+    O << "\t.globl ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
@@ -385,14 +395,18 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   // Use 16-bit alignment by default to simplify bunch of stuff
   EmitAlignment(Align, GVar, 1);
-  O << name << ":";
+  GVarSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << '\n';
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << name << ", " << Size << '\n';
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size\t";
+    GVarSym->print(O, MAI);
+    O << ", " << Size << '\n';
+  }
 
   EmitGlobalConstant(C);
 }
