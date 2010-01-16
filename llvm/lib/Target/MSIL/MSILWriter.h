@@ -27,7 +27,6 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Mangler.h"
 
 namespace llvm {
   extern Target TheMSILTarget;
@@ -78,7 +77,6 @@ namespace llvm {
     formatted_raw_ostream &Out;
     Module* ModulePtr;
     const TargetData* TD;
-    Mangler* Mang;
     LoopInfo *LInfo;
     std::vector<StaticInitializer>* InitListPtr;
     std::map<const GlobalVariable*,std::vector<StaticInitializer> >

@@ -102,7 +102,6 @@ bool MSILWriter::runOnFunction(Function &F) {
 
 bool MSILWriter::doInitialization(Module &M) {
   ModulePtr = &M;
-  Mang = new Mangler(M);
   Out << ".assembly extern mscorlib {}\n";
   Out << ".assembly MSIL {}\n\n";
   Out << "// External\n";
@@ -118,7 +117,6 @@ bool MSILWriter::doInitialization(Module &M) {
 
 
 bool MSILWriter::doFinalization(Module &M) {
-  delete Mang;
   return false;
 }
 
@@ -232,7 +230,7 @@ bool MSILWriter::isZeroValue(const Value* V) {
 std::string MSILWriter::getValueName(const Value* V) {
   std::string Name;
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    Name = Mang->getMangledName(GV);
+    Name = GV->getName();
   else {
     unsigned &No = AnonValueNumbers[V];
     if (No == 0) No = ++NextAnonValueNumber;
@@ -259,7 +257,7 @@ std::string MSILWriter::getLabelName(const std::string& Name) {
 std::string MSILWriter::getLabelName(const Value* V) {
   std::string Name;
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    Name = Mang->getMangledName(GV);
+    Name = GV->getName();
   else {
     unsigned &No = AnonValueNumbers[V];
     if (No == 0) No = ++NextAnonValueNumber;
@@ -1616,7 +1614,7 @@ const char* MSILWriter::getLibraryName(const Function* F) {
 
 
 const char* MSILWriter::getLibraryName(const GlobalVariable* GV) {
-  return getLibraryForSymbol(Mang->getMangledName(GV), false, CallingConv::C);
+  return getLibraryForSymbol(GV->getName(), false, CallingConv::C);
 }
 
 
@@ -1674,7 +1672,7 @@ void MSILWriter::printExternals() {
     std::string Tmp = getTypeName(I->getType())+getValueName(&*I);
     printSimpleInstruction("ldsflda",Tmp.c_str());
     Out << "\tldstr\t\"" << getLibraryName(&*I) << "\"\n";
-    Out << "\tldstr\t\"" << Mang->getMangledName(&*I) << "\"\n";
+    Out << "\tldstr\t\"" << I->getName() << "\"\n";
     printSimpleInstruction("call","void* $MSIL_Import(string,string)");
     printIndirectSave(I->getType());
   }
