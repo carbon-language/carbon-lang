@@ -18,3 +18,9 @@ void f() {
   int B::*a = 0;
   void (B::*b)() = 0;
 }
+
+namespace EmptyNameCrash {
+  struct A { A(); };
+  typedef struct { A x; } B;
+  B x;
+}
