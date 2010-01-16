@@ -105,12 +105,6 @@ bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, MAI->getGlobalPrefix(), MAI->getPrivateGlobalPrefix(),
                      MAI->getLinkerPrivateGlobalPrefix());
   
-  if (MAI->doesAllowQuotesInName())
-    Mang->setUseQuotes(true);
-
-  if (MAI->doesAllowNameToStartWithDigit())
-    Mang->setSymbolsCanStartWithDigit(true);
-  
   // Allow the target to emit any magic that it wants at the start of the file.
   EmitStartOfAsmFile(M);
 
