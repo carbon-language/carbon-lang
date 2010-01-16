@@ -439,6 +439,17 @@ else
   endif
 endif
 
+ifeq ($(HOST_OS),MingW)
+  # Work around PR4957
+  CPP.Defines += -D__NO_CTYPE_INLINE
+  ifeq ($(LLVM_CROSS_COMPILING),1)
+    # Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=525016
+    ifdef TOOLNAME
+      LD.Flags += -Wl,--allow-multiple-definition
+    endif
+  endif
+endif
+
 CXX.Flags     += -Woverloaded-virtual
 CPP.BaseFlags += $(CPP.Defines)
 AR.Flags      := cru
@@ -455,15 +466,6 @@ endif
 
 ifeq ($(ARCH),Alpha)
   LD.Flags += -Wl,--no-relax
-endif
-
-ifeq ($(HOST_OS),MingW)
-  ifeq ($(LLVM_CROSS_COMPILING),1)
-    # Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=525016
-    ifdef TOOLNAME
-      LD.Flags += -Wl,--allow-multiple-definition
-    endif
-  endif
 endif
 
 ifdef ENABLE_EXPENSIVE_CHECKS
