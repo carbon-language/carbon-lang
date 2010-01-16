@@ -95,7 +95,7 @@ namespace {
     };
     
     DenseMap<const MCSymbol*, FnStubInfo> FnStubs;
-    StringMap<const MCSymbol*> GVStubs, HiddenGVStubs, TOC;
+    DenseMap<const MCSymbol*, const MCSymbol*> GVStubs, HiddenGVStubs, TOC;
     const PPCSubtarget &Subtarget;
     uint64_t LabelID;
   public:
@@ -333,17 +333,16 @@ namespace {
 
       assert(MO.getType() == MachineOperand::MO_GlobalAddress);
 
-      GlobalValue *GV = MO.getGlobal();
-
-      std::string Name = Mang->getMangledName(GV);
+      const MCSymbol *Sym = GetGlobalValueSymbol(MO.getGlobal());
 
       // Map symbol -> label of TOC entry.
-      if (TOC.count(Name) == 0)
-        TOC[Name] = OutContext.
+      const MCSymbol *&TOCEntry = TOC[Sym];
+      if (TOCEntry == 0)
+        TOCEntry = OutContext.
           GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) + "C" +
                             Twine(LabelID++));
 
-      TOC[Name]->print(O, MAI);
+      TOCEntry->print(O, MAI);
       O << "@toc";
     }
 
@@ -430,16 +429,16 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     return;
   case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
-    std::string Name(MAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-    
-    if (TM.getRelocationModel() != Reloc::Static) {
-      GVStubs[Name] = 
-        OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
-                                     MO.getSymbolName()+"$non_lazy_ptr");
-      Name += "$non_lazy_ptr";
+    const MCSymbol *SymName = GetExternalSymbolSymbol(MO.getSymbolName());
+    if (TM.getRelocationModel() == Reloc::Static) {
+      SymName->print(O, MAI);
+      return;
     }
-    O << Name;
+    const MCSymbol *NLPSym = 
+      OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
+                                   MO.getSymbolName()+"$non_lazy_ptr");
+    GVStubs[SymName] = NLPSym;
+    NLPSym->print(O, MAI);
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
@@ -452,12 +451,11 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
         (GV->isDeclaration() || GV->isWeakForLinker())) {
       if (!GV->hasHiddenVisibility()) {
         SymToPrint = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
-        GVStubs[Mang->getMangledName(GV)] = SymToPrint;
+        GVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
-        HiddenGVStubs[Mang->getMangledName(GV)] = SymToPrint;
-        GetGlobalValueSymbol(GV)->print(O, MAI);
+        HiddenGVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
       } else {
         SymToPrint = GetGlobalValueSymbol(GV);
       }
@@ -828,11 +826,15 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
     O << "\t.section\t\".toc\",\"aw\"\n";
 
     // FIXME: This is nondeterminstic!
-    for (StringMap<const MCSymbol*>::iterator I = TOC.begin(), E = TOC.end();
-         I != E; ++I) {
+    for (DenseMap<const MCSymbol*, const MCSymbol*>::iterator I = TOC.begin(),
+         E = TOC.end(); I != E; ++I) {
       I->second->print(O, MAI);
       O << ":\n";
-      O << "\t.tc " << I->getKeyData() << "[TC]," << I->getKeyData() << '\n';
+      O << "\t.tc ";
+      I->first->print(O, MAI);
+      O << "[TC],";
+      I->first->print(O, MAI);
+      O << '\n';
     }
   }
 
@@ -1197,7 +1199,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     for (std::vector<Function *>::const_iterator I = Personalities.begin(),
          E = Personalities.end(); I != E; ++I) {
       if (*I)
-        GVStubs[Mang->getMangledName(*I)] =
+        GVStubs[GetGlobalValueSymbol(*I)] =
           GetPrivateGlobalValueSymbolStub(*I, "$non_lazy_ptr");
     }
   }
@@ -1209,11 +1211,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     EmitAlignment(isPPC64 ? 3 : 2);
     
     // FIXME: This is nondeterminstic.
-    for (StringMap<const MCSymbol *>::iterator I = GVStubs.begin(),
-         E = GVStubs.end(); I != E; ++I) {
+    for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
+         I = GVStubs.begin(), E = GVStubs.end(); I != E; ++I) {
       I->second->print(O, MAI);
       O << ":\n";
-      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
+      O << "\t.indirect_symbol ";
+      I->first->print(O, MAI);
+      O << '\n';
       O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
     }
   }
@@ -1222,11 +1226,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
     EmitAlignment(isPPC64 ? 3 : 2);
     // FIXME: This is nondeterminstic.
-    for (StringMap<const MCSymbol *>::iterator I = HiddenGVStubs.begin(),
-         E = HiddenGVStubs.end(); I != E; ++I) {
+    for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
+         I = HiddenGVStubs.begin(), E = HiddenGVStubs.end(); I != E; ++I) {
       I->second->print(O, MAI);
       O << ":\n";
-      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << I->getKeyData() << '\n';
+      O << (isPPC64 ? "\t.quad\t" : "\t.long\t");
+      I->first->print(O, MAI);
+      O << '\n';
     }
   }
 
