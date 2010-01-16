@@ -433,28 +433,28 @@ bool
 TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
                                  SmallVector<MachineBasicBlock*, 8> &TDBBs,
                                  SmallVector<MachineInstr*, 16> &Copies) {
-  // Pre-regalloc tail duplication hurts compile time and doesn't help
-  // much except for indirect branches.
-  bool hasIndirectBranch = (!TailBB->empty() &&
-                            TailBB->back().getDesc().isIndirectBranch());
-  if (PreRegAlloc && !hasIndirectBranch)
-    return false;
-
   // Set the limit on the number of instructions to duplicate, with a default
   // of one less than the tail-merge threshold. When optimizing for size,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
   unsigned MaxDuplicateCount;
-  if (hasIndirectBranch)
-    // If the target has hardware branch prediction that can handle indirect
-    // branches, duplicating them can often make them predictable when there
-    // are common paths through the code.  The limit needs to be high enough
-    // to allow undoing the effects of tail merging.
-    MaxDuplicateCount = 20;
-  else if (MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+  if (MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize))
     MaxDuplicateCount = 1;
   else
     MaxDuplicateCount = TailDuplicateSize;
+
+  if (PreRegAlloc) {
+      // Pre-regalloc tail duplication hurts compile time and doesn't help
+      // much except for indirect branches.
+    if (TailBB->empty() || !TailBB->back().getDesc().isIndirectBranch())
+      return false;
+    // If the target has hardware branch prediction that can handle indirect
+    // branches, duplicating them can often make them predictable when there
+    // are common paths through the code.  The limit needs to be high enough
+    // to allow undoing the effects of tail merging and other optimizations
+    // that rearrange the predecessors of the indirect branch.
+    MaxDuplicateCount = 20;
+  }
 
   // Don't try to tail-duplicate single-block loops.
   if (TailBB->isSuccessor(TailBB))
