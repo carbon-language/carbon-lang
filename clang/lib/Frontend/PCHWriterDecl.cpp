@@ -302,7 +302,8 @@ void PCHDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
   Writer.AddDeclRef(D->getNextClassCategory(), Record);
-  Writer.AddSourceLocation(D->getLocEnd(), Record);
+  Writer.AddSourceLocation(D->getAtLoc(), Record);
+  Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Code = pch::DECL_OBJC_CATEGORY;
 }
 

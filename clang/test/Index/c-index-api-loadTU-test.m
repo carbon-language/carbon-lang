@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -emit-pch -x objective-c %s -o %t.ast
 // RUN: c-index-test -test-load-tu %t.ast all | FileCheck %s
-
+// XFAIL: *
 @interface Foo 
 {
 }

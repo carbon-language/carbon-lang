@@ -315,7 +315,8 @@ void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                       *Reader.getContext());
   CD->setNextClassCategory(cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
-  CD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  CD->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  CD->setCategoryNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
@@ -691,7 +692,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ObjCForwardProtocolDecl::Create(*Context, 0, SourceLocation());
     break;
   case pch::DECL_OBJC_CATEGORY:
-    D = ObjCCategoryDecl::Create(*Context, 0, SourceLocation(), 0);
+    D = ObjCCategoryDecl::Create(*Context, 0, SourceLocation(), 
+                                 SourceLocation(), SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_CATEGORY_IMPL:
     D = ObjCCategoryImplDecl::Create(*Context, 0, SourceLocation(), 0, 0);

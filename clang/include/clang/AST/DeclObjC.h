@@ -880,16 +880,26 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// FIXME: this should not be a singly-linked list.  Move storage elsewhere.
   ObjCCategoryDecl *NextClassCategory;
 
-  SourceLocation EndLoc; // marks the '>' or identifier.
+  /// \brief The location of the '@' in '@interface'
+  SourceLocation AtLoc;
 
-  ObjCCategoryDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : ObjCContainerDecl(ObjCCategory, DC, L, Id),
-      ClassInterface(0), NextClassCategory(0){
+  /// \brief The location of the category name in this declaration.
+  SourceLocation CategoryNameLoc;
+
+  ObjCCategoryDecl(DeclContext *DC, SourceLocation AtLoc, 
+                   SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
+                   IdentifierInfo *Id)
+    : ObjCContainerDecl(ObjCCategory, DC, ClassNameLoc, Id),
+      ClassInterface(0), NextClassCategory(0), AtLoc(AtLoc), 
+      CategoryNameLoc(CategoryNameLoc) {
   }
 public:
 
   static ObjCCategoryDecl *Create(ASTContext &C, DeclContext *DC,
-                                  SourceLocation L, IdentifierInfo *Id);
+                                  SourceLocation AtLoc, 
+                                  SourceLocation ClassNameLoc,
+                                  SourceLocation CategoryNameLoc,
+                                  IdentifierInfo *Id);
 
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
@@ -929,10 +939,16 @@ public:
     NextClassCategory = ClassInterface->getCategoryList();
     ClassInterface->setCategoryList(this);
   }
-  // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getLocation(); } // '@'interface
-  SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
+
+  SourceLocation getAtLoc() const { return AtLoc; }
+  void setAtLoc(SourceLocation At) { AtLoc = At; }
+
+  SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
+  void setCategoryNameLoc(SourceLocation Loc) { CategoryNameLoc = Loc; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, getAtEndRange().getEnd());
+  }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
   static bool classof(const ObjCCategoryDecl *D) { return true; }

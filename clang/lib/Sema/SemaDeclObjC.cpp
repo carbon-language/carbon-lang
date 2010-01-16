@@ -597,7 +597,8 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             const SourceLocation *ProtoLocs,
                             SourceLocation EndProtoLoc) {
   ObjCCategoryDecl *CDecl =
-    ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, CategoryName);
+    ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, ClassLoc,
+                             CategoryLoc, CategoryName);
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
 
@@ -631,7 +632,6 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   if (NumProtoRefs) {
     CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs, 
                            ProtoLocs, Context);
-    CDecl->setLocEnd(EndProtoLoc);
     // Protocols in the class extension belong to the class.
     if (!CDecl->getIdentifier())
      IDecl->mergeClassExtensionProtocolList((ObjCProtocolDecl**)ProtoRefs, 
@@ -658,6 +658,7 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
       // Category @implementation with no corresponding @interface.
       // Create and install one.
       CatIDecl = ObjCCategoryDecl::Create(Context, CurContext, SourceLocation(),
+                                          SourceLocation(), SourceLocation(),
                                           CatName);
       CatIDecl->setClassInterface(IDecl);
       CatIDecl->insertNextClassCategory();

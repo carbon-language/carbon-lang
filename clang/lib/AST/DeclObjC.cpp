@@ -674,9 +674,11 @@ void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {
 //===----------------------------------------------------------------------===//
 
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
-                                           SourceLocation L,
+                                           SourceLocation AtLoc, 
+                                           SourceLocation ClassNameLoc,
+                                           SourceLocation CategoryNameLoc,
                                            IdentifierInfo *Id) {
-  return new (C) ObjCCategoryDecl(DC, L, Id);
+  return new (C) ObjCCategoryDecl(DC, AtLoc, ClassNameLoc, CategoryNameLoc, Id);
 }
 
 ObjCCategoryImplDecl *ObjCCategoryDecl::getImplementation() const {
