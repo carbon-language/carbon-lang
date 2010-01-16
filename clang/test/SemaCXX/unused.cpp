@@ -13,3 +13,12 @@ APSInt& APSInt::operator=(const APSInt &RHS) {
   APInt::operator=(RHS);
   return *this;
 }
+
+template<typename T>
+struct X {
+  X();
+};
+
+void test() {
+  X<int>();
+}
