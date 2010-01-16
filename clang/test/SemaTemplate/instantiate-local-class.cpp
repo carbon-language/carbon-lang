@@ -10,3 +10,22 @@ void f0() {
 }
 
 template void f0<int>();
+
+// PR5764
+namespace PR5764 {
+  class X {
+    template <typename T>
+    void Bar() {
+      class Y {
+        Y() {}
+      };
+
+      Y y;
+    }
+  };
+
+  void test(X x) {
+    x.Bar<int>();
+  }
+}
+

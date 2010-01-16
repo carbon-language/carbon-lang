@@ -1398,15 +1398,35 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                         PP.getSourceManager(),
                                         "parsing struct/union/class body");
 
-  // Determine whether this is a top-level (non-nested) class.
-  bool TopLevelClass = ClassStack.empty() ||
-    CurScope->isInCXXInlineMethodScope();
+  // Determine whether this is a non-nested class. Note that local
+  // classes are *not* considered to be nested classes.
+  bool NonNestedClass = true;
+  if (!ClassStack.empty()) {
+    for (const Scope *S = CurScope; S; S = S->getParent()) {
+      if (S->isClassScope()) {
+        // We're inside a class scope, so this is a nested class.
+        NonNestedClass = false;
+        break;
+      }
+
+      if ((S->getFlags() & Scope::FnScope)) {
+        // If we're in a function or function template declared in the
+        // body of a class, then this is a local class rather than a
+        // nested class.
+        const Scope *Parent = S->getParent();
+        if (Parent->isTemplateParamScope())
+          Parent = Parent->getParent();
+        if (Parent->isClassScope())
+          break;
+      }
+    }
+  }
 
   // Enter a scope for the class.
   ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
 
   // Note that we are parsing a new (potentially-nested) class definition.
-  ParsingClassDefinition ParsingDef(*this, TagDecl, TopLevelClass);
+  ParsingClassDefinition ParsingDef(*this, TagDecl, NonNestedClass);
 
   if (TagDecl)
     Actions.ActOnTagStartDefinition(CurScope, TagDecl);
@@ -1484,7 +1504,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   //
   // FIXME: Only function bodies and constructor ctor-initializers are
   // parsed correctly, fix the rest.
-  if (TopLevelClass) {
+  if (NonNestedClass) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.
@@ -1666,10 +1686,10 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
 /// \brief We have just started parsing the definition of a new class,
 /// so push that class onto our stack of classes that is currently
 /// being parsed.
-void Parser::PushParsingClass(DeclPtrTy ClassDecl, bool TopLevelClass) {
-  assert((TopLevelClass || !ClassStack.empty()) &&
+void Parser::PushParsingClass(DeclPtrTy ClassDecl, bool NonNestedClass) {
+  assert((NonNestedClass || !ClassStack.empty()) &&
          "Nested class without outer class");
-  ClassStack.push(new ParsingClass(ClassDecl, TopLevelClass));
+  ClassStack.push(new ParsingClass(ClassDecl, NonNestedClass));
 }
 
 /// \brief Deallocate the given parsed class and all of its nested
