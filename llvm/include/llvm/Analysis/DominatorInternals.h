@@ -262,29 +262,17 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
                                                                      DT.Info[W];
 
     // Step #2: Calculate the semidominators of all vertices
-    bool HasChildOutsideDFS = false;
 
     // initialize the semi dominator to point to the parent node
     WInfo.Semi = WInfo.Parent;
     for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType CI =
          GraphTraits<Inverse<NodeT> >::child_begin(W),
-         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI) {
+         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI)
       if (DT.Info.count(*CI)) {  // Only if this predecessor is reachable!
         unsigned SemiU = DT.Info[Eval<GraphT>(DT, *CI)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
-      else {
-        // if the child has no DFS number it is not post-dominated by any exit, 
-        // and so is the current block.
-        HasChildOutsideDFS = true;
-      }
-    }
-
-    // if some child has no DFS number it is not post-dominated by any exit, 
-    // and so is the current block.
-    if (DT.isPostDominator() && HasChildOutsideDFS)
-      WInfo.Semi = 0;
 
     DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
 
