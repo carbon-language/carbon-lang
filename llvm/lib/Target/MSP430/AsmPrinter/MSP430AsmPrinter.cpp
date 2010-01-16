@@ -38,9 +38,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/ErrorHandling.h"
-
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -101,14 +99,16 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   const TargetData *TD = TM.getTargetData();
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
-  O << "\t.type\t" << name << ",@object\n";
+  O << "\t.type\t";
+  GVarSym->print(O, MAI);
+  O << ",@object\n";
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -119,10 +119,15 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasLocalLinkage())
-      O << "\t.local\t" << name << '\n';
+    if (GVar->hasLocalLinkage()) {
+      O << "\t.local\t";
+      GVarSym->print(O, MAI);
+      O << '\n';
+    }
 
-    O << MAI->getCOMMDirective()  << name << ',' << Size;
+    O << MAI->getCOMMDirective();
+    GVarSym->print(O, MAI);
+    O << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
       O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
 
@@ -141,7 +146,9 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << "\t.weak\t" << name << '\n';
+    O << "\t.weak\t";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -149,7 +156,9 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << name << '\n';
+    O << "\t.globl ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
@@ -161,7 +170,8 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   // Use 16-bit alignment by default to simplify bunch of stuff
   EmitAlignment(Align, GVar);
-  O << name << ":";
+  GVarSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -171,8 +181,11 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   EmitGlobalConstant(C);
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << name << ", " << Size << '\n';
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size\t";
+    GVarSym->print(O, MAI);
+    O << ", " << Size << '\n';
+  }
 }
 
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -190,20 +203,27 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << CurrentFnName << '\n';
+    O << "\t.globl\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
-    O << "\t.weak\t" << CurrentFnName << '\n';
+    O << "\t.weak\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.type\t" << CurrentFnName << ",@function\n"
-    << CurrentFnName << ":\n";
+  O << "\t.type\t";
+  CurrentFnSym->print(O, MAI);
+  O << ",@function\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 }
 
 bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -225,8 +245,13 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", .-";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
+  }
 
   // We didn't modify anything
   return false;
@@ -263,14 +288,14 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    std::string Name = Mang->getMangledName(MO.getGlobal());
     uint64_t Offset = MO.getOffset();
 
     O << (isMemOp ? '&' : '#');
     if (Offset)
       O << '(' << Offset << '+';
 
-    O << Name;
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    
     if (Offset)
       O << ')';
 
@@ -278,11 +303,8 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    std::string Name(MAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-
-    O << (isMemOp ? '&' : '#') << Name;
-
+    O << (isMemOp ? '&' : '#');
+    O << MAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
   default:

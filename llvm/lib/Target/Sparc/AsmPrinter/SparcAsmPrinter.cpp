@@ -138,7 +138,11 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // We didn't modify anything.
-  O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
+  O << "\t.size\t";
+  CurrentFnSym->print(O, MAI);
+  O << ", .-";
+  CurrentFnSym->print(O, MAI);
+  O << '\n';
   return false;
 }
 
@@ -156,7 +160,9 @@ void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
     // Function is externally visible
-    O << "\t.global\t" << CurrentFnName << '\n';
+    O << "\t.global\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -164,14 +170,18 @@ void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // Function is weak
-    O << "\t.weak\t" << CurrentFnName << '\n' ;
+    O << "\t.weak\t";CurrentFnSym->print(O, MAI);
+    O << '\n' ;
     break;
   }
   
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
   
-  O << "\t.type\t" << CurrentFnName << ", #function\n";
-  O << CurrentFnName << ":\n";
+  O << "\t.type\t";
+  CurrentFnSym->print(O, MAI);
+  O << ", #function\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 }
 
 

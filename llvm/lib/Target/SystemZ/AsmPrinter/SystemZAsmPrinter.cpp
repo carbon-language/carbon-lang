@@ -99,20 +99,27 @@ void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << CurrentFnName << '\n';
+    O << "\t.globl\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
-    O << "\t.weak\t" << CurrentFnName << '\n';
+    O << "\t.weak\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.type\t" << CurrentFnName << ",@function\n"
-    << CurrentFnName << ":\n";
+  O << "\t.type\t";
+  CurrentFnSym->print(O, MAI);
+  O << ",@function\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 }
 
 bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -137,8 +144,13 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", .-";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
+  }
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);

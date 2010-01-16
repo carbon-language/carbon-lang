@@ -37,7 +37,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
@@ -45,7 +44,6 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
-
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -219,15 +217,23 @@ void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // 2 bits aligned
   EmitAlignment(MF.getAlignment(), F);
 
-  O << "\t.globl\t"  << CurrentFnName << '\n';
-  O << "\t.ent\t"    << CurrentFnName << '\n';
+  O << "\t.globl\t";
+  CurrentFnSym->print(O, MAI);
+  O << '\n';
+  O << "\t.ent\t";
+  CurrentFnSym->print(O, MAI);
+  O << '\n';
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
-  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
-    O << "\t.type\t"   << CurrentFnName << ", @function\n";
+  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux()) {
+    O << "\t.type\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", @function\n";
+  }
 
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 
   emitFrameDirective(MF);
   printSavedRegsBitmask(MF);
@@ -243,9 +249,16 @@ void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   O << "\t.set\tmacro\n"; 
   O << "\t.set\treorder\n"; 
 
-  O << "\t.end\t" << CurrentFnName << '\n';
-  if (MAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux())
-    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
+  O << "\t.end\t";
+  CurrentFnSym->print(O, MAI);
+  O << '\n';
+  if (MAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux()) {
+    O << "\t.size\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", .-";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
+  }
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -350,16 +363,16 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress:
-      O << Mang->getMangledName(MO.getGlobal());
+      GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
       break;
 
     case MachineOperand::MO_ExternalSymbol:
-      O << MO.getSymbolName();
+      GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
       break;
 
     case MachineOperand::MO_JumpTableIndex:
       O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getIndex();
+        << '_' << MO.getIndex();
       break;
 
     case MachineOperand::MO_ConstantPoolIndex:
@@ -436,7 +449,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
 
   O << "\n\n";
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   const Type *CTy = C->getType();
   unsigned Size = TD->getTypeAllocSize(CTy);
@@ -455,7 +468,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   } else
     Align = TD->getPreferredTypeAlignmentShift(CTy);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -465,10 +478,15 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasLocalLinkage())
-        O << "\t.local\t" << name << '\n';
+      if (GVar->hasLocalLinkage()) {
+        O << "\t.local\t";
+        GVarSym->print(O, MAI);
+        O << '\n';
+      }
 
-      O << MAI->getCOMMDirective() << name << ',' << Size;
+      O << MAI->getCOMMDirective();
+      GVarSym->print(O, MAI);
+      O << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
@@ -484,14 +502,18 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakODRLinkage:
     // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak " << name << '\n';
+    O << "\t.weak ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of their name
     // or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective() << name << '\n';
+    O << MAI->getGlobalDirective();
+    GVarSym->print(O, MAI);
+    O << '\n';
     // Fall Through
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -512,11 +534,16 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   EmitAlignment(Align, GVar);
 
   if (MAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
-    O << "\t.type " << name << ",@object\n";
-    O << "\t.size " << name << ',' << Size << '\n';
+    O << "\t.type ";
+    GVarSym->print(O, MAI);
+    O << ",@object\n";
+    O << "\t.size ";
+    GVarSym->print(O, MAI);
+    O << ',' << Size << '\n';
   }
 
-  O << name << ":\n";
+  GVarSym->print(O, MAI);
+  O << ":\n";
   EmitGlobalConstant(C);
 }
 

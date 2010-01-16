@@ -256,7 +256,9 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << CurrentFnName << "\n";
+    O << "\t.globl\t";
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
     break;
   case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
@@ -264,29 +266,38 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t" << CurrentFnName << "\n";
-      O << "\t.weak_definition\t" << CurrentFnName << "\n";
+      O << "\t.globl\t";
+      CurrentFnSym->print(O, MAI);
+      O << "\n";
+      O << "\t.weak_definition\t";
+      CurrentFnSym->print(O, MAI);
+      O << "\n";
     } else {
-      O << MAI->getWeakRefDirective() << CurrentFnName << "\n";
+      O << MAI->getWeakRefDirective();
+      CurrentFnSym->print(O, MAI);
+      O << "\n";
     }
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
   unsigned FnAlign = 1 << MF.getAlignment();  // MF alignment is log2.
   if (AFI->isThumbFunction()) {
     EmitAlignment(FnAlign, F, AFI->getAlign());
     O << "\t.code\t16\n";
     O << "\t.thumb_func";
-    if (Subtarget->isTargetDarwin())
-      O << "\t" << CurrentFnName;
+    if (Subtarget->isTargetDarwin()) {
+      O << "\t";
+      CurrentFnSym->print(O, MAI);
+    }
     O << "\n";
   } else {
     EmitAlignment(FnAlign, F);
   }
 
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
 
@@ -313,8 +324,13 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size ";
+    CurrentFnSym->print(O, MAI);
+    O << ", .-";
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
+  }
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);

@@ -641,34 +641,47 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.global\t" << CurrentFnName << '\n'
-      << "\t.type\t" << CurrentFnName << ", @function\n";
+    O << "\t.global\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n' << "\t.type\t";
+    CurrentFnSym->print(O, MAI);
+    O << ", @function\n";
     break;
   case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << "\t.global\t" << CurrentFnName << '\n';
-    O << "\t.weak\t" << CurrentFnName << '\n';
+    O << "\t.global\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
+    O << "\t.weak\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
   EmitAlignment(MF.getAlignment(), F);
 
   if (Subtarget.isPPC64()) {
     // Emit an official procedure descriptor.
-    // FIXME 64-bit SVR4: Use MCSection here?
+    // FIXME 64-bit SVR4: Use MCSection here!
     O << "\t.section\t\".opd\",\"aw\"\n";
     O << "\t.align 3\n";
-    O << CurrentFnName << ":\n";
-    O << "\t.quad .L." << CurrentFnName << ",.TOC.@tocbase\n";
+    CurrentFnSym->print(O, MAI);
+    O  << ":\n";
+    O << "\t.quad .L.";
+    CurrentFnSym->print(O, MAI);
+    O << ",.TOC.@tocbase\n";
     O << "\t.previous\n";
-    O << ".L." << CurrentFnName << ":\n";
+    O << ".L.";
+    CurrentFnSym->print(O, MAI);
+    O << ":\n";
   } else {
-    O << CurrentFnName << ":\n";
+    CurrentFnSym->print(O, MAI);
+    O  << ":\n";
   }
 
   // Emit pre-function debug information.
@@ -688,7 +701,11 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size\t" << CurrentFnName << ",.-" << CurrentFnName << '\n';
+  O << "\t.size\t";
+  CurrentFnSym->print(O, MAI);
+  O << ",.-";
+  CurrentFnSym->print(O, MAI);
+  O << '\n';
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
@@ -829,22 +846,29 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << CurrentFnName << '\n';
+    O << "\t.globl\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::LinkerPrivateLinkage:
-    O << "\t.globl\t" << CurrentFnName << '\n';
-    O << "\t.weak_definition\t" << CurrentFnName << '\n';
+    O << "\t.globl\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
+    O << "\t.weak_definition\t";
+    CurrentFnSym->print(O, MAI);
+    O << '\n';
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
   EmitAlignment(MF.getAlignment(), F);
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);

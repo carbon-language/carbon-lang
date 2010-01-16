@@ -147,22 +147,29 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::PrivateLinkage:
   case Function::LinkerPrivateLinkage:
     break;
-   case Function::ExternalLinkage:
-     O << "\t.globl " << CurrentFnName << "\n";
-     break;
+  case Function::ExternalLinkage:
+    O << "\t.globl ";
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
+    break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << MAI->getWeakRefDirective() << CurrentFnName << "\n";
+    O << MAI->getWeakRefDirective();
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
     break;
   }
 
-  printVisibility(CurrentFnName, F->getVisibility());
+  printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.ent " << CurrentFnName << "\n";
+  O << "\t.ent ";
+  CurrentFnSym->print(O, MAI);
+  O << "\n";
 
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -184,7 +191,9 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.end " << CurrentFnName << "\n";
+  O << "\t.end ";
+  CurrentFnSym->print(O, MAI);
+  O << "\n";
 
   // We didn't modify anything.
   return false;

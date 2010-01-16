@@ -69,10 +69,9 @@ namespace {
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                         unsigned AsmVariant, const char *ExtraCode);
 
-    void emitGlobalDirective(const std::string &name);
-    void emitExternDirective(const std::string &name);
+    void emitGlobalDirective(const MCSymbol *Sym);
     
-    void emitArrayBound(const std::string &name, const GlobalVariable *GV);
+    void emitArrayBound(const MCSymbol *Sym, const GlobalVariable *GV);
     virtual void PrintGlobalVariable(const GlobalVariable *GV);
 
     void emitFunctionStart(MachineFunction &MF);
@@ -95,35 +94,31 @@ namespace {
 
 #include "XCoreGenAsmWriter.inc"
 
-void XCoreAsmPrinter::
-emitGlobalDirective(const std::string &name)
-{
-  O << MAI->getGlobalDirective() << name;
+void XCoreAsmPrinter::emitGlobalDirective(const MCSymbol *Sym) {
+  O << MAI->getGlobalDirective();
+  Sym->print(O, MAI);
   O << "\n";
 }
 
-void XCoreAsmPrinter::
-emitExternDirective(const std::string &name)
-{
-  O << "\t.extern\t" << name;
-  O << '\n';
-}
-
-void XCoreAsmPrinter::
-emitArrayBound(const std::string &name, const GlobalVariable *GV)
-{
+void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
+                                     const GlobalVariable *GV) {
   assert(((GV->hasExternalLinkage() ||
     GV->hasWeakLinkage()) ||
     GV->hasLinkOnceLinkage()) && "Unexpected linkage");
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
-    cast<PointerType>(GV->getType())->getElementType()))
-  {
-    O << MAI->getGlobalDirective() << name << ".globound" << "\n";
-    O << MAI->getSetDirective() << name << ".globound" << ","
+    cast<PointerType>(GV->getType())->getElementType())) {
+    O << MAI->getGlobalDirective();
+    Sym->print(O, MAI);
+    O << ".globound" << "\n";
+    O << MAI->getSetDirective();
+    Sym->print(O, MAI);
+    O << ".globound" << ","
       << ATy->getNumElements() << "\n";
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
-      O << MAI->getWeakDefDirective() << name << ".globound" << "\n";
+      O << MAI->getWeakDefDirective();
+      Sym->print(O, MAI);
+      O << ".globound" << "\n";
     }
   }
 }
@@ -135,15 +130,19 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     return;
 
   const TargetData *TD = TM.getTargetData();
-  
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,TM));
+
   
-  std::string name = Mang->getMangledName(GV);
+  MCSymbol *GVSym = GetGlobalValueSymbol(GV);
   Constant *C = GV->getInitializer();
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
   // Mark the start of the global
-  O << "\t.cc_top " << name << ".data," << name << "\n";
+  O << "\t.cc_top ";
+  GVSym->print(O, MAI);
+  O << ".data,";
+  GVSym->print(O, MAI);
+  O << "\n";
 
   switch (GV->getLinkage()) {
   case GlobalValue::AppendingLinkage:
@@ -153,11 +152,13 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::ExternalLinkage:
-    emitArrayBound(name, GV);
-    emitGlobalDirective(name);
+    emitArrayBound(GVSym, GV);
+    emitGlobalDirective(GVSym);
     // TODO Use COMDAT groups for LinkOnceLinkage
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
-      O << MAI->getWeakDefDirective() << name << "\n";
+      O << MAI->getWeakDefDirective();
+      GVSym->print(O, MAI);
+      O << "\n";
     }
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
@@ -181,10 +182,15 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     Size *= MaxThreads;
   }
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << name << ",@object\n";
-    O << "\t.size " << name << "," << Size << "\n";
+    O << "\t.type ";
+    GVSym->print(O, MAI);
+    O << ",@object\n";
+    O << "\t.size ";
+    GVSym->print(O, MAI);
+    O << "," << Size << "\n";
   }
-  O << name << ":\n";
+  GVSym->print(O, MAI);
+  O << ":\n";
   
   EmitGlobalConstant(C);
   if (GV->isThreadLocal()) {
@@ -199,7 +205,9 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   }
   
   // Mark the end of the global
-  O << "\t.cc_bottom " << name << ".data\n";
+  O << "\t.cc_bottom ";
+  GVSym->print(O, MAI);
+  O << ".data\n";
 }
 
 /// Emit the directives on the start of functions
@@ -210,7 +218,11 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   
   // Mark the start of the function
-  O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";
+  O << "\t.cc_top ";
+  CurrentFnSym->print(O, MAI);
+  O << ".function,";
+  CurrentFnSym->print(O, MAI);
+  O << "\n";
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -219,31 +231,38 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    emitGlobalDirective(CurrentFnName);
+    emitGlobalDirective(CurrentFnSym);
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // TODO Use COMDAT groups for LinkOnceLinkage
-    O << MAI->getGlobalDirective() << CurrentFnName << "\n";
-    O << MAI->getWeakDefDirective() << CurrentFnName << "\n";
+    O << MAI->getGlobalDirective();
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
+    O << MAI->getWeakDefDirective();
+    CurrentFnSym->print(O, MAI);
+    O << "\n";
     break;
   }
   // (1 << 1) byte aligned
   EmitAlignment(MF.getAlignment(), F, 1);
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << CurrentFnName << ",@function\n";
+    O << "\t.type ";
+    CurrentFnSym->print(O, MAI);
+    O << ",@function\n";
   }
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O  << ":\n";
 }
 
 /// Emit the directives on the end of functions
-void XCoreAsmPrinter::
-emitFunctionEnd(MachineFunction &MF) 
-{
+void XCoreAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   // Mark the end of the function
-  O << "\t.cc_bottom " << CurrentFnName << ".function\n";
+  O << "\t.cc_bottom ";
+  CurrentFnSym->print(O, MAI);
+  O << ".function\n";
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

@@ -39,7 +39,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -329,30 +328,25 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.
     if (TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(MAI->getGlobalPrefix()); Name += MO.getSymbolName();
-      O << "L" << Name << "$non_lazy_ptr";
+      O << "L" << MAI->getGlobalPrefix() << MO.getSymbolName()
+        << "$non_lazy_ptr";
       return;
     }
-    O << MAI->getGlobalPrefix() << MO.getSymbolName();
+    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
     return;
-  case MachineOperand::MO_GlobalAddress: {
-    // Computing the address of a global symbol, not calling it.
-    GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
-
+  case MachineOperand::MO_GlobalAddress:
     // External or weakly linked global variables need non-lazily-resolved
     // stubs
     if (TM.getRelocationModel() != Reloc::Static) {
+      GlobalValue *GV = MO.getGlobal();
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
-        O << "L" << Name << "$non_lazy_ptr";
+        GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr")->print(O, MAI);
         return;
       }
     }
-    O << Name;
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
     return;
-  }
-
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
     return;
@@ -505,9 +499,9 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
@@ -524,14 +518,23 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
-        O << "\t.global " << name << '\n';
-        O << "\t.type " << name << ", @object\n";
-        O << name << ":\n";
+        O << "\t.global ";
+        GVarSym->print(O, MAI);
+        O << '\n';
+        O << "\t.type ";
+        GVarSym->print(O, MAI);
+        O << ", @object\n";
+        GVarSym->print(O, MAI);
+        O << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << name << ',' << Size;
+        O << MAI->getLCOMMDirective();
+        GVarSym->print(O, MAI);
+        O << ',' << Size;
       } else {
-        O << ".comm " << name << ',' << Size;
+        O << ".comm ";
+        GVarSym->print(O, MAI);
+        O << ',' << Size;
       }
       O << "\t\t" << MAI->getCommentString() << " '";
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -540,34 +543,42 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   switch (GVar->getLinkage()) {
-    // Should never be seen for the CellSPU platform...
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonLinkage:
-    O << "\t.global " << name << '\n'
-      << "\t.type " << name << ", @object\n"
-      << "\t.weak " << name << '\n';
+  // Should never be seen for the CellSPU platform...
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::CommonLinkage:
+    O << "\t.global ";
+    GVarSym->print(O, MAI);
+    O << "\n\t.type ";
+    GVarSym->print(O, MAI);
+    O << ", @object\n" << "\t.weak ";
+    GVarSym->print(O, MAI);
+    O << '\n';
     break;
-   case GlobalValue::AppendingLinkage:
+  case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
+  case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.global " << name << '\n'
-      << "\t.type " << name << ", @object\n";
-    // FALL THROUGH
-   case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
-   case GlobalValue::InternalLinkage:
+    O << "\t.global ";
+    GVarSym->print(O, MAI);
+    O << "\n\t.type ";
+    GVarSym->print(O, MAI);
+    O << ", @object\n";
     break;
-   default:
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+  case GlobalValue::InternalLinkage:
+    break;
+  default:
     llvm_report_error("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":\t\t\t\t" << MAI->getCommentString() << " '";
+  GVarSym->print(O, MAI);
+  O << ":\t\t\t\t" << MAI->getCommentString() << " '";
   WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   O << "'\n";
 
