@@ -83,33 +83,24 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
 
     const MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
-    if (StubSym == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = Ctx.GetOrCreateSymbol(Name.str());
-    }
+    if (StubSym == 0)
+      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     const MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
-    if (StubSym == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = Ctx.GetOrCreateSymbol(Name.str());
-    }
+    if (StubSym == 0)
+      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
-    if (StubSym == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = Ctx.GetOrCreateSymbol(Name.str());
-    }
+    if (StubSym == 0)
+      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
   }
   // FIXME: These probably should be a modifier on the symbol or something??

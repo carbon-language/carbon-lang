@@ -22,7 +22,6 @@
 #include "llvm/MC/MCInst.h"
 //#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
@@ -40,33 +39,24 @@ MachineModuleInfoMachO &ARMMCInstLower::getMachOMMI() const {
 
 MCSymbol *ARMMCInstLower::
 GetGlobalAddressSymbol(const MachineOperand &MO) const {
-  const GlobalValue *GV = MO.getGlobal();
-  
-  SmallString<128> Name;
-  Mang.getNameWithPrefix(Name, GV, false);
-  
   // FIXME: HANDLE PLT references how??
   switch (MO.getTargetFlags()) {
   default: assert(0 && "Unknown target flag on GV operand");
   case 0: break;
   }
   
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Printer.GetGlobalValueSymbol(MO.getGlobal());
 }
 
 MCSymbol *ARMMCInstLower::
 GetExternalSymbolSymbol(const MachineOperand &MO) const {
-  SmallString<128> Name;
-  Name += Printer.MAI->getGlobalPrefix();
-  Name += MO.getSymbolName();
-  
   // FIXME: HANDLE PLT references how??
   switch (MO.getTargetFlags()) {
   default: assert(0 && "Unknown target flag on GV operand");
   case 0: break;
   }
   
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Printer.GetExternalSymbolSymbol(MO.getSymbolName());
 }
 
 

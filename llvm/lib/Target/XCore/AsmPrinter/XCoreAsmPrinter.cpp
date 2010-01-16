@@ -37,7 +37,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cctype>
@@ -340,7 +339,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

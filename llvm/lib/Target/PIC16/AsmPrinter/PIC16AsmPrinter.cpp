@@ -29,7 +29,6 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 #include <cstring>
 using namespace llvm;
 
@@ -185,24 +184,22 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress: {
-      std::string Sname = Mang->getMangledName(MO.getGlobal());
+      MCSymbol *Sym = GetGlobalValueSymbol(MO.getGlobal());
       // FIXME: currently we do not have a memcpy def coming in the module
       // by any chance, as we do not link in those as .bc lib. So these calls
       // are always external and it is safe to emit an extern.
-      if (PAN::isMemIntrinsic(Sname)) {
-        LibcallDecls.push_back(createESName(Sname));
-      }
+      if (PAN::isMemIntrinsic(Sym->getName()))
+        LibcallDecls.push_back(createESName(Sym->getName()));
 
-      O << Sname;
+      Sym->print(O, MAI);
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
        const char *Sname = MO.getSymbolName();
 
       // If its a libcall name, record it to decls section.
-      if (PAN::getSymbolTag(Sname) == PAN::LIBCALL) {
+      if (PAN::getSymbolTag(Sname) == PAN::LIBCALL)
         LibcallDecls.push_back(Sname);
-      }
 
       // Record a call to intrinsic to print the extern declaration for it.
       std::string Sym = Sname;  
@@ -211,7 +208,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
         LibcallDecls.push_back(createESName(Sym));
       }
 
-      O  << Sym;
+      O << Sym;
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
@@ -317,16 +314,14 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
  // Emit declarations for external functions.
   O <<"\n"<<MAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
-    if (I->isIntrinsic())
-      continue;
-
-    std::string Name = Mang->getMangledName(I);
-    if (Name.compare("@abort") == 0)
+    if (I->isIntrinsic() || I->getName() == "@abort")
       continue;
     
     if (!I->isDeclaration() && !I->hasExternalLinkage())
       continue;
 
+    MCSymbol *Sym = GetGlobalValueSymbol(I);
+    
     // Do not emit memcpy, memset, and memmove here.
     // Calls to these routines can be generated in two ways,
     // 1. User calling the standard lib function
@@ -335,14 +330,14 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
     // second case the call is via and externalsym and the prototype is missing.
     // So declarations for these are currently always getting printing by
     // tracking both kind of references in printInstrunction.
-    if (I->isDeclaration() && PAN::isMemIntrinsic(Name)) continue;
+    if (I->isDeclaration() && PAN::isMemIntrinsic(Sym->getName())) continue;
 
     const char *directive = I->isDeclaration() ? MAI->getExternDirective() :
                                                  MAI->getGlobalDirective();
       
-    O << directive << Name << "\n";
-    O << directive << PAN::getRetvalLabel(Name) << "\n";
-    O << directive << PAN::getArgsLabel(Name) << "\n";
+    O << directive << Sym->getName() << "\n";
+    O << directive << PAN::getRetvalLabel(Sym->getName()) << "\n";
+    O << directive << PAN::getArgsLabel(Sym->getName()) << "\n";
   }
 
   O << MAI->getCommentString() << "Function Declarations - END." <<"\n";
@@ -355,7 +350,9 @@ void PIC16AsmPrinter::EmitUndefinedVars(Module &M) {
 
   O << "\n" << MAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << MAI->getExternDirective() << Mang->getMangledName(Items[j]) << "\n";
+    O << MAI->getExternDirective();
+    GetGlobalValueSymbol(Items[j])->print(O, MAI);
+    O << "\n";
   }
   O << MAI->getCommentString() << "Imported Variables - END" << "\n";
 }
@@ -367,7 +364,9 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
 
   O << "\n" << MAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << MAI->getGlobalDirective() << Mang->getMangledName(Items[j]) << "\n";
+    O << MAI->getGlobalDirective();
+    GetGlobalValueSymbol(Items[j])->print(O, MAI);
+    O << "\n";
   }
   O <<  MAI->getCommentString() << "Exported Variables - END" << "\n";
 }
@@ -392,7 +391,6 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 
 void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  std::string FuncName = Mang->getMangledName(F);
   const TargetData *TD = TM.getTargetData();
   // Emit the data section name.
   O << "\n"; 
@@ -446,10 +444,9 @@ void PIC16AsmPrinter::EmitInitializedDataSection(const PIC16Section *S) {
 
     std::vector<const GlobalVariable*> Items = S->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
-      std::string Name = Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       int AddrSpace = Items[j]->getType()->getAddressSpace();
-      O << Name;
+      GetGlobalValueSymbol(Items[j])->print(O, MAI);
       EmitGlobalConstant(C, AddrSpace);
    }
 }
@@ -465,11 +462,11 @@ EmitUninitializedDataSection(const PIC16Section *S) {
     OutStreamer.SwitchSection(S);
     std::vector<const GlobalVariable*> Items = S->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
-      std::string Name = Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypeAllocSize(Ty);
-      O << Name << " RES " << Size << "\n";
+      GetGlobalValueSymbol(Items[j])->print(O, MAI);
+      O << " RES " << Size << "\n";
     }
 }
 
