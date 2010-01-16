@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-
 // PR5057
 namespace test0 {
   namespace std {
@@ -107,3 +106,20 @@ namespace test5 {
     template <typename T> friend struct cache;
   };
 }
+
+// PR6022
+namespace PR6022 {
+  template <class T1, class T2 , class T3  > class A;
+
+  namespace inner {
+    template<class T1, class T2, class T3, class T> 
+    A<T1, T2, T3>& f0(A<T1, T2, T3>&, T);
+  } 
+
+  template<class T1, class T2, class T3>
+  class A {
+    template<class U1, class U2, class U3, class T>  
+    friend A<U1, U2, U3>& inner::f0(A<U1, U2, U3>&, T);
+  };
+}
+
