@@ -19,10 +19,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DomPrinter.h"
-#include "llvm/Pass.h"
-#include "llvm/Function.h"
-#include "llvm/Analysis/CFGPrinter.h"
+
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DOTGraphTraitsPass.h"
 #include "llvm/Analysis/PostDominators.h"
 
 using namespace llvm;
@@ -110,29 +109,29 @@ struct GenericGraphViewer : public FunctionPass {
 };
 
 struct DomViewer
-  : public GenericGraphViewer<DominatorTree, false> {
+  : public DOTGraphTraitsViewer<DominatorTree, false> {
   static char ID;
-  DomViewer() : GenericGraphViewer<DominatorTree, false>("dom", &ID){}
+  DomViewer() : DOTGraphTraitsViewer<DominatorTree, false>("dom", &ID){}
 };
 
 struct DomOnlyViewer
-  : public GenericGraphViewer<DominatorTree, true> {
+  : public DOTGraphTraitsViewer<DominatorTree, true> {
   static char ID;
-  DomOnlyViewer() : GenericGraphViewer<DominatorTree, true>("domonly", &ID){}
+  DomOnlyViewer() : DOTGraphTraitsViewer<DominatorTree, true>("domonly", &ID){}
 };
 
 struct PostDomViewer
-  : public GenericGraphViewer<PostDominatorTree, false> {
+  : public DOTGraphTraitsViewer<PostDominatorTree, false> {
   static char ID;
   PostDomViewer() :
-    GenericGraphViewer<PostDominatorTree, false>("postdom", &ID){}
+    DOTGraphTraitsViewer<PostDominatorTree, false>("postdom", &ID){}
 };
 
 struct PostDomOnlyViewer
-  : public GenericGraphViewer<PostDominatorTree, true> {
+  : public DOTGraphTraitsViewer<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyViewer() :
-    GenericGraphViewer<PostDominatorTree, true>("postdomonly", &ID){}
+    DOTGraphTraitsViewer<PostDominatorTree, true>("postdomonly", &ID){}
 };
 } // end anonymous namespace
 
@@ -155,67 +154,30 @@ RegisterPass<PostDomOnlyViewer> D("view-postdom-only",
                                   "(with no function bodies)");
 
 namespace {
-template <class Analysis, bool OnlyBBS>
-struct GenericGraphPrinter : public FunctionPass {
-
-  std::string Name;
-
-  GenericGraphPrinter(std::string GraphName, const void *ID)
-    : FunctionPass(ID) {
-    Name = GraphName;
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    Analysis *Graph;
-    std::string Filename = Name + "." + F.getNameStr() + ".dot";
-    errs() << "Writing '" << Filename << "'...";
-
-    std::string ErrorInfo;
-    raw_fd_ostream File(Filename.c_str(), ErrorInfo);
-    Graph = &getAnalysis<Analysis>();
-
-    std::string Title, GraphName;
-    GraphName = DOTGraphTraits<Analysis*>::getGraphName(Graph);
-    Title = GraphName + " for '" + F.getNameStr() + "' function";
-
-    if (ErrorInfo.empty())
-      WriteGraph(File, Graph, OnlyBBS, Name, Title);
-    else
-      errs() << "  error opening file for writing!";
-    errs() << "\n";
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<Analysis>();
-  }
-};
-
 struct DomPrinter
-  : public GenericGraphPrinter<DominatorTree, false> {
+  : public DOTGraphTraitsPrinter<DominatorTree, false> {
   static char ID;
-  DomPrinter() : GenericGraphPrinter<DominatorTree, false>("dom", &ID) {}
+  DomPrinter() : DOTGraphTraitsPrinter<DominatorTree, false>("dom", &ID) {}
 };
 
 struct DomOnlyPrinter
-  : public GenericGraphPrinter<DominatorTree, true> {
+  : public DOTGraphTraitsPrinter<DominatorTree, true> {
   static char ID;
-  DomOnlyPrinter() : GenericGraphPrinter<DominatorTree, true>("domonly", &ID) {}
+  DomOnlyPrinter() : DOTGraphTraitsPrinter<DominatorTree, true>("domonly", &ID) {}
 };
 
 struct PostDomPrinter
-  : public GenericGraphPrinter<PostDominatorTree, false> {
+  : public DOTGraphTraitsPrinter<PostDominatorTree, false> {
   static char ID;
   PostDomPrinter() :
-    GenericGraphPrinter<PostDominatorTree, false>("postdom", &ID) {}
+    DOTGraphTraitsPrinter<PostDominatorTree, false>("postdom", &ID) {}
 };
 
 struct PostDomOnlyPrinter
-  : public GenericGraphPrinter<PostDominatorTree, true> {
+  : public DOTGraphTraitsPrinter<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyPrinter() :
-    GenericGraphPrinter<PostDominatorTree, true>("postdomonly", &ID) {}
+    DOTGraphTraitsPrinter<PostDominatorTree, true>("postdomonly", &ID) {}
 };
 } // end anonymous namespace
 
