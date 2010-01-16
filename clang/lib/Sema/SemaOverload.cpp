@@ -4585,7 +4585,7 @@ void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
 SourceLocation GetLocationForCandidate(const OverloadCandidate *Cand) {
   if (Cand->Function)
     return Cand->Function->getLocation();
-  if (Cand->Surrogate)
+  if (Cand->IsSurrogate)
     return Cand->Surrogate->getLocation();
   return SourceLocation();
 }
@@ -4596,6 +4596,9 @@ struct CompareOverloadCandidatesForDisplay {
 
   bool operator()(const OverloadCandidate *L,
                   const OverloadCandidate *R) {
+    // Fast-path this check.
+    if (L == R) return false;
+
     // Order first by viability.
     if (L->Viable) {
       if (!R->Viable) return true;
