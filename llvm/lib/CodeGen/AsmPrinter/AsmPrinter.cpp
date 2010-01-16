@@ -192,7 +192,7 @@ bool AsmPrinter::doFinalization(Module &M) {
         Name->print(O, MAI);
         O << '\n';
       } else {
-        assert(!I->hasLocalLinkage() && "Invalid alias linkage");
+        assert(I->hasLocalLinkage() && "Invalid alias linkage");
       }
 
       printVisibility(Name, I->getVisibility());
