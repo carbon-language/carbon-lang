@@ -178,21 +178,30 @@ bool AsmPrinter::doFinalization(Module &M) {
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
-      std::string Name = Mang->getMangledName(I);
+      MCSymbol *Name = GetGlobalValueSymbol(I);
 
       const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
-      std::string Target = Mang->getMangledName(GV);
+      MCSymbol *Target = GetGlobalValueSymbol(GV);
 
-      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
-        O << "\t.globl\t" << Name << '\n';
-      else if (I->hasWeakLinkage())
-        O << MAI->getWeakRefDirective() << Name << '\n';
-      else if (!I->hasLocalLinkage())
-        llvm_unreachable("Invalid alias linkage");
+      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective()) {
+        O << "\t.globl\t";
+        Name->print(O, MAI);
+        O << '\n';
+      } else if (I->hasWeakLinkage()) {
+        O << MAI->getWeakRefDirective();
+        Name->print(O, MAI);
+        O << '\n';
+      } else {
+        assert(!I->hasLocalLinkage() && "Invalid alias linkage");
+      }
 
       printVisibility(Name, I->getVisibility());
 
-      O << MAI->getSetDirective() << ' ' << Name << ", " << Target << '\n';
+      O << MAI->getSetDirective() << ' ';
+      Name->print(O, MAI);
+      O << ", ";
+      Target->print(O, MAI);
+      O << '\n';
     }
   }
 
@@ -1843,17 +1852,6 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
       O << MAI->getData32bitsDirective(AddrSpace);
     }
     break;
-  }
-}
-
-void AsmPrinter::printVisibility(const std::string& Name,
-                                 unsigned Visibility) const {
-  if (Visibility == GlobalValue::HiddenVisibility) {
-    if (const char *Directive = MAI->getHiddenDirective())
-      O << Directive << Name << '\n';
-  } else if (Visibility == GlobalValue::ProtectedVisibility) {
-    if (const char *Directive = MAI->getProtectedDirective())
-      O << Directive << Name << '\n';
   }
 }
 

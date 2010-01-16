@@ -35,7 +35,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Mangler.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -184,9 +183,7 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum){
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
-
-    O << Name;
+    GetGlobalValueSymbol(GV)->print(O, MAI);
 
     // Assemble calls via PLT for externally visible symbols if PIC.
     if (TM.getRelocationModel() == Reloc::PIC_ &&
@@ -250,17 +247,11 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
     printOffset(MO.getOffset());
     break;
-  case MachineOperand::MO_GlobalAddress: {
-    const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
-
-    O << Name;
+  case MachineOperand::MO_GlobalAddress:
+    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
     break;
-  }
   case MachineOperand::MO_ExternalSymbol: {
-    std::string Name(MAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-    O << Name;
+    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
     break;
   }
   default:

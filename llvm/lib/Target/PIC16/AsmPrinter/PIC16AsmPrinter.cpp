@@ -128,7 +128,8 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnName) << ")\n";
 
   // Emit function start label.
-  O << CurrentFnName << ":\n";
+  CurrentFnSym->print(O, MAI);
+  O << ":\n";
 
   DebugLoc CurDL;
   O << "\n"; 
@@ -399,7 +400,8 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   // Emit the data section name.
   O << "\n"; 
   
-  PIC16Section *fPDataSection = const_cast<PIC16Section *>(getObjFileLowering().
+  PIC16Section *fPDataSection =
+    const_cast<PIC16Section *>(getObjFileLowering().
                                 SectionForFrame(CurrentFnName));
  
   fPDataSection->setColor(getFunctionColor(F)); 
