@@ -84,9 +84,7 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     break;
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl\t" << CurrentFnName << '\n';
     break;
   case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -94,41 +92,30 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t";
-      CurrentFnSym->print(O, MAI);
-      O << '\n';
-      O << MAI->getWeakDefDirective();
-      CurrentFnSym->print(O, MAI);
-      O << '\n';
+      O << "\t.globl\t" << CurrentFnName << '\n';
+      O << MAI->getWeakDefDirective() << CurrentFnName << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      O << "\t.globl\t";
-      CurrentFnSym->print(O, MAI);
-      O << "\n\t.linkonce discard\n";
+      O << "\t.globl\t" << CurrentFnName << "\n"
+           "\t.linkonce discard\n";
     } else {
-      O << "\t.weak\t";
-      CurrentFnSym->print(O, MAI);
-      O << '\n';
+      O << "\t.weak\t" << CurrentFnName << '\n';
     }
     break;
   }
 
-  printVisibility(CurrentFnSym, F->getVisibility());
+  printVisibility(CurrentFnName, F->getVisibility());
 
-  if (Subtarget->isTargetELF()) {
-    O << "\t.type\t";
-    CurrentFnSym->print(O, MAI);
-    O << ",@function\n";
-  } else if (Subtarget->isTargetCygMing()) {
-    O << "\t.def\t ";
-    CurrentFnSym->print(O, MAI);
-    O << ";\t.scl\t" <<
+  if (Subtarget->isTargetELF())
+    O << "\t.type\t" << CurrentFnName << ",@function\n";
+  else if (Subtarget->isTargetCygMing()) {
+    O << "\t.def\t " << CurrentFnName
+      << ";\t.scl\t" <<
       (F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT)
       << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
       << ";\t.endef\n";
   }
 
-  CurrentFnSym->print(O, MAI);
-  O << ':';
+  O << CurrentFnName << ':';
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -138,11 +125,8 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   // Add some workaround for linkonce linkage on Cygwin\MinGW
   if (Subtarget->isTargetCygMing() &&
-      (F->hasLinkOnceLinkage() || F->hasWeakLinkage())) {
-    O << "Lllvm$workaround$fake$stub$";
-    CurrentFnSym->print(O, MAI);
-    O << ":\n";
-  }
+      (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
+    O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -199,13 +183,8 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\tnop\n";
   }
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", .-";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
   // Emit post-function debug information.
   if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
