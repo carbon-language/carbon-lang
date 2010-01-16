@@ -556,6 +556,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(0);
   }
 
+  case Builtin::BI__builtin_llvm_memory_barrier: {
+    Value *C[5] = {
+      EmitScalarExpr(E->getArg(0)),
+      EmitScalarExpr(E->getArg(1)),
+      EmitScalarExpr(E->getArg(2)),
+      EmitScalarExpr(E->getArg(3)),
+      EmitScalarExpr(E->getArg(4))
+    };
+    Builder.CreateCall(CGM.getIntrinsic(Intrinsic::memory_barrier), C, C + 5);
+    return RValue::get(0);
+  }
+      
     // Library functions with special handling.
   case Builtin::BIsqrt:
   case Builtin::BIsqrtf:
