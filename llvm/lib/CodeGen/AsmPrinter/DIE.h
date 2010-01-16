@@ -25,6 +25,7 @@ namespace llvm {
   class AsmPrinter;
   class Dwarf;
   class TargetData;
+  class MCSymbol;
 
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
@@ -333,10 +334,10 @@ namespace llvm {
   /// DIEObjectLabel - A label to an object in code or data.
   //
   class DIEObjectLabel : public DIEValue {
-    const std::string Label;
+    const MCSymbol *Sym;
   public:
-    explicit DIEObjectLabel(const std::string &L)
-      : DIEValue(isAsIsLabel), Label(L) {}
+    explicit DIEObjectLabel(const MCSymbol *S)
+      : DIEValue(isAsIsLabel), Sym(S) {}
 
     /// EmitValue - Emit label value.
     ///

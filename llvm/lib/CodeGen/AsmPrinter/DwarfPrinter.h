@@ -28,6 +28,7 @@ namespace llvm {
   class MCAsmInfo;
   class TargetData;
   class TargetRegisterInfo;
+  class MCSymbol;
 
   class Dwarf {
   protected:
@@ -122,6 +123,8 @@ namespace llvm {
                        bool IsPCRelative = false,
                        bool Force32Bit = false) const;
     void EmitReference(const std::string &Name, bool IsPCRelative = false,
+                       bool Force32Bit = false) const;
+    void EmitReference(const MCSymbol *Sym, bool IsPCRelative = false,
                        bool Force32Bit = false) const;
 
     /// EmitDifference - Emit the difference between two labels.  Some

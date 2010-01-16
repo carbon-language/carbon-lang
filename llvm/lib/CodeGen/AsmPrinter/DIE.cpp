@@ -15,6 +15,7 @@
 #include "DwarfPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -276,7 +277,7 @@ void DIEDwarfLabel::print(raw_ostream &O) {
 ///
 void DIEObjectLabel::EmitValue(Dwarf *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitReference(Label, false, IsSmall);
+  D->EmitReference(Sym, false, IsSmall);
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -288,7 +289,7 @@ unsigned DIEObjectLabel::SizeOf(const TargetData *TD, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIEObjectLabel::print(raw_ostream &O) {
-  O << "Obj: " << Label;
+  O << "Obj: " << Sym->getName();
 }
 #endif
 

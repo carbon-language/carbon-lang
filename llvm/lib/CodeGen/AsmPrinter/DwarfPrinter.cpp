@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -73,6 +74,13 @@ void Dwarf::EmitReference(const std::string &Name, bool IsPCRelative,
                           bool Force32Bit) const {
   PrintRelDirective(Force32Bit);
   O << Name;
+  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
+}
+
+void Dwarf::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
+                          bool Force32Bit) const {
+  PrintRelDirective(Force32Bit);
+  Sym->print(O, MAI);
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
 

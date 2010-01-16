@@ -256,7 +256,7 @@ class DwarfDebug : public Dwarf {
   /// addObjectLabel - Add an non-Dwarf label attribute data and value.
   ///
   void addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                      const std::string &Label);
+                      const MCSymbol *Sym);
 
   /// addSectionOffset - Add a section offset label attribute data and value.
   ///

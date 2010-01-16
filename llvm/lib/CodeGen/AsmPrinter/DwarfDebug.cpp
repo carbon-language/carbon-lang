@@ -361,8 +361,8 @@ void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
 /// addObjectLabel - Add an non-Dwarf label attribute data and value.
 ///
 void DwarfDebug::addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                                const std::string &Label) {
-  DIEValue *Value = new DIEObjectLabel(Label);
+                                const MCSymbol *Sym) {
+  DIEValue *Value = new DIEObjectLabel(Sym);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
 }
@@ -1665,14 +1665,14 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                   Asm->Mang->getMangledName(DI_GV.getGlobal()));
+                   Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
     ModuleCU->addDie(VariableSpecDIE);
   } else {
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                   Asm->Mang->getMangledName(DI_GV.getGlobal()));
+                   Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
     addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
   }
   addToContextOwner(VariableDie, GVContext);
