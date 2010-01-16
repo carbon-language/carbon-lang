@@ -65,6 +65,7 @@ namespace {
                                                SourceLocation SuperLoc,
                                                const DeclPtrTy *ProtoRefs,
                                                unsigned NumProtocols,
+                                               const SourceLocation *ProtoLocs,
                                                SourceLocation EndProtoLoc,
                                                AttributeList *AttrList) {
       Out << __FUNCTION__ << "\n";
@@ -72,7 +73,8 @@ namespace {
                                                      ClassName, ClassLoc,
                                                      SuperName, SuperLoc,
                                                      ProtoRefs, NumProtocols,
-                                                     EndProtoLoc, AttrList);
+                                                     ProtoLocs, EndProtoLoc,
+                                                     AttrList);
     }
 
     /// ActOnForwardClassDeclaration -

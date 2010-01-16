@@ -2110,6 +2110,7 @@ public:
                                              SourceLocation SuperLoc,
                                              const DeclPtrTy *ProtoRefs,
                                              unsigned NumProtoRefs,
+                                             const SourceLocation *ProtoLocs,
                                              SourceLocation EndProtoLoc,
                                              AttributeList *AttrList) {
     return DeclPtrTy();
@@ -2131,6 +2132,7 @@ public:
                                                 SourceLocation ProtocolLoc,
                                                 const DeclPtrTy *ProtoRefs,
                                                 unsigned NumProtoRefs,
+                                                const SourceLocation *ProtoLocs,
                                                 SourceLocation EndProtoLoc,
                                                 AttributeList *AttrList) {
     return DeclPtrTy();
@@ -2144,6 +2146,7 @@ public:
                                                 SourceLocation CategoryLoc,
                                                 const DeclPtrTy *ProtoRefs,
                                                 unsigned NumProtoRefs,
+                                                const SourceLocation *ProtoLocs,
                                                 SourceLocation EndProtoLoc) {
     return DeclPtrTy();
   }
@@ -2771,6 +2774,7 @@ public:
                                              SourceLocation SuperLoc,
                                              const DeclPtrTy *ProtoRefs,
                                              unsigned NumProtoRefs,
+                                             const SourceLocation *ProtoLocs,
                                              SourceLocation EndProtoLoc,
                                              AttributeList *AttrList);
 };

@@ -37,6 +37,21 @@ void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
   memcpy(List, InList, sizeof(void*)*Elts);
 }
 
+void ObjCProtocolList::set(ObjCProtocolDecl* const* InList, unsigned Elts, 
+                           const SourceLocation *Locs, ASTContext &Ctx) {
+  if (Elts == 0)
+    return;
+
+  Locations = new (Ctx) SourceLocation[Elts];
+  memcpy(Locations, Locs, sizeof(SourceLocation) * Elts);
+  set(InList, Elts, Ctx);
+}
+
+void ObjCProtocolList::Destroy(ASTContext &Ctx) {
+  Ctx.Deallocate(Locations);
+  Locations = 0;
+  ObjCList<ObjCProtocolDecl>::Destroy(Ctx);
+}
 
 //===----------------------------------------------------------------------===//
 // ObjCInterfaceDecl
@@ -141,16 +156,18 @@ ObjCContainerDecl::FindPropertyVisibleInPrimaryClass(
 
 void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
                               ObjCProtocolDecl *const* ExtList, unsigned ExtNum,
+                              const SourceLocation *Locs,
                               ASTContext &C)
 {
   if (ReferencedProtocols.empty()) {
-    ReferencedProtocols.set(ExtList, ExtNum, C);
+    ReferencedProtocols.set(ExtList, ExtNum, Locs, C);
     return;
   }
   // Check for duplicate protocol in class's protocol list.
   // This is (O)2. But it is extremely rare and number of protocols in
   // class or its extension are very few.
   llvm::SmallVector<ObjCProtocolDecl*, 8> ProtocolRefs;
+  llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
   for (unsigned i = 0; i < ExtNum; i++) {
     bool protocolExists = false;
     ObjCProtocolDecl *ProtoInExtension = ExtList[i];
@@ -164,18 +181,23 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
     }
     // Do we want to warn on a protocol in extension class which
     // already exist in the class? Probably not.
-    if (!protocolExists)
+    if (!protocolExists) {
       ProtocolRefs.push_back(ProtoInExtension);
+      ProtocolLocs.push_back(Locs[i]);
+    }
   }
   if (ProtocolRefs.empty())
     return;
   // Merge ProtocolRefs into class's protocol list;
+  protocol_loc_iterator pl = protocol_loc_begin();
   for (protocol_iterator p = protocol_begin(), e = protocol_end();
-       p != e; p++)
+       p != e; ++p, ++pl) {
     ProtocolRefs.push_back(*p);
+    ProtocolLocs.push_back(*pl);
+  }
   ReferencedProtocols.Destroy(C);
   unsigned NumProtoRefs = ProtocolRefs.size();
-  setProtocolList((ObjCProtocolDecl**)&ProtocolRefs[0], NumProtoRefs, C);
+  setProtocolList(ProtocolRefs.data(), NumProtoRefs, ProtocolLocs.data(), C);
 }
 
 ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
@@ -627,9 +649,9 @@ SourceRange ObjCClassDecl::getSourceRange() const {
 ObjCForwardProtocolDecl::
 ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                         ObjCProtocolDecl *const *Elts, unsigned nElts,
-                        ASTContext &C)
+                        const SourceLocation *Locs, ASTContext &C)
 : Decl(ObjCForwardProtocol, DC, L) {
-  ReferencedProtocols.set(Elts, nElts, C);
+  ReferencedProtocols.set(Elts, nElts, Locs, C);
 }
 
 
@@ -637,8 +659,9 @@ ObjCForwardProtocolDecl *
 ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L,
                                 ObjCProtocolDecl *const *Elts,
-                                unsigned NumElts) {
-  return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, C);
+                                unsigned NumElts,
+                                const SourceLocation *Locs) {
+  return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, Locs, C);
 }
 
 void ObjCForwardProtocolDecl::Destroy(ASTContext &C) {

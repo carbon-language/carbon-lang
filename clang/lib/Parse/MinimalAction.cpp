@@ -204,6 +204,7 @@ MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                         SourceLocation SuperLoc,
                                         const DeclPtrTy *ProtoRefs,
                                         unsigned NumProtocols,
+                                        const SourceLocation *ProtoLocs,
                                         SourceLocation EndProtoLoc,
                                         AttributeList *AttrList) {
   // Allocate and add the 'TypeNameInfo' "decl".

@@ -223,7 +223,12 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   Protocols.reserve(NumProtocols);
   for (unsigned I = 0; I != NumProtocols; ++I)
     Protocols.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  ID->setProtocolList(Protocols.data(), NumProtocols, *Reader.getContext());
+  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  ProtoLocs.reserve(NumProtocols);
+  for (unsigned I = 0; I != NumProtocols; ++I)
+    ProtoLocs.push_back(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  ID->setProtocolList(Protocols.data(), NumProtocols, ProtoLocs.data(),
+                      *Reader.getContext());
   unsigned NumIvars = Record[Idx++];
   llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
@@ -253,7 +258,12 @@ void PCHDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, *Reader.getContext());
+  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  ProtoLocs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoLocs.push_back(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
+                      *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
@@ -282,7 +292,12 @@ void PCHDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  FPD->setProtocolList(ProtoRefs.data(), NumProtoRefs, *Reader.getContext());
+  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  ProtoLocs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoLocs.push_back(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  FPD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
+                       *Reader.getContext());
 }
 
 void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
@@ -293,7 +308,12 @@ void PCHDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(cast<ObjCProtocolDecl>(Reader.GetDecl(Record[Idx++])));
-  CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, *Reader.getContext());
+  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  ProtoLocs.reserve(NumProtoRefs);
+  for (unsigned I = 0; I != NumProtoRefs; ++I)
+    ProtoLocs.push_back(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
+                      *Reader.getContext());
   CD->setNextClassCategory(cast_or_null<ObjCCategoryDecl>(Reader.GetDecl(Record[Idx++])));
   CD->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

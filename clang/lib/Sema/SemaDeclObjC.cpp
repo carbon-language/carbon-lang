@@ -81,6 +81,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                          IdentifierInfo *ClassName, SourceLocation ClassLoc,
                          IdentifierInfo *SuperName, SourceLocation SuperLoc,
                          const DeclPtrTy *ProtoRefs, unsigned NumProtoRefs,
+                         const SourceLocation *ProtoLocs, 
                          SourceLocation EndProtoLoc, AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
 
@@ -201,7 +202,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   /// Check then save referenced protocols.
   if (NumProtoRefs) {
     IDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
-                           Context);
+                           ProtoLocs, Context);
     IDecl->setLocEnd(EndProtoLoc);
   }
 
@@ -279,6 +280,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                   SourceLocation ProtocolLoc,
                                   const DeclPtrTy *ProtoRefs,
                                   unsigned NumProtoRefs,
+                                  const SourceLocation *ProtoLocs,
                                   SourceLocation EndProtoLoc,
                                   AttributeList *AttrList) {
   // FIXME: Deal with AttrList.
@@ -312,7 +314,8 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     ProcessDeclAttributeList(TUScope, PDecl, AttrList);
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
-    PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,Context);
+    PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
+                           ProtoLocs, Context);
     PDecl->setLocEnd(EndProtoLoc);
   }
 
@@ -559,6 +562,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       unsigned NumElts,
                                       AttributeList *attrList) {
   llvm::SmallVector<ObjCProtocolDecl*, 32> Protocols;
+  llvm::SmallVector<SourceLocation, 8> ProtoLocs;
 
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
@@ -571,11 +575,13 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     if (attrList)
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
     Protocols.push_back(PDecl);
+    ProtoLocs.push_back(IdentList[i].second);
   }
 
   ObjCForwardProtocolDecl *PDecl =
     ObjCForwardProtocolDecl::Create(Context, CurContext, AtProtocolLoc,
-                                    &Protocols[0], Protocols.size());
+                                    Protocols.data(), Protocols.size(),
+                                    ProtoLocs.data());
   CurContext->addDecl(PDecl);
   CheckObjCDeclScope(PDecl);
   return DeclPtrTy::make(PDecl);
@@ -588,6 +594,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             SourceLocation CategoryLoc,
                             const DeclPtrTy *ProtoRefs,
                             unsigned NumProtoRefs,
+                            const SourceLocation *ProtoLocs,
                             SourceLocation EndProtoLoc) {
   ObjCCategoryDecl *CDecl =
     ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, CategoryName);
@@ -623,12 +630,13 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
 
   if (NumProtoRefs) {
     CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs, 
-                           Context);
+                           ProtoLocs, Context);
     CDecl->setLocEnd(EndProtoLoc);
     // Protocols in the class extension belong to the class.
     if (!CDecl->getIdentifier())
      IDecl->mergeClassExtensionProtocolList((ObjCProtocolDecl**)ProtoRefs, 
-                                            NumProtoRefs,Context); 
+                                            NumProtoRefs, ProtoLocs,
+                                            Context); 
   }
 
   CheckObjCDeclScope(CDecl);

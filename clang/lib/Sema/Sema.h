@@ -3312,6 +3312,7 @@ public:
                                              SourceLocation SuperLoc,
                                              const DeclPtrTy *ProtoRefs,
                                              unsigned NumProtoRefs,
+                                             const SourceLocation *ProtoLocs,
                                              SourceLocation EndProtoLoc,
                                              AttributeList *AttrList);
 
@@ -3329,6 +3330,7 @@ public:
                     SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     const DeclPtrTy *ProtoRefNames, unsigned NumProtoRefs,
+                    const SourceLocation *ProtoLocs,
                     SourceLocation EndProtoLoc,
                     AttributeList *AttrList);
 
@@ -3339,6 +3341,7 @@ public:
                                                 SourceLocation CategoryLoc,
                                                 const DeclPtrTy *ProtoRefs,
                                                 unsigned NumProtoRefs,
+                                                const SourceLocation *ProtoLocs,
                                                 SourceLocation EndProtoLoc);
 
   virtual DeclPtrTy ActOnStartClassImplementation(

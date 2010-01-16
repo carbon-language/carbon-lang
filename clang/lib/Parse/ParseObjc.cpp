@@ -186,6 +186,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
                                           categoryId, categoryLoc,
                                           ProtocolRefs.data(),
                                           ProtocolRefs.size(),
+                                          ProtocolLocs.data(),
                                           EndProtoLoc);
 
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
@@ -224,6 +225,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     Actions.ActOnStartClassInterface(atLoc, nameId, nameLoc,
                                      superClassId, superClassLoc,
                                      ProtocolRefs.data(), ProtocolRefs.size(),
+                                     ProtocolLocs.data(),
                                      EndProtoLoc, attrList);
 
   if (Tok.is(tok::l_brace))
@@ -1127,6 +1129,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     Actions.ActOnStartProtocolInterface(AtLoc, protocolName, nameLoc,
                                         ProtocolRefs.data(),
                                         ProtocolRefs.size(),
+                                        ProtocolLocs.data(),
                                         EndProtoLoc, attrList);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
   return ProtoType;
