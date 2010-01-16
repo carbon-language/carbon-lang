@@ -128,11 +128,11 @@ class BumpPtrAllocator {
   /// one.
   void DeallocateSlabs(MemSlab *Slab);
 
-  static MallocSlabAllocator &GetDefaultSlabAllocator();
+  static MallocSlabAllocator DefaultSlabAllocator;
 
 public:
   BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
-                   SlabAllocator &allocator = GetDefaultSlabAllocator());
+                   SlabAllocator &allocator = DefaultSlabAllocator);
   ~BumpPtrAllocator();
 
   /// Reset - Deallocate all but the current slab and reset the current pointer
