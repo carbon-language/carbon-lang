@@ -90,6 +90,21 @@ cxcursor::getCursorObjCSuperClassRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
+CXCursor cxcursor::MakeCursorObjCProtocolRef(ObjCProtocolDecl *Super, 
+                                             SourceLocation Loc) {
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_ObjCProtocolRef, { Super, RawLoc, 0 } };
+  return C;    
+}
+
+std::pair<ObjCProtocolDecl *, SourceLocation> 
+cxcursor::getCursorObjCProtocolRef(CXCursor C) {
+  assert(C.kind == CXCursor_ObjCProtocolRef);
+  return std::make_pair(static_cast<ObjCProtocolDecl *>(C.data[0]),
+           SourceLocation::getFromRawEncoding(
+                                      reinterpret_cast<uintptr_t>(C.data[1])));
+}
+
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
   return (Decl *)Cursor.data[0];
 }
@@ -99,7 +114,8 @@ Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
 }
 
 Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
-  if (Cursor.kind == CXCursor_ObjCSuperClassRef)
+  if (Cursor.kind == CXCursor_ObjCSuperClassRef ||
+      Cursor.kind == CXCursor_ObjCProtocolRef)
     return 0;
 
   return (Stmt *)Cursor.data[1];

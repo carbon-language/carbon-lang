@@ -262,7 +262,10 @@ void CDeclVisitor::VisitFunctionDecl(FunctionDecl *ND) {
 void CDeclVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
   // Issue callbacks for the containing class.
   Call(CXCursor_ObjCClassRef, ND);
-  // FIXME: Issue callbacks for protocol refs.
+  ObjCCategoryDecl::protocol_loc_iterator PL = ND->protocol_loc_begin();
+  for (ObjCCategoryDecl::protocol_iterator I = ND->protocol_begin(),
+         E = ND->protocol_end(); I != E; ++I, ++PL)
+    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
   VisitDeclContext(dyn_cast<DeclContext>(ND));
 }
 
@@ -282,9 +285,10 @@ void CDeclVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                          D->getSuperClassLoc()), 
              CData);
   
-  for (ObjCProtocolDecl::protocol_iterator I = D->protocol_begin(),
-       E = D->protocol_end(); I != E; ++I)
-    Call(CXCursor_ObjCProtocolRef, *I);
+  ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
+  for (ObjCInterfaceDecl::protocol_iterator I = D->protocol_begin(),
+         E = D->protocol_end(); I != E; ++I, ++PL)
+    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
   VisitDeclContext(dyn_cast<DeclContext>(D));
 }
 
@@ -307,9 +311,10 @@ void CDeclVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
 }
 
 void CDeclVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+  ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
   for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
-       E = PID->protocol_end(); I != E; ++I)
-    Call(CXCursor_ObjCProtocolRef, *I);
+         E = PID->protocol_end(); I != E; ++I, ++PL)
+    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
   
   VisitDeclContext(dyn_cast<DeclContext>(PID));
 }
@@ -346,12 +351,8 @@ static SourceLocation getLocationFromCursor(CXCursor C,
     }
     case CXCursor_ObjCSuperClassRef:
       return getCursorObjCSuperClassRef(C).second;
-
-    case CXCursor_ObjCProtocolRef: {
-      ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
-      assert(OID && "clang_getCursorLine(): Missing protocol decl");
-      return OID->getLocation();
-    }
+    case CXCursor_ObjCProtocolRef:
+      return getCursorObjCProtocolRef(C).second;
     case CXCursor_ObjCSelectorRef: {
       ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
       assert(OME && "clang_getCursorLine(): Missing message expr");
@@ -776,7 +777,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
                             ->getNameStart());
     }
     case CXCursor_ObjCProtocolRef: {
-      ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
+      ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
       assert(OID && "clang_getCursorLine(): Missing protocol decl");
       return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
@@ -884,10 +885,8 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
         CXCursor C = { CXCursor_ObjCClassRef, { Dcl, ALoc.getParentDecl(), 0 }};
         return C;
       }
-      if (isa<ObjCProtocolDecl>(Dcl)) {
-        CXCursor C = {CXCursor_ObjCProtocolRef, {Dcl, ALoc.getParentDecl(), 0}};
-        return C;
-      }
+      if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(Dcl))
+        return MakeCursorObjCProtocolRef(Proto, ALoc.AsNamedRef().Loc);
     }
     return MakeCXCursor(Dcl);
   }
@@ -933,8 +932,7 @@ CXDecl clang_getCursorDecl(CXCursor C) {
 
   if (clang_isReference(C.kind)) {
     if (getCursorStmt(C)) {
-      if (C.kind == CXCursor_ObjCClassRef ||
-          C.kind == CXCursor_ObjCProtocolRef)
+      if (C.kind == CXCursor_ObjCClassRef)
         return getCursorStmt(C);
       else
         return getDeclFromExpr(getCursorStmt(C));

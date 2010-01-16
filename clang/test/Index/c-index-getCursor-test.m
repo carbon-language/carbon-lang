@@ -120,7 +120,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=47 start_col=2 end_line=47 end_col=3} TypedefDecl=id:0:0
 // CHECK: {start_line=47 start_col=4 end_line=47 end_col=4} FunctionDefn=main:44:5
 // CHECK: {start_line=47 start_col=5 end_line=47 end_col=5} VarDecl=c:47:12
-// CHECK: {start_line=47 start_col=6 end_line=47 end_col=9} ObjCProtocolRef=SubP:47:12
+// CHECK: {start_line=47 start_col=6 end_line=47 end_col=9} ObjCProtocolRef=SubP:27:1
 // CHECK: {start_line=47 start_col=10 end_line=47 end_col=10} VarDecl=c:47:12
 // CHECK: {start_line=47 start_col=11 end_line=47 end_col=11} FunctionDefn=main:44:5
 // CHECK: {start_line=47 start_col=12 end_line=47 end_col=15} VarDecl=c:47:12
@@ -129,7 +129,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=48 start_col=2 end_line=48 end_col=3} TypedefDecl=id:0:0
 // CHECK: {start_line=48 start_col=4 end_line=48 end_col=4} FunctionDefn=main:44:5
 // CHECK: {start_line=48 start_col=5 end_line=48 end_col=5} VarDecl=d:48:13
-// CHECK: {start_line=48 start_col=6 end_line=48 end_col=10} ObjCProtocolRef=Proto:48:13
+// CHECK: {start_line=48 start_col=6 end_line=48 end_col=10} ObjCProtocolRef=Proto:23:1
 // CHECK: {start_line=48 start_col=11 end_line=48 end_col=11} VarDecl=d:48:13
 // CHECK: {start_line=48 start_col=12 end_line=48 end_col=12} FunctionDefn=main:44:5
 // CHECK: {start_line=48 start_col=13 end_line=48 end_col=13} VarDecl=d:48:13

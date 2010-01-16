@@ -24,6 +24,7 @@ class Decl;
 class Expr;
 class NamedDecl;
 class ObjCInterfaceDecl;
+class ObjCProtocolDecl;
 class Stmt;
 
 namespace cxcursor {
@@ -39,7 +40,15 @@ CXCursor MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super,
 /// \brief Unpack an ObjCSuperClassRef cursor into the interface it references
 /// and optionally the location where the reference occurred.
 std::pair<ObjCInterfaceDecl *, SourceLocation> 
-getCursorObjCSuperClassRef(CXCursor C);
+  getCursorObjCSuperClassRef(CXCursor C);
+
+/// \brief Create an Objective-C protocol reference at the given location.
+CXCursor MakeCursorObjCProtocolRef(ObjCProtocolDecl *Proto, SourceLocation Loc);
+
+/// \brief Unpack an ObjCProtocolRef cursor into the protocol it references
+/// and optionally the location where the reference occurred.
+std::pair<ObjCProtocolDecl *, SourceLocation> 
+  getCursorObjCProtocolRef(CXCursor C);
 
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
