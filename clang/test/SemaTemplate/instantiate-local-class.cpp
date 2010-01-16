@@ -16,8 +16,11 @@ namespace PR5764 {
   class X {
     template <typename T>
     void Bar() {
+      typedef T ValueType;
       class Y {
-        Y() {}
+        Y() { V = ValueType(); }
+
+        ValueType V;
       };
 
       Y y;

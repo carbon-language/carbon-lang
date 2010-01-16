@@ -3165,13 +3165,17 @@ public:
     /// relevant to this particular scope).
     LocalInstantiationScope *Outer;
 
+    /// \brief Whether we have already exited this scope.
+    bool Exited;
+
     // This class is non-copyable
     LocalInstantiationScope(const LocalInstantiationScope &);
     LocalInstantiationScope &operator=(const LocalInstantiationScope &);
 
   public:
     LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
-      : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope) {
+      : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope), 
+        Exited(false) {
       if (!CombineWithOuterScope)
         SemaRef.CurrentInstantiationScope = this;
       else
@@ -3180,7 +3184,15 @@ public:
     }
 
     ~LocalInstantiationScope() {
+      if (!Exited)
+        SemaRef.CurrentInstantiationScope = Outer;
+    }
+
+    /// \brief Exit this local instantiation scope early.
+    void Exit() {
       SemaRef.CurrentInstantiationScope = Outer;
+      LocalDecls.clear();
+      Exited = true;
     }
 
     Decl *getInstantiationOf(const Decl *D) {
@@ -3227,7 +3239,16 @@ public:
   /// but have not yet been performed.
   std::deque<PendingImplicitInstantiation> PendingImplicitInstantiations;
 
-  void PerformPendingImplicitInstantiations();
+  /// \brief The queue of implicit template instantiations that are required
+  /// and must be performed within the current local scope.
+  ///
+  /// This queue is only used for member functions of local classes in
+  /// templates, which must be instantiated in the same scope as their
+  /// enclosing function, so that they can reference function-local
+  /// types, static variables, enumerators, etc.
+  std::deque<PendingImplicitInstantiation> PendingLocalImplicitInstantiations;
+
+  void PerformPendingImplicitInstantiations(bool LocalOnly = false);
 
   TypeSourceInfo *SubstType(TypeSourceInfo *T,
                             const MultiLevelTemplateArgumentList &TemplateArgs,

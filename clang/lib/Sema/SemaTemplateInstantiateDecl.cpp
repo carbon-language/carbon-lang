@@ -1653,8 +1653,14 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   ActOnStartOfFunctionDef(0, DeclPtrTy::make(Function));
 
   // Introduce a new scope where local variable instantiations will be
-  // recorded.
-  LocalInstantiationScope Scope(*this);
+  // recorded, unless we're actually a member function within a local
+  // class, in which case we need to merge our results with the parent
+  // scope (of the enclosing function).
+  bool MergeWithParentScope = false;
+  if (CXXRecordDecl *Rec = dyn_cast<CXXRecordDecl>(Function->getDeclContext()))
+    MergeWithParentScope = Rec->isLocalClass();
+
+  LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
   // Introduce the instantiated function parameters into the local
   // instantiation scope.
@@ -1690,6 +1696,11 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   DeclGroupRef DG(Function);
   Consumer.HandleTopLevelDecl(DG);
+
+  // This class may have local implicit instantiations that need to be
+  // instantiation within this scope.
+  PerformPendingImplicitInstantiations(/*LocalOnly=*/true);
+  Scope.Exit();
 
   if (Recursive) {
     // Instantiate any pending implicit instantiations found during the
@@ -2223,10 +2234,18 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
 
 /// \brief Performs template instantiation for all implicit template
 /// instantiations we have seen until this point.
-void Sema::PerformPendingImplicitInstantiations() {
-  while (!PendingImplicitInstantiations.empty()) {
-    PendingImplicitInstantiation Inst = PendingImplicitInstantiations.front();
-    PendingImplicitInstantiations.pop_front();
+void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
+  while (!PendingLocalImplicitInstantiations.empty() ||
+         (!LocalOnly && !PendingImplicitInstantiations.empty())) {
+    PendingImplicitInstantiation Inst;
+
+    if (PendingLocalImplicitInstantiations.empty()) {
+      Inst = PendingImplicitInstantiations.front();
+      PendingImplicitInstantiations.pop_front();
+    } else {
+      Inst = PendingLocalImplicitInstantiations.front();
+      PendingLocalImplicitInstantiations.pop_front();
+    }
 
     // Instantiate function definitions
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first)) {

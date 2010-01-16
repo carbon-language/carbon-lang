@@ -7215,8 +7215,15 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
           AlreadyInstantiated = true;
       }
       
-      if (!AlreadyInstantiated)
-        PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
+      if (!AlreadyInstantiated) {
+        if (isa<CXXRecordDecl>(Function->getDeclContext()) &&
+            cast<CXXRecordDecl>(Function->getDeclContext())->isLocalClass())
+          PendingLocalImplicitInstantiations.push_back(std::make_pair(Function,
+                                                                      Loc));
+        else
+          PendingImplicitInstantiations.push_back(std::make_pair(Function, 
+                                                                 Loc));
+      }
     }
     
     // FIXME: keep track of references to static functions
