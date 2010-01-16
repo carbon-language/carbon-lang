@@ -49,6 +49,7 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::ObjCMethod:
       return cast<ObjCMethodDecl>(D)->isInstanceMethod()
               ? CXCursor_ObjCInstanceMethodDecl : CXCursor_ObjCClassMethodDecl;
+    case Decl::ObjCProperty:       return CXCursor_ObjCPropertyDecl;
     case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
     case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
