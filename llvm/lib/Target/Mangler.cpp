@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Mangler.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"

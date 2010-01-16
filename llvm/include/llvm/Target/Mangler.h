@@ -15,7 +15,6 @@
 #define LLVM_SUPPORT_MANGLER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include <string>
 
 namespace llvm {
