@@ -65,14 +65,14 @@ namespace {
         Stub = LazyPtr = AnonSymbol = 0;
       }
       
-      void Init(const GlobalValue *GV, Mangler *Mang, MCContext &Ctx) {
+      void Init(const GlobalValue *GV, AsmPrinter *Printer) {
         // Already initialized.
         if (Stub != 0) return;
 
         // Get the names.
-        SmallString<128> TmpStr;
-        Mang->getNameWithPrefix(TmpStr, GV, true);
-        MakeSymbols(TmpStr, Ctx);
+        Stub = Printer->GetPrivateGlobalValueSymbolStub(GV, "$stub");
+        LazyPtr = Printer->GetPrivateGlobalValueSymbolStub(GV, "$lazy_ptr");
+        AnonSymbol = Printer->GetPrivateGlobalValueSymbolStub(GV, "$stub$tmp");
       }
 
       void Init(StringRef GVName, Mangler *Mang, MCContext &Ctx) {
@@ -81,10 +81,6 @@ namespace {
         // Get the names for the external symbol name.
         SmallString<128> TmpStr;
         Mang->getNameWithPrefix(TmpStr, GVName, Mangler::Private);
-        MakeSymbols(TmpStr, Ctx);
-      }
-      
-      void MakeSymbols(SmallString<128> &TmpStr, MCContext &Ctx) {
         TmpStr += "$stub";
         Stub = Ctx.GetOrCreateSymbol(TmpStr.str());
         TmpStr.erase(TmpStr.end()-5, TmpStr.end()); // Remove $stub
@@ -241,7 +237,7 @@ namespace {
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
             FnStubInfo &FnInfo = FnStubs[Mang->getMangledName(GV)];
-            FnInfo.Init(GV, Mang, OutContext);
+            FnInfo.Init(GV, this);
             FnInfo.Stub->print(O, MAI);
             return;
           }
