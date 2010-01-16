@@ -32,7 +32,6 @@
 #include "llvm/System/Signals.h"
 #include "llvm/System/TimeValue.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SlowOperationInformer.h"
 #include <cstdlib>
@@ -49,7 +48,6 @@ namespace {
       llvm::Module* M = new llvm::Module("", llvm::getGlobalContext());
       (void)new llvm::UnreachableInst(llvm::getGlobalContext());
       (void)    llvm::createVerifierPass(); 
-      (void) new llvm::Mangler(*M,"");
     }
   } ForceVMCoreLinking;
 }
