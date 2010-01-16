@@ -811,6 +811,7 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_UnionDecl: return "UnionDecl";
   case CXCursor_ClassDecl: return "ClassDecl";
   case CXCursor_FieldDecl: return "FieldDecl";
+  case CXCursor_FunctionDefn: return "FunctionDefn";
   case CXCursor_VarDecl: return "VarDecl";
   case CXCursor_ParmDecl: return "ParmDecl";
   case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
@@ -818,13 +819,13 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
   case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
   case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
+  case CXCursor_ObjCIvarRef: return "ObjCIvarRef";
   case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
-  case CXCursor_FunctionDefn: return "FunctionDefn";
   case CXCursor_ObjCInstanceMethodDefn: return "ObjCInstanceMethodDefn";
+  case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
   case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
   case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
-  case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
   case CXCursor_ObjCClassRef: return "ObjCClassRef";
@@ -838,8 +839,10 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_InvalidFile: return "InvalidFile";
   case CXCursor_NoDeclFound: return "NoDeclFound";
   case CXCursor_NotImplemented: return "NotImplemented";
-  default: return "<not implemented>";
   }
+  
+  llvm_unreachable("Unhandled CXCursorKind");
+  return NULL;
 }
 
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
@@ -901,8 +904,7 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
 
 CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  return MakeCXCursor(ND);
+  return MakeCXCursor(static_cast<NamedDecl *>(AnonDecl));
 }
 
 unsigned clang_isInvalid(enum CXCursorKind K) {
