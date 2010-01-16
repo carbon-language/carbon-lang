@@ -45,7 +45,7 @@ namespace {
       // to know that getenv() never returns -1, this will do the job.
       if (std::getenv("bar") != (char*) -1)
         return;
-      llvm::Module* M = new llvm::Module("", llvm::getGlobalContext());
+      (void)new llvm::Module("", llvm::getGlobalContext());
       (void)new llvm::UnreachableInst(llvm::getGlobalContext());
       (void)    llvm::createVerifierPass(); 
     }
