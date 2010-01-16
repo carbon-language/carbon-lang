@@ -223,7 +223,6 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// jump tables, constant pools, global address and external symbols, all of
 /// which print to a label with various suffixes for relocation types etc.
 void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
-  SmallString<128> TempNameStr;
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
@@ -260,39 +259,25 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
-      Mang->getNameWithPrefix(TempNameStr, GV, true);
-      TempNameStr += "$non_lazy_ptr";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
       
       const MCSymbol *&StubSym = 
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
-      if (StubSym == 0) {
-        TempNameStr.clear();
-        Mang->getNameWithPrefix(TempNameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
-      }
+      if (StubSym == 0)
+        StubSym = GetGlobalValueSymbol(GV);
+      
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      Mang->getNameWithPrefix(TempNameStr, GV, true);
-      TempNameStr += "$non_lazy_ptr";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$non_lazy_ptr");
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
-      if (StubSym == 0) {
-        TempNameStr.clear();
-        Mang->getNameWithPrefix(TempNameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
-      }
+      if (StubSym == 0)
+        StubSym = GetGlobalValueSymbol(GV);
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      Mang->getNameWithPrefix(TempNameStr, GV, true);
-      TempNameStr += "$stub";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      MCSymbol *Sym = GetPrivateGlobalValueSymbolStub(GV, "$stub");
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-      if (StubSym == 0) {
-        TempNameStr.clear();
-        Mang->getNameWithPrefix(TempNameStr, GV, false);
-        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
-      }
+      if (StubSym == 0)
+        StubSym = GetGlobalValueSymbol(GV);
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -310,9 +295,11 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case MachineOperand::MO_ExternalSymbol: {
     const MCSymbol *SymToPrint;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      Mang->getNameWithPrefix(TempNameStr,
-                              StringRef(MO.getSymbolName())+"$stub");
-      const MCSymbol *Sym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      SmallString<128> TempNameStr;
+      TempNameStr += StringRef(MO.getSymbolName());
+      TempNameStr += StringRef("$stub");
+      
+      const MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
@@ -321,8 +308,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       }
       SymToPrint = StubSym;
     } else {
-      Mang->getNameWithPrefix(TempNameStr, MO.getSymbolName());
-      SymToPrint = OutContext.GetOrCreateSymbol(TempNameStr.str());
+      SymToPrint = GetExternalSymbolSymbol(MO.getSymbolName());
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -707,16 +693,19 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   
   const TargetData *TD = TM.getTargetData();
 
-  std::string name = Mang->getMangledName(GVar);
+  MCSymbol *GVSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  printVisibility(name, GVar->getVisibility());
+  printVisibility(GVSym, GVar->getVisibility());
 
-  if (Subtarget->isTargetELF())
-    O << "\t.type\t" << name << ",@object\n";
+  if (Subtarget->isTargetELF()) {
+    O << "\t.type\t";
+    GVSym->print(O, MAI);
+    O << ",@object\n";
+  }
 
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
@@ -730,9 +719,12 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = MAI->getZeroFillDirective()) {
-        O << "\t.globl " << name << '\n';
-        O << Directive << "__DATA, __common, " << name << ", "
-          << Size << ", " << Align << '\n';
+        O << "\t.globl ";
+        GVSym->print(O, MAI);
+        O << '\n';
+        O << Directive << "__DATA, __common, ";
+        GVSym->print(O, MAI);
+        O << ", " << Size << ", " << Align << '\n';
         return;
       }
     }
@@ -743,14 +735,20 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
       if (MAI->getLCOMMDirective() != NULL) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective() << name << ',' << Size;
+          O << MAI->getLCOMMDirective();
+          GVSym->print(O, MAI);
+          O << ',' << Size;
           if (Subtarget->isTargetDarwin())
             O << ',' << Align;
         } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
-          O << "\t.globl " << name << '\n'
-            << MAI->getWeakDefDirective() << name << '\n';
+          O << "\t.globl ";
+          GVSym->print(O, MAI);
+          O << '\n' << MAI->getWeakDefDirective();
+          GVSym->print(O, MAI);
+          O << '\n';
           EmitAlignment(Align, GVar);
-          O << name << ":";
+          GVSym->print(O, MAI);
+          O << ":";
           if (VerboseAsm) {
             O.PadToColumn(MAI->getCommentColumn());
             O << MAI->getCommentString() << ' ';
@@ -760,16 +758,23 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           EmitGlobalConstant(C);
           return;
         } else {
-          O << MAI->getCOMMDirective()  << name << ',' << Size;
+          O << MAI->getCOMMDirective();
+          GVSym->print(O, MAI);
+          O << ',' << Size;
           if (MAI->getCOMMDirectiveTakesAlignment())
             O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
         if (!Subtarget->isTargetCygMing()) {
-          if (GVar->hasLocalLinkage())
-            O << "\t.local\t" << name << '\n';
+          if (GVar->hasLocalLinkage()) {
+            O << "\t.local\t";
+            GVSym->print(O, MAI);
+            O << '\n';
+          }
         }
-        O << MAI->getCOMMDirective()  << name << ',' << Size;
+        O << MAI->getCOMMDirective();
+        GVSym->print(O, MAI);
+        O << ',' << Size;
         if (MAI->getCOMMDirectiveTakesAlignment())
           O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
@@ -791,13 +796,19 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl " << name << '\n'
-        << MAI->getWeakDefDirective() << name << '\n';
+      O << "\t.globl ";
+      GVSym->print(O, MAI);
+      O << '\n' << MAI->getWeakDefDirective();
+      GVSym->print(O, MAI);
+      O << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      O << "\t.globl\t" << name << "\n"
-           "\t.linkonce same_size\n";
+      O << "\t.globl\t";
+      GVSym->print(O, MAI);
+      O << "\n\t.linkonce same_size\n";
     } else {
-      O << "\t.weak\t" << name << '\n';
+      O << "\t.weak\t";
+      GVSym->print(O, MAI);
+      O << '\n';
     }
     break;
   case GlobalValue::DLLExportLinkage:
@@ -806,7 +817,9 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << name << '\n';
+    O << "\t.globl ";
+    GVSym->print(O, MAI);
+    O << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
@@ -816,7 +829,8 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << name << ":";
+  GVSym->print(O, MAI);
+  O << ":";
   if (VerboseAsm){
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -826,8 +840,11 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   EmitGlobalConstant(C);
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << name << ", " << Size << '\n';
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.size\t";
+    GVSym->print(O, MAI);
+    O << ", " << Size << '\n';
+  }
 }
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
