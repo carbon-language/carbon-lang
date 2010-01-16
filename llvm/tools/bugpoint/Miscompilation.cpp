@@ -238,15 +238,12 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
 ///
 static void DisambiguateGlobalSymbols(Module *M) {
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
-    // Don't mangle asm names.
+       I != E; ++I)
     if (!I->hasName())
       I->setName("anon_global");
-  }
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->hasName())
       I->setName("anon_fn");
-  }
 }
 
 /// ExtractLoops - Given a reduced list of functions that still exposed the bug,
