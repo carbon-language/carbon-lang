@@ -31,5 +31,16 @@ __declspec(dllexport) extern "C" __declspec(dllexport) void XXXXBreakTheRewriter
 
 }
 
+@interface I
+{
+   id list;
+}
+- (void) Meth;
+@end
+
+@implementation I
+- (void) Meth { __attribute__((__blocks__(byref))) void ** listp = (void **)list; }
+@end
+
 // $CLANG -cc1 -fms-extensions -rewrite-objc -x objective-c++ -fblocks bug.mm
 // g++ -c -D"__declspec(X)=" bug.cpp

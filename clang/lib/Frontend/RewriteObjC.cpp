@@ -4536,8 +4536,13 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   ByrefType += " " + Name + ";\n";
   ByrefType += "};\n";
   // Insert this type in global scope. It is needed by helper function.
-  assert(CurFunctionDef && "RewriteByRefVar - CurFunctionDef is null");
-  SourceLocation FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
+  SourceLocation FunLocStart;
+  if (CurFunctionDef)
+     FunLocStart = CurFunctionDef->getTypeSpecStartLoc();
+  else {
+    assert(CurMethodDef && "RewriteByRefVar - CurMethodDef is null");
+    FunLocStart = CurMethodDef->getLocStart();
+  }
   InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
   if (Ty.isObjCGCWeak()) {
     flag |= BLOCK_FIELD_IS_WEAK;
@@ -4587,12 +4592,17 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
                 ByrefType.c_str(), ByrefType.size());
   }
   else {
-    SourceLocation startLoc = ND->getInit()->getLocStart();
+    SourceLocation startLoc;
+    Expr *E = ND->getInit();
+    if (const CStyleCastExpr *ECE = dyn_cast<CStyleCastExpr>(E))
+      startLoc = ECE->getLParenLoc();
+    else
+      startLoc = E->getLocStart();
     startLoc = SM->getInstantiationLoc(startLoc);
+    endBuf = SM->getCharacterData(startLoc);
+   
     ByrefType += " " + Name;
-    ReplaceText(DeclLoc, endBuf-startBuf, 
-                ByrefType.c_str(), ByrefType.size());
-    ByrefType = " = {(void*)";
+    ByrefType += " = {(void*)";
     ByrefType += utostr(isa);
     ByrefType += ", &" + Name + ", ";
     ByrefType += utostr(flags);
@@ -4607,7 +4617,8 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       ByrefType += utostr(flag);
       ByrefType += ", ";
     }
-    InsertText(startLoc, ByrefType.c_str(), ByrefType.size());
+    ReplaceText(DeclLoc, endBuf-startBuf, 
+                ByrefType.c_str(), ByrefType.size());
     
     // Complete the newly synthesized compound expression by inserting a right
     // curly brace before the end of the declaration.
