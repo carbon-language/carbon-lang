@@ -49,7 +49,7 @@ private:
 public:
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
-  Mangler(const MCAsmInfo &mai) : MAI(mai) {}
+  Mangler(const MCAsmInfo &mai) : MAI(mai), NextAnonGlobalID(0) {}
 
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't
