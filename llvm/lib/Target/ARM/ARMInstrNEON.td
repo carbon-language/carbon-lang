@@ -2116,7 +2116,7 @@ def  VACGTq   : N3VQInt<1, 0, 0b10, 0b1110, 1, IIC_VBINQ, "vacgt", "f32",
                         v4i32, v4f32, int_arm_neon_vacgtq, 0>;
 //   VTST     : Vector Test Bits
 defm VTST     : N3V_QHS<0, 0, 0b1000, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, 
-                        IIC_VBINi4Q, "vtst", "i", NEONvtst, 1>;
+                        IIC_VBINi4Q, "vtst", "", NEONvtst, 1>;
 
 // Vector Bitwise Operations.
 

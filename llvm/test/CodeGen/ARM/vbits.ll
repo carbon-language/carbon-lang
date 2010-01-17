@@ -442,7 +442,7 @@ define <2 x i64> @v_ornQi64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 
 define <8 x i8> @vtsti8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vtsti8:
-;CHECK: vtst.i8
+;CHECK: vtst.8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = and <8 x i8> %tmp1, %tmp2
@@ -453,7 +453,7 @@ define <8 x i8> @vtsti8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 
 define <4 x i16> @vtsti16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vtsti16:
-;CHECK: vtst.i16
+;CHECK: vtst.16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = and <4 x i16> %tmp1, %tmp2
@@ -464,7 +464,7 @@ define <4 x i16> @vtsti16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 
 define <2 x i32> @vtsti32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK: vtsti32:
-;CHECK: vtst.i32
+;CHECK: vtst.32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = and <2 x i32> %tmp1, %tmp2
@@ -475,7 +475,7 @@ define <2 x i32> @vtsti32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 
 define <16 x i8> @vtstQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vtstQi8:
-;CHECK: vtst.i8
+;CHECK: vtst.8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
 	%tmp3 = and <16 x i8> %tmp1, %tmp2
@@ -486,7 +486,7 @@ define <16 x i8> @vtstQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 
 define <8 x i16> @vtstQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vtstQi16:
-;CHECK: vtst.i16
+;CHECK: vtst.16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = and <8 x i16> %tmp1, %tmp2
@@ -497,7 +497,7 @@ define <8 x i16> @vtstQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 
 define <4 x i32> @vtstQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vtstQi32:
-;CHECK: vtst.i32
+;CHECK: vtst.32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
 	%tmp3 = and <4 x i32> %tmp1, %tmp2
