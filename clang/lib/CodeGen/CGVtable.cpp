@@ -1266,9 +1266,19 @@ class VTTBuilder {
                                  const CXXRecordDecl *VtableClass,
                                  const CXXRecordDecl *RD,
                                  uint64_t Offset) {
-    int64_t AddressPoint = 
-      (*AddressPoints[VtableClass])[std::make_pair(RD, Offset)];
+    uint64_t AddressPoint;
     
+    if (VtableClass != Class) {
+      // We have a ctor vtable, look for the address point in the ctor vtable
+      // address points.
+      AddressPoint = 
+        CtorVtableAddressPoints[std::make_pair(VtableClass, 
+                                               BaseSubobject(RD, Offset))];
+    } else { 
+      AddressPoint = 
+        (*AddressPoints[VtableClass])[std::make_pair(RD, Offset)];
+    }
+
     // FIXME: We can never have 0 address point.  Do this for now so gepping
     // retains the same structure.  Later we'll just assert.
     if (AddressPoint == 0)
