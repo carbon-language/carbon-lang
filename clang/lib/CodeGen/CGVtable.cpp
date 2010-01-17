@@ -1266,6 +1266,9 @@ class VTTBuilder {
                                  const CXXRecordDecl *VtableClass,
                                  const CXXRecordDecl *RD,
                                  uint64_t Offset) {
+    if (!GenerateDefinition)
+      return 0;
+
     uint64_t AddressPoint;
     
     if (VtableClass != Class) {
@@ -1330,17 +1333,14 @@ class VTTBuilder {
         // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *init;
         if (BaseMorallyVirtual)
-          init = GenerateDefinition ? 
-            BuildVtablePtr(vtbl, VtblClass, RD, Offset) : 0;
+          init = BuildVtablePtr(vtbl, VtblClass, RD, Offset);
         else {
-          init = GenerateDefinition ?
-            getCtorVtable(BaseSubobject(Base, BaseOffset)) : 0;
+          init = getCtorVtable(BaseSubobject(Base, BaseOffset));
           
           subvtbl = init;
           subVtblClass = Base;
           
-          init = GenerateDefinition ?
-          BuildVtablePtr(init, Class, Base, BaseOffset) : 0;
+          init = BuildVtablePtr(init, Class, Base, BaseOffset);
         }
         Inits.push_back(init);
       }
@@ -1359,16 +1359,14 @@ class VTTBuilder {
 
     // First comes the primary virtual table pointer...
     if (MorallyVirtual) {
-      Vtable = GenerateDefinition ? ClassVtbl : 0;
+      Vtable = ClassVtbl;
       VtableClass = Class;
     } else {
-      Vtable = GenerateDefinition ? 
-        getCtorVtable(BaseSubobject(RD, Offset)) : 0;
+      Vtable = getCtorVtable(BaseSubobject(RD, Offset));
       VtableClass = RD;
     }
     
-    llvm::Constant *Init = GenerateDefinition ?
-      BuildVtablePtr(Vtable, VtableClass, RD, Offset) : 0;
+    llvm::Constant *Init = BuildVtablePtr(Vtable, VtableClass, RD, Offset);
     Inits.push_back(Init);
 
     // then the secondary VTTs....
@@ -1428,9 +1426,9 @@ public:
       GenerateDefinition(GenerateDefinition) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = CGM.getVtableInfo().getVtable(Class);
-    llvm::Constant *Init = GenerateDefinition ? 
-      BuildVtablePtr(ClassVtbl, Class, Class, 0) : 0;
+    ClassVtbl = GenerateDefinition ? CGM.getVtableInfo().getVtable(Class) : 0;
+
+    llvm::Constant *Init = BuildVtablePtr(ClassVtbl, Class, Class, 0);
     Inits.push_back(Init);
     
     // then the secondary VTTs...
