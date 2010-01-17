@@ -407,7 +407,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     return Common;
 
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    // X udiv C^2 -> X >> C
+    // X udiv 2^C -> X >> C
     // Check to see if this is an unsigned division with an exact power of 2,
     // if so, convert to a right shift.
     if (C->getValue().isPowerOf2())  // 0 not included in isPowerOf2
