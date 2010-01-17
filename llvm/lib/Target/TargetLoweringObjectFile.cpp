@@ -579,18 +579,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    SmallString<128> Name, MangledName;
+    SmallString<128> Name;
     Name.append(Prefix, Prefix+strlen(Prefix));
     Mang->getNameWithPrefix(Name, GV, false);
-    
-    raw_svector_ostream OS(MangledName);
-    MCSymbol::printMangledName(Name, OS, 0);
-    OS.flush();
-    
-    return getELFSection(MangledName.str(),
-                         getELFSectionType(MangledName.str(), Kind),
-                         getELFSectionFlags(Kind),
-                         Kind);
+    return getELFSection(Name.str(), getELFSectionType(Name.str(), Kind),
+                         getELFSectionFlags(Kind), Kind);
   }
 
   if (Kind.isText()) return TextSection;

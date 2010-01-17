@@ -26,14 +26,6 @@ static bool isAcceptableChar(char C) {
   return true;
 }
 
-static char HexDigit(int V) {
-  return V < 10 ? V+'0' : V+'A'-10;
-}
-
-static void MangleLetter(raw_ostream &OS, unsigned char C) {
-  OS << '_' << HexDigit(C >> 4) << HexDigit(C & 15) << '_';
-}
-
 /// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
 /// for this assembler.
 static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
@@ -43,7 +35,7 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   // need quotes.
   if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9')
     return true;
-
+  
   // If any of the characters in the string is an unacceptable character, force
   // quotes.
   for (unsigned i = 0, e = Str.size(); i != e; ++i)
@@ -52,59 +44,14 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
   return false;
 }
 
-/// printMangledName - Print the specified string in mangled form if it uses
-/// any unusual characters.
-void MCSymbol::printMangledName(StringRef Str, raw_ostream &OS,
-                                const MCAsmInfo *MAI) {
-  // The first character is not allowed to be a number unless the target
-  // explicitly allows it.
-  if ((MAI == 0 || !MAI->doesAllowNameToStartWithDigit()) &&
-      Str[0] >= '0' && Str[0] <= '9') {
-    MangleLetter(OS, Str[0]);
-    Str = Str.substr(1);
-  }
-  
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    if (!isAcceptableChar(Str[i]))
-      MangleLetter(OS, Str[i]);
-    else
-      OS << Str[i];
-  }
-}
-
-/// PrintMangledQuotedName - On systems that support quoted symbols, we still
-/// have to escape some (obscure) characters like " and \n which would break the
-/// assembler's lexing.
-static void PrintMangledQuotedName(raw_ostream &OS, StringRef Str) {
-  OS << '"';
-
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    if (Str[i] == '"')
-      OS << "_QQ_";
-    else if (Str[i] == '\n')
-      OS << "_NL_";
-    else
-      OS << Str[i];
-  }
-  OS << '"';
-}
-
-
 void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
+  // The name for this MCSymbol is required to be a valid target name.  However,
+  // some targets support quoting names with funny characters.  If the name
+  // contains a funny character, then print it quoted.
   if (MAI == 0 || !NameNeedsEscaping(getName(), *MAI)) {
     OS << getName();
     return;
   }
-
-  // On systems that do not allow quoted names, print with mangling.
-  if (!MAI->doesAllowQuotesInName())
-    return printMangledName(getName(), OS, MAI);
-
-  // If the string contains a double quote or newline, we still have to mangle
-  // it.
-  if (getName().find('"') != std::string::npos ||
-      getName().find('\n') != std::string::npos)
-    return PrintMangledQuotedName(OS, getName());
     
   OS << '"' << getName() << '"';
 }

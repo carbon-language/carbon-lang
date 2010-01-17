@@ -18,6 +18,79 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
+static bool isAcceptableChar(char C) {
+  if ((C < 'a' || C > 'z') &&
+      (C < 'A' || C > 'Z') &&
+      (C < '0' || C > '9') &&
+      C != '_' && C != '$' && C != '.' && C != '@')
+    return false;
+  return true;
+}
+
+static char HexDigit(int V) {
+  return V < 10 ? V+'0' : V+'A'-10;
+}
+
+static void MangleLetter(SmallVectorImpl<char> &OutName, unsigned char C) {
+  OutName.push_back('_');
+  OutName.push_back(HexDigit(C >> 4));
+  OutName.push_back(HexDigit(C & 15));
+  OutName.push_back('_');
+}
+
+/// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
+/// for this assembler.
+static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
+  assert(!Str.empty() && "Cannot create an empty MCSymbol");
+  
+  // If the first character is a number and the target does not allow this, we
+  // need quotes.
+  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9')
+    return true;
+  
+  // If any of the characters in the string is an unacceptable character, force
+  // quotes.
+  for (unsigned i = 0, e = Str.size(); i != e; ++i)
+    if (!isAcceptableChar(Str[i]))
+      return true;
+  return false;
+}
+
+/// appendMangledName - Add the specified string in mangled form if it uses
+/// any unusual characters.
+void Mangler::appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
+                                const MCAsmInfo *MAI) {
+  // The first character is not allowed to be a number unless the target
+  // explicitly allows it.
+  if ((MAI == 0 || !MAI->doesAllowNameToStartWithDigit()) &&
+      Str[0] >= '0' && Str[0] <= '9') {
+    MangleLetter(OutName, Str[0]);
+    Str = Str.substr(1);
+  }
+  
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (!isAcceptableChar(Str[i]))
+      MangleLetter(OutName, Str[i]);
+    else
+      OutName.push_back(Str[i]);
+  }
+}
+
+
+/// appendMangledQuotedName - On systems that support quoted symbols, we still
+/// have to escape some (obscure) characters like " and \n which would break the
+/// assembler's lexing.
+static void appendMangledQuotedName(SmallVectorImpl<char> &OutName,
+                                   StringRef Str) {
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (Str[i] == '"' || Str[i] == '\n')
+      MangleLetter(OutName, Str[i]);
+    else
+      OutName.push_back(Str[i]);
+  }
+}
+
+
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
 /// and the specified name as the global variable name.  GVName must not be
 /// empty.
@@ -28,7 +101,9 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
   
   // If the global name is not led with \1, add the appropriate prefixes.
-  if (Name[0] != '\1') {
+  if (Name[0] == '\1') {
+    Name = Name.substr(1);
+  } else {
     if (PrefixTy == Mangler::Private) {
       const char *Prefix = MAI.getPrivateGlobalPrefix();
       OutName.append(Prefix, Prefix+strlen(Prefix));
@@ -44,11 +119,27 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
       OutName.push_back(Prefix[0]);  // Common, one character prefix.
     else
       OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary length prefix.
-  } else {
-    Name = Name.substr(1);
   }
   
-  OutName.append(Name.begin(), Name.end());
+  // If this is a simple string that doesn't need escaping, just append it.
+  if (!NameNeedsEscaping(Name, MAI) ||
+      // If quotes are supported, they can be used unless the string contains
+      // a quote or newline.
+      (MAI.doesAllowQuotesInName() &&
+       Name.find_first_of("\n\"") == StringRef::npos)) {
+    OutName.append(Name.begin(), Name.end());
+    return;
+  }
+  
+  // On systems that do not allow quoted names, we need to mangle most
+  // strange characters.
+  if (!MAI.doesAllowQuotesInName())
+    return appendMangledName(OutName, Name, &MAI);
+  
+  // Okay, the system allows quoted strings.  We can quote most anything, the
+  // only characters that need escaping are " and \n.
+  assert(Name.find_first_of("\n\"") != StringRef::npos);
+  return appendMangledQuotedName(OutName, Name);
 }
 
 

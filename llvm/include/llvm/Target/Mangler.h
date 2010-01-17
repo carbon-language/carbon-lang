@@ -18,6 +18,7 @@
 #include <string>
 
 namespace llvm {
+class StringRef;
 class Twine;
 class Value;
 class GlobalValue;
@@ -67,6 +68,11 @@ public:
   /// have a name, this fills in a unique name for the global.
   std::string getNameWithPrefix(const GlobalValue *GV,
                                 bool isImplicitlyPrivate = false);
+
+  /// appendMangledName - Add the specified string in mangled form if it uses
+  /// any unusual characters.
+  static void appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
+                                const MCAsmInfo *MAI);
 };
 
 } // End llvm namespace

@@ -352,10 +352,9 @@ char CWriter::ID = 0;
 
 
 static std::string Mangle(const std::string &S) {
-  std::string Result;
-  raw_string_ostream OS(Result);
-  MCSymbol::printMangledName(S, OS, 0);
-  return OS.str();
+  SmallString<52> Result;
+  Mangler::appendMangledName(Result, S, 0);
+  return std::string(Result.begin(), Result.end());
 }
 
 
@@ -1452,7 +1451,7 @@ std::string CWriter::GetValueName(const Value *Operand) {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand)) {
     SmallString<128> Str;
     Mang->getNameWithPrefix(Str, GV, false);
-    return Mangle(Str.str().str());
+    return Str.str().str();
   }
     
   std::string Name = Operand->getName();
