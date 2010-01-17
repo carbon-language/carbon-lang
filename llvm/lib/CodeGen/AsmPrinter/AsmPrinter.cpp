@@ -101,8 +101,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
     .Initialize(OutContext, TM);
   
-  Mang = new Mangler(M, MAI->getGlobalPrefix(), MAI->getPrivateGlobalPrefix(),
-                     MAI->getLinkerPrivateGlobalPrefix());
+  Mang = new Mangler(*MAI);
   
   // Allow the target to emit any magic that it wants at the start of the file.
   EmitStartOfAsmFile(M);

@@ -13,6 +13,7 @@
 
 #include "llvm/Target/Mangler.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,18 +30,21 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   
   // If the global name is not led with \1, add the appropriate prefixes.
   if (Name[0] != '\1') {
-    if (PrefixTy == Mangler::Private)
-      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
-    else if (PrefixTy == Mangler::LinkerPrivate)
-      OutName.append(LinkerPrivatePrefix,
-                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));
-    
+    if (PrefixTy == Mangler::Private) {
+      const char *Prefix = MAI.getPrivateGlobalPrefix();
+      OutName.append(Prefix, Prefix+strlen(Prefix));
+    } else if (PrefixTy == Mangler::LinkerPrivate) {
+      const char *Prefix = MAI.getLinkerPrivateGlobalPrefix();
+      OutName.append(Prefix, Prefix+strlen(Prefix));
+    }
+
+    const char *Prefix = MAI.getGlobalPrefix();
     if (Prefix[0] == 0)
       ; // Common noop, no prefix.
     else if (Prefix[1] == 0)
       OutName.push_back(Prefix[0]);  // Common, one character prefix.
     else
-      OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary prefix.
+      OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary length prefix.
   } else {
     Name = Name.substr(1);
   }
@@ -68,14 +72,21 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   
   // If the global variable doesn't have a name, return a unique name for the
   // global based on a numbering.
+  if (GV->hasPrivateLinkage() || isImplicitlyPrivate) {
+    const char *Prefix = MAI.getPrivateGlobalPrefix();
+    OutName.append(Prefix, Prefix+strlen(Prefix));
+  } else if (GV->hasLinkerPrivateLinkage()) {
+    const char *Prefix = MAI.getLinkerPrivateGlobalPrefix();
+    OutName.append(Prefix, Prefix+strlen(Prefix));
+  }
   
-  // Anonymous names always get prefixes.
-  if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
-    OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
-  else if (GV->hasLinkerPrivateLinkage())
-    OutName.append(LinkerPrivatePrefix,
-                   LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));;
-  OutName.append(Prefix, Prefix+strlen(Prefix));
+  const char *Prefix = MAI.getGlobalPrefix();
+  if (Prefix[0] == 0)
+    ; // Common noop, no prefix.
+  else if (Prefix[1] == 0)
+    OutName.push_back(Prefix[0]);  // Common, one character prefix.
+  else
+    OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary length prefix.
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
@@ -94,11 +105,4 @@ std::string Mangler::getNameWithPrefix(const GlobalValue *GV,
   SmallString<64> Buf;
   getNameWithPrefix(Buf, GV, isImplicitlyPrivate);
   return std::string(Buf.begin(), Buf.end());
-}
-  
-
-Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
-                 const char *linkerPrivatePrefix)
-  : Prefix(prefix), PrivatePrefix(privatePrefix),
-    LinkerPrivatePrefix(linkerPrivatePrefix), NextAnonGlobalID(1) {
 }

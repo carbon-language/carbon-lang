@@ -119,7 +119,7 @@ bool ELFWriter::doInitialization(Module &M) {
   // Initialize TargetLoweringObjectFile.
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(OutContext, TM);
   
-  Mang = new Mangler(M);
+  Mang = new Mangler(*MAI);
 
   // ELF Header
   // ----------

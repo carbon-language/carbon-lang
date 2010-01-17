@@ -58,6 +58,13 @@ extern "C" void LLVMInitializeCBackendTarget() {
 }
 
 namespace {
+  class CBEMCAsmInfo : public MCAsmInfo {
+  public:
+    CBEMCAsmInfo() {
+      GlobalPrefix = "";
+      PrivateGlobalPrefix = "";
+    }
+  };
   /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for
   /// any unnamed structure types that are used by the program, and merges
   /// external functions with the same name.
@@ -1869,8 +1876,17 @@ bool CWriter::doInitialization(Module &M) {
   IL = new IntrinsicLowering(*TD);
   IL->AddPrototypes(M);
 
-  // Ensure that all structure types have names...
-  Mang = new Mangler(M);
+#if 0
+  std::string Triple = TheModule->getTargetTriple();
+  if (Triple.empty())
+    Triple = llvm::sys::getHostTriple();
+  
+  std::string E;
+  if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
+    TAsm = Match->createAsmInfo(Triple);
+#endif    
+  TAsm = new CBEMCAsmInfo();
+  Mang = new Mangler(*TAsm);
 
   // Keep track of which functions are static ctors/dtors so they can have
   // an attribute added to their prototypes.
@@ -3240,30 +3256,31 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
 //      of the per target tables
 //      handle multiple constraint codes
 std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
-
   assert(c.Codes.size() == 1 && "Too many asm constraint codes to handle");
 
-  const char *const *table = 0;
-  
   // Grab the translation table from MCAsmInfo if it exists.
-  if (!TAsm) {
-    std::string Triple = TheModule->getTargetTriple();
-    if (Triple.empty())
-      Triple = llvm::sys::getHostTriple();
-
-    std::string E;
-    if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
-      TAsm = Match->createAsmInfo(Triple);
-  }
-  if (TAsm)
-    table = TAsm->getAsmCBE();
+  const MCAsmInfo *TargetAsm;
+  std::string Triple = TheModule->getTargetTriple();
+  if (Triple.empty())
+    Triple = llvm::sys::getHostTriple();
+  
+  std::string E;
+  if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
+    TargetAsm = Match->createAsmInfo(Triple);
+  else
+    return c.Codes[0];
+  
+  const char *const *table = TargetAsm->getAsmCBE();
 
   // Search the translation table if it exists.
   for (int i = 0; table && table[i]; i += 2)
-    if (c.Codes[0] == table[i])
+    if (c.Codes[0] == table[i]) {
+      delete TargetAsm;
       return table[i+1];
+    }
 
   // Default is identity.
+  delete TargetAsm;
   return c.Codes[0];
 }
 

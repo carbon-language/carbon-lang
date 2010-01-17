@@ -323,8 +323,7 @@ void LTOCodeGenerator::applyScopeRestrictions()
 
         // mark which symbols can not be internalized 
         if ( !_mustPreserveSymbols.empty() ) {
-            Mangler mangler(*mergedModule, 
-                                _target->getMCAsmInfo()->getGlobalPrefix());
+            Mangler mangler(*_target->getMCAsmInfo());
             std::vector<const char*> mustPreserveList;
             for (Module::iterator f = mergedModule->begin(), 
                                         e = mergedModule->end(); f != e; ++f) {

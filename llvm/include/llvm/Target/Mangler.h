@@ -19,11 +19,10 @@
 
 namespace llvm {
 class Twine;
-class Type;
-class Module;
 class Value;
 class GlobalValue;
 template <typename T> class SmallVectorImpl; 
+class MCAsmInfo;
 
 class Mangler {
 public:
@@ -34,17 +33,7 @@ public:
   };
 
 private:
-  /// Prefix - This string is added to each symbol that is emitted, unless the
-  /// symbol is marked as not needing this prefix.
-  const char *Prefix;
-
-  /// PrivatePrefix - This string is emitted before each symbol with private
-  /// linkage.
-  const char *PrivatePrefix;
-
-  /// LinkerPrivatePrefix - This string is emitted before each symbol with
-  /// "linker_private" linkage.
-  const char *LinkerPrivatePrefix;
+  const MCAsmInfo &MAI;
 
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
@@ -59,8 +48,7 @@ private:
 public:
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
-  Mangler(Module &M, const char *Prefix = "", const char *privatePrefix = "",
-          const char *linkerPrivatePrefix = "");
+  Mangler(const MCAsmInfo &mai) : MAI(mai) {}
 
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't
