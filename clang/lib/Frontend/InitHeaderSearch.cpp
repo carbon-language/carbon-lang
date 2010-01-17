@@ -556,7 +556,7 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
         "i686-pc-linux-gnu", "", "", triple);
     break;
   case llvm::Triple::FreeBSD:
-    AddPath("/usr/include/c++/4.2", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2", "", "", "", triple);
     break;
   case llvm::Triple::Solaris:
     // Solaris - Fall though..
