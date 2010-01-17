@@ -2,7 +2,7 @@
 // PR 5406
 
 // ARM test.
-// XFAIL: !arm
+// XFAIL: sparc,powerpc,alpha,x86,mips,xcore,cellspu,blackfin,pic16,systemz
 
 typedef struct { char x[3]; } A0;
 void foo (int i, ...);
