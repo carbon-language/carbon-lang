@@ -70,18 +70,44 @@ static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 /// two values.
 namespace {
   struct Expression {
-    enum ExpressionOpcode { ADD, FADD, SUB, FSUB, MUL, FMUL,
-                            UDIV, SDIV, FDIV, UREM, SREM,
-                            FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ,
-                            ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE,
-                            ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ,
-                            FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE,
-                            FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE,
-                            FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
-                            SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
-                            FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT,
-                            PTRTOINT, INTTOPTR, BITCAST, GEP, CALL, CONSTANT,
-                            INSERTVALUE, EXTRACTVALUE, EMPTY, TOMBSTONE };
+    enum ExpressionOpcode { 
+      ADD = Instruction::Add,
+      FADD = Instruction::FAdd,
+      SUB = Instruction::Sub,
+      FSUB = Instruction::FSub,
+      MUL = Instruction::Mul,
+      FMUL = Instruction::FMul,
+      UDIV = Instruction::UDiv,
+      SDIV = Instruction::SDiv,
+      FDIV = Instruction::FDiv,
+      UREM = Instruction::URem,
+      SREM = Instruction::SRem,
+      FREM = Instruction::FRem,
+      SHL = Instruction::Shl,
+      LSHR = Instruction::LShr,
+      ASHR = Instruction::AShr,
+      AND = Instruction::And,
+      OR = Instruction::Or,
+      XOR = Instruction::Xor,
+      TRUNC = Instruction::Trunc,
+      ZEXT = Instruction::ZExt,
+      SEXT = Instruction::SExt,
+      FPTOUI = Instruction::FPToUI,
+      FPTOSI = Instruction::FPToSI,
+      UITOFP = Instruction::UIToFP,
+      SITOFP = Instruction::SIToFP,
+      FPTRUNC = Instruction::FPTrunc,
+      FPEXT = Instruction::FPExt,
+      PTRTOINT = Instruction::PtrToInt,
+      INTTOPTR = Instruction::IntToPtr,
+      BITCAST = Instruction::BitCast,
+      ICMPEQ, ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE,
+      ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ,
+      FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE,
+      FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE,
+      FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
+      SHUFFLE, SELECT, GEP, CALL, CONSTANT,
+      INSERTVALUE, EXTRACTVALUE, EMPTY, TOMBSTONE };
 
     ExpressionOpcode opcode;
     const Type* type;
@@ -127,9 +153,7 @@ namespace {
 
       uint32_t nextValueNumber;
 
-      Expression::ExpressionOpcode getOpcode(BinaryOperator* BO);
       Expression::ExpressionOpcode getOpcode(CmpInst* C);
-      Expression::ExpressionOpcode getOpcode(CastInst* C);
       Expression create_expression(BinaryOperator* BO);
       Expression create_expression(CmpInst* C);
       Expression create_expression(ShuffleVectorInst* V);
@@ -200,30 +224,6 @@ struct isPodLike<Expression> { static const bool value = true; };
 //===----------------------------------------------------------------------===//
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
-Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
-  switch(BO->getOpcode()) {
-  default: // THIS SHOULD NEVER HAPPEN
-    llvm_unreachable("Binary operator with unknown opcode?");
-  case Instruction::Add:  return Expression::ADD;
-  case Instruction::FAdd: return Expression::FADD;
-  case Instruction::Sub:  return Expression::SUB;
-  case Instruction::FSub: return Expression::FSUB;
-  case Instruction::Mul:  return Expression::MUL;
-  case Instruction::FMul: return Expression::FMUL;
-  case Instruction::UDiv: return Expression::UDIV;
-  case Instruction::SDiv: return Expression::SDIV;
-  case Instruction::FDiv: return Expression::FDIV;
-  case Instruction::URem: return Expression::UREM;
-  case Instruction::SRem: return Expression::SREM;
-  case Instruction::FRem: return Expression::FREM;
-  case Instruction::Shl:  return Expression::SHL;
-  case Instruction::LShr: return Expression::LSHR;
-  case Instruction::AShr: return Expression::ASHR;
-  case Instruction::And:  return Expression::AND;
-  case Instruction::Or:   return Expression::OR;
-  case Instruction::Xor:  return Expression::XOR;
-  }
-}
 
 Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   if (isa<ICmpInst>(C)) {
@@ -263,25 +263,6 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   }
 }
 
-Expression::ExpressionOpcode ValueTable::getOpcode(CastInst* C) {
-  switch(C->getOpcode()) {
-  default: // THIS SHOULD NEVER HAPPEN
-    llvm_unreachable("Cast operator with unknown opcode?");
-  case Instruction::Trunc:    return Expression::TRUNC;
-  case Instruction::ZExt:     return Expression::ZEXT;
-  case Instruction::SExt:     return Expression::SEXT;
-  case Instruction::FPToUI:   return Expression::FPTOUI;
-  case Instruction::FPToSI:   return Expression::FPTOSI;
-  case Instruction::UIToFP:   return Expression::UITOFP;
-  case Instruction::SIToFP:   return Expression::SITOFP;
-  case Instruction::FPTrunc:  return Expression::FPTRUNC;
-  case Instruction::FPExt:    return Expression::FPEXT;
-  case Instruction::PtrToInt: return Expression::PTRTOINT;
-  case Instruction::IntToPtr: return Expression::INTTOPTR;
-  case Instruction::BitCast:  return Expression::BITCAST;
-  }
-}
-
 Expression ValueTable::create_expression(CallInst* C) {
   Expression e;
 
@@ -302,7 +283,7 @@ Expression ValueTable::create_expression(BinaryOperator* BO) {
   e.varargs.push_back(lookup_or_add(BO->getOperand(1)));
   e.function = 0;
   e.type = BO->getType();
-  e.opcode = getOpcode(BO);
+  e.opcode = static_cast<Expression::ExpressionOpcode>(BO->getOpcode());
 
   return e;
 }
@@ -325,7 +306,7 @@ Expression ValueTable::create_expression(CastInst* C) {
   e.varargs.push_back(lookup_or_add(C->getOperand(0)));
   e.function = 0;
   e.type = C->getType();
-  e.opcode = getOpcode(C);
+  e.opcode = static_cast<Expression::ExpressionOpcode>(C->getOpcode());
 
   return e;
 }
