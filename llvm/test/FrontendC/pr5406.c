@@ -1,8 +1,8 @@
 // RUN: %llvmgcc %s -S -emit-llvm -O0 -o - | FileCheck %s
 // PR 5406
 
-// ARM test.
-// XFAIL: sparc,powerpc,alpha,x86,mips,xcore,cellspu,blackfin,pic16,systemz
+// XFAIL: *
+// XTARGET: arm
 
 typedef struct { char x[3]; } A0;
 void foo (int i, ...);
