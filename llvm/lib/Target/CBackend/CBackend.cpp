@@ -351,10 +351,19 @@ namespace {
 char CWriter::ID = 0;
 
 
-static std::string Mangle(const std::string &S) {
-  SmallString<52> Result;
-  Mangler::appendMangledName(Result, S, 0);
-  return std::string(Result.begin(), Result.end());
+static std::string MangleType(const std::string &S) {
+  std::string Result;
+  
+  for (unsigned i = 0, e = S.size(); i != e; ++i)
+    if (isalnum(S[i]) || S[i] == '_') {
+      Result += S[i];
+    } else {
+      Result += '_';
+      Result += 'A'+(S[i]&15);
+      Result += 'A'+((S[i]>>4)&15);
+      Result += '_';
+    }
+  return Result;
 }
 
 
@@ -2238,7 +2247,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I) {
-    std::string Name = "struct " + Mangle("l_"+I->first);
+    std::string Name = "struct " + MangleType("l_"+I->first);
     Out << Name << ";\n";
     TypeNames.insert(std::make_pair(I->second, Name));
   }
@@ -2249,7 +2258,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // for struct or opaque types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    std::string Name = Mangle("l_"+I->first);
+    std::string Name = MangleType("l_"+I->first);
     Out << "typedef ";
     printType(Out, I->second, false, Name);
     Out << ";\n";

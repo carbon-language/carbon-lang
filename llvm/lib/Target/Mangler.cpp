@@ -58,8 +58,8 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
 
 /// appendMangledName - Add the specified string in mangled form if it uses
 /// any unusual characters.
-void Mangler::appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
-                                const MCAsmInfo *MAI) {
+static void appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
+                              const MCAsmInfo *MAI) {
   // The first character is not allowed to be a number unless the target
   // explicitly allows it.
   if ((MAI == 0 || !MAI->doesAllowNameToStartWithDigit()) &&
