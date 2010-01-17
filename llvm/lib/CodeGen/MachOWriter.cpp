@@ -69,9 +69,6 @@ MachOWriter::~MachOWriter() {
 }
 
 bool MachOWriter::doInitialization(Module &M) {
-  Mang = new Mangler(M, MAI->getGlobalPrefix(), MAI->getPrivateGlobalPrefix(),
-                     MAI->getLinkerPrivateGlobalPrefix());
-  
   // Initialize TargetLoweringObjectFile.
   TM.getTargetLowering()->getObjFileLowering().Initialize(OutContext, TM);
 
@@ -81,9 +78,6 @@ bool MachOWriter::doInitialization(Module &M) {
 /// doFinalization - Now that the module has been completely processed, emit
 /// the Mach-O file to 'O'.
 bool MachOWriter::doFinalization(Module &M) {
-  // Release the name mangler object.
-  delete Mang; Mang = 0;
-
   OutStreamer.Finish();
   return false;
 }

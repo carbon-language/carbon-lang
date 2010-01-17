@@ -353,6 +353,8 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   if (!Emitter)
     llvm_unreachable("no code emitter available!");
 
+  // FIXME: Emitting an instruction should cause S_ATTR_SOME_INSTRUCTIONS to
+  //        be set for the current section.
   // FIXME: Relocations!
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
