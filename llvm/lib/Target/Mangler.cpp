@@ -16,7 +16,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
@@ -59,34 +58,15 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
                                 const GlobalValue *GV,
                                 bool isImplicitlyPrivate) {
+  ManglerPrefixTy PrefixTy = Mangler::Default;
+  if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+    PrefixTy = Mangler::Private;
+  else if (GV->hasLinkerPrivateLinkage())
+    PrefixTy = Mangler::LinkerPrivate;
+  
   // If this global has a name, handle it simply.
-  if (GV->hasName()) {
-    ManglerPrefixTy PrefixTy = Mangler::Default;
-    if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
-      PrefixTy = Mangler::Private;
-    else if (GV->hasLinkerPrivateLinkage())
-      PrefixTy = Mangler::LinkerPrivate;
-    
+  if (GV->hasName())
     return getNameWithPrefix(OutName, GV->getName(), PrefixTy);
-  }
-  
-  // If the global variable doesn't have a name, return a unique name for the
-  // global based on a numbering.
-  if (GV->hasPrivateLinkage() || isImplicitlyPrivate) {
-    const char *Prefix = MAI.getPrivateGlobalPrefix();
-    OutName.append(Prefix, Prefix+strlen(Prefix));
-  } else if (GV->hasLinkerPrivateLinkage()) {
-    const char *Prefix = MAI.getLinkerPrivateGlobalPrefix();
-    OutName.append(Prefix, Prefix+strlen(Prefix));
-  }
-  
-  const char *Prefix = MAI.getGlobalPrefix();
-  if (Prefix[0] == 0)
-    ; // Common noop, no prefix.
-  else if (Prefix[1] == 0)
-    OutName.push_back(Prefix[0]);  // Common, one character prefix.
-  else
-    OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary length prefix.
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
@@ -94,7 +74,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   if (ID == 0) ID = NextAnonGlobalID++;
   
   // Must mangle the global into a unique ID.
-  raw_svector_ostream(OutName) << "__unnamed_" << ID;
+  getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy);
 }
 
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
