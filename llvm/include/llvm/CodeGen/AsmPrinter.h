@@ -53,6 +53,7 @@ namespace llvm {
   class Mangler;
   class MCAsmInfo;
   class TargetLoweringObjectFile;
+  class Twine;
   class Type;
   class formatted_raw_ostream;
 
@@ -262,14 +263,13 @@ namespace llvm {
 
     /// PrintHex - Print a value as a hexidecimal value.
     ///
-    void PrintHex(int Value) const;
+    void PrintHex(uint64_t Value) const;
 
     /// EOL - Print a newline character to asm stream.  If a comment is present
     /// then it will be printed first.  Comments should not contain '\n'.
     void EOL() const;
-    void EOL(const std::string &Comment) const;
-    void EOL(const char* Comment) const;
-    void EOL(const char *Comment, unsigned Encoding) const;
+    void EOL(const Twine &Comment) const;
+    void EOL(const Twine &Comment, unsigned Encoding) const;
 
     /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
     /// unsigned leb128 value.
@@ -302,7 +302,7 @@ namespace llvm {
     void EmitString(const char *String, unsigned Size) const;
 
     /// EmitFile - Emit a .file directive.
-    void EmitFile(unsigned Number, const std::string &Name) const;
+    void EmitFile(unsigned Number, StringRef Name) const;
 
     //===------------------------------------------------------------------===//
 

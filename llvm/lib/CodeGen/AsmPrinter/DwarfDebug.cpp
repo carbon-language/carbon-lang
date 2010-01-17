@@ -2343,14 +2343,10 @@ void DwarfDebug::emitDIE(DIE *Die) {
   // Emit the code (index) for the abbreviation.
   Asm->EmitULEB128Bytes(AbbrevNumber);
 
-  if (Asm->isVerbose())
-    Asm->EOL(std::string("Abbrev [" +
-                         utostr(AbbrevNumber) +
-                         "] 0x" + utohexstr(Die->getOffset()) +
-                         ":0x" + utohexstr(Die->getSize()) + " " +
-                         dwarf::TagString(Abbrev->getTag())));
-  else
-    Asm->EOL();
+  Asm->EOL("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
+           Twine::utohexstr(Die->getOffset()) + ":0x" +
+           Twine::utohexstr(Die->getSize()) + " " +
+           dwarf::TagString(Abbrev->getTag()));
 
   SmallVector<DIEValue*, 32> &Values = Die->getValues();
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();

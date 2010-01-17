@@ -13,6 +13,7 @@
 
 #include "DIE.h"
 #include "DwarfPrinter.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"

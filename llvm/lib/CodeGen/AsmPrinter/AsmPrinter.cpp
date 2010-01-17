@@ -43,7 +43,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -523,12 +522,11 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 /// PrintULEB128 - Print a series of hexadecimal values (separated by commas)
 /// representing an unsigned leb128 value.
 void AsmPrinter::PrintULEB128(unsigned Value) const {
-  char Buffer[20];
   do {
     unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
     if (Value) Byte |= 0x80;
-    O << "0x" << utohex_buffer(Byte, Buffer+20);
+    PrintHex(Byte);
     if (Value) O << ", ";
   } while (Value);
 }
@@ -538,14 +536,13 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
 void AsmPrinter::PrintSLEB128(int Value) const {
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
-  char Buffer[20];
 
   do {
     unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
-    O << "0x" << utohex_buffer(Byte, Buffer+20);
+    PrintHex(Byte);
     if (IsMore) O << ", ";
   } while (IsMore);
 }
@@ -556,9 +553,9 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 
 /// PrintHex - Print a value as a hexadecimal value.
 ///
-void AsmPrinter::PrintHex(int Value) const { 
-  char Buffer[20];
-  O << "0x" << utohex_buffer(static_cast<unsigned>(Value), Buffer+20);
+void AsmPrinter::PrintHex(uint64_t Value) const {
+  O << "0x";
+  O.write_hex(Value);
 }
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
@@ -567,18 +564,8 @@ void AsmPrinter::EOL() const {
   O << '\n';
 }
 
-void AsmPrinter::EOL(const std::string &Comment) const {
-  if (VerboseAsm && !Comment.empty()) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString()
-      << ' '
-      << Comment;
-  }
-  O << '\n';
-}
-
-void AsmPrinter::EOL(const char* Comment) const {
-  if (VerboseAsm && *Comment) {
+void AsmPrinter::EOL(const Twine &Comment) const {
+  if (VerboseAsm && !Comment.isTriviallyEmpty()) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString()
       << ' '
@@ -624,8 +611,8 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
   return 0;
 }
 
-void AsmPrinter::EOL(const char *Comment, unsigned Encoding) const {
-  if (VerboseAsm && *Comment) {
+void AsmPrinter::EOL(const Twine &Comment, unsigned Encoding) const {
+  if (VerboseAsm && !Comment.isTriviallyEmpty()) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString()
       << ' '
@@ -755,7 +742,7 @@ void AsmPrinter::EmitString(const char *String, unsigned Size) const {
 
 
 /// EmitFile - Emit a .file directive.
-void AsmPrinter::EmitFile(unsigned Number, const std::string &Name) const {
+void AsmPrinter::EmitFile(unsigned Number, StringRef Name) const {
   O << "\t.file\t" << Number << " \"";
   for (unsigned i = 0, N = Name.size(); i < N; ++i)
     printStringChar(O, Name[i]);

@@ -24,7 +24,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 Dwarf::Dwarf(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
@@ -225,10 +224,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EOL("Offset");
       } else if (Reg < 64) {
         Asm->EmitInt8(dwarf::DW_CFA_offset + Reg);
-        if (Asm->isVerbose())
-          Asm->EOL("DW_CFA_offset + Reg (" + utostr(Reg) + ")");
-        else
-          Asm->EOL();
+        Asm->EOL("DW_CFA_offset + Reg (" + Twine(Reg) + ")");
         Asm->EmitULEB128Bytes(Offset);
         Asm->EOL("Offset");
       } else {
