@@ -26,13 +26,10 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
-    if (Sym.getName()[0] == '$') {
-      OS << '(';
-      Sym.print(OS, MAI);
-      OS << ')';
-    } else {
-      Sym.print(OS, MAI);
-    }
+    if (Sym.getName()[0] == '$')
+      OS << '(' << Sym << ')';
+    else
+      OS << Sym;
     return;
   }
 

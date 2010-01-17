@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -39,7 +38,7 @@ static bool NameNeedsQuoting(StringRef Str) {
   return false;
 }
 
-void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
+void MCSymbol::print(raw_ostream &OS) const {
   // The name for this MCSymbol is required to be a valid target name.  However,
   // some targets support quoting names with funny characters.  If the name
   // contains a funny character, then print it quoted.
@@ -52,5 +51,5 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 }
 
 void MCSymbol::dump() const {
-  print(dbgs(), 0);
+  print(dbgs());
 }

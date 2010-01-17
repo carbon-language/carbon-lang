@@ -106,9 +106,7 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   printVisibility(GVarSym, GVar->getVisibility());
 
-  O << "\t.type\t";
-  GVarSym->print(O, MAI);
-  O << ",@object\n";
+  O << "\t.type\t" << *GVarSym << ",@object\n";
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -119,15 +117,10 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasLocalLinkage()) {
-      O << "\t.local\t";
-      GVarSym->print(O, MAI);
-      O << '\n';
-    }
+    if (GVar->hasLocalLinkage())
+      O << "\t.local\t" << *GVarSym << '\n';
 
-    O << MAI->getCOMMDirective();
-    GVarSym->print(O, MAI);
-    O << ',' << Size;
+    O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
       O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
 
@@ -146,9 +139,7 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << "\t.weak\t";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak\t" << *GVarSym << '\n';
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -156,9 +147,7 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl " << *GVarSym << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
@@ -170,8 +159,7 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   // Use 16-bit alignment by default to simplify bunch of stuff
   EmitAlignment(Align, GVar);
-  GVarSym->print(O, MAI);
-  O << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -181,11 +169,8 @@ void MSP430AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   EmitGlobalConstant(C);
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t";
-    GVarSym->print(O, MAI);
-    O << ", " << Size << '\n';
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *GVarSym << ", " << Size << '\n';
 }
 
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -203,27 +188,20 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl\t" << *CurrentFnSym << '\n';
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
-    O << "\t.weak\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak\t" << *CurrentFnSym << '\n';
     break;
   }
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.type\t";
-  CurrentFnSym->print(O, MAI);
-  O << ",@function\n";
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << "\t.type\t" << *CurrentFnSym << ",@function\n";
+  O << *CurrentFnSym << ":\n";
 }
 
 bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -245,13 +223,8 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", .-";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 
   // We didn't modify anything
   return false;
@@ -284,7 +257,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
@@ -294,7 +267,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     if (Offset)
       O << '(' << Offset << '+';
 
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     
     if (Offset)
       O << ')';

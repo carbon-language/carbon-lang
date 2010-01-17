@@ -79,20 +79,14 @@ void BlackfinAsmPrinter::emitLinkage(const MCSymbol *GVSym,
   case GlobalValue::LinkerPrivateLinkage:
     break;
   case GlobalValue::ExternalLinkage:
-    O << MAI->getGlobalDirective();
-    GVSym->print(O, MAI);
-    O << "\n";
+    O << MAI->getGlobalDirective() << *GVSym << "\n";
     break;
   case GlobalValue::LinkOnceAnyLinkage:
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << MAI->getGlobalDirective();
-    GVSym->print(O, MAI);
-    O << "\n";
-    O << MAI->getWeakDefDirective();
-    GVSym->print(O, MAI);
-    O << "\n";
+    O << MAI->getGlobalDirective() << *GVSym << "\n";
+    O << MAI->getWeakDefDirective() << *GVSym << "\n";
     break;
   }
 }
@@ -112,15 +106,10 @@ void BlackfinAsmPrinter::PrintGlobalVariable(const GlobalVariable* GV) {
   EmitAlignment(TD->getPreferredAlignmentLog(GV), GV);
   printVisibility(GVSym, GV->getVisibility());
 
-  O << "\t.type ";
-  GVSym->print(O, MAI);
-  O << ", STT_OBJECT\n";
-  O << "\t.size ";
-  GVSym->print(O, MAI);
-  O << "\n";
+  O << "\t.type " << *GVSym << ", STT_OBJECT\n";
+  O << "\t.size " << *GVSym << "\n";
   O << ',' << TD->getTypeAllocSize(C->getType()) << '\n';
-  GVSym->print(O, MAI);
-  O << ":\n";
+  O << *GVSym << ":\n";
   EmitGlobalConstant(C);
 }
 
@@ -138,11 +127,8 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   emitLinkage(CurrentFnSym, F->getLinkage());
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.type\t";
-  CurrentFnSym->print(O, MAI);
-  O << ", STT_FUNC\n";
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << "\t.type\t" << *CurrentFnSym << ", STT_FUNC\n";
+  O << *CurrentFnSym << ":\n";
 
   if (DW)
     DW->BeginFunction(&MF);
@@ -168,11 +154,7 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size ";
-  CurrentFnSym->print(O, MAI);
-  O << ", .-";
-  CurrentFnSym->print(O, MAI);
-  O << "\n";
+  O << "\t.size " << *CurrentFnSym << ", .-" << *CurrentFnSym << "\n";
 
   if (DW)
     DW->EndFunction(&MF);
@@ -193,14 +175,14 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_GlobalAddress:
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     printOffset(MO.getOffset());
     break;
   case MachineOperand::MO_ExternalSymbol:
-    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
+    O << *GetExternalSymbolSymbol(MO.getSymbolName());
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"

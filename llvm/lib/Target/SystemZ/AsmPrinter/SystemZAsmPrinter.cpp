@@ -97,27 +97,20 @@ void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl\t" << *CurrentFnSym << '\n';
     break;
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
-    O << "\t.weak\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak\t" << *CurrentFnSym << '\n';
     break;
   }
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.type\t";
-  CurrentFnSym->print(O, MAI);
-  O << ",@function\n";
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << "\t.type\t" << *CurrentFnSym << ",@function\n";
+  O << *CurrentFnSym << ":\n";
 }
 
 bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -142,13 +135,8 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", .-";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
@@ -179,11 +167,11 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum){
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    GetGlobalValueSymbol(GV)->print(O, MAI);
+    O << *GetGlobalValueSymbol(GV);
 
     // Assemble calls via PLT for externally visible symbols if PIC.
     if (TM.getRelocationModel() == Reloc::PIC_ &&
@@ -234,7 +222,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
@@ -248,10 +236,10 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     printOffset(MO.getOffset());
     break;
   case MachineOperand::MO_GlobalAddress:
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol: {
-    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
+    O << *GetExternalSymbolSymbol(MO.getSymbolName());
     break;
   }
   default:
@@ -323,9 +311,7 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   printVisibility(GVarSym, GVar->getVisibility());
 
-  O << "\t.type\t";
-  GVarSym->print(O, MAI);
-  O << ",@object\n";
+  O << "\t.type\t" << *GVarSym << ",@object\n";
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
                                                                   TM));
@@ -336,15 +322,10 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasLocalLinkage()) {
-      O << "\t.local\t";
-      GVarSym->print(O, MAI);
-      O << '\n';
-    }
+    if (GVar->hasLocalLinkage())
+      O << "\t.local\t" << *GVarSym << '\n';
 
-    O << MAI->getCOMMDirective();
-    GVarSym->print(O, MAI);
-    O << ',' << Size;
+    O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
       O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
 
@@ -362,9 +343,7 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::LinkOnceODRLinkage:
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
-    O << "\t.weak\t";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak\t" << *GVarSym << '\n';
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -372,9 +351,7 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl " << *GVarSym << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
@@ -386,18 +363,14 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   // Use 16-bit alignment by default to simplify bunch of stuff
   EmitAlignment(Align, GVar, 1);
-  GVarSym->print(O, MAI);
-  O << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << '\n';
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size\t";
-    GVarSym->print(O, MAI);
-    O << ", " << Size << '\n';
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *GVarSym << ", " << Size << '\n';
 
   EmitGlobalConstant(C);
 }

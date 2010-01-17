@@ -94,9 +94,7 @@ namespace {
 #include "XCoreGenAsmWriter.inc"
 
 void XCoreAsmPrinter::emitGlobalDirective(const MCSymbol *Sym) {
-  O << MAI->getGlobalDirective();
-  Sym->print(O, MAI);
-  O << "\n";
+  O << MAI->getGlobalDirective() << *Sym << "\n";
 }
 
 void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
@@ -106,18 +104,13 @@ void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
     GV->hasLinkOnceLinkage()) && "Unexpected linkage");
   if (const ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType())) {
-    O << MAI->getGlobalDirective();
-    Sym->print(O, MAI);
+    O << MAI->getGlobalDirective() << *Sym;
     O << ".globound" << "\n";
-    O << MAI->getSetDirective();
-    Sym->print(O, MAI);
-    O << ".globound" << ","
-      << ATy->getNumElements() << "\n";
+    O << MAI->getSetDirective() << *Sym;
+    O << ".globound" << "," << ATy->getNumElements() << "\n";
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage
-      O << MAI->getWeakDefDirective();
-      Sym->print(O, MAI);
-      O << ".globound" << "\n";
+      O << MAI->getWeakDefDirective() << *Sym << ".globound" << "\n";
     }
   }
 }
@@ -137,11 +130,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
   // Mark the start of the global
-  O << "\t.cc_top ";
-  GVSym->print(O, MAI);
-  O << ".data,";
-  GVSym->print(O, MAI);
-  O << "\n";
+  O << "\t.cc_top " << *GVSym << ".data," << *GVSym << "\n";
 
   switch (GV->getLinkage()) {
   case GlobalValue::AppendingLinkage:
@@ -154,11 +143,8 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     emitArrayBound(GVSym, GV);
     emitGlobalDirective(GVSym);
     // TODO Use COMDAT groups for LinkOnceLinkage
-    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
-      O << MAI->getWeakDefDirective();
-      GVSym->print(O, MAI);
-      O << "\n";
-    }
+    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())
+      O << MAI->getWeakDefDirective() << *GVSym << "\n";
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -181,15 +167,10 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     Size *= MaxThreads;
   }
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type ";
-    GVSym->print(O, MAI);
-    O << ",@object\n";
-    O << "\t.size ";
-    GVSym->print(O, MAI);
-    O << "," << Size << "\n";
+    O << "\t.type " << *GVSym << ",@object\n";
+    O << "\t.size " << *GVSym << "," << Size << "\n";
   }
-  GVSym->print(O, MAI);
-  O << ":\n";
+  O << *GVSym << ":\n";
   
   EmitGlobalConstant(C);
   if (GV->isThreadLocal()) {
@@ -204,9 +185,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   }
   
   // Mark the end of the global
-  O << "\t.cc_bottom ";
-  GVSym->print(O, MAI);
-  O << ".data\n";
+  O << "\t.cc_bottom " << *GVSym << ".data\n";
 }
 
 /// Emit the directives on the start of functions
@@ -217,11 +196,7 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   
   // Mark the start of the function
-  O << "\t.cc_top ";
-  CurrentFnSym->print(O, MAI);
-  O << ".function,";
-  CurrentFnSym->print(O, MAI);
-  O << "\n";
+  O << "\t.cc_top " << *CurrentFnSym << ".function," << *CurrentFnSym << "\n";
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -237,31 +212,22 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // TODO Use COMDAT groups for LinkOnceLinkage
-    O << MAI->getGlobalDirective();
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
-    O << MAI->getWeakDefDirective();
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
+    O << MAI->getGlobalDirective() << *CurrentFnSym << "\n";
+    O << MAI->getWeakDefDirective() << *CurrentFnSym << "\n";
     break;
   }
   // (1 << 1) byte aligned
   EmitAlignment(MF.getAlignment(), F, 1);
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type ";
-    CurrentFnSym->print(O, MAI);
-    O << ",@function\n";
-  }
-  CurrentFnSym->print(O, MAI);
-  O  << ":\n";
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.type " << *CurrentFnSym << ",@function\n";
+
+  O << *CurrentFnSym << ":\n";
 }
 
 /// Emit the directives on the end of functions
 void XCoreAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   // Mark the end of the function
-  O << "\t.cc_bottom ";
-  CurrentFnSym->print(O, MAI);
-  O << ".function\n";
+  O << "\t.cc_bottom " << *CurrentFnSym << ".function\n";
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -336,10 +302,10 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     break;
   case MachineOperand::MO_GlobalAddress:
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -352,7 +318,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
   case MachineOperand::MO_BlockAddress:
-    GetBlockAddressSymbol(MO.getBlockAddress())->print(O, MAI);
+    O << *GetBlockAddressSymbol(MO.getBlockAddress());
     break;
   default:
     llvm_unreachable("not implemented");

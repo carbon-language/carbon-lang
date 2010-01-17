@@ -315,7 +315,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
@@ -332,7 +332,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
         << "$non_lazy_ptr";
       return;
     }
-    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
+    O << *GetExternalSymbolSymbol(MO.getSymbolName());
     return;
   case MachineOperand::MO_GlobalAddress:
     // External or weakly linked global variables need non-lazily-resolved
@@ -341,11 +341,11 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
       GlobalValue *GV = MO.getGlobal();
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
-        GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr")->print(O, MAI);
+        O << *GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         return;
       }
     }
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     return;
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
@@ -427,27 +427,19 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.global\t";
-    CurrentFnSym->print(O, MAI);
-    O << "\n" << "\t.type\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", @function\n";
+    O << "\t.global\t" << *CurrentFnSym << "\n" << "\t.type\t";
+    O << *CurrentFnSym << ", @function\n";
     break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << "\t.global\t";
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
-    O << "\t.weak_definition\t";
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
+    O << "\t.global\t" << *CurrentFnSym << "\n";
+    O << "\t.weak_definition\t" << *CurrentFnSym << "\n";
     break;
   }
   
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
 
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
@@ -466,11 +458,7 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size\t";
-  CurrentFnSym->print(O, MAI);
-  O << ",.-";
-  CurrentFnSym->print(O, MAI);
-  O << "\n";
+  O << "\t.size\t" << *CurrentFnSym << ",.-" << *CurrentFnSym << "\n";
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
@@ -518,23 +506,14 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
-        O << "\t.global ";
-        GVarSym->print(O, MAI);
-        O << '\n';
-        O << "\t.type ";
-        GVarSym->print(O, MAI);
-        O << ", @object\n";
-        GVarSym->print(O, MAI);
-        O << ":\n";
+        O << "\t.global " << *GVarSym << '\n';
+        O << "\t.type " << *GVarSym << ", @object\n";
+        O << *GVarSym << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective();
-        GVarSym->print(O, MAI);
-        O << ',' << Size;
+        O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
       } else {
-        O << ".comm ";
-        GVarSym->print(O, MAI);
-        O << ',' << Size;
+        O << ".comm " << *GVarSym << ',' << Size;
       }
       O << "\t\t" << MAI->getCommentString() << " '";
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -549,24 +528,15 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::CommonLinkage:
-    O << "\t.global ";
-    GVarSym->print(O, MAI);
-    O << "\n\t.type ";
-    GVarSym->print(O, MAI);
-    O << ", @object\n" << "\t.weak ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.global " << *GVarSym << "\n\t.type " << *GVarSym << ", @object\n";
+    O << "\t.weak " << *GVarSym << '\n';
     break;
   case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.global ";
-    GVarSym->print(O, MAI);
-    O << "\n\t.type ";
-    GVarSym->print(O, MAI);
-    O << ", @object\n";
+    O << "\t.global " << *GVarSym << "\n\t.type " << *GVarSym << ", @object\n";
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
@@ -577,8 +547,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  GVarSym->print(O, MAI);
-  O << ":\t\t\t\t" << MAI->getCommentString() << " '";
+  O << *GVarSym << ":\t\t\t\t" << MAI->getCommentString() << " '";
   WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   O << "'\n";
 

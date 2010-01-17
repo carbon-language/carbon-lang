@@ -187,11 +187,11 @@ namespace {
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
-          GetGlobalValueSymbol(GV)->print(O, MAI);
+          O << *GetGlobalValueSymbol(GV);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-          Sym->print(O, MAI);
+          O << *Sym;
           
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
@@ -203,7 +203,7 @@ namespace {
         }
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
-        GetExternalSymbolSymbol(ACPV->getSymbol())->print(O, MAI);
+        O << *GetExternalSymbolSymbol(ACPV->getSymbol());
       }
 
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
@@ -256,9 +256,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
+    O << "\t.globl\t" << *CurrentFnSym << "\n";
     break;
   case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
@@ -266,16 +264,10 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t";
-      CurrentFnSym->print(O, MAI);
-      O << "\n";
-      O << "\t.weak_definition\t";
-      CurrentFnSym->print(O, MAI);
-      O << "\n";
+      O << "\t.globl\t" << *CurrentFnSym << "\n";
+      O << "\t.weak_definition\t" << *CurrentFnSym << "\n";
     } else {
-      O << MAI->getWeakRefDirective();
-      CurrentFnSym->print(O, MAI);
-      O << "\n";
+      O << MAI->getWeakRefDirective() << *CurrentFnSym << "\n";
     }
     break;
   }
@@ -287,17 +279,14 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     EmitAlignment(FnAlign, F, AFI->getAlign());
     O << "\t.code\t16\n";
     O << "\t.thumb_func";
-    if (Subtarget->isTargetDarwin()) {
-      O << "\t";
-      CurrentFnSym->print(O, MAI);
-    }
+    if (Subtarget->isTargetDarwin())
+      O << "\t" << *CurrentFnSym;
     O << "\n";
   } else {
     EmitAlignment(FnAlign, F);
   }
 
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
 
@@ -324,13 +313,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size ";
-    CurrentFnSym->print(O, MAI);
-    O << ", .-";
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size " << *CurrentFnSym << ", .-" << *CurrentFnSym << "\n";
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);
@@ -379,7 +363,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
@@ -391,7 +375,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    GetGlobalValueSymbol(GV)->print(O, MAI);
+    O << *GetGlobalValueSymbol(GV);
 
     printOffset(MO.getOffset());
 
@@ -402,7 +386,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
+    O << *GetExternalSymbolSymbol(MO.getSymbolName());
     
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
@@ -949,11 +933,11 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
         << '_' << JTI << '_' << MO2.getImm()
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
-      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-      O << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
+      O << *GetMBBSymbol(MBB->getNumber())
+        << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
         << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else {
-      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+      O << *GetMBBSymbol(MBB->getNumber());
     }
     if (i != e-1)
       O << '\n';
@@ -984,13 +968,11 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
     else if (HalfWordOffset)
       O << MAI->getData16bitsDirective();
     if (ByteOffset || HalfWordOffset) {
-      O << '(';
-      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+      O << '(' << GetMBBSymbol(MBB->getNumber());
       O << "-" << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
         << '_' << JTI << '_' << MO2.getImm() << ")/2";
     } else {
-      O << "\tb.w ";
-      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+      O << "\tb.w " << *GetMBBSymbol(MBB->getNumber());
     }
     if (i != e-1)
       O << '\n';
@@ -1211,11 +1193,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   printVisibility(GVarSym, GVar->getVisibility());
 
-  if (Subtarget->isTargetELF()) {
-    O << "\t.type ";
-    GVarSym->print(O, MAI);
-    O << ",%object\n";
-  }
+  if (Subtarget->isTargetELF())
+    O << "\t.type " << *GVarSym << ",%object\n";
 
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
@@ -1227,12 +1206,9 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = MAI->getZeroFillDirective()) {
-        O << "\t.globl\t";
-        GVarSym->print(O, MAI);
-        O << "\n";
-        O << Directive << "__DATA, __common, ";
-        GVarSym->print(O, MAI);
-        O << ", " << Size << ", " << Align << "\n";
+        O << "\t.globl\t" << *GVarSym << "\n";
+        O << Directive << "__DATA, __common, " << *GVarSym
+          << ", " << Size << ", " << Align << "\n";
         return;
       }
     }
@@ -1242,23 +1218,17 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
       if (isDarwin) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective();
-          GVarSym->print(O, MAI);
-          O << ',' << Size << ',' << Align;
+          O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size
+            << ',' << Align;
         } else if (GVar->hasCommonLinkage()) {
-          O << MAI->getCOMMDirective();
-          GVarSym->print(O, MAI);
-          O << ',' << Size << ',' << Align;
+          O << MAI->getCOMMDirective() << *GVarSym << ',' << Size
+            << ',' << Align;
         } else {
           OutStreamer.SwitchSection(TheSection);
-          O << "\t.globl ";
-          GVarSym->print(O, MAI);
-          O << '\n' << MAI->getWeakDefDirective();
-          GVarSym->print(O, MAI);
-          O << '\n';
+          O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();
+          O << *GVarSym << '\n';
           EmitAlignment(Align, GVar);
-          GVarSym->print(O, MAI);
-          O << ":";
+          O << *GVarSym << ":";
           if (VerboseAsm) {
             O.PadToColumn(MAI->getCommentColumn());
             O << MAI->getCommentString() << ' ';
@@ -1270,25 +1240,16 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
         }
       } else if (MAI->getLCOMMDirective() != NULL) {
         if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective();
-          GVarSym->print(O, MAI);
-          O << "," << Size;
+          O << MAI->getLCOMMDirective() << *GVarSym << "," << Size;
         } else {
-          O << MAI->getCOMMDirective();
-          GVarSym->print(O, MAI);
-          O << "," << Size;
+          O << MAI->getCOMMDirective() << *GVarSym << "," << Size;
           if (MAI->getCOMMDirectiveTakesAlignment())
             O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
-        if (GVar->hasLocalLinkage()) {
-          O << "\t.local\t";
-          GVarSym->print(O, MAI);
-          O << '\n';
-        }
-        O << MAI->getCOMMDirective();
-        GVarSym->print(O, MAI);
-        O << "," << Size;
+        if (GVar->hasLocalLinkage())
+          O << "\t.local\t" << *GVarSym << '\n';
+        O << MAI->getCOMMDirective() << *GVarSym << "," << Size;
         if (MAI->getCOMMDirectiveTakesAlignment())
           O << "," << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
@@ -1310,24 +1271,17 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (isDarwin) {
-      O << "\t.globl ";
-      GVarSym->print(O, MAI);
-      O << "\n\t.weak_definition ";
-      GVarSym->print(O, MAI);
-      O << "\n";
+      O << "\t.globl " << *GVarSym
+        << "\n\t.weak_definition " << *GVarSym << "\n";
     } else {
-      O << "\t.weak ";
-      GVarSym->print(O, MAI);
-      O << "\n";
+      O << "\t.weak " << *GVarSym << "\n";
     }
     break;
   case GlobalValue::AppendingLinkage:
   // FIXME: appending linkage variables should go into a section of
   // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
-    O << "\t.globl ";
-    GVarSym->print(O, MAI);
-    O << "\n";
+    O << "\t.globl " << *GVarSym << "\n";
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
@@ -1337,19 +1291,15 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  GVarSym->print(O, MAI);
-  O << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
   }
   O << "\n";
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.size ";
-    GVarSym->print(O, MAI);
-    O << ", " << Size << "\n";
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size " << *GVarSym << ", " << Size << "\n";
 
   EmitGlobalConstant(C);
   O << '\n';
@@ -1374,10 +1324,8 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        Stubs[i].first->print(O, MAI);
-        O << ":\n\t.indirect_symbol ";
-        Stubs[i].second->print(O, MAI);
-        O << "\n\t.long\t0\n";
+        O << *Stubs[i].first << ":\n\t.indirect_symbol ";
+        O << *Stubs[i].second << "\n\t.long\t0\n";
       }
     }
 
@@ -1385,12 +1333,8 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        Stubs[i].first->print(O, MAI);
-        O << ":\n\t.long ";
-        Stubs[i].second->print(O, MAI);
-        O << "\n";
-      }
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i)
+        O << *Stubs[i].first << ":\n\t.long " << *Stubs[i].second << "\n";
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols

@@ -101,8 +101,7 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(CurSection && "Cannot emit before setting section!");
 
-  Symbol->print(OS, &MAI);
-  OS << ":\n";
+  OS << *Symbol << ":\n";
   Symbol->setSection(*CurSection);
 }
 
@@ -119,8 +118,7 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  Symbol->print(OS, &MAI);
-  OS << " = ";
+  OS << *Symbol << " = ";
   Value->print(OS, &MAI);
   OS << '\n';
 
@@ -146,22 +144,16 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case WeakReference:  OS << ".weak_reference";  break;
   }
 
-  OS << ' ';
-  Symbol->print(OS, &MAI);
-  OS << '\n';
+  OS << ' ' << *Symbol << '\n';
 }
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-  OS << ".desc" << ' ';
-  Symbol->print(OS, &MAI);
-  OS << ',' << DescValue << '\n';
+  OS << ".desc" << ' ' << *Symbol << ',' << DescValue << '\n';
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                      unsigned ByteAlignment) {
-  OS << ".comm ";
-  Symbol->print(OS, &MAI);
-  OS << ',' << Size;
+  OS << ".comm " << *Symbol << ',' << Size;
   if (ByteAlignment != 0)
     OS << ',' << Log2_32(ByteAlignment);
   OS << '\n';
@@ -177,9 +169,7 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   OS << MOSection->getSegmentName() << "," << MOSection->getSectionName();
   
   if (Symbol != NULL) {
-    OS << ',';
-    Symbol->print(OS, &MAI);
-    OS << ',' << Size;
+    OS << ',' << *Symbol << ',' << Size;
     if (ByteAlignment != 0)
       OS << ',' << Log2_32(ByteAlignment);
   }

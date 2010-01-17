@@ -124,8 +124,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\tretlw  high(" << PAN::getFrameLabel(CurrentFnSym->getName()) << ")\n";
 
   // Emit function start label.
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
 
   DebugLoc CurDL;
   O << "\n"; 
@@ -191,7 +190,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       if (PAN::isMemIntrinsic(Sym->getName()))
         LibcallDecls.push_back(createESName(Sym->getName()));
 
-      Sym->print(O, MAI);
+      O << *Sym;
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
@@ -212,7 +211,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
-      GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+      O << *GetMBBSymbol(MO.getMBB()->getNumber());
       return;
 
     default:
@@ -349,11 +348,8 @@ void PIC16AsmPrinter::EmitUndefinedVars(Module &M) {
   if (!Items.size()) return;
 
   O << "\n" << MAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
-  for (unsigned j = 0; j < Items.size(); j++) {
-    O << MAI->getExternDirective();
-    GetGlobalValueSymbol(Items[j])->print(O, MAI);
-    O << "\n";
-  }
+  for (unsigned j = 0; j < Items.size(); j++)
+    O << MAI->getExternDirective() << *GetGlobalValueSymbol(Items[j]) << "\n";
   O << MAI->getCommentString() << "Imported Variables - END" << "\n";
 }
 
@@ -363,11 +359,8 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
   if (!Items.size()) return;
 
   O << "\n" << MAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
-  for (unsigned j = 0; j < Items.size(); j++) {
-    O << MAI->getGlobalDirective();
-    GetGlobalValueSymbol(Items[j])->print(O, MAI);
-    O << "\n";
-  }
+  for (unsigned j = 0; j < Items.size(); j++)
+    O << MAI->getGlobalDirective() << *GetGlobalValueSymbol(Items[j]) << "\n";
   O <<  MAI->getCommentString() << "Exported Variables - END" << "\n";
 }
 
@@ -446,7 +439,7 @@ void PIC16AsmPrinter::EmitInitializedDataSection(const PIC16Section *S) {
     for (unsigned j = 0; j < Items.size(); j++) {
       Constant *C = Items[j]->getInitializer();
       int AddrSpace = Items[j]->getType()->getAddressSpace();
-      GetGlobalValueSymbol(Items[j])->print(O, MAI);
+      O << *GetGlobalValueSymbol(Items[j]);
       EmitGlobalConstant(C, AddrSpace);
    }
 }
@@ -465,8 +458,7 @@ EmitUninitializedDataSection(const PIC16Section *S) {
       Constant *C = Items[j]->getInitializer();
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypeAllocSize(Ty);
-      GetGlobalValueSymbol(Items[j])->print(O, MAI);
-      O << " RES " << Size << "\n";
+      O << *GetGlobalValueSymbol(Items[j]) << " RES " << Size << "\n";
     }
 }
 

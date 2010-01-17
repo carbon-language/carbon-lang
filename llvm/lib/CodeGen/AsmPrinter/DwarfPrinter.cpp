@@ -79,7 +79,7 @@ void Dwarf::EmitReference(const std::string &Name, bool IsPCRelative,
 void Dwarf::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
                           bool Force32Bit) const {
   PrintRelDirective(Force32Bit);
-  Sym->print(O, MAI);
+  O << *Sym;
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
 

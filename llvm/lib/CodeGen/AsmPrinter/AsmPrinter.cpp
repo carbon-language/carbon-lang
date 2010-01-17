@@ -156,16 +156,12 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      O << MAI->getWeakRefDirective();
-      GetGlobalValueSymbol(I)->print(O, MAI);
-      O << '\n';
+      O << MAI->getWeakRefDirective() << *GetGlobalValueSymbol(I) << '\n';
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      O << MAI->getWeakRefDirective();
-      GetGlobalValueSymbol(I)->print(O, MAI);
-      O << '\n';
+      O << MAI->getWeakRefDirective() << *GetGlobalValueSymbol(I) << '\n';
     }
   }
 
@@ -178,25 +174,16 @@ bool AsmPrinter::doFinalization(Module &M) {
       const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
       MCSymbol *Target = GetGlobalValueSymbol(GV);
 
-      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective()) {
-        O << "\t.globl\t";
-        Name->print(O, MAI);
-        O << '\n';
-      } else if (I->hasWeakLinkage()) {
-        O << MAI->getWeakRefDirective();
-        Name->print(O, MAI);
-        O << '\n';
-      } else {
+      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
+        O << "\t.globl\t" << *Name << '\n';
+      else if (I->hasWeakLinkage())
+        O << MAI->getWeakRefDirective() << *Name << '\n';
+      else
         assert(I->hasLocalLinkage() && "Invalid alias linkage");
-      }
 
       printVisibility(Name, I->getVisibility());
 
-      O << MAI->getSetDirective() << ' ';
-      Name->print(O, MAI);
-      O << ", ";
-      Target->print(O, MAI);
-      O << '\n';
+      O << MAI->getSetDirective() << ' ' << *Name << ", " << *Target << '\n';
     }
   }
 
@@ -422,12 +409,12 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   // If we're emitting non-PIC code, then emit the entries as direct
   // references to the target basic blocks.
   if (!isPIC) {
-    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MBB->getNumber());
   } else if (MAI->getSetDirective()) {
     O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else {
-    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MBB->getNumber());
     // If the arch uses custom Jump Table directives, don't calc relative to
     // JT
     if (!HadJTEntryDirective) 
@@ -812,12 +799,12 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value.
-    GetGlobalValueSymbol(GV)->print(O, MAI);
+    O << *GetGlobalValueSymbol(GV);
     return;
   }
   
   if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
-    GetBlockAddressSymbol(BA)->print(O, MAI);
+    O << *GetBlockAddressSymbol(BA);
     return;
   }
   
@@ -1580,9 +1567,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           unsigned OpFlags = MI->getOperand(OpNo).getImm();
           ++OpNo;  // Skip over the ID number.
 
-          if (Modifier[0]=='l')  // labels are target independent
-            GetMBBSymbol(MI->getOperand(OpNo).getMBB()
-                           ->getNumber())->print(O, MAI);
+          if (Modifier[0] == 'l')  // labels are target independent
+            O << *GetMBBSymbol(MI->getOperand(OpNo).getMBB()->getNumber());
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
@@ -1597,8 +1583,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         if (Error) {
           std::string msg;
           raw_string_ostream Msg(msg);
-          Msg << "Invalid operand found in inline asm: '"
-               << AsmStr << "'\n";
+          Msg << "Invalid operand found in inline asm: '" << AsmStr << "'\n";
           MI->print(Msg);
           llvm_report_error(Msg.str());
         }
@@ -1734,8 +1719,8 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   // forward references to labels without knowing what their numbers
   // will be.
   if (MBB->hasAddressTaken()) {
-    GetBlockAddressSymbol(MBB->getBasicBlock()->getParent(),
-                          MBB->getBasicBlock())->print(O, MAI);
+    O << *GetBlockAddressSymbol(MBB->getBasicBlock()->getParent(),
+                                MBB->getBasicBlock());
     O << ':';
     if (VerboseAsm) {
       O.PadToColumn(MAI->getCommentColumn());
@@ -1749,8 +1734,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
     if (VerboseAsm)
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
   } else {
-    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-    O << ':';
+    O << *GetMBBSymbol(MBB->getNumber()) << ':';
     if (!VerboseAsm)
       O << '\n';
   }
@@ -1777,9 +1761,9 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     return;
   
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-  O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ','
+    << *GetMBBSymbol(MBB->getNumber())
+    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
 }
 
@@ -1790,9 +1774,9 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
   
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << '_' << uid2
-    << "_set_" << MBB->getNumber() << ',';
-  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-  O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    << "_set_" << MBB->getNumber() << ','
+    << *GetMBBSymbol(MBB->getNumber())
+    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '_' << uid2 << '\n';
 }
 
@@ -1842,17 +1826,11 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
 void AsmPrinter::printVisibility(const MCSymbol *Sym,
                                  unsigned Visibility) const {
   if (Visibility == GlobalValue::HiddenVisibility) {
-    if (const char *Directive = MAI->getHiddenDirective()) {
-      O << Directive;
-      Sym->print(O, MAI);
-      O << '\n';
-    }
+    if (const char *Directive = MAI->getHiddenDirective())
+      O << Directive << *Sym << '\n';
   } else if (Visibility == GlobalValue::ProtectedVisibility) {
-    if (const char *Directive = MAI->getProtectedDirective()) {
-      O << Directive;
-      Sym->print(O, MAI);
-      O << '\n';
-    }
+    if (const char *Directive = MAI->getProtectedDirective())
+      O << Directive << *Sym << '\n';
   }
 }
 

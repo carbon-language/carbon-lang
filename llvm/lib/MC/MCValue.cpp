@@ -19,12 +19,10 @@ void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     return;
   }
 
-  getSymA()->print(OS, MAI);
+  OS << *getSymA();
 
-  if (getSymB()) {
-    OS << " - "; 
-    getSymB()->print(OS, MAI);
-  }
+  if (getSymB())
+    OS << " - " << *getSymB();
 
   if (getConstant())
     OS << " + " << getConstant();

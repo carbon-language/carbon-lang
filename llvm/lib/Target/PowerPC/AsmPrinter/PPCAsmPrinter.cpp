@@ -238,7 +238,7 @@ namespace {
             // Dynamically-resolved functions need a stub for the function.
             FnStubInfo &FnInfo = FnStubs[GetGlobalValueSymbol(GV)];
             FnInfo.Init(GV, this);
-            FnInfo.Stub->print(O, MAI);
+            O << *FnInfo.Stub;
             return;
           }
         }
@@ -246,7 +246,7 @@ namespace {
           FnStubInfo &FnInfo =
             FnStubs[GetExternalSymbolSymbol(MO.getSymbolName())];
           FnInfo.Init(MO.getSymbolName(), Mang, OutContext);
-          FnInfo.Stub->print(O, MAI);
+          O << *FnInfo.Stub;
           return;
         }
       }
@@ -342,8 +342,7 @@ namespace {
           GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) + "C" +
                             Twine(LabelID++));
 
-      TOCEntry->print(O, MAI);
-      O << "@toc";
+      O << *TOCEntry << "@toc";
     }
 
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
@@ -413,7 +412,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     llvm_unreachable("printOp() does not handle immediate values");
 
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
@@ -425,20 +424,20 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
       << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_BlockAddress:
-    GetBlockAddressSymbol(MO.getBlockAddress())->print(O, MAI);
+    O << *GetBlockAddressSymbol(MO.getBlockAddress());
     return;
   case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
     const MCSymbol *SymName = GetExternalSymbolSymbol(MO.getSymbolName());
     if (TM.getRelocationModel() == Reloc::Static) {
-      SymName->print(O, MAI);
+      O << *SymName;
       return;
     }
     const MCSymbol *NLPSym = 
       OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
                                    MO.getSymbolName()+"$non_lazy_ptr");
     GVStubs[SymName] = NLPSym;
-    NLPSym->print(O, MAI);
+    O << *NLPSym;
     return;
   }
   case MachineOperand::MO_GlobalAddress: {
@@ -463,7 +462,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
       SymToPrint = GetGlobalValueSymbol(GV);
     }
     
-    SymToPrint->print(O, MAI);
+    O << *SymToPrint;
 
     printOffset(MO.getOffset());
     return;
@@ -635,23 +634,16 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.global\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n' << "\t.type\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", @function\n";
+    O << "\t.global\t" << *CurrentFnSym << '\n' << "\t.type\t";
+    O << *CurrentFnSym << ", @function\n";
     break;
   case Function::LinkerPrivateLinkage:
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << "\t.global\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-    O << "\t.weak\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.global\t" << *CurrentFnSym << '\n';
+    O << "\t.weak\t" << *CurrentFnSym << '\n';
     break;
   }
 
@@ -664,18 +656,12 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     // FIXME 64-bit SVR4: Use MCSection here!
     O << "\t.section\t\".opd\",\"aw\"\n";
     O << "\t.align 3\n";
-    CurrentFnSym->print(O, MAI);
-    O  << ":\n";
-    O << "\t.quad .L.";
-    CurrentFnSym->print(O, MAI);
-    O << ",.TOC.@tocbase\n";
+    O << *CurrentFnSym << ":\n";
+    O << "\t.quad .L." << *CurrentFnSym << ",.TOC.@tocbase\n";
     O << "\t.previous\n";
-    O << ".L.";
-    CurrentFnSym->print(O, MAI);
-    O << ":\n";
+    O << ".L." << *CurrentFnSym << ":\n";
   } else {
-    CurrentFnSym->print(O, MAI);
-    O  << ":\n";
+    O << *CurrentFnSym << ":\n";
   }
 
   // Emit pre-function debug information.
@@ -695,11 +681,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.size\t";
-  CurrentFnSym->print(O, MAI);
-  O << ",.-";
-  CurrentFnSym->print(O, MAI);
-  O << '\n';
+  O << "\t.size\t" << *CurrentFnSym << ",.-" << *CurrentFnSym << '\n';
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
@@ -742,23 +724,14 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasExternalLinkage()) {
-        O << "\t.global ";
-        GVarSym->print(O, MAI);
-        O << '\n';
-        O << "\t.type ";
-        GVarSym->print(O, MAI);
-        O << ", @object\n";
-        GVarSym->print(O, MAI);
-        O  << ":\n";
+        O << "\t.global " << *GVarSym << '\n';
+        O << "\t.type " << *GVarSym << ", @object\n";
+        O << *GVarSym << ":\n";
         O << "\t.zero " << Size << '\n';
       } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective();
-        GVarSym->print(O, MAI);
-        O << ',' << Size;
+        O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
       } else {
-        O << ".comm ";
-        GVarSym->print(O, MAI);
-        O  << ',' << Size;
+        O << ".comm " << *GVarSym << ',' << Size;
       }
       if (VerboseAsm) {
         O << "\t\t" << MAI->getCommentString() << " '";
@@ -776,24 +749,16 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakODRLinkage:
    case GlobalValue::CommonLinkage:
    case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.global ";
-    GVarSym->print(O, MAI);
-    O << "\n\t.type ";
-    GVarSym->print(O, MAI);
-    O << ", @object\n\t.weak ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.global " << *GVarSym;
+    O << "\n\t.type " << *GVarSym << ", @object\n\t.weak " << *GVarSym << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.global ";
-    GVarSym->print(O, MAI);
-    O << "\n\t.type ";
-    GVarSym->print(O, MAI);
-    O << ", @object\n";
+    O << "\t.global " << *GVarSym;
+    O << "\n\t.type " << *GVarSym << ", @object\n";
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
@@ -803,8 +768,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  GVarSym->print(O, MAI);
-  O << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -828,13 +792,8 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
     // FIXME: This is nondeterminstic!
     for (DenseMap<const MCSymbol*, const MCSymbol*>::iterator I = TOC.begin(),
          E = TOC.end(); I != E; ++I) {
-      I->second->print(O, MAI);
-      O << ":\n";
-      O << "\t.tc ";
-      I->first->print(O, MAI);
-      O << "[TC],";
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *I->second << ":\n";
+      O << "\t.tc " << *I->first << "[TC]," << *I->first << '\n';
     }
   }
 
@@ -863,29 +822,22 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl\t" << *CurrentFnSym << '\n';
     break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
   case Function::LinkerPrivateLinkage:
-    O << "\t.globl\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-    O << "\t.weak_definition\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl\t" << *CurrentFnSym << '\n';
+    O << "\t.weak_definition\t" << *CurrentFnSym << '\n';
     break;
   }
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
   EmitAlignment(MF.getAlignment(), F);
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
 
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
@@ -1006,25 +958,16 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (GVar->hasExternalLinkage()) {
-      O << "\t.globl ";
-      GVarSym->print(O, MAI);
-      O << '\n';
-      O << "\t.zerofill __DATA, __common, ";
-      GVarSym->print(O, MAI);
-      O << ", " << Size << ", " << Align;
+      O << "\t.globl " << *GVarSym << '\n';
+      O << "\t.zerofill __DATA, __common, " << *GVarSym << ", "
+        << Size << ", " << Align;
     } else if (GVar->hasLocalLinkage()) {
-      O << MAI->getLCOMMDirective();
-      GVarSym->print(O, MAI);
-      O << ',' << Size << ',' << Align;
+      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
-      O << "\t.globl ";
-      GVarSym->print(O, MAI);
-      O << '\n' << MAI->getWeakDefDirective();
-      GVarSym->print(O, MAI);
-      O << '\n';
+      O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();
+      O << *GVarSym << '\n';
       EmitAlignment(Align, GVar);
-      GVarSym->print(O, MAI);
-      O << ":";
+      O << *GVarSym << ":";
       if (VerboseAsm) {
         O << "\t\t\t\t" << MAI->getCommentString() << " ";
         WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -1033,9 +976,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       EmitGlobalConstant(C);
       return;
     } else {
-      O << ".comm ";
-      GVarSym->print(O, MAI);
-      O << ',' << Size;
+      O << ".comm " << *GVarSym << ',' << Size;
       // Darwin 9 and above support aligned common data.
       if (Subtarget.isDarwin9())
         O << ',' << Align;
@@ -1056,20 +997,14 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::CommonLinkage:
   case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.globl ";
-    GVarSym->print(O, MAI);
-    O << "\n\t.weak_definition ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl " << *GVarSym << "\n\t.weak_definition " << *GVarSym << '\n';
     break;
   case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.globl " << *GVarSym << '\n';
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -1079,8 +1014,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  GVarSym->print(O, MAI);
-  O << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm) {
     O << "\t\t\t\t" << MAI->getCommentString() << " '";
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -1120,38 +1054,23 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
-      Info.Stub->print(O, MAI);
-      O << ":\n";
-      O << "\t.indirect_symbol ";
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *Info.Stub << ":\n";
+      O << "\t.indirect_symbol " << *I->first << '\n';
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31,";
-      Info.AnonSymbol->print(O, MAI);
-      O << '\n';
-      Info.AnonSymbol->print(O, MAI);
-      O << ":\n";
+      O << "\tbcl 20,31," << *Info.AnonSymbol << '\n';
+      O << *Info.AnonSymbol << ":\n";
       O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(";
-      Info.LazyPtr->print(O, MAI);
-      O << '-';
-      Info.AnonSymbol->print(O, MAI);
-      O << ")\n";
+      O << "\taddis r11,r11,ha16(" << *Info.LazyPtr << '-' << *Info.AnonSymbol
+        << ")\n";
       O << "\tmtlr r0\n";
-      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(";
-      Info.LazyPtr->print(O, MAI);
-      O << '-';
-      Info.AnonSymbol->print(O, MAI);
-      O << ")(r11)\n";
+      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
+        << '-' << *Info.AnonSymbol << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
       OutStreamer.SwitchSection(LSPSection);
-      Info.LazyPtr->print(O, MAI);
-      O << ":\n";
-      O << "\t.indirect_symbol ";
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *Info.LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << *I->first << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   } else if (!FnStubs.empty()) {
@@ -1167,25 +1086,16 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
-      Info.Stub->print(O, MAI);
-      O << ":\n";
-      O << "\t.indirect_symbol ";
-      I->first->print(O, MAI);
-      O << '\n';
-      O << "\tlis r11,ha16(";
-      Info.LazyPtr->print(O, MAI);
-      O << ")\n";
-      O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(";
-      Info.LazyPtr->print(O, MAI);
-      O << ")(r11)\n";
+      O << *Info.Stub << ":\n";
+      O << "\t.indirect_symbol " << *I->first << '\n';
+      O << "\tlis r11,ha16(" << *Info.LazyPtr << ")\n";
+      O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
+        << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       OutStreamer.SwitchSection(LSPSection);
-      Info.LazyPtr->print(O, MAI);
-      O << ":\n";
-      O << "\t.indirect_symbol ";
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *Info.LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << *I->first << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   }
@@ -1213,11 +1123,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     // FIXME: This is nondeterminstic.
     for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
          I = GVStubs.begin(), E = GVStubs.end(); I != E; ++I) {
-      I->second->print(O, MAI);
-      O << ":\n";
-      O << "\t.indirect_symbol ";
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *I->second << ":\n";
+      O << "\t.indirect_symbol " << *I->first << '\n';
       O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
     }
   }
@@ -1228,11 +1135,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     // FIXME: This is nondeterminstic.
     for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
          I = HiddenGVStubs.begin(), E = HiddenGVStubs.end(); I != E; ++I) {
-      I->second->print(O, MAI);
-      O << ":\n";
-      O << (isPPC64 ? "\t.quad\t" : "\t.long\t");
-      I->first->print(O, MAI);
-      O << '\n';
+      O << *I->second << ":\n";
+      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << *I->first << '\n';
     }
   }
 

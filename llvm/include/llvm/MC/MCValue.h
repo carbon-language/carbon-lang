@@ -20,6 +20,7 @@
 
 namespace llvm {
 class MCSymbol;
+class MCAsmInfo;
 class raw_ostream;
 
 /// MCValue - This represents an "assembler immediate".  In its most general

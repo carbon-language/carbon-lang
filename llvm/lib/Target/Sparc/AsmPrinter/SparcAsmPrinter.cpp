@@ -137,11 +137,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // We didn't modify anything.
-  O << "\t.size\t";
-  CurrentFnSym->print(O, MAI);
-  O << ", .-";
-  CurrentFnSym->print(O, MAI);
-  O << '\n';
+  O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
   return false;
 }
 
@@ -159,9 +155,7 @@ void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
     // Function is externally visible
-    O << "\t.global\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.global\t" << *CurrentFnSym << '\n';
     break;
   case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -169,19 +163,14 @@ void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     // Function is weak
-    O << "\t.weak\t";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak\t" << *CurrentFnSym << '\n';
     break;
   }
   
   printVisibility(CurrentFnSym, F->getVisibility());
   
-  O << "\t.type\t";
-  CurrentFnSym->print(O, MAI);
-  O << ", #function\n";
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << "\t.type\t" << *CurrentFnSym << ", #function\n";
+  O << *CurrentFnSym << ":\n";
 }
 
 
@@ -205,10 +194,10 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << (int)MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
   case MachineOperand::MO_GlobalAddress:
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -314,14 +303,10 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (GVar->hasLocalLinkage()) {
-        O << "\t.local ";
-        GVarSym->print(O, MAI);
-        O << '\n';
+        O << "\t.local " << *GVarSym << '\n';
       }
 
-      O << MAI->getCOMMDirective();
-      GVarSym->print(O, MAI);
-      O << ',' << Size;
+      O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
@@ -337,18 +322,14 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
    case GlobalValue::WeakAnyLinkage: // FIXME: Verify correct for weak.
    case GlobalValue::WeakODRLinkage: // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak " << *GVarSym << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective();
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << MAI->getGlobalDirective() << *GVarSym << '\n';
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -367,16 +348,11 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
 
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type ";
-    GVarSym->print(O, MAI);
-    O << ",#object\n";
-    O << "\t.size ";
-    GVarSym->print(O, MAI);
-    O << ',' << Size << '\n';
+    O << "\t.type " << *GVarSym << ",#object\n";
+    O << "\t.size " << *GVarSym << ',' << Size << '\n';
   }
 
-  GVarSym->print(O, MAI);
-  O  << ":\n";
+  O << *GVarSym << ":\n";
   EmitGlobalConstant(C);
 }
 

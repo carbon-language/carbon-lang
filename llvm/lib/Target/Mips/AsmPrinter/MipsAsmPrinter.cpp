@@ -217,23 +217,15 @@ void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // 2 bits aligned
   EmitAlignment(MF.getAlignment(), F);
 
-  O << "\t.globl\t";
-  CurrentFnSym->print(O, MAI);
-  O << '\n';
-  O << "\t.ent\t";
-  CurrentFnSym->print(O, MAI);
-  O << '\n';
+  O << "\t.globl\t" << *CurrentFnSym << '\n';
+  O << "\t.ent\t" << *CurrentFnSym << '\n';
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux()) {
-    O << "\t.type\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", @function\n";
-  }
+  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
+    O << "\t.type\t" << *CurrentFnSym << ", @function\n";
 
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
 
   emitFrameDirective(MF);
   printSavedRegsBitmask(MF);
@@ -249,16 +241,9 @@ void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   O << "\t.set\tmacro\n"; 
   O << "\t.set\treorder\n"; 
 
-  O << "\t.end\t";
-  CurrentFnSym->print(O, MAI);
-  O << '\n';
-  if (MAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux()) {
-    O << "\t.size\t";
-    CurrentFnSym->print(O, MAI);
-    O << ", .-";
-    CurrentFnSym->print(O, MAI);
-    O << '\n';
-  }
+  O << "\t.end\t" << *CurrentFnSym << '\n';
+  if (MAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux())
+    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -359,15 +344,15 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
 
     case MachineOperand::MO_MachineBasicBlock:
-      GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+      O << *GetMBBSymbol(MO.getMBB()->getNumber());
       return;
 
     case MachineOperand::MO_GlobalAddress:
-      GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+      O << *GetGlobalValueSymbol(MO.getGlobal());
       break;
 
     case MachineOperand::MO_ExternalSymbol:
-      GetExternalSymbolSymbol(MO.getSymbolName())->print(O, MAI);
+      O << *GetExternalSymbolSymbol(MO.getSymbolName());
       break;
 
     case MachineOperand::MO_JumpTableIndex:
@@ -478,15 +463,10 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
         (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasLocalLinkage()) {
-        O << "\t.local\t";
-        GVarSym->print(O, MAI);
-        O << '\n';
-      }
+      if (GVar->hasLocalLinkage())
+        O << "\t.local\t" << *GVarSym << '\n';
 
-      O << MAI->getCOMMDirective();
-      GVarSym->print(O, MAI);
-      O << ',' << Size;
+      O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (1 << Align);
 
@@ -502,18 +482,14 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::WeakODRLinkage:
     // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak ";
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << "\t.weak " << *GVarSym << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of their name
     // or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective();
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << MAI->getGlobalDirective() << *GVarSym << '\n';
     // Fall Through
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
@@ -534,16 +510,11 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   EmitAlignment(Align, GVar);
 
   if (MAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
-    O << "\t.type ";
-    GVarSym->print(O, MAI);
-    O << ",@object\n";
-    O << "\t.size ";
-    GVarSym->print(O, MAI);
-    O << ',' << Size << '\n';
+    O << "\t.type " << *GVarSym << ",@object\n";
+    O << "\t.size " << *GVarSym << ',' << Size << '\n';
   }
 
-  GVarSym->print(O, MAI);
-  O << ":\n";
+  O << *GVarSym << ":\n";
   EmitGlobalConstant(C);
 }
 

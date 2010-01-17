@@ -231,26 +231,17 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
   if (!TheFunc->hasLocalLinkage())
-    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective()) {
-      O << GlobalEHDirective;
-      EHFrameInfo.FunctionEHSym->print(O, MAI);
-      O << '\n';
-    }
+    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective())
+      O << GlobalEHDirective << *EHFrameInfo.FunctionEHSym << '\n';
 
   // If corresponding function is weak definition, this should be too.
-  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective()) {
-    O << MAI->getWeakDefDirective();
-    EHFrameInfo.FunctionEHSym->print(O, MAI);
-    O << '\n';
-  }
+  if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
+    O << MAI->getWeakDefDirective() << *EHFrameInfo.FunctionEHSym << '\n';
 
   // If corresponding function is hidden, this should be too.
   if (TheFunc->hasHiddenVisibility())
-    if (const char *HiddenDirective = MAI->getHiddenDirective()) {
-      O << HiddenDirective;
-      EHFrameInfo.FunctionEHSym->print(O, MAI);
-      O << '\n';
-    }
+    if (const char *HiddenDirective = MAI->getHiddenDirective())
+      O << HiddenDirective << *EHFrameInfo.FunctionEHSym << '\n';
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If
@@ -260,19 +251,14 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       (!TheFunc->isWeakForLinker() ||
        !MAI->getWeakDefDirective() ||
        MAI->getSupportsWeakOmittedEHFrame())) {
-    EHFrameInfo.FunctionEHSym->print(O, MAI);
-    O << " = 0\n";
+    O << *EHFrameInfo.FunctionEHSym << " = 0\n";
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
-    if (const char *UsedDirective = MAI->getUsedDirective()) {
-      O << UsedDirective;
-      EHFrameInfo.FunctionEHSym->print(O, MAI);
-      O << "\n\n";
-    }
+    if (const char *UsedDirective = MAI->getUsedDirective())
+      O << UsedDirective << *EHFrameInfo.FunctionEHSym << "\n\n";
   } else {
-    EHFrameInfo.FunctionEHSym->print(O, MAI);
-    O << ":\n";
+    O << *EHFrameInfo.FunctionEHSym << ":\n";
 
     // EH frame header.
     EmitDifference("eh_frame_end", EHFrameInfo.Number,
@@ -344,9 +330,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
       if (const char *UsedDirective = MAI->getUsedDirective()) {
-        O << UsedDirective;
-        EHFrameInfo.FunctionEHSym->print(O, MAI);
-        O << "\n\n";
+        O << UsedDirective << *EHFrameInfo.FunctionEHSym << "\n\n";
       }
   }
 
@@ -946,7 +930,7 @@ void DwarfException::EmitExceptionTable() {
     PrintRelDirective();
 
     if (GV) {
-      Asm->GetGlobalValueSymbol(GV)->print(O, MAI);
+      O << *Asm->GetGlobalValueSymbol(GV);
     } else {
       O << "0x0";
     }

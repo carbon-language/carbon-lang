@@ -94,7 +94,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
+    O << *GetMBBSymbol(MO.getMBB()->getNumber());
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:
@@ -107,7 +107,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_GlobalAddress:
-    GetGlobalValueSymbol(MO.getGlobal())->print(O, MAI);
+    O << *GetGlobalValueSymbol(MO.getGlobal());
     return;
 
   case MachineOperand::MO_JumpTableIndex:
@@ -148,35 +148,28 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
-    O << "\t.globl ";
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
+    O << "\t.globl " << *CurrentFnSym << '\n';
     break;
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
   case Function::LinkOnceAnyLinkage:
   case Function::LinkOnceODRLinkage:
-    O << MAI->getWeakRefDirective();
-    CurrentFnSym->print(O, MAI);
-    O << "\n";
+    O << MAI->getWeakRefDirective() << *CurrentFnSym << '\n';
     break;
   }
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  O << "\t.ent ";
-  CurrentFnSym->print(O, MAI);
-  O << "\n";
+  O << "\t.ent " << *CurrentFnSym << "\n";
 
-  CurrentFnSym->print(O, MAI);
-  O << ":\n";
+  O << *CurrentFnSym << ":\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
-    if (I != MF.begin()) {
+    if (I != MF.begin())
       EmitBasicBlockStart(I);
-    }
+
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -191,9 +184,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  O << "\t.end ";
-  CurrentFnSym->print(O, MAI);
-  O << "\n";
+  O << "\t.end " << *CurrentFnSym << "\n";
 
   // We didn't modify anything.
   return false;
@@ -235,15 +226,11 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::CommonLinkage:
-    O << MAI->getWeakRefDirective();
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << MAI->getWeakRefDirective() << *GVarSym << '\n';
     break;
   case GlobalValue::AppendingLinkage:
   case GlobalValue::ExternalLinkage:
-    O << MAI->getGlobalDirective();
-    GVarSym->print(O, MAI);
-    O << '\n';
+    O << MAI->getGlobalDirective() << *GVarSym << '\n';
     break;
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -255,18 +242,13 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   // 3: Type, Size, Align
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type\t";
-    GVarSym->print(O, MAI);
-    O << ", @object\n";
-    O << "\t.size\t";
-    GVarSym->print(O, MAI);
-    O << ", " << Size << "\n";
+    O << "\t.type\t" << *GVarSym << ", @object\n";
+    O << "\t.size\t" << *GVarSym << ", " << Size << "\n";
   }
 
   EmitAlignment(Align, GVar);
   
-  GVarSym->print(O, MAI);
-  O << ":\n";
+  O << *GVarSym << ":\n";
 
   EmitGlobalConstant(C);
   O << '\n';
