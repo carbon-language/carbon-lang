@@ -26,15 +26,10 @@ static bool isAcceptableChar(char C) {
   return true;
 }
 
-/// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
-/// for this assembler.
-static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
+/// NameNeedsQuoting - Return true if the identifier \arg Str needs quotes to be
+/// syntactically correct.
+static bool NameNeedsQuoting(StringRef Str) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");
-  
-  // If the first character is a number and the target does not allow this, we
-  // need quotes.
-  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9')
-    return true;
   
   // If any of the characters in the string is an unacceptable character, force
   // quotes.
@@ -48,7 +43,7 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   // The name for this MCSymbol is required to be a valid target name.  However,
   // some targets support quoting names with funny characters.  If the name
   // contains a funny character, then print it quoted.
-  if (MAI == 0 || !NameNeedsEscaping(getName(), *MAI)) {
+  if (!NameNeedsQuoting(getName())) {
     OS << getName();
     return;
   }
