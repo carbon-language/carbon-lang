@@ -373,24 +373,29 @@ int main(int argc, char **argv) {
   // FIXME: outs() is not binary!
   raw_ostream *Out = &outs();  // Default to printing to stdout...
   if (OutputFilename != "-") {
-    // Make sure that the Output file gets unlinked from the disk if we get a
-    // SIGINT
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+    if (NoOutput || AnalyzeOnly) {
+      errs() << "WARNING: The -o (output filename) option is ignored when\n"
+                "the --disable-output or --analyze options are used.\n";
+    } else {
+      // Make sure that the Output file gets unlinked from the disk if we get a
+      // SIGINT
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
-    std::string ErrorInfo;
-    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                             raw_fd_ostream::F_Binary);
-    if (!ErrorInfo.empty()) {
-      errs() << ErrorInfo << '\n';
-      delete Out;
-      return 1;
+      std::string ErrorInfo;
+      Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                               raw_fd_ostream::F_Binary);
+      if (!ErrorInfo.empty()) {
+        errs() << ErrorInfo << '\n';
+        delete Out;
+        return 1;
+      }
     }
   }
 
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't
   // impress anyone by spewing tons of binary goo to a terminal.
-  if (!Force && !NoOutput && !OutputAssembly)
+  if (!Force && !NoOutput && !AnalyzeOnly && !OutputAssembly)
     if (CheckBitcodeOutputToConsole(*Out, !Quiet))
       NoOutput = true;
 
@@ -517,7 +522,7 @@ int main(int argc, char **argv) {
   if (!NoVerify && !VerifyEach)
     Passes.add(createVerifierPass());
 
-  // Write bitcode or assembly  out to disk or outs() as the last step...
+  // Write bitcode or assembly out to disk or outs() as the last step...
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputAssembly)
       Passes.add(createPrintModulePass(Out));
