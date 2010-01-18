@@ -1153,6 +1153,10 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::trap: {
+    BuildMI(MBB, DL, TII.get(X86::TRAP));
+    return true;
+  }
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow: {
     // Replace "add with overflow" intrinsics with an "add" instruction followed
