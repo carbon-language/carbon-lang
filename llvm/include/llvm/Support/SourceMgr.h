@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the SMLoc, SMDiagnostic and SourceMgr classes.  This
+// This file declares the SMDiagnostic and SourceMgr classes.  This
 // provides a simple substrate for diagnostics, #include handling, and other low
 // level things for simple parsers.
 //
@@ -15,6 +15,8 @@
 
 #ifndef SUPPORT_SOURCEMGR_H
 #define SUPPORT_SOURCEMGR_H
+
+#include "llvm/Support/SMLoc.h"
 
 #include <string>
 #include <vector>
@@ -25,26 +27,6 @@ namespace llvm {
   class SourceMgr;
   class SMDiagnostic;
   class raw_ostream;
-  
-class SMLoc {
-  const char *Ptr;
-public:
-  SMLoc() : Ptr(0) {}
-  SMLoc(const SMLoc &RHS) : Ptr(RHS.Ptr) {}
-  
-  bool isValid() const { return Ptr != 0; }
-
-  bool operator==(const SMLoc &RHS) const { return RHS.Ptr == Ptr; }
-  bool operator!=(const SMLoc &RHS) const { return RHS.Ptr != Ptr; }
-
-  const char *getPointer() const { return Ptr; }
-  
-  static SMLoc getFromPointer(const char *Ptr) {
-    SMLoc L;
-    L.Ptr = Ptr;
-    return L;
-  }
-};
 
 /// SourceMgr - This owns the files read by a parser, handles include stacks,
 /// and handles diagnostic wrangling.
