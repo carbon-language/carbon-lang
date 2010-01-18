@@ -29,8 +29,9 @@ class ActionCommentHandler : public CommentHandler {
 public:
   explicit ActionCommentHandler(Action &Actions) : Actions(Actions) { }
 
-  virtual void HandleComment(Preprocessor &PP, SourceRange Comment) {
+  virtual bool HandleComment(Preprocessor &PP, SourceRange Comment) {
     Actions.ActOnComment(Comment);
+    return false;
   }
 };
 

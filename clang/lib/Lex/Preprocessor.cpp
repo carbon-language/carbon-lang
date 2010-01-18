@@ -583,11 +583,18 @@ void Preprocessor::RemoveCommentHandler(CommentHandler *Handler) {
   CommentHandlers.erase(Pos);
 }
 
-void Preprocessor::HandleComment(SourceRange Comment) {
+bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
+  bool AnyPendingTokens = false;
   for (std::vector<CommentHandler *>::iterator H = CommentHandlers.begin(),
        HEnd = CommentHandlers.end();
-       H != HEnd; ++H)
-    (*H)->HandleComment(*this, Comment);
+       H != HEnd; ++H) {
+    if ((*H)->HandleComment(*this, Comment))
+      AnyPendingTokens = true;
+  }
+  if (!AnyPendingTokens || getCommentRetentionState())
+    return false;
+  Lex(result);
+  return true;
 }
 
 CommentHandler::~CommentHandler() { }

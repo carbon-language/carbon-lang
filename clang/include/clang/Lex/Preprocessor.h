@@ -884,7 +884,9 @@ public:
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
   void HandlePragmaDependency(Token &DependencyTok);
   void HandlePragmaComment(Token &CommentTok);
-  void HandleComment(SourceRange Comment);
+  // Return true and store the first token only if any CommentHandler
+  // has inserted some tokens and getCommentRetentionState() is false.
+  bool HandleComment(Token &Token, SourceRange Comment);
 };
 
 /// \brief Abstract base class that describes a handler that will receive
@@ -893,7 +895,9 @@ class CommentHandler {
 public:
   virtual ~CommentHandler();
 
-  virtual void HandleComment(Preprocessor &PP, SourceRange Comment) = 0;
+  // The handler shall return true if it has pushed any tokens
+  // to be read using e.g. EnterToken or EnterTokenStream.
+  virtual bool HandleComment(Preprocessor &PP, SourceRange Comment) = 0;
 };
 
 }  // end namespace clang
