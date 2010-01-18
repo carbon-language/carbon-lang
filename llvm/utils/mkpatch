@@ -23,8 +23,8 @@ echo "mkpatch: Generating differences on all directories"
 svn diff -x -u  >> "$NAME".patch.raw 2>&1 \
   autoconf docs utils include lib/System lib/Support lib/VMCore lib/AsmParser \
   lib/Bitcode lib/Analysis lib/Transforms lib/CodeGen lib/Target \
-  lib/ExecutionEngine lib/Debugger lib/Linker \
-  tools test unittests runtime projects examples win32 Xcode
+  lib/ExecutionEngine lib/Linker \
+  tools test unittests runtime projects examples Xcode
 
 echo "mkpatch: Removing cruft from the patch file"
 sed -e '/^[?] .*/d' -e '/^cvs diff: Diffing/d' "$NAME".patch.raw | awk '\
