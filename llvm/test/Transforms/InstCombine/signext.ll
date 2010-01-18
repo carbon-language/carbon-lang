@@ -8,8 +8,8 @@ define i32 @test1(i32 %x) {
         %tmp.3 = add i32 %tmp.2, 32768          ; <i32> [#uses=1]
         ret i32 %tmp.3
 ; CHECK: @test1
-; CHECK: %sext = trunc i32 %x to i16
-; CHECK: %tmp.3 = sext i16 %sext to i32
+; CHECK: %sext1 = shl i32 %x, 16
+; CHECK: %tmp.3 = ashr i32 %sext1, 16
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -19,8 +19,8 @@ define i32 @test2(i32 %x) {
         %tmp.3 = add i32 %tmp.2, -32768         ; <i32> [#uses=1]
         ret i32 %tmp.3
 ; CHECK: @test2
-; CHECK: %sext = trunc i32 %x to i16
-; CHECK: %tmp.3 = sext i16 %sext to i32
+; CHECK: %sext1 = shl i32 %x, 16
+; CHECK: %tmp.3 = ashr i32 %sext1, 16
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -50,8 +50,8 @@ define i32 @test5(i32 %x) {
         %tmp.3 = add i32 %tmp.2, -128           ; <i32> [#uses=1]
         ret i32 %tmp.3
 ; CHECK: @test5
-; CHECK: %sext = trunc i32 %x to i8
-; CHECK: %tmp.3 = sext i8 %sext to i32
+; CHECK: %sext1 = shl i32 %x, 24
+; CHECK: %tmp.3 = ashr i32 %sext1, 24
 ; CHECK: ret i32 %tmp.3
 }
 
@@ -65,3 +65,12 @@ define i32 @test6(i32 %x) {
 ; CHECK: ret i32 %tmp.4
 }
 
+define i32 @test7(i16 %P) {
+  %tmp.1 = zext i16 %P to i32                     ; <i32> [#uses=1]
+  %sext1 = shl i32 %tmp.1, 16                     ; <i32> [#uses=1]
+  %tmp.5 = ashr i32 %sext1, 16                    ; <i32> [#uses=1]
+  ret i32 %tmp.5
+; CHECK: @test7
+; CHECK: %tmp.5 = sext i16 %P to i32
+; CHECK: ret i32 %tmp.5
+}

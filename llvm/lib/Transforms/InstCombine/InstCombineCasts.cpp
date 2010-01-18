@@ -955,6 +955,19 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
                                       ShAmt);
   }
 
+  // If this input is a trunc from our destination, then turn sext(trunc(x))
+  // into shifts.
+  if (TruncInst *TI = dyn_cast<TruncInst>(Src))
+    if (TI->hasOneUse() && TI->getOperand(0)->getType() == DestTy) {
+      uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
+      uint32_t DestBitSize = DestTy->getScalarSizeInBits();
+      
+      // We need to emit a shl + ashr to do the sign extend.
+      Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
+      Value *Res = Builder->CreateShl(TI->getOperand(0), ShAmt, "sext");
+      return BinaryOperator::CreateAShr(Res, ShAmt);
+    }
+  
   // If the input is a shl/ashr pair of a same constant, then this is a sign
   // extension from a smaller value.  If we could trust arbitrary bitwidth
   // integers, we could turn this into a truncate to the smaller bit and then

@@ -404,12 +404,26 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     // If the input is a SHL by the same constant (ashr (shl X, C), C), then we
-    // have a sign-extend idiom.  If the input value is known to already be sign
-    // extended enough, delete the extension.
+    // have a sign-extend idiom.
     Value *X;
-    if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1))) &&
-        ComputeNumSignBits(X) > Op1C->getZExtValue())
-      return ReplaceInstUsesWith(I, X);
+    if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1)))) {
+      // If the input value is known to already be sign extended enough, delete
+      // the extension.
+      if (ComputeNumSignBits(X) > Op1C->getZExtValue())
+        return ReplaceInstUsesWith(I, X);
+
+      // If the input is an extension from the shifted amount value, e.g.
+      //   %x = zext i8 %A to i32
+      //   %y = shl i32 %x, 24
+      //   %z = ashr %y, 24
+      // then turn this into "z = sext i8 A to i32".
+      if (ZExtInst *ZI = dyn_cast<ZExtInst>(X)) {
+        uint32_t SrcBits = ZI->getOperand(0)->getType()->getScalarSizeInBits();
+        uint32_t DestBits = ZI->getType()->getScalarSizeInBits();
+        if (Op1C->getZExtValue() == DestBits-SrcBits)
+          return new SExtInst(ZI->getOperand(0), ZI->getType());
+      }
+    }
   }            
   
   // See if we can turn a signed shr into an unsigned shr.
