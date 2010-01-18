@@ -43,6 +43,7 @@ public:
     case TypeLoc::CLASS: DISPATCH(CLASS##TypeLoc);
 #include "clang/AST/TypeLocNodes.def"
     }
+    llvm_unreachable("unexpected type loc class!");
   }
 
 #define TYPELOC(CLASS, PARENT)      \
