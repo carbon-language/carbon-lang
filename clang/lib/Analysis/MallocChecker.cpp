@@ -170,7 +170,12 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
   assert(Sym);
 
   const RefState *RS = state->get<RegionState>(Sym);
-  assert(RS);
+
+  // If the symbol has not been tracked, return. This is possible when free() is
+  // called on a pointer that does not get its pointee directly from malloc(). 
+  // Full support of this requires inter-procedural analysis.
+  if (!RS)
+    return state;
 
   // Check double free.
   if (RS->isReleased()) {
