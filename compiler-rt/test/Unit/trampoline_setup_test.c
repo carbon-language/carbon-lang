@@ -24,14 +24,13 @@
  * Note that, nested functions are not ISO C and are not supported in Clang.
  */
 
-#ifdef __gcc__ && !__clang__
+#if !defined(__clang__)
 
 typedef int (*nested_func_t)(int x);
 
 nested_func_t proc;
 
-int main()
-{
+int main() {
     /* Some locals */
     int c = 10;
     int d = 7;
@@ -55,4 +54,10 @@ int main()
     return 0;
 }
 
-#endif /* __clang__ */
+#else
+
+int main() {
+  return 0;
+}
+
+#endif
