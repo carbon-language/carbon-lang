@@ -316,6 +316,8 @@ namespace llvm {
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
     }
+    bool hasZeroFillDirective() const { return ZeroFillDirective != 0; }
+    
     const char *getNonexecutableStackDirective() const {
       return NonexecutableStackDirective;
     }

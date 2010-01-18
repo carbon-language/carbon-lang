@@ -685,10 +685,19 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
-      if (const char *Directive = MAI->getZeroFillDirective()) {
+      if (MAI->hasZeroFillDirective()) {
+        // .globl _foo
         OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
-        O << Directive << "__DATA, __common, " << *GVSym;
-        O << ", " << Size << ", " << Align << '\n';
+        // .zerofill __DATA, __common, _foo, 400, 5
+        TargetLoweringObjectFileMachO &TLOFMacho = 
+          static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+        // FIXME: This stuff should already be handled by SectionForGlobal!
+        const MCSection *TheSection = 
+          TLOFMacho.getMachOSection("__DATA", "__common",
+                                    MCSectionMachO::S_ZEROFILL,
+                                    SectionKind::getBSS());
+          
+        OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << Align);
         return;
       }
     }
