@@ -1,4 +1,4 @@
-# Makefile utilities
+# Generic Makefile Utilities
 
 ###
 # Utility functions
@@ -15,6 +15,19 @@ streq = $(if $(1),$(if $(subst $(1),,$(2))$(subst $(2),,$(1)),,true),$(if $(2),,
 # Return "true" if LHS != RHS, otherwise "".
 strneq = $(if $(call streq,$(1),$(2)),,true)
 
+# Function: contains list item
+#
+# Return "true" if 'list' contains the value 'item'.
+contains = $(if $(strip $(foreach i,$(1),$(if $(call streq,$(2),$(i)),T,))),true,)
+
+# Function: is_subset a b
+# Return "true" if 'a' is a subset of 'b'.
+is_subset = $(if $(strip $(set_difference $(1),$(2))),,true)
+
+# Function: set_difference a b
+# Return a - b.
+set_difference = $(foreach i,$(1),$(if $(call contains,$(2),$(i)),,$(i)))
+
 # Function: Set variable value
 #
 # Set the given make variable to the given value.
@@ -24,6 +37,47 @@ Set = $(eval $(1) := $(2))
 #
 # Append the given value to the given make variable.
 Append = $(eval $(1) += $(2))
+
+# Function: IsDefined variable
+#
+# Check whether the given variable is defined.
+IsDefined = $(call strneq,undefined,$(flavor $(1)))
+
+# Function: IsUndefined variable
+#
+# Check whether the given variable is undefined.
+IsUndefined = $(call streq,undefined,$(flavor $(1)))
+
+# Function: VarOrDefault variable default-value
+#
+# Get the value of the given make variable, or the default-value if the variable
+# is undefined.
+VarOrDefault = $(if $(call IsDefined,$(1)),$($(1)),$(2))
+
+# Function: CheckValue variable
+#
+# Print the name, definition, and value of a variable, for testing make
+# utilities.
+#
+# Example:
+#   foo = $(call streq,a,a)
+#   $(call CheckValue,foo)
+# Example Output:
+#   CHECKVALUE: foo: $(call streq,,) - true
+CheckValue = $(info CHECKVALUE: $(1): $(value $(1)) - $($(1)))
+
+# Function: Assert value message
+#
+# Check that a value is true, or give an error including the given message
+Assert = $(if $(1),,\
+           $(error Assertion failed: $(2)))
+
+# Function: AssertEqual variable expected-value
+#
+# Check that the value of a variable is 'expected-value'.
+AssertEqual = \
+  $(if $(call streq,$($(1)),$(2)),,\
+       $(error Assertion failed: $(1): $(value $(1)) - $($(1)) != $(2)))
 
 ###
 # Clean up make behavior
@@ -38,4 +92,3 @@ Append = $(eval $(1) += $(2))
 # and origin of XXX.
 make-print-%:
 	$(error PRINT: $(value $*) = "$($*)" (from $(origin $*)))
-
