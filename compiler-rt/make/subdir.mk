@@ -15,30 +15,6 @@ ifeq ($(Dir),)
   $(error "No Dir variable defined.")
 endif
 
-# Expand template for each configuration and architecture.
-#
-# FIXME: This level of logic should be in primary Makefile?
-ifeq ($(OnlyConfigs),)
-  ConfigsToTraverse := $(Configs)
-else
-  ConfigsToTraverse := $(OnlyConfigs)
-endif
-
-ifeq ($(OnlyArchs),)
-  ArchsToTraverse := $(Archs)
-else
-  ArchsToTraverse := $(OnlyArchs)
-endif
-
-# If we are only targetting a single arch, only traverse that.
-ifneq ($(TargetArch),)
-  ArchsToTraverse := $(filter $(TargetArch), $(ArchsToTraverse))
-endif
-
-$(foreach config,$(ConfigsToTraverse), \
-  $(foreach arch,$(ArchsToTraverse), \
-    $(eval $(call CNA_subdir_template,$(config),$(arch),$(Dir)))))
-
 ###
 # Include child makefile fragments
 
