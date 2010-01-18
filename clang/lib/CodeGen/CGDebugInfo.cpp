@@ -1008,9 +1008,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
-    // Skip the asm prefix if it exists.
-    if (Name[0] == '\01')
-      Name = Name.substr(1);
     LinkageName = Name;
   }
 
