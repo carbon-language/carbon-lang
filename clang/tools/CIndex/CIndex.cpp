@@ -643,7 +643,7 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl) {
   return SourceMgr.getSpellingColumnNumber(ND->getLocation());
 }
   
-CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
+CXSourceRange clang_getDeclExtent(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   SourceManager &SM = ND->getASTContext().getSourceManager();
@@ -653,7 +653,7 @@ CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
   SourceLocation End = SM.getInstantiationLoc(R.getEnd());
 
   if (!Begin.isValid()) {
-    CXDeclExtent extent = { { 0, 0 }, { 0, 0 } };
+    CXSourceRange extent = { { 0, 0, 0 }, { 0, 0, 0 } };
     return extent;
   }
   
@@ -691,8 +691,9 @@ CXDeclExtent clang_getDeclExtent(CXDecl AnonDecl) {
   }
 
   // Package up the line/column data and return to the caller.
-  CXDeclExtent extent = { { StartLineNo, StartColNo },
-                          { EndLineNo, EndColNo } };
+  const FileEntry *FEntry = SM.getFileEntryForID(SM.getFileID(Begin));
+  CXSourceRange extent = { { (void *)FEntry, StartLineNo, StartColNo },
+                           { (void *)FEntry, EndLineNo, EndColNo } };
   return extent;  
 }
 

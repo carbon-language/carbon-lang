@@ -74,7 +74,7 @@ static const char* GetCursorSource(CXCursor Cursor) {
 static const char *FileCheckPrefix = "CHECK";
 
 static void PrintDeclExtent(CXDecl Dcl) {
-  CXSourceExtent extent; 
+  CXSourceRange extent; 
   if (!Dcl)
     return;
   extent = clang_getDeclExtent(Dcl);
