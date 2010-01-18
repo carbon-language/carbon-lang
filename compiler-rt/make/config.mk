@@ -65,11 +65,14 @@ RANLIB.Flags := 2> /dev/null
 LIPO := lipo
 CP := cp
 
+VERBOSE := 0
+DEBUGMAKE := 0
+
 ###
 # Automatic and derived variables.
 
 # Adjust settings for verbose mode
-ifndef VERBOSE
+ifneq ($(VERBOSE),1)
   Verb := @
 else
   Verb :=

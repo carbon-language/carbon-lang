@@ -4,7 +4,7 @@ ifeq ($(Dir),)
   $(error "No Dir variable defined.")
 endif
 
-ifeq ($(DebugMake),1)
+ifeq ($(DEBUGMAKE),1)
   $(info MAKE: $(Dir): Processing subdirectory)
 endif
 
@@ -39,7 +39,7 @@ $(foreach config,$(ConfigsToTraverse), \
 SubDirsList := $(SubDirs:%=$(Dir)/%)
 ifeq ($(SubDirsList),)
 else
-  ifeq ($(DebugMake),1)
+  ifeq ($(DEBUGMAKE),1)
     $(info MAKE: Descending into subdirs: $(SubDirsList))
   endif
   $(foreach subdir,$(SubDirsList),$(eval include $(subdir)/Makefile.mk))
