@@ -18,6 +18,7 @@
 use 5.006;
 use strict;
 use warnings;
+use Cwd 'abs_path';
 
 #---- begin autoconf values ----
 my $PACKAGE_NAME        = q{@PACKAGE_NAME@};
@@ -53,20 +54,14 @@ my $LLVM_BUILDMODE      = q{@LLVM_BUILDMODE@};
 # Convert the current executable name into its directory (e.g. ".").
 my ($RUN_DIR) = ($0 =~ /^(.*)\/.*$/);
 
-# Find the unix pwd program: we don't want to use the bash builtin, as it does
-# not look through symlinks etc.
-my $PWD = `which pwd`;
-chomp($PWD);
-$PWD = "pwd" if (!-e $PWD);
-
 # Turn the directory into an absolute directory on the file system, also pop up
 # from "bin" into the build or prefix dir.
-my $ABS_RUN_DIR = `cd $RUN_DIR/..; $PWD`;
+my $ABS_RUN_DIR = abs_path("$RUN_DIR/..");
 chomp($ABS_RUN_DIR);
 
 # Compute the absolute object directory build, e.g. "foo/llvm/Debug".
 my $ABS_OBJ_ROOT = "$LLVM_OBJ_ROOT/$LLVM_BUILDMODE";
-$ABS_OBJ_ROOT = `cd $ABS_OBJ_ROOT; $PWD` if (-d $ABS_OBJ_ROOT);
+$ABS_OBJ_ROOT = abs_path("$ABS_OBJ_ROOT") if (-d $ABS_OBJ_ROOT);
 chomp($ABS_OBJ_ROOT);
 
 my $INCLUDEDIR = "$ABS_RUN_DIR/include";
@@ -134,9 +129,9 @@ foreach my $arg (@ARGV) {
         } elsif ($arg eq "--build-mode") {
             $has_opt = 1; print "$LLVM_BUILDMODE\n";
         } elsif ($arg eq "--obj-root") {
-            $has_opt = 1; print `cd $LLVM_OBJ_ROOT/; $PWD`;
+            $has_opt = 1; print abs_path("$LLVM_OBJ_ROOT/");
         } elsif ($arg eq "--src-root") {
-            $has_opt = 1; print `cd $LLVM_SRC_ROOT/; $PWD`;
+            $has_opt = 1; print abs_path("$LLVM_SRC_ROOT/");
         } else {
             usage();
         }
