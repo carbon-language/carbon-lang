@@ -51,7 +51,7 @@ public:
   /// @name Utility Methods
   /// @{
 
-  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 
   /// @}
@@ -75,6 +75,11 @@ public:
 
   static bool classof(const MCExpr *) { return true; }
 };
+  
+inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
+  E.print(OS);
+  return OS;
+}
 
 //// MCConstantExpr - Represent a constant integer expression.
 class MCConstantExpr : public MCExpr {

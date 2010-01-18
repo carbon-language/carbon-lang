@@ -62,7 +62,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else {
     assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    Op.getExpr()->print(O, &MAI);
+    O << *Op.getExpr();
   }
 }
 

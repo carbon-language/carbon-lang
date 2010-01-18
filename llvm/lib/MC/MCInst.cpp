@@ -23,9 +23,7 @@ void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   else if (isImm())
     OS << "Imm:" << getImm();
   else if (isExpr()) {
-    OS << "Expr:(";
-    getExpr()->print(OS, MAI);
-    OS << ")";
+    OS << "Expr:(" << *getExpr() << ")";
   } else
     OS << "UNDEFINED";
   OS << ">";

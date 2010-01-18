@@ -39,7 +39,7 @@ void MSP430InstPrinter::printPCRelImmOperand(const MCInst *MI, unsigned OpNo) {
     O << Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
-    Op.getExpr()->print(O, &MAI);
+    O << *Op.getExpr();
   }
 }
 
@@ -53,8 +53,7 @@ void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    O << '#';
-    Op.getExpr()->print(O, &MAI);
+    O << '#' << *Op.getExpr();
   }
 }
 
@@ -65,8 +64,7 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
 
   // Print displacement first
   if (Disp.isExpr()) {
-    O << '&';
-    Disp.getExpr()->print(O, &MAI);
+    O << '&' << *Disp.getExpr();
   } else {
     assert(Disp.isImm() && "Expected immediate in displacement field");
     if (!Base.getReg())

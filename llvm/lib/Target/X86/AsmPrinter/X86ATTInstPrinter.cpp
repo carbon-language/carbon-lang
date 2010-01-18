@@ -55,7 +55,7 @@ void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
     O << (int)Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
-    Op.getExpr()->print(O, &MAI);
+    O << *Op.getExpr();
   }
 }
 
@@ -68,8 +68,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo) {
     O << '$' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    O << '$';
-    Op.getExpr()->print(O, &MAI);
+    O << '$' << *Op.getExpr();
   }
 }
 
@@ -84,7 +83,7 @@ void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
       O << DispVal;
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
-    DispSpec.getExpr()->print(O, &MAI);
+    O << *DispSpec.getExpr();
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {

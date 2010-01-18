@@ -52,7 +52,7 @@ void X86IntelInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
     O << Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
-    Op.getExpr()->print(O, &MAI);
+    O << *Op.getExpr();
   }
 }
 
@@ -72,7 +72,7 @@ void X86IntelInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    Op.getExpr()->print(O, &MAI);
+    O << *Op.getExpr();
   }
 }
 
@@ -102,7 +102,7 @@ void X86IntelInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   if (!DispSpec.isImm()) {
     if (NeedPlus) O << " + ";
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
-    DispSpec.getExpr()->print(O, &MAI);
+    O << *DispSpec.getExpr();
   } else {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg())) {

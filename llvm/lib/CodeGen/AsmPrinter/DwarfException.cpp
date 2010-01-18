@@ -194,8 +194,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
       PersonalityRef = CreateLabelDiff(PersonalityRef, "personalityref_addr",
                                        Index);
 
-    O << MAI->getData32bitsDirective();
-    PersonalityRef->print(O, MAI);
+    O << MAI->getData32bitsDirective() << *PersonalityRef;
     Asm->EOL("Personality");
 
     Asm->EmitInt8(LSDAEncoding);

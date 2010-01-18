@@ -118,9 +118,7 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  OS << *Symbol << " = ";
-  Value->print(OS, &MAI);
-  OS << '\n';
+  OS << *Symbol << " = " << *Value << '\n';
 
   // FIXME: Lift context changes into super class.
   // FIXME: Set associated section.
@@ -194,9 +192,7 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
   case 8: OS << ".quad"; break;
   }
 
-  OS << ' ';
-  truncateToSize(Value, Size)->print(OS, &MAI);
-  OS << '\n';
+  OS << ' ' << *truncateToSize(Value, Size) << '\n';
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
@@ -250,9 +246,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
-  OS << ".org ";
-  Offset->print(OS, &MAI);
-  OS << ", " << (unsigned) Value << '\n';
+  OS << ".org " << *Offset << ", " << (unsigned) Value << '\n';
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
