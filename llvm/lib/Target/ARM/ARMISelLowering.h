@@ -53,6 +53,8 @@ namespace llvm {
       CMOV,         // ARM conditional move instructions.
       CNEG,         // ARM conditional negate instructions.
 
+      RBIT,         // ARM bitreverse instruction
+
       FTOSI,        // FP to sint within a FP register.
       FTOUI,        // FP to uint within a FP register.
       SITOF,        // sint to FP within a FP register.

@@ -1455,6 +1455,13 @@ def CLZ  : AMiscA1I<0b000010110, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
   let Inst{19-16} = 0b1111;
 }
 
+def RBIT : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
+              "rbit", "\t$dst, $src", []>, Requires<[IsARM, HasV6T2]> {
+  let Inst{7-4}   = 0b0011;
+  let Inst{11-8}  = 0b1111;
+  let Inst{19-16} = 0b1111;
+}
+
 def REV  : AMiscA1I<0b01101011, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
               "rev", "\t$dst, $src",
               [(set GPR:$dst, (bswap GPR:$src))]>, Requires<[IsARM, HasV6]> {
