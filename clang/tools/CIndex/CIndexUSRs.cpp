@@ -70,12 +70,16 @@ static inline Program &GetProgram(CXIndex CIdx) {
 namespace {
 class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::raw_ostream &Out;
+  bool IgnoreResults;
 public:
-  USRGenerator(llvm::raw_ostream &out) : Out(out) {}
+  USRGenerator(llvm::raw_ostream &out) : Out(out), IgnoreResults(false) {}
+  
+  bool ignoreResults() const { return IgnoreResults; }
   
   void VisitBlockDecl(BlockDecl *D);
   void VisitDeclContext(DeclContext *D);
   void VisitEnumDecl(EnumDecl *D);
+  void VisitFieldDecl(FieldDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
@@ -103,6 +107,17 @@ void USRGenerator::VisitEnumDecl(EnumDecl *D) {
   VisitDeclContext(D->getDeclContext());
   Out << "@E^";
   VisitTagDeclCommon(D);
+}
+
+void USRGenerator::VisitFieldDecl(FieldDecl *D) {
+  const std::string &s = D->getNameAsString();
+  if (s.empty()) {
+    // Bit fields can be anonymous.
+    IgnoreResults = true;
+    return;
+  }
+  VisitDeclContext(D->getDeclContext());
+  Out << "@^FI^" << s;
 }
 
 void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
@@ -192,6 +207,8 @@ static CXString ConstructUSR(Decl *D) {
     llvm::raw_svector_ostream Out(StrBuf);
     USRGenerator UG(Out);
     UG.Visit(static_cast<Decl*>(D));
+    if (UG.ignoreResults())
+      return CIndexer::createCXString(NULL);
   }
   
   if (StrBuf.empty())
