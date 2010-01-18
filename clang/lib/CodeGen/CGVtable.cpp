@@ -1367,6 +1367,9 @@ class VTTBuilder {
     if (RD->getNumVBases() == 0)
       return;
 
+    // Remember the sub-VTT index.
+    SubVTTIndicies[RD] = Inits.size();
+
     llvm::Constant *Vtable;
     const CXXRecordDecl *VtableClass;
 
@@ -1403,9 +1406,6 @@ class VTTBuilder {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       
-      // Remember the sub-VTT index.
-      SubVTTIndicies[Base] = Inits.size();
-
       BuildVTT(Base, BaseOffset, MorallyVirtual);
     }
   }
@@ -1418,9 +1418,6 @@ class VTTBuilder {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       if (i->isVirtual() && !SeenVBase.count(Base)) {
-        // Remember the sub-VTT index.
-        SubVTTIndicies[Base] = Inits.size();
-
         SeenVBase.insert(Base);
         uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         BuildVTT(Base, BaseOffset, true);
