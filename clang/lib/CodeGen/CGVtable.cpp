@@ -1221,6 +1221,10 @@ class VTTBuilder {
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
 
+  /// SeenVBasesInSecondary - The seen virtual bases when building the 
+  /// secondary virtual pointers.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 32> SeenVBasesInSecondary;
+
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> SubVTTIndicies;
   
   bool GenerateDefinition;
@@ -1314,6 +1318,10 @@ class VTTBuilder {
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+
+      // We only want to visit each virtual base once.
+      if (i->isVirtual() && SeenVBasesInSecondary.count(Base))
+        continue;
       
       // Itanium C++ ABI 2.6.2:
       //   Secondary virtual pointers are present for all bases with either
@@ -1352,8 +1360,13 @@ class VTTBuilder {
           
           init = BuildVtablePtr(init, Class, Base, BaseOffset);
         }
+
         Inits.push_back(init);
       }
+      
+      if (i->isVirtual())
+        SeenVBasesInSecondary.insert(Base);
+      
       Secondary(Base, subvtbl, subVtblClass, BaseOffset, BaseMorallyVirtual);
     }
   }
@@ -1388,6 +1401,9 @@ class VTTBuilder {
     // then the secondary VTTs....
     SecondaryVTTs(RD, Offset, MorallyVirtual);
 
+    // Make sure to clear the set of seen virtual bases.
+    SeenVBasesInSecondary.clear();
+
     // and last the secondary vtable pointers.
     Secondary(RD, Vtable, VtableClass, Offset, MorallyVirtual);
   }
@@ -1420,7 +1436,7 @@ class VTTBuilder {
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
         uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        BuildVTT(Base, BaseOffset, true);
+        BuildVTT(Base, BaseOffset, false);
       }
       VirtualVTTs(Base);
     }
@@ -1443,6 +1459,9 @@ public:
     
     // then the secondary VTTs...
     SecondaryVTTs(Class);
+
+    // Make sure to clear the set of seen virtual bases.
+    SeenVBasesInSecondary.clear();
 
     // then the secondary vtable pointers...
     Secondary(Class, ClassVtbl, Class);
