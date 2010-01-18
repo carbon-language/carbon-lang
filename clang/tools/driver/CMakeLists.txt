@@ -44,4 +44,4 @@ install(TARGETS clang
   RUNTIME DESTINATION bin)
 
 # Create the clang++ symlink at installation time.
-install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E ${CLANGXX_LINK_OR_COPY} \"${CMAKE_INSTALL_PREFIX}/bin/clang${CMAKE_EXECUTABLE_SUFFIX}\" \"${CMAKE_INSTALL_PREFIX}/bin/clang++${CMAKE_EXECUTABLE_SUFFIX}\")")
+install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E ${CLANGXX_LINK_OR_COPY} \"${CMAKE_INSTALL_PREFIX}/bin/clang${CMAKE_EXECUTABLE_SUFFIX}\" \"\$ENV{DESTDIR}/\${CMAKE_INSTALL_PREFIX}/bin/clang++${CMAKE_EXECUTABLE_SUFFIX}\")")
