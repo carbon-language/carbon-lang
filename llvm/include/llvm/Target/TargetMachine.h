@@ -202,6 +202,9 @@ public:
 
   /// getLSDAEncoding - Returns the LSDA pointer encoding. The choices are
   /// 4-byte, 8-byte, and target default.
+  /// FIXME: This call-back isn't good! We should be using the correct encoding
+  /// regardless of the system. However, there are some systems which have bugs
+  /// that prevent this from occuring.
   virtual DwarfLSDAEncoding::Encoding getLSDAEncoding() const {
     return DwarfLSDAEncoding::Default;
   }

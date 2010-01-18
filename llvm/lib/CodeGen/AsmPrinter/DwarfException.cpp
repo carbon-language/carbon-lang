@@ -283,7 +283,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     if (MMI->getPersonalities()[0] != NULL) {
       bool is4Byte = TD->getPointerSize() == sizeof(int32_t);
 
-      if (Asm->TM.getLSDAEncoding() == DwarfLSDAEncoding::FourByte) {
+      if (Asm->TM.getLSDAEncoding() != DwarfLSDAEncoding::EightByte) {
         Asm->EmitULEB128Bytes(4);
         Asm->EOL("Augmentation size");
 

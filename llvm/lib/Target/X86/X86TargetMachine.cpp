@@ -251,8 +251,8 @@ void X86TargetMachine::setCodeModelForJIT() {
 }
 
 DwarfLSDAEncoding::Encoding X86TargetMachine::getLSDAEncoding() const {
-  if (Subtarget.isTargetDarwin() && Subtarget.getDarwinVers() > 10)
+  if (Subtarget.isTargetDarwin() && Subtarget.getDarwinVers() != 10)
     return DwarfLSDAEncoding::FourByte;
 
-  return DwarfLSDAEncoding::Default;
+  return DwarfLSDAEncoding::EightByte;
 }
