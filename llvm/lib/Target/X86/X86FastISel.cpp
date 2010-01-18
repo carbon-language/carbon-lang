@@ -1153,6 +1153,16 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::dbg_declare: {
+    DbgDeclareInst *DI = cast<DbgDeclareInst>(&I);
+    X86AddressMode AM;
+    if (!X86SelectAddress(DI->getAddress(), AM))
+      return false;
+    const TargetInstrDesc &II = TII.get(TargetInstrInfo::DEBUG_VALUE);
+    addFullAddress(BuildMI(MBB, DL, II), AM).addImm(0).
+                                        addMetadata(DI->getVariable());
+    return true;
+  }
   case Intrinsic::trap: {
     BuildMI(MBB, DL, TII.get(X86::TRAP));
     return true;
