@@ -1,4 +1,4 @@
-//===- SMLoc.h - Manager for Source Buffers & Diagnostics -------*- C++ -*-===//
+//===- SMLoc.h - Source location for use with diagnostics -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
