@@ -239,22 +239,12 @@ $(foreach config,$(Configs), \
   $(foreach arch,$(Archs), \
     $(eval $(call Final_CNA_template,$(config),$(arch)))))
 
+###
+
+include make/lib_info.mk
+include make/lib_util.mk
+
 ifneq ($(DEBUGMAKE),)
   $(info MAKE: Done processing Makefile)
   $(info  )
 endif
-
-###
-# Function Information
-#
-# FIXME: Factor out.
-
-AvailableObjects := $(sort $(foreach key,$(SubDirKeys),\
-	$($(key).ObjNames)))
-AvailableFunctions := $(AvailableObjects:%.o=%)
-
-# Compute lists of where each function is available.
-$(foreach key,$(SubDirKeys),\
-  $(foreach fn,$(subst .o,,$($(key).ObjNames)),\
-    $(call Append,AvailableIn.$(fn),$(key))))
-
