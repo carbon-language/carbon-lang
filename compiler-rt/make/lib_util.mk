@@ -2,6 +2,15 @@
 #
 # This should be included following 'lib_info.mk'.
 
+# Function: GetCNAVar variable-name platform-key config arch
+#
+# Get a per-config-and-arch variable value.
+GetCNAVar = $(strip \
+  $(or $($(2).$(1).$(3).$(4)), \
+       $($(2).$(1).$(3)), \
+       $($(2).$(1).$(4)), \
+       $($(2).$(1))))
+
 # Function: SelectFunctionDir config arch function-name optimized
 #
 # Choose the appropriate implementation directory to use for 'function-name' in

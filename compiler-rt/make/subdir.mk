@@ -74,7 +74,11 @@ endif
 endef
 
 # Evaluate this now so we do not have to worry about order of evaluation.
-SubDirsList := $(SubDirs:%=$(Dir)/%)
+
+SubDirsList := $(strip \
+  $(if $(call streq,.,$(Dir)),\
+       $(SubDirs),\
+       $(SubDirs:%=$(Dir)/%)))
 ifeq ($(SubDirsList),)
 else
   ifneq ($(DEBUGMAKE),)

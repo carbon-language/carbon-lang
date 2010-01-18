@@ -40,14 +40,14 @@ for ARCH in $ARCHS; do
     fi
     if test "$REMOTE" = "1"
     then 
-      if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA -o ./remote/$FILE.exe
+      if gcc $CFLAGS $FILE ../../darwin_fat/Release/libcompiler_rt.a $LIBS $EXTRA -o ./remote/$FILE.exe
       then
         echo "Built $FILE.exe for $ARCH"
       else
         echo "$FILE failed to compile"
       fi
     else
-      if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA
+      if gcc $CFLAGS $FILE ../../darwin_fat/Release/libcompiler_rt.a $LIBS $EXTRA
       then
         echo "Testing $FILE for $ARCH"
         if ./a.out

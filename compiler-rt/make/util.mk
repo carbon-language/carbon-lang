@@ -66,6 +66,15 @@ VarOrDefault = $(if $(call IsDefined,$(1)),$($(1)),$(2))
 #   CHECKVALUE: foo: $(call streq,,) - true
 CheckValue = $(info CHECKVALUE: $(1): $(value $(1)) - $($(1)))
 
+# Function: CopyVariable src dst
+#
+# Copy the value of the variable 'src' to 'dst', taking care to not define 'dst'
+# if 'src' is undefined. The destination variable must be undefined.
+CopyVariable = \
+  $(call AssertValue,$(call IsUndefined,$(2)),destination is already defined)\
+  $(if $(call IsUndefined,$(1)),,\
+       $(call Set,$(2),$($(1))))
+
 # Function: Assert value message
 #
 # Check that a value is true, or give an error including the given message

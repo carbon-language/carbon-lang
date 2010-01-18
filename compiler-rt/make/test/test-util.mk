@@ -53,6 +53,13 @@ varordefault_t1_var.opt := 2
 varordefault_t1 = $(call VarOrDefault,varordefault_t1_var.opt,$(varordefault_t1_var))
 $(call AssertEqual,varordefault_t1,2)
 
+$(call CopyVariable,copyvariable_t0_src,copyvariable_t0_dst)
+copyvariable_t0 = $(call IsUndefined,copyvariable_t0_dst)
+$(call AssertEqual,copyvariable_t0,true)
+copyvariable_t1_src = 1
+$(call CopyVariable,copyvariable_t1_src,copyvariable_t1)
+$(call AssertEqual,copyvariable_t1,1)
+
 all:
 	@true
 .PHONY: all

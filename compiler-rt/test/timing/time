@@ -27,8 +27,7 @@ for ARCH in i386 x86_64; do
 		echo "Timing $FILE for $ARCH"
 
 		test $ARCH $FILE libgcc ""
-                test $ARCH $FILE untuned ../../Release/libcompiler_rt.Generic.a
-                test $ARCH $FILE tuned ../../Release/libcompiler_rt.Optimized.a
+                test $ARCH $FILE tuned ../../darwin_fat/Release/libcompiler_rt.a
                 if [ -f "$INSTALLED" ]; then
                     test $ARCH $FILE installed $INSTALLED
 		fi

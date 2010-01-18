@@ -11,16 +11,9 @@ ProjObjRoot := $(ProjSrcRoot)
 ###
 # Tool configuration variables.
 
-CC := gcc
 # FIXME: LLVM uses autoconf/mkinstalldirs ?
 MKDIR := mkdir -p
 DATE := date
-AR := ar
-# FIXME: Remove these pipes once ranlib errors are fixed.
-AR.Flags := cru 2> /dev/null
-RANLIB := ranlib
-# FIXME: Remove these pipes once ranlib errors are fixed.
-RANLIB.Flags := 2> /dev/null
 LIPO := lipo
 CP := cp
 
@@ -38,9 +31,6 @@ else
 endif
 
 Echo := @echo
-Archive := $(AR) $(AR.Flags)
-Ranlib := $(RANLIB) $(RANLIB.Flags)
-Lipo := $(LIPO)
 ifndef Summary
-	Summary = $(Echo)
+  Summary = $(Echo)
 endif

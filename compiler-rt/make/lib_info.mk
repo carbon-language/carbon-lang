@@ -42,3 +42,8 @@ $(foreach arch,$(AvailableArchs),\
 $(foreach key,$(SubDirKeys),\
   $(foreach fn,$(basename $($(key).ObjNames)),\
     $(call Append,AvailableIn.$(fn),$(key))))
+
+# The names of all the available options.
+AvailableOptions := AR ARFLAGS \
+                    CC CFLAGS FUNCTIONS OPTIMIZED \
+                    RANLIB RANLIBFLAGS
