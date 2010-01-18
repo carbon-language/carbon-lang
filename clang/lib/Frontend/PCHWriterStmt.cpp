@@ -496,6 +496,7 @@ void PCHStmtWriter::VisitCStyleCastExpr(CStyleCastExpr *E) {
 void PCHStmtWriter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.AddTypeSourceInfo(E->getTypeSourceInfo(), Record);
   Writer.WriteSubStmt(E->getInitializer());
   Record.push_back(E->isFileScope());
   Code = pch::EXPR_COMPOUND_LITERAL;

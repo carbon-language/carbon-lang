@@ -1666,12 +1666,17 @@ public:
   OwningExprResult MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg ME);
   OwningExprResult ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                             SourceLocation RParenLoc, ExprArg E,
-                                            QualType Ty);
+                                            TypeSourceInfo *TInfo);
 
   virtual OwningExprResult ActOnCompoundLiteral(SourceLocation LParenLoc,
                                                 TypeTy *Ty,
                                                 SourceLocation RParenLoc,
                                                 ExprArg Op);
+
+  OwningExprResult BuildCompoundLiteralExpr(SourceLocation LParenLoc,
+                                            TypeSourceInfo *TInfo,
+                                            SourceLocation RParenLoc,
+                                            ExprArg InitExpr);
 
   virtual OwningExprResult ActOnInitList(SourceLocation LParenLoc,
                                          MultiExprArg InitList,

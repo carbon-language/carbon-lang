@@ -3663,11 +3663,21 @@ Action::OwningExprResult
 Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                            SourceLocation RParenLoc, ExprArg InitExpr) {
   assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
-  
-  QualType literalType = GetTypeFromParser(Ty);  
-  
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
+
+  TypeSourceInfo *TInfo;
+  QualType literalType = GetTypeFromParser(Ty, &TInfo);
+  if (!TInfo)
+    TInfo = Context.getTrivialTypeSourceInfo(literalType);
+
+  return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, move(InitExpr));
+}
+
+Action::OwningExprResult
+Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
+                               SourceLocation RParenLoc, ExprArg InitExpr) {
+  QualType literalType = TInfo->getType();
   Expr *literalExpr = static_cast<Expr*>(InitExpr.get());
 
   if (literalType->isArrayType()) {
@@ -3703,8 +3713,7 @@ Sema::ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
 
   Result.release();
   
-  // FIXME: Store the TInfo to preserve type information better.
-  return Owned(new (Context) CompoundLiteralExpr(LParenLoc, literalType,
+  return Owned(new (Context) CompoundLiteralExpr(LParenLoc, TInfo,
                                                  literalExpr, isFileScope));
 }
 
@@ -3912,13 +3921,13 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   TypeSourceInfo *castTInfo;
   QualType castType = GetTypeFromParser(Ty, &castTInfo);
   if (!castTInfo)
-    castTInfo = Context.getTrivialTypeSourceInfo(castType, SourceLocation());
+    castTInfo = Context.getTrivialTypeSourceInfo(castType);
 
   // If the Expr being casted is a ParenListExpr, handle it specially.
-  // FIXME: preserve type source info.
   Expr *castExpr = (Expr *)Op.get();
   if (isa<ParenListExpr>(castExpr))
-    return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),castType);
+    return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),
+                                    castTInfo);
 
   return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, move(Op));
 }
@@ -3973,8 +3982,9 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, ExprArg EA) {
 Action::OwningExprResult
 Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                SourceLocation RParenLoc, ExprArg Op,
-                               QualType Ty) {
+                               TypeSourceInfo *TInfo) {
   ParenListExpr *PE = (ParenListExpr *)Op.get();
+  QualType Ty = TInfo->getType();
 
   // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')'
   // then handle it as such.
@@ -3994,13 +4004,12 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
     InitListExpr *E = new (Context) InitListExpr(LParenLoc, &initExprs[0],
                                                  initExprs.size(), RParenLoc);
     E->setType(Ty);
-    return ActOnCompoundLiteral(LParenLoc, Ty.getAsOpaquePtr(), RParenLoc,
-                                Owned(E));
+    return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, Owned(E));
   } else {
     // This is not an AltiVec-style cast, so turn the ParenListExpr into a
     // sequence of BinOp comma operators.
     Op = MaybeConvertParenListExprToParenExpr(S, move(Op));
-    return ActOnCastExpr(S, LParenLoc, Ty.getAsOpaquePtr(), RParenLoc,move(Op));
+    return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, move(Op));
   }
 }
 
@@ -4714,8 +4723,9 @@ static void ConstructTransparentUnion(ASTContext &C, Expr *&E,
 
   // Build a compound literal constructing a value of the transparent
   // union type from this initializer list.
-  E = new (C) CompoundLiteralExpr(SourceLocation(), UnionType, Initializer,
-                                  false);
+  TypeSourceInfo *unionTInfo = C.getTrivialTypeSourceInfo(UnionType);
+  E = new (C) CompoundLiteralExpr(SourceLocation(), unionTInfo,
+                                  Initializer, false);
 }
 
 Sema::AssignConvertType

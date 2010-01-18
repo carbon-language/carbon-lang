@@ -1027,11 +1027,11 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   OwningExprResult RebuildCompoundLiteralExpr(SourceLocation LParenLoc,
-                                              QualType T,
+                                              TypeSourceInfo *TInfo,
                                               SourceLocation RParenLoc,
                                               ExprArg Init) {
-    return getSema().ActOnCompoundLiteral(LParenLoc, T.getAsOpaquePtr(),
-                                          RParenLoc, move(Init));
+    return getSema().BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc,
+                                              move(Init));
   }
 
   /// \brief Build a new extended vector element access expression.
@@ -3853,28 +3853,21 @@ TreeTransform<Derived>::TransformCStyleCastExpr(CStyleCastExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E) {
-  QualType T;
-  {
-    // FIXME: Source location isn't quite accurate.
-    SourceLocation FakeTypeLoc
-      = SemaRef.PP.getLocForEndOfToken(E->getLParenLoc());
-    TemporaryBase Rebase(*this, FakeTypeLoc, DeclarationName());
-
-    T = getDerived().TransformType(E->getType());
-    if (T.isNull())
-      return SemaRef.ExprError();
-  }
+  TypeSourceInfo *OldT = E->getTypeSourceInfo();
+  TypeSourceInfo *NewT = getDerived().TransformType(OldT);
+  if (!NewT)
+    return SemaRef.ExprError();
 
   OwningExprResult Init = getDerived().TransformExpr(E->getInitializer());
   if (Init.isInvalid())
     return SemaRef.ExprError();
 
   if (!getDerived().AlwaysRebuild() &&
-      T == E->getType() &&
+      OldT == NewT &&
       Init.get() == E->getInitializer())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildCompoundLiteralExpr(E->getLParenLoc(), T,
+  return getDerived().RebuildCompoundLiteralExpr(E->getLParenLoc(), NewT,
                                    /*FIXME:*/E->getInitializer()->getLocEnd(),
                                                  move(Init));
 }

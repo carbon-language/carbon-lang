@@ -533,6 +533,7 @@ unsigned PCHStmtReader::VisitCStyleCastExpr(CStyleCastExpr *E) {
 unsigned PCHStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   VisitExpr(E);
   E->setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
   E->setInitializer(cast<Expr>(StmtStack.back()));
   E->setFileScope(Record[Idx++]);
   return 1;

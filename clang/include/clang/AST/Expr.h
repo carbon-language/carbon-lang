@@ -1462,14 +1462,16 @@ class CompoundLiteralExpr : public Expr {
   /// compound literal like "(int){4}".  This can be null if this is a
   /// synthesized compound expression.
   SourceLocation LParenLoc;
+  TypeSourceInfo *TInfo;
   Stmt *Init;
   bool FileScope;
 public:
   // FIXME: Can compound literals be value-dependent?
-  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init,
-                      bool fileScope)
-    : Expr(CompoundLiteralExprClass, ty, ty->isDependentType(), false),
-      LParenLoc(lparenloc), Init(init), FileScope(fileScope) {}
+  CompoundLiteralExpr(SourceLocation lparenloc, TypeSourceInfo *tinfo,
+                      Expr *init, bool fileScope)
+    : Expr(CompoundLiteralExprClass, tinfo->getType(),
+           tinfo->getType()->isDependentType(), false),
+      LParenLoc(lparenloc), TInfo(tinfo), Init(init), FileScope(fileScope) {}
 
   /// \brief Construct an empty compound literal.
   explicit CompoundLiteralExpr(EmptyShell Empty)
@@ -1484,6 +1486,9 @@ public:
 
   SourceLocation getLParenLoc() const { return LParenLoc; }
   void setLParenLoc(SourceLocation L) { LParenLoc = L; }
+
+  TypeSourceInfo *getTypeSourceInfo() const { return TInfo; }
+  void setTypeSourceInfo(TypeSourceInfo* tinfo) { TInfo = tinfo; }
 
   virtual SourceRange getSourceRange() const {
     // FIXME: Init should never be null.

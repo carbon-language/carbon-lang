@@ -2514,8 +2514,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
                                              &InitExprs[0], InitExprs.size(),
                                              SourceLocation());
-        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superType, ILE,
-                                           false);
+        TypeSourceInfo *superTInfo
+          = Context->getTrivialTypeSourceInfo(superType);
+        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(),
+                                                     superTInfo, ILE, false);
         // struct objc_super *
         SuperRep = new (Context) UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                  Context->getPointerType(SuperRep->getType()),
@@ -2597,7 +2599,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
         InitListExpr *ILE = new (Context) InitListExpr(SourceLocation(),
                                              &InitExprs[0], InitExprs.size(),
                                              SourceLocation());
-        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(), superType, ILE, false);
+        TypeSourceInfo *superTInfo
+          = Context->getTrivialTypeSourceInfo(superType);
+        SuperRep = new (Context) CompoundLiteralExpr(SourceLocation(),
+                                                     superTInfo, ILE, false);
       }
       MsgExprs.push_back(SuperRep);
     } else {
