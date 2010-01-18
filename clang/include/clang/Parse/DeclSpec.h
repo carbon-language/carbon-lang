@@ -17,6 +17,7 @@
 #include "clang/Parse/AttributeList.h"
 #include "clang/Lex/Token.h"
 #include "clang/Basic/OperatorKinds.h"
+#include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
@@ -78,51 +79,50 @@ public:
     SCS_mutable
   };
 
-  // type-specifier
-  enum TSW {
-    TSW_unspecified,
-    TSW_short,
-    TSW_long,
-    TSW_longlong
-  };
-
+  // Import type specifier width enumeration and constants.
+  typedef TypeSpecifierWidth TSW;
+  static const TSW TSW_unspecified = clang::TSW_unspecified;
+  static const TSW TSW_short = clang::TSW_short;
+  static const TSW TSW_long = clang::TSW_long;
+  static const TSW TSW_longlong = clang::TSW_longlong;
+  
   enum TSC {
     TSC_unspecified,
     TSC_imaginary,
     TSC_complex
   };
 
-  enum TSS {
-    TSS_unspecified,
-    TSS_signed,
-    TSS_unsigned
-  };
+  // Import type specifier sign enumeration and constants.
+  typedef TypeSpecifierSign TSS;
+  static const TSS TSS_unspecified = clang::TSS_unspecified;
+  static const TSS TSS_signed = clang::TSS_signed;
+  static const TSS TSS_unsigned = clang::TSS_unsigned;
 
-  enum TST {
-    TST_unspecified,
-    TST_void,
-    TST_char,
-    TST_wchar,        // C++ wchar_t
-    TST_char16,       // C++0x char16_t
-    TST_char32,       // C++0x char32_t
-    TST_int,
-    TST_float,
-    TST_double,
-    TST_bool,         // _Bool
-    TST_decimal32,    // _Decimal32
-    TST_decimal64,    // _Decimal64
-    TST_decimal128,   // _Decimal128
-    TST_enum,
-    TST_union,
-    TST_struct,
-    TST_class,        // C++ class type
-    TST_typename,     // Typedef, C++ class-name or enum name, etc.
-    TST_typeofType,
-    TST_typeofExpr,
-    TST_decltype,     // C++0x decltype
-    TST_auto,         // C++0x auto
-    TST_error         // erroneous type
-  };
+  // Import type specifier type enumeration and constants.
+  typedef TypeSpecifierType TST;
+  static const TST TST_unspecified = clang::TST_unspecified;
+  static const TST TST_void = clang::TST_void;
+  static const TST TST_char = clang::TST_char;
+  static const TST TST_wchar = clang::TST_wchar;
+  static const TST TST_char16 = clang::TST_char16;
+  static const TST TST_char32 = clang::TST_char32;
+  static const TST TST_int = clang::TST_int;
+  static const TST TST_float = clang::TST_float;
+  static const TST TST_double = clang::TST_double;
+  static const TST TST_bool = clang::TST_bool;
+  static const TST TST_decimal32 = clang::TST_decimal32;
+  static const TST TST_decimal64 = clang::TST_decimal64;
+  static const TST TST_decimal128 = clang::TST_decimal128;
+  static const TST TST_enum = clang::TST_enum;
+  static const TST TST_union = clang::TST_union;
+  static const TST TST_struct = clang::TST_struct;
+  static const TST TST_class = clang::TST_class;
+  static const TST TST_typename = clang::TST_typename;
+  static const TST TST_typeofType = clang::TST_typeofType;
+  static const TST TST_typeofExpr = clang::TST_typeofExpr;
+  static const TST TST_decltype = clang::TST_decltype;
+  static const TST TST_auto = clang::TST_auto;
+  static const TST TST_error = clang::TST_error;
 
   // type-qualifiers
   enum TQ {   // NOTE: These flags must be kept in sync with Qualifiers::TQ.
@@ -198,6 +198,9 @@ private:
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
   SourceLocation FriendLoc, ConstexprLoc;
+
+  WrittenBuiltinSpecs writtenBS;
+  void SaveWrittenBuiltinSpecs();
 
   DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
@@ -410,6 +413,10 @@ public:
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
   void Finish(Diagnostic &D, Preprocessor &PP);
+
+  const WrittenBuiltinSpecs& getWrittenBuiltinSpecs() const {
+    return writtenBS;
+  }
 
   /// isMissingDeclaratorOk - This checks if this DeclSpec can stand alone,
   /// without a Declarator. Only tag declspecs can stand alone.

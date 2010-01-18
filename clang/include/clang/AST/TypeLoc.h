@@ -16,6 +16,7 @@
 
 #include "clang/AST/Type.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/Basic/Specifiers.h"
 
 namespace clang {
   class ParmVarDecl;
@@ -372,6 +373,111 @@ public:
 };
 
 
+struct BuiltinLocInfo {
+  SourceLocation BuiltinLoc;
+};
+
+/// \brief Wrapper for source info for builtin types.
+class BuiltinTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                              BuiltinTypeLoc,
+                                              BuiltinType,
+                                              BuiltinLocInfo> {
+public:
+  enum { LocalDataSize = sizeof(BuiltinLocInfo) };
+
+  SourceLocation getBuiltinLoc() const {
+    return getLocalData()->BuiltinLoc;
+  }
+  void setBuiltinLoc(SourceLocation Loc) {
+    getLocalData()->BuiltinLoc = Loc;
+  }
+
+  SourceLocation getNameLoc() const { return getBuiltinLoc(); }
+
+  WrittenBuiltinSpecs& getWrittenBuiltinSpecs() {
+    return *(static_cast<WrittenBuiltinSpecs*>(getExtraLocalData()));
+  }
+  const WrittenBuiltinSpecs& getWrittenBuiltinSpecs() const {
+    return *(static_cast<WrittenBuiltinSpecs*>(getExtraLocalData()));
+  }
+
+  bool needsExtraLocalData() const {
+    BuiltinType::Kind bk = getTypePtr()->getKind();
+    return (bk >= BuiltinType::UShort && bk <= BuiltinType::UInt128)
+      || (bk >= BuiltinType::Short && bk <= BuiltinType::Int128)
+      || bk == BuiltinType::UChar
+      || bk == BuiltinType::SChar;
+  }
+
+  unsigned getExtraLocalDataSize() const {
+    return needsExtraLocalData() ? 4 : 0;
+  }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getBuiltinLoc(), getBuiltinLoc());
+  }
+
+  TypeSpecifierSign getWrittenSignSpec() const {
+    if (needsExtraLocalData())
+      return static_cast<TypeSpecifierSign>(getWrittenBuiltinSpecs().Sign);
+    else
+      return TSS_unspecified;
+  }
+  bool hasWrittenSignSpec() const {
+    return getWrittenSignSpec() != TSS_unspecified;
+  }
+  void setWrittenSignSpec(TypeSpecifierSign written) {
+    if (needsExtraLocalData())
+      getWrittenBuiltinSpecs().Sign = written;
+  }
+
+  TypeSpecifierWidth getWrittenWidthSpec() const {
+    if (needsExtraLocalData())
+      return static_cast<TypeSpecifierWidth>(getWrittenBuiltinSpecs().Width);
+    else
+      return TSW_unspecified;
+  }
+  bool hasWrittenWidthSpec() const {
+    return getWrittenWidthSpec() != TSW_unspecified;
+  }
+  void setWrittenWidthSpec(TypeSpecifierWidth written) {
+    if (needsExtraLocalData())
+      getWrittenBuiltinSpecs().Width = written;
+  }
+
+  TypeSpecifierType getWrittenTypeSpec() const;
+  bool hasWrittenTypeSpec() const {
+    return getWrittenTypeSpec() != TST_unspecified;
+  }
+  void setWrittenTypeSpec(TypeSpecifierType written) {
+    if (needsExtraLocalData())
+      getWrittenBuiltinSpecs().Type = written;
+  }
+
+  bool hasModeAttr() const {
+    if (needsExtraLocalData())
+      return getWrittenBuiltinSpecs().ModeAttr;
+    else
+      return false;
+  }
+  void setModeAttr(bool written) {
+    if (needsExtraLocalData())
+      getWrittenBuiltinSpecs().ModeAttr = written;
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setBuiltinLoc(Loc);
+    if (needsExtraLocalData()) {
+      WrittenBuiltinSpecs &wbs = getWrittenBuiltinSpecs();
+      wbs.Sign = TSS_unspecified;
+      wbs.Width = TSW_unspecified;
+      wbs.Type = TST_unspecified;
+      wbs.ModeAttr = false;
+    }
+  }
+};
+
+
 /// \brief Wrapper for source info for typedefs.
 class TypedefTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                         TypedefTypeLoc,
@@ -419,12 +525,6 @@ class EnumTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
                                                      EnumType> {
 public:
   EnumDecl *getDecl() const { return getTypePtr()->getDecl(); }
-};
-
-/// \brief Wrapper for source info for builtin types.
-class BuiltinTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
-                                                        BuiltinTypeLoc,
-                                                        BuiltinType> {
 };
 
 /// \brief Wrapper for template type parameters.

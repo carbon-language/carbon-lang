@@ -1374,6 +1374,21 @@ namespace {
       Sema::GetTypeFromParser(DS.getTypeRep(), &TInfo);
       TL.setUnderlyingTInfo(TInfo);
     }
+    void VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+      // By default, use the source location of the type specifier.
+      TL.setBuiltinLoc(DS.getTypeSpecTypeLoc());
+      if (TL.needsExtraLocalData()) {
+        // Set info for the written builtin specifiers.
+        TL.getWrittenBuiltinSpecs() = DS.getWrittenBuiltinSpecs();
+        // Try to have a meaningful source location.
+        if (TL.getWrittenSignSpec() != TSS_unspecified)
+          // Sign spec loc overrides the others (e.g., 'unsigned long').
+          TL.setBuiltinLoc(DS.getTypeSpecSignLoc());
+        else if (TL.getWrittenWidthSpec() != TSW_unspecified)
+          // Width spec loc overrides type spec loc (e.g., 'short int').
+          TL.setBuiltinLoc(DS.getTypeSpecWidthLoc());
+      }
+    }
     void VisitTypeLoc(TypeLoc TL) {
       // FIXME: add other typespec types and change this to an assert.
       TL.initialize(DS.getTypeSpecTypeLoc());

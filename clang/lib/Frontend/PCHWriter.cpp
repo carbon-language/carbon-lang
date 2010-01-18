@@ -277,7 +277,13 @@ void TypeLocWriter::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do
 }
 void TypeLocWriter::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+  Writer.AddSourceLocation(TL.getBuiltinLoc(), Record);
+  if (TL.needsExtraLocalData()) {
+    Record.push_back(TL.getWrittenTypeSpec());
+    Record.push_back(TL.getWrittenSignSpec());
+    Record.push_back(TL.getWrittenWidthSpec());
+    Record.push_back(TL.hasModeAttr());
+  }
 }
 void TypeLocWriter::VisitComplexTypeLoc(ComplexTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);

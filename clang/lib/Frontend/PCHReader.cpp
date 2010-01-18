@@ -2042,7 +2042,13 @@ void TypeLocReader::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do
 }
 void TypeLocReader::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
-  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setBuiltinLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  if (TL.needsExtraLocalData()) {
+    TL.setWrittenTypeSpec(static_cast<DeclSpec::TST>(Record[Idx++]));
+    TL.setWrittenSignSpec(static_cast<DeclSpec::TSS>(Record[Idx++]));
+    TL.setWrittenWidthSpec(static_cast<DeclSpec::TSW>(Record[Idx++]));
+    TL.setModeAttr(Record[Idx++]);
+  }
 }
 void TypeLocReader::VisitComplexTypeLoc(ComplexTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -373,11 +373,30 @@ void DeclSpec::setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos,
   ProtocolLAngleLoc = LAngleLoc;
 }
 
+void DeclSpec::SaveWrittenBuiltinSpecs() {
+  writtenBS.Sign = getTypeSpecSign();
+  writtenBS.Width = getTypeSpecWidth();
+  writtenBS.Type = getTypeSpecType();
+  // Search the list of attributes for the presence of a mode attribute.
+  writtenBS.ModeAttr = false;
+  AttributeList* attrs = getAttributes();
+  while (attrs) {
+    if (attrs->getKind() == AttributeList::AT_mode) {
+      writtenBS.ModeAttr = true;
+      break;
+    }
+    attrs = attrs->getNext();
+  }
+}
+
 /// Finish - This does final analysis of the declspec, rejecting things like
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
 void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
+  // Before possibly changing their values, save specs as written.
+  SaveWrittenBuiltinSpecs();
+
   // Check the type specifier components first.
   SourceManager &SrcMgr = PP.getSourceManager();
 

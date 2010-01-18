@@ -2138,7 +2138,11 @@ QualType TransformTypeSpecType(TypeLocBuilder &TLB, TyLoc T) {
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformBuiltinType(TypeLocBuilder &TLB,
                                                       BuiltinTypeLoc T) {
-  return TransformTypeSpecType(TLB, T);
+  BuiltinTypeLoc NewT = TLB.push<BuiltinTypeLoc>(T.getType());
+  NewT.setBuiltinLoc(T.getBuiltinLoc());
+  if (T.needsExtraLocalData())
+    NewT.getWrittenBuiltinSpecs() = T.getWrittenBuiltinSpecs();
+  return T.getType();
 }
 
 template<typename Derived>
