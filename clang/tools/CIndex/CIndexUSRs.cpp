@@ -146,13 +146,13 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
     case Decl::ObjCCategory: {
       ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
       Out << "objc(cy)" << CD->getClassInterface()->getName()
-      << '_' << CD->getName();
+      << '^' << CD->getName();
       break;
     }
     case Decl::ObjCCategoryImpl: {
       ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
       Out << "objc(cy)" << CD->getClassInterface()->getName()
-      << '_' << CD->getName();
+      << '^' << CD->getName();
       break;
     }
     case Decl::ObjCProtocol:
@@ -230,8 +230,7 @@ CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
 
 CXString clang_getCursorUSR(CXCursor C) {
   if (Decl *D = cxcursor::getCursorDecl(C))
-    return ConstructUSR(D);
-  
+    return ConstructUSR(D);  
   
   return CIndexer::createCXString(NULL);
 }
