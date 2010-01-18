@@ -1176,6 +1176,9 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   if (N1C)
     return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0,
                        DAG.getConstant(-N1C->getAPIntValue(), VT));
+  // Canonicalize (sub -1, x) -> ~x, i.e. (xor x, -1)
+  if (N0C && N0C->isAllOnesValue())
+    return DAG.getNode(ISD::XOR, N->getDebugLoc(), VT, N1, N0);
   // fold (A+B)-A -> B
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1)
     return N0.getOperand(1);

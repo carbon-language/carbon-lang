@@ -131,3 +131,14 @@ bb12:
 ; X32:    andl	{{.*}}[[REG]]
 }
 
+define i32 @test8(i32 %a) nounwind {
+; rdar://7553032
+entry:
+  %t1 = sub i32 0, %a
+  %t2 = add i32 %t1, -1
+  ret i32 %t2
+; X64: test8:
+; X64:   notl %eax
+; X32: test8:
+; X32:   notl %eax
+}
