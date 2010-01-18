@@ -385,6 +385,14 @@ public:
   }
 };
 
+/// CallingConv - Specifies the calling convention that a function uses.
+enum CallingConv {
+  CC_Default,
+  CC_C,           // __attribute__((cdecl))
+  CC_X86StdCall,  // __attribute__((stdcall))
+  CC_X86FastCall  // __attribute__((fastcall))
+};
+
 
 /// QualType - For efficiency, we don't store CV-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -668,6 +676,10 @@ public:
   /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
   /// false otherwise.
   bool getNoReturnAttr() const;
+
+  /// getCallConv - Returns the calling convention of the type if the type
+  /// is a function type, CC_Default otherwise.
+  CallingConv getCallConv() const;
 
 private:
   // These methods are implemented in a separate translation unit;
@@ -1691,21 +1703,25 @@ class FunctionType : public Type {
   /// NoReturn - Indicates if the function type is attribute noreturn.
   unsigned NoReturn : 1;
 
+  /// CallConv - The calling convention used by the function.
+  unsigned CallConv : 2;
+
   // The type returned by the function.
   QualType ResultType;
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
                unsigned typeQuals, QualType Canonical, bool Dependent,
-               bool noReturn = false)
+               bool noReturn = false, CallingConv callConv = CC_Default)
     : Type(tc, Canonical, Dependent),
       SubClassData(SubclassInfo), TypeQuals(typeQuals), NoReturn(noReturn),
-      ResultType(res) {}
+      CallConv(callConv), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
 public:
 
   QualType getResultType() const { return ResultType; }
   bool getNoReturnAttr() const { return NoReturn; }
+  CallingConv getCallConv() const { return (CallingConv)CallConv; }
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto ||
@@ -1718,9 +1734,9 @@ public:
 /// no information available about its arguments.
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical,
-                      bool NoReturn = false)
+                      bool NoReturn = false, CallingConv CallConv = CC_Default)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
-                   /*Dependent=*/false, NoReturn) {}
+                   /*Dependent=*/false, NoReturn, CallConv) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -1762,10 +1778,12 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, bool hasExs,
                     bool hasAnyExs, const QualType *ExArray,
-                    unsigned numExs, QualType Canonical, bool NoReturn)
+                    unsigned numExs, QualType Canonical, bool NoReturn,
+                    CallingConv CallConv)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                    (Result->isDependentType() ||
-                    hasAnyDependentType(ArgArray, numArgs)), NoReturn),
+                    hasAnyDependentType(ArgArray, numArgs)), NoReturn,
+                   CallConv),
       NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
       AnyExceptionSpec(hasAnyExs) {
     // Fill in the trailing argument array.
@@ -2795,6 +2813,26 @@ inline bool QualType::getNoReturnAttr() const {
     return FT->getNoReturnAttr();
 
   return false;
+}
+
+/// getCallConv - Returns the calling convention of the type if the type
+/// is a function type, CC_Default otherwise.
+inline CallingConv QualType::getCallConv() const {
+  if (const PointerType *PT = getTypePtr()->getAs<PointerType>())
+    return PT->getPointeeType().getCallConv();
+  else if (const ReferenceType *RT = getTypePtr()->getAs<ReferenceType>())
+    return RT->getPointeeType().getCallConv();
+  else if (const MemberPointerType *MPT =
+           getTypePtr()->getAs<MemberPointerType>())
+    return MPT->getPointeeType().getCallConv();
+  else if (const BlockPointerType *BPT =
+           getTypePtr()->getAs<BlockPointerType>()) {
+    if (const FunctionType *FT = BPT->getPointeeType()->getAs<FunctionType>())
+      return FT->getCallConv();
+  } else if (const FunctionType *FT = getTypePtr()->getAs<FunctionType>())
+    return FT->getCallConv();
+
+  return CC_Default;
 }
 
 /// isMoreQualifiedThan - Determine whether this type is more
