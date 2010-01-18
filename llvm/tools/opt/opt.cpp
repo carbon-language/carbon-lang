@@ -288,7 +288,17 @@ void AddOptimizationPasses(PassManager &MPM, FunctionPassManager &FPM,
                            unsigned OptLevel) {
   createStandardFunctionPasses(&FPM, OptLevel);
 
-  llvm::Pass *InliningPass = OptLevel > 1 ? createFunctionInliningPass() : 0;
+  llvm::Pass *InliningPass = 0;
+  if (DisableInline) {
+    // No inlining pass
+  } else if (OptLevel) {
+    unsigned Threshold = 200;
+    if (OptLevel > 2)
+      Threshold = 250;
+    InliningPass = createFunctionInliningPass(Threshold);
+  } else {
+    InliningPass = createAlwaysInlinerPass();
+  }
   createStandardModulePasses(&MPM, OptLevel,
                              /*OptimizeSize=*/ false,
                              UnitAtATime,
