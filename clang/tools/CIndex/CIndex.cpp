@@ -754,8 +754,7 @@ static Decl *getDeclFromExpr(Stmt *E) {
 
 extern "C" {
 CXString clang_getCursorSpelling(CXCursor C) {
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  assert(ND && "CXCursor has null decl");
+  assert(getCursorDecl(C) && "CXCursor has null decl");
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
