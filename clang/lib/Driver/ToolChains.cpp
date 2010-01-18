@@ -118,10 +118,6 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
-  Path = getDriver().Dir;
-  Path += "/../libexec";
-  getProgramPaths().push_back(Path);
-
   getProgramPaths().push_back(getDriver().Dir);
 }
 
@@ -235,13 +231,6 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
                          bool IsIPhoneOS)
   : Darwin(Host, Triple, DarwinVersion, IsIPhoneOS)
 {
-  // Add the relative libexec dir (for clang-cc).
-  //
-  // FIXME: We should sink clang-cc into libexec/clang/<version>/.
-  std::string Path = getDriver().Dir;
-  Path += "/../libexec";
-  getProgramPaths().push_back(Path);
-
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getDriver().Dir);
 }
@@ -544,10 +533,6 @@ const char *Darwin::GetForcedPicModel() const {
 
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
   : ToolChain(Host, Triple) {
-  std::string Path(getDriver().Dir);
-  Path += "/../libexec";
-  getProgramPaths().push_back(Path);
-
   getProgramPaths().push_back(getDriver().Dir);
 }
 
@@ -684,11 +669,6 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
 AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
-  // Path mangling to find libexec
-  std::string Path(getDriver().Dir);
-
-  Path += "/../libexec";
-  getProgramPaths().push_back(Path);
   getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
@@ -753,10 +733,6 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_GCC(Host, Triple) {
 
   // Path mangling to find libexec
-  std::string Path(getDriver().Dir);
-
-  Path += "/../libexec";
-  getProgramPaths().push_back(Path);
   getProgramPaths().push_back(getDriver().Dir);
 
   getFilePaths().push_back(getDriver().Dir + "/../lib");
