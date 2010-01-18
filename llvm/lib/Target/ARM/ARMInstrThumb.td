@@ -208,7 +208,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBRIND : TI<(outs), (ins GPR:$dst), IIC_Br, "mov\tpc, $dst",
                   [(brind GPR:$dst)]>,
-               T1Special<{1,0,1,1}> {
+               T1Special<{1,0,1,?}> {
     // <Rd> = Inst{7:2-0} = pc
     let Inst{2-0} = 0b111;
   }
@@ -630,13 +630,13 @@ def tMOVSr      : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
 // FIXME: Make these predicable.
 def tMOVgpr2tgpr : T1I<(outs tGPR:$dst), (ins GPR:$src), IIC_iMOVr,
                        "mov\t$dst, $src", []>,
-                   T1Special<{1,0,0,1}>;
+                   T1Special<{1,0,0,?}>;
 def tMOVtgpr2gpr : T1I<(outs GPR:$dst), (ins tGPR:$src), IIC_iMOVr,
                        "mov\t$dst, $src", []>,
-                   T1Special<{1,0,1,0}>;
+                   T1Special<{1,0,?,0}>;
 def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
                        "mov\t$dst, $src", []>,
-                   T1Special<{1,0,1,1}>;
+                   T1Special<{1,0,?,?}>;
 } // neverHasSideEffects
 
 // multiply register
@@ -771,7 +771,7 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 // 16-bit movcc in IT blocks for Thumb2.
 def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
-              T1Special<{1,0,1,1}>;
+              T1Special<{1,0,?,?}>;
 
 def tMOVCCi : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
