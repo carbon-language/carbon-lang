@@ -61,7 +61,7 @@ static void PrintCursor(CXCursor Cursor) {
 }
 
 static const char* GetCursorSource(CXCursor Cursor) {  
-  const char *source = clang_getCursorSource(Cursor);
+  const char *source = clang_getFileName(clang_getCursorLocation(Cursor).file);
   if (!source)
     return "<invalid loc>";  
   return basename(source);
@@ -84,10 +84,11 @@ static void PrintDeclExtent(CXDecl Dcl) {
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
-    printf("// %s: %s:%d:%d: ", FileCheckPrefix,
-                                GetCursorSource(Cursor),
-                                clang_getCursorLine(Cursor),
-                                clang_getCursorColumn(Cursor));
+    CXSourceLocation Loc = clang_getCursorLocation(Cursor);
+    const char *source = clang_getFileName(Loc.file);
+    if (!source)
+      source = "<invalid loc>";  
+    printf("// %s: %s:%d:%d: ", FileCheckPrefix, source, Loc.line, Loc.column);
     PrintCursor(Cursor);    
     PrintDeclExtent(clang_getCursorDecl(Cursor));
 
@@ -99,9 +100,9 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXDecl D;
+    CXSourceLocation Loc = clang_getCursorLocation(Cursor);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
-           GetCursorSource(Cursor), clang_getCursorLine(Cursor),
-           clang_getCursorColumn(Cursor));
+           GetCursorSource(Cursor), Loc.line, Loc.column);
     PrintCursor(Cursor);
     
     D = clang_getCursorDecl(Cursor);
@@ -133,6 +134,9 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
   curColumn = startColumn;
 
   while (startBuf < endBuf) {
+    CXSourceLocation Loc;
+    const char *source = 0;
+    
     if (*startBuf == '\n') {
       startBuf++;
       curLine++;
@@ -140,15 +144,18 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
     } else if (*startBuf != '\t')
       curColumn++;
           
-    Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
-                          curLine, curColumn);
-    if (Ref.kind == CXCursor_NoDeclFound) {
-      /* Nothing found here; that's fine. */
-    } else if (Ref.kind != CXCursor_FunctionDecl) {
-      printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
-             curLine, curColumn);
-      PrintCursor(Ref);
-      printf("\n");
+    Loc = clang_getCursorLocation(Cursor);
+    source = clang_getFileName(Loc.file);
+    if (source) {
+      Ref = clang_getCursor(Unit, source, curLine, curColumn);
+      if (Ref.kind == CXCursor_NoDeclFound) {
+        /* Nothing found here; that's fine. */
+      } else if (Ref.kind != CXCursor_FunctionDecl) {
+        printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
+               curLine, curColumn);
+        PrintCursor(Ref);
+        printf("\n");
+      }
     }
     startBuf++;
   }

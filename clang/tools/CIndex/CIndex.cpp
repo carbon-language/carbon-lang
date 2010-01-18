@@ -113,6 +113,23 @@ public:
 #endif
 #endif
 
+/// \brief Translate a Clang source location into a CIndex source location.
+static CXSourceLocation translateSourceLocation(SourceManager &SourceMgr,
+                                                SourceLocation Loc) {
+  SourceLocation InstLoc = SourceMgr.getInstantiationLoc(Loc);
+  if (InstLoc.isInvalid()) {
+      CXSourceLocation Loc = { 0, 0, 0 };
+      return Loc;
+    }
+ 
+  CXSourceLocation Result;
+  Result.file 
+    = (void*)SourceMgr.getFileEntryForID(SourceMgr.getFileID(InstLoc));
+  Result.line = SourceMgr.getInstantiationLineNumber(InstLoc);
+  Result.column = SourceMgr.getInstantiationColumnNumber(InstLoc);
+  return Result;
+}
+
 //===----------------------------------------------------------------------===//
 // Visitors.
 //===----------------------------------------------------------------------===//
@@ -350,14 +367,14 @@ static SourceLocation getLocationFromCursor(CXCursor C,
       return getCursorObjCProtocolRef(C).second;
     case CXCursor_ObjCSelectorRef: {
       ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
-      assert(OME && "clang_getCursorLine(): Missing message expr");
+      assert(OME && "getLocationFromCursor(): Missing message expr");
       return OME->getLeftLoc(); /* FIXME: should be a range */
     }
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
     case CXCursor_EnumConstantRef: {
       DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(getCursorStmt(C));
-      assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+      assert(DRE && "getLocationFromCursor(): Missing decl ref expr");
       return DRE->getLocation();
     }
     default:
@@ -719,12 +736,18 @@ CXFile clang_getDeclSourceFile(CXDecl AnonDecl) {
 
 extern "C" {
 const char *clang_getFileName(CXFile SFile) {
+  if (!SFile)
+    return 0;
+  
   assert(SFile && "Passed null CXFile");
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getName();
 }
 
 time_t clang_getFileTime(CXFile SFile) {
+  if (!SFile)
+    return 0;
+  
   assert(SFile && "Passed null CXFile");
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getModificationTime();
@@ -768,12 +791,12 @@ CXString clang_getCursorSpelling(CXCursor C) {
     }
     case CXCursor_ObjCProtocolRef: {
       ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
-      assert(OID && "clang_getCursorLine(): Missing protocol decl");
+      assert(OID && "getLocationFromCursor(): Missing protocol decl");
       return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCSelectorRef: {
       ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
-      assert(OME && "clang_getCursorLine(): Missing message expr");
+      assert(OME && "getLocationFromCursor(): Missing message expr");
       return CIndexer::createCXString(OME->getSelector().getAsString().c_str(),
                                       true);
     }
@@ -781,7 +804,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
     case CXCursor_FunctionRef:
     case CXCursor_EnumConstantRef: {
       DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(getCursorStmt(C));
-      assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+      assert(DRE && "getLocationFromCursor(): Missing decl ref expr");
       return CIndexer::createCXString(DRE->getDecl()->getIdentifier()
                                       ->getNameStart());
     }
@@ -928,56 +951,38 @@ CXDecl clang_getCursorDecl(CXCursor C) {
 }
 
 unsigned clang_getCursorLine(CXCursor C) {
-  assert(getCursorDecl(C) && "CXCursor has null decl");
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-
-  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-  return SourceMgr.getSpellingLineNumber(SLoc);
+  return clang_getCursorLocation(C).line;
 }
   
 unsigned clang_getCursorColumn(CXCursor C) {
-  assert(getCursorDecl(C) && "CXCursor has null decl");
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  
-  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-  return SourceMgr.getSpellingColumnNumber(SLoc);
+  return clang_getCursorLocation(C).column;
 }
 
 const char *clang_getCursorSource(CXCursor C) {
-  assert(getCursorDecl(C) && "CXCursor has null decl");
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  
-  SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-  
-  if (SLoc.isFileID()) {
-    const char *bufferName = SourceMgr.getBufferName(SLoc);
-    return bufferName[0] == '<' ? NULL : bufferName;
-  }
-  
-  // Retrieve the file in which the macro was instantiated, then provide that
-  // buffer name.
-  // FIXME: Do we want to give specific macro-instantiation information?
-  const llvm::MemoryBuffer *Buffer
-  = SourceMgr.getBuffer(SourceMgr.getDecomposedSpellingLoc(SLoc).first);
-  if (!Buffer)
-    return 0;
-  
-  return Buffer->getBufferIdentifier();
+  return clang_getFileName(clang_getCursorLocation(C).file);
 }
 
 CXFile clang_getCursorSourceFile(CXCursor C) {
-  assert(getCursorDecl(C) && "CXCursor has null decl");
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  
-  return (void *)
-  getFileEntryFromSourceLocation(SourceMgr, getLocationFromCursor(C,SourceMgr,
-                                                                  ND));
+  return clang_getCursorLocation(C).file;
 }
 
+CXSourceLocation clang_getCursorLocation(CXCursor C) {
+  if (clang_isReference(C.kind)) {
+    // FIXME: Return the location of the reference, not of the underlying
+    // declaration (which may not even exist!).
+  }
+  
+  if (!getCursorDecl(C)) {
+    CXSourceLocation empty = { 0, 0, 0 };
+    return empty;
+  }
+
+  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
+  SourceManager &SM = ND->getASTContext().getSourceManager();
+  
+  return translateSourceLocation(SM, getLocationFromCursor(C, SM, ND));
+}
+  
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
                                           const char **startBuf,
                                           const char **endBuf,

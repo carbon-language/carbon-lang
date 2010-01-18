@@ -393,12 +393,26 @@ CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
-CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor);
-CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor);
 CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
-CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor); /* deprecate */
-CINDEX_LINKAGE CXFile clang_getCursorSourceFile(CXCursor);
 
+CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor); /* deprecate */
+CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor); /* deprecate */
+CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor); /* deprecate */
+CINDEX_LINKAGE CXFile clang_getCursorSourceFile(CXCursor); /* deprecate */
+
+/**
+ * \brief Retrieve the physical location of the source constructor referenced
+ * by the given cursor.
+ *
+ * The location of a declaration is typically the location of the name of that
+ * declaration, where the name of that declaration would occur if it is 
+ * unnamed, or some keyword that introduces that particular declaration. 
+ * The location of a reference is where that reference occurs within the 
+ * source code.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
+    
+  
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
 CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor, 
