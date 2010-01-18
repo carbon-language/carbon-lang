@@ -105,7 +105,8 @@ public:
 
   // FIXME: Make out-of-line.
   virtual DefinedOrUnknownSVal getSizeInElements(const GRState *state, 
-                                                 const MemRegion *region) {
+                                                 const MemRegion *region,
+                                                 QualType EleTy) {
     return UnknownVal();
   }
 

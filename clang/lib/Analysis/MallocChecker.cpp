@@ -72,7 +72,7 @@ public:
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
   const GRState *MallocMemAux(CheckerContext &C, const CallExpr *CE,
-                              const GRState *state);
+                              const Expr *SizeEx, const GRState *state);
   void FreeMem(CheckerContext &C, const CallExpr *CE);
   const GRState *FreeMemAux(CheckerContext &C, const CallExpr *CE,
                             const GRState *state);
@@ -136,17 +136,23 @@ bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 }
 
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
-  const GRState *state = MallocMemAux(C, CE, C.getState());
+  const GRState *state = MallocMemAux(C, CE, CE->getArg(0), C.getState());
   C.addTransition(state);
 }
 
 const GRState *MallocChecker::MallocMemAux(CheckerContext &C,  
                                            const CallExpr *CE,
+                                           const Expr *SizeEx,
                                            const GRState *state) {
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   ValueManager &ValMgr = C.getValueManager();
 
   SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
+
+  SVal Size = state->getSVal(SizeEx);
+
+  state = C.getEngine().getStoreManager().setExtent(state, RetVal.getAsRegion(),
+                                                    Size);
 
   state = state->BindExpr(CE, RetVal);
   
@@ -216,7 +222,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
     if (Sym)
       stateEqual = stateEqual->set<RegionState>(Sym, RefState::getReleased(CE));
 
-    const GRState *stateMalloc = MallocMemAux(C, CE, stateEqual);
+    const GRState *stateMalloc = MallocMemAux(C, CE, CE->getArg(1), stateEqual);
     C.addTransition(stateMalloc);
   }
 
@@ -237,7 +243,8 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
       const GRState *stateFree = FreeMemAux(C, CE, stateSizeNotZero);
       if (stateFree) {
         // FIXME: We should copy the content of the original buffer.
-        const GRState *stateRealloc = MallocMemAux(C, CE, stateFree);
+        const GRState *stateRealloc = MallocMemAux(C, CE, CE->getArg(1), 
+                                                   stateFree);
         C.addTransition(stateRealloc);
       }
     }

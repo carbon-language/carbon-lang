@@ -21,6 +21,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Support/Optional.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/AST/CharUnits.h"
 
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -423,9 +424,9 @@ public:
   // Region "extents".
   //===------------------------------------------------------------------===//
 
-  const GRState *setExtent(const GRState *state, const MemRegion* R, SVal Extent);
+  const GRState *setExtent(const GRState *state,const MemRegion* R,SVal Extent);
   DefinedOrUnknownSVal getSizeInElements(const GRState *state, 
-                                         const MemRegion* R);
+                                         const MemRegion* R, QualType EleTy);
 
   //===------------------------------------------------------------------===//
   // Utility methods.
@@ -767,7 +768,8 @@ SVal RegionStoreManager::getLValueElement(QualType elementType, SVal Offset,
 //===----------------------------------------------------------------------===//
 
 DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
-                                                           const MemRegion *R) {
+                                                           const MemRegion *R,
+                                                           QualType EleTy) {
 
   switch (R->getKind()) {
     case MemRegion::CXXThisRegionKind:
@@ -793,9 +795,24 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
     case MemRegion::ElementRegionKind:
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
-    case MemRegion::SymbolicRegionKind:
     case MemRegion::CXXObjectRegionKind:
       return UnknownVal();
+
+    case MemRegion::SymbolicRegionKind: {
+      const SVal *Size = state->get<RegionExtents>(R);
+      if (!Size)
+        return UnknownVal();
+      const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(Size);
+      if (!CI)
+        return UnknownVal();
+
+      CharUnits RegionSize = 
+        CharUnits::fromQuantity(CI->getValue().getSExtValue());
+      CharUnits EleSize = getContext().getTypeSizeInChars(EleTy);
+      assert(RegionSize % EleSize == 0);
+
+      return ValMgr.makeIntVal(RegionSize / EleSize, false);
+    }
 
     case MemRegion::StringRegionKind: {
       const StringLiteral* Str = cast<StringRegion>(R)->getStringLiteral();
