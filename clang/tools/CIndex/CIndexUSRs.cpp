@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "CXCursor.h"
 #include "clang/AST/DeclVisitor.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
@@ -184,6 +185,23 @@ void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
   Out << "typedef@" << D->getName();
 }
 
+// FIXME: This is a skeleton implementation.  It will be overhauled.
+static CXString ConstructUSR(Decl *D) {
+  llvm::SmallString<1024> StrBuf;
+  {
+    llvm::raw_svector_ostream Out(StrBuf);
+    USRGenerator UG(Out);
+    UG.Visit(static_cast<Decl*>(D));
+  }
+  
+  if (StrBuf.empty())
+    return CIndexer::createCXString(NULL);
+  
+  // Return a copy of the string that must be disposed by the caller.
+  return CIndexer::createCXString(StrBuf.c_str(), true);
+}  
+
+
 extern "C" {
 
 /// clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
@@ -198,22 +216,13 @@ CXEntity clang_getEntityFromDecl(CXIndex CIdx, CXDecl CE) {
     return MakeEntity(CIdx, Entity::get(D, GetProgram(CIdx)));
   return NullCXEntity();
 }
-    
-// FIXME: This is a skeleton implementation.  It will be overhauled.
-CXString clang_getDeclUSR(CXDecl D) {
-  assert(D && "Null CXDecl passed to clang_getDeclUSR()");
-  llvm::SmallString<1024> StrBuf;
-  {
-    llvm::raw_svector_ostream Out(StrBuf);
-    USRGenerator UG(Out);
-    UG.Visit(static_cast<Decl*>(D));
-  }
-  
-  if (StrBuf.empty())
-    return CIndexer::createCXString(NULL);
 
-  // Return a copy of the string that must be disposed by the caller.
-  return CIndexer::createCXString(StrBuf.c_str(), true);
-}  
+CXString clang_getCursorUSR(CXCursor C) {
+  if (Decl *D = cxcursor::getCursorDecl(C))
+    return ConstructUSR(D);
+  
+  
+  return CIndexer::createCXString(NULL);
+}
 
 } // end extern "C"

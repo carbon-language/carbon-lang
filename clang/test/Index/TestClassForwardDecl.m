@@ -41,6 +41,6 @@ void function(Foo * arg)
 
 
 
-// CHECK-load: TestClassForwardDecl.m:10:6: FunctionDefn=function:10:6 [Context=TestClassForwardDecl.m]
-// CHECK-load: TestClassForwardDecl.m:10:21: ParmDecl=arg:10:21 [Context=function]
+// CHECK-load: TestClassForwardDecl.m:10:6: FunctionDefn=function:10:6
+// CHECK-load: TestClassForwardDecl.m:10:21: ParmDecl=arg:10:21
 

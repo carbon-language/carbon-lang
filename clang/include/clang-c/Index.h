@@ -336,7 +336,6 @@ CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
-CINDEX_LINKAGE CXString clang_getDeclUSR(CXDecl);
 CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 
@@ -369,6 +368,10 @@ CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit,
                                         unsigned line, unsigned column);
                          
 CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
+
+/* clang_getCursorUSR() returns the USR (if any) associated with entity referred to by the
+ *   provided CXCursor object. */
+CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
 
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
 CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);

@@ -84,17 +84,11 @@ static void PrintDeclExtent(CXDecl Dcl) {
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
-    CXString string;
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
                                 GetCursorSource(Cursor),
                                 clang_getCursorLine(Cursor),
                                 clang_getCursorColumn(Cursor));
-    PrintCursor(Cursor);
-
-    string = clang_getDeclSpelling(Dcl);
-    printf(" [Context=%s]", clang_getCString(string));
-    clang_disposeString(string);
-    
+    PrintCursor(Cursor);    
     PrintDeclExtent(clang_getCursorDecl(Cursor));
 
     printf("\n");
@@ -105,15 +99,10 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                    CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXDecl D;
-    CXString string;
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), clang_getCursorLine(Cursor),
            clang_getCursorColumn(Cursor));
     PrintCursor(Cursor);
-    string = clang_getTranslationUnitSpelling(Unit);
-    printf(" [Context=%s]",
-          basename(clang_getCString(string)));
-    clang_disposeString(string);
     
     D = clang_getCursorDecl(Cursor);
     if (!D) {
@@ -156,13 +145,10 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
     if (Ref.kind == CXCursor_NoDeclFound) {
       /* Nothing found here; that's fine. */
     } else if (Ref.kind != CXCursor_FunctionDecl) {
-      CXString string;
       printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
              curLine, curColumn);
       PrintCursor(Ref);
-      string = clang_getDeclSpelling(Ref.data[0]);
-      printf(" [Context:%s]\n", clang_getCString(string));
-      clang_disposeString(string);
+      printf("\n");
     }
     startBuf++;
   }
@@ -174,13 +160,13 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 
 static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
   if (!Filter || (C.kind == *(enum CXCursorKind *)Filter)) {
-    CXString USR = clang_getDeclUSR(C.data[0]);
+    CXString USR = clang_getCursorUSR(C);
     if (!USR.Spelling) {
       clang_disposeString(USR);
       return;
     }
     printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C), USR.Spelling);
-    PrintDeclExtent(C.data[0]);
+    PrintDeclExtent(clang_getCursorDecl(C));
     printf("\n");
     clang_disposeString(USR);
   }

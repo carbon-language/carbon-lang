@@ -21,14 +21,14 @@ _clang_getCursorLine
 _clang_getCursorSource
 _clang_getCursorSourceFile
 _clang_getCursorSpelling
+_clang_getCursorUSR
 _clang_getDeclColumn
 _clang_getDeclExtent
-_clang_getDeclLine
 _clang_getDeclExtent
+_clang_getDeclLine
 _clang_getDeclSource
 _clang_getDeclSourceFile
 _clang_getDeclSpelling
-_clang_getDeclUSR
 _clang_getDeclaration
 _clang_getDefinitionSpellingAndExtent
 _clang_getEntityFromDecl
