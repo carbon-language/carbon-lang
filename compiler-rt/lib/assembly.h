@@ -16,18 +16,18 @@
 #ifndef COMPILERRT_ASSEMBLY_H
 #define COMPILERRT_ASSEMBLY_H
 
-// Define SYMBOL_NAME to add the appropriate symbol prefix; we can't use
-// USER_LABEL_PREFIX directly because of cpp brokenness.
 #if defined(__POWERPC__) || defined(__powerpc__) || defined(__ppc__)
-
-#define SYMBOL_NAME(name) name
 #define SEPARATOR @
-
 #else
-
-#define SYMBOL_NAME(name) #__USER_LABEL_PREFIX__ ##name
 #define SEPARATOR ;
+#endif
 
+/* We can't use __USER_LABEL_PREFIX__ here, it isn't possible to concatenate the
+   *values* of two macros. This is quite brittle, though. */
+#if defined(__APPLE__)
+#define SYMBOL_NAME(name) _##name
+#else
+#define SYMBOL_NAME(name) name
 #endif
 
 #define DEFINE_COMPILERRT_FUNCTION(name) \
