@@ -1278,6 +1278,9 @@ public:
                                const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap,
                                ObjCInterfaceDecl *IDecl);
+  
+  void CheckPropertyImplementation(ObjCImplDecl* IMPDecl,
+                                   ObjCInterfaceDecl *CDecl);
 
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface.
@@ -3409,14 +3412,13 @@ public:
                                          ObjCMethodDecl *MethodDecl,
                                          bool IsInstance);
 
-  void MergeProtocolPropertiesIntoClass(Decl *CDecl,
-                                        DeclPtrTy MergeProtocols);
+  void CompareProperties(Decl *CDecl, DeclPtrTy MergeProtocols);
 
   void DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
                                         ObjCInterfaceDecl *ID);
 
-  void MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
-                                           ObjCProtocolDecl *PDecl);
+  void MatchOneProtocolPropertiesInClass(Decl *CDecl,
+                                         ObjCProtocolDecl *PDecl);
 
   virtual void ActOnAtEnd(SourceRange AtEnd,
                           DeclPtrTy classDecl,

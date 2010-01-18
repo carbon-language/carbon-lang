@@ -435,17 +435,17 @@ void Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   }
 }
 
-/// MergeOneProtocolPropertiesIntoClass - This routine goes thru the list
-/// of properties declared in a protocol and adds them to the list
-/// of properties for current class/category if it is not there already.
+/// MatchOneProtocolPropertiesInClass - This routine goes thru the list
+/// of properties declared in a protocol and compares their attribute against
+/// the same property declared in the class or category.
 void
-Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
+Sema::MatchOneProtocolPropertiesInClass(Decl *CDecl,
                                           ObjCProtocolDecl *PDecl) {
   ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
   if (!IDecl) {
     // Category
     ObjCCategoryDecl *CatDecl = static_cast<ObjCCategoryDecl*>(CDecl);
-    assert (CatDecl && "MergeOneProtocolPropertiesIntoClass");
+    assert (CatDecl && "MatchOneProtocolPropertiesInClass");
     for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
          E = PDecl->prop_end(); P != E; ++P) {
       ObjCPropertyDecl *Pr = (*P);
@@ -474,35 +474,35 @@ Sema::MergeOneProtocolPropertiesIntoClass(Decl *CDecl,
     }
 }
 
-/// MergeProtocolPropertiesIntoClass - This routine merges properties
-/// declared in 'MergeItsProtocols' objects (which can be a class or an
-/// inherited protocol into the list of properties for class/category 'CDecl'
+/// CompareProperties - This routine compares properties
+/// declared in 'ClassOrProtocol' objects (which can be a class or an
+/// inherited protocol with the list of properties for class/category 'CDecl'
 ///
-void Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
-                                            DeclPtrTy MergeItsProtocols) {
-  Decl *ClassDecl = MergeItsProtocols.getAs<Decl>();
+void Sema::CompareProperties(Decl *CDecl,
+                             DeclPtrTy ClassOrProtocol) {
+  Decl *ClassDecl = ClassOrProtocol.getAs<Decl>();
   ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
 
   if (!IDecl) {
     // Category
     ObjCCategoryDecl *CatDecl = static_cast<ObjCCategoryDecl*>(CDecl);
-    assert (CatDecl && "MergeProtocolPropertiesIntoClass");
+    assert (CatDecl && "CompareProperties");
     if (ObjCCategoryDecl *MDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
       for (ObjCCategoryDecl::protocol_iterator P = MDecl->protocol_begin(),
            E = MDecl->protocol_end(); P != E; ++P)
-      // Merge properties of category (*P) into IDECL's
-      MergeOneProtocolPropertiesIntoClass(CatDecl, *P);
+      // Match properties of category with those of protocol (*P)
+      MatchOneProtocolPropertiesInClass(CatDecl, *P);
 
-      // Go thru the list of protocols for this category and recursively merge
-      // their properties into this class as well.
+      // Go thru the list of protocols for this category and recursively match
+      // their properties with those in the category.
       for (ObjCCategoryDecl::protocol_iterator P = CatDecl->protocol_begin(),
            E = CatDecl->protocol_end(); P != E; ++P)
-        MergeProtocolPropertiesIntoClass(CatDecl, DeclPtrTy::make(*P));
+        CompareProperties(CatDecl, DeclPtrTy::make(*P));
     } else {
       ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
       for (ObjCProtocolDecl::protocol_iterator P = MD->protocol_begin(),
            E = MD->protocol_end(); P != E; ++P)
-        MergeOneProtocolPropertiesIntoClass(CatDecl, *P);
+        MatchOneProtocolPropertiesInClass(CatDecl, *P);
     }
     return;
   }
@@ -510,19 +510,19 @@ void Sema::MergeProtocolPropertiesIntoClass(Decl *CDecl,
   if (ObjCInterfaceDecl *MDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     for (ObjCInterfaceDecl::protocol_iterator P = MDecl->protocol_begin(),
          E = MDecl->protocol_end(); P != E; ++P)
-      // Merge properties of class (*P) into IDECL's
-      MergeOneProtocolPropertiesIntoClass(IDecl, *P);
+      // Match properties of class IDecl with those of protocol (*P).
+      MatchOneProtocolPropertiesInClass(IDecl, *P);
 
-    // Go thru the list of protocols for this class and recursively merge
-    // their properties into this class as well.
+    // Go thru the list of protocols for this class and recursively match
+    // their properties with those declared in the class.
     for (ObjCInterfaceDecl::protocol_iterator P = IDecl->protocol_begin(),
          E = IDecl->protocol_end(); P != E; ++P)
-      MergeProtocolPropertiesIntoClass(IDecl, DeclPtrTy::make(*P));
+      CompareProperties(IDecl, DeclPtrTy::make(*P));
   } else {
     ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
     for (ObjCProtocolDecl::protocol_iterator P = MD->protocol_begin(),
          E = MD->protocol_end(); P != E; ++P)
-      MergeOneProtocolPropertiesIntoClass(IDecl, *P);
+      MatchOneProtocolPropertiesInClass(IDecl, *P);
   }
 }
 
@@ -1084,6 +1084,13 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
                                  IMPDecl,
                                  I->getSuperClass(), IncompleteImpl, false);
   }
+}
+
+/// CheckPropertyImplementation - Check that all required properties are
+/// synthesized in class's implementation. This includes properties 
+/// declared in current class and in class's protocols (direct or indirect).
+void Sema::CheckPropertyImplementation(ObjCImplDecl* IMPDecl,
+                                       ObjCInterfaceDecl *CDecl) {
 }
 
 void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
@@ -1703,14 +1710,14 @@ void Sema::ActOnAtEnd(SourceRange AtEnd,
     // Compares properties declared in this class to those of its
     // super class.
     ComparePropertiesInBaseAndSuper(I);
-    MergeProtocolPropertiesIntoClass(I, DeclPtrTy::make(I));
+    CompareProperties(I, DeclPtrTy::make(I));
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
     // Categories are used to extend the class by declaring new methods.
     // By the same token, they are also used to add new properties. No
     // need to compare the added property to those in the class.
 
-    // Merge protocol properties into category
-    MergeProtocolPropertiesIntoClass(C, DeclPtrTy::make(C));
+    // Compare protocol properties with those in category
+    CompareProperties(C, DeclPtrTy::make(C));
     if (C->getIdentifier() == 0)
       DiagnoseClassExtensionDupMethods(C, C->getClassInterface());
   }
