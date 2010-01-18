@@ -428,6 +428,42 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
         }
       }
     }
+    // Now that we have the entire fixit line, expand the tabs in it.
+    // Since we don't want to insert spaces in the middle of a word,
+    // find each word and the column it should line up with and insert
+    // spaces until they match.
+    if (!FixItInsertionLine.empty()) {
+      unsigned FixItPos = 0;
+      unsigned LinePos = 0;
+      unsigned TabExpandedCol = 0;
+      unsigned LineLength = LineEnd - LineStart;
+
+      while (FixItPos < FixItInsertionLine.size() && LinePos < LineLength) {
+        // Find the next word in the FixIt line.
+        while (FixItPos < FixItInsertionLine.size() &&
+               FixItInsertionLine[FixItPos] == ' ')
+          ++FixItPos;
+        unsigned CharDistance = FixItPos - TabExpandedCol;
+
+        // Walk forward in the source line, keeping track of
+        // the tab-expanded column.
+        for (unsigned I = 0; I < CharDistance; ++I, ++LinePos)
+          if (LinePos >= LineLength || LineStart[LinePos] != '\t')
+            ++TabExpandedCol;
+          else
+            TabExpandedCol =
+              (TabExpandedCol/DiagOpts->TabStop + 1) * DiagOpts->TabStop;
+
+        // Adjust the fixit line to match this column.
+        FixItInsertionLine.insert(FixItPos, TabExpandedCol-FixItPos, ' ');
+        FixItPos = TabExpandedCol;
+
+        // Walk to the end of the word.
+        while (FixItPos < FixItInsertionLine.size() &&
+               FixItInsertionLine[FixItPos] != ' ')
+          ++FixItPos;
+      }
+    }
   }
 
   // If the source line is too long for our terminal, select only the

@@ -28,3 +28,23 @@ void* d =	1;
 //CHECK-5: {{^          void\* b = 1;}}
 //CHECK-5: {{^     void\* c = 1;}}
 //CHECK-5: {{^void\* d = 1;}}
+
+// Test code modification hints
+
+void f(void)
+{
+	if (0	& 1	== 1)
+	{}
+}
+
+// CHECK-3: {{^   }}if (0 & 1   == 1)
+// CHECK-3: {{^   }}        (       )
+// CHECK-3: {{^   }}    (    )
+
+// CHECK-4: {{^    }}if (0   & 1 == 1)
+// CHECK-4: {{^    }}          (     )
+// CHECK-4: {{^    }}    (      )
+
+// CHECK-5: {{^     }}if (0     & 1  == 1)
+// CHECK-5: {{^     }}            (      )
+// CHECK-5: {{^     }}    (        )
