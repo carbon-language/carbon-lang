@@ -19,7 +19,7 @@
 // This function should never be exported by a shared library.  Each linkage
 // unit carries its own copy of this function.
 //
-DEFINE_COMPILERRT_PRIVATE_FUNCTION(restFP)
+DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(restFP)
         lfd    f14,-144(r1)
         lfd    f15,-136(r1)
         lfd    f16,-128(r1)
@@ -39,5 +39,5 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(restFP)
         lfd    f30,-16(r1)
         lfd    f31,-8(r1)
         lwz     r0,8(r1)
-		mtlr	r0
+        mtlr	r0
         blr

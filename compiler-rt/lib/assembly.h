@@ -39,4 +39,9 @@
   .private_extern SYMBOL_NAME(name) SEPARATOR    \
   SYMBOL_NAME(name):
 
+#define DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(name) \
+  .globl name SEPARATOR             \
+  .private_extern name SEPARATOR    \
+  name:
+
 #endif /* COMPILERRT_ASSEMBLY_H */

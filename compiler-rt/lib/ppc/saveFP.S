@@ -17,7 +17,7 @@
 // This function should never be exported by a shared library.  Each linkage
 // unit carries its own copy of this function.
 //
-DEFINE_COMPILERRT_PRIVATE_FUNCTION(saveFP)
+DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(saveFP)
 	stfd    f14,-144(r1)
         stfd    f15,-136(r1)
         stfd    f16,-128(r1)
