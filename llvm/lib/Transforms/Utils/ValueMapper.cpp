@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"  // For getNullValue(Type::Int32Ty)
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -130,4 +131,21 @@ void llvm::RemapInstruction(Instruction *I, ValueMapTy &ValueMap) {
     assert(V && "Referenced value not in value map!");
     *op = V;
   }
+
+  // Map llvm.dbg.declare instruction's first operand, which points to
+  // alloca instruction through MDNode. Since MDNodes are not counted as normal
+  // uses, this will fall through cracks otherwise.
+  const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I);
+  if (!DDI) return;
+  
+  Value *AddrInsn = DDI->getAddress();
+  if (!AddrInsn) return;
+  
+  ValueMapTy::iterator VMI = ValueMap.find(AddrInsn);
+  if (VMI == ValueMap.end()) return;
+  
+  Value *Elts[] =  { VMI->second };
+  MDNode *NewAddr = MDNode::get(AddrInsn->getContext(), Elts, 1);
+  I->setOperand(1, NewAddr);
 }
+
