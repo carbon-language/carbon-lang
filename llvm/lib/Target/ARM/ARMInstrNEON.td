@@ -197,12 +197,12 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 class VLD2D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b1000,op7_4, (outs DPR:$dst1, DPR:$dst2),
           (ins addrmode6:$addr), IIC_VLD2,
-          OpcodeStr, Dt, "\\{$dst1,$dst2\\}, $addr", "", []>;
+          OpcodeStr, Dt, "\\{$dst1, $dst2\\}, $addr", "", []>;
 class VLD2Q<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0011,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD2,
-          OpcodeStr, Dt, "\\{$dst1,$dst2,$dst3,$dst4\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
           "", []>;
 
 def  VLD2d8   : VLD2D<0b0000, "vld2", "8">;
@@ -210,7 +210,7 @@ def  VLD2d16  : VLD2D<0b0100, "vld2", "16">;
 def  VLD2d32  : VLD2D<0b1000, "vld2", "32">;
 def  VLD2d64  : NLdSt<0,0b10,0b1010,0b1100, (outs DPR:$dst1, DPR:$dst2),
                       (ins addrmode6:$addr), IIC_VLD1,
-                      "vld1", "64", "\\{$dst1,$dst2\\}, $addr", "", []>;
+                      "vld1", "64", "\\{$dst1, $dst2\\}, $addr", "", []>;
 
 def  VLD2q8   : VLD2Q<0b0000, "vld2", "8">;
 def  VLD2q16  : VLD2Q<0b0100, "vld2", "16">;
@@ -220,11 +220,11 @@ def  VLD2q32  : VLD2Q<0b1000, "vld2", "32">;
 class VLD3D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0100,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr), IIC_VLD3,
-          OpcodeStr, Dt, "\\{$dst1,$dst2,$dst3\\}, $addr", "", []>;
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
 class VLD3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0101,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD3,
-          OpcodeStr, Dt, "\\{$dst1,$dst2,$dst3\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3\\}, $addr",
           "$addr.addr = $wb", []>;
 
 def  VLD3d8   : VLD3D<0b0000, "vld3", "8">;
@@ -233,7 +233,7 @@ def  VLD3d32  : VLD3D<0b1000, "vld3", "32">;
 def  VLD3d64  : NLdSt<0,0b10,0b0110,0b1100,
                       (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
                       (ins addrmode6:$addr), IIC_VLD1,
-                      "vld1", "64", "\\{$dst1,$dst2,$dst3\\}, $addr", "", []>;
+                      "vld1", "64", "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
 
 // vld3 to double-spaced even registers.
 def  VLD3q8a  : VLD3WB<0b0000, "vld3", "8">;
@@ -250,13 +250,13 @@ class VLD4D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0000,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD4,
-          OpcodeStr, Dt, "\\{$dst1,$dst2,$dst3,$dst4\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
           "", []>;
 class VLD4WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0001,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD4,
-          OpcodeStr, Dt, "\\{$dst1,$dst2,$dst3,$dst4\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
           "$addr.addr = $wb", []>;
 
 def  VLD4d8   : VLD4D<0b0000, "vld4", "8">;
@@ -265,7 +265,8 @@ def  VLD4d32  : VLD4D<0b1000, "vld4", "32">;
 def  VLD4d64  : NLdSt<0,0b10,0b0010,0b1100,
                       (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
                       (ins addrmode6:$addr), IIC_VLD1,
-                   "vld1", "64", "\\{$dst1,$dst2,$dst3,$dst4\\}, $addr", "", []>;
+                      "vld1", "64", "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
+                      "", []>;
 
 // vld4 to double-spaced even registers.
 def  VLD4q8a  : VLD4WB<0b0000, "vld4", "8">;
@@ -285,7 +286,7 @@ class VLD2LN<bits<4> op11_8, string OpcodeStr, string Dt>
   : NLdSt<1,0b10,op11_8,{?,?,?,?}, (outs DPR:$dst1, DPR:$dst2),
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
             IIC_VLD2,
-            OpcodeStr, Dt, "\\{$dst1[$lane],$dst2[$lane]\\}, $addr",
+            OpcodeStr, Dt, "\\{$dst1[$lane], $dst2[$lane]\\}, $addr",
             "$src1 = $dst1, $src2 = $dst2", []>;
 
 // vld2 to single-spaced registers.
@@ -319,7 +320,7 @@ class VLD3LN<bits<4> op11_8, string OpcodeStr, string Dt>
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
             nohash_imm:$lane), IIC_VLD3,
             OpcodeStr, Dt,
-            "\\{$dst1[$lane],$dst2[$lane],$dst3[$lane]\\}, $addr",
+            "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane]\\}, $addr",
             "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3", []>;
 
 // vld3 to single-spaced registers.
@@ -356,7 +357,7 @@ class VLD4LN<bits<4> op11_8, string OpcodeStr, string Dt>
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
             nohash_imm:$lane), IIC_VLD4,
             OpcodeStr, Dt,
-           "\\{$dst1[$lane],$dst2[$lane],$dst3[$lane],$dst4[$lane]\\}, $addr",
+          "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $addr",
             "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
 
 // vld4 to single-spaced registers.
@@ -423,12 +424,12 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 class VST2D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b1000,op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2\\}, $addr", "", []>;
+          OpcodeStr, Dt, "\\{$src1, $src2\\}, $addr", "", []>;
 class VST2Q<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0011,op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2,$src3,$src4\\}, $addr",
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "", []>;
 
 def  VST2d8   : VST2D<0b0000, "vst2", "8">;
@@ -436,7 +437,7 @@ def  VST2d16  : VST2D<0b0100, "vst2", "16">;
 def  VST2d32  : VST2D<0b1000, "vst2", "32">;
 def  VST2d64  : NLdSt<0,0b00,0b1010,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-                      "vst1", "64", "\\{$src1,$src2\\}, $addr", "", []>;
+                      "vst1", "64", "\\{$src1, $src2\\}, $addr", "", []>;
 
 def  VST2q8   : VST2Q<0b0000, "vst2", "8">;
 def  VST2q16  : VST2Q<0b0100, "vst2", "16">;
@@ -446,11 +447,11 @@ def  VST2q32  : VST2Q<0b1000, "vst2", "32">;
 class VST3D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0100,op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2,$src3\\}, $addr", "", []>;
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 class VST3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0101,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2,$src3\\}, $addr",
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3\\}, $addr",
           "$addr.addr = $wb", []>;
 
 def  VST3d8   : VST3D<0b0000, "vst3", "8">;
@@ -459,7 +460,7 @@ def  VST3d32  : VST3D<0b1000, "vst3", "32">;
 def  VST3d64  : NLdSt<0,0b00,0b0110,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
                       IIC_VST,
-                      "vst1", "64", "\\{$src1,$src2,$src3\\}, $addr", "", []>;
+                      "vst1", "64", "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 
 // vst3 to double-spaced even registers.
 def  VST3q8a  : VST3WB<0b0000, "vst3", "8">;
@@ -476,13 +477,13 @@ class VST4D<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0000,op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2,$src3,$src4\\}, $addr",
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "", []>;
 class VST4WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0001,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST,
-          OpcodeStr, Dt, "\\{$src1,$src2,$src3,$src4\\}, $addr",
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "$addr.addr = $wb", []>;
 
 def  VST4d8   : VST4D<0b0000, "vst4", "8">;
@@ -491,7 +492,8 @@ def  VST4d32  : VST4D<0b1000, "vst4", "32">;
 def  VST4d64  : NLdSt<0,0b00,0b0010,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
                        DPR:$src4), IIC_VST,
-                   "vst1", "64", "\\{$src1,$src2,$src3,$src4\\}, $addr", "", []>;
+                      "vst1", "64", "\\{$src1, $src2, $src3, $src4\\}, $addr",
+                      "", []>;
 
 // vst4 to double-spaced even registers.
 def  VST4q8a  : VST4WB<0b0000, "vst4", "8">;
@@ -511,7 +513,7 @@ class VST2LN<bits<4> op11_8, string OpcodeStr, string Dt>
   : NLdSt<1,0b00,op11_8,{?,?,?,?}, (outs),
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
             IIC_VST,
-            OpcodeStr, Dt, "\\{$src1[$lane],$src2[$lane]\\}, $addr",
+            OpcodeStr, Dt, "\\{$src1[$lane], $src2[$lane]\\}, $addr",
             "", []>;
 
 // vst2 to single-spaced registers.
@@ -545,7 +547,7 @@ class VST3LN<bits<4> op11_8, string OpcodeStr, string Dt>
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
             nohash_imm:$lane), IIC_VST,
             OpcodeStr, Dt,
-            "\\{$src1[$lane],$src2[$lane],$src3[$lane]\\}, $addr", "", []>;
+            "\\{$src1[$lane], $src2[$lane], $src3[$lane]\\}, $addr", "", []>;
 
 // vst3 to single-spaced registers.
 def VST3LNd8  : VST3LN<0b0010, "vst3", "8"> {
@@ -580,7 +582,7 @@ class VST4LN<bits<4> op11_8, string OpcodeStr, string Dt>
             (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
             nohash_imm:$lane), IIC_VST,
             OpcodeStr, Dt,
-           "\\{$src1[$lane],$src2[$lane],$src3[$lane],$src4[$lane]\\}, $addr",
+          "\\{$src1[$lane], $src2[$lane], $src3[$lane], $src4[$lane]\\}, $addr",
             "", []>;
 
 // vst4 to single-spaced registers.
@@ -3022,19 +3024,19 @@ let hasExtraSrcRegAllocReq = 1 in {
 def  VTBL2
   : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$src), IIC_VTB2,
-        "vtbl", "8", "$dst, \\{$tbl1,$tbl2\\}, $src", "",
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl2
                                DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
 def  VTBL3
   : N3V<1,1,0b11,0b1010,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src), IIC_VTB3,
-        "vtbl", "8", "$dst, \\{$tbl1,$tbl2,$tbl3\\}, $src", "",
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src", "",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl3
                                DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
 def  VTBL4
   : N3V<1,1,0b11,0b1011,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src), IIC_VTB4,
-        "vtbl", "8", "$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "",
+        "vtbl", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src", "",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl4 DPR:$tbl1, DPR:$tbl2,
                                DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
 } // hasExtraSrcRegAllocReq = 1
@@ -3050,19 +3052,20 @@ let hasExtraSrcRegAllocReq = 1 in {
 def  VTBX2
   : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$dst),
         (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src), IIC_VTBX2,
-        "vtbx", "8", "$dst, \\{$tbl1,$tbl2\\}, $src", "$orig = $dst",
+        "vtbx", "8", "$dst, \\{$tbl1, $tbl2\\}, $src", "$orig = $dst",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx2
                                DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src)))]>;
 def  VTBX3
   : N3V<1,1,0b11,0b1010,1,0, (outs DPR:$dst),
         (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$tbl3, DPR:$src), IIC_VTBX3,
-        "vtbx", "8", "$dst, \\{$tbl1,$tbl2,$tbl3\\}, $src", "$orig = $dst",
+        "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3\\}, $src", "$orig = $dst",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx3 DPR:$orig, DPR:$tbl1,
                                DPR:$tbl2, DPR:$tbl3, DPR:$src)))]>;
 def  VTBX4
   : N3V<1,1,0b11,0b1011,1,0, (outs DPR:$dst), (ins DPR:$orig, DPR:$tbl1,
         DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src), IIC_VTBX4,
-        "vtbx", "8", "$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "$orig = $dst",
+        "vtbx", "8", "$dst, \\{$tbl1, $tbl2, $tbl3, $tbl4\\}, $src",
+        "$orig = $dst",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx4 DPR:$orig, DPR:$tbl1,
                                DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
 } // hasExtraSrcRegAllocReq = 1
