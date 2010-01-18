@@ -1035,8 +1035,8 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Elts[] = { Storage };
-  Value *Args[] = { MDNode::get(Storage->getContext(), Elts, 1), D.getNode() };
+  Value *Args[] = { MDNode::get(Storage->getContext(), &Storage, 1),
+                    D.getNode() };
   return CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
 }
 
@@ -1046,8 +1046,8 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
-  Value *Elts[] = { Storage };
-  Value *Args[] = { MDNode::get(Storage->getContext(), Elts, 1), D.getNode() };
+  Value *Args[] = { MDNode::get(Storage->getContext(), &Storage, 1),
+                    D.getNode() };
   return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
 }
 
@@ -1234,7 +1234,8 @@ bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   return true;
 }
 
-Value *llvm::findDbgGlobalDeclare(GlobalVariable *V) {
+/// Find the debug info descriptor corresponding to this global variable.
+static Value *findDbgGlobalDeclare(GlobalVariable *V) {
   const Module *M = V->getParent();
   NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv");
   if (!NMD)
@@ -1252,7 +1253,7 @@ Value *llvm::findDbgGlobalDeclare(GlobalVariable *V) {
 
 /// Finds the llvm.dbg.declare intrinsic corresponding to this value if any.
 /// It looks through pointer casts too.
-const DbgDeclareInst *llvm::findDbgDeclare(const Value *V) {
+static const DbgDeclareInst *findDbgDeclare(const Value *V) {
   V = V->stripPointerCasts();
   
   if (!isa<Instruction>(V) && !isa<Argument>(V))
