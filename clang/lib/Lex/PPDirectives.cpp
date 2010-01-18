@@ -160,10 +160,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   CurPPLexer->LexingRawMode = true;
   Token Tok;
   while (1) {
-    if (CurLexer)
-      CurLexer->Lex(Tok);
-    else
-      CurPTHLexer->Lex(Tok);
+    CurLexer->Lex(Tok);
 
     // If this is the end of the buffer, we have an error.
     if (Tok.is(tok::eof)) {
