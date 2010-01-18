@@ -950,22 +950,6 @@ CXDecl clang_getCursorDecl(CXCursor C) {
   return 0;
 }
 
-unsigned clang_getCursorLine(CXCursor C) {
-  return clang_getCursorLocation(C).line;
-}
-  
-unsigned clang_getCursorColumn(CXCursor C) {
-  return clang_getCursorLocation(C).column;
-}
-
-const char *clang_getCursorSource(CXCursor C) {
-  return clang_getFileName(clang_getCursorLocation(C).file);
-}
-
-CXFile clang_getCursorSourceFile(CXCursor C) {
-  return clang_getCursorLocation(C).file;
-}
-
 CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (clang_isReference(C.kind)) {
     // FIXME: Return the location of the reference, not of the underlying

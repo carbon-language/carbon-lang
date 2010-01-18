@@ -395,11 +395,6 @@ CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
 CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
 
-CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor); /* deprecate */
-CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor); /* deprecate */
-CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor); /* deprecate */
-CINDEX_LINKAGE CXFile clang_getCursorSourceFile(CXCursor); /* deprecate */
-
 /**
  * \brief Retrieve the physical location of the source constructor referenced
  * by the given cursor.
