@@ -156,11 +156,6 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
       return TST_char32;
     case BuiltinType::WChar:
       return TST_wchar;
-    case BuiltinType::Float:
-      return TST_float;
-    case BuiltinType::Double:
-    case BuiltinType::LongDouble:
-      return TST_double;
     case BuiltinType::UndeducedAuto:
       return TST_auto;
         
@@ -176,6 +171,9 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
     case BuiltinType::Long:
     case BuiltinType::LongLong:
     case BuiltinType::Int128:
+    case BuiltinType::Float:
+    case BuiltinType::Double:
+    case BuiltinType::LongDouble:
       llvm_unreachable("Builtin type needs extra local data!");
       // Fall through, if the impossible happens.
         
