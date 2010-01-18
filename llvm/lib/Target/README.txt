@@ -1665,3 +1665,54 @@ int foo() {
 
 //===---------------------------------------------------------------------===//
 
+Missed instcombine transformation:
+define i1 @a(i32 %x) nounwind readnone {
+entry:
+  %cmp = icmp eq i32 %x, 30
+  %sub = add i32 %x, -30
+  %cmp2 = icmp ugt i32 %sub, 9
+  %or = or i1 %cmp, %cmp2
+  ret i1 %or
+}
+This should be optimized to a single compare.  Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
+
+Missed instcombine transformation:
+void b();
+void a(int x) { if (((1<<x)&8)==0) b(); }
+
+The shift should be optimized out.  Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
+
+Missed instcombine or reassociate transformation:
+int a(int a, int b) { return (a==12)&(b>47)&(b<58); }
+
+The sgt and slt should be combined into a single comparison. Testcase derived
+from gcc.
+
+//===---------------------------------------------------------------------===//
+
+Missed instcombine transformation:
+define i32 @a(i32 %x) nounwind readnone {
+entry:
+  %shr = lshr i32 %x, 5                           ; <i32> [#uses=1]
+  %xor = xor i32 %shr, 67108864                   ; <i32> [#uses=1]
+  %sub = add i32 %xor, -67108864                  ; <i32> [#uses=1]
+  ret i32 %sub
+}
+
+This function is equivalent to "ashr i32 %x, 5".  Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
+
+isSafeToLoadUnconditionally should allow a GEP of a global/alloca with constant
+indicies within the bounds of the allocated object. Reduced example:
+
+const int a[] = {3,6};
+int b(int y) { int* x = y ? &a[0] : &a[1]; return *x; }
+
+All the loads should be eliminated.  Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
