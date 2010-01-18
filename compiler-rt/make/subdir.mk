@@ -54,6 +54,11 @@ ifneq ($(DEBUGMAKE),)
   $$(info MAKE: $(Dir): Processing subdirectory)
 endif
 
+# Construct the variable key for this directory.
+$(call Set,DirKey,SubDir.$(subst .,,$(subst /,__,$(1))))
+$(call Append,SubDirKeys,$(DirKey))
+$(call Set,$(DirKey).Dir,$(Dir))
+
 # Reset subdirectory specific variables to sentinel value.
 $$(foreach var,$$(RequiredSubdirVariables) $$(OptionalSubdirVariables),\
   $$(call Set,$$(var),UNDEFINED))
@@ -63,7 +68,7 @@ include $(1)/Makefile.mk
 
 ifeq ($(DEBUGMAKE),2)
 $$(foreach var,$(RequiredSubdirVariables) $(OptionalSubdirVariables),\
-  $$(if $$(call strneq UNDEFINED,$$($$(var))), \
+  $$(if $$(call strneq,UNDEFINED,$$($$(var))), \
 	$$(info MAKE: $(Dir): $$(var) is defined), \
 	$$(info MAKE: $(Dir): $$(var) is undefined)))
 endif
@@ -71,16 +76,20 @@ endif
 # Check for undefined required variables, and unset sentinel value from optional
 # variables.
 $$(foreach var,$(RequiredSubdirVariables),\
-  $$(if $$(call strneq UNDEFINED,$$($$(var))), \
+  $$(if $$(call strneq,UNDEFINED,$$($$(var))),, \
 	$$(error $(Dir): variable '$$(var)' was not undefined)))
 $$(foreach var,$(OptionalSubdirVariables),\
-  $$(if $$(call strneq UNDEFINED,$$($$(var))),, \
+  $$(if $$(call strneq,UNDEFINED,$$($$(var))),, \
 	$$(call Set,$$(var),)))
+
+# Collect all subdirectory variables for subsequent use.
+$$(foreach var,$(RequiredSubdirVariables) $(OptionalSubdirVariables),\
+  $$(call Set,$(DirKey).$$(var),$$($$(var))))
 
 # Recurse.
 include make/subdir.mk
 
-# Restore directory variable.
+# Restore directory variable, for cleanliness.
 $$(call Set,Dir,$(1))
 
 ifneq ($(DEBUGMAKE),)

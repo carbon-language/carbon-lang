@@ -37,7 +37,12 @@ help:
 	@echo "  all:   build all configurations"
 	@echo
 
-help-hidden: help
+help-devel: help
+	@echo "Development targets:"
+	@echo "  info-functions: list available compiler-rt functions"
+	@echo
+
+help-hidden: help-devel
 	@echo "Debugging variables:"
 	@echo "  DEBUGMAKE=1: enable some Makefile logging [default=]"
 	@echo "           =2: enable more Makefile logging"
@@ -45,6 +50,14 @@ help-hidden: help
 	@echo "Debugging targets:"
 	@echo "  make-print-FOO: print information on the variable 'FOO'"
 	@echo
+
+info-functions:
+	@echo "compiler-rt Available Functions"
+	@echo
+	@echo "All Functions: $(AvailableFunctions)"
+	@$(foreach fn,$(AvailableFunctions),\
+	  printf "  %-20s - available in (%s)\n" $(fn)\
+	    "$(foreach key,$(AvailableIn.$(fn)),$($(key).Dir))";)
 
 # Provide default clean target which is extended by other templates.
 .PHONY: clean
@@ -230,3 +243,18 @@ ifneq ($(DEBUGMAKE),)
   $(info MAKE: Done processing Makefile)
   $(info  )
 endif
+
+###
+# Function Information
+#
+# FIXME: Factor out.
+
+AvailableObjects := $(sort $(foreach key,$(SubDirKeys),\
+	$($(key).ObjNames)))
+AvailableFunctions := $(AvailableObjects:%.o=%)
+
+# Compute lists of where each function is available.
+$(foreach key,$(SubDirKeys),\
+  $(foreach fn,$(subst .o,,$($(key).ObjNames)),\
+    $(call Append,AvailableIn.$(fn),$(key))))
+
