@@ -154,7 +154,8 @@ static Function *assertLocalFunction(const MDNode *N) {
 
 // getFunction - If this metadata is function-local and recursively has a
 // function-local operand, return the first such operand's parent function.
-// Otherwise, return null. 
+// Otherwise, return null. getFunction() should not be used for performance-
+// critical code because it recursively visits all the MDNode's operands.  
 Function *MDNode::getFunction() const {
 #ifndef NDEBUG
   return assertLocalFunction(this);
