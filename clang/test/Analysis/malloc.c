@@ -51,3 +51,9 @@ void f6() {
   else
     free(p);
 }
+
+char *doit2();
+void pr6069() {
+  char *buf = doit2();
+  free(buf);
+}
