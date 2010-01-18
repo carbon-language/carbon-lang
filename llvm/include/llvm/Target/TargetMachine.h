@@ -201,7 +201,12 @@ public:
   static void setAsmVerbosityDefault(bool);
 
   /// getLSDAEncoding - Returns the LSDA pointer encoding. The choices are
-  /// 4-byte, 8-byte, and target default.
+  /// 4-byte, 8-byte, and target default. The CIE is hard-coded to indicate that
+  /// the LSDA pointer in the FDE section is an "sdata4", and should be encoded
+  /// as a 4-byte pointer by default. However, some systems may require a
+  /// different size due to bugs or other conditions. We will default to a
+  /// 4-byte encoding unless the system tells us otherwise.
+  ///
   /// FIXME: This call-back isn't good! We should be using the correct encoding
   /// regardless of the system. However, there are some systems which have bugs
   /// that prevent this from occuring.
