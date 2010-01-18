@@ -1301,6 +1301,8 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
           &AI);
   Assert1(PTy->getElementType()->isSized(), "Cannot allocate unsized type",
           &AI);
+  Assert1(AI.getArraySize()->getType()->isInteger(32),
+          "Alloca array size must be i32", &AI);
   visitInstruction(AI);
 }
 
