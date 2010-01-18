@@ -26,9 +26,10 @@ CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D) {
   return C;  
 }
 
-CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S) {
+CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S,
+                                ASTContext &Context) {
   assert(clang_isReference(K));
-  CXCursor C = { K, { D, S, 0 } };
+  CXCursor C = { K, { D, S, &Context } };
   return C;  
 }
 
@@ -140,8 +141,52 @@ Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
   return (Stmt *)Cursor.data[1];
 }
 
-Decl *cxcursor::getCursorReferringDecl(CXCursor Cursor) {
-  return (Decl *)Cursor.data[2];
+ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
+  switch (Cursor.kind) {
+  case CXCursor_TypedefDecl:
+  case CXCursor_StructDecl:
+  case CXCursor_UnionDecl:
+  case CXCursor_ClassDecl:
+  case CXCursor_EnumDecl:
+  case CXCursor_FieldDecl:
+  case CXCursor_EnumConstantDecl:
+  case CXCursor_FunctionDecl:
+  case CXCursor_VarDecl:
+  case CXCursor_ParmDecl:
+  case CXCursor_ObjCInterfaceDecl:
+  case CXCursor_ObjCCategoryDecl:
+  case CXCursor_ObjCProtocolDecl:
+  case CXCursor_ObjCPropertyDecl:
+  case CXCursor_ObjCIvarDecl:
+  case CXCursor_ObjCInstanceMethodDecl:
+  case CXCursor_ObjCClassMethodDecl:
+  case CXCursor_FunctionDefn:
+  case CXCursor_ObjCClassDefn:
+  case CXCursor_ObjCCategoryDefn:
+  case CXCursor_ObjCInstanceMethodDefn:
+  case CXCursor_ObjCClassMethodDefn:
+    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
+
+  case CXCursor_ObjCSuperClassRef:
+  case CXCursor_ObjCProtocolRef:
+  case CXCursor_ObjCClassRef:
+    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
+    
+  case CXCursor_ObjCSelectorRef:
+  case CXCursor_ObjCIvarRef:
+  case CXCursor_VarRef:
+  case CXCursor_FunctionRef:
+  case CXCursor_EnumConstantRef:
+  case CXCursor_MemberRef:
+    return *static_cast<ASTContext *>(Cursor.data[2]);
+  
+  case CXCursor_InvalidFile:
+  case CXCursor_NoDeclFound:
+  case CXCursor_NotImplemented:
+    llvm_unreachable("No context in an invalid cursor");
+  }
+  
+  llvm_unreachable("No context available");
 }
 
 bool cxcursor::operator==(CXCursor X, CXCursor Y) {

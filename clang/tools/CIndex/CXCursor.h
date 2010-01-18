@@ -20,6 +20,7 @@
 
 namespace clang {
 
+class ASTContext;
 class Decl;
 class Expr;
 class NamedDecl;
@@ -30,7 +31,8 @@ class Stmt;
 namespace cxcursor {
   
 CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D);  
-CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D, clang::Stmt *S);
+CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D, clang::Stmt *S,
+                      ASTContext &Context);
 CXCursor MakeCXCursor(clang::Decl *D);
 
 /// \brief Create an Objective-C superclass reference at the given location.
@@ -61,7 +63,7 @@ std::pair<ObjCInterfaceDecl *, SourceLocation>
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);
-Decl *getCursorReferringDecl(CXCursor Cursor);
+ASTContext &getCursorContext(CXCursor Cursor);
   
 bool operator==(CXCursor X, CXCursor Y);
   

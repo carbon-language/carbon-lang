@@ -350,58 +350,6 @@ void CDeclVisitor::VisitVarDecl(VarDecl *ND) {
   Call(CXCursor_VarDecl, ND);
 }
 
-static SourceLocation getLocationFromCursor(CXCursor C,
-                                            SourceManager &SourceMgr,
-                                            NamedDecl *ND) {
-  if (clang_isReference(C.kind)) {
-    
-    if (Decl *D = getCursorReferringDecl(C))
-      return D->getLocation();
-    
-    switch (C.kind) {
-    case CXCursor_ObjCClassRef:
-      return getCursorObjCClassRef(C).second;
-    case CXCursor_ObjCSuperClassRef:
-      return getCursorObjCSuperClassRef(C).second;
-    case CXCursor_ObjCProtocolRef:
-      return getCursorObjCProtocolRef(C).second;
-    case CXCursor_ObjCSelectorRef: {
-      ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
-      assert(OME && "getLocationFromCursor(): Missing message expr");
-      return OME->getLeftLoc(); /* FIXME: should be a range */
-    }
-    case CXCursor_VarRef:
-    case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef: {
-      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(getCursorStmt(C));
-      assert(DRE && "getLocationFromCursor(): Missing decl ref expr");
-      return DRE->getLocation();
-    }
-    default:
-      return SourceLocation();
-    }
-  } else { // We have a declaration or a definition.
-    SourceLocation SLoc;
-    switch (ND->getKind()) {
-    case Decl::ObjCInterface: {
-      SLoc = dyn_cast<ObjCInterfaceDecl>(ND)->getClassLoc();
-      break;
-    }
-    case Decl::ObjCProtocol: {
-      SLoc = ND->getLocation(); /* FIXME: need to get the name location. */
-      break;
-    }
-    default: {
-      SLoc = ND->getLocation();
-      break;
-    }
-    }
-    if (SLoc.isInvalid())
-      return SourceLocation();
-    return SourceMgr.getSpellingLoc(SLoc); // handles macro instantiations.
-  }
-}
-
 CXString CIndexer::createCXString(const char *String, bool DupString){
   CXString Str;
   if (DupString) {
@@ -791,12 +739,12 @@ CXString clang_getCursorSpelling(CXCursor C) {
     }
     case CXCursor_ObjCProtocolRef: {
       ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
-      assert(OID && "getLocationFromCursor(): Missing protocol decl");
+      assert(OID && "getCursorSpelling(): Missing protocol decl");
       return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCSelectorRef: {
       ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
-      assert(OME && "getLocationFromCursor(): Missing message expr");
+      assert(OME && "getCursorSpelling(): Missing message expr");
       return CIndexer::createCXString(OME->getSelector().getAsString().c_str(),
                                       true);
     }
@@ -804,7 +752,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
     case CXCursor_FunctionRef:
     case CXCursor_EnumConstantRef: {
       DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(getCursorStmt(C));
-      assert(DRE && "getLocationFromCursor(): Missing decl ref expr");
+      assert(DRE && "getCursorSpelling(): Missing decl ref expr");
       return CIndexer::createCXString(DRE->getDecl()->getIdentifier()
                                       ->getNameStart());
     }
@@ -888,9 +836,11 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   if (Dcl) {
     if (Stm) {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Stm))
-        return MakeCXCursor(TranslateDeclRefExpr(DRE), Dcl, Stm);
+        return MakeCXCursor(TranslateDeclRefExpr(DRE), Dcl, Stm,
+                            CXXUnit->getASTContext());
       else if (ObjCMessageExpr *MExp = dyn_cast<ObjCMessageExpr>(Stm))
-        return MakeCXCursor(CXCursor_ObjCSelectorRef, Dcl, MExp);
+        return MakeCXCursor(CXCursor_ObjCSelectorRef, Dcl, MExp,
+                            CXXUnit->getASTContext());
       // Fall through...treat as a decl, not a ref.
     }
     if (ALoc.isNamedRef()) {
@@ -952,8 +902,51 @@ CXDecl clang_getCursorDecl(CXCursor C) {
 
 CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (clang_isReference(C.kind)) {
-    // FIXME: Return the location of the reference, not of the underlying
-    // declaration (which may not even exist!).
+    switch (C.kind) {
+    case CXCursor_ObjCSuperClassRef: {       
+      std::pair<ObjCInterfaceDecl *, SourceLocation> P
+        = getCursorObjCSuperClassRef(C);
+      SourceManager &SM = P.first->getASTContext().getSourceManager();
+      return translateSourceLocation(SM, P.second);
+    }
+
+    case CXCursor_ObjCProtocolRef: {       
+      std::pair<ObjCProtocolDecl *, SourceLocation> P
+        = getCursorObjCProtocolRef(C);
+      SourceManager &SM = P.first->getASTContext().getSourceManager();
+      return translateSourceLocation(SM, P.second);
+    }
+
+    case CXCursor_ObjCClassRef: {       
+      std::pair<ObjCInterfaceDecl *, SourceLocation> P
+        = getCursorObjCClassRef(C);
+      SourceManager &SM = P.first->getASTContext().getSourceManager();
+      return translateSourceLocation(SM, P.second);
+    }
+      
+    case CXCursor_ObjCSelectorRef:
+    case CXCursor_ObjCIvarRef:
+    case CXCursor_VarRef:
+    case CXCursor_FunctionRef:
+    case CXCursor_EnumConstantRef:
+    case CXCursor_MemberRef: {
+      Expr *E = getCursorExpr(C);
+      SourceManager &SM = getCursorContext(C).getSourceManager();
+      if (ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E))
+        return translateSourceLocation(SM, /*FIXME:*/Msg->getLeftLoc());
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+        return translateSourceLocation(SM, DRE->getLocation());
+      if (MemberExpr *Member = dyn_cast<MemberExpr>(E))
+        return translateSourceLocation(SM, Member->getMemberLoc());
+      if (ObjCIvarRefExpr *Ivar = dyn_cast<ObjCIvarRefExpr>(E))
+        return translateSourceLocation(SM, Ivar->getLocation());
+      return translateSourceLocation(SM, E->getLocStart());
+    }
+        
+    default:
+      // FIXME: Need a way to enumerate all non-reference cases.
+      llvm_unreachable("Missed a reference kind");
+    }
   }
   
   if (!getCursorDecl(C)) {
@@ -961,10 +954,12 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return empty;
   }
 
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  SourceManager &SM = ND->getASTContext().getSourceManager();
-  
-  return translateSourceLocation(SM, getLocationFromCursor(C, SM, ND));
+  Decl *D = getCursorDecl(C);
+  SourceManager &SM = D->getASTContext().getSourceManager();
+  SourceLocation Loc = D->getLocation();
+  if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
+    Loc = Class->getClassLoc();
+  return translateSourceLocation(SM, Loc);
 }
   
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
