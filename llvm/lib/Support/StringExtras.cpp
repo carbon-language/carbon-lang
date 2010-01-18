@@ -39,13 +39,11 @@ std::pair<StringRef, StringRef> llvm::getToken(StringRef Source,
                                                StringRef Delimiters) {
   // Figure out where the token starts.
   StringRef::size_type Start = Source.find_first_not_of(Delimiters);
-  if (Start == StringRef::npos) Start = Source.size();
 
   // Find the next occurrence of the delimiter.
   StringRef::size_type End = Source.find_first_of(Delimiters, Start);
-  if (End == StringRef::npos) End = Source.size();
 
-  return std::make_pair(Source.substr(Start, End), Source.substr(End));
+  return std::make_pair(Source.slice(Start, End), Source.substr(End));
 }
 
 /// SplitString - Split up the specified string according to the specified
