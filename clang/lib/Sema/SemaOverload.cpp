@@ -1100,7 +1100,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
                                    bool &IncompatibleObjC) {
   if (!getLangOptions().ObjC1)
     return false;
-
+ 
   // First, we handle all conversions on ObjC object pointer types.
   const ObjCObjectPointerType* ToObjCPtr = ToType->getAs<ObjCObjectPointerType>();
   const ObjCObjectPointerType *FromObjCPtr =
@@ -1164,6 +1164,16 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     ConvertedType = ToType;
     return true;
   }
+  // Allow conversion of pointee being objective-c pointer to another one;
+  // as in I* to id.
+  if (FromPointeeType->getAs<ObjCObjectPointerType>() &&
+      ToPointeeType->getAs<ObjCObjectPointerType>() &&
+      isObjCPointerConversion(FromPointeeType, ToPointeeType, ConvertedType,
+                              IncompatibleObjC)) {
+    ConvertedType = ToType;
+    return true;
+  }
+  
   // If we have pointers to functions or blocks, check whether the only
   // differences in the argument and result types are in Objective-C
   // pointer conversions. If so, we permit the conversion (but
