@@ -13,7 +13,7 @@ OnlyArchs := x86_64
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
 ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.S=%.o)
-Target := Optimized
+Implementation := Optimized
 
 # FIXME: use automatic dependencies?
 Dependencies := $(wildcard lib/*.h $(Dir)/*.h)

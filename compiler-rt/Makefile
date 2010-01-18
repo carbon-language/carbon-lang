@@ -177,8 +177,8 @@ $(call Set,ActiveFlags,$(call GetArgs,$(ActiveConfig),$(ActiveArch)))
 $(call Set,ActiveObjects,$(ObjNames:%=$(ActiveObjPath)/%))
 
 # Add to the input list for the appropriate library and update the dependency.
-$(call Append,$(Target).Inputs.$(ActiveConfig).$(ActiveArch),$(ActiveObjects))
-$(ProjObjRoot)/$(ActiveConfig)/$(ActiveArch)/libcompiler_rt.$(Target).a: $(ActiveObjects)
+$(call Append,$(Implementation).Inputs.$(ActiveConfig).$(ActiveArch),$(ActiveObjects))
+$(ProjObjRoot)/$(ActiveConfig)/$(ActiveArch)/libcompiler_rt.$(Implementation).a: $(ActiveObjects)
 
 $(ActiveObjPath)/%.o: $(ActiveSrcPath)/%.s $(Dependencies) $(ActiveObjPath)/.dir
 	$(Summary) "  ASSEMBLE:  $(ActiveConfig)/$(ActiveArch): $$<"

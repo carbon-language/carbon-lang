@@ -19,20 +19,20 @@ SelectFunctionDir = $(strip \
 # defined with a certain specificity.
 SelectFunctionDirs_Opt_ConfigAndArch = $(strip \
   $(foreach key,$(AvailableIn.$(3)),\
-    $(if $(and $(call streq,Optimized,$($(key).Target)),\
+    $(if $(and $(call streq,Optimized,$($(key).Implementation)),\
                $(call contains,$($(key).OnlyConfigs),$(1)),\
                $(call contains,$($(key).OnlyArchs),$(2))),$(key),)))
 SelectFunctionDirs_Opt_Config = $(strip \
   $(foreach key,$(AvailableIn.$(3)),\
-    $(if $(and $(call streq,Optimized,$($(key).Target)),\
+    $(if $(and $(call streq,Optimized,$($(key).Implementation)),\
                $(call contains,$($(key).OnlyConfigs),$(1))),$(key),)))
 SelectFunctionDirs_Opt_Arch = $(strip \
   $(foreach key,$(AvailableIn.$(3)),\
-    $(if $(and $(call streq,Optimized,$($(key).Target)),\
+    $(if $(and $(call streq,Optimized,$($(key).Implementation)),\
                $(call contains,$($(key).OnlyArchs),$(2))),$(key),)))
 SelectFunctionDirs_Gen = $(strip \
   $(foreach key,$(AvailableIn.$(3)),\
-    $(if $(call streq,Generic,$($(key).Target)),$(key))))
+    $(if $(call streq,Generic,$($(key).Implementation)),$(key))))
 
 # Helper function to select the right set of dirs in generic priority order.
 SelectFunctions_Gen = \

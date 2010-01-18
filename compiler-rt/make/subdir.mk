@@ -3,8 +3,8 @@
 # Subdirectory makefiles must define:
 #   SubDirs - The subdirectories to traverse.
 #   ObjNames - The objects available in that directory.
-#   Target - The library configuration the objects should go in (Generic or
-#            Optimized)
+#   Implementation - The library configuration the objects should go in (Generic or
+#                    Optimized)
 #   Dependencies - Any dependences for the object files.
 #
 # Subdirectory makefiles may define:
@@ -44,7 +44,7 @@ $(foreach config,$(ConfigsToTraverse), \
 
 # The list of variables which are intended to be overridden in a subdirectory
 # makefile.
-RequiredSubdirVariables := SubDirs ObjNames Target Dependencies
+RequiredSubdirVariables := SubDirs ObjNames Implementation Dependencies
 OptionalSubdirVariables := OnlyArchs OnlyConfigs
 
 # Template: subdir_traverse_template subdir

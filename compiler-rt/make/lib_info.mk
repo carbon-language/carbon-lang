@@ -42,4 +42,3 @@ $(foreach arch,$(AvailableArchs),\
 $(foreach key,$(SubDirKeys),\
   $(foreach fn,$(basename $($(key).ObjNames)),\
     $(call Append,AvailableIn.$(fn),$(key))))
-
