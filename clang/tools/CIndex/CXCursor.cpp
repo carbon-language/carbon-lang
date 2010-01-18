@@ -45,6 +45,9 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::ObjCClass:
       // FIXME
       return CXCursor_NotImplemented;
+    case Decl::ObjCForwardProtocol:
+      // FIXME
+      return CXCursor_NotImplemented;      
     case Decl::ObjCImplementation: return CXCursor_ObjCClassDefn;
     case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
     case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
