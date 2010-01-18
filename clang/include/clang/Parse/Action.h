@@ -16,9 +16,9 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
-#include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Ownership.h"
 #include "llvm/Support/PrettyStackTrace.h"

@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_PARSE_PARSER_H
 #define LLVM_CLANG_PARSE_PARSER_H
 
+#include "clang/Basic/Specifiers.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Parse/AccessSpecifier.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/OwningPtr.h"

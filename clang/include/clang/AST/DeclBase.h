@@ -16,8 +16,7 @@
 
 #include "clang/AST/Attr.h"
 #include "clang/AST/Type.h"
-// FIXME: Layering violation
-#include "clang/Parse/AccessSpecifier.h"
+#include "clang/Basic/Specifiers.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/PointerUnion.h"
 

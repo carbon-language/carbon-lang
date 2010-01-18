@@ -67,6 +67,15 @@ namespace clang {
     /*DeclSpec::TSW*/ unsigned Width : 2;
     bool ModeAttr : 1;
   };  
+
+  /// AccessSpecifier - A C++ access specifier (none, public, private,
+  /// protected).
+  enum AccessSpecifier {
+    AS_none,
+    AS_public,
+    AS_protected,
+    AS_private
+  };
 }
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H
