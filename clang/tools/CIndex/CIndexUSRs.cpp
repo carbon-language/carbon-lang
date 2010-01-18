@@ -78,7 +78,6 @@ public:
   
   void VisitBlockDecl(BlockDecl *D);
   void VisitDeclContext(DeclContext *D);
-  void VisitEnumDecl(EnumDecl *D);
   void VisitFieldDecl(FieldDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
@@ -86,8 +85,7 @@ public:
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
   void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-  void VisitRecordDecl(RecordDecl *D);
-  void VisitTagDeclCommon(TagDecl *D);
+  void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
 };
 } // end anonymous namespace
@@ -101,12 +99,6 @@ void USRGenerator::VisitBlockDecl(BlockDecl *D) {
 void USRGenerator::VisitDeclContext(DeclContext *DC) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC))
     Visit(D);
-}
-
-void USRGenerator::VisitEnumDecl(EnumDecl *D) {
-  VisitDeclContext(D->getDeclContext());
-  Out << "@E^";
-  VisitTagDeclCommon(D);
 }
 
 void USRGenerator::VisitFieldDecl(FieldDecl *D) {
@@ -135,12 +127,6 @@ void USRGenerator::VisitNamedDecl(NamedDecl *D) {
 void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitDeclContext(D->getDeclContext());
   Out << "@N^" << D->getNameAsString();
-}
-
-void USRGenerator::VisitRecordDecl(RecordDecl *D) {
-  VisitDeclContext(D->getDeclContext());
-  Out << "@S^";
-  VisitTagDeclCommon(D);
 }
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
@@ -180,7 +166,15 @@ void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Out << "(py)" << D->getName();
 }
 
-void USRGenerator::VisitTagDeclCommon(TagDecl *D) {
+void USRGenerator::VisitTagDecl(TagDecl *D) {
+  VisitDeclContext(D->getDeclContext());
+  switch (D->getTagKind()) {
+    case TagDecl::TK_struct: Out << "@S^"; break;
+    case TagDecl::TK_class:  Out << "@C^"; break;
+    case TagDecl::TK_union:  Out << "@U^"; break;
+    case TagDecl::TK_enum:   Out << "@E^"; break;
+  }
+  
   // FIXME: Better support for anonymous structures and enums.
   const std::string &s = D->getNameAsString();
   if (s.empty()) {
