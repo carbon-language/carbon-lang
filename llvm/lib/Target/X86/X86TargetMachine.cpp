@@ -250,6 +250,9 @@ void X86TargetMachine::setCodeModelForJIT() {
     setCodeModel(CodeModel::Small);
 }
 
+/// FIXME: This call-back isn't good! We should be using the correct encoding
+/// regardless of the system. However, there are some systems which have bugs
+/// that prevent this from occuring.
 DwarfLSDAEncoding::Encoding X86TargetMachine::getLSDAEncoding() const {
   if (Subtarget.isTargetDarwin() && Subtarget.getDarwinVers() != 10)
     return DwarfLSDAEncoding::FourByte;
