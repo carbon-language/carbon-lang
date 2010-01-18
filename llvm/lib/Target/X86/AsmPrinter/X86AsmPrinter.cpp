@@ -465,7 +465,7 @@ void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   
-  O << GetMBBSymbol(MBB->getNumber());
+  O << *GetMBBSymbol(MBB->getNumber());
   
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
