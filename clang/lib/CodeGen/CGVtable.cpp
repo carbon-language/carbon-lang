@@ -1314,6 +1314,17 @@ class VTTBuilder {
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      
+      // Itanium C++ ABI 2.6.2:
+      //   Secondary virtual pointers are present for all bases with either
+      //   virtual bases or virtual function declarations overridden along a 
+      //   virtual path.
+      //
+      // If the base class is not dynamic, we don't want to add it, nor any
+      // of its base classes.
+      if (!Base->isDynamicClass())
+        continue;
+
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
       const bool PrimaryBaseWasVirtual = Layout.getPrimaryBaseWasVirtual();
@@ -1330,10 +1341,9 @@ class VTTBuilder {
       const CXXRecordDecl *subVtblClass = VtblClass;
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
-        // FIXME: Slightly too many of these for __ZTT8test8_B2
         llvm::Constant *init;
-        if (BaseMorallyVirtual)
-          init = BuildVtablePtr(vtbl, VtblClass, RD, Offset);
+        if (BaseMorallyVirtual || VtblClass == Class)
+          init = BuildVtablePtr(vtbl, VtblClass, Base, BaseOffset);
         else {
           init = getCtorVtable(BaseSubobject(Base, BaseOffset));
           
@@ -1351,7 +1361,10 @@ class VTTBuilder {
   /// BuiltVTT - Add the VTT to Inits.  Offset is the offset in bits to the
   /// currnet object we're working on.
   void BuildVTT(const CXXRecordDecl *RD, uint64_t Offset, bool MorallyVirtual) {
-    if (RD->getNumVBases() == 0 && !MorallyVirtual)
+    // Itanium C++ ABI 2.6.2:
+    //   An array of virtual table addresses, called the VTT, is declared for 
+    //   each class type that has indirect or direct virtual base classes.
+    if (RD->getNumVBases() == 0)
       return;
 
     llvm::Constant *Vtable;

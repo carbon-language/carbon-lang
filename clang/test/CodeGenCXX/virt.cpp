@@ -375,13 +375,13 @@ class test8_D : test8_B1, test8_B2, test8_B3 {
 // CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 32
 // CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 32
 // CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 32
-// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_9test8_B2a) + 64
-// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_9test8_B2a) + 96
-// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_8test8_B2) + 72
-// CHECK-LP64-NEXT  .quad   (__ZTC7test8_D8_8test8_B2) + 104
-// CHECK-LP64-NEXT  .quad   (__ZTV7test8_D) + 72
-// CHECK-LP64: .quad   (__ZTV7test8_D) + 160
-// CHECK-LP64: .quad   (__ZTV7test8_D) + 192
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 64
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 96
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 72
+// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 104
+// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 72
+// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 160
+// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 192
 
 
 struct test9_B3 { virtual void funcB3(); int i; };
