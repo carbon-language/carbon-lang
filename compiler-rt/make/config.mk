@@ -11,7 +11,8 @@ ProjObjRoot := $(ProjSrcRoot)
 Configs := Debug Release Profile
 
 # The full list of architectures we support.
-Archs := i386 ppc x86_64 armv6 armv7
+Archs := i386 ppc x86_64
+# armv6 armv7
 
 # If TargetArch is defined, only build for that architecture (and don't use
 # -arch).
@@ -66,7 +67,7 @@ LIPO := lipo
 CP := cp
 
 VERBOSE := 0
-DEBUGMAKE := 0
+DEBUGMAKE :=
 
 ###
 # Automatic and derived variables.

@@ -7,7 +7,6 @@
 #
 #===------------------------------------------------------------------------===#
 
-Dir := lib/ppc
 SubDirs := 
 OnlyArchs := ppc
 
@@ -18,5 +17,3 @@ Target := Optimized
 
 # FIXME: use automatic dependencies?
 Dependencies := $(wildcard lib/*.h $(Dir)/*.h)
-
-include make/subdir.mk

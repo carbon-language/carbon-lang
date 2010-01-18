@@ -39,7 +39,8 @@ help:
 
 help-hidden: help
 	@echo "Debugging variables:"
-	@echo "  DEBUGMAKE=1: enable some Makefile logging [default=0]"
+	@echo "  DEBUGMAKE=1: enable some Makefile logging [default=]"
+	@echo "           =2: enable more Makefile logging"
 	@echo
 	@echo "Debugging targets:"
 	@echo "  make-print-FOO: print information on the variable 'FOO'"
@@ -201,7 +202,8 @@ endef
 ###
 # Include child makefile fragments
 
-$(foreach subdir,$(SubDirs),$(eval include $(subdir)/Makefile.mk))
+Dir := .
+include make/subdir.mk
 
 ###
 # Determine the actual inputs for an optimized library.
@@ -223,3 +225,8 @@ endef
 $(foreach config,$(Configs), \
   $(foreach arch,$(Archs), \
     $(eval $(call Final_CNA_template,$(config),$(arch)))))
+
+ifneq ($(DEBUGMAKE),)
+  $(info MAKE: Done processing Makefile)
+  $(info  )
+endif
