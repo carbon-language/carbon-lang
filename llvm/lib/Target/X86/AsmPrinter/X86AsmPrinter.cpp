@@ -84,7 +84,7 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     break;
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << '\n';
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
     break;
   case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -92,11 +92,11 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t" << *CurrentFnSym << '\n';
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
       O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      O << "\t.globl\t" << *CurrentFnSym;
-      O << "\n\t.linkonce discard\n";
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
+      O << "\t.linkonce discard\n";
     } else {
       O << "\t.weak\t" << *CurrentFnSym << '\n';
     }
@@ -215,7 +215,7 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
     
-    const MCSymbol *GVSym;
+    MCSymbol *GVSym;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
       GVSym = GetSymbolWithGlobalValueBase(GV, "$stub");
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
@@ -351,7 +351,7 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
 
 
 void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                    const char *Modifier) {
+                                 const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("unknown operand type!");
@@ -686,7 +686,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = MAI->getZeroFillDirective()) {
-        O << "\t.globl " << *GVSym << '\n';
+        OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
         O << Directive << "__DATA, __common, " << *GVSym;
         O << ", " << Size << ", " << Align << '\n';
         return;
@@ -703,7 +703,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           if (Subtarget->isTargetDarwin())
             O << ',' << Align;
         } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
-          O << "\t.globl " << *GVSym << '\n';
+          OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
           O << MAI->getWeakDefDirective() << *GVSym << '\n';
           EmitAlignment(Align, GVar);
           O << *GVSym << ":";
@@ -747,11 +747,11 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl " << *GVSym << '\n';
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
       O << MAI->getWeakDefDirective() << *GVSym << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      O << "\t.globl\t" << *GVSym;
-      O << "\n\t.linkonce same_size\n";
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      O << "\t.linkonce same_size\n";
     } else
       O << "\t.weak\t" << *GVSym << '\n';
     break;
@@ -761,8 +761,8 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << "\t.globl " << *GVSym << '\n';
-    // FALL THROUGH
+    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
      break;
@@ -876,7 +876,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
       for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (I->hasDLLExportLinkage()) {
-          const MCSymbol *Sym = GetGlobalValueSymbol(I);
+          MCSymbol *Sym = GetGlobalValueSymbol(I);
           COFFMMI.DecorateCygMingName(Sym, OutContext, I, *TM.getTargetData());
           DLLExportedFns.push_back(Sym);
         }

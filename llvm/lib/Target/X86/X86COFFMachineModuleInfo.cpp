@@ -115,7 +115,7 @@ void X86COFFMachineModuleInfo::DecorateCygMingName(SmallVectorImpl<char> &Name,
 
 /// DecorateCygMingName - Query FunctionInfoMap and use this information for
 /// various name decorations for Cygwin and MingW.
-void X86COFFMachineModuleInfo::DecorateCygMingName(const MCSymbol *&Name,
+void X86COFFMachineModuleInfo::DecorateCygMingName(MCSymbol *&Name,
                                                    MCContext &Ctx,
                                                    const GlobalValue *GV,
                                                    const TargetData &TD) {

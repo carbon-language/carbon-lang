@@ -136,7 +136,7 @@ namespace llvm {
     /// The symbol for the current function. This is recalculated at the
     /// beginning of each call to runOnMachineFunction().
     ///
-    const MCSymbol *CurrentFnSym;
+    MCSymbol *CurrentFnSym;
     
     /// getCurrentSection() - Return the current section we are emitting to.
     const MCSection *getCurrentSection() const;
