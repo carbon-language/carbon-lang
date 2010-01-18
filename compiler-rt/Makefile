@@ -24,6 +24,27 @@ endif
 ###
 # Top level targets
 
+# FIXME: Document the available subtargets.
+help:
+	@echo "usage: make [{VARIABLE=VALUE}*] target"
+	@echo
+	@echo "User variables:"
+	@echo "  VERBOSE=1: Use to show all commands [default=0]"
+	@echo
+	@echo "Available targets:"
+	@echo "  clean: clean all configurations"
+	@echo "  test:  run unit tests"
+	@echo "  all:   build all configurations"
+	@echo
+
+help-hidden: help
+	@echo "Debugging variables:"
+	@echo "  DEBUGMAKE=1: enable some Makefile logging [default=0]"
+	@echo
+	@echo "Debugging targets:"
+	@echo "  make-print-FOO: print information on the variable 'FOO'"
+	@echo
+
 # Provide default clean target which is extended by other templates.
 .PHONY: clean
 clean::
