@@ -30,9 +30,16 @@
 #define SYMBOL_NAME(name) name
 #endif
 
+#ifdef VISIBILITY_HIDDEN
+#define DEFINE_COMPILERRT_FUNCTION(name) \
+  .globl SYMBOL_NAME(name) SEPARATOR     \
+  .private_extern SYMBOL_NAME(name) SEPARATOR    \
+  SYMBOL_NAME(name):
+#else
 #define DEFINE_COMPILERRT_FUNCTION(name) \
   .globl SYMBOL_NAME(name) SEPARATOR     \
   SYMBOL_NAME(name):
+#endif
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name) \
   .globl SYMBOL_NAME(name) SEPARATOR             \

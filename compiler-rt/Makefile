@@ -205,19 +205,20 @@ $(call Set,Tmp.Dependencies,$($(Tmp.SubDirKey).Dependencies))
 $(call Set,Tmp.CC,$(strip \
   $(call GetCNAVar,CC,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
 $(call Set,Tmp.CFLAGS,$(strip \
+  $(if $(call IsDefined,$(Tmp.Key).UniversalArchs),-arch $(Tmp.Arch),)\
+  $(if $(call streq,$($(Tmp.Key).VISIBILITY_HIDDEN),1),\
+       -fvisibility=hidden -DVISIBILITY_HIDDEN,)\
   $(call GetCNAVar,CFLAGS,$(Tmp.Key),$(Tmp.Config),$(Tmp.Arch))))
-$(call Set,Tmp.ArchFlag,$(strip \
-  $(if $(call IsDefined,$(Tmp.Key).UniversalArchs),-arch $(Tmp.Arch),)))
 
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.s $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  ASSEMBLE:  $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.ArchFlag) $(Tmp.CFLAGS)  -c -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS)  -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.S $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  ASSEMBLE:  $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.ArchFlag) $(Tmp.CFLAGS) -c -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.c $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
-	$(Verb) $(Tmp.CC) $(Tmp.ArchFlag) $(Tmp.CFLAGS) -c -o $$@ $$<
+	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 
 endef

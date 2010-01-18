@@ -50,3 +50,4 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 switch save_restore_d8_d15
 
+VISIBILITY_HIDDEN := 0

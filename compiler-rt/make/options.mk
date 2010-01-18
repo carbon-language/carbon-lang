@@ -15,6 +15,14 @@ FUNCTIONS :=
 # Whether optimized function implementations should be used.
 OPTIMIZED := 1
 
+# Whether function definitions should use hidden visibility. This adds the
+# -fvisibility=hidden compiler option and uses .private_extern annotations in
+# assembly files.
+#
+# FIXME: Make this more portable. When that is done, it should probably be the
+# default.
+VISIBILITY_HIDDEN := 0
+
 # Miscellaneous tools.
 
 AR := ar

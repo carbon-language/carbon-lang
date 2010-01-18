@@ -46,4 +46,5 @@ $(foreach key,$(SubDirKeys),\
 # The names of all the available options.
 AvailableOptions := AR ARFLAGS \
                     CC CFLAGS FUNCTIONS OPTIMIZED \
-                    RANLIB RANLIBFLAGS
+                    RANLIB RANLIBFLAGS \
+                    VISIBILITY_HIDDEN

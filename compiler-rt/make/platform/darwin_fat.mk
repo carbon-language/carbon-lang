@@ -51,3 +51,5 @@ FUNCTIONS.armv6 := $(CommonFunctions) $(ArchFunctions.armv6)
 FUNCTIONS.armv7 := $(CommonFunctions) $(ArchFunctions.armv7)
 
 OPTIMIZED.Debug := 0
+
+VISIBILITY_HIDDEN := 1
