@@ -968,7 +968,7 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
     else if (HalfWordOffset)
       O << MAI->getData16bitsDirective();
     if (ByteOffset || HalfWordOffset) {
-      O << '(' << GetMBBSymbol(MBB->getNumber());
+      O << '(' << *GetMBBSymbol(MBB->getNumber());
       O << "-" << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
         << '_' << JTI << '_' << MO2.getImm() << ")/2";
     } else {
