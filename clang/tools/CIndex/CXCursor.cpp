@@ -172,7 +172,6 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
     return static_cast<Decl *>(Cursor.data[0])->getASTContext();
     
   case CXCursor_ObjCSelectorRef:
-  case CXCursor_ObjCIvarRef:
   case CXCursor_VarRef:
   case CXCursor_FunctionRef:
   case CXCursor_EnumConstantRef:

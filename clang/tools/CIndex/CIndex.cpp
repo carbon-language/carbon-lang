@@ -869,7 +869,6 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
   case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
   case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
-  case CXCursor_ObjCIvarRef: return "ObjCIvarRef";
   case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
   case CXCursor_ObjCImplementationDecl: return "ObjCImplementationDecl";
@@ -1005,7 +1004,6 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     }
       
     case CXCursor_ObjCSelectorRef:
-    case CXCursor_ObjCIvarRef:
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
     case CXCursor_EnumConstantRef:
@@ -1064,7 +1062,6 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
       }
         
       case CXCursor_ObjCSelectorRef:
-      case CXCursor_ObjCIvarRef:
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
       case CXCursor_EnumConstantRef:
@@ -1105,7 +1102,6 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return MakeCXCursor(getCursorObjCClassRef(C).first);
       
     case CXCursor_ObjCSelectorRef:
-    case CXCursor_ObjCIvarRef:
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
     case CXCursor_EnumConstantRef:
