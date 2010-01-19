@@ -13,7 +13,7 @@ void function(Foo * arg)
 }
 
 // CHECK-scan: {start_line=1 start_col=1 end_line=7 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} Invalid Cursor => NotImplemented
+// CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} UnexposedDecl=:8:1
 // CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:8:8
 // CHECK-scan: {start_line=8 start_col=11 end_line=9 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK-scan: {start_line=10 start_col=1 end_line=10 end_col=4} FunctionDecl=function:10:6 (Definition)

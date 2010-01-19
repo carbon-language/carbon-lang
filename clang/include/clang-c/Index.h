@@ -55,26 +55,58 @@ typedef void *CXStmt;    /* A specific statement within a function/method */
 enum CXCursorKind {
  /* Declarations */
  CXCursor_FirstDecl                     = 1,
+ /** \brief A typedef */
  CXCursor_TypedefDecl                   = 1,
+ /** \brief A C or C++ struct. */
  CXCursor_StructDecl                    = 2, 
+ /** \brief A C or C++ union. */
  CXCursor_UnionDecl                     = 3,
+ /** \brief A C++ class. */
  CXCursor_ClassDecl                     = 4,
+ /** \brief An enumeration. */
  CXCursor_EnumDecl                      = 5,
+ /** 
+  * \brief A field (in C) or non-static data member (in C++) in a
+  * struct, union, or C++ class.
+  */
  CXCursor_FieldDecl                     = 6,
+ /** \brief An enumerator constant. */
  CXCursor_EnumConstantDecl              = 7,
+ /** \brief A function. */
  CXCursor_FunctionDecl                  = 8,
+ /** \brief A variable. */
  CXCursor_VarDecl                       = 9,
+ /** \brief A function or method parameter. */
  CXCursor_ParmDecl                      = 10,
+ /** \brief An Objective-C @interface. */
  CXCursor_ObjCInterfaceDecl             = 11,
+ /** \brief An Objective-C @interface for a category. */
  CXCursor_ObjCCategoryDecl              = 12,
+ /** \brief An Objective-C @protocol declaration. */
  CXCursor_ObjCProtocolDecl              = 13,
+ /** \brief An Objective-C @property declaration. */
  CXCursor_ObjCPropertyDecl              = 14,
+ /** \brief An Objective-C instance variable. */
  CXCursor_ObjCIvarDecl                  = 15,
+ /** \brief An Objective-C instance method. */
  CXCursor_ObjCInstanceMethodDecl        = 16,
+ /** \brief An Objective-C class method. */
  CXCursor_ObjCClassMethodDecl           = 17,
+ /** \brief An Objective-C @implementation. */
  CXCursor_ObjCImplementationDecl        = 18,
+ /** \brief An Objective-C @implementation for a category. */
  CXCursor_ObjCCategoryImplDecl          = 19,
- CXCursor_LastDecl                      = 19,
+ /** 
+  * \brief A declaration whose specific kind is not exposed via this
+  * interface. 
+  *
+  * Unexposed declarations have the same operations as any other kind
+  * of declaration; one can extract their location information,
+  * spelling, find their definitions, etc. However, the specific kind
+  * of the declaration is not reported.
+  */
+ CXCursor_UnexposedDecl                 = 20,
+ CXCursor_LastDecl                      = 20,
  
  /* References */
  CXCursor_FirstRef                      = 40, /* Decl references */

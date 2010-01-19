@@ -208,7 +208,7 @@ static enum CXCursorKind TranslateDeclRefExpr(DeclRefExpr *DRE) {
   else if (isa<EnumConstantDecl>(D))
     return CXCursor_EnumConstantRef;
   else
-    return CXCursor_NotImplemented;
+    return CXCursor_UnexposedDecl;
 }
 
 // Translation Unit Visitor.
@@ -712,7 +712,10 @@ static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
 extern "C" {
 CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  Decl *D = static_cast<Decl *>(AnonDecl);
+  NamedDecl *ND = dyn_cast<NamedDecl>(D);
+  if (!ND)
+    return CIndexer::createCXString("");
 
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
     return CIndexer::createCXString(OMD->getSelector().getAsString().c_str(),
@@ -871,6 +874,7 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
   case CXCursor_ObjCImplementationDecl: return "ObjCImplementationDecl";
   case CXCursor_ObjCCategoryImplDecl: return "ObjCCategoryImplDecl";
+  case CXCursor_UnexposedDecl: return "UnexposedDecl";
   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
   case CXCursor_ObjCClassRef: return "ObjCClassRef";

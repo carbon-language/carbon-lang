@@ -44,10 +44,10 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
     case Decl::ObjCClass:
       // FIXME
-      return CXCursor_NotImplemented;
+      return CXCursor_UnexposedDecl;
     case Decl::ObjCForwardProtocol:
       // FIXME
-      return CXCursor_NotImplemented;      
+      return CXCursor_UnexposedDecl;      
     case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
     case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
     case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
@@ -68,6 +68,8 @@ static CXCursorKind GetCursorKind(Decl *D) {
           case TagDecl::TK_enum:   return CXCursor_EnumDecl;
         }
       }
+
+      return CXCursor_UnexposedDecl;
   }
   
   llvm_unreachable("Invalid Decl");
@@ -161,6 +163,7 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   case CXCursor_ObjCClassMethodDecl:
   case CXCursor_ObjCImplementationDecl:
   case CXCursor_ObjCCategoryImplDecl:
+  case CXCursor_UnexposedDecl:
     return static_cast<Decl *>(Cursor.data[0])->getASTContext();
 
   case CXCursor_ObjCSuperClassRef:
