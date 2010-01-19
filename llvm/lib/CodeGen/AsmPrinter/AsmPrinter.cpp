@@ -436,7 +436,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       // Emit inter-object padding for alignment.
       unsigned AlignMask = CPE.getAlignment() - 1;
       unsigned NewOffset = (Offset + AlignMask) & ~AlignMask;
-      EmitZeros(NewOffset - Offset);
+      OutStreamer.EmitFill(NewOffset - Offset);
 
       const Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
@@ -917,8 +917,8 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
   if (NumZeros == 0) return;
-  if (MAI->getZeroDirective()) {
-    O << MAI->getZeroDirective() << NumZeros << '\n';
+  if (MAI->getZeroDirective() || AddrSpace == 0) {
+    OutStreamer.EmitFill(NumZeros);
   } else {
     for (; NumZeros; --NumZeros)
       O << MAI->getData8bitsDirective(AddrSpace) << "0\n";
@@ -1417,13 +1417,11 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   const Type *type = CV->getType();
   unsigned Size = TD->getTypeAllocSize(type);
 
-  if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    EmitZeros(Size, AddrSpace);
-    return;
-  }
+  if (CV->isNullValue() || isa<UndefValue>(CV))
+    return EmitZeros(Size, AddrSpace);
   
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    EmitGlobalConstantArray(CVA , AddrSpace);
+    EmitGlobalConstantArray(CVA, AddrSpace);
     return;
   }
   

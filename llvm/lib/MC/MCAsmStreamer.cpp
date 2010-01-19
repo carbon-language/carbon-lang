@@ -203,6 +203,8 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
+  if (NumBytes == 0) return;
+  
   if (const char *ZeroDirective = MAI.getZeroDirective()) {
     OS << ZeroDirective << NumBytes;
     if (FillValue != 0)
