@@ -41,3 +41,13 @@ define i32 @test3(i32 %tmp1) {
   %ov110 = xor i32 %ov31, 153
   ret i32 %ov110
 }
+
+define i32 @test4(i32 %A, i32 %B) {
+	%1 = xor i32 %A, -1
+	%2 = ashr i32 %1, %B
+	%3 = xor i32 %2, -1
+	ret i32 %3
+; CHECK: @test4
+; CHECK: %1 = ashr i32 %A, %B
+; CHECK: ret i32 %1
+}

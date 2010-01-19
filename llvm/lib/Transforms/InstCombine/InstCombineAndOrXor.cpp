@@ -1751,6 +1751,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
             return BinaryOperator::CreateOr(NotX, NotY);
           return BinaryOperator::CreateAnd(NotX, NotY);
         }
+
+      } else if (Op0I->getOpcode() == Instruction::AShr) {
+        // ~(~X >>s Y) --> (X >>s Y)
+        if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0)))
+          return BinaryOperator::CreateAShr(Op0NotVal, Op0I->getOperand(1));
       }
     }
   }
