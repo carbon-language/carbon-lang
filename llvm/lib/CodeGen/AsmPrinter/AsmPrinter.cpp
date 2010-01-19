@@ -1512,14 +1512,14 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
     return;
 
   if (BeforePrintingInsn) {
-    if (CurDLT.getNode() != PrevDLT.getNode()) {
+    if (CurDLT.getNode() != PrevDLT) {
       unsigned L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
                                         CurDLT.getColumnNumber(),
                                         CurDLT.getScope().getNode());
       printLabel(L);
       O << '\n';
       DW->BeginScope(MI, L);
-      PrevDLT = CurDLT;
+      PrevDLT = CurDLT.getNode();
     }
   } else {
     // After printing instruction

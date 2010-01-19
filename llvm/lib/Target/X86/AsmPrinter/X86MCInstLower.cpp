@@ -16,6 +16,7 @@
 #include "X86AsmPrinter.h"
 #include "X86MCAsmInfo.h"
 #include "X86COFFMachineModuleInfo.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"

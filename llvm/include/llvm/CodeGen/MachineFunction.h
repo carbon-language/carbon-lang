@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+class DILocation;
 class Value;
 class Function;
 class MachineRegisterInfo;
