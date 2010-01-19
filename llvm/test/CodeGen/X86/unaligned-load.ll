@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=dynamic-no-pic | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=dynamic-no-pic --asm-verbose=0 | FileCheck %s
 
 @.str1 = internal constant [31 x i8] c"DHRYSTONE PROGRAM, SOME STRING\00", align 8
 @.str3 = internal constant [31 x i8] c"DHRYSTONE PROGRAM, 2'ND STRING\00", align 8
