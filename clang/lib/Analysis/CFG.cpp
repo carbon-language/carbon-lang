@@ -1579,10 +1579,7 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
   // up to the try.
   assert(Terminator->getTryBlock() && "try must contain a non-NULL body");
   Block = NULL;
-  CFGBlock *BodyBlock = addStmt(Terminator->getTryBlock());
-
-  Block = BodyBlock;
-  
+  Block = addStmt(Terminator->getTryBlock());
   return Block;
 }
 
@@ -1741,9 +1738,7 @@ CFG::BlkExprNumTy CFG::getBlkExprNum(const Stmt* S) {
 
   BlkExprMapTy* M = reinterpret_cast<BlkExprMapTy*>(BlkExprMap);
   BlkExprMapTy::iterator I = M->find(S);
-
-  if (I == M->end()) return CFG::BlkExprNumTy();
-  else return CFG::BlkExprNumTy(I->second);
+  return (I == M->end()) ? CFG::BlkExprNumTy() : CFG::BlkExprNumTy(I->second);
 }
 
 unsigned CFG::getNumBlkExprs() {
@@ -1772,7 +1767,6 @@ CFG::~CFG() {
 namespace {
 
 class StmtPrinterHelper : public PrinterHelper  {
-
   typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
   StmtMapTy StmtMap;
   signed CurrentBlock;
@@ -1804,10 +1798,11 @@ public:
       return false;
 
     if (CurrentBlock >= 0 && I->second.first == (unsigned) CurrentBlock
-                          && I->second.second == CurrentStmt)
+                          && I->second.second == CurrentStmt) {
       return false;
+    }
 
-      OS << "[B" << I->second.first << "." << I->second.second << "]";
+    OS << "[B" << I->second.first << "." << I->second.second << "]";
     return true;
   }
 };
@@ -1821,7 +1816,6 @@ class CFGBlockTerminatorPrint
   llvm::raw_ostream& OS;
   StmtPrinterHelper* Helper;
   PrintingPolicy Policy;
-
 public:
   CFGBlockTerminatorPrint(llvm::raw_ostream& os, StmtPrinterHelper* helper,
                           const PrintingPolicy &Policy)
@@ -1839,22 +1833,27 @@ public:
 
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
-    if (F->getInit()) OS << "...";
+    if (F->getInit())
+      OS << "...";
     OS << "; ";
-    if (Stmt* C = F->getCond()) C->printPretty(OS, Helper, Policy);
+    if (Stmt* C = F->getCond())
+      C->printPretty(OS, Helper, Policy);
     OS << "; ";
-    if (F->getInc()) OS << "...";
+    if (F->getInc())
+      OS << "...";
     OS << ")";
   }
 
   void VisitWhileStmt(WhileStmt* W) {
     OS << "while " ;
-    if (Stmt* C = W->getCond()) C->printPretty(OS, Helper, Policy);
+    if (Stmt* C = W->getCond())
+      C->printPretty(OS, Helper, Policy);
   }
 
   void VisitDoStmt(DoStmt* D) {
     OS << "do ... while ";
-    if (Stmt* C = D->getCond()) C->printPretty(OS, Helper, Policy);
+    if (Stmt* C = D->getCond())
+      C->printPretty(OS, Helper, Policy);
   }
 
   void VisitSwitchStmt(SwitchStmt* Terminator) {
