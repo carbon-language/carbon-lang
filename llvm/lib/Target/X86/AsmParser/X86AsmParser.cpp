@@ -248,7 +248,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   const AsmToken &TokPercent = getLexer().getTok();
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
   StartLoc = TokPercent.getLoc();
-  getLexer().Lex(); // Eat percent token.
+  Parser.Lex(); // Eat percent token.
 
   const AsmToken &Tok = getLexer().getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -261,7 +261,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
     return Error(Tok.getLoc(), "invalid register name");
 
   EndLoc = Tok.getLoc();
-  getLexer().Lex(); // Eat identifier token.
+  Parser.Lex(); // Eat identifier token.
   return false;
 }
 
@@ -280,7 +280,7 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
   case AsmToken::Dollar: {
     // $42 -> immediate.
     SMLoc Start = getLexer().getTok().getLoc(), End;
-    getLexer().Lex();
+    Parser.Lex();
     const MCExpr *Val;
     if (getParser().ParseExpression(Val, End))
       return 0;
@@ -315,12 +315,12 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     }
     
     // Eat the '('.
-    getLexer().Lex();
+    Parser.Lex();
   } else {
     // Okay, we have a '('.  We don't know if this is an expression or not, but
     // so we have to eat the ( to see beyond it.
     SMLoc LParenLoc = getLexer().getTok().getLoc();
-    getLexer().Lex(); // Eat the '('.
+    Parser.Lex(); // Eat the '('.
     
     if (getLexer().is(AsmToken::Percent) || getLexer().is(AsmToken::Comma)) {
       // Nothing to do here, fall into the code below with the '(' part of the
@@ -342,7 +342,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
       }
       
       // Eat the '('.
-      getLexer().Lex();
+      Parser.Lex();
     }
   }
   
@@ -356,7 +356,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   }
   
   if (getLexer().is(AsmToken::Comma)) {
-    getLexer().Lex(); // Eat the comma.
+    Parser.Lex(); // Eat the comma.
 
     // Following the comma we should have either an index register, or a scale
     // value. We don't support the later form, but we want to parse it
@@ -376,7 +376,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
                 "expected comma in scale expression");
           return 0;
         }
-        getLexer().Lex(); // Eat the comma.
+        Parser.Lex(); // Eat the comma.
 
         if (getLexer().isNot(AsmToken::RParen)) {
           SMLoc Loc = getLexer().getTok().getLoc();
@@ -413,7 +413,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     return 0;
   }
   SMLoc MemEnd = getLexer().getTok().getLoc();
-  getLexer().Lex(); // Eat the ')'.
+  Parser.Lex(); // Eat the ')'.
   
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
                                MemStart, MemEnd);
@@ -431,7 +431,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     if (getLexer().is(AsmToken::Star)) {
       SMLoc Loc = getLexer().getTok().getLoc();
       Operands.push_back(X86Operand::CreateToken("*", Loc));
-      getLexer().Lex(); // Eat the star.
+      Parser.Lex(); // Eat the star.
     }
 
     // Read the first operand.
@@ -441,7 +441,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
       return true;
     
     while (getLexer().is(AsmToken::Comma)) {
-      getLexer().Lex();  // Eat the comma.
+      Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
       if (X86Operand *Op = ParseOperand())
@@ -478,11 +478,11 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
       // FIXME: Improve diagnostic.
       if (getLexer().isNot(AsmToken::Comma))
         return Error(L, "unexpected token in directive");
-      getLexer().Lex();
+      Parser.Lex();
     }
   }
 
-  getLexer().Lex();
+  Parser.Lex();
   return false;
 }
 

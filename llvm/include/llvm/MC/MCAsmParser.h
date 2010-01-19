@@ -13,6 +13,7 @@
 #include "llvm/System/DataTypes.h"
 
 namespace llvm {
+class AsmToken;
 class MCAsmLexer;
 class MCContext;
 class MCExpr;
@@ -50,6 +51,10 @@ public:
   /// clients.
   virtual bool Error(SMLoc L, const Twine &Msg) = 0;
 
+  /// Lex - Get the next AsmToken in the stream, possibly handling file
+  /// inclusion first.
+  virtual const AsmToken &Lex() = 0;
+  
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined
