@@ -4293,7 +4293,19 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
 
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
-
+  QualType QT = CE->getType();
+  const Type* TypePtr = QT->getAs<Type>();
+  if (isa<TypeOfExprType>(TypePtr)) {
+    const TypeOfExprType *TypeOfExprTypePtr = cast<TypeOfExprType>(TypePtr);
+    QT = TypeOfExprTypePtr->getUnderlyingExpr()->getType();
+    std::string TypeAsString = "(";
+    TypeAsString += QT.getAsString();
+    TypeAsString += ")";
+    ReplaceText(LocStart, endBuf-startBuf+1, 
+                TypeAsString.c_str(), TypeAsString.size());
+    return;
+  }
+  
   // advance the location to startArgList.
   const char *argPtr = startBuf;
 
