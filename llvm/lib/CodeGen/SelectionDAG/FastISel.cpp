@@ -343,9 +343,6 @@ bool FastISel::SelectCall(User *I) {
       if (MDNode *Dbg = DI->getMetadata("dbg"))
         MMI->setVariableDbgInfo(DI->getVariable(), FI, Dbg);
     }
-    // Building the map above is target independent.  Generating DEBUG_VALUE
-    // inline is target dependent; do this now.
-    (void)TargetSelectInstruction(cast<Instruction>(I));
     return true;
   }
   case Intrinsic::eh_exception: {
