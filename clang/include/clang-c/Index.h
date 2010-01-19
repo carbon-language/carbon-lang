@@ -115,11 +115,10 @@ enum CXCursorKind {
  CXCursor_ObjCClassRef                  = 42,
  
  CXCursor_ObjCSelectorRef               = 43, /* Expression references */
- CXCursor_VarRef                        = 45,
- CXCursor_FunctionRef                   = 46,
- CXCursor_EnumConstantRef               = 47,
- CXCursor_MemberRef                     = 48,
- CXCursor_LastRef                       = 48,
+ CXCursor_VarRef                        = 44,
+ CXCursor_FunctionRef                   = 45,
+ CXCursor_EnumConstantRef               = 46,
+ CXCursor_LastRef                       = 46,
  
  /* Error conditions */
  CXCursor_FirstInvalid                  = 70,

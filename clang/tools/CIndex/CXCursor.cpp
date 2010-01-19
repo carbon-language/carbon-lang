@@ -175,7 +175,6 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   case CXCursor_VarRef:
   case CXCursor_FunctionRef:
   case CXCursor_EnumConstantRef:
-  case CXCursor_MemberRef:
     return *static_cast<ASTContext *>(Cursor.data[2]);
   
   case CXCursor_InvalidFile:

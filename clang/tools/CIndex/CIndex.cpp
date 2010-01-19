@@ -882,7 +882,6 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_VarRef: return "VarRef";
   case CXCursor_FunctionRef: return "FunctionRef";
   case CXCursor_EnumConstantRef: return "EnumConstantRef";
-  case CXCursor_MemberRef: return "MemberRef";
 
   case CXCursor_InvalidFile: return "InvalidFile";
   case CXCursor_NoDeclFound: return "NoDeclFound";
@@ -1006,8 +1005,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     case CXCursor_ObjCSelectorRef:
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef:
-    case CXCursor_MemberRef: {
+    case CXCursor_EnumConstantRef: {
       Expr *E = getCursorExpr(C);
       ASTContext &Context = getCursorContext(C);
       if (ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E))
@@ -1065,7 +1063,6 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
       case CXCursor_EnumConstantRef:
-      case CXCursor_MemberRef:
         return translateSourceRange(getCursorContext(C), 
                                     getCursorExpr(C)->getSourceRange());
         
@@ -1104,8 +1101,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     case CXCursor_ObjCSelectorRef:
     case CXCursor_VarRef:
     case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef:
-    case CXCursor_MemberRef: {
+    case CXCursor_EnumConstantRef: {
       Decl *D = getDeclFromExpr(getCursorExpr(C));
       if (D)
         return MakeCXCursor(D);
