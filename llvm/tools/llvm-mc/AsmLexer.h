@@ -62,7 +62,9 @@ public:
   bool EnterIncludeFile(const std::string &Filename);
   
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
-  
+
+  const MCAsmInfo &getMAI() const { return MAI; }
+
 private:
   int getNextChar();
   AsmToken ReturnError(const char *Loc, const std::string &Msg);

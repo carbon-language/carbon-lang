@@ -1278,6 +1278,13 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
     Pow2AlignmentLoc = Lexer.getLoc();
     if (ParseAbsoluteExpression(Pow2Alignment))
       return true;
+    
+    // If this target takes alignments in bytes (not log) validate and convert.
+    if (Lexer.getMAI().getAlignmentIsInBytes()) {
+      if (!isPowerOf2_64(Pow2Alignment))
+        return Error(Pow2AlignmentLoc, "alignment must be a power of 2");
+      Pow2Alignment = Log2_64(Pow2Alignment);
+    }
   }
   
   if (Lexer.isNot(AsmToken::EndOfStatement))
