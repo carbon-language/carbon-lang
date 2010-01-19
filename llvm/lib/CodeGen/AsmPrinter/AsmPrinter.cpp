@@ -449,6 +449,10 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticCtorSection());
     EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
+    
+    if (TM.getRelocationModel() == Reloc::Static &&
+        MAI->hasStaticCtorDtorReferenceInStaticMode())
+      O << ".reference .constructors_used\n";
     return true;
   } 
   
@@ -456,6 +460,10 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     OutStreamer.SwitchSection(getObjFileLowering().getStaticDtorSection());
     EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
+
+    if (TM.getRelocationModel() == Reloc::Static &&
+        MAI->hasStaticCtorDtorReferenceInStaticMode())
+      O << ".reference .destructors_used\n";
     return true;
   }
   

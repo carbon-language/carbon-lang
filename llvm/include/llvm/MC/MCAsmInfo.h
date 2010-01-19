@@ -36,7 +36,13 @@ namespace llvm {
 
     /// HasMachoZeroFillDirective - True if this is a MachO target that supports
     /// the macho-specific .zerofill directive for emitting BSS Symbols.
-    bool HasMachoZeroFillDirective;           // Default is false.
+    bool HasMachoZeroFillDirective;               // Default is false.
+    
+    /// HasStaticCtorDtorReferenceInStaticMode - True if the compiler should
+    /// emit a ".reference .constructors_used" or ".reference .destructors_used"
+    /// directive after the a static ctor/dtor list.  This directive is only
+    /// emitted in Static relocation model.
+    bool HasStaticCtorDtorReferenceInStaticMode;  // Default is false.
     
     /// NeedsSet - True if target asm treats expressions in data directives
     /// as linktime-relocatable.  For assembly-time computation, we need to
@@ -314,7 +320,9 @@ namespace llvm {
     // Accessors.
     //
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
-    
+    bool hasStaticCtorDtorReferenceInStaticMode() const {
+      return HasStaticCtorDtorReferenceInStaticMode;
+    }
     const char *getNonexecutableStackDirective() const {
       return NonexecutableStackDirective;
     }

@@ -933,15 +933,8 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;   // External global require no code
 
   // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar)) {
-    if (TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->getName() == "llvm.global_ctors")
-        O << ".reference .constructors_used\n";
-      else if (GVar->getName() == "llvm.global_dtors")
-        O << ".reference .destructors_used\n";
-    }
+  if (EmitSpecialLLVMGlobal(GVar))
     return;
-  }
 
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   printVisibility(GVarSym, GVar->getVisibility());

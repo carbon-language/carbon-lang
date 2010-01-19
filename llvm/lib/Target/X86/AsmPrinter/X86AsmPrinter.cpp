@@ -651,16 +651,8 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;   // External global require no code
   
   // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar)) {
-    if (Subtarget->isTargetDarwin() &&
-        TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->getName() == "llvm.global_ctors")
-        O << ".reference .constructors_used\n";
-      else if (GVar->getName() == "llvm.global_dtors")
-        O << ".reference .destructors_used\n";
-    }
+  if (EmitSpecialLLVMGlobal(GVar))
     return;
-  }
   
   const TargetData *TD = TM.getTargetData();
 

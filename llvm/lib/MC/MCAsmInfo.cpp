@@ -20,6 +20,7 @@ using namespace llvm;
 
 MCAsmInfo::MCAsmInfo() {
   HasMachoZeroFillDirective = false;
+  HasStaticCtorDtorReferenceInStaticMode = false;
   NonexecutableStackDirective = 0;
   NeedsSet = false;
   MaxInstLength = 4;
