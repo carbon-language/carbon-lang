@@ -366,7 +366,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   // alloca dead.
   // If the RHS is an alloca with a two uses, the other one being a 
   // llvm.dbg.declare, zapify the store and the declare, making the
-  // alloca dead.  We must do this to prevent declare's from affecting
+  // alloca dead.  We must do this to prevent declares from affecting
   // codegen.
   if (!SI.isVolatile()) {
     if (Ptr->hasOneUse()) {
