@@ -951,7 +951,9 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
-    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
+    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
+    if (MAI->getLCOMMDirectiveTakesAlignment())
+      O << ',' << Align;
     
     if (VerboseAsm) {
       O << "\t\t" << MAI->getCommentString() << " '";

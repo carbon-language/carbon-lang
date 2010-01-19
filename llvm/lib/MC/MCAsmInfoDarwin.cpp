@@ -37,6 +37,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill
   HasStaticCtorDtorReferenceInStaticMode = true;
+  LCOMMDirectiveTakesAlignment = true;
   SetDirective = "\t.set";
   ProtectedDirective = "\t.globl\t";
   HasDotTypeDotSizeDirective = false;

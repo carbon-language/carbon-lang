@@ -647,17 +647,18 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-  const TargetData *TD = TM.getTargetData();
 
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
+  
+  const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   printVisibility(GVarSym, GVar->getVisibility());
 
-  if (Subtarget->isTargetELF())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.type\t" << *GVarSym << ",@object\n";
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
@@ -685,7 +686,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     if (const char *LComm = MAI->getLCOMMDirective()) {
       if (GVar->hasLocalLinkage()) {
         O << LComm << *GVarSym << ',' << Size;
-        if (Subtarget->isTargetDarwin())
+        if (MAI->getLCOMMDirectiveTakesAlignment())
           O << ',' << Align;
       }
     } else {

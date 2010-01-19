@@ -1202,14 +1202,12 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
-    if (isDarwin) {
-      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size
-      << ',' << Align;
-    } else if (MAI->getLCOMMDirective() != NULL) {
-      O << MAI->getLCOMMDirective() << *GVarSym << "," << Size;
+    if (const char *LCOMM = MAI->getLCOMMDirective()) {
+      O << LCOMM << *GVarSym << "," << Size;
+      if (MAI->getLCOMMDirectiveTakesAlignment())
+        O << ',' << Align;
     } else {
-      if (GVar->hasLocalLinkage())
-        O << "\t.local\t" << *GVarSym << '\n';
+      O << "\t.local\t" << *GVarSym << '\n';
       O << MAI->getCOMMDirective() << *GVarSym << "," << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << "," << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);

@@ -56,6 +56,7 @@ MCAsmInfo::MCAsmInfo() {
   LCOMMDirective = 0;
   COMMDirective = "\t.comm\t";
   COMMDirectiveTakesAlignment = true;
+  LCOMMDirectiveTakesAlignment = false;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
   UsedDirective = 0;
