@@ -58,10 +58,11 @@ public:
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
 
-  virtual void EmitBytes(StringRef Data);
+  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size);
-  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
+                        unsigned AddrSpace);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -179,41 +180,45 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitBytes(StringRef Data) {
+void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
+  const char *Directive = MAI.getData8bitsDirective(AddrSpace);
   for (unsigned i = 0, e = Data.size(); i != e; ++i)
-    OS << ".byte " << (unsigned) (unsigned char) Data[i] << '\n';
+    OS << Directive << (unsigned)(unsigned char)Data[i] << '\n';
 }
 
-void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
+void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                              unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   // Need target hooks to know how to print this.
   switch (Size) {
-  default:
-    llvm_unreachable("Invalid size for machine code value!");
-  case 1: OS << ".byte"; break;
-  case 2: OS << ".short"; break;
-  case 4: OS << ".long"; break;
-  case 8: OS << ".quad"; break;
+  default: assert(0 && "Invalid size for machine code value!");
+  case 1: OS << MAI.getData8bitsDirective(AddrSpace); break;
+  case 2: OS << MAI.getData16bitsDirective(AddrSpace); break;
+  case 4: OS << MAI.getData32bitsDirective(AddrSpace); break;
+  case 8: OS << MAI.getData64bitsDirective(AddrSpace); break;
   }
-
-  OS << ' ' << *truncateToSize(Value, Size) << '\n';
+  
+  OS << *truncateToSize(Value, Size) << '\n';
 }
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
-void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
+void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
+                             unsigned AddrSpace) {
   if (NumBytes == 0) return;
   
-  if (const char *ZeroDirective = MAI.getZeroDirective()) {
-    OS << ZeroDirective << NumBytes;
-    if (FillValue != 0)
-      OS << ',' << (int)FillValue;
-    OS << '\n';
-  } else {
-    // Emit a byte at a time.
-    MCStreamer::EmitFill(NumBytes, FillValue);
-  }
+  if (AddrSpace == 0)
+    if (const char *ZeroDirective = MAI.getZeroDirective()) {
+      OS << ZeroDirective << NumBytes;
+      if (FillValue != 0)
+        OS << ',' << (int)FillValue;
+      OS << '\n';
+      return;
+    }
+
+  // Emit a byte at a time.
+  MCStreamer::EmitFill(NumBytes, FillValue, AddrSpace);
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

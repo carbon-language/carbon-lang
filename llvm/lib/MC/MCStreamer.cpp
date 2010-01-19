@@ -20,8 +20,9 @@ MCStreamer::~MCStreamer() {
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
-void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
+void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
+                          unsigned AddrSpace) {
   const MCExpr *E = MCConstantExpr::Create(FillValue, getContext());
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
-    EmitValue(E, 1);
+    EmitValue(E, 1, AddrSpace);
 }

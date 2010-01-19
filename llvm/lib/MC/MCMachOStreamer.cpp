@@ -134,9 +134,9 @@ public:
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
 
-  virtual void EmitBytes(StringRef Data);
+  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -315,14 +315,15 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
     SectData.setAlignment(ByteAlignment);
 }
 
-void MCMachOStreamer::EmitBytes(StringRef Data) {
+void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
   if (!DF)
     DF = new MCDataFragment(CurSectionData);
   DF->getContents().append(Data.begin(), Data.end());
 }
 
-void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
+void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                                unsigned AddrSpace) {
   new MCFillFragment(*AddValueSymbols(Value), Size, 1, CurSectionData);
 }
 
@@ -359,7 +360,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
   Emitter->EncodeInstruction(Inst, VecOS);
-  EmitBytes(VecOS.str());
+  EmitBytes(VecOS.str(), 0);
 }
 
 void MCMachOStreamer::Finish() {

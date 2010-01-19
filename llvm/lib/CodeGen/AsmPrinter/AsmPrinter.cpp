@@ -436,7 +436,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       // Emit inter-object padding for alignment.
       unsigned AlignMask = CPE.getAlignment() - 1;
       unsigned NewOffset = (Offset + AlignMask) & ~AlignMask;
-      OutStreamer.EmitFill(NewOffset - Offset);
+      OutStreamer.EmitFill(NewOffset - Offset, 0/*fillval*/, 0/*addrspace*/);
 
       const Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
@@ -913,18 +913,6 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   OutStreamer.EmitValueToAlignment(1 << NumBits, FillValue, 1, 0);
 }
 
-/// EmitZeros - Emit a block of zeros.
-///
-void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
-  if (NumZeros == 0) return;
-  if (MAI->getZeroDirective() || AddrSpace == 0) {
-    OutStreamer.EmitFill(NumZeros);
-  } else {
-    for (; NumZeros; --NumZeros)
-      O << MAI->getData8bitsDirective(AddrSpace) << "0\n";
-  }
-}
-
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
 void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
@@ -1068,6 +1056,12 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     O << ')';
     break;
   }
+}
+
+/// EmitZeros - Emit a block of zeros.
+///
+void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
+  OutStreamer.EmitFill(NumZeros, 0, AddrSpace);
 }
 
 /// printAsCString - Print the specified array as a C compatible string, only if

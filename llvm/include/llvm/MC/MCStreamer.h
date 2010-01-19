@@ -155,7 +155,7 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .byte, .ascii,
     /// etc.
-    virtual void EmitBytes(StringRef Data) = 0;
+    virtual void EmitBytes(StringRef Data, unsigned AddrSpace) = 0;
 
     /// EmitValue - Emit the expression @param Value into the output as a native
     /// integer of the given @param Size bytes.
@@ -166,11 +166,13 @@ namespace llvm {
     /// @param Value - The value to emit.
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
-    virtual void EmitValue(const MCExpr *Value, unsigned Size) = 0;
+    virtual void EmitValue(const MCExpr *Value, unsigned Size,
+                           unsigned AddrSpace) = 0;
 
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.
-    virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue = 0);
+    virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
+                          unsigned AddrSpace);
     
     
     /// EmitValueToAlignment - Emit some number of copies of @param Value until

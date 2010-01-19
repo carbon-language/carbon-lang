@@ -29,6 +29,9 @@
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
+
+enum { DEFAULT_ADDRSPACE = 0 };
+
 // Mach-O section uniquing.
 //
 // FIXME: Figure out where this should live, it should be shared by
@@ -967,9 +970,9 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
       if (ParseEscapedString(Data))
         return true;
       
-      Out.EmitBytes(Data);
+      Out.EmitBytes(Data, DEFAULT_ADDRSPACE);
       if (ZeroTerminated)
-        Out.EmitBytes(StringRef("\0", 1));
+        Out.EmitBytes(StringRef("\0", 1), DEFAULT_ADDRSPACE);
       
       Lexer.Lex();
       
@@ -996,7 +999,7 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
       if (ParseExpression(Value))
         return true;
 
-      Out.EmitValue(Value, Size);
+      Out.EmitValue(Value, Size, DEFAULT_ADDRSPACE);
 
       if (Lexer.is(AsmToken::EndOfStatement))
         break;
@@ -1041,7 +1044,7 @@ bool AsmParser::ParseDirectiveSpace() {
     return TokError("invalid number of bytes in '.space' directive");
 
   // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
-  Out.EmitFill(NumBytes, FillExpr);
+  Out.EmitFill(NumBytes, FillExpr, DEFAULT_ADDRSPACE);
 
   return false;
 }
@@ -1078,7 +1081,8 @@ bool AsmParser::ParseDirectiveFill() {
     return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
-    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), FillSize);
+    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), FillSize,
+                  DEFAULT_ADDRSPACE);
 
   return false;
 }

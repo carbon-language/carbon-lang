@@ -629,7 +629,7 @@ bool ARMAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
       if (getParser().ParseExpression(Value))
         return true;
 
-      getParser().getStreamer().EmitValue(Value, Size);
+      getParser().getStreamer().EmitValue(Value, Size, 0/*addrspace*/);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
