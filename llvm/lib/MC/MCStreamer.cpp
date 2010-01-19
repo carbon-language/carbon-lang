@@ -18,6 +18,13 @@ MCStreamer::MCStreamer(MCContext &_Context) : Context(_Context), CurSection(0) {
 MCStreamer::~MCStreamer() {
 }
 
+/// EmitIntValue - Special case of EmitValue that avoids the client having to
+/// pass in a MCExpr for constant integers.
+void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
+                              unsigned AddrSpace) {
+  EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
+}
+
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,

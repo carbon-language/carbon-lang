@@ -169,6 +169,10 @@ namespace llvm {
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
                            unsigned AddrSpace) = 0;
 
+    /// EmitIntValue - Special case of EmitValue that avoids the client having
+    /// to pass in a MCExpr for constant integers.
+    virtual void EmitIntValue(uint64_t Value, unsigned Size,unsigned AddrSpace);
+    
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.
     virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,

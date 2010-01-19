@@ -61,6 +61,8 @@ public:
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace);
+
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
                         unsigned AddrSpace);
 
@@ -187,19 +189,40 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
     OS << Directive << (unsigned)(unsigned char)Data[i] << '\n';
 }
 
+/// EmitIntValue - Special case of EmitValue that avoids the client having
+/// to pass in a MCExpr for constant integers.
+void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
+                                 unsigned AddrSpace) {
+  assert(CurSection && "Cannot emit contents before setting section!");
+  // Need target hooks to know how to print this.
+  const char *Directive = 0;
+  switch (Size) {
+  default: break;
+  case 1: Directive = MAI.getData8bitsDirective(AddrSpace); break;
+  case 2: Directive = MAI.getData16bitsDirective(AddrSpace); break;
+  case 4: Directive = MAI.getData32bitsDirective(AddrSpace); break;
+  case 8: Directive = MAI.getData64bitsDirective(AddrSpace); break;
+  }
+  
+  assert(Directive && "Invalid size for machine code value!");
+  OS << Directive << truncateToSize(Value, Size) << '\n';
+}
+
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                               unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   // Need target hooks to know how to print this.
+  const char *Directive = 0;
   switch (Size) {
-  default: assert(0 && "Invalid size for machine code value!");
-  case 1: OS << MAI.getData8bitsDirective(AddrSpace); break;
-  case 2: OS << MAI.getData16bitsDirective(AddrSpace); break;
-  case 4: OS << MAI.getData32bitsDirective(AddrSpace); break;
-  case 8: OS << MAI.getData64bitsDirective(AddrSpace); break;
+  default: break;
+  case 1: Directive = MAI.getData8bitsDirective(AddrSpace); break;
+  case 2: Directive = MAI.getData16bitsDirective(AddrSpace); break;
+  case 4: Directive = MAI.getData32bitsDirective(AddrSpace); break;
+  case 8: Directive = MAI.getData64bitsDirective(AddrSpace); break;
   }
   
-  OS << *truncateToSize(Value, Size) << '\n';
+  assert(Directive && "Invalid size for machine code value!");
+  OS << Directive << *truncateToSize(Value, Size) << '\n';
 }
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
