@@ -334,10 +334,10 @@ CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
 CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
 CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
-CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
-CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
+CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl); /* deprecate */
+CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl); /* deprecate */
 CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
-CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
+CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl); /* deprecate */
 
 /**
  * \brief Identifies a specific source location given its file, line, and 
@@ -418,6 +418,18 @@ CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
  * entity was actually used).
  */
 CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
+
+/** \brief For a cursor that is a reference, retrieve a cursor representing the
+ * entity that it references.
+ *
+ * Reference cursors refer to other entities in the AST. For example, an
+ * Objective-C superclass reference cursor refers to an Objective-C class.
+ * This function produces the cursor for the Objective-C class from the 
+ * cursor for the superclass reference. If the input cursor is a declaration or
+ * definition, it returns that declaration or definition unchanged.
+ * Othewise, returns the NULL cursor.
+ */
+CINDEX_LINKAGE CXCursor clang_getCursorReferenced(CXCursor);
   
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 

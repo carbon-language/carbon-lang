@@ -47,16 +47,18 @@ static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
     printf("Invalid Cursor => %s", clang_getCursorKindSpelling(Cursor.kind));
   else {
-    CXDecl DeclReferenced;
     CXString string;
+    CXCursor Referenced;
     string = clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
                       clang_getCString(string));
     clang_disposeString(string);
-    DeclReferenced = clang_getCursorDecl(Cursor);
-    if (DeclReferenced)
-      printf(":%d:%d", clang_getDeclLine(DeclReferenced),
-                       clang_getDeclColumn(DeclReferenced));
+    
+    Referenced = clang_getCursorReferenced(Cursor);
+    if (!clang_equalCursors(Referenced, clang_getNullCursor())) {
+      CXSourceLocation Loc = clang_getCursorLocation(Referenced);
+      printf(":%d:%d", Loc.line, Loc.column);
+    }
   }
 }
 

@@ -32,7 +32,7 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=13 start_col=24 end_line=16 end_col=1} FunctionDefn=function:13:6
 // CHECK-scan: {start_line=16 start_col=2 end_line=38 end_col=1} Invalid Cursor => NoDeclFound
 
-// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:1 [Extent=10:1:11:4]
+// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 [Extent=10:1:11:4]
 // CHECK-load: TestClassDecl.m:13:6: FunctionDefn=function:13:6 [Extent=13:6:16:1]
 // CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 [Extent=13:21:13:23]
 

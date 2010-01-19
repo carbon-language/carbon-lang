@@ -18,6 +18,7 @@ _clang_getCursorFromDecl
 _clang_getCursorKind
 _clang_getCursorKindSpelling
 _clang_getCursorLocation
+_clang_getCursorReferenced
 _clang_getCursorSpelling
 _clang_getCursorUSR
 _clang_getDeclColumn

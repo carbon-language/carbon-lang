@@ -1006,7 +1006,46 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   Decl *D = getCursorDecl(C);
   return translateSourceRange(D->getASTContext(), D->getSourceRange());
 }
+
+CXCursor clang_getCursorReferenced(CXCursor C) {
+  if (clang_isDeclaration(C.kind) || clang_isDefinition(C.kind))
+    return C;
   
+  if (!clang_isReference(C.kind))
+    return clang_getNullCursor();
+  
+  switch (C.kind) {
+    case CXCursor_ObjCSuperClassRef:
+      return MakeCXCursor(getCursorObjCSuperClassRef(C).first);
+      
+    case CXCursor_ObjCProtocolRef: {       
+      return MakeCXCursor(getCursorObjCProtocolRef(C).first);
+      
+    case CXCursor_ObjCClassRef:      
+      return MakeCXCursor(getCursorObjCClassRef(C).first);
+      
+    case CXCursor_ObjCSelectorRef:
+    case CXCursor_ObjCIvarRef:
+    case CXCursor_VarRef:
+    case CXCursor_FunctionRef:
+    case CXCursor_EnumConstantRef:
+    case CXCursor_MemberRef: {
+      Decl *D = getDeclFromExpr(getCursorExpr(C));
+      if (D)
+        return MakeCXCursor(D);
+      break;
+    }
+      
+    default:
+      // We would prefer to enumerate all non-reference cursor kinds here.
+      llvm_unreachable("Unhandled reference cursor kind");
+      break;
+    }
+  }
+  
+  return clang_getNullCursor();
+}
+
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
                                           const char **startBuf,
                                           const char **endBuf,
