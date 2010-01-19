@@ -21,7 +21,6 @@
 		1A2A54BD0FD1DD1C00F4CE45 /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */; };
 		1A2A54BE0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AD0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp */; };
 		1A2A54BF0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */; };
-		1A2A54C00FD1DD1C00F4CE45 /* RewriteBlocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54AF0FD1DD1C00F4CE45 /* RewriteBlocks.cpp */; };
 		1A2A54C10FD1DD1C00F4CE45 /* RewriteMacros.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54B00FD1DD1C00F4CE45 /* RewriteMacros.cpp */; };
 		1A2A54C20FD1DD1C00F4CE45 /* RewriteObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54B10FD1DD1C00F4CE45 /* RewriteObjC.cpp */; };
 		1A2A54C30FD1DD1C00F4CE45 /* RewriteTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54B20FD1DD1C00F4CE45 /* RewriteTest.cpp */; };
@@ -48,6 +47,15 @@
 		1AA1D91810125DE30078DEBC /* RecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */; };
 		1AA963C410D85A7300786C86 /* FullExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA963C310D85A7300786C86 /* FullExpr.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
+		1ACB57E41105820D0047B991 /* CompilerInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */; };
+		1ACB57E51105820D0047B991 /* CompilerInvocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */; };
+		1ACB57E61105820D0047B991 /* DeclXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57DD1105820D0047B991 /* DeclXML.cpp */; };
+		1ACB57E71105820D0047B991 /* FrontendAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57DE1105820D0047B991 /* FrontendAction.cpp */; };
+		1ACB57E81105820D0047B991 /* FrontendActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57DF1105820D0047B991 /* FrontendActions.cpp */; };
+		1ACB57E91105820D0047B991 /* FrontendOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57E01105820D0047B991 /* FrontendOptions.cpp */; };
+		1ACB57EA1105820D0047B991 /* LangStandards.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57E11105820D0047B991 /* LangStandards.cpp */; };
+		1ACB57EB1105820D0047B991 /* TypeXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57E21105820D0047B991 /* TypeXML.cpp */; };
+		1ACB57EC1105820D0047B991 /* VerifyDiagnosticsClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ACB57E31105820D0047B991 /* VerifyDiagnosticsClient.cpp */; };
 		1ADD795410A90C6100741BBA /* TypePrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795110A90C6100741BBA /* TypePrinter.cpp */; };
 		1ADD795510A90C6100741BBA /* TypeLoc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795210A90C6100741BBA /* TypeLoc.cpp */; };
 		1ADD795610A90C6100741BBA /* TemplateBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADD795310A90C6100741BBA /* TemplateBase.cpp */; };
@@ -59,7 +67,6 @@
 		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
 		352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */; };
 		352246E80F5C6BE000D0D279 /* InitHeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */; };
-		352246E90F5C6BE000D0D279 /* ManagerRegistry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E30F5C6BE000D0D279 /* ManagerRegistry.cpp */; };
 		352246EA0F5C6BE000D0D279 /* PlistDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */; };
 		352246EB0F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */; };
 		352246EC0F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */; };
@@ -360,7 +367,6 @@
 		1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = lib/Frontend/HTMLPrint.cpp; sourceTree = "<group>"; };
 		1A2A54AD0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = lib/Frontend/PrintParserCallbacks.cpp; sourceTree = "<group>"; };
 		1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = lib/Frontend/PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
-		1A2A54AF0FD1DD1C00F4CE45 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = lib/Frontend/RewriteBlocks.cpp; sourceTree = "<group>"; };
 		1A2A54B00FD1DD1C00F4CE45 /* RewriteMacros.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteMacros.cpp; path = lib/Frontend/RewriteMacros.cpp; sourceTree = "<group>"; };
 		1A2A54B10FD1DD1C00F4CE45 /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = lib/Frontend/RewriteObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A2A54B20FD1DD1C00F4CE45 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = lib/Frontend/RewriteTest.cpp; sourceTree = "<group>"; };
@@ -405,6 +411,15 @@
 		1AA963C310D85A7300786C86 /* FullExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = FullExpr.cpp; path = lib/AST/FullExpr.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AB290021045858B00FE33D8 /* PartialDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = PartialDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompilerInstance.cpp; path = lib/Frontend/CompilerInstance.cpp; sourceTree = "<group>"; };
+		1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompilerInvocation.cpp; path = lib/Frontend/CompilerInvocation.cpp; sourceTree = "<group>"; };
+		1ACB57DD1105820D0047B991 /* DeclXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclXML.cpp; path = lib/Frontend/DeclXML.cpp; sourceTree = "<group>"; };
+		1ACB57DE1105820D0047B991 /* FrontendAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FrontendAction.cpp; path = lib/Frontend/FrontendAction.cpp; sourceTree = "<group>"; };
+		1ACB57DF1105820D0047B991 /* FrontendActions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FrontendActions.cpp; path = lib/Frontend/FrontendActions.cpp; sourceTree = "<group>"; };
+		1ACB57E01105820D0047B991 /* FrontendOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FrontendOptions.cpp; path = lib/Frontend/FrontendOptions.cpp; sourceTree = "<group>"; };
+		1ACB57E11105820D0047B991 /* LangStandards.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LangStandards.cpp; path = lib/Frontend/LangStandards.cpp; sourceTree = "<group>"; };
+		1ACB57E21105820D0047B991 /* TypeXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeXML.cpp; path = lib/Frontend/TypeXML.cpp; sourceTree = "<group>"; };
+		1ACB57E31105820D0047B991 /* VerifyDiagnosticsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VerifyDiagnosticsClient.cpp; path = lib/Frontend/VerifyDiagnosticsClient.cpp; sourceTree = "<group>"; };
 		1ADD795110A90C6100741BBA /* TypePrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypePrinter.cpp; path = lib/AST/TypePrinter.cpp; sourceTree = "<group>"; };
 		1ADD795210A90C6100741BBA /* TypeLoc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeLoc.cpp; path = lib/AST/TypeLoc.cpp; sourceTree = "<group>"; };
 		1ADD795310A90C6100741BBA /* TemplateBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TemplateBase.cpp; path = lib/AST/TemplateBase.cpp; sourceTree = "<group>"; };
@@ -418,7 +433,6 @@
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Frontend/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitHeaderSearch.cpp; path = lib/Frontend/InitHeaderSearch.cpp; sourceTree = "<group>"; };
-		352246E30F5C6BE000D0D279 /* ManagerRegistry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ManagerRegistry.cpp; path = lib/Frontend/ManagerRegistry.cpp; sourceTree = "<group>"; };
 		352246E40F5C6BE000D0D279 /* PlistDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlistDiagnostics.cpp; path = lib/Frontend/PlistDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticBuffer.cpp; path = lib/Frontend/TextDiagnosticBuffer.cpp; sourceTree = "<group>"; };
 		352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = lib/Frontend/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
@@ -922,16 +936,22 @@
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
 				1A2A54A60FD1DD1C00F4CE45 /* Backend.cpp */,
 				1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */,
+				1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */,
+				1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */,
+				1ACB57DD1105820D0047B991 /* DeclXML.cpp */,
 				1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */,
 				1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */,
 				1A2A54AA0FD1DD1C00F4CE45 /* DocumentXML.cpp */,
 				DEF1683F0F9548DC0098507F /* FixItRewriter.cpp */,
+				1ACB57DE1105820D0047B991 /* FrontendAction.cpp */,
+				1ACB57DF1105820D0047B991 /* FrontendActions.cpp */,
+				1ACB57E01105820D0047B991 /* FrontendOptions.cpp */,
 				1A2A54AB0FD1DD1C00F4CE45 /* GeneratePCH.cpp */,
 				352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */,
 				1A2A54AC0FD1DD1C00F4CE45 /* HTMLPrint.cpp */,
 				352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */,
 				DECB6F060F9D93A800F5FBC7 /* InitPreprocessor.cpp */,
-				352246E30F5C6BE000D0D279 /* ManagerRegistry.cpp */,
+				1ACB57E11105820D0047B991 /* LangStandards.cpp */,
 				DEF165740F8FB3510098507F /* PCHReader.cpp */,
 				DECB77780FA579B000F5FBC7 /* PCHReaderDecl.cpp */,
 				DECB77120FA5752300F5FBC7 /* PCHReaderStmt.cpp */,
@@ -943,11 +963,12 @@
 				1A2A54AE0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp */,
 				352246E50F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp */,
 				352246E60F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp */,
-				1A2A54AF0FD1DD1C00F4CE45 /* RewriteBlocks.cpp */,
+				1ACB57E21105820D0047B991 /* TypeXML.cpp */,
 				1A2A54B00FD1DD1C00F4CE45 /* RewriteMacros.cpp */,
 				1A2A54B10FD1DD1C00F4CE45 /* RewriteObjC.cpp */,
 				1A2A54B20FD1DD1C00F4CE45 /* RewriteTest.cpp */,
 				1A2A54B30FD1DD1C00F4CE45 /* StmtXML.cpp */,
+				1ACB57E31105820D0047B991 /* VerifyDiagnosticsClient.cpp */,
 				1A2A54B40FD1DD1C00F4CE45 /* Warnings.cpp */,
 			);
 			name = Frontend;
@@ -1844,7 +1865,6 @@
 				DEB07AC80F4A427E00F5A2BE /* SemaAttr.cpp in Sources */,
 				352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */,
 				352246E80F5C6BE000D0D279 /* InitHeaderSearch.cpp in Sources */,
-				352246E90F5C6BE000D0D279 /* ManagerRegistry.cpp in Sources */,
 				352246EA0F5C6BE000D0D279 /* PlistDiagnostics.cpp in Sources */,
 				352246EB0F5C6BE000D0D279 /* TextDiagnosticBuffer.cpp in Sources */,
 				352246EC0F5C6BE000D0D279 /* TextDiagnosticPrinter.cpp in Sources */,
@@ -1892,7 +1912,6 @@
 				1A2A54BD0FD1DD1C00F4CE45 /* HTMLPrint.cpp in Sources */,
 				1A2A54BE0FD1DD1C00F4CE45 /* PrintParserCallbacks.cpp in Sources */,
 				1A2A54BF0FD1DD1C00F4CE45 /* PrintPreprocessedOutput.cpp in Sources */,
-				1A2A54C00FD1DD1C00F4CE45 /* RewriteBlocks.cpp in Sources */,
 				1A2A54C10FD1DD1C00F4CE45 /* RewriteMacros.cpp in Sources */,
 				1A2A54C20FD1DD1C00F4CE45 /* RewriteObjC.cpp in Sources */,
 				1A2A54C30FD1DD1C00F4CE45 /* RewriteTest.cpp in Sources */,
@@ -1935,6 +1954,15 @@
 				1A986AB710D0746D00A8EA9E /* CGDeclCXX.cpp in Sources */,
 				E16B523510D30B2400430AC9 /* cc1_main.cpp in Sources */,
 				1AA963C410D85A7300786C86 /* FullExpr.cpp in Sources */,
+				1ACB57E41105820D0047B991 /* CompilerInstance.cpp in Sources */,
+				1ACB57E51105820D0047B991 /* CompilerInvocation.cpp in Sources */,
+				1ACB57E61105820D0047B991 /* DeclXML.cpp in Sources */,
+				1ACB57E71105820D0047B991 /* FrontendAction.cpp in Sources */,
+				1ACB57E81105820D0047B991 /* FrontendActions.cpp in Sources */,
+				1ACB57E91105820D0047B991 /* FrontendOptions.cpp in Sources */,
+				1ACB57EA1105820D0047B991 /* LangStandards.cpp in Sources */,
+				1ACB57EB1105820D0047B991 /* TypeXML.cpp in Sources */,
+				1ACB57EC1105820D0047B991 /* VerifyDiagnosticsClient.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
