@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+# RUN: llvm-mc -triple i386-apple-darwin10 %s | FileCheck %s
 
 # CHECK: TEST0:
 # CHECK: .zerofill __DATA,__bss,a,7,4
