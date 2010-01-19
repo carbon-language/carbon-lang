@@ -61,6 +61,7 @@ public:
   virtual void EmitBytes(StringRef Data);
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size);
+  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -197,6 +198,20 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
   }
 
   OS << ' ' << *truncateToSize(Value, Size) << '\n';
+}
+
+/// EmitFill - Emit NumBytes bytes worth of the value specified by
+/// FillValue.  This implements directives such as '.space'.
+void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
+  if (const char *ZeroDirective = MAI.getZeroDirective()) {
+    OS << ZeroDirective << NumBytes;
+    if (FillValue != 0)
+      OS << ',' << (int)FillValue;
+    OS << '\n';
+  } else {
+    // Emit a byte at a time.
+    MCStreamer::EmitFill(NumBytes, FillValue);
+  }
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
