@@ -545,11 +545,10 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
       MethodName = getFunctionName(Method);
       // FIXME : Find linkage name.
     } else {
-      // regular method
-      IdentifierInfo *II = Method->getIdentifier();
-      if (!II)
+      if (Method->isImplicit())
         continue;
-      MethodName = Method->getIdentifier()->getName();
+      // regular method
+      MethodName = getFunctionName(Method);
       MethodLinkageName = CGM.getMangledName(Method);
     }
 
