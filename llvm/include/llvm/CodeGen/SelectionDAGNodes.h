@@ -1285,37 +1285,55 @@ public:
   void print_details(raw_ostream &OS, const SelectionDAG *G) const;
   void print(raw_ostream &OS, const SelectionDAG *G = 0) const;
   void printr(raw_ostream &OS, const SelectionDAG *G = 0) const;
-  /// printWithDepth - Print a SelectionDAG node and children up to
-  /// depth "depth."  "limit" controls whether a message should be
-  /// printed if we hit depth "depth."
+
+  /// printrFull - Print a SelectionDAG node and all children down to
+  /// the leaves.  The given SelectionDAG allows target-specific nodes
+  /// to be printed in human-readable form.  Unlike printr, this will
+  /// print the whole DAG, including children that appear multiple
+  /// times.
   ///
-  void printWithDepth(raw_ostream &O, const SelectionDAG *G = 0,
-                      unsigned depth = -1, unsigned indent = 0,
-                      bool limit = false) const;
-  /// printWithFullDepth - Print a SelectionDAG node and all children
-  /// down to the leaves.
+  void printrFull(raw_ostream &O, const SelectionDAG *G = 0) const;
+
+  /// printrWithDepth - Print a SelectionDAG node and children up to
+  /// depth "depth."  The given SelectionDAG allows target-specific
+  /// nodes to be printed in human-readable form.  Unlike printr, this
+  /// will print children that appear multiple times wherever they are
+  /// used.
   ///
-  void printWithFullDepth(raw_ostream &O, const SelectionDAG *G = 0,
-                          unsigned indent = 0) const;
+  void printrWithDepth(raw_ostream &O, const SelectionDAG *G = 0,
+                       unsigned depth = 100) const;
+
+
   /// dump - Dump this node, for debugging.
   void dump() const;
+
   /// dumpr - Dump (recursively) this node and its use-def subgraph.
   void dumpr() const;
+
   /// dump - Dump this node, for debugging.
   /// The given SelectionDAG allows target-specific nodes to be printed
   /// in human-readable form.
   void dump(const SelectionDAG *G) const;
+
   /// dumpr - Dump (recursively) this node and its use-def subgraph.
   /// The given SelectionDAG allows target-specific nodes to be printed
   /// in human-readable form.
   void dumpr(const SelectionDAG *G) const;
-  /// dumpWithDepth - printWithDepth to dbgs().
+
+  /// dumprFull - printrFull to dbgs().  The given SelectionDAG allows
+  /// target-specific nodes to be printed in human-readable form.
+  /// Unlike dumpr, this will print the whole DAG, including children
+  /// that appear multiple times.
   ///
-  void dumpWithDepth(const SelectionDAG *G = 0, unsigned depth = 1,
-                     unsigned indent = 0, bool limit = false) const;
-  /// dumpWithFullDepth - printWithFullDepth to dbgs().
+  void dumprFull(const SelectionDAG *G = 0) const;
+
+  /// dumprWithDepth - printrWithDepth to dbgs().  The given
+  /// SelectionDAG allows target-specific nodes to be printed in
+  /// human-readable form.  Unlike dumpr, this will print children
+  /// that appear multiple times wherever they are used.
   ///
-  void dumpWithFullDepth(const SelectionDAG *G = 0, unsigned indent = 0) const;
+  void dumprWithDepth(const SelectionDAG *G = 0, unsigned depth = 100) const;
+
 
   static bool classof(const SDNode *) { return true; }
 
