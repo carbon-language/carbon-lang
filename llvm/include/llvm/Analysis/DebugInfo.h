@@ -475,7 +475,7 @@ namespace llvm {
   /// is not associated with any DWARF tag.
   class DILocation : public DIDescriptor {
   public:
-    explicit DILocation(MDNode *N) : DIDescriptor(N) { ; }
+    explicit DILocation(MDNode *N) : DIDescriptor(N) { }
 
     unsigned getLineNumber() const     { return getUnsignedField(0); }
     unsigned getColumnNumber() const   { return getUnsignedField(1); }
