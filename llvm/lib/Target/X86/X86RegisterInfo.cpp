@@ -666,6 +666,23 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 }
 
+/// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
+/// any DEBUG_VALUE instructions.  Return UnknownLoc if there is none.
+static
+DebugLoc findDebugLoc(MachineBasicBlock::iterator &MBBI, MachineBasicBlock &MBB) {
+  DebugLoc DL;
+  if (MBBI != MBB.end()) {
+    // Skip debug declarations, we don't want a DebugLoc from them.
+    MachineBasicBlock::iterator MBBI2 = MBBI;
+    while (MBBI2 != MBB.end() &&
+           MBBI2->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+      MBBI2++;
+    if (MBBI2 != MBB.end())
+      DL = MBBI2->getDebugLoc();
+  }
+  return DL;
+}
+
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 static
@@ -682,8 +699,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
        (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
        (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri));
   uint64_t Chunk = (1LL << 31) - 1;
-  DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
-                 DebugLoc::getUnknownLoc());
+  DebugLoc DL = findDebugLoc(MBBI, MBB);
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
@@ -1032,8 +1048,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (MBBI != MBB.end())
-    DL = MBBI->getDebugLoc();
+  DL = findDebugLoc(MBBI, MBB);
 
   // Adjust stack pointer: ESP -= numbytes.
   if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
