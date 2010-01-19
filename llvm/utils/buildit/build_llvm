@@ -57,24 +57,19 @@ DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
 if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
-    DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/Developer/usr
-    DEST_ROOT="/Developer/Platforms/iPhoneOS.platform/Developer$DEST_ROOT"
-elif [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
-    DT_HOME=$DEST_DIR/usr
-    DEST_ROOT="/Developer$DEST_ROOT"
+    DEST_DIR="$DEST_DIR/Developer/Platforms/iPhoneOS.platform"
+    mkdir -p "$DEST_DIR"
+fi
+
+DEVELOPER_DIR="${DEVELOPER_DIR-Developer}"
+if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
+    DT_HOME="$DEST_DIR/usr"
     HOST_SDKROOT=$SDKROOT
 else
-    DT_HOME=$DEST_DIR/Developer/usr
-    DEST_ROOT="/Developer$DEST_ROOT"
+    DT_HOME="$DEST_DIR/$DEVELOPER_DIR/usr"
 fi
-if [ "x$DEVELOPER_BIN" != "x" ]; then
-    if [ "x$RC_ProjectName" = "xllvmCore_Embedded" ]; then
-        DT_HOME=$DEST_DIR/Developer/Platforms/iPhoneOS.platform/$DEVELOPER_DIR/usr
-    else
-        DT_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
-    fi
-    DEST_ROOT="/$DEVELOPER_DIR$DEST_ROOT"
-fi
+
+DEST_ROOT="/$DEVELOPER_DIR$DEST_ROOT"
 
 ################################################################################
 # Run the build.
@@ -350,7 +345,7 @@ find $DEST_DIR -name html.tar.gz -exec rm {} \;
 cd $DEST_DIR
 mkdir -p ./usr/lib/
 cd usr/lib
-ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
+ln -s ../../$DEVELOPER_DIR/usr/lib/libLTO.dylib ./libLTO.dylib
 
 ################################################################################
 # w00t! Done!
