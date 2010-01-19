@@ -811,3 +811,29 @@ int pr6033(int x) {
   return x % y; // expected-warning{{The right operand of '%' is a garbage value}}
 }
 
+struct trie {
+  struct trie* next;
+};
+
+struct kwset {
+  struct trie *trie;
+  unsigned char delta[10];
+  struct trie* next[10];
+  int d;
+};
+
+typedef struct trie trie_t;
+typedef struct kwset kwset_t;
+
+void f(kwset_t *kws, char const *p, char const *q) {
+  struct trie const *trie;
+  struct trie * const *next = kws->next;
+  register unsigned char c;
+  register char const *end = p;
+  register char const *lim = q;
+  register int d = 1;
+  register unsigned char const *delta = kws->delta;
+
+  d = delta[c = (end+=d)[-1]]; // no-warning
+  trie = next[c];
+}
