@@ -168,6 +168,11 @@ namespace llvm {
     /// match a native machine width.
     virtual void EmitValue(const MCExpr *Value, unsigned Size) = 0;
 
+    /// EmitFill - Emit NumBytes bytes worth of the value specified by
+    /// FillValue.  This implements directives such as '.space'.
+    virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue = 0);
+    
+    
     /// EmitValueToAlignment - Emit some number of copies of @param Value until
     /// the byte alignment @param ByteAlignment is reached.
     ///

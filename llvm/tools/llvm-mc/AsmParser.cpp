@@ -1041,8 +1041,7 @@ bool AsmParser::ParseDirectiveSpace() {
     return TokError("invalid number of bytes in '.space' directive");
 
   // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
-  for (uint64_t i = 0, e = NumBytes; i != e; ++i)
-    Out.EmitValue(MCConstantExpr::Create(FillExpr, getContext()), 1);
+  Out.EmitFill(NumBytes, FillExpr);
 
   return false;
 }
