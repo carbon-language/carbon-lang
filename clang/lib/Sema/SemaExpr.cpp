@@ -3082,15 +3082,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
       return ExprError();
 
-    if (Getter || Setter) {
+    if (Getter) {
       QualType PType;
-
-      if (Getter)
-        PType = Getter->getResultType();
-      else
-        // Get the expression type from Setter's incoming parameter.
-        PType = (*(Setter->param_end() -1))->getType();
-      // FIXME: we must check that the setter has property type.
+      PType = Getter->getResultType();
       return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
                                       Setter, MemberLoc, BaseExpr));
     }
