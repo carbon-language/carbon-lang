@@ -2952,13 +2952,13 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
 
       // Perform a load (the LHS).  This performs the checks for
       // null dereferences, and so on.
-      ExplodedNodeSet Tmp3;
+      ExplodedNodeSet Tmp4;
       SVal location = state->getSVal(LHS);
-      EvalLoad(Tmp3, LHS, *I2, state, location);
+      EvalLoad(Tmp4, LHS, *I2, state, location);
 
-      for (ExplodedNodeSet::iterator I3=Tmp3.begin(), E3=Tmp3.end(); I3!=E3;
-           ++I3) {
-        state = GetState(*I3);
+      for (ExplodedNodeSet::iterator I4=Tmp4.begin(), E4=Tmp4.end(); I4!=E4;
+           ++I4) {
+        state = GetState(*I4);
         SVal V = state->getSVal(LHS);
 
         // Get the computation type.
@@ -3008,7 +3008,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           llvm::tie(state, LHSVal) = SVator.EvalCast(Result, state, LTy, CTy);
         }
 
-        EvalStore(Tmp3, B, LHS, *I3, state->BindExpr(B, Result),
+        EvalStore(Tmp3, B, LHS, *I4, state->BindExpr(B, Result),
                   location, LHSVal);
       }
     }

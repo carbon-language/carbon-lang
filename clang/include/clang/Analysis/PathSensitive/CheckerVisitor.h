@@ -66,6 +66,11 @@ break;
       default:
         assert(false && "Unsupport statement.");
         return;
+      case Stmt::CompoundAssignOperatorClass:
+        static_cast<ImplClass*>(this)->PostVisitBinaryOperator(C,
+                                         static_cast<const BinaryOperator*>(S));
+        break;
+
 #define POSTVISIT(NAME, FALLBACK) \
 case Stmt::NAME ## Class:\
 static_cast<ImplClass*>(this)->\
