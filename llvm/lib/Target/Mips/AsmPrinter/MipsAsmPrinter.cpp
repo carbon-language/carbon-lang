@@ -438,8 +438,6 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   Constant *C = GVar->getInitializer();
   const Type *CTy = C->getType();
   unsigned Size = TD->getTypeAllocSize(CTy);
-  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-  bool printSizeAndType = true;
 
   // A data structure or array is aligned in memory to the largest
   // alignment boundary required by any data type inside it (this matches
@@ -494,9 +492,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
    case GlobalValue::PrivateLinkage:
    case GlobalValue::LinkerPrivateLinkage:
    case GlobalValue::InternalLinkage:
-    if (CVA && CVA->isCString())
-      printSizeAndType = false;
-    break;
+      break;
    case GlobalValue::GhostLinkage:
     llvm_unreachable("Should not have any unmaterialized functions!");
    case GlobalValue::DLLImportLinkage:
@@ -509,7 +505,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   EmitAlignment(Align, GVar);
 
-  if (MAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     O << "\t.type " << *GVarSym << ",@object\n";
     O << "\t.size " << *GVarSym << ',' << Size << '\n';
   }
