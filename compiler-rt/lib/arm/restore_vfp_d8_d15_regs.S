@@ -11,25 +11,16 @@
 
 //
 // When compiling C++ functions that need to handle thrown exceptions the
-// compiler is required to save all registers and call __Unwind_SjLj_Register 
-// in the function prolog.  But when compiling for thumb1, there are 
+// compiler is required to save all registers and call __Unwind_SjLj_Register
+// in the function prolog.  But when compiling for thumb1, there are
 // no instructions to access the floating point registers, so the
 // compiler needs to add a call to the helper function _save_vfp_d8_d15_regs
-// written in ARM to save the float registers.  In the epilog, the compiler 
+// written in ARM to save the float registers.  In the epilog, the compiler
 // must also add a call to __restore_vfp_d8_d15_regs to restore those registers.
 //
 
 	.text
-	.syntax unified 
-
-//
-// Save registers d8-d15 onto stack
-//
-DEFINE_COMPILERRT_PRIVATE_FUNCTION(__save_vfp_d8_d15_regs)
-	vstmdb	sp!, {d8-d15}           // push registers d8-d15 onto stack
-	bx      lr                      // return to prolog
-
-
+	.syntax unified
 
 //
 // Restore registers d8-d15 from stack
@@ -42,4 +33,4 @@ DEFINE_COMPILERRT_PRIVATE_FUNCTION(__restore_vfp_d8_d15_regs)
 
 	// tell linker it can break up file at label boundaries
 	.subsections_via_symbols
-	
+
