@@ -1205,8 +1205,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   // emission.
   if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
     TargetLoweringObjectFileMachO &TLOFMacho = 
-    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-    if (TheSection == TLOFMacho.getDataCommonSection()) {
+      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    if (TLOFMacho.isDataCommonSection(TheSection)) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
       // .zerofill __DATA, __common, _foo, 400, 5

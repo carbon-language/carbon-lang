@@ -315,8 +315,8 @@ public:
   
   /// getDataCommonSection - Return the "__DATA,__common" section we put
   /// zerofill (aka bss) data into.
-  const MCSection *getDataCommonSection() const {
-    return DataCommonSection;
+  bool isDataCommonSection(const MCSection *Section) const {
+    return Section == DataCommonSection;
   }
   
   /// getLazySymbolPointerSection - Return the section corresponding to
