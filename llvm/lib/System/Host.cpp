@@ -299,3 +299,7 @@ std::string sys::getHostCPUName() {
   return "generic";
 }
 #endif
+
+bool sys::getHostCPUFeatures(StringMap<bool> &Features){
+  return false;
+}
