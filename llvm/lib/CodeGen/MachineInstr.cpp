@@ -1162,6 +1162,13 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
     if (FirstOp) FirstOp = false; else OS << ",";
     OS << " ";
+    if (i < getDesc().NumOperands) {
+      const TargetOperandInfo &TOI = getDesc().OpInfo[i];
+      if (TOI.isPredicate())
+        OS << "pred:";
+      if (TOI.isOptionalDef())
+        OS << "opt:";
+    }
     MO.print(OS, TM);
   }
 
