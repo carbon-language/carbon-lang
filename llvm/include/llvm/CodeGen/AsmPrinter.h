@@ -377,10 +377,6 @@ namespace llvm {
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
     
-    /// EmitZeros - Emit a block of zeros.
-    ///
-    void EmitZeros(uint64_t NumZeros, unsigned AddrSpace = 0) const;
-
     /// EmitString - Emit a zero-byte-terminated string constant.
     ///
     virtual void EmitString(const ConstantArray *CVA) const;

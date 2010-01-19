@@ -174,6 +174,12 @@ namespace llvm {
     virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
                           unsigned AddrSpace);
     
+    /// EmitZeros - Emit NumBytes worth of zeros.  This is a convenience
+    /// function that just wraps EmitFill.
+    void EmitZeros(uint64_t NumBytes, unsigned AddrSpace) {
+      EmitFill(NumBytes, 0, AddrSpace);
+    }
+
     
     /// EmitValueToAlignment - Emit some number of copies of @param Value until
     /// the byte alignment @param ByteAlignment is reached.

@@ -1058,12 +1058,6 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   }
 }
 
-/// EmitZeros - Emit a block of zeros.
-///
-void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
-  OutStreamer.EmitFill(NumZeros, 0, AddrSpace);
-}
-
 /// printAsCString - Print the specified array as a C compatible string, only if
 /// the predicate isString is true.
 ///
@@ -1134,7 +1128,7 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    AP.EmitZeros(padSize, AddrSpace);
+    AP.OutStreamer.EmitZeros(padSize, AddrSpace);
   }
   assert(SizeSoFar == cvsLayout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
@@ -1283,9 +1277,8 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       }
       O << '\n';
     }
-    LLVMContext &Context = CFP->getContext();
-    EmitZeros(TD.getTypeAllocSize(Type::getX86_FP80Ty(Context)) -
-              TD.getTypeStoreSize(Type::getX86_FP80Ty(Context)), AddrSpace);
+    OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
+                            TD.getTypeStoreSize(CFP->getType()), AddrSpace);
     return;
   }
   
@@ -1412,7 +1405,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   unsigned Size = TD->getTypeAllocSize(type);
 
   if (CV->isNullValue() || isa<UndefValue>(CV))
-    return EmitZeros(Size, AddrSpace);
+    return OutStreamer.EmitZeros(Size, AddrSpace);
   
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
     return EmitGlobalConstantArray(CVA, AddrSpace, *this);
