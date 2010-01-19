@@ -1173,11 +1173,9 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
-  bool isDarwin = Subtarget->isTargetDarwin();
-
   printVisibility(GVarSym, GVar->getVisibility());
 
-  if (Subtarget->isTargetELF())
+  if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.type " << *GVarSym << ",%object\n";
 
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
@@ -1243,7 +1241,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
-    if (isDarwin) {
+    if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << *GVarSym
         << "\n\t.weak_definition " << *GVarSym << "\n";
     } else {

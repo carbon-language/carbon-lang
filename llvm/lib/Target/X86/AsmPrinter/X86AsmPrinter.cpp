@@ -647,29 +647,32 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  Constant *C = GVar->getInitializer();
-  const Type *Type = C->getType();
-  
-  const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypeAllocSize(Type);
-  unsigned Align = TD->getPreferredAlignmentLog(GVar);
-
   printVisibility(GVarSym, GVar->getVisibility());
 
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.type\t" << *GVarSym << ",@object\n";
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.type\t" << *GVarSym;
+    if (MAI->getCommentString()[0] != '@')
+      O << ",@object\n";
+    else
+      O << ",%object\n";
+  }
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
 
+  const Type *Type = GVar->getType()->getElementType();
+  
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(Type);
+  unsigned AlignLog = TD->getPreferredAlignmentLog(GVar);
+  
   // Handle normal common symbols.
   if (GVKind.isCommon()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
     O << ".comm " << *GVarSym << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
     
     if (VerboseAsm) {
       O << "\t\t" << MAI->getCommentString() << " '";
@@ -687,14 +690,14 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       if (GVar->hasLocalLinkage()) {
         O << LComm << *GVarSym << ',' << Size;
         if (MAI->getLCOMMDirectiveTakesAlignment())
-          O << ',' << Align;
+          O << ',' << AlignLog;
       }
     } else {
       if (!Subtarget->isTargetCygMing())
         O << "\t.local\t" << *GVarSym << '\n';
       O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
     }
     if (VerboseAsm) {
       O.PadToColumn(MAI->getCommentColumn());
@@ -714,7 +717,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // .globl _foo
     OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
     // .zerofill __DATA, __common, _foo, 400, 5
-    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << AlignLog);
     return;
   }
 
@@ -751,7 +754,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     llvm_unreachable("Unknown linkage type!");
   }
 
-  EmitAlignment(Align, GVar);
+  EmitAlignment(AlignLog, GVar);
   O << *GVarSym << ":";
   if (VerboseAsm){
     O.PadToColumn(MAI->getCommentColumn());
@@ -760,7 +763,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   }
   O << '\n';
 
-  EmitGlobalConstant(C);
+  EmitGlobalConstant(GVar->getInitializer());
 
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << *GVarSym << ", " << Size << '\n';
