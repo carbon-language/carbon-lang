@@ -295,6 +295,13 @@ namespace llvm {
   public:
     virtual const char *getOperationStr() const { return " + "; }
 
+    virtual const Type *getType() const {
+      // Use the type of the last operand, which is likely to be a pointer
+      // type, if there is one. This doesn't usually matter, but it can help
+      // reduce casts when the expressions are expanded.
+      return getOperand(getNumOperands() - 1)->getType();
+    }
+
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVAddExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
