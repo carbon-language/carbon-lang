@@ -3,8 +3,8 @@
 # This should be included following 'lib_util.mk'.
 
 # The simple variables configurations can define.
-PlainConfigVariables := Configs UniversalArchs Description
-PerConfigVariables := Arch $(AvailableOptions)
+PlainConfigVariables := Configs Description
+PerConfigVariables := UniversalArchs Arch $(AvailableOptions)
 RequiredConfigVariables := Configs Description
 
 ###

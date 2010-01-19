@@ -136,7 +136,9 @@ $(call Set,Tmp.ObjPath,$(ProjObjRoot)/$(Tmp.Name)/$(Tmp.Config))
 # not.
 $(call Set,Tmp.ArchsToBuild,\
   $(if $(call IsDefined,$(Tmp.Key).UniversalArchs),\
-       $($(Tmp.Key).UniversalArchs),\
+       $(strip \
+         $(or $($(Tmp.Key).UniversalArchs.$(Tmp.Config)),\
+              $($(Tmp.Key).UniversalArchs))),\
        $(call VarOrDefault,$(Tmp.Key).Arch.$(Tmp.Config),$($(Tmp.Key).Arch))))
 
 # Copy or lipo to create the per-config library.
