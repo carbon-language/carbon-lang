@@ -460,6 +460,65 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   return DbgTy;
 }
 
+/// CollectRecordFields - A helper function to collect debug info for
+/// record fields. This is used while creating debug info entry for a Record.
+void CGDebugInfo::
+CollectRecordFields(const RecordDecl *Decl,
+                    llvm::DICompileUnit Unit,
+                    llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys) {
+  unsigned FieldNo = 0;
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
+  for (RecordDecl::field_iterator I = Decl->field_begin(),
+                                  E = Decl->field_end();
+       I != E; ++I, ++FieldNo) {
+    FieldDecl *Field = *I;
+    llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
+
+    llvm::StringRef FieldName = Field->getName();
+
+    // Ignore unnamed fields.
+    if (FieldName.empty())
+      continue;
+
+    // Get the location for the field.
+    SourceLocation FieldDefLoc = Field->getLocation();
+    PresumedLoc PLoc = SM.getPresumedLoc(FieldDefLoc);
+    llvm::DICompileUnit FieldDefUnit;
+    unsigned FieldLine = 0;
+
+    if (!PLoc.isInvalid()) {
+      FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
+      FieldLine = PLoc.getLine();
+    }
+
+    QualType FType = Field->getType();
+    uint64_t FieldSize = 0;
+    unsigned FieldAlign = 0;
+    if (!FType->isIncompleteArrayType()) {
+
+      // Bit size, align and offset of the type.
+      FieldSize = CGM.getContext().getTypeSize(FType);
+      Expr *BitWidth = Field->getBitWidth();
+      if (BitWidth)
+        FieldSize = BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
+
+      FieldAlign =  CGM.getContext().getTypeAlign(FType);
+    }
+
+    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);
+
+    // Create a DW_TAG_member node to remember the offset of this field in the
+    // struct.  FIXME: This is an absolutely insane way to capture this
+    // information.  When we gut debug info, this should be fixed.
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             FieldName, FieldDefUnit,
+                                             FieldLine, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+  }
+}
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
@@ -509,57 +568,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
-  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
 
-  unsigned FieldNo = 0;
-  for (RecordDecl::field_iterator I = Decl->field_begin(),
-                                  E = Decl->field_end();
-       I != E; ++I, ++FieldNo) {
-    FieldDecl *Field = *I;
-    llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
 
-    llvm::StringRef FieldName = Field->getName();
-
-    // Ignore unnamed fields.
-    if (FieldName.empty())
-      continue;
-
-    // Get the location for the field.
-    SourceLocation FieldDefLoc = Field->getLocation();
-    PresumedLoc PLoc = SM.getPresumedLoc(FieldDefLoc);
-    llvm::DICompileUnit FieldDefUnit;
-    unsigned FieldLine = 0;
-
-    if (!PLoc.isInvalid()) {
-      FieldDefUnit = getOrCreateCompileUnit(FieldDefLoc);
-      FieldLine = PLoc.getLine();
-    }
-
-    QualType FType = Field->getType();
-    uint64_t FieldSize = 0;
-    unsigned FieldAlign = 0;
-    if (!FType->isIncompleteArrayType()) {
-
-      // Bit size, align and offset of the type.
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      Expr *BitWidth = Field->getBitWidth();
-      if (BitWidth)
-        FieldSize = BitWidth->EvaluateAsInt(CGM.getContext()).getZExtValue();
-
-      FieldAlign =  CGM.getContext().getTypeAlign(FType);
-    }
-
-    uint64_t FieldOffset = RL.getFieldOffset(FieldNo);
-
-    // Create a DW_TAG_member node to remember the offset of this field in the
-    // struct.  FIXME: This is an absolutely insane way to capture this
-    // information.  When we gut debug info, this should be fixed.
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             FieldName, FieldDefUnit,
-                                             FieldLine, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-  }
+  CollectRecordFields(Decl, Unit, EltTys);
 
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());

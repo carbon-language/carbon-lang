@@ -85,6 +85,8 @@ class CGDebugInfo {
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);
+  void CollectRecordFields(const RecordDecl *Decl, llvm::DICompileUnit U,
+                           llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
