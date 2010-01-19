@@ -4,7 +4,7 @@
 @state = external global [0 x i32]		; <[0 x i32]*> [#uses=4]
 @S = external global [0 x i32]		; <[0 x i32]*> [#uses=4]
 
-define i32 @foo() {
+define i32 @foo() nounwind {
 entry:
 	br label %bb
 

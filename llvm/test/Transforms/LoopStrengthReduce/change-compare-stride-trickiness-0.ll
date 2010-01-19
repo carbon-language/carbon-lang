@@ -6,7 +6,7 @@ target triple = "x86_64-apple-darwin9"
 ; happens before the relevant use, so the comparison stride can't be
 ; easily changed.
 
-define void @foo() {
+define void @foo() nounwind {
 entry:
 	br label %loop
 
