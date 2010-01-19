@@ -25,6 +25,7 @@
 
 namespace llvm {
 class AsmCond;
+class AsmToken;
 class MCContext;
 class MCExpr;
 class MCInst;
@@ -78,6 +79,8 @@ public:
 
   virtual void Warning(SMLoc L, const Twine &Meg);
   virtual bool Error(SMLoc L, const Twine &Msg);
+
+  const AsmToken &Lex();
 
   bool ParseExpression(const MCExpr *&Res);
   virtual bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc);
