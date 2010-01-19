@@ -1140,66 +1140,41 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
   // precision...
   const TargetData &TD = *TM.getTargetData();
   if (CFP->getType()->isDoubleTy()) {
-    double Val = CFP->getValueAPF().convertToDouble();  // for comment only
+    if (VerboseAsm) {
+      double Val = CFP->getValueAPF().convertToDouble();  // for comment only
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " double " << Val << '\n';
+    }
+
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (MAI->getData64bitsDirective(AddrSpace)) {
-      O << MAI->getData64bitsDirective(AddrSpace) << i;
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " double " << Val;
-      }
-      O << '\n';
+      O << MAI->getData64bitsDirective(AddrSpace) << i << '\n';
     } else if (TD.isBigEndian()) {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant word of double " << Val;
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant word of double " << Val;
-      }
-      O << '\n';
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32)  << '\n';
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i) << '\n';
     } else {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant word of double " << Val;
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant word of double " << Val;
-      }
-      O << '\n';
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i) << '\n';
+      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32) << '\n';
     }
     return;
   }
   
   if (CFP->getType()->isFloatTy()) {
-    float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-    O << MAI->getData32bitsDirective(AddrSpace)
-      << CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     if (VerboseAsm) {
+      float Val = CFP->getValueAPF().convertToFloat();  // for comment only
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " float " << Val;
+      O << MAI->getCommentString() << " float " << Val << '\n';
     }
-    O << '\n';
+    O << MAI->getData32bitsDirective(AddrSpace)
+      << CFP->getValueAPF().bitcastToAPInt().getZExtValue() << '\n';
     return;
   }
   
   if (CFP->getType()->isX86_FP80Ty()) {
     // all long double variants are printed as hex
     // api needed to prevent premature destruction
-    APInt api = CFP->getValueAPF().bitcastToAPInt();
-    const uint64_t *p = api.getRawData();
+    APInt API = CFP->getValueAPF().bitcastToAPInt();
+    const uint64_t *p = API.getRawData();
     if (VerboseAsm) {
       // Convert to double so we can print the approximate val as a comment.
       APFloat DoubleVal = CFP->getValueAPF();
@@ -1229,72 +1204,23 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     return;
   }
   
-  if (CFP->getType()->isPPC_FP128Ty()) {
-    // all long double variants are printed as hex
-    // api needed to prevent premature destruction
-    APInt api = CFP->getValueAPF().bitcastToAPInt();
-    const uint64_t *p = api.getRawData();
-    if (TD.isBigEndian()) {
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant word of ppc_fp128";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-        << " next word";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next word";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant word";
-      }
-      O << '\n';
-     } else {
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant word of ppc_fp128";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next word";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next word";
-      }
-      O << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant word";
-      }
-      O << '\n';
-    }
-    return;
-  } else llvm_unreachable("Floating point constant type not handled");
+  assert(CFP->getType()->isPPC_FP128Ty() &&
+         "Floating point constant type not handled");
+  // All long double variants are printed as hex api needed to prevent
+  // premature destruction.
+  APInt API = CFP->getValueAPF().bitcastToAPInt();
+  const uint64_t *p = API.getRawData();
+  if (TD.isBigEndian()) {
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])<<'\n';
+   } else {
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])<<'\n';
+    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)<<'\n';
+  }
 }
 
 void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
