@@ -93,7 +93,7 @@ public:
                           TryTerminatedBlock(NULL) {}
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(Stmt *Statement, ASTContext *C);
+  CFG* buildCFG(Stmt *Statement, ASTContext *C, bool AddScopes);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -139,6 +139,25 @@ private:
   CFGBlock* NYS() {
     badCFG = true;
     return Block;
+  }
+
+  CFGBlock *StartScope(Stmt *S, CFGBlock *B) {
+    if (!AddScopes)
+      return B;
+
+    if (B == 0)
+      B = createBlock();
+    B->StartScope(S, cfg->getBumpVectorContext());
+    return B;
+  }
+
+  void EndScope(Stmt *S) {
+    if (!AddScopes)
+      return;
+
+    if (Block == 0)
+      Block = createBlock();
+    Block->EndScope(S, cfg->getBumpVectorContext());
   }
 
   void autoCreateBlock() { if (!Block) Block = createBlock(); }
@@ -188,6 +207,7 @@ private:
   }
 
   bool badCFG;
+  bool AddScopes;
 };
 
 // FIXME: Add support for dependent-sized array types in C++?
@@ -209,12 +229,13 @@ static VariableArrayType* FindVA(Type* t) {
 ///  body (compound statement).  The ownership of the returned CFG is
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
-CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
+CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C, bool AddScopes) {
   Context = C;
   assert(cfg.get());
   if (!Statement)
     return NULL;
 
+  this->AddScopes = AddScopes;
   badCFG = false;
 
   // Create an empty block that will serve as the exit block for the CFG.  Since
@@ -519,22 +540,43 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
     NoReturn = true;
   }
 
-  if (FunctionDecl *FD = C->getDirectCallee())
+  bool CanThrow = false;
+
+  // Languages without exceptions are assumed to not throw.
+  if (Context->getLangOptions().Exceptions) {
+    CanThrow = true;
+  }
+
+  if (FunctionDecl *FD = C->getDirectCallee()) {
     if (FD->hasAttr<NoReturnAttr>())
       NoReturn = true;
+    if (FD->hasAttr<NoThrowAttr>())
+      CanThrow = false;
+  }
 
-  if (!NoReturn)
+  if (!NoReturn && !CanThrow)
     return VisitStmt(C, asc);
 
-  if (Block && !FinishBlock(Block))
-    return 0;
+  if (Block) {
+    Succ = Block;
+    if (!FinishBlock(Block))
+      return 0;
+  }
 
-  // Create new block with no successor for the remaining pieces.
-  Block = createBlock(false);
+  Block = createBlock(!NoReturn);
   AppendStmt(Block, C, asc);
 
-  // Wire this to the exit block directly.
-  AddSuccessor(Block, &cfg->getExit());
+  if (NoReturn) {
+    // Wire this to the exit block directly.
+    AddSuccessor(Block, &cfg->getExit());
+  }
+  if (CanThrow) {
+    // Add exceptional edges.
+    if (TryTerminatedBlock)
+      AddSuccessor(Block, TryTerminatedBlock);
+    else
+      AddSuccessor(Block, &cfg->getExit());
+  }
 
   return VisitChildren(C);
 }
@@ -569,6 +611,8 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C,
 
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
+  EndScope(C);
+
   CFGBlock* LastBlock = Block;
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
@@ -578,6 +622,9 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
     if (badCFG)
       return NULL;
   }
+
+  LastBlock = StartScope(C, LastBlock);
+
   return LastBlock;
 }
 
@@ -1648,9 +1695,9 @@ CFGBlock* CFG::createBlock() {
 
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
-CFG* CFG::buildCFG(Stmt* Statement, ASTContext *C) {
+CFG* CFG::buildCFG(Stmt* Statement, ASTContext *C, bool AddScopes) {
   CFGBuilder Builder;
-  return Builder.buildCFG(Statement, C);
+  return Builder.buildCFG(Statement, C, AddScopes);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1909,7 +1956,18 @@ public:
 
 
 static void print_stmt(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
-                       Stmt* Terminator) {
+                       const CFGElement &E) {
+  Stmt *Terminator = E;
+
+  if (E.asStartScope()) {
+    OS << "start scope\n";
+    return;
+  }
+  if (E.asEndScope()) {
+    OS << "end scope\n";
+    return;
+  }
+
   if (Helper) {
     // special printing for statement-expressions.
     if (StmtExpr* SE = dyn_cast<StmtExpr>(Terminator)) {
@@ -1959,14 +2017,14 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
     OS << " ]\n";
 
   // Print the label of this block.
-  if (Stmt* Terminator = const_cast<Stmt*>(B.getLabel())) {
+  if (Stmt* Label = const_cast<Stmt*>(B.getLabel())) {
 
     if (print_edges)
       OS << "    ";
 
-    if (LabelStmt* L = dyn_cast<LabelStmt>(Terminator))
+    if (LabelStmt* L = dyn_cast<LabelStmt>(Label))
       OS << L->getName();
-    else if (CaseStmt* C = dyn_cast<CaseStmt>(Terminator)) {
+    else if (CaseStmt* C = dyn_cast<CaseStmt>(Label)) {
       OS << "case ";
       C->getLHS()->printPretty(OS, Helper,
                                PrintingPolicy(Helper->getLangOpts()));
@@ -1975,9 +2033,9 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
         C->getRHS()->printPretty(OS, Helper,
                                  PrintingPolicy(Helper->getLangOpts()));
       }
-    } else if (isa<DefaultStmt>(Terminator))
+    } else if (isa<DefaultStmt>(Label))
       OS << "default";
-    else if (CXXCatchStmt *CS = dyn_cast<CXXCatchStmt>(Terminator)) {
+    else if (CXXCatchStmt *CS = dyn_cast<CXXCatchStmt>(Label)) {
       OS << "catch (";
       CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper->getLangOpts()),
         0);

@@ -20,6 +20,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
 #include "clang/Analysis/Support/BumpVector.h"
+#include "clang/Basic/SourceLocation.h"
 #include <cassert>
 
 namespace llvm {
@@ -33,15 +34,39 @@ namespace clang {
   class LangOptions;
   class ASTContext;
 
+namespace {
+// An element of the CFG for implicit descructor calls implied by the language
+// rules.
+class Dtor {
+  // Statement that introduces the variable.
+  Stmt *S;
+  // A token which ends the scope, return, goto, throw, }.
+  SourceLocation Loc;
+public:
+  Dtor(Stmt *s, SourceLocation l) : S(s), Loc(l) {
+  }
+  SourceLocation getLoc() { return Loc; }
+  Stmt *getStmt() { return S; }
+};
+}
+
 /// CFGElement - Represents a top-level expression in a basic block.
 class CFGElement {
-  llvm::PointerIntPair<Stmt *, 1> Data;
+  llvm::PointerIntPair<Stmt *, 2> Data;
 public:
+  enum Type { StartScope, EndScope };
   explicit CFGElement() {}
   CFGElement(Stmt *S, bool lvalue) : Data(S, lvalue ? 1 : 0) {}
+  CFGElement(Stmt *S, Type t) : Data(S, t == StartScope ? 2 : 3) {}
+  // CFGElement(Dtor *S, Type t) : Data(reinterpret_cast<Stmt*>(S), 4) {}
   Stmt *getStmt() const { return Data.getPointer(); }
   bool asLValue() const { return Data.getInt() == 1; }
+  bool asStartScope() const { return Data.getInt() == 2; }
+  bool asEndScope() const { return Data.getInt() == 3; }
+  bool asDtor() const { return Data.getInt() == 4; }
   operator Stmt*() const { return getStmt(); }
+  operator bool() const { return getStmt() != 0; }
+  operator Dtor*() const { return reinterpret_cast<Dtor*>(getStmt()); }
 };
 
 /// CFGBlock - Represents a single basic block in a source-level CFG.
@@ -236,6 +261,12 @@ public:
   void appendStmt(Stmt* Statement, BumpVectorContext &C, bool asLValue) {
       Stmts.push_back(CFGElement(Statement, asLValue), C);
   }  
+  void StartScope(Stmt* S, BumpVectorContext &C) {
+    Stmts.push_back(CFGElement(S, CFGElement::StartScope), C);
+  }
+  void EndScope(Stmt* S, BumpVectorContext &C) {
+    Stmts.push_back(CFGElement(S, CFGElement::EndScope), C);
+  }
 };
 
 
@@ -254,7 +285,7 @@ public:
 
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.
-  static CFG* buildCFG(Stmt* AST, ASTContext *C);
+  static CFG* buildCFG(Stmt* AST, ASTContext *C, bool AddScopes = false);
 
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;
   ///  the caller should not directly free it.
