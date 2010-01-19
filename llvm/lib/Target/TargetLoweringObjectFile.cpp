@@ -761,16 +761,19 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   ConstDataCoalSection
     = getMachOSection("__DATA","__const_coal", MCSectionMachO::S_COALESCED,
                       SectionKind::getText());
-  DataCommonSection
-    = getMachOSection("__DATA","__common", MCSectionMachO::S_ZEROFILL,
-                      SectionKind::getBSS());
   ConstDataSection  // .const_data
     = getMachOSection("__DATA", "__const", 0,
                       SectionKind::getReadOnlyWithRel());
   DataCoalSection
     = getMachOSection("__DATA","__datacoal_nt", MCSectionMachO::S_COALESCED,
                       SectionKind::getDataRel());
-
+  DataCommonSection
+    = getMachOSection("__DATA","__common", MCSectionMachO::S_ZEROFILL,
+                      SectionKind::getBSS());
+  DataBSSSection
+    = getMachOSection("__DATA","__bss", MCSectionMachO::S_ZEROFILL,
+                    SectionKind::getBSS());
+  
 
   LazySymbolPointerSection
     = getMachOSection("__DATA", "__la_symbol_ptr",
@@ -933,6 +936,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // DATA, __common section with the .zerofill directive.
   if (Kind.isBSSExtern())
     return DataCommonSection;
+
+  // Put zero initialized globals with local linkage in __DATA,__bss directive
+  // with the .zerofill directive (aka .lcomm).
+  if (Kind.isBSSLocal())
+    return DataBSSSection;
   
   // Otherwise, just drop the variable in the normal data section.
   return DataSection;

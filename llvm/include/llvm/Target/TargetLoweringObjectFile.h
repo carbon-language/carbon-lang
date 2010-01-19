@@ -259,6 +259,7 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *ConstDataSection;
   const MCSection *DataCoalSection;
   const MCSection *DataCommonSection;
+  const MCSection *DataBSSSection;
   const MCSection *FourByteConstantSection;
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;

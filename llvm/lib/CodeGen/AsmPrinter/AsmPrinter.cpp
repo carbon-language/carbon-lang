@@ -171,21 +171,34 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
       O << '\n';
     }
+    
+    // Handle common symbols.
     if (GVKind.isCommon()) {
       // .comm _foo, 42, 4
       OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
-    } else if (const char *LComm = MAI->getLCOMMDirective()) {
-      // .lcomm _foo, 42, 4
-      O << LComm << *GVSym << ',' << Size;
-      if (MAI->getLCOMMDirectiveTakesAlignment())
-        O << ',' << AlignLog;
-      O << '\n';
-    } else {
-      // .local _foo
-      O << "\t.local\t" << *GVSym << '\n';
-      // .comm _foo, 42, 4
-      OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
+      return;
     }
+    
+    // Handle local BSS symbols.
+    if (MAI->hasMachoZeroFillDirective()) {
+      const MCSection *TheSection =
+        getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+      // .zerofill __DATA, __bss, _foo, 400, 5
+      OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << AlignLog);
+      return;
+    }
+    
+    if (const char *LComm = MAI->getLCOMMDirective()) {
+      // .lcomm _foo, 42
+      O << LComm << *GVSym << ',' << Size;
+      O << '\n';
+      return;
+    }
+    
+    // .local _foo
+    O << "\t.local\t" << *GVSym << '\n';
+    // .comm _foo, 42, 4
+    OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
     return;
   }
   

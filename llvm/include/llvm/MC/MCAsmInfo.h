@@ -192,7 +192,7 @@ namespace llvm {
     /// LCOMMDirective - This is the name of a directive (if supported) that can
     /// be used to efficiently declare a local (internal) block of zero
     /// initialized data in the .bss/.data section.  The syntax expected is:
-    /// @verbatim <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
+    /// @verbatim <LCOMMDirective> SYMBOLNAME LENGTHINBYTES
     /// @endverbatim
     const char *LCOMMDirective;              // Defaults to null.
     
@@ -201,10 +201,6 @@ namespace llvm {
     /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
     /// argument that specifies the alignment of the declaration.
     bool COMMDirectiveTakesAlignment;        // Defaults to true.
-    
-    /// LCOMMDirectiveTakesAlignment - True if LCOMMDirective takes a third
-    /// argument that specifies the alignment of the declaration.
-    bool LCOMMDirectiveTakesAlignment;       // Defaults to false.
     
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
@@ -417,9 +413,6 @@ namespace llvm {
     }
     bool getCOMMDirectiveTakesAlignment() const {
       return COMMDirectiveTakesAlignment;
-    }
-    bool getLCOMMDirectiveTakesAlignment() const {
-      return LCOMMDirectiveTakesAlignment;
     }
     bool hasDotTypeDotSizeDirective() const {
       return HasDotTypeDotSizeDirective;
