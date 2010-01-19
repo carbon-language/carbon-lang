@@ -818,20 +818,6 @@ CXString clang_getCursorSpelling(CXCursor C) {
       assert(OID && "getCursorSpelling(): Missing protocol decl");
       return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
-    case CXCursor_ObjCSelectorRef: {
-      ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(getCursorStmt(C));
-      assert(OME && "getCursorSpelling(): Missing message expr");
-      return CIndexer::createCXString(OME->getSelector().getAsString().c_str(),
-                                      true);
-    }
-    case CXCursor_VarRef:
-    case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef: {
-      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(getCursorStmt(C));
-      assert(DRE && "getCursorSpelling(): Missing decl ref expr");
-      return CIndexer::createCXString(DRE->getDecl()->getIdentifier()
-                                      ->getNameStart());
-    }
     default:
       return CIndexer::createCXString("<not implemented>");
     }
@@ -872,10 +858,6 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
   case CXCursor_ObjCClassRef: return "ObjCClassRef";
-  case CXCursor_ObjCSelectorRef: return "ObjCSelectorRef";
-  case CXCursor_VarRef: return "VarRef";
-  case CXCursor_FunctionRef: return "FunctionRef";
-  case CXCursor_EnumConstantRef: return "EnumConstantRef";
   case CXCursor_UnexposedExpr: return "UnexposedExpr";
   case CXCursor_DeclRefExpr: return "DeclRefExpr";
   case CXCursor_MemberRefExpr: return "MemberRefExpr";
@@ -1019,13 +1001,6 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return translateSourceLocation(P.first->getASTContext(), P.second);
     }
       
-    case CXCursor_ObjCSelectorRef:
-    case CXCursor_VarRef:
-    case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef:
-      return translateSourceLocation(getCursorContext(C), 
-                                     getLocationFromExpr(getCursorExpr(C)));
-        
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -1070,13 +1045,6 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
         return translateSourceRange(P.first->getASTContext(), P.second);
       }
         
-      case CXCursor_ObjCSelectorRef:
-      case CXCursor_VarRef:
-      case CXCursor_FunctionRef:
-      case CXCursor_EnumConstantRef:
-        return translateSourceRange(getCursorContext(C), 
-                                    getCursorExpr(C)->getSourceRange());
-        
       default:
         // FIXME: Need a way to enumerate all non-reference cases.
         llvm_unreachable("Missed a reference kind");
@@ -1119,16 +1087,6 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       
     case CXCursor_ObjCClassRef:      
       return MakeCXCursor(getCursorObjCClassRef(C).first);
-      
-    case CXCursor_ObjCSelectorRef:
-    case CXCursor_VarRef:
-    case CXCursor_FunctionRef:
-    case CXCursor_EnumConstantRef: {
-      Decl *D = getDeclFromExpr(getCursorExpr(C));
-      if (D)
-        return MakeCXCursor(D);
-      break;
-    }
       
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
