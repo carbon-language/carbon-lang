@@ -1200,82 +1200,29 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
-    // Convert to double so we can print the approximate val as a comment.
-    APFloat DoubleVal = CFP->getValueAPF();
-    bool ignored;
-    DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
-                      &ignored);
+    if (VerboseAsm) {
+      // Convert to double so we can print the approximate val as a comment.
+      APFloat DoubleVal = CFP->getValueAPF();
+      bool ignored;
+      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
+                        &ignored);
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << " x86_fp80 ~= "
+        << DoubleVal.convertToDouble() << '\n';
+    }
+    
     if (TD.isBigEndian()) {
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant halfword of x86_fp80 ~"
-          << DoubleVal.convertToDouble();
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant halfword";
-      }
-      O << '\n';
-     } else {
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " least significant halfword of x86_fp80 ~"
-          << DoubleVal.convertToDouble();
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " next halfword";
-      }
-      O << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString()
-          << " most significant halfword";
-      }
-      O << '\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]) << '\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])      <<'\n';
+    } else {
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]) << '\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)<<'\n';
+      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]) << '\n';
     }
     OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
                             TD.getTypeStoreSize(CFP->getType()), AddrSpace);
