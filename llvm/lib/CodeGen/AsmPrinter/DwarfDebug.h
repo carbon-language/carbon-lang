@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/ValueMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
@@ -136,25 +136,25 @@ class DwarfDebug : public Dwarf {
   
   /// DbgScopeMap - Tracks the scopes in the current function.
   ///
-  ValueMap<MDNode *, DbgScope *> DbgScopeMap;
+  DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
   /// ConcreteScopes - Tracks the concrete scopees in the current function.
   /// These scopes are also included in DbgScopeMap.
-  ValueMap<MDNode *, DbgScope *> ConcreteScopes;
+  DenseMap<MDNode *, DbgScope *> ConcreteScopes;
 
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
   /// not included DbgScopeMap.
-  ValueMap<MDNode *, DbgScope *> AbstractScopes;
+  DenseMap<MDNode *, DbgScope *> AbstractScopes;
   SmallVector<DbgScope *, 4>AbstractScopesList;
 
   /// AbstractVariables - Collection on abstract variables.
-  ValueMap<MDNode *, DbgVariable *> AbstractVariables;
+  DenseMap<MDNode *, DbgVariable *> AbstractVariables;
 
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
 
-  DenseMap<DIE *, WeakVH> ContainingTypeMap;
+  DenseMap<DIE *, MDNode *> ContainingTypeMap;
 
   /// AbstractSubprogramDIEs - Collection of abstruct subprogram DIEs.
   SmallPtrSet<DIE *, 4> AbstractSubprogramDIEs;
@@ -176,7 +176,7 @@ class DwarfDebug : public Dwarf {
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
   typedef std::pair<unsigned, DIE *> InlineInfoLabels;
-  ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
+  DenseMap<MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
 
   /// CompileUnitOffsets - A vector of the offsets of the compile units. This is

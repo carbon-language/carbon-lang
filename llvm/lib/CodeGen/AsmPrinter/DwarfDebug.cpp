@@ -56,12 +56,12 @@ class CompileUnit {
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
   /// variables to debug information entries.
   /// FIXME : Rename GVToDieMap -> NodeToDieMap
-  ValueMap<MDNode *, DIE *> GVToDieMap;
+  DenseMap<MDNode *, DIE *> GVToDieMap;
 
   /// GVToDIEEntryMap - Tracks the mapping of unit level debug informaton
   /// descriptors to debug information entries using a DIEEntry proxy.
   /// FIXME : Rename
-  ValueMap<MDNode *, DIEEntry *> GVToDIEEntryMap;
+  DenseMap<MDNode *, DIEEntry *> GVToDIEEntryMap;
 
   /// Globals - A map of globally visible named entities for this unit.
   ///
@@ -108,7 +108,7 @@ public:
   /// getDIEEntry - Returns the debug information entry for the speciefied
   /// debug variable.
   DIEEntry *getDIEEntry(MDNode *N) { 
-    ValueMap<MDNode *, DIEEntry *>::iterator I = GVToDIEEntryMap.find(N);
+    DenseMap<MDNode *, DIEEntry *>::iterator I = GVToDIEEntryMap.find(N);
     if (I == GVToDIEEntryMap.end())
       return NULL;
     return I->second;
@@ -1162,7 +1162,8 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     addUInt(Block, 0, dwarf::DW_FORM_data1, SP.getVirtualIndex());
     addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
-    ContainingTypeMap.insert(std::make_pair(SPDie, WeakVH(SP.getContainingType().getNode())));
+    ContainingTypeMap.insert(std::make_pair(SPDie, 
+                                            SP.getContainingType().getNode()));
   }
 
   if (MakeDecl || !SP.isDefinition()) {
@@ -1379,7 +1380,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   InlinedSubprogramDIEs.insert(OriginDIE);
 
   // Track the start label for this inlined function.
-  ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
+  DenseMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
     I = InlineInfo.find(InlinedSP.getNode());
 
   if (I == InlineInfo.end()) {
@@ -1808,7 +1809,7 @@ void DwarfDebug::endModule() {
          TE = TopLevelDIEsVector.end(); TI != TE; ++TI)
     ModuleCU->getCUDie()->addChild(*TI);
 
-  for (DenseMap<DIE *, WeakVH>::iterator CI = ContainingTypeMap.begin(),
+  for (DenseMap<DIE *, MDNode *>::iterator CI = ContainingTypeMap.begin(),
          CE = ContainingTypeMap.end(); CI != CE; ++CI) {
     DIE *SPDie = CI->first;
     MDNode *N = dyn_cast_or_null<MDNode>(CI->second);
@@ -2042,7 +2043,7 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
   // and end of a scope respectively. Create an inverse map that list scopes
   // starts (and ends) with an instruction. One instruction may start (or end)
   // multiple scopes.
-  for (ValueMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
+  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
 	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
     DbgScope *S = DI->second;
     if (S->isAbstractScope())
@@ -2922,7 +2923,7 @@ void DwarfDebug::emitDebugInlineInfo() {
          E = InlinedSPNodes.end(); I != E; ++I) {
 
     MDNode *Node = *I;
-    ValueMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
+    DenseMap<MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
       = InlineInfo.find(Node);
     SmallVector<InlineInfoLabels, 4> &Labels = II->second;
     DISubprogram SP(Node);
