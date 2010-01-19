@@ -464,7 +464,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
       AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
       AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
     } else {
-      assert (B->getOpcode() == BinaryOperator::LAnd);
+      assert(B->getOpcode() == BinaryOperator::LAnd);
       AddSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
       AddSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
     }
@@ -751,7 +751,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   CFGBlock* ThenBlock;
   {
     Stmt* Then = I->getThen();
-    assert (Then);
+    assert(Then);
     SaveAndRestore<CFGBlock*> sv(Succ);
     Block = NULL;
     ThenBlock = addStmt(Then);
@@ -927,7 +927,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
   // Now create the loop body.
   {
-    assert (F->getBody());
+    assert(F->getBody());
 
     // Save the current values for Block, Succ, and continue and break targets
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
@@ -1313,7 +1313,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
   // Process the loop body.
   CFGBlock* BodyBlock = NULL;
   {
-    assert (D->getBody());
+    assert(D->getBody());
 
     // Save the current values for Block, Succ, and continue and break targets
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
@@ -1446,7 +1446,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // When visiting the body, the case statements should automatically get linked
   // up to the switch.  We also don't keep a pointer to the body, since all
   // control-flow from the switch goes to case/default statements.
-  assert (Terminator->getBody() && "switch must contain a non-NULL body");
+  assert(Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
   CFGBlock *BodyBlock = addStmt(Terminator->getBody());
   if (Block) {
@@ -1460,7 +1460,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
 
   // Add the terminator and condition in the switch block.
   SwitchTerminatedBlock->setTerminator(Terminator);
-  assert (Terminator->getCond() && "switch condition must be non-NULL");
+  assert(Terminator->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
   Block = addStmt(Terminator->getCond());
   
@@ -1577,7 +1577,7 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
 
   // When visiting the body, the case statements should automatically get linked
   // up to the try.
-  assert (Terminator->getTryBlock() && "try must contain a non-NULL body");
+  assert(Terminator->getTryBlock() && "try must contain a non-NULL body");
   Block = NULL;
   CFGBlock *BodyBlock = addStmt(Terminator->getTryBlock());
 
