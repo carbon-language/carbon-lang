@@ -226,6 +226,10 @@ namespace llvm {
     /// WeakDefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak defined symbol.
     const char *WeakDefDirective;            // Defaults to NULL.
+
+    /// LinkOnceDirective - This directive, if non-null is used to declare a
+    /// global as being a weak defined symbol.  This is used on cygwin/mingw.
+    const char *LinkOnceDirective;           // Defaults to NULL.
     
     /// HiddenDirective - This directive, if non-null, is used to declare a
     /// global or function as having hidden visibility.
@@ -426,12 +430,9 @@ namespace llvm {
     const char *getUsedDirective() const {
       return UsedDirective;
     }
-    const char *getWeakRefDirective() const {
-      return WeakRefDirective;
-    }
-    const char *getWeakDefDirective() const {
-      return WeakDefDirective;
-    }
+    const char *getWeakRefDirective() const { return WeakRefDirective; }
+    const char *getWeakDefDirective() const { return WeakDefDirective; }
+    const char *getLinkOnceDirective() const { return LinkOnceDirective; }
     const char *getHiddenDirective() const {
       return HiddenDirective;
     }

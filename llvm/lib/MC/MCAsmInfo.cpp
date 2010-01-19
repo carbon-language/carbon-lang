@@ -62,6 +62,7 @@ MCAsmInfo::MCAsmInfo() {
   UsedDirective = 0;
   WeakRefDirective = 0;
   WeakDefDirective = 0;
+  LinkOnceDirective = 0;
   // FIXME: These are ELFish - move to ELFMAI.
   HiddenDirective = "\t.hidden\t";
   ProtectedDirective = "\t.protected\t";

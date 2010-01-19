@@ -727,12 +727,16 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
-    if (Subtarget->isTargetDarwin()) {
+    if (const char *WeakDef = MAI->getWeakDefDirective()) {
+      // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-      O << MAI->getWeakDefDirective() << *GVarSym << '\n';
-    } else if (Subtarget->isTargetCygMing()) {
+      // .weak_definition _foo
+      O << WeakDef << *GVarSym << '\n';
+    } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
+      // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-      O << "\t.linkonce same_size\n";
+      // .linkonce same_size
+      O << LinkOnce;
     } else
       O << "\t.weak\t" << *GVarSym << '\n';
     break;
@@ -741,7 +745,8 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
+    // If external or appending, declare as a global symbol.
+    // .globl _foo
     OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
     break;
   case GlobalValue::PrivateLinkage:
@@ -753,7 +758,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   EmitAlignment(AlignLog, GVar);
   O << *GVarSym << ":";
-  if (VerboseAsm){
+  if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());

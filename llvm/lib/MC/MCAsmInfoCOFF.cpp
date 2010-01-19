@@ -25,6 +25,7 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   HiddenDirective = NULL;
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols
   WeakRefDirective = "\t.weak\t";
+  LinkOnceDirective = "\t.linkonce same_size\n";
   SetDirective = "\t.set\t";
 
   // Set up DWARF directives
