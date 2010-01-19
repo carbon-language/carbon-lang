@@ -226,18 +226,20 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
-    if (const char *WeakDef = MAI->getWeakDefDirective()) {
+    if (MAI->getWeakDefDirective() != 0) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
       // .weak_definition _foo
-      O << WeakDef << *GVSym << '\n';
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::WeakDefinition);
     } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
       // .linkonce same_size
       O << LinkOnce;
-    } else
-      O << "\t.weak\t" << *GVSym << '\n';
+    } else {
+      // .weak _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Weak);
+    }
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -256,13 +258,13 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   }
 
   EmitAlignment(AlignLog, GV);
-  O << *GVSym << ":";
   if (VerboseAsm) {
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
     WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+    O << '\n';
   }
-  O << '\n';
+  OutStreamer.EmitLabel(GVSym);
 
   EmitGlobalConstant(GV->getInitializer());
 
