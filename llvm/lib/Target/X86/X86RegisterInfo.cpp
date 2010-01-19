@@ -438,6 +438,12 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
           (MMI && MMI->callsUnwindInit()));
 }
 
+bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return (RealignStack &&
+          !MFI->hasVarSizedObjects());
+}
+
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   bool requiresRealignment =

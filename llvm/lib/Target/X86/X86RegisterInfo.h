@@ -128,6 +128,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  bool canRealignStack(const MachineFunction &MF) const;
+
   bool needsStackRealignment(const MachineFunction &MF) const;
 
   bool hasReservedCallFrame(MachineFunction &MF) const;

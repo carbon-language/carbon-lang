@@ -96,6 +96,7 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  bool canRealignStack(const MachineFunction &MF) const;
   bool needsStackRealignment(const MachineFunction &MF) const;
 
   bool cannotEliminateFrame(const MachineFunction &MF) const;
