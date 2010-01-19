@@ -1088,6 +1088,26 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     if (Result.getNode()) return Result;
   }
 
+  // fold (add x, shl(0 - y, n)) -> sub(x, shl(y, n))
+  if (N1.getOpcode() == ISD::SHL &&
+      N1.getOperand(0).getOpcode() == ISD::SUB)
+    if (ConstantSDNode *C =
+          dyn_cast<ConstantSDNode>(N1.getOperand(0).getOperand(0)))
+      if (C->getAPIntValue() == 0)
+        return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0,
+                           DAG.getNode(ISD::SHL, N->getDebugLoc(), VT,
+                                       N1.getOperand(0).getOperand(1),
+                                       N1.getOperand(1)));
+  if (N0.getOpcode() == ISD::SHL &&
+      N0.getOperand(0).getOpcode() == ISD::SUB)
+    if (ConstantSDNode *C =
+          dyn_cast<ConstantSDNode>(N0.getOperand(0).getOperand(0)))
+      if (C->getAPIntValue() == 0)
+        return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N1,
+                           DAG.getNode(ISD::SHL, N->getDebugLoc(), VT,
+                                       N0.getOperand(0).getOperand(1),
+                                       N0.getOperand(1)));
+
   return SDValue();
 }
 
