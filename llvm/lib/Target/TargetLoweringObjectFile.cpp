@@ -146,8 +146,13 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getCommon();
 
   // Variable can be easily put to BSS section.
-  if (isSuitableForBSS(GVar))
+  if (isSuitableForBSS(GVar)) {
+    if (GVar->hasLocalLinkage())
+      return SectionKind::getBSSLocal();
+    else if (GVar->hasExternalLinkage())
+      return SectionKind::getBSSExtern();
     return SectionKind::getBSS();
+  }
 
   Constant *C = GVar->getInitializer();
 
@@ -926,7 +931,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // Put zero initialized globals with strong external linkage in the
   // DATA, __common section with the .zerofill directive.
-  if (Kind.isBSS() && GV->hasExternalLinkage())
+  if (Kind.isBSSExtern())
     return DataCommonSection;
   
   // Otherwise, just drop the variable in the normal data section.
