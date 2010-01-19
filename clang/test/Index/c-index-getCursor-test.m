@@ -53,108 +53,114 @@ int main (int argc, const char * argv[]) {
 }
 
 // CHECK: {start_line=1 start_col=1 end_line=2 end_col=62} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=3 start_col=1 end_line=6 end_col=1} ObjCInterfaceDecl=Foo:3:1
+// CHECK: {start_line=3 start_col=1 end_line=6 end_col=1} ObjCInterfaceDecl=Foo:3:12
 // CHECK: {start_line=7 start_col=1 end_line=7 end_col=6} ObjCInstanceMethodDecl=foo:7:1
-// CHECK: {start_line=7 start_col=7 end_line=7 end_col=7} ObjCInterfaceDecl=Foo:3:1
+// CHECK: {start_line=7 start_col=7 end_line=7 end_col=7} ObjCInterfaceDecl=Foo:3:12
 // CHECK: {start_line=8 start_col=1 end_line=8 end_col=7} ObjCClassMethodDecl=fooC:8:1
-// CHECK: {start_line=8 start_col=8 end_line=10 end_col=4} ObjCInterfaceDecl=Foo:3:1
+// CHECK: {start_line=8 start_col=8 end_line=10 end_col=4} ObjCInterfaceDecl=Foo:3:12
 // CHECK: {start_line=10 start_col=5 end_line=11 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=12 start_col=1 end_line=16 end_col=4} ObjCInterfaceDecl=Bar:12:1
+// CHECK: {start_line=12 start_col=1 end_line=16 end_col=4} ObjCInterfaceDecl=Bar:12:12
 // CHECK: {start_line=16 start_col=5 end_line=17 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=18 start_col=1 end_line=18 end_col=24} ObjCCategoryDecl=FooCat:18:1
+// CHECK: {start_line=18 start_col=1 end_line=18 end_col=24} ObjCCategoryDecl=FooCat:18:12
 // CHECK: {start_line=19 start_col=1 end_line=19 end_col=28} ObjCInstanceMethodDecl=catMethodWithFloat::19:1
-// CHECK: {start_line=19 start_col=29 end_line=19 end_col=33} ParmDecl=fArg:19:36
+// CHECK: {start_line=19 start_col=29 end_line=19 end_col=33} ParmDecl=fArg:19:36 (Definition)
 // CHECK: {start_line=19 start_col=34 end_line=19 end_col=35} ObjCInstanceMethodDecl=catMethodWithFloat::19:1
-// CHECK: {start_line=19 start_col=36 end_line=19 end_col=39} ParmDecl=fArg:19:36
+// CHECK: {start_line=19 start_col=36 end_line=19 end_col=39} ParmDecl=fArg:19:36 (Definition)
 // CHECK: {start_line=19 start_col=40 end_line=19 end_col=40} ObjCInstanceMethodDecl=catMethodWithFloat::19:1
-// CHECK: {start_line=19 start_col=41 end_line=19 end_col=41} ObjCCategoryDecl=FooCat:18:1
+// CHECK: {start_line=19 start_col=41 end_line=19 end_col=41} ObjCCategoryDecl=FooCat:18:12
 // CHECK: {start_line=20 start_col=1 end_line=20 end_col=22} ObjCInstanceMethodDecl=floatMethod:20:1
-// CHECK: {start_line=20 start_col=23 end_line=21 end_col=4} ObjCCategoryDecl=FooCat:18:1
+// CHECK: {start_line=20 start_col=23 end_line=21 end_col=4} ObjCCategoryDecl=FooCat:18:12
 // CHECK: {start_line=21 start_col=5 end_line=22 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=23 start_col=1 end_line=23 end_col=16} ObjCProtocolDecl=Proto:23:1
+// CHECK: {start_line=23 start_col=1 end_line=23 end_col=16} ObjCProtocolDecl=Proto:23:1 (Definition)
 // CHECK: {start_line=24 start_col=1 end_line=24 end_col=10} ObjCInstanceMethodDecl=pMethod:24:1
-// CHECK: {start_line=24 start_col=11 end_line=25 end_col=4} ObjCProtocolDecl=Proto:23:1
+// CHECK: {start_line=24 start_col=11 end_line=25 end_col=4} ObjCProtocolDecl=Proto:23:1 (Definition)
 // CHECK: {start_line=25 start_col=5 end_line=26 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=27 start_col=1 end_line=27 end_col=23} ObjCProtocolDecl=SubP:27:1
+// CHECK: {start_line=27 start_col=1 end_line=27 end_col=23} ObjCProtocolDecl=SubP:27:1 (Definition)
 // CHECK: {start_line=28 start_col=1 end_line=28 end_col=11} ObjCInstanceMethodDecl=spMethod:28:1
-// CHECK: {start_line=28 start_col=12 end_line=29 end_col=4} ObjCProtocolDecl=SubP:27:1
+// CHECK: {start_line=28 start_col=12 end_line=29 end_col=4} ObjCProtocolDecl=SubP:27:1 (Definition)
 // CHECK: {start_line=29 start_col=5 end_line=30 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=31 start_col=1 end_line=33 end_col=4} ObjCInterfaceDecl=Baz:31:1
-// CHECK: {start_line=33 start_col=5 end_line=33 end_col=7} ObjCIvarDecl=_anIVar:33:9
-// CHECK: {start_line=33 start_col=8 end_line=33 end_col=8} ObjCInterfaceDecl=Baz:31:1
-// CHECK: {start_line=33 start_col=9 end_line=33 end_col=15} ObjCIvarDecl=_anIVar:33:9
-// CHECK: {start_line=33 start_col=16 end_line=35 end_col=1} ObjCInterfaceDecl=Baz:31:1
+// CHECK: {start_line=31 start_col=1 end_line=33 end_col=4} ObjCInterfaceDecl=Baz:31:12
+// CHECK: {start_line=33 start_col=5 end_line=33 end_col=7} ObjCIvarDecl=_anIVar:33:9 (Definition)
+// CHECK: {start_line=33 start_col=8 end_line=33 end_col=8} ObjCInterfaceDecl=Baz:31:12
+// CHECK: {start_line=33 start_col=9 end_line=33 end_col=15} ObjCIvarDecl=_anIVar:33:9 (Definition)
+// CHECK: {start_line=33 start_col=16 end_line=35 end_col=1} ObjCInterfaceDecl=Baz:31:12
 // CHECK: {start_line=36 start_col=1 end_line=36 end_col=20} ObjCInstanceMethodDecl=bazMethod:36:1
-// CHECK: {start_line=36 start_col=21 end_line=38 end_col=4} ObjCInterfaceDecl=Baz:31:1
+// CHECK: {start_line=36 start_col=21 end_line=38 end_col=4} ObjCInterfaceDecl=Baz:31:12
 // CHECK: {start_line=38 start_col=5 end_line=39 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=40 start_col=1 end_line=41 end_col=2} EnumDecl=:40:1
-// CHECK: {start_line=41 start_col=3 end_line=41 end_col=10} EnumConstantDecl=someEnum:41:3
-// CHECK: {start_line=41 start_col=11 end_line=42 end_col=1} EnumDecl=:40:1
+// CHECK: {start_line=40 start_col=1 end_line=41 end_col=2} EnumDecl=:40:1 (Definition)
+// CHECK: {start_line=41 start_col=3 end_line=41 end_col=10} EnumConstantDecl=someEnum:41:3 (Definition)
+// CHECK: {start_line=41 start_col=11 end_line=42 end_col=1} EnumDecl=:40:1 (Definition)
 // CHECK: {start_line=42 start_col=2 end_line=43 end_col=1} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=44 start_col=1 end_line=44 end_col=3} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=4 end_line=44 end_col=4} Invalid Cursor => NoDeclFound
 // CHECK: {start_line=44 start_col=5 end_line=44 end_col=10} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=44 start_col=11 end_line=44 end_col=13} ParmDecl=argc:44:15
+// CHECK: {start_line=44 start_col=11 end_line=44 end_col=13} ParmDecl=argc:44:15 (Definition)
 // CHECK: {start_line=44 start_col=14 end_line=44 end_col=14} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=44 start_col=15 end_line=44 end_col=18} ParmDecl=argc:44:15
+// CHECK: {start_line=44 start_col=15 end_line=44 end_col=18} ParmDecl=argc:44:15 (Definition)
 // CHECK: {start_line=44 start_col=19 end_line=44 end_col=26} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=44 start_col=27 end_line=44 end_col=30} ParmDecl=argv:44:34
+// CHECK: {start_line=44 start_col=27 end_line=44 end_col=30} ParmDecl=argv:44:34 (Definition)
 // CHECK: {start_line=44 start_col=31 end_line=44 end_col=31} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=44 start_col=32 end_line=44 end_col=32} ParmDecl=argv:44:34
+// CHECK: {start_line=44 start_col=32 end_line=44 end_col=32} ParmDecl=argv:44:34 (Definition)
 // CHECK: {start_line=44 start_col=33 end_line=44 end_col=33} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=44 start_col=34 end_line=44 end_col=39} ParmDecl=argv:44:34
-// CHECK: {start_line=44 start_col=40 end_line=45 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=45 start_col=2 end_line=45 end_col=4} ObjCClassRef=Baz:31:1
-// CHECK: {start_line=45 start_col=5 end_line=45 end_col=5} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=45 start_col=6 end_line=45 end_col=6} VarDecl=bee:45:8
-// CHECK: {start_line=45 start_col=7 end_line=45 end_col=7} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=45 start_col=8 end_line=45 end_col=10} VarDecl=bee:45:8
-// CHECK: {start_line=45 start_col=11 end_line=46 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=46 start_col=2 end_line=46 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=46 start_col=4 end_line=46 end_col=4} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=46 start_col=5 end_line=46 end_col=8} VarDecl=a:46:5
-// CHECK: {start_line=46 start_col=9 end_line=46 end_col=9} ObjCSelectorRef=foo:7:1
-// CHECK: {start_line=46 start_col=10 end_line=46 end_col=12} VarRef=bee:45:8
-// CHECK: {start_line=46 start_col=13 end_line=46 end_col=17} ObjCSelectorRef=foo:7:1
-// CHECK: {start_line=46 start_col=18 end_line=47 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=47 start_col=2 end_line=47 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=47 start_col=4 end_line=47 end_col=4} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=47 start_col=5 end_line=47 end_col=5} VarDecl=c:47:12
+// CHECK: {start_line=44 start_col=34 end_line=44 end_col=39} ParmDecl=argv:44:34 (Definition)
+// CHECK: {start_line=44 start_col=40 end_line=44 end_col=41} FunctionDecl=main:44:5 (Definition)
+// CHECK: {start_line=44 start_col=42 end_line=45 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=45 start_col=2 end_line=45 end_col=4} ObjCClassRef=Baz:31:12
+// CHECK: {start_line=45 start_col=5 end_line=45 end_col=5} UnexposedStmt=main
+// CHECK: {start_line=45 start_col=6 end_line=45 end_col=6} VarDecl=bee:45:8 (Definition)
+// CHECK: {start_line=45 start_col=7 end_line=45 end_col=7} UnexposedStmt=main
+// CHECK: {start_line=45 start_col=8 end_line=45 end_col=10} VarDecl=bee:45:8 (Definition)
+// CHECK: {start_line=45 start_col=11 end_line=45 end_col=11} UnexposedStmt=main
+// CHECK: {start_line=45 start_col=12 end_line=46 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=46 start_col=2 end_line=46 end_col=3} TypedefDecl=id:0:0 (Definition)
+// CHECK: {start_line=46 start_col=4 end_line=46 end_col=4} UnexposedStmt=main
+// CHECK: {start_line=46 start_col=5 end_line=46 end_col=8} VarDecl=a:46:5 (Definition)
+// CHECK: {start_line=46 start_col=9 end_line=46 end_col=9} ObjCMessageExpr=foo:7:1
+// CHECK: {start_line=46 start_col=10 end_line=46 end_col=12} DeclRefExpr=bee:45:8
+// CHECK: {start_line=46 start_col=13 end_line=46 end_col=17} ObjCMessageExpr=foo:7:1
+// CHECK: {start_line=46 start_col=18 end_line=46 end_col=18} UnexposedStmt=main
+// CHECK: {start_line=46 start_col=19 end_line=47 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=47 start_col=2 end_line=47 end_col=3} TypedefDecl=id:0:0 (Definition)
+// CHECK: {start_line=47 start_col=4 end_line=47 end_col=4} UnexposedStmt=main
+// CHECK: {start_line=47 start_col=5 end_line=47 end_col=5} VarDecl=c:47:12 (Definition)
 // CHECK: {start_line=47 start_col=6 end_line=47 end_col=9} ObjCProtocolRef=SubP:27:1
-// CHECK: {start_line=47 start_col=10 end_line=47 end_col=10} VarDecl=c:47:12
-// CHECK: {start_line=47 start_col=11 end_line=47 end_col=11} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=47 start_col=12 end_line=47 end_col=15} VarDecl=c:47:12
-// CHECK: {start_line=47 start_col=16 end_line=47 end_col=25} ObjCSelectorRef=fooC:8:1
-// CHECK: {start_line=47 start_col=26 end_line=48 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=48 start_col=2 end_line=48 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=48 start_col=4 end_line=48 end_col=4} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=48 start_col=5 end_line=48 end_col=5} VarDecl=d:48:13
+// CHECK: {start_line=47 start_col=10 end_line=47 end_col=10} VarDecl=c:47:12 (Definition)
+// CHECK: {start_line=47 start_col=11 end_line=47 end_col=11} UnexposedStmt=main
+// CHECK: {start_line=47 start_col=12 end_line=47 end_col=15} VarDecl=c:47:12 (Definition)
+// CHECK: {start_line=47 start_col=16 end_line=47 end_col=25} ObjCMessageExpr=fooC:8:1
+// CHECK: {start_line=47 start_col=26 end_line=47 end_col=26} UnexposedStmt=main
+// CHECK: {start_line=47 start_col=27 end_line=48 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=48 start_col=2 end_line=48 end_col=3} TypedefDecl=id:0:0 (Definition)
+// CHECK: {start_line=48 start_col=4 end_line=48 end_col=4} UnexposedStmt=main
+// CHECK: {start_line=48 start_col=5 end_line=48 end_col=5} VarDecl=d:48:13 (Definition)
 // CHECK: {start_line=48 start_col=6 end_line=48 end_col=10} ObjCProtocolRef=Proto:23:1
-// CHECK: {start_line=48 start_col=11 end_line=48 end_col=11} VarDecl=d:48:13
-// CHECK: {start_line=48 start_col=12 end_line=48 end_col=12} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=48 start_col=13 end_line=48 end_col=13} VarDecl=d:48:13
-// CHECK: {start_line=48 start_col=14 end_line=49 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=49 start_col=2 end_line=49 end_col=2} VarRef=d:48:13
-// CHECK: {start_line=49 start_col=3 end_line=49 end_col=5} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=49 start_col=6 end_line=49 end_col=6} VarRef=c:47:12
-// CHECK: {start_line=49 start_col=7 end_line=50 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=50 start_col=2 end_line=50 end_col=2} ObjCSelectorRef=pMethod:24:1
-// CHECK: {start_line=50 start_col=3 end_line=50 end_col=3} VarRef=d:48:13
-// CHECK: {start_line=50 start_col=4 end_line=50 end_col=12} ObjCSelectorRef=pMethod:24:1
-// CHECK: {start_line=50 start_col=13 end_line=51 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=51 start_col=2 end_line=51 end_col=2} ObjCSelectorRef=catMethodWithFloat::19:1
-// CHECK: {start_line=51 start_col=3 end_line=51 end_col=5} VarRef=bee:45:8
-// CHECK: {start_line=51 start_col=6 end_line=51 end_col=25} ObjCSelectorRef=catMethodWithFloat::19:1
-// CHECK: {start_line=51 start_col=26 end_line=51 end_col=26} ObjCSelectorRef=floatMethod:20:1
-// CHECK: {start_line=51 start_col=27 end_line=51 end_col=29} VarRef=bee:45:8
-// CHECK: {start_line=51 start_col=30 end_line=51 end_col=42} ObjCSelectorRef=floatMethod:20:1
-// CHECK: {start_line=51 start_col=43 end_line=51 end_col=43} ObjCSelectorRef=catMethodWithFloat::19:1
-// CHECK: {start_line=51 start_col=44 end_line=52 end_col=2} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=52 start_col=3 end_line=52 end_col=6} FunctionRef=main:44:5
-// CHECK: {start_line=52 start_col=7 end_line=52 end_col=7} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=52 start_col=8 end_line=52 end_col=15} EnumConstantRef=someEnum:41:3
-// CHECK: {start_line=52 start_col=16 end_line=52 end_col=32} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=52 start_col=33 end_line=52 end_col=35} VarRef=bee:45:8
-// CHECK: {start_line=52 start_col=36 end_line=53 end_col=1} FunctionDecl=main:44:5 (Definition)
-// CHECK: {start_line=53 start_col=2 end_line=160 end_col=1} Invalid Cursor => NoDeclFound
+// CHECK: {start_line=48 start_col=11 end_line=48 end_col=11} VarDecl=d:48:13 (Definition)
+// CHECK: {start_line=48 start_col=12 end_line=48 end_col=12} UnexposedStmt=main
+// CHECK: {start_line=48 start_col=13 end_line=48 end_col=13} VarDecl=d:48:13 (Definition)
+// CHECK: {start_line=48 start_col=14 end_line=48 end_col=14} UnexposedStmt=main
+// CHECK: {start_line=48 start_col=15 end_line=49 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=49 start_col=2 end_line=49 end_col=2} DeclRefExpr=d:48:13
+// CHECK: {start_line=49 start_col=3 end_line=49 end_col=5} UnexposedExpr=
+// CHECK: {start_line=49 start_col=6 end_line=49 end_col=6} DeclRefExpr=c:47:12
+// CHECK: {start_line=49 start_col=7 end_line=50 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=50 start_col=2 end_line=50 end_col=2} ObjCMessageExpr=pMethod:24:1
+// CHECK: {start_line=50 start_col=3 end_line=50 end_col=3} DeclRefExpr=d:48:13
+// CHECK: {start_line=50 start_col=4 end_line=50 end_col=12} ObjCMessageExpr=pMethod:24:1
+// CHECK: {start_line=50 start_col=13 end_line=51 end_col=1} UnexposedStmt=main
+// CHECK: {start_line=51 start_col=2 end_line=51 end_col=2} ObjCMessageExpr=catMethodWithFloat::19:1
+// CHECK: {start_line=51 start_col=3 end_line=51 end_col=5} DeclRefExpr=bee:45:8
+// CHECK: {start_line=51 start_col=6 end_line=51 end_col=25} ObjCMessageExpr=catMethodWithFloat::19:1
+// CHECK: {start_line=51 start_col=26 end_line=51 end_col=26} ObjCMessageExpr=floatMethod:20:1
+// CHECK: {start_line=51 start_col=27 end_line=51 end_col=29} DeclRefExpr=bee:45:8
+// CHECK: {start_line=51 start_col=30 end_line=51 end_col=42} ObjCMessageExpr=floatMethod:20:1
+// CHECK: {start_line=51 start_col=43 end_line=51 end_col=43} ObjCMessageExpr=catMethodWithFloat::19:1
+// CHECK: {start_line=51 start_col=44 end_line=52 end_col=2} UnexposedStmt=main
+// CHECK: {start_line=52 start_col=3 end_line=52 end_col=6} DeclRefExpr=main:44:5
+// CHECK: {start_line=52 start_col=7 end_line=52 end_col=7} CallExpr=main:44:5
+// CHECK: {start_line=52 start_col=8 end_line=52 end_col=15} DeclRefExpr=someEnum:41:3
+// CHECK: {start_line=52 start_col=16 end_line=52 end_col=17} CallExpr=main:44:5
+// CHECK: {start_line=52 start_col=18 end_line=52 end_col=32} UnexposedExpr=bee:45:8
+// CHECK: {start_line=52 start_col=33 end_line=52 end_col=35} DeclRefExpr=bee:45:8
+// CHECK: {start_line=52 start_col=36 end_line=52 end_col=36} CallExpr=main:44:5
+// CHECK: {start_line=52 start_col=37 end_line=53 end_col=1} UnexposedStmt=main
 

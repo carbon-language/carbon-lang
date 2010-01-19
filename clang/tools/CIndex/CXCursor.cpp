@@ -80,6 +80,141 @@ CXCursor cxcursor::MakeCXCursor(Decl *D) {
   return MakeCXCursor(GetCursorKind(D), D);
 }
 
+CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent) {
+  CXCursorKind K = CXCursor_NotImplemented;
+  
+  switch (S->getStmtClass()) {
+  case Stmt::NoStmtClass:
+    break;
+      
+  case Stmt::NullStmtClass:
+  case Stmt::CompoundStmtClass:
+  case Stmt::CaseStmtClass:
+  case Stmt::DefaultStmtClass:
+  case Stmt::LabelStmtClass:       
+  case Stmt::IfStmtClass:          
+  case Stmt::SwitchStmtClass:      
+  case Stmt::WhileStmtClass:       
+  case Stmt::DoStmtClass:          
+  case Stmt::ForStmtClass:        
+  case Stmt::GotoStmtClass:        
+  case Stmt::IndirectGotoStmtClass:
+  case Stmt::ContinueStmtClass:    
+  case Stmt::BreakStmtClass:       
+  case Stmt::ReturnStmtClass:      
+  case Stmt::DeclStmtClass:        
+  case Stmt::SwitchCaseClass:      
+  case Stmt::AsmStmtClass:         
+  case Stmt::ObjCAtTryStmtClass:        
+  case Stmt::ObjCAtCatchStmtClass:      
+  case Stmt::ObjCAtFinallyStmtClass:    
+  case Stmt::ObjCAtThrowStmtClass:      
+  case Stmt::ObjCAtSynchronizedStmtClass: 
+  case Stmt::ObjCForCollectionStmtClass:
+  case Stmt::CXXCatchStmtClass:
+  case Stmt::CXXTryStmtClass:  
+    K = CXCursor_UnexposedStmt;
+    break;
+      
+  case Stmt::ExprClass:
+  case Stmt::PredefinedExprClass:        
+  case Stmt::IntegerLiteralClass:        
+  case Stmt::FloatingLiteralClass:       
+  case Stmt::ImaginaryLiteralClass:      
+  case Stmt::StringLiteralClass:         
+  case Stmt::CharacterLiteralClass:      
+  case Stmt::ParenExprClass:             
+  case Stmt::UnaryOperatorClass:         
+  case Stmt::SizeOfAlignOfExprClass:     
+  case Stmt::ArraySubscriptExprClass:    
+  case Stmt::CastExprClass:              
+  case Stmt::BinaryOperatorClass:        
+  case Stmt::CompoundAssignOperatorClass:
+  case Stmt::ConditionalOperatorClass:   
+  case Stmt::ImplicitCastExprClass:
+  case Stmt::ExplicitCastExprClass:
+  case Stmt::CStyleCastExprClass:
+  case Stmt::CompoundLiteralExprClass:   
+  case Stmt::ExtVectorElementExprClass:  
+  case Stmt::InitListExprClass:          
+  case Stmt::DesignatedInitExprClass:    
+  case Stmt::ImplicitValueInitExprClass: 
+  case Stmt::ParenListExprClass:         
+  case Stmt::VAArgExprClass:             
+  case Stmt::AddrLabelExprClass:        
+  case Stmt::StmtExprClass:             
+  case Stmt::TypesCompatibleExprClass:  
+  case Stmt::ChooseExprClass:           
+  case Stmt::GNUNullExprClass:          
+  case Stmt::CXXNamedCastExprClass:
+  case Stmt::CXXStaticCastExprClass:      
+  case Stmt::CXXDynamicCastExprClass:     
+  case Stmt::CXXReinterpretCastExprClass: 
+  case Stmt::CXXConstCastExprClass:       
+  case Stmt::CXXFunctionalCastExprClass:
+  case Stmt::CXXTypeidExprClass:          
+  case Stmt::CXXBoolLiteralExprClass:     
+  case Stmt::CXXNullPtrLiteralExprClass:  
+  case Stmt::CXXThisExprClass:            
+  case Stmt::CXXThrowExprClass:           
+  case Stmt::CXXDefaultArgExprClass:      
+  case Stmt::CXXZeroInitValueExprClass:   
+  case Stmt::CXXNewExprClass:             
+  case Stmt::CXXDeleteExprClass:          
+  case Stmt::CXXPseudoDestructorExprClass:
+  case Stmt::UnresolvedLookupExprClass:   
+  case Stmt::UnaryTypeTraitExprClass:     
+  case Stmt::DependentScopeDeclRefExprClass:  
+  case Stmt::CXXBindTemporaryExprClass:   
+  case Stmt::CXXExprWithTemporariesClass: 
+  case Stmt::CXXUnresolvedConstructExprClass:
+  case Stmt::CXXDependentScopeMemberExprClass:
+  case Stmt::UnresolvedMemberExprClass:   
+  case Stmt::ObjCStringLiteralClass:    
+  case Stmt::ObjCEncodeExprClass:       
+  case Stmt::ObjCSelectorExprClass:   
+  case Stmt::ObjCProtocolExprClass:   
+  case Stmt::ObjCImplicitSetterGetterRefExprClass: 
+  case Stmt::ObjCSuperExprClass:     
+  case Stmt::ObjCIsaExprClass:       
+  case Stmt::ShuffleVectorExprClass: 
+  case Stmt::BlockExprClass:  
+    K = CXCursor_UnexposedExpr;
+    break;
+  case Stmt::DeclRefExprClass:           
+  case Stmt::BlockDeclRefExprClass:
+    // FIXME: UnresolvedLookupExpr?
+    // FIXME: DependentScopeDeclRefExpr?
+    K = CXCursor_DeclRefExpr;
+    break;
+      
+  case Stmt::MemberExprClass:            
+  case Stmt::ObjCIvarRefExprClass:    
+  case Stmt::ObjCPropertyRefExprClass: 
+    // FIXME: UnresolvedMemberExpr?
+    // FIXME: CXXDependentScopeMemberExpr?
+    K = CXCursor_MemberRefExpr;
+    break;
+      
+  case Stmt::CallExprClass:              
+  case Stmt::CXXOperatorCallExprClass:
+  case Stmt::CXXMemberCallExprClass:
+  case Stmt::CXXConstructExprClass:  
+  case Stmt::CXXTemporaryObjectExprClass:
+    // FIXME: CXXUnresolvedConstructExpr
+    // FIXME: ObjCImplicitSetterGetterRefExpr?
+    K = CXCursor_CallExpr;
+    break;
+      
+  case Stmt::ObjCMessageExprClass:      
+    K = CXCursor_ObjCMessageExpr;
+    break;
+  }
+  
+  CXCursor C = { K, { Parent, S, 0 } };
+  return C;
+}
+
 CXCursor cxcursor::MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super, 
                                          SourceLocation Loc) {
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
@@ -181,6 +316,16 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   case CXCursor_NoDeclFound:
   case CXCursor_NotImplemented:
     llvm_unreachable("No context in an invalid cursor");
+    break;
+
+  case CXCursor_UnexposedExpr:
+  case CXCursor_DeclRefExpr:
+  case CXCursor_MemberRefExpr:
+  case CXCursor_CallExpr:
+  case CXCursor_ObjCMessageExpr:
+  case CXCursor_UnexposedStmt:
+    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
+
   }
   
   llvm_unreachable("No context available");

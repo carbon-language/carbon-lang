@@ -24,7 +24,7 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=10 start_col=19 end_line=10 end_col=19} ParmDecl=arg:10:21
 // CHECK-scan: {start_line=10 start_col=20 end_line=10 end_col=20} FunctionDecl=function:10:6 (Definition)
 // CHECK-scan: {start_line=10 start_col=21 end_line=10 end_col=23} ParmDecl=arg:10:21
-// CHECK-scan: {start_line=10 start_col=24 end_line=13 end_col=1} FunctionDecl=function:10:6 (Definition)
+// CHECK-scan: {start_line=11 start_col=1 end_line=13 end_col=1} UnexposedStmt=function
 // CHECK-scan: {start_line=13 start_col=2 end_line=46 end_col=1} Invalid Cursor => NoDeclFound
 
 

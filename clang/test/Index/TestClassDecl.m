@@ -29,7 +29,7 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=13 start_col=19 end_line=13 end_col=19} ParmDecl=arg:13:21
 // CHECK-scan: {start_line=13 start_col=20 end_line=13 end_col=20} FunctionDecl=function:13:6 (Definition)
 // CHECK-scan: {start_line=13 start_col=21 end_line=13 end_col=23} ParmDecl=arg:13:21
-// CHECK-scan: {start_line=13 start_col=24 end_line=16 end_col=1} FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: {start_line=14 start_col=1 end_line=16 end_col=1} UnexposedStmt=function
 // CHECK-scan: {start_line=16 start_col=2 end_line=38 end_col=1} Invalid Cursor => NoDeclFound
 
 // CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 [Extent=10:1:11:4]

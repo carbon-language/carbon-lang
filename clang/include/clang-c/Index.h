@@ -125,7 +125,55 @@ enum CXCursorKind {
  CXCursor_InvalidFile                   = 70,
  CXCursor_NoDeclFound                   = 71,
  CXCursor_NotImplemented                = 72,
- CXCursor_LastInvalid                   = 72
+ CXCursor_LastInvalid                   = 72,
+
+ /* Expressions */
+ CXCursor_FirstExpr                     = 100,
+
+ /**
+  * \brief An expression whose specific kind is not exposed via this
+  * interface. 
+  *
+  * Unexposed expressions have the same operations as any other kind
+  * of expression; one can extract their location information,
+  * spelling, children, etc. However, the specific kind of the
+  * expression is not reported.
+  */
+ CXCursor_UnexposedExpr                 = 100,
+
+ /**
+  * \brief An expression that refers to some value declaration, such
+  * as a function, varible, or enumerator.
+  */
+ CXCursor_DeclRefExpr                   = 101,
+
+ /**
+  * \brief An expression that refers to a member of a struct, union,
+  * class, Objective-C class, etc.
+  */
+ CXCursor_MemberRefExpr                 = 102,
+
+ /** \brief An expression that calls a function. */
+ CXCursor_CallExpr                      = 103,
+
+ /** \brief An expression that sends a message to an Objective-C
+     object or class. */
+ CXCursor_ObjCMessageExpr               = 104,
+ CXCursor_LastExpr                      = 104,
+
+ /* Statements */
+ CXCursor_FirstStmt                     = 200,
+ /**
+  * \brief A statement whose specific kind is not exposed via this
+  * interface.
+  *
+  * Unexposed statements have the same operations as any other kind of
+  * statement; one can extract their location information, spelling,
+  * children, etc. However, the specific kind of the statement is not
+  * reported.
+  */
+ CXCursor_UnexposedStmt                 = 200,
+ CXCursor_LastStmt                      = 200
 };
 
 /**
@@ -446,6 +494,8 @@ CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
 CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
+CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
+CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);

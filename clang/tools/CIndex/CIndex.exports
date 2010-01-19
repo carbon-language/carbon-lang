@@ -42,8 +42,10 @@ _clang_getRangeStart
 _clang_getTranslationUnitSpelling
 _clang_isCursorDefinition
 _clang_isDeclaration
+_clang_isExpression
 _clang_isInvalid
 _clang_isReference
+_clang_isStatement
 _clang_loadDeclaration
 _clang_loadTranslationUnit
 _clang_setUseExternalASTGeneration
