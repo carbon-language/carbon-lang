@@ -879,10 +879,6 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 Action::OwningStmtResult
 Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
-  // If we are in a block, reject all gotos for now.
-  if (CurBlock)
-    return StmtError(Diag(GotoLoc, diag::err_goto_in_block));
-
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = getLabelMap()[LabelII];
 

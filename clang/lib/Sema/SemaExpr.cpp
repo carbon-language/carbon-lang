@@ -6884,6 +6884,26 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
 
   BSI->TheDecl->setBody(body.takeAs<CompoundStmt>());
+
+  bool Good = true;
+  // Check goto/label use.
+  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
+         I = BSI->LabelMap.begin(), E = BSI->LabelMap.end(); I != E; ++I) {
+    LabelStmt *L = I->second;
+
+    // Verify that we have no forward references left.  If so, there was a goto
+    // or address of a label taken, but no definition of it.
+    if (L->getSubStmt() != 0)
+      continue;
+
+    // Emit error.
+    Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
+    Good = false;
+  }
+  BSI->LabelMap.clear();
+  if (!Good)
+    return ExprError();
+
   AnalysisContext AC(BSI->TheDecl);
   CheckFallThroughForBlock(BlockTy, BSI->TheDecl->getBody(), AC);
   CheckUnreachable(AC);

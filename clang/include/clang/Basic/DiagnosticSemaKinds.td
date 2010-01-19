@@ -2458,8 +2458,6 @@ def warn_stringcompare : Warning<
 def err_blocks_disable : Error<"blocks support disabled - compile with -fblocks"
   " or pick a deployment target that supports them">;
 def err_expected_block_lbrace : Error<"expected '{' in block literal">;
-def err_goto_in_block : Error<
-  "goto not allowed in block literal">;
 def err_return_in_block_expression : Error<
   "return not allowed in block expression literal">;
 def err_block_returns_array : Error<

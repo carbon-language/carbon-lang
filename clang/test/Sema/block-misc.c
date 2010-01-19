@@ -87,8 +87,7 @@ int test7(void (^p)()) {
 
 void test8() {
 somelabel:
- // FIXME: This should say "jump out of block not legal" when gotos are allowed.
-  ^{ goto somelabel; }();   // expected-error {{goto not allowed in block literal}}
+  ^{ goto somelabel; }();   // expected-error {{use of undeclared label 'somelabel'}}
 }
 
 void test9() {
