@@ -1462,14 +1462,17 @@ class CompoundLiteralExpr : public Expr {
   /// compound literal like "(int){4}".  This can be null if this is a
   /// synthesized compound expression.
   SourceLocation LParenLoc;
+
+  /// The type as written.  This can be an incomplete array type, in
+  /// which case the actual expression type will be different.
   TypeSourceInfo *TInfo;
   Stmt *Init;
   bool FileScope;
 public:
   // FIXME: Can compound literals be value-dependent?
   CompoundLiteralExpr(SourceLocation lparenloc, TypeSourceInfo *tinfo,
-                      Expr *init, bool fileScope)
-    : Expr(CompoundLiteralExprClass, tinfo->getType(),
+                      QualType T, Expr *init, bool fileScope)
+    : Expr(CompoundLiteralExprClass, T,
            tinfo->getType()->isDependentType(), false),
       LParenLoc(lparenloc), TInfo(tinfo), Init(init), FileScope(fileScope) {}
 

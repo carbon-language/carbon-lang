@@ -3867,6 +3867,10 @@ TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E) {
       Init.get() == E->getInitializer())
     return SemaRef.Owned(E->Retain());
 
+  // Note: the expression type doesn't necessarily match the
+  // type-as-written, but that's okay, because it should always be
+  // derivable from the initializer.
+
   return getDerived().RebuildCompoundLiteralExpr(E->getLParenLoc(), NewT,
                                    /*FIXME:*/E->getInitializer()->getLocEnd(),
                                                  move(Init));

@@ -3707,7 +3707,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
 
   Result.release();
   
-  return Owned(new (Context) CompoundLiteralExpr(LParenLoc, TInfo,
+  return Owned(new (Context) CompoundLiteralExpr(LParenLoc, TInfo, literalType,
                                                  literalExpr, isFileScope));
 }
 
@@ -4718,7 +4718,7 @@ static void ConstructTransparentUnion(ASTContext &C, Expr *&E,
   // Build a compound literal constructing a value of the transparent
   // union type from this initializer list.
   TypeSourceInfo *unionTInfo = C.getTrivialTypeSourceInfo(UnionType);
-  E = new (C) CompoundLiteralExpr(SourceLocation(), unionTInfo,
+  E = new (C) CompoundLiteralExpr(SourceLocation(), unionTInfo, UnionType,
                                   Initializer, false);
 }
 
