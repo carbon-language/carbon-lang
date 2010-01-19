@@ -660,17 +660,15 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
 
-  const Type *Type = GVar->getType()->getElementType();
-  
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypeAllocSize(Type);
+  unsigned Size = TD->getTypeAllocSize(GVar->getType()->getElementType());
   unsigned AlignLog = TD->getPreferredAlignmentLog(GVar);
   
   // Handle normal common symbols.
   if (GVKind.isCommon()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
-    O << ".comm " << *GVarSym << ',' << Size;
+    O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
     if (MAI->getCOMMDirectiveTakesAlignment())
       O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
     
@@ -693,8 +691,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << ',' << AlignLog;
       }
     } else {
-      if (!Subtarget->isTargetCygMing())
-        O << "\t.local\t" << *GVarSym << '\n';
+      O << "\t.local\t" << *GVarSym << '\n';
       O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
       if (MAI->getCOMMDirectiveTakesAlignment())
         O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
