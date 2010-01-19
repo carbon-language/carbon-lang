@@ -64,6 +64,8 @@ class CGDebugInfo {
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
   llvm::BumpPtrAllocator FunctionNames;
 
+  llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
+
   /// Helper functions for getOrCreateType.
   llvm::DIType CreateType(const BuiltinType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const ComplexType *Ty, llvm::DICompileUnit U);
@@ -85,6 +87,10 @@ class CGDebugInfo {
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);
+  void CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
+                                 llvm::DICompileUnit U,
+                                 llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
+                                 llvm::DICompositeType &T);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DICompileUnit U,
                            llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
 public:

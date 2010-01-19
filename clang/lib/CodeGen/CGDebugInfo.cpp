@@ -519,6 +519,65 @@ CollectRecordFields(const RecordDecl *Decl,
   }
 }
 
+/// CollectCXXMemberFunctions - A helper function to collect debug info for
+/// C++ member functions.This is used while creating debug info entry for 
+/// a Record.
+void CGDebugInfo::
+CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
+                          llvm::DICompileUnit Unit,
+                          llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                          llvm::DICompositeType &RecordTy) {
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  for(CXXRecordDecl::method_iterator I = Decl->method_begin(),
+        E = Decl->method_end(); I != E; ++I) {
+    CXXMethodDecl *Method = *I;
+    llvm::StringRef MethodName;
+    llvm::StringRef MethodLinkageName;
+    llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
+    if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(Method)) {
+      if (CDecl->isImplicit())
+        continue;
+      MethodName = Decl->getName();
+      // FIXME : Find linkage name.
+    } else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(Method)) {
+      if (DDecl->isImplicit())
+        continue;
+      MethodName = getFunctionName(Method);
+      // FIXME : Find linkage name.
+    } else {
+      // regular method
+      IdentifierInfo *II = Method->getIdentifier();
+      if (!II)
+        continue;
+      MethodName = Method->getIdentifier()->getName();
+      MethodLinkageName = CGM.getMangledName(Method);
+    }
+
+    // Get the location for the method.
+    SourceLocation MethodDefLoc = Method->getLocation();
+    PresumedLoc PLoc = SM.getPresumedLoc(MethodDefLoc);
+    llvm::DICompileUnit MethodDefUnit;
+    unsigned MethodLine = 0;
+
+    if (!PLoc.isInvalid()) {
+      MethodDefUnit = getOrCreateCompileUnit(MethodDefLoc);
+      MethodLine = PLoc.getLine();
+    }
+
+    llvm::DISubprogram SP =
+      DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
+                                    MethodLinkageName,
+                                    MethodDefUnit, MethodLine,
+                                    MethodTy, false, 
+                                    Method->isThisDeclarationADefinition(),
+                                    0 /*Virtuality*/, 0 /*VIndex*/, 
+                                    llvm::DIType() /*ContainingType*/);
+    if (Method->isThisDeclarationADefinition())
+      SPCache[cast<FunctionDecl>(Method)] = llvm::WeakVH(SP.getNode());
+    EltTys.push_back(SP);
+  }
+}                                 
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
@@ -568,9 +627,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
-
-
   CollectRecordFields(Decl, Unit, EltTys);
+  if (CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl))
+    CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
 
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
@@ -1011,6 +1070,16 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   const Decl *D = GD.getDecl();
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // If there is a DISubprogram for  this function available then use it.
+    llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
+      FI = SPCache.find(FD);
+    if (FI != SPCache.end()) {
+      llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(FI->second));
+      if (!SP.isNull() && SP.isSubprogram() && SP.isDefinition()) {
+        RegionStack.push_back(SP.getNode());
+        return;
+      }
+    }
     Name = getFunctionName(FD);
     if (!Name.empty() && Name[0] == '\01')
       Name = Name.substr(1);
