@@ -495,10 +495,15 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     /// be loaded with 3 instructions. 
     case MipsISD::JmpLink: {
       if (TM.getRelocationModel() == Reloc::PIC_) {
+        unsigned LastOpNum = Node->getNumOperands()-1;
+
         SDValue Chain  = Node->getOperand(0);
         SDValue Callee = Node->getOperand(1);
-        SDValue T9Reg = CurDAG->getRegister(Mips::T9, MVT::i32);
-        SDValue InFlag(0, 0);
+        SDValue InFlag;
+
+        // Skip the incomming flag if present
+        if (Node->getOperand(LastOpNum).getValueType() == MVT::Flag)
+          LastOpNum--;
 
         if ( (isa<GlobalAddressSDNode>(Callee)) ||
              (isa<ExternalSymbolSDNode>(Callee)) )
@@ -513,18 +518,28 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
           Chain = Load.getValue(1);
 
           // Call target must be on T9
-          Chain = CurDAG->getCopyToReg(Chain, dl, T9Reg, Load, InFlag);
+          Chain = CurDAG->getCopyToReg(Chain, dl, Mips::T9, Load, InFlag);
         } else 
           /// Indirect call
-          Chain = CurDAG->getCopyToReg(Chain, dl, T9Reg, Callee, InFlag);
+          Chain = CurDAG->getCopyToReg(Chain, dl, Mips::T9, Callee, InFlag);
+
+        // Map the JmpLink operands to JALR
+        SDVTList NodeTys = CurDAG->getVTList(MVT::Other, MVT::Flag);
+        SmallVector<SDValue, 8> Ops;
+        Ops.push_back(CurDAG->getRegister(Mips::T9, MVT::i32));
+
+        for (unsigned i = 2, e = LastOpNum+1; i != e; ++i)
+          Ops.push_back(Node->getOperand(i));
+        Ops.push_back(Chain);
+        Ops.push_back(Chain.getValue(1));
 
         // Emit Jump and Link Register
-        SDNode *ResNode = CurDAG->getMachineNode(Mips::JALR, dl, MVT::Other,
-                                  MVT::Flag, T9Reg, Chain);
-        Chain  = SDValue(ResNode, 0);
-        InFlag = SDValue(ResNode, 1);
-        ReplaceUses(SDValue(Node, 0), Chain);
-        ReplaceUses(SDValue(Node, 1), InFlag);
+        SDNode *ResNode = CurDAG->getMachineNode(Mips::JALR, dl, NodeTys, 
+                                  &Ops[0], Ops.size());
+
+        // Replace Chain and InFlag
+        ReplaceUses(SDValue(Node, 0), SDValue(ResNode, 0));
+        ReplaceUses(SDValue(Node, 1), SDValue(ResNode, 1));
         return ResNode;
       } 
     }
