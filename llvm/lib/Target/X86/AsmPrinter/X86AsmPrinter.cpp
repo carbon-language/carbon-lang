@@ -718,7 +718,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString() &&
       !GVar->isThreadLocal() &&
-      (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
+      (GVar->hasLocalLinkage())) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (const char *LComm = MAI->getLCOMMDirective()) {

@@ -119,4 +119,19 @@
 ; LINUX:G9
 
 
+@G10 = weak global [100 x i32] zeroinitializer, align 32 ; <[100 x i32]*> [#uses=0]
+
+
+; DARWIN: 	.section	__DATA,__datacoal_nt,coalesced
+; DARWIN: .globl _G10
+; DARWIN:	.weak_definition _G10
+; DARWIN:	.align	5
+; DARWIN: _G10:
+; DARWIN:	.space	400
+
+; LINUX:	.bss
+; LINUX:	.weak	G10
+; LINUX:	.align	32
+; LINUX: G10:
+; LINUX:	.zero	400
 

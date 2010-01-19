@@ -565,7 +565,6 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
   if (Kind.isThreadData())           return ".gnu.linkonce.td.";
   if (Kind.isThreadBSS())            return ".gnu.linkonce.tb.";
 
-  if (Kind.isBSS())                  return ".gnu.linkonce.b.";
   if (Kind.isDataNoRel())            return ".gnu.linkonce.d.";
   if (Kind.isDataRelLocal())         return ".gnu.linkonce.d.rel.local.";
   if (Kind.isDataRel())              return ".gnu.linkonce.d.rel.";
@@ -581,7 +580,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker() && !Kind.isCommon()) {
+  if (GV->isWeakForLinker() && !Kind.isCommon() && !Kind.isBSS()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name;
     Name.append(Prefix, Prefix+strlen(Prefix));
@@ -634,6 +633,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isThreadData())           return TLSDataSection;
   if (Kind.isThreadBSS())            return TLSBSSSection;
 
+  // Note: we claim that common symbols are put in BSSSection, but they are
+  // really emitted with the magic .comm directive, which creates a symbol table
+  // entry but not a section.
   if (Kind.isBSS() || Kind.isCommon()) return BSSSection;
 
   if (Kind.isDataNoRel())            return DataSection;
