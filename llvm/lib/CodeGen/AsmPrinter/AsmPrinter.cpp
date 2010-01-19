@@ -161,40 +161,32 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   unsigned Size = TD->getTypeAllocSize(GV->getType()->getElementType());
   unsigned AlignLog = TD->getPreferredAlignmentLog(GV);
   
-  // Handle normal common symbols.
-  if (GVKind.isCommon()) {
+  // Handle common and BSS local symbols (.lcomm).
+  if (GVKind.isCommon() || GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
-    O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
-    if (MAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
-    
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
-      O << '\'';
-    }
-    O << '\n';
-    return;
-  }
-  
-  if (GVKind.isBSSLocal()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-    
-    if (const char *LComm = MAI->getLCOMMDirective()) {
-      O << LComm << *GVSym << ',' << Size;
-      if (MAI->getLCOMMDirectiveTakesAlignment())
-        O << ',' << AlignLog;
-    } else {
-      O << "\t.local\t" << *GVSym << '\n';
-      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
-      if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
-    }
     if (VerboseAsm) {
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << ' ';
       WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+    }
+    if (GVKind.isCommon()) {
+      // .comm _foo, 42, 4
+      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
+        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
+    } else if (const char *LComm = MAI->getLCOMMDirective()) {
+      // .lcomm _foo, 42, 4
+      O << LComm << *GVSym << ',' << Size;
+      if (MAI->getLCOMMDirectiveTakesAlignment())
+        O << ',' << AlignLog;
+    } else {
+      // .local _foo
+      O << "\t.local\t" << *GVSym << '\n';
+      // .comm _foo, 42, 4
+      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
+        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
     }
     O << '\n';
     return;
