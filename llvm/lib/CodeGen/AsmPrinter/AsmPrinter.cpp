@@ -916,16 +916,12 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
 /// EmitZeros - Emit a block of zeros.
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros, unsigned AddrSpace) const {
-  if (NumZeros) {
-    if (MAI->getZeroDirective()) {
-      O << MAI->getZeroDirective() << NumZeros;
-      if (MAI->getZeroDirectiveSuffix())
-        O << MAI->getZeroDirectiveSuffix();
-      O << '\n';
-    } else {
-      for (; NumZeros; --NumZeros)
-        O << MAI->getData8bitsDirective(AddrSpace) << "0\n";
-    }
+  if (NumZeros == 0) return;
+  if (MAI->getZeroDirective()) {
+    O << MAI->getZeroDirective() << NumZeros << '\n';
+  } else {
+    for (; NumZeros; --NumZeros)
+      O << MAI->getData8bitsDirective(AddrSpace) << "0\n";
   }
 }
 

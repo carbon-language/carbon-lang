@@ -37,7 +37,6 @@ MCAsmInfo::MCAsmInfo() {
   AllowQuotesInName = false;
   AllowNameToStartWithDigit = false;
   ZeroDirective = "\t.zero\t";
-  ZeroDirectiveSuffix = 0;
   AsciiDirective = "\t.ascii\t";
   AscizDirective = "\t.asciz\t";
   Data8bitsDirective = "\t.byte\t";

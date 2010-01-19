@@ -109,7 +109,6 @@ X86WinMCAsmInfo::X86WinMCAsmInfo(const Triple &Triple) {
   PrivateGlobalPrefix = "$";
   AlignDirective = "\tALIGN\t";
   ZeroDirective = "\tdb\t";
-  ZeroDirectiveSuffix = " dup(0)";
   AsciiDirective = "\tdb\t";
   AscizDirective = 0;
   Data8bitsDirective = "\tdb\t";
