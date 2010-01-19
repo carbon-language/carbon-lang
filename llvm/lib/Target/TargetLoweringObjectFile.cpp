@@ -141,6 +141,10 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getThreadData();
   }
 
+  // Variables with common linkage always get classified as common.
+  if (GVar->hasCommonLinkage())
+    return SectionKind::getCommon();
+
   // Variable can be easily put to BSS section.
   if (isSuitableForBSS(GVar))
     return SectionKind::getBSS();
@@ -577,7 +581,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker()) {
+  if (GV->isWeakForLinker() && !Kind.isCommon()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name;
     Name.append(Prefix, Prefix+strlen(Prefix));
@@ -630,7 +634,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isThreadData())           return TLSDataSection;
   if (Kind.isThreadBSS())            return TLSBSSSection;
 
-  if (Kind.isBSS())                  return BSSSection;
+  if (Kind.isBSS() || Kind.isCommon()) return BSSSection;
 
   if (Kind.isDataNoRel())            return DataSection;
   if (Kind.isDataRelLocal())         return DataRelLocalSection;

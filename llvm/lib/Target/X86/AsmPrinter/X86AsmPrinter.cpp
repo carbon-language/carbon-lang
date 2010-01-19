@@ -676,9 +676,26 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.type\t" << *GVarSym << ",@object\n";
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
+
+  // Handle normal common symbols.
+  if (GVKind.isCommon()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    O << ".comm " << *GVarSym << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << '\'';
+    }
+    O << '\n';
+    return;
+  }
+  
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  OutStreamer.SwitchSection(TheSection);
 
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
@@ -693,6 +710,8 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       return;
     }
   }
+
+  OutStreamer.SwitchSection(TheSection);
   
   // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() &&
@@ -707,7 +726,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
         O << LComm << *GVarSym << ',' << Size;
         if (Subtarget->isTargetDarwin())
           O << ',' << Align;
-      } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
+      } else if (Subtarget->isTargetDarwin()) {
         OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
         O << MAI->getWeakDefDirective() << *GVarSym << '\n';
         EmitAlignment(Align, GVar);

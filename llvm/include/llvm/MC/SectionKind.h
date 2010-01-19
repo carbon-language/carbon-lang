@@ -87,6 +87,11 @@ class SectionKind {
     
            /// BSS - Zero initialized writeable data.
            BSS,
+    
+           /// Common - Data with common linkage.  These represent tentative
+           /// definitions, which always have a zero initializer and are never
+           /// marked 'constant'.
+           Common,
 
            /// DataRel - This is the most general form of data that is written
            /// to by the program, it can have random relocations to arbitrary
@@ -158,10 +163,11 @@ public:
   bool isThreadData() const { return K == ThreadData; } 
 
   bool isGlobalWriteableData() const {
-    return isBSS() || isDataRel() || isReadOnlyWithRel();
+    return isBSS() || isCommon() || isDataRel() || isReadOnlyWithRel();
   }
   
   bool isBSS() const { return K == BSS; }
+  bool isCommon() const { return K == Common; }
   
   bool isDataRel() const {
     return K == DataRel || K == DataRelLocal || K == DataNoRel;
@@ -207,6 +213,7 @@ public:
   static SectionKind getThreadBSS() { return get(ThreadBSS); }
   static SectionKind getThreadData() { return get(ThreadData); }
   static SectionKind getBSS() { return get(BSS); }
+  static SectionKind getCommon() { return get(Common); }
   static SectionKind getDataRel() { return get(DataRel); }
   static SectionKind getDataRelLocal() { return get(DataRelLocal); }
   static SectionKind getDataNoRel() { return get(DataNoRel); }

@@ -714,8 +714,27 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
+  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
+
+  // Handle normal common symbols.
+  if (GVKind.isCommon()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    O << ".comm " << *GVarSym << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << Align;
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << '\'';
+    }
+    O << '\n';
+    return;
+  }
+  
+  OutStreamer.SwitchSection(getObjFileLowering().
+                            SectionForGlobal(GVar, GVKind, Mang, TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -945,10 +964,27 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
+
+  // Handle normal common symbols.
+  if (GVKind.isCommon()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+
+    O << ".comm " << *GVarSym << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << '\'';
+    }
+    O << '\n';
+    return;
+  }
+  
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  OutStreamer.SwitchSection(TheSection);
-
+  
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
   if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
@@ -963,6 +999,8 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     }
   }
   
+  OutStreamer.SwitchSection(TheSection);
+
   /// FIXME: Drive this off the section!
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -974,7 +1012,14 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
     if (GVar->hasLocalLinkage()) {
       O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
-    } else if (!GVar->hasCommonLinkage()) {
+      
+      if (VerboseAsm) {
+        O << "\t\t" << MAI->getCommentString() << " '";
+        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+        O << "'";
+      }
+      O << '\n';
+    } else {
       O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();
       O << *GVarSym << '\n';
       EmitAlignment(Align, GVar);
@@ -985,19 +1030,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       }
       O << '\n';
       EmitGlobalConstant(C);
-      return;
-    } else {
-      O << ".comm " << *GVarSym << ',' << Size;
-      // Darwin 9 and above support aligned common data.
-      if (Subtarget.isDarwin9())
-        O << ',' << Align;
     }
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << "'";
-    }
-    O << '\n';
     return;
   }
 

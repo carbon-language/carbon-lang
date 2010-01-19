@@ -318,7 +318,7 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection() &&
       !GVar->isThreadLocal() &&
-      (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
+      (GVar->hasLocalLinkage() || GVar->hasCommonLinkage())) {
 
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 

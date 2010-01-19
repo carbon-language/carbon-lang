@@ -1197,10 +1197,27 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.type " << *GVarSym << ",%object\n";
 
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
+
+  // Handle normal common symbols.
+  if (GVKind.isCommon()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    O << ".comm " << *GVarSym << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << '\'';
+    }
+    O << '\n';
+    return;
+  }
+  
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  OutStreamer.SwitchSection(TheSection);
-
+  
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
   if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
@@ -1215,6 +1232,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     }
   }
   
+  OutStreamer.SwitchSection(TheSection);
+
   // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
       // Don't put things that should go in the cstring section into "comm".
