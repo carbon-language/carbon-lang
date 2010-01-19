@@ -143,11 +143,23 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 
     // Now replace all uses.
     if (!Uses.empty()) {
+      SmallPtrSet<MachineBasicBlock*, 4> PHIBBs;
+      // Look for PHI uses of the extended result, we don't want to extend the
+      // liveness of a PHI input. It breaks all kinds of assumptions down
+      // stream. A PHI use is expected to be the kill of its source values.
+      UI = MRI->use_begin(DstReg);
+      for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
+           ++UI)
+        if (UI->getOpcode() == TargetInstrInfo::PHI)
+          PHIBBs.insert(UI->getParent());
+
       const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
       for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
         MachineOperand *UseMO = Uses[i];
         MachineInstr *UseMI = UseMO->getParent();
         MachineBasicBlock *UseMBB = UseMI->getParent();
+        if (PHIBBs.count(UseMBB))
+          continue;
         unsigned NewVR = MRI->createVirtualRegister(RC);
         BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
                 TII->get(TargetInstrInfo::EXTRACT_SUBREG), NewVR)
