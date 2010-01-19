@@ -752,9 +752,16 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       }
       break;
     }
-    // If OtherPtr has already been rewritten, this intrinsic will be dead.
-    if (OtherPtr == NewElts[0])
+    // Copying the alloca to itself is a no-op: just delete it.
+    if (OtherPtr == AI || OtherPtr == NewElts[0]) {
+      // This code will run twice for a no-op memcpy -- once for each operand.
+      // Put only one reference to MI on the DeadInsts list.
+      for (SmallVector<Value*, 32>::const_iterator I = DeadInsts.begin(),
+             E = DeadInsts.end(); I != E; ++I)
+        if (*I == MI) return;
+      DeadInsts.push_back(MI);
       return;
+    }
     
     if (ConstantExpr *BCE = dyn_cast<ConstantExpr>(OtherPtr))
       if (BCE->getOpcode() == Instruction::BitCast)
@@ -779,10 +786,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     Value *OtherElt = 0;
     unsigned OtherEltAlign = MemAlignment;
     
-    if (OtherPtr == AI) {
-      OtherElt = NewElts[i];
-      OtherEltAlign = 0;
-    } else if (OtherPtr) {
+    if (OtherPtr) {
       Value *Idx[2] = { Zero,
                       ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
       OtherElt = GetElementPtrInst::CreateInBounds(OtherPtr, Idx, Idx + 2,
