@@ -70,6 +70,7 @@ class CFGBuilder {
   CFGBlock* BreakTargetBlock;
   CFGBlock* SwitchTerminatedBlock;
   CFGBlock* DefaultCaseBlock;
+  CFGBlock* TryTerminatedBlock;
 
   // LabelMap records the mapping from Label expressions to their blocks.
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -88,7 +89,8 @@ public:
   explicit CFGBuilder() : cfg(new CFG()), // crew a new CFG
                           Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
-                          SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL) {}
+                          SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
+                          TryTerminatedBlock(NULL) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(Stmt *Statement, ASTContext *C);
@@ -106,9 +108,9 @@ private:
   CFGBlock *VisitConditionalOperator(ConditionalOperator *C,
                                      AddStmtChoice asc);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
-  CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S) { return NYS(); }
+  CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
-  CFGBlock *VisitCXXTryStmt(CXXTryStmt *S) { return NYS(); }  
+  CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
   CFGBlock *VisitDeclSubExpr(Decl* D);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);
@@ -389,6 +391,12 @@ tryAgain:
 
     case Stmt::SwitchStmtClass:
       return VisitSwitchStmt(cast<SwitchStmt>(S));
+
+    case Stmt::CXXTryStmtClass:
+      return VisitCXXTryStmt(cast<CXXTryStmt>(S));
+
+    case Stmt::CXXCatchStmtClass:
+      return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
 
     case Stmt::WhileStmtClass:
       return VisitWhileStmt(cast<WhileStmt>(S));
@@ -923,8 +931,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     // Save the current values for Block, Succ, and continue and break targets
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-    save_continue(ContinueTargetBlock),
-    save_break(BreakTargetBlock);
+      save_continue(ContinueTargetBlock),
+      save_break(BreakTargetBlock);
 
     // Create a new block to contain the (bottom) of the loop body.
     Block = NULL;
@@ -1252,8 +1260,12 @@ CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
   // Create the new block.
   Block = createBlock(false);
 
-  // The Exit block is the only successor.
-  AddSuccessor(Block, &cfg->getExit());
+  if (TryTerminatedBlock)
+    // The current try statement is the only successor.
+    AddSuccessor(Block, TryTerminatedBlock);
+  else 
+    // otherwise the Exit block is the only successor.
+    AddSuccessor(Block, &cfg->getExit());
 
   // Add the statement to the block.  This may create new blocks if S contains
   // control-flow (short-circuit operations).
@@ -1305,8 +1317,8 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
 
     // Save the current values for Block, Succ, and continue and break targets
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-    save_continue(ContinueTargetBlock),
-    save_break(BreakTargetBlock);
+      save_continue(ContinueTargetBlock),
+      save_break(BreakTargetBlock);
 
     // All continues within this loop should go to the condition block
     ContinueTargetBlock = EntryConditionBlock;
@@ -1526,6 +1538,74 @@ CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
   Succ = DefaultCaseBlock;
 
   return DefaultCaseBlock;
+}
+
+CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
+  // "try"/"catch" is a control-flow statement.  Thus we stop processing the
+  // current block.
+  CFGBlock* TrySuccessor = NULL;
+
+  if (Block) {
+    if (!FinishBlock(Block))
+      return 0;
+    TrySuccessor = Block;
+  } else TrySuccessor = Succ;
+
+  // Save the current "try" context.
+  SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock);
+
+  // Create a new block that will contain the try statement.
+  TryTerminatedBlock = createBlock(false);
+  // Add the terminator in the try block.
+  TryTerminatedBlock->setTerminator(Terminator);
+
+  for (unsigned h = 0; h <Terminator->getNumHandlers(); ++h) {
+    // The code after the try is the implicit successor.
+    Succ = TrySuccessor;
+    CXXCatchStmt *CS = Terminator->getHandler(h);
+    Block = NULL;
+    CFGBlock *CatchBlock = VisitCXXCatchStmt(CS);
+    if (CatchBlock == 0)
+      return 0;
+    // Add this block to the list of successors for the block with the try
+    // statement.
+    AddSuccessor(TryTerminatedBlock, CatchBlock);
+  }
+
+  // The code after the try is the implicit successor.
+  Succ = TrySuccessor;
+
+  // When visiting the body, the case statements should automatically get linked
+  // up to the try.
+  assert (Terminator->getTryBlock() && "try must contain a non-NULL body");
+  Block = NULL;
+  CFGBlock *BodyBlock = addStmt(Terminator->getTryBlock());
+
+  Block = BodyBlock;
+  
+  return Block;
+}
+
+CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
+  // CXXCatchStmt are treated like labels, so they are the first statement in a
+  // block.
+
+  if (CS->getHandlerBlock())
+    addStmt(CS->getHandlerBlock());
+
+  CFGBlock* CatchBlock = Block;
+  if (!CatchBlock)
+    CatchBlock = createBlock();
+
+  CatchBlock->setLabel(CS);
+
+  if (!FinishBlock(CatchBlock))
+    return 0;
+
+  // We set Block to NULL to allow lazy creation of a new block (if necessary)
+  Block = NULL;
+
+  return CatchBlock;
 }
 
 CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
@@ -1782,6 +1862,10 @@ public:
     Terminator->getCond()->printPretty(OS, Helper, Policy);
   }
 
+  void VisitCXXTryStmt(CXXTryStmt* CS) {
+    OS << "try ...";
+  }
+
   void VisitConditionalOperator(ConditionalOperator* C) {
     C->getCond()->printPretty(OS, Helper, Policy);
     OS << " ? ... : ...";
@@ -1894,7 +1978,13 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
       }
     } else if (isa<DefaultStmt>(Terminator))
       OS << "default";
-    else
+    else if (CXXCatchStmt *CS = dyn_cast<CXXCatchStmt>(Terminator)) {
+      OS << "catch (";
+      CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper->getLangOpts()),
+        0);
+      OS << ")";
+
+    } else
       assert(false && "Invalid label statement in CFGBlock.");
 
     OS << ":\n";
