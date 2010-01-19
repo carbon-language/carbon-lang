@@ -181,6 +181,10 @@ namespace llvm {
     ///
     TargetData *TD;
 
+    /// DT - The dominator tree.
+    ///
+    DominatorTree *DT;
+
     /// CouldNotCompute - This SCEV is used to represent unknown trip
     /// counts and things.
     SCEVCouldNotCompute CouldNotCompute;

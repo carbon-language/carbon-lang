@@ -5167,6 +5167,7 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
+  DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
   return false;
 }
@@ -5183,6 +5184,7 @@ void ScalarEvolution::releaseMemory() {
 void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<LoopInfo>();
+  AU.addRequiredTransitive<DominatorTree>();
 }
 
 bool ScalarEvolution::hasLoopInvariantBackedgeTakenCount(const Loop *L) {
