@@ -151,9 +151,13 @@ void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                      unsigned ByteAlignment) {
-  OS << ".comm " << *Symbol << ',' << Size;
-  if (ByteAlignment != 0)
-    OS << ',' << Log2_32(ByteAlignment);
+  OS << MAI.getCOMMDirective() << *Symbol << ',' << Size;
+  if (ByteAlignment != 0 && MAI.getCOMMDirectiveTakesAlignment()) {
+    if (MAI.getAlignmentIsInBytes())
+      OS << ',' << ByteAlignment;
+    else
+      OS << ',' << Log2_32(ByteAlignment);
+  }
   OS << '\n';
 }
 

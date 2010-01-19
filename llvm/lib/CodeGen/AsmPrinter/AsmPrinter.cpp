@@ -169,26 +169,23 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << ' ';
       WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+      O << '\n';
     }
     if (GVKind.isCommon()) {
       // .comm _foo, 42, 4
-      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
-      if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
+      OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
     } else if (const char *LComm = MAI->getLCOMMDirective()) {
       // .lcomm _foo, 42, 4
       O << LComm << *GVSym << ',' << Size;
       if (MAI->getLCOMMDirectiveTakesAlignment())
         O << ',' << AlignLog;
+      O << '\n';
     } else {
       // .local _foo
       O << "\t.local\t" << *GVSym << '\n';
       // .comm _foo, 42, 4
-      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
-      if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
+      OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
     }
-    O << '\n';
     return;
   }
   
