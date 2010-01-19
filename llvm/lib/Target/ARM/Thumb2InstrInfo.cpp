@@ -329,12 +329,16 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
 
     bool isSP = FrameReg == ARM::SP;
-    if (Offset == 0) {
+    unsigned PredReg;
+    if (Offset == 0 && getInstrPredicate(&MI, PredReg) == ARMCC::AL) {
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::tMOVgpr2gpr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
-      MI.RemoveOperand(FrameRegIdx+1);
-      Offset = 0;
+      // Remove offset and remaining explicit predicate operands.
+      do MI.RemoveOperand(FrameRegIdx+1);
+      while (MI.getNumOperands() > FrameRegIdx+1 &&
+             (!MI.getOperand(FrameRegIdx+1).isReg() ||
+              !MI.getOperand(FrameRegIdx+1).isImm()));
       return true;
     }
 

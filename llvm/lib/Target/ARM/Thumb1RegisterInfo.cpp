@@ -479,11 +479,15 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
              "Thumb add/sub sp, #imm immediate must be multiple of 4!");
     }
 
-    if (Offset == 0) {
+    unsigned PredReg;
+    if (Offset == 0 && getInstrPredicate(&MI, PredReg) == ARMCC::AL) {
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::tMOVgpr2tgpr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.RemoveOperand(i+1);
+      // Remove offset and remaining explicit predicate operands.
+      do MI.RemoveOperand(i+1);
+      while (MI.getNumOperands() > i+1 &&
+             (!MI.getOperand(i+1).isReg() || !MI.getOperand(i+1).isImm()));
       return 0;
     }
 
