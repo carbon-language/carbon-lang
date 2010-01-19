@@ -22,7 +22,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/TokenConcatenation.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -443,13 +443,11 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
   }
 }
 
-namespace {
-  struct SortMacrosByID {
-    typedef std::pair<IdentifierInfo*, MacroInfo*> id_macro_pair;
-    bool operator()(const id_macro_pair &LHS, const id_macro_pair &RHS) const {
-      return LHS.first->getName() < RHS.first->getName();
-    }
-  };
+typedef std::pair<IdentifierInfo*, MacroInfo*> id_macro_pair;
+static int MacroIDCompare(const void* a, const void* b) {
+  const id_macro_pair *LHS = static_cast<const id_macro_pair*>(a);
+  const id_macro_pair *RHS = static_cast<const id_macro_pair*>(b);
+  return LHS->first->getName().compare(RHS->first->getName());
 }
 
 static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
@@ -461,11 +459,9 @@ static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
   do PP.Lex(Tok);
   while (Tok.isNot(tok::eof));
 
-  std::vector<std::pair<IdentifierInfo*, MacroInfo*> > MacrosByID;
-  for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
-       I != E; ++I)
-    MacrosByID.push_back(*I);
-  std::sort(MacrosByID.begin(), MacrosByID.end(), SortMacrosByID());
+  llvm::SmallVector<id_macro_pair, 128>
+    MacrosByID(PP.macro_begin(), PP.macro_end());
+  llvm::array_pod_sort(MacrosByID.begin(), MacrosByID.end(), MacroIDCompare);
 
   for (unsigned i = 0, e = MacrosByID.size(); i != e; ++i) {
     MacroInfo &MI = *MacrosByID[i].second;
@@ -473,7 +469,7 @@ static void DoPrintMacros(Preprocessor &PP, llvm::raw_ostream *OS) {
     if (MI.isBuiltinMacro()) continue;
 
     PrintMacroDefinition(*MacrosByID[i].first, MI, PP, *OS);
-    *OS << "\n";
+    *OS << '\n';
   }
 }
 
