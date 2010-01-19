@@ -71,7 +71,7 @@ namespace {
     void emitGlobalDirective(const MCSymbol *Sym);
     
     void emitArrayBound(const MCSymbol *Sym, const GlobalVariable *GV);
-    virtual void PrintGlobalVariable(const GlobalVariable *GV);
+    virtual void EmitGlobalVariable(const GlobalVariable *GV);
 
     void emitFunctionStart(MachineFunction &MF);
     void emitFunctionEnd(MachineFunction &MF);
@@ -115,7 +115,7 @@ void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
   }
 }
 
-void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
+void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (!GV->hasInitializer() ||
       EmitSpecialLLVMGlobal(GV))

@@ -70,7 +70,6 @@ namespace {
                          const char *Modifier = 0);
     void printFCCOperand(const MachineInstr *MI, int opNum, 
                          const char *Modifier = 0);
-    void PrintGlobalVariable(const GlobalVariable *GVar);
     void printSavedRegsBitmask(MachineFunction &MF);
     void printHex32(unsigned int Value);
 
@@ -422,98 +421,6 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // return to previous section
   O << "\t.previous" << '\n'; 
 }
-
-void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer())
-    return;   // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
-  O << "\n\n";
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  Constant *C = GVar->getInitializer();
-  const Type *CTy = C->getType();
-  unsigned Size = TD->getTypeAllocSize(CTy);
-
-  // A data structure or array is aligned in memory to the largest
-  // alignment boundary required by any data type inside it (this matches
-  // the Preferred Type Alignment). For integral types, the alignment is
-  // the type size.
-  unsigned Align;
-  if (CTy->getTypeID() == Type::IntegerTyID ||
-      CTy->getTypeID() == Type::VoidTyID) {
-    assert(!(Size & (Size-1)) && "Alignment is not a power of two!");
-    Align = Log2_32(Size);
-  } else
-    Align = TD->getPreferredTypeAlignmentShift(CTy);
-
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
-
-  if (C->isNullValue() && !GVar->hasSection()) {
-    if (!GVar->isThreadLocal() &&
-        (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-      if (GVar->hasLocalLinkage())
-        O << "\t.local\t" << *GVarSym << '\n';
-
-      O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
-      if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (1 << Align);
-
-      O << '\n';
-      return;
-    }
-  }
-  switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
-    // FIXME: Verify correct for weak.
-    // Nonnull linkonce -> weak
-    O << "\t.weak " << *GVarSym << '\n';
-    break;
-   case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of their name
-    // or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective() << *GVarSym << '\n';
-    // Fall Through
-   case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
-   case GlobalValue::InternalLinkage:
-      break;
-   case GlobalValue::GhostLinkage:
-    llvm_unreachable("Should not have any unmaterialized functions!");
-   case GlobalValue::DLLImportLinkage:
-    llvm_unreachable("DLLImport linkage is not supported by this target!");
-   case GlobalValue::DLLExportLinkage:
-    llvm_unreachable("DLLExport linkage is not supported by this target!");
-   default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
-  EmitAlignment(Align, GVar);
-
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << *GVarSym << ",@object\n";
-    O << "\t.size " << *GVarSym << ',' << Size << '\n';
-  }
-
-  O << *GVarSym << ":\n";
-  EmitGlobalConstant(C);
-}
-
 
 // Force static initialization.
 extern "C" void LLVMInitializeMipsAsmPrinter() { 

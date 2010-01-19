@@ -143,9 +143,129 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GV))
     return;
+
+  MCSymbol *GVSym = GetGlobalValueSymbol(GV);
+  printVisibility(GVSym, GV->getVisibility());
+
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.type\t" << *GVSym;
+    if (MAI->getCommentString()[0] != '@')
+      O << ",@object\n";
+    else
+      O << ",%object\n";
+  }
   
-  // Let the target emit it.
-  PrintGlobalVariable(GV);
+  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
+
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+  unsigned AlignLog = TD->getPreferredAlignmentLog(GV);
+  
+  // Handle normal common symbols.
+  if (GVKind.isCommon()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
+    if (MAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+      O << '\'';
+    }
+    O << '\n';
+    return;
+  }
+  
+  if (GVKind.isBSSLocal()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    if (const char *LComm = MAI->getLCOMMDirective()) {
+      O << LComm << *GVSym << ',' << Size;
+      if (MAI->getLCOMMDirectiveTakesAlignment())
+        O << ',' << AlignLog;
+    } else {
+      O << "\t.local\t" << *GVSym << '\n';
+      O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
+        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << AlignLog) : AlignLog);
+    }
+    if (VerboseAsm) {
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << ' ';
+      WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+    }
+    O << '\n';
+    return;
+  }
+  
+  const MCSection *TheSection =
+    getObjFileLowering().SectionForGlobal(GV, GVKind, Mang, TM);
+
+  // Handle the zerofill directive on darwin, which is a special form of BSS
+  // emission.
+  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    // .zerofill __DATA, __common, _foo, 400, 5
+    OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << AlignLog);
+    return;
+  }
+
+  OutStreamer.SwitchSection(TheSection);
+
+  // TODO: Factor into an 'emit linkage' thing that is shared with function
+  // bodies.
+  switch (GV->getLinkage()) {
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+    if (const char *WeakDef = MAI->getWeakDefDirective()) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      // .weak_definition _foo
+      O << WeakDef << *GVSym << '\n';
+    } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      // .linkonce same_size
+      O << LinkOnce;
+    } else
+      O << "\t.weak\t" << *GVSym << '\n';
+    break;
+  case GlobalValue::DLLExportLinkage:
+  case GlobalValue::AppendingLinkage:
+    // FIXME: appending linkage variables should go into a section of
+    // their name or something.  For now, just emit them as external.
+  case GlobalValue::ExternalLinkage:
+    // If external or appending, declare as a global symbol.
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    break;
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::InternalLinkage:
+     break;
+  default:
+    llvm_unreachable("Unknown linkage type!");
+  }
+
+  EmitAlignment(AlignLog, GV);
+  O << *GVSym << ":";
+  if (VerboseAsm) {
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << ' ';
+    WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
+  }
+  O << '\n';
+
+  EmitGlobalConstant(GV->getInitializer());
+
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *GVSym << ", " << Size << '\n';
 }
 
 

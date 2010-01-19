@@ -299,9 +299,6 @@ namespace {
       AU.addRequired<DwarfWriter>();
       SPUAsmPrinter::getAnalysisUsage(AU);
     }
-
-    //! Emit a global variable according to its section and type
-    void PrintGlobalVariable(const GlobalVariable* GVar);
   };
 } // end of anonymous namespace
 
@@ -468,91 +465,6 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // We didn't modify anything.
   return false;
-}
-
-
-/*!
-  Emit a global variable according to its section, alignment, etc.
-
-  \note This code was shamelessly copied from the PowerPC's assembly printer,
-  which sort of screams for some kind of refactorization of common code.
- */
-void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer())
-    return;
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  Constant *C = GVar->getInitializer();
-  const Type *Type = C->getType();
-  unsigned Size = TD->getTypeAllocSize(Type);
-  unsigned Align = TD->getPreferredAlignmentLog(GVar);
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
-
-  if (C->isNullValue() && /* FIXME: Verify correct */
-      !GVar->hasSection() &&
-      (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->isWeakForLinker())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-      if (GVar->hasExternalLinkage()) {
-        O << "\t.global " << *GVarSym << '\n';
-        O << "\t.type " << *GVarSym << ", @object\n";
-        O << *GVarSym << ":\n";
-        O << "\t.zero " << Size << '\n';
-      } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
-      } else {
-        O << ".comm " << *GVarSym << ',' << Size;
-      }
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << "'\n";
-      return;
-  }
-
-  switch (GVar->getLinkage()) {
-  // Should never be seen for the CellSPU platform...
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::CommonLinkage:
-    O << "\t.global " << *GVarSym << "\n\t.type " << *GVarSym << ", @object\n";
-    O << "\t.weak " << *GVarSym << '\n';
-    break;
-  case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-  case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << "\t.global " << *GVarSym << "\n\t.type " << *GVarSym << ", @object\n";
-    break;
-  case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-  case GlobalValue::InternalLinkage:
-    break;
-  default:
-    llvm_report_error("Unknown linkage type!");
-  }
-
-  EmitAlignment(Align, GVar);
-  O << *GVarSym << ":\t\t\t\t" << MAI->getCommentString() << " '";
-  WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-  O << "'\n";
-
-  EmitGlobalConstant(C);
-  O << '\n';
 }
 
 // Force static initialization.

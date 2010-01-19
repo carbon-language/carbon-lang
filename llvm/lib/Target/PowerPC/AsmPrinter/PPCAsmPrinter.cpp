@@ -371,8 +371,6 @@ namespace {
       AU.addRequired<DwarfWriter>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
-
-    void PrintGlobalVariable(const GlobalVariable *GVar);
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -398,8 +396,6 @@ namespace {
       AU.addRequired<DwarfWriter>();
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
-
-    void PrintGlobalVariable(const GlobalVariable *GVar);
   };
 } // end of anonymous namespace
 
@@ -695,90 +691,6 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
-  const TargetData *TD = TM.getTargetData();
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  Constant *C = GVar->getInitializer();
-  const Type *Type = C->getType();
-  unsigned Size = TD->getTypeAllocSize(Type);
-  unsigned Align = TD->getPreferredAlignmentLog(GVar);
-
-  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
-
-  // Handle normal common symbols.
-  if (GVKind.isCommon()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-    
-    O << ".comm " << *GVarSym << ',' << Size;
-    if (MAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << Align;
-    
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << '\'';
-    }
-    O << '\n';
-    return;
-  }
-  
-  if (GVKind.isBSSLocal()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
-        
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << "'";
-    }
-    O << '\n';
-    return;
-  }
-
-  OutStreamer.SwitchSection(getObjFileLowering().
-                            SectionForGlobal(GVar, GVKind, Mang, TM));
-  
-  switch (GVar->getLinkage()) {
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.global " << *GVarSym;
-    O << "\n\t.type " << *GVarSym << ", @object\n\t.weak " << *GVarSym << '\n';
-    break;
-  case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-  case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << "\t.global " << *GVarSym;
-    O << "\n\t.type " << *GVarSym << ", @object\n";
-    // FALL THROUGH
-  case GlobalValue::InternalLinkage:
-  case GlobalValue::PrivateLinkage:
-    break;
-  default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
-  EmitAlignment(Align, GVar);
-  O << *GVarSym << ":";
-  if (VerboseAsm) {
-    O << "\t\t\t\t" << MAI->getCommentString() << " '";
-    WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-    O << "'";
-  }
-  O << '\n';
-
-  EmitGlobalConstant(C);
-  O << '\n';
-}
-
 bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
@@ -916,103 +828,6 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
                                       16, SectionKind::getText()));
   }
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
-}
-
-void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  Constant *C = GVar->getInitializer();
-  const Type *Type = C->getType();
-  unsigned Size = TD->getTypeAllocSize(Type);
-  unsigned Align = TD->getPreferredAlignmentLog(GVar);
-
-  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
-
-  // Handle normal common symbols.
-  if (GVKind.isCommon()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-    O << ".comm " << *GVarSym << ',' << Size;
-    if (MAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
-    
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << '\'';
-    }
-    O << '\n';
-    return;
-  }
-  
-  if (GVKind.isBSSLocal()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-    
-    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
-    if (MAI->getLCOMMDirectiveTakesAlignment())
-      O << ',' << Align;
-    
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << "'";
-    }
-    O << '\n';
-    return;
-  }
-  
-  const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  
-  // Handle the zerofill directive on darwin, which is a special form of BSS
-  // emission.
-  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
-    // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-    // .zerofill __DATA, __common, _foo, 400, 5
-    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
-    return;
-  }
-  
-  OutStreamer.SwitchSection(TheSection);
-
-  switch (GVar->getLinkage()) {
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::CommonLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-    O << "\t.globl " << *GVarSym << "\n\t.weak_definition " << *GVarSym << '\n';
-    break;
-  case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-  case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << "\t.globl " << *GVarSym << '\n';
-    // FALL THROUGH
-  case GlobalValue::InternalLinkage:
-  case GlobalValue::PrivateLinkage:
-    break;
-  default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
-  EmitAlignment(Align, GVar);
-  O << *GVarSym << ":";
-  if (VerboseAsm) {
-    O << "\t\t\t\t" << MAI->getCommentString() << " '";
-    WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-    O << "'";
-  }
-  O << '\n';
-
-  EmitGlobalConstant(C);
-  O << '\n';
 }
 
 bool PPCDarwinAsmPrinter::doFinalization(Module &M) {

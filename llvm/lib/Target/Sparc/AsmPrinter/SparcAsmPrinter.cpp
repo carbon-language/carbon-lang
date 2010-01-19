@@ -60,7 +60,6 @@ namespace {
       return "Sparc Assembly Printer";
     }
 
-    void PrintGlobalVariable(const GlobalVariable *GVar);
     void printOperand(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum,
                          const char *Modifier = 0);
@@ -274,86 +273,6 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum) {
 void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   int CC = (int)MI->getOperand(opNum).getImm();
   O << SPARCCondCodeToString((SPCC::CondCodes)CC);
-}
-
-void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer())
-    return;  // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
-  O << "\n\n";
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  Constant *C = GVar->getInitializer();
-  unsigned Size = TD->getTypeAllocSize(C->getType());
-  unsigned Align = TD->getPreferredAlignment(GVar);
-
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
-
-  if (C->isNullValue() && !GVar->hasSection()) {
-    if (!GVar->isThreadLocal() &&
-        (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-      if (GVar->hasLocalLinkage()) {
-        O << "\t.local " << *GVarSym << '\n';
-      }
-
-      O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
-      if (MAI->getCOMMDirectiveTakesAlignment())
-        O << ',' << (1 << Align);
-
-      O << '\n';
-      return;
-    }
-  }
-
-  switch (GVar->getLinkage()) {
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage: // FIXME: Verify correct for weak.
-   case GlobalValue::WeakODRLinkage: // FIXME: Verify correct for weak.
-    // Nonnull linkonce -> weak
-    O << "\t.weak " << *GVarSym << '\n';
-    break;
-   case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << MAI->getGlobalDirective() << *GVarSym << '\n';
-    // FALL THROUGH
-   case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
-   case GlobalValue::InternalLinkage:
-    break;
-   case GlobalValue::GhostLinkage:
-    llvm_unreachable("Should not have any unmaterialized functions!");
-   case GlobalValue::DLLImportLinkage:
-    llvm_unreachable("DLLImport linkage is not supported by this target!");
-   case GlobalValue::DLLExportLinkage:
-    llvm_unreachable("DLLExport linkage is not supported by this target!");
-   default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
-  EmitAlignment(Align, GVar);
-
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << *GVarSym << ",%object\n";
-    O << "\t.size " << *GVarSym << ',' << Size << '\n';
-  }
-
-  O << *GVarSym << ":\n";
-  EmitGlobalConstant(C);
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

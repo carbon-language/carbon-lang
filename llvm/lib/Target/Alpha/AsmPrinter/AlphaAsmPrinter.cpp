@@ -52,7 +52,6 @@ namespace {
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair(const MachineInstr *MI, int i, bool brackets=true);
-    void PrintGlobalVariable(const GlobalVariable *GVar);
     bool runOnMachineFunction(MachineFunction &F);
     void EmitStartOfAsmFile(Module &M);
 
@@ -196,62 +195,6 @@ void AlphaAsmPrinter::EmitStartOfAsmFile(Module &M) {
   else
     O << "\t.arch ev6\n";
   O << "\t.set noat\n";
-}
-
-void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer()) return;  // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  Constant *C = GVar->getInitializer();
-  unsigned Size = TD->getTypeAllocSize(C->getType());
-  unsigned Align = TD->getPreferredAlignmentLog(GVar);
-
-  // 0: Switch to section
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
-
-  // 1: Check visibility
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  // 2: Kind
-  switch (GVar->getLinkage()) {
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::CommonLinkage:
-    O << MAI->getWeakRefDirective() << *GVarSym << '\n';
-    break;
-  case GlobalValue::AppendingLinkage:
-  case GlobalValue::ExternalLinkage:
-    O << MAI->getGlobalDirective() << *GVarSym << '\n';
-    break;
-  case GlobalValue::InternalLinkage:
-  case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-    break;
-  default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
-  // 3: Type, Size, Align
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type\t" << *GVarSym << ", @object\n";
-    O << "\t.size\t" << *GVarSym << ", " << Size << "\n";
-  }
-
-  EmitAlignment(Align, GVar);
-  
-  O << *GVarSym << ":\n";
-
-  EmitGlobalConstant(C);
-  O << '\n';
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

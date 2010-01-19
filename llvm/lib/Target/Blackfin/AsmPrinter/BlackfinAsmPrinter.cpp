@@ -60,7 +60,6 @@ namespace {
                          unsigned AsmVariant, const char *ExtraCode);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode);
-    void PrintGlobalVariable(const GlobalVariable* GVar);
   };
 } // end of anonymous namespace
 
@@ -89,28 +88,6 @@ void BlackfinAsmPrinter::emitLinkage(const MCSymbol *GVSym,
     O << MAI->getWeakDefDirective() << *GVSym << "\n";
     break;
   }
-}
-
-void BlackfinAsmPrinter::PrintGlobalVariable(const GlobalVariable* GV) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GV->hasInitializer() || EmitSpecialLLVMGlobal(GV))
-    return;
-
-  MCSymbol *GVSym = GetGlobalValueSymbol(GV);
-  Constant *C = GV->getInitializer();
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,
-                                                                  TM));
-  emitLinkage(GVSym, GV->getLinkage());
-  EmitAlignment(TD->getPreferredAlignmentLog(GV), GV);
-  printVisibility(GVSym, GV->getVisibility());
-
-  O << "\t.type " << *GVSym << ", STT_OBJECT\n";
-  O << "\t.size " << *GVSym << "\n";
-  O << ',' << TD->getTypeAllocSize(C->getType()) << '\n';
-  O << *GVSym << ":\n";
-  EmitGlobalConstant(C);
 }
 
 /// runOnMachineFunction - This uses the printInstruction()

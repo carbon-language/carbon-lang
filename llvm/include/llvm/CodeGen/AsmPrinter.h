@@ -215,10 +215,6 @@ namespace llvm {
                                        unsigned AsmVariant, 
                                        const char *ExtraCode);
     
-    /// PrintGlobalVariable - Emit the specified global variable and its
-    /// initializer to the output stream.
-    virtual void PrintGlobalVariable(const GlobalVariable *GV) = 0;
-
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
@@ -241,7 +237,7 @@ namespace llvm {
     void EmitJumpTableInfo(MachineJumpTableInfo *MJTI, MachineFunction &MF);
     
     /// EmitGlobalVariable - Emit the specified global variable to the .s file.
-    void EmitGlobalVariable(const GlobalVariable *GV);
+    virtual void EmitGlobalVariable(const GlobalVariable *GV);
     
     /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
     /// special global used by LLVM.  If so, emit it and return true, otherwise

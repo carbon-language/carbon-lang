@@ -71,7 +71,6 @@ namespace {
 
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
-    void PrintGlobalVariable(const GlobalVariable* GVar);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -292,87 +291,6 @@ void SystemZAsmPrinter::printRRIAddrOperand(const MachineInstr *MI, int OpNum,
     O << ')';
   } else
     assert(!Index.getReg() && "Should allocate base register first!");
-}
-
-void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-  const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer())
-    return;   // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
-  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
-  Constant *C = GVar->getInitializer();
-  unsigned Size = TD->getTypeAllocSize(C->getType());
-  unsigned Align = std::max(1U, TD->getPreferredAlignmentLog(GVar));
-
-  printVisibility(GVarSym, GVar->getVisibility());
-
-  O << "\t.type\t" << *GVarSym << ",@object\n";
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GVar, Mang,
-                                                                  TM));
-
-  if (C->isNullValue() && !GVar->hasSection() &&
-      !GVar->isThreadLocal() &&
-      (GVar->hasLocalLinkage() || GVar->hasCommonLinkage())) {
-
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-    if (GVar->hasLocalLinkage())
-      O << "\t.local\t" << *GVarSym << '\n';
-
-    O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
-    if (MAI->getCOMMDirectiveTakesAlignment())
-      O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
-
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << ' ';
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-    }
-    O << '\n';
-    return;
-  }
-
-  switch (GVar->getLinkage()) {
-  case GlobalValue::CommonLinkage:
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-    O << "\t.weak\t" << *GVarSym << '\n';
-    break;
-  case GlobalValue::DLLExportLinkage:
-  case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-  case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol
-    O << "\t.globl " << *GVarSym << '\n';
-    // FALL THROUGH
-  case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-  case GlobalValue::InternalLinkage:
-     break;
-  default:
-    assert(0 && "Unknown linkage type!");
-  }
-
-  // Use 16-bit alignment by default to simplify bunch of stuff
-  EmitAlignment(Align, GVar, 1);
-  O << *GVarSym << ":";
-  if (VerboseAsm) {
-    O << "\t\t\t\t" << MAI->getCommentString() << ' ';
-    WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-  }
-  O << '\n';
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << *GVarSym << ", " << Size << '\n';
-
-  EmitGlobalConstant(C);
 }
 
 // Force static initialization.

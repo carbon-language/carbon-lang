@@ -69,9 +69,9 @@ namespace llvm {
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
 
-    /// PrintGlobalVariable - Emit the specified global variable and its
+    /// EmitGlobalVariable - Emit the specified global variable and its
     /// initializer to the output stream.
-    virtual void PrintGlobalVariable(const GlobalVariable *GV) {
+    virtual void EmitGlobalVariable(const GlobalVariable *GV) {
       // PIC16 doesn't use normal hooks for this.
     }
     
