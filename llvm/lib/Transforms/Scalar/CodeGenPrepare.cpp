@@ -617,7 +617,23 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
           TLI->getTargetData()->getIntPtrType(AccessTy->getContext());
 
     Value *Result = 0;
-    // Start with the scale value.
+
+    // Start with the base register. Do this first so that subsequent address
+    // matching finds it last, which will prevent it from trying to match it
+    // as the scaled value in case it happens to be a mul. That would be
+    // problematic if we've sunk a different mul for the scale, because then
+    // we'd end up sinking both muls.
+    if (AddrMode.BaseReg) {
+      Value *V = AddrMode.BaseReg;
+      if (isa<PointerType>(V->getType()))
+        V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
+      if (V->getType() != IntPtrTy)
+        V = CastInst::CreateIntegerCast(V, IntPtrTy, /*isSigned=*/true,
+                                        "sunkaddr", InsertPt);
+      Result = V;
+    }
+
+    // Add the scale value.
     if (AddrMode.Scale) {
       Value *V = AddrMode.ScaledReg;
       if (V->getType() == IntPtrTy) {
@@ -634,17 +650,6 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
         V = BinaryOperator::CreateMul(V, ConstantInt::get(IntPtrTy,
                                                                 AddrMode.Scale),
                                       "sunkaddr", InsertPt);
-      Result = V;
-    }
-
-    // Add in the base register.
-    if (AddrMode.BaseReg) {
-      Value *V = AddrMode.BaseReg;
-      if (isa<PointerType>(V->getType()))
-        V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
-      if (V->getType() != IntPtrTy)
-        V = CastInst::CreateIntegerCast(V, IntPtrTy, /*isSigned=*/true,
-                                        "sunkaddr", InsertPt);
       if (Result)
         Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
