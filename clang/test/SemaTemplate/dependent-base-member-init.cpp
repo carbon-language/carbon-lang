@@ -52,3 +52,8 @@ namespace PR6062 {
     A(U& init) : U::other_type(init) { }
   };
 }
+
+template<typename T, typename U>
+struct X0 : T::template apply<U> {
+  X0(int i) : T::template apply<U>(i) { }
+};
