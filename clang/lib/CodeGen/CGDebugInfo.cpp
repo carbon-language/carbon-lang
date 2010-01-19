@@ -1020,6 +1020,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     // Use llvm function name as linkage name.
     Name = Fn->getName();
     LinkageName = Name;
+    if (!Name.empty() && Name[0] == '\01')
+      Name = Name.substr(1);
   }
 
   // It is expected that CurLoc is set before using EmitFunctionStart.
