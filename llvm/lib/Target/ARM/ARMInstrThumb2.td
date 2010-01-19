@@ -1541,7 +1541,8 @@ def t2CLZ : T2I_misc<0b11, 0b00, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
                     "clz", "\t$dst, $src", [(set GPR:$dst, (ctlz GPR:$src))]>;
 
 def t2RBIT : T2I_misc<0b01, 0b10, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-                      "rbit", "\t$dst, $src", []>;
+                      "rbit", "\t$dst, $src",
+                      [(set GPR:$dst, (ARMrbit GPR:$src))]>;
 
 def t2REV : T2I_misc<0b01, 0b00, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
                    "rev", ".w\t$dst, $src", [(set GPR:$dst, (bswap GPR:$src))]>;

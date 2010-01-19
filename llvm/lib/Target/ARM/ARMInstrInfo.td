@@ -107,6 +107,8 @@ def ARMMemBarrierV6  : SDNode<"ARMISD::MEMBARRIER", SDT_ARMMEMBARRIERV6,
 def ARMSyncBarrierV6 : SDNode<"ARMISD::SYNCBARRIER", SDT_ARMMEMBARRIERV6,
                               [SDNPHasChain]>;
 
+def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
+
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
@@ -1456,7 +1458,9 @@ def CLZ  : AMiscA1I<0b000010110, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
 }
 
 def RBIT : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
-              "rbit", "\t$dst, $src", []>, Requires<[IsARM, HasV6T2]> {
+              "rbit", "\t$dst, $src",
+              [(set GPR:$dst, (ARMrbit GPR:$src))]>,
+           Requires<[IsARM, HasV6T2]> {
   let Inst{7-4}   = 0b0011;
   let Inst{11-8}  = 0b1111;
   let Inst{19-16} = 0b1111;

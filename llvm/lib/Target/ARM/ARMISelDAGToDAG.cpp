@@ -1680,12 +1680,6 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(ARM::VMOVRRD, dl, MVT::i32, MVT::i32,
                                   N->getOperand(0), getAL(CurDAG),
                                   CurDAG->getRegister(0, MVT::i32));
-  case ARMISD::RBIT: {
-    EVT VT = N->getValueType(0);
-    SDValue Ops[] = { N->getOperand(0),
-                      getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-    return CurDAG->getMachineNode(ARM::RBIT, dl, VT, Ops, 3);
-  }
   case ISD::UMUL_LOHI: {
     if (Subtarget->isThumb1Only())
       break;
