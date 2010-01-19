@@ -679,8 +679,6 @@ public:
       UndefinedSymbolData[i].SymbolData->setIndex(Index++);
 
     // The string table is padded to a multiple of 4.
-    //
-    // FIXME: Check to see if this varies per arch.
     while (StringTable.size() % 4)
       StringTable += '\x00';
   }
