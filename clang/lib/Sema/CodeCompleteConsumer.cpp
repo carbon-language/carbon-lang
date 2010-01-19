@@ -572,11 +572,11 @@ CIndexCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
         break;
         
       case Decl::ObjCImplementation:
-        Kind = CXCursor_ObjCClassDefn;
+        Kind = CXCursor_ObjCImplementationDecl;
         break;
         
       case Decl::ObjCCategoryImpl:
-        Kind = CXCursor_ObjCCategoryDefn;
+        Kind = CXCursor_ObjCCategoryImplDecl;
         break;
         
       default:

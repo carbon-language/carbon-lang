@@ -59,6 +59,9 @@ static void PrintCursor(CXCursor Cursor) {
       CXSourceLocation Loc = clang_getCursorLocation(Referenced);
       printf(":%d:%d", Loc.line, Loc.column);
     }
+
+    if (clang_isCursorDefinition(Cursor))
+      printf(" (Definition)");
   }
 }
 
@@ -125,7 +128,8 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
   unsigned startLine, startColumn, endLine, endColumn, curLine, curColumn;
   CXCursor Ref;
 
-  if (Cursor.kind != CXCursor_FunctionDefn)
+  if (Cursor.kind != CXCursor_FunctionDecl ||
+      !clang_isCursorDefinition(Cursor))
     return;
 
   clang_getDefinitionSpellingAndExtent(Cursor, &startBuf, &endBuf,

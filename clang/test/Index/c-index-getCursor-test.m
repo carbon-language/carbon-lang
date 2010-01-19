@@ -91,57 +91,57 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=41 start_col=3 end_line=41 end_col=10} EnumConstantDecl=someEnum:41:3
 // CHECK: {start_line=41 start_col=11 end_line=42 end_col=1} EnumDecl=:40:1
 // CHECK: {start_line=42 start_col=2 end_line=43 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=44 start_col=1 end_line=44 end_col=3} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=1 end_line=44 end_col=3} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=4 end_line=44 end_col=4} Invalid Cursor => NoDeclFound
-// CHECK: {start_line=44 start_col=5 end_line=44 end_col=10} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=5 end_line=44 end_col=10} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=11 end_line=44 end_col=13} ParmDecl=argc:44:15
-// CHECK: {start_line=44 start_col=14 end_line=44 end_col=14} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=14 end_line=44 end_col=14} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=15 end_line=44 end_col=18} ParmDecl=argc:44:15
-// CHECK: {start_line=44 start_col=19 end_line=44 end_col=26} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=19 end_line=44 end_col=26} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=27 end_line=44 end_col=30} ParmDecl=argv:44:34
-// CHECK: {start_line=44 start_col=31 end_line=44 end_col=31} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=31 end_line=44 end_col=31} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=32 end_line=44 end_col=32} ParmDecl=argv:44:34
-// CHECK: {start_line=44 start_col=33 end_line=44 end_col=33} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=33 end_line=44 end_col=33} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=44 start_col=34 end_line=44 end_col=39} ParmDecl=argv:44:34
-// CHECK: {start_line=44 start_col=40 end_line=45 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=44 start_col=40 end_line=45 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=45 start_col=2 end_line=45 end_col=4} ObjCClassRef=Baz:31:1
-// CHECK: {start_line=45 start_col=5 end_line=45 end_col=5} FunctionDefn=main:44:5
+// CHECK: {start_line=45 start_col=5 end_line=45 end_col=5} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=45 start_col=6 end_line=45 end_col=6} VarDecl=bee:45:8
-// CHECK: {start_line=45 start_col=7 end_line=45 end_col=7} FunctionDefn=main:44:5
+// CHECK: {start_line=45 start_col=7 end_line=45 end_col=7} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=45 start_col=8 end_line=45 end_col=10} VarDecl=bee:45:8
-// CHECK: {start_line=45 start_col=11 end_line=46 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=45 start_col=11 end_line=46 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=46 start_col=2 end_line=46 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=46 start_col=4 end_line=46 end_col=4} FunctionDefn=main:44:5
+// CHECK: {start_line=46 start_col=4 end_line=46 end_col=4} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=46 start_col=5 end_line=46 end_col=8} VarDecl=a:46:5
 // CHECK: {start_line=46 start_col=9 end_line=46 end_col=9} ObjCSelectorRef=foo:7:1
 // CHECK: {start_line=46 start_col=10 end_line=46 end_col=12} VarRef=bee:45:8
 // CHECK: {start_line=46 start_col=13 end_line=46 end_col=17} ObjCSelectorRef=foo:7:1
-// CHECK: {start_line=46 start_col=18 end_line=47 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=46 start_col=18 end_line=47 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=47 start_col=2 end_line=47 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=47 start_col=4 end_line=47 end_col=4} FunctionDefn=main:44:5
+// CHECK: {start_line=47 start_col=4 end_line=47 end_col=4} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=47 start_col=5 end_line=47 end_col=5} VarDecl=c:47:12
 // CHECK: {start_line=47 start_col=6 end_line=47 end_col=9} ObjCProtocolRef=SubP:27:1
 // CHECK: {start_line=47 start_col=10 end_line=47 end_col=10} VarDecl=c:47:12
-// CHECK: {start_line=47 start_col=11 end_line=47 end_col=11} FunctionDefn=main:44:5
+// CHECK: {start_line=47 start_col=11 end_line=47 end_col=11} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=47 start_col=12 end_line=47 end_col=15} VarDecl=c:47:12
 // CHECK: {start_line=47 start_col=16 end_line=47 end_col=25} ObjCSelectorRef=fooC:8:1
-// CHECK: {start_line=47 start_col=26 end_line=48 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=47 start_col=26 end_line=48 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=48 start_col=2 end_line=48 end_col=3} TypedefDecl=id:0:0
-// CHECK: {start_line=48 start_col=4 end_line=48 end_col=4} FunctionDefn=main:44:5
+// CHECK: {start_line=48 start_col=4 end_line=48 end_col=4} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=48 start_col=5 end_line=48 end_col=5} VarDecl=d:48:13
 // CHECK: {start_line=48 start_col=6 end_line=48 end_col=10} ObjCProtocolRef=Proto:23:1
 // CHECK: {start_line=48 start_col=11 end_line=48 end_col=11} VarDecl=d:48:13
-// CHECK: {start_line=48 start_col=12 end_line=48 end_col=12} FunctionDefn=main:44:5
+// CHECK: {start_line=48 start_col=12 end_line=48 end_col=12} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=48 start_col=13 end_line=48 end_col=13} VarDecl=d:48:13
-// CHECK: {start_line=48 start_col=14 end_line=49 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=48 start_col=14 end_line=49 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=49 start_col=2 end_line=49 end_col=2} VarRef=d:48:13
-// CHECK: {start_line=49 start_col=3 end_line=49 end_col=5} FunctionDefn=main:44:5
+// CHECK: {start_line=49 start_col=3 end_line=49 end_col=5} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=49 start_col=6 end_line=49 end_col=6} VarRef=c:47:12
-// CHECK: {start_line=49 start_col=7 end_line=50 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=49 start_col=7 end_line=50 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=50 start_col=2 end_line=50 end_col=2} ObjCSelectorRef=pMethod:24:1
 // CHECK: {start_line=50 start_col=3 end_line=50 end_col=3} VarRef=d:48:13
 // CHECK: {start_line=50 start_col=4 end_line=50 end_col=12} ObjCSelectorRef=pMethod:24:1
-// CHECK: {start_line=50 start_col=13 end_line=51 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=50 start_col=13 end_line=51 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=51 start_col=2 end_line=51 end_col=2} ObjCSelectorRef=catMethodWithFloat::19:1
 // CHECK: {start_line=51 start_col=3 end_line=51 end_col=5} VarRef=bee:45:8
 // CHECK: {start_line=51 start_col=6 end_line=51 end_col=25} ObjCSelectorRef=catMethodWithFloat::19:1
@@ -149,12 +149,12 @@ int main (int argc, const char * argv[]) {
 // CHECK: {start_line=51 start_col=27 end_line=51 end_col=29} VarRef=bee:45:8
 // CHECK: {start_line=51 start_col=30 end_line=51 end_col=42} ObjCSelectorRef=floatMethod:20:1
 // CHECK: {start_line=51 start_col=43 end_line=51 end_col=43} ObjCSelectorRef=catMethodWithFloat::19:1
-// CHECK: {start_line=51 start_col=44 end_line=52 end_col=2} FunctionDefn=main:44:5
+// CHECK: {start_line=51 start_col=44 end_line=52 end_col=2} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=52 start_col=3 end_line=52 end_col=6} FunctionRef=main:44:5
-// CHECK: {start_line=52 start_col=7 end_line=52 end_col=7} FunctionDefn=main:44:5
+// CHECK: {start_line=52 start_col=7 end_line=52 end_col=7} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=52 start_col=8 end_line=52 end_col=15} EnumConstantRef=someEnum:41:3
-// CHECK: {start_line=52 start_col=16 end_line=52 end_col=32} FunctionDefn=main:44:5
+// CHECK: {start_line=52 start_col=16 end_line=52 end_col=32} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=52 start_col=33 end_line=52 end_col=35} VarRef=bee:45:8
-// CHECK: {start_line=52 start_col=36 end_line=53 end_col=1} FunctionDefn=main:44:5
+// CHECK: {start_line=52 start_col=36 end_line=53 end_col=1} FunctionDecl=main:44:5 (Definition)
 // CHECK: {start_line=53 start_col=2 end_line=160 end_col=1} Invalid Cursor => NoDeclFound
 

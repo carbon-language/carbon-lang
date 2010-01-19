@@ -39,17 +39,16 @@ static CXCursorKind GetCursorKind(Decl *D) {
     case Decl::EnumConstant:       return CXCursor_EnumConstantDecl;
     case Decl::Field:              return CXCursor_FieldDecl;
     case Decl::Function:  
-      return cast<FunctionDecl>(D)->isThisDeclarationADefinition()
-              ? CXCursor_FunctionDefn : CXCursor_FunctionDecl;
+      return CXCursor_FunctionDecl;
     case Decl::ObjCCategory:       return CXCursor_ObjCCategoryDecl;
-    case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryDefn;
+    case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
     case Decl::ObjCClass:
       // FIXME
       return CXCursor_NotImplemented;
     case Decl::ObjCForwardProtocol:
       // FIXME
       return CXCursor_NotImplemented;      
-    case Decl::ObjCImplementation: return CXCursor_ObjCClassDefn;
+    case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
     case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
     case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
     case Decl::ObjCMethod:
@@ -160,11 +159,8 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   case CXCursor_ObjCIvarDecl:
   case CXCursor_ObjCInstanceMethodDecl:
   case CXCursor_ObjCClassMethodDecl:
-  case CXCursor_FunctionDefn:
-  case CXCursor_ObjCClassDefn:
-  case CXCursor_ObjCCategoryDefn:
-  case CXCursor_ObjCInstanceMethodDefn:
-  case CXCursor_ObjCClassMethodDefn:
+  case CXCursor_ObjCImplementationDecl:
+  case CXCursor_ObjCCategoryImplDecl:
     return static_cast<Decl *>(Cursor.data[0])->getASTContext();
 
   case CXCursor_ObjCSuperClassRef:

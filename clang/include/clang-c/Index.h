@@ -72,17 +72,10 @@ enum CXCursorKind {
  CXCursor_ObjCIvarDecl                  = 15,
  CXCursor_ObjCInstanceMethodDecl        = 16,
  CXCursor_ObjCClassMethodDecl           = 17,
- CXCursor_LastDecl                      = 17,
+ CXCursor_ObjCImplementationDecl        = 18,
+ CXCursor_ObjCCategoryImplDecl          = 19,
+ CXCursor_LastDecl                      = 19,
  
- /* Definitions */
- CXCursor_FirstDefn                     = 32,
- CXCursor_FunctionDefn                  = 32,
- CXCursor_ObjCClassDefn                 = 33,
- CXCursor_ObjCCategoryDefn              = 34,
- CXCursor_ObjCInstanceMethodDefn        = 35,
- CXCursor_ObjCClassMethodDefn           = 36,
- CXCursor_LastDefn                      = 36,
-   
  /* References */
  CXCursor_FirstRef                      = 40, /* Decl references */
  CXCursor_ObjCSuperClassRef             = 40,            
@@ -388,7 +381,6 @@ CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
 CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isDefinition(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
@@ -407,7 +399,8 @@ CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
  */
 CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
     
-/** \brief Retrieve the physical extent of the source construct referenced by
+/**
+ * \brief Retrieve the physical extent of the source construct referenced by
  * the given cursor.
  *
  * The extent of a cursor starts with the file/line/column pointing at the
@@ -430,7 +423,43 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
  * Othewise, returns the NULL cursor.
  */
 CINDEX_LINKAGE CXCursor clang_getCursorReferenced(CXCursor);
-  
+
+/** 
+ *  \brief For a cursor that is either a reference to or a declaration
+ *  of some entity, retrieve a cursor that describes the definition of
+ *  that entity.
+ *
+ *  Some entities can be declared multiple times within a translation
+ *  unit, but only one of those declarations can also be a
+ *  definition. For example, given:
+ *
+ *  \code
+ *  int f(int, int);
+ *  int g(int x, int y) { return f(x, y); }
+ *  int f(int a, int b) { return a + b; }
+ *  int f(int, int);
+ *  \endcode
+ *
+ *  there are three declarations of the function "f", but only the
+ *  second one is a definition. The clang_getCursorDefinition()
+ *  function will take any cursor pointing to a declaration of "f"
+ *  (the first or fourth lines of the example) or a cursor referenced
+ *  that uses "f" (the call to "f' inside "g") and will return a
+ *  declaration cursor pointing to the definition (the second "f"
+ *  declaration).
+ *
+ *  If given a cursor for which there is no corresponding definition,
+ *  e.g., because there is no definition of that entity within this
+ *  translation unit, returns a NULL cursor.
+ */
+CINDEX_LINKAGE CXCursor clang_getCursorDefinition(CXCursor);
+
+/** 
+ * \brief Determine whether the declaration pointed to by this cursor
+ * is also a definition of that entity.
+ */
+CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
+
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
 CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor, 

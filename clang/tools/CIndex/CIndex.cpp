@@ -365,13 +365,11 @@ void CDeclVisitor::VisitObjCIvarDecl(ObjCIvarDecl *ND) {
 }
 
 void CDeclVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-  if (ND->getBody()) {
-    Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDefn
-         : CXCursor_ObjCClassMethodDefn, ND);
+  Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
+       : CXCursor_ObjCClassMethodDecl, ND);
+
+  if (ND->getBody())
     VisitDeclContext(dyn_cast<DeclContext>(ND));
-  } else
-    Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
-         : CXCursor_ObjCClassMethodDecl, ND);
 }
 
 void CDeclVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
@@ -772,7 +770,6 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_UnionDecl: return "UnionDecl";
   case CXCursor_ClassDecl: return "ClassDecl";
   case CXCursor_FieldDecl: return "FieldDecl";
-  case CXCursor_FunctionDefn: return "FunctionDefn";
   case CXCursor_VarDecl: return "VarDecl";
   case CXCursor_ParmDecl: return "ParmDecl";
   case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
@@ -783,10 +780,8 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCIvarRef: return "ObjCIvarRef";
   case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
   case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
-  case CXCursor_ObjCInstanceMethodDefn: return "ObjCInstanceMethodDefn";
-  case CXCursor_ObjCCategoryDefn: return "ObjCCategoryDefn";
-  case CXCursor_ObjCClassMethodDefn: return "ObjCClassMethodDefn";
-  case CXCursor_ObjCClassDefn: return "ObjCClassDefn";
+  case CXCursor_ObjCImplementationDecl: return "ObjCImplementationDecl";
+  case CXCursor_ObjCCategoryImplDecl: return "ObjCCategoryImplDecl";
   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
   case CXCursor_ObjCClassRef: return "ObjCClassRef";
@@ -878,16 +873,12 @@ unsigned clang_isReference(enum CXCursorKind K) {
   return K >= CXCursor_FirstRef && K <= CXCursor_LastRef;
 }
 
-unsigned clang_isDefinition(enum CXCursorKind K) {
-  return K >= CXCursor_FirstDefn && K <= CXCursor_LastDefn;
-}
-
 CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
 }
 
 CXDecl clang_getCursorDecl(CXCursor C) {
-  if (clang_isDeclaration(C.kind) || clang_isDefinition(C.kind))
+  if (clang_isDeclaration(C.kind))
     return getCursorDecl(C);
 
   if (clang_isReference(C.kind)) {
@@ -1008,7 +999,7 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
 }
 
 CXCursor clang_getCursorReferenced(CXCursor C) {
-  if (clang_isDeclaration(C.kind) || clang_isDefinition(C.kind))
+  if (clang_isDeclaration(C.kind))
     return C;
   
   if (!clang_isReference(C.kind))
@@ -1044,6 +1035,238 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   }
   
   return clang_getNullCursor();
+}
+
+CXCursor clang_getCursorDefinition(CXCursor C) {
+  bool WasReference = false;
+  if (clang_isReference(C.kind)) {
+    C = clang_getCursorReferenced(C);
+    WasReference = true;
+  }
+
+  if (!clang_isDeclaration(C.kind))
+    return clang_getNullCursor();
+
+  Decl *D = getCursorDecl(C);
+  if (!D)
+    return clang_getNullCursor();
+  
+  switch (D->getKind()) {
+  // Declaration kinds that don't really separate the notions of
+  // declaration and definition.
+  case Decl::Namespace:
+  case Decl::Typedef:
+  case Decl::TemplateTypeParm:
+  case Decl::EnumConstant:
+  case Decl::Field:
+  case Decl::ObjCIvar:
+  case Decl::ObjCAtDefsField:
+  case Decl::ImplicitParam:
+  case Decl::ParmVar:
+  case Decl::NonTypeTemplateParm:
+  case Decl::TemplateTemplateParm:
+  case Decl::ObjCCategoryImpl:
+  case Decl::ObjCImplementation:
+  case Decl::LinkageSpec:
+  case Decl::ObjCPropertyImpl:
+  case Decl::FileScopeAsm:
+  case Decl::StaticAssert:
+  case Decl::Block:
+    return C;
+
+  // Declaration kinds that don't make any sense here, but are
+  // nonetheless harmless.
+  case Decl::TranslationUnit:
+  case Decl::Template:
+  case Decl::ObjCContainer:
+    break;
+
+  // Declaration kinds for which the definition is not resolvable.
+  case Decl::UnresolvedUsingTypename:
+  case Decl::UnresolvedUsingValue:
+    break;
+
+  case Decl::UsingDirective:
+    return MakeCXCursor(cast<UsingDirectiveDecl>(D)->getNominatedNamespace());
+
+  case Decl::NamespaceAlias:
+    return MakeCXCursor(cast<NamespaceAliasDecl>(D)->getNamespace());
+
+  case Decl::Enum:
+  case Decl::Record:
+  case Decl::CXXRecord:
+  case Decl::ClassTemplateSpecialization:
+  case Decl::ClassTemplatePartialSpecialization:
+    if (TagDecl *Def = cast<TagDecl>(D)->getDefinition(D->getASTContext()))
+      return MakeCXCursor(Def);
+    return clang_getNullCursor();
+
+  case Decl::Function:
+  case Decl::CXXMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion: {
+    const FunctionDecl *Def = 0;
+    if (cast<FunctionDecl>(D)->getBody(Def))
+      return MakeCXCursor(const_cast<FunctionDecl *>(Def));
+    return clang_getNullCursor();
+  }
+
+  case Decl::Var: {
+    VarDecl *Var = cast<VarDecl>(D);
+
+    // Variables with initializers have definitions.
+    const VarDecl *Def = 0;
+    if (Var->getDefinition(Def))
+      return MakeCXCursor(const_cast<VarDecl *>(Def));
+
+    // extern and private_extern variables are not definitions.
+    if (Var->hasExternalStorage())
+      return clang_getNullCursor();
+
+    // In-line static data members do not have definitions.
+    if (Var->isStaticDataMember() && !Var->isOutOfLine())
+      return clang_getNullCursor();
+
+    // All other variables are themselves definitions.
+    return C;
+  }
+   
+  case Decl::FunctionTemplate: {
+    const FunctionDecl *Def = 0;
+    if (cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->getBody(Def))
+      return MakeCXCursor(Def->getDescribedFunctionTemplate());
+    return clang_getNullCursor();
+  }
+   
+  case Decl::ClassTemplate: {
+    if (RecordDecl *Def = cast<ClassTemplateDecl>(D)->getTemplatedDecl()
+                                          ->getDefinition(D->getASTContext()))
+      return MakeCXCursor(
+                         cast<CXXRecordDecl>(Def)->getDescribedClassTemplate());
+    return clang_getNullCursor();
+  }
+
+  case Decl::Using: {
+    UsingDecl *Using = cast<UsingDecl>(D);
+    CXCursor Def = clang_getNullCursor();
+    for (UsingDecl::shadow_iterator S = Using->shadow_begin(), 
+                                 SEnd = Using->shadow_end(); 
+         S != SEnd; ++S) {
+      if (Def != clang_getNullCursor()) {
+        // FIXME: We have no way to return multiple results.
+        return clang_getNullCursor();
+      }
+
+      Def = clang_getCursorDefinition(MakeCXCursor((*S)->getTargetDecl()));
+    }
+
+    return Def;
+  }
+
+  case Decl::UsingShadow:
+    return clang_getCursorDefinition(
+                       MakeCXCursor(cast<UsingShadowDecl>(D)->getTargetDecl()));
+
+  case Decl::ObjCMethod: {
+    ObjCMethodDecl *Method = cast<ObjCMethodDecl>(D);
+    if (Method->isThisDeclarationADefinition())
+      return C;
+
+    // Dig out the method definition in the associated
+    // @implementation, if we have it.
+    // FIXME: The ASTs should make finding the definition easier.
+    if (ObjCInterfaceDecl *Class
+                       = dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext()))
+      if (ObjCImplementationDecl *ClassImpl = Class->getImplementation())
+        if (ObjCMethodDecl *Def = ClassImpl->getMethod(Method->getSelector(),
+                                                  Method->isInstanceMethod()))
+          if (Def->isThisDeclarationADefinition())
+            return MakeCXCursor(Def);
+
+    return clang_getNullCursor();
+  }
+
+  case Decl::ObjCCategory:
+    if (ObjCCategoryImplDecl *Impl
+                               = cast<ObjCCategoryDecl>(D)->getImplementation())
+      return MakeCXCursor(Impl);
+    return clang_getNullCursor();
+
+  case Decl::ObjCProtocol:
+    if (!cast<ObjCProtocolDecl>(D)->isForwardDecl())
+      return C;
+    return clang_getNullCursor();
+
+  case Decl::ObjCInterface:
+    // There are two notions of a "definition" for an Objective-C
+    // class: the interface and its implementation. When we resolved a
+    // reference to an Objective-C class, produce the @interface as
+    // the definition; when we were provided with the interface,
+    // produce the @implementation as the definition.
+    if (WasReference) {
+      if (!cast<ObjCInterfaceDecl>(D)->isForwardDecl())
+        return C;
+    } else if (ObjCImplementationDecl *Impl
+                              = cast<ObjCInterfaceDecl>(D)->getImplementation())
+      return MakeCXCursor(Impl);
+    return clang_getNullCursor();
+  
+  case Decl::ObjCProperty:
+    // FIXME: We don't really know where to find the
+    // ObjCPropertyImplDecls that implement this property.
+    return clang_getNullCursor();
+
+  case Decl::ObjCCompatibleAlias:
+    if (ObjCInterfaceDecl *Class
+          = cast<ObjCCompatibleAliasDecl>(D)->getClassInterface())
+      if (!Class->isForwardDecl())
+        return MakeCXCursor(Class);
+    
+    return clang_getNullCursor();
+
+  case Decl::ObjCForwardProtocol: {
+    ObjCForwardProtocolDecl *Forward = cast<ObjCForwardProtocolDecl>(D);
+    if (Forward->protocol_size() == 1)
+      return clang_getCursorDefinition(
+                                     MakeCXCursor(*Forward->protocol_begin()));
+
+    // FIXME: Cannot return multiple definitions.
+    return clang_getNullCursor();
+  }
+
+  case Decl::ObjCClass: {
+    ObjCClassDecl *Class = cast<ObjCClassDecl>(D);
+    if (Class->size() == 1) {
+      ObjCInterfaceDecl *IFace = Class->begin()->getInterface();
+      if (!IFace->isForwardDecl())
+        return MakeCXCursor(IFace);
+      return clang_getNullCursor();
+    }
+
+    // FIXME: Cannot return multiple definitions.
+    return clang_getNullCursor();
+  }
+
+  case Decl::Friend:
+    if (NamedDecl *Friend = cast<FriendDecl>(D)->getFriendDecl())
+      return clang_getCursorDefinition(MakeCXCursor(Friend));
+    return clang_getNullCursor();
+
+  case Decl::FriendTemplate:
+    if (NamedDecl *Friend = cast<FriendTemplateDecl>(D)->getFriendDecl())
+      return clang_getCursorDefinition(MakeCXCursor(Friend));
+    return clang_getNullCursor();
+  }
+
+  return clang_getNullCursor();
+}
+
+unsigned clang_isCursorDefinition(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+
+  return clang_getCursorDefinition(C) == C;
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C,
