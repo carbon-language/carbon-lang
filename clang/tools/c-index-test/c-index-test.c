@@ -73,11 +73,11 @@ static const char* GetCursorSource(CXCursor Cursor) {
 
 static const char *FileCheckPrefix = "CHECK";
 
-static void PrintDeclExtent(CXDecl Dcl) {
-  CXSourceRange extent; 
-  if (!Dcl)
+static void PrintCursorExtent(CXCursor C) {
+  CXSourceRange extent = clang_getCursorExtent(C);
+  /* FIXME: Better way to check for empty extents? */
+  if (!extent.begin.file)
     return;
-  extent = clang_getDeclExtent(Dcl);
   printf(" [Extent=%d:%d:%d:%d]", extent.begin.line, extent.begin.column,
          extent.end.line, extent.end.column);
 }
@@ -89,8 +89,8 @@ static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
     if (!source)
       source = "<invalid loc>";  
     printf("// %s: %s:%d:%d: ", FileCheckPrefix, source, Loc.line, Loc.column);
-    PrintCursor(Cursor);    
-    PrintDeclExtent(clang_getCursorDecl(Cursor));
+    PrintCursor(Cursor);
+    PrintCursorExtent(Cursor);
 
     printf("\n");
   }
@@ -111,7 +111,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
       return;
     }
     
-    PrintDeclExtent(D);
+    PrintCursorExtent(Cursor);
     printf("\n");    
     clang_loadDeclaration(D, DeclVisitor, 0);
   }
@@ -173,7 +173,7 @@ static void USRDeclVisitor(CXDecl D, CXCursor C, CXClientData Filter) {
       return;
     }
     printf("// %s: %s %s", FileCheckPrefix, GetCursorSource(C), USR.Spelling);
-    PrintDeclExtent(clang_getCursorDecl(C));
+    PrintCursorExtent(C);
     printf("\n");
     clang_disposeString(USR);
   }

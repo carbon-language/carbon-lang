@@ -13,6 +13,7 @@ _clang_getCompletionChunkKind
 _clang_getCompletionChunkText
 _clang_getCursor
 _clang_getCursorDecl
+_clang_getCursorExtent
 _clang_getCursorFromDecl
 _clang_getCursorKind
 _clang_getCursorKindSpelling

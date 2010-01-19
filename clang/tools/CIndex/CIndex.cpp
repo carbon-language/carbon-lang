@@ -130,6 +130,55 @@ static CXSourceLocation translateSourceLocation(SourceManager &SourceMgr,
   return Result;
 }
 
+/// \brief Translate a Clang source range into a CIndex source range.
+static CXSourceRange translateSourceRange(ASTContext &Context,
+                                          SourceRange R) {
+  if (R.isInvalid()) {
+    CXSourceRange extent = { { 0, 0, 0 }, { 0, 0, 0 } };
+    return extent;
+  }
+  
+  // FIXME: This is largely copy-paste from
+  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
+  // what we want the two routines should be refactored.
+  
+  SourceManager &SM = Context.getSourceManager();
+  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
+  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
+        
+  // If the End location and the start location are the same and are a macro
+  // location, then the range was something that came from a macro expansion
+  // or _Pragma.  If this is an object-like macro, the best we can do is to
+  // get the range.  If this is a function-like macro, we'd also like to
+  // get the arguments.
+  if (Begin == End && R.getEnd().isMacroID())
+    End = SM.getInstantiationRange(R.getEnd()).second;
+  
+  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);  
+  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
+  
+  // Compute the column number of the start.  Keep the column based at 1.
+  unsigned StartColNo = SM.getInstantiationColumnNumber(Begin);
+  
+  // Compute the column number of the end.
+  unsigned EndColNo = SM.getInstantiationColumnNumber(End);
+  if (EndColNo) {
+    // Offset the end column by 1 so that we point to the last character
+    // in the last token.
+    --EndColNo;
+    
+    // Add in the length of the token, so that we cover multi-char tokens.
+    EndColNo += Lexer::MeasureTokenLength(End, SM, Context.getLangOptions());
+  }
+  
+  // Package up the line/column data and return to the caller.
+  const FileEntry *BeginFile = SM.getFileEntryForID(SM.getFileID(Begin));
+  const FileEntry *EndFile = SM.getFileEntryForID(SM.getFileID(End));
+  CXSourceRange extent = { { (void *)BeginFile, StartLineNo, StartColNo },
+                           { (void *)EndFile, EndLineNo, EndColNo } };
+  return extent;  
+}
+
 //===----------------------------------------------------------------------===//
 // Visitors.
 //===----------------------------------------------------------------------===//
@@ -609,57 +658,7 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl) {
 }
   
 CXSourceRange clang_getDeclExtent(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  SourceManager &SM = ND->getASTContext().getSourceManager();
-  SourceRange R = ND->getSourceRange();
-
-  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
-  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
-
-  if (!Begin.isValid()) {
-    CXSourceRange extent = { { 0, 0, 0 }, { 0, 0, 0 } };
-    return extent;
-  }
-  
-  // FIXME: This is largely copy-paste from
-  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
-  // what we want the two routines should be refactored.
-  
-  // If the End location and the start location are the same and are a macro
-  // location, then the range was something that came from a macro expansion
-  // or _Pragma.  If this is an object-like macro, the best we can do is to
-  // get the range.  If this is a function-like macro, we'd also like to
-  // get the arguments.
-  if (Begin == End && R.getEnd().isMacroID())
-    End = SM.getInstantiationRange(R.getEnd()).second;
-
-  assert(SM.getFileID(Begin) == SM.getFileID(End));
-  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);  
-  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
-  
-  // Compute the column number of the start.  Keep the column based at 1.
-  unsigned StartColNo = SM.getInstantiationColumnNumber(Begin);
-  
-  // Compute the column number of the end.
-  unsigned EndColNo = SM.getInstantiationColumnNumber(End);
-  if (EndColNo) {
-    // Offset the end column by 1 so that we point to the last character
-    // in the last token.
-    --EndColNo;
-    
-    // Add in the length of the token, so that we cover multi-char tokens.
-    ASTContext &Ctx = ND->getTranslationUnitDecl()->getASTContext();
-    const LangOptions &LOpts = Ctx.getLangOptions();
-
-    EndColNo += Lexer::MeasureTokenLength(End, SM, LOpts);
-  }
-
-  // Package up the line/column data and return to the caller.
-  const FileEntry *FEntry = SM.getFileEntryForID(SM.getFileID(Begin));
-  CXSourceRange extent = { { (void *)FEntry, StartLineNo, StartColNo },
-                           { (void *)FEntry, EndLineNo, EndColNo } };
-  return extent;  
+  return clang_getCursorExtent(clang_getCursorFromDecl(AnonDecl));
 }
 
 const char *clang_getDeclSource(CXDecl AnonDecl) {
@@ -960,6 +959,52 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
     Loc = Class->getClassLoc();
   return translateSourceLocation(SM, Loc);
+}
+
+CXSourceRange clang_getCursorExtent(CXCursor C) {
+  if (clang_isReference(C.kind)) {
+    switch (C.kind) {
+      case CXCursor_ObjCSuperClassRef: {       
+        std::pair<ObjCInterfaceDecl *, SourceLocation> P
+          = getCursorObjCSuperClassRef(C);
+        return translateSourceRange(P.first->getASTContext(), P.second);
+      }
+        
+      case CXCursor_ObjCProtocolRef: {       
+        std::pair<ObjCProtocolDecl *, SourceLocation> P
+          = getCursorObjCProtocolRef(C);
+        return translateSourceRange(P.first->getASTContext(), P.second);
+      }
+        
+      case CXCursor_ObjCClassRef: {       
+        std::pair<ObjCInterfaceDecl *, SourceLocation> P
+          = getCursorObjCClassRef(C);
+        
+        return translateSourceRange(P.first->getASTContext(), P.second);
+      }
+        
+      case CXCursor_ObjCSelectorRef:
+      case CXCursor_ObjCIvarRef:
+      case CXCursor_VarRef:
+      case CXCursor_FunctionRef:
+      case CXCursor_EnumConstantRef:
+      case CXCursor_MemberRef:
+        return translateSourceRange(getCursorContext(C), 
+                                    getCursorExpr(C)->getSourceRange());
+        
+      default:
+        // FIXME: Need a way to enumerate all non-reference cases.
+        llvm_unreachable("Missed a reference kind");
+    }
+  }
+  
+  if (!getCursorDecl(C)) {
+    CXSourceRange empty = { { 0, 0, 0 }, { 0, 0, 0 } };
+    return empty;
+  }
+  
+  Decl *D = getCursorDecl(C);
+  return translateSourceRange(D->getASTContext(), D->getSourceRange());
 }
   
 void clang_getDefinitionSpellingAndExtent(CXCursor C,

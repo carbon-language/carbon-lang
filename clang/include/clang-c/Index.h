@@ -407,6 +407,17 @@ CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
  */
 CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
     
+/** \brief Retrieve the physical extent of the source construct referenced by
+ * the given cursor.
+ *
+ * The extent of a cursor starts with the file/line/column pointing at the
+ * first character within the source construct that the cursor refers to and
+ * ends with the last character withinin that source construct. For a 
+ * declaration, the extent covers the declaration itself. For a reference,
+ * the extent covers the location of the reference (e.g., where the referenced
+ * entity was actually used).
+ */
+CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
   
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
