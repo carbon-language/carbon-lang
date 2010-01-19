@@ -331,6 +331,15 @@ tryAgain:
     case Stmt::ContinueStmtClass:
       return VisitContinueStmt(cast<ContinueStmt>(S));
 
+    case Stmt::CXXCatchStmtClass:
+      return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
+
+    case Stmt::CXXThrowExprClass:
+      return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
+      
+    case Stmt::CXXTryStmtClass:
+      return VisitCXXTryStmt(cast<CXXTryStmt>(S));
+      
     case Stmt::DeclStmtClass:
       return VisitDeclStmt(cast<DeclStmt>(S));
 
@@ -357,9 +366,6 @@ tryAgain:
 
     case Stmt::ObjCAtCatchStmtClass:
       return VisitObjCAtCatchStmt(cast<ObjCAtCatchStmt>(S));
-
-  case Stmt::CXXThrowExprClass:
-    return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
 
     case Stmt::ObjCAtSynchronizedStmtClass:
       return VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S));
@@ -391,12 +397,6 @@ tryAgain:
 
     case Stmt::SwitchStmtClass:
       return VisitSwitchStmt(cast<SwitchStmt>(S));
-
-    case Stmt::CXXTryStmtClass:
-      return VisitCXXTryStmt(cast<CXXTryStmt>(S));
-
-    case Stmt::CXXCatchStmtClass:
-      return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
 
     case Stmt::WhileStmtClass:
       return VisitWhileStmt(cast<WhileStmt>(S));
