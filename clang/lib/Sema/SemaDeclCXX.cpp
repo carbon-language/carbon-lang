@@ -1062,8 +1062,23 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     if (!TyD) {
       if (R.isAmbiguous()) return true;
 
+      if (SS.isSet() && isDependentScopeSpecifier(SS)) {
+        bool NotUnknownSpecialization = false;
+        DeclContext *DC = computeDeclContext(SS, false);
+        if (CXXRecordDecl *Record = dyn_cast_or_null<CXXRecordDecl>(DC)) 
+          NotUnknownSpecialization = !Record->hasAnyDependentBases();
+
+        if (!NotUnknownSpecialization) {
+          // When the scope specifier can refer to a member of an unknown
+          // specialization, we take it as a type name.
+          BaseType = CheckTypenameType((NestedNameSpecifier *)SS.getScopeRep(),
+                                       *MemberOrBase, SS.getRange());
+          R.clear();
+        }
+      }
+
       // If no results were found, try to correct typos.
-      if (R.empty() && 
+      if (R.empty() && BaseType.isNull() &&
           CorrectTypo(R, S, &SS, ClassDecl) && R.isSingleResult()) {
         if (FieldDecl *Member = R.getAsSingle<FieldDecl>()) {
           if (Member->getDeclContext()->getLookupContext()->Equals(ClassDecl)) {
@@ -1106,20 +1121,22 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
         }
       }
 
-      if (!TyD) {
+      if (!TyD && BaseType.isNull()) {
         Diag(IdLoc, diag::err_mem_init_not_member_or_class)
           << MemberOrBase << SourceRange(IdLoc, RParenLoc);
         return true;
       }
     }
 
-    BaseType = Context.getTypeDeclType(TyD);
-    if (SS.isSet()) {
-      NestedNameSpecifier *Qualifier =
-        static_cast<NestedNameSpecifier*>(SS.getScopeRep());
+    if (BaseType.isNull()) {
+      BaseType = Context.getTypeDeclType(TyD);
+      if (SS.isSet()) {
+        NestedNameSpecifier *Qualifier =
+          static_cast<NestedNameSpecifier*>(SS.getScopeRep());
 
-      // FIXME: preserve source range information
-      BaseType = Context.getQualifiedNameType(Qualifier, BaseType);
+        // FIXME: preserve source range information
+        BaseType = Context.getQualifiedNameType(Qualifier, BaseType);
+      }
     }
   }
 

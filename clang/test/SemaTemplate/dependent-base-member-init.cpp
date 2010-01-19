@@ -34,3 +34,21 @@ template<typename T> struct s1 : s0<typename s0_traits<T>::t0> {
   s1() {}
 };
 
+// PR6062
+namespace PR6062 {
+  template <typename T>
+  class A : public T::type
+  {
+    A() : T::type()
+    {  
+    }
+    
+    template <typename U>
+    A(U const& init)
+      : T::type(init)
+    { }
+
+    template<typename U>
+    A(U& init) : U::other_type(init) { }
+  };
+}
