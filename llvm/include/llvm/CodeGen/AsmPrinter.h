@@ -370,7 +370,13 @@ namespace llvm {
     /// MachineBasicBlock, an alignment (if present) and a comment describing
     /// it if appropriate.
     void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
-  protected:
+    
+    
+    // Data emission.
+    
+    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
+    void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
+    
     /// EmitZeros - Emit a block of zeros.
     ///
     void EmitZeros(uint64_t NumZeros, unsigned AddrSpace = 0) const;
@@ -379,12 +385,10 @@ namespace llvm {
     ///
     virtual void EmitString(const ConstantArray *CVA) const;
 
+  protected:
     /// EmitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
     void EmitConstantValueOnly(const Constant *CV);
-
-    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
@@ -427,12 +431,8 @@ namespace llvm {
   private:
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
-    void EmitGlobalConstantStruct(const ConstantStruct* CVS,
-                                  unsigned AddrSpace);
-    void EmitGlobalConstantArray(const ConstantArray* CVA, unsigned AddrSpace);
-    void EmitGlobalConstantVector(const ConstantVector* CP);
-    void EmitGlobalConstantFP(const ConstantFP* CFP, unsigned AddrSpace);
     void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
+    void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

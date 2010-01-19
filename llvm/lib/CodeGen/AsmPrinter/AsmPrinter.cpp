@@ -1101,57 +1101,56 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
   O << '\n';
 }
 
-void AsmPrinter::EmitGlobalConstantArray(const ConstantArray *CVA,
-                                         unsigned AddrSpace) {
-  if (CVA->isString()) {
-    EmitString(CVA);
+static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
+                                    AsmPrinter &AP) {
+  if (AddrSpace == 0 && CA->isString()) {
+    AP.EmitString(CA);
   } else { // Not a string.  Print the values in successive locations
-    for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-      EmitGlobalConstant(CVA->getOperand(i), AddrSpace);
+    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+      AP.EmitGlobalConstant(CA->getOperand(i), AddrSpace);
   }
 }
 
-void AsmPrinter::EmitGlobalConstantVector(const ConstantVector *CP) {
-  const VectorType *PTy = CP->getType();
-  
-  for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
-    EmitGlobalConstant(CP->getOperand(I));
+static void EmitGlobalConstantVector(const ConstantVector *CV,
+                                     unsigned AddrSpace, AsmPrinter &AP) {
+  const VectorType *VTy = CV->getType();
+  for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
+    AP.EmitGlobalConstant(CV->getOperand(i), AddrSpace);
 }
 
-void AsmPrinter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
-                                          unsigned AddrSpace) {
+static void EmitGlobalConstantStruct(const ConstantStruct *CS,
+                                     unsigned AddrSpace, AsmPrinter &AP) {
   // Print the fields in successive locations. Pad to align if needed!
-  const TargetData *TD = TM.getTargetData();
-  unsigned Size = TD->getTypeAllocSize(CVS->getType());
-  const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
-  uint64_t sizeSoFar = 0;
-  for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
-    const Constant* field = CVS->getOperand(i);
+  const TargetData *TD = AP.TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(CS->getType());
+  const StructLayout *cvsLayout = TD->getStructLayout(CS->getType());
+  uint64_t SizeSoFar = 0;
+  for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
+    const Constant *field = CS->getOperand(i);
 
     // Check if padding is needed and insert one or more 0s.
     uint64_t fieldSize = TD->getTypeAllocSize(field->getType());
     uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
                         - cvsLayout->getElementOffset(i)) - fieldSize;
-    sizeSoFar += fieldSize + padSize;
+    SizeSoFar += fieldSize + padSize;
 
     // Now print the actual field value.
-    EmitGlobalConstant(field, AddrSpace);
+    AP.EmitGlobalConstant(field, AddrSpace);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    EmitZeros(padSize, AddrSpace);
+    AP.EmitZeros(padSize, AddrSpace);
   }
-  assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
+  assert(SizeSoFar == cvsLayout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
 }
 
-void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP, 
+void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
                                       unsigned AddrSpace) {
   // FP Constants are printed as integer constants to avoid losing
   // precision...
-  LLVMContext &Context = CFP->getContext();
-  const TargetData *TD = TM.getTargetData();
+  const TargetData &TD = *TM.getTargetData();
   if (CFP->getType()->isDoubleTy()) {
     double Val = CFP->getValueAPF().convertToDouble();  // for comment only
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
@@ -1162,7 +1161,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
         O << MAI->getCommentString() << " double " << Val;
       }
       O << '\n';
-    } else if (TD->isBigEndian()) {
+    } else if (TD.isBigEndian()) {
       O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32);
       if (VerboseAsm) {
         O.PadToColumn(MAI->getCommentColumn());
@@ -1218,7 +1217,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     bool ignored;
     DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                       &ignored);
-    if (TD->isBigEndian()) {
+    if (TD.isBigEndian()) {
       O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]);
       if (VerboseAsm) {
         O.PadToColumn(MAI->getCommentColumn());
@@ -1290,8 +1289,9 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       }
       O << '\n';
     }
-    EmitZeros(TD->getTypeAllocSize(Type::getX86_FP80Ty(Context)) -
-              TD->getTypeStoreSize(Type::getX86_FP80Ty(Context)), AddrSpace);
+    LLVMContext &Context = CFP->getContext();
+    EmitZeros(TD.getTypeAllocSize(Type::getX86_FP80Ty(Context)) -
+              TD.getTypeStoreSize(Type::getX86_FP80Ty(Context)), AddrSpace);
     return;
   }
   
@@ -1300,7 +1300,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = api.getRawData();
-    if (TD->isBigEndian()) {
+    if (TD.isBigEndian()) {
       O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32);
       if (VerboseAsm) {
         O.PadToColumn(MAI->getCommentColumn());
@@ -1420,20 +1420,14 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     return EmitZeros(Size, AddrSpace);
   
-  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
-    EmitGlobalConstantArray(CVA, AddrSpace);
-    return;
-  }
+  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
+    return EmitGlobalConstantArray(CVA, AddrSpace, *this);
   
-  if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
-    EmitGlobalConstantStruct(CVS, AddrSpace);
-    return;
-  }
+  if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
+    return EmitGlobalConstantStruct(CVS, AddrSpace, *this);
 
-  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    EmitGlobalConstantFP(CFP, AddrSpace);
-    return;
-  }
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
+    return EmitGlobalConstantFP(CFP, AddrSpace);
   
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     // If we can directly emit an 8-byte constant, do it.
@@ -1450,10 +1444,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     }
   }
   
-  if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
-    EmitGlobalConstantVector(CP);
-    return;
-  }
+  if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
+    return EmitGlobalConstantVector(V, AddrSpace, *this);
 
   printDataDirective(type, AddrSpace);
   EmitConstantValueOnly(CV);
