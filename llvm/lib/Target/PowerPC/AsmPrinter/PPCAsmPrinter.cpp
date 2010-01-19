@@ -697,14 +697,6 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
-
-  if (!GVar->hasInitializer())
-    return;   // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
 
   printVisibility(GVarSym, GVar->getVisibility());
@@ -929,13 +921,6 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
 void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
-  if (!GVar->hasInitializer())
-    return;   // External global require no code
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   printVisibility(GVarSym, GVar->getVisibility());
 
@@ -963,6 +948,20 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
   }
   
+  if (GVKind.isBSSLocal()) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    
+    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << "'";
+    }
+    O << '\n';
+    return;
+  }
+  
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
   
@@ -976,20 +975,6 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
   }
   
-  if (GVKind.isBSSLocal()) {
-    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
-    
-    if (VerboseAsm) {
-      O << "\t\t" << MAI->getCommentString() << " '";
-      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      O << "'";
-    }
-    O << '\n';
-    return;
-  }
-
   OutStreamer.SwitchSection(TheSection);
 
   switch (GVar->getLinkage()) {

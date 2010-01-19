@@ -135,11 +135,25 @@ bool AsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
+/// EmitGlobalVariable - Emit the specified global variable to the .s file.
+void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
+  if (!GV->hasInitializer())   // External globals require no code.
+    return;
+  
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (EmitSpecialLLVMGlobal(GV))
+    return;
+  
+  // Let the target emit it.
+  PrintGlobalVariable(GV);
+}
+
+
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    PrintGlobalVariable(I);
+    EmitGlobalVariable(I);
   
   // Emit final debug information.
   if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())

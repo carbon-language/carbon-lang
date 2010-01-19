@@ -647,13 +647,6 @@ void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-  if (!GVar->hasInitializer())
-    return;   // External global require no code
-  
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-  
   const TargetData *TD = TM.getTargetData();
 
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
@@ -686,22 +679,9 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;
   }
   
-  const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-
-  // Handle the zerofill directive on darwin, which is a special form of BSS
-  // emission.
-  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
-    // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-    // .zerofill __DATA, __common, _foo, 400, 5
-    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
-    return;
-  }
-
   if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
+    
     if (const char *LComm = MAI->getLCOMMDirective()) {
       if (GVar->hasLocalLinkage()) {
         O << LComm << *GVarSym << ',' << Size;
@@ -721,6 +701,19 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
     }
     O << '\n';
+    return;
+  }
+  
+  const MCSection *TheSection =
+    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
+
+  // Handle the zerofill directive on darwin, which is a special form of BSS
+  // emission.
+  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+    // .zerofill __DATA, __common, _foo, 400, 5
+    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
     return;
   }
 

@@ -1167,13 +1167,6 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
 void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
-  if (!GVar->hasInitializer())   // External global require no code
-    return;
-
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GVar))
-    return;
-
   MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   
   Constant *C = GVar->getInitializer();
@@ -1206,25 +1199,12 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     return;
   }
   
-  const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
-  
-  // Handle the zerofill directive on darwin, which is a special form of BSS
-  // emission.
-  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
-    // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-    // .zerofill __DATA, __common, _foo, 400, 5
-    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
-    return;
-  }
-  
   if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
+    
     if (isDarwin) {
       O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size
-        << ',' << Align;
+      << ',' << Align;
     } else if (MAI->getLCOMMDirective() != NULL) {
       O << MAI->getLCOMMDirective() << *GVarSym << "," << Size;
     } else {
@@ -1242,7 +1222,20 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\n";
     return;
   }
-
+  
+  const MCSection *TheSection =
+    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
+  
+  // Handle the zerofill directive on darwin, which is a special form of BSS
+  // emission.
+  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+    // .zerofill __DATA, __common, _foo, 400, 5
+    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+    return;
+  }
+  
   OutStreamer.SwitchSection(TheSection);
 
   switch (GVar->getLinkage()) {

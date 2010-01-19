@@ -240,6 +240,9 @@ namespace llvm {
     ///
     void EmitJumpTableInfo(MachineJumpTableInfo *MJTI, MachineFunction &MF);
     
+    /// EmitGlobalVariable - Emit the specified global variable to the .s file.
+    void EmitGlobalVariable(const GlobalVariable *GV);
+    
     /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
     /// special global used by LLVM.  If so, emit it and return true, otherwise
     /// do nothing and return false.
