@@ -387,7 +387,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only())
-    // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR iff target supports vfp2.
+    // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR
+    // iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
 
   // We want to custom lower some of our intrinsics.
@@ -3531,7 +3532,8 @@ static SDValue PerformSUBCombine(SDNode *N,
   return SDValue();
 }
 
-/// PerformVMOVRRDCombine - Target-specific dag combine xforms for ARMISD::VMOVRRD.
+/// PerformVMOVRRDCombine - Target-specific dag combine xforms for
+/// ARMISD::VMOVRRD.
 static SDValue PerformVMOVRRDCombine(SDNode *N,
                                    TargetLowering::DAGCombinerInfo &DCI) {
   // fmrrd(fmdrr x, y) -> x,y
