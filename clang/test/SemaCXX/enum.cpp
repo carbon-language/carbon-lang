@@ -56,3 +56,14 @@ namespace test1 {
   enum enum4 { v4 = __LONG_MAX__ * 2UL };
   int test4[is_same<__typeof(+v4), unsigned long>::value];
 }
+
+// PR6061
+namespace PR6061 {
+  struct A { enum { id }; };
+  struct B { enum { id }; };
+  
+  struct C : public A, public B
+  { 
+    enum { id }; 
+  };
+}
