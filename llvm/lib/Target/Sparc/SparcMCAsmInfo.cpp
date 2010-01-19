@@ -15,7 +15,8 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT) {
+SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT)
+  : MCAsmInfo(/*isLittleEndian*/ false) {
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   Data64bitsDirective = 0;  // .xword is only supported by V9.

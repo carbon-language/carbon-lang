@@ -14,7 +14,7 @@
 #include "PPCMCAsmInfo.h"
 using namespace llvm;
 
-PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
+PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) : MCAsmInfoDarwin(false) {
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::Dwarf;
@@ -25,7 +25,7 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   SupportsDebugInformation= true; // Debug information.
 }
 
-PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
+PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) : MCAsmInfo(false)  {
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";

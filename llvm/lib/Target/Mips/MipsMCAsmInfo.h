@@ -22,9 +22,23 @@ namespace llvm {
   
   class MipsMCAsmInfo : public MCAsmInfo {
   public:
-    explicit MipsMCAsmInfo(const Target &T, const StringRef &TT);
+    explicit MipsMCAsmInfo(const Target &T, const StringRef &TT,
+                           bool isLittleEndian);
   };
-
+  
+  /// Big Endian MAI.
+  class MipsBEMCAsmInfo : public MipsMCAsmInfo {
+  public:
+    MipsBEMCAsmInfo(const Target &T, const StringRef &TT)
+      : MipsMCAsmInfo(T, TT, false) {}
+  };
+  
+  /// Little Endian MAI.
+  class MipsLEMCAsmInfo : public MipsMCAsmInfo {
+  public:
+    MipsLEMCAsmInfo(const Target &T, const StringRef &TT)
+    : MipsMCAsmInfo(T, TT, true) {}
+  };
 } // namespace llvm
 
 #endif

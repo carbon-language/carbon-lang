@@ -15,7 +15,8 @@
 #include "llvm/MC/MCAsmInfoDarwin.h"
 using namespace llvm;
 
-MCAsmInfoDarwin::MCAsmInfoDarwin() {
+MCAsmInfoDarwin::MCAsmInfoDarwin(bool isLittleEndian)
+  : MCAsmInfo(isLittleEndian) {
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";

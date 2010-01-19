@@ -14,7 +14,8 @@
 #include "MipsMCAsmInfo.h"
 using namespace llvm;
 
-MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
+MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT,
+                             bool isLittleEndian) : MCAsmInfo(isLittleEndian) {
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";
