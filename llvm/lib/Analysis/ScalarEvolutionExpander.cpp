@@ -323,7 +323,7 @@ static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
 /// http://llvm.org/docs/LangRef.html#pointeraliasing
 /// for details.
 ///
-/// Design note: The correctness of using getelmeentptr here depends on
+/// Design note: The correctness of using getelementptr here depends on
 /// ScalarEvolution not recognizing inttoptr and ptrtoint operators, as
 /// they may introduce pointer arithmetic which may not be safely converted
 /// into getelementptr.
@@ -687,8 +687,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
          HPI != HPE; ++HPI)
       if (L->contains(*HPI)) {
-        // Insert a unit add instruction right before the terminator corresponding
-        // to the back-edge.
+        // Insert a unit add instruction right before the terminator
+        // corresponding to the back-edge.
         Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                      (*HPI)->getTerminator());
         InsertedValues.insert(Add);
