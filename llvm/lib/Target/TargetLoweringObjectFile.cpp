@@ -750,6 +750,9 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   ConstDataCoalSection
     = getMachOSection("__DATA","__const_coal", MCSectionMachO::S_COALESCED,
                       SectionKind::getText());
+  DataCommonSection
+    = getMachOSection("__DATA","__common", MCSectionMachO::S_ZEROFILL,
+                      SectionKind::getBSS());
   ConstDataSection  // .const_data
     = getMachOSection("__DATA", "__const", 0,
                       SectionKind::getReadOnlyWithRel());
@@ -915,6 +918,11 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isReadOnlyWithRel())
     return ConstDataSection;
 
+  // Put zero initialized globals with strong external linkage in the
+  // DATA, __common section with the .zerofill directive.
+  if (Kind.isBSS() && GV->hasExternalLinkage())
+    return DataCommonSection;
+  
   // Otherwise, just drop the variable in the normal data section.
   return DataSection;
 }

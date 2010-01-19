@@ -664,88 +664,83 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   
   const TargetData *TD = TM.getTargetData();
 
-  MCSymbol *GVSym = GetGlobalValueSymbol(GVar);
+  MCSymbol *GVarSym = GetGlobalValueSymbol(GVar);
   Constant *C = GVar->getInitializer();
   const Type *Type = C->getType();
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  printVisibility(GVSym, GVar->getVisibility());
+  printVisibility(GVarSym, GVar->getVisibility());
 
   if (Subtarget->isTargetELF())
-    O << "\t.type\t" << *GVSym << ",@object\n";
+    O << "\t.type\t" << *GVarSym << ",@object\n";
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
   const MCSection *TheSection =
     getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
   OutStreamer.SwitchSection(TheSection);
 
+  // Handle the zerofill directive on darwin, which is a special form of BSS
+  // emission.
+  if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
+    TargetLoweringObjectFileMachO &TLOFMacho = 
+      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    if (TheSection == TLOFMacho.getDataCommonSection()) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+      // .zerofill __DATA, __common, _foo, 400, 5
+      OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+      return;
+    }
+  }
+  
   // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() &&
       // Don't put things that should go in the cstring section into "comm".
-      !TheSection->getKind().isMergeableCString()) {
-    if (GVar->hasExternalLinkage()) {
-      if (MAI->hasZeroFillDirective()) {
-        // .globl _foo
-        OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
-        // .zerofill __DATA, __common, _foo, 400, 5
-        TargetLoweringObjectFileMachO &TLOFMacho = 
-          static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-        // FIXME: This stuff should already be handled by SectionForGlobal!
-        const MCSection *TheSection = 
-          TLOFMacho.getMachOSection("__DATA", "__common",
-                                    MCSectionMachO::S_ZEROFILL,
-                                    SectionKind::getBSS());
-          
-        OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << Align);
+      !TheSection->getKind().isMergeableCString() &&
+      !GVar->isThreadLocal() &&
+      (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+
+    if (const char *LComm = MAI->getLCOMMDirective()) {
+      if (GVar->hasLocalLinkage()) {
+        O << LComm << *GVarSym << ',' << Size;
+        if (Subtarget->isTargetDarwin())
+          O << ',' << Align;
+      } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
+        OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+        O << MAI->getWeakDefDirective() << *GVarSym << '\n';
+        EmitAlignment(Align, GVar);
+        O << *GVarSym << ":";
+        if (VerboseAsm) {
+          O.PadToColumn(MAI->getCommentColumn());
+          O << MAI->getCommentString() << ' ';
+          WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+        }
+        O << '\n';
+        EmitGlobalConstant(C);
         return;
-      }
-    }
-
-    if (!GVar->isThreadLocal() &&
-        (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-
-      if (MAI->getLCOMMDirective() != NULL) {
-        if (GVar->hasLocalLinkage()) {
-          O << MAI->getLCOMMDirective() << *GVSym << ',' << Size;
-          if (Subtarget->isTargetDarwin())
-            O << ',' << Align;
-        } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
-          OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
-          O << MAI->getWeakDefDirective() << *GVSym << '\n';
-          EmitAlignment(Align, GVar);
-          O << *GVSym << ":";
-          if (VerboseAsm) {
-            O.PadToColumn(MAI->getCommentColumn());
-            O << MAI->getCommentString() << ' ';
-            WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-          }
-          O << '\n';
-          EmitGlobalConstant(C);
-          return;
-        } else {
-          O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
-          if (MAI->getCOMMDirectiveTakesAlignment())
-            O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
-        }
       } else {
-        if (!Subtarget->isTargetCygMing()) {
-          if (GVar->hasLocalLinkage())
-            O << "\t.local\t" << *GVSym << '\n';
-        }
-        O << MAI->getCOMMDirective() << *GVSym << ',' << Size;
+        O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
         if (MAI->getCOMMDirectiveTakesAlignment())
           O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
       }
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << ' ';
-        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+    } else {
+      if (!Subtarget->isTargetCygMing()) {
+        if (GVar->hasLocalLinkage())
+          O << "\t.local\t" << *GVarSym << '\n';
       }
-      O << '\n';
-      return;
+      O << MAI->getCOMMDirective() << *GVarSym << ',' << Size;
+      if (MAI->getCOMMDirectiveTakesAlignment())
+        O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
     }
+    if (VerboseAsm) {
+      O.PadToColumn(MAI->getCommentColumn());
+      O << MAI->getCommentString() << ' ';
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+    }
+    O << '\n';
+    return;
   }
 
   switch (GVar->getLinkage()) {
@@ -756,13 +751,13 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   case GlobalValue::WeakODRLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     if (Subtarget->isTargetDarwin()) {
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
-      O << MAI->getWeakDefDirective() << *GVSym << '\n';
+      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+      O << MAI->getWeakDefDirective() << *GVarSym << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
       O << "\t.linkonce same_size\n";
     } else
-      O << "\t.weak\t" << *GVSym << '\n';
+      O << "\t.weak\t" << *GVarSym << '\n';
     break;
   case GlobalValue::DLLExportLinkage:
   case GlobalValue::AppendingLinkage:
@@ -770,7 +765,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     // their name or something.  For now, just emit them as external.
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
@@ -780,7 +775,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   }
 
   EmitAlignment(Align, GVar);
-  O << *GVSym << ":";
+  O << *GVarSym << ":";
   if (VerboseAsm){
     O.PadToColumn(MAI->getCommentColumn());
     O << MAI->getCommentString() << ' ';
@@ -791,7 +786,7 @@ void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitGlobalConstant(C);
 
   if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << *GVSym << ", " << Size << '\n';
+    O << "\t.size\t" << *GVarSym << ", " << Size << '\n';
 }
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {

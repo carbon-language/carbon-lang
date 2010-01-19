@@ -35,7 +35,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HiddenDirective = "\t.private_extern ";
   LCOMMDirective = "\t.lcomm\t";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
+  HasMachoZeroFillDirective = true;  // Uses .zerofill
   SetDirective = "\t.set";
   ProtectedDirective = "\t.globl\t";
   HasDotTypeDotSizeDirective = false;

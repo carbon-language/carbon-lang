@@ -721,25 +721,25 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
        GVar->isWeakForLinker())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-      if (GVar->hasExternalLinkage()) {
-        O << "\t.global " << *GVarSym << '\n';
-        O << "\t.type " << *GVarSym << ", @object\n";
-        O << *GVarSym << ":\n";
-        O << "\t.zero " << Size << '\n';
-      } else if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
-      } else {
-        O << ".comm " << *GVarSym << ',' << Size;
-      }
-      if (VerboseAsm) {
-        O << "\t\t" << MAI->getCommentString() << " '";
-        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-        O << "'";
-      }
-      O << '\n';
-      return;
+    if (GVar->hasExternalLinkage()) {
+      O << "\t.global " << *GVarSym << '\n';
+      O << "\t.type " << *GVarSym << ", @object\n";
+      O << *GVarSym << ":\n";
+      O << "\t.zero " << Size << '\n';
+    } else if (GVar->hasLocalLinkage()) {
+      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
+    } else {
+      O << ".comm " << *GVarSym << ',' << Size;
+    }
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << "'";
+    }
+    O << '\n';
+    return;
   }
 
   switch (GVar->getLinkage()) {
@@ -944,10 +944,25 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
+  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GVar, TM);
   const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
+    getObjFileLowering().SectionForGlobal(GVar, GVKind, Mang, TM);
   OutStreamer.SwitchSection(TheSection);
 
+  // Handle the zerofill directive on darwin, which is a special form of BSS
+  // emission.
+  if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
+    TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    if (TheSection == TLOFMacho.getDataCommonSection()) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+      // .zerofill __DATA, __common, _foo, 400, 5
+      OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+      return;
+    }
+  }
+  
   /// FIXME: Drive this off the section!
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -957,11 +972,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       !TheSection->getKind().isMergeableCString()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasExternalLinkage()) {
-      O << "\t.globl " << *GVarSym << '\n';
-      O << "\t.zerofill __DATA, __common, " << *GVarSym << ", "
-        << Size << ", " << Align;
-    } else if (GVar->hasLocalLinkage()) {
+    if (GVar->hasLocalLinkage()) {
       O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
     } else if (!GVar->hasCommonLinkage()) {
       O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();

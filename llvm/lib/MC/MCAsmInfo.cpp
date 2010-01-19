@@ -19,7 +19,7 @@
 using namespace llvm;
 
 MCAsmInfo::MCAsmInfo() {
-  ZeroFillDirective = 0;
+  HasMachoZeroFillDirective = false;
   NonexecutableStackDirective = 0;
   NeedsSet = false;
   MaxInstLength = 4;

@@ -258,6 +258,7 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *ConstDataCoalSection;
   const MCSection *ConstDataSection;
   const MCSection *DataCoalSection;
+  const MCSection *DataCommonSection;
   const MCSection *FourByteConstantSection;
   const MCSection *EightByteConstantSection;
   const MCSection *SixteenByteConstantSection;
@@ -310,6 +311,12 @@ public:
   /// we put weak read-only symbols into.
   const MCSection *getConstTextCoalSection() const {
     return ConstTextCoalSection;
+  }
+  
+  /// getDataCommonSection - Return the "__DATA,__common" section we put
+  /// zerofill (aka bss) data into.
+  const MCSection *getDataCommonSection() const {
+    return DataCommonSection;
   }
   
   /// getLazySymbolPointerSection - Return the section corresponding to

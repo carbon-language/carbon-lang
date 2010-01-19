@@ -29,15 +29,15 @@ namespace llvm {
     // Properties to be set by the target writer, used to configure asm printer.
     //
 
-    /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
-    /// section on this target.  Null if this target doesn't support zerofill.
-    const char *ZeroFillDirective;           // Default is null.
-
     /// NonexecutableStackDirective - Directive for declaring to the
     /// linker and beyond that the emitted code does not require stack
     /// memory to be executable.
     const char *NonexecutableStackDirective; // Default is null.
 
+    /// HasMachoZeroFillDirective - True if this is a MachO target that supports
+    /// the macho-specific .zerofill directive for emitting BSS Symbols.
+    bool HasMachoZeroFillDirective;           // Default is false.
+    
     /// NeedsSet - True if target asm treats expressions in data directives
     /// as linktime-relocatable.  For assembly-time computation, we need to
     /// use a .set.  Thus:
@@ -313,10 +313,7 @@ namespace llvm {
 
     // Accessors.
     //
-    const char *getZeroFillDirective() const {
-      return ZeroFillDirective;
-    }
-    bool hasZeroFillDirective() const { return ZeroFillDirective != 0; }
+    bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
     
     const char *getNonexecutableStackDirective() const {
       return NonexecutableStackDirective;
