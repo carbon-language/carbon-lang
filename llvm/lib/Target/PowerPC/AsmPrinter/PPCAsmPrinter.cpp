@@ -736,22 +736,11 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   OutStreamer.SwitchSection(getObjFileLowering().
                             SectionForGlobal(GVar, GVKind, Mang, TM));
 
-  if (C->isNullValue() && /* FIXME: Verify correct */
-      !GVar->hasSection() &&
-      (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->isWeakForLinker())) {
+  if (C->isNullValue() && !GVar->hasSection() && GVar->hasLocalLinkage()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasExternalLinkage()) {
-      O << "\t.global " << *GVarSym << '\n';
-      O << "\t.type " << *GVarSym << ", @object\n";
-      O << *GVarSym << ":\n";
-      O << "\t.zero " << Size << '\n';
-    } else if (GVar->hasLocalLinkage()) {
-      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
-    } else {
-      O << ".comm " << *GVarSym << ',' << Size;
-    }
+    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
+        
     if (VerboseAsm) {
       O << "\t\t" << MAI->getCommentString() << " '";
       WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
@@ -1003,34 +992,19 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   /// FIXME: Drive this off the section!
   if (C->isNullValue() && /* FIXME: Verify correct */
-      !GVar->hasSection() &&
-      (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
-       GVar->isWeakForLinker()) &&
+      !GVar->hasSection() && GVar->hasLocalLinkage() &&
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (GVar->hasLocalLinkage()) {
-      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
-      
-      if (VerboseAsm) {
-        O << "\t\t" << MAI->getCommentString() << " '";
-        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-        O << "'";
-      }
-      O << '\n';
-    } else {
-      O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();
-      O << *GVarSym << '\n';
-      EmitAlignment(Align, GVar);
-      O << *GVarSym << ":";
-      if (VerboseAsm) {
-        O << "\t\t\t\t" << MAI->getCommentString() << " ";
-        WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-      }
-      O << '\n';
-      EmitGlobalConstant(C);
+    O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
+    
+    if (VerboseAsm) {
+      O << "\t\t" << MAI->getCommentString() << " '";
+      WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
+      O << "'";
     }
+    O << '\n';
     return;
   }
 

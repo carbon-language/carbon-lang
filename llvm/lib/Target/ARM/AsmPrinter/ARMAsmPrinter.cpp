@@ -1238,39 +1238,14 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
       // Don't put things that should go in the cstring section into "comm".
       !TheSection->getKind().isMergeableCString() &&
-      (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
+      (GVar->hasLocalLinkage() || GVar->hasLocalLinkage())) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (isDarwin) {
-      if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size
-          << ',' << Align;
-      } else if (GVar->hasCommonLinkage()) {
-        O << MAI->getCOMMDirective() << *GVarSym << ',' << Size
-          << ',' << Align;
-      } else {
-        OutStreamer.SwitchSection(TheSection);
-        O << "\t.globl " << *GVarSym << '\n' << MAI->getWeakDefDirective();
-        O << *GVarSym << '\n';
-        EmitAlignment(Align, GVar);
-        O << *GVarSym << ":";
-        if (VerboseAsm) {
-          O.PadToColumn(MAI->getCommentColumn());
-          O << MAI->getCommentString() << ' ';
-          WriteAsOperand(O, GVar, /*PrintType=*/false, GVar->getParent());
-        }
-        O << '\n';
-        EmitGlobalConstant(C);
-        return;
-      }
+      O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size
+        << ',' << Align;
     } else if (MAI->getLCOMMDirective() != NULL) {
-      if (GVar->hasLocalLinkage()) {
-        O << MAI->getLCOMMDirective() << *GVarSym << "," << Size;
-      } else {
-        O << MAI->getCOMMDirective() << *GVarSym << "," << Size;
-        if (MAI->getCOMMDirectiveTakesAlignment())
-          O << ',' << (MAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
-      }
+      O << MAI->getLCOMMDirective() << *GVarSym << "," << Size;
     } else {
       if (GVar->hasLocalLinkage())
         O << "\t.local\t" << *GVarSym << '\n';
