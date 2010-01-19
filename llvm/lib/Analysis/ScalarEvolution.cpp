@@ -1530,7 +1530,6 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   return S;
 }
 
-
 /// getMulExpr - Get a canonical multiply expression, or something simpler if
 /// possible.
 const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
@@ -1557,7 +1556,6 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
             isa<SCEVConstant>(Add->getOperand(0)))
           return getAddExpr(getMulExpr(LHSC, Add->getOperand(0)),
                             getMulExpr(LHSC, Add->getOperand(1)));
-
 
     ++Idx;
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
@@ -1877,6 +1875,8 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
     }
   }
 
+  // Okay, it looks like we really DO need an addrec expr.  Check to see if we
+  // already have one, otherwise create a new one.
   FoldingSetNodeID ID;
   ID.AddInteger(scAddRecExpr);
   ID.AddInteger(Operands.size());
