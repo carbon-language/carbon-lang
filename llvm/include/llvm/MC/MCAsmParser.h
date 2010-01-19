@@ -55,6 +55,9 @@ public:
   /// inclusion first.
   virtual const AsmToken &Lex() = 0;
   
+  /// getTok - Get the current AsmToken from the stream.
+  const AsmToken &getTok();
+  
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined

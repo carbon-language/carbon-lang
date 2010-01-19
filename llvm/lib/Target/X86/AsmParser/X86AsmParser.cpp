@@ -245,12 +245,12 @@ struct X86Operand : public MCParsedAsmOperand {
 bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
                                     SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
-  const AsmToken &TokPercent = getLexer().getTok();
+  const AsmToken &TokPercent = Parser.getTok();
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
   StartLoc = TokPercent.getLoc();
   Parser.Lex(); // Eat percent token.
 
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return Error(Tok.getLoc(), "invalid register name");
 
@@ -279,7 +279,7 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
   }
   case AsmToken::Dollar: {
     // $42 -> immediate.
-    SMLoc Start = getLexer().getTok().getLoc(), End;
+    SMLoc Start = Parser.getTok().getLoc(), End;
     Parser.Lex();
     const MCExpr *Val;
     if (getParser().ParseExpression(Val, End))
@@ -291,7 +291,7 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
 
 /// ParseMemOperand: segment: disp(basereg, indexreg, scale)
 X86Operand *X86ATTAsmParser::ParseMemOperand() {
-  SMLoc MemStart = getLexer().getTok().getLoc();
+  SMLoc MemStart = Parser.getTok().getLoc();
   
   // FIXME: If SegReg ':'  (e.g. %gs:), eat and remember.
   unsigned SegReg = 0;
@@ -319,7 +319,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   } else {
     // Okay, we have a '('.  We don't know if this is an expression or not, but
     // so we have to eat the ( to see beyond it.
-    SMLoc LParenLoc = getLexer().getTok().getLoc();
+    SMLoc LParenLoc = Parser.getTok().getLoc();
     Parser.Lex(); // Eat the '('.
     
     if (getLexer().is(AsmToken::Percent) || getLexer().is(AsmToken::Comma)) {
@@ -372,14 +372,14 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
         // Parse the scale amount:
         //  ::= ',' [scale-expression]
         if (getLexer().isNot(AsmToken::Comma)) {
-          Error(getLexer().getTok().getLoc(),
+          Error(Parser.getTok().getLoc(),
                 "expected comma in scale expression");
           return 0;
         }
         Parser.Lex(); // Eat the comma.
 
         if (getLexer().isNot(AsmToken::RParen)) {
-          SMLoc Loc = getLexer().getTok().getLoc();
+          SMLoc Loc = Parser.getTok().getLoc();
 
           int64_t ScaleVal;
           if (getParser().ParseAbsoluteExpression(ScaleVal))
@@ -396,7 +396,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     } else if (getLexer().isNot(AsmToken::RParen)) {
       // Otherwise we have the unsupported form of a scale amount without an
       // index.
-      SMLoc Loc = getLexer().getTok().getLoc();
+      SMLoc Loc = Parser.getTok().getLoc();
 
       int64_t Value;
       if (getParser().ParseAbsoluteExpression(Value))
@@ -409,10 +409,10 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   
   // Ok, we've eaten the memory operand, verify we have a ')' and eat it too.
   if (getLexer().isNot(AsmToken::RParen)) {
-    Error(getLexer().getTok().getLoc(), "unexpected token in memory operand");
+    Error(Parser.getTok().getLoc(), "unexpected token in memory operand");
     return 0;
   }
-  SMLoc MemEnd = getLexer().getTok().getLoc();
+  SMLoc MemEnd = Parser.getTok().getLoc();
   Parser.Lex(); // Eat the ')'.
   
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
@@ -429,7 +429,7 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
 
     // Parse '*' modifier.
     if (getLexer().is(AsmToken::Star)) {
-      SMLoc Loc = getLexer().getTok().getLoc();
+      SMLoc Loc = Parser.getTok().getLoc();
       Operands.push_back(X86Operand::CreateToken("*", Loc));
       Parser.Lex(); // Eat the star.
     }

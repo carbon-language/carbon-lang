@@ -222,7 +222,7 @@ struct ARMOperand : public MCParsedAsmOperand {
 /// TODO this is likely to change to allow different register types and or to
 /// parse for a specific register type.
 bool ARMAsmParser::MaybeParseRegister(ARMOperand &Op, bool ParseWriteBack) {
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
 
   // FIXME: Validate register for the current architecture; we have to do
@@ -236,7 +236,7 @@ bool ARMAsmParser::MaybeParseRegister(ARMOperand &Op, bool ParseWriteBack) {
 
   bool Writeback = false;
   if (ParseWriteBack) {
-    const AsmToken &ExclaimTok = getLexer().getTok();
+    const AsmToken &ExclaimTok = Parser.getTok();
     if (ExclaimTok.is(AsmToken::Exclaim)) {
       Writeback = true;
       Parser.Lex(); // Eat exclaim token
@@ -251,11 +251,11 @@ bool ARMAsmParser::MaybeParseRegister(ARMOperand &Op, bool ParseWriteBack) {
 /// Parse a register list, return false if successful else return true or an 
 /// error.  The first token must be a '{' when called.
 bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
-  assert(getLexer().getTok().is(AsmToken::LCurly) &&
+  assert(Parser.getTok().is(AsmToken::LCurly) &&
          "Token is not an Left Curly Brace");
   Parser.Lex(); // Eat left curly brace token.
 
-  const AsmToken &RegTok = getLexer().getTok();
+  const AsmToken &RegTok = Parser.getTok();
   SMLoc RegLoc = RegTok.getLoc();
   if (RegTok.isNot(AsmToken::Identifier))
     return Error(RegLoc, "register expected");
@@ -267,10 +267,10 @@ bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
 
   int HighRegNum = RegNum;
   // TODO ranges like "{Rn-Rm}"
-  while (getLexer().getTok().is(AsmToken::Comma)) {
+  while (Parser.getTok().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat comma token.
 
-    const AsmToken &RegTok = getLexer().getTok();
+    const AsmToken &RegTok = Parser.getTok();
     SMLoc RegLoc = RegTok.getLoc();
     if (RegTok.isNot(AsmToken::Identifier))
       return Error(RegLoc, "register expected");
@@ -287,7 +287,7 @@ bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
 
     Parser.Lex(); // Eat identifier token.
   }
-  const AsmToken &RCurlyTok = getLexer().getTok();
+  const AsmToken &RCurlyTok = Parser.getTok();
   if (RCurlyTok.isNot(AsmToken::RCurly))
     return Error(RCurlyTok.getLoc(), "'}' expected");
   Parser.Lex(); // Eat left curly brace token.
@@ -300,11 +300,11 @@ bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
 /// TODO Only preindexing and postindexing addressing are started, unindexed
 /// with option, etc are still to do.
 bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
-  assert(getLexer().getTok().is(AsmToken::LBrac) &&
+  assert(Parser.getTok().is(AsmToken::LBrac) &&
          "Token is not an Left Bracket");
   Parser.Lex(); // Eat left bracket token.
 
-  const AsmToken &BaseRegTok = getLexer().getTok();
+  const AsmToken &BaseRegTok = Parser.getTok();
   if (BaseRegTok.isNot(AsmToken::Identifier))
     return Error(BaseRegTok.getLoc(), "register expected");
   if (MaybeParseRegister(Op, false))
@@ -319,7 +319,7 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
 
   // First look for preindexed address forms, that is after the "[Rn" we now
   // have to see if the next token is a comma.
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.is(AsmToken::Comma)) {
     Preindexed = true;
     Parser.Lex(); // Eat comma token.
@@ -331,12 +331,12 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
     if(ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
                             Offset, OffsetIsReg, OffsetRegNum))
       return true;
-    const AsmToken &RBracTok = getLexer().getTok();
+    const AsmToken &RBracTok = Parser.getTok();
     if (RBracTok.isNot(AsmToken::RBrac))
       return Error(RBracTok.getLoc(), "']' expected");
     Parser.Lex(); // Eat right bracket token.
 
-    const AsmToken &ExclaimTok = getLexer().getTok();
+    const AsmToken &ExclaimTok = Parser.getTok();
     if (ExclaimTok.is(AsmToken::Exclaim)) {
       Writeback = true;
       Parser.Lex(); // Eat exclaim token
@@ -360,7 +360,7 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
     const MCExpr *ShiftAmount;
     const MCExpr *Offset;
 
-    const AsmToken &NextTok = getLexer().getTok();
+    const AsmToken &NextTok = Parser.getTok();
     if (NextTok.isNot(AsmToken::EndOfStatement)) {
       if (NextTok.isNot(AsmToken::Comma))
 	return Error(NextTok.getLoc(), "',' expected");
@@ -398,7 +398,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
   OffsetRegShifted = false;
   OffsetIsReg = false;
   OffsetRegNum = -1;
-  const AsmToken &NextTok = getLexer().getTok();
+  const AsmToken &NextTok = Parser.getTok();
   if (NextTok.is(AsmToken::Plus))
     Parser.Lex(); // Eat plus token.
   else if (NextTok.is(AsmToken::Minus)) {
@@ -406,7 +406,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
     Parser.Lex(); // Eat minus token
   }
   // See if there is a register following the "[Rn," or "[Rn]," we have so far.
-  const AsmToken &OffsetRegTok = getLexer().getTok();
+  const AsmToken &OffsetRegTok = Parser.getTok();
   if (OffsetRegTok.is(AsmToken::Identifier)) {
     OffsetIsReg = !MaybeParseRegister(Op, false);
     if (OffsetIsReg)
@@ -415,11 +415,11 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
   // If we parsed a register as the offset then their can be a shift after that
   if (OffsetRegNum != -1) {
     // Look for a comma then a shift
-    const AsmToken &Tok = getLexer().getTok();
+    const AsmToken &Tok = Parser.getTok();
     if (Tok.is(AsmToken::Comma)) {
       Parser.Lex(); // Eat comma token.
 
-      const AsmToken &Tok = getLexer().getTok();
+      const AsmToken &Tok = Parser.getTok();
       if (ParseShift(ShiftType, ShiftAmount))
 	return Error(Tok.getLoc(), "shift expected");
       OffsetRegShifted = true;
@@ -427,7 +427,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
   }
   else { // the "[Rn," or "[Rn,]" we have so far was not followed by "Rm"
     // Look for #offset following the "[Rn," or "[Rn],"
-    const AsmToken &HashTok = getLexer().getTok();
+    const AsmToken &HashTok = Parser.getTok();
     if (HashTok.isNot(AsmToken::Hash))
       return Error(HashTok.getLoc(), "'#' expected");
     Parser.Lex(); // Eat hash token.
@@ -443,7 +443,7 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
 ///   rrx
 /// and returns true if it parses a shift otherwise it returns false.
 bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount) {
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return true;
   const StringRef &ShiftName = Tok.getString();
@@ -466,7 +466,7 @@ bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount) {
     return false;
 
   // Otherwise, there must be a '#' and a shift amount.
-  const AsmToken &HashTok = getLexer().getTok();
+  const AsmToken &HashTok = Parser.getTok();
   if (HashTok.isNot(AsmToken::Hash))
     return Error(HashTok.getLoc(), "'#' expected");
   Parser.Lex(); // Eat hash token.
@@ -576,7 +576,7 @@ bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
     Op = ARMOperand::CreateImm(ImmVal);
     return false;
   default:
-    return Error(getLexer().getTok().getLoc(), "unexpected token in operand");
+    return Error(Parser.getTok().getLoc(), "unexpected token in operand");
   }
 }
 
@@ -585,7 +585,7 @@ bool ARMAsmParser::ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Operands.push_back(new ARMOperand(ARMOperand::CreateToken(Name)));
 
-  SMLoc Loc = getLexer().getTok().getLoc();
+  SMLoc Loc = Parser.getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
     // Read the first operand.
@@ -661,10 +661,10 @@ bool ARMAsmParser::ParseDirectiveThumb(SMLoc L) {
 /// ParseDirectiveThumbFunc
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
     return Error(L, "unexpected token in .syntax directive");
-  StringRef ATTRIBUTE_UNUSED SymbolName = getLexer().getTok().getIdentifier();
+  StringRef ATTRIBUTE_UNUSED SymbolName = Parser.getTok().getIdentifier();
   Parser.Lex(); // Consume the identifier token.
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
@@ -679,7 +679,7 @@ bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
 /// ParseDirectiveSyntax
 ///  ::= .syntax unified | divided
 bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return Error(L, "unexpected token in .syntax directive");
   const StringRef &Mode = Tok.getString();
@@ -696,7 +696,7 @@ bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
     return Error(L, "unrecognized syntax mode in .syntax directive");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(getLexer().getTok().getLoc(), "unexpected token in directive");
+    return Error(Parser.getTok().getLoc(), "unexpected token in directive");
   Parser.Lex();
 
   // TODO tell the MC streamer the mode
@@ -707,10 +707,10 @@ bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
 /// ParseDirectiveCode
 ///  ::= .code 16 | 32
 bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
-  const AsmToken &Tok = getLexer().getTok();
+  const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Integer))
     return Error(L, "unexpected token in .code directive");
-  int64_t Val = getLexer().getTok().getIntVal();
+  int64_t Val = Parser.getTok().getIntVal();
   bool thumb_mode;
   if (Val == 16) {
     Parser.Lex();
@@ -724,7 +724,7 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
     return Error(L, "invalid operand to .code directive");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
-    return Error(getLexer().getTok().getLoc(), "unexpected token in directive");
+    return Error(Parser.getTok().getLoc(), "unexpected token in directive");
   Parser.Lex();
 
   // TODO tell the MC streamer the mode

@@ -126,7 +126,7 @@ bool AsmParser::Run() {
     // Handle conditional assembly here before calling ParseStatement()
     if (Lexer.getKind() == AsmToken::Identifier) {
       // If we have an identifier, handle it as the key symbol.
-      AsmToken ID = Lexer.getTok();
+      AsmToken ID = getTok();
       SMLoc IDLoc = ID.getLoc();
       StringRef IDVal = ID.getString();
 
@@ -233,7 +233,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::String:
   case AsmToken::Identifier: {
     // This is a symbol reference.
-    MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
+    MCSymbol *Sym = CreateSymbol(getTok().getIdentifier());
     EndLoc = Lexer.getLoc();
     Lex(); // Eat identifier.
 
@@ -249,7 +249,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     return false;
   }
   case AsmToken::Integer:
-    Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), getContext());
+    Res = MCConstantExpr::Create(getTok().getIntVal(), getContext());
     EndLoc = Lexer.getLoc();
     Lex(); // Eat token.
     return false;
@@ -435,7 +435,7 @@ bool AsmParser::ParseStatement() {
   }
 
   // Statements always start with an identifier.
-  AsmToken ID = Lexer.getTok();
+  AsmToken ID = getTok();
   SMLoc IDLoc = ID.getLoc();
   StringRef IDVal;
   if (ParseIdentifier(IDVal))
@@ -811,7 +811,7 @@ bool AsmParser::ParseIdentifier(StringRef &Res) {
       Lexer.isNot(AsmToken::String))
     return true;
 
-  Res = Lexer.getTok().getIdentifier();
+  Res = getTok().getIdentifier();
 
   Lex(); // Consume the identifier token.
 
@@ -908,7 +908,7 @@ bool AsmParser::ParseEscapedString(std::string &Data) {
   assert(Lexer.is(AsmToken::String) && "Unexpected current token!");
 
   Data = "";
-  StringRef Str = Lexer.getTok().getStringContents();
+  StringRef Str = getTok().getStringContents();
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     if (Str[i] != '\\') {
       Data += Str[i];
@@ -1337,7 +1337,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
 
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected segment name after '.zerofill' directive");
-  StringRef Segment = Lexer.getTok().getString();
+  StringRef Segment = getTok().getString();
   Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1347,7 +1347,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
-  StringRef Section = Lexer.getTok().getString();
+  StringRef Section = getTok().getString();
   Lex();
 
   // If this is the end of the line all that was wanted was to create the
@@ -1369,7 +1369,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = CreateSymbol(Lexer.getTok().getString());
+  MCSymbol *Sym = CreateSymbol(getTok().getString());
   Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1444,7 +1444,7 @@ bool AsmParser::ParseDirectiveAbort() {
     if (Lexer.isNot(AsmToken::String))
       return TokError("expected string in '.abort' directive");
     
-    Str = Lexer.getTok().getString();
+    Str = getTok().getString();
 
     Lex();
   }
@@ -1500,7 +1500,7 @@ bool AsmParser::ParseDirectiveInclude() {
   if (Lexer.isNot(AsmToken::String))
     return TokError("expected string in '.include' directive");
   
-  std::string Filename = Lexer.getTok().getString();
+  std::string Filename = getTok().getString();
   SMLoc IncludeLoc = Lexer.getLoc();
   Lex();
 
@@ -1664,7 +1664,7 @@ bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   // FIXME: I'm not sure what this is.
   int64_t FileNumber = -1;
   if (Lexer.is(AsmToken::Integer)) {
-    FileNumber = Lexer.getTok().getIntVal();
+    FileNumber = getTok().getIntVal();
     Lex();
     
     if (FileNumber < 1)
@@ -1674,7 +1674,7 @@ bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (Lexer.isNot(AsmToken::String))
     return TokError("unexpected token in '.file' directive");
   
-  StringRef ATTRIBUTE_UNUSED FileName = Lexer.getTok().getString();
+  StringRef ATTRIBUTE_UNUSED FileName = getTok().getString();
   Lex();
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
@@ -1692,7 +1692,7 @@ bool AsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
     if (Lexer.isNot(AsmToken::Integer))
       return TokError("unexpected token in '.line' directive");
 
-    int64_t LineNumber = Lexer.getTok().getIntVal();
+    int64_t LineNumber = getTok().getIntVal();
     (void) LineNumber;
     Lex();
 
@@ -1713,7 +1713,7 @@ bool AsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     return TokError("unexpected token in '.loc' directive");
 
   // FIXME: What are these fields?
-  int64_t FileNumber = Lexer.getTok().getIntVal();
+  int64_t FileNumber = getTok().getIntVal();
   (void) FileNumber;
   // FIXME: Validate file.
 
@@ -1722,7 +1722,7 @@ bool AsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
     if (Lexer.isNot(AsmToken::Integer))
       return TokError("unexpected token in '.loc' directive");
 
-    int64_t Param2 = Lexer.getTok().getIntVal();
+    int64_t Param2 = getTok().getIntVal();
     (void) Param2;
     Lex();
 
@@ -1730,7 +1730,7 @@ bool AsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
       if (Lexer.isNot(AsmToken::Integer))
         return TokError("unexpected token in '.loc' directive");
 
-      int64_t Param3 = Lexer.getTok().getIntVal();
+      int64_t Param3 = getTok().getIntVal();
       (void) Param3;
       Lex();
 
