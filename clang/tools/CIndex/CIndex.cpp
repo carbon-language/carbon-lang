@@ -113,9 +113,17 @@ public:
 #endif
 #endif
 
+typedef llvm::PointerIntPair<ASTContext *, 1, bool> CXSourceLocationPtr;
+
 /// \brief Translate a Clang source location into a CIndex source location.
-static CXSourceLocation translateSourceLocation(SourceManager &SourceMgr,
-                                                SourceLocation Loc) {
+static CXSourceLocation translateSourceLocation(ASTContext &Context,
+                                                SourceLocation Loc,
+                                                bool AtEnd = false) {
+  CXSourceLocationPtr Ptr(&Context, AtEnd);
+  CXSourceLocation Result = { Ptr.getOpaqueValue(), Loc.getRawEncoding() };
+  return Result;
+
+#if 0
   SourceLocation InstLoc = SourceMgr.getInstantiationLoc(Loc);
   if (InstLoc.isInvalid()) {
       CXSourceLocation Loc = { 0, 0, 0 };
@@ -128,11 +136,16 @@ static CXSourceLocation translateSourceLocation(SourceManager &SourceMgr,
   Result.line = SourceMgr.getInstantiationLineNumber(InstLoc);
   Result.column = SourceMgr.getInstantiationColumnNumber(InstLoc);
   return Result;
+#endif
 }
 
 /// \brief Translate a Clang source range into a CIndex source range.
-static CXSourceRange translateSourceRange(ASTContext &Context,
-                                          SourceRange R) {
+static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
+  CXSourceRange Result = { &Context, 
+                           R.getBegin().getRawEncoding(),
+                           R.getEnd().getRawEncoding() };
+  return Result;
+#if 0
   if (R.isInvalid()) {
     CXSourceRange extent = { { 0, 0, 0 }, { 0, 0, 0 } };
     return extent;
@@ -177,7 +190,9 @@ static CXSourceRange translateSourceRange(ASTContext &Context,
   CXSourceRange extent = { { (void *)BeginFile, StartLineNo, StartColNo },
                            { (void *)EndFile, EndLineNo, EndColNo } };
   return extent;  
+#endif
 }
+
 
 //===----------------------------------------------------------------------===//
 // Visitors.
@@ -607,6 +622,80 @@ void clang_loadDeclaration(CXDecl Dcl,
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
+// CXSourceLocation and CXSourceRange Operations.
+//===----------------------------------------------------------------------===//
+
+void clang_getInstantiationLocation(CXSourceLocation location,
+                                    CXFile *file,
+                                    unsigned *line,
+                                    unsigned *column) {
+  CXSourceLocationPtr Ptr
+    = CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
+
+  if (!Ptr.getPointer() || Loc.isInvalid()) {
+    if (file)
+      *file = 0;
+    if (line)
+      *line = 0;
+    if (column)
+      *column = 0;
+    return;
+  }
+
+  // FIXME: This is largely copy-paste from
+  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
+  // what we want the two routines should be refactored.  
+  ASTContext &Context = *Ptr.getPointer();
+  SourceManager &SM = Context.getSourceManager();
+  SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
+  
+  if (Ptr.getInt()) {
+    // We want the last character in this location, so we will adjust
+    // the instantiation location accordingly.
+
+    // If the location is from a macro instantiation, get the end of
+    // the instantiation range.
+    if (Loc.isMacroID())
+      InstLoc = SM.getInstantiationRange(Loc).second;
+
+    // Measure the length token we're pointing at, so we can adjust
+    // the physical location in the file to point at the last
+    // character.
+    // FIXME: This won't cope with trigraphs or escaped newlines
+    // well. For that, we actually need a preprocessor, which isn't
+    // currently available here. Eventually, we'll switch the pointer
+    // data of CXSourceLocation/CXSourceRange to a translation unit
+    // (CXXUnit), so that the preprocessor will be available here. At
+    // that point, we can use Preprocessor::getLocForEndOfToken().
+    unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, 
+                                                Context.getLangOptions());
+    if (Length > 0)
+      InstLoc = InstLoc.getFileLocWithOffset(Length - 1);
+  }
+
+  if (file)
+    *file = (void *)SM.getFileEntryForID(SM.getFileID(InstLoc));
+  if (line)
+    *line = SM.getInstantiationLineNumber(InstLoc);
+  if (column)
+    *column = SM.getInstantiationColumnNumber(InstLoc);
+}
+
+CXSourceLocation clang_getRangeStart(CXSourceRange range) {
+  CXSourceLocation Result = { range.ptr_data, range.begin_int_data };
+  return Result;
+}
+
+CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
+  llvm::PointerIntPair<ASTContext *, 1, bool> Ptr;
+  Ptr.setPointer(static_cast<ASTContext *>(range.ptr_data));
+  Ptr.setInt(true);
+  CXSourceLocation Result = { Ptr.getOpaqueValue(), range.end_int_data };
+  return Result;
+}
+
+//===----------------------------------------------------------------------===//
 // CXDecl Operations.
 //===----------------------------------------------------------------------===//
 
@@ -896,22 +985,19 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     case CXCursor_ObjCSuperClassRef: {       
       std::pair<ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCSuperClassRef(C);
-      SourceManager &SM = P.first->getASTContext().getSourceManager();
-      return translateSourceLocation(SM, P.second);
+      return translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCProtocolRef: {       
       std::pair<ObjCProtocolDecl *, SourceLocation> P
         = getCursorObjCProtocolRef(C);
-      SourceManager &SM = P.first->getASTContext().getSourceManager();
-      return translateSourceLocation(SM, P.second);
+      return translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCClassRef: {       
       std::pair<ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCClassRef(C);
-      SourceManager &SM = P.first->getASTContext().getSourceManager();
-      return translateSourceLocation(SM, P.second);
+      return translateSourceLocation(P.first->getASTContext(), P.second);
     }
       
     case CXCursor_ObjCSelectorRef:
@@ -921,16 +1007,16 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     case CXCursor_EnumConstantRef:
     case CXCursor_MemberRef: {
       Expr *E = getCursorExpr(C);
-      SourceManager &SM = getCursorContext(C).getSourceManager();
+      ASTContext &Context = getCursorContext(C);
       if (ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E))
-        return translateSourceLocation(SM, /*FIXME:*/Msg->getLeftLoc());
+        return translateSourceLocation(Context, /*FIXME:*/Msg->getLeftLoc());
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-        return translateSourceLocation(SM, DRE->getLocation());
+        return translateSourceLocation(Context, DRE->getLocation());
       if (MemberExpr *Member = dyn_cast<MemberExpr>(E))
-        return translateSourceLocation(SM, Member->getMemberLoc());
+        return translateSourceLocation(Context, Member->getMemberLoc());
       if (ObjCIvarRefExpr *Ivar = dyn_cast<ObjCIvarRefExpr>(E))
-        return translateSourceLocation(SM, Ivar->getLocation());
-      return translateSourceLocation(SM, E->getLocStart());
+        return translateSourceLocation(Context, Ivar->getLocation());
+      return translateSourceLocation(Context, E->getLocStart());
     }
         
     default:
@@ -940,16 +1026,15 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   }
   
   if (!getCursorDecl(C)) {
-    CXSourceLocation empty = { 0, 0, 0 };
+    CXSourceLocation empty = { 0, 0 };
     return empty;
   }
 
   Decl *D = getCursorDecl(C);
-  SourceManager &SM = D->getASTContext().getSourceManager();
   SourceLocation Loc = D->getLocation();
   if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
     Loc = Class->getClassLoc();
-  return translateSourceLocation(SM, Loc);
+  return translateSourceLocation(D->getASTContext(), Loc);
 }
 
 CXSourceRange clang_getCursorExtent(CXCursor C) {
@@ -990,7 +1075,7 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   }
   
   if (!getCursorDecl(C)) {
-    CXSourceRange empty = { { 0, 0, 0 }, { 0, 0, 0 } };
+    CXSourceRange empty = { 0, 0, 0 };
     return empty;
   }
   

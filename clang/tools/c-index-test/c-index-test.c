@@ -49,6 +49,7 @@ static void PrintCursor(CXCursor Cursor) {
   else {
     CXString string;
     CXCursor Referenced;
+    unsigned line, column;
     string = clang_getCursorSpelling(Cursor);
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
                       clang_getCString(string));
@@ -57,7 +58,8 @@ static void PrintCursor(CXCursor Cursor) {
     Referenced = clang_getCursorReferenced(Cursor);
     if (!clang_equalCursors(Referenced, clang_getNullCursor())) {
       CXSourceLocation Loc = clang_getCursorLocation(Referenced);
-      printf(":%d:%d", Loc.line, Loc.column);
+      clang_getInstantiationLocation(Loc, 0, &line, &column);
+      printf(":%d:%d", line, column);
     }
 
     if (clang_isCursorDefinition(Cursor))
@@ -66,7 +68,11 @@ static void PrintCursor(CXCursor Cursor) {
 }
 
 static const char* GetCursorSource(CXCursor Cursor) {  
-  const char *source = clang_getFileName(clang_getCursorLocation(Cursor).file);
+  CXSourceLocation Loc = clang_getCursorLocation(Cursor);
+  const char *source;
+  CXFile file;
+  clang_getInstantiationLocation(Loc, &file, 0, 0);
+  source = clang_getFileName(file);
   if (!source)
     return "<invalid loc>";  
   return basename(source);
@@ -80,20 +86,31 @@ static const char *FileCheckPrefix = "CHECK";
 
 static void PrintCursorExtent(CXCursor C) {
   CXSourceRange extent = clang_getCursorExtent(C);
-  /* FIXME: Better way to check for empty extents? */
-  if (!extent.begin.file)
+  CXFile begin_file, end_file;
+  unsigned begin_line, begin_column, end_line, end_column;
+  
+  clang_getInstantiationLocation(clang_getRangeStart(extent),
+                                 &begin_file, &begin_line, &begin_column);
+  clang_getInstantiationLocation(clang_getRangeEnd(extent),
+                                 &end_file, &end_line, &end_column);
+  if (!begin_file || !end_file)
     return;
-  printf(" [Extent=%d:%d:%d:%d]", extent.begin.line, extent.begin.column,
-         extent.end.line, extent.end.column);
+
+  printf(" [Extent=%d:%d:%d:%d]", begin_line, begin_column,
+         end_line, end_column);
 }
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXSourceLocation Loc = clang_getCursorLocation(Cursor);
-    const char *source = clang_getFileName(Loc.file);
+    CXFile file;
+    unsigned line, column;
+    const char *source;
+    clang_getInstantiationLocation(Loc, &file, &line, &column);
+    source = clang_getFileName(file);
     if (!source)
       source = "<invalid loc>";  
-    printf("// %s: %s:%d:%d: ", FileCheckPrefix, source, Loc.line, Loc.column);
+    printf("// %s: %s:%d:%d: ", FileCheckPrefix, source, line, column);
     PrintCursor(Cursor);
     PrintCursorExtent(Cursor);
 
@@ -106,8 +123,10 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     CXDecl D;
     CXSourceLocation Loc = clang_getCursorLocation(Cursor);
+    unsigned line, column;
+    clang_getInstantiationLocation(Loc, 0, &line, &column);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
-           GetCursorSource(Cursor), Loc.line, Loc.column);
+           GetCursorSource(Cursor), line, column);
     PrintCursor(Cursor);
     
     D = clang_getCursorDecl(Cursor);
@@ -141,6 +160,7 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
 
   while (startBuf < endBuf) {
     CXSourceLocation Loc;
+    CXFile file;
     const char *source = 0;
     
     if (*startBuf == '\n') {
@@ -151,7 +171,8 @@ static void FunctionScanVisitor(CXTranslationUnit Unit, CXCursor Cursor,
       curColumn++;
           
     Loc = clang_getCursorLocation(Cursor);
-    source = clang_getFileName(Loc.file);
+    clang_getInstantiationLocation(Loc, &file, 0, 0);
+    source = clang_getFileName(file);
     if (source) {
       Ref = clang_getCursor(Unit, source, curLine, curColumn);
       if (Ref.kind == CXCursor_NoDeclFound) {

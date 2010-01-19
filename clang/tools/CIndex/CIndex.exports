@@ -34,8 +34,11 @@ _clang_getDefinitionSpellingAndExtent
 _clang_getEntityFromDecl
 _clang_getFileName
 _clang_getFileTime
+_clang_getInstantiationLocation
 _clang_getNullCursor
 _clang_getNumCompletionChunks
+_clang_getRangeEnd
+_clang_getRangeStart
 _clang_getTranslationUnitSpelling
 _clang_isCursorDefinition
 _clang_isDeclaration

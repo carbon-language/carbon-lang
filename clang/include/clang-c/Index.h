@@ -333,26 +333,61 @@ CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
 CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl); /* deprecate */
 
 /**
- * \brief Identifies a specific source location given its file, line, and 
- * column.
+ * \brief Identifies a specific source location within a translation
+ * unit.
+ *
+ * Use clang_getInstantiationLocation() to map a source location to a
+ * particular file, line, and column.
  */
 typedef struct {
-  CXFile file;
-  unsigned line;
-  unsigned column;
+  void *ptr_data;
+  unsigned int_data;
 } CXSourceLocation;
 
 /**
- * \brief Identifies a range of source locations identified by the starting and
- * ending locations of that range.
+ * \brief Identifies a range of source locations in the source code.
  *
- * The \c begin location points to the first character in the range and the
- * \c end location points to the last character in the range.
+ * Use clang_getRangeStart() and clang_getRangeEnd() to retrieve the
+ * starting and end locations from a source range, respectively.
  */
 typedef struct {
-  CXSourceLocation begin;
-  CXSourceLocation end;
+  void *ptr_data;
+  unsigned begin_int_data;
+  unsigned end_int_data;
 } CXSourceRange;
+
+/**
+ * \brief Retrieve the file, line, and column represented by the
+ * given source location.
+ *
+ * \param location the location within a source file that will be
+ * decomposed into its parts.
+ *
+ * \param file if non-NULL, will be set to the file to which the given
+ * source location points.
+ *
+ * \param line if non-NULL, will be set to the line to which the given
+ * source location points.
+ *
+ * \param column if non-NULL, will be set to the column to which the
+ * given source location points.
+ */
+CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
+                                                   CXFile *file,
+                                                   unsigned *line,
+                                                   unsigned *column);
+
+/**
+ * \brief Retrieve a source location representing the first
+ * character within a source range.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
+
+/**
+ * \brief Retrieve a source location representing the last
+ * character within a source range.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 
 /* clang_getDeclExtent() returns the physical extent of a declaration.  The
  * beginning line/column pair points to the start of the first token in the
