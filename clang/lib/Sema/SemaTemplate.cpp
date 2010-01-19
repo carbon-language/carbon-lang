@@ -1586,9 +1586,12 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
                                  UnqualifiedId &Name,
                                  TypeTy *ObjectType,
                                  bool EnteringContext) {
-  if ((ObjectType &&
-       computeDeclContext(QualType::getFromOpaquePtr(ObjectType))) ||
-      (SS.isSet() && computeDeclContext(SS, EnteringContext))) {
+  DeclContext *LookupCtx = 0;
+  if (SS.isSet())
+    LookupCtx = computeDeclContext(SS, EnteringContext);
+  if (!LookupCtx && ObjectType)
+    LookupCtx = computeDeclContext(QualType::getFromOpaquePtr(ObjectType));
+  if (LookupCtx) {
     // C++0x [temp.names]p5:
     //   If a name prefixed by the keyword template is not the name of
     //   a template, the program is ill-formed. [Note: the keyword
@@ -1608,8 +1611,9 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     TemplateTy Template;
     TemplateNameKind TNK = isTemplateName(0, SS, Name, ObjectType,
                                           EnteringContext, Template);
-    if (TNK == TNK_Non_template && 
-        isCurrentInstantiationWithDependentBases(SS)) {
+    if (TNK == TNK_Non_template && LookupCtx->isDependentContext() &&
+        isa<CXXRecordDecl>(LookupCtx) &&
+        cast<CXXRecordDecl>(LookupCtx)->hasAnyDependentBases()) {
       // This is a dependent template.
     } else if (TNK == TNK_Non_template) {
       Diag(Name.getSourceRange().getBegin(), 

@@ -82,3 +82,31 @@ namespace Ambig {
 
   Derived<int> di; // expected-note{{instantiation of}}
 }
+
+namespace PR6081 {
+  template<typename T>
+  struct A { };
+
+  template<typename T>
+  class B : public A<T> 
+  {
+  public:
+    template< class X >
+    void f0(const X & k)
+    {
+      this->template f1<int>()(k);
+    }
+  };
+
+  template<typename T>
+  class C
+  {
+  public:
+    template< class X >
+    void f0(const X & k)
+    {
+      this->template f1<int>()(k); // expected-error{{'f1' following the 'template' keyword does not refer to a template}} \
+      // FIXME: expected-error{{unqualified-id}}
+    }
+  };
+}
