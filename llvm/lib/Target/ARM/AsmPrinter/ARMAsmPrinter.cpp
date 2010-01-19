@@ -1220,25 +1220,15 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
-  if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
-    TargetLoweringObjectFileMachO &TLOFMacho = 
-      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-    if (TLOFMacho.isDataCommonSection(TheSection)) {
-      // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-      // .zerofill __DATA, __common, _foo, 400, 5
-      OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
-      return;
-    }
+  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+    // .zerofill __DATA, __common, _foo, 400, 5
+    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+    return;
   }
   
-  OutStreamer.SwitchSection(TheSection);
-
-  // FIXME: get this stuff from section kind flags.
-  if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
-      // Don't put things that should go in the cstring section into "comm".
-      !TheSection->getKind().isMergeableCString() &&
-      (GVar->hasLocalLinkage() || GVar->hasLocalLinkage())) {
+  if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (isDarwin) {
@@ -1261,6 +1251,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\n";
     return;
   }
+
+  OutStreamer.SwitchSection(TheSection);
 
   switch (GVar->getLinkage()) {
   case GlobalValue::CommonLinkage:

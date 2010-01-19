@@ -313,12 +313,6 @@ public:
     return ConstTextCoalSection;
   }
   
-  /// getDataCommonSection - Return the "__DATA,__common" section we put
-  /// zerofill (aka bss) data into.
-  bool isDataCommonSection(const MCSection *Section) const {
-    return Section == DataCommonSection;
-  }
-  
   /// getLazySymbolPointerSection - Return the section corresponding to
   /// the .lazy_symbol_pointer directive.
   const MCSection *getLazySymbolPointerSection() const {

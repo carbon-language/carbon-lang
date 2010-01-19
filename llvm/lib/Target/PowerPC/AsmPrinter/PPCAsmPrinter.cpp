@@ -733,10 +733,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
   }
   
-  OutStreamer.SwitchSection(getObjFileLowering().
-                            SectionForGlobal(GVar, GVKind, Mang, TM));
-
-  if (C->isNullValue() && !GVar->hasSection() && GVar->hasLocalLinkage()) {
+  if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size;
@@ -750,28 +747,30 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     return;
   }
 
+  OutStreamer.SwitchSection(getObjFileLowering().
+                            SectionForGlobal(GVar, GVKind, Mang, TM));
+  
   switch (GVar->getLinkage()) {
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
     O << "\t.global " << *GVarSym;
     O << "\n\t.type " << *GVarSym << ", @object\n\t.weak " << *GVarSym << '\n';
     break;
-   case GlobalValue::AppendingLinkage:
+  case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
+  case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
     O << "\t.global " << *GVarSym;
     O << "\n\t.type " << *GVarSym << ", @object\n";
     // FALL THROUGH
-   case GlobalValue::InternalLinkage:
-   case GlobalValue::PrivateLinkage:
+  case GlobalValue::InternalLinkage:
+  case GlobalValue::PrivateLinkage:
     break;
-   default:
+  default:
     llvm_unreachable("Unknown linkage type!");
   }
 
@@ -976,25 +975,15 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
-  if (GVKind.isBSS() && MAI->hasMachoZeroFillDirective()) {
-    TargetLoweringObjectFileMachO &TLOFMacho = 
-      static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-    if (TLOFMacho.isDataCommonSection(TheSection)) {
-      // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
-      // .zerofill __DATA, __common, _foo, 400, 5
-      OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
-      return;
-    }
+  if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVarSym, MCStreamer::Global);
+    // .zerofill __DATA, __common, _foo, 400, 5
+    OutStreamer.EmitZerofill(TheSection, GVarSym, Size, 1 << Align);
+    return;
   }
   
-  OutStreamer.SwitchSection(TheSection);
-
-  /// FIXME: Drive this off the section!
-  if (C->isNullValue() && /* FIXME: Verify correct */
-      !GVar->hasSection() && GVar->hasLocalLinkage() &&
-      // Don't put things that should go in the cstring section into "comm".
-      !TheSection->getKind().isMergeableCString()) {
+  if (GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     O << MAI->getLCOMMDirective() << *GVarSym << ',' << Size << ',' << Align;
@@ -1007,6 +996,8 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
     O << '\n';
     return;
   }
+
+  OutStreamer.SwitchSection(TheSection);
 
   switch (GVar->getLinkage()) {
   case GlobalValue::LinkOnceAnyLinkage:
