@@ -37,7 +37,6 @@ add_llvm_library(LLVMCodeGen
   MachineSSAUpdater.cpp
   MachineSink.cpp
   MachineVerifier.cpp
-  MaxStackAlignment.cpp
   ObjectCodeEmitter.cpp
   OcamlGC.cpp
   OptimizeExts.cpp
