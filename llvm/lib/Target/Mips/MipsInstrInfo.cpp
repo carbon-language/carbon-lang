@@ -134,8 +134,6 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              const TargetRegisterClass *DestRC,
              const TargetRegisterClass *SrcRC) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
-  const MachineFunction *MF = MBB.getParent();
-  const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
   
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -156,13 +154,6 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     else if ((DestRC == Mips::FGR32RegisterClass) &&
              (SrcRC == Mips::CPURegsRegisterClass))
       BuildMI(MBB, I, DL, get(Mips::MTC1), DestReg).addReg(SrcReg);
-    else if ((DestRC == Mips::AFGR64RegisterClass) &&
-             (SrcRC == Mips::CPURegsRegisterClass) &&
-             (SrcReg == Mips::ZERO)) {
-      const unsigned *AliasSet = TRI->getAliasSet(DestReg);
-      BuildMI(MBB, I, DL, get(Mips::MTC1), AliasSet[0]).addReg(SrcReg);
-      BuildMI(MBB, I, DL, get(Mips::MTC1), AliasSet[1]).addReg(SrcReg);
-    }         
 
     // Move from/to Hi/Lo registers
     else if ((DestRC == Mips::HILORegisterClass) &&
