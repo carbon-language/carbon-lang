@@ -348,7 +348,7 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   EmitAlignment(Align, GVar);
 
   if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type " << *GVarSym << ",#object\n";
+    O << "\t.type " << *GVarSym << ",%object\n";
     O << "\t.size " << *GVarSym << ',' << Size << '\n';
   }
 
