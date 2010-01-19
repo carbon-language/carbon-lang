@@ -39,8 +39,6 @@ RuntimeDirs += darwin
 RuntimeLibrary.darwin.Configs = x86_10.4 armv6
 endif
 
-endif
-
 # Rule to build the compiler-rt libraries we need.
 #
 # We build all the libraries in a single shot to avoid recursive make as much as
@@ -97,3 +95,5 @@ $(foreach lib,$(RuntimeDirs), $(eval $(call RuntimeLibraryTemplate,$(lib))))
 all-local:: $(RuntimeDirs:%=RuntimeLibrary.%)
 install-local:: $(RuntimeDirs:%=RuntimeLibraryInstall.%)
 clean-local:: CleanRuntimeLibraries
+
+endif
