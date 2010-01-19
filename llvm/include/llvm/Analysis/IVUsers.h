@@ -212,6 +212,11 @@ public:
   /// value of the OperandValToReplace of the given IVStrideUse.
   const SCEV *getReplacementExpr(const IVStrideUse &U) const;
 
+  /// getCanonicalExpr - Return a SCEV expression which computes the
+  /// value of the SCEV of the given IVStrideUse, ignoring the 
+  /// isUseOfPostIncrementedValue flag.
+  const SCEV *getCanonicalExpr(const IVStrideUse &U) const;
+
   void print(raw_ostream &OS, const Module* = 0) const;
 
   /// dump - This method is used for debugging.

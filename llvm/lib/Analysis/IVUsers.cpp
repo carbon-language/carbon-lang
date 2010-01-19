@@ -333,6 +333,19 @@ const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &U) const {
   return RetVal;
 }
 
+/// getCanonicalExpr - Return a SCEV expression which computes the
+/// value of the SCEV of the given IVStrideUse, ignoring the 
+/// isUseOfPostIncrementedValue flag.
+const SCEV *IVUsers::getCanonicalExpr(const IVStrideUse &U) const {
+  // Start with zero.
+  const SCEV *RetVal = SE->getIntegerSCEV(0, U.getParent()->Stride->getType());
+  // Create the basic add recurrence.
+  RetVal = SE->getAddRecExpr(RetVal, U.getParent()->Stride, L);
+  // Add the offset in a separate step, because it may be loop-variant.
+  RetVal = SE->getAddExpr(RetVal, U.getOffset());
+  return RetVal;
+}
+
 void IVUsers::print(raw_ostream &OS, const Module *M) const {
   OS << "IV Users for loop ";
   WriteAsOperand(OS, L->getHeader(), false);
