@@ -26,6 +26,7 @@
 #include "clang/Basic/Version.h"
 
 #include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
@@ -675,7 +676,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     }
 
     // Build the pipeline for this file.
-    Action *Current = new InputAction(*InputArg, InputType);
+    llvm::OwningPtr<Action> Current(new InputAction(*InputArg, InputType));
     for (unsigned i = 0; i != NumSteps; ++i) {
       phases::ID Phase = types::getCompilationPhase(InputType, i);
 
@@ -686,8 +687,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
       // Queue linker inputs.
       if (Phase == phases::Link) {
         assert(i + 1 == NumSteps && "linking must be final compilation step.");
-        LinkerInputs.push_back(Current);
-        Current = 0;
+        LinkerInputs.push_back(Current.take());
         break;
       }
 
@@ -698,14 +698,14 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
         continue;
 
       // Otherwise construct the appropriate action.
-      Current = ConstructPhaseAction(Args, Phase, Current);
+      Current.reset(ConstructPhaseAction(Args, Phase, Current.take()));
       if (Current->getType() == types::TY_Nothing)
         break;
     }
 
     // If we ended with something, add to the output list.
     if (Current)
-      Actions.push_back(Current);
+      Actions.push_back(Current.take());
   }
 
   // Add a link action if necessary.
