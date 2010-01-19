@@ -508,6 +508,10 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.2",
                                 "i386-redhat-linux","", "", triple);
 
+    // Fedora 10 x86_64
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.2",
+                                "x86_64-redhat-linux", "32", "", triple);
+
     // Fedora 11
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.1",
                                 "i586-redhat-linux","", "", triple);
