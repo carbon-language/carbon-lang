@@ -122,6 +122,7 @@ MDNode::~MDNode() {
 }
 
 static const Function *getFunctionForValue(Value *V) {
+  assert(!isa<MDNode>(V) && "does not iterate over metadata operands");
   if (!V) return NULL;
   if (Instruction *I = dyn_cast<Instruction>(V))
     return I->getParent()->getParent();
@@ -161,7 +162,8 @@ const Function *MDNode::getFunction() const {
     if (Value *V = getOperand(i)) {
       if (MDNode *MD = dyn_cast<MDNode>(V)) {
         if (const Function *F = MD->getFunction()) return F;
-        else return getFunctionForValue(V);
+      } else {
+        return getFunctionForValue(V);
       }
     }
   }
