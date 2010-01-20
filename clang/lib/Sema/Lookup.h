@@ -245,10 +245,16 @@ public:
     return IDNS;
   }
 
-  /// \brief Add a declaration to these results with no access bits.
+  /// \brief Add a declaration to these results with its natural access.
   /// Does not test the acceptance criteria.
   void addDecl(NamedDecl *D) {
-    Decls.addDecl(D);
+    addDecl(D, D->getAccess());
+  }
+
+  /// \brief Add a declaration to these results with the given access.
+  /// Does not test the acceptance criteria.
+  void addDecl(NamedDecl *D, AccessSpecifier AS) {
+    Decls.addDecl(D, AS);
     ResultKind = Found;
   }
 

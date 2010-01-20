@@ -445,8 +445,9 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
 
   DeclContext::lookup_const_iterator I, E;
   for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I) {
-    if (R.isAcceptableDecl(*I)) {
-      R.addDecl(*I);
+    NamedDecl *D = *I;
+    if (R.isAcceptableDecl(D)) {
+      R.addDecl(D);
       Found = true;
     }
   }
@@ -1047,10 +1048,15 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // FIXME: support using declarations!
   QualType SubobjectType;
   int SubobjectNumber = 0;
+  AccessSpecifier SubobjectAccess = AS_private;
   for (CXXBasePaths::paths_iterator Path = Paths.begin(), PathEnd = Paths.end();
        Path != PathEnd; ++Path) {
     const CXXBasePathElement &PathElement = Path->back();
 
+    // Pick the best (i.e. most permissive i.e. numerically lowest) access
+    // across all paths.
+    SubobjectAccess = std::min(SubobjectAccess, Path->Access);
+    
     // Determine whether we're looking at a distinct sub-object or not.
     if (SubobjectType.isNull()) {
       // This is the first subobject we've looked at. Record its type.
@@ -1106,7 +1112,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
 
   DeclContext::lookup_iterator I, E;
   for (llvm::tie(I,E) = Paths.front().Decls; I != E; ++I)
-    R.addDecl(*I);
+    R.addDecl(*I, std::max(SubobjectAccess, (*I)->getAccess()));
   R.resolveKind();
   return true;
 }

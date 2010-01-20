@@ -150,6 +150,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
 
+  Typedef->setAccess(D->getAccess());
   Owner->addDecl(Typedef);
 
   return Typedef;
@@ -207,6 +208,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // context (which will be a namespace scope) as the template.
   if (D->isOutOfLine())
     Var->setLexicalDeclContext(D->getLexicalDeclContext());
+
+  Var->setAccess(D->getAccess());
 
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
@@ -375,6 +378,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   }
 
   Field->setImplicit(D->isImplicit());
+  Field->setAccess(D->getAccess());
   Owner->addDecl(Field);
 
   return Field;
@@ -559,6 +563,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     return Inst;
   }
   
+  Inst->setAccess(D->getAccess());
   Owner->addDecl(Inst);
   
   // First, we sort the partial specializations by location, so 
@@ -633,6 +638,8 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   
   if (!Instantiated)
     return 0;
+
+  Instantiated->setAccess(D->getAccess());
 
   // Link the instantiated function template declaration to the function
   // template from which it was instantiated.
@@ -963,6 +970,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
 
   if (D->isPure())
     SemaRef.CheckPureMethod(Method, SourceRange());
+
+  Method->setAccess(D->getAccess());
 
   if (!FunctionTemplate && (!Method->isInvalidDecl() || Previous.empty()) &&
       !Method->getFriendObjectKind())

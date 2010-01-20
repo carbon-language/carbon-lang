@@ -410,9 +410,16 @@ SourceLocation Decl::getBodyRBrace() const {
 
 #ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
-  // If the decl is the toplevel translation unit or if we're not in a
-  // record decl context, we don't need to check anything.
+  // Suppress this check if any of the following hold:
+  // 1. this is the translation unit (and thus has no parent)
+  // 2. this is a template parameter (and thus doesn't belong to its context)
+  // 3. this is a ParmVarDecl (which can be in a record context during
+  //    the brief period between its creation and the creation of the
+  //    FunctionDecl)
+  // 4. the context is not a record
   if (isa<TranslationUnitDecl>(this) ||
+      isTemplateParameter() ||
+      isa<ParmVarDecl>(this) ||
       !isa<CXXRecordDecl>(getDeclContext()))
     return;
 

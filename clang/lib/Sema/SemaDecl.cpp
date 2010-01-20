@@ -1305,6 +1305,9 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
+
+  // Inherit access appropriately.
+  New->setAccess(Old->getAccess());
 }
 
 static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
@@ -3361,6 +3364,10 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
+    // Fake up an access specifier if it's supposed to be a class member.
+    if (isa<CXXRecordDecl>(NewFD->getDeclContext()))
+      NewFD->setAccess(AS_public);
+
     // An out-of-line member function declaration must also be a
     // definition (C++ [dcl.meaning]p1).
     // Note that this is not the case for explicit specializations of

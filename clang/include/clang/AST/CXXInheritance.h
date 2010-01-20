@@ -65,6 +65,9 @@ struct CXXBasePathElement {
 /// subobject is being used.
 class CXXBasePath : public llvm::SmallVector<CXXBasePathElement, 4> {
 public:
+  /// \brief The access along this inheritance path.
+  AccessSpecifier Access;
+
   /// \brief The set of declarations found inside this base class
   /// subobject.
   DeclContext::lookup_result Decls;
@@ -131,9 +134,13 @@ class CXXBasePaths {
   /// is also recorded.
   bool DetectVirtual;
   
-  /// ScratchPath - A BasePath that is used by Sema::IsDerivedFrom
+  /// ScratchPath - A BasePath that is used by Sema::lookupInBases
   /// to help build the set of paths.
   CXXBasePath ScratchPath;
+
+  /// ScratchAccess - A stack of accessibility annotations used by
+  /// Sema::lookupInBases.
+  llvm::SmallVector<AccessSpecifier, 4> ScratchAccess;
   
   /// DetectedVirtual - The base class that is virtual.
   const RecordType *DetectedVirtual;

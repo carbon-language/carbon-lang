@@ -61,6 +61,7 @@ void CXXBasePaths::clear() {
   Paths.clear();
   ClassSubobjects.clear();
   ScratchPath.clear();
+  ScratchAccess.clear();
   DetectedVirtual = 0;
 }
 
@@ -145,7 +146,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
                                   void *UserData,
                                   CXXBasePaths &Paths) const {
   bool FoundPath = false;
-  
+
   ASTContext &Context = getASTContext();
   for (base_class_const_iterator BaseSpec = bases_begin(),
          BaseSpecEnd = bases_end(); BaseSpec != BaseSpecEnd; ++BaseSpec) {
@@ -189,6 +190,17 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
       else
         Element.SubobjectNumber = Subobjects.second;
       Paths.ScratchPath.push_back(Element);
+
+      // C++0x [class.access.base]p1 (paraphrased):
+      //   The access of a member of a base class is the less permissive
+      //   of its access within the base class and the access of the base
+      //   class within the derived class.
+      // We're just calculating the access along the path, so we ignore
+      // the access specifiers of whatever decls we've found.
+      AccessSpecifier PathAccess = Paths.ScratchPath.Access;
+      Paths.ScratchAccess.push_back(PathAccess);
+      Paths.ScratchPath.Access
+        = std::max(PathAccess, BaseSpec->getAccessSpecifier());
     }
         
     if (BaseMatches(BaseSpec, Paths.ScratchPath, UserData)) {
@@ -223,8 +235,12 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
     
     // Pop this base specifier off the current path (if we're
     // collecting paths).
-    if (Paths.isRecordingPaths())
+    if (Paths.isRecordingPaths()) {
       Paths.ScratchPath.pop_back();
+      Paths.ScratchPath.Access = Paths.ScratchAccess.back();
+      Paths.ScratchAccess.pop_back();
+    }
+
     // If we set a virtual earlier, and this isn't a path, forget it again.
     if (SetVirtual && !FoundPath) {
       Paths.DetectedVirtual = 0;
