@@ -1086,11 +1086,75 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
   }
 }
 
-/// CheckPropertyImplementation - Check that all required properties are
-/// synthesized in class's implementation. This includes properties 
-/// declared in current class and in class's protocols (direct or indirect).
-void Sema::CheckPropertyImplementation(ObjCImplDecl* IMPDecl,
-                                       ObjCInterfaceDecl *CDecl) {
+/// CollectImmediateProperties - This routine collects all properties in
+/// the class and its conforming protocols; but not those it its super class.
+void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
+                llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap) {
+  if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
+    for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
+         E = IDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      PropMap[Prop->getIdentifier()] = Prop;
+    }
+    // scan through class's protocols.
+    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
+         E = IDecl->protocol_end(); PI != E; ++PI)
+      CollectImmediateProperties((*PI), PropMap);
+  }
+  else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      ObjCPropertyDecl *&PropEntry = PropMap[Prop->getIdentifier()];
+      if (!PropEntry)
+        PropEntry = Prop;
+    }
+    // scan through protocol's protocols.
+    for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+         E = PDecl->protocol_end(); PI != E; ++PI)
+      CollectImmediateProperties((*PI), PropMap);
+  }
+}
+
+void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
+                                      ObjCContainerDecl *CDecl,
+                                      const llvm::DenseSet<Selector>& InsMap) {
+  llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
+  CollectImmediateProperties(CDecl, PropMap);
+
+  for (llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>::iterator 
+       P = PropMap.begin(), E = PropMap.end(); P != E; ++P) {
+    ObjCPropertyDecl *Prop = P->second;
+    if (Prop->isInvalidDecl() ||
+        Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional)
+      continue;
+    ObjCPropertyImplDecl *PI = 0;
+    // Is there a matching propery synthesize/dynamic?
+    for (ObjCImplDecl::propimpl_iterator
+         I = IMPDecl->propimpl_begin(),
+         EI = IMPDecl->propimpl_end(); I != EI; ++I)
+      if ((*I)->getPropertyDecl() == Prop) {
+        PI = (*I);
+        break;
+      }
+    if (PI)
+      continue;
+    if (!InsMap.count(Prop->getGetterName())) {
+      Diag(Prop->getLocation(),
+           diag::warn_setter_getter_impl_required)
+      << Prop->getDeclName() << Prop->getGetterName();
+      Diag(IMPDecl->getLocation(),
+           diag::note_property_impl_required);
+    }
+    
+    if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
+      Diag(Prop->getLocation(),
+           diag::warn_setter_getter_impl_required)
+      << Prop->getDeclName() << Prop->getSetterName();
+      Diag(IMPDecl->getLocation(),
+           diag::note_property_impl_required);
+    }    
+  }
 }
 
 void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
@@ -1107,39 +1171,8 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
   if (isa<ObjCInterfaceDecl>(CDecl))
-      for (ObjCContainerDecl::prop_iterator P = CDecl->prop_begin(),
-       E = CDecl->prop_end(); P != E; ++P) {
-        ObjCPropertyDecl *Prop = (*P);
-        if (Prop->isInvalidDecl())
-          continue;
-        ObjCPropertyImplDecl *PI = 0;
-        // Is there a matching propery synthesize/dynamic?
-        for (ObjCImplDecl::propimpl_iterator
-               I = IMPDecl->propimpl_begin(),
-               EI = IMPDecl->propimpl_end(); I != EI; ++I)
-          if ((*I)->getPropertyDecl() == Prop) {
-            PI = (*I);
-            break;
-          }
-        if (PI)
-          continue;
-        if (!InsMap.count(Prop->getGetterName())) {
-          Diag(Prop->getLocation(),
-               diag::warn_setter_getter_impl_required)
-          << Prop->getDeclName() << Prop->getGetterName();
-          Diag(IMPDecl->getLocation(),
-               diag::note_property_impl_required);
-        }
-
-        if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
-          Diag(Prop->getLocation(),
-               diag::warn_setter_getter_impl_required)
-          << Prop->getDeclName() << Prop->getSetterName();
-          Diag(IMPDecl->getLocation(),
-               diag::note_property_impl_required);
-        }
-      }
-
+    DiagnoseUnimplementedProperties(IMPDecl, CDecl, InsMap);
+      
   llvm::DenseSet<Selector> ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
        I = IMPDecl->classmeth_begin(),

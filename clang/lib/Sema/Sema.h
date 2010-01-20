@@ -1278,9 +1278,6 @@ public:
                                const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap,
                                ObjCInterfaceDecl *IDecl);
-  
-  void CheckPropertyImplementation(ObjCImplDecl* IMPDecl,
-                                   ObjCInterfaceDecl *CDecl);
 
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface.
@@ -1293,6 +1290,17 @@ public:
   void ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
                                  ObjCContainerDecl* IDecl,
                                  bool IncompleteImpl = false);
+  
+  /// DiagnoseUnimplementedProperties - This routine warns on those properties
+  /// which must be implemented by this implementation.
+  void DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
+                                       ObjCContainerDecl *CDecl,
+                                       const llvm::DenseSet<Selector>& InsMap);
+  
+  /// CollectImmediateProperties - This routine collects all properties in
+  /// the class and its conforming protocols; but not those it its super class.
+  void CollectImmediateProperties(ObjCContainerDecl *CDecl,
+                  llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap);
   
   /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
   /// warning) when atomic property has one but not the other user-declared

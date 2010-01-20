@@ -12,6 +12,7 @@ void test() {
 }
 
 @protocol P1
+@optional
 @property int *sprop; // expected-note{{'sprop' declared here}}
 @end
 
