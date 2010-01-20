@@ -58,43 +58,6 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class PPCAsmPrinter : public AsmPrinter {
   protected:
-    struct FnStubInfo {
-      MCSymbol *Stub, *LazyPtr, *AnonSymbol;
-      
-      FnStubInfo() {
-        Stub = LazyPtr = AnonSymbol = 0;
-      }
-      
-      void Init(const GlobalValue *GV, AsmPrinter *Printer) {
-        // Already initialized.
-        if (Stub != 0) return;
-
-        // Get the names.
-        Stub = Printer->GetSymbolWithGlobalValueBase(GV, "$stub");
-        LazyPtr = Printer->GetSymbolWithGlobalValueBase(GV, "$lazy_ptr");
-        AnonSymbol = Printer->GetSymbolWithGlobalValueBase(GV, "$stub$tmp");
-      }
-
-      void Init(StringRef GVName, Mangler *Mang, MCContext &Ctx) {
-        assert(!GVName.empty() && "external symbol name shouldn't be empty");
-        if (Stub != 0) return; // Already initialized.
-        // Get the names for the external symbol name.
-        SmallString<128> TmpStr;
-        Mang->getNameWithPrefix(TmpStr, GVName, Mangler::Private);
-        TmpStr += "$stub";
-        Stub = Ctx.GetOrCreateSymbol(TmpStr.str());
-        TmpStr.erase(TmpStr.end()-5, TmpStr.end()); // Remove $stub
-
-        TmpStr += "$lazy_ptr";
-        LazyPtr = Ctx.GetOrCreateSymbol(TmpStr.str());
-        TmpStr.erase(TmpStr.end()-9, TmpStr.end()); // Remove $lazy_ptr
-        
-        TmpStr += "$stub$tmp";
-        AnonSymbol = Ctx.GetOrCreateSymbol(TmpStr.str());
-      }
-    };
-    
-    DenseMap<const MCSymbol*, FnStubInfo> FnStubs;
     DenseMap<const MCSymbol*, const MCSymbol*> TOC;
     const PPCSubtarget &Subtarget;
     uint64_t LabelID;
@@ -236,17 +199,28 @@ namespace {
           GlobalValue *GV = MO.getGlobal();
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
-            FnStubInfo &FnInfo = FnStubs[GetGlobalValueSymbol(GV)];
-            FnInfo.Init(GV, this);
-            O << *FnInfo.Stub;
+            MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
+            const MCSymbol *&StubSym =
+              MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
+            if (StubSym == 0)
+              StubSym = GetGlobalValueSymbol(GV);
+            O << *Sym;
             return;
           }
         }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
-          FnStubInfo &FnInfo =
-            FnStubs[GetExternalSymbolSymbol(MO.getSymbolName())];
-          FnInfo.Init(MO.getSymbolName(), Mang, OutContext);
-          O << *FnInfo.Stub;
+          SmallString<128> TempNameStr;
+          TempNameStr += StringRef(MO.getSymbolName());
+          TempNameStr += StringRef("$stub");
+          
+          const MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
+          const MCSymbol *&StubSym =
+            MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
+          if (StubSym == 0) {
+            TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
+            StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+          }
+          O << *Sym;
           return;
         }
       }
@@ -390,7 +364,7 @@ namespace {
     bool doFinalization(Module &M);
     void EmitStartOfAsmFile(Module &M);
 
-    void EmitFunctionStubs();
+    void EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -844,7 +818,22 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 }
 
-void PPCDarwinAsmPrinter::EmitFunctionStubs() {
+static const MCSymbol *GetLazyPtr(const MCSymbol *Sym, MCContext &Ctx) {
+  // Remove $stub suffix, add $lazy_ptr.
+  SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end()-5);
+  TmpStr += "$lazy_ptr";
+  return Ctx.GetOrCreateSymbol(TmpStr.str());
+}
+
+static const MCSymbol *GetAnonSym(const MCSymbol *Sym, MCContext &Ctx) {
+  // Add $tmp suffix to $stub, yielding $stub$tmp.
+  SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end());
+  TmpStr += "$tmp";
+  return Ctx.GetOrCreateSymbol(TmpStr.str());
+}
+
+void PPCDarwinAsmPrinter::
+EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   bool isPPC64 = TM.getTargetData()->getPointerSizeInBits() == 64;
   
   TargetLoweringObjectFileMachO &TLOFMacho = 
@@ -860,29 +849,32 @@ void PPCDarwinAsmPrinter::EmitFunctionStubs() {
                               MCSectionMachO::S_SYMBOL_STUBS |
                               MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                               32, SectionKind::getText());
-    // FIXME: This is emitting in nondeterminstic order!
-    for (DenseMap<const MCSymbol*, FnStubInfo>::iterator I = 
-         FnStubs.begin(), E = FnStubs.end(); I != E; ++I) {
+    for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
-      const FnStubInfo &Info = I->second;
-      O << *Info.Stub << ":\n";
-      O << "\t.indirect_symbol " << *I->first << '\n';
+      
+      const MCSymbol *Stub = Stubs[i].first;
+      const MCSymbol *RawSym = Stubs[i].second;
+      const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
+      const MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
+                                           
+      O << *Stub << ":\n";
+      O << "\t.indirect_symbol " << *RawSym << '\n';
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31," << *Info.AnonSymbol << '\n';
-      O << *Info.AnonSymbol << ":\n";
+      O << "\tbcl 20,31," << *AnonSymbol << '\n';
+      O << *AnonSymbol << ":\n";
       O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(" << *Info.LazyPtr << '-' << *Info.AnonSymbol
+      O << "\taddis r11,r11,ha16(" << *LazyPtr << '-' << *AnonSymbol
       << ")\n";
       O << "\tmtlr r0\n";
-      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
-      << '-' << *Info.AnonSymbol << ")(r11)\n";
+      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(" << *LazyPtr
+      << '-' << *AnonSymbol << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
       OutStreamer.SwitchSection(LSPSection);
-      O << *Info.LazyPtr << ":\n";
-      O << "\t.indirect_symbol " << *I->first << '\n';
+      O << *LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << *RawSym << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
     O << '\n';
@@ -894,23 +886,23 @@ void PPCDarwinAsmPrinter::EmitFunctionStubs() {
                               MCSectionMachO::S_SYMBOL_STUBS |
                               MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                               16, SectionKind::getText());
-  
-  // FIXME: This is emitting in nondeterminstic order!
-  for (DenseMap<const MCSymbol*, FnStubInfo>::iterator I = FnStubs.begin(),
-       E = FnStubs.end(); I != E; ++I) {
+  for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+    const MCSymbol *Stub = Stubs[i].first;
+    const MCSymbol *RawSym = Stubs[i].second;
+    const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
+
     OutStreamer.SwitchSection(StubSection);
     EmitAlignment(4);
-    const FnStubInfo &Info = I->second;
-    O << *Info.Stub << ":\n";
-    O << "\t.indirect_symbol " << *I->first << '\n';
-    O << "\tlis r11,ha16(" << *Info.LazyPtr << ")\n";
-    O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
+    O << *Stub << ":\n";
+    O << "\t.indirect_symbol " << *RawSym << '\n';
+    O << "\tlis r11,ha16(" << *LazyPtr << ")\n";
+    O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *LazyPtr
     << ")(r11)\n";
     O << "\tmtctr r12\n";
     O << "\tbctr\n";
     OutStreamer.SwitchSection(LSPSection);
-    O << *Info.LazyPtr << ":\n";
-    O << "\t.indirect_symbol " << *I->first << '\n';
+    O << *LazyPtr << ":\n";
+    O << "\t.indirect_symbol " << *RawSym << '\n';
     O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
   }
   
@@ -927,8 +919,9 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   MachineModuleInfoMachO &MMIMacho =
     MMI->getObjFileInfo<MachineModuleInfoMachO>();
   
-  if (!FnStubs.empty())
-    EmitFunctionStubs();
+  MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetFnStubList();
+  if (!Stubs.empty())
+    EmitFunctionStubs(Stubs);
 
   if (MAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
@@ -946,7 +939,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   // Output stubs for dynamically-linked functions.
-  MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetGVStubList();
+  Stubs = MMIMacho.GetGVStubList();
   
   // Output macho stubs for external and common global variables.
   if (!Stubs.empty()) {
