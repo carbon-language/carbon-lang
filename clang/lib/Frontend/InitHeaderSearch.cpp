@@ -208,8 +208,8 @@ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
   // I.e. "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\$VERSION".
   // There can be additional characters in the component.  Only the numberic
   // characters are compared.
-bool getSystemRegistryString(const char *keyPath, const char *valueName,
-                       char *value, size_t maxLength) {
+static bool getSystemRegistryString(const char *keyPath, const char *valueName,
+                                    char *value, size_t maxLength) {
   HKEY hRootKey = NULL;
   HKEY hKey = NULL;
   const char* subKey = NULL;
@@ -314,13 +314,13 @@ bool getSystemRegistryString(const char *keyPath, const char *valueName,
 }
 #else // _MSC_VER
   // Read registry string.
-bool getSystemRegistryString(const char *, const char *, char *, size_t) {
+static bool getSystemRegistryString(const char*, const char*, char*, size_t) {
   return(false);
 }
 #endif // _MSC_VER
 
   // Get Visual Studio installation directory.
-bool getVisualStudioDir(std::string &path) {
+static bool getVisualStudioDir(std::string &path) {
   char vsIDEInstallDir[256];
   // Try the Windows registry first.
   bool hasVCDir = getSystemRegistryString(
@@ -367,7 +367,7 @@ bool getVisualStudioDir(std::string &path) {
 }
 
   // Get Windows SDK installation directory.
-bool getWindowsSDKDir(std::string &path) {
+static bool getWindowsSDKDir(std::string &path) {
   char windowsSDKInstallDir[256];
   // Try the Windows registry.
   bool hasSDKDir = getSystemRegistryString(
