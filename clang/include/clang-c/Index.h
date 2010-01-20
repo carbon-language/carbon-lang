@@ -34,15 +34,21 @@ extern "C" {
   #define CINDEX_LINKAGE
 #endif
 
-/*
-   Clang indeX abstractions. The backing store for the following API's will be 
-   clangs AST file (currently based on PCH). AST files are created as follows:
-   
-   "clang -emit-ast <sourcefile.langsuffix> -o <sourcefile.ast>". 
-   
-   Naming Conventions: To avoid namespace pollution, data types are prefixed 
-   with "CX" and functions are prefixed with "clang_".
-*/
+/** \defgroup CINDEX C Interface to Clang
+ *
+ * Clang indeX abstractions. The backing store for the following
+ * API's will be clangs AST file (currently based on PCH). AST files
+ * are created as follows:
+ *
+ * \code
+ * clang -emit-ast <sourcefile.langsuffix> -o <sourcefile.ast>". 
+ * \endcode
+ *
+ * Naming Conventions: To avoid namespace pollution, data types are
+ * prefixed with "CX" and functions are prefixed with "clang_".
+ *
+ * @{
+ */
 typedef void *CXIndex;            /* An indexing instance. */
 
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
@@ -960,6 +966,9 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
 CINDEX_LINKAGE 
 void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
   
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif
