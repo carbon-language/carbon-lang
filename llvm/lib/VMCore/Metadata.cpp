@@ -159,10 +159,10 @@ const Function *MDNode::getFunction() const {
 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (Value *V = getOperand(i)) {
-      if (MDNode *MD = dyn_cast<MDNode>(V))
+      if (MDNode *MD = dyn_cast<MDNode>(V)) {
         if (const Function *F = MD->getFunction()) return F;
-      else
-        return getFunctionForValue(V);
+        else return getFunctionForValue(V);
+      }
     }
   }
   return NULL;
