@@ -303,7 +303,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *   TU = clang_createTranslationUnit(Idx, "IndexTest.pch");
  *
  *   // This will load all the symbols from 'IndexTest.pch'
- *   clang_visitChildren(TU, clang_getTranslationUnitCursor(TU), 
+ *   clang_visitChildren(clang_getTranslationUnitCursor(TU), 
  *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
  *
@@ -311,8 +311,8 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *   // from 'IndexTest.pch'.
  *   char *args[] = { "-Xclang", "-include-pch=IndexTest.pch", 0 };
  *   TU = clang_createTranslationUnitFromSourceFile(Idx, "IndexTest.c", 2, args);
- *   clang_loadTranslationUnit(TU, clang_getTranslationUnitCursor(TU),
- *                             TranslationUnitVisitor, 0);
+ *   clang_visitChildren(clang_getTranslationUnitCursor(TU),
+ *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
  *
  * This process of creating the 'pch', loading it separately, and using it (via
@@ -451,8 +451,7 @@ typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
  * \returns a non-zero value if the traversal was terminated
  * prematurely by the visitor returning \c CXChildVisit_Break.
  */
-CINDEX_LINKAGE unsigned clang_visitChildren(CXTranslationUnit tu,
-                                            CXCursor parent, 
+CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent, 
                                             CXCursorVisitor visitor,
                                             CXClientData client_data);
 

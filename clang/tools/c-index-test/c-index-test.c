@@ -230,7 +230,7 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
   
   Data.TU = TU;
   Data.Filter = ck;
-  clang_visitChildren(TU, clang_getTranslationUnitCursor(TU), Visitor, &Data);
+  clang_visitChildren(clang_getTranslationUnitCursor(TU), Visitor, &Data);
   clang_disposeTranslationUnit(TU);
   return 0;
 }

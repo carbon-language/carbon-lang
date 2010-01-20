@@ -71,12 +71,12 @@ static CXCursorKind GetCursorKind(Decl *D) {
   return CXCursor_NotImplemented;  
 }
 
-CXCursor cxcursor::MakeCXCursor(Decl *D) {
-  CXCursor C = { GetCursorKind(D), { D, 0, 0 } };
+CXCursor cxcursor::MakeCXCursor(Decl *D, ASTUnit *TU) {
+  CXCursor C = { GetCursorKind(D), { D, 0, TU } };
   return C;
 }
 
-CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent) {
+CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   CXCursorKind K = CXCursor_NotImplemented;
   
   switch (S->getStmtClass()) {
@@ -207,14 +207,15 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent) {
     break;
   }
   
-  CXCursor C = { K, { Parent, S, 0 } };
+  CXCursor C = { K, { Parent, S, TU } };
   return C;
 }
 
 CXCursor cxcursor::MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super, 
-                                         SourceLocation Loc) {
+                                               SourceLocation Loc, 
+                                               ASTUnit *TU) {
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_ObjCSuperClassRef, { Super, RawLoc, 0 } };
+  CXCursor C = { CXCursor_ObjCSuperClassRef, { Super, RawLoc, TU } };
   return C;    
 }
 
@@ -227,9 +228,10 @@ cxcursor::getCursorObjCSuperClassRef(CXCursor C) {
 }
 
 CXCursor cxcursor::MakeCursorObjCProtocolRef(ObjCProtocolDecl *Super, 
-                                             SourceLocation Loc) {
+                                             SourceLocation Loc, 
+                                             ASTUnit *TU) {
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_ObjCProtocolRef, { Super, RawLoc, 0 } };
+  CXCursor C = { CXCursor_ObjCProtocolRef, { Super, RawLoc, TU } };
   return C;    
 }
 
@@ -242,9 +244,10 @@ cxcursor::getCursorObjCProtocolRef(CXCursor C) {
 }
 
 CXCursor cxcursor::MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, 
-                                         SourceLocation Loc) {
+                                          SourceLocation Loc, 
+                                          ASTUnit *TU) {
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
-  CXCursor C = { CXCursor_ObjCClassRef, { Class, RawLoc, 0 } };
+  CXCursor C = { CXCursor_ObjCClassRef, { Class, RawLoc, TU } };
   return C;    
 }
 
@@ -274,55 +277,11 @@ Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
 }
 
 ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
-  switch (Cursor.kind) {
-  case CXCursor_TypedefDecl:
-  case CXCursor_StructDecl:
-  case CXCursor_UnionDecl:
-  case CXCursor_ClassDecl:
-  case CXCursor_EnumDecl:
-  case CXCursor_FieldDecl:
-  case CXCursor_EnumConstantDecl:
-  case CXCursor_FunctionDecl:
-  case CXCursor_VarDecl:
-  case CXCursor_ParmDecl:
-  case CXCursor_ObjCInterfaceDecl:
-  case CXCursor_ObjCCategoryDecl:
-  case CXCursor_ObjCProtocolDecl:
-  case CXCursor_ObjCPropertyDecl:
-  case CXCursor_ObjCIvarDecl:
-  case CXCursor_ObjCInstanceMethodDecl:
-  case CXCursor_ObjCClassMethodDecl:
-  case CXCursor_ObjCImplementationDecl:
-  case CXCursor_ObjCCategoryImplDecl:
-  case CXCursor_UnexposedDecl:
-    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
+  return getCursorASTUnit(Cursor)->getASTContext();
+}
 
-  case CXCursor_ObjCSuperClassRef:
-  case CXCursor_ObjCProtocolRef:
-  case CXCursor_ObjCClassRef:
-    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
-    
-  case CXCursor_InvalidFile:
-  case CXCursor_NoDeclFound:
-  case CXCursor_NotImplemented:
-    llvm_unreachable("No context in an invalid cursor");
-    break;
-
-  case CXCursor_UnexposedExpr:
-  case CXCursor_DeclRefExpr:
-  case CXCursor_MemberRefExpr:
-  case CXCursor_CallExpr:
-  case CXCursor_ObjCMessageExpr:
-  case CXCursor_UnexposedStmt:
-    return static_cast<Decl *>(Cursor.data[0])->getASTContext();
-
-  case CXCursor_TranslationUnit: {
-    ASTUnit *CXXUnit = static_cast<ASTUnit *>(Cursor.data[0]);
-    return CXXUnit->getASTContext();
-  }
-  }
-  
-  llvm_unreachable("No context available");
+ASTUnit *cxcursor::getCursorASTUnit(CXCursor Cursor) {
+  return static_cast<ASTUnit *>(Cursor.data[2]);
 }
 
 bool cxcursor::operator==(CXCursor X, CXCursor Y) {

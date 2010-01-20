@@ -141,6 +141,7 @@ namespace {
   
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
+  ASTUnit *TU;
   CXCursor Parent;
   CXCursorVisitor Visitor;
   CXClientData ClientData;
@@ -153,9 +154,9 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
   using DeclVisitor<CursorVisitor, bool>::Visit;
   
 public:
-  CursorVisitor(CXCursorVisitor Visitor, CXClientData ClientData, 
+  CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData, 
                 unsigned MaxPCHLevel)
-    : Visitor(Visitor), ClientData(ClientData), MaxPCHLevel(MaxPCHLevel)
+    : TU(TU), Visitor(Visitor), ClientData(ClientData), MaxPCHLevel(MaxPCHLevel)
   {
     Parent.kind = CXCursor_NoDeclFound;
     Parent.data[0] = 0;
@@ -242,12 +243,12 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   }
   
   if (clang_isTranslationUnit(Cursor.kind)) {
-    ASTUnit *CXXUnit = static_cast<ASTUnit *>(Cursor.data[0]);
+    ASTUnit *CXXUnit = getCursorASTUnit(Cursor);
     if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
       const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
       for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
            ie = TLDs.end(); it != ie; ++it) {
-        if (Visit(MakeCXCursor(*it)))
+        if (Visit(MakeCXCursor(*it, CXXUnit)))
           return true;
       }
     } else {
@@ -271,7 +272,7 @@ bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-    if (Visit(MakeCXCursor(*I)))
+    if (Visit(MakeCXCursor(*I, TU)))
       return true;
   }
   
@@ -296,13 +297,14 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
 }
 
 bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-  if (Visit(MakeCursorObjCClassRef(ND->getClassInterface(), ND->getLocation())))
+  if (Visit(MakeCursorObjCClassRef(ND->getClassInterface(), ND->getLocation(),
+                                   TU)))
     return true;
   
   ObjCCategoryDecl::protocol_loc_iterator PL = ND->protocol_loc_begin();
   for (ObjCCategoryDecl::protocol_iterator I = ND->protocol_begin(),
          E = ND->protocol_end(); I != E; ++I, ++PL)
-    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
   return VisitDeclContext(ND);
@@ -312,13 +314,14 @@ bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   // Issue callbacks for super class.
   if (D->getSuperClass() &&
       Visit(MakeCursorObjCSuperClassRef(D->getSuperClass(),
-                                        D->getSuperClassLoc())))
+                                        D->getSuperClassLoc(), 
+                                        TU)))
     return true;
   
   ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
   for (ObjCInterfaceDecl::protocol_iterator I = D->protocol_begin(),
          E = D->protocol_end(); I != E; ++I, ++PL)
-    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
   return VisitDeclContext(D);
@@ -336,7 +339,7 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
   ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
   for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
          E = PID->protocol_end(); I != E; ++I, ++PL)
-    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
   return VisitDeclContext(PID);
@@ -513,7 +516,7 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
-  CXCursor Result = { CXCursor_TranslationUnit, { TU, 0, 0 } };
+  CXCursor Result = { CXCursor_TranslationUnit, { 0, 0, TU } };
   return Result;
 }
 
@@ -641,11 +644,10 @@ static Decl *getDeclFromExpr(Stmt *E) {
 
 extern "C" {
   
-unsigned clang_visitChildren(CXTranslationUnit tu,
-                             CXCursor parent, 
+unsigned clang_visitChildren(CXCursor parent, 
                              CXCursorVisitor visitor,
                              CXClientData client_data) {
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
+  ASTUnit *CXXUnit = getCursorASTUnit(parent);
 
   unsigned PCHLevel = Decl::MaxPCHLevel;
   
@@ -658,7 +660,7 @@ unsigned clang_visitChildren(CXTranslationUnit tu,
       ++PCHLevel;
   }
   
-  CursorVisitor CursorVis(visitor, client_data, PCHLevel);
+  CursorVisitor CursorVis(CXXUnit, visitor, client_data, PCHLevel);
   return CursorVis.VisitChildren(parent);
 }
 
@@ -686,7 +688,7 @@ static CXString getDeclSpelling(Decl *D) {
 CXString clang_getCursorSpelling(CXCursor C) {
   assert(getCursorDecl(C) && "CXCursor has null decl");
   if (clang_isTranslationUnit(C.kind))
-    return clang_getTranslationUnitSpelling(C.data[0]);
+    return clang_getTranslationUnitSpelling(C.data[2]);
 
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
@@ -787,15 +789,15 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   Stmt *Stm = ALoc.dyn_AsStmt();
   if (Dcl) {
     if (Stm)
-      return MakeCXCursor(Stm, Dcl);
+      return MakeCXCursor(Stm, Dcl, CXXUnit);
 
     if (ALoc.isNamedRef()) {
       if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(Dcl))
-        return MakeCursorObjCClassRef(Class, ALoc.AsNamedRef().Loc);
+        return MakeCursorObjCClassRef(Class, ALoc.AsNamedRef().Loc, CXXUnit);
       if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(Dcl))
-        return MakeCursorObjCProtocolRef(Proto, ALoc.AsNamedRef().Loc);
+        return MakeCursorObjCProtocolRef(Proto, ALoc.AsNamedRef().Loc, CXXUnit);
     }
-    return MakeCXCursor(Dcl);
+    return MakeCXCursor(Dcl, CXXUnit);
   }
   return MakeCXCursorInvalid(CXCursor_NoDeclFound);
 }
@@ -933,13 +935,17 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
 }
 
 CXCursor clang_getCursorReferenced(CXCursor C) {
+  if (clang_isInvalid(C.kind))
+    return clang_getNullCursor();
+  
+  ASTUnit *CXXUnit = getCursorASTUnit(C);
   if (clang_isDeclaration(C.kind))
     return C;
   
   if (clang_isExpression(C.kind)) {
     Decl *D = getDeclFromExpr(getCursorExpr(C));
     if (D)
-      return MakeCXCursor(D);
+      return MakeCXCursor(D, CXXUnit);
     return clang_getNullCursor();
   }
 
@@ -948,13 +954,13 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   
   switch (C.kind) {
     case CXCursor_ObjCSuperClassRef:
-      return MakeCXCursor(getCursorObjCSuperClassRef(C).first);
+      return MakeCXCursor(getCursorObjCSuperClassRef(C).first, CXXUnit);
       
     case CXCursor_ObjCProtocolRef: {       
-      return MakeCXCursor(getCursorObjCProtocolRef(C).first);
+      return MakeCXCursor(getCursorObjCProtocolRef(C).first, CXXUnit);
       
     case CXCursor_ObjCClassRef:      
-      return MakeCXCursor(getCursorObjCClassRef(C).first);
+      return MakeCXCursor(getCursorObjCClassRef(C).first, CXXUnit);
       
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
@@ -967,6 +973,11 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 }
 
 CXCursor clang_getCursorDefinition(CXCursor C) {
+  if (clang_isInvalid(C.kind))
+    return clang_getNullCursor();
+  
+  ASTUnit *CXXUnit = getCursorASTUnit(C);
+  
   bool WasReference = false;
   if (clang_isReference(C.kind) || clang_isExpression(C.kind)) {
     C = clang_getCursorReferenced(C);
@@ -1016,10 +1027,11 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     break;
 
   case Decl::UsingDirective:
-    return MakeCXCursor(cast<UsingDirectiveDecl>(D)->getNominatedNamespace());
+    return MakeCXCursor(cast<UsingDirectiveDecl>(D)->getNominatedNamespace(),
+                        CXXUnit);
 
   case Decl::NamespaceAlias:
-    return MakeCXCursor(cast<NamespaceAliasDecl>(D)->getNamespace());
+    return MakeCXCursor(cast<NamespaceAliasDecl>(D)->getNamespace(), CXXUnit);
 
   case Decl::Enum:
   case Decl::Record:
@@ -1027,7 +1039,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:
     if (TagDecl *Def = cast<TagDecl>(D)->getDefinition(D->getASTContext()))
-      return MakeCXCursor(Def);
+      return MakeCXCursor(Def, CXXUnit);
     return clang_getNullCursor();
 
   case Decl::Function:
@@ -1037,7 +1049,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::CXXConversion: {
     const FunctionDecl *Def = 0;
     if (cast<FunctionDecl>(D)->getBody(Def))
-      return MakeCXCursor(const_cast<FunctionDecl *>(Def));
+      return MakeCXCursor(const_cast<FunctionDecl *>(Def), CXXUnit);
     return clang_getNullCursor();
   }
 
@@ -1047,7 +1059,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     // Variables with initializers have definitions.
     const VarDecl *Def = 0;
     if (Var->getDefinition(Def))
-      return MakeCXCursor(const_cast<VarDecl *>(Def));
+      return MakeCXCursor(const_cast<VarDecl *>(Def), CXXUnit);
 
     // extern and private_extern variables are not definitions.
     if (Var->hasExternalStorage())
@@ -1064,7 +1076,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::FunctionTemplate: {
     const FunctionDecl *Def = 0;
     if (cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->getBody(Def))
-      return MakeCXCursor(Def->getDescribedFunctionTemplate());
+      return MakeCXCursor(Def->getDescribedFunctionTemplate(), CXXUnit);
     return clang_getNullCursor();
   }
    
@@ -1072,7 +1084,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     if (RecordDecl *Def = cast<ClassTemplateDecl>(D)->getTemplatedDecl()
                                           ->getDefinition(D->getASTContext()))
       return MakeCXCursor(
-                         cast<CXXRecordDecl>(Def)->getDescribedClassTemplate());
+                         cast<CXXRecordDecl>(Def)->getDescribedClassTemplate(), 
+                          CXXUnit);
     return clang_getNullCursor();
   }
 
@@ -1087,7 +1100,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
         return clang_getNullCursor();
       }
 
-      Def = clang_getCursorDefinition(MakeCXCursor((*S)->getTargetDecl()));
+      Def = clang_getCursorDefinition(MakeCXCursor((*S)->getTargetDecl(), 
+                                                   CXXUnit));
     }
 
     return Def;
@@ -1095,7 +1109,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
   case Decl::UsingShadow:
     return clang_getCursorDefinition(
-                       MakeCXCursor(cast<UsingShadowDecl>(D)->getTargetDecl()));
+                       MakeCXCursor(cast<UsingShadowDecl>(D)->getTargetDecl(), 
+                                    CXXUnit));
 
   case Decl::ObjCMethod: {
     ObjCMethodDecl *Method = cast<ObjCMethodDecl>(D);
@@ -1111,7 +1126,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
         if (ObjCMethodDecl *Def = ClassImpl->getMethod(Method->getSelector(),
                                                   Method->isInstanceMethod()))
           if (Def->isThisDeclarationADefinition())
-            return MakeCXCursor(Def);
+            return MakeCXCursor(Def, CXXUnit);
 
     return clang_getNullCursor();
   }
@@ -1119,7 +1134,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::ObjCCategory:
     if (ObjCCategoryImplDecl *Impl
                                = cast<ObjCCategoryDecl>(D)->getImplementation())
-      return MakeCXCursor(Impl);
+      return MakeCXCursor(Impl, CXXUnit);
     return clang_getNullCursor();
 
   case Decl::ObjCProtocol:
@@ -1138,7 +1153,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
         return C;
     } else if (ObjCImplementationDecl *Impl
                               = cast<ObjCInterfaceDecl>(D)->getImplementation())
-      return MakeCXCursor(Impl);
+      return MakeCXCursor(Impl, CXXUnit);
     return clang_getNullCursor();
   
   case Decl::ObjCProperty:
@@ -1150,7 +1165,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     if (ObjCInterfaceDecl *Class
           = cast<ObjCCompatibleAliasDecl>(D)->getClassInterface())
       if (!Class->isForwardDecl())
-        return MakeCXCursor(Class);
+        return MakeCXCursor(Class, CXXUnit);
     
     return clang_getNullCursor();
 
@@ -1158,7 +1173,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     ObjCForwardProtocolDecl *Forward = cast<ObjCForwardProtocolDecl>(D);
     if (Forward->protocol_size() == 1)
       return clang_getCursorDefinition(
-                                     MakeCXCursor(*Forward->protocol_begin()));
+                                     MakeCXCursor(*Forward->protocol_begin(), 
+                                                  CXXUnit));
 
     // FIXME: Cannot return multiple definitions.
     return clang_getNullCursor();
@@ -1169,7 +1185,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     if (Class->size() == 1) {
       ObjCInterfaceDecl *IFace = Class->begin()->getInterface();
       if (!IFace->isForwardDecl())
-        return MakeCXCursor(IFace);
+        return MakeCXCursor(IFace, CXXUnit);
       return clang_getNullCursor();
     }
 
@@ -1179,12 +1195,12 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
   case Decl::Friend:
     if (NamedDecl *Friend = cast<FriendDecl>(D)->getFriendDecl())
-      return clang_getCursorDefinition(MakeCXCursor(Friend));
+      return clang_getCursorDefinition(MakeCXCursor(Friend, CXXUnit));
     return clang_getNullCursor();
 
   case Decl::FriendTemplate:
     if (NamedDecl *Friend = cast<FriendTemplateDecl>(D)->getFriendDecl())
-      return clang_getCursorDefinition(MakeCXCursor(Friend));
+      return clang_getCursorDefinition(MakeCXCursor(Friend, CXXUnit));
     return clang_getNullCursor();
   }
 
