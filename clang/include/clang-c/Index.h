@@ -438,9 +438,7 @@ CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
 /*
  * CXDecl Operations.
  */
-CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
 CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
-CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
 
 /**
  * \brief Identifies a specific source location within a translation
@@ -609,13 +607,6 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
                                           unsigned *startColumn,
                                           unsigned *endLine,
                                           unsigned *endColumn);
-
-/*
- * If CXCursorKind == Cursor_Reference, then this will return the referenced
- * declaration.
- * If CXCursorKind == Cursor_Declaration, then this will return the declaration.
- */
-CINDEX_LINKAGE CXDecl clang_getCursorDecl(CXCursor);
 
 /**
  * \brief A semantic string that describes a code-completion result.

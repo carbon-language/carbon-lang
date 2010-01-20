@@ -594,36 +594,6 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
 }
 
 //===----------------------------------------------------------------------===//
-// CXDecl Operations.
-//===----------------------------------------------------------------------===//
-
-extern "C" {
-CXString clang_getDeclSpelling(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  Decl *D = static_cast<Decl *>(AnonDecl);
-  NamedDecl *ND = dyn_cast<NamedDecl>(D);
-  if (!ND)
-    return CIndexer::createCXString("");
-
-  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
-    return CIndexer::createCXString(OMD->getSelector().getAsString().c_str(),
-                                    true);
-
-  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
-    // No, this isn't the same as the code below. getIdentifier() is non-virtual
-    // and returns different names. NamedDecl returns the class name and
-    // ObjCCategoryImplDecl returns the category name.
-    return CIndexer::createCXString(CIMP->getIdentifier()->getNameStart());
-
-  if (ND->getIdentifier())
-    return CIndexer::createCXString(ND->getIdentifier()->getNameStart());
-
-  return CIndexer::createCXString("");
-}
-
-} // end: extern "C"
-
-//===----------------------------------------------------------------------===//
 // CXFile Operations.
 //===----------------------------------------------------------------------===//
 
@@ -692,6 +662,27 @@ unsigned clang_visitChildren(CXTranslationUnit tu,
   return CursorVis.VisitChildren(parent);
 }
 
+static CXString getDeclSpelling(Decl *D) {
+  NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
+  if (!ND)
+    return CIndexer::createCXString("");
+  
+  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
+    return CIndexer::createCXString(OMD->getSelector().getAsString().c_str(),
+                                    true);
+  
+  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
+    // No, this isn't the same as the code below. getIdentifier() is non-virtual
+    // and returns different names. NamedDecl returns the class name and
+    // ObjCCategoryImplDecl returns the category name.
+    return CIndexer::createCXString(CIMP->getIdentifier()->getNameStart());
+  
+  if (ND->getIdentifier())
+    return CIndexer::createCXString(ND->getIdentifier()->getNameStart());
+  
+  return CIndexer::createCXString("");
+}
+    
 CXString clang_getCursorSpelling(CXCursor C) {
   assert(getCursorDecl(C) && "CXCursor has null decl");
   if (clang_isTranslationUnit(C.kind))
@@ -720,11 +711,11 @@ CXString clang_getCursorSpelling(CXCursor C) {
   if (clang_isExpression(C.kind)) {
     Decl *D = getDeclFromExpr(getCursorExpr(C));
     if (D)
-      return clang_getDeclSpelling(D);
+      return getDeclSpelling(D);
     return CIndexer::createCXString("");
   }
 
-  return clang_getDeclSpelling(getCursorDecl(C));
+  return getDeclSpelling(getCursorDecl(C));
 }
 
 const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
@@ -817,11 +808,6 @@ unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
   return X == Y;
 }
 
-CXCursor clang_getCursorFromDecl(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  return MakeCXCursor(static_cast<NamedDecl *>(AnonDecl));
-}
-
 unsigned clang_isInvalid(enum CXCursorKind K) {
   return K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid;
 }
@@ -848,23 +834,6 @@ unsigned clang_isTranslationUnit(enum CXCursorKind K) {
 
 CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
-}
-
-CXDecl clang_getCursorDecl(CXCursor C) {
-  if (clang_isDeclaration(C.kind))
-    return getCursorDecl(C);
-
-  if (clang_isReference(C.kind)) {
-    if (getCursorStmt(C))
-      return getDeclFromExpr(getCursorStmt(C));
-
-    return getCursorDecl(C);
-  }
-
-  if (clang_isExpression(C.kind))
-    return getDeclFromExpr(getCursorStmt(C));
-
-  return 0;
 }
 
 static SourceLocation getLocationFromExpr(Expr *E) {
