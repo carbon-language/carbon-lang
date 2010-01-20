@@ -42,8 +42,8 @@ typedef struct _Unwind_Context* _Unwind_Context_t;
 
 struct _Unwind_Exception {
     uint64_t                exception_class;
-    _Unwind_Reason_Code        (*exception_cleanup)(_Unwind_Reason_Code reason, 
-                                                struct _Unwind_Exception* exc);
+    void                    (*exception_cleanup)(_Unwind_Reason_Code reason, 
+                                                 struct _Unwind_Exception* exc);
     uintptr_t                private_1;    
     uintptr_t                private_2;    
 };
