@@ -82,6 +82,11 @@ public:
   /// TODO : Rename
   intptr_t getTypeInfo() const { return PassID; }
 
+  /// Return true if this PassID implements the specified ID pointer.
+  bool isPassID(void *IDPtr) const {
+    return PassID == (intptr_t)IDPtr;
+  }
+  
   /// isAnalysisGroup - Return true if this is an analysis group, not a normal
   /// pass.
   ///
