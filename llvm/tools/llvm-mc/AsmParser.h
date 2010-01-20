@@ -105,6 +105,8 @@ private:
 
   bool TokError(const char *Msg);
   
+  void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
+  
   bool ParseConditionalAssemblyDirectives(StringRef Directive,
                                           SMLoc DirectiveLoc);
   void EatToEndOfStatement();

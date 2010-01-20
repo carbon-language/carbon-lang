@@ -87,24 +87,29 @@ const MCSection *AsmParser::getMachOSection(const StringRef &Segment,
 }
 
 void AsmParser::Warning(SMLoc L, const Twine &Msg) {
-  Lexer.PrintMessage(L, Msg.str(), "warning");
+  PrintMessage(L, Msg.str(), "warning");
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg) {
-  Lexer.PrintMessage(L, Msg.str(), "error");
+  PrintMessage(L, Msg.str(), "error");
   return true;
 }
 
 bool AsmParser::TokError(const char *Msg) {
-  Lexer.PrintMessage(Lexer.getLoc(), Msg, "error");
+  PrintMessage(Lexer.getLoc(), Msg, "error");
   return true;
+}
+
+void AsmParser::PrintMessage(SMLoc Loc, const std::string &Msg, 
+                             const char *Type) const {
+  SrcMgr.PrintMessage(Loc, Msg, Type);
 }
 
 const AsmToken &AsmParser::Lex() {
   const AsmToken &tok = Lexer.Lex();
   
   if (tok.is(AsmToken::Error))
-    Lexer.PrintMessage(Lexer.getErrLoc(), Lexer.getErr(), "error");
+    PrintMessage(Lexer.getErrLoc(), Lexer.getErr(), "error");
   
   return tok;
 }
@@ -1518,9 +1523,9 @@ bool AsmParser::ParseDirectiveInclude() {
   // Attempt to switch the lexer to the included file before consuming the end
   // of statement to avoid losing it when we switch.
   if (Lexer.EnterIncludeFile(Filename)) {
-    Lexer.PrintMessage(IncludeLoc,
-                       "Could not find include file '" + Filename + "'",
-                       "error");
+    PrintMessage(IncludeLoc,
+                 "Could not find include file '" + Filename + "'",
+                 "error");
     return true;
   }
 

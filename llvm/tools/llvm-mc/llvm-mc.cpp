@@ -141,7 +141,7 @@ static int AsLexInput(const char *ProgName) {
   while (Lexer.Lex().isNot(AsmToken::Eof)) {
     switch (Lexer.getKind()) {
     default:
-      Lexer.PrintMessage(Lexer.getLoc(), "unknown token", "warning");
+      SrcMgr.PrintMessage(Lexer.getLoc(), "unknown token", "warning");
       Error = true;
       break;
     case AsmToken::Error:
