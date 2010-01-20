@@ -228,6 +228,9 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
     break;
   }
 
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion:
   case Decl::CXXMethod: {
     CXXMethodDecl *CXXMD = cast<CXXMethodDecl>(D);
 
@@ -236,8 +239,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
       return;
 
     Stmt *Body = CXXMD->getBody();
-    if (Body)
-      HandleCode(CXXMD, Body, FunctionActions);
+    if (Body) HandleCode(CXXMD, Body, FunctionActions);
     break;
   }
 
