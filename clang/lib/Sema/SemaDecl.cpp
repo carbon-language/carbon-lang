@@ -1496,6 +1496,7 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
   bool HasLiveReturn = false;
   bool HasFakeEdge = false;
   bool HasPlainEdge = false;
+  bool HasAbnormalEdge = false;
   for (CFGBlock::pred_iterator I=cfg->getExit().pred_begin(),
          E = cfg->getExit().pred_end();
        I != E;
@@ -1528,9 +1529,17 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
         continue;
       }
     }
+    if (isa<CXXTryStmt>(S)) {
+      HasAbnormalEdge = true;
+      continue;
+    }
 
     bool NoReturnEdge = false;
     if (CallExpr *C = dyn_cast<CallExpr>(S)) {
+      if (B.succ_begin()[0] != &cfg->getExit()) {
+        HasAbnormalEdge = true;
+        continue;
+      }
       Expr *CEE = C->getCallee()->IgnoreParenCasts();
       if (CEE->getType().getNoReturnAttr()) {
         NoReturnEdge = true;
@@ -1552,7 +1561,7 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
       return NeverFallThrough;
     return NeverFallThroughOrReturn;
   }
-  if (HasFakeEdge || HasLiveReturn)
+  if (HasAbnormalEdge || HasFakeEdge || HasLiveReturn)
     return MaybeFallThrough;
   // This says AlwaysFallThrough for calls to functions that are not marked
   // noreturn, that don't return.  If people would like this warning to be more
