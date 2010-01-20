@@ -1599,6 +1599,7 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
   } else TrySuccessor = Succ;
 
   // Save the current "try" context.
+  CFGBlock *PrevTryTerminatedBlock = TryTerminatedBlock;
   SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock);
 
   // Create a new block that will contain the try statement.
@@ -1606,10 +1607,14 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
   // Add the terminator in the try block.
   TryTerminatedBlock->setTerminator(Terminator);
 
+  bool HasCatchAll = false;
   for (unsigned h = 0; h <Terminator->getNumHandlers(); ++h) {
     // The code after the try is the implicit successor.
     Succ = TrySuccessor;
     CXXCatchStmt *CS = Terminator->getHandler(h);
+    if (CS->getExceptionDecl() == 0) {
+      HasCatchAll = true;
+    }
     Block = NULL;
     CFGBlock *CatchBlock = VisitCXXCatchStmt(CS);
     if (CatchBlock == 0)
@@ -1617,6 +1622,12 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
     // Add this block to the list of successors for the block with the try
     // statement.
     AddSuccessor(TryTerminatedBlock, CatchBlock);
+  }
+  if (!HasCatchAll) {
+    if (PrevTryTerminatedBlock)
+      AddSuccessor(TryTerminatedBlock, PrevTryTerminatedBlock);
+    else
+      AddSuccessor(TryTerminatedBlock, &cfg->getExit());
   }
 
   // The code after the try is the implicit successor.
@@ -2037,8 +2048,11 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
       OS << "default";
     else if (CXXCatchStmt *CS = dyn_cast<CXXCatchStmt>(Label)) {
       OS << "catch (";
-      CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper->getLangOpts()),
-        0);
+      if (CS->getExceptionDecl())
+        CS->getExceptionDecl()->print(OS, PrintingPolicy(Helper->getLangOpts()),
+                                      0);
+      else
+        OS << "...";
       OS << ")";
 
     } else
