@@ -1247,6 +1247,12 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return EmitGlobalConstantVector(V, AddrSpace, *this);
 
+  if (isa<ConstantPointerNull>(CV)) {
+    unsigned Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+    OutStreamer.EmitIntValue(0, Size, AddrSpace);
+    return;
+  }
+  
   // Otherwise, it must be a ConstantExpr.  Emit the data directive, then emit
   // the expression value.
   switch (TM.getTargetData()->getTypeAllocSize(CV->getType())) {
