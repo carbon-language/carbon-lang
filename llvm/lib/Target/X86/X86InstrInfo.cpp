@@ -2200,8 +2200,7 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
+  DebugLoc DL = findDebugLoc(MI, MBB);
 
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
   bool isWin64 = TM.getSubtarget<X86Subtarget>().isTargetWin64();
@@ -2239,8 +2238,7 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  if (MI != MBB.end()) DL = MI->getDebugLoc();
+  DebugLoc DL = findDebugLoc(MI, MBB);
 
   MachineFunction &MF = *MBB.getParent();
   unsigned FPReg = RI.getFrameRegister(MF);

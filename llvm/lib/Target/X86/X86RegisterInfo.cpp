@@ -666,23 +666,6 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 }
 
-/// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
-/// any DEBUG_VALUE instructions.  Return UnknownLoc if there is none.
-static
-DebugLoc findDebugLoc(MachineBasicBlock::iterator &MBBI, MachineBasicBlock &MBB) {
-  DebugLoc DL;
-  if (MBBI != MBB.end()) {
-    // Skip debug declarations, we don't want a DebugLoc from them.
-    MachineBasicBlock::iterator MBBI2 = MBBI;
-    while (MBBI2 != MBB.end() &&
-           MBBI2->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
-      MBBI2++;
-    if (MBBI2 != MBB.end())
-      DL = MBBI2->getDebugLoc();
-  }
-  return DL;
-}
-
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 static

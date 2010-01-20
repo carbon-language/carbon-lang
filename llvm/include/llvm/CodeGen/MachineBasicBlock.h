@@ -367,6 +367,9 @@ private:   // Methods used to maintain doubly linked list of blocks...
   void removePredecessor(MachineBasicBlock *pred);
 };
 
+DebugLoc
+findDebugLoc(MachineBasicBlock::iterator &MBBI, MachineBasicBlock &MBB);
+
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 
 void WriteAsOperand(raw_ostream &, const MachineBasicBlock*, bool t);
