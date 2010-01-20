@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This files defines CastToStructChecker, a builtin checker that checks for
-// assignment of a fixed address to a pointer.
+// cast from non-struct pointer to struct pointer.
 // This check corresponds to CWE-588.
 //
 //===----------------------------------------------------------------------===//
