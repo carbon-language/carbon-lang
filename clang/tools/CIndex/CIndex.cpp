@@ -122,21 +122,6 @@ static CXSourceLocation translateSourceLocation(ASTContext &Context,
   CXSourceLocationPtr Ptr(&Context, AtEnd);
   CXSourceLocation Result = { Ptr.getOpaqueValue(), Loc.getRawEncoding() };
   return Result;
-
-#if 0
-  SourceLocation InstLoc = SourceMgr.getInstantiationLoc(Loc);
-  if (InstLoc.isInvalid()) {
-      CXSourceLocation Loc = { 0, 0, 0 };
-      return Loc;
-    }
- 
-  CXSourceLocation Result;
-  Result.file 
-    = (void*)SourceMgr.getFileEntryForID(SourceMgr.getFileID(InstLoc));
-  Result.line = SourceMgr.getInstantiationLineNumber(InstLoc);
-  Result.column = SourceMgr.getInstantiationColumnNumber(InstLoc);
-  return Result;
-#endif
 }
 
 /// \brief Translate a Clang source range into a CIndex source range.
@@ -145,52 +130,6 @@ static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
                            R.getBegin().getRawEncoding(),
                            R.getEnd().getRawEncoding() };
   return Result;
-#if 0
-  if (R.isInvalid()) {
-    CXSourceRange extent = { { 0, 0, 0 }, { 0, 0, 0 } };
-    return extent;
-  }
-  
-  // FIXME: This is largely copy-paste from
-  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
-  // what we want the two routines should be refactored.
-  
-  SourceManager &SM = Context.getSourceManager();
-  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
-  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
-        
-  // If the End location and the start location are the same and are a macro
-  // location, then the range was something that came from a macro expansion
-  // or _Pragma.  If this is an object-like macro, the best we can do is to
-  // get the range.  If this is a function-like macro, we'd also like to
-  // get the arguments.
-  if (Begin == End && R.getEnd().isMacroID())
-    End = SM.getInstantiationRange(R.getEnd()).second;
-  
-  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);  
-  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
-  
-  // Compute the column number of the start.  Keep the column based at 1.
-  unsigned StartColNo = SM.getInstantiationColumnNumber(Begin);
-  
-  // Compute the column number of the end.
-  unsigned EndColNo = SM.getInstantiationColumnNumber(End);
-  if (EndColNo) {
-    // Offset the end column by 1 so that we point to the last character
-    // in the last token.
-    --EndColNo;
-    
-    // Add in the length of the token, so that we cover multi-char tokens.
-    EndColNo += Lexer::MeasureTokenLength(End, SM, Context.getLangOptions());
-  }
-  
-  // Package up the line/column data and return to the caller.
-  const FileEntry *BeginFile = SM.getFileEntryForID(SM.getFileID(Begin));
-  const FileEntry *EndFile = SM.getFileEntryForID(SM.getFileID(End));
-  CXSourceRange extent = { { (void *)BeginFile, StartLineNo, StartColNo },
-                           { (void *)EndFile, EndLineNo, EndColNo } };
-  return extent;  
-#endif
 }
 
 
