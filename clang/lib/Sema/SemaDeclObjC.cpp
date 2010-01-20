@@ -1121,24 +1121,24 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
                                       const llvm::DenseSet<Selector>& InsMap) {
   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> PropMap;
   CollectImmediateProperties(CDecl, PropMap);
-
+  if (PropMap.empty())
+    return;
+  
+  llvm::DenseSet<ObjCPropertyDecl *> PropImplMap;
+  for (ObjCImplDecl::propimpl_iterator
+       I = IMPDecl->propimpl_begin(),
+       EI = IMPDecl->propimpl_end(); I != EI; ++I)
+    PropImplMap.insert((*I)->getPropertyDecl());
+  
   for (llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>::iterator 
        P = PropMap.begin(), E = PropMap.end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = P->second;
-    if (Prop->isInvalidDecl() ||
-        Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional)
-      continue;
-    ObjCPropertyImplDecl *PI = 0;
     // Is there a matching propery synthesize/dynamic?
-    for (ObjCImplDecl::propimpl_iterator
-         I = IMPDecl->propimpl_begin(),
-         EI = IMPDecl->propimpl_end(); I != EI; ++I)
-      if ((*I)->getPropertyDecl() == Prop) {
-        PI = (*I);
-        break;
-      }
-    if (PI)
+    if (Prop->isInvalidDecl() ||
+        Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
+        PropImplMap.count(Prop))
       continue;
+  
     if (!InsMap.count(Prop->getGetterName())) {
       Diag(Prop->getLocation(),
            diag::warn_setter_getter_impl_required)
