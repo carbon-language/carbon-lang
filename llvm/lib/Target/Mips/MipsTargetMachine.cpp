@@ -22,8 +22,8 @@ extern "C" void LLVMInitializeMipsTarget() {
   // Register the target.
   RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
   RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
-  RegisterAsmInfo<MipsBEMCAsmInfo> A(TheMipsTarget);
-  RegisterAsmInfo<MipsLEMCAsmInfo> B(TheMipselTarget);
+  RegisterAsmInfo<MipsMCAsmInfo> A(TheMipsTarget);
+  RegisterAsmInfo<MipsMCAsmInfo> B(TheMipselTarget);
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
@@ -60,7 +60,8 @@ MipselTargetMachine(const Target &T, const std::string &TT,
 // Install an instruction selector pass using 
 // the ISelDag to gen Mips code.
 bool MipsTargetMachine::
-addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel) 
+{
   PM.add(createMipsISelDag(*this));
   return false;
 }

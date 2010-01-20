@@ -18,8 +18,7 @@
 #include <cstring>
 using namespace llvm;
 
-MCAsmInfo::MCAsmInfo(bool isLittleEndian) {
-  IsLittleEndian = isLittleEndian;
+MCAsmInfo::MCAsmInfo() {
   HasMachoZeroFillDirective = false;
   HasStaticCtorDtorReferenceInStaticMode = false;
   NonexecutableStackDirective = 0;

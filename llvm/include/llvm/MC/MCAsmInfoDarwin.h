@@ -24,7 +24,7 @@ namespace llvm {
   class Mangler;
 
   struct MCAsmInfoDarwin : public MCAsmInfo {
-    explicit MCAsmInfoDarwin(bool isLittleEndian);
+    explicit MCAsmInfoDarwin();
   };
 }
 

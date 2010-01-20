@@ -60,7 +60,7 @@ extern "C" void LLVMInitializeCBackendTarget() {
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {
   public:
-    CBEMCAsmInfo(bool isLE) : MCAsmInfo(isLE) {
+    CBEMCAsmInfo() {
       GlobalPrefix = "";
       PrivateGlobalPrefix = "";
     }
@@ -1893,7 +1893,7 @@ bool CWriter::doInitialization(Module &M) {
   if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
     TAsm = Match->createAsmInfo(Triple);
 #endif    
-  TAsm = new CBEMCAsmInfo(TD->isLittleEndian());
+  TAsm = new CBEMCAsmInfo();
   Mang = new Mangler(*TAsm);
 
   // Keep track of which functions are static ctors/dtors so they can have

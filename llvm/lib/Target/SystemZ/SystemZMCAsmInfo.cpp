@@ -14,8 +14,7 @@
 #include "SystemZMCAsmInfo.h"
 using namespace llvm;
 
-SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT)
-: MCAsmInfo(false) {
+SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = true;
 
   PrivateGlobalPrefix = ".L";

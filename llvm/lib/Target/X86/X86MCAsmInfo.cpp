@@ -43,8 +43,7 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple)
-  : MCAsmInfoDarwin(true /*islittleendian*/) {
+X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
     
@@ -69,8 +68,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple)
   AbsoluteEHSectionOffsets = false;
 }
 
-X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple)
-  : MCAsmInfo(true /*islittleendian*/) {
+X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 
@@ -95,15 +93,13 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple)
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
 
-X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple)
-  : MCAsmInfoCOFF(true /*islittleendian*/) {
+X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 }
 
 
-X86WinMCAsmInfo::X86WinMCAsmInfo(const Triple &Triple)
-  : MCAsmInfo(true /*islittleendian*/) {
+X86WinMCAsmInfo::X86WinMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 

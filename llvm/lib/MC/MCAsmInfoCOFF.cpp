@@ -16,7 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-MCAsmInfoCOFF::MCAsmInfoCOFF(bool isLittleEndian) : MCAsmInfo(isLittleEndian) {
+MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
   LCOMMDirective = "\t.lcomm\t";
   COMMDirectiveTakesAlignment = false;

@@ -14,8 +14,7 @@
 #include "AlphaMCAsmInfo.h"
 using namespace llvm;
 
-AlphaMCAsmInfo::AlphaMCAsmInfo(const Target &T, const StringRef &TT)
-  : MCAsmInfo(true) {
+AlphaMCAsmInfo::AlphaMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
   PICJumpTableDirective = ".gprel32";

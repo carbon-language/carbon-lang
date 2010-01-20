@@ -40,7 +40,7 @@ static const char *const arm_asm_table[] = {
   0,0
 };
 
-ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() : MCAsmInfoDarwin(true) {
+ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
   AsmTransCBE = arm_asm_table;
   Data64bitsDirective = 0;
   CommentString = "@";
@@ -52,7 +52,7 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() : MCAsmInfoDarwin(true) {
   AbsoluteEHSectionOffsets = false;
 }
 
-ARMELFMCAsmInfo::ARMELFMCAsmInfo() : MCAsmInfo(true) {
+ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";

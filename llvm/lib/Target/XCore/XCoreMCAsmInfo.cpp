@@ -10,8 +10,7 @@
 #include "XCoreMCAsmInfo.h"
 using namespace llvm;
 
-XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, const StringRef &TT)
-: MCAsmInfo(true) {
+XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, const StringRef &TT) {
   SupportsDebugInformation = true;
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";

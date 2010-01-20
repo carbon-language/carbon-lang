@@ -15,7 +15,7 @@
 namespace llvm {
   class MCAsmInfoCOFF : public MCAsmInfo {
   protected:
-    explicit MCAsmInfoCOFF(bool isLittleEndian);
+    explicit MCAsmInfoCOFF();
       
   };
 }

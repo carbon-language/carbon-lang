@@ -14,8 +14,7 @@
 #include "SPUMCAsmInfo.h"
 using namespace llvm;
 
-SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT)
-  : MCAsmInfo(false) {
+SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   ZeroDirective = "\t.space\t";
   SetDirective = "\t.set";
   Data64bitsDirective = "\t.quad\t";

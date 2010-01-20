@@ -24,7 +24,6 @@ namespace llvm {
   namespace ExceptionHandling { enum ExceptionsType { None, Dwarf, SjLj }; }
 
   class MCAsmInfo {
-    bool IsLittleEndian;
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
@@ -286,12 +285,9 @@ namespace llvm {
     const char *const *AsmTransCBE;          // Defaults to empty
 
   public:
-    explicit MCAsmInfo(bool isLittleEndian);
+    explicit MCAsmInfo();
     virtual ~MCAsmInfo();
 
-    bool isLittleEndian() const { return IsLittleEndian; }
-    bool isBigEndian() const { return !IsLittleEndian; }
-    
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.
     static unsigned getSLEB128Size(int Value);
