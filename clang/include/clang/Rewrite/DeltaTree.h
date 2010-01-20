@@ -17,7 +17,7 @@
 namespace clang {
 
   /// DeltaTree - a multiway search tree (BTree) structure with some fancy
-  /// features.  B-Trees are are generally more memory and cache efficient than
+  /// features.  B-Trees are generally more memory and cache efficient than
   /// binary trees, because they store multiple keys/values in each node.  This
   /// implements a key/value mapping from index to delta, and allows fast lookup
   /// on index.  However, an added (important) bonus is that it can also

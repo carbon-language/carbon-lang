@@ -20,7 +20,7 @@ using llvm::cast;
 using llvm::dyn_cast;
 
 /// The DeltaTree class is a multiway search tree (BTree) structure with some
-/// fancy features.  B-Trees are are generally more memory and cache efficient
+/// fancy features.  B-Trees are generally more memory and cache efficient
 /// than binary trees, because they store multiple keys/values in each node.
 ///
 /// DeltaTree implements a key/value mapping from FileIndex to Delta, allowing
