@@ -15,7 +15,6 @@
 #define LLVM_CLANG_FRONTEND_UTILS_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -40,28 +39,6 @@ class SourceManager;
 class Stmt;
 class TargetInfo;
 class FrontendOptions;
-
-class MacroBuilder {
-  llvm::raw_ostream &Out;
-public:
-  MacroBuilder(llvm::raw_ostream &Output) : Out(Output) {}
-
-  /// Append a #define line for macro of the form "#define Name Value\n".
-  void defineMacro(const llvm::Twine &Name, const llvm::Twine &Value = "1") {
-    Out << "#define " << Name << ' ' << Value << '\n';
-  }
-
-  /// Append a #undef line for Name.  Name should be of the form XXX
-  /// and we emit "#undef XXX".
-  void undefineMacro(const llvm::Twine &Name) {
-    Out << "#undef " << Name << '\n';
-  }
-
-  /// Directly append Str and a newline to the underlying buffer.
-  void append(const llvm::Twine &Str) {
-    Out << Str << '\n';
-  }
-};
 
 /// Normalize \arg File for use in a user defined #include directive (in the
 /// predefines buffer).

@@ -17,6 +17,8 @@
 // FIXME: Daniel isn't smart enough to use a prototype for this.
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DataTypes.h"
 #include <cassert>
 #include <vector>
@@ -30,12 +32,33 @@ class StringRef;
 namespace clang {
 class Diagnostic;
 class LangOptions;
-class MacroBuilder;
 class SourceLocation;
 class SourceManager;
 class TargetOptions;
 
 namespace Builtin { struct Info; }
+
+class MacroBuilder {
+  llvm::raw_ostream &Out;
+public:
+  MacroBuilder(llvm::raw_ostream &Output) : Out(Output) {}
+
+  /// Append a #define line for macro of the form "#define Name Value\n".
+  void defineMacro(const llvm::Twine &Name, const llvm::Twine &Value = "1") {
+    Out << "#define " << Name << ' ' << Value << '\n';
+  }
+
+  /// Append a #undef line for Name.  Name should be of the form XXX
+  /// and we emit "#undef XXX".
+  void undefineMacro(const llvm::Twine &Name) {
+    Out << "#undef " << Name << '\n';
+  }
+
+  /// Directly append Str and a newline to the underlying buffer.
+  void append(const llvm::Twine &Str) {
+    Out << Str << '\n';
+  }
+};
 
 /// TargetInfo - This class exposes information about the current target.
 ///
