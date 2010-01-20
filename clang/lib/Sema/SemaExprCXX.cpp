@@ -893,9 +893,9 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     if (const RecordType *Record = Type->getAs<RecordType>()) {
       llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
-      const UnresolvedSet *Conversions = RD->getVisibleConversionFunctions();
+      const UnresolvedSetImpl *Conversions = RD->getVisibleConversionFunctions();
       
-      for (UnresolvedSet::iterator I = Conversions->begin(),
+      for (UnresolvedSetImpl::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
         // Skip over templated conversion functions; they aren't considered.
         if (isa<FunctionTemplateDecl>(*I))

@@ -1533,9 +1533,9 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     if (CXXRecordDecl *FromRecordDecl
          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
       // Add all of the conversion functions as candidates.
-      const UnresolvedSet *Conversions
+      const UnresolvedSetImpl *Conversions
         = FromRecordDecl->getVisibleConversionFunctions();
-      for (UnresolvedSet::iterator I = Conversions->begin(),
+      for (UnresolvedSetImpl::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
         NamedDecl *D = *I;
         CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
@@ -3280,9 +3280,9 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       }
 
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
-      const UnresolvedSet *Conversions
+      const UnresolvedSetImpl *Conversions
         = ClassDecl->getVisibleConversionFunctions();
-      for (UnresolvedSet::iterator I = Conversions->begin(),
+      for (UnresolvedSetImpl::iterator I = Conversions->begin(),
              E = Conversions->end(); I != E; ++I) {
 
         // Skip conversion function templates; they don't tell us anything
@@ -3344,10 +3344,10 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     }
     
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
-    const UnresolvedSet *Conversions =
+    const UnresolvedSetImpl *Conversions =
       ClassDecl->getVisibleConversionFunctions();
     
-    for (UnresolvedSet::iterator I = Conversions->begin(),
+    for (UnresolvedSetImpl::iterator I = Conversions->begin(),
            E = Conversions->end(); I != E; ++I) {
       if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(*I)) {
         QualType CanTy = Context.getCanonicalType(Conv->getConversionType());
@@ -5938,9 +5938,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //   functions for each conversion function declared in an
   //   accessible base class provided the function is not hidden
   //   within T by another intervening declaration.
-  const UnresolvedSet *Conversions
+  const UnresolvedSetImpl *Conversions
     = cast<CXXRecordDecl>(Record->getDecl())->getVisibleConversionFunctions();
-  for (UnresolvedSet::iterator I = Conversions->begin(),
+  for (UnresolvedSetImpl::iterator I = Conversions->begin(),
          E = Conversions->end(); I != E; ++I) {
     NamedDecl *D = *I;
     CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());

@@ -3759,8 +3759,8 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
 
 /// \brief Retrieve the template name that corresponds to a non-empty
 /// lookup.
-TemplateName ASTContext::getOverloadedTemplateName(NamedDecl * const *Begin,
-                                                   NamedDecl * const *End) {
+TemplateName ASTContext::getOverloadedTemplateName(UnresolvedSetIterator Begin,
+                                                   UnresolvedSetIterator End) {
   unsigned size = End - Begin;
   assert(size > 1 && "set is not overloaded!");
 
@@ -3769,7 +3769,7 @@ TemplateName ASTContext::getOverloadedTemplateName(NamedDecl * const *Begin,
   OverloadedTemplateStorage *OT = new(memory) OverloadedTemplateStorage(size);
 
   NamedDecl **Storage = OT->getStorage();
-  for (NamedDecl * const *I = Begin; I != End; ++I) {
+  for (UnresolvedSetIterator I = Begin; I != End; ++I) {
     NamedDecl *D = *I;
     assert(isa<FunctionTemplateDecl>(D) ||
            (isa<UsingShadowDecl>(D) &&

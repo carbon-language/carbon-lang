@@ -324,9 +324,9 @@ void LookupResult::resolveKind() {
   // If there's a single decl, we need to examine it to decide what
   // kind of lookup this is.
   if (N == 1) {
-    if (isa<FunctionTemplateDecl>(Decls[0]))
+    if (isa<FunctionTemplateDecl>(*Decls.begin()))
       ResultKind = FoundOverloaded;
-    else if (isa<UnresolvedUsingValueDecl>(Decls[0]))
+    else if (isa<UnresolvedUsingValueDecl>(*Decls.begin()))
       ResultKind = FoundUnresolvedValue;
     return;
   }
@@ -463,10 +463,9 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
     if (!Record->isDefinition())
       return Found;
 
-    const UnresolvedSet *Unresolved = Record->getConversionFunctions();
-    for (UnresolvedSet::iterator U = Unresolved->begin(), 
-                              UEnd = Unresolved->end();
-         U != UEnd; ++U) {
+    const UnresolvedSetImpl *Unresolved = Record->getConversionFunctions();
+    for (UnresolvedSetImpl::iterator U = Unresolved->begin(), 
+           UEnd = Unresolved->end(); U != UEnd; ++U) {
       FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(*U);
       if (!ConvTemplate)
         continue;
@@ -1243,7 +1242,12 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
         Diag((*DI)->getLocation(), diag::note_hiding_object);
 
     // For recovery purposes, go ahead and implement the hiding.
-    Result.hideDecls(TagDecls);
+    LookupResult::Filter F = Result.makeFilter();
+    while (F.hasNext()) {
+      if (TagDecls.count(F.next()))
+        F.erase();
+    }
+    F.done();
 
     return true;
   }

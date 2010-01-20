@@ -135,10 +135,11 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
   return ULE;
 }
 
-bool UnresolvedLookupExpr::ComputeDependence(NamedDecl * const *Begin,
-                                             NamedDecl * const *End,
-                                       const TemplateArgumentListInfo *Args) {
-  for (NamedDecl * const *I = Begin; I != End; ++I)
+bool UnresolvedLookupExpr::
+  ComputeDependence(UnresolvedSetImpl::const_iterator Begin,
+                    UnresolvedSetImpl::const_iterator End,
+                    const TemplateArgumentListInfo *Args) {
+  for (UnresolvedSetImpl::const_iterator I = Begin; I != End; ++I)
     if ((*I)->getDeclContext()->isDependentContext())
       return true;
 

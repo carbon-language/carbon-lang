@@ -61,6 +61,7 @@ namespace clang {
   class TypedefDecl;
   class UsingDecl;
   class UsingShadowDecl;
+  class UnresolvedSetIterator;
 
   namespace Builtin { class Context; }
 
@@ -753,8 +754,8 @@ public:
 
   DeclarationName getNameForTemplate(TemplateName Name);
 
-  TemplateName getOverloadedTemplateName(NamedDecl * const *Begin,
-                                         NamedDecl * const *End);
+  TemplateName getOverloadedTemplateName(UnresolvedSetIterator Begin,
+                                         UnresolvedSetIterator End);
 
   TemplateName getQualifiedTemplateName(NestedNameSpecifier *NNS,
                                         bool TemplateKeyword,

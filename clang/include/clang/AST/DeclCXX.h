@@ -16,6 +16,7 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -275,13 +276,13 @@ class CXXRecordDecl : public RecordDecl {
   /// of this C++ class (but not its inherited conversion
   /// functions). Each of the entries in this overload set is a
   /// CXXConversionDecl. 
-  UnresolvedSet Conversions;
+  UnresolvedSet<4> Conversions;
 
   /// VisibleConversions - Overload set containing the conversion functions
   /// of this C++ class and all those inherited conversion functions that
   /// are visible in this class. Each of the entries in this overload set is
   /// a CXXConversionDecl or a FunctionTemplateDecl.
-  UnresolvedSet VisibleConversions;
+  UnresolvedSet<4> VisibleConversions;
   
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
@@ -483,20 +484,20 @@ public:
 
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
-  UnresolvedSet *getConversionFunctions() {
+  UnresolvedSetImpl *getConversionFunctions() {
     assert((this->isDefinition() ||
             cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
            "getConversionFunctions() called on incomplete type");
     return &Conversions;
   }
-  const UnresolvedSet *getConversionFunctions() const {
+  const UnresolvedSetImpl *getConversionFunctions() const {
     assert((this->isDefinition() ||
             cast<RecordType>(getTypeForDecl())->isBeingDefined()) &&
            "getConversionFunctions() called on incomplete type");
     return &Conversions;
   }
 
-  typedef UnresolvedSet::iterator conversion_iterator;
+  typedef UnresolvedSetImpl::iterator conversion_iterator;
   conversion_iterator conversion_begin() const { return Conversions.begin(); }
   conversion_iterator conversion_end() const { return Conversions.end(); }
 
@@ -509,7 +510,7 @@ public:
 
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
-  const UnresolvedSet *getVisibleConversionFunctions();
+  const UnresolvedSetImpl *getVisibleConversionFunctions();
 
   /// addVisibleConversionFunction - Add a new conversion function to the
   /// list of visible conversion functions.

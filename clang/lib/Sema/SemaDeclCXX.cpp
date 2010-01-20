@@ -4487,9 +4487,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
     OverloadCandidateSet CandidateSet;
-    const UnresolvedSet *Conversions
+    const UnresolvedSetImpl *Conversions
       = T2RecordDecl->getVisibleConversionFunctions();
-    for (UnresolvedSet::iterator I = Conversions->begin(),
+    for (UnresolvedSetImpl::iterator I = Conversions->begin(),
            E = Conversions->end(); I != E; ++I) {
       NamedDecl *D = *I;
       CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());

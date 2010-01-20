@@ -412,10 +412,10 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
   llvm::SmallVector<CXXConversionDecl *, 4> ViableConversions;
   llvm::SmallVector<CXXConversionDecl *, 4> ExplicitConversions;
   if (const RecordType *RecordTy = CondType->getAs<RecordType>()) {
-    const UnresolvedSet *Conversions
+    const UnresolvedSetImpl *Conversions
       = cast<CXXRecordDecl>(RecordTy->getDecl())
                                              ->getVisibleConversionFunctions();
-    for (UnresolvedSet::iterator I = Conversions->begin(),
+    for (UnresolvedSetImpl::iterator I = Conversions->begin(),
            E = Conversions->end(); I != E; ++I) {
       if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(*I))
         if (Conversion->getConversionType().getNonReferenceType()

@@ -55,32 +55,6 @@ public:
   TypeLoc getTypeLoc() const;
 };
 
-/// UnresolvedSet - A set of unresolved declarations.  This is needed
-/// in a lot of places, but isn't really worth breaking into its own
-/// header right now.
-class UnresolvedSet {
-  typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
-  DeclsTy Decls;
-
-public:
-  void addDecl(NamedDecl *D) {
-    Decls.push_back(D);
-  }
-
-  bool replace(const NamedDecl* Old, NamedDecl *New) {
-    for (DeclsTy::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I)
-      if (*I == Old)
-        return (*I = New, true);
-    return false;
-  }
-
-  unsigned size() const { return Decls.size(); }
-
-  typedef DeclsTy::const_iterator iterator;
-  iterator begin() const { return Decls.begin(); }
-  iterator end() const { return Decls.end(); }
-};
-
 /// TranslationUnitDecl - The top declaration context.
 class TranslationUnitDecl : public Decl, public DeclContext {
   ASTContext &Ctx;

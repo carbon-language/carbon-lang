@@ -2141,11 +2141,10 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // refers to.
     QualType ToType = AllowRValues? cv1T1 : DestType;
 
-    const UnresolvedSet *Conversions
+    const UnresolvedSetImpl *Conversions
       = T2RecordDecl->getVisibleConversionFunctions();
-    for (UnresolvedSet::iterator I = Conversions->begin(),
-         E = Conversions->end(); 
-         I != E; ++I) {
+    for (UnresolvedSetImpl::const_iterator I = Conversions->begin(),
+           E = Conversions->end(); I != E; ++I) {
       NamedDecl *D = *I;
       CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
       if (isa<UsingShadowDecl>(D))
@@ -2662,9 +2661,9 @@ static void TryUserDefinedConversion(Sema &S,
       CXXRecordDecl *SourceRecordDecl
         = cast<CXXRecordDecl>(SourceRecordType->getDecl());
       
-      const UnresolvedSet *Conversions
+      const UnresolvedSetImpl *Conversions
         = SourceRecordDecl->getVisibleConversionFunctions();
-      for (UnresolvedSet::iterator I = Conversions->begin(),
+      for (UnresolvedSetImpl::const_iterator I = Conversions->begin(),
            E = Conversions->end(); 
            I != E; ++I) {
         NamedDecl *D = *I;

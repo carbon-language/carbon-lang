@@ -312,8 +312,9 @@ void
 CXXRecordDecl::collectConversionFunctions(
                  llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) const
 {
-  const UnresolvedSet *Cs = getConversionFunctions();
-  for (UnresolvedSet::iterator I = Cs->begin(), E = Cs->end(); I != E; ++I) {
+  const UnresolvedSetImpl *Cs = getConversionFunctions();
+  for (UnresolvedSetImpl::iterator I = Cs->begin(), E = Cs->end();
+         I != E; ++I) {
     NamedDecl *TopConv = *I;
     CanQualType TConvType;
     if (FunctionTemplateDecl *TConversionTemplate =
@@ -344,10 +345,11 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
   bool inTopClass = (RD == this);
   QualType ClassType = getASTContext().getTypeDeclType(this);
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
-    const UnresolvedSet *Cs
+    const UnresolvedSetImpl *Cs
       = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
     
-    for (UnresolvedSet::iterator I = Cs->begin(), E = Cs->end(); I != E; ++I) {
+    for (UnresolvedSetImpl::iterator I = Cs->begin(), E = Cs->end();
+           I != E; ++I) {
       NamedDecl *Conv = *I;
       // Only those conversions not exact match of conversions in current
       // class are candidateconversion routines.
@@ -410,7 +412,7 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
 
 /// getVisibleConversionFunctions - get all conversion functions visible
 /// in current class; including conversion function templates.
-const UnresolvedSet *CXXRecordDecl::getVisibleConversionFunctions() {
+const UnresolvedSetImpl *CXXRecordDecl::getVisibleConversionFunctions() {
   // If root class, all conversions are visible.
   if (bases_begin() == bases_end())
     return &Conversions;

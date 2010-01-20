@@ -123,9 +123,7 @@ public:
     Temporary
   };
 
-  typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
-  typedef DeclsTy::const_iterator iterator;
-
+  typedef UnresolvedSetImpl::iterator iterator;
   typedef bool (*ResultFilter)(NamedDecl*, unsigned IDNS);
 
   LookupResult(Sema &SemaRef, DeclarationName Name, SourceLocation NameLoc,
@@ -224,8 +222,8 @@ public:
     return Ambiguity;
   }
 
-  iterator begin() const { return Decls.begin(); }
-  iterator end() const { return Decls.end(); }
+  iterator begin() const { return iterator(Decls.begin()); }
+  iterator end() const { return iterator(Decls.end()); }
 
   /// \brief Return true if no decls were found
   bool empty() const { return Decls.empty(); }
@@ -247,30 +245,18 @@ public:
     return IDNS;
   }
 
-  /// \brief Add a declaration to these results.  Does not test the
-  /// acceptance criteria.
+  /// \brief Add a declaration to these results with no access bits.
+  /// Does not test the acceptance criteria.
   void addDecl(NamedDecl *D) {
-    Decls.push_back(D);
+    Decls.addDecl(D);
     ResultKind = Found;
   }
 
   /// \brief Add all the declarations from another set of lookup
   /// results.
   void addAllDecls(const LookupResult &Other) {
-    Decls.append(Other.begin(), Other.end());
+    Decls.append(Other.Decls.begin(), Other.Decls.end());
     ResultKind = Found;
-  }
-
-  /// \brief Hides a set of declarations.
-  template <class NamedDeclSet> void hideDecls(const NamedDeclSet &Set) {
-    unsigned I = 0, N = Decls.size();
-    while (I < N) {
-      if (Set.count(Decls[I]))
-        Decls[I] = Decls[--N];
-      else
-        I++;
-    }
-    Decls.set_size(N);
   }
 
   /// \brief Determine whether no result was found because we could not
@@ -319,13 +305,13 @@ public:
   NamedDecl *getFoundDecl() const {
     assert(getResultKind() == Found
            && "getFoundDecl called on non-unique result");
-    return Decls[0]->getUnderlyingDecl();
+    return (*begin())->getUnderlyingDecl();
   }
 
   /// Fetches a representative decl.  Useful for lazy diagnostics.
   NamedDecl *getRepresentativeDecl() const {
     assert(!Decls.empty() && "cannot get representative of empty set");
-    return Decls[0];
+    return *begin();
   }
 
   /// \brief Asks if the result is a single tag decl.
@@ -403,7 +389,7 @@ public:
   /// sugared.
   class Filter {
     LookupResult &Results;
-    unsigned I;
+    LookupResult::iterator I;
     bool Changed;
 #ifndef NDEBUG
     bool CalledDone;
@@ -411,7 +397,7 @@ public:
     
     friend class LookupResult;
     Filter(LookupResult &Results)
-      : Results(Results), I(0), Changed(false)
+      : Results(Results), I(Results.begin()), Changed(false)
 #ifndef NDEBUG
       , CalledDone(false)
 #endif
@@ -426,23 +412,30 @@ public:
 #endif
 
     bool hasNext() const {
-      return I != Results.Decls.size();
+      return I != Results.end();
     }
 
     NamedDecl *next() {
-      assert(I < Results.Decls.size() && "next() called on empty filter");
-      return Results.Decls[I++];
+      assert(I != Results.end() && "next() called on empty filter");
+      return *I++;
     }
 
     /// Erase the last element returned from this iterator.
     void erase() {
-      Results.Decls[--I] = Results.Decls.back();
-      Results.Decls.pop_back();
+      Results.Decls.erase(--I);
       Changed = true;
     }
 
+    /// Replaces the current entry with the given one, preserving the
+    /// access bits.
     void replace(NamedDecl *D) {
-      Results.Decls[I-1] = D;
+      Results.Decls.replace(I-1, D);
+      Changed = true;
+    }
+
+    /// Replaces the current entry with the given one.
+    void replace(NamedDecl *D, AccessSpecifier AS) {
+      Results.Decls.replace(I-1, D, AS);
       Changed = true;
     }
 
@@ -482,7 +475,7 @@ private:
     assert(ResultKind != Found || Decls.size() == 1);
     assert(ResultKind != FoundOverloaded || Decls.size() > 1 ||
            (Decls.size() == 1 &&
-            isa<FunctionTemplateDecl>(Decls[0]->getUnderlyingDecl())));
+            isa<FunctionTemplateDecl>((*begin())->getUnderlyingDecl())));
     assert(ResultKind != FoundUnresolvedValue || sanityCheckUnresolved());
     assert(ResultKind != Ambiguous || Decls.size() > 1 ||
            (Decls.size() == 1 && Ambiguity == AmbiguousBaseSubobjects));
@@ -492,8 +485,7 @@ private:
   }
 
   bool sanityCheckUnresolved() const {
-    for (DeclsTy::const_iterator I = Decls.begin(), E = Decls.end();
-           I != E; ++I)
+    for (iterator I = begin(), E = end(); I != E; ++I)
       if (isa<UnresolvedUsingValueDecl>(*I))
         return true;
     return false;
@@ -504,7 +496,7 @@ private:
   // Results.
   LookupResultKind ResultKind;
   AmbiguityKind Ambiguity; // ill-defined unless ambiguous
-  DeclsTy Decls;
+  UnresolvedSet<8> Decls;
   CXXBasePaths *Paths;
 
   // Parameters.

@@ -16,7 +16,7 @@
 
 #include "clang/Basic/TypeTraits.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/Decl.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/TemplateBase.h"
 
 namespace clang {
@@ -1072,7 +1072,7 @@ public:
 class UnresolvedLookupExpr : public Expr {
   /// The results.  These are undesugared, which is to say, they may
   /// include UsingShadowDecls.
-  UnresolvedSet Results;
+  UnresolvedSet<4> Results;
 
   /// The name declared.
   DeclarationName Name;
@@ -1133,15 +1133,15 @@ public:
 
   /// Computes whether an unresolved lookup on the given declarations
   /// and optional template arguments is type- and value-dependent.
-  static bool ComputeDependence(NamedDecl * const *Begin,
-                                NamedDecl * const *End,
+  static bool ComputeDependence(UnresolvedSetImpl::const_iterator Begin,
+                                UnresolvedSetImpl::const_iterator End,
                                 const TemplateArgumentListInfo *Args);
 
   void addDecl(NamedDecl *Decl) {
     Results.addDecl(Decl);
   }
 
-  typedef UnresolvedSet::iterator decls_iterator;
+  typedef UnresolvedSetImpl::iterator decls_iterator;
   decls_iterator decls_begin() const { return Results.begin(); }
   decls_iterator decls_end() const { return Results.end(); }
 
@@ -1716,7 +1716,7 @@ public:
 class UnresolvedMemberExpr : public Expr {
   /// The results.  These are undesugared, which is to say, they may
   /// include UsingShadowDecls.
-  UnresolvedSet Results;
+  UnresolvedSet<4> Results;
 
   /// \brief The expression for the base pointer or class reference,
   /// e.g., the \c x in x.f.  This can be null if this is an 'unbased'
@@ -1795,7 +1795,7 @@ public:
     Results.addDecl(Decl);
   }
 
-  typedef UnresolvedSet::iterator decls_iterator;
+  typedef UnresolvedSetImpl::iterator decls_iterator;
   decls_iterator decls_begin() const { return Results.begin(); }
   decls_iterator decls_end() const { return Results.end(); }
 
