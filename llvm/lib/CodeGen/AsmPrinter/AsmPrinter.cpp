@@ -700,9 +700,7 @@ void AsmPrinter::EOL() const {
 void AsmPrinter::EOL(const Twine &Comment) const {
   if (VerboseAsm && !Comment.isTriviallyEmpty()) {
     O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString()
-      << ' '
-      << Comment;
+    O << MAI->getCommentString() << ' ' << Comment;
   }
   O << '\n';
 }
@@ -1212,7 +1210,7 @@ static void EmitGlobalConstantLargeInt(const ConstantInt *CI,
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
-  if (CV->isNullValue() || isa<UndefValue>(CV)) {
+  if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV)) {
     uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
     return OutStreamer.EmitZeros(Size, AddrSpace);
   }
@@ -1250,6 +1248,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return EmitGlobalConstantVector(V, AddrSpace, *this);
 
+  // ConstantExpr case.
   printDataDirective(CV->getType(), AddrSpace);
   EmitConstantValueOnly(CV);
   O << '\n';
@@ -1307,19 +1306,17 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
   if (CurDLT.getScope().isNull())
     return;
 
-  if (BeforePrintingInsn) {
-    if (CurDLT.getNode() != PrevDLT) {
-      unsigned L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
-                                        CurDLT.getColumnNumber(),
-                                        CurDLT.getScope().getNode());
-      printLabel(L);
-      O << '\n';
-      DW->BeginScope(MI, L);
-      PrevDLT = CurDLT.getNode();
-    }
-  } else {
+  if (!BeforePrintingInsn) {
     // After printing instruction
     DW->EndScope(MI);
+  } else if (CurDLT.getNode() != PrevDLT) {
+    unsigned L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
+                                      CurDLT.getColumnNumber(),
+                                      CurDLT.getScope().getNode());
+    printLabel(L);
+    O << '\n';
+    DW->BeginScope(MI, L);
+    PrevDLT = CurDLT.getNode();
   }
 }
 
