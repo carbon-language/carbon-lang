@@ -32,14 +32,16 @@ class MCInst;
 class MCStreamer;
 class MCAsmInfo;
 class MCValue;
+class SourceMgr;
 class TargetAsmParser;
 class Twine;
 
 class AsmParser : public MCAsmParser {
-private:  
+private:
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
+  SourceMgr &SrcMgr;
   TargetAsmParser *TargetParser;
 
   AsmCond TheCondState;

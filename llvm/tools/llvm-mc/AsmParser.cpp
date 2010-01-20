@@ -40,7 +40,7 @@ typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
 
 AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
                      const MCAsmInfo &_MAI) 
-  : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), TargetParser(0),
+  : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
     SectionUniquingMap(0) {
   // Debugging directives.
   AddDirectiveHandler(".file", &AsmParser::ParseDirectiveFile);
