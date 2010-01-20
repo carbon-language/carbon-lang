@@ -4,7 +4,7 @@
 
 ; CHECK: _foo:
 ; CHECK:    L_Arr$non_lazy_ptr
-; CHECK: LBB1_1:	## %cond_true
+; CHECK: LBB1_1:
 
 @Arr = external global [0 x i32]		; <[0 x i32]*> [#uses=1]
 

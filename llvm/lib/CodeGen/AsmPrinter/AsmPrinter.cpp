@@ -1643,14 +1643,12 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   // forward references to labels without knowing what their numbers
   // will be.
   if (MBB->hasAddressTaken()) {
-    O << *GetBlockAddressSymbol(MBB->getBasicBlock()->getParent(),
-                                MBB->getBasicBlock());
-    O << ':';
+    const BasicBlock *BB = MBB->getBasicBlock();
+    OutStreamer.EmitLabel(GetBlockAddressSymbol(BB->getParent(), BB));
     if (VerboseAsm) {
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Address Taken";
+      O << MAI->getCommentString() << " Address Taken" << '\n';
     }
-    O << '\n';
   }
 
   // Print the main label for the block.
@@ -1658,9 +1656,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
     if (VerboseAsm)
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
   } else {
-    O << *GetMBBSymbol(MBB->getNumber()) << ':';
-    if (!VerboseAsm)
-      O << '\n';
+    OutStreamer.EmitLabel(GetMBBSymbol(MBB->getNumber()));
   }
   
   // Print some comments to accompany the label.
