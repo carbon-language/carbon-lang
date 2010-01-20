@@ -28,15 +28,19 @@ namespace {
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const MCAsmInfo &MAI;
+  bool IsLittleEndian;
   MCInstPrinter *InstPrinter;
   MCCodeEmitter *Emitter;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
-                MCInstPrinter *_Printer, MCCodeEmitter *_Emitter)
+                bool isLittleEndian, MCInstPrinter *_Printer,
+                MCCodeEmitter *_Emitter)
     : MCStreamer(Context), OS(_OS), MAI(tai), InstPrinter(_Printer),
       Emitter(_Emitter) {}
   ~MCAsmStreamer() {}
 
+  bool isLittleEndian() const { return IsLittleEndian; }
+  
   /// @name MCStreamer Interface
   /// @{
 
@@ -337,7 +341,8 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    const MCAsmInfo &MAI, MCInstPrinter *IP,
+                                    const MCAsmInfo &MAI, bool isLittleEndian,
+                                    MCInstPrinter *IP,
                                     MCCodeEmitter *CE) {
-  return new MCAsmStreamer(Context, OS, MAI, IP, CE);
+  return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, IP, CE);
 }

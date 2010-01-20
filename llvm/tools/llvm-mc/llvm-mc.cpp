@@ -28,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetAsmParser.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
@@ -263,7 +264,9 @@ static int AssembleInput(const char *ProgName) {
     IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM));
-    Str.reset(createAsmStreamer(Ctx, *Out, *MAI, IP.get(), CE.get()));
+    Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
+                                TM->getTargetData()->isLittleEndian(),
+                                IP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));

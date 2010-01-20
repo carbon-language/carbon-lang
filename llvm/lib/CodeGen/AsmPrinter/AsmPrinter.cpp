@@ -58,7 +58,8 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
 
     OutContext(*new MCContext()),
     // FIXME: Pass instprinter to streamer.
-    OutStreamer(*createAsmStreamer(OutContext, O, *T, 0)),
+    OutStreamer(*createAsmStreamer(OutContext, O, *T,
+                                   TM.getTargetData()->isLittleEndian(), 0)),
 
     LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
   DW = 0; MMI = 0;

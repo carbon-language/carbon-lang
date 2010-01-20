@@ -235,7 +235,7 @@ namespace llvm {
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
   MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS,
-                                const MCAsmInfo &MAI,
+                                const MCAsmInfo &MAI, bool isLittleEndian,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0);
 
