@@ -172,7 +172,7 @@ getReservedRegs(const MachineFunction &MF) const
 //
 // The stack is allocated decrementing the stack pointer on
 // the first instruction of a function prologue. Once decremented,
-// all stack referencesare are done thought a positive offset
+// all stack references are done thought a positive offset
 // from the stack/frame pointer, so the stack is considering
 // to grow up! Otherwise terrible hacks would have to be made
 // to get this stack ABI compliant :)
