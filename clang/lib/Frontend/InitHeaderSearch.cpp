@@ -189,10 +189,12 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
 void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
                                                      llvm::StringRef Arch,
                                                      llvm::StringRef Version) {
-  llvm::Twine localBase = Base + "/" + Arch + "/" + Version + "/include";
-  AddPath(localBase, System, true, false, false);
-  AddPath(localBase + "/c++", System, true, false, false);
-  AddPath(localBase + "/c++/backward", System, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include",
+          System, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
+          System, true, false, false);
+  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
+          System, true, false, false);
 }
 
   // FIXME: This probably should goto to some platform utils place.
