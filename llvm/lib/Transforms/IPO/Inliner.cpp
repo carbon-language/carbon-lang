@@ -171,7 +171,16 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   
   return true;
 }
-        
+
+unsigned Inliner::getInlineThreshold(Function* Caller) const {
+  if (Caller && !Caller->isDeclaration() &&
+      Caller->hasFnAttr(Attribute::OptimizeForSize) &&
+      InlineLimit.getNumOccurrences() == 0)
+    return 50;
+  else
+    return InlineThreshold;
+}
+
 /// shouldInline - Return true if the inliner should attempt to inline
 /// at the given CallSite.
 bool Inliner::shouldInline(CallSite CS) {
@@ -190,14 +199,8 @@ bool Inliner::shouldInline(CallSite CS) {
   }
   
   int Cost = IC.getValue();
-  int CurrentThreshold = InlineThreshold;
   Function *Caller = CS.getCaller();
-  if (Caller && !Caller->isDeclaration() &&
-      Caller->hasFnAttr(Attribute::OptimizeForSize) &&
-      InlineLimit.getNumOccurrences() == 0 &&
-      InlineThreshold != 50)
-    CurrentThreshold = 50;
-  
+  int CurrentThreshold = getInlineThreshold(Caller);
   float FudgeFactor = getInlineFudgeFactor(CS);
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
     DEBUG(dbgs() << "    NOT Inlining: cost=" << Cost
@@ -233,13 +236,8 @@ bool Inliner::shouldInline(CallSite CS) {
 
       outerCallsFound = true;
       int Cost2 = IC2.getValue();
-      int CurrentThreshold2 = InlineThreshold;
       Function *Caller2 = CS2.getCaller();
-      if (Caller2 && !Caller2->isDeclaration() &&
-          Caller2->hasFnAttr(Attribute::OptimizeForSize) &&
-          InlineThreshold != 50)
-        CurrentThreshold2 = 50;
-
+      int CurrentThreshold2 = getInlineThreshold(Caller2);
       float FudgeFactor2 = getInlineFudgeFactor(CS2);
 
       if (Cost2 >= (int)(CurrentThreshold2 * FudgeFactor2))

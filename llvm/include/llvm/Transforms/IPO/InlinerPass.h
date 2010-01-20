@@ -51,6 +51,12 @@ struct Inliner : public CallGraphSCCPass {
   ///
   unsigned getInlineThreshold() const { return InlineThreshold; }
 
+  /// Calculate the inline threshold for given Caller. This threshold is lower
+  /// if Caller is marked with OptimizeForSize and -inline-threshold is not
+  /// given on the comand line.
+  ///
+  unsigned getInlineThreshold(Function* Caller) const;
+
   /// getInlineCost - This method must be implemented by the subclass to
   /// determine the cost of inlining the specified call site.  If the cost
   /// returned is greater than the current inline threshold, the call site is
