@@ -517,67 +517,6 @@ CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
   return Result;
 }
 
-struct LoadTranslationUnitData {
-  CXTranslationUnit TU;
-  CXTranslationUnitIterator Callback;
-  CXClientData ClientData;
-};
-  
-enum CXChildVisitResult LoadTranslationUnitVisitor(CXCursor cursor,
-                                                   CXCursor parent,
-                                                   CXClientData client_data) {
-  LoadTranslationUnitData *Data
-    = static_cast<LoadTranslationUnitData *>(client_data);
-  Data->Callback(Data->TU, cursor, Data->ClientData);
-  return CXChildVisit_Continue;
-}
-  
-void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
-                               CXTranslationUnitIterator callback,
-                               CXClientData CData) {
-  assert(CTUnit && "Passed null CXTranslationUnit");
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-
-  unsigned PCHLevel = Decl::MaxPCHLevel;
-
-  // Set the PCHLevel to filter out unwanted decls if requested.
-  if (CXXUnit->getOnlyLocalDecls()) {
-    PCHLevel = 0;
-
-    // If the main input was an AST, bump the level.
-    if (CXXUnit->isMainFileAST())
-      ++PCHLevel;
-  }
-
-  LoadTranslationUnitData Data = { CTUnit, callback, CData };
-  
-  CursorVisitor CurVisitor(&LoadTranslationUnitVisitor, &Data, PCHLevel);
-  CurVisitor.VisitChildren(clang_getTranslationUnitCursor(CTUnit));
-}
-
-struct LoadDeclarationData {
-  CXDeclIterator Callback;
-  CXClientData ClientData;
-};
-
-CXChildVisitResult LoadDeclarationVisitor(CXCursor cursor, 
-                                          CXCursor parent, 
-                                          CXClientData client_data) {
-  LoadDeclarationData *Data = static_cast<LoadDeclarationData *>(client_data);
-  Data->Callback(clang_getCursorDecl(cursor), cursor, Data->ClientData);
-  return CXChildVisit_Recurse;
-}
-  
-void clang_loadDeclaration(CXDecl Dcl,
-                           CXDeclIterator callback,
-                           CXClientData CData) {
-  assert(Dcl && "Passed null CXDecl");
-
-  LoadDeclarationData Data = { callback, CData };
-  CursorVisitor CurVisit(&LoadDeclarationVisitor, &Data, 
-                         static_cast<Decl *>(Dcl)->getPCHLevel());
-  CurVisit.VisitChildren(clang_getCursorFromDecl(Dcl));
-}
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//

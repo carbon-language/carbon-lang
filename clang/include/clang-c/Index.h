@@ -269,14 +269,16 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *   TU = clang_createTranslationUnit(Idx, "IndexTest.pch");
  *
  *   // This will load all the symbols from 'IndexTest.pch'
- *   clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+ *   clang_visitChildren(TU, clang_getTranslationUnitCursor(TU), 
+ *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
  *
  *   // This will load all the symbols from 'IndexTest.c', excluding symbols
  *   // from 'IndexTest.pch'.
  *   char *args[] = { "-Xclang", "-include-pch=IndexTest.pch", 0 };
  *   TU = clang_createTranslationUnitFromSourceFile(Idx, "IndexTest.c", 2, args);
- *   clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+ *   clang_loadTranslationUnit(TU, clang_getTranslationUnitCursor(TU),
+ *                             TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
  *
  * This process of creating the 'pch', loading it separately, and using it (via
@@ -341,58 +343,7 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char **clang_command_line_args
 );
 
-/*
-   Usage: clang_loadTranslationUnit(). Will load the toplevel declarations
-   within a translation unit, issuing a 'callback' for each one.
-
-   void printObjCInterfaceNames(CXTranslationUnit X, CXCursor C) {
-     if (clang_getCursorKind(C) == Cursor_Declaration) {
-       CXDecl D = clang_getCursorDecl(C);
-       if (clang_getDeclKind(D) == CXDecl_ObjC_interface)
-         printf("@interface %s in file %s on line %d column %d\n",
-                clang_getDeclSpelling(D), clang_getCursorSource(C),
-                clang_getCursorLine(C), clang_getCursorColumn(C));
-     }
-   }
-   static void usage {
-     clang_loadTranslationUnit(CXTranslationUnit, printObjCInterfaceNames);
-  }
-*/
 typedef void *CXClientData;
-typedef void (*CXTranslationUnitIterator)(CXTranslationUnit, CXCursor, 
-                                          CXClientData);
-CINDEX_LINKAGE void clang_loadTranslationUnit(CXTranslationUnit,
-                                              CXTranslationUnitIterator,
-                                              CXClientData);
-
-/*
-   Usage: clang_loadDeclaration(). Will load the declaration, issuing a 
-   'callback' for each declaration/reference within the respective declaration.
-   
-   For interface declarations, this will index the super class, protocols, 
-   ivars, methods, etc. For structure declarations, this will index the fields.
-   For functions, this will index the parameters (and body, for function 
-   definitions), local declarations/references.
-
-   void getInterfaceDetails(CXDecl X, CXCursor C) {
-     switch (clang_getCursorKind(C)) {
-       case Cursor_ObjC_ClassRef:
-         CXDecl SuperClass = clang_getCursorDecl(C);
-       case Cursor_ObjC_ProtocolRef:
-         CXDecl AdoptsProtocol = clang_getCursorDecl(C);
-       case Cursor_Declaration:
-         CXDecl AnIvarOrMethod = clang_getCursorDecl(C);
-     }
-   }
-   static void usage() {
-     if (clang_getDeclKind(D) == CXDecl_ObjC_interface) {
-       clang_loadDeclaration(D, getInterfaceDetails);
-     }
-   }
-*/
-typedef void (*CXDeclIterator)(CXDecl, CXCursor, CXClientData);
-
-CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 
 /**
  * \brief Retrieve the cursor that represents the given translation unit.
