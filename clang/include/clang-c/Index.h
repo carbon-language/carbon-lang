@@ -55,8 +55,16 @@ typedef void *CXStmt;    /* A specific statement within a function/method */
 enum CXCursorKind {
  /* Declarations */
  CXCursor_FirstDecl                     = 1,
- /** \brief A typedef */
- CXCursor_TypedefDecl                   = 1,
+ /** 
+  * \brief A declaration whose specific kind is not exposed via this
+  * interface. 
+  *
+  * Unexposed declarations have the same operations as any other kind
+  * of declaration; one can extract their location information,
+  * spelling, find their definitions, etc. However, the specific kind
+  * of the declaration is not reported.
+  */
+ CXCursor_UnexposedDecl                 = 1,
  /** \brief A C or C++ struct. */
  CXCursor_StructDecl                    = 2, 
  /** \brief A C or C++ union. */
@@ -96,16 +104,8 @@ enum CXCursorKind {
  CXCursor_ObjCImplementationDecl        = 18,
  /** \brief An Objective-C @implementation for a category. */
  CXCursor_ObjCCategoryImplDecl          = 19,
- /** 
-  * \brief A declaration whose specific kind is not exposed via this
-  * interface. 
-  *
-  * Unexposed declarations have the same operations as any other kind
-  * of declaration; one can extract their location information,
-  * spelling, find their definitions, etc. However, the specific kind
-  * of the declaration is not reported.
-  */
- CXCursor_UnexposedDecl                 = 20,
+ /** \brief A typedef */
+ CXCursor_TypedefDecl                   = 20,
  CXCursor_LastDecl                      = 20,
  
  /* References */
