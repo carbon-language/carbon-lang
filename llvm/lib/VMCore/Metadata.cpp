@@ -121,32 +121,27 @@ MDNode::~MDNode() {
     Op->~MDNodeOperand();
 }
 
+static const Function *getFunctionForValue(Value *V) {
+  if (!V) return NULL;
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    return I->getParent()->getParent();
+  if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) return BB->getParent();
+  if (Argument *A = dyn_cast<Argument>(V)) return A->getParent();
+  return NULL;
+}
+
 #ifndef NDEBUG
-static Function *assertLocalFunction(const MDNode *N) {
+static const Function *assertLocalFunction(const MDNode *N) {
   if (!N->isFunctionLocal()) return NULL;
 
-  Function *F = NULL;
+  const Function *F = NULL, *NewF = NULL;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    Value *V = N->getOperand(i);
-    if (!V) continue;
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (F) assert(F == I->getParent()->getParent() &&
-                    "inconsistent function-local metadata");
-      else F = I->getParent()->getParent();
-    } else if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-      if (F) assert(F == BB->getParent() &&
-                    "inconsistent function-local metadata");
-      else F = BB->getParent();
-    } else if (Argument *A = dyn_cast<Argument>(V)) {
-      if (F) assert(F == A->getParent() &&
-                    "inconsistent function-local metadata");
-      else F = A->getParent();
-    } else if (MDNode *MD = dyn_cast<MDNode>(V)) {
-      if (Function *NewF = assertLocalFunction(MD)) {
-        if (F) assert(F == NewF && "inconsistent function-local metadata");
-        else F = NewF;
-      }
+    if (Value *V = N->getOperand(i)) {
+      if (MDNode *MD = dyn_cast<MDNode>(V)) NewF = assertLocalFunction(MD);
+      else NewF = getFunctionForValue(V);
     }
+    if (F && NewF) assert(F == NewF && "inconsistent function-local metadata");
+    else if (!F) F = NewF;
   }
   return F;
 }
@@ -156,24 +151,19 @@ static Function *assertLocalFunction(const MDNode *N) {
 // function-local operand, return the first such operand's parent function.
 // Otherwise, return null. getFunction() should not be used for performance-
 // critical code because it recursively visits all the MDNode's operands.  
-Function *MDNode::getFunction() const {
+const Function *MDNode::getFunction() const {
 #ifndef NDEBUG
   return assertLocalFunction(this);
 #endif
-
   if (!isFunctionLocal()) return NULL;
 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Value *V = getOperand(i);
-    if (!V) continue;
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      return I->getParent()->getParent();
-    if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
-      return BB->getParent();
-    if (Argument *A = dyn_cast<Argument>(V))
-      return A->getParent();
-    if (MDNode *MD = dyn_cast<MDNode>(V))
-      if (Function *F = MD->getFunction()) return F;
+    if (Value *V = getOperand(i)) {
+      if (MDNode *MD = dyn_cast<MDNode>(V))
+        if (const Function *F = MD->getFunction()) return F;
+      else
+        return getFunctionForValue(V);
+    }
   }
   return NULL;
 }
