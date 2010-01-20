@@ -9,7 +9,6 @@
 
 #include "Tools.h"
 
-#include "clang/Basic/Version.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
@@ -864,15 +863,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);
 
   // Pass the path to compiler resource files.
-  //
-  // FIXME: Get this from a configuration object.
-  llvm::sys::Path P(D.Dir);
-  P.eraseComponent(); // Remove /bin from foo/bin
-  P.appendComponent("lib");
-  P.appendComponent("clang");
-  P.appendComponent(CLANG_VERSION_STRING);
   CmdArgs.push_back("-resource-dir");
-  CmdArgs.push_back(Args.MakeArgString(P.str()));
+  CmdArgs.push_back(D.ResourceDir.c_str());
 
   // Add preprocessing options like -I, -D, etc. if we are using the
   // preprocessor.

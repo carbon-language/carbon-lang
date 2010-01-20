@@ -61,6 +61,9 @@ public:
   /// command line.
   std::string Dir;
 
+  /// The path to the compiler resource directory.
+  std::string ResourceDir;
+
   /// Default host triple.
   std::string DefaultHostTriple;
 

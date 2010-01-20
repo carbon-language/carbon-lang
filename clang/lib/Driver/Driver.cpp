@@ -67,6 +67,14 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
 
     CCCUseClangCXX = false;
   }
+
+  // Compute the path to the resource directory.
+  llvm::sys::Path P(Dir);
+  P.eraseComponent(); // Remove /bin from foo/bin
+  P.appendComponent("lib");
+  P.appendComponent("clang");
+  P.appendComponent(CLANG_VERSION_STRING);
+  ResourceDir = P.str();
 }
 
 Driver::~Driver() {
