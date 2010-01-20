@@ -410,7 +410,7 @@ public:
   }
 
   unsigned getExtraLocalDataSize() const {
-    return needsExtraLocalData() ? 4 : 0;
+    return needsExtraLocalData() ? sizeof(WrittenBuiltinSpecs) : 0;
   }
 
   SourceRange getSourceRange() const {
