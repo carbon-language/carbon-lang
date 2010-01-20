@@ -6,13 +6,14 @@
 
 Description := Static runtime libraries for clang/Darwin.
 
-Configs := 
+Configs :=
 UniversalArchs :=
 
-# Configuration for targetting 10.4 on x86. We need a few functions missing from
-# libgcc_s.10.4.dylib.
-Configs += x86_10.4
-UniversalArchs.x86_10.4 := i386 x86_64
+# Configuration for targetting 10.4. We need a few functions missing from
+# libgcc_s.10.4.dylib. We only build x86 slices since clang doesn't really
+# support targetting PowerPC.
+Configs += 10.4
+UniversalArchs.10.4 := i386 x86_64
 
 # Configuration for targetting armv6. We need a few additional functions which
 # must be in the same linkage unit.
@@ -23,7 +24,7 @@ CC := gcc
 
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
-FUNCTIONS.x86_10.4 := floatundidf floatundisf floatundixf
+FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 FUNCTIONS.armv6 := switch16 switch32 switch8 switchu8 \
                    save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
 
