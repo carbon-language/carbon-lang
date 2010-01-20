@@ -101,7 +101,12 @@ bool AsmParser::TokError(const char *Msg) {
 }
 
 const AsmToken &AsmParser::Lex() {
-  return Lexer.Lex();
+  const AsmToken &tok = Lexer.Lex();
+  
+  if (tok.is(AsmToken::Error))
+    Lexer.PrintMessage(Lexer.getErrLoc(), Lexer.getErr(), "error");
+  
+  return tok;
 }
 
 bool AsmParser::Run() {

@@ -12,11 +12,11 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/Support/SMLoc.h"
 
 namespace llvm {
 class MCAsmLexer;
 class MCInst;
-class SMLoc;
 class Target;
 
 /// AsmToken - Target independent representation for an assembler token.
@@ -103,6 +103,10 @@ public:
 class MCAsmLexer {
   /// The current token, stored in the base class for faster access.
   AsmToken CurTok;
+  
+  /// The location and description of the current error
+  SMLoc ErrLoc;
+  std::string Err;
 
   MCAsmLexer(const MCAsmLexer &);   // DO NOT IMPLEMENT
   void operator=(const MCAsmLexer &);  // DO NOT IMPLEMENT
@@ -110,7 +114,12 @@ protected: // Can only create subclasses.
   MCAsmLexer();
 
   virtual AsmToken LexToken() = 0;
-
+  
+  void SetError(const SMLoc &errLoc, const std::string &err) {
+    ErrLoc = errLoc;
+    Err = err;
+  }
+  
 public:
   virtual ~MCAsmLexer();
 
@@ -125,6 +134,16 @@ public:
   /// getTok - Get the current (last) lexed token.
   const AsmToken &getTok() {
     return CurTok;
+  }
+  
+  /// getErrLoc - Get the current error location
+  const SMLoc &getErrLoc() {
+    return ErrLoc;
+  }
+           
+  /// getErr - Get the current error string
+  const std::string &getErr() {
+    return Err;
   }
 
   /// getKind - Get the kind of current token.
