@@ -29,10 +29,20 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
   // NOTE: VMSlot can be invalidated by any reference to VM, which can grow the
   // DenseMap.  This includes any recursive calls to MapValue.
 
-  // Global values and metadata do not need to be seeded into the ValueMap if 
-  // they are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MetadataBase>(V))
+  // Global values and non-function-local metadata do not need to be seeded into
+  // the ValueMap if they are using the identity mapping.
+  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
+      (isa<MDNode>(V) && !dyn_cast<MDNode>(V)->isFunctionLocal()))
     return VMSlot = const_cast<Value*>(V);
+
+  if (isa<MDNode>(V)) {
+    const MDNode *MD = dyn_cast<MDNode>(V);
+    std::vector<Value*> Elts;
+    Elts.reserve(MD->getNumOperands());
+    for (unsigned i = 0; i != MD->getNumOperands(); i++)
+      Elts.push_back(MapValue(MD->getOperand(i), VM));
+    return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+  }
 
   Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
   if (C == 0) return 0;
@@ -131,21 +141,5 @@ void llvm::RemapInstruction(Instruction *I, ValueMapTy &ValueMap) {
     assert(V && "Referenced value not in value map!");
     *op = V;
   }
-
-  // Map llvm.dbg.declare instruction's first operand, which points to
-  // alloca instruction through MDNode. Since MDNodes are not counted as normal
-  // uses, this will fall through cracks otherwise.
-  const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I);
-  if (!DDI) return;
-  
-  Value *AddrInsn = DDI->getAddress();
-  if (!AddrInsn) return;
-  
-  ValueMapTy::iterator VMI = ValueMap.find(AddrInsn);
-  if (VMI == ValueMap.end()) return;
-  
-  Value *Elts[] =  { VMI->second };
-  MDNode *NewAddr = MDNode::get(AddrInsn->getContext(), Elts, 1);
-  I->setOperand(1, NewAddr);
 }
 
