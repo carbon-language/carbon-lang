@@ -63,6 +63,16 @@ namespace {
     virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, double &);
     virtual void readEdge(ProfileInfo::Edge, std::vector<unsigned>&);
 
+    /// getAdjustedAnalysisPointer - This method is used when a pass implements
+    /// an analysis interface through multiple inheritance.  If needed, it
+    /// should override this to adjust the this pointer as needed for the
+    /// specified pass info.
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&ProfileInfo::ID))
+        return (ProfileInfo*)this;
+      return this;
+    }
+    
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
   };

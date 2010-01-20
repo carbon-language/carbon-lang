@@ -1079,6 +1079,20 @@ namespace {
   struct NoProfileInfo : public ImmutablePass, public ProfileInfo {
     static char ID; // Class identification, replacement for typeinfo
     NoProfileInfo() : ImmutablePass(&ID) {}
+    
+    /// getAdjustedAnalysisPointer - This method is used when a pass implements
+    /// an analysis interface through multiple inheritance.  If needed, it
+    /// should override this to adjust the this pointer as needed for the
+    /// specified pass info.
+    virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+      if (PI->isPassID(&ProfileInfo::ID))
+        return (ProfileInfo*)this;
+      return this;
+    }
+    
+    virtual const char *getPassName() const {
+      return "NoProfileInfo";
+    }
   };
 }  // End of anonymous namespace
 
