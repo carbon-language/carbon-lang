@@ -37,8 +37,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
 
   if (isa<MDNode>(V)) {
     const MDNode *MD = dyn_cast<MDNode>(V);
-    std::vector<Value*> Elts;
-    Elts.reserve(MD->getNumOperands());
+    SmallVector<Value*, 4> Elts;
     for (unsigned i = 0; i != MD->getNumOperands(); i++)
       Elts.push_back(MapValue(MD->getOperand(i), VM));
     return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
