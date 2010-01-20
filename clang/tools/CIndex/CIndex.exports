@@ -20,9 +20,7 @@ _clang_getCursorLocation
 _clang_getCursorReferenced
 _clang_getCursorSpelling
 _clang_getCursorUSR
-_clang_getDeclaration
 _clang_getDefinitionSpellingAndExtent
-_clang_getEntityFromDecl
 _clang_getFileName
 _clang_getFileTime
 _clang_getInstantiationLocation

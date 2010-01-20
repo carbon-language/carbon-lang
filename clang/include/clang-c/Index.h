@@ -54,7 +54,6 @@ typedef void *CXIndex;            /* An indexing instance. */
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
 typedef void *CXFile;    /* A source file */
-typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 
 /* Cursors represent declarations, definitions, and references. */
 enum CXCursorKind {
@@ -218,12 +217,6 @@ typedef struct {
   enum CXCursorKind kind;
   void *data[3];
 } CXCursor;  
-
-/* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
-typedef struct {
-  CXIndex index;
-  void *data;
-} CXEntity;
 
 /**
  * For functions returning a string that might or might not need
@@ -426,19 +419,6 @@ CINDEX_LINKAGE unsigned clang_visitChildren(CXTranslationUnit tu,
  */
 CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
 CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
-
-/*
- * CXEntity Operations.
- */
-  
-/* clang_getDeclaration() maps from a CXEntity to the matching CXDecl (if any)
- *  in a specified translation unit. */
-CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
-
-/*
- * CXDecl Operations.
- */
-CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 
 /**
  * \brief Identifies a specific source location within a translation
