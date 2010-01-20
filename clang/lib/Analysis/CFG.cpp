@@ -1598,14 +1598,12 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
     TrySuccessor = Block;
   } else TrySuccessor = Succ;
 
-  // Save the current "try" context.
   CFGBlock *PrevTryTerminatedBlock = TryTerminatedBlock;
-  SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock);
 
   // Create a new block that will contain the try statement.
-  TryTerminatedBlock = createBlock(false);
+  CFGBlock *NewTryTerminatedBlock = createBlock(false);
   // Add the terminator in the try block.
-  TryTerminatedBlock->setTerminator(Terminator);
+  NewTryTerminatedBlock->setTerminator(Terminator);
 
   bool HasCatchAll = false;
   for (unsigned h = 0; h <Terminator->getNumHandlers(); ++h) {
@@ -1621,20 +1619,22 @@ CFGBlock *CFGBuilder::VisitCXXTryStmt(CXXTryStmt *Terminator) {
       return 0;
     // Add this block to the list of successors for the block with the try
     // statement.
-    AddSuccessor(TryTerminatedBlock, CatchBlock);
+    AddSuccessor(NewTryTerminatedBlock, CatchBlock);
   }
   if (!HasCatchAll) {
     if (PrevTryTerminatedBlock)
-      AddSuccessor(TryTerminatedBlock, PrevTryTerminatedBlock);
+      AddSuccessor(NewTryTerminatedBlock, PrevTryTerminatedBlock);
     else
-      AddSuccessor(TryTerminatedBlock, &cfg->getExit());
+      AddSuccessor(NewTryTerminatedBlock, &cfg->getExit());
   }
 
   // The code after the try is the implicit successor.
   Succ = TrySuccessor;
 
-  // When visiting the body, the case statements should automatically get linked
-  // up to the try.
+  // Save the current "try" context.
+  SaveAndRestore<CFGBlock*> save_try(TryTerminatedBlock);
+  TryTerminatedBlock = NewTryTerminatedBlock;
+
   assert(Terminator->getTryBlock() && "try must contain a non-NULL body");
   Block = NULL;
   Block = addStmt(Terminator->getTryBlock());
