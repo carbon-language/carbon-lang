@@ -138,61 +138,7 @@ static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-// Translation Unit Visitor.
-class TUVisitor : public DeclVisitor<TUVisitor> {
-public:
-  typedef void (*Iterator)(void *, CXCursor, CXClientData);
-private:
-  void *Root; // CXDecl or CXTranslationUnit
-  Iterator Callback; // CXTranslationUnitIterator or CXDeclIterator.
-  CXClientData CData;
-
-  // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
-  // to the visitor. Declarations with a PCH level greater than this value will
-  // be suppressed.
-  unsigned MaxPCHLevel;
-
-  void Call(const CXCursor &C) {
-    if (clang_isInvalid(C.kind))
-      return;
-    
-    if (const Decl *D = getCursorDecl(C)) {
-      // Filter any declarations that have a PCH level greater than what 
-      // we allow.
-      if (D->getPCHLevel() > MaxPCHLevel)
-        return;
-
-      // Filter any implicit declarations (since the source info will be bogus).
-      if (D->isImplicit())
-        return;
-    }
-
-    Callback(Root, C, CData);
-  }
-
-public:
-  TUVisitor(void *root, Iterator cback, CXClientData D, unsigned MaxPCHLevel) :
-    Root(root), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
-
-  void VisitDecl(Decl *D);
-  void VisitDeclContext(DeclContext *DC);
-  void VisitTranslationUnitDecl(TranslationUnitDecl *D);
-};
-
-void TUVisitor::VisitDecl(Decl *D) {
-  Call(MakeCXCursor(D));
-}
   
-void TUVisitor::VisitDeclContext(DeclContext *DC) {
-  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
-       I != E; ++I)
-    Visit(*I);
-}
-    
-void TUVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
-  VisitDeclContext(dyn_cast<DeclContext>(D));
-}
-
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
   CXCursor Parent;
@@ -297,8 +243,19 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   
   if (clang_isTranslationUnit(Cursor.kind)) {
     ASTUnit *CXXUnit = static_cast<ASTUnit *>(Cursor.data[0]);
-    return VisitTranslationUnitDecl(
+    if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
+      const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
+      for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
+           ie = TLDs.end(); it != ie; ++it) {
+        if (Visit(MakeCXCursor(*it)))
+          return true;
+      }
+    } else {
+      return VisitDeclContext(
                             CXXUnit->getASTContext().getTranslationUnitDecl());
+    }
+    
+    return false;
   }
     
   // Nothing to visit at the moment.
@@ -307,7 +264,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 }
 
 bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
-  return VisitDeclContext(D);
+  llvm_unreachable("Translation units are visited directly by Visit()");
+  return false;
 }
 
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
@@ -559,12 +517,26 @@ CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
   return Result;
 }
 
+struct LoadTranslationUnitData {
+  CXTranslationUnit TU;
+  CXTranslationUnitIterator Callback;
+  CXClientData ClientData;
+};
+  
+enum CXChildVisitResult LoadTranslationUnitVisitor(CXCursor cursor,
+                                                   CXCursor parent,
+                                                   CXClientData client_data) {
+  LoadTranslationUnitData *Data
+    = static_cast<LoadTranslationUnitData *>(client_data);
+  Data->Callback(Data->TU, cursor, Data->ClientData);
+  return CXChildVisit_Continue;
+}
+  
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
                                CXTranslationUnitIterator callback,
                                CXClientData CData) {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  ASTContext &Ctx = CXXUnit->getASTContext();
 
   unsigned PCHLevel = Decl::MaxPCHLevel;
 
@@ -577,18 +549,10 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
       ++PCHLevel;
   }
 
-  TUVisitor DVisit(CTUnit, callback, CData, PCHLevel);
-
-  // If using a non-AST based ASTUnit, iterate over the stored list of top-level
-  // decls.
-  if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
-    const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
-    for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
-           ie = TLDs.end(); it != ie; ++it) {
-      DVisit.Visit(*it);
-    }
-  } else
-    DVisit.Visit(Ctx.getTranslationUnitDecl());
+  LoadTranslationUnitData Data = { CTUnit, callback, CData };
+  
+  CursorVisitor CurVisitor(&LoadTranslationUnitVisitor, &Data, PCHLevel);
+  CurVisitor.VisitChildren(clang_getTranslationUnitCursor(CTUnit));
 }
 
 struct LoadDeclarationData {
