@@ -416,10 +416,6 @@ CINDEX_LINKAGE CXDecl clang_getDeclaration(CXEntity, CXTranslationUnit);
 CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
 CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXIndex, CXDecl);
 CINDEX_LINKAGE CXString clang_getDeclSpelling(CXDecl);
-CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl); /* deprecate */
-CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl); /* deprecate */
-CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
-CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl); /* deprecate */
 
 /**
  * \brief Identifies a specific source location within a translation
@@ -477,13 +473,6 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
  * character within a source range.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
-
-/* clang_getDeclExtent() returns the physical extent of a declaration.  The
- * beginning line/column pair points to the start of the first token in the
- * declaration, and the ending line/column pair points to the last character in
- * the last token of the declaration.
- */
-CINDEX_LINKAGE CXSourceRange clang_getDeclExtent(CXDecl);
 
 /*
  * CXCursor Operations.

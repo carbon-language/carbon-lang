@@ -22,12 +22,6 @@ _clang_getCursorLocation
 _clang_getCursorReferenced
 _clang_getCursorSpelling
 _clang_getCursorUSR
-_clang_getDeclColumn
-_clang_getDeclExtent
-_clang_getDeclExtent
-_clang_getDeclLine
-_clang_getDeclSource
-_clang_getDeclSourceFile
 _clang_getDeclSpelling
 _clang_getDeclaration
 _clang_getDefinitionSpellingAndExtent

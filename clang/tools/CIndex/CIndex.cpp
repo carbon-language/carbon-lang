@@ -691,16 +691,6 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
 // CXDecl Operations.
 //===----------------------------------------------------------------------===//
 
-static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
-                                                       SourceLocation SLoc) {
-  FileID FID;
-  if (SLoc.isFileID())
-    FID = SMgr.getFileID(SLoc);
-  else
-    FID = SMgr.getDecomposedSpellingLoc(SLoc).first;
-  return SMgr.getFileEntryForID(FID);
-}
-
 extern "C" {
 CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   assert(AnonDecl && "Passed null CXDecl");
@@ -725,38 +715,6 @@ CXString clang_getDeclSpelling(CXDecl AnonDecl) {
   return CIndexer::createCXString("");
 }
 
-unsigned clang_getDeclLine(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  return SourceMgr.getSpellingLineNumber(ND->getLocation());
-}
-
-unsigned clang_getDeclColumn(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  return SourceMgr.getSpellingColumnNumber(ND->getLocation());
-}
-  
-CXSourceRange clang_getDeclExtent(CXDecl AnonDecl) {
-  return clang_getCursorExtent(clang_getCursorFromDecl(AnonDecl));
-}
-
-const char *clang_getDeclSource(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  FileEntry *FEnt = static_cast<FileEntry *>(clang_getDeclSourceFile(AnonDecl));
-  assert(FEnt && "Cannot find FileEntry for Decl");
-  return clang_getFileName(FEnt);
-}
-
-
-CXFile clang_getDeclSourceFile(CXDecl AnonDecl) {
-  assert(AnonDecl && "Passed null CXDecl");
-  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
-  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  return (void *)getFileEntryFromSourceLocation(SourceMgr, ND->getLocation());
-}
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
