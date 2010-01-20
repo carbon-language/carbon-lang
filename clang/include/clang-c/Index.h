@@ -55,7 +55,6 @@ typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
 typedef void *CXFile;    /* A source file */
 typedef void *CXDecl;    /* A specific declaration within a translation unit. */
-typedef void *CXStmt;    /* A specific statement within a function/method */
 
 /* Cursors represent declarations, definitions, and references. */
 enum CXCursorKind {
