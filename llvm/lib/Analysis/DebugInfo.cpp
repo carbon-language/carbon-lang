@@ -1059,8 +1059,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
-  Value *Elts[] = { V };
-  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1),
+  Value *Args[] = { MDNode::get(V->getContext(), &V, 1),
                     ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     D.getNode() };
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertBefore);
@@ -1074,8 +1073,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
-  Value *Elts[] = { V };
-  Value *Args[] = { MDNode::get(V->getContext(), Elts, 1), 
+  Value *Args[] = { MDNode::get(V->getContext(), &V, 1), 
                     ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     D.getNode() };
   return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
