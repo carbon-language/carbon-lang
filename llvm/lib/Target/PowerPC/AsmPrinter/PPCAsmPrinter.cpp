@@ -27,10 +27,10 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -95,7 +95,7 @@ namespace {
     };
     
     DenseMap<const MCSymbol*, FnStubInfo> FnStubs;
-    DenseMap<const MCSymbol*, const MCSymbol*> GVStubs, HiddenGVStubs, TOC;
+    DenseMap<const MCSymbol*, const MCSymbol*> TOC;
     const PPCSubtarget &Subtarget;
     uint64_t LabelID;
   public:
@@ -424,15 +424,19 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     return;
   case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
-    const MCSymbol *SymName = GetExternalSymbolSymbol(MO.getSymbolName());
     if (TM.getRelocationModel() == Reloc::Static) {
-      O << *SymName;
+      O << *GetExternalSymbolSymbol(MO.getSymbolName());
       return;
     }
+
     const MCSymbol *NLPSym = 
       OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
                                    MO.getSymbolName()+"$non_lazy_ptr");
-    GVStubs[SymName] = NLPSym;
+    const MCSymbol *&StubSym = 
+      MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(NLPSym);
+    if (StubSym == 0)
+      StubSym = GetExternalSymbolSymbol(MO.getSymbolName());
+    
     O << *NLPSym;
     return;
   }
@@ -446,11 +450,19 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
         (GV->isDeclaration() || GV->isWeakForLinker())) {
       if (!GV->hasHiddenVisibility()) {
         SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-        GVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
+        const MCSymbol *&StubSym = 
+       MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(SymToPrint);
+        if (StubSym == 0)
+          StubSym = GetGlobalValueSymbol(GV);
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-        HiddenGVStubs[GetGlobalValueSymbol(GV)] = SymToPrint;
+        
+        const MCSymbol *&StubSym = 
+          MMI->getObjFileInfo<MachineModuleInfoMachO>().
+                    getHiddenGVStubEntry(SymToPrint);
+        if (StubSym == 0)
+          StubSym = GetGlobalValueSymbol(GV);
       } else {
         SymToPrint = GetGlobalValueSymbol(GV);
       }
@@ -838,12 +850,12 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   // Darwin/PPC always uses mach-o.
   TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-
+  MachineModuleInfoMachO &MMIMacho =
+    MMI->getObjFileInfo<MachineModuleInfoMachO>();
   
   const MCSection *LSPSection = 0;
   if (!FnStubs.empty()) // .lazy_symbol_pointer
     LSPSection = TLOFMacho.getLazySymbolPointerSection();
-    
   
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
@@ -912,35 +924,39 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     const std::vector<Function *> &Personalities = MMI->getPersonalities();
     for (std::vector<Function *>::const_iterator I = Personalities.begin(),
          E = Personalities.end(); I != E; ++I) {
-      if (*I)
-        GVStubs[GetGlobalValueSymbol(*I)] =
+      if (*I) {
+        const MCSymbol *NLPSym = 
           GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
+        const MCSymbol *&StubSym = MMIMacho.getGVStubEntry(NLPSym);
+        StubSym = GetGlobalValueSymbol(*I);
+      }
     }
   }
 
+  // Output stubs for dynamically-linked functions.
+  MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetGVStubList();
+  
   // Output macho stubs for external and common global variables.
-  if (!GVStubs.empty()) {
+  if (!Stubs.empty()) {
     // Switch with ".non_lazy_symbol_pointer" directive.
     OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
     EmitAlignment(isPPC64 ? 3 : 2);
     
-    // FIXME: This is nondeterminstic.
-    for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
-         I = GVStubs.begin(), E = GVStubs.end(); I != E; ++I) {
-      O << *I->second << ":\n";
-      O << "\t.indirect_symbol " << *I->first << '\n';
+    for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+      O << *Stubs[i].first << ":\n";
+      O << "\t.indirect_symbol " << *Stubs[i].second << '\n';
       O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
     }
   }
 
-  if (!HiddenGVStubs.empty()) {
+  Stubs = MMIMacho.GetHiddenGVStubList();
+  if (!Stubs.empty()) {
     OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
     EmitAlignment(isPPC64 ? 3 : 2);
-    // FIXME: This is nondeterminstic.
-    for (DenseMap<const MCSymbol *, const MCSymbol *>::iterator
-         I = HiddenGVStubs.begin(), E = HiddenGVStubs.end(); I != E; ++I) {
-      O << *I->second << ":\n";
-      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << *I->first << '\n';
+    
+    for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+      O << *Stubs[i].first << ":\n";
+      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << *Stubs[i].second << '\n';
     }
   }
 
