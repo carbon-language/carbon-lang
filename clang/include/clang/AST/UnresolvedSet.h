@@ -17,6 +17,8 @@
 
 #include <iterator>
 #include <llvm/ADT/PointerIntPair.h>
+#include <llvm/ADT/SmallVector.h>
+#include <clang/Basic/Specifiers.h>
 
 namespace clang {
 
