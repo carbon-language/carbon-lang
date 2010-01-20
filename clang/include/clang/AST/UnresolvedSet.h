@@ -16,9 +16,9 @@
 #define LLVM_CLANG_AST_UNRESOLVEDSET_H
 
 #include <iterator>
-#include <llvm/ADT/PointerIntPair.h>
-#include <llvm/ADT/SmallVector.h>
-#include <clang/Basic/Specifiers.h>
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallVector.h"
+#include "clang/Basic/Specifiers.h"
 
 namespace clang {
 
