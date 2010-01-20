@@ -784,39 +784,25 @@ void AsmPrinter::EmitSLEB128Bytes(int Value) const {
 /// EmitInt8 - Emit a byte directive and value.
 ///
 void AsmPrinter::EmitInt8(int Value) const {
-  O << MAI->getData8bitsDirective();
-  PrintHex(Value & 0xFF);
+  OutStreamer.EmitIntValue(Value, 1, 0/*addrspace*/);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
 void AsmPrinter::EmitInt16(int Value) const {
-  O << MAI->getData16bitsDirective();
-  PrintHex(Value & 0xFFFF);
+  OutStreamer.EmitIntValue(Value, 2, 0/*addrspace*/);
 }
 
 /// EmitInt32 - Emit a long directive and value.
 ///
 void AsmPrinter::EmitInt32(int Value) const {
-  O << MAI->getData32bitsDirective();
-  PrintHex(Value);
+  OutStreamer.EmitIntValue(Value, 4, 0/*addrspace*/);
 }
 
 /// EmitInt64 - Emit a long long directive and value.
 ///
 void AsmPrinter::EmitInt64(uint64_t Value) const {
-  if (MAI->getData64bitsDirective()) {
-    O << MAI->getData64bitsDirective();
-    PrintHex(Value);
-  } else {
-    if (TM.getTargetData()->isBigEndian()) {
-      EmitInt32(unsigned(Value >> 32)); O << '\n';
-      EmitInt32(unsigned(Value));
-    } else {
-      EmitInt32(unsigned(Value)); O << '\n';
-      EmitInt32(unsigned(Value >> 32));
-    }
-  }
+  OutStreamer.EmitIntValue(Value, 8, 0/*addrspace*/);
 }
 
 /// toOctal - Convert the low order bits of X into an octal digit.

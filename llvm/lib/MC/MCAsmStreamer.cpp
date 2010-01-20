@@ -198,14 +198,24 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
                                  unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  // Need target hooks to know how to print this.
   const char *Directive = 0;
   switch (Size) {
   default: break;
   case 1: Directive = MAI.getData8bitsDirective(AddrSpace); break;
   case 2: Directive = MAI.getData16bitsDirective(AddrSpace); break;
   case 4: Directive = MAI.getData32bitsDirective(AddrSpace); break;
-  case 8: Directive = MAI.getData64bitsDirective(AddrSpace); break;
+  case 8:
+    Directive = MAI.getData64bitsDirective(AddrSpace);
+    // If the target doesn't support 64-bit data, emit as two 32-bit halves.
+    if (Directive) break;
+    if (isLittleEndian()) {
+      EmitIntValue((uint32_t)(Value >> 0 ), 4, AddrSpace);
+      EmitIntValue((uint32_t)(Value >> 32), 4, AddrSpace);
+    } else {
+      EmitIntValue((uint32_t)(Value >> 32), 4, AddrSpace);
+      EmitIntValue((uint32_t)(Value >> 0 ), 4, AddrSpace);
+    }
+    return;
   }
   
   assert(Directive && "Invalid size for machine code value!");
@@ -215,7 +225,6 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                               unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  // Need target hooks to know how to print this.
   const char *Directive = 0;
   switch (Size) {
   default: break;
