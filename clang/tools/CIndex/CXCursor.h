@@ -30,9 +30,7 @@ class Stmt;
 
 namespace cxcursor {
   
-CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D);  
-CXCursor MakeCXCursor(CXCursorKind K, clang::Decl *D, clang::Stmt *S,
-                      ASTContext &Context);
+CXCursor MakeCXCursorInvalid(CXCursorKind K);
 CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent);
 CXCursor MakeCXCursor(clang::Decl *D);
 

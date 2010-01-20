@@ -797,11 +797,11 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
     }
     return MakeCXCursor(Dcl);
   }
-  return MakeCXCursor(CXCursor_NoDeclFound, 0);
+  return MakeCXCursorInvalid(CXCursor_NoDeclFound);
 }
 
 CXCursor clang_getNullCursor(void) {
-  return MakeCXCursor(CXCursor_InvalidFile, 0);
+  return MakeCXCursorInvalid(CXCursor_InvalidFile);
 }
 
 unsigned clang_equalCursors(CXCursor X, CXCursor Y) {

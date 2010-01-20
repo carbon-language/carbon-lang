@@ -22,16 +22,10 @@
 
 using namespace clang;
 
-CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D) {
-  CXCursor C = { K, { D, 0, 0 } };
-  return C;  
-}
-
-CXCursor cxcursor::MakeCXCursor(CXCursorKind K, Decl *D, Stmt *S,
-                                ASTContext &Context) {
-  assert(clang_isReference(K));
-  CXCursor C = { K, { D, S, &Context } };
-  return C;  
+CXCursor cxcursor::MakeCXCursorInvalid(CXCursorKind K) {
+  assert(K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid);
+  CXCursor C = { K, { 0, 0, 0 } };
+  return C;
 }
 
 static CXCursorKind GetCursorKind(Decl *D) {
@@ -78,7 +72,8 @@ static CXCursorKind GetCursorKind(Decl *D) {
 }
 
 CXCursor cxcursor::MakeCXCursor(Decl *D) {
-  return MakeCXCursor(GetCursorKind(D), D);
+  CXCursor C = { GetCursorKind(D), { D, 0, 0 } };
+  return C;
 }
 
 CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent) {
