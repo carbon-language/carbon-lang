@@ -5179,6 +5179,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
       allnodes_iterator Q = N;
       if (Q != SortedPos)
         SortedPos = AllNodes.insert(SortedPos, AllNodes.remove(Q));
+      assert(SortedPos != AllNodes.end() && "Overran node list");
       ++SortedPos;
     } else {
       // Temporarily use the Node Id as scratch space for the degree count.
@@ -5190,21 +5191,32 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
   // such that by the time the end is reached all nodes will be sorted.
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I) {
     SDNode *N = I;
+    // N is in sorted position, so all its uses have one less operand
+    // that needs to be sorted.
     for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
          UI != UE; ++UI) {
       SDNode *P = *UI;
       unsigned Degree = P->getNodeId();
+      assert(Degree != 0 && "Invalid node degree");
       --Degree;
       if (Degree == 0) {
         // All of P's operands are sorted, so P may sorted now.
         P->setNodeId(DAGSize++);
         if (P != SortedPos)
           SortedPos = AllNodes.insert(SortedPos, AllNodes.remove(P));
+        assert(SortedPos != AllNodes.end() && "Overran node list");
         ++SortedPos;
       } else {
         // Update P's outstanding operand count.
         P->setNodeId(Degree);
       }
+    }
+    if (I == SortedPos) {
+      allnodes_iterator J = I;
+      SDNode *S = ++J;
+      dbgs() << "Offending node:\n";
+      S->dumprFull();
+      assert(I != SortedPos && "Overran sorted position");
     }
   }
 
