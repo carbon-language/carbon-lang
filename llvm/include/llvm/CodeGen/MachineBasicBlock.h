@@ -337,6 +337,10 @@ public:
                             MachineBasicBlock *DestB,
                             bool isCond);
 
+  /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
+  /// any DEBUG_VALUE instructions.  Return UnknownLoc if there is none.
+  DebugLoc findDebugLoc(MachineBasicBlock::iterator &MBBI);
+
   // Debugging methods.
   void dump() const;
   void print(raw_ostream &OS) const;
@@ -366,9 +370,6 @@ private:   // Methods used to maintain doubly linked list of blocks...
   ///
   void removePredecessor(MachineBasicBlock *pred);
 };
-
-DebugLoc
-findDebugLoc(MachineBasicBlock::iterator &MBBI, MachineBasicBlock &MBB);
 
 raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 

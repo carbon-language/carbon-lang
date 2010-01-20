@@ -682,7 +682,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
        (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
        (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri));
   uint64_t Chunk = (1LL << 31) - 1;
-  DebugLoc DL = findDebugLoc(MBBI, MBB);
+  DebugLoc DL = MBB.findDebugLoc(MBBI);
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
@@ -1031,7 +1031,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  DL = findDebugLoc(MBBI, MBB);
+  DL = MBB.findDebugLoc(MBBI);
 
   // Adjust stack pointer: ESP -= numbytes.
   if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
