@@ -145,6 +145,14 @@ public:
   ///
   virtual void releaseMemory();
 
+  /// getAdjustedAnalysisPointer - This method is used when a pass implements
+  /// an analysis interface through multiple inheritance.  If needed, it should
+  /// override this to adjust the this pointer as needed for the specified pass
+  /// info.
+  virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
+    return this;
+  }
+  
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
   /// check state of analysis information. 
   virtual void verifyAnalysis() const;
