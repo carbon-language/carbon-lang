@@ -177,12 +177,12 @@ static llvm::raw_ostream& EmitString(llvm::raw_ostream& o,
   for (std::string::const_iterator I=s.begin(), E=s.end(); I!=E; ++I) {
     char c = *I;
     switch (c) {
-      default:   o << c; break;
-      case '&':  o << "&amp;"; break;
-      case '<':  o << "&lt;"; break;
-      case '>':  o << "&gt;"; break;
-      case '\'': o << "&apos;"; break;
-      case '\"': o << "&quot;"; break;
+    default:   o << c; break;
+    case '&':  o << "&amp;"; break;
+    case '<':  o << "&lt;"; break;
+    case '>':  o << "&gt;"; break;
+    case '\'': o << "&apos;"; break;
+    case '\"': o << "&quot;"; break;
     }
   }
   o << "</string>";
@@ -289,16 +289,16 @@ static void ReportMacro(llvm::raw_ostream& o,
        I!=E; ++I) {
 
     switch ((*I)->getKind()) {
-      default:
-        break;
-      case PathDiagnosticPiece::Event:
-        ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, LangOpts,
-                    indent);
-        break;
-      case PathDiagnosticPiece::Macro:
-        ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, LangOpts,
-                    indent);
-        break;
+    default:
+      break;
+    case PathDiagnosticPiece::Event:
+      ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, LangOpts,
+                  indent);
+      break;
+    case PathDiagnosticPiece::Macro:
+      ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, LangOpts,
+                  indent);
+      break;
     }
   }
 }
@@ -310,18 +310,18 @@ static void ReportDiag(llvm::raw_ostream& o, const PathDiagnosticPiece& P,
   unsigned indent = 4;
 
   switch (P.getKind()) {
-    case PathDiagnosticPiece::ControlFlow:
-      ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
-                        LangOpts, indent);
-      break;
-    case PathDiagnosticPiece::Event:
-      ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, LangOpts,
-                  indent);
-      break;
-    case PathDiagnosticPiece::Macro:
-      ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, LangOpts,
-                  indent);
-      break;
+  case PathDiagnosticPiece::ControlFlow:
+    ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
+                      LangOpts, indent);
+    break;
+  case PathDiagnosticPiece::Event:
+    ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, LangOpts,
+                indent);
+    break;
+  case PathDiagnosticPiece::Macro:
+    ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, LangOpts,
+                indent);
+    break;
   }
 }
 

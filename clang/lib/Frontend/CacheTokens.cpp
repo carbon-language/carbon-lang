@@ -77,25 +77,25 @@ public:
 
   void EmitData(llvm::raw_ostream& Out) {
     switch (Kind) {
-      case IsFE:
-        // Emit stat information.
-        ::Emit32(Out, FE->getInode());
-        ::Emit32(Out, FE->getDevice());
-        ::Emit16(Out, FE->getFileMode());
-        ::Emit64(Out, FE->getModificationTime());
-        ::Emit64(Out, FE->getSize());
-        break;
-      case IsDE:
-        // Emit stat information.
-        ::Emit32(Out, (uint32_t) StatBuf->st_ino);
-        ::Emit32(Out, (uint32_t) StatBuf->st_dev);
-        ::Emit16(Out, (uint16_t) StatBuf->st_mode);
-        ::Emit64(Out, (uint64_t) StatBuf->st_mtime);
-        ::Emit64(Out, (uint64_t) StatBuf->st_size);
-        delete StatBuf;
-        break;
-      default:
-        break;
+    case IsFE:
+      // Emit stat information.
+      ::Emit32(Out, FE->getInode());
+      ::Emit32(Out, FE->getDevice());
+      ::Emit16(Out, FE->getFileMode());
+      ::Emit64(Out, FE->getModificationTime());
+      ::Emit64(Out, FE->getSize());
+      break;
+    case IsDE:
+      // Emit stat information.
+      ::Emit32(Out, (uint32_t) StatBuf->st_ino);
+      ::Emit32(Out, (uint32_t) StatBuf->st_dev);
+      ::Emit16(Out, (uint16_t) StatBuf->st_mode);
+      ::Emit64(Out, (uint64_t) StatBuf->st_mtime);
+      ::Emit64(Out, (uint64_t) StatBuf->st_size);
+      delete StatBuf;
+      break;
+    default:
+      break;
     }
   }
 

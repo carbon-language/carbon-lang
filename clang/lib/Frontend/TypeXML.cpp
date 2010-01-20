@@ -43,14 +43,14 @@ public:
     const char* pAttributeName = NAME;  \
     const bool optional = false;             \
     switch (T->FN) {                    \
-      default: assert(0 && "unknown enum value");
+    default: assert(0 && "unknown enum value");
 
 #define ATTRIBUTE_ENUM_OPT_XML( FN, NAME )  \
   {                                     \
     const char* pAttributeName = NAME;  \
     const bool optional = true;              \
     switch (T->FN) {                    \
-      default: assert(0 && "unknown enum value");
+    default: assert(0 && "unknown enum value");
 
 #define ENUM_XML( VALUE, NAME )         case VALUE: if ((!optional) || NAME[0]) Doc.addAttribute(pAttributeName, NAME); break;
 #define END_ENUM_XML                    } }

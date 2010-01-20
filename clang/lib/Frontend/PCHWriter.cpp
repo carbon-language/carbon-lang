@@ -1271,7 +1271,7 @@ void PCHWriter::WriteType(QualType T) {
       // For all of the concrete, non-dependent types, call the
       // appropriate visitor function.
 #define TYPE(Class, Base) \
-      case Type::Class: W.Visit##Class##Type(cast<Class##Type>(T)); break;
+    case Type::Class: W.Visit##Class##Type(cast<Class##Type>(T)); break;
 #define ABSTRACT_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"

@@ -349,10 +349,10 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
   const char *Kind = 0;
   switch (P.getKind()) {
-    case PathDiagnosticPiece::Event:  Kind = "Event"; break;
-    case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
-      // Setting Kind to "Control" is intentional.
-    case PathDiagnosticPiece::Macro: Kind = "Control"; break;
+  case PathDiagnosticPiece::Event:  Kind = "Event"; break;
+  case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
+    // Setting Kind to "Control" is intentional.
+  case PathDiagnosticPiece::Macro: Kind = "Control"; break;
   }
 
   std::string sbuf;
@@ -380,14 +380,14 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
     for (std::string::const_iterator I=Msg.begin(), E=Msg.end(); I!=E; ++I)
       switch (*I) {
-        default:
-          ++cnt;
-          continue;
-        case ' ':
-        case '\t':
-        case '\n':
-          if (cnt > max_token) max_token = cnt;
-          cnt = 0;
+      default:
+        ++cnt;
+        continue;
+      case ' ':
+      case '\t':
+      case '\n':
+        if (cnt > max_token) max_token = cnt;
+        cnt = 0;
       }
 
     if (cnt > max_token)

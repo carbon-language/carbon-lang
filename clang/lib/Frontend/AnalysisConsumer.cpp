@@ -204,45 +204,45 @@ namespace llvm {
 
 void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
   switch (D->getKind()) {
-    case Decl::Function: {
-      FunctionDecl* FD = cast<FunctionDecl>(D);
+  case Decl::Function: {
+    FunctionDecl* FD = cast<FunctionDecl>(D);
 
-      if (!Opts.AnalyzeSpecificFunction.empty() &&
-          Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
-        break;
-
-      Stmt* Body = FD->getBody();
-      if (Body) HandleCode(FD, Body, FunctionActions);
+    if (!Opts.AnalyzeSpecificFunction.empty() &&
+        Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
       break;
-    }
 
-    case Decl::ObjCMethod: {
-      ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
+    Stmt* Body = FD->getBody();
+    if (Body) HandleCode(FD, Body, FunctionActions);
+    break;
+  }
 
-      if (Opts.AnalyzeSpecificFunction.size() > 0 &&
-          Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
-        return;
+  case Decl::ObjCMethod: {
+    ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
 
-      Stmt* Body = MD->getBody();
-      if (Body) HandleCode(MD, Body, ObjCMethodActions);
-      break;
-    }
+    if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+        Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
+      return;
 
-    case Decl::CXXMethod: {
-      CXXMethodDecl *CXXMD = cast<CXXMethodDecl>(D);
+    Stmt* Body = MD->getBody();
+    if (Body) HandleCode(MD, Body, ObjCMethodActions);
+    break;
+  }
 
-      if (Opts.AnalyzeSpecificFunction.size() > 0 &&
-          Opts.AnalyzeSpecificFunction != CXXMD->getName())
-        return;
+  case Decl::CXXMethod: {
+    CXXMethodDecl *CXXMD = cast<CXXMethodDecl>(D);
 
-      Stmt *Body = CXXMD->getBody();
-      if (Body)
-        HandleCode(CXXMD, Body, FunctionActions);
-      break;
-    }
+    if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+        Opts.AnalyzeSpecificFunction != CXXMD->getName())
+      return;
 
-    default:
-      break;
+    Stmt *Body = CXXMD->getBody();
+    if (Body)
+      HandleCode(CXXMD, Body, FunctionActions);
+    break;
+  }
+
+  default:
+    break;
   }
 }
 
@@ -409,20 +409,20 @@ static void ActionCheckerCFRef(AnalysisConsumer &C, AnalysisManager& mgr,
                                Decl *D) {
 
  switch (mgr.getLangOptions().getGCMode()) {
-   default:
-     assert (false && "Invalid GC mode.");
-   case LangOptions::NonGC:
-     ActionCheckerCFRefAux(C, mgr, D, false);
-     break;
+ default:
+   assert (false && "Invalid GC mode.");
+ case LangOptions::NonGC:
+   ActionCheckerCFRefAux(C, mgr, D, false);
+   break;
 
-   case LangOptions::GCOnly:
-     ActionCheckerCFRefAux(C, mgr, D, true);
-     break;
+ case LangOptions::GCOnly:
+   ActionCheckerCFRefAux(C, mgr, D, true);
+   break;
 
-   case LangOptions::HybridGC:
-     ActionCheckerCFRefAux(C, mgr, D, false);
-     ActionCheckerCFRefAux(C, mgr, D, true);
-     break;
+ case LangOptions::HybridGC:
+   ActionCheckerCFRefAux(C, mgr, D, false);
+   ActionCheckerCFRefAux(C, mgr, D, true);
+   break;
  }
 }
 
@@ -530,11 +530,11 @@ ASTConsumer* clang::CreateAnalysisConsumer(const Preprocessor& pp,
   for (unsigned i = 0; i < Opts.AnalysisList.size(); ++i)
     switch (Opts.AnalysisList[i]) {
 #define ANALYSIS(NAME, CMD, DESC, SCOPE)\
-      case NAME:\
-        C->add ## SCOPE ## Action(&Action ## NAME);\
-        break;
+    case NAME:\
+      C->add ## SCOPE ## Action(&Action ## NAME);\
+      break;
 #include "clang/Frontend/Analyses.def"
-      default: break;
+    default: break;
     }
 
   // Last, disable the effects of '-Werror' when using the AnalysisConsumer.

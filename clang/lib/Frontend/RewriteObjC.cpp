@@ -4311,11 +4311,11 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
 
   while (*argPtr++ && (argPtr < endBuf)) {
     switch (*argPtr) {
-      case '^':
-        // Replace the '^' with '*'.
-        LocStart = LocStart.getFileLocWithOffset(argPtr-startBuf);
-        ReplaceText(LocStart, 1, "*", 1);
-        break;
+    case '^':
+      // Replace the '^' with '*'.
+      LocStart = LocStart.getFileLocWithOffset(argPtr-startBuf);
+      ReplaceText(LocStart, 1, "*", 1);
+      break;
     }
   }
   return;
@@ -4340,17 +4340,17 @@ void RewriteObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
 
   while (*argPtr++ && parenCount) {
     switch (*argPtr) {
-      case '^':
-        // Replace the '^' with '*'.
-        DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList);
-        ReplaceText(DeclLoc, 1, "*", 1);
-        break;
-      case '(':
-        parenCount++;
-        break;
-      case ')':
-        parenCount--;
-        break;
+    case '^':
+      // Replace the '^' with '*'.
+      DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList);
+      ReplaceText(DeclLoc, 1, "*", 1);
+      break;
+    case '(':
+      parenCount++;
+      break;
+    case ')':
+      parenCount--;
+      break;
     }
   }
   return;
@@ -4386,9 +4386,9 @@ void RewriteObjC::GetExtentOfArgList(const char *Name, const char *&LParen,
 
   while (*argPtr && parenCount) {
     switch (*argPtr) {
-      case '(': parenCount++; break;
-      case ')': parenCount--; break;
-      default: break;
+    case '(': parenCount++; break;
+    case ')': parenCount--; break;
+    default: break;
     }
     if (parenCount) argPtr++;
   }
