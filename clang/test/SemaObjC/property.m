@@ -11,7 +11,8 @@
 @end
 
 @interface I(CAT)
-@property int d1;
+@property int d1;	// expected-warning {{property 'd1' requires method 'd1' to be defined }} \
+			// expected-warning {{property 'd1' requires method 'setD1:' to be defined }}
 @end
 
 @implementation I
@@ -22,7 +23,7 @@
 @synthesize name;	// OK! property with same name as an accessible ivar of same name
 @end
 
-@implementation I(CAT)  
+@implementation I(CAT)  // expected-note 2 {{implementation is here}}
 @synthesize d1;		// expected-error {{@synthesize not allowed in a category's implementation}}
 @dynamic bad;		// expected-error {{property implementation must have its declaration in the category 'CAT'}}
 @end

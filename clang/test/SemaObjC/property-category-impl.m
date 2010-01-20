@@ -1,0 +1,31 @@
+// RUN: %clang_cc1 -fsyntax-only -verify %s
+
+/* This test is for categories which don't implement the accessors but some accessors are
+   implemented in their base class implementation. In this case,no warning must be issued.
+*/
+
+@interface MyClass 
+{
+    int        _foo;
+}
+@property(readonly)    int        foo;
+@end
+
+@implementation MyClass
+- (int) foo        { return _foo; }
+@end
+
+@interface MyClass (private)
+@property(readwrite)    int        foo;
+@end
+
+@implementation MyClass (private)
+- (void) setFoo:(int)foo    { _foo = foo; }
+@end
+
+@interface MyClass (public)
+@property(readwrite)    int        foo;	// expected-warning {{property 'foo' requires method 'setFoo:' to be defined }}
+@end
+
+@implementation MyClass (public)// expected-note {{implementation is here}}
+@end 

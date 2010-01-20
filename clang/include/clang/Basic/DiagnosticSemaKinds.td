@@ -1840,6 +1840,9 @@ def err_illegal_super_cast : Error<
 def warn_setter_getter_impl_required : Warning<
   "property %0 requires method %1 to be defined - "
   "use @synthesize, @dynamic or provide a method implementation">;
+def warn_setter_getter_impl_required_in_category : Warning<
+  "property %0 requires method %1 to be defined - "
+  "use @dynamic or provide a method implementation in category">;
 def note_property_impl_required : Note<
   "implementation is here">;
 

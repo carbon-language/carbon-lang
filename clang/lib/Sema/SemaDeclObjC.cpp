@@ -1101,6 +1101,17 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
          E = IDecl->protocol_end(); PI != E; ++PI)
       CollectImmediateProperties((*PI), PropMap);
   }
+  if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
+    for (ObjCContainerDecl::prop_iterator P = CATDecl->prop_begin(),
+         E = CATDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      PropMap[Prop->getIdentifier()] = Prop;
+    }
+    // scan through class's protocols.
+    for (ObjCInterfaceDecl::protocol_iterator PI = CATDecl->protocol_begin(),
+         E = CATDecl->protocol_end(); PI != E; ++PI)
+      CollectImmediateProperties((*PI), PropMap);
+  }  
   else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
     for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
          E = PDecl->prop_end(); P != E; ++P) {
@@ -1141,7 +1152,9 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
   
     if (!InsMap.count(Prop->getGetterName())) {
       Diag(Prop->getLocation(),
-           diag::warn_setter_getter_impl_required)
+           isa<ObjCCategoryDecl>(CDecl) ? 
+            diag::warn_setter_getter_impl_required_in_category : 
+            diag::warn_setter_getter_impl_required)
       << Prop->getDeclName() << Prop->getGetterName();
       Diag(IMPDecl->getLocation(),
            diag::note_property_impl_required);
@@ -1149,6 +1162,8 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
     
     if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
       Diag(Prop->getLocation(),
+           isa<ObjCCategoryDecl>(CDecl) ? 
+           diag::warn_setter_getter_impl_required_in_category :
            diag::warn_setter_getter_impl_required)
       << Prop->getDeclName() << Prop->getSetterName();
       Diag(IMPDecl->getLocation(),
@@ -1212,7 +1227,18 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
            E = C->protocol_end(); PI != E; ++PI)
         CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
                                 InsMap, ClsMap, C->getClassInterface());
-    }
+      // Report unimplemented properties in the category as well.
+      // When reporting on missing setter/getters, do not report when
+      // setter/getter is implemented in category's primary class 
+      // implementation.
+      if (ObjCInterfaceDecl *ID = C->getClassInterface())
+        if (ObjCImplDecl *IMP = ID->getImplementation()) {
+          for (ObjCImplementationDecl::instmeth_iterator
+               I = IMP->instmeth_begin(), E = IMP->instmeth_end(); I!=E; ++I)
+            InsMap.insert((*I)->getSelector());
+        }
+      DiagnoseUnimplementedProperties(IMPDecl, CDecl, InsMap);      
+    } 
   } else
     assert(false && "invalid ObjCContainerDecl type.");
 }
