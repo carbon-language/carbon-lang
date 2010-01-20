@@ -44,6 +44,8 @@ template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 
+void checkForCycles(const SDNode *N);
+  
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by
 /// SelectionDAG::getVTList(...).
@@ -1363,6 +1365,7 @@ protected:
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
     }
+    checkForCycles(this);
   }
 
   /// This constructor adds no operands itself; operands can be
@@ -1379,6 +1382,7 @@ protected:
     Ops[0].setInitial(Op0);
     NumOperands = 1;
     OperandList = Ops;
+    checkForCycles(this);
   }
 
   /// InitOperands - Initialize the operands list of this with 2 operands.
@@ -1389,6 +1393,7 @@ protected:
     Ops[1].setInitial(Op1);
     NumOperands = 2;
     OperandList = Ops;
+    checkForCycles(this);
   }
 
   /// InitOperands - Initialize the operands list of this with 3 operands.
@@ -1402,6 +1407,7 @@ protected:
     Ops[2].setInitial(Op2);
     NumOperands = 3;
     OperandList = Ops;
+    checkForCycles(this);
   }
 
   /// InitOperands - Initialize the operands list of this with 4 operands.
@@ -1417,6 +1423,7 @@ protected:
     Ops[3].setInitial(Op3);
     NumOperands = 4;
     OperandList = Ops;
+    checkForCycles(this);
   }
 
   /// InitOperands - Initialize the operands list of this with N operands.
@@ -1427,6 +1434,7 @@ protected:
     }
     NumOperands = N;
     OperandList = Ops;
+    checkForCycles(this);
   }
 
   /// DropOperands - Release the operands and set this node to have

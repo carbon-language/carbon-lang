@@ -598,6 +598,7 @@ void X86DAGToDAGISel::PreprocessForRMW() {
     if (RModW) {
       MoveBelowTokenFactor(CurDAG, Load, SDValue(I, 0), Chain);
       ++NumLoadMoved;
+      checkForCycles(I);
     }
   }
 }

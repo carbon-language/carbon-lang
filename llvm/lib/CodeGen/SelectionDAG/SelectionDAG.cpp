@@ -5172,6 +5172,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
   // count of outstanding operands.
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ) {
     SDNode *N = I++;
+    checkForCycles(N);
     unsigned Degree = N->getNumOperands();
     if (Degree == 0) {
       // A node with no uses, add it to the result array immediately.
@@ -5191,6 +5192,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
   // such that by the time the end is reached all nodes will be sorted.
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I) {
     SDNode *N = I;
+    checkForCycles(N);
     // N is in sorted position, so all its uses have one less operand
     // that needs to be sorted.
     for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
@@ -5216,7 +5218,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
       SDNode *S = ++J;
       dbgs() << "Offending node:\n";
       S->dumprFull();
-      assert(I != SortedPos && "Overran sorted position");
+      assert(0 && "Overran sorted position");
     }
   }
 
@@ -6278,4 +6280,36 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
     if (Mask[i] >= 0 && Mask[i] != Idx)
       return false;
   return true;
+}
+
+static void checkForCyclesHelper(const SDNode *N,
+                                 std::set<const SDNode *> &visited) {
+  if (visited.find(N) != visited.end()) {
+    dbgs() << "Offending node:\n";
+    N->dumprFull();
+    assert(0 && "Detected cycle in SelectionDAG");
+  }
+
+  std::set<const SDNode*>::iterator i;
+  bool inserted;
+
+  tie(i, inserted) = visited.insert(N);
+  assert(inserted && "Missed cycle");
+
+  for(unsigned i = 0; i < N->getNumOperands(); ++i) {
+    checkForCyclesHelper(N->getOperand(i).getNode(), visited);
+  }
+  visited.erase(i);
+}
+
+void llvm::checkForCycles(const llvm::SDNode *N) {
+#ifdef XDEBUG
+  assert(N && "Checking nonexistant SDNode");
+  std::set<const SDNode *> visited;
+  checkForCyclesHelper(N, visited);
+#endif
+}
+
+void llvm::checkForCycles(const llvm::SelectionDAG *DAG) {
+  checkForCycles(DAG->getRoot().getNode());
 }

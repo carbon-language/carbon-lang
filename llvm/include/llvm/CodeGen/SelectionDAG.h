@@ -63,6 +63,10 @@ enum CombineLevel {
   NoIllegalOperations // Combine may only create legal operations and types.
 };
 
+class SelectionDAG;
+void checkForCycles(const SDNode *N);
+void checkForCycles(const SelectionDAG *DAG);
+
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
 /// selection.  This DAG is constructed as the first step of instruction
@@ -204,7 +208,12 @@ public:
   const SDValue &setRoot(SDValue N) {
     assert((!N.getNode() || N.getValueType() == MVT::Other) &&
            "DAG root value is not a chain!");
-    return Root = N;
+    if (N.getNode())
+      checkForCycles(N.getNode());
+    Root = N;
+    if (N.getNode())
+      checkForCycles(this);
+    return Root;
   }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding
