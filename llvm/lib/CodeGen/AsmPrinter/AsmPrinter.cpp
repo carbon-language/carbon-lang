@@ -1098,16 +1098,16 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
   // Print the fields in successive locations. Pad to align if needed!
   const TargetData *TD = AP.TM.getTargetData();
   unsigned Size = TD->getTypeAllocSize(CS->getType());
-  const StructLayout *cvsLayout = TD->getStructLayout(CS->getType());
+  const StructLayout *Layout = TD->getStructLayout(CS->getType());
   uint64_t SizeSoFar = 0;
   for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
     const Constant *field = CS->getOperand(i);
 
     // Check if padding is needed and insert one or more 0s.
-    uint64_t fieldSize = TD->getTypeAllocSize(field->getType());
-    uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
-                        - cvsLayout->getElementOffset(i)) - fieldSize;
-    SizeSoFar += fieldSize + padSize;
+    uint64_t FieldSize = TD->getTypeAllocSize(field->getType());
+    uint64_t PadSize = ((i == e-1 ? Size : Layout->getElementOffset(i+1))
+                        - Layout->getElementOffset(i)) - FieldSize;
+    SizeSoFar += FieldSize + PadSize;
 
     // Now print the actual field value.
     AP.EmitGlobalConstant(field, AddrSpace);
@@ -1115,36 +1115,36 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    AP.OutStreamer.EmitZeros(padSize, AddrSpace);
+    AP.OutStreamer.EmitZeros(PadSize, AddrSpace);
   }
-  assert(SizeSoFar == cvsLayout->getSizeInBytes() &&
+  assert(SizeSoFar == Layout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
 }
 
-void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
-                                      unsigned AddrSpace) {
+static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
+                                 AsmPrinter &AP) {
   // FP Constants are printed as integer constants to avoid losing
   // precision.
   if (CFP->getType()->isDoubleTy()) {
-    if (VerboseAsm) {
+    if (AP.VerboseAsm) {
       double Val = CFP->getValueAPF().convertToDouble();  // for comment only
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " double " << Val << '\n';
+      AP.O.PadToColumn(AP.MAI->getCommentColumn());
+      AP.O << AP.MAI->getCommentString() << " double " << Val << '\n';
     }
 
-    uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-    OutStreamer.EmitIntValue(i, 8, AddrSpace);
+    uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    AP.OutStreamer.EmitIntValue(Val, 8, AddrSpace);
     return;
   }
   
   if (CFP->getType()->isFloatTy()) {
-    if (VerboseAsm) {
+    if (AP.VerboseAsm) {
       float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " float " << Val << '\n';
+      AP.O.PadToColumn(AP.MAI->getCommentColumn());
+      AP.O << AP.MAI->getCommentString() << " float " << Val << '\n';
     }
-    OutStreamer.EmitIntValue(CFP->getValueAPF().bitcastToAPInt().getZExtValue(),
-                             4, AddrSpace);
+    uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    AP.OutStreamer.EmitIntValue(Val, 4, AddrSpace);
     return;
   }
   
@@ -1153,29 +1153,29 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     // api needed to prevent premature destruction
     APInt API = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = API.getRawData();
-    if (VerboseAsm) {
+    if (AP.VerboseAsm) {
       // Convert to double so we can print the approximate val as a comment.
       APFloat DoubleVal = CFP->getValueAPF();
       bool ignored;
       DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                         &ignored);
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " x86_fp80 ~= "
-        << DoubleVal.convertToDouble() << '\n';
+      AP.O.PadToColumn(AP.MAI->getCommentColumn());
+      AP.O << AP.MAI->getCommentString() << " x86_fp80 ~= "
+           << DoubleVal.convertToDouble() << '\n';
     }
     
-    if (TM.getTargetData()->isBigEndian()) {
-      OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
-      OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+    if (AP.TM.getTargetData()->isBigEndian()) {
+      AP.OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
     } else {
-      OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
-      OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
     }
     
     // Emit the tail padding for the long double.
-    const TargetData &TD = *TM.getTargetData();
-    OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
-                            TD.getTypeStoreSize(CFP->getType()), AddrSpace);
+    const TargetData &TD = *AP.TM.getTargetData();
+    AP.OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
+                             TD.getTypeStoreSize(CFP->getType()), AddrSpace);
     return;
   }
   
@@ -1185,18 +1185,18 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
   // premature destruction.
   APInt API = CFP->getValueAPF().bitcastToAPInt();
   const uint64_t *p = API.getRawData();
-  if (TM.getTargetData()->isBigEndian()) {
-    OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
-    OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
+  if (AP.TM.getTargetData()->isBigEndian()) {
+    AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+    AP.OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
   } else {
-    OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
-    OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+    AP.OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
+    AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
   }
 }
 
-void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
-                                            unsigned AddrSpace) {
-  const TargetData *TD = TM.getTargetData();
+static void EmitGlobalConstantLargeInt(const ConstantInt *CI,
+                                       unsigned AddrSpace, AsmPrinter &AP) {
+  const TargetData *TD = AP.TM.getTargetData();
   unsigned BitWidth = CI->getBitWidth();
   assert((BitWidth & 63) == 0 && "only support multiples of 64-bits");
 
@@ -1205,51 +1205,38 @@ void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
   // quantities at a time.
   const uint64_t *RawData = CI->getValue().getRawData();
   for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
-    uint64_t Val;
-    if (TD->isBigEndian())
-      Val = RawData[e - i - 1];
-    else
-      Val = RawData[i];
-
-    if (MAI->getData64bitsDirective(AddrSpace)) {
-      O << MAI->getData64bitsDirective(AddrSpace) << Val << '\n';
-      continue;
-    }
-
-    // Emit two 32-bit chunks, order depends on endianness.
-    unsigned FirstChunk = unsigned(Val), SecondChunk = unsigned(Val >> 32);
-    const char *FirstName = " least", *SecondName = " most";
-    if (TD->isBigEndian()) {
-      std::swap(FirstChunk, SecondChunk);
-      std::swap(FirstName, SecondName);
-    }
-    
-    O << MAI->getData32bitsDirective(AddrSpace) << FirstChunk;
-    if (VerboseAsm) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString()
-        << FirstName << " significant half of i64 " << Val;
-    }
-    O << '\n';
-    
-    O << MAI->getData32bitsDirective(AddrSpace) << SecondChunk;
-    if (VerboseAsm) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString()
-        << SecondName << " significant half of i64 " << Val;
-    }
-    O << '\n';
+    uint64_t Val = TD->isBigEndian() ? RawData[e - i - 1] : RawData[i];
+    AP.OutStreamer.EmitIntValue(Val, 8, AddrSpace);
   }
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
-  const TargetData *TD = TM.getTargetData();
-  const Type *type = CV->getType();
-  unsigned Size = TD->getTypeAllocSize(type);
-
-  if (CV->isNullValue() || isa<UndefValue>(CV))
+  if (CV->isNullValue() || isa<UndefValue>(CV)) {
+    uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
     return OutStreamer.EmitZeros(Size, AddrSpace);
+  }
+
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    unsigned Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+    switch (Size) {
+    case 1:
+    case 2:
+    case 4:
+    case 8:
+      if (VerboseAsm) {
+        O.PadToColumn(MAI->getCommentColumn());
+        O << MAI->getCommentString() << " 0x";
+        O.write_hex(CI->getZExtValue());
+        O << '\n';
+      }
+      OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
+      return;
+    default:
+      EmitGlobalConstantLargeInt(CI, AddrSpace, *this);
+      return;
+    }
+  }
   
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
     return EmitGlobalConstantArray(CVA, AddrSpace, *this);
@@ -1258,36 +1245,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     return EmitGlobalConstantStruct(CVS, AddrSpace, *this);
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
-    return EmitGlobalConstantFP(CFP, AddrSpace);
-  
-  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    // If we can directly emit an 8-byte constant, do it.
-    if (Size == 8)
-      if (const char *Data64Dir = MAI->getData64bitsDirective(AddrSpace)) {
-        O << Data64Dir << CI->getZExtValue() << '\n';
-        return;
-      }
-
-    // Small integers are handled below; large integers are handled here.
-    if (Size > 4) {
-      EmitGlobalConstantLargeInt(CI, AddrSpace);
-      return;
-    }
-  }
+    return EmitGlobalConstantFP(CFP, AddrSpace, *this);
   
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return EmitGlobalConstantVector(V, AddrSpace, *this);
 
-  printDataDirective(type, AddrSpace);
+  printDataDirective(CV->getType(), AddrSpace);
   EmitConstantValueOnly(CV);
-  if (VerboseAsm) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-      SmallString<40> S;
-      CI->getValue().toStringUnsigned(S, 16);
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " 0x" << S.str();
-    }
-  }
   O << '\n';
 }
 

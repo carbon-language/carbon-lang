@@ -427,8 +427,6 @@ namespace llvm {
   private:
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
-    void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
-    void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }
