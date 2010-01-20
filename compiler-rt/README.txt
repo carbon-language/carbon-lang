@@ -243,9 +243,9 @@ double __subdf3vfp(double a, double b); // arm only.  Appears to return a - b
 float __subsf3vfp(float a, float b);    // arm only.  Appears to return a - b
 float __truncdfsf2vfp(double a);        // arm only.  Appears to convert from
                                         //     double to float.
-int __unorddf2vfp(double a, double b);  // army only.  Appears to return
+int __unorddf2vfp(double a, double b);  // arm only.  Appears to return
                                         //     __unorddf2
-int __unordsf2vfp(float a, float b);    // army only.  Appears to return
+int __unordsf2vfp(float a, float b);    // arm only.  Appears to return
                                         //     __unordsf2
 
 
