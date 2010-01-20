@@ -609,8 +609,15 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
+
+  // A Decl->getName() is not unique. However, the debug info descriptors 
+  // are uniqued. The debug info descriptor describing record's context is
+  // necessary to keep two Decl's descriptor unique if their name match.
+  // FIXME : Use RecordDecl's DeclContext's descriptor. As a temp. step
+  // use type's name in FwdDecl.
+  std::string STy = QualType(Ty, 0).getAsString();
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(),
+    DebugFactory.CreateCompositeType(Tag, Unit, STy.c_str(),
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
 
