@@ -21,6 +21,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -114,6 +115,9 @@ FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
 bool DwarfEHPrepare::NormalizeLandingPads() {
   bool Changed = false;
 
+  const MCAsmInfo *MAI = TLI->getTargetMachine().getMCAsmInfo();
+  bool usingSjLjEH = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
+
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     TerminatorInst *TI = I->getTerminator();
     if (!isa<InvokeInst>(TI))
@@ -125,9 +129,18 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
 
     // Check that only invoke unwind edges end at the landing pad.
     bool OnlyUnwoundTo = true;
+    bool SwitchOK = usingSjLjEH;
     for (pred_iterator PI = pred_begin(LPad), PE = pred_end(LPad);
          PI != PE; ++PI) {
       TerminatorInst *PT = (*PI)->getTerminator();
+      // The SjLj dispatch block uses a switch instruction. This is effectively
+      // an unwind edge, so we can disregard it here. There will only ever
+      // be one dispatch, however, so if there are multiple switches, one
+      // of them truly is a normal edge, not an unwind edge.
+      if (SwitchOK && isa<SwitchInst>(PT)) {
+        SwitchOK = false;
+        continue;
+      }
       if (!isa<InvokeInst>(PT) || LPad == PT->getSuccessor(0)) {
         OnlyUnwoundTo = false;
         break;
