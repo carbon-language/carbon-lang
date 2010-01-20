@@ -390,6 +390,8 @@ namespace {
     bool doFinalization(Module &M);
     void EmitStartOfAsmFile(Module &M);
 
+    void EmitFunctionStubs();
+    
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
@@ -842,31 +844,25 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 }
 
-bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
-  const TargetData *TD = TM.getTargetData();
-
-  bool isPPC64 = TD->getPointerSizeInBits() == 64;
-
-  // Darwin/PPC always uses mach-o.
+void PPCDarwinAsmPrinter::EmitFunctionStubs() {
+  bool isPPC64 = TM.getTargetData()->getPointerSizeInBits() == 64;
+  
   TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
-  MachineModuleInfoMachO &MMIMacho =
-    MMI->getObjFileInfo<MachineModuleInfoMachO>();
-  
-  const MCSection *LSPSection = 0;
-  if (!FnStubs.empty()) // .lazy_symbol_pointer
-    LSPSection = TLOFMacho.getLazySymbolPointerSection();
+
+  // .lazy_symbol_pointer
+  const MCSection *LSPSection = TLOFMacho.getLazySymbolPointerSection();
   
   // Output stubs for dynamically-linked functions
-  if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     const MCSection *StubSection = 
-      TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
-                                MCSectionMachO::S_SYMBOL_STUBS |
-                                MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                32, SectionKind::getText());
+    TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub1",
+                              MCSectionMachO::S_SYMBOL_STUBS |
+                              MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                              32, SectionKind::getText());
     // FIXME: This is emitting in nondeterminstic order!
     for (DenseMap<const MCSymbol*, FnStubInfo>::iterator I = 
-           FnStubs.begin(), E = FnStubs.end(); I != E; ++I) {
+         FnStubs.begin(), E = FnStubs.end(); I != E; ++I) {
       OutStreamer.SwitchSection(StubSection);
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
@@ -877,10 +873,10 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << *Info.AnonSymbol << ":\n";
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(" << *Info.LazyPtr << '-' << *Info.AnonSymbol
-        << ")\n";
+      << ")\n";
       O << "\tmtlr r0\n";
       O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
-        << '-' << *Info.AnonSymbol << ")(r11)\n";
+      << '-' << *Info.AnonSymbol << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       
@@ -889,34 +885,50 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << "\t.indirect_symbol " << *I->first << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
-  } else if (!FnStubs.empty()) {
-    const MCSection *StubSection =
-      TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
-                                MCSectionMachO::S_SYMBOL_STUBS |
-                                MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                16, SectionKind::getText());
-    
-    // FIXME: This is emitting in nondeterminstic order!
-    for (DenseMap<const MCSymbol*, FnStubInfo>::iterator I = FnStubs.begin(),
-         E = FnStubs.end(); I != E; ++I) {
-      OutStreamer.SwitchSection(StubSection);
-      EmitAlignment(4);
-      const FnStubInfo &Info = I->second;
-      O << *Info.Stub << ":\n";
-      O << "\t.indirect_symbol " << *I->first << '\n';
-      O << "\tlis r11,ha16(" << *Info.LazyPtr << ")\n";
-      O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
-        << ")(r11)\n";
-      O << "\tmtctr r12\n";
-      O << "\tbctr\n";
-      OutStreamer.SwitchSection(LSPSection);
-      O << *Info.LazyPtr << ":\n";
-      O << "\t.indirect_symbol " << *I->first << '\n';
-      O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
-    }
+    O << '\n';
+    return;
   }
-
+  
+  const MCSection *StubSection =
+    TLOFMacho.getMachOSection("__TEXT","__symbol_stub1",
+                              MCSectionMachO::S_SYMBOL_STUBS |
+                              MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                              16, SectionKind::getText());
+  
+  // FIXME: This is emitting in nondeterminstic order!
+  for (DenseMap<const MCSymbol*, FnStubInfo>::iterator I = FnStubs.begin(),
+       E = FnStubs.end(); I != E; ++I) {
+    OutStreamer.SwitchSection(StubSection);
+    EmitAlignment(4);
+    const FnStubInfo &Info = I->second;
+    O << *Info.Stub << ":\n";
+    O << "\t.indirect_symbol " << *I->first << '\n';
+    O << "\tlis r11,ha16(" << *Info.LazyPtr << ")\n";
+    O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(" << *Info.LazyPtr
+    << ")(r11)\n";
+    O << "\tmtctr r12\n";
+    O << "\tbctr\n";
+    OutStreamer.SwitchSection(LSPSection);
+    O << *Info.LazyPtr << ":\n";
+    O << "\t.indirect_symbol " << *I->first << '\n';
+    O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
+  }
+  
   O << '\n';
+}
+
+
+bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
+  bool isPPC64 = TM.getTargetData()->getPointerSizeInBits() == 64;
+
+  // Darwin/PPC always uses mach-o.
+  TargetLoweringObjectFileMachO &TLOFMacho = 
+    static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+  MachineModuleInfoMachO &MMIMacho =
+    MMI->getObjFileInfo<MachineModuleInfoMachO>();
+  
+  if (!FnStubs.empty())
+    EmitFunctionStubs();
 
   if (MAI->doesSupportExceptionHandling() && MMI) {
     // Add the (possibly multiple) personalities to the set of global values.
