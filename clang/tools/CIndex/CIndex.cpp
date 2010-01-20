@@ -565,6 +565,11 @@ CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
                                   true);
 }
 
+CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
+  CXCursor Result = { CXCursor_TranslationUnit, { TU, 0, 0 } };
+  return Result;
+}
+
 void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
                                CXTranslationUnitIterator callback,
                                CXClientData CData) {
@@ -803,6 +808,9 @@ static Decl *getDeclFromExpr(Stmt *E) {
 extern "C" {
 CXString clang_getCursorSpelling(CXCursor C) {
   assert(getCursorDecl(C) && "CXCursor has null decl");
+  if (clang_isTranslationUnit(C.kind))
+    return clang_getTranslationUnitSpelling(C.data[0]);
+
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
@@ -867,6 +875,7 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_InvalidFile: return "InvalidFile";
   case CXCursor_NoDeclFound: return "NoDeclFound";
   case CXCursor_NotImplemented: return "NotImplemented";
+  case CXCursor_TranslationUnit: return "TranslationUnit";
   }
   
   llvm_unreachable("Unhandled CXCursorKind");
@@ -945,6 +954,10 @@ unsigned clang_isExpression(enum CXCursorKind K) {
 
 unsigned clang_isStatement(enum CXCursorKind K) {
   return K >= CXCursor_FirstStmt && K <= CXCursor_LastStmt;
+}
+
+unsigned clang_isTranslationUnit(enum CXCursorKind K) {
+  return K == CXCursor_TranslationUnit;
 }
 
 CXCursorKind clang_getCursorKind(CXCursor C) {

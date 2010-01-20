@@ -168,7 +168,15 @@ enum CXCursorKind {
   * reported.
   */
  CXCursor_UnexposedStmt                 = 200,
- CXCursor_LastStmt                      = 200
+ CXCursor_LastStmt                      = 200,
+
+ /**
+  * \brief Cursor that represents the translation unit itself.
+  *
+  * The translation unit cursor exists primarily to act as the root
+  * cursor for traversing the contents of a translation unit.
+  */
+ CXCursor_TranslationUnit               = 300
 };
 
 /**
@@ -380,6 +388,14 @@ typedef void (*CXDeclIterator)(CXDecl, CXCursor, CXClientData);
 
 CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 
+/**
+ * \brief Retrieve the cursor that represents the given translation unit.
+ *
+ * The translation unit cursor can be used to start traversing the
+ * various declarations within the given translation unit.
+ */
+CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
+
 /*
  * CXFile Operations.
  */
@@ -492,7 +508,7 @@ CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
-
+CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 
 CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);

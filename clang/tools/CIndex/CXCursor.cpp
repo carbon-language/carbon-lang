@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CXCursor.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -320,6 +321,10 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   case CXCursor_UnexposedStmt:
     return static_cast<Decl *>(Cursor.data[0])->getASTContext();
 
+  case CXCursor_TranslationUnit: {
+    ASTUnit *CXXUnit = static_cast<ASTUnit *>(Cursor.data[0]);
+    return CXXUnit->getASTContext();
+  }
   }
   
   llvm_unreachable("No context available");
