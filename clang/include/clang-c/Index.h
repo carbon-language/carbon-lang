@@ -49,13 +49,26 @@ extern "C" {
  *
  * @{
  */
-typedef void *CXIndex;            /* An indexing instance. */
+  
+/**
+ * \brief An "index" that consists of a set of translation units that would
+ * typically be linked together into an executable or library.
+ */
+typedef void *CXIndex;
 
+/**
+ * \brief A single translation unit, which resides in an index.
+ */
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
+/**
+ * \brief A particular source file that is part of a translation unit.
+ */
 typedef void *CXFile;    /* A source file */
 
-/* Cursors represent declarations, definitions, and references. */
+/**
+ * \brief Describes the kind of entity that a cursor refers to.
+ */
 enum CXCursorKind {
  /* Declarations */
  CXCursor_FirstDecl                     = 1,
@@ -211,19 +224,42 @@ struct CXUnsavedFile {
   unsigned long Length;
 };
 
-/* A cursor into the CXTranslationUnit. */
-
+/**
+ * \brief A cursor representing some element in the abstract syntax tree for
+ * a translation unit.
+ *
+ * The cursor abstraction unifies the different kinds of entities in a 
+ * program--declaration, statements, expressions, references to declarations,
+ * etc.--under a single "cursor" abstraction with a common set of operations.
+ * Common operation for a cursor include: getting the physical location in
+ * a source file where the cursor points, getting the name associated with a
+ * cursor, and retrieving cursors for any child nodes of a particular cursor.
+ *
+ * Cursors can be produced in two specific ways.
+ * clang_getTranslationUnitCursor() produces a cursor for a translation unit,
+ * from which one can use clang_visitChildren() to explore the rest of the
+ * translation unit. clang_getCursor() maps from a physical source location
+ * to the entity that resides at that location, allowing one to map from the
+ * source code into the AST.
+ */
 typedef struct {
   enum CXCursorKind kind;
   void *data[3];
 } CXCursor;  
 
 /**
- * For functions returning a string that might or might not need
- * to be internally allocated and freed.
- * Use clang_getCString to access the C string value.
- * Use clang_disposeString to free the value.
- * Treat it as an opaque type.
+ * \defgroup CINDEX_STRING String manipulation routines
+ *
+ * @{
+ */
+  
+/**
+ * \brief A character string.
+ *
+ * The \c CXString type is used to return strings from the interface when
+ * the ownership of that string might different from one call to the next.
+ * Use \c clang_getCString() to retrieve the string data and, once finished
+ * with the string data, call \c clang_disposeString() to free the string.
  */
 typedef struct {
   const char *Spelling;
@@ -232,12 +268,20 @@ typedef struct {
   int MustFreeString;
 } CXString;
 
-/* Get C string pointer from a CXString. */
+/**
+ * \brief Retrieve the character data associated with the given string.
+ */
 CINDEX_LINKAGE const char *clang_getCString(CXString string);
 
-/* Free CXString. */
+/**
+ * \brief Free the given string,
+ */
 CINDEX_LINKAGE void clang_disposeString(CXString string);
 
+/**
+ * @}
+ */
+  
 /**  
  * \brief clang_createIndex() provides a shared context for creating
  * translation units. It provides two options:
@@ -283,7 +327,7 @@ CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
 CINDEX_LINKAGE CXString
 clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
-/* 
+/**
  * \brief Request that AST's be generated external for API calls which parse
  * source code on the fly, e.g. \see createTranslationUnitFromSourceFile.
  *
@@ -296,7 +340,7 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 CINDEX_LINKAGE void clang_setUseExternalASTGeneration(CXIndex index,
                                                       int value);
 
-/* 
+/**
  * \brief Create a translation unit from an AST file (-emit-ast).
  */
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(
