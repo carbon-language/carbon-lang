@@ -1581,7 +1581,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
   // If the intrinsic takes MDNode arguments, verify that they are either global
   // or are local to *this* function.
-  for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
+  for (unsigned i = 1, e = CI.getNumOperands(); i != e; ++i)
     if (MDNode *MD = dyn_cast<MDNode>(CI.getOperand(i))) {
       if (!MD->isFunctionLocal()) continue;
       SmallPtrSet<MDNode *, 32> Visited;
@@ -1591,12 +1591,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   default:
     break;
-  case Intrinsic::dbg_declare:  // llvm.dbg.declare
-    if (MDNode *MD = dyn_cast<MDNode>(CI.getOperand(1)))
+  case Intrinsic::dbg_declare: {  // llvm.dbg.declare
+    Assert1(CI.getOperand(1) && isa<MDNode>(CI.getOperand(1)),
+                "invalid llvm.dbg.declare intrinsic call", &CI);
+    MDNode *MD = cast<MDNode>(CI.getOperand(1));
+    Assert1(MD->getNumOperands() == 1,
+                "invalid llvm.dbg.declare intrinsic call", &CI);
+    if (MD->getOperand(0))
       if (Constant *C = dyn_cast<Constant>(MD->getOperand(0)))
         Assert1(C && !isa<ConstantPointerNull>(C),
                 "invalid llvm.dbg.declare intrinsic call", &CI);
-    break;
+  } break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
   case Intrinsic::memset:
