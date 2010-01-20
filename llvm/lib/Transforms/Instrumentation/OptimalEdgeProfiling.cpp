@@ -130,7 +130,7 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     // actual MST is returned but the edges _not_ in the MST.
 
     ProfileInfo::EdgeWeights ECs = 
-      getAnalysisID<ProfileInfo>(ProfileEstimatorPassID, *F).getEdgeWeights(F);
+      getAnalysis<ProfileInfo>(*F).getEdgeWeights(F);
     std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
     MaximumSpanningTree<BasicBlock> MST (EdgeVector);
     std::stable_sort(MST.begin(),MST.end());
