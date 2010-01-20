@@ -119,7 +119,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
   // EH frame header.
   EmitLabel("eh_frame_common_begin", Index);
-  Asm->EmitInt32((int)0);
+  Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
   Asm->EOL("CIE Identifier Tag");
   Asm->EmitInt8(dwarf::DW_CIE_VERSION);
   Asm->EOL("CIE Version");
@@ -281,7 +281,6 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
     if (MMI->getPersonalities()[0] != NULL) {
-      bool is4Byte = TD->getPointerSize() == sizeof(int32_t);
 
       if (Asm->TM.getLSDAEncoding() != DwarfLSDAEncoding::EightByte) {
         Asm->EmitULEB128Bytes(4);
@@ -290,18 +289,16 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
         if (EHFrameInfo.hasLandingPads)
           EmitReference("exception", EHFrameInfo.Number, true, true);
         else
-          Asm->EmitInt32((int)0);
+          Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       } else {
-        Asm->EmitULEB128Bytes(is4Byte ? 4 : 8);
+        Asm->EmitULEB128Bytes(TD->getPointerSize());
         Asm->EOL("Augmentation size");
 
         if (EHFrameInfo.hasLandingPads) {
           EmitReference("exception", EHFrameInfo.Number, true, false);
         } else {
-          if (is4Byte)
-            Asm->EmitInt32((int)0);
-          else
-            Asm->EmitInt64((int)0);
+          Asm->OutStreamer.EmitIntValue(0, TD->getPointerSize(),
+                                        0/*addrspace*/);
         }
       }
 
@@ -885,7 +882,7 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
       if (!S.PadLabel)
-        Asm->EmitInt32(0);
+        Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       else
         EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
                           true, true);

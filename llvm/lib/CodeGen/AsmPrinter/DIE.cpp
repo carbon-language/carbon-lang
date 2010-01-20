@@ -16,6 +16,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Debug.h"
@@ -186,20 +187,22 @@ void DIEValue::dump() {
 ///
 void DIEInteger::EmitValue(Dwarf *D, unsigned Form) const {
   const AsmPrinter *Asm = D->getAsm();
+  unsigned Size = ~0U;
   switch (Form) {
   case dwarf::DW_FORM_flag:  // Fall thru
   case dwarf::DW_FORM_ref1:  // Fall thru
-  case dwarf::DW_FORM_data1: Asm->EmitInt8(Integer);         break;
+  case dwarf::DW_FORM_data1: Size = 1; break;
   case dwarf::DW_FORM_ref2:  // Fall thru
-  case dwarf::DW_FORM_data2: Asm->EmitInt16(Integer);        break;
+  case dwarf::DW_FORM_data2: Size = 2; break;
   case dwarf::DW_FORM_ref4:  // Fall thru
-  case dwarf::DW_FORM_data4: Asm->EmitInt32(Integer);        break;
+  case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
-  case dwarf::DW_FORM_data8: Asm->EmitInt64(Integer);        break;
-  case dwarf::DW_FORM_udata: Asm->EmitULEB128Bytes(Integer); break;
-  case dwarf::DW_FORM_sdata: Asm->EmitSLEB128Bytes(Integer); break;
+  case dwarf::DW_FORM_data8: Size = 8; break;
+  case dwarf::DW_FORM_udata: Asm->EmitULEB128Bytes(Integer); return;
+  case dwarf::DW_FORM_sdata: Asm->EmitSLEB128Bytes(Integer); return;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
+  Asm->OutStreamer.EmitIntValue(Integer, Size, 0/*addrspace*/);
 }
 
 /// SizeOf - Determine size of integer value in bytes.

@@ -1086,8 +1086,7 @@ static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
 
 static void EmitGlobalConstantVector(const ConstantVector *CV,
                                      unsigned AddrSpace, AsmPrinter &AP) {
-  const VectorType *VTy = CV->getType();
-  for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i)
+  for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
     AP.EmitGlobalConstant(CV->getOperand(i), AddrSpace);
 }
 
@@ -1099,16 +1098,16 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
   const StructLayout *Layout = TD->getStructLayout(CS->getType());
   uint64_t SizeSoFar = 0;
   for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
-    const Constant *field = CS->getOperand(i);
+    const Constant *Field = CS->getOperand(i);
 
     // Check if padding is needed and insert one or more 0s.
-    uint64_t FieldSize = TD->getTypeAllocSize(field->getType());
+    uint64_t FieldSize = TD->getTypeAllocSize(Field->getType());
     uint64_t PadSize = ((i == e-1 ? Size : Layout->getElementOffset(i+1))
                         - Layout->getElementOffset(i)) - FieldSize;
     SizeSoFar += FieldSize + PadSize;
 
     // Now print the actual field value.
-    AP.EmitGlobalConstant(field, AddrSpace);
+    AP.EmitGlobalConstant(Field, AddrSpace);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
