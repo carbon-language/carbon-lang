@@ -2042,10 +2042,18 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
   // Each scope has first instruction and last instruction to mark beginning
   // and end of a scope respectively. Create an inverse map that list scopes
   // starts (and ends) with an instruction. One instruction may start (or end)
-  // multiple scopes.
-  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
-	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
-    DbgScope *S = DI->second;
+  // multiple scopes. Ignore scopes that are not reachable.
+  SmallVector<DbgScope *, 4> WorkList;
+  WorkList.push_back(CurrentFnDbgScope);
+  while (!WorkList.empty()) {
+    DbgScope *S = WorkList.back(); WorkList.pop_back();
+
+    SmallVector<DbgScope *, 4> &Children = S->getScopes();
+    if (!Children.empty()) 
+      for (SmallVector<DbgScope *, 4>::iterator SI = Children.begin(),
+             SE = Children.end(); SI != SE; ++SI)
+        WorkList.push_back(*SI);
+
     if (S->isAbstractScope())
       continue;
     const MachineInstr *MI = S->getFirstInsn();
