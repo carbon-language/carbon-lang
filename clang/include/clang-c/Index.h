@@ -36,16 +36,19 @@ extern "C" {
 
 /** \defgroup CINDEX C Interface to Clang
  *
- * Clang indeX abstractions. The backing store for the following
- * API's will be clangs AST file (currently based on PCH). AST files
- * are created as follows:
+ * The C Interface to Clang provides a relatively small API that exposes 
+ * facilities for parsing source code into an abstract syntax tree (AST),
+ * loading already-parsed ASTs, traversing the AST, associating
+ * physical source locations with elements within the AST, and other
+ * facilities that support Clang-based development tools.
  *
- * \code
- * clang -emit-ast <sourcefile.langsuffix> -o <sourcefile.ast>". 
- * \endcode
- *
- * Naming Conventions: To avoid namespace pollution, data types are
- * prefixed with "CX" and functions are prefixed with "clang_".
+ * This C interface to Clang will never provide all of the information 
+ * representation stored in Clang's C++ AST, nor should it: the intent is to
+ * maintain an API that is relatively stable from one release to the next,
+ * providing only the basic functionality needed to support development tools.
+ * 
+ * To avoid namespace pollution, data types are prefixed with "CX" and 
+ * functions are prefixed with "clang_".
  *
  * @{
  */
@@ -60,11 +63,6 @@ typedef void *CXIndex;
  * \brief A single translation unit, which resides in an index.
  */
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
-
-/**
- * \brief A particular source file that is part of a translation unit.
- */
-typedef void *CXFile;    /* A source file */
 
 /**
  * \brief Describes the kind of entity that a cursor refers to.
@@ -458,12 +456,45 @@ CINDEX_LINKAGE unsigned clang_visitChildren(CXTranslationUnit tu,
                                             CXCursorVisitor visitor,
                                             CXClientData client_data);
 
-/*
- * CXFile Operations.
+/**
+ * \defgroup CINDEX_FILES File manipulation routines.
+ *
+ * @{
+ */
+  
+/**
+ * \brief A particular source file that is part of a translation unit.
+ */
+typedef void *CXFile;
+  
+
+/**
+ * \brief Retrieve the complete file and path name of the given file.
  */
 CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
+  
+/**
+ * \brief Retrieve the last modification time of the given file.
+ */
 CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 
+/**
+ * @}
+ */
+
+/**
+ * \defgroup CINDEX_LOCATIONS Physical source locations
+ *
+ * Clang represents physical source locations in its abstract syntax tree in
+ * great detail, with file, line, and column information for the majority of
+ * the tokens parsed in the source code. These data types and functions are
+ * used to represent source location information, either for a particular
+ * point in the program or for a range of points in the program, and extract
+ * specific location information from those data types.
+ *
+ * @{
+ */
+  
 /**
  * \brief Identifies a specific source location within a translation
  * unit.
@@ -521,6 +552,10 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
  */
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 
+/**
+ * @}
+ */
+  
 /*
  * CXCursor Operations.
  */
