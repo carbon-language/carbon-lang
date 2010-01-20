@@ -1124,8 +1124,7 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
 void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
                                       unsigned AddrSpace) {
   // FP Constants are printed as integer constants to avoid losing
-  // precision...
-  const TargetData &TD = *TM.getTargetData();
+  // precision.
   if (CFP->getType()->isDoubleTy()) {
     if (VerboseAsm) {
       double Val = CFP->getValueAPF().convertToDouble();  // for comment only
@@ -1134,15 +1133,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
     }
 
     uint64_t i = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-    if (MAI->getData64bitsDirective(AddrSpace)) {
-      O << MAI->getData64bitsDirective(AddrSpace) << i << '\n';
-    } else if (TD.isBigEndian()) {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32)  << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i) << '\n';
-    } else {
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i) << '\n';
-      O << MAI->getData32bitsDirective(AddrSpace) << unsigned(i >> 32) << '\n';
-    }
+    OutStreamer.EmitIntValue(i, 8, AddrSpace);
     return;
   }
   
@@ -1152,8 +1143,8 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << " float " << Val << '\n';
     }
-    O << MAI->getData32bitsDirective(AddrSpace)
-      << CFP->getValueAPF().bitcastToAPInt().getZExtValue() << '\n';
+    OutStreamer.EmitIntValue(CFP->getValueAPF().bitcastToAPInt().getZExtValue(),
+                             4, AddrSpace);
     return;
   }
   
@@ -1173,19 +1164,16 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
         << DoubleVal.convertToDouble() << '\n';
     }
     
-    if (TD.isBigEndian()) {
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]) << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0])      <<'\n';
+    if (TM.getTargetData()->isBigEndian()) {
+      OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
+      OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
     } else {
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0]) << '\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 16)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 32)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[0] >> 48)<<'\n';
-      O << MAI->getData16bitsDirective(AddrSpace) << uint16_t(p[1]) << '\n';
+      OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+      OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
     }
+    
+    // Emit the tail padding for the long double.
+    const TargetData &TD = *TM.getTargetData();
     OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
                             TD.getTypeStoreSize(CFP->getType()), AddrSpace);
     return;
@@ -1197,16 +1185,12 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
   // premature destruction.
   APInt API = CFP->getValueAPF().bitcastToAPInt();
   const uint64_t *p = API.getRawData();
-  if (TD.isBigEndian()) {
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])<<'\n';
-   } else {
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1])<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[1] >> 32)<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0])<<'\n';
-    O << MAI->getData32bitsDirective(AddrSpace) << uint32_t(p[0] >> 32)<<'\n';
+  if (TM.getTargetData()->isBigEndian()) {
+    OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
+    OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
+  } else {
+    OutStreamer.EmitIntValue(p[1], 8, AddrSpace);
+    OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
   }
 }
 
