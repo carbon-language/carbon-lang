@@ -421,6 +421,11 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<namespace alias> " << NAD->getNameAsString() << "\n";
       break;
     }
+    case Decl::ClassTemplate: {
+      ClassTemplateDecl *CTD = cast<ClassTemplateDecl>(*I);
+      Out << "<class template> " << CTD->getNameAsString() << '\n';
+      break;
+    }
     default:
       Out << "DeclKind: " << DK << '"' << I->getDeclKindName() << "\"\n";
       assert(0 && "decl unhandled");
