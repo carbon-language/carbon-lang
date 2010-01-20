@@ -170,7 +170,12 @@ namespace {
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-      printDataDirective(MCPV->getType());
+      switch (TM.getTargetData()->getTypeAllocSize(MCPV->getType())) {
+      case 1: O << MAI->getData8bitsDirective(0); break;
+      case 2: O << MAI->getData16bitsDirective(0); break;
+      case 4: O << MAI->getData32bitsDirective(0); break;
+      default: assert(0 && "Unknown CPV size");
+      }
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
       SmallString<128> TmpNameStr;

@@ -1248,8 +1248,24 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
     return EmitGlobalConstantVector(V, AddrSpace, *this);
 
-  // ConstantExpr case.
-  printDataDirective(CV->getType(), AddrSpace);
+  // Otherwise, it must be a ConstantExpr.  Emit the data directive, then emit
+  // the expression value.
+  switch (TM.getTargetData()->getTypeAllocSize(CV->getType())) {
+  case 0: return;
+  case 1: O << MAI->getData8bitsDirective(AddrSpace); break;
+  case 2: O << MAI->getData16bitsDirective(AddrSpace); break;
+  case 4: O << MAI->getData32bitsDirective(AddrSpace); break;
+  case 8:
+    if (const char *Dir = MAI->getData64bitsDirective(AddrSpace)) {
+      O << Dir;
+      break;
+    }
+    // FALL THROUGH.
+  default:
+    llvm_unreachable("Target cannot handle given data directive width!");
+    return;
+  }
+  
   EmitConstantValueOnly(CV);
   O << '\n';
 }
@@ -1698,49 +1714,6 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
     << *GetMBBSymbol(MBB->getNumber())
     << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '_' << uid2 << '\n';
-}
-
-/// printDataDirective - This method prints the asm directive for the
-/// specified type.
-void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
-  const TargetData *TD = TM.getTargetData();
-  switch (type->getTypeID()) {
-  case Type::FloatTyID: case Type::DoubleTyID:
-  case Type::X86_FP80TyID: case Type::FP128TyID: case Type::PPC_FP128TyID:
-    assert(0 && "Should have already output floating point constant.");
-  default:
-    assert(0 && "Can't handle printing this type of thing");
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(type)->getBitWidth();
-    if (BitWidth <= 8)
-      O << MAI->getData8bitsDirective(AddrSpace);
-    else if (BitWidth <= 16)
-      O << MAI->getData16bitsDirective(AddrSpace);
-    else if (BitWidth <= 32)
-      O << MAI->getData32bitsDirective(AddrSpace);
-    else if (BitWidth <= 64) {
-      assert(MAI->getData64bitsDirective(AddrSpace) &&
-             "Target cannot handle 64-bit constant exprs!");
-      O << MAI->getData64bitsDirective(AddrSpace);
-    } else {
-      llvm_unreachable("Target cannot handle given data directive width!");
-    }
-    break;
-  }
-  case Type::PointerTyID:
-    if (TD->getPointerSize() == 8) {
-      assert(MAI->getData64bitsDirective(AddrSpace) &&
-             "Target cannot handle 64-bit pointer exprs!");
-      O << MAI->getData64bitsDirective(AddrSpace);
-    } else if (TD->getPointerSize() == 2) {
-      O << MAI->getData16bitsDirective(AddrSpace);
-    } else if (TD->getPointerSize() == 1) {
-      O << MAI->getData8bitsDirective(AddrSpace);
-    } else {
-      O << MAI->getData32bitsDirective(AddrSpace);
-    }
-    break;
-  }
 }
 
 void AsmPrinter::printVisibility(const MCSymbol *Sym,

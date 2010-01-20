@@ -413,10 +413,6 @@ namespace llvm {
                                         const MachineBasicBlock *MBB,
                                         unsigned uid) const;
     
-    /// printDataDirective - This method prints the asm directive for the
-    /// specified type.
-    void printDataDirective(const Type *type, unsigned AddrSpace = 0);
-
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
     void printVisibility(const MCSymbol *Sym, unsigned Visibility) const;
