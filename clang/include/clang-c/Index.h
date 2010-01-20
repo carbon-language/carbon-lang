@@ -402,6 +402,75 @@ CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
  */
 CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
 
+/**
+ * \brief Describes how the traversal of the children of a particular
+ * cursor should proceed after visiting a particular child cursor.
+ *
+ * A value of this enumeration type should be returned by each
+ * \c CXCursorVisitor to indicate how clang_visitChildren() proceed.
+ */
+enum CXChildVisitResult {
+  /**
+   * \brief Terminates the cursor traversal. 
+   */
+  CXChildVisit_Break,
+  /** 
+   * \brief Continues the cursor traversal with the next sibling of
+   * the cursor just visited, without visiting its children.
+   */
+  CXChildVisit_Continue,
+  /**
+   * \brief Recursively traverse the children of this cursor, using
+   * the same visitor and client data.
+   */
+  CXChildVisit_Recurse
+};
+
+/**
+ * \brief Visitor invoked for each cursor found by a traversal.
+ *
+ * This visitor function will be invoked for each cursor found by
+ * clang_visitCursorChildren(). Its first argument is the cursor being
+ * visited, its second argument is the parent visitor for that cursor,
+ * and its third argument is the client data provided to
+ * clang_visitCursorChildren().
+ *
+ * The visitor should return one of the \c CXChildVisitResult values
+ * to direct clang_visitCursorChildren().
+ */
+typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor, 
+                                                   CXCursor parent, 
+                                                   CXClientData client_data);
+
+/**
+ * \brief Visit the children of a particular cursor.
+ *
+ * This function visits all the direct children of the given cursor,
+ * invoking the given \p visitor function with the cursors of each
+ * visited child. The traversal may be recursive, if the visitor returns
+ * \c CXChildVisit_Recurse. The traversal may also be ended prematurely, if
+ * the visitor returns \c CXChildVisit_Break.
+ *
+ * \param tu the translation unit into which the cursor refers.
+ *
+ * \param parent the cursor whose child may be visited. All kinds of
+ * cursors can be visited, including invalid visitors (which, by
+ * definition, have no children).
+ *
+ * \param visitor the visitor function that will be invoked for each
+ * child of \p parent.
+ *
+ * \param client_data pointer data supplied by the client, which will
+ * be passed to the visitor each time it is invoked.
+ *
+ * \returns a non-zero value if the traversal was terminated
+ * prematurely by the visitor returning \c CXChildVisit_Break.
+ */
+CINDEX_LINKAGE unsigned clang_visitChildren(CXTranslationUnit tu,
+                                            CXCursor parent, 
+                                            CXCursorVisitor visitor,
+                                            CXClientData client_data);
+
 /*
  * CXFile Operations.
  */

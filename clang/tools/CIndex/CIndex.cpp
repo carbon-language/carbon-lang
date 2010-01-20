@@ -193,70 +193,139 @@ void TUVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   VisitDeclContext(dyn_cast<DeclContext>(D));
 }
 
-// Declaration visitor.
-class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
-  CXDecl CDecl;
-  CXDeclIterator Callback;
-  CXClientData CData;
-
+// Cursor visitor.
+class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
+  CXCursor Parent;
+  CXCursorVisitor Visitor;
+  CXClientData ClientData;
+  
   // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
   // to the visitor. Declarations with a PCH level greater than this value will
   // be suppressed.
   unsigned MaxPCHLevel;
-
-  void Call(enum CXCursorKind CK, NamedDecl *ND) {
-    // Disable the callback when the context is equal to the visiting decl.
-    if (CDecl == ND && !clang_isReference(CK))
-      return;
-
-    // Filter any declarations that have a PCH level greater than what we allow.
-    if (ND->getPCHLevel() > MaxPCHLevel)
-      return;
-
-    CXCursor C = { CK, { ND, 0, 0 } };
-    Callback(CDecl, C, CData);
-  }
-
+  
+  using DeclVisitor<CursorVisitor, bool>::Visit;
+  
 public:
-  CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D,
-               unsigned MaxPCHLevel) :
-    CDecl(C), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
-
-  void VisitDeclContext(DeclContext *DC);
-  void VisitEnumConstantDecl(EnumConstantDecl *ND);
-  void VisitFieldDecl(FieldDecl *ND);
-  void VisitFunctionDecl(FunctionDecl *ND);
-  void VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
-  void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
-  void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
-  void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-  void VisitObjCIvarDecl(ObjCIvarDecl *ND);
-  void VisitObjCMethodDecl(ObjCMethodDecl *ND);
-  void VisitObjCPropertyDecl(ObjCPropertyDecl *ND);
-  void VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
-  void VisitParmVarDecl(ParmVarDecl *ND);
-  void VisitTagDecl(TagDecl *D);
-  void VisitVarDecl(VarDecl *ND);
+  CursorVisitor(CXCursorVisitor Visitor, CXClientData ClientData, 
+                unsigned MaxPCHLevel)
+    : Visitor(Visitor), ClientData(ClientData), MaxPCHLevel(MaxPCHLevel)
+  {
+    Parent.kind = CXCursor_NoDeclFound;
+    Parent.data[0] = 0;
+    Parent.data[1] = 0;
+    Parent.data[2] = 0;
+  }
+  
+  bool Visit(CXCursor Cursor);
+  bool VisitChildren(CXCursor Parent);
+  
+  bool VisitDeclContext(DeclContext *DC);
+  
+  bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
+  bool VisitFunctionDecl(FunctionDecl *ND);
+  bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
+  bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+  bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
+  bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
+  bool VisitTagDecl(TagDecl *D);
 };
+  
 } // end anonymous namespace
 
-void CDeclVisitor::VisitDeclContext(DeclContext *DC) {
+/// \brief Visit the given cursor and, if requested by the visitor,
+/// its children.
+///
+/// \returns true if the visitation should be aborted, false if it
+/// should continue.
+bool CursorVisitor::Visit(CXCursor Cursor) {
+  if (clang_isInvalid(Cursor.kind))
+    return false;
+  
+  if (clang_isDeclaration(Cursor.kind)) {
+    Decl *D = getCursorDecl(Cursor);
+    assert(D && "Invalid declaration cursor");
+    if (D->getPCHLevel() > MaxPCHLevel)
+      return false;
+
+    if (D->isImplicit())
+      return false;
+  }
+
+  switch (Visitor(Cursor, Parent, ClientData)) {
+  case CXChildVisit_Break:
+    return true;
+
+  case CXChildVisit_Continue:
+    return false;
+
+  case CXChildVisit_Recurse:
+    return VisitChildren(Cursor);
+  }
+
+  llvm_unreachable("Silly GCC, we can't get here");
+}
+
+/// \brief Visit the children of the given cursor.
+///
+/// \returns true if the visitation should be aborted, false if it
+/// should continue.
+bool CursorVisitor::VisitChildren(CXCursor Cursor) { 
+  // Set the Parent field to Cursor, then back to its old value once we're 
+  // done.
+  class SetParentRAII {
+    CXCursor &Parent;
+    CXCursor OldParent;
+    
+  public:
+    SetParentRAII(CXCursor &Parent, CXCursor NewParent)
+      : Parent(Parent), OldParent(Parent) 
+    {
+      Parent = NewParent;
+    }
+    
+    ~SetParentRAII() {
+      Parent = OldParent;
+    }
+  } SetParent(Parent, Cursor);
+  
+  if (clang_isDeclaration(Cursor.kind)) {
+    Decl *D = getCursorDecl(Cursor);
+    assert(D && "Invalid declaration cursor");
+    return Visit(D);
+  }
+  
+  if (clang_isTranslationUnit(Cursor.kind)) {
+    ASTUnit *CXXUnit = static_cast<ASTUnit *>(Cursor.data[0]);
+    return VisitTranslationUnitDecl(
+                            CXXUnit->getASTContext().getTranslationUnitDecl());
+  }
+    
+  // Nothing to visit at the moment.
+  // FIXME: Traverse statements, declarations, etc. here.
+  return false;
+}
+
+bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+  return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
-       I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I)
-    Visit(*I);
+       I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
+    if (Visit(MakeCXCursor(*I)))
+      return true;
+  }
+  
+  return false;
 }
 
-void CDeclVisitor::VisitEnumConstantDecl(EnumConstantDecl *ND) {
-  Call(CXCursor_EnumConstantDecl, ND);
-}
-
-void CDeclVisitor::VisitFieldDecl(FieldDecl *ND) {
-  Call(CXCursor_FieldDecl, ND);
-}
-
-void CDeclVisitor::VisitFunctionDecl(FunctionDecl *ND) {
+bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
+  // FIXME: This is wrong. We always want to visit the parameters and
+  // the body, if available.
   if (ND->isThisDeclarationADefinition()) {
-    VisitDeclContext(dyn_cast<DeclContext>(ND));
+    return VisitDeclContext(ND);
+    
 #if 0
     // Not currently needed.
     CompoundStmt *Body = dyn_cast<CompoundStmt>(ND->getBody());
@@ -264,78 +333,59 @@ void CDeclVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     RVisit.Visit(Body);
 #endif
   }
-}  
+  
+  return false;
+}
 
-void CDeclVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
-  // Issue callbacks for the containing class.
-  Callback(CDecl, 
-           MakeCursorObjCClassRef(ND->getClassInterface(), ND->getLocation()),
-           CData);
+bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
+  if (Visit(MakeCursorObjCClassRef(ND->getClassInterface(), ND->getLocation())))
+    return true;
+  
   ObjCCategoryDecl::protocol_loc_iterator PL = ND->protocol_loc_begin();
   for (ObjCCategoryDecl::protocol_iterator I = ND->protocol_begin(),
          E = ND->protocol_end(); I != E; ++I, ++PL)
-    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
-  VisitDeclContext(dyn_cast<DeclContext>(ND));
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+      return true;
+  
+  return VisitDeclContext(ND);
 }
 
-void CDeclVisitor::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
-  VisitDeclContext(dyn_cast<DeclContext>(D));
-}
-
-void CDeclVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
-  VisitDeclContext(dyn_cast<DeclContext>(D));
-}
-
-void CDeclVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   // Issue callbacks for super class.
-  if (D->getSuperClass())
-    Callback(CDecl, 
-             MakeCursorObjCSuperClassRef(D->getSuperClass(),
-                                         D->getSuperClassLoc()), 
-             CData);
+  if (D->getSuperClass() &&
+      Visit(MakeCursorObjCSuperClassRef(D->getSuperClass(),
+                                        D->getSuperClassLoc())))
+    return true;
   
   ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
   for (ObjCInterfaceDecl::protocol_iterator I = D->protocol_begin(),
          E = D->protocol_end(); I != E; ++I, ++PL)
-    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
-  VisitDeclContext(dyn_cast<DeclContext>(D));
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+      return true;
+  
+  return VisitDeclContext(D);
 }
 
-void CDeclVisitor::VisitObjCIvarDecl(ObjCIvarDecl *ND) {
-  Call(CXCursor_ObjCIvarDecl, ND);
-}
-
-void CDeclVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-  Call(ND->isInstanceMethod() ? CXCursor_ObjCInstanceMethodDecl
-       : CXCursor_ObjCClassMethodDecl, ND);
-
+bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
+  // FIXME: Wrong in the same way that VisitFunctionDecl is wrong.
   if (ND->getBody())
-    VisitDeclContext(dyn_cast<DeclContext>(ND));
+    return VisitDeclContext(ND);
+  
+  return false;
 }
 
-void CDeclVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *ND) {
-  Call(CXCursor_ObjCPropertyDecl, ND);
-}
-
-void CDeclVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
   ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
   for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
          E = PID->protocol_end(); I != E; ++I, ++PL)
-    Callback(CDecl, MakeCursorObjCProtocolRef(*I, *PL), CData);
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL)))
+      return true;
   
-  VisitDeclContext(dyn_cast<DeclContext>(PID));
+  return VisitDeclContext(PID);
 }
 
-void CDeclVisitor::VisitParmVarDecl(ParmVarDecl *ND) {
-  Call(CXCursor_ParmDecl, ND);
-}
-
-void CDeclVisitor::VisitTagDecl(TagDecl *D) {
-  VisitDeclContext(dyn_cast<DeclContext>(D));
-}
-
-void CDeclVisitor::VisitVarDecl(VarDecl *ND) {
-  Call(CXCursor_VarDecl, ND);
+bool CursorVisitor::VisitTagDecl(TagDecl *D) {
+  return VisitDeclContext(D);
 }
 
 CXString CIndexer::createCXString(const char *String, bool DupString){
@@ -541,14 +591,28 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
     DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
+struct LoadDeclarationData {
+  CXDeclIterator Callback;
+  CXClientData ClientData;
+};
+
+CXChildVisitResult LoadDeclarationVisitor(CXCursor cursor, 
+                                          CXCursor parent, 
+                                          CXClientData client_data) {
+  LoadDeclarationData *Data = static_cast<LoadDeclarationData *>(client_data);
+  Data->Callback(clang_getCursorDecl(cursor), cursor, Data->ClientData);
+  return CXChildVisit_Recurse;
+}
+  
 void clang_loadDeclaration(CXDecl Dcl,
                            CXDeclIterator callback,
                            CXClientData CData) {
   assert(Dcl && "Passed null CXDecl");
 
-  CDeclVisitor DVisit(Dcl, callback, CData,
-                      static_cast<Decl *>(Dcl)->getPCHLevel());
-  DVisit.Visit(static_cast<Decl *>(Dcl));
+  LoadDeclarationData Data = { callback, CData };
+  CursorVisitor CurVisit(&LoadDeclarationVisitor, &Data, 
+                         static_cast<Decl *>(Dcl)->getPCHLevel());
+  CurVisit.VisitChildren(clang_getCursorFromDecl(Dcl));
 }
 } // end: extern "C"
 
@@ -703,6 +767,28 @@ static Decl *getDeclFromExpr(Stmt *E) {
 }
 
 extern "C" {
+  
+unsigned clang_visitChildren(CXTranslationUnit tu,
+                             CXCursor parent, 
+                             CXCursorVisitor visitor,
+                             CXClientData client_data) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
+
+  unsigned PCHLevel = Decl::MaxPCHLevel;
+  
+  // Set the PCHLevel to filter out unwanted decls if requested.
+  if (CXXUnit->getOnlyLocalDecls()) {
+    PCHLevel = 0;
+    
+    // If the main input was an AST, bump the level.
+    if (CXXUnit->isMainFileAST())
+      ++PCHLevel;
+  }
+  
+  CursorVisitor CursorVis(visitor, client_data, PCHLevel);
+  return CursorVis.VisitChildren(parent);
+}
+
 CXString clang_getCursorSpelling(CXCursor C) {
   assert(getCursorDecl(C) && "CXCursor has null decl");
   if (clang_isTranslationUnit(C.kind))

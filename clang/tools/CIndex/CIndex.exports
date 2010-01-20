@@ -45,3 +45,4 @@ _clang_isTranslationUnit
 _clang_loadDeclaration
 _clang_loadTranslationUnit
 _clang_setUseExternalASTGeneration
+_clang_visitChildren
