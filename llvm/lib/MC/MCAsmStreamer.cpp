@@ -35,8 +35,8 @@ public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
                 bool isLittleEndian, MCInstPrinter *_Printer,
                 MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), OS(_OS), MAI(tai), InstPrinter(_Printer),
-      Emitter(_Emitter) {}
+    : MCStreamer(Context), OS(_OS), MAI(tai), IsLittleEndian(isLittleEndian),
+      InstPrinter(_Printer), Emitter(_Emitter) {}
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
