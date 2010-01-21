@@ -70,15 +70,15 @@ void test1() {
 // CHECK-LL-NEXT:  [[vp:%.*]] = alloca i8*, align 8
 // CHECK-LL-NEXT:  [[cvp:%.*]] = alloca i8*, align 8
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull:.*]], label %[[castnotnull:.*]]
-// CHECK-LL:       [[castnotnull]]:
+// CHECK-LL:       [[castnotnull]]
 // CHECK-LL-NEXT:  br label %[[castend:.*]]
-// CHECK-LL:       [[castnull]]:
+// CHECK-LL:       [[castnull]]
 // CHECK-LL-NEXT:  br label %[[castend]]
-// CHECK-LL:       [[castend]]:
+// CHECK-LL:       [[castend]]
 // CHECK-LL-NEXT:  [[v0:%.*]] = phi %class.test1_A* [ bitcast (%class.test1_D* @test1_d to %class.test1_A*), %[[castnotnull]] ], [ null, %[[castnull]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v0]], %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull2:.*]], label %[[castnotnull1:.*]]
-// CHECK-LL:       [[castnotnull1]]:
+// CHECK-LL:       [[castnotnull1]]
 // CHECK-LL-NEXT:  [[vtable:%.*]] = load i8** bitcast (%class.test1_D* @test1_d to i8**)
 // CHECK-LL-NEXT:  [[vbaseoffsetptr:%.*]] = getelementptr i8* [[vtable]], i64 -24
 // CHECK-LL-NEXT:  [[v1:%.*]] = bitcast i8* [[vbaseoffsetptr]] to i64*
@@ -86,9 +86,9 @@ void test1() {
 // CHECK-LL-NEXT:  [[addptr:%.*]] = getelementptr i8* getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0), i64 [[vbaseoffset:.*]]
 // CHECK-LL-NEXT:  [[v2:%.*]] = bitcast i8* [[addptr]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[castend3:.*]]
-// CHECK-LL:       [[castnull2]]:
+// CHECK-LL:       [[castnull2]]
 // CHECK-LL-NEXT:  br label %[[castend3]]
-// CHECK-LL:       [[castend3]]:
+// CHECK-LL:       [[castend3]]
 // CHECK-LL-NEXT:  [[v3:%.*]] = phi %class.test1_A* [ [[v2]], %[[castnotnull1]] ], [ null, %[[castnull2]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v3]], %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[tmp:%.*]] = load %class.test1_A** [[bp]]
@@ -107,13 +107,13 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp4:%.*]] = load %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[cmp:%.*]] = icmp eq %class.test1_D* [[tmp4]], null
 // CHECK-LL-NEXT:  br i1 [[cmp]], label %[[ifthen:.*]], label %[[ifelse:.*]]
-// CHECK-LL:       [[ifthen]]:
+// CHECK-LL:       [[ifthen]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 1)
 // CHECK-LL-NEXT:  br label %[[ifend:.*]]
-// CHECK-LL:       [[ifelse]]:
+// CHECK-LL:       [[ifelse]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 1)
 // CHECK-LL-NEXT:  br label %[[ifend]]
-// CHECK-LL:       [[ifend]]:
+// CHECK-LL:       [[ifend]]
 // CHECK-LL-NEXT:  [[tmp6:%.*]] = load %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[v12:%.*]] = icmp ne %class.test1_A* [[tmp6]], null
 // CHECK-LL-NEXT:  br i1 [[v12]], label %[[v13:.*]], label %[[v17:.*]]
@@ -130,13 +130,13 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp7:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[cmp8:%.*]] = icmp eq %class.test1_A* [[tmp7]], null
 // CHECK-LL-NEXT:  br i1 [[cmp8]], label %[[ifthen9:.*]], label %[[ifelse11:.*]]
-// CHECK-LL:       [[ifthen9]]:
+// CHECK-LL:       [[ifthen9]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 2)
 // CHECK-LL-NEXT:  br label %[[ifend13:.*]]
-// CHECK-LL:       [[ifelse11]]:
+// CHECK-LL:       [[ifelse11]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 2)
 // CHECK-LL-NEXT:  br label %[[ifend13]]
-// CHECK-LL:       [[ifend13]]:
+// CHECK-LL:       [[ifend13]]
 // CHECK-LL-NEXT:  [[tmp14:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v20:%.*]] = icmp ne %class.test1_A* [[tmp14]], null
 // CHECK-LL-NEXT:  br i1 [[v20]], label %[[v21:.*]], label %[[v25:.*]]
@@ -153,15 +153,15 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp15:%.*]] = load %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  [[cmp16:%.*]] = icmp eq %class.test1_A* [[tmp15]], null
 // CHECK-LL-NEXT:  br i1 [[cmp16]], label %[[ifthen17:.*]], label %[[ifelse19:.*]]
-// CHECK-LL:       [[ifthen17]]:
+// CHECK-LL:       [[ifthen17]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 3)
 // CHECK-LL-NEXT:  br label %[[ifend21:.*]]
-// CHECK-LL:       [[ifelse19]]:
+// CHECK-LL:       [[ifelse19]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 3)
 // CHECK-LL-NEXT:  br label %[[ifend21]]
-// CHECK-LL:       [[ifend21]]:
+// CHECK-LL:       [[ifend21]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull27:.*]], label %[[castnotnull22:.*]]
-// CHECK-LL:       [[castnotnull22]]:
+// CHECK-LL:       [[castnotnull22]]
 // CHECK-LL-NEXT:  [[vtable23:%.*]] = load i8** bitcast (%class.test1_D* @test1_d to i8**)
 // CHECK-LL-NEXT:  [[vbaseoffsetptr24:%.*]] = getelementptr i8* [[vtable23]], i64 -24
 // CHECK-LL-NEXT:  [[v28:%.*]] = bitcast i8* [[vbaseoffsetptr24]] to i64*
@@ -169,23 +169,23 @@ void test1() {
 // CHECK-LL-NEXT:  [[addptr26:%.*]] = getelementptr i8* getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0), i64 [[vbaseoffset25]]
 // CHECK-LL-NEXT:  [[v29:%.*]] = bitcast i8* [[addptr26]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[castend28:.*]]
-// CHECK-LL:       [[castnull27]]:
+// CHECK-LL:       [[castnull27]]
 // CHECK-LL-NEXT:  br label %[[castend28]]
-// CHECK-LL:       [[castend28]]:
+// CHECK-LL:       [[castend28]]
 // CHECK-LL-NEXT:  [[v30:%.*]] = phi %class.test1_A* [ [[v29]], %[[castnotnull22]] ], [ null, %[[castnull27]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v30]], %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[tmp29:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[cmp30:%.*]] = icmp ne %class.test1_A* [[tmp29]], null
 // CHECK-LL-NEXT:  br i1 [[cmp30]], label %[[ifthen31:.*]], label %[[ifelse33:.*]]
-// CHECK-LL:       [[ifthen31]]:
+// CHECK-LL:       [[ifthen31]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 4)
 // CHECK-LL-NEXT:  br label %[[ifend35:.*]]
-// CHECK-LL:       [[ifelse33]]:
+// CHECK-LL:       [[ifelse33]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 4)
 // CHECK-LL-NEXT:  br label %[[ifend35]]
-// CHECK-LL:       [[ifend35]]:
+// CHECK-LL:       [[ifend35]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull43:.*]], label %[[castnotnull38:.*]]
-// CHECK-LL:       [[castnotnull38]]:
+// CHECK-LL:       [[castnotnull38]]
 // CHECK-LL-NEXT:  [[vtable39:%.*]] = load i8** bitcast (%class.test1_F* @test1_f to i8**)
 // CHECK-LL-NEXT:  [[vbaseoffsetptr40:%.*]] = getelementptr i8* [[vtable39]], i64 -24
 // CHECK-LL-NEXT:  [[v31:%.*]] = bitcast i8* [[vbaseoffsetptr40]] to i64*
@@ -193,21 +193,21 @@ void test1() {
 // CHECK-LL-NEXT:  [[addptr42:%.*]] = getelementptr i8* getelementptr inbounds (%class.test1_F* @test1_f, i32 0, i32 0, i32 0), i64 [[vbaseoffset41]]
 // CHECK-LL-NEXT:  [[v32:%.*]] = bitcast i8* [[addptr42]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[castend44:.*]]
-// CHECK-LL:       [[castnull43]]:
+// CHECK-LL:       [[castnull43]]
 // CHECK-LL-NEXT:  br label %[[castend44]]
-// CHECK-LL:       [[castend44]]:
+// CHECK-LL:       [[castend44]]
 // CHECK-LL-NEXT:  [[v33:%.*]] = phi %class.test1_A* [ [[v32]], %[[castnotnull38]] ], [ null, %[[castnull43]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v33]], %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[tmp45:%.*]] = load %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[cmp46:%.*]] = icmp ne %class.test1_A* [[tmp45]], null
 // CHECK-LL-NEXT:  br i1 [[cmp46]], label %[[ifthen47:.*]], label %[[ifelse49:.*]]
-// CHECK-LL:       [[ifthen47]]:
+// CHECK-LL:       [[ifthen47]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 6)
 // CHECK-LL-NEXT:  br label %[[ifend51:.*]]
-// CHECK-LL:       [[ifelse49]]:
+// CHECK-LL:       [[ifelse49]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 6)
 // CHECK-LL-NEXT:  br label %[[ifend51]]
-// CHECK-LL:       [[ifend51]]:
+// CHECK-LL:       [[ifend51]]
 // CHECK-LL-NEXT:  [[tmp54:%.*]] = load %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[v34:%.*]] = icmp ne %class.test1_A* [[tmp54]], null
 // CHECK-LL-NEXT:  br i1 [[v34]], label %[[v35:.*]], label %[[v39:.*]]
@@ -224,13 +224,13 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp55:%.*]] = load %class.test1_D** [[dp53]]
 // CHECK-LL-NEXT:  [[cmp56:%.*]] = icmp eq %class.test1_D* [[tmp55]], null
 // CHECK-LL-NEXT:  br i1 [[cmp56]], label %[[ifthen57:.*]], label %[[ifelse59:.*]]
-// CHECK-LL:       [[ifthen57]]:
+// CHECK-LL:       [[ifthen57]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 7)
 // CHECK-LL-NEXT:  br label %[[ifend61:.*]]
-// CHECK-LL:       [[ifelse59]]:
+// CHECK-LL:       [[ifelse59]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 7)
 // CHECK-LL-NEXT:  br label %[[ifend61]]
-// CHECK-LL:       [[ifend61]]:
+// CHECK-LL:       [[ifend61]]
 // CHECK-LL-NEXT:  [[tmp63:%.*]] = load %class.test1_A** [[ap37]]
 // CHECK-LL-NEXT:  [[v42:%.*]] = icmp ne %class.test1_A* [[tmp63]], null
 // CHECK-LL-NEXT:  br i1 [[v42]], label %[[v43:.*]], label %[[v47:.*]]
@@ -247,35 +247,35 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp64:%.*]] = load %class.test1_E** [[ep1]]
 // CHECK-LL-NEXT:  [[cmp65:%.*]] = icmp ne %class.test1_E* [[tmp64]], null
 // CHECK-LL-NEXT:  br i1 [[cmp65]], label %[[ifthen66:.*]], label %[[ifelse68:.*]]
-// CHECK-LL:       [[ifthen66]]:
+// CHECK-LL:       [[ifthen66]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 8)
 // CHECK-LL-NEXT:  br label %[[ifend70:.*]]
-// CHECK-LL:       [[ifelse68]]:
+// CHECK-LL:       [[ifelse68]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 8)
 // CHECK-LL-NEXT:  br label %[[ifend70]]
-// CHECK-LL:       [[ifend70]]:
+// CHECK-LL:       [[ifend70]]
 // CHECK-LL-NEXT:  store %class.test1_D* @test1_d, %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[tmp71:%.*]] = load %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[cmp72:%.*]] = icmp eq %class.test1_D* [[tmp71]], @test1_d
 // CHECK-LL-NEXT:  br i1 [[cmp72]], label %[[ifthen73:.*]], label %[[ifelse75:.*]]
-// CHECK-LL:       [[ifthen73]]:
+// CHECK-LL:       [[ifthen73]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 9)
 // CHECK-LL-NEXT:  br label %[[ifend77:.*]]
-// CHECK-LL:       [[ifelse75]]:
+// CHECK-LL:       [[ifelse75]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 9)
 // CHECK-LL-NEXT:  br label %[[ifend77]]
-// CHECK-LL:       [[ifend77]]:
+// CHECK-LL:       [[ifend77]]
 // CHECK-LL-NEXT:  store %class.test1_D* @test1_d, %class.test1_D** [[cdp]]
 // CHECK-LL-NEXT:  [[tmp79:%.*]] = load %class.test1_D** [[cdp]]
 // CHECK-LL-NEXT:  [[cmp80:%.*]] = icmp eq %class.test1_D* [[tmp79]], @test1_d
 // CHECK-LL-NEXT:  br i1 [[cmp80]], label %[[ifthen81:.*]], label %[[ifelse83:.*]]
-// CHECK-LL:       [[ifthen81]]:
+// CHECK-LL:       [[ifthen81]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 10)
 // CHECK-LL-NEXT:  br label %[[ifend85:.*]]
-// CHECK-LL:       [[ifelse83]]:
+// CHECK-LL:       [[ifelse83]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 10)
 // CHECK-LL-NEXT:  br label %[[ifend85]]
-// CHECK-LL:       [[ifend85]]:
+// CHECK-LL:       [[ifend85]]
 // CHECK-LL-NEXT:  br i1 false, label %[[v50:.*]], label %[[v53:.*]]
 // CHECK-LL:       ; <label>:[[v50]]
 // CHECK-LL-NEXT:  [[v51:%.*]] = call i8* @__dynamic_cast(i8* null, i8* bitcast ({{.*}}* @_ZTI7test1_A to i8*), i8* bitcast ({{.*}} @_ZTI7test1_D to i8*), i64 -1)
@@ -289,15 +289,15 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp86:%.*]] = load %class.test1_D** [[dp]]
 // CHECK-LL-NEXT:  [[cmp87:%.*]] = icmp eq %class.test1_D* [[tmp86]], null
 // CHECK-LL-NEXT:  br i1 [[cmp87]], label %[[ifthen88:.*]], label %[[ifelse90:.*]]
-// CHECK-LL:       [[ifthen88]]:
+// CHECK-LL:       [[ifthen88]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 11)
 // CHECK-LL-NEXT:  br label %[[ifend92:.*]]
-// CHECK-LL:       [[ifelse90]]:
+// CHECK-LL:       [[ifelse90]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 11)
 // CHECK-LL-NEXT:  br label %[[ifend92]]
-// CHECK-LL:       [[ifend92]]:
+// CHECK-LL:       [[ifend92]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull98:.*]], label %[[castnotnull93:.*]]
-// CHECK-LL:       [[castnotnull93]]:
+// CHECK-LL:       [[castnotnull93]]
 // CHECK-LL-NEXT:  [[vtable94:%.*]] = load i8** bitcast (%class.test1_D* @test1_d to i8**)
 // CHECK-LL-NEXT:  [[vbaseoffsetptr95:%.*]] = getelementptr i8* [[vtable94]], i64 -24
 // CHECK-LL-NEXT:  [[v56:%.*]] = bitcast i8* [[vbaseoffsetptr95]] to i64*
@@ -305,14 +305,14 @@ void test1() {
 // CHECK-LL-NEXT:  [[addptr97:%.*]] = getelementptr i8* getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0), i64 [[vbaseoffset96]]
 // CHECK-LL-NEXT:  [[v57:%.*]] = bitcast i8* [[addptr97]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[castend99:.*]]
-// CHECK-LL:       [[castnull98]]:
+// CHECK-LL:       [[castnull98]]
 // CHECK-LL-NEXT:  br label %[[castend99]]
-// CHECK-LL:       [[castend99]]:
+// CHECK-LL:       [[castend99]]
 // CHECK-LL-NEXT:  [[v58:%.*]] = phi %class.test1_A* [ [[v57]], %[[castnotnull93]] ], [ null, %[[castnull98]] ]
 // CHECK-LL-NEXT:  store %class.test1_A* [[v58]], %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[tmp100:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull106:.*]], label %[[castnotnull101:.*]]
-// CHECK-LL:       [[castnotnull101]]:
+// CHECK-LL:       [[castnotnull101]]
 // CHECK-LL-NEXT:  [[vtable102:%.*]] = load i8** bitcast (%class.test1_D* @test1_d to i8**)
 // CHECK-LL-NEXT:  [[vbaseoffsetptr103:%.*]] = getelementptr i8* [[vtable102]], i64 -24
 // CHECK-LL-NEXT:  [[v59:%.*]] = bitcast i8* [[vbaseoffsetptr103]] to i64*
@@ -320,44 +320,44 @@ void test1() {
 // CHECK-LL-NEXT:  [[addptr105:%.*]] = getelementptr i8* getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0), i64 [[vbaseoffset104]]
 // CHECK-LL-NEXT:  [[v60:%.*]] = bitcast i8* [[addptr105]] to %class.test1_A*
 // CHECK-LL-NEXT:  br label %[[castend107:.*]]
-// CHECK-LL:       [[castnull106]]:
+// CHECK-LL:       [[castnull106]]
 // CHECK-LL-NEXT:  br label %[[castend107]]
-// CHECK-LL:       [[castend107]]:
+// CHECK-LL:       [[castend107]]
 // CHECK-LL-NEXT:  [[v61:%.*]] = phi %class.test1_A* [ [[v60]], %[[castnotnull101]] ], [ null, %[[castnull106]] ]
 // CHECK-LL-NEXT:  [[cmp108:%.*]] = icmp eq %class.test1_A* [[tmp100]], [[v61]]
 // CHECK-LL-NEXT:  br i1 [[cmp108]], label %[[ifthen109:.*]], label %[[ifelse111:.*]]
-// CHECK-LL:       [[ifthen109]]:
+// CHECK-LL:       [[ifthen109]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 12)
 // CHECK-LL-NEXT:  br label %[[ifend113:.*]]
-// CHECK-LL:       [[ifelse111]]:
+// CHECK-LL:       [[ifelse111]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 12)
 // CHECK-LL-NEXT:  br label %[[ifend113]]
-// CHECK-LL:       [[ifend113]]:
+// CHECK-LL:       [[ifend113]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull116:.*]], label %[[castnotnull115:.*]]
-// CHECK-LL:       [[castnotnull115]]:
+// CHECK-LL:       [[castnotnull115]]
 // CHECK-LL-NEXT:  br label %[[castend117:.*]]
-// CHECK-LL:       [[castnull116]]:
+// CHECK-LL:       [[castnull116]]
 // CHECK-LL-NEXT:  br label %[[castend117]]
-// CHECK-LL:       [[castend117]]:
+// CHECK-LL:       [[castend117]]
 // CHECK-LL-NEXT:  [[v62:%.*]] = phi %class.test1_E* [ bitcast (%class.test1_F* @test1_f to %class.test1_E*), %[[castnotnull115]] ], [ null, %[[castnull116]] ]
 // CHECK-LL-NEXT:  store %class.test1_E* [[v62]], %class.test1_E** [[ep]]
 // CHECK-LL-NEXT:  [[tmp118:%.*]] = load %class.test1_E** [[ep]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull120:.*]], label %[[castnotnull119:.*]]
-// CHECK-LL:       [[castnotnull119]]:
+// CHECK-LL:       [[castnotnull119]]
 // CHECK-LL-NEXT:  br label %[[castend121:.*]]
-// CHECK-LL:       [[castnull120]]:
+// CHECK-LL:       [[castnull120]]
 // CHECK-LL-NEXT:  br label %[[castend121]]
-// CHECK-LL:       [[castend121]]:
+// CHECK-LL:       [[castend121]]
 // CHECK-LL-NEXT:  [[v63:%.*]] = phi %class.test1_E* [ bitcast (%class.test1_F* @test1_f to %class.test1_E*), %[[castnotnull119]] ], [ null, %[[castnull120]] ]
 // CHECK-LL-NEXT:  [[cmp122:%.*]] = icmp eq %class.test1_E* [[tmp118]], [[v63]]
 // CHECK-LL-NEXT:  br i1 [[cmp122]], label %[[ifthen123:.*]], label %[[ifelse125:.*]]
-// CHECK-LL:       [[ifthen123]]:
+// CHECK-LL:       [[ifthen123]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 13)
 // CHECK-LL-NEXT:  br label %[[ifend127:.*]]
-// CHECK-LL:       [[ifelse125]]:
+// CHECK-LL:       [[ifelse125]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 13)
 // CHECK-LL-NEXT:  br label %[[ifend127]]
-// CHECK-LL:       [[ifend127]]:
+// CHECK-LL:       [[ifend127]]
 // CHECK-LL-NEXT:  [[tmp129:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v64:%.*]] = icmp ne %class.test1_A* [[tmp129]], null
 // CHECK-LL-NEXT:  br i1 [[v64]], label %[[v65:.*]], label %[[v70:.*]]
@@ -377,13 +377,13 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp131:%.*]] = load i8** [[vp]]
 // CHECK-LL-NEXT:  [[cmp132:%.*]] = icmp eq i8* [[tmp131]], getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0)
 // CHECK-LL-NEXT:  br i1 [[cmp132]], label %[[ifthen133:.*]], label %[[ifelse135:.*]]
-// CHECK-LL:       [[ifthen133]]:
+// CHECK-LL:       [[ifthen133]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 14)
 // CHECK-LL-NEXT:  br label %[[ifend137:.*]]
-// CHECK-LL:       [[ifelse135]]:
+// CHECK-LL:       [[ifelse135]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 14)
 // CHECK-LL-NEXT:  br label %[[ifend137]]
-// CHECK-LL:       [[ifend137]]:
+// CHECK-LL:       [[ifend137]]
 // CHECK-LL-NEXT:  [[tmp139:%.*]] = load %class.test1_A** [[ap]]
 // CHECK-LL-NEXT:  [[v73:%.*]] = icmp ne %class.test1_A* [[tmp139]], null
 // CHECK-LL-NEXT:  br i1 [[v73]], label %[[v74:.*]], label %[[v79:.*]]
@@ -403,11 +403,11 @@ void test1() {
 // CHECK-LL-NEXT:  [[tmp142:%.*]] = load i8** [[cvp]]
 // CHECK-LL-NEXT:  [[cmp143:%.*]] = icmp eq i8* [[tmp142]], getelementptr inbounds (%class.test1_D* @test1_d, i32 0, i32 0, i32 0)
 // CHECK-LL-NEXT:  br i1 [[cmp143]], label %[[ifthen144:.*]], label %[[ifelse146:.*]]
-// CHECK-LL:       [[ifthen144]]:
+// CHECK-LL:       [[ifthen144]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 15)
 // CHECK-LL-NEXT:  br label %[[ifend148:.*]]
-// CHECK-LL:       [[ifelse146]]:
+// CHECK-LL:       [[ifelse146]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 15)
 // CHECK-LL-NEXT:  br label %[[ifend148]]
-// CHECK-LL:       [[ifend148]]:
+// CHECK-LL:       [[ifend148]]
 // CHECK-LL-NEXT:  ret void
