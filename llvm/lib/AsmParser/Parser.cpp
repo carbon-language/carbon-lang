@@ -45,7 +45,8 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
     Err = SMDiagnostic("", -1, -1,
-                       "Could not open input file '" + Filename + "'", "");
+                       "Could not open input file '" + Filename + "': " +
+                       ErrorStr, "");
     return 0;
   }
 
