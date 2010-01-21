@@ -78,9 +78,12 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:45:15: ParmDecl=argc:45:15 (Definition) [Extent=45:15:45:18]
 // CHECK: c-index-api-loadTU-test.m:45:34: ParmDecl=argv:45:34 (Definition) [Extent=45:34:45:37]
 // CHECK: c-index-api-loadTU-test.m:46:8: VarDecl=bee:46:8 (Definition) [Extent=46:8:46:10]
+// CHECK: c-index-api-loadTU-test.m:46:2: ObjCClassRef=Baz:32:12 [Extent=46:2:46:4]
 // CHECK: c-index-api-loadTU-test.m:47:5: VarDecl=a:47:5 (Definition) [Extent=47:5:47:17]
 // CHECK: c-index-api-loadTU-test.m:47:2: TypeRef=id:0:0 [Extent=47:2:47:3]
 // CHECK: c-index-api-loadTU-test.m:48:12: VarDecl=c:48:12 (Definition) [Extent=48:12:48:25]
+// CHECK: c-index-api-loadTU-test.m:48:2: TypeRef=id:0:0 [Extent=48:2:48:3]
+// CHECK: c-index-api-loadTU-test.m:48:6: ObjCProtocolRef=SubP:28:1 [Extent=48:6:48:9]
 // CHECK: c-index-api-loadTU-test.m:49:13: VarDecl=d:49:13 (Definition) [Extent=49:13:49:13]
-
-
+// CHECK: c-index-api-loadTU-test.m:49:2: TypeRef=id:0:0 [Extent=49:2:49:3]
+// CHECK: c-index-api-loadTU-test.m:49:6: ObjCProtocolRef=Proto:24:1 [Extent=49:6:49:10]

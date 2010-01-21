@@ -146,9 +146,10 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
 {
   ASTUnit *TU;
   CXCursor Parent;
+  Decl *StmtParent;
   CXCursorVisitor Visitor;
   CXClientData ClientData;
-  
+
   // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
   // to the visitor. Declarations with a PCH level greater than this value will
   // be suppressed.
@@ -166,6 +167,7 @@ public:
     Parent.data[0] = 0;
     Parent.data[1] = 0;
     Parent.data[2] = 0;
+    StmtParent = 0;
   }
   
   bool Visit(CXCursor Cursor);
@@ -183,7 +185,21 @@ public:
   bool VisitTagDecl(TagDecl *D);
 
   // Type visitors
+  // FIXME: QualifiedTypeLoc doesn't provide any location information
+  bool VisitBuiltinTypeLoc(BuiltinTypeLoc TL);
   bool VisitTypedefTypeLoc(TypedefTypeLoc TL);
+  bool VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL);
+  bool VisitTagTypeLoc(TagTypeLoc TL);
+  // FIXME: TemplateTypeParmTypeLoc doesn't provide any location information
+  bool VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
+  bool VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
+  bool VisitPointerTypeLoc(PointerTypeLoc TL);
+  bool VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL);
+  bool VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL);
+  bool VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL);
+  bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
+  bool VisitFunctionTypeLoc(FunctionTypeLoc TL);
+  bool VisitArrayTypeLoc(ArrayTypeLoc TL);
 };
   
 } // end anonymous namespace
@@ -230,19 +246,24 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   // done.
   class SetParentRAII {
     CXCursor &Parent;
+    Decl *&StmtParent;
     CXCursor OldParent;
-    
+
   public:
-    SetParentRAII(CXCursor &Parent, CXCursor NewParent)
-      : Parent(Parent), OldParent(Parent) 
+    SetParentRAII(CXCursor &Parent, Decl *&StmtParent, CXCursor NewParent)
+      : Parent(Parent), StmtParent(StmtParent), OldParent(Parent) 
     {
       Parent = NewParent;
+      if (clang_isDeclaration(Parent.kind))
+        StmtParent = getCursorDecl(Parent);
     }
     
     ~SetParentRAII() {
       Parent = OldParent;
+      if (clang_isDeclaration(Parent.kind))
+        StmtParent = getCursorDecl(Parent);
     }
-  } SetParent(Parent, Cursor);
+  } SetParent(Parent, StmtParent, Cursor);
   
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
@@ -296,8 +317,10 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
-  // FIXME: This is wrong. We always want to visit the parameters and
-  // the body, if available.
+  if (VisitDeclaratorDecl(ND))
+    return true;
+
+  // FIXME: This is wrong. We want to visit the body as a statement.
   if (ND->isThisDeclarationADefinition()) {
     return VisitDeclContext(ND);
     
@@ -365,8 +388,148 @@ bool CursorVisitor::VisitTagDecl(TagDecl *D) {
   return VisitDeclContext(D);
 }
 
+bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+  ASTContext &Context = TU->getASTContext();
+
+  // Some builtin types (such as Objective-C's "id", "sel", and
+  // "Class") have associated declarations. Create cursors for those.
+  QualType VisitType;
+  switch (TL.getType()->getAs<BuiltinType>()->getKind()) {
+  case BuiltinType::Void:
+  case BuiltinType::Bool:
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
+  case BuiltinType::Char16:
+  case BuiltinType::Char32:
+  case BuiltinType::UShort:
+  case BuiltinType::UInt:
+  case BuiltinType::ULong:
+  case BuiltinType::ULongLong:
+  case BuiltinType::UInt128:
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+  case BuiltinType::WChar:
+  case BuiltinType::Short:
+  case BuiltinType::Int:
+  case BuiltinType::Long:
+  case BuiltinType::LongLong:
+  case BuiltinType::Int128:
+  case BuiltinType::Float: 
+  case BuiltinType::Double: 
+  case BuiltinType::LongDouble:
+  case BuiltinType::NullPtr:
+  case BuiltinType::Overload:
+  case BuiltinType::Dependent:
+    break;
+
+  case BuiltinType::UndeducedAuto: // FIXME: Deserves a cursor?
+    break;
+
+  case BuiltinType::ObjCId:
+    VisitType = Context.getObjCIdType();
+    break;
+
+  case BuiltinType::ObjCClass:
+    VisitType = Context.getObjCClassType();
+    break;
+
+  case BuiltinType::ObjCSel:
+    VisitType = Context.getObjCSelType();
+    break;
+  }
+
+  if (!VisitType.isNull()) {
+    if (const TypedefType *Typedef = VisitType->getAs<TypedefType>())
+      return Visit(MakeCursorTypeRef(Typedef->getDecl(), TL.getBuiltinLoc(), 
+                                     TU));
+  }
+
+  return false;
+}
+
 bool CursorVisitor::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   return Visit(MakeCursorTypeRef(TL.getTypedefDecl(), TL.getNameLoc(), TU));
+}
+
+bool CursorVisitor::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
+  return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
+}
+
+bool CursorVisitor::VisitTagTypeLoc(TagTypeLoc TL) {
+  return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
+}
+
+bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
+  if (Visit(MakeCursorObjCClassRef(TL.getIFaceDecl(), TL.getNameLoc(), TU)))
+    return true;
+
+  for (unsigned I = 0, N = TL.getNumProtocols(); I != N; ++I) {
+    if (Visit(MakeCursorObjCProtocolRef(TL.getProtocol(I), TL.getProtocolLoc(I),
+                                        TU)))
+      return true;
+  }
+
+  return false;
+}
+
+bool CursorVisitor::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  if (TL.hasBaseTypeAsWritten() && Visit(TL.getBaseTypeLoc()))
+    return true;
+
+  if (TL.hasProtocolsAsWritten()) {
+    for (unsigned I = 0, N = TL.getNumProtocols(); I != N; ++I) {
+      if (Visit(MakeCursorObjCProtocolRef(TL.getProtocol(I), 
+                                          TL.getProtocolLoc(I),
+                                          TU)))
+        return true;
+    }
+  }
+  
+  return false;
+}
+
+bool CursorVisitor::VisitPointerTypeLoc(PointerTypeLoc TL) {
+  return Visit(TL.getPointeeLoc());
+}
+
+bool CursorVisitor::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
+  return Visit(TL.getPointeeLoc());
+}
+
+bool CursorVisitor::VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
+  return Visit(TL.getPointeeLoc());
+}
+
+bool CursorVisitor::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
+  return Visit(TL.getPointeeLoc());  
+}
+
+bool CursorVisitor::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
+  return Visit(TL.getPointeeLoc());  
+}
+
+bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+  if (Visit(TL.getResultLoc()))
+    return true;
+
+  // FIXME: For function definitions, this means that we'll end up
+  // visiting the parameters twice, because VisitFunctionDecl is
+  // walking the DeclContext.
+  for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
+    if (Visit(MakeCXCursor(TL.getArg(I), TU)))
+      return true;
+
+  return false;
+}
+
+bool CursorVisitor::VisitArrayTypeLoc(ArrayTypeLoc TL) {
+  if (Visit(TL.getElementLoc()))
+    return true;
+
+  if (Expr *Size = TL.getSizeExpr())
+    return Visit(MakeCXCursor(Size, StmtParent, TU));
+
+  return false;
 }
 
 CXString CIndexer::createCXString(const char *String, bool DupString){
