@@ -2198,6 +2198,16 @@ static int LineCmp(const void *p1, const void *p2) {
   return !(*Line1 < *Line2);
 }
 
+namespace {
+  struct ErrLoc {
+    SourceLocation Loc;
+    SourceRange R1;
+    SourceRange R2;
+    ErrLoc(SourceLocation l, SourceRange r1, SourceRange r2)
+      : Loc(l), R1(r1), R2(r2) { }
+  };
+}
+
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
   unsigned count;
@@ -2222,7 +2232,7 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
 
   SourceRange R1, R2;
 
-  llvm::SmallVector<SourceLocation, 24> lines;
+  llvm::SmallVector<ErrLoc, 24> lines;
   bool AddEHEdges = AC.getAddEHEdges();
   // First, give warnings for blocks with no predecessors, as they
   // can't be part of a loop.
@@ -2245,7 +2255,7 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
           ++count;
           continue;
         }
-        lines.push_back(c);
+        lines.push_back(ErrLoc(c, R1, R2));
         // Avoid excessive errors by marking everything reachable from here
         count += MarkLive(&b, live);
       }
@@ -2258,17 +2268,17 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
       CFGBlock &b = **I;
       if (!live[b.getBlockID()])
         // Avoid excessive errors by marking everything reachable from here
-        lines.push_back(MarkLiveTop(&b, live, Context.getSourceManager()));
+        lines.push_back(ErrLoc(MarkLiveTop(&b, live, Context.getSourceManager()), SourceRange(), SourceRange()));
     }
   }
 
   llvm::array_pod_sort(lines.begin(), lines.end(), LineCmp);
-  for (llvm::SmallVector<SourceLocation, 24>::iterator I = lines.begin(),
+  for (llvm::SmallVector<ErrLoc, 24>::iterator I = lines.begin(),
          E = lines.end();
        I != E;
        ++I)
-    if (I->isValid())
-      Diag(*I, diag::warn_unreachable);
+    if (I->Loc.isValid())
+      Diag(I->Loc, diag::warn_unreachable) << I->R1 << I->R2;
 }
 
 /// CheckFallThrough - Check that we don't fall off the end of a
