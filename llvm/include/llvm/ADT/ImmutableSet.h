@@ -190,23 +190,22 @@ public:
     unsigned HL = getLeft() ? getLeft()->verify() : 0;
     unsigned HR = getRight() ? getRight()->verify() : 0;
 
-    assert (getHeight() == ( HL > HR ? HL : HR ) + 1
-            && "Height calculation wrong.");
+    assert(getHeight() == ( HL > HR ? HL : HR ) + 1
+            && "Height calculation wrong");
 
-    assert ((HL > HR ? HL-HR : HR-HL) <= 2
-            && "Balancing invariant violated.");
+    assert((HL > HR ? HL-HR : HR-HL) <= 2
+           && "Balancing invariant violated");
+
+    assert(!getLeft()
+           || ImutInfo::isLess(ImutInfo::KeyOfValue(getLeft()->getValue()),
+                               ImutInfo::KeyOfValue(getValue()))
+           && "Value in left child is not less that current value");
 
 
-    assert (!getLeft()
-            || ImutInfo::isLess(ImutInfo::KeyOfValue(getLeft()->getValue()),
-                                ImutInfo::KeyOfValue(getValue()))
-            && "Value in left child is not less that current value.");
-
-
-    assert (!getRight()
-            || ImutInfo::isLess(ImutInfo::KeyOfValue(getValue()),
-                                ImutInfo::KeyOfValue(getRight()->getValue()))
-            && "Current value is not less that value of right child.");
+    assert(!getRight()
+           || ImutInfo::isLess(ImutInfo::KeyOfValue(getValue()),
+                               ImutInfo::KeyOfValue(getRight()->getValue()))
+           && "Current value is not less that value of right child");
 
     return getHeight();
   }
@@ -439,7 +438,7 @@ private:
   }
 
   TreeTy* CreateNode(TreeTy* L, TreeTy* OldTree, TreeTy* R) {
-    assert (!isEmpty(OldTree));
+    assert(!isEmpty(OldTree));
 
     if (OldTree->isMutable()) {
       OldTree->setLeft(L);
@@ -459,8 +458,7 @@ private:
     unsigned hr = Height(R);
 
     if (hl > hr + 2) {
-      assert (!isEmpty(L) &&
-              "Left tree cannot be empty to have a height >= 2.");
+      assert(!isEmpty(L) && "Left tree cannot be empty to have a height >= 2");
 
       TreeTy* LL = Left(L);
       TreeTy* LR = Right(L);
@@ -468,8 +466,7 @@ private:
       if (Height(LL) >= Height(LR))
         return CreateNode(LL, L, CreateNode(LR,V,R));
 
-      assert (!isEmpty(LR) &&
-              "LR cannot be empty because it has a height >= 1.");
+      assert(!isEmpty(LR) && "LR cannot be empty because it has a height >= 1");
 
       TreeTy* LRL = Left(LR);
       TreeTy* LRR = Right(LR);
@@ -477,8 +474,7 @@ private:
       return CreateNode(CreateNode(LL,L,LRL), LR, CreateNode(LRR,V,R));
     }
     else if (hr > hl + 2) {
-      assert (!isEmpty(R) &&
-              "Right tree cannot be empty to have a height >= 2.");
+      assert(!isEmpty(R) && "Right tree cannot be empty to have a height >= 2");
 
       TreeTy* RL = Left(R);
       TreeTy* RR = Right(R);
@@ -486,8 +482,7 @@ private:
       if (Height(RR) >= Height(RL))
         return CreateNode(CreateNode(L,V,RL), R, RR);
 
-      assert (!isEmpty(RL) &&
-              "RL cannot be empty because it has a height >= 1.");
+      assert(!isEmpty(RL) && "RL cannot be empty because it has a height >= 1");
 
       TreeTy* RLL = Left(RL);
       TreeTy* RLR = Right(RL);
@@ -505,7 +500,7 @@ private:
     if (isEmpty(T))
       return CreateNode(T, V, T);
 
-    assert (!T->isMutable());
+    assert(!T->isMutable());
 
     key_type_ref K = ImutInfo::KeyOfValue(V);
     key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
@@ -526,7 +521,7 @@ private:
     if (isEmpty(T))
       return T;
 
-    assert (!T->isMutable());
+    assert(!T->isMutable());
 
     key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
 
@@ -548,7 +543,7 @@ private:
   }
 
   TreeTy* RemoveMinBinding(TreeTy* T, TreeTy*& NodeRemoved) {
-    assert (!isEmpty(T));
+    assert(!isEmpty(T));
 
     if (isEmpty(Left(T))) {
       NodeRemoved = T;
@@ -641,12 +636,12 @@ public:
   }
 
   TreeTy* operator*() const {
-    assert (!stack.empty());
+    assert(!stack.empty());
     return reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
   }
 
   uintptr_t getVisitState() {
-    assert (!stack.empty());
+    assert(!stack.empty());
     return stack.back() & Flags;
   }
 
@@ -658,7 +653,7 @@ public:
   }
 
   void SkipToParent() {
-    assert (!stack.empty());
+    assert(!stack.empty());
     stack.pop_back();
 
     if (stack.empty())
@@ -672,7 +667,7 @@ public:
         stack.back() |= VisitedRight;
         break;
       default:
-        assert (false && "Unreachable.");
+        assert(false && "Unreachable.");
     }
   }
 
@@ -690,10 +685,10 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
   _Self& operator++() {
-    assert (!stack.empty());
+    assert(!stack.empty());
 
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
-    assert (Current);
+    assert(Current);
 
     switch (getVisitState()) {
       case VisitedNone:
@@ -717,17 +712,17 @@ public:
         break;
 
       default:
-        assert (false && "Unreachable.");
+        assert(false && "Unreachable.");
     }
 
     return *this;
   }
 
   _Self& operator--() {
-    assert (!stack.empty());
+    assert(!stack.empty());
 
     TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
-    assert (Current);
+    assert(Current);
 
     switch (getVisitState()) {
       case VisitedNone:
@@ -752,7 +747,7 @@ public:
         break;
 
       default:
-        assert (false && "Unreachable.");
+        assert(false && "Unreachable.");
     }
 
     return *this;
