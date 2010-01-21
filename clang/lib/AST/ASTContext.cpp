@@ -2127,7 +2127,8 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
 
   // No Match;
   ObjCObjectPointerType *QType = new (*this, TypeAlignment)
-    ObjCObjectPointerType(Canonical, InterfaceT, Protocols, NumProtocols);
+    ObjCObjectPointerType(*this, Canonical, InterfaceT, Protocols,
+                          NumProtocols);
 
   Types.push_back(QType);
   ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
@@ -2161,7 +2162,7 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
   }
 
   ObjCInterfaceType *QType = new (*this, TypeAlignment)
-    ObjCInterfaceType(Canonical, const_cast<ObjCInterfaceDecl*>(Decl),
+    ObjCInterfaceType(*this, Canonical, const_cast<ObjCInterfaceDecl*>(Decl),
                       Protocols, NumProtocols);
 
   Types.push_back(QType);

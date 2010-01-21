@@ -2514,26 +2514,31 @@ class ObjCInterfaceType : public Type, public llvm::FoldingSetNode {
 
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is enterred more than once.
-  llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
+  ObjCProtocolDecl **Protocols;
+  unsigned NumProtocols;
 
-  ObjCInterfaceType(QualType Canonical, ObjCInterfaceDecl *D,
-                    ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCInterface, Canonical, /*Dependent=*/false),
-    Decl(D), Protocols(Protos, Protos+NumP) { }
+  ObjCInterfaceType(ASTContext &Ctx, QualType Canonical, ObjCInterfaceDecl *D,
+                    ObjCProtocolDecl **Protos, unsigned NumP);
   friend class ASTContext;  // ASTContext creates these.
 public:
+  void Destroy(ASTContext& C);
+
   ObjCInterfaceDecl *getDecl() const { return Decl; }
 
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
-  unsigned getNumProtocols() const { return Protocols.size(); }
+  unsigned getNumProtocols() const { return NumProtocols; }
 
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
-  qual_iterator qual_begin() const { return Protocols.begin(); }
-  qual_iterator qual_end() const   { return Protocols.end(); }
-  bool qual_empty() const { return Protocols.size() == 0; }
+  typedef ObjCProtocolDecl*  const * qual_iterator;
+  qual_iterator qual_begin() const {
+    return Protocols;
+  }
+  qual_iterator qual_end() const   {
+    return Protocols ? Protocols + NumProtocols : 0;
+  }
+  bool qual_empty() const { return NumProtocols == 0; }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -2559,15 +2564,16 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
 
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is entered more than once.
-  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
+  ObjCProtocolDecl **Protocols;
+  unsigned NumProtocols;
 
-  ObjCObjectPointerType(QualType Canonical, QualType T,
-                        ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCObjectPointer, Canonical, /*Dependent=*/false),
-    PointeeType(T), Protocols(Protos, Protos+NumP) { }
+  ObjCObjectPointerType(ASTContext &Ctx, QualType Canonical, QualType T,
+                        ObjCProtocolDecl **Protos, unsigned NumP);
   friend class ASTContext;  // ASTContext creates these.
 
 public:
+  void Destroy(ASTContext& C);
+
   // Get the pointee type. Pointee will either be:
   // - a built-in type (for 'id' and 'Class').
   // - an interface type (for user-defined types).
@@ -2585,35 +2591,39 @@ public:
   /// isObjCIdType - true for "id".
   bool isObjCIdType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-           !Protocols.size();
+           !NumProtocols;
   }
   /// isObjCClassType - true for "Class".
   bool isObjCClassType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
-           !Protocols.size();
+           !NumProtocols;
   }
   
   /// isObjCQualifiedIdType - true for "id <p>".
   bool isObjCQualifiedIdType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-           Protocols.size();
+           NumProtocols;
   }
   /// isObjCQualifiedClassType - true for "Class <p>".
   bool isObjCQualifiedClassType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
-           Protocols.size();
+           NumProtocols;
   }
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+  typedef ObjCProtocolDecl*  const * qual_iterator;
 
-  qual_iterator qual_begin() const { return Protocols.begin(); }
-  qual_iterator qual_end() const   { return Protocols.end(); }
-  bool qual_empty() const { return Protocols.size() == 0; }
+  qual_iterator qual_begin() const {
+    return Protocols;
+  }
+  qual_iterator qual_end() const   {
+    return Protocols ? Protocols + NumProtocols : NULL;
+  }
+  bool qual_empty() const { return NumProtocols == 0; }
 
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
-  unsigned getNumProtocols() const { return Protocols.size(); }
+  unsigned getNumProtocols() const { return NumProtocols; }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

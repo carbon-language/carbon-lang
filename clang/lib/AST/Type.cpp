@@ -339,6 +339,25 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
+ObjCInterfaceType::ObjCInterfaceType(ASTContext &Ctx, QualType Canonical,
+                                     ObjCInterfaceDecl *D,
+                                     ObjCProtocolDecl **Protos, unsigned NumP) :
+  Type(ObjCInterface, Canonical, /*Dependent=*/false),
+  Decl(D), Protocols(0), NumProtocols(NumP)
+{
+  if (NumProtocols) {
+    Protocols = new (Ctx) ObjCProtocolDecl*[NumProtocols];
+    memcpy(Protocols, Protos, NumProtocols * sizeof(*Protocols));
+  }
+}
+
+void ObjCInterfaceType::Destroy(ASTContext& C) {
+  if (Protocols)
+    C.Deallocate(Protocols);
+  this->~ObjCInterfaceType();
+  C.Deallocate(this);
+}
+
 const ObjCInterfaceType *Type::getAsObjCQualifiedInterfaceType() const {
   // There is no sugar for ObjCInterfaceType's, just return the canonical
   // type pointer if it is the right class.  There is no typedef information to
@@ -351,6 +370,26 @@ const ObjCInterfaceType *Type::getAsObjCQualifiedInterfaceType() const {
 
 bool Type::isObjCQualifiedInterfaceType() const {
   return getAsObjCQualifiedInterfaceType() != 0;
+}
+
+ObjCObjectPointerType::ObjCObjectPointerType(ASTContext &Ctx,
+                                             QualType Canonical, QualType T,
+                                             ObjCProtocolDecl **Protos,
+                                             unsigned NumP) :
+  Type(ObjCObjectPointer, Canonical, /*Dependent=*/false),
+  PointeeType(T), Protocols(NULL), NumProtocols(NumP)
+{
+  if (NumProtocols) {
+    Protocols = new (Ctx) ObjCProtocolDecl*[NumProtocols];
+    memcpy(Protocols, Protos, NumProtocols * sizeof(*Protocols));
+  }
+}
+
+void ObjCObjectPointerType::Destroy(ASTContext& C) {
+  if (Protocols)
+    C.Deallocate(Protocols);
+  this->~ObjCObjectPointerType();
+  C.Deallocate(this);
 }
 
 const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
