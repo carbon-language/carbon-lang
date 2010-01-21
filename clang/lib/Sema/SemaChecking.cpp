@@ -2102,6 +2102,12 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
     R1 = UO->getSubExpr()->getSourceRange();
     return UO->getOperatorLoc();
   }
+  case Expr::CompoundAssignOperatorClass: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(S);
+    R1 = CAO->getLHS()->getSourceRange();
+    R2 = CAO->getRHS()->getSourceRange();
+    return CAO->getOperatorLoc();
+  }
   case Stmt::CXXTryStmtClass: {
     return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
   }

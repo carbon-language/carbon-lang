@@ -24,6 +24,7 @@ void test1() {
 }
 
 void test2() {
+  int i;
   switch (live()) {
   case 1:
     halt(),
@@ -77,6 +78,10 @@ void test2() {
       +         // expected-warning {{will never be executed}}
       dead();
     -           // expected-warning {{will never be executed}}
+      halt();
+  case 8:
+    i
+      +=        // expected-warning {{will never be executed}}
       halt();
   }
 }
