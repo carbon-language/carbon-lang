@@ -134,7 +134,7 @@ static int AsLexInput(const char *ProgName) {
   const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
   assert(MAI && "Unable to create target asm info!");
 
-  AsmLexer Lexer(SrcMgr, *MAI);
+  AsmLexer Lexer(*MAI);
   
   bool Error = false;
   

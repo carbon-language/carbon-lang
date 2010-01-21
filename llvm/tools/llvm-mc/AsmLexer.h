@@ -23,23 +23,17 @@
 
 namespace llvm {
 class MemoryBuffer;
-class SourceMgr;
 class SMLoc;
 class MCAsmInfo;
 
 /// AsmLexer - Lexer class for assembly files.
 class AsmLexer : public MCAsmLexer {
-  SourceMgr &SrcMgr;
   const MCAsmInfo &MAI;
   
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
   
   const char *TokStart;
-
-  /// This is the current buffer index we're lexing from as managed by the
-  /// SourceMgr object.
-  int CurBuffer;
   
   void operator=(const AsmLexer&); // DO NOT IMPLEMENT
   AsmLexer(const AsmLexer&);       // DO NOT IMPLEMENT
@@ -49,17 +43,16 @@ protected:
   virtual AsmToken LexToken();
 
 public:
-  AsmLexer(SourceMgr &SrcMgr, const MCAsmInfo &MAI);
+  AsmLexer(const MCAsmInfo &MAI);
   ~AsmLexer();
+  
+  void setBuffer(const MemoryBuffer *buf, const char *ptr = NULL);
   
   SMLoc getLoc() const;
   
   StringRef LexUntilEndOfStatement();
 
   bool isAtStartOfComment(char Char);
-
-  /// EnterIncludeFile - Enter the specified file. This returns true on failure.
-  bool EnterIncludeFile(const std::string &Filename);
   
   const MCAsmInfo &getMAI() const { return MAI; }
 

@@ -40,8 +40,10 @@ typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
 
 AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
                      const MCAsmInfo &_MAI) 
-  : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
-    SectionUniquingMap(0) {
+  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM), TargetParser(0),
+    CurBuffer(0), SectionUniquingMap(0) {
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
+  
   // Debugging directives.
   AddDirectiveHandler(".file", &AsmParser::ParseDirectiveFile);
   AddDirectiveHandler(".line", &AsmParser::ParseDirectiveLine);
@@ -104,14 +106,38 @@ void AsmParser::PrintMessage(SMLoc Loc, const std::string &Msg,
                              const char *Type) const {
   SrcMgr.PrintMessage(Loc, Msg, Type);
 }
-
-const AsmToken &AsmParser::Lex() {
-  const AsmToken &tok = Lexer.Lex();
+                  
+bool AsmParser::EnterIncludeFile(const std::string &Filename) {
+  int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc());
+  if (NewBuf == -1)
+    return true;
   
-  if (tok.is(AsmToken::Error))
+  CurBuffer = NewBuf;
+  
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
+  
+  return false;
+}
+                  
+const AsmToken &AsmParser::Lex() {
+  const AsmToken *tok = &Lexer.Lex();
+  
+  if (tok->is(AsmToken::Eof)) {
+    // If this is the end of an included file, pop the parent file off the
+    // include stack.
+    SMLoc ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
+    if (ParentIncludeLoc != SMLoc()) {
+      CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
+      Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer), 
+                      ParentIncludeLoc.getPointer());
+      tok = &Lexer.Lex();
+    }
+  }
+    
+  if (tok->is(AsmToken::Error))
     PrintMessage(Lexer.getErrLoc(), Lexer.getErr(), "error");
   
-  return tok;
+  return *tok;
 }
 
 bool AsmParser::Run() {
@@ -1522,7 +1548,7 @@ bool AsmParser::ParseDirectiveInclude() {
   
   // Attempt to switch the lexer to the included file before consuming the end
   // of statement to avoid losing it when we switch.
-  if (Lexer.EnterIncludeFile(Filename)) {
+  if (EnterIncludeFile(Filename)) {
     PrintMessage(IncludeLoc,
                  "Could not find include file '" + Filename + "'",
                  "error");

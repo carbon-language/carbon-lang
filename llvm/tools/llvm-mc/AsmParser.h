@@ -43,6 +43,10 @@ private:
   MCStreamer &Out;
   SourceMgr &SrcMgr;
   TargetAsmParser *TargetParser;
+  
+  /// This is the current buffer index we're lexing from as managed by the
+  /// SourceMgr object.
+  int CurBuffer;
 
   AsmCond TheCondState;
   std::vector<AsmCond> TheCondStack;
@@ -106,6 +110,9 @@ private:
   bool TokError(const char *Msg);
   
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
+    
+  /// EnterIncludeFile - Enter the specified file. This returns true on failure.
+  bool EnterIncludeFile(const std::string &Filename);
   
   bool ParseConditionalAssemblyDirectives(StringRef Directive,
                                           SMLoc DirectiveLoc);

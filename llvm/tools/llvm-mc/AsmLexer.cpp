@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmLexer.h"
-#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/SMLoc.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Config/config.h"  // for strtoull.
 #include "llvm/MC/MCAsmInfo.h"
@@ -21,15 +21,24 @@
 #include <cstdlib>
 using namespace llvm;
 
-AsmLexer::AsmLexer(SourceMgr &SM, const MCAsmInfo &_MAI) : SrcMgr(SM),
-                                                           MAI(_MAI)  {
-  CurBuffer = 0;
-  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-  CurPtr = CurBuf->getBufferStart();
+AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
+  CurBuf = NULL;
+  CurPtr = NULL;
   TokStart = 0;
 }
 
 AsmLexer::~AsmLexer() {
+}
+
+void AsmLexer::setBuffer(const MemoryBuffer *buf, const char *ptr) {
+  CurBuf = buf;
+  
+  if (ptr)
+    CurPtr = ptr;
+  else
+    CurPtr = CurBuf->getBufferStart();
+  
+  TokStart = 0;
 }
 
 SMLoc AsmLexer::getLoc() const {
@@ -44,50 +53,20 @@ AsmToken AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
   return AsmToken(AsmToken::Error, StringRef(Loc, 0));
 }
 
-/// EnterIncludeFile - Enter the specified file.  This prints an error and
-/// returns true on failure.
-bool AsmLexer::EnterIncludeFile(const std::string &Filename) {
-  int NewBuf = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr));
-  if (NewBuf == -1)
-    return true;
-  
-  // Save the line number and lex buffer of the includer.
-  CurBuffer = NewBuf;
-  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-  CurPtr = CurBuf->getBufferStart();
-  return false;
-}
-
-
 int AsmLexer::getNextChar() {
   char CurChar = *CurPtr++;
   switch (CurChar) {
   default:
     return (unsigned char)CurChar;
-  case 0: {
+  case 0:
     // A nul character in the stream is either the end of the current buffer or
     // a random nul in the file.  Disambiguate that here.
     if (CurPtr-1 != CurBuf->getBufferEnd())
       return 0;  // Just whitespace.
     
-    // If this is the end of an included file, pop the parent file off the
-    // include stack.
-    SMLoc ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
-    if (ParentIncludeLoc != SMLoc()) {
-      CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
-      CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-      CurPtr = ParentIncludeLoc.getPointer();
-      
-      // Reset the token start pointer to the start of the new file.
-      TokStart = CurPtr;
-      
-      return getNextChar();
-    }
-    
     // Otherwise, return end of file.
     --CurPtr;  // Another call to lex will return EOF again.  
     return EOF;
-  }
   }
 }
 
