@@ -2121,6 +2121,11 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
     R1 = CSC->getSubExpr()->getSourceRange();
     return CSC->getLParenLoc();
   }
+  case Expr::CXXFunctionalCastExprClass: {
+    const CXXFunctionalCastExpr *CE = cast <CXXFunctionalCastExpr>(S);
+    R1 = CE->getSubExpr()->getSourceRange();
+    return CE->getTypeBeginLoc();
+  }
   case Expr::ImplicitCastExprClass:
     ++sn;
     goto top;

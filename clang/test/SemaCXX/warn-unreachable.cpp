@@ -40,6 +40,9 @@ void test3() {
   halt()
     --;         // expected-warning {{will never be executed}}
   halt()
-    ?         // expected-warning {{will never be executed}}
+    ?           // expected-warning {{will never be executed}}
     dead() : dead();
+  live(),
+    float       // expected-warning {{will never be executed}}
+      (halt());
 }
