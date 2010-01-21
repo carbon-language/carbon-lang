@@ -128,7 +128,23 @@ enum CXCursorKind {
  CXCursor_ObjCSuperClassRef             = 40,            
  CXCursor_ObjCProtocolRef               = 41,
  CXCursor_ObjCClassRef                  = 42,
- CXCursor_LastRef                       = 42,
+ /**
+  * \brief A reference to a type declaration.
+  *
+  * A type reference occurs anywhere where a type is named but not
+  * declared. For example, given:
+  *
+  * \code
+  * typedef unsigned size_type;
+  * size_type size;
+  * \endcode
+  *
+  * The typedef is a declaration of size_type (CXCursor_TypedefDecl),
+  * while the type of the variable "size" is referenced. The cursor
+  * referenced by the type of size is the typedef for size_type.
+  */
+ CXCursor_TypeRef                       = 43,
+ CXCursor_LastRef                       = 43,
  
  /* Error conditions */
  CXCursor_FirstInvalid                  = 70,

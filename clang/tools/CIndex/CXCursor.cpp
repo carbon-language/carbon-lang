@@ -259,6 +259,21 @@ cxcursor::getCursorObjCClassRef(CXCursor C) {
                                       reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
+CXCursor cxcursor::MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, 
+                                     ASTUnit *TU) {
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_TypeRef, { Type, RawLoc, TU } };
+  return C;    
+}
+
+std::pair<TypeDecl *, SourceLocation> 
+cxcursor::getCursorTypeRef(CXCursor C) {
+  assert(C.kind == CXCursor_TypeRef);
+  return std::make_pair(static_cast<TypeDecl *>(C.data[0]),
+           SourceLocation::getFromRawEncoding(
+                                      reinterpret_cast<uintptr_t>(C.data[1])));
+}
+
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
   return (Decl *)Cursor.data[0];
 }

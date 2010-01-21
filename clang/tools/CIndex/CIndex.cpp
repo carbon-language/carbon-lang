@@ -17,6 +17,7 @@
 
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/TypeLocVisitor.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
@@ -140,7 +141,9 @@ static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
 namespace {
   
 // Cursor visitor.
-class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
+class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
+                      public TypeLocVisitor<CursorVisitor, bool>
+{
   ASTUnit *TU;
   CXCursor Parent;
   CXCursorVisitor Visitor;
@@ -152,6 +155,7 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool> {
   unsigned MaxPCHLevel;
   
   using DeclVisitor<CursorVisitor, bool>::Visit;
+  using TypeLocVisitor<CursorVisitor, bool>::Visit;
   
 public:
   CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData, 
@@ -167,15 +171,19 @@ public:
   bool Visit(CXCursor Cursor);
   bool VisitChildren(CXCursor Parent);
   
+  // Declaration visitors
   bool VisitDeclContext(DeclContext *DC);
-  
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
+  bool VisitDeclaratorDecl(DeclaratorDecl *DD);
   bool VisitFunctionDecl(FunctionDecl *ND);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
   bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
   bool VisitTagDecl(TagDecl *D);
+
+  // Type visitors
+  bool VisitTypedefTypeLoc(TypedefTypeLoc TL);
 };
   
 } // end anonymous namespace
@@ -279,6 +287,14 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   return false;
 }
 
+bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
+  if (TypeSourceInfo *TSInfo = DD->getTypeSourceInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+
+  return false;
+}
+
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   // FIXME: This is wrong. We always want to visit the parameters and
   // the body, if available.
@@ -347,6 +363,10 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
 
 bool CursorVisitor::VisitTagDecl(TagDecl *D) {
   return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
+  return Visit(MakeCursorTypeRef(TL.getTypedefDecl(), TL.getNameLoc(), TU));
 }
 
 CXString CIndexer::createCXString(const char *String, bool DupString){
@@ -705,6 +725,15 @@ CXString clang_getCursorSpelling(CXCursor C) {
       assert(OID && "getCursorSpelling(): Missing protocol decl");
       return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
     }
+    case CXCursor_TypeRef: {
+      TypeDecl *Type = getCursorTypeRef(C).first;
+      assert(Type && "Missing type decl");
+
+      return CIndexer::createCXString(
+               getCursorContext(C).getTypeDeclType(Type).getAsString().c_str(),
+                                      true);
+    }
+
     default:
       return CIndexer::createCXString("<not implemented>");
     }
@@ -745,6 +774,7 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
   case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
   case CXCursor_ObjCClassRef: return "ObjCClassRef";
+  case CXCursor_TypeRef: return "TypeRef";
   case CXCursor_UnexposedExpr: return "UnexposedExpr";
   case CXCursor_DeclRefExpr: return "DeclRefExpr";
   case CXCursor_MemberRefExpr: return "MemberRefExpr";
@@ -870,6 +900,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
         = getCursorObjCClassRef(C);
       return translateSourceLocation(P.first->getASTContext(), P.second);
     }
+
+    case CXCursor_TypeRef: {       
+      std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
+      return translateSourceLocation(P.first->getASTContext(), P.second);
+    }
       
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
@@ -912,6 +947,11 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
         std::pair<ObjCInterfaceDecl *, SourceLocation> P
           = getCursorObjCClassRef(C);
         
+        return translateSourceRange(P.first->getASTContext(), P.second);
+      }
+
+      case CXCursor_TypeRef: {       
+        std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
         return translateSourceRange(P.first->getASTContext(), P.second);
       }
         
@@ -961,6 +1001,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       
     case CXCursor_ObjCClassRef:      
       return MakeCXCursor(getCursorObjCClassRef(C).first, CXXUnit);
+
+    case CXCursor_TypeRef:      
+      return MakeCXCursor(getCursorTypeRef(C).first, CXXUnit);
       
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.

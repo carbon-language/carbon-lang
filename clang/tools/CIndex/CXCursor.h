@@ -28,6 +28,7 @@ class NamedDecl;
 class ObjCInterfaceDecl;
 class ObjCProtocolDecl;
 class Stmt;
+class TypeDecl;
 
 namespace cxcursor {
   
@@ -62,6 +63,13 @@ CXCursor MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, SourceLocation Loc,
 /// and optionally the location where the reference occurred.
 std::pair<ObjCInterfaceDecl *, SourceLocation> 
   getCursorObjCClassRef(CXCursor C);
+
+/// \brief Create a type reference at the given location.
+CXCursor MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, ASTUnit *TU);
+
+/// \brief Unpack a TypeRef cursor into the class it references
+/// and optionally the location where the reference occurred.
+std::pair<TypeDecl *, SourceLocation> getCursorTypeRef(CXCursor C);
 
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
