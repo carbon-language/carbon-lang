@@ -20,7 +20,7 @@ CPPFLAGS += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include
 
 include $(LEVEL)/Makefile.common
 
-SVN_REVISION := $(shell cd $(PROJ_SRC_DIR)/../.. && svnversion)
+SVN_REVISION := $(shell $(LLVM_SRC_ROOT)/utils/GetSourceVersion $(PROJ_SRC_DIR)/../..)
 
 CPP.Defines += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include \
          -DSVN_REVISION='"$(SVN_REVISION)"'
