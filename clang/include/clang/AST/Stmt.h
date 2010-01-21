@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
+#include <iterator>
 using llvm::dyn_cast_or_null;
 
 namespace llvm {

@@ -14,6 +14,7 @@
 
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/GraphWriter.h"
@@ -93,7 +94,7 @@ public:
                           TryTerminatedBlock(NULL) {}
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(Stmt *Statement, ASTContext *C, bool AddScopes);
+  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C, bool AddScopes);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -229,7 +230,8 @@ static VariableArrayType* FindVA(Type* t) {
 ///  body (compound statement).  The ownership of the returned CFG is
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
-CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C, bool AddScopes) {
+CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
+                          bool AddScopes) {
   Context = C;
   assert(cfg.get());
   if (!Statement)
@@ -247,6 +249,11 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C, bool AddScopes) {
 
   // Visit the statements and create the CFG.
   CFGBlock* B = addStmt(Statement);
+
+  if (const CXXConstructorDecl *CD = dyn_cast_or_null<CXXConstructorDecl>(D)) {
+    // FIXME: Add code for base initializers and member initializers.
+    (void)CD;
+  }
   if (!B)
     B = Succ;
 
@@ -1706,9 +1713,10 @@ CFGBlock* CFG::createBlock() {
 
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
-CFG* CFG::buildCFG(Stmt* Statement, ASTContext *C, bool AddScopes) {
+CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
+                   bool AddScopes) {
   CFGBuilder Builder;
-  return Builder.buildCFG(Statement, C, AddScopes);
+  return Builder.buildCFG(D, Statement, C, AddScopes);
 }
 
 //===----------------------------------------------------------------------===//
