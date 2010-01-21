@@ -1311,7 +1311,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 }
 
 // MarkLive - Mark all the blocks reachable from e as live.  Returns the total
-// number of blocks marked live.
+// number of blocks just marked live.
 static unsigned MarkLive(CFGBlock *e, llvm::BitVector &live) {
   unsigned count = 0;
   std::queue<CFGBlock*> workq;
@@ -1425,6 +1425,7 @@ public:
 
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
+  unsigned count;
   // We avoid checking when there are errors, as the CFG won't faithfully match
   // the user's code.
   if (getDiagnostics().hasErrorOccurred())
@@ -1438,7 +1439,9 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   
   llvm::BitVector live(cfg->getNumBlockIDs());
   // Mark all live things first.
-  if (MarkLive(&cfg->getEntry(), live) == cfg->getNumBlockIDs())
+  count = MarkLive(&cfg->getEntry(), live);
+
+  if (count == cfg->getNumBlockIDs())
     // If there are no dead blocks, we're done.
     return;
 
@@ -1454,21 +1457,24 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
           // Blocks without a location can't produce a warning, so don't mark
           // reachable blocks from here as live.
           live.set(b.getBlockID());
+          ++count;
           continue;
         }
         lines.push_back(c);
         // Avoid excessive errors by marking everything reachable from here
-        MarkLive(&b, live);
+        count += MarkLive(&b, live);
       }
     }
   }
 
-  // And then give warnings for the tops of loops.
-  for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
-    CFGBlock &b = **I;
-    if (!live[b.getBlockID()])
-      // Avoid excessive errors by marking everything reachable from here
-      lines.push_back(MarkLiveTop(&b, live, Context.getSourceManager()));
+  if (count < cfg->getNumBlockIDs()) {
+    // And then give warnings for the tops of loops.
+    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+      CFGBlock &b = **I;
+      if (!live[b.getBlockID()])
+        // Avoid excessive errors by marking everything reachable from here
+        lines.push_back(MarkLiveTop(&b, live, Context.getSourceManager()));
+    }
   }
 
   std::sort(lines.begin(), lines.end(), LineCmp(Context.getSourceManager()));
