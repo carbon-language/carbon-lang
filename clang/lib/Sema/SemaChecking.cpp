@@ -2064,7 +2064,8 @@ static unsigned MarkLive(CFGBlock *e, llvm::BitVector &live) {
   return count;
 }
 
-static SourceLocation GetUnreachableLoc(CFGBlock &b) {
+static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
+                                        SourceRange &R2) {
   Stmt *S;
   if (!b.empty())
     S = b[0].getStmt();
@@ -2075,7 +2076,10 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b) {
 
   switch (S->getStmtClass()) {
   case Expr::BinaryOperatorClass: {
-    if (b.size() < 2) {
+    BinaryOperator *BO = cast<BinaryOperator>(S);
+    if (BO->getOpcode() == BinaryOperator::Comma) {
+      if (b.size() >= 2)
+        return b[1].getStmt()->getLocStart();
       CFGBlock *n = &b;
       while (1) {
         if (n->getTerminator())
@@ -2089,7 +2093,14 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b) {
           return n[0][0].getStmt()->getLocStart();
       }
     }
-    return b[1].getStmt()->getLocStart();
+    R1 = BO->getLHS()->getSourceRange();
+    R2 = BO->getRHS()->getSourceRange();
+    return BO->getOperatorLoc();
+  }
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *UO = cast<UnaryOperator>(S);
+    R1 = UO->getSubExpr()->getSourceRange();
+    return UO->getOperatorLoc();
   }
   case Stmt::CXXTryStmtClass: {
     return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
@@ -2104,7 +2115,8 @@ static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
   std::queue<CFGBlock*> workq;
   // Prep work queue
   workq.push(e);
-  SourceLocation top = GetUnreachableLoc(*e);
+  SourceRange R1, R2;
+  SourceLocation top = GetUnreachableLoc(*e, R1, R2);
   bool FromMainFile = false;
   bool FromSystemHeader = false;
   bool TopValid = false;
@@ -2117,7 +2129,7 @@ static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
   while (!workq.empty()) {
     CFGBlock *item = workq.front();
     workq.pop();
-    SourceLocation c = GetUnreachableLoc(*item);
+    SourceLocation c = GetUnreachableLoc(*item, R1, R2);
     if (c.isValid()
         && (!TopValid
             || (SM.isFromMainFile(c) && !FromMainFile)
@@ -2169,6 +2181,8 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
     // If there are no dead blocks, we're done.
     return;
 
+  SourceRange R1, R2;
+
   llvm::SmallVector<SourceLocation, 24> lines;
   bool AddEHEdges = AC.getAddEHEdges();
   // First, give warnings for blocks with no predecessors, as they
@@ -2184,7 +2198,7 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
           count += MarkLive(&b, live);
           continue;
         }
-        SourceLocation c = GetUnreachableLoc(b);
+        SourceLocation c = GetUnreachableLoc(b, R1, R2);
         if (!c.isValid()) {
           // Blocks without a location can't produce a warning, so don't mark
           // reachable blocks from here as live.

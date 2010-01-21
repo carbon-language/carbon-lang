@@ -30,14 +30,14 @@ void test2() {
       dead();   // expected-warning {{will never be executed}}
 
   case 2:
-    live(),
-      halt(),
+    live(), halt(),
       dead();   // expected-warning {{will never be executed}}
 
   case 3:
   live()
-    + halt();
-  dead();     // expected-warning {{will never be executed}}
+    +           // expected-warning {{will never be executed}}
+    halt();
+  dead();
 
   case 4:
   a4:
@@ -72,5 +72,11 @@ void test2() {
       halt();
   b6:
     goto c6;
+  case 7:
+    halt()
+      +         // expected-warning {{will never be executed}}
+      dead();
+    -           // expected-warning {{will never be executed}}
+      halt();
   }
 }

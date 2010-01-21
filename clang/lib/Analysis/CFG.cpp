@@ -237,7 +237,8 @@ static VariableArrayType* FindVA(Type* t) {
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
 CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
-                          bool AddEHEdges, bool AddScopes) {
+                          bool addehedges, bool AddScopes) {
+  AddEHEdges = addehedges;
   Context = C;
   assert(cfg.get());
   if (!Statement)
