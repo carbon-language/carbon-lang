@@ -216,10 +216,8 @@ namespace {
           const MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
           const MCSymbol *&StubSym =
             MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-          if (StubSym == 0) {
-            TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
+          if (StubSym == 0)
             StubSym = GetExternalSymbolSymbol(MO.getSymbolName());
-          }
           O << *Sym;
           return;
         }
