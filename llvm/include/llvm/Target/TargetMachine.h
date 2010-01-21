@@ -137,10 +137,7 @@ public:
   /// TargetSubtarget.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
   template<typename STC> const STC &getSubtarget() const {
-    const TargetSubtarget *TST = getSubtargetImpl();
-    assert(TST && dynamic_cast<const STC*>(TST) &&
-           "Not the right kind of subtarget!");
-    return *static_cast<const STC*>(TST);
+    return *static_cast<const STC*>(getSubtargetImpl());
   }
 
   /// getRegisterInfo - If register information is available, return it.  If

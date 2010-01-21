@@ -175,9 +175,6 @@ public:
                                                       AlignOf<Ty>::Alignment));
         MFInfo = new (Loc) Ty(*this);
     }
-
-    assert((void*)dynamic_cast<Ty*>(MFInfo) == (void*)MFInfo &&
-           "Invalid concrete type or multiple inheritence for getInfo");
     return static_cast<Ty*>(MFInfo);
   }
 
