@@ -98,14 +98,16 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
             It = cast<InvokeInst>(I)->getNormalDest()->begin();
           while (isa<PHINode>(It)) ++It;
           if (It != BasicBlock::iterator(CI)) {
-            // Recreate the cast at the beginning of the entry block.
+            // Recreate the cast after the user.
             // The old cast is left in place in case it is being used
             // as an insert point.
             Instruction *NewCI = CastInst::Create(Op, V, Ty, "", It);
             NewCI->takeName(CI);
             CI->replaceAllUsesWith(NewCI);
+            rememberInstruction(NewCI);
             return NewCI;
           }
+          rememberInstruction(CI);
           return CI;
         }
   }
