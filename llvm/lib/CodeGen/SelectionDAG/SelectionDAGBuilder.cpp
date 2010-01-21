@@ -5049,12 +5049,6 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
 
-    // Keep track of which landing pads go with which invokes. SjLj uses
-    // this to maintain the ordering of pads in the LSDA. Dwarf ignores it.
-    Function *F = LandingPad->getParent()->getFunction();
-    MMI->setCallSiteBeginLabel(BeginLabel,
-                               F->getCallSiteNumber(CS.getInstruction()));
-
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
