@@ -21,3 +21,22 @@ typedef int (^blocktype)(int a, int b);
           return (blocktype)c;
 }
 @end
+
+@interface B {
+    blocktype a;
+    blocktype b;
+    blocktype c;
+}
+- (id)Meth;
+@end
+
+@implementation B
+- (id)Meth {
+        if (a)
+          return (A*)a; // expected-error {{C-style cast from 'blocktype' (aka 'int (^)(int, int)') to 'A *' is not allowed}}
+        if (b)
+	  return (id)b;
+        if (c)
+	  return (Class)b;
+}
+@end

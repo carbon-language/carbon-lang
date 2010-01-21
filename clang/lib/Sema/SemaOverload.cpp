@@ -1151,6 +1151,13 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     }
     ToPointeeType = ToBlockPtr->getPointeeType();
   }
+  else if (FromType->getAs<BlockPointerType>() && 
+           ToObjCPtr && ToObjCPtr->isObjCBuiltinType()) {
+    // Objective C++: We're able to convert from a block pointer type to a 
+    // pointer to an any object.
+    ConvertedType = ToType;
+    return true;
+  }
   else
     return false;
 
