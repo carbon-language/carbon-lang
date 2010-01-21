@@ -1204,7 +1204,7 @@ public:
   enum SetterKind { Assign, Retain, Copy };
   enum PropertyControl { None, Required, Optional };
 private:
-  SourceLocation AtLoc;   // location of @propery
+  SourceLocation AtLoc;   // location of @property
   QualType DeclType;
   unsigned PropertyAttributes : 8;
 
