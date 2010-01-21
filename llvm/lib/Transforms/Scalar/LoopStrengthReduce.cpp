@@ -1120,6 +1120,8 @@ public:
             const SmallVector<LSRUse, 16> &Uses, const Loop *L,
             ScalarEvolution &SE);
 
+  unsigned getNumRegs() const { return NumRegs; }
+
   bool operator<(const Score &Other) const;
 
   void print_details(raw_ostream &OS, const SCEV *Reg,
@@ -1383,6 +1385,11 @@ class LSRInstance {
   /// arbitrary index value to each register as a sort tie breaker.
   unsigned CurrentArbitraryRegIndex;
 
+  /// MaxNumRegs - To help prune the search for solutions, identify the number
+  /// of registers needed by the initial solution. No formula should require
+  /// more than this.
+  unsigned MaxNumRegs;
+
   /// Factors - Interesting factors between use strides.
   SmallSetVector<int64_t, 4> Factors;
 
@@ -1411,6 +1418,8 @@ class LSRInstance {
 
   void CountRegister(const SCEV *Reg, uint32_t Complexity, size_t LUIdx);
   void CountRegisters(const Formula &F, size_t LUIdx);
+
+  bool InsertFormula(LSRUse &LU, unsigned LUIdx, const Formula &F);
 
   void GenerateSymbolicOffsetReuse(LSRUse &LU, unsigned LUIdx,
                                    Formula Base);
@@ -1913,6 +1922,23 @@ void LSRInstance::CountRegisters(const Formula &F, size_t LUIdx) {
     CountRegister(*I, Complexity, LUIdx);
 }
 
+/// InsertFormula - If the given formula has not yet been inserted, add it
+/// to the list, and return true. Return false otherwise.
+bool LSRInstance::InsertFormula(LSRUse &LU, unsigned LUIdx, const Formula &F) {
+  // If a formula by itself would require more registers than the base solution,
+  // discard it and stop searching from it, as it won't be profitable. This is
+  // actually more permissive than it could be, because it doesn't include
+  // registers used by non-constant strides in F.
+  if (F.getNumRegs() > MaxNumRegs)
+    return false;
+
+  if (!LU.InsertFormula(F))
+    return false;
+
+  CountRegisters(LU.Formulae.back(), LUIdx);
+  return true;
+}
+
 /// GenerateSymbolicOffsetReuse - Generate reuse formulae using symbolic
 /// offsets.
 void LSRInstance::GenerateSymbolicOffsetReuse(LSRUse &LU, unsigned LUIdx,
@@ -1930,8 +1956,7 @@ void LSRInstance::GenerateSymbolicOffsetReuse(LSRUse &LU, unsigned LUIdx,
     if (!isLegalUse(F.AM, LU.Kind, LU.AccessTy, TLI))
       continue;
     F.BaseRegs[i] = G;
-    if (LU.InsertFormula(F))
-      CountRegisters(LU.Formulae.back(), LUIdx);
+    (void)InsertFormula(LU, LUIdx, F);
   }
 }
 
@@ -1981,8 +2006,7 @@ void LSRInstance::GenerateICmpZeroScaledReuse(LSRUse &LU, unsigned LUIdx,
     }
 
     // If we make it here and it's legal, add it.
-    if (LU.InsertFormula(F))
-      CountRegisters(LU.Formulae.back(), LUIdx);
+    (void)InsertFormula(LU, LUIdx, F);
   next:;
   }
 }
@@ -2006,11 +2030,9 @@ LSRInstance::GenerateFormulaeFromReplacedBaseReg(
        E = AddOps.end(); I != E; ++I)
     F.BaseRegs.push_back(*I);
   F.AM.HasBaseReg = !F.BaseRegs.empty();
-  if (LU.InsertFormula(F)) {
-    CountRegisters(LU.Formulae.back(), LUIdx);
-    // Recurse.
+  if (InsertFormula(LU, LUIdx, F))
+    // If that formula hadn't been seen before, recurse to find more like it.
     GenerateReassociationReuse(LU, LUIdx, LU.Formulae.back());
-  }
 }
 
 /// GenerateReassociationReuse - Split out subexpressions from adds and
@@ -2095,8 +2117,7 @@ void LSRInstance::GenerateCombinationReuse(LSRUse &LU, unsigned LUIdx,
   }
   if (Ops.size() > 1) {
     F.BaseRegs.push_back(SE.getAddExpr(Ops));
-    if (LU.InsertFormula(F))
-      CountRegisters(LU.Formulae.back(), LUIdx);
+    (void)InsertFormula(LU, LUIdx, F);
   }
 }
 
@@ -2144,8 +2165,7 @@ void LSRInstance::GenerateScaledReuse(LSRUse &LU, unsigned LUIdx,
           std::swap(NewF.BaseRegs[i], NewF.BaseRegs.back());
           NewF.BaseRegs.pop_back();
           NewF.AM.HasBaseReg = !NewF.BaseRegs.empty();
-          if (LU.InsertFormula(NewF))
-            CountRegisters(LU.Formulae.back(), LUIdx);
+          (void)InsertFormula(LU, LUIdx, NewF);
         }
       }
   }
@@ -2174,8 +2194,7 @@ void LSRInstance::GenerateTruncateReuse(LSRUse &LU, unsigned LUIdx,
       for (SmallVectorImpl<const SCEV *>::iterator J = F.BaseRegs.begin(),
            JE = F.BaseRegs.end(); J != JE; ++J)
         *J = SE.getAnyExtendExpr(*J, SrcTy);
-      if (LU.InsertFormula(F))
-        CountRegisters(LU.Formulae.back(), LUIdx);
+      (void)InsertFormula(LU, LUIdx, F);
     }
   }
 }
@@ -2300,8 +2319,7 @@ void LSRInstance::GenerateConstantOffsetReuse() {
         const SCEV *Diff = SE.getAddExpr(NegImmS, NewF.ScaledReg);
         if (Diff->isZero()) continue;
         NewF.ScaledReg = Diff;
-        if (LU.InsertFormula(NewF))
-          CountRegisters(LU.Formulae.back(), LUIdx);
+        (void)InsertFormula(LU, LUIdx, NewF);
       }
       // Use the immediate in a base register.
       for (size_t N = 0, NE = F.BaseRegs.size(); N != NE; ++N) {
@@ -2320,8 +2338,7 @@ void LSRInstance::GenerateConstantOffsetReuse() {
                                         -(uint64_t)NewF.AM.BaseOffs)))
           continue;
         NewF.BaseRegs[N] = Diff;
-        if (LU.InsertFormula(NewF))
-          CountRegisters(LU.Formulae.back(), LUIdx);
+        (void)InsertFormula(LU, LUIdx, NewF);
       }
     }
   }
@@ -2358,8 +2375,19 @@ LSRInstance::GenerateAllReuseFormulae() {
 /// TODO: Should this give more weight to users inside the loop?
 void
 LSRInstance::GenerateLoopInvariantRegisterUses() {
-  for (size_t i = 0, e = RegSequence.size(); i != e; ++i)
-    if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(RegSequence[i])) {
+  SmallVector<const SCEV *, 8> Worklist(RegSequence.begin(), RegSequence.end());
+
+  while (!Worklist.empty()) {
+    const SCEV *S = Worklist.pop_back_val();
+
+    if (const SCEVNAryExpr *N = dyn_cast<SCEVNAryExpr>(S))
+      Worklist.insert(Worklist.end(), N->op_begin(), N->op_end());
+    else if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(S))
+      Worklist.push_back(C->getOperand());
+    else if (const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S)) {
+      Worklist.push_back(D->getLHS());
+      Worklist.push_back(D->getRHS());
+    } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
       const Value *V = U->getValue();
       if (const Instruction *Inst = dyn_cast<Instruction>(V))
         if (L->contains(Inst)) continue;
@@ -2400,6 +2428,7 @@ LSRInstance::GenerateLoopInvariantRegisterUses() {
         CountRegisters(LU.Formulae.back(), Uses.size() - 1);
       }
     }
+  }
 }
 
 #ifndef NDEBUG
@@ -2424,7 +2453,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   : IU(P->getAnalysis<IVUsers>()),
     SE(P->getAnalysis<ScalarEvolution>()),
     DT(P->getAnalysis<DominatorTree>()),
-    TLI(tli), L(l), Changed(false), CurrentArbitraryRegIndex(0) {
+    TLI(tli), L(l), Changed(false), CurrentArbitraryRegIndex(0), MaxNumRegs(0) {
 
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm()) return;
@@ -2538,14 +2567,23 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   if (Types.size() == 1)
     Types.clear();
 
-  // Now use the reuse data to generate a bunch of interesting ways
-  // to formulate the values needed for the uses.
-  GenerateAllReuseFormulae();
-
   // If there are any uses of registers that we're tracking that have escaped
   // IVUsers' attention, add trivial uses for them, so that the register
   // voting process takes the into consideration.
   GenerateLoopInvariantRegisterUses();
+
+  // Start by assuming we'll assign each use its own register. This is
+  // sometimes called "full" strength reduction, or "superhero" mode.
+  // Sometimes this is the best solution, but if there are opportunities for
+  // reuse we may find a better solution.
+  Score CurScore;
+  CurScore.RateInitial(Uses, L, SE);
+
+  MaxNumRegs = CurScore.getNumRegs();
+
+  // Now use the reuse data to generate a bunch of interesting ways
+  // to formulate the values needed for the uses.
+  GenerateAllReuseFormulae();
 
   // Sort the formulae. TODO: This is redundantly sorted below.
   for (SmallVectorImpl<LSRUse>::iterator I = Uses.begin(), E = Uses.end();
@@ -2558,13 +2596,6 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   // Ok, we've now collected all the uses and noted their register uses. The
   // next step is to start looking at register reuse possibilities.
   DEBUG(print(dbgs()); dbgs() << '\n');
-
-  // Start by assuming we'll assign each use its own register. This is
-  // sometimes called "full" strength reduction, or "superhero" mode.
-  // Sometimes this is the best solution, but if there are opportunities for
-  // reuse we may find a better solution.
-  Score CurScore;
-  CurScore.RateInitial(Uses, L, SE);
 
   // Create a sorted list of registers with those with the most uses appearing
   // earlier in the list. We'll visit them first, as they're the most likely
@@ -2669,6 +2700,10 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 }
 
 void LSRInstance::print(raw_ostream &OS) const {
+  if (MaxNumRegs != 0)
+    OS << "LSR is considering " << MaxNumRegs << " to be the maximum "
+          "number of registers needed.\n";
+
   OS << "LSR has identified the following interesting factors and types: ";
   bool First = true;
 
