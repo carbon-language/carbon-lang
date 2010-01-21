@@ -113,7 +113,11 @@ class MachineModuleInfo : public ImmutablePass {
   // LandingPads - List of LandingPadInfo describing the landing pad information
   // in the current function.
   std::vector<LandingPadInfo> LandingPads;
-  
+
+  // Map of invoke call site index values to associated begin EH_LABEL for
+  // the current function.
+  DenseMap<unsigned, unsigned> CallSiteMap;
+
   // TypeInfos - List of C++ TypeInfo used in the current function.
   //
   std::vector<GlobalVariable *> TypeInfos;
@@ -301,7 +305,19 @@ public:
   const std::vector<LandingPadInfo> &getLandingPads() const {
     return LandingPads;
   }
-  
+
+  /// setCallSiteBeginLabel - Map the begin label for a call site
+  void setCallSiteBeginLabel(unsigned BeginLabel, unsigned Site) {
+    CallSiteMap[BeginLabel] = Site;
+  }
+
+  /// getCallSiteBeginLabel - Get the call site number for a begin label
+  unsigned getCallSiteBeginLabel(unsigned BeginLabel) {
+    assert(CallSiteMap.count(BeginLabel) &&
+           "Missing call site number for EH_LABEL!");
+    return CallSiteMap[BeginLabel];
+  }
+
   /// getTypeInfos - Return a reference to the C++ typeinfo for the current
   /// function.
   const std::vector<GlobalVariable *> &getTypeInfos() const {

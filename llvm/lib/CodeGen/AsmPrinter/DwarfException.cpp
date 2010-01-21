@@ -590,7 +590,16 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         }
 
         // Otherwise, create a new call-site.
-        CallSites.push_back(Site);
+        if (MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf)
+          CallSites.push_back(Site);
+        else {
+          // SjLj EH must maintain the call sites in the order assigned
+          // to them by the SjLjPrepare pass.
+          unsigned SiteNo = MMI->getCallSiteBeginLabel(BeginLabel);
+          if (CallSites.size() < SiteNo)
+            CallSites.resize(SiteNo);
+          CallSites[SiteNo - 1] = Site;
+        }
         PreviousIsInvoke = true;
       } else {
         // Create a gap.

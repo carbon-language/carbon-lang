@@ -24,6 +24,7 @@
 #include "llvm/Argument.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -86,6 +87,8 @@ private:
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
   AttrListPtr AttributeList;              ///< Parameter attributes
+  DenseMap<Instruction*, unsigned>
+    CallSiteNumbering;                    ///< SjLj EH call site numbering
 
   // HasLazyArguments is stored in Value::SubclassData.
   /*bool HasLazyArguments;*/
@@ -165,7 +168,19 @@ public:
     setValueSubclassData((getSubclassDataFromValue() & 1) |
                          (static_cast<unsigned>(CC) << 1));
   }
-  
+
+  /// setCallSiteNumber - Set the call site number mapping for an invoke
+  /// in the function
+  void setCallSiteNumber(Instruction *II, unsigned Num) {
+    CallSiteNumbering[II] = Num;
+  }
+
+  /// getCallSiteNumber - Get the call site number for an invoke instruction
+  unsigned getCallSiteNumber(Instruction *II) {
+    if (CallSiteNumbering.count(II) == 0) return 0;
+    return CallSiteNumbering[II];
+  }
+
   /// getAttributes - Return the attribute list for this Function.
   ///
   const AttrListPtr &getAttributes() const { return AttributeList; }

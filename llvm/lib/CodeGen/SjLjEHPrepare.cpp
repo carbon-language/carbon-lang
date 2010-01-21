@@ -474,8 +474,10 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // At this point, we are all set up, update the invoke instructions
     // to mark their call_site values, and fill in the dispatch switch
     // accordingly.
-    for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
+    for (unsigned i = 0, e = Invokes.size(); i != e; ++i) {
+      F.setCallSiteNumber(Invokes[i], i+1);
       markInvokeCallSite(Invokes[i], i+1, CallSite, DispatchSwitch);
+    }
 
     // The front end has likely added calls to _Unwind_Resume. We need
     // to find those calls and mark the call_site as -1 immediately prior.
