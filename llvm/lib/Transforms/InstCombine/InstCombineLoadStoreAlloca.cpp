@@ -406,12 +406,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
        --ScanInsts) {
     --BBI;
-    // Don't count debug info directives, lest they affect codegen,
-    // and we skip pointer-to-pointer bitcasts, which are NOPs.
-    // It is necessary for correctness to skip those that feed into a
-    // llvm.dbg.declare, as these are not present when debugging is off.
-    if (isa<DbgInfoIntrinsic>(BBI) ||
-        (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
+    // Don't count debug info directives, lest they affect codegen
+    if (isa<DbgInfoIntrinsic>(BBI)) {
       ScanInsts++;
       continue;
     }    
@@ -475,14 +471,12 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 
   
   // If this store is the last instruction in the basic block (possibly
-  // excepting debug info instructions and the pointer bitcasts that feed
-  // into them), and if the block ends with an unconditional branch, try
-  // to move it to the successor block.
+  // excepting debug info instructions), and if the block ends with an
+  // unconditional branch, try to move it to the successor block.
   BBI = &SI; 
   do {
     ++BBI;
-  } while (isa<DbgInfoIntrinsic>(BBI) ||
-           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType())));
+  } while (isa<DbgInfoIntrinsic>(BBI));
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional())
       if (SimplifyStoreAtEndOfBlock(SI))
@@ -542,8 +536,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   if (OtherBr->isUnconditional()) {
     --BBI;
     // Skip over debugging info.
-    while (isa<DbgInfoIntrinsic>(BBI) ||
-           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
+    while (isa<DbgInfoIntrinsic>(BBI)) {
       if (BBI==OtherBB->begin())
         return false;
       --BBI;
