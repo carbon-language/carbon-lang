@@ -126,23 +126,29 @@ static const Function *getFunctionForValue(Value *V) {
   if (!V) return NULL;
   if (Instruction *I = dyn_cast<Instruction>(V))
     return I->getParent()->getParent();
-  if (BasicBlock *BB = dyn_cast<BasicBlock>(V)) return BB->getParent();
-  if (Argument *A = dyn_cast<Argument>(V)) return A->getParent();
+  if (BasicBlock *BB = dyn_cast<BasicBlock>(V))
+    return BB->getParent();
+  if (Argument *A = dyn_cast<Argument>(V))
+    return A->getParent();
   return NULL;
 }
 
 #ifndef NDEBUG
 static const Function *assertLocalFunction(const MDNode *N) {
-  if (!N->isFunctionLocal()) return NULL;
+  if (!N->isFunctionLocal()) return 0;
 
-  const Function *F = NULL, *NewF = NULL;
+  const Function *F = 0, *NewF = 0;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (Value *V = N->getOperand(i)) {
-      if (MDNode *MD = dyn_cast<MDNode>(V)) NewF = assertLocalFunction(MD);
-      else NewF = getFunctionForValue(V);
+      if (MDNode *MD = dyn_cast<MDNode>(V))
+        NewF = assertLocalFunction(MD);
+      else
+        NewF = getFunctionForValue(V);
     }
-    if (F && NewF) assert(F == NewF && "inconsistent function-local metadata");
-    else if (!F) F = NewF;
+    if (F == 0)
+      F = NewF;
+    else 
+      assert((NewF == 0 || F == NewF) &&"inconsistent function-local metadata");
   }
   return F;
 }
@@ -161,7 +167,8 @@ const Function *MDNode::getFunction() const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (Value *V = getOperand(i)) {
       if (MDNode *MD = dyn_cast<MDNode>(V)) {
-        if (const Function *F = MD->getFunction()) return F;
+        if (const Function *F = MD->getFunction())
+          return F;
       } else {
         return getFunctionForValue(V);
       }
