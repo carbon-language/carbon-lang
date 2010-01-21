@@ -192,18 +192,21 @@ void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) {
   if (ProgName && ProgName[0])
     S << ProgName << ": ";
 
-  if (Filename == "-")
-    S << "<stdin>";
-  else
-    S << Filename;
+  if (!Filename.empty()) {
+    if (Filename == "-")
+      S << "<stdin>";
+    else
+      S << Filename;
   
-  if (LineNo != -1) {
-    S << ':' << LineNo;
-    if (ColumnNo != -1)
-      S << ':' << (ColumnNo+1);
+    if (LineNo != -1) {
+      S << ':' << LineNo;
+      if (ColumnNo != -1)
+        S << ':' << (ColumnNo+1);
+    }
+    S << ": ";
   }
   
-  S << ": " << Message << '\n';
+  S << Message << '\n';
 
   if (LineNo != -1 && ColumnNo != -1 && ShowLine) {
     S << LineContents << '\n';
