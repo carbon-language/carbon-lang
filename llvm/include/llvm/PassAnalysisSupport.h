@@ -19,14 +19,12 @@
 #ifndef LLVM_PASS_ANALYSIS_SUPPORT_H
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
-#include <vector>
 #include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace llvm {
-
-class StringRef;
 
 //===----------------------------------------------------------------------===//
 // AnalysisUsage - Represent the analysis usage information of a pass.  This
@@ -192,8 +190,15 @@ AnalysisType *Pass::getAnalysisIfAvailable() const {
 
   const PassInfo *PI = getClassPassInfo<AnalysisType>();
   if (PI == 0) return 0;
-  return dynamic_cast<AnalysisType*>
-    (Resolver->getAnalysisIfAvailable(PI, true));
+
+  Pass *ResultPass = Resolver->getAnalysisIfAvailable(PI, true);
+  if (ResultPass == 0) return 0;
+
+  // Because the AnalysisType may not be a subclass of pass (for
+  // AnalysisGroups), we use getAdjustedAnalysisPointer here to potentially
+  // adjust the return pointer (because the class may multiply inherit, once
+  // from pass, once from AnalysisType).
+  return (AnalysisType*)ResultPass->getAdjustedAnalysisPointer(PI);
 }
 
 /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
@@ -202,8 +207,7 @@ AnalysisType *Pass::getAnalysisIfAvailable() const {
 ///
 template<typename AnalysisType>
 AnalysisType &Pass::getAnalysis() const {
-  assert(Resolver &&"Pass has not been inserted into a PassManager object!");
-
+  assert(Resolver && "Pass has not been inserted into a PassManager object!");
   return getAnalysisID<AnalysisType>(getClassPassInfo<AnalysisType>());
 }
 
@@ -220,13 +224,10 @@ AnalysisType &Pass::getAnalysisID(const PassInfo *PI) const {
           "'required' by pass!");
 
   // Because the AnalysisType may not be a subclass of pass (for
-  // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
-  // return pointer (because the class may multiply inherit, once from pass,
-  // once from AnalysisType).
-  //
-  AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
-  assert(Result && "Pass does not implement interface required!");
-  return *Result;
+  // AnalysisGroups), we use getAdjustedAnalysisPointer here to potentially
+  // adjust the return pointer (because the class may multiply inherit, once
+  // from pass, once from AnalysisType).
+  return *(AnalysisType*)ResultPass->getAdjustedAnalysisPointer(PI);
 }
 
 /// getAnalysis<AnalysisType>() - This function is used by subclasses to get
@@ -248,16 +249,13 @@ AnalysisType &Pass::getAnalysisID(const PassInfo *PI, Function &F) {
   // should be a small number, we just do a linear search over a (dense)
   // vector.
   Pass *ResultPass = Resolver->findImplPass(this, PI, F);
-  assert (ResultPass &&  "Unable to find requested analysis info");
+  assert(ResultPass && "Unable to find requested analysis info");
   
   // Because the AnalysisType may not be a subclass of pass (for
-  // AnalysisGroups), we must use dynamic_cast here to potentially adjust the
-  // return pointer (because the class may multiply inherit, once from pass,
-  // once from AnalysisType).
-  //
-  AnalysisType *Result = dynamic_cast<AnalysisType*>(ResultPass);
-  assert(Result && "Pass does not implement interface required!");
-  return *Result;
+  // AnalysisGroups), we use getAdjustedAnalysisPointer here to potentially
+  // adjust the return pointer (because the class may multiply inherit, once
+  // from pass, once from AnalysisType).
+  return *(AnalysisType*)ResultPass->getAdjustedAnalysisPointer(PI);
 }
 
 } // End llvm namespace
