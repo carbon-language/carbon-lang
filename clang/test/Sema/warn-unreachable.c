@@ -87,5 +87,8 @@ void test2() {
     halt()
       ?         // expected-warning {{will never be executed}}
       dead() : dead();
+  case 10:
+    (           // expected-warning {{will never be executed}}
+      float)halt();
   }
 }

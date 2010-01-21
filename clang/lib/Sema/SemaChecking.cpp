@@ -2116,6 +2116,11 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
     const ConditionalOperator *CO = cast<ConditionalOperator>(S);
     return CO->getQuestionLoc();
   }
+  case Expr::CStyleCastExprClass: {
+    const CStyleCastExpr *CSC = cast<CStyleCastExpr>(S);
+    R1 = CSC->getSubExpr()->getSourceRange();
+    return CSC->getLParenLoc();
+  }
   case Expr::ImplicitCastExprClass:
     ++sn;
     goto top;
