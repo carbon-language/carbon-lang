@@ -13,14 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/Analysis/CFG.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include <limits>
+#include <queue>
 using namespace clang;
 
 /// getLocationOfStringLiteralByte - Return a source location that points to the
@@ -2029,3 +2037,425 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
   return;
 }
 
+// MarkLive - Mark all the blocks reachable from e as live.  Returns the total
+// number of blocks just marked live.
+static unsigned MarkLive(CFGBlock *e, llvm::BitVector &live) {
+  unsigned count = 0;
+  std::queue<CFGBlock*> workq;
+  // Prep work queue
+  live.set(e->getBlockID());
+  ++count;
+  workq.push(e);
+  // Solve
+  while (!workq.empty()) {
+    CFGBlock *item = workq.front();
+    workq.pop();
+    for (CFGBlock::succ_iterator I=item->succ_begin(),
+           E=item->succ_end();
+         I != E;
+         ++I) {
+      if ((*I) && !live[(*I)->getBlockID()]) {
+        live.set((*I)->getBlockID());
+        ++count;
+        workq.push(*I);
+      }
+    }
+  }
+  return count;
+}
+
+static SourceLocation GetUnreachableLoc(CFGBlock &b) {
+  Stmt *S;
+  if (!b.empty())
+    S = b[0].getStmt();
+  else if (b.getTerminator())
+    S = b.getTerminator();
+  else
+    return SourceLocation();
+
+  switch (S->getStmtClass()) {
+  case Expr::BinaryOperatorClass: {
+    if (b.size() < 2) {
+      CFGBlock *n = &b;
+      while (1) {
+        if (n->getTerminator())
+          return n->getTerminator()->getLocStart();
+        if (n->succ_size() != 1)
+          return SourceLocation();
+        n = n[0].succ_begin()[0];
+        if (n->pred_size() != 1)
+          return SourceLocation();
+        if (!n->empty())
+          return n[0][0].getStmt()->getLocStart();
+      }
+    }
+    return b[1].getStmt()->getLocStart();
+  }
+  default: ;
+  }
+  return S->getLocStart();
+}
+
+static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
+                               SourceManager &SM) {
+  std::queue<CFGBlock*> workq;
+  // Prep work queue
+  workq.push(e);
+  SourceLocation top = GetUnreachableLoc(*e);
+  bool FromMainFile = false;
+  bool FromSystemHeader = false;
+  bool TopValid = false;
+  if (top.isValid()) {
+    FromMainFile = SM.isFromMainFile(top);
+    FromSystemHeader = SM.isInSystemHeader(top);
+    TopValid = true;
+  }
+  // Solve
+  while (!workq.empty()) {
+    CFGBlock *item = workq.front();
+    workq.pop();
+    SourceLocation c = GetUnreachableLoc(*item);
+    if (c.isValid()
+        && (!TopValid
+            || (SM.isFromMainFile(c) && !FromMainFile)
+            || (FromSystemHeader && !SM.isInSystemHeader(c))
+            || SM.isBeforeInTranslationUnit(c, top))) {
+      top = c;
+      FromMainFile = SM.isFromMainFile(top);
+      FromSystemHeader = SM.isInSystemHeader(top);
+    }
+    live.set(item->getBlockID());
+    for (CFGBlock::succ_iterator I=item->succ_begin(),
+           E=item->succ_end();
+         I != E;
+         ++I) {
+      if ((*I) && !live[(*I)->getBlockID()]) {
+        live.set((*I)->getBlockID());
+        workq.push(*I);
+      }
+    }
+  }
+  return top;
+}
+
+static int LineCmp(const void *p1, const void *p2) {
+  SourceLocation *Line1 = (SourceLocation *)p1;
+  SourceLocation *Line2 = (SourceLocation *)p2;
+  return !(*Line1 < *Line2);
+}
+
+/// CheckUnreachable - Check for unreachable code.
+void Sema::CheckUnreachable(AnalysisContext &AC) {
+  unsigned count;
+  // We avoid checking when there are errors, as the CFG won't faithfully match
+  // the user's code.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
+  if (Diags.getDiagnosticLevel(diag::warn_unreachable) == Diagnostic::Ignored)
+    return;
+
+  CFG *cfg = AC.getCFG();
+  if (cfg == 0)
+    return;
+  
+  llvm::BitVector live(cfg->getNumBlockIDs());
+  // Mark all live things first.
+  count = MarkLive(&cfg->getEntry(), live);
+
+  if (count == cfg->getNumBlockIDs())
+    // If there are no dead blocks, we're done.
+    return;
+
+  llvm::SmallVector<SourceLocation, 24> lines;
+  // First, give warnings for blocks with no predecessors, as they
+  // can't be part of a loop.
+  for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+    CFGBlock &b = **I;
+    if (!live[b.getBlockID()]) {
+      if (b.pred_begin() == b.pred_end()) {
+        SourceLocation c = GetUnreachableLoc(b);
+        if (!c.isValid()) {
+          // Blocks without a location can't produce a warning, so don't mark
+          // reachable blocks from here as live.
+          live.set(b.getBlockID());
+          ++count;
+          continue;
+        }
+        lines.push_back(c);
+        // Avoid excessive errors by marking everything reachable from here
+        count += MarkLive(&b, live);
+      }
+    }
+  }
+
+  if (count < cfg->getNumBlockIDs()) {
+    // And then give warnings for the tops of loops.
+    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+      CFGBlock &b = **I;
+      if (!live[b.getBlockID()])
+        // Avoid excessive errors by marking everything reachable from here
+        lines.push_back(MarkLiveTop(&b, live, Context.getSourceManager()));
+    }
+  }
+
+  llvm::array_pod_sort(lines.begin(), lines.end(), LineCmp);
+  for (llvm::SmallVector<SourceLocation, 24>::iterator I = lines.begin(),
+         E = lines.end();
+       I != E;
+       ++I)
+    if (I->isValid())
+      Diag(*I, diag::warn_unreachable);
+}
+
+/// CheckFallThrough - Check that we don't fall off the end of a
+/// Statement that should return a value.
+///
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end,
+/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
+/// return.  We assume NeverFallThrough iff we never fall off the end of the
+/// statement but we may return.  We assume that functions not marked noreturn
+/// will return.
+Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
+  CFG *cfg = AC.getCFG();
+  if (cfg == 0)
+    // FIXME: This should be NeverFallThrough
+    return NeverFallThroughOrReturn;
+
+  // The CFG leaves in dead things, and we don't want to dead code paths to
+  // confuse us, so we mark all live things first.
+  std::queue<CFGBlock*> workq;
+  llvm::BitVector live(cfg->getNumBlockIDs());
+  MarkLive(&cfg->getEntry(), live);
+
+  // Now we know what is live, we check the live precessors of the exit block
+  // and look for fall through paths, being careful to ignore normal returns,
+  // and exceptional paths.
+  bool HasLiveReturn = false;
+  bool HasFakeEdge = false;
+  bool HasPlainEdge = false;
+  bool HasAbnormalEdge = false;
+  for (CFGBlock::pred_iterator I=cfg->getExit().pred_begin(),
+         E = cfg->getExit().pred_end();
+       I != E;
+       ++I) {
+    CFGBlock& B = **I;
+    if (!live[B.getBlockID()])
+      continue;
+    if (B.size() == 0) {
+      // A labeled empty statement, or the entry block...
+      HasPlainEdge = true;
+      continue;
+    }
+    Stmt *S = B[B.size()-1];
+    if (isa<ReturnStmt>(S)) {
+      HasLiveReturn = true;
+      continue;
+    }
+    if (isa<ObjCAtThrowStmt>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    if (isa<CXXThrowExpr>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    if (const AsmStmt *AS = dyn_cast<AsmStmt>(S)) {
+      if (AS->isMSAsm()) {
+        HasFakeEdge = true;
+        HasLiveReturn = true;
+        continue;
+      }
+    }
+    if (isa<CXXTryStmt>(S)) {
+      HasAbnormalEdge = true;
+      continue;
+    }
+
+    bool NoReturnEdge = false;
+    if (CallExpr *C = dyn_cast<CallExpr>(S)) {
+      if (B.succ_begin()[0] != &cfg->getExit()) {
+        HasAbnormalEdge = true;
+        continue;
+      }
+      Expr *CEE = C->getCallee()->IgnoreParenCasts();
+      if (CEE->getType().getNoReturnAttr()) {
+        NoReturnEdge = true;
+        HasFakeEdge = true;
+      } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+        ValueDecl *VD = DRE->getDecl();
+        if (VD->hasAttr<NoReturnAttr>()) {
+          NoReturnEdge = true;
+          HasFakeEdge = true;
+        }
+      }
+    }
+    // FIXME: Add noreturn message sends.
+    if (NoReturnEdge == false)
+      HasPlainEdge = true;
+  }
+  if (!HasPlainEdge) {
+    if (HasLiveReturn)
+      return NeverFallThrough;
+    return NeverFallThroughOrReturn;
+  }
+  if (HasAbnormalEdge || HasFakeEdge || HasLiveReturn)
+    return MaybeFallThrough;
+  // This says AlwaysFallThrough for calls to functions that are not marked
+  // noreturn, that don't return.  If people would like this warning to be more
+  // accurate, such functions should be marked as noreturn.
+  return AlwaysFallThrough;
+}
+
+/// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
+/// function that should return a value.  Check that we don't fall off the end
+/// of a noreturn function.  We assume that functions and blocks not marked
+/// noreturn will return.
+void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body,
+                                          AnalysisContext &AC) {
+  // FIXME: Would be nice if we had a better way to control cascading errors,
+  // but for now, avoid them.  The problem is that when Parse sees:
+  //   int foo() { return a; }
+  // The return is eaten and the Sema code sees just:
+  //   int foo() { }
+  // which this code would then warn about.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
+  
+  bool ReturnsVoid = false;
+  bool HasNoReturn = false;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // If the result type of the function is a dependent type, we don't know
+    // whether it will be void or not, so don't 
+    if (FD->getResultType()->isDependentType())
+      return;
+    if (FD->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (FD->hasAttr<NoReturnAttr>())
+      HasNoReturn = true;
+  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    if (MD->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (MD->hasAttr<NoReturnAttr>())
+      HasNoReturn = true;
+  }
+
+  // Short circuit for compilation speed.
+  if ((Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
+       == Diagnostic::Ignored || ReturnsVoid)
+      && (Diags.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr)
+          == Diagnostic::Ignored || !HasNoReturn)
+      && (Diags.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+          == Diagnostic::Ignored || !ReturnsVoid))
+    return;
+  // FIXME: Function try block
+  if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
+    switch (CheckFallThrough(AC)) {
+    case MaybeFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(),diag::warn_maybe_falloff_nonvoid_function);
+      break;
+    case AlwaysFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
+      break;
+    case NeverFallThroughOrReturn:
+      if (ReturnsVoid && !HasNoReturn)
+        Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_function);
+      break;
+    case NeverFallThrough:
+      break;
+    }
+  }
+}
+
+/// CheckFallThroughForBlock - Check that we don't fall off the end of a block
+/// that should return a value.  Check that we don't fall off the end of a
+/// noreturn block.  We assume that functions and blocks not marked noreturn
+/// will return.
+void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body,
+                                    AnalysisContext &AC) {
+  // FIXME: Would be nice if we had a better way to control cascading errors,
+  // but for now, avoid them.  The problem is that when Parse sees:
+  //   int foo() { return a; }
+  // The return is eaten and the Sema code sees just:
+  //   int foo() { }
+  // which this code would then warn about.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
+  bool ReturnsVoid = false;
+  bool HasNoReturn = false;
+  if (const FunctionType *FT =BlockTy->getPointeeType()->getAs<FunctionType>()){
+    if (FT->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (FT->getNoReturnAttr())
+      HasNoReturn = true;
+  }
+
+  // Short circuit for compilation speed.
+  if (ReturnsVoid
+      && !HasNoReturn
+      && (Diags.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+          == Diagnostic::Ignored || !ReturnsVoid))
+    return;
+  // FIXME: Funtion try block
+  if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
+    switch (CheckFallThrough(AC)) {
+    case MaybeFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::err_noreturn_block_has_return_expr);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::err_maybe_falloff_nonvoid_block);
+      break;
+    case AlwaysFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::err_noreturn_block_has_return_expr);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::err_falloff_nonvoid_block);
+      break;
+    case NeverFallThroughOrReturn:
+      if (ReturnsVoid)
+        Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_block);
+      break;
+    case NeverFallThrough:
+      break;
+    }
+  }
+}
+
+/// CheckParmsForFunctionDef - Check that the parameters of the given
+/// function are appropriate for the definition of a function. This
+/// takes care of any checks that cannot be performed on the
+/// declaration itself, e.g., that the types of each of the function
+/// parameters are complete.
+bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
+  bool HasInvalidParm = false;
+  for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
+    ParmVarDecl *Param = FD->getParamDecl(p);
+
+    // C99 6.7.5.3p4: the parameters in a parameter type list in a
+    // function declarator that is part of a function definition of
+    // that function shall not have incomplete type.
+    //
+    // This is also C++ [dcl.fct]p6.
+    if (!Param->isInvalidDecl() &&
+        RequireCompleteType(Param->getLocation(), Param->getType(),
+                               diag::err_typecheck_decl_incomplete_type)) {
+      Param->setInvalidDecl();
+      HasInvalidParm = true;
+    }
+
+    // C99 6.9.1p5: If the declarator includes a parameter type list, the
+    // declaration of each parameter shall include an identifier.
+    if (Param->getIdentifier() == 0 &&
+        !Param->isImplicit() &&
+        !getLangOptions().CPlusPlus)
+      Diag(Param->getLocation(), diag::err_parameter_name_omitted);
+  }
+
+  return HasInvalidParm;
+}
