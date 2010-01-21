@@ -142,7 +142,8 @@ namespace {
   
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
-                      public TypeLocVisitor<CursorVisitor, bool>
+                      public TypeLocVisitor<CursorVisitor, bool>,
+                      public StmtVisitor<CursorVisitor, bool>
 {
   ASTUnit *TU;
   CXCursor Parent;
@@ -157,6 +158,7 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
+  using StmtVisitor<CursorVisitor, bool>::Visit;
   
 public:
   CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData, 
@@ -178,6 +180,7 @@ public:
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitDeclaratorDecl(DeclaratorDecl *DD);
   bool VisitFunctionDecl(FunctionDecl *ND);
+  bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
   bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
@@ -205,6 +208,10 @@ public:
   // implemented
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
+  
+  // Statement visitors
+  bool VisitStmt(Stmt *S);
+  bool VisitDeclStmt(DeclStmt *S);
 };
   
 } // end anonymous namespace
@@ -247,6 +254,11 @@ bool CursorVisitor::Visit(CXCursor Cursor) {
 /// \returns true if the visitation should be aborted, false if it
 /// should continue.
 bool CursorVisitor::VisitChildren(CXCursor Cursor) { 
+  if (clang_isReference(Cursor.kind)) {
+    // By definition, references have no children.
+    return false;
+  }
+  
   // Set the Parent field to Cursor, then back to its old value once we're 
   // done.
   class SetParentRAII {
@@ -276,6 +288,11 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
     return Visit(D);
   }
   
+  if (clang_isStatement(Cursor.kind))
+    return Visit(getCursorStmt(Cursor));
+  if (clang_isExpression(Cursor.kind))
+    return Visit(getCursorExpr(Cursor));
+  
   if (clang_isTranslationUnit(Cursor.kind)) {
     ASTUnit *CXXUnit = getCursorASTUnit(Cursor);
     if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
@@ -292,9 +309,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
     
     return false;
   }
-    
+  
   // Nothing to visit at the moment.
-  // FIXME: Traverse statements, declarations, etc. here.
   return false;
 }
 
@@ -325,19 +341,15 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (VisitDeclaratorDecl(ND))
     return true;
 
-  // FIXME: This is wrong. We want to visit the body as a statement.
-  if (ND->isThisDeclarationADefinition()) {
-    return VisitDeclContext(ND);
-    
-#if 0
-    // Not currently needed.
-    CompoundStmt *Body = dyn_cast<CompoundStmt>(ND->getBody());
-    CRefVisitor RVisit(CDecl, Callback, CData);
-    RVisit.Visit(Body);
-#endif
-  }
+  if (ND->isThisDeclarationADefinition() &&
+      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+    return true;
   
   return false;
+}
+
+bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
+  return VisitDeclContext(D);
 }
 
 bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
@@ -351,7 +363,7 @@ bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
     if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
-  return VisitDeclContext(ND);
+  return VisitObjCContainerDecl(ND);
 }
 
 bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
@@ -368,13 +380,23 @@ bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
-  return VisitDeclContext(D);
+  return VisitObjCContainerDecl(D);
 }
 
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-  // FIXME: Wrong in the same way that VisitFunctionDecl is wrong.
-  if (ND->getBody())
-    return VisitDeclContext(ND);
+  // FIXME: We really need a TypeLoc covering Objective-C method declarations.
+  // At the moment, we don't have information about locations in the return 
+  // type.
+  for (ObjCMethodDecl::param_iterator P = ND->param_begin(), 
+                                   PEnd = ND->param_end();
+       P != PEnd; ++P) {
+    if (Visit(MakeCXCursor(*P, TU)))
+      return true;
+  }
+  
+  if (ND->isThisDeclarationADefinition() &&
+      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+    return true;
   
   return false;
 }
@@ -386,7 +408,7 @@ bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
     if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
-  return VisitDeclContext(PID);
+  return VisitObjCContainerDecl(PID);
 }
 
 bool CursorVisitor::VisitTagDecl(TagDecl *D) {
@@ -517,9 +539,6 @@ bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   if (Visit(TL.getResultLoc()))
     return true;
 
-  // FIXME: For function definitions, this means that we'll end up
-  // visiting the parameters twice, because VisitFunctionDecl is
-  // walking the DeclContext.
   for (unsigned I = 0, N = TL.getNumArgs(); I != N; ++I)
     if (Visit(MakeCXCursor(TL.getArg(I), TU)))
       return true;
@@ -545,6 +564,26 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
   if (TypeSourceInfo *TSInfo = TL.getUnderlyingTInfo())
     return Visit(TSInfo->getTypeLoc());
 
+  return false;
+}
+
+bool CursorVisitor::VisitStmt(Stmt *S) {
+  for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
+       Child != ChildEnd; ++Child) {
+    if (Visit(MakeCXCursor(*Child, StmtParent, TU)))
+      return true;
+  }
+  
+  return false;
+}
+
+bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
+  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+       D != DEnd; ++D) {
+    if (Visit(MakeCXCursor(*D, TU)))
+      return true;
+  }
+  
   return false;
 }
 
