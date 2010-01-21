@@ -2234,30 +2234,36 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   // FIXME: What if we're calling a pseudo-destructor?
   // FIXME: What if we're calling a member function?
   
+  typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
+  llvm::SmallVector<ResultCandidate, 8> Results;
+
   Expr *NakedFn = Fn->IgnoreParenCasts();
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
     AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet,
                                 /*PartialOverloading=*/ true);
   else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(NakedFn)) {
     FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
-    if (FDecl)
-      AddOverloadCandidate(FDecl, Args, NumArgs, CandidateSet,
-                           false, false, /*PartialOverloading*/ true);
+    if (FDecl) {
+      if (!FDecl->getType()->getAs<FunctionProtoType>())
+        Results.push_back(ResultCandidate(FDecl));
+      else
+        AddOverloadCandidate(FDecl, Args, NumArgs, CandidateSet,
+                             false, false, /*PartialOverloading*/ true);
+    }
   }
   
-  // Sort the overload candidate set by placing the best overloads first.
-  std::stable_sort(CandidateSet.begin(), CandidateSet.end(),
-                   IsBetterOverloadCandidate(*this));
+  if (!CandidateSet.empty()) {
+    // Sort the overload candidate set by placing the best overloads first.
+    std::stable_sort(CandidateSet.begin(), CandidateSet.end(),
+                     IsBetterOverloadCandidate(*this));
   
-  // Add the remaining viable overload candidates as code-completion reslults.  
-  typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
-  llvm::SmallVector<ResultCandidate, 8> Results;
-  
-  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
-                                   CandEnd = CandidateSet.end();
-       Cand != CandEnd; ++Cand) {
-    if (Cand->Viable)
-      Results.push_back(ResultCandidate(Cand->Function));
+    // Add the remaining viable overload candidates as code-completion reslults.
+    for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                     CandEnd = CandidateSet.end();
+         Cand != CandEnd; ++Cand) {
+      if (Cand->Viable)
+        Results.push_back(ResultCandidate(Cand->Function));
+    }
   }
 
   if (Results.empty())
