@@ -4102,7 +4102,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Decl *dcl = D.getAs<Decl>();
   Stmt *Body = BodyArg.takeAs<Stmt>();
 
-  AnalysisContext AC(dcl);
+  // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
+  // explosion for destrutors that can result and the compile time hit.
+  AnalysisContext AC(dcl, false);
   FunctionDecl *FD = 0;
   FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(dcl);
   if (FunTmpl)

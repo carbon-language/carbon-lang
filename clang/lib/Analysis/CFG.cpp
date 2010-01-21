@@ -94,7 +94,8 @@ public:
                           TryTerminatedBlock(NULL) {}
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C, bool AddScopes);
+  CFG* buildCFG(const Decl *D, Stmt *Statement, ASTContext *C, bool AddEHEdges,
+                bool AddScopes);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -208,6 +209,11 @@ private:
   }
 
   bool badCFG;
+
+  // True iff EH edges on CallExprs should be added to the CFG.
+  bool AddEHEdges;
+
+  // True iff scope start and scope end notes should be added to the CFG.
   bool AddScopes;
 };
 
@@ -231,7 +237,7 @@ static VariableArrayType* FindVA(Type* t) {
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
 CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
-                          bool AddScopes) {
+                          bool AddEHEdges, bool AddScopes) {
   Context = C;
   assert(cfg.get());
   if (!Statement)
@@ -540,6 +546,22 @@ CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
   return Block;
 }
 
+static bool CanThrow(Expr *E) {
+  QualType Ty = E->getType();
+  if (Ty->isFunctionPointerType())
+    Ty = Ty->getAs<PointerType>()->getPointeeType();
+  else if (Ty->isBlockPointerType())
+    Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
+    
+  const FunctionType *FT = Ty->getAs<FunctionType>();
+  if (FT) {
+    if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
+      if (Proto->hasEmptyExceptionSpec())
+        return false;
+  }
+  return true;
+}
+
 CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   // If this is a call to a no-return function, this stops the block here.
   bool NoReturn = false;
@@ -547,21 +569,25 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
     NoReturn = true;
   }
 
-  bool CanThrow = false;
+  bool AddEHEdge = false;
 
   // Languages without exceptions are assumed to not throw.
   if (Context->getLangOptions().Exceptions) {
-    CanThrow = true;
+    if (AddEHEdges)
+      AddEHEdge = true;
   }
 
   if (FunctionDecl *FD = C->getDirectCallee()) {
     if (FD->hasAttr<NoReturnAttr>())
       NoReturn = true;
     if (FD->hasAttr<NoThrowAttr>())
-      CanThrow = false;
+      AddEHEdge = false;
   }
 
-  if (!NoReturn && !CanThrow)
+  if (!CanThrow(C->getCallee()))
+    AddEHEdge = false;
+
+  if (!NoReturn && !AddEHEdge)
     return VisitStmt(C, asc);
 
   if (Block) {
@@ -577,7 +603,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
     // Wire this to the exit block directly.
     AddSuccessor(Block, &cfg->getExit());
   }
-  if (CanThrow) {
+  if (AddEHEdge) {
     // Add exceptional edges.
     if (TryTerminatedBlock)
       AddSuccessor(Block, TryTerminatedBlock);
@@ -1714,9 +1740,9 @@ CFGBlock* CFG::createBlock() {
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
 CFG* CFG::buildCFG(const Decl *D, Stmt* Statement, ASTContext *C,
-                   bool AddScopes) {
+                   bool AddEHEdges, bool AddScopes) {
   CFGBuilder Builder;
-  return Builder.buildCFG(D, Statement, C, AddScopes);
+  return Builder.buildCFG(D, Statement, C, AddEHEdges, AddScopes);
 }
 
 //===----------------------------------------------------------------------===//

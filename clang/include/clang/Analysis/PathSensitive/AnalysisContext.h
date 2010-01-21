@@ -46,14 +46,21 @@ class AnalysisContext {
   ParentMap *PM;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
   llvm::BumpPtrAllocator A;
+  bool AddEHEdges;
 public:
-  AnalysisContext(const Decl *d) : D(d), cfg(0), liveness(0), PM(0),
-    ReferencedBlockVars(0) {}
+  AnalysisContext(const Decl *d, bool addehedges = false)
+    : D(d), cfg(0), liveness(0), PM(0), ReferencedBlockVars(0),
+      AddEHEdges(addehedges) {}
 
   ~AnalysisContext();
 
   ASTContext &getASTContext() { return D->getASTContext(); }
   const Decl *getDecl() { return D; }
+  /// getAddEHEdges - Return true iff we are adding exceptional edges from
+  /// callExprs.  If this is false, then try/catch statements and blocks
+  /// reachable from them can appear to be dead in the CFG, analysis passes must
+  /// cope with that.
+  bool getAddEHEdges() const { return AddEHEdges; }
   Stmt *getBody();
   CFG *getCFG();
   ParentMap &getParentMap();

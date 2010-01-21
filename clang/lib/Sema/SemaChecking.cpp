@@ -2091,6 +2091,9 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b) {
     }
     return b[1].getStmt()->getLocStart();
   }
+  case Stmt::CXXTryStmtClass: {
+    return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
+  }
   default: ;
   }
   return S->getLocStart();
@@ -2167,12 +2170,20 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
     return;
 
   llvm::SmallVector<SourceLocation, 24> lines;
+  bool AddEHEdges = AC.getAddEHEdges();
   // First, give warnings for blocks with no predecessors, as they
   // can't be part of a loop.
   for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
     CFGBlock &b = **I;
     if (!live[b.getBlockID()]) {
       if (b.pred_begin() == b.pred_end()) {
+        if (!AddEHEdges && b.getTerminator()
+            && isa<CXXTryStmt>(b.getTerminator())) {
+          // When not adding EH edges from calls, catch clauses
+          // can otherwise seem dead.  Avoid noting them as dead.
+          count += MarkLive(&b, live);
+          continue;
+        }
         SourceLocation c = GetUnreachableLoc(b);
         if (!c.isValid()) {
           // Blocks without a location can't produce a warning, so don't mark
@@ -2222,11 +2233,29 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
     // FIXME: This should be NeverFallThrough
     return NeverFallThroughOrReturn;
 
-  // The CFG leaves in dead things, and we don't want to dead code paths to
+  // The CFG leaves in dead things, and we don't want the dead code paths to
   // confuse us, so we mark all live things first.
   std::queue<CFGBlock*> workq;
   llvm::BitVector live(cfg->getNumBlockIDs());
-  MarkLive(&cfg->getEntry(), live);
+  unsigned count = MarkLive(&cfg->getEntry(), live);
+
+  bool AddEHEdges = AC.getAddEHEdges();
+  if (!AddEHEdges && count != cfg->getNumBlockIDs())
+    // When there are things remaining dead, and we didn't add EH edges
+    // from CallExprs to the catch clauses, we have to go back and
+    // mark them as live.
+    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+      CFGBlock &b = **I;
+      if (!live[b.getBlockID()]) {
+        if (b.pred_begin() == b.pred_end()) {
+          if (b.getTerminator() && isa<CXXTryStmt>(b.getTerminator()))
+            // When not adding EH edges from calls, catch clauses
+            // can otherwise seem dead.  Avoid noting them as dead.
+            count += MarkLive(&b, live);
+          continue;
+        }
+      }
+    }
 
   // Now we know what is live, we check the live precessors of the exit block
   // and look for fall through paths, being careful to ignore normal returns,
@@ -2243,6 +2272,11 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
     if (!live[B.getBlockID()])
       continue;
     if (B.size() == 0) {
+      if (B.getTerminator() && isa<CXXTryStmt>(B.getTerminator())) {
+        HasAbnormalEdge = true;
+        continue;
+      }
+
       // A labeled empty statement, or the entry block...
       HasPlainEdge = true;
       continue;

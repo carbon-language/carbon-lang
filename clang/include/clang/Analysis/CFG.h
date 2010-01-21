@@ -133,7 +133,7 @@ class CFGBlock {
 
   /// Label - An (optional) label that prefixes the executable
   ///  statements in the block.  When this variable is non-NULL, it is
-  ///  either an instance of LabelStmt or SwitchCase.
+  ///  either an instance of LabelStmt, SwitchCase or CXXCatchStmt.
   Stmt *Label;
 
   /// Terminator - The terminator for a basic block that
@@ -287,6 +287,7 @@ public:
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt* AST, ASTContext *C,
+                       bool AddEHEdges = false,
                        bool AddScopes = false);
 
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;

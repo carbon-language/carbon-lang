@@ -55,7 +55,7 @@ const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
 
 CFG *AnalysisContext::getCFG() {
   if (!cfg)
-    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext());
+    cfg = CFG::buildCFG(D, getBody(), &D->getASTContext(), AddEHEdges);
   return cfg;
 }
 
