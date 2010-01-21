@@ -339,7 +339,8 @@ struct Formula {
 }
 
 /// getNumRegs - Return the total number of register operands used by this
-/// formula.
+/// formula. This does not include register uses implied by non-constant
+/// addrec strides.
 unsigned Formula::getNumRegs() const {
   return !!ScaledReg + BaseRegs.size();
 }
