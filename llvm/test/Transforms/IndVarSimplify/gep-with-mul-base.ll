@@ -1,6 +1,7 @@
 ; RUN: opt < %s -indvars -S > %t
-; RUN: grep add %t | count 8
-; RUN: grep mul %t | count 7
+; RUN: grep add %t | count 6
+; RUN: grep sub %t | count 2
+; RUN: grep mul %t | count 6
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* nocapture %p) nounwind {
 entry:

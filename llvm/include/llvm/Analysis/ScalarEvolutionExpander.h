@@ -26,19 +26,44 @@ namespace llvm {
   /// Clients should create an instance of this class when rewriting is needed,
   /// and destroy it when finished to allow the release of the associated
   /// memory.
-  struct SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
+  class SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
     std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
       InsertedExpressions;
     std::set<Value*> InsertedValues;
 
+    /// PostIncLoop - When non-null, expanded addrecs referring to the given
+    /// loop expanded in post-inc mode. For example, expanding {1,+,1}<L> in
+    /// post-inc mode returns the add instruction that adds one to the phi
+    /// for {0,+,1}<L>, as opposed to a new phi starting at 1. This is only
+    /// supported in non-canonical mode.
+    const Loop *PostIncLoop;
+
+    /// IVIncInsertPos - When this is non-null, addrecs expanded in the
+    /// loop it indicates should be inserted with increments at
+    /// IVIncInsertPos.
+    const Loop *IVIncInsertLoop;
+
+    /// IVIncInsertPos - When expanding addrecs in the IVIncInsertLoop loop,
+    /// insert the IV increment at this position.
+    Instruction *IVIncInsertPos;
+
+    /// CanonicalMode - When true, expressions are expanded in "canonical"
+    /// form. In particular, addrecs are expanded as arithmetic based on
+    /// a canonical induction variable. When false, expression are expanded
+    /// in a more literal form.
+    bool CanonicalMode;
+
+  protected:
     typedef IRBuilder<true, TargetFolder> BuilderType;
     BuilderType Builder;
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
+    /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
     explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se), Builder(se.getContext(), TargetFolder(se.TD)) {}
+      : SE(se), PostIncLoop(0), IVIncInsertLoop(0), CanonicalMode(true),
+        Builder(se.getContext(), TargetFolder(se.TD)) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
@@ -54,10 +79,35 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *IP) {
+    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *I) {
+      BasicBlock::iterator IP = I;
+      while (isInsertedInstruction(IP)) ++IP;
       Builder.SetInsertPoint(IP->getParent(), IP);
       return expandCodeFor(SH, Ty);
     }
+
+    /// setIVIncInsertPos - Set the current IV increment loop and position.
+    void setIVIncInsertPos(const Loop *L, Instruction *Pos) {
+      assert(!CanonicalMode &&
+             "IV increment positions are not supported in CanonicalMode");
+      IVIncInsertLoop = L;
+      IVIncInsertPos = Pos;
+    }
+
+    /// setPostInc - If L is non-null, enable post-inc expansion for addrecs
+    /// referring to the given loop. If L is null, disable post-inc expansion
+    /// completely. Post-inc expansion is only supported in non-canonical
+    /// mode.
+    void setPostInc(const Loop *L) {
+      assert(!CanonicalMode &&
+             "Post-inc expansion is not supported in CanonicalMode");
+      PostIncLoop = L;
+    }
+
+    /// disableCanonicalMode - Disable the behavior of expanding expressions in
+    /// canonical form rather than in a more literal form. Non-canonical mode
+    /// is useful for late optimization passes.
+    void disableCanonicalMode() { CanonicalMode = false; }
 
   private:
     LLVMContext &getContext() const { return SE.getContext(); }
@@ -121,6 +171,16 @@ namespace llvm {
     Value *visitUnknown(const SCEVUnknown *S) {
       return S->getValue();
     }
+
+    void rememberInstruction(Value *I) {
+      if (!PostIncLoop) InsertedValues.insert(I);
+    }
+
+    Value *expandAddRecExprLiterally(const SCEVAddRecExpr *);
+    PHINode *getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
+                                       const Loop *L,
+                                       const Type *ExpandTy,
+                                       const Type *IntTy);
   };
 }
 

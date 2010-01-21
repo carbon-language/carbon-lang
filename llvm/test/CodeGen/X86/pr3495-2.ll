@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of reloads omited}
 
+target datalayout = "e-p:32:32:32"
 target triple = "i386-apple-darwin9.6"
 	%struct.constraintVCGType = type { i32, i32, i32, i32 }
 	%struct.nodeVCGType = type { %struct.constraintVCGType*, i32, i32, i32, %struct.constraintVCGType*, i32, i32, i32 }

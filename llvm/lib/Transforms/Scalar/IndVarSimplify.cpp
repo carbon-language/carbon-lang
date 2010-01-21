@@ -471,6 +471,13 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       // Compute the final addrec to expand into code.
       const SCEV *AR = IU->getReplacementExpr(*UI);
 
+      // Evaluate the expression out of the loop, if possible.
+      if (!L->contains(UI->getUser())) {
+        const SCEV *ExitVal = SE->getSCEVAtScope(AR, L->getParentLoop());
+        if (ExitVal->isLoopInvariant(L))
+          AR = ExitVal;
+      }
+
       // FIXME: It is an extremely bad idea to indvar substitute anything more
       // complex than affine induction variables.  Doing so will put expensive
       // polynomial evaluations inside of the loop, and the str reduction pass
@@ -522,11 +529,10 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
   Rewriter.clear();
   // Now that we're done iterating through lists, clean up any instructions
   // which are now dead.
-  while (!DeadInsts.empty()) {
-    Instruction *Inst = dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val());
-    if (Inst)
+  while (!DeadInsts.empty())
+    if (Instruction *Inst =
+          dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
       RecursivelyDeleteTriviallyDeadInstructions(Inst);
-  }
 }
 
 /// If there's a single exit block, sink any loop-invariant values that

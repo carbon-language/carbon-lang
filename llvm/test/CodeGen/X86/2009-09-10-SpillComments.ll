@@ -1,5 +1,11 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux | FileCheck %s
 
+; This test shouldn't require spills.
+
+; CHECK: subq  $8, %rsp
+; CHECK-NOT: $rsp
+; CHECK: addq  $8, %rsp
+
 	%struct..0anon = type { i32 }
 	%struct.rtvec_def = type { i32, [1 x %struct..0anon] }
 	%struct.rtx_def = type { i16, i8, i8, [1 x %struct..0anon] }
@@ -10,9 +16,6 @@ declare %struct.rtx_def* @fixup_memory_subreg(%struct.rtx_def*, %struct.rtx_def*
 
 define %struct.rtx_def* @walk_fixup_memory_subreg(%struct.rtx_def* %x, %struct.rtx_def* %insn) {
 entry:
-; CHECK: Spill
-; CHECK: Folded Spill
-; CHECK: Reload
 	%tmp2 = icmp eq %struct.rtx_def* %x, null		; <i1> [#uses=1]
 	br i1 %tmp2, label %UnifiedReturnBlock, label %cond_next
 

@@ -1,5 +1,4 @@
-; RUN: opt < %s -loop-reduce -S | grep ugt
-; PR2535
+; RUN: llc -march=x86-64 < %s -o - | grep {cmpl	\\$\[1\], %}
 
 @.str = internal constant [4 x i8] c"%d\0A\00"
 
@@ -16,7 +15,7 @@ forbody:
         %add166 = or i32 %mul15, 1              ; <i32> [#uses=1] *
         call i32 (i8*, ...)* @printf( i8* noalias  getelementptr ([4 x i8]* @.str, i32 0, i32 0), i32 %add166 ) nounwind
         %inc = add i32 %i.0, 1          ; <i32> [#uses=3]
-        %cmp = icmp ult i32 %inc, 1027          ; <i1> [#uses=1]
+        %cmp = icmp ne i32 %inc, 1027          ; <i1> [#uses=1]
         br i1 %cmp, label %forbody, label %afterfor
 
 afterfor:               ; preds = %forcond

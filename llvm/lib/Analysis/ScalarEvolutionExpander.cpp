@@ -81,7 +81,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
 
     Instruction *I = CastInst::Create(Op, V, Ty, V->getName(),
                                       A->getParent()->getEntryBlock().begin());
-    InsertedValues.insert(I);
+    rememberInstruction(I);
     return I;
   }
 
@@ -114,7 +114,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP)) ++IP;
   Instruction *CI = CastInst::Create(Op, V, Ty, V->getName(), IP);
-  InsertedValues.insert(CI);
+  rememberInstruction(CI);
   return CI;
 }
 
@@ -144,7 +144,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
 
   // If we haven't found this binop, insert it.
   Value *BO = Builder.CreateBinOp(Opcode, LHS, RHS, "tmp");
-  InsertedValues.insert(BO);
+  rememberInstruction(BO);
   return BO;
 }
 
@@ -491,20 +491,37 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
 
     // Emit a GEP.
     Value *GEP = Builder.CreateGEP(V, Idx, "uglygep");
-    InsertedValues.insert(GEP);
+    rememberInstruction(GEP);
     return GEP;
   }
 
   // Insert a pretty getelementptr. Note that this GEP is not marked inbounds,
   // because ScalarEvolution may have changed the address arithmetic to
   // compute a value which is beyond the end of the allocated object.
-  Value *GEP = Builder.CreateGEP(V,
+  Value *Casted = V;
+  if (V->getType() != PTy)
+    Casted = InsertNoopCastOfTo(Casted, PTy);
+  Value *GEP = Builder.CreateGEP(Casted,
                                  GepIndices.begin(),
                                  GepIndices.end(),
                                  "scevgep");
   Ops.push_back(SE.getUnknown(GEP));
-  InsertedValues.insert(GEP);
+  rememberInstruction(GEP);
   return expand(SE.getAddExpr(Ops));
+}
+
+/// isNonConstantNegative - Return true if the specified scev is negated, but
+/// not a constant.
+static bool isNonConstantNegative(const SCEV *F) {
+  const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(F);
+  if (!Mul) return false;
+
+  // If there is a constant factor, it will be first.
+  const SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
+  if (!SC) return false;
+
+  // Return true if the value is negative, this matches things like (-42 * V).
+  return SC->getValue()->getValue().isNegative();
 }
 
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
@@ -539,8 +556,14 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   // Emit a bunch of add instructions
   for (int i = NumOperands-1; i >= 0; --i) {
     if (i == PIdx) continue;
-    Value *W = expandCodeFor(S->getOperand(i), Ty);
-    V = InsertBinop(Instruction::Add, V, W);
+    const SCEV *Op = S->getOperand(i);
+    if (isNonConstantNegative(Op)) {
+      Value *W = expandCodeFor(SE.getNegativeSCEV(Op), Ty);
+      V = InsertBinop(Instruction::Sub, V, W);
+    } else {
+      Value *W = expandCodeFor(Op, Ty);
+      V = InsertBinop(Instruction::Add, V, W);
+    }
   }
   return V;
 }
@@ -603,7 +626,175 @@ static void ExposePointerBase(const SCEV *&Base, const SCEV *&Rest,
   }
 }
 
+/// getAddRecExprPHILiterally - Helper for expandAddRecExprLiterally. Expand
+/// the base addrec, which is the addrec without any non-loop-dominating
+/// values, and return the PHI.
+PHINode *
+SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
+                                        const Loop *L,
+                                        const Type *ExpandTy,
+                                        const Type *IntTy) {
+  // Reuse a previously-inserted PHI, if present.
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    if (isInsertedInstruction(PN) && SE.getSCEV(PN) == Normalized)
+      return PN;
+
+  // Save the original insertion point so we can restore it when we're done.
+  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
+  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
+
+  // Expand code for the start value.
+  Value *StartV = expandCodeFor(Normalized->getStart(), ExpandTy,
+                                L->getHeader()->begin());
+
+  // Expand code for the step value. Insert instructions right before the
+  // terminator corresponding to the back-edge. Do this before creating the PHI
+  // so that PHI reuse code doesn't see an incomplete PHI. If the stride is
+  // negative, insert a sub instead of an add for the increment (unless it's a
+  // constant, because subtracts of constants are canonicalized to adds).
+  const SCEV *Step = Normalized->getStepRecurrence(SE);
+  bool isPointer = isa<PointerType>(ExpandTy);
+  bool isNegative = !isPointer && isNonConstantNegative(Step);
+  if (isNegative)
+    Step = SE.getNegativeSCEV(Step);
+  Value *StepV = expandCodeFor(Step, IntTy, L->getHeader()->begin());
+
+  // Create the PHI.
+  Builder.SetInsertPoint(L->getHeader(), L->getHeader()->begin());
+  PHINode *PN = Builder.CreatePHI(ExpandTy, "lsr.iv");
+  rememberInstruction(PN);
+
+  // Create the step instructions and populate the PHI.
+  BasicBlock *Header = L->getHeader();
+  for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
+       HPI != HPE; ++HPI) {
+    BasicBlock *Pred = *HPI;
+
+    // Add a start value.
+    if (!L->contains(Pred)) {
+      PN->addIncoming(StartV, Pred);
+      continue;
+    }
+
+    // Create a step value and add it to the PHI. If IVIncInsertLoop is
+    // non-null and equal to the addrec's loop, insert the instructions
+    // at IVIncInsertPos.
+    Instruction *InsertPos = L == IVIncInsertLoop ?
+      IVIncInsertPos : Pred->getTerminator();
+    Builder.SetInsertPoint(InsertPos->getParent(), InsertPos);
+    Value *IncV;
+    // If the PHI is a pointer, use a GEP, otherwise use an add or sub.
+    if (isPointer) {
+      const PointerType *GEPPtrTy = cast<PointerType>(ExpandTy);
+      // If the step isn't constant, don't use an implicitly scaled GEP, because
+      // that would require a multiply inside the loop.
+      if (!isa<ConstantInt>(StepV))
+        GEPPtrTy = PointerType::get(Type::getInt1Ty(SE.getContext()),
+                                    GEPPtrTy->getAddressSpace());
+      const SCEV *const StepArray[1] = { SE.getSCEV(StepV) };
+      IncV = expandAddToGEP(StepArray, StepArray+1, GEPPtrTy, IntTy, PN);
+      if (IncV->getType() != PN->getType()) {
+        IncV = Builder.CreateBitCast(IncV, PN->getType(), "tmp");
+        rememberInstruction(IncV);
+      }
+    } else {
+      IncV = isNegative ?
+        Builder.CreateSub(PN, StepV, "lsr.iv.next") :
+        Builder.CreateAdd(PN, StepV, "lsr.iv.next");
+      rememberInstruction(IncV);
+    }
+    PN->addIncoming(IncV, Pred);
+  }
+
+  // Restore the original insert point.
+  if (SaveInsertBB)
+    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+
+  // Remember this PHI, even in post-inc mode.
+  InsertedValues.insert(PN);
+
+  return PN;
+}
+
+Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
+  const Type *STy = S->getType();
+  const Type *IntTy = SE.getEffectiveSCEVType(STy);
+  const Loop *L = S->getLoop();
+
+  // Determine a normalized form of this expression, which is the expression
+  // before any post-inc adjustment is made.
+  const SCEVAddRecExpr *Normalized = S;
+  if (L == PostIncLoop) {
+    const SCEV *Step = S->getStepRecurrence(SE);
+    Normalized = cast<SCEVAddRecExpr>(SE.getMinusSCEV(S, Step));
+  }
+
+  // Strip off any non-loop-dominating component from the addrec start.
+  const SCEV *Start = Normalized->getStart();
+  const SCEV *PostLoopOffset = 0;
+  if (!Start->properlyDominates(L->getHeader(), SE.DT)) {
+    PostLoopOffset = Start;
+    Start = SE.getIntegerSCEV(0, Normalized->getType());
+    Normalized =
+      cast<SCEVAddRecExpr>(SE.getAddRecExpr(Start,
+                                            Normalized->getStepRecurrence(SE),
+                                            Normalized->getLoop()));
+  }
+
+  // Strip off any non-loop-dominating component from the addrec step.
+  const SCEV *Step = Normalized->getStepRecurrence(SE);
+  const SCEV *PostLoopScale = 0;
+  if (!Step->hasComputableLoopEvolution(L) &&
+      !Step->dominates(L->getHeader(), SE.DT)) {
+    PostLoopScale = Step;
+    Step = SE.getIntegerSCEV(1, Normalized->getType());
+    Normalized =
+      cast<SCEVAddRecExpr>(SE.getAddRecExpr(Start, Step,
+                                            Normalized->getLoop()));
+  }
+
+  // Expand the core addrec. If we need post-loop scaling, force it to
+  // expand to an integer type to avoid the need for additional casting.
+  const Type *ExpandTy = PostLoopScale ? IntTy : STy;
+  PHINode *PN = getAddRecExprPHILiterally(Normalized, L, ExpandTy, IntTy);
+
+  // Accomodate post-inc mode, if necessary.
+  Value *Result;
+  if (L != PostIncLoop)
+    Result = PN;
+  else {
+    // In PostInc mode, use the post-incremented value.
+    BasicBlock *LatchBlock = L->getLoopLatch();
+    assert(LatchBlock && "PostInc mode requires a unique loop latch!");
+    Result = PN->getIncomingValueForBlock(LatchBlock);
+  }
+
+  // Re-apply any non-loop-dominating scale.
+  if (PostLoopScale) {
+    Result = Builder.CreateMul(Result,
+                               expandCodeFor(PostLoopScale, IntTy));
+    rememberInstruction(Result);
+  }
+
+  // Re-apply any non-loop-dominating offset.
+  if (PostLoopOffset) {
+    if (const PointerType *PTy = dyn_cast<PointerType>(ExpandTy)) {
+      const SCEV *const OffsetArray[1] = { PostLoopOffset };
+      Result = expandAddToGEP(OffsetArray, OffsetArray+1, PTy, IntTy, Result);
+    } else {
+      Result = Builder.CreateAdd(Result,
+                                 expandCodeFor(PostLoopOffset, IntTy));
+      rememberInstruction(Result);
+    }
+  }
+
+  return Result;
+}
+
 Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
+  if (!CanonicalMode) return expandAddRecExprLiterally(S);
+
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
   const Loop *L = S->getLoop();
 
@@ -681,7 +872,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // specified loop.
     BasicBlock *Header = L->getHeader();
     PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
-    InsertedValues.insert(PN);
+    rememberInstruction(PN);
 
     Constant *One = ConstantInt::get(Ty, 1);
     for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
@@ -691,7 +882,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
         // corresponding to the back-edge.
         Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                      (*HPI)->getTerminator());
-        InsertedValues.insert(Add);
+        rememberInstruction(Add);
         PN->addIncoming(Add, *HPI);
       } else {
         PN->addIncoming(Constant::getNullValue(Ty), *HPI);
@@ -738,7 +929,7 @@ Value *SCEVExpander::visitTruncateExpr(const SCEVTruncateExpr *S) {
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Value *I = Builder.CreateTrunc(V, Ty, "tmp");
-  InsertedValues.insert(I);
+  rememberInstruction(I);
   return I;
 }
 
@@ -747,7 +938,7 @@ Value *SCEVExpander::visitZeroExtendExpr(const SCEVZeroExtendExpr *S) {
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Value *I = Builder.CreateZExt(V, Ty, "tmp");
-  InsertedValues.insert(I);
+  rememberInstruction(I);
   return I;
 }
 
@@ -756,7 +947,7 @@ Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
   Value *V = expandCodeFor(S->getOperand(),
                            SE.getEffectiveSCEVType(S->getOperand()->getType()));
   Value *I = Builder.CreateSExt(V, Ty, "tmp");
-  InsertedValues.insert(I);
+  rememberInstruction(I);
   return I;
 }
 
@@ -772,9 +963,9 @@ Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
     }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Value *ICmp = Builder.CreateICmpSGT(LHS, RHS, "tmp");
-    InsertedValues.insert(ICmp);
+    rememberInstruction(ICmp);
     Value *Sel = Builder.CreateSelect(ICmp, LHS, RHS, "smax");
-    InsertedValues.insert(Sel);
+    rememberInstruction(Sel);
     LHS = Sel;
   }
   // In the case of mixed integer and pointer types, cast the
@@ -796,9 +987,9 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
     }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Value *ICmp = Builder.CreateICmpUGT(LHS, RHS, "tmp");
-    InsertedValues.insert(ICmp);
+    rememberInstruction(ICmp);
     Value *Sel = Builder.CreateSelect(ICmp, LHS, RHS, "umax");
-    InsertedValues.insert(Sel);
+    rememberInstruction(Sel);
     LHS = Sel;
   }
   // In the case of mixed integer and pointer types, cast the
@@ -863,7 +1054,8 @@ Value *SCEVExpander::expand(const SCEV *S) {
   Value *V = visit(S);
 
   // Remember the expanded value for this SCEV at this location.
-  InsertedExpressions[std::make_pair(S, InsertPt)] = V;
+  if (!PostIncLoop)
+    InsertedExpressions[std::make_pair(S, InsertPt)] = V;
 
   Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
   return V;

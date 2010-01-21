@@ -324,12 +324,6 @@ const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &U) const {
   // the actual replacement value.
   if (U.isUseOfPostIncrementedValue())
     RetVal = SE->getAddExpr(RetVal, U.getParent()->Stride);
-  // Evaluate the expression out of the loop, if possible.
-  if (!L->contains(U.getUser())) {
-    const SCEV *ExitVal = SE->getSCEVAtScope(RetVal, L->getParentLoop());
-    if (ExitVal->isLoopInvariant(L))
-      RetVal = ExitVal;
-  }
   return RetVal;
 }
 

@@ -4,9 +4,9 @@
 ; RUN: not grep sar %t
 ; RUN: not grep shl %t
 ; RUN: grep add %t | count 2
-; RUN: grep inc %t | count 4
+; RUN: grep inc %t | count 3
 ; RUN: grep dec %t | count 2
-; RUN: grep lea %t | count 2
+; RUN: grep lea %t | count 3
 
 ; Optimize away zext-inreg and sext-inreg on the loop induction
 ; variable using trip-count information.
@@ -127,6 +127,9 @@ return:
 	ret void
 }
 
+; TODO: If we could handle all the loads and stores as post-inc users, we could
+; use {-1,+,1} in the induction variable register, and we'd get another inc,
+; one fewer add, and a comparison with zero.
 define void @another_count_up(double* %d, i64 %n) nounwind {
 entry:
 	br label %loop
