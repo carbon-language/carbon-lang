@@ -90,5 +90,11 @@ void test2() {
   case 10:
     (           // expected-warning {{will never be executed}}
       float)halt();
+  case 11: {
+    int a[5];
+    live(),
+      a[halt()
+        ];      // expected-warning {{will never be executed}}
+  }
   }
 }

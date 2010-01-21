@@ -46,3 +46,31 @@ void test3() {
     float       // expected-warning {{will never be executed}}
       (halt());
 }
+
+void test4() {
+  struct S {
+    int mem;
+  } s;
+  S &foor();
+  halt(), foor()
+    .mem;       // expected-warning {{will never be executed}}
+}
+
+void test5() {
+  struct S {
+    int mem;
+  } s;
+  S &foor() __attribute__((noreturn));
+  foor()
+    .mem;       // expected-warning {{will never be executed}}
+}
+
+void test6() {
+  struct S {
+    ~S() { }
+    S(int i) { }
+  };
+  live(),
+    S            // expected-warning {{will never be executed}}
+      (halt());
+}

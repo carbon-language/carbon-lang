@@ -2116,6 +2116,17 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
     const ConditionalOperator *CO = cast<ConditionalOperator>(S);
     return CO->getQuestionLoc();
   }
+  case Expr::MemberExprClass: {
+    const MemberExpr *ME = cast<MemberExpr>(S);
+    R1 = ME->getSourceRange();
+    return ME->getMemberLoc();
+  }
+  case Expr::ArraySubscriptExprClass: {
+    const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(S);
+    R1 = ASE->getLHS()->getSourceRange();
+    R2 = ASE->getRHS()->getSourceRange();
+    return ASE->getRBracketLoc();
+  }
   case Expr::CStyleCastExprClass: {
     const CStyleCastExpr *CSC = cast<CStyleCastExpr>(S);
     R1 = CSC->getSubExpr()->getSourceRange();
@@ -2134,6 +2145,7 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
   }
   default: ;
   }
+  R1 = S->getSourceRange();
   return S->getLocStart();
 }
 
