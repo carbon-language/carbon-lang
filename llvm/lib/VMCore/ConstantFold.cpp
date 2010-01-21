@@ -1673,14 +1673,15 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     SmallVector<Constant*, 16> C1Elts, C2Elts;
     C1->getVectorElements(Context, C1Elts);
     C2->getVectorElements(Context, C2Elts);
+    if (C1Elts.empty() || C2Elts.empty())
+      return 0;
 
     // If we can constant fold the comparison of each element, constant fold
     // the whole vector comparison.
     SmallVector<Constant*, 4> ResElts;
     for (unsigned i = 0, e = C1Elts.size(); i != e; ++i) {
       // Compare the elements, producing an i1 result or constant expr.
-      ResElts.push_back(
-                    ConstantExpr::getCompare(pred, C1Elts[i], C2Elts[i]));
+      ResElts.push_back(ConstantExpr::getCompare(pred, C1Elts[i], C2Elts[i]));
     }
     return ConstantVector::get(&ResElts[0], ResElts.size());
   }

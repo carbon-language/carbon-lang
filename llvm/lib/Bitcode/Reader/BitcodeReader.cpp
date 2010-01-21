@@ -1167,7 +1167,7 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
 
-      if (OpTy->isFloatingPoint())
+      if (OpTy->isFPOrFPVector())
         V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
       else
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);

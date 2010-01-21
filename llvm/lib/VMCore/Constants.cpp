@@ -1630,7 +1630,7 @@ Constant *ConstantExpr::getInBoundsGetElementPtr(Constant *C,
 }
 
 Constant *
-ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+ConstantExpr::getICmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   assert(LHS->getType() == RHS->getType());
   assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
          pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
@@ -1646,13 +1646,16 @@ ConstantExpr::getICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
 
+  const Type *ResultTy = Type::getInt1Ty(LHS->getContext());
+  if (const VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
+    ResultTy = VectorType::get(ResultTy, VT->getNumElements());
+
   LLVMContextImpl *pImpl = LHS->getType()->getContext().pImpl;
-  return
-      pImpl->ExprConstants.getOrCreate(Type::getInt1Ty(LHS->getContext()), Key);
+  return pImpl->ExprConstants.getOrCreate(ResultTy, Key);
 }
 
 Constant *
-ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   assert(LHS->getType() == RHS->getType());
   assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid FCmp Predicate");
 
@@ -1666,10 +1669,13 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   ArgVec.push_back(RHS);
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
-  
+
+  const Type *ResultTy = Type::getInt1Ty(LHS->getContext());
+  if (const VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
+    ResultTy = VectorType::get(ResultTy, VT->getNumElements());
+
   LLVMContextImpl *pImpl = LHS->getType()->getContext().pImpl;
-  return
-      pImpl->ExprConstants.getOrCreate(Type::getInt1Ty(LHS->getContext()), Key);
+  return pImpl->ExprConstants.getOrCreate(ResultTy, Key);
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
