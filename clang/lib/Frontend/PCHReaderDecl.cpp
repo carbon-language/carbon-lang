@@ -326,6 +326,7 @@ void PCHDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
 
 void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
+  D->setAtLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   D->setType(Reader.GetType(Record[Idx++]));
   // FIXME: stable encoding
   D->setPropertyAttributes(
@@ -705,7 +706,8 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ObjCCompatibleAliasDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_OBJC_PROPERTY:
-    D = ObjCPropertyDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
+    D = ObjCPropertyDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(),
+                                 QualType());
     break;
   case pch::DECL_OBJC_PROPERTY_IMPL:
     D = ObjCPropertyImplDecl::Create(*Context, 0, SourceLocation(),

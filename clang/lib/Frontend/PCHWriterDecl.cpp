@@ -315,6 +315,7 @@ void PCHDeclWriter::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *D) {
 
 void PCHDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
+  Writer.AddSourceLocation(D->getAtLoc(), Record);
   Writer.AddTypeRef(D->getType(), Record);
   // FIXME: stable encoding
   Record.push_back((unsigned)D->getPropertyAttributes());

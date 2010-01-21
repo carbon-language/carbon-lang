@@ -833,6 +833,10 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
 }
 
 void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
+  // When method is a synthesized one, such as a getter/setter there is
+  // nothing to rewrite.
+  if (Method->isSynthesized())
+    return;
   SourceLocation LocStart = Method->getLocStart();
   SourceLocation LocEnd = Method->getLocEnd();
 
@@ -846,10 +850,9 @@ void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
 }
 
 void RewriteObjC::RewriteProperty(ObjCPropertyDecl *prop) {
-  SourceLocation Loc = prop->getLocation();
+  SourceLocation Loc = prop->getAtLoc();
 
   ReplaceText(Loc, 0, "// ", 3);
-
   // FIXME: handle properties that are declared across multiple lines.
 }
 

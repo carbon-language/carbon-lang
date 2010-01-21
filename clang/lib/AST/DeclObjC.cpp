@@ -790,9 +790,10 @@ ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
 ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,
                                            IdentifierInfo *Id,
+                                           SourceLocation AtLoc,
                                            QualType T,
                                            PropertyControl propControl) {
-  return new (C) ObjCPropertyDecl(DC, L, Id, T);
+  return new (C) ObjCPropertyDecl(DC, L, Id, AtLoc, T);
 }
 
 

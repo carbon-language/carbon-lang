@@ -2186,7 +2186,8 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   assert(DC && "ClassDecl is not a DeclContext");
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
                                                      FD.D.getIdentifierLoc(),
-                                                     FD.D.getIdentifier(), T);
+                                                     FD.D.getIdentifier(), 
+                                                     AtLoc, T);
   DeclContext::lookup_result Found = DC->lookup(PDecl->getDeclName());
   if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
     Diag(PDecl->getLocation(), diag::err_duplicate_property);
