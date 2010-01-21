@@ -1411,16 +1411,10 @@ static SourceLocation MarkLiveTop(CFGBlock *e, llvm::BitVector &live,
   return top;
 }
 
-namespace {
-class LineCmp {
-  SourceManager &SM;
-public:
-  LineCmp(SourceManager &sm) : SM(sm) {
-  }
-  bool operator () (SourceLocation l1, SourceLocation l2) {
-    return l1 < l2;
-  }
-};
+static int LineCmp(const void *p1, const void *p2) {
+  SourceLocation *Line1 = (SourceLocation *)p1;
+  SourceLocation *Line2 = (SourceLocation *)p2;
+  return !(*Line1 < *Line2);
 }
 
 /// CheckUnreachable - Check for unreachable code.
@@ -1477,7 +1471,7 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
     }
   }
 
-  std::sort(lines.begin(), lines.end(), LineCmp(Context.getSourceManager()));
+  llvm::array_pod_sort(lines.begin(), lines.end(), LineCmp);
   for (llvm::SmallVector<SourceLocation, 24>::iterator I = lines.begin(),
          E = lines.end();
        I != E;
