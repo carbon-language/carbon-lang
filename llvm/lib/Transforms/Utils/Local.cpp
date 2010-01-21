@@ -609,30 +609,6 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
   return true;
 }
 
-
-
-/// OnlyUsedByDbgIntrinsics - Return true if the instruction I is only used
-/// by DbgIntrinsics. If DbgInUses is specified then the vector is filled 
-/// with the DbgInfoIntrinsic that use the instruction I.
-bool llvm::OnlyUsedByDbgInfoIntrinsics(Instruction *I, 
-                               SmallVectorImpl<DbgInfoIntrinsic *> *DbgInUses) {
-  if (DbgInUses)
-    DbgInUses->clear();
-
-  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE; 
-       ++UI) {
-    if (DbgInfoIntrinsic *DI = dyn_cast<DbgInfoIntrinsic>(*UI)) {
-      if (DbgInUses)
-        DbgInUses->push_back(DI);
-    } else {
-      if (DbgInUses)
-        DbgInUses->clear();
-      return false;
-    }
-  }
-  return true;
-}
-
 /// EliminateDuplicatePHINodes - Check for and eliminate duplicate PHI
 /// nodes in this block. This doesn't try to be clever about PHI nodes
 /// which differ only in the order of the incoming values, but instcombine

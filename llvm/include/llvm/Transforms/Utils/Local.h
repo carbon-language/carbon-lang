@@ -27,7 +27,6 @@ class PHINode;
 class AllocaInst;
 class ConstantExpr;
 class TargetData;
-class DbgInfoIntrinsic;
 
 template<typename T> class SmallVectorImpl;
   
@@ -153,12 +152,6 @@ AllocaInst *DemoteRegToStack(Instruction &X,
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted. 
 AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
-
-/// OnlyUsedByDbgIntrinsics - Return true if the instruction I is only used
-/// by DbgIntrinsics. If DbgInUses is specified then the vector is filled 
-/// with DbgInfoIntrinsic that use the instruction I.
-bool OnlyUsedByDbgInfoIntrinsics(Instruction *I, 
-                           SmallVectorImpl<DbgInfoIntrinsic *> *DbgInUses = 0);
 
 } // End llvm namespace
 

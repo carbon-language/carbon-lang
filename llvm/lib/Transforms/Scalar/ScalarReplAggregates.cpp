@@ -85,10 +85,6 @@ namespace {
       /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
       bool isUnsafe : 1;
       
-      /// needsCleanup - This is set to true if there is some use of the alloca
-      /// that requires cleanup.
-      bool needsCleanup : 1;
-      
       /// isMemCpySrc - This is true if this aggregate is memcpy'd from.
       bool isMemCpySrc : 1;
 
@@ -96,15 +92,14 @@ namespace {
       bool isMemCpyDst : 1;
 
       AllocaInfo()
-        : isUnsafe(false), needsCleanup(false), 
-          isMemCpySrc(false), isMemCpyDst(false) {}
+        : isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false) {}
     };
     
     unsigned SRThreshold;
 
     void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
 
-    int isSafeAllocaToScalarRepl(AllocaInst *AI);
+    bool isSafeAllocaToScalarRepl(AllocaInst *AI);
 
     void isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
                              AllocaInfo &Info);
@@ -119,7 +114,6 @@ namespace {
     void DoScalarReplacement(AllocaInst *AI, 
                              std::vector<AllocaInst*> &WorkList);
     void DeleteDeadInstructions();
-    void CleanupAllocaUsers(Value *V);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocaInst *Base);
     
     void RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
@@ -281,14 +275,7 @@ bool SROA::performScalarRepl(Function &F) {
         getNumSAElements(AI->getAllocatedType()) <= SRThreshold/4) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
-      switch (isSafeAllocaToScalarRepl(AI)) {
-      default: llvm_unreachable("Unexpected value!");
-      case 0:  // Not safe to scalar replace.
-        break;
-      case 1:  // Safe, but requires cleanup/canonicalizations first
-        CleanupAllocaUsers(AI);
-        // FALL THROUGH.
-      case 3:  // Safe to scalar replace.
+      if (isSafeAllocaToScalarRepl(AI)) {
         DoScalarReplacement(AI, WorkList);
         Changed = true;
         continue;
@@ -437,14 +424,6 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
                         SIType, true, Info);
       } else
         MarkUnsafe(Info);
-    } else if (isa<DbgInfoIntrinsic>(UI)) {
-      // If one user is DbgInfoIntrinsic then check if all users are
-      // DbgInfoIntrinsics.
-      if (OnlyUsedByDbgInfoIntrinsics(I)) {
-        Info.needsCleanup = true;
-        return;
-      }
-      MarkUnsafe(Info);
     } else {
       DEBUG(errs() << "  Transformation preventing inst: " << *User << '\n');
       MarkUnsafe(Info);
@@ -1150,7 +1129,7 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
 /// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
 /// or 1 if safe after canonicalization has been performed.
-int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
+bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
   AllocaInfo Info;
@@ -1158,7 +1137,7 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   isSafeForScalarRepl(AI, AI, 0, Info);
   if (Info.isUnsafe) {
     DEBUG(dbgs() << "Cannot transform: " << *AI << '\n');
-    return 0;
+    return false;
   }
   
   // Okay, we know all the users are promotable.  If the aggregate is a memcpy
@@ -1168,29 +1147,9 @@ int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // struct.
   if (Info.isMemCpySrc && Info.isMemCpyDst &&
       HasPadding(AI->getAllocatedType(), *TD))
-    return 0;
+    return false;
 
-  // If we require cleanup, return 1, otherwise return 3.
-  return Info.needsCleanup ? 1 : 3;
-}
-
-/// CleanupAllocaUsers - If SROA reported that it can promote the specified
-/// allocation, but only if cleaned up, perform the cleanups required.
-void SROA::CleanupAllocaUsers(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ) {
-    User *U = *UI++;
-    Instruction *I = cast<Instruction>(U);
-    SmallVector<DbgInfoIntrinsic *, 2> DbgInUses;
-    if (!isa<StoreInst>(I) && OnlyUsedByDbgInfoIntrinsics(I, &DbgInUses)) {
-      // Safe to remove debug info uses.
-      while (!DbgInUses.empty()) {
-        DbgInfoIntrinsic *DI = DbgInUses.pop_back_val();
-        DI->eraseFromParent();
-      }
-      I->eraseFromParent();
-    }
-  }
+  return true;
 }
 
 /// MergeInType - Add the 'In' type to the accumulated type (Accum) so far at
@@ -1325,10 +1284,6 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
         }
     }
     
-    // Ignore dbg intrinsic.
-    if (isa<DbgInfoIntrinsic>(User))
-      continue;
-
     // Otherwise, we cannot handle this!
     return false;
   }
@@ -1453,18 +1408,11 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       } else {
         // Noop transfer. Src == Dst
       }
-          
 
       MTI->eraseFromParent();
       continue;
     }
     
-    // If user is a dbg info intrinsic then it is safe to remove it.
-    if (isa<DbgInfoIntrinsic>(User)) {
-      User->eraseFromParent();
-      continue;
-    }
-
     llvm_unreachable("Unsupported operation!");
   }
 }
