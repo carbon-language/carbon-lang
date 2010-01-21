@@ -24,6 +24,7 @@ add_clang_library(clangCodeGen
   CGStmt.cpp
   CGTemporaries.cpp
   CGVtable.cpp
+  CGVTT.cpp
   CodeGenFunction.cpp
   CodeGenModule.cpp
   CodeGenTypes.cpp
