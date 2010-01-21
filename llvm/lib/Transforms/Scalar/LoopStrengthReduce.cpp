@@ -2595,7 +2595,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   // Ok, we've now collected all the uses and noted their register uses. The
   // next step is to start looking at register reuse possibilities.
-  DEBUG(print(dbgs()); dbgs() << '\n');
+  DEBUG(print(dbgs()); dbgs() << '\n'; IU.dump());
 
   // Create a sorted list of registers with those with the most uses appearing
   // earlier in the list. We'll visit them first, as they're the most likely
