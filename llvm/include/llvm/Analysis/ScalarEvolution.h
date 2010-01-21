@@ -167,7 +167,7 @@ namespace llvm {
     };
 
     friend class SCEVCallbackVH;
-    friend struct SCEVExpander;
+    friend class SCEVExpander;
 
     /// F - The function we are analyzing.
     ///
