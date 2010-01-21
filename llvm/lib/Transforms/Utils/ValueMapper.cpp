@@ -13,12 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/DerivedTypes.h"  // For getNullValue(Type::Int32Ty)
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
@@ -31,14 +29,13 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
   // Global values and non-function-local metadata do not need to be seeded into
   // the ValueMap if they are using the identity mapping.
   if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V) ||
-      (isa<MDNode>(V) && !dyn_cast<MDNode>(V)->isFunctionLocal()))
+      (isa<MDNode>(V) && !cast<MDNode>(V)->isFunctionLocal()))
     return VMSlot = const_cast<Value*>(V);
 
-  if (isa<MDNode>(V)) {
-    const MDNode *MD = dyn_cast<MDNode>(V);
+  if (const MDNode *MD = dyn_cast<MDNode>(V)) {
     SmallVector<Value*, 4> Elts;
     for (unsigned i = 0; i != MD->getNumOperands(); i++)
-      Elts.push_back(MD->getOperand(i) ? MapValue(MD->getOperand(i), VM) : NULL);
+      Elts.push_back(MD->getOperand(i) ? MapValue(MD->getOperand(i), VM) : 0);
     return VM[V] = MDNode::get(V->getContext(), Elts.data(), Elts.size());
   }
 
@@ -120,14 +117,10 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
     return VM[V] = C;
   }
   
-  if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
-    Function *F = cast<Function>(MapValue(BA->getFunction(), VM));
-    BasicBlock *BB = cast_or_null<BasicBlock>(MapValue(BA->getBasicBlock(),VM));
-    return VM[V] = BlockAddress::get(F, BB ? BB : BA->getBasicBlock());
-  }
-  
-  llvm_unreachable("Unknown type of constant!");
-  return 0;
+  BlockAddress *BA = cast<BlockAddress>(C);
+  Function *F = cast<Function>(MapValue(BA->getFunction(), VM));
+  BasicBlock *BB = cast_or_null<BasicBlock>(MapValue(BA->getBasicBlock(),VM));
+  return VM[V] = BlockAddress::get(F, BB ? BB : BA->getBasicBlock());
 }
 
 /// RemapInstruction - Convert the instruction operands from referencing the
