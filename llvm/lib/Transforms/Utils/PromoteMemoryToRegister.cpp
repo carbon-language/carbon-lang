@@ -76,16 +76,9 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
         return false;   // Don't allow a store OF the AI, only INTO the AI.
       if (SI->isVolatile())
         return false;
-    } else if (const BitCastInst *BC = dyn_cast<BitCastInst>(*UI)) {
-      // A bitcast that does not feed into debug info inhibits promotion.
-      if (!BC->hasOneUse() || !isa<DbgInfoIntrinsic>(*BC->use_begin()))
-        return false;
-      // If the only use is by debug info, this alloca will not exist in
-      // non-debug code, so don't try to promote; this ensures the same
-      // codegen with debug info.  Otherwise, debug info should not
-      // inhibit promotion (but we must examine other uses).
-      if (AI->hasOneUse())
-        return false;
+    } else if (isa<BitCastInst>(*UI)) {
+      // A bitcast inhibits promotion.
+      return false;
     } else {
       return false;
     }
@@ -290,15 +283,7 @@ namespace {
       for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
            UI != E;)  {
         Instruction *User = cast<Instruction>(*UI++);
-        if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
-          // Remove any uses of this alloca in DbgInfoInstrinsics.
-          assert(BC->hasOneUse() && "Unexpected alloca uses!");
-          DbgInfoIntrinsic *DI = cast<DbgInfoIntrinsic>(*BC->use_begin());
-          DI->eraseFromParent();
-          BC->eraseFromParent();
-          continue;
-        } 
-        
+
         if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
           DefiningBlocks.push_back(SI->getParent());
