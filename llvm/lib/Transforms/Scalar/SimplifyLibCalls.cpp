@@ -81,6 +81,10 @@ public:
   /// and the return value has 'i8*' type.
   Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B);
 
+  /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
+  /// specified pointer arguments.
+  Value *EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B);
+  
   /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This
   /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
   Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len,
@@ -176,6 +180,20 @@ Value *LibCallOptimization::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B) {
   return CI;
 }
 
+/// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
+/// specified pointer arguments.
+Value *LibCallOptimization::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B) {
+  Module *M = Caller->getParent();
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  const Type *I8Ptr = Type::getInt8PtrTy(*Context);
+  Value *StrCpy = M->getOrInsertFunction("strcpy", AttrListPtr::get(AWI, 2),
+                                         I8Ptr, I8Ptr, I8Ptr, NULL);
+  CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
+                               "strcpy");
+  return CI;
+}
 
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
 /// expects that the size has type 'intptr_t' and Dst/Src are pointers.
@@ -1181,6 +1199,31 @@ struct MemMoveChkOpt : public LibCallOptimization {
   }
 };
 
+struct StrCpyChkOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
+    const FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
+        !isa<PointerType>(FT->getParamType(0)) ||
+        !isa<PointerType>(FT->getParamType(1)) ||
+        !isa<IntegerType>(FT->getParamType(2)))
+      return 0;
+
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeCI)
+      return 0;
+    
+    // We don't have any length information, just lower to a plain strcpy.
+    if (SizeCI->isAllOnesValue())
+      return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B);
+
+    return 0;
+  }
+};
+
+  
 //===----------------------------------------------------------------------===//
 // Math Library Optimizations
 //===----------------------------------------------------------------------===//
@@ -1725,6 +1768,7 @@ namespace {
 
     // Object Size Checking
     MemCpyChkOpt MemCpyChk; MemSetChkOpt MemSetChk; MemMoveChkOpt MemMoveChk;
+    StrCpyChkOpt StrCpyChk;
 
     bool Modified;  // This is only used by doInitialization.
   public:
@@ -1836,6 +1880,7 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["__memcpy_chk"] = &MemCpyChk;
   Optimizations["__memset_chk"] = &MemSetChk;
   Optimizations["__memmove_chk"] = &MemMoveChk;
+  Optimizations["__strcpy_chk"] = &StrCpyChk;
 }
 
 
