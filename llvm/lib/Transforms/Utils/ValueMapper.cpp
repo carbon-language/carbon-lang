@@ -16,7 +16,6 @@
 #include "llvm/DerivedTypes.h"  // For getNullValue(Type::Int32Ty)
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/IntrinsicInst.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
