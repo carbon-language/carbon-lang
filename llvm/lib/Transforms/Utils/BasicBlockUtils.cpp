@@ -615,11 +615,6 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     Instruction *Inst = --ScanFrom;
     if (isa<DbgInfoIntrinsic>(Inst))
       continue;
-    // We skip pointer-to-pointer bitcasts, which are NOPs.
-    // It is necessary for correctness to skip those that feed into a
-    // llvm.dbg.declare, as these are not present when debugging is off.
-    if (isa<BitCastInst>(Inst) && isa<PointerType>(Inst->getType()))
-      continue;
 
     // Restore ScanFrom to expected value in case next test succeeds
     ScanFrom++;
