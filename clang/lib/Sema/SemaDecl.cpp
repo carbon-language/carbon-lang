@@ -1310,25 +1310,31 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   New->setAccess(Old->getAccess());
 }
 
-static void MarkLive(CFGBlock *e, llvm::BitVector &live) {
+// MarkLive - Mark all the blocks reachable from e as live.  Returns the total
+// number of blocks marked live.
+static unsigned MarkLive(CFGBlock *e, llvm::BitVector &live) {
+  unsigned count = 0;
   std::queue<CFGBlock*> workq;
   // Prep work queue
+  live.set(e->getBlockID());
+  ++count;
   workq.push(e);
   // Solve
   while (!workq.empty()) {
     CFGBlock *item = workq.front();
     workq.pop();
-    live.set(item->getBlockID());
     for (CFGBlock::succ_iterator I=item->succ_begin(),
            E=item->succ_end();
          I != E;
          ++I) {
       if ((*I) && !live[(*I)->getBlockID()]) {
         live.set((*I)->getBlockID());
+        ++count;
         workq.push(*I);
       }
     }
   }
+  return count;
 }
 
 static SourceLocation GetUnreachableLoc(CFGBlock &b) {
@@ -1432,7 +1438,9 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   
   llvm::BitVector live(cfg->getNumBlockIDs());
   // Mark all live things first.
-  MarkLive(&cfg->getEntry(), live);
+  if (MarkLive(&cfg->getEntry(), live) == cfg->getNumBlockIDs())
+    // If there are no dead blocks, we're done.
+    return;
 
   llvm::SmallVector<SourceLocation, 24> lines;
   // First, give warnings for blocks with no predecessors, as they
