@@ -619,7 +619,8 @@ public:
 
   bool InsertFormula(const Formula &F);
 
-  void Rewrite(Loop *L, SCEVExpander &Rewriter,
+  void Rewrite(Loop *L, Instruction *IVIncInsertPos,
+               SCEVExpander &Rewriter,
                SmallVectorImpl<WeakVH> &DeadInsts,
                ScalarEvolution &SE, DominatorTree &DT,
                Pass *P) const;
@@ -628,8 +629,8 @@ public:
   void dump() const;
 
 private:
-  Value *Expand(BasicBlock::iterator IP,
-                Loop *L, SCEVExpander &Rewriter,
+  Value *Expand(BasicBlock::iterator IP, Loop *L, Instruction *IVIncInsertPos,
+                SCEVExpander &Rewriter,
                 SmallVectorImpl<WeakVH> &DeadInsts,
                 ScalarEvolution &SE, DominatorTree &DT) const;
 };
@@ -809,7 +810,8 @@ static BasicBlock *getImmediateDominator(BasicBlock *BB, DominatorTree &DT) {
 }
 
 Value *LSRUse::Expand(BasicBlock::iterator IP,
-                      Loop *L, SCEVExpander &Rewriter,
+                      Loop *L, Instruction *IVIncInsertPos,
+                      SCEVExpander &Rewriter,
                       SmallVectorImpl<WeakVH> &DeadInsts,
                       ScalarEvolution &SE, DominatorTree &DT) const {
   // Then, collect some instructions which we will remain dominated by when
@@ -885,8 +887,13 @@ Value *LSRUse::Expand(BasicBlock::iterator IP,
     // If we're expanding for a post-inc user for the add-rec's loop, make the
     // post-inc adjustment.
     if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg))
-      if (AR->getLoop() == PostIncLoop)
+      if (AR->getLoop() == PostIncLoop) {
         Reg = SE.getAddExpr(Reg, AR->getStepRecurrence(SE));
+        // If the user is inside the loop, insert the code after the increment
+        // so that it is dominated by its operand.
+        if (L->contains(UserInst))
+          IP = IVIncInsertPos;
+      }
 
     Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, 0, IP)));
   }
@@ -988,7 +995,8 @@ Value *LSRUse::Expand(BasicBlock::iterator IP,
 /// Rewrite - Emit instructions for the leading candidate expression for this
 /// LSRUse (this is called "expanding"), and update the UserInst to reference
 /// the newly expanded value.
-void LSRUse::Rewrite(Loop *L, SCEVExpander &Rewriter,
+void LSRUse::Rewrite(Loop *L, Instruction *IVIncInsertPos,
+                     SCEVExpander &Rewriter,
                      SmallVectorImpl<WeakVH> &DeadInsts,
                      ScalarEvolution &SE, DominatorTree &DT,
                      Pass *P) const {
@@ -1029,8 +1037,8 @@ void LSRUse::Rewrite(Loop *L, SCEVExpander &Rewriter,
         if (!Pair.second)
           PN->setIncomingValue(i, Pair.first->second);
         else {
-          Value *FullV = Expand(BB->getTerminator(),
-                                L, Rewriter, DeadInsts, SE, DT);
+          Value *FullV = Expand(BB->getTerminator(), L, IVIncInsertPos,
+                                Rewriter, DeadInsts, SE, DT);
 
           // If this is reuse-by-noop-cast, insert the noop cast.
           if (FullV->getType() != OpTy)
@@ -1045,7 +1053,8 @@ void LSRUse::Rewrite(Loop *L, SCEVExpander &Rewriter,
         }
       }
   } else {
-    Value *FullV = Expand(UserInst, L, Rewriter, DeadInsts, SE, DT);
+    Value *FullV = Expand(UserInst, L, IVIncInsertPos,
+                          Rewriter, DeadInsts, SE, DT);
 
     // If this is reuse-by-noop-cast, insert the noop cast.
     if (FullV->getType() != OpTy) {
@@ -1381,6 +1390,12 @@ class LSRInstance {
   Loop *const L;
   bool Changed;
 
+  /// IVIncInsertPos - This is the insert position that the current loop's
+  /// induction variable increment should be placed. In simple loops, this is
+  /// the latch block's terminator. But in more complicated cases, this is
+  /// a position which will dominate all the in-loop post-increment users.
+  Instruction *IVIncInsertPos;
+
   /// CurrentArbitraryRegIndex - To ensure a deterministic ordering, assign an
   /// arbitrary index value to each register as a sort tie breaker.
   unsigned CurrentArbitraryRegIndex;
@@ -1409,7 +1424,7 @@ class LSRInstance {
                          const SCEV* &CondStride);
   ICmpInst *OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse);
   bool StrideMightBeShared(const SCEV* Stride);
-  bool OptimizeLoopTermCond(Instruction *&IVIncInsertPos);
+  bool OptimizeLoopTermCond();
 
   LSRUse &getNewUse() {
     Uses.push_back(LSRUse());
@@ -1761,7 +1776,7 @@ bool LSRInstance::StrideMightBeShared(const SCEV* Stride) {
 /// OptimizeLoopTermCond - Change loop terminating condition to use the
 /// postinc iv when possible.
 bool
-LSRInstance::OptimizeLoopTermCond(Instruction *&IVIncInsertPos) {
+LSRInstance::OptimizeLoopTermCond() {
   SmallPtrSet<Instruction *, 4> PostIncs;
 
   BasicBlock *LatchBlock = L->getLoopLatch();
@@ -2101,6 +2116,7 @@ void LSRInstance::GenerateReassociationReuse(LSRUse &LU, unsigned LUIdx,
 /// loop-dominating registers added into a single register.
 void LSRInstance::GenerateCombinationReuse(LSRUse &LU, unsigned LUIdx,
                                            Formula Base) {
+  // This method is only intersting on a plurality of registers.
   if (Base.BaseRegs.size() <= 1) return;
 
   Formula F = Base;
@@ -2453,7 +2469,8 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   : IU(P->getAnalysis<IVUsers>()),
     SE(P->getAnalysis<ScalarEvolution>()),
     DT(P->getAnalysis<DominatorTree>()),
-    TLI(tli), L(l), Changed(false), CurrentArbitraryRegIndex(0), MaxNumRegs(0) {
+    TLI(tli), L(l), Changed(false), IVIncInsertPos(0),
+    CurrentArbitraryRegIndex(0), MaxNumRegs(0) {
 
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm()) return;
@@ -2474,8 +2491,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   OptimizeShadowIV();
 
   // Change loop terminating condition to use the postinc iv when possible.
-  Instruction *IVIncInsertPos;
-  Changed |= OptimizeLoopTermCond(IVIncInsertPos);
+  Changed |= OptimizeLoopTermCond();
 
   for (SmallVectorImpl<const SCEV *>::const_iterator SIter =
        IU.StrideOrder.begin(), SEnd = IU.StrideOrder.end();
@@ -2555,8 +2571,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
           Factors.insert(-1);
         }
 
-      // Ok, now enumerate all the different formulae we can find to compute
-      // the value for this expression.
+      // Set up the initial formula for this use.
       LU.InsertInitialFormula(S, L, SE, DT);
       CountRegisters(LU.Formulae.back(), Uses.size() - 1);
     }
@@ -2688,7 +2703,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
                    "Illegal formula generated!"));
 
     // Expand the new code and update the user.
-    I->Rewrite(L, Rewriter, DeadInsts, SE, DT, P);
+    I->Rewrite(L, IVIncInsertPos, Rewriter, DeadInsts, SE, DT, P);
     Changed = true;
   }
 
