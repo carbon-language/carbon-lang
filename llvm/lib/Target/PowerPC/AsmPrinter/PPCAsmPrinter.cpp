@@ -218,7 +218,7 @@ namespace {
             MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
           if (StubSym == 0) {
             TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
-            StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+            StubSym = GetExternalSymbolSymbol(MO.getSymbolName());
           }
           O << *Sym;
           return;
