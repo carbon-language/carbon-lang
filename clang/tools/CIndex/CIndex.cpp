@@ -200,6 +200,11 @@ public:
   bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
   bool VisitFunctionTypeLoc(FunctionTypeLoc TL);
   bool VisitArrayTypeLoc(ArrayTypeLoc TL);
+  // FIXME: Implement for TemplateSpecializationTypeLoc
+  // FIXME: Implement visitors here when the unimplemented TypeLocs get
+  // implemented
+  bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
+  bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
 };
   
 } // end anonymous namespace
@@ -528,6 +533,17 @@ bool CursorVisitor::VisitArrayTypeLoc(ArrayTypeLoc TL) {
 
   if (Expr *Size = TL.getSizeExpr())
     return Visit(MakeCXCursor(Size, StmtParent, TU));
+
+  return false;
+}
+
+bool CursorVisitor::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
+  return Visit(MakeCXCursor(TL.getUnderlyingExpr(), StmtParent, TU));
+}
+
+bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
+  if (TypeSourceInfo *TSInfo = TL.getUnderlyingTInfo())
+    return Visit(TSInfo->getTypeLoc());
 
   return false;
 }
