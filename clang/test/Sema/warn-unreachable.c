@@ -83,5 +83,9 @@ void test2() {
     i
       +=        // expected-warning {{will never be executed}}
       halt();
+  case 9:
+    halt()
+      ?         // expected-warning {{will never be executed}}
+      dead() : dead();
   }
 }

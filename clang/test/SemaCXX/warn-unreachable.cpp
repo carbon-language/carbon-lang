@@ -39,4 +39,7 @@ void test2() {
 void test3() {
   halt()
     --;         // expected-warning {{will never be executed}}
+  halt()
+    ?         // expected-warning {{will never be executed}}
+    dead() : dead();
 }

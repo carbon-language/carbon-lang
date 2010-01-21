@@ -2067,8 +2067,12 @@ static unsigned MarkLive(CFGBlock *e, llvm::BitVector &live) {
 static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
                                         SourceRange &R2) {
   Stmt *S;
-  if (!b.empty())
-    S = b[0].getStmt();
+  unsigned sn = 0;
+  R1 = R2 = SourceRange();
+
+  top:
+  if (sn < b.size())
+    S = b[sn].getStmt();
   else if (b.getTerminator())
     S = b.getTerminator();
   else
@@ -2078,8 +2082,8 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
   case Expr::BinaryOperatorClass: {
     BinaryOperator *BO = cast<BinaryOperator>(S);
     if (BO->getOpcode() == BinaryOperator::Comma) {
-      if (b.size() >= 2)
-        return b[1].getStmt()->getLocStart();
+      if (sn+1 < b.size())
+        return b[sn+1].getStmt()->getLocStart();
       CFGBlock *n = &b;
       while (1) {
         if (n->getTerminator())
@@ -2108,6 +2112,13 @@ static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
     R2 = CAO->getRHS()->getSourceRange();
     return CAO->getOperatorLoc();
   }
+  case Expr::ConditionalOperatorClass: {
+    const ConditionalOperator *CO = cast<ConditionalOperator>(S);
+    return CO->getQuestionLoc();
+  }
+  case Expr::ImplicitCastExprClass:
+    ++sn;
+    goto top;
   case Stmt::CXXTryStmtClass: {
     return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
   }
