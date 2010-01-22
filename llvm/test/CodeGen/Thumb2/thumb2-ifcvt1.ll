@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
 
-define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
+define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK: t1:
 ; CHECK: it ne
 ; CHECK: cmpne
@@ -20,12 +20,12 @@ cond_next:
 }
 
 ; FIXME: Check for # of unconditional branch after adding branch folding post ifcvt.
-define i32 @t2(i32 %a, i32 %b) nounwind {
+define i32 @t2(i32 %a, i32 %b) {
 entry:
 ; CHECK: t2:
-; CHECK: ite gt
-; CHECK: subgt
+; CHECK: ite le
 ; CHECK: suble
+; CHECK: subgt
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]
 	br i1 %tmp1434, label %bb17, label %bb.outer
 
@@ -60,14 +60,14 @@ bb17:		; preds = %cond_false, %cond_true, %entry
 
 @x = external global i32*		; <i32**> [#uses=1]
 
-define void @foo(i32 %a) nounwind {
+define void @foo(i32 %a) {
 entry:
 	%tmp = load i32** @x		; <i32*> [#uses=1]
 	store i32 %a, i32* %tmp
 	ret void
 }
 
-define void @t3(i32 %a, i32 %b) nounwind {
+define void @t3(i32 %a, i32 %b) {
 entry:
 ; CHECK: t3:
 ; CHECK: it lt

@@ -1,11 +1,11 @@
 ; RUN: llc < %s -march=x86-64 -o %t
-; RUN: not grep inc %t
+; RUN: grep inc %t | count 1
 ; RUN: grep dec %t | count 2
-; RUN: grep addq %t | count 10
+; RUN: grep addq %t | count 13
 ; RUN: not grep addb %t
 ; RUN: grep leaq %t | count 9
-; RUN: grep leal %t | count 2
-; RUN: grep movq %t | count 10
+; RUN: grep leal %t | count 3
+; RUN: grep movq %t | count 5
 
 ; IV users in each of the loops from other loops shouldn't cause LSR
 ; to insert new induction variables. Previously it would create a

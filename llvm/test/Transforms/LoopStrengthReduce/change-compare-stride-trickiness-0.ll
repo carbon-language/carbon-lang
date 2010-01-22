@@ -1,9 +1,10 @@
-; RUN: llc < %s -o - | grep {testl	%ecx, %ecx}
+; RUN: llc %s -o - --x86-asm-syntax=att | grep {cmpl	\$4}
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 target triple = "x86_64-apple-darwin9"
 
-; The comparison happens before the relevant use, but it can still be rewritten
-; to compare with zero.
+; This is like change-compare-stride-trickiness-1.ll except the comparison
+; happens before the relevant use, so the comparison stride can't be
+; easily changed.
 
 define void @foo() nounwind {
 entry:
