@@ -1847,9 +1847,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
 
 /// PrintChildLoopComment - Print comments about child loops within
 /// the loop for this basic block, with nesting.
-static void PrintChildLoopComment(MCStreamer &O, const MachineLoop *Loop,
+static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
                                   unsigned FunctionNumber) {
-  raw_ostream &OS = O.GetCommentOS();
   // Add child loop information
   for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
     MachineBasicBlock *Header = (*CL)->getHeader();
@@ -1857,7 +1856,7 @@ static void PrintChildLoopComment(MCStreamer &O, const MachineLoop *Loop,
     OS.indent(((*CL)->getLoopDepth()-1)*2)
       << "Child Loop BB" << FunctionNumber << "_"
       << Header->getNumber() << " Depth " << (*CL)->getLoopDepth() << '\n';
-    PrintChildLoopComment(O, *CL, FunctionNumber);
+    PrintChildLoopComment(OS, *CL, FunctionNumber);
   }
 }
 
@@ -1869,23 +1868,27 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const {
   const MachineLoop *Loop = LI->getLoopFor(&MBB);
   if (Loop == 0) return;
 
-  OutStreamer.AddComment("Loop Depth " + Twine(Loop->getLoopDepth()));
-
   MachineBasicBlock *Header = Loop->getHeader();
   assert(Header && "No header for loop");
-  
+
+  // If this block is not a loop header, just print out what is the loop header
+  // and return.
   if (Header != &MBB) {
-    OutStreamer.AddComment("Loop Header is BB" + Twine(getFunctionNumber()) +
-                           "_" + Twine(Loop->getHeader()->getNumber()));
-  } else {
-    OutStreamer.AddComment("Loop Header");
-    PrintChildLoopComment(OutStreamer, Loop, getFunctionNumber());
+    OutStreamer.AddComment("  in Loop: Header=BB" + Twine(getFunctionNumber())+
+                           "_" + Twine(Loop->getHeader()->getNumber())+
+                           " Depth="+Twine(Loop->getLoopDepth()));
+    return;
   }
 
-  if (Loop->empty())
-    OutStreamer.AddComment("Inner Loop");
-
+  // Otherwise, it is a loop header.  Print out information about child and
+  // parent loops.
   raw_ostream &OS = OutStreamer.GetCommentOS();
+
+  if (Loop->empty())
+    OS << "Inner ";
+  OS << "Loop Header: Depth=" + Twine(Loop->getLoopDepth()) << '\n';
+
+  PrintChildLoopComment(OS, Loop, getFunctionNumber());
 
   // Add parent loop information.
   for (const MachineLoop *CurLoop = Loop->getParentLoop(); CurLoop;
