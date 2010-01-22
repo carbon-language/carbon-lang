@@ -418,8 +418,6 @@ void Decl::CheckAccessDeclContext() const {
   //    FunctionDecl)
   // 4. the context is not a record
   if (isa<TranslationUnitDecl>(this) ||
-      isTemplateParameter() ||
-      isa<ParmVarDecl>(this) ||
       !isa<CXXRecordDecl>(getDeclContext()))
     return;
 

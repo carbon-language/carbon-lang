@@ -1012,7 +1012,9 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
 
   // Allocate the parameter
   ParmVarDecl *Param
-    = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+    = ParmVarDecl::Create(SemaRef.Context,
+                          SemaRef.Context.getTranslationUnitDecl(),
+                          D->getLocation(),
                           D->getIdentifier(), T, DI, D->getStorageClass(), 0);
 
   // Mark the default argument as being uninstantiated.

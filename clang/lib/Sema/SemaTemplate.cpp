@@ -449,8 +449,8 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     Loc = KeyLoc;
 
   TemplateTypeParmDecl *Param
-    = TemplateTypeParmDecl::Create(Context, CurContext, Loc,
-                                   Depth, Position, ParamName, Typename,
+    = TemplateTypeParmDecl::Create(Context, Context.getTranslationUnitDecl(),
+                                   Loc, Depth, Position, ParamName, Typename,
                                    Ellipsis);
   if (Invalid)
     Param->setInvalidDecl();
@@ -572,7 +572,8 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   }
 
   NonTypeTemplateParmDecl *Param
-    = NonTypeTemplateParmDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+    = NonTypeTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
+                                      D.getIdentifierLoc(),
                                       Depth, Position, ParamName, T, TInfo);
   if (Invalid)
     Param->setInvalidDecl();
@@ -625,8 +626,8 @@ Sema::DeclPtrTy Sema::ActOnTemplateTemplateParameter(Scope* S,
 
   // Construct the parameter object.
   TemplateTemplateParmDecl *Param =
-    TemplateTemplateParmDecl::Create(Context, CurContext, TmpLoc, Depth,
-                                     Position, Name,
+    TemplateTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
+                                     TmpLoc, Depth, Position, Name,
                                      (TemplateParameterList*)Params);
 
   // Make sure the parameter is valid.

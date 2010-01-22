@@ -2864,7 +2864,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Synthesize a parameter for each argument type.
     for (FunctionProtoType::arg_type_iterator AI = FT->arg_type_begin(),
          AE = FT->arg_type_end(); AI != AE; ++AI) {
-      ParmVarDecl *Param = ParmVarDecl::Create(Context, DC,
+      ParmVarDecl *Param = ParmVarDecl::Create(Context, NewFD,
                                                SourceLocation(), 0,
                                                *AI, /*TInfo=*/0,
                                                VarDecl::None, 0);
@@ -3862,8 +3862,13 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   QualType T = adjustParameterType(parmDeclType);
 
+  // Temporarily put parameter variables in the translation unit, not
+  // the enclosing context.  This prevents them from accidentally
+  // looking like class members in C++.
+  DeclContext *DC = Context.getTranslationUnitDecl();
+
   ParmVarDecl *New
-    = ParmVarDecl::Create(Context, CurContext, D.getIdentifierLoc(), II,
+    = ParmVarDecl::Create(Context, DC, D.getIdentifierLoc(), II,
                           T, TInfo, StorageClass, 0);
 
   if (D.isInvalidType())

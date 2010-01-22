@@ -6801,10 +6801,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
-       E = CurBlock->TheDecl->param_end(); AI != E; ++AI)
+         E = CurBlock->TheDecl->param_end(); AI != E; ++AI) {
+    (*AI)->setOwningFunction(CurBlock->TheDecl);
+
     // If this has an identifier, add it to the scope stack.
     if ((*AI)->getIdentifier())
       PushOnScopeChains(*AI, CurBlock->TheScope);
+  }
 
   // Check for a valid sentinel attribute on this block.
   if (!CurBlock->isVariadic &&
