@@ -398,7 +398,17 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return ActOnInstanceMessage(ReceiverExpr.get(), Sel, lbrac,
                                     selectorLoc, rbrac, Args, NumArgs);
       }
-      return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
+      else if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(SuperDecl)) {
+        const ObjCInterfaceType *OCIT;
+        OCIT = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>();
+        if (!OCIT) {
+          Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+          return true;
+        }
+        ClassDecl = OCIT->getDecl();
+      }
+      else      
+        return Diag(receiverLoc, diag::err_undeclared_var_use) << receiverName;
     }
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName, receiverLoc);
