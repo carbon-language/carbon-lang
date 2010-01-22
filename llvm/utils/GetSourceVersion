@@ -1,6 +1,6 @@
 #!/bin/sh
 
-function usage() {
+usage() {
    echo "usage: $0 <source root>"
    echo "  Prints the source control revision of the given source directory,"
    echo "  the exact format of the revision string depends on the source "
