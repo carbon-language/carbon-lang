@@ -32,6 +32,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/Mangler.h"
@@ -173,10 +174,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
     
     if (VerboseAsm) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' ';
-      WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
-      O << '\n';
+      WriteAsOperand(OutStreamer.GetCommentOS(), GV,
+                     /*PrintType=*/false, GV->getParent());
+      OutStreamer.GetCommentOS() << '\n';
     }
     
     // Handle common symbols.
@@ -266,10 +266,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   EmitAlignment(AlignLog, GV);
   if (VerboseAsm) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << ' ';
-    WriteAsOperand(O, GV, /*PrintType=*/false, GV->getParent());
-    O << '\n';
+    WriteAsOperand(OutStreamer.GetCommentOS(), GV,
+                   /*PrintType=*/false, GV->getParent());
+    OutStreamer.GetCommentOS() << '\n';
   }
   OutStreamer.EmitLabel(GVSym);
 
@@ -277,6 +276,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << *GVSym << ", " << Size << '\n';
+  
+  OutStreamer.AddBlankLine();
 }
 
 
@@ -1141,9 +1142,8 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
   
   if (CFP->getType()->isFloatTy()) {
     if (AP.VerboseAsm) {
-      float Val = CFP->getValueAPF().convertToFloat();  // for comment only
-      AP.O.PadToColumn(AP.MAI->getCommentColumn());
-      AP.O << AP.MAI->getCommentString() << " float " << Val << '\n';
+      float Val = CFP->getValueAPF().convertToFloat();
+      AP.OutStreamer.GetCommentOS() << "float " << Val << '\n';
     }
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     AP.OutStreamer.EmitIntValue(Val, 4, AddrSpace);
@@ -1161,9 +1161,8 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
       bool ignored;
       DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                         &ignored);
-      AP.O.PadToColumn(AP.MAI->getCommentColumn());
-      AP.O << AP.MAI->getCommentString() << " x86_fp80 ~= "
-           << DoubleVal.convertToDouble() << '\n';
+      AP.OutStreamer.GetCommentOS() << "x86_fp80 ~= "
+        << DoubleVal.convertToDouble() << '\n';
     }
     
     if (AP.TM.getTargetData()->isBigEndian()) {
@@ -1226,12 +1225,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     case 2:
     case 4:
     case 8:
-      if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " 0x";
-        O.write_hex(CI->getZExtValue());
-        O << '\n';
-      }
+      if (VerboseAsm)
+        OutStreamer.GetCommentOS() << format("0x%llx\n", CI->getZExtValue());
       OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
       return;
     default:
@@ -1670,30 +1665,32 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   // will be.
   if (MBB->hasAddressTaken()) {
     const BasicBlock *BB = MBB->getBasicBlock();
+    if (VerboseAsm)
+      OutStreamer.AddComment("Address Taken");
     OutStreamer.EmitLabel(GetBlockAddressSymbol(BB->getParent(), BB));
-    if (VerboseAsm) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Address Taken" << '\n';
-    }
   }
 
   // Print the main label for the block.
   if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
-    if (VerboseAsm)
+    if (VerboseAsm) {
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
+      if (const BasicBlock *BB = MBB->getBasicBlock())
+        if (BB->hasName())
+          OutStreamer.AddComment("%" + BB->getName());
+      OutStreamer.AddBlankLine();
+    }
   } else {
+    if (VerboseAsm) {
+      if (const BasicBlock *BB = MBB->getBasicBlock())
+        if (BB->hasName())
+          OutStreamer.AddComment("%" + BB->getName());
+    }
     OutStreamer.EmitLabel(GetMBBSymbol(MBB->getNumber()));
   }
   
   // Print some comments to accompany the label.
-  if (VerboseAsm) {
-    if (const BasicBlock *BB = MBB->getBasicBlock())
-      if (BB->hasName()) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << ' ';
-        WriteAsOperand(O, BB, /*PrintType=*/false);
-      }
-
+  // FIXME: REENABLE.
+  if (0 && VerboseAsm) {
     EmitComments(*MBB);
     O << '\n';
   }

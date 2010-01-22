@@ -81,6 +81,9 @@ namespace llvm {
 
     MCContext &getContext() const { return Context; }
 
+    /// @name Assembly File Formatting.
+    /// @{
+
     /// AddComment - Add a comment that can be emitted to the generated .s
     /// file if applicable as a QoI issue to make the output of the compiler
     /// more readable.  This only affects the MCAsmStreamer, and only when
@@ -94,6 +97,11 @@ namespace llvm {
     /// Unlike AddComment, you are required to terminate comments with \n if you
     /// use this method.
     virtual raw_ostream &GetCommentOS();
+    
+    /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
+    virtual void AddBlankLine() {}
+    
+    /// @}
     
     /// @name Symbol & Section Management
     /// @{

@@ -73,6 +73,11 @@ public:
     return CommentStream;
   }
   
+  /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
+  virtual void AddBlankLine() {
+    EmitEOL();
+  }
+  
   /// @name MCStreamer Interface
   /// @{
 
