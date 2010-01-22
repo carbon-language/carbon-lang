@@ -147,7 +147,7 @@ static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
 // Strip the symbol table of its names.
 static void StripTypeSymtab(TypeSymbolTable &ST, bool PreserveDbgInfo) {
   for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; ) {
-    if (PreserveDbgInfo && strncmp(TI->first.c_str(), "llvm.dbg", 8) == 0)
+    if (PreserveDbgInfo && StringRef(TI->first).startswith("llvm.dbg"))
       ++TI;
     else
       ST.remove(TI++);
