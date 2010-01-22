@@ -5622,13 +5622,13 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   QualType NewClassTy, OldClassTy;
 
   /// Both types must be pointers or references to classes.
-  if (PointerType *NewPT = dyn_cast<PointerType>(NewTy)) {
-    if (PointerType *OldPT = dyn_cast<PointerType>(OldTy)) {
+  if (PointerType *NewPT = dyn_cast<PointerType>(CNewTy)) {
+    if (PointerType *OldPT = dyn_cast<PointerType>(COldTy)) {
       NewClassTy = NewPT->getPointeeType();
       OldClassTy = OldPT->getPointeeType();
     }
-  } else if (ReferenceType *NewRT = dyn_cast<ReferenceType>(NewTy)) {
-    if (ReferenceType *OldRT = dyn_cast<ReferenceType>(OldTy)) {
+  } else if (ReferenceType *NewRT = dyn_cast<ReferenceType>(CNewTy)) {
+    if (ReferenceType *OldRT = dyn_cast<ReferenceType>(COldTy)) {
       NewClassTy = NewRT->getPointeeType();
       OldClassTy = OldRT->getPointeeType();
     }

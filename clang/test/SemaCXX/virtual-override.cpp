@@ -197,3 +197,20 @@ namespace PR5920 {
     virtual Derived<int>* Method();
   };
 }
+
+// Look through template types and typedefs to see whether return types are
+// pointers or references.
+namespace PR6110 {
+  class Base {};
+  class Derived : public Base {};
+
+  typedef Base* BaseP;
+  typedef Derived* DerivedP;
+
+  class X { virtual BaseP f(); };
+  class X1 : public X { virtual DerivedP f(); };
+
+  template <typename T> class Y { virtual T f(); };
+  template <typename T1, typename T> class Y1 : public Y<T> { virtual T1 f(); };
+  Y1<Derived*, Base*> y;
+}
