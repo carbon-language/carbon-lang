@@ -85,6 +85,18 @@ void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
   Asm->OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
+/// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
+void DwarfPrinter::EmitCFAByte(unsigned Val) {
+  if (Asm->VerboseAsm) {
+    if (Val >= dwarf::DW_CFA_offset && Val < dwarf::DW_CFA_offset+64)
+      Asm->OutStreamer.AddComment("DW_CFA_offset + Reg (" + 
+                                  Twine(Val-dwarf::DW_CFA_offset) + ")");
+    else
+      Asm->OutStreamer.AddComment(dwarf::CallFrameString(Val));
+  }
+  Asm->OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
+}
+
 /// EmitSLEB128 - emit the specified signed leb128 value.
 void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
   if (Asm->VerboseAsm && Desc)
@@ -263,8 +275,7 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
 
     // Advance row if new location.
     if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
-      Asm->EmitInt8(dwarf::DW_CFA_advance_loc4);
-      Asm->EOL("DW_CFA_advance_loc4");
+      EmitCFAByte(dwarf::DW_CFA_advance_loc4);
       EmitDifference("label", LabelID, BaseLabel, BaseLabelID, true);
       Asm->O << '\n';
 
@@ -277,11 +288,9 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
       if (!Src.isReg()) {
         if (Src.getReg() == MachineLocation::VirtualFP) {
-          Asm->EmitInt8(dwarf::DW_CFA_def_cfa_offset);
-          Asm->EOL("DW_CFA_def_cfa_offset");
+          EmitCFAByte(dwarf::DW_CFA_def_cfa_offset);
         } else {
-          Asm->EmitInt8(dwarf::DW_CFA_def_cfa);
-          Asm->EOL("DW_CFA_def_cfa");
+          EmitCFAByte(dwarf::DW_CFA_def_cfa);
           EmitULEB128(RI->getDwarfRegNum(Src.getReg(), isEH), "Register");
         }
 
@@ -293,8 +302,7 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     } else if (Src.isReg() &&
                Src.getReg() == MachineLocation::VirtualFP) {
       if (Dst.isReg()) {
-        Asm->EmitInt8(dwarf::DW_CFA_def_cfa_register);
-        Asm->EOL("DW_CFA_def_cfa_register");
+        EmitCFAByte(dwarf::DW_CFA_def_cfa_register);
         EmitULEB128(RI->getDwarfRegNum(Dst.getReg(), isEH), "Register");
       } else {
         llvm_unreachable("Machine move not supported yet.");
@@ -304,17 +312,14 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       int Offset = Dst.getOffset() / stackGrowth;
 
       if (Offset < 0) {
-        Asm->EmitInt8(dwarf::DW_CFA_offset_extended_sf);
-        Asm->EOL("DW_CFA_offset_extended_sf");
+        EmitCFAByte(dwarf::DW_CFA_offset_extended_sf);
         EmitULEB128(Reg, "Reg");
         EmitSLEB128(Offset, "Offset");
       } else if (Reg < 64) {
-        Asm->EmitInt8(dwarf::DW_CFA_offset + Reg);
-        Asm->EOL("DW_CFA_offset + Reg (" + Twine(Reg) + ")");
+        EmitCFAByte(dwarf::DW_CFA_offset + Reg);
         EmitULEB128(Offset, "Offset");
       } else {
-        Asm->EmitInt8(dwarf::DW_CFA_offset_extended);
-        Asm->EOL("DW_CFA_offset_extended");
+        EmitCFAByte(dwarf::DW_CFA_offset_extended);
         EmitULEB128(Reg, "Reg");
         EmitULEB128(Offset, "Offset");
       }

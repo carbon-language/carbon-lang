@@ -91,6 +91,10 @@ public:
   /// specifying (e.g. "LSDA").
   void EmitEncodingByte(unsigned Val, const char *Desc);
   
+  /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
+  void EmitCFAByte(unsigned Val);
+  
+  
   /// EmitSLEB128 - emit the specified signed leb128 value.
   void EmitSLEB128(int Value, const char *Desc) const;
 
