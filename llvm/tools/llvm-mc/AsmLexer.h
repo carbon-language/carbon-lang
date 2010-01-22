@@ -15,7 +15,7 @@
 #define ASMLEXER_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCAsmLexer.h"
+#include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/System/DataTypes.h"
 #include <string>

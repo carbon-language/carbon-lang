@@ -8,18 +8,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/MC/MCAsmLexer.h"
-#include "llvm/MC/MCAsmParser.h"
-#include "llvm/MC/MCParsedAsmOperand.h"
+#include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 namespace {

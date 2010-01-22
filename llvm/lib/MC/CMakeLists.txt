@@ -2,8 +2,6 @@ add_llvm_library(LLVMMC
   MCAsmInfo.cpp
   MCAsmInfoCOFF.cpp
   MCAsmInfoDarwin.cpp
-  MCAsmLexer.cpp
-  MCAsmParser.cpp
   MCAsmStreamer.cpp
   MCAssembler.cpp
   MCCodeEmitter.cpp
@@ -20,5 +18,4 @@ add_llvm_library(LLVMMC
   MCStreamer.cpp
   MCSymbol.cpp
   MCValue.cpp
-  TargetAsmParser.cpp
   )

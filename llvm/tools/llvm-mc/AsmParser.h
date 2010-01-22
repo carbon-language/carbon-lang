@@ -17,7 +17,7 @@
 #include <vector>
 #include "AsmLexer.h"
 #include "AsmCond.h"
-#include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"

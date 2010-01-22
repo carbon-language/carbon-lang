@@ -10,6 +10,7 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMMC
 BUILD_ARCHIVE := 1
+PARALLEL_DIRS := MCParser
 
 include $(LEVEL)/Makefile.common
 
