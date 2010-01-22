@@ -76,9 +76,6 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
         return false;   // Don't allow a store OF the AI, only INTO the AI.
       if (SI->isVolatile())
         return false;
-    } else if (isa<BitCastInst>(*UI)) {
-      // A bitcast inhibits promotion.
-      return false;
     } else {
       return false;
     }

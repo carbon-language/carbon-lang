@@ -406,8 +406,10 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
        --ScanInsts) {
     --BBI;
-    // Don't count debug info directives, lest they affect codegen
-    if (isa<DbgInfoIntrinsic>(BBI)) {
+    // Don't count debug info directives, lest they affect codegen,
+    // and we skip pointer-to-pointer bitcasts, which are NOPs.
+    if (isa<DbgInfoIntrinsic>(BBI) ||
+        (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
       ScanInsts++;
       continue;
     }    
@@ -476,7 +478,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   BBI = &SI; 
   do {
     ++BBI;
-  } while (isa<DbgInfoIntrinsic>(BBI));
+  } while (isa<DbgInfoIntrinsic>(BBI) ||
+           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType())));
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional())
       if (SimplifyStoreAtEndOfBlock(SI))
@@ -536,7 +539,8 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   if (OtherBr->isUnconditional()) {
     --BBI;
     // Skip over debugging info.
-    while (isa<DbgInfoIntrinsic>(BBI)) {
+    while (isa<DbgInfoIntrinsic>(BBI) ||
+           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
       if (BBI==OtherBB->begin())
         return false;
       --BBI;
