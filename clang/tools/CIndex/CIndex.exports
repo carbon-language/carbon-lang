@@ -8,6 +8,7 @@ _clang_disposeString
 _clang_disposeTranslationUnit
 _clang_equalCursors
 _clang_equalLocations
+_clang_getClangVersion
 _clang_getCString
 _clang_getCompletionChunkCompletionString
 _clang_getCompletionChunkKind

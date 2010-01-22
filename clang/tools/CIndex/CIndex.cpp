@@ -15,6 +15,7 @@
 #include "CIndexer.h"
 #include "CXCursor.h"
 
+#include "clang/Basic/Version.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLocVisitor.h"
@@ -1791,4 +1792,18 @@ void clang_disposeString(CXString string) {
   if (string.MustFreeString && string.Spelling)
     free((void*)string.Spelling);
 }
+
 } // end: extern "C"
+
+//===----------------------------------------------------------------------===//
+// Misc. utility functions.
+//===----------------------------------------------------------------------===//
+  
+extern "C" {
+
+const char *clang_getClangVersion() {
+  return getClangFullVendorVersion();
+}
+
+} // end: extern "C"
+

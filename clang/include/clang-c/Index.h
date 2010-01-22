@@ -1238,6 +1238,19 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
  * @}
  */
   
+  
+/**
+ * \defgroup CINDEX_MISC Miscellaneous utility functions
+ *
+ * @{
+ */
+  
+CINDEX_LINKAGE const char *clang_getClangVersion();
+
+/**
+ * @}
+ */
+    
 /**
  * @}
  */

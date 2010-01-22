@@ -71,7 +71,7 @@ llvm::StringRef getClangFullRepositoryVersion() {
   return buf;
 }
   
-llvm::StringRef getClangFullVendorVersion() {
+const char *getClangFullVendorVersion() {
   static std::string buf;
   if (buf.empty()) {
     llvm::raw_string_ostream OS(buf);
@@ -81,7 +81,7 @@ llvm::StringRef getClangFullVendorVersion() {
     OS << "clang version " CLANG_VERSION_STRING " ("
        << getClangFullRepositoryVersion() << ')';
   }
-  return buf;
+  return buf.c_str();
 }
   
 } // end namespace clang
