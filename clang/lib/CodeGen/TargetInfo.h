@@ -34,7 +34,7 @@ namespace clang {
     ABIInfo *Info;
   public:
     // WARNING: Acquires the ownership of ABIInfo.
-    TargetCodeGenInfo(ABIInfo *info = 0):Info(info) { };
+    TargetCodeGenInfo(ABIInfo *info = 0):Info(info) { }
     virtual ~TargetCodeGenInfo();
 
     /// getABIInfo() - Returns ABI info helper for the target.
@@ -43,7 +43,7 @@ namespace clang {
     /// SetTargetAttributes - Provides a convenient hook to handle extra
     /// target-specific attributes for the given global.
     virtual void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
-                                     CodeGen::CodeGenModule &M) const { };
+                                     CodeGen::CodeGenModule &M) const { }
   };
 }
 

@@ -257,7 +257,7 @@ class DefaultABIInfo : public ABIInfo {
 
 class DefaultTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  DefaultTargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {};
+  DefaultTargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {}
 };
 
 llvm::Value *DefaultABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -320,7 +320,7 @@ public:
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_32TargetCodeGenInfo(ASTContext &Context, bool d, bool p)
-    :TargetCodeGenInfo(new X86_32ABIInfo(Context, d, p)) {};
+    :TargetCodeGenInfo(new X86_32ABIInfo(Context, d, p)) {}
 };
 
 }
@@ -619,7 +619,7 @@ public:
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_64TargetCodeGenInfo():TargetCodeGenInfo(new X86_64ABIInfo()) {};
+  X86_64TargetCodeGenInfo():TargetCodeGenInfo(new X86_64ABIInfo()) {}
 };
 
 }
@@ -1428,7 +1428,7 @@ class PIC16ABIInfo : public ABIInfo {
 
 class PIC16TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  PIC16TargetCodeGenInfo():TargetCodeGenInfo(new PIC16ABIInfo()) {};
+  PIC16TargetCodeGenInfo():TargetCodeGenInfo(new PIC16ABIInfo()) {}
 };
 
 }
@@ -1493,7 +1493,7 @@ private:
 class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   ARMTargetCodeGenInfo(ARMABIInfo::ABIKind K)
-    :TargetCodeGenInfo(new ARMABIInfo(K)) {};
+    :TargetCodeGenInfo(new ARMABIInfo(K)) {}
 };
 
 }
@@ -1754,7 +1754,7 @@ class SystemZABIInfo : public ABIInfo {
 
 class SystemZTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  SystemZTargetCodeGenInfo():TargetCodeGenInfo(new SystemZABIInfo()) {};
+  SystemZTargetCodeGenInfo():TargetCodeGenInfo(new SystemZABIInfo()) {}
 };
 
 }
@@ -1816,7 +1816,7 @@ namespace {
 
 class MSP430TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  MSP430TargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {};
+  MSP430TargetCodeGenInfo():TargetCodeGenInfo(new DefaultABIInfo()) {}
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const;
 };
