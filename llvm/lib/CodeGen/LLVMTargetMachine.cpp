@@ -14,7 +14,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
@@ -283,9 +282,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
       PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
-#ifndef NDEBUG
-    PM.add(createVerifierPass());
-#endif
   }
 
   // Turn exception handling constructs into something the code generators can
