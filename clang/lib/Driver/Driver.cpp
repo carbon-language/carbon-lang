@@ -286,7 +286,7 @@ void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
   OS << CLANG_VENDOR;
 #endif
   OS << "clang version " CLANG_VERSION_STRING " ("
-     << getClangSubversionPath();
+     << getClangRepositoryPath();
   if (unsigned Revision = getClangSubversionRevision())
     OS << " " << Revision;
   OS << ")" << '\n';

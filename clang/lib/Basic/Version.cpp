@@ -10,13 +10,16 @@
 // This file defines several version-related utility functions for Clang.
 //
 //===----------------------------------------------------------------------===//
+
+#include "llvm/ADT/StringRef.h"
 #include <cstring>
 #include <cstdlib>
+
 using namespace std;
 
 namespace clang {
   
-const char *getClangSubversionPath() {
+llvm::StringRef getClangRepositoryPath() {
   static const char *Path = 0;
   if (Path)
     return Path;

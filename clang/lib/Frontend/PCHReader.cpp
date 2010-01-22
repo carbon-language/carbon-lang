@@ -1407,9 +1407,9 @@ PCHReader::ReadPCHBlock() {
         return IgnorePCH;
       }
       
-      const char *CurBranch = getClangSubversionPath();
-      if (strncmp(CurBranch, BlobStart, BlobLen)) {
-        std::string PCHBranch(BlobStart, BlobLen);
+      llvm::StringRef CurBranch = getClangRepositoryPath();
+      llvm::StringRef PCHBranch(BlobStart, BlobLen);
+      if (CurBranch != PCHBranch) {
         Diag(diag::warn_pch_different_branch) << PCHBranch << CurBranch;
         return IgnorePCH;
       }

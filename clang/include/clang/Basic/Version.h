@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_BASIC_VERSION_H
 #define LLVM_CLANG_BASIC_VERSION_H
 
+#include "llvm/ADT/StringRef.h"
+
 /// \brief Clang major version
 #define CLANG_VERSION_MAJOR 1
 
@@ -47,9 +49,10 @@
 #endif
 
 namespace clang {
-  /// \brief Retrieves the Subversion path that identifies the particular 
-  /// Clang branch, tag, or trunk from which this Clang was built.
-  const char *getClangSubversionPath();
+  /// \brief Retrieves the repository path (e.g., Subversion path) that 
+  /// identifies the particular Clang branch, tag, or trunk from which this
+  /// Clang was built.
+  llvm::StringRef getClangRepositoryPath();
   
   /// \brief Retrieves the Subversion revision number from which this Clang
   /// was built.

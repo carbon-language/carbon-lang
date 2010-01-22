@@ -716,7 +716,7 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   Record.clear();
   Record.push_back(pch::SVN_BRANCH_REVISION);
   Record.push_back(getClangSubversionRevision());
-  Stream.EmitRecordWithBlob(SvnAbbrevCode, Record, getClangSubversionPath());
+  Stream.EmitRecordWithBlob(SvnAbbrevCode, Record, getClangRepositoryPath());
 }
 
 /// \brief Write the LangOptions structure.
