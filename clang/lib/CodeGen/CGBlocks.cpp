@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include <algorithm>
-#include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;
@@ -221,11 +220,10 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       C = llvm::ConstantStruct::get(VMContext, Elts, false);
 
-      char Name[32];
-      sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
       C = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
-                                   llvm::GlobalValue::InternalLinkage,
-                                   C, Name);
+                                   llvm::GlobalValue::InternalLinkage, C,
+                                   "__block_holder_tmp_" +
+                                   llvm::Twine(CGM.getGlobalUniqueCount()));
       QualType BPT = BE->getType();
       C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
       return C;
@@ -747,13 +745,12 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(ResultType, Args);
 
-  std::string Name = std::string("__") + Info.Name + "_block_invoke_";
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           Name,
+                           llvm::Twine("__") + Info.Name + "_block_invoke_",
                            &CGM.getModule());
 
   CGM.SetInternalFunctionAttributes(BD, Fn, FI);
@@ -875,14 +872,12 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
-  std::string Name = std::string("__copy_helper_block_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           Name,
-                           &CGM.getModule());
+                           "__copy_helper_block_", &CGM.getModule());
 
   IdentifierInfo *II
     = &CGM.getContext().Idents.get("__copy_helper_block_");
@@ -958,14 +953,12 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
-  std::string Name = std::string("__destroy_helper_block_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           Name,
-                           &CGM.getModule());
+                           "__destroy_helper_block_", &CGM.getModule());
 
   IdentifierInfo *II
     = &CGM.getContext().Idents.get("__destroy_helper_block_");
@@ -1042,7 +1035,6 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
-  std::string Name = std::string("__Block_byref_id_object_copy_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
@@ -1050,8 +1042,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           Name,
-                           &CGM.getModule());
+                           "__Block_byref_id_object_copy_", &CGM.getModule());
 
   IdentifierInfo *II
     = &CGM.getContext().Idents.get("__Block_byref_id_object_copy_");
@@ -1107,7 +1098,6 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
-  std::string Name = std::string("__Block_byref_id_object_dispose_");
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
 
@@ -1115,7 +1105,7 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           Name,
+                           "__Block_byref_id_object_dispose_",
                            &CGM.getModule());
 
   IdentifierInfo *II
