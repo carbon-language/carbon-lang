@@ -26,7 +26,9 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class StringRef;
+  class Twine;
   class raw_ostream;
+  class formatted_raw_ostream;
 
   /// MCStreamer - Streaming machine code generation interface.  This interface
   /// is intended to provide a programatic interface that is very similar to the
@@ -79,6 +81,15 @@ namespace llvm {
 
     MCContext &getContext() const { return Context; }
 
+    /// addComment - Add a comment that can be emitted to the generated .s
+    /// file if applicable as a QoI issue to make the output of the compiler
+    /// more readable.  This only affects the MCAsmStreamer, and only when
+    /// verbose assembly output is enabled.
+    ///
+    /// If the comment includes embedded \n's, they will each get the comment
+    /// prefix as appropriate.  The added comment should not end with a \n.
+    virtual void addComment(const Twine &T) {}
+    
     /// @name Symbol & Section Management
     /// @{
     
@@ -234,7 +245,7 @@ namespace llvm {
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
-  MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS,
+  MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 const MCAsmInfo &MAI, bool isLittleEndian,
                                 bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,

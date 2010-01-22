@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -17,22 +16,27 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace {
 
 class MCAsmStreamer : public MCStreamer {
-  raw_ostream &OS;
+  formatted_raw_ostream &OS;
   const MCAsmInfo &MAI;
   bool IsLittleEndian, IsVerboseAsm;
   MCInstPrinter *InstPrinter;
   MCCodeEmitter *Emitter;
+  
+  SmallString<128> CommentToEmit;
 public:
-  MCAsmStreamer(MCContext &Context, raw_ostream &os, const MCAsmInfo &mai,
+  MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
+                const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
                 MCCodeEmitter *emitter)
     : MCStreamer(Context), OS(os), MAI(mai), IsLittleEndian(isLittleEndian),
@@ -40,6 +44,22 @@ public:
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
+  
+  
+  inline void EmitEOL() {
+    if (CommentToEmit.empty()) {
+      OS << '\n';
+      return;
+    }
+    EmitCommentsAndEOL();
+  }
+  void EmitCommentsAndEOL();
+  
+  /// addComment - Add a comment that can be emitted to the generated .s
+  /// file if applicable as a QoI issue to make the output of the compiler
+  /// more readable.  This only affects the MCAsmStreamer, and only when
+  /// verbose assembly output is enabled.
+  virtual void addComment(const Twine &T);
   
   /// @name MCStreamer Interface
   /// @{
@@ -85,6 +105,34 @@ public:
 };
 
 } // end anonymous namespace.
+
+/// addComment - Add a comment that can be emitted to the generated .s
+/// file if applicable as a QoI issue to make the output of the compiler
+/// more readable.  This only affects the MCAsmStreamer, and only when
+/// verbose assembly output is enabled.
+void MCAsmStreamer::addComment(const Twine &T) {
+  if (!IsVerboseAsm) return;
+  // Each comment goes on its own line.
+  if (!CommentToEmit.empty())
+    CommentToEmit.push_back('\n');
+  T.toVector(CommentToEmit);
+}
+
+void MCAsmStreamer::EmitCommentsAndEOL() {
+  StringRef Comments = CommentToEmit.str();
+  while (!Comments.empty()) {
+    // Emit a line of comments.
+    OS.PadToColumn(MAI.getCommentColumn());
+    size_t Position = Comments.find('\n');
+    OS << MAI.getCommentString() << ' ' << Comments.substr(0, Position) << '\n';
+    
+    if (Position == StringRef::npos) break;
+    Comments = Comments.substr(Position+1);
+  }
+  
+  CommentToEmit.clear();
+}
+
 
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
@@ -219,7 +267,8 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
   }
   
   assert(Directive && "Invalid size for machine code value!");
-  OS << Directive << truncateToSize(Value, Size) << '\n';
+  OS << Directive << truncateToSize(Value, Size);
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
@@ -235,7 +284,8 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   }
   
   assert(Directive && "Invalid size for machine code value!");
-  OS << Directive << *truncateToSize(Value, Size) << '\n';
+  OS << Directive << *truncateToSize(Value, Size);
+  EmitEOL();
 }
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
@@ -249,7 +299,7 @@ void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
       OS << ZeroDirective << NumBytes;
       if (FillValue != 0)
         OS << ',' << (int)FillValue;
-      OS << '\n';
+      EmitEOL();
       return;
     }
 
@@ -349,7 +399,8 @@ void MCAsmStreamer::Finish() {
   OS.flush();
 }
     
-MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
+MCStreamer *llvm::createAsmStreamer(MCContext &Context,
+                                    formatted_raw_ostream &OS,
                                     const MCAsmInfo &MAI, bool isLittleEndian,
                                     bool isVerboseAsm, MCInstPrinter *IP,
                                     MCCodeEmitter *CE) {
