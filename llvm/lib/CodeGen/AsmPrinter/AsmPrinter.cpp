@@ -659,16 +659,6 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 // Emission and print routines
 //
 
-/// EOL - Print a newline character to asm stream.  If a comment is present
-/// then it will be printed first.  Comments should not contain '\n'.
-void AsmPrinter::EOL(const Twine &Comment) const {
-  if (VerboseAsm && !Comment.isTriviallyEmpty()) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << ' ' << Comment;
-  }
-  O << '\n';
-}
-
 /// EmitInt8 - Emit a byte directive and value.
 ///
 void AsmPrinter::EmitInt8(int Value) const {

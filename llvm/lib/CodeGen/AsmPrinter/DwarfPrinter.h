@@ -29,6 +29,7 @@ class MCAsmInfo;
 class TargetData;
 class TargetRegisterInfo;
 class MCSymbol;
+class Twine;
 
 class DwarfPrinter {
 protected:
@@ -85,6 +86,10 @@ public:
   void PrintRelDirective(bool Force32Bit = false,
                          bool isInSection = false) const;
 
+  /// EOL - Print a newline character to asm stream.  If a comment is present
+  /// then it will be printed first.  Comments should not contain '\n'.
+  void EOL(const Twine &Comment) const;
+  
   /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
   /// encoding.  If verbose assembly output is enabled, we output comments
   /// describing the encoding.  Desc is a string saying what the encoding is

@@ -42,6 +42,16 @@ void DwarfPrinter::PrintRelDirective(bool Force32Bit, bool isInSection) const {
     O << MAI->getData64bitsDirective();
 }
 
+/// EOL - Print a newline character to asm stream.  If a comment is present
+/// then it will be printed first.  Comments should not contain '\n'.
+void DwarfPrinter::EOL(const Twine &Comment) const {
+  if (Asm->VerboseAsm && !Comment.isTriviallyEmpty()) {
+    Asm->O.PadToColumn(MAI->getCommentColumn());
+    Asm->O << Asm->MAI->getCommentString() << ' ' << Comment;
+  }
+  Asm->O << '\n';
+}
+
 static const char *DecodeDWARFEncoding(unsigned Encoding) {
   switch (Encoding) {
   case dwarf::DW_EH_PE_absptr: return "absptr";

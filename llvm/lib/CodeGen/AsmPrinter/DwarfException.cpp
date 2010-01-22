@@ -115,7 +115,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Define the eh frame length.
   EmitDifference("eh_frame_common_end", Index,
                  "eh_frame_common_begin", Index, true);
-  Asm->EOL("Length of Common Information Entry");
+  EOL("Length of Common Information Entry");
 
   // EH frame header.
   EmitLabel("eh_frame_common_begin", Index);
@@ -172,13 +172,13 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     Augmentation[0] = 'z';
 
   Asm->EmitString(Augmentation);
-  Asm->EOL("CIE Augmentation");
+  EOL("CIE Augmentation");
 
   // Round out reader.
   EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
-  Asm->EOL("CIE Return Address Column");
+  EOL("CIE Return Address Column");
 
   EmitULEB128(AugmentationSize, "Augmentation Size");
   EmitEncodingByte(PerEncoding, "Personality");
@@ -190,7 +190,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
                                        Index);
 
     O << MAI->getData32bitsDirective() << *PersonalityRef;
-    Asm->EOL("Personality");
+    EOL("Personality");
 
     EmitEncodingByte(LSDAEncoding, "LSDA");
     EmitEncodingByte(FDEEncoding, "FDE");
@@ -253,7 +253,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // EH frame header.
     EmitDifference("eh_frame_end", EHFrameInfo.Number,
                    "eh_frame_begin", EHFrameInfo.Number, true);
-    Asm->EOL("Length of Frame Information Entry");
+    EOL("Length of Frame Information Entry");
 
     EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
@@ -261,13 +261,13 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
                       EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
                       true, true, false);
 
-    Asm->EOL("FDE CIE offset");
+    EOL("FDE CIE offset");
 
     EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);
-    Asm->EOL("FDE initial location");
+    EOL("FDE initial location");
     EmitDifference("eh_func_end", EHFrameInfo.Number,
                    "eh_func_begin", EHFrameInfo.Number, true);
-    Asm->EOL("FDE address range");
+    EOL("FDE address range");
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
@@ -291,7 +291,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
         }
       }
 
-      Asm->EOL("Language Specific Data Area");
+      EOL("Language Specific Data Area");
     } else {
       EmitULEB128(0, "Augmentation size");
     }
@@ -760,7 +760,7 @@ void DwarfException::EmitExceptionTable() {
 
   for (unsigned i = 0; i != SizeAlign; ++i) {
     Asm->EmitInt8(0);
-    Asm->EOL("Padding");
+    EOL("Padding");
   }
 
   EmitLabel("exception", SubprogramCount);
@@ -844,7 +844,7 @@ void DwarfException::EmitExceptionTable() {
       // the start of the procedure fragment.
       EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
                         true, true);
-      Asm->EOL("Region start");
+      EOL("Region start");
 
       if (!S.EndLabel)
         EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
@@ -852,7 +852,7 @@ void DwarfException::EmitExceptionTable() {
       else
         EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
 
-      Asm->EOL("Region length");
+      EOL("Region length");
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
@@ -862,7 +862,7 @@ void DwarfException::EmitExceptionTable() {
         EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
                           true, true);
 
-      Asm->EOL("Landing pad");
+      EOL("Landing pad");
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
@@ -895,13 +895,12 @@ void DwarfException::EmitExceptionTable() {
     const GlobalVariable *GV = *I;
     PrintRelDirective();
 
-    if (GV) {
+    if (GV)
       O << *Asm->GetGlobalValueSymbol(GV);
-    } else {
+    else
       O << "0x0";
-    }
 
-    Asm->EOL("TypeInfo");
+    EOL("TypeInfo");
   }
 
   // Emit the Exception Specifications.

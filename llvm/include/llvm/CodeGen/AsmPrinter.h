@@ -249,10 +249,6 @@ namespace llvm {
     // Emission and print routines
     //
 
-    /// EOL - Print a newline character to asm stream.  If a comment is present
-    /// then it will be printed first.  Comments should not contain '\n'.
-    void EOL(const Twine &Comment) const;
-
     /// EmitInt8 - Emit a byte directive and value.
     ///
     void EmitInt8(int Value) const;
