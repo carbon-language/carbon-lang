@@ -178,14 +178,26 @@ public:
   // Declaration visitors
   bool VisitDeclContext(DeclContext *DC);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
+  bool VisitTypedefDecl(TypedefDecl *D);
+  bool VisitTagDecl(TagDecl *D);
+  bool VisitEnumConstantDecl(EnumConstantDecl *D);
   bool VisitDeclaratorDecl(DeclaratorDecl *DD);
   bool VisitFunctionDecl(FunctionDecl *ND);
+  bool VisitFieldDecl(FieldDecl *D);
+  bool VisitVarDecl(VarDecl *);
+  bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCContainerDecl(ObjCContainerDecl *D);
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
-  bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-  bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
-  bool VisitTagDecl(TagDecl *D);
+  bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+  bool VisitObjCImplDecl(ObjCImplDecl *D);
+  bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
+  bool VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+  // FIXME: ObjCPropertyDecl requires TypeSourceInfo, getter/setter locations,
+  // etc.
+  // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
+  bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
+  bool VisitObjCClassDecl(ObjCClassDecl *D);
 
   // Type visitors
   // FIXME: QualifiedTypeLoc doesn't provide any location information
@@ -314,11 +326,6 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   return false;
 }
 
-bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
-  llvm_unreachable("Translation units are visited directly by Visit()");
-  return false;
-}
-
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
@@ -326,6 +333,28 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
       return true;
   }
   
+  return false;
+}
+
+bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
+  llvm_unreachable("Translation units are visited directly by Visit()");
+  return false;
+}
+
+bool CursorVisitor::VisitTypedefDecl(TypedefDecl *D) {
+  if (TypeSourceInfo *TSInfo = D->getTypeSourceInfo())
+    return Visit(TSInfo->getTypeLoc());
+  
+  return false;
+}
+
+bool CursorVisitor::VisitTagDecl(TagDecl *D) {
+  return VisitDeclContext(D);
+}
+
+bool CursorVisitor::VisitEnumConstantDecl(EnumConstantDecl *D) {
+  if (Expr *Init = D->getInitExpr())
+    return Visit(MakeCXCursor(Init, StmtParent, TU));
   return false;
 }
 
@@ -341,6 +370,44 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (VisitDeclaratorDecl(ND))
     return true;
 
+  if (ND->isThisDeclarationADefinition() &&
+      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
+    return true;
+  
+  return false;
+}
+
+bool CursorVisitor::VisitFieldDecl(FieldDecl *D) {
+  if (VisitDeclaratorDecl(D))
+    return true;
+  
+  if (Expr *BitWidth = D->getBitWidth())
+    return Visit(MakeCXCursor(BitWidth, StmtParent, TU));
+  
+  return false;
+}
+
+bool CursorVisitor::VisitVarDecl(VarDecl *D) {
+  if (VisitDeclaratorDecl(D))
+    return true;
+  
+  if (Expr *Init = D->getInit())
+    return Visit(MakeCXCursor(Init, StmtParent, TU));
+  
+  return false;
+}
+
+bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
+  // FIXME: We really need a TypeLoc covering Objective-C method declarations.
+  // At the moment, we don't have information about locations in the return 
+  // type.
+  for (ObjCMethodDecl::param_iterator P = ND->param_begin(), 
+       PEnd = ND->param_end();
+       P != PEnd; ++P) {
+    if (Visit(MakeCXCursor(*P, TU)))
+      return true;
+  }
+  
   if (ND->isThisDeclarationADefinition() &&
       Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
     return true;
@@ -366,6 +433,16 @@ bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
   return VisitObjCContainerDecl(ND);
 }
 
+bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+  ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
+  for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
+       E = PID->protocol_end(); I != E; ++I, ++PL)
+    if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
+      return true;
+  
+  return VisitObjCContainerDecl(PID);
+}
+
 bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   // Issue callbacks for super class.
   if (D->getSuperClass() &&
@@ -383,36 +460,49 @@ bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   return VisitObjCContainerDecl(D);
 }
 
-bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-  // FIXME: We really need a TypeLoc covering Objective-C method declarations.
-  // At the moment, we don't have information about locations in the return 
-  // type.
-  for (ObjCMethodDecl::param_iterator P = ND->param_begin(), 
-                                   PEnd = ND->param_end();
-       P != PEnd; ++P) {
-    if (Visit(MakeCXCursor(*P, TU)))
-      return true;
-  }
-  
-  if (ND->isThisDeclarationADefinition() &&
-      Visit(MakeCXCursor(ND->getBody(), StmtParent, TU)))
-    return true;
-  
-  return false;
+bool CursorVisitor::VisitObjCImplDecl(ObjCImplDecl *D) {
+  return VisitObjCContainerDecl(D);
 }
 
-bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
-  ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
-  for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
-         E = PID->protocol_end(); I != E; ++I, ++PL)
+bool CursorVisitor::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+  if (Visit(MakeCursorObjCClassRef(D->getCategoryDecl()->getClassInterface(), 
+                                   D->getLocation(), TU)))
+    return true;
+  
+  return VisitObjCImplDecl(D);
+}
+
+bool CursorVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+#if 0
+  // Issue callbacks for super class.
+  // FIXME: No source location information!
+  if (D->getSuperClass() &&
+      Visit(MakeCursorObjCSuperClassRef(D->getSuperClass(),
+                                        D->getSuperClassLoc(), 
+                                        TU)))
+    return true;
+#endif
+  
+  return VisitObjCImplDecl(D);
+}
+
+bool CursorVisitor::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
+  ObjCForwardProtocolDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
+  for (ObjCForwardProtocolDecl::protocol_iterator I = D->protocol_begin(),
+                                                  E = D->protocol_end();
+       I != E; ++I, ++PL)
     if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
       return true;
   
-  return VisitObjCContainerDecl(PID);
+  return false; 
 }
 
-bool CursorVisitor::VisitTagDecl(TagDecl *D) {
-  return VisitDeclContext(D);
+bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
+  for (ObjCClassDecl::iterator C = D->begin(), CEnd = D->end(); C != CEnd; ++C)
+    if (Visit(MakeCursorObjCClassRef(C->getInterface(), C->getLocation(), TU)))
+      return true;
+       
+  return false;
 }
 
 bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
