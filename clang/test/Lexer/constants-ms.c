@@ -7,6 +7,19 @@ __int64 x5 = 0x42i64;
 __int64 x4 = 70000000i128;
 
 __int64 y = 0x42i64u;  // expected-error {{invalid suffix}}
-__int64 w = 0x43ui64;  // expected-error {{invalid suffix}}
+__int64 w = 0x43ui64; 
 __int64 z = 9Li64;  // expected-error {{invalid suffix}}
 __int64 q = 10lli64;  // expected-error {{invalid suffix}}
+
+// radar 7562363
+#define ULLONG_MAX 0xffffffffffffffffui64
+#define UINT 0xffffffffui32
+#define USHORT 0xffffui8
+#define UCHAR 0xffffffffui8
+
+void a() {
+	unsigned long long m = ULLONG_MAX;
+	unsigned int n = UINT;
+        unsigned short s = USHORT;
+        unsigned char c = UCHAR;
+}

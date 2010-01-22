@@ -375,7 +375,7 @@ NumericLiteralParser(const char *begin, const char *end,
       continue;  // Success.
     case 'i':
       if (PP.getLangOptions().Microsoft) {
-        if (isFPConstant || isUnsigned || isLong || isLongLong) break;
+        if (isFPConstant || isLong || isLongLong) break;
 
         // Allow i8, i16, i32, i64, and i128.
         if (s + 1 != ThisTokEnd) {
