@@ -25,7 +25,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <cstdio>
 
 namespace clang {
 
@@ -183,51 +182,53 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
 /// DebugPrint - Print this standard conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void StandardConversionSequence::DebugPrint() const {
+  llvm::raw_ostream &OS = llvm::errs();
   bool PrintedSomething = false;
   if (First != ICK_Identity) {
-    fprintf(stderr, "%s", GetImplicitConversionName(First));
+    OS << GetImplicitConversionName(First);
     PrintedSomething = true;
   }
 
   if (Second != ICK_Identity) {
     if (PrintedSomething) {
-      fprintf(stderr, " -> ");
+      OS << " -> ";
     }
-    fprintf(stderr, "%s", GetImplicitConversionName(Second));
+    OS << GetImplicitConversionName(Second);
 
     if (CopyConstructor) {
-      fprintf(stderr, " (by copy constructor)");
+      OS << " (by copy constructor)";
     } else if (DirectBinding) {
-      fprintf(stderr, " (direct reference binding)");
+      OS << " (direct reference binding)";
     } else if (ReferenceBinding) {
-      fprintf(stderr, " (reference binding)");
+      OS << " (reference binding)";
     }
     PrintedSomething = true;
   }
 
   if (Third != ICK_Identity) {
     if (PrintedSomething) {
-      fprintf(stderr, " -> ");
+      OS << " -> ";
     }
-    fprintf(stderr, "%s", GetImplicitConversionName(Third));
+    OS << GetImplicitConversionName(Third);
     PrintedSomething = true;
   }
 
   if (!PrintedSomething) {
-    fprintf(stderr, "No conversions required");
+    OS << "No conversions required";
   }
 }
 
 /// DebugPrint - Print this user-defined conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void UserDefinedConversionSequence::DebugPrint() const {
+  llvm::raw_ostream &OS = llvm::errs();
   if (Before.First || Before.Second || Before.Third) {
     Before.DebugPrint();
-    fprintf(stderr, " -> ");
+    OS << " -> ";
   }
-  fprintf(stderr, "'%s'", ConversionFunction->getNameAsString().c_str());
+  OS << "'" << ConversionFunction->getNameAsString() << "'";
   if (After.First || After.Second || After.Third) {
-    fprintf(stderr, " -> ");
+    OS << " -> ";
     After.DebugPrint();
   }
 }
@@ -235,27 +236,28 @@ void UserDefinedConversionSequence::DebugPrint() const {
 /// DebugPrint - Print this implicit conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void ImplicitConversionSequence::DebugPrint() const {
+  llvm::raw_ostream &OS = llvm::errs();
   switch (ConversionKind) {
   case StandardConversion:
-    fprintf(stderr, "Standard conversion: ");
+    OS << "Standard conversion: ";
     Standard.DebugPrint();
     break;
   case UserDefinedConversion:
-    fprintf(stderr, "User-defined conversion: ");
+    OS << "User-defined conversion: ";
     UserDefined.DebugPrint();
     break;
   case EllipsisConversion:
-    fprintf(stderr, "Ellipsis conversion");
+    OS << "Ellipsis conversion";
     break;
   case AmbiguousConversion:
-    fprintf(stderr, "Ambiguous conversion");
+    OS << "Ambiguous conversion";
     break;
   case BadConversion:
-    fprintf(stderr, "Bad conversion");
+    OS << "Bad conversion";
     break;
   }
 
-  fprintf(stderr, "\n");
+  OS << "\n";
 }
 
 void AmbiguousConversionSequence::construct() {
