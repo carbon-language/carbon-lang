@@ -1399,7 +1399,7 @@ PCHReader::ReadPCHBlock() {
       NumComments = BlobLen / sizeof(SourceRange);
       break;
         
-    case pch::SVN_BRANCH_REVISION: {
+    case pch::VERSION_CONTROL_BRANCH_REVISION: {
       unsigned CurRevision = getClangSubversionRevision();
       if (Record[0] && CurRevision && Record[0] != CurRevision) {
         Diag(Record[0] < CurRevision? diag::warn_pch_version_too_old

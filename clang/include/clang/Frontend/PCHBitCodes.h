@@ -30,7 +30,7 @@ namespace clang {
     /// designed for the previous version could not support reading
     /// the new version), this number should be increased.
     ///
-    /// Version 3 of PCH files also requires that the Subversion branch and
+    /// Version 3 of PCH files also requires that the version control branch and
     /// revision match exactly, since there is no backward compatibility of
     /// PCH files at this time.
     const unsigned VERSION_MAJOR = 3;
@@ -219,9 +219,9 @@ namespace clang {
       /// comments were encountered in the source code.
       COMMENT_RANGES = 20,
       
-      /// \brief Record code for the Subversion branch and revision information
-      /// of the compiler used to build this PCH file.
-      SVN_BRANCH_REVISION = 21
+      /// \brief Record code for the version control branch and revision
+      /// information of the compiler used to build this PCH file.
+      VERSION_CONTROL_BRANCH_REVISION = 21
     };
 
     /// \brief Record types used within a source manager block.

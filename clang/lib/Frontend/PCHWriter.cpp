@@ -543,7 +543,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
   RECORD(COMMENT_RANGES);
-  RECORD(SVN_BRANCH_REVISION);
+  RECORD(VERSION_CONTROL_BRANCH_REVISION);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -709,12 +709,12 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   
   // Subversion branch/version information.
   BitCodeAbbrev *SvnAbbrev = new BitCodeAbbrev();
-  SvnAbbrev->Add(BitCodeAbbrevOp(pch::SVN_BRANCH_REVISION));
+  SvnAbbrev->Add(BitCodeAbbrevOp(pch::VERSION_CONTROL_BRANCH_REVISION));
   SvnAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // SVN revision
   SvnAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // SVN branch/tag
   unsigned SvnAbbrevCode = Stream.EmitAbbrev(SvnAbbrev);
   Record.clear();
-  Record.push_back(pch::SVN_BRANCH_REVISION);
+  Record.push_back(pch::VERSION_CONTROL_BRANCH_REVISION);
   Record.push_back(getClangSubversionRevision());
   Stream.EmitRecordWithBlob(SvnAbbrevCode, Record, getClangRepositoryPath());
 }
