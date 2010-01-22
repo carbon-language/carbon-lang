@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringRef.h"
+#include "clang/Basic/Version.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
 #include <cstdlib>
@@ -52,8 +52,8 @@ llvm::StringRef getClangRevision() {
 #else
   static std::string revision;
   if (revision.empty()) {
-    llvm::raw_string_ostream Out(revision);
-    Out << strtol(SVN_REVISION, 0, 10);
+    llvm::raw_string_ostream OS(revision);
+    OS << strtol(SVN_REVISION, 0, 10);
   }
   return revision;
 #endif
@@ -62,11 +62,24 @@ llvm::StringRef getClangRevision() {
 llvm::StringRef getClangFullRepositoryVersion() {
   static std::string buf;
   if (buf.empty()) {
-    llvm::raw_string_ostream Out(buf);
-    Out << getClangRepositoryPath();
+    llvm::raw_string_ostream OS(buf);
+    OS << getClangRepositoryPath();
     llvm::StringRef Revision = getClangRevision();
     if (!Revision.empty())
-      Out << ' ' << Revision;
+      OS << ' ' << Revision;
+  }
+  return buf;
+}
+  
+llvm::StringRef getClangFullVendorVersion() {
+  static std::string buf;
+  if (buf.empty()) {
+    llvm::raw_string_ostream OS(buf);
+#ifdef CLANG_VENDOR
+    OS << CLANG_VENDOR;
+#endif
+    OS << "clang version " CLANG_VERSION_STRING " ("
+       << getClangFullRepositoryVersion() << ')';
   }
   return buf;
 }
