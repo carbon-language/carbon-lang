@@ -5611,26 +5611,24 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   QualType NewTy = New->getType()->getAs<FunctionType>()->getResultType();
   QualType OldTy = Old->getType()->getAs<FunctionType>()->getResultType();
 
-  QualType CNewTy = Context.getCanonicalType(NewTy);
-  QualType COldTy = Context.getCanonicalType(OldTy);
-
-  if (CNewTy == COldTy &&
-      CNewTy.getLocalCVRQualifiers() == COldTy.getLocalCVRQualifiers())
+  if (Context.hasSameType(NewTy, OldTy))
     return false;
 
   // Check if the return types are covariant
   QualType NewClassTy, OldClassTy;
 
   /// Both types must be pointers or references to classes.
-  if (PointerType *NewPT = dyn_cast<PointerType>(CNewTy)) {
-    if (PointerType *OldPT = dyn_cast<PointerType>(COldTy)) {
+  if (const PointerType *NewPT = NewTy->getAs<PointerType>()) {
+    if (const PointerType *OldPT = OldTy->getAs<PointerType>()) {
       NewClassTy = NewPT->getPointeeType();
       OldClassTy = OldPT->getPointeeType();
     }
-  } else if (ReferenceType *NewRT = dyn_cast<ReferenceType>(CNewTy)) {
-    if (ReferenceType *OldRT = dyn_cast<ReferenceType>(COldTy)) {
-      NewClassTy = NewRT->getPointeeType();
-      OldClassTy = OldRT->getPointeeType();
+  } else if (const ReferenceType *NewRT = NewTy->getAs<ReferenceType>()) {
+    if (const ReferenceType *OldRT = OldTy->getAs<ReferenceType>()) {
+      if (NewRT->getTypeClass() == OldRT->getTypeClass()) {
+        NewClassTy = NewRT->getPointeeType();
+        OldClassTy = OldRT->getPointeeType();
+      }
     }
   }
 
@@ -5678,7 +5676,7 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   }
 
   // The qualifiers of the return types must be the same.
-  if (CNewTy.getLocalCVRQualifiers() != COldTy.getLocalCVRQualifiers()) {
+  if (NewTy.getLocalCVRQualifiers() != OldTy.getLocalCVRQualifiers()) {
     Diag(New->getLocation(),
          diag::err_covariant_return_type_different_qualifications)
     << New->getDeclName() << NewTy << OldTy;
