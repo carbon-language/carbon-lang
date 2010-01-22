@@ -17,10 +17,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
-static inline Program &GetProgram(CXIndex CIdx) {
-  return ((CIndexer*) CIdx)->getProgram();
-}
-
 //===----------------------------------------------------------------------===//
 // USR generation.
 //===----------------------------------------------------------------------===//

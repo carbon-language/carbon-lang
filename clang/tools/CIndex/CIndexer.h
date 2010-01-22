@@ -16,10 +16,6 @@
 #define LLVM_CLANG_CINDEXER_H
 
 #include "clang-c/Index.h"
-#include "clang/Index/ASTLocation.h"
-#include "clang/Index/Indexer.h"
-#include "clang/Index/Program.h"
-#include "clang/Index/Utils.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/System/Path.h"
@@ -34,7 +30,7 @@ public:
   virtual void HandleDiagnostic(Diagnostic::Level, const DiagnosticInfo &) {}
 };
 
-class CIndexer : public Indexer {
+class CIndexer {
   DiagnosticOptions DiagOpts;
   IgnoreDiagnosticsClient IgnoreDiagClient;
   llvm::OwningPtr<Diagnostic> TextDiags;
@@ -46,15 +42,11 @@ class CIndexer : public Indexer {
   llvm::sys::Path ClangPath;
   
 public:
-  explicit CIndexer(Program *prog) : Indexer(*prog),
-    IgnoreDiags(&IgnoreDiagClient),
-    UseExternalASTGeneration(false),
-    OnlyLocalDecls(false),
-    DisplayDiagnostics(false) {
+  CIndexer() : IgnoreDiags(&IgnoreDiagClient), UseExternalASTGeneration(false),
+               OnlyLocalDecls(false), DisplayDiagnostics(false) 
+  {
     TextDiags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
   }
-  
-  virtual ~CIndexer() { delete &getProgram(); }
   
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all

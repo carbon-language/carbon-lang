@@ -834,7 +834,7 @@ CXString CIndexer::createCXString(const char *String, bool DupString){
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
-  CIndexer *CIdxr = new CIndexer(new Program());
+  CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
   if (displayDiagnostics)
