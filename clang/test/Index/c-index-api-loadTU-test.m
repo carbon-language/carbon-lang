@@ -53,6 +53,22 @@ int main (int argc, const char * argv[]) {
   main(someEnum, (const char **)bee);
 }
 
+// CHECK: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 (Definition)
+// CHECK: <invalid loc>:0:0: TypedefDecl=__uint128_t:0:0 (Definition)
+// CHECK: <invalid loc>:0:0: TypedefDecl=SEL:0:0 (Definition)
+// CHECK: <invalid loc>:0:0: TypeRef=SEL:0:0
+// CHECK: <invalid loc>:0:0: TypedefDecl=id:0:0 (Definition)
+// CHECK: <invalid loc>:0:0: TypedefDecl=Class:0:0 (Definition)
+// CHECK: <invalid loc>:87:16: StructDecl=__va_list_tag:87:16 (Definition)
+// CHECK: <invalid loc>:87:42: FieldDecl=gp_offset:87:42 (Definition)
+// CHECK: <invalid loc>:87:63: FieldDecl=fp_offset:87:63 (Definition)
+// CHECK: <invalid loc>:87:81: FieldDecl=overflow_arg_area:87:81 (Definition)
+// CHECK: <invalid loc>:87:107: FieldDecl=reg_save_area:87:107 (Definition)
+// CHECK: <invalid loc>:87:123: TypedefDecl=__va_list_tag:87:123 (Definition)
+// CHECK: <invalid loc>:87:9: TypeRef=struct __va_list_tag:87:16
+// CHECK: <invalid loc>:87:159: TypedefDecl=__builtin_va_list:87:159 (Definition)
+// CHECK: <invalid loc>:87:145: TypeRef=__va_list_tag:87:123
+// CHECK: <invalid loc>:87:177: UnexposedExpr=
 // CHECK: c-index-api-loadTU-test.m:4:12: ObjCInterfaceDecl=Foo:4:12 [Extent=4:1:11:4]
 // CHECK: c-index-api-loadTU-test.m:8:1: ObjCInstanceMethodDecl=foo:8:1 [Extent=8:1:8:6]
 // CHECK: c-index-api-loadTU-test.m:9:1: ObjCClassMethodDecl=fooC:9:1 [Extent=9:1:9:7]
@@ -61,6 +77,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:19:12: ObjCCategoryDecl=FooCat:19:12 [Extent=19:1:22:4]
 // CHECK: c-index-api-loadTU-test.m:19:12: ObjCClassRef=Foo:4:12 [Extent=19:12:19:14]
 // CHECK: c-index-api-loadTU-test.m:20:1: ObjCInstanceMethodDecl=catMethodWithFloat::20:1 [Extent=20:1:20:40]
+// CHECK: c-index-api-loadTU-test.m:20:36: ParmDecl=fArg:20:36 (Definition) [Extent=20:29:20:39]
 // CHECK: c-index-api-loadTU-test.m:21:1: ObjCInstanceMethodDecl=floatMethod:21:1 [Extent=21:1:21:22]
 // CHECK: c-index-api-loadTU-test.m:24:1: ObjCProtocolDecl=Proto:24:1 (Definition) [Extent=24:1:26:4]
 // CHECK: c-index-api-loadTU-test.m:25:1: ObjCInstanceMethodDecl=pMethod:25:1 [Extent=25:1:25:10]
@@ -75,25 +92,25 @@ int main (int argc, const char * argv[]) {
 // CHECK: c-index-api-loadTU-test.m:41:1: EnumDecl=:41:1 (Definition) [Extent=41:1:43:1]
 // CHECK: c-index-api-loadTU-test.m:42:3: EnumConstantDecl=someEnum:42:3 (Definition) [Extent=42:3:42:10]
 // CHECK: c-index-api-loadTU-test.m:45:5: FunctionDecl=main:45:5 (Definition) [Extent=45:5:54:1]
-// CHECK: c-index-api-loadTU-test.m:45:15: ParmDecl=argc:45:15 (Definition) [Extent=45:15:45:18]
-// CHECK: c-index-api-loadTU-test.m:45:34: ParmDecl=argv:45:34 (Definition) [Extent=45:34:45:37]
-// CHECK: c-index-api-loadTU-test.m:45:5: UnexposedStmt=main [Extent=45:5:54:1]
-// CHECK: c-index-api-loadTU-test.m:45:5: UnexposedStmt=main [Extent=45:5:54:1]
-// CHECK: c-index-api-loadTU-test.m:46:8: VarDecl=bee:46:8 (Definition) [Extent=46:8:46:10]
+// CHECK: c-index-api-loadTU-test.m:45:15: ParmDecl=argc:45:15 (Definition) [Extent=45:11:45:18]
+// CHECK: c-index-api-loadTU-test.m:45:34: ParmDecl=argv:45:34 (Definition) [Extent=45:27:45:37]
+// CHECK: c-index-api-loadTU-test.m:45:5: UnexposedStmt=main [Extent=45:42:54:1]
+// CHECK: c-index-api-loadTU-test.m:45:5: UnexposedStmt=main [Extent=46:2:46:11]
+// CHECK: c-index-api-loadTU-test.m:46:8: VarDecl=bee:46:8 (Definition) [Extent=46:2:46:10]
 // CHECK: c-index-api-loadTU-test.m:46:2: ObjCClassRef=Baz:32:12 [Extent=46:2:46:4]
-// CHECK: c-index-api-loadTU-test.m:46:8: UnexposedStmt=bee [Extent=46:8:46:10]
-// CHECK: c-index-api-loadTU-test.m:47:5: VarDecl=a:47:5 (Definition) [Extent=47:5:47:17]
+// CHECK: c-index-api-loadTU-test.m:46:8: UnexposedStmt=bee [Extent=47:2:47:18]
+// CHECK: c-index-api-loadTU-test.m:47:5: VarDecl=a:47:5 (Definition) [Extent=47:2:47:17]
 // CHECK: c-index-api-loadTU-test.m:47:2: TypeRef=id:0:0 [Extent=47:2:47:3]
 // CHECK: c-index-api-loadTU-test.m:47:9: ObjCMessageExpr=foo:8:1 [Extent=47:9:47:17]
 // CHECK: c-index-api-loadTU-test.m:47:10: DeclRefExpr=bee:46:8 [Extent=47:10:47:12]
-// CHECK: c-index-api-loadTU-test.m:47:5: UnexposedStmt=a [Extent=47:5:47:17]
-// CHECK: c-index-api-loadTU-test.m:48:12: VarDecl=c:48:12 (Definition) [Extent=48:12:48:25]
+// CHECK: c-index-api-loadTU-test.m:47:5: UnexposedStmt=a [Extent=48:2:48:26]
+// CHECK: c-index-api-loadTU-test.m:48:12: VarDecl=c:48:12 (Definition) [Extent=48:2:48:25]
 // CHECK: c-index-api-loadTU-test.m:48:2: TypeRef=id:0:0 [Extent=48:2:48:3]
 // CHECK: c-index-api-loadTU-test.m:48:6: ObjCProtocolRef=SubP:28:1 [Extent=48:6:48:9]
 // CHECK: c-index-api-loadTU-test.m:48:16: UnexposedExpr=fooC:9:1 [Extent=48:16:48:25]
 // CHECK: c-index-api-loadTU-test.m:48:16: ObjCMessageExpr=fooC:9:1 [Extent=48:16:48:25]
-// CHECK: c-index-api-loadTU-test.m:48:12: UnexposedStmt=c [Extent=48:12:48:25]
-// CHECK: c-index-api-loadTU-test.m:49:13: VarDecl=d:49:13 (Definition) [Extent=49:13:49:13]
+// CHECK: c-index-api-loadTU-test.m:48:12: UnexposedStmt=c [Extent=49:2:49:14]
+// CHECK: c-index-api-loadTU-test.m:49:13: VarDecl=d:49:13 (Definition) [Extent=49:2:49:13]
 // CHECK: c-index-api-loadTU-test.m:49:2: TypeRef=id:0:0 [Extent=49:2:49:3]
 // CHECK: c-index-api-loadTU-test.m:49:6: ObjCProtocolRef=Proto:24:1 [Extent=49:6:49:10]
 // CHECK: c-index-api-loadTU-test.m:50:2: UnexposedExpr= [Extent=50:2:50:6]

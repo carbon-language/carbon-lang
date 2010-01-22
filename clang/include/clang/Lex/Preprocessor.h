@@ -602,7 +602,12 @@ public:
   /// the returned source location would not be meaningful (e.g., if
   /// it points into a macro), this routine returns an invalid
   /// source location.
-  SourceLocation getLocForEndOfToken(SourceLocation Loc);
+  ///
+  /// \param Offset an offset from the end of the token, where the source
+  /// location should refer to. The default offset (0) produces a source
+  /// location pointing just past the end of the token; an offset of 1 produces
+  /// a source location pointing to the last character in the token, etc.
+  SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset = 0);
 
   /// DumpToken - Print the token to stderr, used for debugging.
   ///

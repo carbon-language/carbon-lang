@@ -210,6 +210,7 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
   }
 }
 
+static bool isWhitespace(unsigned char c);
 
 /// MeasureTokenLength - Relex the token at the specified location and return
 /// its length in bytes in the input file.  If the token needs cleaning (e.g.
@@ -230,6 +231,9 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first);
   const char *StrData = Buffer.first+LocInfo.second;
+
+  if (isWhitespace(StrData[0]))
+    return 0;
 
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(Loc, LangOpts, Buffer.first, StrData, Buffer.second);

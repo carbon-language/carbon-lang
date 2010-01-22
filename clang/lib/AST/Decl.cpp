@@ -629,9 +629,13 @@ VarDecl::~VarDecl() {
 }
 
 SourceRange VarDecl::getSourceRange() const {
+  SourceLocation Start = getTypeSpecStartLoc();
+  if (Start.isInvalid())
+    Start = getLocation();
+  
   if (getInit())
-    return SourceRange(getLocation(), getInit()->getLocEnd());
-  return SourceRange(getLocation(), getLocation());
+    return SourceRange(Start, getInit()->getLocEnd());
+  return SourceRange(Start, getLocation());
 }
 
 bool VarDecl::isOutOfLine() const {

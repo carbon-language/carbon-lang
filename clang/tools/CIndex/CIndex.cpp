@@ -19,6 +19,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
 
@@ -133,9 +134,40 @@ static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
   return Result;
 }
 
+static SourceRange translateSourceRange(CXSourceRange R) {
+  return SourceRange(SourceLocation::getFromRawEncoding(R.begin_int_data),
+                     SourceLocation::getFromRawEncoding(R.end_int_data));
+}
+
+/// \brief The result of comparing two source ranges.
+enum RangeComparisonResult {
+  /// \brief Either the ranges overlap or one of the ranges is invalid.
+  RangeOverlap,
+  
+  /// \brief The first range ends before the second range starts.
+  RangeBefore,
+  
+  /// \brief The first range starts after the second range ends.
+  RangeAfter
+};
+
+/// \brief Compare two source ranges to determine their relative position in 
+/// the translation unit.
+static RangeComparisonResult RangeCompare(SourceManager &SM, 
+                                          SourceRange R1, 
+                                          SourceRange R2) {
+  assert(R1.isValid() && "First range is invalid?");
+  assert(R2.isValid() && "Second range is invalid?");
+  if (SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin()))
+    return RangeBefore;
+  if (SM.isBeforeInTranslationUnit(R2.getEnd(), R1.getBegin()))
+    return RangeAfter;
+  return RangeOverlap;
+}
+
 
 //===----------------------------------------------------------------------===//
-// Visitors.
+// Cursor visitor.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -145,25 +177,53 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
                       public TypeLocVisitor<CursorVisitor, bool>,
                       public StmtVisitor<CursorVisitor, bool>
 {
+  /// \brief The translation unit we are traversing.
   ASTUnit *TU;
+  
+  /// \brief The parent cursor whose children we are traversing.
   CXCursor Parent;
+  
+  /// \brief The declaration that serves at the parent of any statement or
+  /// expression nodes.
   Decl *StmtParent;
+  
+  /// \brief The visitor function.
   CXCursorVisitor Visitor;
+  
+  /// \brief The opaque client data, to be passed along to the visitor.
   CXClientData ClientData;
-
+  
   // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
   // to the visitor. Declarations with a PCH level greater than this value will
   // be suppressed.
   unsigned MaxPCHLevel;
-  
+
+  /// \brief When valid, a source range to which the cursor should restrict
+  /// its search.
+  SourceRange RegionOfInterest;
+    
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
   using StmtVisitor<CursorVisitor, bool>::Visit;
+    
+  /// \brief Determine whether this particular source range comes before, comes 
+  /// after, or overlaps the region of interest. 
+  ///
+  /// \param R a source range retrieved from the abstract syntax tree.
+  RangeComparisonResult CompareRegionOfInterest(SourceRange R); 
+  
+  /// \brief Determine whether this particular source range comes before, comes 
+  /// after, or overlaps the region of interest. 
+  ///
+  /// \param CXR a source range retrieved from a cursor.
+  RangeComparisonResult CompareRegionOfInterest(CXSourceRange CXR); 
   
 public:
   CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData, 
-                unsigned MaxPCHLevel)
-    : TU(TU), Visitor(Visitor), ClientData(ClientData), MaxPCHLevel(MaxPCHLevel)
+                unsigned MaxPCHLevel, 
+                SourceRange RegionOfInterest = SourceRange())
+    : TU(TU), Visitor(Visitor), ClientData(ClientData), 
+      MaxPCHLevel(MaxPCHLevel), RegionOfInterest(RegionOfInterest)
   {
     Parent.kind = CXCursor_NoDeclFound;
     Parent.data[0] = 0;
@@ -172,7 +232,7 @@ public:
     StmtParent = 0;
   }
   
-  bool Visit(CXCursor Cursor);
+  bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);
   bool VisitChildren(CXCursor Parent);
   
   // Declaration visitors
@@ -231,12 +291,32 @@ public:
   
 } // end anonymous namespace
 
+RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
+  assert(RegionOfInterest.isValid() && "RangeCompare called with invalid range");
+  if (R.isInvalid())
+    return RangeOverlap;
+
+  // Move the end of the input range to the end of the last token in that
+  // range.
+  R.setEnd(TU->getPreprocessor().getLocForEndOfToken(R.getEnd(), 1));
+  return RangeCompare(TU->getSourceManager(), R, RegionOfInterest);
+}
+
+RangeComparisonResult CursorVisitor::CompareRegionOfInterest(CXSourceRange CXR) {
+  return CompareRegionOfInterest(translateSourceRange(CXR));
+}
+
 /// \brief Visit the given cursor and, if requested by the visitor,
 /// its children.
 ///
+/// \param Cursor the cursor to visit.
+///
+/// \param CheckRegionOfInterest if true, then the caller already checked that
+/// this cursor is within the region of interest.
+///
 /// \returns true if the visitation should be aborted, false if it
 /// should continue.
-bool CursorVisitor::Visit(CXCursor Cursor) {
+bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   if (clang_isInvalid(Cursor.kind))
     return false;
   
@@ -250,6 +330,15 @@ bool CursorVisitor::Visit(CXCursor Cursor) {
       return false;
   }
 
+  // If we have a range of interest, and this cursor doesn't intersect with it,
+  // we're done.
+  if (RegionOfInterest.isValid() && !CheckedRegionOfInterest) {
+    CXSourceRange Range = clang_getCursorExtent(Cursor);
+    if (translateSourceRange(Range).isInvalid() || 
+        CompareRegionOfInterest(Range))
+      return false;
+  }
+  
   switch (Visitor(Cursor, Parent, ClientData)) {
   case CXChildVisit_Break:
     return true;
@@ -310,11 +399,12 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   
   if (clang_isTranslationUnit(Cursor.kind)) {
     ASTUnit *CXXUnit = getCursorASTUnit(Cursor);
-    if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls()) {
+    if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls() &&
+        RegionOfInterest.isInvalid()) {
       const std::vector<Decl*> &TLDs = CXXUnit->getTopLevelDecls();
       for (std::vector<Decl*>::const_iterator it = TLDs.begin(),
            ie = TLDs.end(); it != ie; ++it) {
-        if (Visit(MakeCXCursor(*it, CXXUnit)))
+        if (Visit(MakeCXCursor(*it, CXXUnit), true))
           return true;
       }
     } else {
@@ -332,7 +422,27 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-    if (Visit(MakeCXCursor(*I, TU)))
+    if (RegionOfInterest.isValid()) {
+      SourceRange R = (*I)->getSourceRange();
+      if (R.isInvalid())
+        continue;
+      
+      switch (CompareRegionOfInterest(R)) {
+      case RangeBefore:
+        // This declaration comes before the region of interest; skip it.
+        continue;
+      
+      case RangeAfter:
+        // This declaration comes after the region of interest; we're done.
+        return false;
+      
+      case RangeOverlap:
+        // This declaration overlaps the region of interest; visit it.
+        break;
+      }      
+    }
+    
+    if (Visit(MakeCXCursor(*I, TU), true))
       return true;
   }
   
@@ -1131,6 +1241,14 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   return NULL;
 }
 
+enum CXChildVisitResult GetCursorVisitor(CXCursor cursor, 
+                                         CXCursor parent, 
+                                         CXClientData client_data) {
+  CXCursor *BestCursor = static_cast<CXCursor *>(client_data);
+  *BestCursor = cursor;
+  return CXChildVisit_Recurse;
+}
+  
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
                          unsigned line, unsigned column) {
   assert(CTUnit && "Passed null CXTranslationUnit");
@@ -1144,32 +1262,21 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
 
   SourceLocation SLoc =
     CXXUnit->getSourceManager().getLocation(File, line, column);
-
-  ASTLocation LastLoc = CXXUnit->getLastASTLocation();
-  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc,
-                                          &LastLoc);
   
-  // FIXME: This doesn't look thread-safe.
-  if (ALoc.isValid())
-    CXXUnit->setLastASTLocation(ALoc);
-
-  Decl *Dcl = ALoc.getParentDecl();
-  if (ALoc.isNamedRef())
-    Dcl = ALoc.AsNamedRef().ND;
-  Stmt *Stm = ALoc.dyn_AsStmt();
-  if (Dcl) {
-    if (Stm)
-      return MakeCXCursor(Stm, Dcl, CXXUnit);
-
-    if (ALoc.isNamedRef()) {
-      if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(Dcl))
-        return MakeCursorObjCClassRef(Class, ALoc.AsNamedRef().Loc, CXXUnit);
-      if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(Dcl))
-        return MakeCursorObjCProtocolRef(Proto, ALoc.AsNamedRef().Loc, CXXUnit);
-    }
-    return MakeCXCursor(Dcl, CXXUnit);
+  CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
+  if (SLoc.isValid()) {
+    SourceRange RegionOfInterest(SLoc, 
+                       CXXUnit->getPreprocessor().getLocForEndOfToken(SLoc, 1));
+    
+    // FIXME: Would be great to have a "hint" cursor, then walk from that
+    // hint cursor upward until we find a cursor whose source range encloses
+    // the region of interest, rather than starting from the translation unit.
+    CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
+    CursorVisitor CursorVis(CXXUnit, GetCursorVisitor, &Result, 
+                            Decl::MaxPCHLevel, RegionOfInterest);
+    CursorVis.VisitChildren(Parent);
   }
-  return MakeCXCursorInvalid(CXCursor_NoDeclFound);
+  return Result;  
 }
 
 CXCursor clang_getNullCursor(void) {
@@ -1304,6 +1411,10 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   if (clang_isExpression(C.kind))
     return translateSourceRange(getCursorContext(C), 
                                 getCursorExpr(C)->getSourceRange());
+
+  if (clang_isStatement(C.kind))
+    return translateSourceRange(getCursorContext(C), 
+                                getCursorStmt(C)->getSourceRange());
   
   if (!getCursorDecl(C)) {
     CXSourceRange empty = { 0, 0, 0 };
