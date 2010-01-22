@@ -31,6 +31,7 @@ namespace llvm {
   class MCAsmInfo;
   class MCDisassembler;
   class MCInstPrinter;
+  class TargetAsmLexer;
   class TargetAsmParser;
   class TargetMachine;
   class formatted_raw_ostream;
@@ -59,8 +60,9 @@ namespace llvm {
                                             TargetMachine &TM,
                                             const MCAsmInfo *MAI,
                                             bool VerboseAsm);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
-                                                MCAsmParser &P);
+    typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
+                                              const MCAsmInfo &MAI);
+    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
     typedef const MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
@@ -97,8 +99,12 @@ namespace llvm {
     /// if registered.
     AsmPrinterCtorTy AsmPrinterCtorFn;
 
-    /// AsmParserCtorFn - Construction function for this target's AsmParser,
+    /// AsmLexerCtorFn - Construction function for this target's TargetAsmLexer,
     /// if registered.
+    AsmLexerCtorTy AsmLexerCtorFn;
+    
+    /// AsmParserCtorFn - Construction function for this target's
+    /// TargetAsmParser, if registered.
     AsmParserCtorTy AsmParserCtorFn;
     
     /// MCDisassemblerCtorFn - Construction function for this target's
@@ -191,6 +197,14 @@ namespace llvm {
       return AsmPrinterCtorFn(OS, TM, MAI, Verbose);
     }
 
+    /// createAsmLexer - Create a target specific assembly lexer.
+    ///
+    TargetAsmLexer *createAsmLexer(const MCAsmInfo &MAI) const {
+      if (!AsmLexerCtorFn)
+        return 0;
+      return AsmLexerCtorFn(*this, MAI);
+    }
+    
     /// createAsmParser - Create a target specific assembly parser.
     ///
     /// \arg Parser - The target independent parser implementation to use for
@@ -358,6 +372,20 @@ namespace llvm {
         T.AsmPrinterCtorFn = Fn;
     }
 
+    /// RegisterAsmLexer - Register a TargetAsmLexer implementation for the
+    /// given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an AsmPrinter for the target.
+    static void RegisterAsmLexer(Target &T, Target::AsmLexerCtorTy Fn) {
+      if (!T.AsmLexerCtorFn)
+        T.AsmLexerCtorFn = Fn;
+    }
+    
     /// RegisterAsmParser - Register a TargetAsmParser implementation for the
     /// given target.
     /// 
@@ -521,6 +549,26 @@ namespace llvm {
     static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
                                  const MCAsmInfo *MAI, bool Verbose) {
       return new AsmPrinterImpl(OS, TM, MAI, Verbose);
+    }
+  };
+
+  /// RegisterAsmLexer - Helper template for registering a target specific
+  /// assembly lexer, for use in the target machine initialization
+  /// function. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooAsmLexer() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmLexer<FooAsmLexer> X(TheFooTarget);
+  /// }
+  template<class AsmLexerImpl>
+  struct RegisterAsmLexer {
+    RegisterAsmLexer(Target &T) {
+      TargetRegistry::RegisterAsmLexer(T, &Allocator);
+    }
+    
+  private:
+    static TargetAsmLexer *Allocator(const Target &T, const MCAsmInfo &MAI) {
+      return new AsmLexerImpl(T, MAI);
     }
   };
 

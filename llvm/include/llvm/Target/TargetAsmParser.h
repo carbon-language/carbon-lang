@@ -11,7 +11,6 @@
 #define LLVM_TARGET_TARGETPARSER_H
 
 namespace llvm {
-class MCAsmParser;
 class MCInst;
 class StringRef;
 class Target;
