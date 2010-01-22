@@ -315,6 +315,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
+    break;
   case MachineOperand::MO_BlockAddress:
     O << *GetBlockAddressSymbol(MO.getBlockAddress());
     break;
