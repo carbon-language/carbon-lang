@@ -185,8 +185,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->EmitULEB128Bytes(AugmentationSize);
   Asm->EOL("Augmentation Size");
 
-  Asm->EmitInt8(PerEncoding);
-  Asm->EOL("Personality", PerEncoding);
+  EmitEncodingByte(PerEncoding, "Personality");
 
   // If there is a personality, we need to indicate the function's location.
   if (PersonalityRef) {
@@ -197,11 +196,8 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     O << MAI->getData32bitsDirective() << *PersonalityRef;
     Asm->EOL("Personality");
 
-    Asm->EmitInt8(LSDAEncoding);
-    Asm->EOL("LSDA Encoding", LSDAEncoding);
-
-    Asm->EmitInt8(FDEEncoding);
-    Asm->EOL("FDE Encoding", FDEEncoding);
+    EmitEncodingByte(LSDAEncoding, "LSDA");
+    EmitEncodingByte(FDEEncoding, "FDE");
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -784,11 +780,8 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the header.
-  Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-  Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
-
-  Asm->EmitInt8(TTypeFormat);
-  Asm->EOL("@TType format", TTypeFormat);
+  EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
+  EmitEncodingByte(TTypeFormat, "@TType");
 
   if (HaveTTData) {
     Asm->EmitULEB128Bytes(TyOffset);
@@ -797,8 +790,7 @@ void DwarfException::EmitExceptionTable() {
 
   // SjLj Exception handling
   if (IsSJLJ) {
-    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
-    Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
+    EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table length");
 
@@ -842,8 +834,7 @@ void DwarfException::EmitExceptionTable() {
     // supposed to throw.
 
     // Emit the landing pad call site table.
-    Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
-    Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
+    EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table size");
 

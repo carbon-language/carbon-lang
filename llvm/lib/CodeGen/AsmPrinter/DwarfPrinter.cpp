@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -40,6 +41,50 @@ void DwarfPrinter::PrintRelDirective(bool Force32Bit, bool isInSection) const {
   else
     O << MAI->getData64bitsDirective();
 }
+
+static const char *DecodeDWARFEncoding(unsigned Encoding) {
+  switch (Encoding) {
+  case dwarf::DW_EH_PE_absptr: return "absptr";
+  case dwarf::DW_EH_PE_omit:   return "omit";
+  case dwarf::DW_EH_PE_pcrel:  return "pcrel";
+  case dwarf::DW_EH_PE_udata4: return "udata4";
+  case dwarf::DW_EH_PE_udata8: return "udata8";
+  case dwarf::DW_EH_PE_sdata4: return "sdata4";
+  case dwarf::DW_EH_PE_sdata8: return "sdata8";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata4: return "pcrel udata4";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4: return "pcrel sdata4";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8: return "pcrel udata8";
+  case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata8: return "pcrel sdata8";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata4:
+    return "indirect pcrel udata4";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata4:
+    return "indirect pcrel sdata4";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata8:
+    return "indirect pcrel udata8";
+  case dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata8:
+    return "indirect pcrel sdata8";
+  }
+  
+  return "<unknown encoding>";
+}
+
+/// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
+/// encoding.  If verbose assembly output is enabled, we output comments
+/// describing the encoding.  Desc is an optional string saying what the
+/// encoding is specifying (e.g. "LSDA").
+void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
+  if (Asm->VerboseAsm) {
+    if (Desc != 0)
+      Asm->OutStreamer.AddComment(Twine(Desc)+" Encoding = " +
+                                  Twine(DecodeDWARFEncoding(Val)));
+    else
+      Asm->OutStreamer.AddComment(Twine("Encoding = ") +
+                                  DecodeDWARFEncoding(Val));
+  }
+
+  Asm->OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
+}
+
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///

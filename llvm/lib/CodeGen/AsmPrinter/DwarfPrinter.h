@@ -73,6 +73,7 @@ protected:
   DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
                const char *flavor);
 public:
+  
   //===------------------------------------------------------------------===//
   // Accessors.
   //
@@ -84,6 +85,12 @@ public:
   void PrintRelDirective(bool Force32Bit = false,
                          bool isInSection = false) const;
 
+  /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
+  /// encoding.  If verbose assembly output is enabled, we output comments
+  /// describing the encoding.  Desc is an optional string saying what the
+  /// encoding is specifying (e.g. "LSDA").
+  void EmitEncodingByte(unsigned Val, const char *Desc = 0);
+  
 
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
