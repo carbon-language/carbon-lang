@@ -119,6 +119,11 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
         return;
       }
     }
+    if (i->isVirtual()) {
+      SelectPrimaryVBase(Base, FirstPrimary);
+      if (PrimaryBase.getBase())
+        return;
+    }
   }
 }
 

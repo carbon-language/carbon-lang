@@ -1091,6 +1091,45 @@ struct test22_D : test22_s3 { virtual void dtor() { } };
 // CHECK-LP64-NEXT:        .quad   __ZThn8_N8test22_D4dtorEv
 
 
+class test23_s1 {
+  virtual void fun1(char *t) { }
+};
+class test23_s2 {
+  virtual void fun2(char *t) { }
+};
+class test23_s3 {
+  virtual void fun3(char *t) { }
+};
+class test23_s4: virtual test23_s1, test23_s2, test23_s3 {
+  virtual void fun4(char *t) { }
+};
+class test23_D: virtual test23_s4 {
+  virtual void fun5(char *t) { }
+};
+
+
+// CHECK-LP64:     __ZTV8test23_D:
+// CHECK-LP64-NEXT:	.quad	0
+// CHECK-LP64-NEXT:	.quad	8
+// CHECK-LP64-NEXT:	.quad	0
+// CHECK-LP64-NEXT:	.quad	0
+// CHECK-LP64-NEXT:	.quad	__ZTI8test23_D
+// CHECK-LP64-NEXT:	.quad	__ZN9test23_s14fun1EPc
+// CHECK-LP64-NEXT:	.quad	__ZN8test23_D4fun5EPc
+// CHECK-LP64-NEXT	.quad	8
+// CHECK-LP64:  	.quad	0
+// CHECK-LP64-NEXT:	.quad	0
+// CHECK-LP64:  	.quad	18446744073709551608
+// CHECK-LP64-NEXT:	.quad	18446744073709551608
+// CHECK-LP64-NEXT:	.quad	__ZTI8test23_D
+// CHECK-LP64-NEXT:	.quad	__ZN9test23_s24fun2EPc
+// CHECK-LP64-NEXT:	.quad	__ZN9test23_s44fun4EPc
+// CHECK-LP64-NEXT:	.quad	18446744073709551600
+// CHECK-LP64-NEXT:	.quad	__ZTI8test23_D
+// CHECK-LP64-NEXT:	.quad	__ZN9test23_s34fun3EPc
+
+
+test23_D d23;
 test22_D d22;
 test21_D d21;
 test20_D d20;
