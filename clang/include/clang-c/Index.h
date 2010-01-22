@@ -65,151 +65,11 @@ typedef void *CXIndex;
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
 /**
- * \brief Describes the kind of entity that a cursor refers to.
+ * \brief Opaque pointer representing client data that will be passed through
+ * to various callbacks and visitors.
  */
-enum CXCursorKind {
- /* Declarations */
- CXCursor_FirstDecl                     = 1,
- /** 
-  * \brief A declaration whose specific kind is not exposed via this
-  * interface. 
-  *
-  * Unexposed declarations have the same operations as any other kind
-  * of declaration; one can extract their location information,
-  * spelling, find their definitions, etc. However, the specific kind
-  * of the declaration is not reported.
-  */
- CXCursor_UnexposedDecl                 = 1,
- /** \brief A C or C++ struct. */
- CXCursor_StructDecl                    = 2, 
- /** \brief A C or C++ union. */
- CXCursor_UnionDecl                     = 3,
- /** \brief A C++ class. */
- CXCursor_ClassDecl                     = 4,
- /** \brief An enumeration. */
- CXCursor_EnumDecl                      = 5,
- /** 
-  * \brief A field (in C) or non-static data member (in C++) in a
-  * struct, union, or C++ class.
-  */
- CXCursor_FieldDecl                     = 6,
- /** \brief An enumerator constant. */
- CXCursor_EnumConstantDecl              = 7,
- /** \brief A function. */
- CXCursor_FunctionDecl                  = 8,
- /** \brief A variable. */
- CXCursor_VarDecl                       = 9,
- /** \brief A function or method parameter. */
- CXCursor_ParmDecl                      = 10,
- /** \brief An Objective-C @interface. */
- CXCursor_ObjCInterfaceDecl             = 11,
- /** \brief An Objective-C @interface for a category. */
- CXCursor_ObjCCategoryDecl              = 12,
- /** \brief An Objective-C @protocol declaration. */
- CXCursor_ObjCProtocolDecl              = 13,
- /** \brief An Objective-C @property declaration. */
- CXCursor_ObjCPropertyDecl              = 14,
- /** \brief An Objective-C instance variable. */
- CXCursor_ObjCIvarDecl                  = 15,
- /** \brief An Objective-C instance method. */
- CXCursor_ObjCInstanceMethodDecl        = 16,
- /** \brief An Objective-C class method. */
- CXCursor_ObjCClassMethodDecl           = 17,
- /** \brief An Objective-C @implementation. */
- CXCursor_ObjCImplementationDecl        = 18,
- /** \brief An Objective-C @implementation for a category. */
- CXCursor_ObjCCategoryImplDecl          = 19,
- /** \brief A typedef */
- CXCursor_TypedefDecl                   = 20,
- CXCursor_LastDecl                      = 20,
- 
- /* References */
- CXCursor_FirstRef                      = 40, /* Decl references */
- CXCursor_ObjCSuperClassRef             = 40,            
- CXCursor_ObjCProtocolRef               = 41,
- CXCursor_ObjCClassRef                  = 42,
- /**
-  * \brief A reference to a type declaration.
-  *
-  * A type reference occurs anywhere where a type is named but not
-  * declared. For example, given:
-  *
-  * \code
-  * typedef unsigned size_type;
-  * size_type size;
-  * \endcode
-  *
-  * The typedef is a declaration of size_type (CXCursor_TypedefDecl),
-  * while the type of the variable "size" is referenced. The cursor
-  * referenced by the type of size is the typedef for size_type.
-  */
- CXCursor_TypeRef                       = 43,
- CXCursor_LastRef                       = 43,
- 
- /* Error conditions */
- CXCursor_FirstInvalid                  = 70,
- CXCursor_InvalidFile                   = 70,
- CXCursor_NoDeclFound                   = 71,
- CXCursor_NotImplemented                = 72,
- CXCursor_LastInvalid                   = 72,
-
- /* Expressions */
- CXCursor_FirstExpr                     = 100,
-
- /**
-  * \brief An expression whose specific kind is not exposed via this
-  * interface. 
-  *
-  * Unexposed expressions have the same operations as any other kind
-  * of expression; one can extract their location information,
-  * spelling, children, etc. However, the specific kind of the
-  * expression is not reported.
-  */
- CXCursor_UnexposedExpr                 = 100,
-
- /**
-  * \brief An expression that refers to some value declaration, such
-  * as a function, varible, or enumerator.
-  */
- CXCursor_DeclRefExpr                   = 101,
-
- /**
-  * \brief An expression that refers to a member of a struct, union,
-  * class, Objective-C class, etc.
-  */
- CXCursor_MemberRefExpr                 = 102,
-
- /** \brief An expression that calls a function. */
- CXCursor_CallExpr                      = 103,
-
- /** \brief An expression that sends a message to an Objective-C
-     object or class. */
- CXCursor_ObjCMessageExpr               = 104,
- CXCursor_LastExpr                      = 104,
-
- /* Statements */
- CXCursor_FirstStmt                     = 200,
- /**
-  * \brief A statement whose specific kind is not exposed via this
-  * interface.
-  *
-  * Unexposed statements have the same operations as any other kind of
-  * statement; one can extract their location information, spelling,
-  * children, etc. However, the specific kind of the statement is not
-  * reported.
-  */
- CXCursor_UnexposedStmt                 = 200,
- CXCursor_LastStmt                      = 200,
-
- /**
-  * \brief Cursor that represents the translation unit itself.
-  *
-  * The translation unit cursor exists primarily to act as the root
-  * cursor for traversing the contents of a translation unit.
-  */
- CXCursor_TranslationUnit               = 300
-};
-
+typedef void *CXClientData;
+  
 /**
  * \brief Provides the contents of a file that has not yet been saved to disk.
  *
@@ -237,29 +97,6 @@ struct CXUnsavedFile {
    */
   unsigned long Length;
 };
-
-/**
- * \brief A cursor representing some element in the abstract syntax tree for
- * a translation unit.
- *
- * The cursor abstraction unifies the different kinds of entities in a 
- * program--declaration, statements, expressions, references to declarations,
- * etc.--under a single "cursor" abstraction with a common set of operations.
- * Common operation for a cursor include: getting the physical location in
- * a source file where the cursor points, getting the name associated with a
- * cursor, and retrieving cursors for any child nodes of a particular cursor.
- *
- * Cursors can be produced in two specific ways.
- * clang_getTranslationUnitCursor() produces a cursor for a translation unit,
- * from which one can use clang_visitChildren() to explore the rest of the
- * translation unit. clang_getCursor() maps from a physical source location
- * to the entity that resides at that location, allowing one to map from the
- * source code into the AST.
- */
-typedef struct {
-  enum CXCursorKind kind;
-  void *data[3];
-} CXCursor;  
 
 /**
  * \defgroup CINDEX_STRING String manipulation routines
@@ -393,86 +230,8 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char **clang_command_line_args
 );
 
-typedef void *CXClientData;
-
 /**
- * \brief Retrieve the cursor that represents the given translation unit.
- *
- * The translation unit cursor can be used to start traversing the
- * various declarations within the given translation unit.
- */
-CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
-
-/**
- * \brief Describes how the traversal of the children of a particular
- * cursor should proceed after visiting a particular child cursor.
- *
- * A value of this enumeration type should be returned by each
- * \c CXCursorVisitor to indicate how clang_visitChildren() proceed.
- */
-enum CXChildVisitResult {
-  /**
-   * \brief Terminates the cursor traversal. 
-   */
-  CXChildVisit_Break,
-  /** 
-   * \brief Continues the cursor traversal with the next sibling of
-   * the cursor just visited, without visiting its children.
-   */
-  CXChildVisit_Continue,
-  /**
-   * \brief Recursively traverse the children of this cursor, using
-   * the same visitor and client data.
-   */
-  CXChildVisit_Recurse
-};
-
-/**
- * \brief Visitor invoked for each cursor found by a traversal.
- *
- * This visitor function will be invoked for each cursor found by
- * clang_visitCursorChildren(). Its first argument is the cursor being
- * visited, its second argument is the parent visitor for that cursor,
- * and its third argument is the client data provided to
- * clang_visitCursorChildren().
- *
- * The visitor should return one of the \c CXChildVisitResult values
- * to direct clang_visitCursorChildren().
- */
-typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor, 
-                                                   CXCursor parent, 
-                                                   CXClientData client_data);
-
-/**
- * \brief Visit the children of a particular cursor.
- *
- * This function visits all the direct children of the given cursor,
- * invoking the given \p visitor function with the cursors of each
- * visited child. The traversal may be recursive, if the visitor returns
- * \c CXChildVisit_Recurse. The traversal may also be ended prematurely, if
- * the visitor returns \c CXChildVisit_Break.
- *
- * \param tu the translation unit into which the cursor refers.
- *
- * \param parent the cursor whose child may be visited. All kinds of
- * cursors can be visited, including invalid visitors (which, by
- * definition, have no children).
- *
- * \param visitor the visitor function that will be invoked for each
- * child of \p parent.
- *
- * \param client_data pointer data supplied by the client, which will
- * be passed to the visitor each time it is invoked.
- *
- * \returns a non-zero value if the traversal was terminated
- * prematurely by the visitor returning \c CXChildVisit_Break.
- */
-CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent, 
-                                            CXCursorVisitor visitor,
-                                            CXClientData client_data);
-
-/**
- * \defgroup CINDEX_FILES File manipulation routines.
+ * \defgroup CINDEX_FILES File manipulation routines
  *
  * @{
  */
@@ -615,9 +374,255 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 /**
  * @}
  */
+
+/**
+ * \brief Describes the kind of entity that a cursor refers to.
+ */
+enum CXCursorKind {
+  /* Declarations */
+  CXCursor_FirstDecl                     = 1,
+  /** 
+   * \brief A declaration whose specific kind is not exposed via this
+   * interface. 
+   *
+   * Unexposed declarations have the same operations as any other kind
+   * of declaration; one can extract their location information,
+   * spelling, find their definitions, etc. However, the specific kind
+   * of the declaration is not reported.
+   */
+  CXCursor_UnexposedDecl                 = 1,
+  /** \brief A C or C++ struct. */
+  CXCursor_StructDecl                    = 2, 
+  /** \brief A C or C++ union. */
+  CXCursor_UnionDecl                     = 3,
+  /** \brief A C++ class. */
+  CXCursor_ClassDecl                     = 4,
+  /** \brief An enumeration. */
+  CXCursor_EnumDecl                      = 5,
+  /** 
+   * \brief A field (in C) or non-static data member (in C++) in a
+   * struct, union, or C++ class.
+   */
+  CXCursor_FieldDecl                     = 6,
+  /** \brief An enumerator constant. */
+  CXCursor_EnumConstantDecl              = 7,
+  /** \brief A function. */
+  CXCursor_FunctionDecl                  = 8,
+  /** \brief A variable. */
+  CXCursor_VarDecl                       = 9,
+  /** \brief A function or method parameter. */
+  CXCursor_ParmDecl                      = 10,
+  /** \brief An Objective-C @interface. */
+  CXCursor_ObjCInterfaceDecl             = 11,
+  /** \brief An Objective-C @interface for a category. */
+  CXCursor_ObjCCategoryDecl              = 12,
+  /** \brief An Objective-C @protocol declaration. */
+  CXCursor_ObjCProtocolDecl              = 13,
+  /** \brief An Objective-C @property declaration. */
+  CXCursor_ObjCPropertyDecl              = 14,
+  /** \brief An Objective-C instance variable. */
+  CXCursor_ObjCIvarDecl                  = 15,
+  /** \brief An Objective-C instance method. */
+  CXCursor_ObjCInstanceMethodDecl        = 16,
+  /** \brief An Objective-C class method. */
+  CXCursor_ObjCClassMethodDecl           = 17,
+  /** \brief An Objective-C @implementation. */
+  CXCursor_ObjCImplementationDecl        = 18,
+  /** \brief An Objective-C @implementation for a category. */
+  CXCursor_ObjCCategoryImplDecl          = 19,
+  /** \brief A typedef */
+  CXCursor_TypedefDecl                   = 20,
+  CXCursor_LastDecl                      = 20,
   
-/*
- * CXCursor Operations.
+  /* References */
+  CXCursor_FirstRef                      = 40, /* Decl references */
+  CXCursor_ObjCSuperClassRef             = 40,            
+  CXCursor_ObjCProtocolRef               = 41,
+  CXCursor_ObjCClassRef                  = 42,
+  /**
+   * \brief A reference to a type declaration.
+   *
+   * A type reference occurs anywhere where a type is named but not
+   * declared. For example, given:
+   *
+   * \code
+   * typedef unsigned size_type;
+   * size_type size;
+   * \endcode
+   *
+   * The typedef is a declaration of size_type (CXCursor_TypedefDecl),
+   * while the type of the variable "size" is referenced. The cursor
+   * referenced by the type of size is the typedef for size_type.
+   */
+  CXCursor_TypeRef                       = 43,
+  CXCursor_LastRef                       = 43,
+  
+  /* Error conditions */
+  CXCursor_FirstInvalid                  = 70,
+  CXCursor_InvalidFile                   = 70,
+  CXCursor_NoDeclFound                   = 71,
+  CXCursor_NotImplemented                = 72,
+  CXCursor_LastInvalid                   = 72,
+  
+  /* Expressions */
+  CXCursor_FirstExpr                     = 100,
+  
+  /**
+   * \brief An expression whose specific kind is not exposed via this
+   * interface. 
+   *
+   * Unexposed expressions have the same operations as any other kind
+   * of expression; one can extract their location information,
+   * spelling, children, etc. However, the specific kind of the
+   * expression is not reported.
+   */
+  CXCursor_UnexposedExpr                 = 100,
+  
+  /**
+   * \brief An expression that refers to some value declaration, such
+   * as a function, varible, or enumerator.
+   */
+  CXCursor_DeclRefExpr                   = 101,
+  
+  /**
+   * \brief An expression that refers to a member of a struct, union,
+   * class, Objective-C class, etc.
+   */
+  CXCursor_MemberRefExpr                 = 102,
+  
+  /** \brief An expression that calls a function. */
+  CXCursor_CallExpr                      = 103,
+  
+  /** \brief An expression that sends a message to an Objective-C
+   object or class. */
+  CXCursor_ObjCMessageExpr               = 104,
+  CXCursor_LastExpr                      = 104,
+  
+  /* Statements */
+  CXCursor_FirstStmt                     = 200,
+  /**
+   * \brief A statement whose specific kind is not exposed via this
+   * interface.
+   *
+   * Unexposed statements have the same operations as any other kind of
+   * statement; one can extract their location information, spelling,
+   * children, etc. However, the specific kind of the statement is not
+   * reported.
+   */
+  CXCursor_UnexposedStmt                 = 200,
+  CXCursor_LastStmt                      = 200,
+  
+  /**
+   * \brief Cursor that represents the translation unit itself.
+   *
+   * The translation unit cursor exists primarily to act as the root
+   * cursor for traversing the contents of a translation unit.
+   */
+  CXCursor_TranslationUnit               = 300
+};
+
+/**
+ * \brief A cursor representing some element in the abstract syntax tree for
+ * a translation unit.
+ *
+ * The cursor abstraction unifies the different kinds of entities in a 
+ * program--declaration, statements, expressions, references to declarations,
+ * etc.--under a single "cursor" abstraction with a common set of operations.
+ * Common operation for a cursor include: getting the physical location in
+ * a source file where the cursor points, getting the name associated with a
+ * cursor, and retrieving cursors for any child nodes of a particular cursor.
+ *
+ * Cursors can be produced in two specific ways.
+ * clang_getTranslationUnitCursor() produces a cursor for a translation unit,
+ * from which one can use clang_visitChildren() to explore the rest of the
+ * translation unit. clang_getCursor() maps from a physical source location
+ * to the entity that resides at that location, allowing one to map from the
+ * source code into the AST.
+ */
+typedef struct {
+  enum CXCursorKind kind;
+  void *data[3];
+} CXCursor;  
+
+/**
+ * \defgroup CINDEX_CURSOR_MANIP Cursor manipulations
+ *
+ * @{
+ */
+  
+/**
+ * \brief Retrieve the NULL cursor, which represents no entity.
+ */
+CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
+  
+/**
+ * \brief Retrieve the cursor that represents the given translation unit.
+ *
+ * The translation unit cursor can be used to start traversing the
+ * various declarations within the given translation unit.
+ */
+CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
+
+/**
+ * \brief Determine whether two cursors are equivalent.
+ */
+CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
+  
+/**
+ * \brief Retrieve the kind of the given cursor.
+ */
+CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
+
+/**
+ * \brief Determine whether the given cursor kind represents a declaration.
+ */
+CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
+
+/**
+ * \brief Determine whether the given cursor kind represents a simple
+ * reference.
+ *
+ * Note that other kinds of cursors (such as expressions) can also refer to
+ * other cursors. Use clang_getCursorReferenced() to determine whether a
+ * particular cursor refers to another entity.
+ */
+CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
+
+/**
+ * \brief Determine whether the given cursor kind represents an expression.
+ */
+CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
+
+/**
+ * \brief Determine whether the given cursor kind represents a statement.
+ */
+CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
+
+/**
+ * \brief Determine whether the given cursor kind represents an invalid 
+ * cursor.
+ */  
+CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
+
+/**
+ * \brief Determine whether the given cursor kind represents a translation 
+ * unit.   
+ */
+CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
+  
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_CURSOR_SOURCE Mapping between cursors and source code
+ *
+ * Cursors represent a location within the Abstract Syntax Tree (AST). These
+ * routines help map between cursors and the physical locations where the
+ * described entities occur in the source code. The mapping is provided in
+ * both directions, so one can map from source code to the AST and back.
+ *
+ * @{
  */
   
 /**
@@ -636,24 +641,7 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
  * a NULL cursor if no such entity can be found.
  */
 CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, CXSourceLocation);
-                         
-CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
-
-/* clang_getCursorUSR() returns the USR (if any) associated with entity referred to by the
- *   provided CXCursor object. */
-CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
-
-CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
-CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
-CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
-
-CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
-
+  
 /**
  * \brief Retrieve the physical location of the source constructor referenced
  * by the given cursor.
@@ -665,7 +653,7 @@ CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
  * source code.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
-    
+
 /**
  * \brief Retrieve the physical extent of the source construct referenced by
  * the given cursor.
@@ -678,6 +666,118 @@ CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
  * entity was actually used).
  */
 CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
+
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_CURSOR_TRAVERSAL Traversing the AST with cursors
+ *
+ * These routines provide the ability to traverse the abstract syntax tree
+ * using cursors.
+ *
+ * @{
+ */
+  
+/**
+ * \brief Describes how the traversal of the children of a particular
+ * cursor should proceed after visiting a particular child cursor.
+ *
+ * A value of this enumeration type should be returned by each
+ * \c CXCursorVisitor to indicate how clang_visitChildren() proceed.
+ */
+enum CXChildVisitResult {
+  /**
+   * \brief Terminates the cursor traversal. 
+   */
+  CXChildVisit_Break,
+  /** 
+   * \brief Continues the cursor traversal with the next sibling of
+   * the cursor just visited, without visiting its children.
+   */
+  CXChildVisit_Continue,
+  /**
+   * \brief Recursively traverse the children of this cursor, using
+   * the same visitor and client data.
+   */
+  CXChildVisit_Recurse
+};
+
+/**
+ * \brief Visitor invoked for each cursor found by a traversal.
+ *
+ * This visitor function will be invoked for each cursor found by
+ * clang_visitCursorChildren(). Its first argument is the cursor being
+ * visited, its second argument is the parent visitor for that cursor,
+ * and its third argument is the client data provided to
+ * clang_visitCursorChildren().
+ *
+ * The visitor should return one of the \c CXChildVisitResult values
+ * to direct clang_visitCursorChildren().
+ */
+typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor, 
+                                                   CXCursor parent, 
+                                                   CXClientData client_data);
+
+/**
+ * \brief Visit the children of a particular cursor.
+ *
+ * This function visits all the direct children of the given cursor,
+ * invoking the given \p visitor function with the cursors of each
+ * visited child. The traversal may be recursive, if the visitor returns
+ * \c CXChildVisit_Recurse. The traversal may also be ended prematurely, if
+ * the visitor returns \c CXChildVisit_Break.
+ *
+ * \param tu the translation unit into which the cursor refers.
+ *
+ * \param parent the cursor whose child may be visited. All kinds of
+ * cursors can be visited, including invalid visitors (which, by
+ * definition, have no children).
+ *
+ * \param visitor the visitor function that will be invoked for each
+ * child of \p parent.
+ *
+ * \param client_data pointer data supplied by the client, which will
+ * be passed to the visitor each time it is invoked.
+ *
+ * \returns a non-zero value if the traversal was terminated
+ * prematurely by the visitor returning \c CXChildVisit_Break.
+ */
+CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent, 
+                                            CXCursorVisitor visitor,
+                                            CXClientData client_data);
+  
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_CURSOR_XREF Cross-referencing in the AST
+ *
+ * These routines provide the ability to determine references within and 
+ * across translation units, by providing the names of the entities referenced
+ * by cursors, follow reference cursors to the declarations they reference,
+ * and associate declarations with their definitions.
+ *
+ * @{
+ */
+  
+/**
+ * \brief Retrieve a Unified Symbol Resolution (USR) for the entity referenced
+ * by the given cursor.
+ *
+ * A Unified Symbol Resolution (USR) is a string that identifies a particular
+ * entity (function, class, variable, etc.) within a program. USRs can be
+ * compared across translation units to determine, e.g., when references in
+ * one translation refer to an entity defined in another translation unit.
+ */
+CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
+
+/**
+ * \brief Retrieve a name for the entity referenced by this cursor.
+ */
+CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
 
 /** \brief For a cursor that is a reference, retrieve a cursor representing the
  * entity that it references.
@@ -727,6 +827,19 @@ CINDEX_LINKAGE CXCursor clang_getCursorDefinition(CXCursor);
  */
 CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
 
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_DEBUG Debugging facilities
+ *
+ * These routines are used for testing and debugging, only, and should not
+ * be relied upon.
+ *
+ * @{
+ */
+  
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
 CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor, 
@@ -737,6 +850,22 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
                                           unsigned *endLine,
                                           unsigned *endColumn);
 
+/**
+ * @}
+ */
+  
+/**
+ * \defgroup CINDEX_CODE_COMPLET Code completion
+ *
+ * Code completion involves taking an (incomplete) source file, along with
+ * knowledge of where the user is actively editing that file, and suggesting
+ * syntactically- and semantically-valid constructs that the user might want to
+ * use at that particular point in the source code. These data structures and
+ * routines provide support for code completion.
+ *
+ * @{
+ */
+  
 /**
  * \brief A semantic string that describes a code-completion result.
  *
@@ -1108,6 +1237,11 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
 /**
  * @}
  */
+  
+/**
+ * @}
+ */
+  
 #ifdef __cplusplus
 }
 #endif
