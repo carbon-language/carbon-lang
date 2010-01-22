@@ -305,12 +305,10 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
 
 void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
                                         ArgStringList &CmdArgs) const {
-  // Check for static linking.
-  if (Args.hasArg(options::OPT_static)) {
-    // FIXME: We need to have compiler-rt available (perhaps as
-    // libclang_static.a) to link against.
+  // Darwin doesn't support real static executables, don't link any runtime
+  // libraries with -static.
+  if (Args.hasArg(options::OPT_static))
     return;
-  }
 
   // Reject -static-libgcc for now, we can deal with this when and if someone
   // cares. This is useful in situations where someone wants to statically link
@@ -321,12 +319,52 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     return;
   }
 
-  // Otherwise link libSystem, which should have the support routines.
-  //
-  // FIXME: This is only true for 10.6 and beyond. Legacy support isn't
-  // critical, but it should work... we should just link in the static
-  // compiler-rt library.
+  // Otherwise link libSystem, then the dynamic runtime library, and finally any
+  // target specific static runtime library.
   CmdArgs.push_back("-lSystem");
+
+  // Select the dynamic runtime library and the target specific static library.
+  const char *DarwinStaticLib = 0;
+  if (isIPhoneOS()) {
+    CmdArgs.push_back("-lgcc_s.1");
+
+    // We may need some static functions for armv6/thumb which are required to
+    // be in the same linkage unit as their caller.
+    if (getDarwinArchName(Args) == "armv6")
+      DarwinStaticLib = "libclang_rt.armv6.a";
+  } else {
+    unsigned MacosxVersionMin[3];
+    getMacosxVersionMin(Args, MacosxVersionMin);
+
+    // The dynamic runtime library was merged with libSystem for 10.6 and
+    // beyond; only 10.4 and 10.5 need an additional runtime library.
+    if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+      CmdArgs.push_back("-lgcc_s.10.4");
+    else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+      CmdArgs.push_back("-lgcc_s.10.5");
+
+    // For OS X, we only need a static runtime library when targetting 10.4, to
+    // provide versions of the static functions which were omitted from
+    // 10.4.dylib.
+    if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+      DarwinStaticLib = "libclang_rt.10.4.a";
+  }
+
+  /// Add the target specific static library, if needed.
+  if (DarwinStaticLib) {
+    llvm::sys::Path P(getDriver().ResourceDir);
+    P.appendComponent("lib");
+    P.appendComponent("darwin");
+    P.appendComponent(DarwinStaticLib);
+
+    // For now, allow missing resource libraries to support developers who may
+    // not have compiler-rt checked out or integrated into their build.
+    if (!P.exists())
+      getDriver().Diag(clang::diag::warn_drv_missing_resource_library)
+        << P.str();
+    else
+      CmdArgs.push_back(Args.MakeArgString(P.str()));
+  }
 }
 
 void Darwin::getMacosxVersionMin(const ArgList &Args,
