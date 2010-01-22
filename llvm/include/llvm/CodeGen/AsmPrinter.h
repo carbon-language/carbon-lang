@@ -260,10 +260,6 @@ namespace llvm {
     // Emission and print routines
     //
 
-    /// PrintHex - Print a value as a hexidecimal value.
-    ///
-    void PrintHex(uint64_t Value) const;
-
     /// EOL - Print a newline character to asm stream.  If a comment is present
     /// then it will be printed first.  Comments should not contain '\n'.
     void EOL() const;

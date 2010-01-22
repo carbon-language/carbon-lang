@@ -666,7 +666,8 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
     unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
     if (Value) Byte |= 0x80;
-    PrintHex(Byte);
+    O << "0x";
+    O.write_hex(Byte);
     if (Value) O << ", ";
   } while (Value);
 }
@@ -682,7 +683,8 @@ void AsmPrinter::PrintSLEB128(int Value) const {
     Value >>= 7;
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
-    PrintHex(Byte);
+    O << "0x";
+    O.write_hex(Byte);
     if (IsMore) O << ", ";
   } while (IsMore);
 }
@@ -690,13 +692,6 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 //===--------------------------------------------------------------------===//
 // Emission and print routines
 //
-
-/// PrintHex - Print a value as a hexadecimal value.
-///
-void AsmPrinter::PrintHex(uint64_t Value) const {
-  O << "0x";
-  O.write_hex(Value);
-}
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
 /// then it will be printed first.  Comments should not contain '\n'.
