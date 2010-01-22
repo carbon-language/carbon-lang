@@ -136,8 +136,13 @@ AsmToken AsmLexer::LexDigit() {
   if (CurPtr[-1] != '0') {
     while (isdigit(*CurPtr))
       ++CurPtr;
-    return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart), 
-                    strtoll(TokStart, 0, 10));
+    
+    StringRef Result(TokStart, CurPtr - TokStart);
+    
+    long long Value;
+    if (Result.getAsInteger(10, Value))
+      return ReturnError(TokStart, "Invalid decimal number");
+    return AsmToken(AsmToken::Integer, Result, Value);
   }
   
   if (*CurPtr == 'b') {
@@ -148,9 +153,15 @@ AsmToken AsmLexer::LexDigit() {
     
     // Requires at least one binary digit.
     if (CurPtr == NumStart)
-      return ReturnError(CurPtr-2, "Invalid binary number");
-    return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
-                    strtoll(NumStart, 0, 2));
+      return ReturnError(TokStart, "Invalid binary number");
+    
+    StringRef Result(TokStart, CurPtr - TokStart);
+    
+    long long Value;
+    if (Result.getAsInteger(2, Value))
+      return ReturnError(TokStart, "Invalid binary number");
+    
+    return AsmToken(AsmToken::Integer, Result, Value);
   }
  
   if (*CurPtr == 'x') {
@@ -165,7 +176,7 @@ AsmToken AsmLexer::LexDigit() {
 
     unsigned long long Result;
     if (StringRef(TokStart, CurPtr - TokStart).getAsInteger(0, Result))
-      return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+      return ReturnError(TokStart, "Invalid hexadecimal number");
       
     return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
                     (int64_t)Result);
@@ -174,8 +185,13 @@ AsmToken AsmLexer::LexDigit() {
   // Must be an octal number, it starts with 0.
   while (*CurPtr >= '0' && *CurPtr <= '7')
     ++CurPtr;
-  return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
-                  strtoll(TokStart, 0, 8));
+  
+  StringRef Result(TokStart, CurPtr - TokStart);
+  long long Value;
+  if (Result.getAsInteger(8, Value))
+    return ReturnError(TokStart, "Invalid octal number");
+  
+  return AsmToken(AsmToken::Integer, Result, Value);
 }
 
 /// LexQuote: String: "..."
