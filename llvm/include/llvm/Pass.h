@@ -152,6 +152,7 @@ public:
   virtual void *getAdjustedAnalysisPointer(const PassInfo *PI) {
     return this;
   }
+  virtual ImmutablePass *getAsImmutablePass() { return 0; }
   
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
   /// check state of analysis information. 
@@ -248,6 +249,8 @@ public:
   /// these passes with getAnalysis<>.
   ///
   virtual void initializePass();
+
+  virtual ImmutablePass *getAsImmutablePass() { return this; }
 
   /// ImmutablePasses are never run.
   ///

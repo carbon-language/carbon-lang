@@ -202,9 +202,7 @@ public:
   }
 
   inline void addTopLevelPass(Pass *P) {
-
-    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
-      
+    if (ImmutablePass *IP = P->getAsImmutablePass()) {
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver *AR = new AnalysisResolver(*this);
@@ -333,8 +331,7 @@ public:
   }
 
   inline void addTopLevelPass(Pass *P) {
-    if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (P)) {
-      
+    if (ImmutablePass *IP = P->getAsImmutablePass()) {
       // P is a immutable pass and it will be managed by this
       // top level manager. Set up analysis resolver to connect them.
       AnalysisResolver *AR = new AnalysisResolver(*this);
@@ -670,7 +667,7 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
   for (SmallVector<Pass *, 8>::iterator I = HigherLevelAnalysis.begin(),
          E = HigherLevelAnalysis.end(); I  != E; ++I) {
     Pass *P1 = *I;
-    if (!dynamic_cast<ImmutablePass*>(P1) &&
+    if (P1->getAsImmutablePass() == 0 &&
         std::find(PreservedSet.begin(), PreservedSet.end(),
                   P1->getPassInfo()) == 
            PreservedSet.end())
@@ -713,8 +710,8 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
-    if (!dynamic_cast<ImmutablePass*>(Info->second)
-        && std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
+    if (Info->second->getAsImmutablePass() == 0 &&
+        std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
         PreservedSet.end()) {
       // Remove this analysis
       if (PassDebugging >= Details) {
@@ -737,7 +734,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
            I = InheritedAnalysis[Index]->begin(),
            E = InheritedAnalysis[Index]->end(); I != E; ) {
       std::map<AnalysisID, Pass *>::iterator Info = I++;
-      if (!dynamic_cast<ImmutablePass*>(Info->second) &&
+      if (Info->second->getAsImmutablePass() == 0 &&
           std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
              PreservedSet.end()) {
         // Remove this analysis
