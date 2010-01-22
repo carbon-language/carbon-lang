@@ -224,6 +224,9 @@ public:
   // Statement visitors
   bool VisitStmt(Stmt *S);
   bool VisitDeclStmt(DeclStmt *S);
+  // FIXME: LabelStmt label?
+  bool VisitIfStmt(IfStmt *S);
+  bool VisitSwitchStmt(SwitchStmt *S);
 };
   
 } // end anonymous namespace
@@ -673,6 +676,35 @@ bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
     if (Visit(MakeCXCursor(*D, TU)))
       return true;
   }
+  
+  return false;
+}
+
+bool CursorVisitor::VisitIfStmt(IfStmt *S) {
+  if (VarDecl *Var = S->getConditionVariable()) {
+    if (Visit(MakeCXCursor(Var, TU)))
+      return true;
+  } else if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
+  
+  if (S->getThen() && Visit(MakeCXCursor(S->getThen(), StmtParent, TU)))
+    return true;
+
+  if (S->getElse() && Visit(MakeCXCursor(S->getElse(), StmtParent, TU)))
+    return true;
+
+  return false;
+}
+
+bool CursorVisitor::VisitSwitchStmt(SwitchStmt *S) {
+  if (VarDecl *Var = S->getConditionVariable()) {
+    if (Visit(MakeCXCursor(Var, TU)))
+      return true;
+  } else if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
+
+  if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
+    return true;
   
   return false;
 }
