@@ -655,24 +655,6 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
     }
 }
 
-
-//===----------------------------------------------------------------------===//
-/// LEB 128 number encoding.
-
-/// PrintULEB128 - Print a series of hexadecimal values (separated by commas)
-/// representing an unsigned leb128 value.
-void AsmPrinter::PrintULEB128(unsigned Value) const {
-  do {
-    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
-    Value >>= 7;
-    if (Value) Byte |= 0x80;
-    O << "0x";
-    O.write_hex(Byte);
-    if (Value) O << ", ";
-  } while (Value);
-}
-
-
 //===--------------------------------------------------------------------===//
 // Emission and print routines
 //
@@ -685,17 +667,6 @@ void AsmPrinter::EOL(const Twine &Comment) const {
     O << MAI->getCommentString() << ' ' << Comment;
   }
   O << '\n';
-}
-
-/// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
-/// unsigned leb128 value.
-void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
-  if (MAI->hasLEB128()) {
-    O << "\t.uleb128\t" << Value;
-  } else {
-    O << MAI->getData8bitsDirective();
-    PrintULEB128(Value);
-  }
 }
 
 /// EmitInt8 - Emit a byte directive and value.

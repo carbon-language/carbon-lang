@@ -2350,12 +2350,12 @@ void DwarfDebug::emitDIE(DIE *Die) {
   Asm->O << '\n';
 
   // Emit the code (index) for the abbreviation.
-  Asm->EmitULEB128Bytes(AbbrevNumber);
-
-  Asm->EOL("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
-           Twine::utohexstr(Die->getOffset()) + ":0x" +
-           Twine::utohexstr(Die->getSize()) + " " +
-           dwarf::TagString(Abbrev->getTag()));
+  if (Asm->VerboseAsm)
+    Asm->OutStreamer.AddComment("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
+                                Twine::utohexstr(Die->getOffset()) + ":0x" +
+                                Twine::utohexstr(Die->getSize()) + " " +
+                                dwarf::TagString(Abbrev->getTag()));
+  EmitULEB128(AbbrevNumber);
 
   SmallVector<DIEValue*, 32> &Values = Die->getValues();
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
@@ -2448,16 +2448,15 @@ void DwarfDebug::emitAbbreviations() const {
       const DIEAbbrev *Abbrev = Abbreviations[i];
 
       // Emit the abbrevations code (base 1 index.)
-      Asm->EmitULEB128Bytes(Abbrev->getNumber());
-      Asm->EOL("Abbreviation Code");
+      EmitULEB128(Abbrev->getNumber(), "Abbreviation Code");
 
       // Emit the abbreviations data.
-      Abbrev->Emit(Asm);
+      Abbrev->Emit(this);
       Asm->O << '\n';
     }
 
     // Mark end of abbreviations.
-    Asm->EmitULEB128Bytes(0); Asm->EOL("EOM(3)");
+    EmitULEB128(0, "EOM(3)");
 
     EmitLabel("abbrev_end", 0);
     Asm->O << '\n';
@@ -2476,10 +2475,8 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 
   // Mark end of matrix.
   Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
-  Asm->EmitULEB128Bytes(1);
-  Asm->O << '\n';
   Asm->EmitInt8(1);
-  Asm->O << '\n';
+  Asm->EmitInt8(1);
 }
 
 /// emitDebugLines - Emit source line information.
@@ -2545,12 +2542,9 @@ void DwarfDebug::emitDebugLines() {
     std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(SI);
     Asm->EmitString(getSourceFileName(Id.second));
     Asm->EOL("Source");
-    Asm->EmitULEB128Bytes(Id.first);
-    Asm->EOL("Directory #");
-    Asm->EmitULEB128Bytes(0);
-    Asm->EOL("Mod date");
-    Asm->EmitULEB128Bytes(0);
-    Asm->EOL("File size");
+    EmitULEB128(Id.first, "Directory #");
+    EmitULEB128(0, "Mod date");
+    EmitULEB128(0, "File size");
   }
 
   Asm->EmitInt8(0); Asm->EOL("End of files");
@@ -2604,7 +2598,7 @@ void DwarfDebug::emitDebugLines() {
       if (Source != LineInfo.getSourceID()) {
         Source = LineInfo.getSourceID();
         Asm->EmitInt8(dwarf::DW_LNS_set_file); Asm->EOL("DW_LNS_set_file");
-        Asm->EmitULEB128Bytes(Source); Asm->EOL("New Source");
+        EmitULEB128(Source, "New Source");
       }
 
       // If change of line.
@@ -2673,8 +2667,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   Asm->EOL("CIE Version");
   Asm->EmitString("");
   Asm->EOL("CIE Augmentation");
-  Asm->EmitULEB128Bytes(1);
-  Asm->EOL("CIE Code Alignment Factor");
+  EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
   Asm->EOL("CIE RA Column");
@@ -2941,7 +2934,7 @@ void DwarfDebug::emitDebugInlineInfo() {
     EmitSectionOffset("string", "section_str",
                       StringPool.idFor(Name), false, true);
     Asm->EOL("Function name");
-    Asm->EmitULEB128Bytes(Labels.size()); Asm->EOL("Inline count");
+    EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
            LE = Labels.end(); LI != LE; ++LI) {

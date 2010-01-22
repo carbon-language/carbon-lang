@@ -101,7 +101,7 @@ namespace llvm {
 
     /// Emit - Print the abbreviation using the specified asm printer.
     ///
-    void Emit(const AsmPrinter *Asm) const;
+    void Emit(const DwarfPrinter *Asm) const;
 
 #ifndef NDEBUG
     void print(raw_ostream &O);

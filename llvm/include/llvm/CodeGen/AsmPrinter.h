@@ -246,13 +246,6 @@ namespace llvm {
 
   public:
     //===------------------------------------------------------------------===//
-    /// LEB 128 number encoding.
-
-    /// PrintULEB128 - Print a series of hexidecimal values(separated by commas)
-    /// representing an unsigned leb128 value.
-    void PrintULEB128(unsigned Value) const;
-
-    //===------------------------------------------------------------------===//
     // Emission and print routines
     //
 
@@ -260,10 +253,6 @@ namespace llvm {
     /// then it will be printed first.  Comments should not contain '\n'.
     void EOL(const Twine &Comment) const;
 
-    /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
-    /// unsigned leb128 value.
-    void EmitULEB128Bytes(unsigned Value) const;
-    
     /// EmitInt8 - Emit a byte directive and value.
     ///
     void EmitInt8(int Value) const;

@@ -85,9 +85,18 @@ void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
   Asm->OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
-/// PrintSLEB128 - Print a series of hexadecimal values (separated by commas)
-/// representing a signed leb128 value.
-static void PrintSLEB128(MCStreamer &O, int Value) {
+/// EmitSLEB128 - emit the specified signed leb128 value.
+void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
+  if (Asm->VerboseAsm && Desc)
+    Asm->OutStreamer.AddComment(Desc);
+    
+  if (MAI->hasLEB128()) {
+    O << "\t.sleb128\t" << Value;
+    Asm->OutStreamer.AddBlankLine();
+    return;
+  }
+
+  // If we don't have .sleb128, emit as .bytes.
   int Sign = Value >> (8 * sizeof(Value) - 1);
   bool IsMore;
   
@@ -97,23 +106,29 @@ static void PrintSLEB128(MCStreamer &O, int Value) {
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
     
-    O.EmitIntValue(Byte, 1, /*addrspace*/0);
+    Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
   } while (IsMore);
 }
 
-/// EmitSLEB128 - print the specified signed leb128 value.
-void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
+/// EmitULEB128 - emit the specified signed leb128 value.
+void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc) const {
   if (Asm->VerboseAsm && Desc)
     Asm->OutStreamer.AddComment(Desc);
-    
+ 
   if (MAI->hasLEB128()) {
-    O << "\t.sleb128\t" << Value;
+    O << "\t.uleb128\t" << Value;
     Asm->OutStreamer.AddBlankLine();
-  } else {
-    PrintSLEB128(Asm->OutStreamer, Value);
+    return;
   }
+  
+  // If we don't have .uleb128, emit as .bytes.
+  do {
+    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
+    Value >>= 7;
+    if (Value) Byte |= 0x80;
+    Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
+  } while (Value);
 }
-
 
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
@@ -267,14 +282,11 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         } else {
           Asm->EmitInt8(dwarf::DW_CFA_def_cfa);
           Asm->EOL("DW_CFA_def_cfa");
-          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), isEH));
-          Asm->EOL("Register");
+          EmitULEB128(RI->getDwarfRegNum(Src.getReg(), isEH), "Register");
         }
 
         int Offset = -Src.getOffset();
-
-        Asm->EmitULEB128Bytes(Offset);
-        Asm->EOL("Offset");
+        EmitULEB128(Offset, "Offset");
       } else {
         llvm_unreachable("Machine move not supported yet.");
       }
@@ -283,8 +295,7 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       if (Dst.isReg()) {
         Asm->EmitInt8(dwarf::DW_CFA_def_cfa_register);
         Asm->EOL("DW_CFA_def_cfa_register");
-        Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), isEH));
-        Asm->EOL("Register");
+        EmitULEB128(RI->getDwarfRegNum(Dst.getReg(), isEH), "Register");
       } else {
         llvm_unreachable("Machine move not supported yet.");
       }
@@ -295,21 +306,17 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       if (Offset < 0) {
         Asm->EmitInt8(dwarf::DW_CFA_offset_extended_sf);
         Asm->EOL("DW_CFA_offset_extended_sf");
-        Asm->EmitULEB128Bytes(Reg);
-        Asm->EOL("Reg");
+        EmitULEB128(Reg, "Reg");
         EmitSLEB128(Offset, "Offset");
       } else if (Reg < 64) {
         Asm->EmitInt8(dwarf::DW_CFA_offset + Reg);
         Asm->EOL("DW_CFA_offset + Reg (" + Twine(Reg) + ")");
-        Asm->EmitULEB128Bytes(Offset);
-        Asm->EOL("Offset");
+        EmitULEB128(Offset, "Offset");
       } else {
         Asm->EmitInt8(dwarf::DW_CFA_offset_extended);
         Asm->EOL("DW_CFA_offset_extended");
-        Asm->EmitULEB128Bytes(Reg);
-        Asm->EOL("Reg");
-        Asm->EmitULEB128Bytes(Offset);
-        Asm->EOL("Offset");
+        EmitULEB128(Reg, "Reg");
+        EmitULEB128(Offset, "Offset");
       }
     }
   }

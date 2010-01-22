@@ -91,9 +91,12 @@ public:
   /// specifying (e.g. "LSDA").
   void EmitEncodingByte(unsigned Val, const char *Desc);
   
-  /// EmitSLEB128 - print the specified signed leb128 value.
+  /// EmitSLEB128 - emit the specified signed leb128 value.
   void EmitSLEB128(int Value, const char *Desc) const;
-  
+
+  /// EmitULEB128 - emit the specified unsigned leb128 value.
+  void EmitULEB128(unsigned Value, const char *Desc = 0) const;
+
   
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///

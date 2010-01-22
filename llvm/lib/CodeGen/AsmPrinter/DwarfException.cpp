@@ -175,15 +175,12 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->EOL("CIE Augmentation");
 
   // Round out reader.
-  Asm->EmitULEB128Bytes(1);
-  Asm->EOL("CIE Code Alignment Factor");
+  EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   Asm->EOL("CIE Return Address Column");
 
-  Asm->EmitULEB128Bytes(AugmentationSize);
-  Asm->EOL("Augmentation Size");
-
+  EmitULEB128(AugmentationSize, "Augmentation Size");
   EmitEncodingByte(PerEncoding, "Personality");
 
   // If there is a personality, we need to indicate the function's location.
@@ -277,16 +274,14 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     if (MMI->getPersonalities()[0] != NULL) {
 
       if (Asm->TM.getLSDAEncoding() != DwarfLSDAEncoding::EightByte) {
-        Asm->EmitULEB128Bytes(4);
-        Asm->EOL("Augmentation size");
+        EmitULEB128(4, "Augmentation size");
 
         if (EHFrameInfo.hasLandingPads)
           EmitReference("exception", EHFrameInfo.Number, true, true);
         else
           Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       } else {
-        Asm->EmitULEB128Bytes(TD->getPointerSize());
-        Asm->EOL("Augmentation size");
+        EmitULEB128(TD->getPointerSize(), "Augmentation size");
 
         if (EHFrameInfo.hasLandingPads) {
           EmitReference("exception", EHFrameInfo.Number, true, false);
@@ -298,8 +293,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
       Asm->EOL("Language Specific Data Area");
     } else {
-      Asm->EmitULEB128Bytes(0);
-      Asm->EOL("Augmentation size");
+      EmitULEB128(0, "Augmentation size");
     }
 
     // Indicate locations of function specific callee saved registers in frame.
@@ -782,16 +776,13 @@ void DwarfException::EmitExceptionTable() {
   EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
   EmitEncodingByte(TTypeFormat, "@TType");
 
-  if (HaveTTData) {
-    Asm->EmitULEB128Bytes(TyOffset);
-    Asm->EOL("@TType base offset");
-  }
+  if (HaveTTData)
+    EmitULEB128(TyOffset, "@TType base offset");
 
   // SjLj Exception handling
   if (IsSJLJ) {
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
-    Asm->EmitULEB128Bytes(SizeSites);
-    Asm->EOL("Call site table length");
+    EmitULEB128(SizeSites, "Call site table length");
 
     // Emit the landing pad site information.
     unsigned idx = 0;
@@ -801,14 +792,12 @@ void DwarfException::EmitExceptionTable() {
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      Asm->EmitULEB128Bytes(idx);
-      Asm->EOL("Landing pad");
+      EmitULEB128(idx, "Landing pad");
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
       // the action table), and 0 indicates that there are no actions.
-      Asm->EmitULEB128Bytes(S.Action);
-      Asm->EOL("Action");
+      EmitULEB128(S.Action, "Action");
     }
   } else {
     // DWARF Exception handling
@@ -834,8 +823,7 @@ void DwarfException::EmitExceptionTable() {
 
     // Emit the landing pad call site table.
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
-    Asm->EmitULEB128Bytes(SizeSites);
-    Asm->EOL("Call site table size");
+    EmitULEB128(SizeSites, "Call site table size");
 
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
@@ -879,8 +867,7 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
       // the action table), and 0 indicates that there are no actions.
-      Asm->EmitULEB128Bytes(S.Action);
-      Asm->EOL("Action");
+      EmitULEB128(S.Action, "Action");
     }
   }
 
@@ -921,11 +908,7 @@ void DwarfException::EmitExceptionTable() {
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
-    Asm->EmitULEB128Bytes(TypeID);
-    if (TypeID != 0)
-      Asm->EOL("Exception specification");
-    else
-      Asm->O << '\n';
+    EmitULEB128(TypeID, TypeID != 0 ? "Exception specification" : 0);
   }
 
   Asm->EmitAlignment(2, 0, 0, false);
