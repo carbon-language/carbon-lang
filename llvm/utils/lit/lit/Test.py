@@ -70,7 +70,7 @@ class Test:
         self.elapsed = elapsed
 
     def getFullName(self):
-        return self.suite.config.name + '::' + '/'.join(self.path_in_suite)
+        return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)
 
     def getSourcePath(self):
         return self.suite.getSourcePath(self.path_in_suite)
