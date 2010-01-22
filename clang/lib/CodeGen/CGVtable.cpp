@@ -376,13 +376,13 @@ public:
                        CurrentVBaseOffset))
       return;
 
+    D1(printf("  vfn for %s at %d\n",
+              dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
+              (int)Methods.size()));
+
     // We didn't find an entry in the vtable that we could use, add a new
     // entry.
     Methods.AddMethod(GD);
-
-    D1(printf("  vfn for %s at %d\n",
-              dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
-              666 /* (int)Index[GD] */));
 
     VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
