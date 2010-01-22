@@ -157,7 +157,8 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   assert(CurSection && "Cannot emit before setting section!");
 
-  OS << *Symbol << ":\n";
+  OS << *Symbol << ":";
+  EmitEOL();
   Symbol->setSection(*CurSection);
 }
 
@@ -166,7 +167,7 @@ void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   default: assert(0 && "Invalid flag!");
   case SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
   }
-  OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
@@ -174,7 +175,8 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  OS << *Symbol << " = " << *Value << '\n';
+  OS << *Symbol << " = " << *Value;
+  EmitEOL();
 
   // FIXME: Lift context changes into super class.
   // FIXME: Set associated section.
@@ -198,11 +200,13 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case WeakReference:  OS << ".weak_reference ";  break;
   }
 
-  OS << *Symbol << '\n';
+  OS << *Symbol;
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-  OS << ".desc" << ' ' << *Symbol << ',' << DescValue << '\n';
+  OS << ".desc" << ' ' << *Symbol << ',' << DescValue;
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
@@ -214,7 +218,7 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
     else
       OS << ',' << Log2_32(ByteAlignment);
   }
-  OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
@@ -231,14 +235,16 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
     if (ByteAlignment != 0)
       OS << ',' << Log2_32(ByteAlignment);
   }
-  OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   const char *Directive = MAI.getData8bitsDirective(AddrSpace);
-  for (unsigned i = 0, e = Data.size(); i != e; ++i)
-    OS << Directive << (unsigned)(unsigned char)Data[i] << '\n';
+  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+    OS << Directive << (unsigned)(unsigned char)Data[i];
+    EmitEOL();
+  }
 }
 
 /// EmitIntValue - Special case of EmitValue that avoids the client having
@@ -334,7 +340,7 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
       if (MaxBytesToEmit) 
         OS << ", " << MaxBytesToEmit;
     }
-    OS << '\n';
+    EmitEOL();
     return;
   }
   
@@ -352,13 +358,14 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
   OS << ", " << truncateToSize(Value, ValueSize);
   if (MaxBytesToEmit) 
     OS << ", " << MaxBytesToEmit;
-  OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
                                       unsigned char Value) {
   // FIXME: Verify that Offset is associated with the current section.
-  OS << ".org " << *Offset << ", " << (unsigned) Value << '\n';
+  OS << ".org " << *Offset << ", " << (unsigned) Value;
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
@@ -367,7 +374,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   // If we have an AsmPrinter, use that to print.
   if (InstPrinter) {
     InstPrinter->printInst(&Inst);
-    OS << '\n';
+    EmitEOL();
 
     // Show the encoding if we have a code emitter.
     if (Emitter) {
@@ -392,7 +399,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   // Otherwise fall back to a structural printing for now. Eventually we should
   // always have access to the target specific printer.
   Inst.print(OS, &MAI);
-  OS << '\n';
+  EmitEOL();
 }
 
 void MCAsmStreamer::Finish() {
