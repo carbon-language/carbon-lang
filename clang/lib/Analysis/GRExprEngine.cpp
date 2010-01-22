@@ -2173,8 +2173,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred, 
-                             ExplodedNodeSet& Dst, bool asLValue){
+void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred, 
+                             ExplodedNodeSet &Dst, bool asLValue) {
   ExplodedNodeSet S1;
   QualType T = CastE->getType();
   QualType ExTy = Ex->getType();
@@ -2191,14 +2191,6 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
   ExplodedNodeSet S2;
   CheckerVisit(CastE, S2, S1, true);
 
-  // Check for casting to "void".
-  if (T->isVoidType()) {
-    assert(!asLValue);
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
-      Dst.Add(*I);
-    return;
-  }
-  
   // If we are evaluating the cast in an lvalue context, we implicitly want
   // the cast to evaluate to a location.
   if (asLValue) {
@@ -2207,13 +2199,51 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, ExplodedNode* Pred,
     ExTy = Ctx.getPointerType(Ctx.getCanonicalType(ExTy));
   }
 
-  for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
-    ExplodedNode* N = *I;
-    const GRState* state = GetState(N);
-    SVal V = state->getSVal(Ex);
-    const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);
-    state = Res.getState()->BindExpr(CastE, Res.getSVal());
-    MakeNode(Dst, CastE, N, state);
+  switch (CastE->getCastKind()) {
+  case CastExpr::CK_ToVoid:
+    assert(!asLValue);
+    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
+      Dst.Add(*I);
+    return;
+
+  case CastExpr::CK_NoOp:
+  case CastExpr::CK_FunctionToPointerDecay:
+    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+      // Copy the SVal of Ex to CastE.
+      ExplodedNode *N = *I;
+      const GRState *state = GetState(N);
+      SVal V = state->getSVal(Ex);
+      state = state->BindExpr(CastE, V);
+      MakeNode(Dst, CastE, N, state);
+    }
+    return;
+
+  case CastExpr::CK_Unknown:
+  case CastExpr::CK_ArrayToPointerDecay:
+  case CastExpr::CK_BitCast:
+  case CastExpr::CK_IntegralCast:
+  case CastExpr::CK_IntegralToPointer:
+  case CastExpr::CK_PointerToIntegral:
+  case CastExpr::CK_IntegralToFloating:
+  case CastExpr::CK_FloatingToIntegral:
+  case CastExpr::CK_FloatingCast:
+  case CastExpr::CK_AnyPointerToObjCPointerCast:
+  case CastExpr::CK_AnyPointerToBlockPointerCast:
+  case CastExpr::CK_DerivedToBase:
+    // Delegate to SValuator to process.
+    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+      ExplodedNode* N = *I;
+      const GRState* state = GetState(N);
+      SVal V = state->getSVal(Ex);
+      const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);
+      state = Res.getState()->BindExpr(CastE, Res.getSVal());
+      MakeNode(Dst, CastE, N, state);
+    }
+    return;
+
+  default:
+    llvm::errs() << "Cast kind " << CastE->getCastKind() << " not handled.\n";
+    assert(0);
   }
 }
 
