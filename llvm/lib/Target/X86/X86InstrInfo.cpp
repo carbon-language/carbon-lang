@@ -2990,6 +2990,8 @@ bool X86InstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
   case MVT::i16:
   case MVT::i32:
   case MVT::i64:
+  case MVT::f32:
+  case MVT::f64:
     if (NumLoads)
       return false;
   }
