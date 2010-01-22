@@ -672,22 +672,6 @@ void AsmPrinter::PrintULEB128(unsigned Value) const {
   } while (Value);
 }
 
-/// PrintSLEB128 - Print a series of hexadecimal values (separated by commas)
-/// representing a signed leb128 value.
-void AsmPrinter::PrintSLEB128(int Value) const {
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-
-  do {
-    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    if (IsMore) Byte |= 0x80;
-    O << "0x";
-    O.write_hex(Byte);
-    if (IsMore) O << ", ";
-  } while (IsMore);
-}
 
 //===--------------------------------------------------------------------===//
 // Emission and print routines
@@ -707,23 +691,10 @@ void AsmPrinter::EOL(const Twine &Comment) const {
 /// unsigned leb128 value.
 void AsmPrinter::EmitULEB128Bytes(unsigned Value) const {
   if (MAI->hasLEB128()) {
-    O << "\t.uleb128\t"
-      << Value;
+    O << "\t.uleb128\t" << Value;
   } else {
     O << MAI->getData8bitsDirective();
     PrintULEB128(Value);
-  }
-}
-
-/// EmitSLEB128Bytes - print an assembler byte data directive to compose a
-/// signed leb128 value.
-void AsmPrinter::EmitSLEB128Bytes(int Value) const {
-  if (MAI->hasLEB128()) {
-    O << "\t.sleb128\t"
-      << Value;
-  } else {
-    O << MAI->getData8bitsDirective();
-    PrintSLEB128(Value);
   }
 }
 

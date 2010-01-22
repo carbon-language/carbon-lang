@@ -177,8 +177,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Round out reader.
   Asm->EmitULEB128Bytes(1);
   Asm->EOL("CIE Code Alignment Factor");
-  Asm->EmitSLEB128Bytes(stackGrowth);
-  Asm->EOL("CIE Data Alignment Factor");
+  EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   Asm->EOL("CIE Return Address Column");
 
@@ -894,17 +893,13 @@ void DwarfException::EmitExceptionTable() {
     //
     //   Used by the runtime to match the type of the thrown exception to the
     //   type of the catch clauses or the types in the exception specification.
-
-    Asm->EmitSLEB128Bytes(Action.ValueForTypeID);
-    Asm->EOL("TypeInfo index");
+    EmitSLEB128(Action.ValueForTypeID, "TypeInfo index");
 
     // Action Record
     //
     //   Self-relative signed displacement in bytes of the next action record,
     //   or 0 if there is no next action record.
-
-    Asm->EmitSLEB128Bytes(Action.NextAction);
-    Asm->EOL("Next action");
+    EmitSLEB128(Action.NextAction, "Next action");
   }
 
   // Emit the Catch TypeInfos.

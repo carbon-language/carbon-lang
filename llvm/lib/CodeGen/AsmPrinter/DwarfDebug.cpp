@@ -2624,7 +2624,7 @@ void DwarfDebug::emitDebugLines() {
           // ... otherwise use long hand.
           Asm->EmitInt8(dwarf::DW_LNS_advance_line);
           Asm->EOL("DW_LNS_advance_line");
-          Asm->EmitSLEB128Bytes(Offset); Asm->EOL("Line Offset");
+          EmitSLEB128(Offset, "Line Offset");
           Asm->EmitInt8(dwarf::DW_LNS_copy); Asm->EOL("DW_LNS_copy");
         }
       } else {
@@ -2675,8 +2675,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   Asm->EOL("CIE Augmentation");
   Asm->EmitULEB128Bytes(1);
   Asm->EOL("CIE Code Alignment Factor");
-  Asm->EmitSLEB128Bytes(stackGrowth);
-  Asm->EOL("CIE Data Alignment Factor");
+  EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
   Asm->EOL("CIE RA Column");
 

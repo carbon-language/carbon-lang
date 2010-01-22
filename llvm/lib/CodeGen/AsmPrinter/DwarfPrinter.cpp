@@ -85,6 +85,36 @@ void DwarfPrinter::EmitEncodingByte(unsigned Val, const char *Desc) {
   Asm->OutStreamer.EmitIntValue(Val, 1, 0/*addrspace*/);
 }
 
+/// PrintSLEB128 - Print a series of hexadecimal values (separated by commas)
+/// representing a signed leb128 value.
+static void PrintSLEB128(MCStreamer &O, int Value) {
+  int Sign = Value >> (8 * sizeof(Value) - 1);
+  bool IsMore;
+  
+  do {
+    unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
+    Value >>= 7;
+    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+    if (IsMore) Byte |= 0x80;
+    
+    O.EmitIntValue(Byte, 1, /*addrspace*/0);
+  } while (IsMore);
+}
+
+/// EmitSLEB128 - print the specified signed leb128 value.
+void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
+  if (Asm->VerboseAsm && Desc)
+    Asm->OutStreamer.AddComment(Desc);
+    
+  if (MAI->hasLEB128()) {
+    O << "\t.sleb128\t" << Value;
+    Asm->OutStreamer.AddBlankLine();
+  } else {
+    PrintSLEB128(Asm->OutStreamer, Value);
+  }
+}
+
+
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
@@ -267,8 +297,7 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EOL("DW_CFA_offset_extended_sf");
         Asm->EmitULEB128Bytes(Reg);
         Asm->EOL("Reg");
-        Asm->EmitSLEB128Bytes(Offset);
-        Asm->EOL("Offset");
+        EmitSLEB128(Offset, "Offset");
       } else if (Reg < 64) {
         Asm->EmitInt8(dwarf::DW_CFA_offset + Reg);
         Asm->EOL("DW_CFA_offset + Reg (" + Twine(Reg) + ")");

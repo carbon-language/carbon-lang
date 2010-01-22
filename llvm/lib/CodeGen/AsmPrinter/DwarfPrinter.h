@@ -87,11 +87,14 @@ public:
 
   /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
   /// encoding.  If verbose assembly output is enabled, we output comments
-  /// describing the encoding.  Desc is an optional string saying what the
-  /// encoding is specifying (e.g. "LSDA").
-  void EmitEncodingByte(unsigned Val, const char *Desc = 0);
+  /// describing the encoding.  Desc is a string saying what the encoding is
+  /// specifying (e.g. "LSDA").
+  void EmitEncodingByte(unsigned Val, const char *Desc);
   
-
+  /// EmitSLEB128 - print the specified signed leb128 value.
+  void EmitSLEB128(int Value, const char *Desc) const;
+  
+  
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
   void PrintLabelName(const DWLabel &Label) const {

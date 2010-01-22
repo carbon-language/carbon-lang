@@ -200,7 +200,7 @@ void DIEInteger::EmitValue(DwarfPrinter *D, unsigned Form) const {
   case dwarf::DW_FORM_ref8:  // Fall thru
   case dwarf::DW_FORM_data8: Size = 8; break;
   case dwarf::DW_FORM_udata: Asm->EmitULEB128Bytes(Integer); return;
-  case dwarf::DW_FORM_sdata: Asm->EmitSLEB128Bytes(Integer); return;
+  case dwarf::DW_FORM_sdata: D->EmitSLEB128(Integer, ""); return;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
   Asm->OutStreamer.EmitIntValue(Integer, Size, 0/*addrspace*/);
