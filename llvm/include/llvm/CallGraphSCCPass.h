@@ -32,8 +32,8 @@ class PMStack;
 
 struct CallGraphSCCPass : public Pass {
 
-  explicit CallGraphSCCPass(intptr_t pid) : Pass(pid) {}
-  explicit CallGraphSCCPass(void *pid) : Pass(pid) {}
+  explicit CallGraphSCCPass(intptr_t pid) : Pass(PT_CallGraphSCC, pid) {}
+  explicit CallGraphSCCPass(void *pid) : Pass(PT_CallGraphSCC, pid) {}
 
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.

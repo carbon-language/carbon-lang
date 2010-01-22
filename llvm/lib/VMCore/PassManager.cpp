@@ -172,7 +172,7 @@ private:
 public:
   static char ID;
   explicit FunctionPassManagerImpl(int Depth) : 
-    Pass(&ID), PMDataManager(Depth), 
+    Pass(PT_PassManager, &ID), PMDataManager(Depth), 
     PMTopLevelManager(TLM_Function), wasRun(false) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
@@ -241,7 +241,7 @@ class MPPassManager : public Pass, public PMDataManager {
 public:
   static char ID;
   explicit MPPassManager(int Depth) :
-    Pass(&ID), PMDataManager(Depth) { }
+    Pass(PT_PassManager, &ID), PMDataManager(Depth) { }
 
   // Delete on the fly managers.
   virtual ~MPPassManager() {
@@ -321,7 +321,8 @@ class PassManagerImpl : public Pass,
 public:
   static char ID;
   explicit PassManagerImpl(int Depth) :
-    Pass(&ID), PMDataManager(Depth), PMTopLevelManager(TLM_Pass) { }
+    Pass(PT_PassManager, &ID), PMDataManager(Depth),
+                               PMTopLevelManager(TLM_Pass) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass

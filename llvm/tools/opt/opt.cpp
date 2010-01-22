@@ -479,16 +479,23 @@ int main(int argc, char **argv) {
       addPass(Passes, P);
 
       if (AnalyzeOnly) {
-        if (dynamic_cast<BasicBlockPass*>(P))
+        switch (P->getPassKind()) {
+        case PT_BasicBlock:
           Passes.add(new BasicBlockPassPrinter(PassInf));
-        else if (dynamic_cast<LoopPass*>(P))
+          break;
+        case PT_Loop:
           Passes.add(new LoopPassPrinter(PassInf));
-        else if (dynamic_cast<FunctionPass*>(P))
+          break;
+        case PT_Function:
           Passes.add(new FunctionPassPrinter(PassInf));
-        else if (dynamic_cast<CallGraphSCCPass*>(P))
+          break;
+        case PT_CallGraphSCC:
           Passes.add(new CallGraphSCCPassPrinter(PassInf));
-        else
+          break;
+        default:
           Passes.add(new ModulePassPrinter(PassInf));
+          break;
+        }
       }
     }
 
