@@ -402,7 +402,6 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
 const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
-                                          SourceLocation FilenameTokLoc,
                                           bool isAngled,
                                           const DirectoryLookup *FromDir,
                                           const DirectoryLookup *&CurDir) {
@@ -429,16 +428,7 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
   CurDir = CurDirLookup;
   const FileEntry *FE =
     HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
-  if (FE) {
-    // Warn about normal quoted #include from framework headers.  Since
-    // framework headers are published (both public and private ones) they
-    // should not do relative searches, they should do an include with the
-    // framework path included.
-    if (!isAngled && CurDir && FilenameTokLoc.isValid() &&
-        CurDir->isFramework() && CurDir == CurDirLookup)
-      Diag(FilenameTokLoc, diag::warn_pp_relative_include_from_framework);
-    return FE;
-  }
+  if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
@@ -1079,8 +1069,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = LookupFile(Filename, FilenameTok.getLocation(),
-                                     isAngled, LookupFrom, CurDir);
+  const FileEntry *File = LookupFile(Filename, isAngled, LookupFrom, CurDir);
   if (File == 0) {
     Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
