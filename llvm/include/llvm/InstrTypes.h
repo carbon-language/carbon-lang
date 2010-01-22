@@ -652,8 +652,7 @@ public:
 
 /// This class is the base class for the comparison instructions.
 /// @brief Abstract base class of comparison instructions.
-// FIXME: why not derive from BinaryOperator?
-class CmpInst: public Instruction {
+class CmpInst : public Instruction {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   CmpInst(); // do not implement
 protected:
@@ -665,6 +664,7 @@ protected:
           Value *LHS, Value *RHS, const Twine &Name,
           BasicBlock *InsertAtEnd);
 
+  virtual void Anchor() const; // Out of line virtual method.
 public:
   /// This enumeration lists the possible predicates for CmpInst subclasses.
   /// Values in the range 0-31 are reserved for FCmpInst, while values in the
