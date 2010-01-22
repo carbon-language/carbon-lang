@@ -2868,6 +2868,136 @@ unsigned X86InstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
   return I->second.first;
 }
 
+bool
+X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
+                                     int64_t &Offset1, int64_t &Offset2) const {
+  if (!Load1->isMachineOpcode() || !Load2->isMachineOpcode())
+    return false;
+  unsigned Opc1 = Load1->getMachineOpcode();
+  unsigned Opc2 = Load2->getMachineOpcode();
+  switch (Opc1) {
+  default: return false;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV32rm:
+  case X86::MOV64rm:
+  case X86::LD_Fp32m:
+  case X86::LD_Fp64m:
+  case X86::LD_Fp80m:
+  case X86::MOVSSrm:
+  case X86::MOVSDrm:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+  case X86::FsMOVAPSrm:
+  case X86::FsMOVAPDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVUPSrm:
+  case X86::MOVUPSrm_Int:
+  case X86::MOVAPDrm:
+  case X86::MOVDQArm:
+  case X86::MOVDQUrm:
+  case X86::MOVDQUrm_Int:
+    break;
+  }
+  switch (Opc2) {
+  default: return false;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV32rm:
+  case X86::MOV64rm:
+  case X86::LD_Fp32m:
+  case X86::LD_Fp64m:
+  case X86::LD_Fp80m:
+  case X86::MOVSSrm:
+  case X86::MOVSDrm:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+  case X86::FsMOVAPSrm:
+  case X86::FsMOVAPDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVUPSrm:
+  case X86::MOVUPSrm_Int:
+  case X86::MOVAPDrm:
+  case X86::MOVDQArm:
+  case X86::MOVDQUrm:
+  case X86::MOVDQUrm_Int:
+    break;
+  }
+
+  // Check if chain operands and base addresses match.
+  if (Load1->getOperand(0) != Load2->getOperand(0) ||
+      Load1->getOperand(5) != Load2->getOperand(5))
+    return false;
+  // Segment operands should match as well.
+  if (Load1->getOperand(4) != Load2->getOperand(4))
+    return false;
+  // Scale should be 1, Index should be Reg0.
+  if (Load1->getOperand(1) == Load2->getOperand(1) &&
+      Load1->getOperand(2) == Load2->getOperand(2)) {
+    if (cast<ConstantSDNode>(Load1->getOperand(1))->getZExtValue() != 1)
+      return false;
+    SDValue Op2 = Load1->getOperand(2);
+    if (!isa<RegisterSDNode>(Op2) ||
+        cast<RegisterSDNode>(Op2)->getReg() != 0)
+      return 0;
+
+    // Now let's examine the displacements.
+    if (isa<ConstantSDNode>(Load1->getOperand(3)) &&
+        isa<ConstantSDNode>(Load2->getOperand(3))) {
+      Offset1 = cast<ConstantSDNode>(Load1->getOperand(3))->getSExtValue();
+      Offset2 = cast<ConstantSDNode>(Load2->getOperand(3))->getSExtValue();
+      return true;
+    }
+  }
+  return false;
+}
+
+bool X86InstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
+                                           int64_t Offset1, int64_t Offset2,
+                                           unsigned NumLoads) const {
+  assert(Offset2 > Offset1);
+  if ((Offset2 - Offset1) / 8 > 64)
+    return false;
+
+  unsigned Opc1 = Load1->getMachineOpcode();
+  unsigned Opc2 = Load2->getMachineOpcode();
+  if (Opc1 != Opc2)
+    return false;  // FIXME: overly conservative?
+
+  switch (Opc1) {
+  default: break;
+  case X86::LD_Fp32m:
+  case X86::LD_Fp64m:
+  case X86::LD_Fp80m:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+    return false;
+  }
+
+  EVT VT = Load1->getValueType(0);
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: {
+    // XMM registers. In 64-bit mode we can be a bit more aggressive since we
+    // have 16 of them to play with.
+    if (TM.getSubtargetImpl()->is64Bit()) {
+      if (NumLoads >= 3)
+        return false;
+    } else if (NumLoads)
+      return false;
+    break;
+  }
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    if (NumLoads)
+      return false;
+  }
+
+  return true;
+}
+
+
 bool X86InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid X86 branch condition!");

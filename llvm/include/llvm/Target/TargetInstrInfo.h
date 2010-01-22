@@ -486,6 +486,30 @@ public:
                                       unsigned *LoadRegIndex = 0) const {
     return 0;
   }
+
+  /// areLoadsFromSameBasePtr - This is used by the pre-regalloc scheduler
+  /// to determine if two loads are loading from the same base address. It
+  /// should only return true if the base pointers are the same and the
+  /// only differences between the two addresses are the offset. It also returns
+  /// the offsets by reference.
+  virtual bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
+                                       int64_t &Offset1, int64_t &Offset2) const {
+    return false;
+  }
+
+  /// shouldScheduleLoadsNear - This is a used by the pre-regalloc scheduler to
+  /// determine (in conjuction with areLoadsFromSameBasePtr) if two loads should
+  /// be scheduled togther. On some targets if two loads are loading from
+  /// addresses in the same cache line, it's better if they are scheduled
+  /// together. This function takes two integers that represent the load offsets
+  /// from the common base address. It returns true if it decides it's desirable
+  /// to schedule the two loads together. "NumLoads" is the number of loads that
+  /// have already been scheduled after Load1.
+  virtual bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
+                                       int64_t Offset1, int64_t Offset2,
+                                       unsigned NumLoads) const {
+    return false;
+  }
   
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
