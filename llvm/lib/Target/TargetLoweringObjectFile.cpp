@@ -474,30 +474,30 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
 
 
 static SectionKind
-getELFKindForNamedSection(const char *Name, SectionKind K) {
-  if (Name[0] != '.') return K;
+getELFKindForNamedSection(StringRef Name, SectionKind K) {
+  if (Name.empty() || Name[0] != '.') return K;
 
   // Some lame default implementation based on some magic section names.
-  if (strcmp(Name, ".bss") == 0 ||
-      strncmp(Name, ".bss.", 5) == 0 ||
-      strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
-      strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
-      strcmp(Name, ".sbss") == 0 ||
-      strncmp(Name, ".sbss.", 6) == 0 ||
-      strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
-      strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
+  if (Name == ".bss" ||
+      Name.startswith(".bss.") ||
+      Name.startswith(".gnu.linkonce.b.") ||
+      Name.startswith(".llvm.linkonce.b.") ||
+      Name == ".sbss" ||
+      Name.startswith(".sbss.") ||
+      Name.startswith(".gnu.linkonce.sb.") ||
+      Name.startswith(".llvm.linkonce.sb."))
     return SectionKind::getBSS();
 
-  if (strcmp(Name, ".tdata") == 0 ||
-      strncmp(Name, ".tdata.", 7) == 0 ||
-      strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
-      strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
+  if (Name == ".tdata" ||
+      Name.startswith(".tdata.") ||
+      Name.startswith(".gnu.linkonce.td.") ||
+      Name.startswith(".llvm.linkonce.td."))
     return SectionKind::getThreadData();
 
-  if (strcmp(Name, ".tbss") == 0 ||
-      strncmp(Name, ".tbss.", 6) == 0 ||
-      strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
-      strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
+  if (Name == ".tbss" ||
+      Name.startswith(".tbss.") ||
+      Name.startswith(".gnu.linkonce.tb.") ||
+      Name.startswith(".llvm.linkonce.tb."))
     return SectionKind::getThreadBSS();
 
   return K;
@@ -553,7 +553,7 @@ getELFSectionFlags(SectionKind K) {
 const MCSection *TargetLoweringObjectFileELF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const {
-  const char *SectionName = GV->getSection().c_str();
+  StringRef SectionName = GV->getSection();
 
   // Infer section flags from the section name if we can.
   Kind = getELFKindForNamedSection(SectionName, Kind);
@@ -616,7 +616,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
 
     std::string Name = SizeSpec + utostr(Align);
-    return getELFSection(Name.c_str(), MCSectionELF::SHT_PROGBITS,
+    return getELFSection(Name, MCSectionELF::SHT_PROGBITS,
                          MCSectionELF::SHF_ALLOC |
                          MCSectionELF::SHF_MERGE |
                          MCSectionELF::SHF_STRINGS,
@@ -1086,7 +1086,7 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
 const MCSection *TargetLoweringObjectFileCOFF::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const {
-  return getCOFFSection(GV->getSection().c_str(), false, Kind);
+  return getCOFFSection(GV->getSection(), false, Kind);
 }
 
 static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {

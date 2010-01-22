@@ -47,8 +47,7 @@ public:
 
   /// ShouldOmitSectionDirective - Decides whether a '.section' directive
   /// should be printed before the section name
-  bool ShouldOmitSectionDirective(const char *Name, 
-                                  const MCAsmInfo &MAI) const;
+  bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
   /// ShouldPrintSectionType - Only prints the section type if supported
   bool ShouldPrintSectionType(unsigned Ty) const;
