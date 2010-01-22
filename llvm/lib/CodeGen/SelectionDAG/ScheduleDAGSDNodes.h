@@ -108,6 +108,10 @@ namespace llvm {
     virtual void getCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const;
 
   private:
+    /// ClusterNeighboringLoads - Cluster loads from "near" addresses into
+    /// combined SUnits.
+    void ClusterNeighboringLoads();
+
     /// BuildSchedUnits, AddSchedEdges - Helper functions for BuildSchedGraph.
     void BuildSchedUnits();
     void AddSchedEdges();

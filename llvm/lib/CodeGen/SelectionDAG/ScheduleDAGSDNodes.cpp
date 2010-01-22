@@ -20,9 +20,20 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+STATISTIC(LoadsClustered, "Number of loads clustered together");
+
+static cl::opt<bool>
+ClusterLoads("cluster-loads", cl::Hidden,
+           cl::desc("Schedule nearby loads together and in order"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
   : ScheduleDAG(mf) {
@@ -71,6 +82,122 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
       const TargetRegisterClass *RC =
         TRI->getPhysicalRegisterRegClass(Reg, Def->getValueType(ResNo));
       Cost = RC->getCopyCost();
+    }
+  }
+}
+
+static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
+                     SelectionDAG *DAG) {
+  SmallVector<EVT, 4> VTs;
+  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
+    VTs.push_back(N->getValueType(i));
+  if (AddFlag)
+    VTs.push_back(MVT::Flag);
+  SmallVector<SDValue, 4> Ops;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    Ops.push_back(N->getOperand(i));
+  if (Flag.getNode())
+    Ops.push_back(Flag);
+  SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
+  DAG->MorphNodeTo(N, N->getOpcode(), VTList, &Ops[0], Ops.size());
+}
+
+/// ClusterNeighboringLoads - Force nearby loads together by "flagging" them.
+/// This function finds loads of the same base and different offsets. If the
+/// offsets are not far apart (target specific), it add MVT::Flag inputs and
+/// outputs to ensure they are scheduled together and in order. This
+/// optimization may benefit some targets by improving cache locality.
+void ScheduleDAGSDNodes::ClusterNeighboringLoads() {
+  SmallPtrSet<SDNode*, 16> Visited;
+  SmallVector<int64_t, 4> Offsets;
+  DenseMap<long long, SDNode*> O2SMap;  // Map from offset to SDNode.
+  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
+       E = DAG->allnodes_end(); NI != E; ++NI) {
+    SDNode *Node = &*NI;
+    if (!Node || !Node->isMachineOpcode())
+      continue;
+
+    unsigned Opc = Node->getMachineOpcode();
+    const TargetInstrDesc &TID = TII->get(Opc);
+    if (!TID.mayLoad())
+      continue;
+
+    SDNode *Chain = 0;
+    unsigned NumOps = Node->getNumOperands();
+    if (Node->getOperand(NumOps-1).getValueType() == MVT::Other)
+      Chain = Node->getOperand(NumOps-1).getNode();
+    if (!Chain)
+      continue;
+
+    // Look for other loads of the same chain. Find loads that are loading from
+    // the same base pointer and different offsets.
+    Visited.clear();
+    Offsets.clear();
+    O2SMap.clear();
+    bool Cluster = false;
+    SDNode *Base = Node;
+    int64_t BaseOffset;
+    for (SDNode::use_iterator I = Chain->use_begin(), E = Chain->use_end();
+         I != E; ++I) {
+      SDNode *User = *I;
+      if (User == Node || !Visited.insert(User))
+        continue;
+      int64_t Offset1, Offset2;
+      if (!TII->areLoadsFromSameBasePtr(Base, User, Offset1, Offset2) ||
+          Offset1 == Offset2)
+        // FIXME: Should be ok if they addresses are identical. But earlier
+        // optimizations really should have eliminated one of the loads.
+        continue;
+      if (O2SMap.insert(std::make_pair(Offset1, Base)).second)
+        Offsets.push_back(Offset1);
+      O2SMap.insert(std::make_pair(Offset2, User));
+      Offsets.push_back(Offset2);
+      if (Offset2 < Offset1) {
+        Base = User;
+        BaseOffset = Offset2;
+      } else {
+        BaseOffset = Offset1;
+      }
+      Cluster = true;
+    }
+
+    if (!Cluster)
+      continue;
+
+    // Sort them in increasing order.
+    std::sort(Offsets.begin(), Offsets.end());
+
+    // Check if the loads are close enough.
+    SmallVector<SDNode*, 4> Loads;
+    unsigned NumLoads = 0;
+    int64_t BaseOff = Offsets[0];
+    SDNode *BaseLoad = O2SMap[BaseOff];
+    Loads.push_back(BaseLoad);
+    for (unsigned i = 1, e = Offsets.size(); i != e; ++i) {
+      int64_t Offset = Offsets[i];
+      SDNode *Load = O2SMap[Offset];
+      if (!TII->shouldScheduleLoadsNear(BaseLoad, Load, BaseOff, Offset,
+                                        NumLoads))
+        break; // Stop right here. Ignore loads that are further away.
+      Loads.push_back(Load);
+      ++NumLoads;
+    }
+
+    if (NumLoads == 0)
+      continue;
+
+    // Cluster loads by adding MVT::Flag outputs and inputs. This also
+    // ensure they are scheduled in order of increasing addresses.
+    SDNode *Lead = Loads[0];
+    AddFlags(Lead, SDValue(0,0), true, DAG);
+    SDValue InFlag = SDValue(Lead, Lead->getNumValues()-1);
+    for (unsigned i = 1, e = Loads.size(); i != e; ++i) {
+      bool OutFlag = i < e-1;
+      SDNode *Load = Loads[i];
+      AddFlags(Load, InFlag, OutFlag, DAG);
+      if (OutFlag)
+        InFlag = SDValue(Load, Load->getNumValues()-1);
+      ++LoadsClustered;
     }
   }
 }
@@ -232,6 +359,9 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
 /// excludes nodes that aren't interesting to scheduling, and represents
 /// flagged together nodes with a single SUnit.
 void ScheduleDAGSDNodes::BuildSchedGraph(AliasAnalysis *AA) {
+  // Cluster loads from "near" addresses into combined SUnits.
+  if (ClusterLoads)
+    ClusterNeighboringLoads();
   // Populate the SUnits array.
   BuildSchedUnits();
   // Compute all the scheduling dependencies between nodes.
