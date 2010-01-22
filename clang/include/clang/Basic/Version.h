@@ -54,9 +54,13 @@ namespace clang {
   /// Clang was built.
   llvm::StringRef getClangRepositoryPath();
   
-  /// \brief Retrieves the Subversion revision number from which this Clang
-  /// was built.
-  unsigned getClangSubversionRevision();
+  /// \brief Retrieves the repository revision number (or identifer) from which
+  ///  this Clang was built.
+  llvm::StringRef getClangRevision();
+  
+  /// \brief Retrieves the full repository version that is an amalgamation of
+  ///  the information in getClangRepositoryPath() and getClangRevision().
+  llvm::StringRef getClangFullRepositoryVersion();
 }
 
 #endif // LLVM_CLANG_BASIC_VERSION_H

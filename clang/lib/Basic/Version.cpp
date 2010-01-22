@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -44,13 +45,30 @@ llvm::StringRef getClangRepositoryPath() {
 }
 
 
-unsigned getClangSubversionRevision() {
+llvm::StringRef getClangRevision() {
 #ifndef SVN_REVISION
   // Subversion was not available at build time?
-  return 0;
+  return llvm::StringRef();
 #else
-  return strtol(SVN_REVISION, 0, 10);
+  static std::string revision;
+  if (revision.empty()) {
+    llvm::raw_string_ostream Out(revision);
+    Out << strtol(SVN_REVISION, 0, 10);
+  }
+  return revision;
 #endif
 }
 
+llvm::StringRef getClangFullRepositoryVersion() {
+  static std::string buf;
+  if (buf.empty()) {
+    llvm::raw_string_ostream Out(buf);
+    Out << getClangRepositoryPath();
+    llvm::StringRef Revision = getClangRevision();
+    if (!Revision.empty())
+      Out << ' ' << Revision;
+  }
+  return buf;
+}
+  
 } // end namespace clang
