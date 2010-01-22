@@ -90,6 +90,11 @@ namespace llvm {
     /// prefix as appropriate.  The added comment should not end with a \n.
     virtual void AddComment(const Twine &T) {}
     
+    /// GetCommentOS - Return a raw_ostream that comments can be written to.
+    /// Unlike AddComment, you are required to terminate comments with \n if you
+    /// use this method.
+    virtual raw_ostream &GetCommentOS();
+    
     /// @name Symbol & Section Management
     /// @{
     

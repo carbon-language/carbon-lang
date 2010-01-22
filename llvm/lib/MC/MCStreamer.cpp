@@ -9,7 +9,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
-
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 MCStreamer::MCStreamer(MCContext &_Context) : Context(_Context), CurSection(0) {
@@ -17,6 +17,12 @@ MCStreamer::MCStreamer(MCContext &_Context) : Context(_Context), CurSection(0) {
 
 MCStreamer::~MCStreamer() {
 }
+
+raw_ostream &MCStreamer::GetCommentOS() {
+  // By default, discard comments.
+  return nulls();
+}
+
 
 /// EmitIntValue - Special case of EmitValue that avoids the client having to
 /// pass in a MCExpr for constant integers.

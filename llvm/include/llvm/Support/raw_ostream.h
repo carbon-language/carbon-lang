@@ -456,6 +456,9 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
+  /// clear - Flush the stream and clear the underlying vector.
+  void clear();
+  
   /// str - Flushes the stream contents to the target vector and return a
   /// StringRef for the vector contents.
   StringRef str();

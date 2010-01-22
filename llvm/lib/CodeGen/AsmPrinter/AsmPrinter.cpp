@@ -1126,16 +1126,12 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
 
 static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
                                  AsmPrinter &AP) {
-  SmallString<128> TmpBuffer;
-  
   // FP Constants are printed as integer constants to avoid losing
   // precision.
   if (CFP->getType()->isDoubleTy()) {
     if (AP.VerboseAsm) {
-      raw_svector_ostream OS(TmpBuffer);
-      double Val = CFP->getValueAPF().convertToDouble();  // for comment only
-      OS << "double " << Val;
-      AP.OutStreamer.AddComment(OS.str());
+      double Val = CFP->getValueAPF().convertToDouble();
+      AP.OutStreamer.GetCommentOS() << "double " << Val << '\n';
     }
 
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();

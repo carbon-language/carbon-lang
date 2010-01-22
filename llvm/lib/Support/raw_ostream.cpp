@@ -562,6 +562,14 @@ raw_svector_ostream::~raw_svector_ostream() {
   flush();
 }
 
+/// clear - Flush the stream and clear the underlying vector.
+void raw_svector_ostream::clear() {
+  if (GetNumBytesInBuffer() == 0) flush();
+  
+  OS.clear();
+  SetBuffer(OS.end(), OS.capacity() - OS.size());
+}
+
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   assert(Ptr == OS.end() && OS.size() + Size <= OS.capacity() &&
          "Invalid write_impl() call!");

@@ -34,20 +34,23 @@ class MCAsmStreamer : public MCStreamer {
   MCCodeEmitter *Emitter;
   
   SmallString<128> CommentToEmit;
+  raw_svector_ostream CommentStream;
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
                 MCCodeEmitter *emitter)
     : MCStreamer(Context), OS(os), MAI(mai), IsLittleEndian(isLittleEndian),
-      IsVerboseAsm(isVerboseAsm), InstPrinter(printer), Emitter(emitter) {}
+      IsVerboseAsm(isVerboseAsm), InstPrinter(printer), Emitter(emitter),
+      CommentStream(CommentToEmit) {}
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
   
   
   inline void EmitEOL() {
-    if (CommentToEmit.empty()) {
+    // If we don't have any comments, just emit a \n.
+    if (!IsVerboseAsm) {
       OS << '\n';
       return;
     }
@@ -60,6 +63,15 @@ public:
   /// more readable.  This only affects the MCAsmStreamer, and only when
   /// verbose assembly output is enabled.
   virtual void AddComment(const Twine &T);
+  
+  /// GetCommentOS - Return a raw_ostream that comments can be written to.
+  /// Unlike AddComment, you are required to terminate comments with \n if you
+  /// use this method.
+  virtual raw_ostream &GetCommentOS() {
+    if (!IsVerboseAsm)
+      return nulls();  // Discard comments unless in verbose asm mode.
+    return CommentStream;
+  }
   
   /// @name MCStreamer Interface
   /// @{
@@ -112,25 +124,36 @@ public:
 /// verbose assembly output is enabled.
 void MCAsmStreamer::AddComment(const Twine &T) {
   if (!IsVerboseAsm) return;
-  // Each comment goes on its own line.
-  if (!CommentToEmit.empty())
-    CommentToEmit.push_back('\n');
+  
+  // Make sure that CommentStream is flushed.
+  CommentStream.flush();
+  
   T.toVector(CommentToEmit);
+  // Each comment goes on its own line.
+  CommentToEmit.push_back('\n');
 }
 
 void MCAsmStreamer::EmitCommentsAndEOL() {
+  if (CommentToEmit.empty() && CommentStream.GetNumBytesInBuffer() == 0) {
+    OS << '\n';
+    return;
+  }
+  
+  CommentStream.flush();
   StringRef Comments = CommentToEmit.str();
-  while (!Comments.empty()) {
+  
+  assert(Comments.back() == '\n' &&
+         "Comment array not newline terminated");
+  do {
     // Emit a line of comments.
     OS.PadToColumn(MAI.getCommentColumn());
     size_t Position = Comments.find('\n');
     OS << MAI.getCommentString() << ' ' << Comments.substr(0, Position) << '\n';
     
-    if (Position == StringRef::npos) break;
     Comments = Comments.substr(Position+1);
-  }
+  } while (!Comments.empty());
   
-  CommentToEmit.clear();
+  CommentStream.clear();
 }
 
 
