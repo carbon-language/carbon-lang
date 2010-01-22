@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -400,7 +401,7 @@ void DIEBlock::EmitValue(Dwarf *D, unsigned Form) const {
 
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    Asm->EOL();
+    Asm->O << '\n';
     Values[i]->EmitValue(D, AbbrevData[i].getForm());
   }
 }

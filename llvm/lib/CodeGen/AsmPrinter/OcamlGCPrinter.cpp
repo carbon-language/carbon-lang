@@ -21,7 +21,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace {
@@ -105,8 +105,7 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, MAI, "data_end");
 
-  OS << AddressDirective << 0; // FIXME: Why does ocaml emit this??
-  AP.EOL();
+  OS << AddressDirective << 0 << '\n'; // FIXME: Why does ocaml emit this??
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, MAI, "frametable");

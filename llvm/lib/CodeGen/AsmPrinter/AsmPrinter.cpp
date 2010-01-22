@@ -695,10 +695,6 @@ void AsmPrinter::PrintSLEB128(int Value) const {
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
 /// then it will be printed first.  Comments should not contain '\n'.
-void AsmPrinter::EOL() const {
-  O << '\n';
-}
-
 void AsmPrinter::EOL(const Twine &Comment) const {
   if (VerboseAsm && !Comment.isTriviallyEmpty()) {
     O.PadToColumn(MAI->getCommentColumn());

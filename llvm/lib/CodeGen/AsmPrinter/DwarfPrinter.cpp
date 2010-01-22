@@ -174,7 +174,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       Asm->EmitInt8(dwarf::DW_CFA_advance_loc4);
       Asm->EOL("DW_CFA_advance_loc4");
       EmitDifference("label", LabelID, BaseLabel, BaseLabelID, true);
-      Asm->EOL();
+      Asm->O << '\n';
 
       BaseLabelID = LabelID;
       BaseLabel = "label";

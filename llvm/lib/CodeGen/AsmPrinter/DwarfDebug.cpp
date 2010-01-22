@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
 using namespace llvm;
@@ -1771,13 +1772,15 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
     for (unsigned i = 1, e = getNumSourceIds()+1; i != e; ++i) {
       // Remember source id starts at 1.
       std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(i);
+      // FIXME: don't use sys::path for this!  This should not depend on the
+      // host.
       sys::Path FullPath(getSourceDirectoryName(Id.first));
       bool AppendOk =
         FullPath.appendComponent(getSourceFileName(Id.second));
       assert(AppendOk && "Could not append filename to directory!");
       AppendOk = false;
       Asm->EmitFile(i, FullPath.str());
-      Asm->EOL();
+      Asm->O << '\n';
     }
   }
 
@@ -2345,7 +2348,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
   unsigned AbbrevNumber = Die->getAbbrevNumber();
   const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
 
-  Asm->EOL();
+  Asm->O << '\n';
 
   // Emit the code (index) for the abbreviation.
   Asm->EmitULEB128Bytes(AbbrevNumber);
@@ -2426,8 +2429,7 @@ void DwarfDebug::emitDebugInfo() {
   Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
   Asm->EmitInt8(0); Asm->EOL("Extra Pad For GDB");
   EmitLabel("info_end", ModuleCU->getID());
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// emitAbbreviations - Emit the abbreviation section.
@@ -2452,15 +2454,14 @@ void DwarfDebug::emitAbbreviations() const {
 
       // Emit the abbreviations data.
       Abbrev->Emit(Asm);
-
-      Asm->EOL();
+      Asm->O << '\n';
     }
 
     // Mark end of abbreviations.
     Asm->EmitULEB128Bytes(0); Asm->EOL("EOM(3)");
 
     EmitLabel("abbrev_end", 0);
-    Asm->EOL();
+    Asm->O << '\n';
   }
 }
 
@@ -2476,8 +2477,10 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 
   // Mark end of matrix.
   Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
-  Asm->EmitULEB128Bytes(1); Asm->EOL();
-  Asm->EmitInt8(1); Asm->EOL();
+  Asm->EmitULEB128Bytes(1);
+  Asm->O << '\n';
+  Asm->EmitInt8(1);
+  Asm->O << '\n';
 }
 
 /// emitDebugLines - Emit source line information.
@@ -2567,7 +2570,7 @@ void DwarfDebug::emitDebugLines() {
       O << '\t' << MAI->getCommentString() << " Section"
         << S->getName() << '\n';
     }*/
-    Asm->EOL();
+    Asm->O << '\n';
 
     // Dwarf assumes we start with first line of first source file.
     unsigned Source = 1;
@@ -2582,7 +2585,7 @@ void DwarfDebug::emitDebugLines() {
       if (LineInfo.getLine() == 0) continue;
 
       if (!Asm->isVerbose())
-        Asm->EOL();
+        Asm->O << '\n';
       else {
         std::pair<unsigned, unsigned> SourceID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
@@ -2641,7 +2644,7 @@ void DwarfDebug::emitDebugLines() {
     emitEndOfLineMatrix(1);
 
   EmitLabel("line_end", 0);
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// emitCommonDebugFrame - Emit common frame info into a debug frame section.
@@ -2685,8 +2688,7 @@ void DwarfDebug::emitCommonDebugFrame() {
 
   Asm->EmitAlignment(2, 0, 0, false);
   EmitLabel("debug_frame_common_end", 0);
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// emitFunctionDebugFrame - Emit per function frame info into a debug frame
@@ -2721,8 +2723,7 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
 
   Asm->EmitAlignment(2, 0, 0, false);
   EmitLabel("debug_frame_end", DebugFrameInfo.Number);
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
@@ -2760,8 +2761,7 @@ void DwarfDebug::emitDebugPubNames() {
 
   Asm->EmitInt32(0); Asm->EOL("End Mark");
   EmitLabel("pubnames_end", ModuleCU->getID());
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 void DwarfDebug::emitDebugPubTypes() {
@@ -2796,8 +2796,7 @@ void DwarfDebug::emitDebugPubTypes() {
 
   Asm->EmitInt32(0); Asm->EOL("End Mark");
   EmitLabel("pubtypes_end", ModuleCU->getID());
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// emitDebugStr - Emit visible names into a debug str section.
@@ -2817,10 +2816,11 @@ void DwarfDebug::emitDebugStr() {
 
       // Emit the string itself.
       const std::string &String = StringPool[StringID];
-      Asm->EmitString(String); Asm->EOL();
+      Asm->EmitString(String);
+      Asm->O << '\n';
     }
 
-    Asm->EOL();
+    Asm->O << '\n';
   }
 }
 
@@ -2830,7 +2830,6 @@ void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
                               Asm->getObjFileLowering().getDwarfLocSection());
-  Asm->EOL();
 }
 
 /// EmitDebugARanges - Emit visible names into a debug aranges section.
@@ -2866,8 +2865,6 @@ void DwarfDebug::EmitDebugARanges() {
   Asm->EmitInt32(0); Asm->EOL("EOM (1)");
   Asm->EmitInt32(0); Asm->EOL("EOM (2)");
 #endif
-
-  Asm->EOL();
 }
 
 /// emitDebugRanges - Emit visible names into a debug ranges section.
@@ -2876,7 +2873,6 @@ void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->OutStreamer.SwitchSection(
                             Asm->getObjFileLowering().getDwarfRangesSection());
-  Asm->EOL();
 }
 
 /// emitDebugMacInfo - Emit visible names into a debug macinfo section.
@@ -2886,7 +2882,6 @@ void DwarfDebug::emitDebugMacInfo() {
       Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
     // Start the dwarf macinfo section.
     Asm->OutStreamer.SwitchSection(LineInfo);
-    Asm->EOL();
   }
 }
 
@@ -2917,7 +2912,7 @@ void DwarfDebug::emitDebugInlineInfo() {
 
   Asm->OutStreamer.SwitchSection(
                         Asm->getObjFileLowering().getDwarfDebugInlineSection());
-  Asm->EOL();
+
   EmitDifference("debug_inlined_end", 1,
                  "debug_inlined_begin", 1, true);
   Asm->EOL("Length of Debug Inlined Information Entry");
@@ -2965,5 +2960,5 @@ void DwarfDebug::emitDebugInlineInfo() {
   }
 
   EmitLabel("debug_inlined_end", 1);
-  Asm->EOL();
+  Asm->O << '\n';
 }

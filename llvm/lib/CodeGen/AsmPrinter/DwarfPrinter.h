@@ -17,7 +17,7 @@
 #include "DwarfLabel.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include <vector>
 
 namespace llvm {

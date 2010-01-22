@@ -262,7 +262,6 @@ namespace llvm {
 
     /// EOL - Print a newline character to asm stream.  If a comment is present
     /// then it will be printed first.  Comments should not contain '\n'.
-    void EOL() const;
     void EOL(const Twine &Comment) const;
     void EOL(const Twine &Comment, unsigned Encoding) const;
 

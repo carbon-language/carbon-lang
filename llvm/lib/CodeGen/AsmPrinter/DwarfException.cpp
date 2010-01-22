@@ -30,8 +30,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -214,8 +214,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // holes which confuse readers of eh_frame.
   Asm->EmitAlignment(TD->getPointerSize() == 4 ? 2 : 3, 0, 0, false);
   EmitLabel("eh_frame_common_end", Index);
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// EmitFDE - Emit the Frame Description Entry (FDE) for the function.
@@ -325,12 +324,10 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
-      if (const char *UsedDirective = MAI->getUsedDirective()) {
+      if (const char *UsedDirective = MAI->getUsedDirective())
         O << UsedDirective << *EHFrameInfo.FunctionEHSym << "\n\n";
-      }
   }
-
-  Asm->EOL();
+  Asm->O << '\n';
 }
 
 /// SharedTypeIds - How many leading type ids two landing pads have in common.
@@ -942,7 +939,7 @@ void DwarfException::EmitExceptionTable() {
     if (TypeID != 0)
       Asm->EOL("Exception specification");
     else
-      Asm->EOL();
+      Asm->O << '\n';
   }
 
   Asm->EmitAlignment(2, 0, 0, false);
