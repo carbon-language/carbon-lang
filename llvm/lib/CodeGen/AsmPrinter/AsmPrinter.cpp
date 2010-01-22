@@ -1135,7 +1135,7 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
       raw_svector_ostream OS(TmpBuffer);
       double Val = CFP->getValueAPF().convertToDouble();  // for comment only
       OS << "double " << Val;
-      AP.OutStreamer.addComment(OS.str());
+      AP.OutStreamer.AddComment(OS.str());
     }
 
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();

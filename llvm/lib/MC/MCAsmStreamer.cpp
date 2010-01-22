@@ -55,11 +55,11 @@ public:
   }
   void EmitCommentsAndEOL();
   
-  /// addComment - Add a comment that can be emitted to the generated .s
+  /// AddComment - Add a comment that can be emitted to the generated .s
   /// file if applicable as a QoI issue to make the output of the compiler
   /// more readable.  This only affects the MCAsmStreamer, and only when
   /// verbose assembly output is enabled.
-  virtual void addComment(const Twine &T);
+  virtual void AddComment(const Twine &T);
   
   /// @name MCStreamer Interface
   /// @{
@@ -106,11 +106,11 @@ public:
 
 } // end anonymous namespace.
 
-/// addComment - Add a comment that can be emitted to the generated .s
+/// AddComment - Add a comment that can be emitted to the generated .s
 /// file if applicable as a QoI issue to make the output of the compiler
 /// more readable.  This only affects the MCAsmStreamer, and only when
 /// verbose assembly output is enabled.
-void MCAsmStreamer::addComment(const Twine &T) {
+void MCAsmStreamer::AddComment(const Twine &T) {
   if (!IsVerboseAsm) return;
   // Each comment goes on its own line.
   if (!CommentToEmit.empty())

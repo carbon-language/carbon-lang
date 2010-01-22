@@ -81,14 +81,14 @@ namespace llvm {
 
     MCContext &getContext() const { return Context; }
 
-    /// addComment - Add a comment that can be emitted to the generated .s
+    /// AddComment - Add a comment that can be emitted to the generated .s
     /// file if applicable as a QoI issue to make the output of the compiler
     /// more readable.  This only affects the MCAsmStreamer, and only when
     /// verbose assembly output is enabled.
     ///
     /// If the comment includes embedded \n's, they will each get the comment
     /// prefix as appropriate.  The added comment should not end with a \n.
-    virtual void addComment(const Twine &T) {}
+    virtual void AddComment(const Twine &T) {}
     
     /// @name Symbol & Section Management
     /// @{
