@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
@@ -393,6 +394,8 @@ PassRegistrationListener::~PassRegistrationListener() {
 void PassRegistrationListener::enumeratePasses() {
   getPassRegistrar()->EnumerateWith(this);
 }
+
+PassNameParser::~PassNameParser() {}
 
 //===----------------------------------------------------------------------===//
 //   AnalysisUsage Class Implementation

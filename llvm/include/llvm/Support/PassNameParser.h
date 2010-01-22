@@ -41,7 +41,9 @@ class PassNameParser : public PassRegistrationListener,
   cl::Option *Opt;
 public:
   PassNameParser() : Opt(0) {}
-
+  virtual ~PassNameParser();
+                         
+                         
   void initialize(cl::Option &O) {
     Opt = &O;
     cl::parser<const PassInfo*>::initialize(O);
