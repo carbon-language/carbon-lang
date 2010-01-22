@@ -16,7 +16,9 @@
         movl %eax, 10(%ebp, %ebx, 4)
 // CHECK: movl %eax, 10(,%ebx,4)
         movl %eax, 10(, %ebx, 4)
-
+// CHECK: ret
+        ret
+        
 // FIXME: Check that this matches SUB32ri8
 // CHECK: subl $1, %eax
         subl $1, %eax
