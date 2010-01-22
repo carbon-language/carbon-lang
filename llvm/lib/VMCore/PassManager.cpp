@@ -1479,7 +1479,7 @@ Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const PassInfo *PI, Function &F){
   
   FPP->releaseMemoryOnTheFly();
   FPP->run(F);
-  return (dynamic_cast<PMTopLevelManager *>(FPP))->findAnalysisPass(PI);
+  return ((PMTopLevelManager*)FPP)->findAnalysisPass(PI);
 }
 
 
@@ -1626,16 +1626,18 @@ void FunctionPass::assignPassManager(PMStack &PMS,
                                      PassManagerType PreferredType) {
 
   // Find Module Pass Manager
-  while(!PMS.empty()) {
+  while (!PMS.empty()) {
     if (PMS.top()->getPassManagerType() > PMT_FunctionPassManager)
       PMS.pop();
     else
       break; 
   }
-  FPPassManager *FPP = dynamic_cast<FPPassManager *>(PMS.top());
 
-  // Create new Function Pass Manager
-  if (!FPP) {
+  // Create new Function Pass Manager if needed.
+  FPPassManager *FPP;
+  if (PMS.top()->getPassManagerType() == PMT_FunctionPassManager) {
+    FPP = (FPPassManager *)PMS.top();
+  } else {
     assert(!PMS.empty() && "Unable to create Function Pass Manager");
     PMDataManager *PMD = PMS.top();
 
@@ -1663,17 +1665,16 @@ void FunctionPass::assignPassManager(PMStack &PMS,
 /// in the PM Stack and add self into that manager. 
 void BasicBlockPass::assignPassManager(PMStack &PMS,
                                        PassManagerType PreferredType) {
-  BBPassManager *BBP = NULL;
+  BBPassManager *BBP;
 
   // Basic Pass Manager is a leaf pass manager. It does not handle
   // any other pass manager.
-  if (!PMS.empty())
-    BBP = dynamic_cast<BBPassManager *>(PMS.top());
-
-  // If leaf manager is not Basic Block Pass manager then create new
-  // basic Block Pass manager.
-
-  if (!BBP) {
+  if (!PMS.empty() && 
+      PMS.top()->getPassManagerType() == PMT_BasicBlockPassManager) {
+    BBP = (BBPassManager *)PMS.top();
+  } else {
+    // If leaf manager is not Basic Block Pass manager then create new
+    // basic Block Pass manager.
     assert(!PMS.empty() && "Unable to create BasicBlock Pass Manager");
     PMDataManager *PMD = PMS.top();
 

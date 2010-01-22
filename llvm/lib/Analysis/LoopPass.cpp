@@ -147,8 +147,7 @@ void LPPassManager::redoLoop(Loop *L) {
 void LPPassManager::cloneBasicBlockSimpleAnalysis(BasicBlock *From, 
                                                   BasicBlock *To, Loop *L) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    Pass *P = getContainedPass(Index);
-    LoopPass *LP = dynamic_cast<LoopPass *>(P);
+    LoopPass *LP = (LoopPass *)getContainedPass(Index);
     LP->cloneBasicBlockAnalysis(From, To, L);
   }
 }
@@ -163,8 +162,7 @@ void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
     }
   }
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-    Pass *P = getContainedPass(Index);
-    LoopPass *LP = dynamic_cast<LoopPass *>(P);
+    LoopPass *LP = (LoopPass *)getContainedPass(Index);
     LP->deleteAnalysisValue(V, L);
   }
 }
@@ -206,10 +204,8 @@ bool LPPassManager::runOnFunction(Function &F) {
        I != E; ++I) {
     Loop *L = *I;
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-      Pass *P = getContainedPass(Index);
-      LoopPass *LP = dynamic_cast<LoopPass *>(P);
-      if (LP)
-        Changed |= LP->doInitialization(L, *this);
+      LoopPass *P = (LoopPass*)getContainedPass(Index);
+      Changed |= P->doInitialization(L, *this);
     }
   }
 
@@ -222,7 +218,7 @@ bool LPPassManager::runOnFunction(Function &F) {
 
     // Run all passes on the current Loop.
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
-      Pass *P = getContainedPass(Index);
+      LoopPass *P = (LoopPass*)getContainedPass(Index);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG,
                    CurrentLoop->getHeader()->getNameStr());
@@ -230,12 +226,10 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       initializeAnalysisImpl(P);
 
-      LoopPass *LP = dynamic_cast<LoopPass *>(P);
-      assert(LP && "Invalid LPPassManager member");
       {
-        PassManagerPrettyStackEntry X(LP, *CurrentLoop->getHeader());
+        PassManagerPrettyStackEntry X(P, *CurrentLoop->getHeader());
         Timer *T = StartPassTimer(P);
-        Changed |= LP->runOnLoop(CurrentLoop, *this);
+        Changed |= P->runOnLoop(CurrentLoop, *this);
         StopPassTimer(P, T);
       }
 
@@ -256,7 +250,7 @@ bool LPPassManager::runOnFunction(Function &F) {
         StopPassTimer(LI, T);
 
         // Then call the regular verifyAnalysis functions.
-        verifyPreservedAnalysis(LP);
+        verifyPreservedAnalysis(P);
       }
 
       removeNotPreservedAnalysis(P);
@@ -289,10 +283,8 @@ bool LPPassManager::runOnFunction(Function &F) {
   
   // Finalization
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
-    Pass *P = getContainedPass(Index);
-    LoopPass *LP = dynamic_cast <LoopPass *>(P);
-    if (LP)
-      Changed |= LP->doFinalization();
+    LoopPass *P = (LoopPass *)getContainedPass(Index);
+    Changed |= P->doFinalization();
   }
 
   return Changed;
@@ -325,12 +317,11 @@ void LoopPass::preparePassManager(PMStack &PMS) {
          PMS.top()->getPassManagerType() > PMT_LoopPassManager)
     PMS.pop();
 
-  LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
-
   // If this pass is destroying high level information that is used
   // by other passes that are managed by LPM then do not insert
   // this pass in current LPM. Use new LPPassManager.
-  if (LPPM && !LPPM->preserveHigherLevelAnalysis(this)) 
+  if (PMS.top()->getPassManagerType() == PMT_LoopPassManager &&
+      !PMS.top()->preserveHigherLevelAnalysis(this)) 
     PMS.pop();
 }
 
@@ -342,11 +333,11 @@ void LoopPass::assignPassManager(PMStack &PMS,
          PMS.top()->getPassManagerType() > PMT_LoopPassManager)
     PMS.pop();
 
-  LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
-
-  // Create new Loop Pass Manager if it does not exist. 
-  if (!LPPM) {
-
+  LPPassManager *LPPM;
+  if (PMS.top()->getPassManagerType() == PMT_LoopPassManager)
+    LPPM = (LPPassManager*)PMS.top();
+  else {
+    // Create new Loop Pass Manager if it does not exist. 
     assert (!PMS.empty() && "Unable to create Loop Pass Manager");
     PMDataManager *PMD = PMS.top();
 
@@ -360,7 +351,7 @@ void LoopPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    Pass *P = dynamic_cast<Pass *>(LPPM);
+    Pass *P = LPPM->getAsPass();
     TPM->schedulePass(P);
 
     // [4] Push new manager into PMS

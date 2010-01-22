@@ -400,13 +400,14 @@ void CallGraphSCCPass::assignPassManager(PMStack &PMS,
          PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)
     PMS.pop();
 
-  assert (!PMS.empty() && "Unable to handle Call Graph Pass");
-  CGPassManager *CGP = dynamic_cast<CGPassManager *>(PMS.top());
-
-  // Create new Call Graph SCC Pass Manager if it does not exist. 
-  if (!CGP) {
-
-    assert (!PMS.empty() && "Unable to create Call Graph Pass Manager");
+  assert(!PMS.empty() && "Unable to handle Call Graph Pass");
+  CGPassManager *CGP;
+  
+  if (PMS.top()->getPassManagerType() == PMT_CallGraphPassManager)
+    CGP = (CGPassManager*)PMS.top();
+  else {
+    // Create new Call Graph SCC Pass Manager if it does not exist. 
+    assert(!PMS.empty() && "Unable to create Call Graph Pass Manager");
     PMDataManager *PMD = PMS.top();
 
     // [1] Create new Call Graph Pass Manager
@@ -418,7 +419,7 @@ void CallGraphSCCPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    Pass *P = dynamic_cast<Pass *>(CGP);
+    Pass *P = CGP;
     TPM->schedulePass(P);
 
     // [4] Push new manager into PMS
