@@ -32,7 +32,7 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
-#include "AsmParser.h"
+#include "llvm/MC/MCParser/AsmParser.h"
 #include "Disassembler.h"
 using namespace llvm;
 

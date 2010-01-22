@@ -15,8 +15,8 @@
 #define ASMPARSER_H
 
 #include <vector>
-#include "AsmLexer.h"
-#include "AsmCond.h"
+#include "llvm/MC/MCParser/AsmLexer.h"
+#include "llvm/MC/MCParser/AsmCond.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
