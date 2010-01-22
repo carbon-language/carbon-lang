@@ -9,6 +9,7 @@
 
 LEVEL = ../../../..
 LIBRARYNAME = LLVMMipsAsmPrinter
+CXXFLAGS = -fno-rtti
 
 # Hack: we need to include 'main' Mips target directory to grab
 # private headers

@@ -9,6 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llc
+CXXFLAGS = -fno-rtti
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 

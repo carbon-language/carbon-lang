@@ -6,9 +6,11 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 LIBRARYNAME = LLVMPowerPCCodeGen
 TARGET = PPC
+CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \

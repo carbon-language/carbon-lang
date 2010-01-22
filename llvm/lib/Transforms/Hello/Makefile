@@ -11,6 +11,7 @@ LEVEL = ../../..
 LIBRARYNAME = LLVMHello
 LOADABLE_MODULE = 1
 USEDLIBS =
+CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common
 

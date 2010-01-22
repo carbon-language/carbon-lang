@@ -32,6 +32,10 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "gtest/gtest.h"
 
+int dummy;
+
+#if 0
+
 namespace llvm {
   namespace {
     // ND = no deps
@@ -525,3 +529,4 @@ namespace llvm {
 
   }
 }
+#endif

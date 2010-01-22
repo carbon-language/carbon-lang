@@ -6,7 +6,9 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 LIBRARYNAME = LLVMInterpreter
+CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

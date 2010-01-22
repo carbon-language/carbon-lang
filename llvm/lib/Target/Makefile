@@ -10,6 +10,7 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMTarget
 BUILD_ARCHIVE = 1
+CXXFLAGS = -fno-rtti
 
 # We include this early so we can access the value of TARGETS_TO_BUILD as the
 # value for PARALLEL_DIRS which must be set before Makefile.rules is included

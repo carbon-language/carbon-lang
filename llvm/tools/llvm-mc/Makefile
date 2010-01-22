@@ -13,6 +13,7 @@ TOOLNAME = llvm-mc
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 NO_INSTALL = 1
+CXXFLAGS = -fno-rtti
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 

@@ -1007,7 +1007,7 @@ namespace llvm {
                                                         \
     template<typename T>                                \
     inline T *unwrap(ref P) {                           \
-      T *Q = dynamic_cast<T*>(unwrap(P));               \
+      T *Q = (T*)unwrap(P);                             \
       assert(Q && "Invalid cast!");                     \
       return Q;                                         \
     }

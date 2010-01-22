@@ -9,6 +9,7 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMMSIL
+CXXFLAGS = -fno-rtti
 
 DIRS = TargetInfo
 

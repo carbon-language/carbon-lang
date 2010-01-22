@@ -9,6 +9,7 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMCppBackend
+CXXFLAGS = -fno-rtti
 
 DIRS = TargetInfo
 

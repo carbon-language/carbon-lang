@@ -9,5 +9,6 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMExecutionEngine
 PARALLEL_DIRS = Interpreter JIT
+CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

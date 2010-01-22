@@ -6,8 +6,10 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 LIBRARYNAME = LLVMJIT
+CXXFLAGS = -fno-rtti
 
 # Get the $(ARCH) setting
 include $(LEVEL)/Makefile.config

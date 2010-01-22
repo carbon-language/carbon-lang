@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = opt
+CXXFLAGS = -fno-rtti
 
 LINK_COMPONENTS := bitreader bitwriter asmparser instrumentation scalaropts ipo
 

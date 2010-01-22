@@ -10,7 +10,7 @@
 LEVEL = ../..
 TOOLNAME = llvm-as
 LINK_COMPONENTS := asmparser bitwriter
-REQUIRES_EH := 1
+CXXFLAGS = -fno-rtti
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

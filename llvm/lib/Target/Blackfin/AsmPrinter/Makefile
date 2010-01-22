@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
 LIBRARYNAME = LLVMBlackfinAsmPrinter
+CXXFLAGS = -fno-rtti
 
 # Hack: we need to include 'main' Blackfin target directory to grab private
 # headers

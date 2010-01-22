@@ -9,6 +9,7 @@
 
 LEVEL = ../../../..
 LIBRARYNAME = LLVMX86Disassembler
+CXXFLAGS = -fno-rtti
 
 # Hack: we need to include 'main' x86 target directory to grab private headers
 CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..

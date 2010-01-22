@@ -6,9 +6,11 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 LIBRARYNAME = LLVMPIC16CodeGen
 TARGET = PIC16
+CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PIC16GenRegisterInfo.h.inc PIC16GenRegisterNames.inc \

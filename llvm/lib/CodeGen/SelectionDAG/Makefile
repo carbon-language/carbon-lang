@@ -6,8 +6,9 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../../..
 LIBRARYNAME = LLVMSelectionDAG
-PARALLEL_DIRS =
+CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

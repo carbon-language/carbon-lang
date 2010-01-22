@@ -10,6 +10,7 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMCellSPUCodeGen
 TARGET = SPU
+CXXFLAGS = -fno-rtti
 
 BUILT_SOURCES = SPUGenInstrNames.inc SPUGenRegisterNames.inc \
 		SPUGenAsmWriter.inc SPUGenCodeEmitter.inc \
