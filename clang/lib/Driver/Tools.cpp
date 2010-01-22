@@ -1877,9 +1877,8 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
 
   if (!Args.hasArg(options::OPT_dynamiclib)) {
     AddDarwinArch(Args, CmdArgs);
-
     // FIXME: Why do this only on this path?
-    CmdArgs.push_back("-force_cpusubtype_ALL");
+    Args.AddLastArg(CmdArgs, options::OPT_force__cpusubtype__ALL);
 
     Args.AddLastArg(CmdArgs, options::OPT_bundle);
     Args.AddAllArgs(CmdArgs, options::OPT_bundle__loader);
