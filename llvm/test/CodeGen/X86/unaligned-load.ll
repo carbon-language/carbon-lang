@@ -23,5 +23,5 @@ declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
 ; CHECK: .align  3
 ; CHECK-NEXT: _.str1:
 ; CHECK-NEXT: .asciz "DHRYSTONE PROGRAM, SOME STRING"
-; CHECK-NEXT: .align 3
+; CHECK: .align 3
 ; CHECK-NEXT: _.str3:
