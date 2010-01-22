@@ -1539,8 +1539,10 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 
 defm CMP  : AI1_cmp_irs<0b1010, "cmp",
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
-defm CMN  : AI1_cmp_irs<0b1011, "cmn",
-                        BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
+//FIXME: Disable CMN, as CCodes are backwards from compare expectations
+//       Compare-to-zero still works out, just not the relationals
+//defm CMN  : AI1_cmp_irs<0b1011, "cmn",
+//                        BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
@@ -1553,11 +1555,11 @@ defm CMPz  : AI1_cmp_irs<0b1010, "cmp",
 defm CMNz  : AI1_cmp_irs<0b1011, "cmn",
                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
-def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
-             (CMNri  GPR:$src, so_imm_neg:$imm)>;
+//def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
+//             (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
 def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
-             (CMNri  GPR:$src, so_imm_neg:$imm)>;
+             (CMNzri  GPR:$src, so_imm_neg:$imm)>;
 
 
 // Conditional moves

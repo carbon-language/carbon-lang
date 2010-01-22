@@ -65,7 +65,8 @@ namespace {
     { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   0,  0,0, 0 },
     { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,    0,   1,  0,0, 0 },
     { ARM::t2BICrr, 0,            ARM::tBIC,     0,   0,    0,   1,  0,0, 0 },
-    { ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  2,0, 0 },
+    //FIXME: Disable CMN, as CCodes are backwards from compare expectations
+    //{ ARM::t2CMNrr, ARM::tCMN,    0,             0,   0,    1,   0,  2,0, 0 },
     { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  2,0, 0 },
     { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  2,0, 0 },
     { ARM::t2CMPzri,ARM::tCMPzi8, 0,             8,   0,    1,   0,  2,0, 0 },

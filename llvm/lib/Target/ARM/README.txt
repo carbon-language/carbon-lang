@@ -596,3 +596,12 @@ Make use of the "rbit" instruction.
 
 Take a look at test/CodeGen/Thumb2/machine-licm.ll. ARM should be taught how
 to licm and cse the unnecessary load from cp#1.
+
+//===---------------------------------------------------------------------===//
+
+The CMN instruction sets the flags like an ADD instruction, while CMP sets
+them like a subtract. Therefore to be able to use CMN for comparisons other
+than the Z bit, we'll need additional logic to reverse the conditionals
+associated with the comparison. Perhaps a pseudo-instruction for the comparison,
+with a post-codegen pass to clean up and handle the condition codes?
+See PR5694 for testcase.

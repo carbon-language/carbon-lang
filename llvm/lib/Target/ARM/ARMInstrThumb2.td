@@ -1609,16 +1609,18 @@ defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
 defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
                           BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 
-defm t2CMN  : T2I_cmp_irs<0b1000, "cmn",
-                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
+//FIXME: Disable CMN, as CCodes are backwards from compare expectations
+//       Compare-to-zero still works out, just not the relationals
+//defm t2CMN  : T2I_cmp_irs<0b1000, "cmn",
+//                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
                           BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;
 
-def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
-            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
+//def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
+//            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
 
 def : T2Pat<(ARMcmpZ  GPR:$src, t2_so_imm_neg:$imm),
-            (t2CMNri   GPR:$src, t2_so_imm_neg:$imm)>;
+            (t2CMNzri GPR:$src, t2_so_imm_neg:$imm)>;
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
                           BinOpFrag<(ARMcmpZ (and node:$LHS, node:$RHS), 0)>>;
