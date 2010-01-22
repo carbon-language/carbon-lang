@@ -14,8 +14,8 @@ __int64 q = 10lli64;  // expected-error {{invalid suffix}}
 // radar 7562363
 #define ULLONG_MAX 0xffffffffffffffffui64
 #define UINT 0xffffffffui32
-#define USHORT 0xffffui8
-#define UCHAR 0xffffffffui8
+#define USHORT 0xffffui16
+#define UCHAR 0xffui8
 
 void a() {
 	unsigned long long m = ULLONG_MAX;
