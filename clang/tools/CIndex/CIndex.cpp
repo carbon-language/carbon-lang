@@ -134,6 +134,10 @@ static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
   return Result;
 }
 
+static SourceLocation translateSourceLocation(CXSourceLocation L) {
+  return SourceLocation::getFromRawEncoding(L.int_data);
+}
+
 static SourceRange translateSourceRange(CXSourceRange R) {
   return SourceRange(SourceLocation::getFromRawEncoding(R.begin_int_data),
                      SourceLocation::getFromRawEncoding(R.end_int_data));
@@ -996,6 +1000,42 @@ CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
 // CXSourceLocation and CXSourceRange Operations.
 //===----------------------------------------------------------------------===//
 
+extern "C" {
+CXSourceLocation clang_getNullLocation() {
+  CXSourceLocation Result = { 0, 0 };
+  return Result;
+}
+
+unsigned clang_equalLocations(CXSourceLocation loc1, CXSourceLocation loc2) {
+  return loc1.ptr_data == loc2.ptr_data && loc1.int_data == loc2.int_data;
+}
+
+CXSourceLocation clang_getLocation(CXTranslationUnit tu,
+                                   CXFile file,
+                                   unsigned line,
+                                   unsigned column) {
+  if (!tu)
+    return clang_getNullLocation();
+  
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
+  SourceLocation SLoc
+    = CXXUnit->getSourceManager().getLocation(
+                                        static_cast<const FileEntry *>(file), 
+                                              line, column);
+  
+  return translateSourceLocation(CXXUnit->getASTContext(), SLoc, false);
+}
+
+CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
+  if (begin.ptr_data != end.ptr_data) {
+    CXSourceRange Result = { 0, 0, 0 };
+    return Result;
+  }
+  
+  CXSourceRange Result = { begin.ptr_data, begin.int_data, end.int_data };
+  return Result;
+}
+
 void clang_getInstantiationLocation(CXSourceLocation location,
                                     CXFile *file,
                                     unsigned *line,
@@ -1066,6 +1106,8 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
   return Result;
 }
 
+} // end: extern "C"
+
 //===----------------------------------------------------------------------===//
 // CXFile Operations.
 //===----------------------------------------------------------------------===//
@@ -1088,6 +1130,18 @@ time_t clang_getFileTime(CXFile SFile) {
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getModificationTime();
 }
+  
+CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
+  if (!tu)
+    return 0;
+  
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu);
+  
+  FileManager &FMgr = CXXUnit->getFileManager();
+  const FileEntry *File = FMgr.getFile(file_name, file_name+strlen(file_name));
+  return const_cast<FileEntry *>(File);
+}
+  
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
@@ -1249,20 +1303,13 @@ enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   return CXChildVisit_Recurse;
 }
   
-CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
-                         unsigned line, unsigned column) {
-  assert(CTUnit && "Passed null CXTranslationUnit");
-  ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-
-  FileManager &FMgr = CXXUnit->getFileManager();
-  const FileEntry *File = FMgr.getFile(source_name,
-                                       source_name+strlen(source_name));
-  if (!File)
+CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
+  if (!TU)
     return clang_getNullCursor();
-
-  SourceLocation SLoc =
-    CXXUnit->getSourceManager().getLocation(File, line, column);
   
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+
+  SourceLocation SLoc = translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
     SourceRange RegionOfInterest(SLoc, 

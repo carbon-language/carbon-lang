@@ -494,6 +494,19 @@ CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
 CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 
 /**
+ * \brief Retrieve a file handle within the given translation unit.
+ *
+ * \param tu the translation unit
+ * 
+ * \param file_name the name of the file.
+ *
+ * \returns the file handle for the named file in the translation unit \p tu,
+ * or a NULL file handle if the file was not a part of this translation unit.
+ */
+CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu, 
+                                    const char *file_name);
+  
+/**
  * @}
  */
 
@@ -535,6 +548,38 @@ typedef struct {
 } CXSourceRange;
 
 /**
+ * \brief Retrieve a NULL (invalid) source location.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getNullLocation();
+  
+/**
+ * \determine Determine whether two source locations, which must refer into
+ * the same translation unit, refer to exactly the same point in the source 
+ * code.
+ *
+ * \returns non-zero if the source locations refer to the same location, zero
+ * if they refer to different locations.
+ */
+CINDEX_LINKAGE unsigned clang_equalLocations(CXSourceLocation loc1,
+                                             CXSourceLocation loc2);
+  
+/**
+ * \brief Retrieves the source location associated with a given 
+ * file/line/column in a particular translation unit.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getLocation(CXTranslationUnit tu,
+                                                  CXFile file,
+                                                  unsigned line,
+                                                  unsigned column);
+  
+/**
+ * \brief Retrieve a source range given the beginning and ending source
+ * locations.
+ */
+CINDEX_LINKAGE CXSourceRange clang_getRange(CXSourceLocation begin,
+                                            CXSourceLocation end);
+  
+/**
  * \brief Retrieve the file, line, and column represented by the
  * given source location.
  *
@@ -574,13 +619,23 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 /*
  * CXCursor Operations.
  */
+  
 /**
-   Usage: clang_getCursor() will translate a source/line/column position
-   into an AST cursor (to derive semantic information from the source code).
+ * \brief Map a source location to the cursor that describes the entity at that
+ * location in the source code.
+ *
+ * clang_getCursor() maps an arbitrary source location within a translation
+ * unit down to the most specific cursor that describes the entity at that
+ * location. For example, given an expression \c x + y, invoking 
+ * clang_getCursor() with a source location pointing to "x" will return the
+ * cursor for "x"; similarly for "y". If the cursor points anywhere between 
+ * "x" or "y" (e.g., on the + or the whitespace around it), clang_getCursor()
+ * will return a cursor referring to the "+" expression.
+ *
+ * \returns a cursor representing the entity at the given source location, or
+ * a NULL cursor if no such entity can be found.
  */
-CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit,
-                                        const char *source_name, 
-                                        unsigned line, unsigned column);
+CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, CXSourceLocation);
                          
 CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
 

@@ -161,7 +161,9 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
     clang_getInstantiationLocation(Loc, &file, 0, 0);
     source = clang_getFileName(file);
     if (source) {
-      Ref = clang_getCursor(Data->TU, source, curLine, curColumn);
+      CXSourceLocation RefLoc
+        = clang_getLocation(Data->TU, file, curLine, curColumn);
+      Ref = clang_getCursor(Data->TU, RefLoc);
       if (Ref.kind == CXCursor_NoDeclFound) {
         /* Nothing found here; that's fine. */
       } else if (Ref.kind != CXCursor_FunctionDecl) {
@@ -296,6 +298,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   FILE *fp;
   unsigned line;
   CXCursor prevCursor;
+  CXFile file;
   unsigned printed;
   unsigned start_line, start_col, last_line, last_col;
   size_t i;
@@ -320,6 +323,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   start_line = last_line = 1;
   start_col = last_col = 1;
   
+  file = clang_getFile(TU, source_file);
   while (!feof(fp)) {
     size_t len = 0;
     int c;
@@ -334,7 +338,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
     
     for (i = 0; i < len ; ++i) {
       CXCursor cursor;
-      cursor = clang_getCursor(TU, source_file, line, i+1);
+      cursor = clang_getCursor(TU, clang_getLocation(TU, file, line, i+1));
 
       if (!clang_equalCursors(cursor, prevCursor) &&
           prevCursor.kind != CXCursor_InvalidFile) {
@@ -656,8 +660,13 @@ int inspect_cursor_at(int argc, const char **argv) {
   }
   
   for (Loc = 0; Loc < NumLocations; ++Loc) {
-    Cursor = clang_getCursor(TU, Locations[Loc].filename, 
-                             Locations[Loc].line, Locations[Loc].column);  
+    CXFile file = clang_getFile(TU, Locations[Loc].filename);
+    if (!file)
+      continue;
+    
+    Cursor = clang_getCursor(TU, 
+                             clang_getLocation(TU, file, Locations[Loc].line, 
+                                               Locations[Loc].column)); 
     PrintCursor(Cursor);
     printf("\n");
     free(Locations[Loc].filename);

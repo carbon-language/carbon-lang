@@ -7,6 +7,7 @@ _clang_disposeIndex
 _clang_disposeString
 _clang_disposeTranslationUnit
 _clang_equalCursors
+_clang_equalLocations
 _clang_getCString
 _clang_getCompletionChunkCompletionString
 _clang_getCompletionChunkKind
@@ -21,11 +22,15 @@ _clang_getCursorReferenced
 _clang_getCursorSpelling
 _clang_getCursorUSR
 _clang_getDefinitionSpellingAndExtent
+_clang_getFile
 _clang_getFileName
 _clang_getFileTime
 _clang_getInstantiationLocation
+_clang_getLocation
 _clang_getNullCursor
+_clang_getNullLocation
 _clang_getNumCompletionChunks
+_clang_getRange
 _clang_getRangeEnd
 _clang_getRangeStart
 _clang_getTranslationUnitCursor
