@@ -57,6 +57,9 @@ public:
     return "CallGraph Pass Manager";
   }
 
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
+
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
     errs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";

@@ -127,6 +127,9 @@ public:
   bool doFinalization(Module &M);
   bool doFinalization(Function &F);
 
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
+
   virtual const char *getPassName() const {
     return "BasicBlock Pass Manager";
   }
@@ -195,6 +198,10 @@ public:
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization(Module &M);
+
+                                  
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
@@ -268,6 +275,9 @@ public:
   virtual const char *getPassName() const {
     return "Module Pass Manager";
   }
+
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
@@ -344,6 +354,9 @@ public:
     }
   }
 
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
+
   MPPassManager *getContainedManager(unsigned N) {
     assert(N < PassManagers.size() && "Pass number out of range!");
     MPPassManager *MP = static_cast<MPPassManager *>(PassManagers[N]);
@@ -387,7 +400,7 @@ public:
   /// passStarted - This method creates a timer for the given pass if it doesn't
   /// already have one, and starts the timer.
   Timer *passStarted(Pass *P) {
-    if (dynamic_cast<PMDataManager *>(P)) 
+    if (P->getAsPMDataManager()) 
       return 0;
 
     sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
@@ -581,11 +594,11 @@ void PMTopLevelManager::dumpPasses() const {
   
   // Every class that derives from PMDataManager also derives from Pass
   // (sometimes indirectly), but there's no inheritance relationship
-  // between PMDataManager and Pass, so we have to dynamic_cast to get
+  // between PMDataManager and Pass, so we have to getAsPass to get
   // from a PMDataManager* to a Pass*.
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
-    dynamic_cast<Pass *>(*I)->dumpPassStructure(1);
+    (*I)->getAsPass()->dumpPassStructure(1);
 }
 
 void PMTopLevelManager::dumpArguments() const {
@@ -851,12 +864,12 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
   // Set P as P's last user until someone starts using P.
   // However, if P is a Pass Manager then it does not need
   // to record its last user.
-  if (!dynamic_cast<PMDataManager *>(P))
+  if (P->getAsPMDataManager() == 0)
     LastUses.push_back(P);
   TPM->setLastUser(LastUses, P);
 
   if (!TransferLastUses.empty()) {
-    Pass *My_PM = dynamic_cast<Pass *>(this);
+    Pass *My_PM = getAsPass();
     TPM->setLastUser(TransferLastUses, My_PM);
     TransferLastUses.clear();
   }
@@ -965,7 +978,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 void PMDataManager::dumpPassArguments() const {
   for (SmallVector<Pass *, 8>::const_iterator I = PassVector.begin(),
         E = PassVector.end(); I != E; ++I) {
-    if (PMDataManager *PMD = dynamic_cast<PMDataManager *>(*I))
+    if (PMDataManager *PMD = (*I)->getAsPMDataManager())
       PMD->dumpPassArguments();
     else
       if (const PassInfo *PI = (*I)->getPassInfo())
@@ -1583,7 +1596,7 @@ void PMStack::push(PMDataManager *PM) {
 void PMStack::dump() {
   for (std::deque<PMDataManager *>::iterator I = S.begin(),
          E = S.end(); I != E; ++I)
-    printf("%s ", dynamic_cast<Pass *>(*I)->getPassName());
+    printf("%s ", (*I)->getAsPass()->getPassName());
 
   if (!S.empty())
     printf("\n");

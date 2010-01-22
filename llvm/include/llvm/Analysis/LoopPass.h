@@ -94,6 +94,9 @@ public:
     return "Loop Pass Manager";
   }
 
+  virtual PMDataManager *getAsPMDataManager() { return this; }
+  virtual Pass *getAsPass() { return this; }
+
   /// Print passes managed by this manager
   void dumpPassStructure(unsigned Offset);
 

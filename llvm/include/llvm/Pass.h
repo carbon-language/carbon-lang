@@ -153,6 +153,7 @@ public:
     return this;
   }
   virtual ImmutablePass *getAsImmutablePass() { return 0; }
+  virtual PMDataManager *getAsPMDataManager() { return 0; }
   
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
   /// check state of analysis information. 
