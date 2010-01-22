@@ -180,73 +180,147 @@ long double _Complex __divxc3(long double a, long double b,
 long double _Complex __divtc3(long double a, long double b,
                               long double c, long double d);  // ppc only
 
+
+//         Runtime support
+
+// __clear_cache() is used to tell process that new instructions have been
+// written to an address range.  Necessary on processors that do not have
+// a unified instuction and data cache.
+void __clear_cache(void* start, void* end);
+
+// __enable_execute_stack() is used with nested functions when a trampoline
+// function is written onto the stack and that page range needs to be made
+// executable.
+void __enable_execute_stack(void* addr);
+
+// __gcc_personality_v0() is normally only called by the system unwinder.
+// C code (as opposed to C++) normally does not need a personality function
+// because there are no catch clauses or destructors to be run.  But there
+// is a C language extension __attribute__((cleanup(func))) which marks local
+// variables as needing the cleanup function "func" to be run when the
+// variable goes out of scope.  That includes when an exception is thrown,
+// so a personality handler is needed.  
+_Unwind_Reason_Code __gcc_personality_v0(int version, _Unwind_Action actions,
+         uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
+         _Unwind_Context_t context);
+
+// for use with some implementations of assert() in <assert.h>
+void __eprintf(const char* format, const char* assertion_expression,
+				const char* line, const char* file);
+				
+
+
+//   Power PC specific functions
+
+// There is no C interface to the saveFP/restFP functions.  They are helper
+// functions called by the prolog and epilog of functions that need to save
+// a number of non-volatile float point registers.  
+saveFP
+restFP
+
+// PowerPC has a standard template for trampoline functions.  This function
+// generates a custom trampoline function with the specific realFunc
+// and localsPtr values.
+void __trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated, 
+                                const void* realFunc, void* localsPtr);
+
+// adds two 128-bit double-double precision values ( x + y )
+long double __gcc_qadd(long double x, long double y);  
+
+// subtracts two 128-bit double-double precision values ( x - y )
+long double __gcc_qsub(long double x, long double y); 
+
+// multiples two 128-bit double-double precision values ( x * y )
+long double __gcc_qmul(long double x, long double y);  
+
+// divides two 128-bit double-double precision values ( x / y )
+long double __gcc_qdiv(long double a, long double b);  
+
+
+//    ARM specific functions
+
+// There is no C interface to the switch* functions.  These helper functions
+// are only needed by Thumb1 code for efficient switch table generation.
+switch16
+switch32
+switch8
+switchu8
+
+// There is no C interface to the *_vfp_d8_d15_regs functions.  There are
+// called in the prolog and epilog of Thumb1 functions.  When the C++ ABI use
+// SJLJ for exceptions, each function with a catch clause or destuctors needs
+// to save and restore all registers in it prolog and epliog.  But there is 
+// no way to access vector and high float registers from thumb1 code, so the 
+// compiler must add call outs to these helper functions in the prolog and 
+// epilog.
+restore_vfp_d8_d15_regs
+save_vfp_d8_d15_regs
+
+
+// Note: long ago ARM processors did not have floating point hardware support.
+// Floating point was done in software and floating point parameters were 
+// passed in integer registers.  When hardware support was added for floating
+// point, new *vfp functions were added to do the same operations but with 
+// floating point parameters in floating point registers.
+
+
 // Undocumented functions
 
-float  __addsf3vfp(float a, float b);   // arm only.  Appears to return a + b
-double __adddf3vfp(double a, double b); // arm only.  Appears to return a + b
-float  __divsf3vfp(float a, float b);   // arm only.  Appears to return a / b
-double __divdf3vfp(double a, double b); // arm only.  Appears to return a / b
-int    __eqsf2vfp(float a, float b);    // arm only.  Appears to return  one
+float  __addsf3vfp(float a, float b);   // Appears to return a + b
+double __adddf3vfp(double a, double b); // Appears to return a + b
+float  __divsf3vfp(float a, float b);   // Appears to return a / b
+double __divdf3vfp(double a, double b); // Appears to return a / b
+int    __eqsf2vfp(float a, float b);    // Appears to return  one
                                         //     iff a == b and neither is NaN.
-int    __eqdf2vfp(double a, double b);  // arm only.  Appears to return  one
+int    __eqdf2vfp(double a, double b);  // Appears to return  one
                                         //     iff a == b and neither is NaN.
-double __extendsfdf2vfp(float a);       // arm only.  Appears to convert from
+double __extendsfdf2vfp(float a);       // Appears to convert from
                                         //     float to double.
-int    __fixdfsivfp(double a);          // arm only.  Appears to convert from
+int    __fixdfsivfp(double a);          // Appears to convert from
                                         //     double to int.
-int    __fixsfsivfp(float a);           // arm only.  Appears to convert from
+int    __fixsfsivfp(float a);           // Appears to convert from
                                         //     float to int.
-unsigned int __fixunssfsivfp(float a);  // arm only.  Appears to convert from
+unsigned int __fixunssfsivfp(float a);  // Appears to convert from
                                         //     float to unsigned int.
-unsigned int __fixunsdfsivfp(double a); // arm only.  Appears to convert from
+unsigned int __fixunsdfsivfp(double a); // Appears to convert from
                                         //     double to unsigned int.
-double __floatsidfvfp(int a);           // arm only.  Appears to convert from
+double __floatsidfvfp(int a);           // Appears to convert from
                                         //     int to double.
-float __floatsisfvfp(int a);            // arm only.  Appears to convert from
+float __floatsisfvfp(int a);            // Appears to convert from
                                         //     int to float.
-double __floatunssidfvfp(unsigned int a); // arm only. Appears to convert from
+double __floatunssidfvfp(unsigned int a); // Appears to convert from
                                         //     unisgned int to double.
-float __floatunssisfvfp(unsigned int a); // arm only.  Appears to convert from
+float __floatunssisfvfp(unsigned int a); // Appears to convert from
                                         //     unisgned int to float.
-long double __gcc_qadd(long double x, long double y);  // ppc only.  Appears to
-                                        //     return x + y.
-long double __gcc_qdiv(long double a, long double b);  // ppc only.  Appears to
-                                        //     return x / y.
-long double __gcc_qmul(long double x, long double y);  // ppc only.  Appears to
-                                        //     return x * y.
-long double __gcc_qsub(long double x, long double y);  // ppc only.  Appears to
-                                        //     return x - y.
-int __gedf2vfp(double a, double b);     // arm only.  Appears to return __gedf2
+int __gedf2vfp(double a, double b);     // Appears to return __gedf2
                                         //     (a >= b)
-int __gesf2vfp(float a, float b);       // arm only.  Appears to return __gesf2
+int __gesf2vfp(float a, float b);       // Appears to return __gesf2
                                         //     (a >= b)
-int __gtdf2vfp(double a, double b);     // arm only.  Appears to return __gtdf2
+int __gtdf2vfp(double a, double b);     // Appears to return __gtdf2
                                         //     (a > b)
-int __gtsf2vfp(float a, float b);       // arm only.  Appears to return __gtsf2
+int __gtsf2vfp(float a, float b);       // Appears to return __gtsf2
                                         //     (a > b)
-int __ledf2vfp(double a, double b);     // arm only.  Appears to return __ledf2
+int __ledf2vfp(double a, double b);     // Appears to return __ledf2
                                         //     (a <= b)
-int __lesf2vfp(float a, float b);       // arm only.  Appears to return __lesf2
+int __lesf2vfp(float a, float b);       // Appears to return __lesf2
                                         //     (a <= b)
-int __ltdf2vfp(double a, double b);     // arm only.  Appears to return __ltdf2
+int __ltdf2vfp(double a, double b);     // Appears to return __ltdf2
                                         //     (a < b)
-int __ltsf2vfp(float a, float b);       // arm only.  Appears to return __ltsf2
+int __ltsf2vfp(float a, float b);       // Appears to return __ltsf2
                                         //     (a < b)
-double __muldf3vfp(double a, double b); // arm only.  Appears to return a * b
-float __mulsf3vfp(float a, float b);    // arm only.  Appears to return a * b
-int __nedf2vfp(double a, double b);     // arm only.  Appears to return __nedf2
+double __muldf3vfp(double a, double b); // Appears to return a * b
+float __mulsf3vfp(float a, float b);    // Appears to return a * b
+int __nedf2vfp(double a, double b);     // Appears to return __nedf2
                                         //     (a != b)
-double __negdf2vfp(double a);           // arm only.  Appears to return -a
-float __negsf2vfp(float a);             // arm only.  Appears to return -a
-float __negsf2vfp(float a);             // arm only.  Appears to return -a
-double __subdf3vfp(double a, double b); // arm only.  Appears to return a - b
-float __subsf3vfp(float a, float b);    // arm only.  Appears to return a - b
-float __truncdfsf2vfp(double a);        // arm only.  Appears to convert from
+double __negdf2vfp(double a);           // Appears to return -a
+float __negsf2vfp(float a);             // Appears to return -a
+float __negsf2vfp(float a);             // Appears to return -a
+double __subdf3vfp(double a, double b); // Appears to return a - b
+float __subsf3vfp(float a, float b);    // Appears to return a - b
+float __truncdfsf2vfp(double a);        // Appears to convert from
                                         //     double to float.
-int __unorddf2vfp(double a, double b);  // arm only.  Appears to return
-                                        //     __unorddf2
-int __unordsf2vfp(float a, float b);    // arm only.  Appears to return
-                                        //     __unordsf2
+int __unorddf2vfp(double a, double b);  // Appears to return __unorddf2
+int __unordsf2vfp(float a, float b);    // Appears to return __unordsf2
 
 
 Preconditions are listed for each function at the definition when there are any.
