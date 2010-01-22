@@ -304,6 +304,7 @@ add_subdirectory(lib/Linker)
 add_subdirectory(lib/Analysis)
 add_subdirectory(lib/Analysis/IPA)
 add_subdirectory(lib/MC)
+add_subdirectory(lib/MC/MCParser)
 add_subdirectory(test)
 
 add_subdirectory(utils/FileCheck)
