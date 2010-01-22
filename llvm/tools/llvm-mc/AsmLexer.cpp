@@ -14,7 +14,6 @@
 #include "AsmLexer.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Config/config.h"  // for strtoull.
 #include "llvm/MC/MCAsmInfo.h"
 #include <cerrno>
 #include <cstdio>
@@ -163,19 +162,13 @@ AsmToken AsmLexer::LexDigit() {
     // Requires at least one hex digit.
     if (CurPtr == NumStart)
       return ReturnError(CurPtr-2, "Invalid hexadecimal number");
-    
-    errno = 0;
-    if (errno == EINVAL)
+
+    unsigned long long Result;
+    if (StringRef(TokStart, CurPtr - TokStart).getAsInteger(0, Result))
       return ReturnError(CurPtr-2, "Invalid hexadecimal number");
-    if (errno == ERANGE) {
-      errno = 0;
-      if (errno == EINVAL)
-        return ReturnError(CurPtr-2, "Invalid hexadecimal number");
-      if (errno == ERANGE)
-        return ReturnError(CurPtr-2, "Hexadecimal number out of range");
-    }
+      
     return AsmToken(AsmToken::Integer, StringRef(TokStart, CurPtr - TokStart),
-                    (int64_t) strtoull(NumStart, 0, 16));
+                    (int64_t)Result);
   }
   
   // Must be an octal number, it starts with 0.
