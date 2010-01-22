@@ -1353,17 +1353,17 @@ DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
 DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
                   else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
 
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
 
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(PROJ_SRC_DIR)/Makefile
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Verb) if $(Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
 	        $(DEPEND_MOVEFILE)
