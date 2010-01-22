@@ -1677,6 +1677,8 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
+      
+      EmitComments(*MBB);
       OutStreamer.AddBlankLine();
     }
   } else {
@@ -1684,15 +1686,10 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
+      EmitComments(*MBB);
     }
+
     OutStreamer.EmitLabel(GetMBBSymbol(MBB->getNumber()));
-  }
-  
-  // Print some comments to accompany the label.
-  // FIXME: REENABLE.
-  if (0 && VerboseAsm) {
-    EmitComments(*MBB);
-    O << '\n';
   }
 }
 
@@ -1850,78 +1847,54 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
 
 /// PrintChildLoopComment - Print comments about child loops within
 /// the loop for this basic block, with nesting.
-///
-static void PrintChildLoopComment(formatted_raw_ostream &O,
-                                  const MachineLoop *loop,
-                                  const MCAsmInfo *MAI,
-                                  int FunctionNumber) {
+static void PrintChildLoopComment(MCStreamer &O, const MachineLoop *Loop,
+                                  unsigned FunctionNumber) {
+  raw_ostream &OS = O.GetCommentOS();
   // Add child loop information
-  for(MachineLoop::iterator cl = loop->begin(),
-        clend = loop->end();
-      cl != clend;
-      ++cl) {
-    MachineBasicBlock *Header = (*cl)->getHeader();
+  for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
+    MachineBasicBlock *Header = (*CL)->getHeader();
     assert(Header && "No header for loop");
-
-    O << '\n';
-    O.PadToColumn(MAI->getCommentColumn());
-
-    O << MAI->getCommentString();
-    O.indent(((*cl)->getLoopDepth()-1)*2)
-      << " Child Loop BB" << FunctionNumber << "_"
-      << Header->getNumber() << " Depth " << (*cl)->getLoopDepth();
-
-    PrintChildLoopComment(O, *cl, MAI, FunctionNumber);
+    OS.indent(((*CL)->getLoopDepth()-1)*2)
+      << "Child Loop BB" << FunctionNumber << "_"
+      << Header->getNumber() << " Depth " << (*CL)->getLoopDepth() << '\n';
+    PrintChildLoopComment(O, *CL, FunctionNumber);
   }
 }
 
 /// EmitComments - Pretty-print comments for basic blocks
 void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const {
-  if (VerboseAsm) {
-    // Add loop depth information
-    const MachineLoop *loop = LI->getLoopFor(&MBB);
+  assert(VerboseAsm && "Shouldn't be called unless in verbose asm mode");
+  
+  // Add loop depth information
+  const MachineLoop *Loop = LI->getLoopFor(&MBB);
+  if (Loop == 0) return;
 
-    if (loop) {
-      // Print a newline after bb# annotation.
-      O << "\n";
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Loop Depth " << loop->getLoopDepth()
-        << '\n';
+  OutStreamer.AddComment("Loop Depth " + Twine(Loop->getLoopDepth()));
 
-      O.PadToColumn(MAI->getCommentColumn());
+  MachineBasicBlock *Header = Loop->getHeader();
+  assert(Header && "No header for loop");
+  
+  if (Header != &MBB) {
+    OutStreamer.AddComment("Loop Header is BB" + Twine(getFunctionNumber()) +
+                           "_" + Twine(Loop->getHeader()->getNumber()));
+  } else {
+    OutStreamer.AddComment("Loop Header");
+    PrintChildLoopComment(OutStreamer, Loop, getFunctionNumber());
+  }
 
-      MachineBasicBlock *Header = loop->getHeader();
-      assert(Header && "No header for loop");
-      
-      if (Header == &MBB) {
-        O << MAI->getCommentString() << " Loop Header";
-        PrintChildLoopComment(O, loop, MAI, getFunctionNumber());
-      }
-      else {
-        O << MAI->getCommentString() << " Loop Header is BB"
-          << getFunctionNumber() << "_" << loop->getHeader()->getNumber();
-      }
+  if (Loop->empty())
+    OutStreamer.AddComment("Inner Loop");
 
-      if (loop->empty()) {
-        O << '\n';
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " Inner Loop";
-      }
+  raw_ostream &OS = OutStreamer.GetCommentOS();
 
-      // Add parent loop information
-      for (const MachineLoop *CurLoop = loop->getParentLoop();
-           CurLoop;
-           CurLoop = CurLoop->getParentLoop()) {
-        MachineBasicBlock *Header = CurLoop->getHeader();
-        assert(Header && "No header for loop");
+  // Add parent loop information.
+  for (const MachineLoop *CurLoop = Loop->getParentLoop(); CurLoop;
+       CurLoop = CurLoop->getParentLoop()) {
+    MachineBasicBlock *Header = CurLoop->getHeader();
+    assert(Header && "No header for loop");
 
-        O << '\n';
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString();
-        O.indent((CurLoop->getLoopDepth()-1)*2)
-          << " Inside Loop BB" << getFunctionNumber() << "_"
-          << Header->getNumber() << " Depth " << CurLoop->getLoopDepth();
-      }
-    }
+    OS.indent(CurLoop->getLoopDepth()*2)
+      << "Inside Loop BB" << getFunctionNumber() << "_"
+      << Header->getNumber() << " Depth " << CurLoop->getLoopDepth() << '\n';
   }
 }
