@@ -17,11 +17,7 @@ struct B {
 void B::bar1() { }
 void B::bar2() { }
 
-// CHECK-LP64: __ZTV1B:
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI1B
-// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
-// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
+// CHECK-LPLL64:@_ZTV1B = constant [4 x i8*] [i8* null, i8* bitcast (%0* @_ZTI1B to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar1Ev to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar2Ev to i8*)]
 
 struct C {
   virtual void bee1();
@@ -52,42 +48,8 @@ public:
 };
 void F::foo() { }
 
-// CHECK-LP64: __ZTV1F:
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI1F
-// CHECK-LP64-NEXT: .quad __ZN1D3booEv
-// CHECK-LP64-NEXT: .quad __ZN1F3fooEv
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI1F
-// CHECK-LP64-NEXT: .quad __ZN2D13barEv
-// CHECK-LP64-NEXT: .quad __ZN2D14bar2Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar3Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
-// CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
+// CHECK-LPLL64:@_ZTV1F = constant [19 x i8*] [i8* null, i8* inttoptr (i64 16 to i8*), i8* null, i8* null, i8* bitcast (%1* @_ZTI1F to i8*), i8* bitcast (void (%class.test14*)* @_ZN1D3booEv to i8*), i8* bitcast (void (%class.F*)* @_ZN1F3fooEv to i8*), i8* null, i8* null, i8* null, i8* null, i8* null, i8* inttoptr (i64 -16 to i8*), i8* bitcast (%1* @_ZTI1F to i8*), i8* bitcast (void (%struct.D1*)* @_ZN2D13barEv to i8*), i8* bitcast (void (%struct.D1*)* @_ZN2D14bar2Ev to i8*), i8* bitcast (void (%struct.D1*)* @_ZN2D14bar3Ev to i8*), i8* bitcast (void (%struct.D1*)* @_ZN2D14bar4Ev to i8*), i8* bitcast (void (%struct.D1*)* @_ZN2D14bar5Ev to i8*)]
 
-
-int j;
-void *vp;
-void test2() {
-  F f;
-  static int sz = (char *)(&f.f) - (char *)(&f);
-  vp = &sz;
-  j = sz;
-  // FIXME: These should result in a frontend constant a la fold, no run time
-  // initializer
-  // CHECK-LPLL64: define void @_Z5test2v()
-  // CHECK-LPLL64: = getelementptr inbounds %class.F* %f, i32 0, i32 1
-}
-
-static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");
 
 struct E {
   int e;
@@ -105,24 +67,14 @@ public:
 void A::foo1() { }
 void A::foo2() { }
 
+// CHECK-LPLL64:@_ZTV1A = constant [10 x i8*] [i8* null, i8* bitcast (%2* @_ZTI1A to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar1Ev to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar2Ev to i8*), i8* bitcast (void (%class.A*)* @_ZN1A4foo1Ev to i8*), i8* bitcast (void (%class.A*)* @_ZN1A4foo2Ev to i8*), i8* inttoptr (i64 -16 to i8*), i8* bitcast (%2* @_ZTI1A to i8*), i8* bitcast (void (%class.test14*)* @_ZN1C4bee1Ev to i8*), i8* bitcast (void (%class.test14*)* @_ZN1C4bee2Ev to i8*)]
+
 int main() {
   A a;
   B b;
   ap->e = 1;
   ap->b = 2;
 }
-
-// CHECK-LP64: __ZTV1A:
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI1A
-// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
-// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
-// CHECK-LP64-NEXT: .quad __ZN1A4foo1Ev
-// CHECK-LP64-NEXT: .quad __ZN1A4foo2Ev
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI1A
-// CHECK-LP64-NEXT: .quad __ZN1C4bee1Ev
-// CHECK-LP64-NEXT: .quad __ZN1C4bee2Ev
 
 
 struct test12_A {
@@ -136,24 +88,6 @@ struct test12_B : public test12_A {
 
 struct test12_D : public test12_B {
 } *test12_pd;
-void test12_foo() {
-  test12_pa->foo0();
-  test12_pb->foo0();
-  test12_pd->foo0();
-  test12_pa->foo();
-  test12_pb->foo();
-  test12_pd->foo();
-  test12_pa->test12_A::foo();
-}
-
-// CHECK-LPLL64:define void @_Z10test12_foov() nounwind {
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void %
-// CHECK-LPLL64:  call void @_ZN8test12_A3fooEv(%class.test14* %{{.*}})
 
 
 struct test6_B2 { virtual void funcB2(); char b[1000]; };
@@ -181,38 +115,13 @@ struct test3_D : virtual test3_B1 {
   virtual void funcD() { }
 };
 
-// CHECK-LP64:__ZTV7test3_D:
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI7test3_D
-// CHECK-LP64-NEXT: .quad __ZN8test3_B36funcB3Ev
-// CHECK-LP64-NEXT: .quad __ZN8test3_B26funcB2Ev
-// CHECK-LP64-NEXT: .quad __ZN8test3_B16funcB1Ev
-// CHECK-LP64-NEXT: .quad __ZN7test3_D5funcDEv
+// CHECK-LPLL64:@_ZTV7test3_D = weak_odr constant [12 x i8*] [i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* bitcast (%3* @_ZTI7test3_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN8test3_B36funcB3Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN8test3_B26funcB2Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN8test3_B16funcB1Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN7test3_D5funcDEv to i8*)]
+
 
 struct test4_D : virtual B, virtual C {
 };
 
-// CHECK-LP64:__ZTV7test4_D:
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 8
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI7test4_D
-// CHECK-LP64-NEXT: .quad __ZN1C4bee1Ev
-// CHECK-LP64-NEXT: .quad __ZN1C4bee2Ev
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551608
-// CHECK-LP64-NEXT: .quad __ZTI7test4_D
-// CHECK-LP64-NEXT: .quad __ZN1B4bar1Ev
-// CHECK-LP64-NEXT: .quad __ZN1B4bar2Ev
+// CHECK-LPLL64:@_ZTV7test4_D = weak_odr constant [14 x i8*] [i8* null, i8* inttoptr (i64 8 to i8*), i8* null, i8* null, i8* null, i8* bitcast (%1* @_ZTI7test4_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN1C4bee1Ev to i8*), i8* bitcast (void (%class.test14*)* @_ZN1C4bee2Ev to i8*), i8* null, i8* null, i8* inttoptr (i64 -8 to i8*), i8* bitcast (%1* @_ZTI7test4_D to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar1Ev to i8*), i8* bitcast (void (%struct.B*)* @_ZN1B4bar2Ev to i8*)]
 
 
 struct test5_B3 { virtual void funcB3(); };
@@ -235,57 +144,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
   virtual void funcD() { }
 };
 
-// CHECK-LP64:__ZTV7test5_D:
-// CHECK-LP64-NEXT: .quad 32
-// CHECK-LP64-NEXT: .quad 24
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 8
-// CHECK-LP64-NEXT: .quad 8
-// CHECK-LP64-NEXT: .quad 8
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI7test5_D
-// CHECK-LP64-NEXT: .quad __ZN8test5_B36funcB3Ev
-// CHECK-LP64-NEXT: .quad __ZN8test5_B26funcB2Ev
-// CHECK-LP64-NEXT: .quad __ZN8test5_B16funcB1Ev
-// CHECK-LP64-NEXT: .quad __ZN7test5_D5funcDEv
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551608
-// CHECK-LP64-NEXT: .quad __ZTI7test5_D
-// CHECK-LP64-NEXT: .quad __ZN9test5_B237funcB23Ev
-// CHECK-LP64-NEXT: .quad __ZN9test5_B227funcB22Ev
-// CHECK-LP64-NEXT: .quad __ZN9test5_B217funcB21Ev
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 8
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI7test5_D
-// CHECK-LP64-NEXT: .quad __ZN9test5_B337funcB33Ev
-// CHECK-LP64-NEXT: .quad __ZN9test5_B327funcB32Ev
-// CHECK-LP64-NEXT: .quad __ZN9test5_B317funcB31Ev
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551592
-// CHECK-LP64-NEXT: .quad __ZTI7test5_D
-// CHECK-LP64-NEXT: .quad __ZN4B2328funcB232Ev
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551584
-// CHECK-LP64-NEXT: .quad __ZTI7test5_D
-// CHECK-LP64-NEXT: .quad __ZN4B2318funcB231Ev
+// CHECK-LPLL64:@_ZTV7test5_D = weak_odr constant [50 x i8*] [i8* inttoptr (i64 32 to i8*), i8* inttoptr (i64 24 to i8*), i8* inttoptr (i64 16 to i8*), i8* inttoptr (i64 16 to i8*), i8* inttoptr (i64 16 to i8*), i8* inttoptr (i64 8 to i8*), i8* inttoptr (i64 8 to i8*), i8* inttoptr (i64 8 to i8*), i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* bitcast (%2* @_ZTI7test5_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN8test5_B36funcB3Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN8test5_B26funcB2Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN8test5_B16funcB1Ev to i8*), i8* bitcast (void (%struct.test10_B2*)* @_ZN7test5_D5funcDEv to i8*), i8* null, i8* null, i8* null, i8* null, i8* null, i8* inttoptr (i64 -8 to i8*), i8* bitcast (%2* @_ZTI7test5_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN9test5_B237funcB23Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN9test5_B227funcB22Ev to i8*), i8* bitcast (void (%class.test17_B2*)* @_ZN9test5_B217funcB21Ev to i8*), i8* null, i8* inttoptr (i64 16 to i8*), i8* null, i8* null, i8* inttoptr (i64 8 to i8*), i8* null, i8* null, i8* inttoptr (i64 -16 to i8*), i8* bitcast (%2* @_ZTI7test5_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN9test5_B337funcB33Ev to i8*), i8* bitcast (void (%class.test20_D*)* @_ZN9test5_B327funcB32Ev to i8*), i8* bitcast (void (%class.test23_D*)* @_ZN9test5_B317funcB31Ev to i8*), i8* null, i8* inttoptr (i64 -24 to i8*), i8* bitcast (%2* @_ZTI7test5_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN4B2328funcB232Ev to i8*), i8* null, i8* inttoptr (i64 -32 to i8*), i8* bitcast (%2* @_ZTI7test5_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN4B2318funcB231Ev to i8*)]
 
 struct test8_B1 {
   virtual void ftest8_B1() { }
@@ -313,75 +172,13 @@ struct test8_B3 {
 class test8_D : test8_B1, test8_B2, test8_B3 {
 };
 
-// CHECK-LP64:__ZTV7test8_D:
-// CHECK-LP64-NEXT: .quad 48
-// CHECK-LP64-NEXT: .quad 32
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN8test8_B19ftest8_B1Ev
-// CHECK-LP64-NEXT: .quad 40
-// CHECK-LP64-NEXT: .quad 24
-// CHECK-LP64-NEXT: .quad 18446744073709551608
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN9test8_B2a10ftest8_B2aEv
-// CHECK-LP64-NEXT: .quad __ZN8test8_B29ftest8_B2Ev
-// CHECK-LP64-NEXT: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN9test8_B2b10ftest8_B2bEv
-// CHECK-LP64-NEXT: .quad 18446744073709551592
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN8test8_B39ftest8_B3Ev
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551584
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN10test8_B2aa11ftest8_B2aaEv
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551568
-// CHECK-LP64-NEXT: .quad __ZTI7test8_D
-// CHECK-LP64-NEXT: .quad __ZN10test8_B2ab11ftest8_B2abEv
+// CHECK-LPLL64:@_ZTV7test8_D = weak_odr constant [25 x i8*] [i8* inttoptr (i64 48 to i8*), i8* inttoptr (i64 32 to i8*), i8* null, i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN8test8_B19ftest8_B1Ev to i8*), i8* inttoptr (i64 40 to i8*), i8* inttoptr (i64 24 to i8*), i8* inttoptr (i64 -8 to i8*), i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%struct.test10_B2a*)* @_ZN9test8_B2a10ftest8_B2aEv to i8*), i8* bitcast (void (%struct.test15_D*)* @_ZN8test8_B29ftest8_B2Ev to i8*), i8* inttoptr (i64 -16 to i8*), i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN9test8_B2b10ftest8_B2bEv to i8*), i8* inttoptr (i64 -24 to i8*), i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%class.test14*)* @_ZN8test8_B39ftest8_B3Ev to i8*), i8* null, i8* inttoptr (i64 -32 to i8*), i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2aa11ftest8_B2aaEv to i8*), i8* null, i8* inttoptr (i64 -48 to i8*), i8* bitcast (%2* @_ZTI7test8_D to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2ab11ftest8_B2abEv to i8*)]
 
-// CHECK-LP64:__ZTC7test8_D8_8test8_B2:
-// CHECK-LP64-NEXT:        .quad   40
-// CHECK-LP64-NEXT:        .quad   24
-// CHECK-LP64-NEXT:        .quad 0
-// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
-// CHECK-LP64-NEXT:        .quad   __ZN9test8_B2a10ftest8_B2aEv
-// CHECK-LP64-NEXT:        .quad   __ZN8test8_B29ftest8_B2Ev
-// CHECK-LP64-NEXT:        .quad 0
-// CHECK-LP64-NEXT:        .quad   18446744073709551592
-// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
-// CHECK-LP64-NEXT:        .quad   __ZN10test8_B2aa11ftest8_B2aaEv
-// CHECK-LP64-NEXT:        .quad 0
-// CHECK-LP64-NEXT:        .quad   18446744073709551576
-// CHECK-LP64-NEXT:        .quad   __ZTI8test8_B2
-// CHECK-LP64-NEXT:        .quad   __ZN10test8_B2ab11ftest8_B2abEv
+// CHECK-LPLL64:@_ZTC7test8_D8_8test8_B2 = internal constant [14 x i8*] [i8* inttoptr (i64 40 to i8*), i8* inttoptr (i64 24 to i8*), i8* null, i8* bitcast (%1* @_ZTI8test8_B2 to i8*), i8* bitcast (void (%struct.test10_B2a*)* @_ZN9test8_B2a10ftest8_B2aEv to i8*), i8* bitcast (void (%struct.test15_D*)* @_ZN8test8_B29ftest8_B2Ev to i8*), i8* null, i8* inttoptr (i64 -24 to i8*), i8* bitcast (%1* @_ZTI8test8_B2 to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2aa11ftest8_B2aaEv to i8*), i8* null, i8* inttoptr (i64 -40 to i8*), i8* bitcast (%1* @_ZTI8test8_B2 to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2ab11ftest8_B2abEv to i8*)] ; <[14 x i8*]*> [#uses=3]
 
-// CHECK-LP64:__ZTC7test8_D8_9test8_B2a:
-// CHECK-LP64-NEXT: .quad   40
-// CHECK-LP64-NEXT: .quad   24
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
-// CHECK-LP64-NEXT: .quad   __ZN9test8_B2a10ftest8_B2aEv
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad   18446744073709551592
-// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
-// CHECK-LP64-NEXT: .quad   __ZN10test8_B2aa11ftest8_B2aaEv
-// CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad   18446744073709551576
-// CHECK-LP64-NEXT: .quad   __ZTI9test8_B2a
-// CHECK-LP64-NEXT: .quad   __ZN10test8_B2ab11ftest8_B2abEv
+// CHECK-LPLL64:@_ZTC7test8_D8_9test8_B2a = internal constant [13 x i8*] [i8* inttoptr (i64 40 to i8*), i8* inttoptr (i64 24 to i8*), i8* null, i8* bitcast (%1* @_ZTI9test8_B2a to i8*), i8* bitcast (void (%struct.test10_B2a*)* @_ZN9test8_B2a10ftest8_B2aEv to i8*), i8* null, i8* inttoptr (i64 -24 to i8*), i8* bitcast (%1* @_ZTI9test8_B2a to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2aa11ftest8_B2aaEv to i8*), i8* null, i8* inttoptr (i64 -40 to i8*), i8* bitcast (%1* @_ZTI9test8_B2a to i8*), i8* bitcast (void (%struct.B*)* @_ZN10test8_B2ab11ftest8_B2abEv to i8*)] ; <[13 x i8*]*> [#uses=3]
 
-// CHECK-LP64:__ZTT7test8_D:
-// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 64
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_9test8_B2a) + 96
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 72
-// CHECK-LP64-NEXT: .quad   (__ZTC7test8_D8_8test8_B2) + 104
-// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 72
-// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 160
-// CHECK-LP64-NEXT: .quad   (__ZTV7test8_D) + 192
+// CHECK-LPLL64:@_ZTT7test8_D = weak_odr constant [10 x i8*] [i8* bitcast (i8** getelementptr inbounds ([25 x i8*]* @_ZTV7test8_D, i64 0, i64 4) to i8*), i8* bitcast (i8** getelementptr inbounds ([14 x i8*]* @_ZTC7test8_D8_8test8_B2, i64 0, i64 4) to i8*), i8* bitcast (i8** getelementptr inbounds ([13 x i8*]* @_ZTC7test8_D8_9test8_B2a, i64 0, i64 4) to i8*), i8* bitcast (i8** getelementptr inbounds ([13 x i8*]* @_ZTC7test8_D8_9test8_B2a, i64 0, i64 8) to i8*), i8* bitcast (i8** getelementptr inbounds ([13 x i8*]* @_ZTC7test8_D8_9test8_B2a, i64 0, i64 12) to i8*), i8* bitcast (i8** getelementptr inbounds ([14 x i8*]* @_ZTC7test8_D8_8test8_B2, i64 0, i64 9) to i8*), i8* bitcast (i8** getelementptr inbounds ([14 x i8*]* @_ZTC7test8_D8_8test8_B2, i64 0, i64 13) to i8*), i8* bitcast (i8** getelementptr inbounds ([25 x i8*]* @_ZTV7test8_D, i64 0, i64 9) to i8*), i8* bitcast (i8** getelementptr inbounds ([25 x i8*]* @_ZTV7test8_D, i64 0, i64 20) to i8*), i8* bitcast (i8** getelementptr inbounds ([25 x i8*]* @_ZTV7test8_D, i64 0, i64 24) to i8*)]
 
 
 struct test9_B3 { virtual void funcB3(); int i; };
@@ -766,57 +563,6 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV28foo_NV2bEv
 
 
-// FIXME: This is the wrong thunk, but until these issues are fixed, better
-// than nothing.
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
-// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
-// CHECK-LPLL64:  %.addr = alloca %class.test8_D*
-// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
-// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
-// CHECK-LPLL64:  %{{1|4}} = bitcast %class.test8_D* %{{this|3}} to i8*
-// CHECK-LPLL64:  %{{2|5}} = getelementptr inbounds i8* %{{1|4}}, i64 -16
-// CHECK-LPLL64:  %{{3|6}} = bitcast i8* %{{2|5}} to %class.test8_D*
-// CHECK-LPLL64:  %{{4|7}} = bitcast %class.test8_D* %{{3|6}} to i8*
-// CHECK-LPLL64:  %{{5|8}} = bitcast %class.test8_D* %3 to i64**
-// CHECK-LPLL64:  %{{vtable|9}} = load i64** %{{5|8}}
-// CHECK-LPLL64:  %{{6|10}} = getelementptr inbounds i64* %{{vtable|9}}, i64 -9
-// CHECK-LPLL64:  %{{7|11}} = load i64* %{{6|10}}
-// CHECK-LPLL64:  %{{8|12}} = getelementptr i8* %{{4|7}}, i64 %{{7|11}}
-// CHECK-LPLL64:  %{{9|13}} = bitcast i8* %{{8|12}} to %class.test8_D*
-// CHECK-LPLL64:  %{{call|14}} = call %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D* %{{9|13}})
-// CHECK-LPLL64:  store %class.test8_D* %{{call|14}}, %class.test8_D** %{{retval|2}}
-// CHECK-LPLL64:  %{{10|15}} = load %class.test8_D** %{{retval|2}}
-// CHECK-LPLL64:  ret %class.test8_D* %{{10|15}}
-// CHECK-LPLL64:}
-
-// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%{{class.test8_D|.*}}*)
-// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
-// CHECK-LPLL64:  %.addr = alloca %class.test8_D*
-// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
-// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
-// CHECK-LPLL64:  %{{call|4}} = call %class.test8_D* @_ZN8test16_D4foo1Ev(%class.test8_D* %{{this|3}})
-// CHECK-LPLL64:  %{{1|5}} = icmp ne %class.test8_D* %{{call|4}}, null
-// CHECK-LPLL64:  br i1 %{{1|5}}, label %{{2|6}}, label %{{12|17}}
-// CHECK-LPLL64:; <label>:{{2|6}}
-// CHECK-LPLL64:  %{{3|7}} = bitcast %class.test8_D* %{{call|4}} to i8*
-// CHECK-LPLL64:  %{{4|8}} = getelementptr inbounds i8* %{{3|7}}, i64 16
-// CHECK-LPLL64:  %{{5|9}} = bitcast i8* %4 to %class.test8_D*
-// CHECK-LPLL64:  %{{6|10}} = bitcast %class.test8_D* %{{5|9}} to i8*
-// CHECK-LPLL64:  %{{7|11}} = bitcast %class.test8_D* %{{5|9}} to i64**
-// CHECK-LPLL64:  %{{vtable|12}} = load i64** %{{7|11}}
-// CHECK-LPLL64:  %{{8|13}} = getelementptr inbounds i64* %vtable, i64 -4
-// CHECK-LPLL64:  %{{9|14}} = load i64* %{{8|13}}
-// CHECK-LPLL64:  %{{10|15}} = getelementptr i8* %{{6|10}}, i64 %{{9|14}}
-// CHECK-LPLL64:  %{{11|16}} = bitcast i8* %{{10|15}} to %class.test8_D*
-// CHECK-LPLL64:  br label %{{13|18}}
-// CHECK-LPLL64:; <label>:{{12|17}}
-// CHECK-LPLL64:  br label %{{13|18}}
-// CHECK-LPLL64:; <label>:{{13|18}}
-// CHECK-LPLL64:  %{{14|19}} = phi %class.test8_D* [ %{{11|16}}, %{{2|6}} ], [ %{{call|4}}, %{{12|17}} ]
-// CHECK-LPLL64:  store %class.test8_D* %{{14|19}}, %class.test8_D** %{{retval|2}}
-// CHECK-LPLL64:  %{{15|20}} = load %class.test8_D** %{{retval|2}}
-// CHECK-LPLL64:  ret %class.test8_D* %{{15|20}}
-// CHECK-LPLL64:}
 
 
 class test17_B1 {
@@ -1150,3 +896,93 @@ test3_D d3;
 
 test6_D d6;
 test7_D d7;
+
+
+int j;
+void *vp;
+void test2() {
+  F f;
+  static int sz = (char *)(&f.f) - (char *)(&f);
+  vp = &sz;
+  j = sz;
+  // FIXME: These should result in a frontend constant a la fold, no run time
+  // initializer
+  // CHECK-LPLL64: define void @_Z5test2v()
+  // CHECK-LPLL64: = getelementptr inbounds %class.F* %f, i32 0, i32 1
+}
+
+static_assert(sizeof(F) == sizeof(void*)*4, "invalid vbase size");
+
+
+void test12_foo() {
+  test12_pa->foo0();
+  test12_pb->foo0();
+  test12_pd->foo0();
+  test12_pa->foo();
+  test12_pb->foo();
+  test12_pd->foo();
+  test12_pa->test12_A::foo();
+}
+
+
+// CHECK-LPLL64:define void @_Z10test12_foov() nounwind {
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void %
+// CHECK-LPLL64:  call void @_ZN8test12_A3fooEv(%class.test14* %{{.*}})
+
+
+// FIXME: This is the wrong thunk, but until these issues are fixed, better
+// than nothing.
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTcvn16_n72_v16_n32_N8test16_D4foo1Ev(%class.test8_D*)
+// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
+// CHECK-LPLL64:  %.addr = alloca %class.test8_D*
+// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{1|4}} = bitcast %class.test8_D* %{{this|3}} to i8*
+// CHECK-LPLL64:  %{{2|5}} = getelementptr inbounds i8* %{{1|4}}, i64 -16
+// CHECK-LPLL64:  %{{3|6}} = bitcast i8* %{{2|5}} to %class.test8_D*
+// CHECK-LPLL64:  %{{4|7}} = bitcast %class.test8_D* %{{3|6}} to i8*
+// CHECK-LPLL64:  %{{5|8}} = bitcast %class.test8_D* %3 to i64**
+// CHECK-LPLL64:  %{{vtable|9}} = load i64** %{{5|8}}
+// CHECK-LPLL64:  %{{6|10}} = getelementptr inbounds i64* %{{vtable|9}}, i64 -9
+// CHECK-LPLL64:  %{{7|11}} = load i64* %{{6|10}}
+// CHECK-LPLL64:  %{{8|12}} = getelementptr i8* %{{4|7}}, i64 %{{7|11}}
+// CHECK-LPLL64:  %{{9|13}} = bitcast i8* %{{8|12}} to %class.test8_D*
+// CHECK-LPLL64:  %{{call|14}} = call %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%class.test8_D* %{{9|13}})
+// CHECK-LPLL64:  store %class.test8_D* %{{call|14}}, %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  %{{10|15}} = load %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  ret %class.test8_D* %{{10|15}}
+// CHECK-LPLL64:}
+
+// CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%{{class.test8_D|.*}}*)
+// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
+// CHECK-LPLL64:  %.addr = alloca %class.test8_D*
+// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{call|4}} = call %class.test8_D* @_ZN8test16_D4foo1Ev(%class.test8_D* %{{this|3}})
+// CHECK-LPLL64:  %{{1|5}} = icmp ne %class.test8_D* %{{call|4}}, null
+// CHECK-LPLL64:  br i1 %{{1|5}}, label %{{2|6}}, label %{{12|17}}
+// CHECK-LPLL64:; <label>:{{2|6}}
+// CHECK-LPLL64:  %{{3|7}} = bitcast %class.test8_D* %{{call|4}} to i8*
+// CHECK-LPLL64:  %{{4|8}} = getelementptr inbounds i8* %{{3|7}}, i64 16
+// CHECK-LPLL64:  %{{5|9}} = bitcast i8* %4 to %class.test8_D*
+// CHECK-LPLL64:  %{{6|10}} = bitcast %class.test8_D* %{{5|9}} to i8*
+// CHECK-LPLL64:  %{{7|11}} = bitcast %class.test8_D* %{{5|9}} to i64**
+// CHECK-LPLL64:  %{{vtable|12}} = load i64** %{{7|11}}
+// CHECK-LPLL64:  %{{8|13}} = getelementptr inbounds i64* %vtable, i64 -4
+// CHECK-LPLL64:  %{{9|14}} = load i64* %{{8|13}}
+// CHECK-LPLL64:  %{{10|15}} = getelementptr i8* %{{6|10}}, i64 %{{9|14}}
+// CHECK-LPLL64:  %{{11|16}} = bitcast i8* %{{10|15}} to %class.test8_D*
+// CHECK-LPLL64:  br label %{{13|18}}
+// CHECK-LPLL64:; <label>:{{12|17}}
+// CHECK-LPLL64:  br label %{{13|18}}
+// CHECK-LPLL64:; <label>:{{13|18}}
+// CHECK-LPLL64:  %{{14|19}} = phi %class.test8_D* [ %{{11|16}}, %{{2|6}} ], [ %{{call|4}}, %{{12|17}} ]
+// CHECK-LPLL64:  store %class.test8_D* %{{14|19}}, %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  %{{15|20}} = load %class.test8_D** %{{retval|2}}
+// CHECK-LPLL64:  ret %class.test8_D* %{{15|20}}
+// CHECK-LPLL64:}
