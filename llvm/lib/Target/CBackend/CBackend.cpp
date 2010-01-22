@@ -351,7 +351,7 @@ namespace {
 char CWriter::ID = 0;
 
 
-static std::string MangleType(const std::string &S) {
+static std::string CBEMangle(const std::string &S) {
   std::string Result;
   
   for (unsigned i = 0, e = S.size(); i != e; ++i)
@@ -1460,7 +1460,7 @@ std::string CWriter::GetValueName(const Value *Operand) {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand)) {
     SmallString<128> Str;
     Mang->getNameWithPrefix(Str, GV, false);
-    return Str.str().str();
+    return CBEMangle(Str.str().str());
   }
     
   std::string Name = Operand->getName();
@@ -2247,7 +2247,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I) {
-    std::string Name = "struct " + MangleType("l_"+I->first);
+    std::string Name = "struct " + CBEMangle("l_"+I->first);
     Out << Name << ";\n";
     TypeNames.insert(std::make_pair(I->second, Name));
   }
@@ -2258,7 +2258,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   // for struct or opaque types.
   Out << "/* Typedefs */\n";
   for (I = TST.begin(); I != End; ++I) {
-    std::string Name = MangleType("l_"+I->first);
+    std::string Name = CBEMangle("l_"+I->first);
     Out << "typedef ";
     printType(Out, I->second, false, Name);
     Out << ";\n";
