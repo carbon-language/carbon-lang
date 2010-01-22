@@ -51,13 +51,11 @@ public:
 
   /// getLeft - Returns a pointer to the left subtree.  This value
   ///  is NULL if there is no left subtree.
-  ImutAVLTree *getLeft() const {
-    return reinterpret_cast<ImutAVLTree*>(Left & ~LeftFlags);
-  }
+  ImutAVLTree *getLeft() const { return Left; }
 
   /// getRight - Returns a pointer to the right subtree.  This value is
   ///  NULL if there is no right subtree.
-  ImutAVLTree* getRight() const { return Right; }
+  ImutAVLTree *getRight() const { return Right; }
 
   /// getHeight - Returns the height of the tree.  A tree with no subtrees
   ///  has a height of 1.
@@ -220,9 +218,11 @@ public:
   //===----------------------------------------------------===//
 
 private:
-  uintptr_t        Left;
+  ImutAVLTree*     Left;
   ImutAVLTree*     Right;
-  unsigned         Height;
+  unsigned         Height       : 28;
+  unsigned         Mutable      : 1;
+  unsigned         CachedDigest : 1;
   value_type       Value;
   uint32_t         Digest;
 
@@ -231,15 +231,12 @@ private:
   //===----------------------------------------------------===//
 
 private:
-
-  enum { Mutable = 0x1, NoCachedDigest = 0x2, LeftFlags = 0x3 };
-
   /// ImutAVLTree - Internal constructor that is only called by
   ///   ImutAVLFactory.
-  ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
-  : Left(reinterpret_cast<uintptr_t>(l) | (Mutable | NoCachedDigest)),
-    Right(r), Height(height), Value(v), Digest(0) {}
-
+  ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v,
+              unsigned height)
+    : Left(l), Right(r), Height(height), Mutable(true), CachedDigest(false),
+      Value(v), Digest(0) {}
 
   /// isMutable - Returns true if the left and right subtree references
   ///  (as well as height) can be changed.  If this method returns false,
@@ -247,11 +244,11 @@ private:
   ///  object should always have this method return true.  Further, if this
   ///  method returns false for an instance of ImutAVLTree, all subtrees
   ///  will also have this method return false.  The converse is not true.
-  bool isMutable() const { return Left & Mutable; }
+  bool isMutable() const { return Mutable; }
   
   /// hasCachedDigest - Returns true if the digest for this tree is cached.
   ///  This can only be true if the tree is immutable.
-  bool hasCachedDigest() const { return !(Left & NoCachedDigest); }
+  bool hasCachedDigest() const { return CachedDigest; }
 
   //===----------------------------------------------------===//
   // Mutating operations.  A tree root can be manipulated as
@@ -268,13 +265,13 @@ private:
   ///   it is an error to call setLeft(), setRight(), and setHeight().
   void MarkImmutable() {
     assert(isMutable() && "Mutable flag already removed.");
-    Left &= ~Mutable;
+    Mutable = false;
   }
   
   /// MarkedCachedDigest - Clears the NoCachedDigest flag for a tree.
   void MarkedCachedDigest() {
     assert(!hasCachedDigest() && "NoCachedDigest flag already removed.");
-    Left &= ~NoCachedDigest;
+    CachedDigest = true;
   }
 
   /// setLeft - Changes the reference of the left subtree.  Used internally
@@ -282,7 +279,8 @@ private:
   void setLeft(ImutAVLTree* NewLeft) {
     assert(isMutable() &&
            "Only a mutable tree can have its left subtree changed.");
-    Left = reinterpret_cast<uintptr_t>(NewLeft) | LeftFlags;
+    Left = NewLeft;
+    CachedDigest = false;
   }
 
   /// setRight - Changes the reference of the right subtree.  Used internally
@@ -292,9 +290,7 @@ private:
            "Only a mutable tree can have its right subtree changed.");
 
     Right = NewRight;
-    // Set the NoCachedDigest flag.
-    Left = Left | NoCachedDigest;
-
+    CachedDigest = false;
   }
 
   /// setHeight - Changes the height of the tree.  Used internally by
@@ -396,7 +392,7 @@ public:
 private:
 
   bool           isEmpty(TreeTy* T) const { return !T; }
-  unsigned        Height(TreeTy* T) const { return T ? T->getHeight() : 0; }
+  unsigned Height(TreeTy* T) const { return T ? T->getHeight() : 0; }
   TreeTy*           Left(TreeTy* T) const { return T->getLeft(); }
   TreeTy*          Right(TreeTy* T) const { return T->getRight(); }
   value_type_ref   Value(TreeTy* T) const { return T->Value; }
@@ -404,7 +400,7 @@ private:
   unsigned IncrementHeight(TreeTy* L, TreeTy* R) const {
     unsigned hl = Height(L);
     unsigned hr = Height(R);
-    return ( hl > hr ? hl : hr ) + 1;
+    return (hl > hr ? hl : hr) + 1;
   }
 
   static bool CompareTreeWithSection(TreeTy* T,
@@ -433,7 +429,7 @@ private:
   TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {   
     BumpPtrAllocator& A = getAllocator();
     TreeTy* T = (TreeTy*) A.Allocate<TreeTy>();
-    new (T) TreeTy(L,R,V,IncrementHeight(L,R));
+    new (T) TreeTy(L, R, V, IncrementHeight(L,R));
     return T;
   }
 
@@ -443,7 +439,7 @@ private:
     if (OldTree->isMutable()) {
       OldTree->setLeft(L);
       OldTree->setRight(R);
-      OldTree->setHeight(IncrementHeight(L,R));
+      OldTree->setHeight(IncrementHeight(L, R));
       return OldTree;
     }
     else
@@ -1046,7 +1042,7 @@ public:
   // Utility methods.
   //===--------------------------------------------------===//
 
-  inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
+  unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 
   static inline void Profile(FoldingSetNodeID& ID, const ImmutableSet& S) {
     ID.AddPointer(S.Root);

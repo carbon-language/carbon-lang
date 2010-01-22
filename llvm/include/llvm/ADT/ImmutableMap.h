@@ -217,7 +217,7 @@ public:
   // Utility methods.
   //===--------------------------------------------------===//
 
-  inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
+  unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 
   static inline void Profile(FoldingSetNodeID& ID, const ImmutableMap& M) {
     ID.AddPointer(M.Root);
