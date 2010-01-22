@@ -33,6 +33,9 @@ public:
     // Integer values.
     Integer,
     
+    // Register values (stored in IntVal).  Only used by TargetAsmLexer.
+    Register,
+    
     // No-value.
     EndOfStatement,
     Colon,
@@ -95,6 +98,13 @@ public:
   int64_t getIntVal() const { 
     assert(Kind == Integer && "This token isn't an integer!");
     return IntVal; 
+  }
+  
+  /// getRegVal - Get the register number for the current token, which should
+  /// be a register.
+  unsigned getRegVal() const {
+    assert(Kind == Register && "This token isn't a register!");
+    return static_cast<unsigned>(IntVal);
   }
 };
 
