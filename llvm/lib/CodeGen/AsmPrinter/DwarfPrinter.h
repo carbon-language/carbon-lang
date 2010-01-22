@@ -30,7 +30,7 @@ class TargetData;
 class TargetRegisterInfo;
 class MCSymbol;
 
-class Dwarf {
+class DwarfPrinter {
 protected:
   //===-------------------------------------------------------------==---===//
   // Core attributes used by the DWARF printer.
@@ -70,8 +70,8 @@ protected:
   /// SetCounter - A unique number for each '.set' directive.
   unsigned SetCounter;
 
-  Dwarf(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
-        const char *flavor);
+  DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
+               const char *flavor);
 public:
   //===------------------------------------------------------------------===//
   // Accessors.

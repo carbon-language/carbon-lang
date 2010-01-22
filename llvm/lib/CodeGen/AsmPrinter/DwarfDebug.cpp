@@ -275,7 +275,7 @@ DbgScope::~DbgScope() {
 } // end llvm namespace
 
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
-  : Dwarf(OS, A, T, "dbg"), ModuleCU(0),
+  : DwarfPrinter(OS, A, T, "dbg"), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
     DIEValues(), StringPool(),
     SectionSourceLines(), didInitial(false), shouldEmit(false),

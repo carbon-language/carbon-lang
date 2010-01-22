@@ -38,7 +38,7 @@ using namespace llvm;
 
 DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
                                const MCAsmInfo *T)
-  : Dwarf(OS, A, T, "eh"), shouldEmitTable(false), shouldEmitMoves(false),
+  : DwarfPrinter(OS, A, T, "eh"), shouldEmitTable(false),shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)
@@ -119,10 +119,10 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
   // EH frame header.
   EmitLabel("eh_frame_common_begin", Index);
+  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("CIE Identifier Tag");
   Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
-  Asm->EOL("CIE Identifier Tag");
-  Asm->EmitInt8(dwarf::DW_CIE_VERSION);
-  Asm->EOL("CIE Version");
+  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DW_CIE_VERSION");
+  Asm->OutStreamer.EmitIntValue(dwarf::DW_CIE_VERSION, 1/*size*/, 0/*addr*/);
 
   // The personality presence indicates that language specific information will
   // show up in the eh frame.  Find out how we are supposed to lower the

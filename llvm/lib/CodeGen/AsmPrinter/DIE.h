@@ -23,7 +23,7 @@
 
 namespace llvm {
   class AsmPrinter;
-  class Dwarf;
+  class DwarfPrinter;
   class TargetData;
   class MCSymbol;
 
@@ -222,7 +222,7 @@ namespace llvm {
 
     /// EmitValue - Emit value via the Dwarf writer.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const = 0;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const = 0;
 
     /// SizeOf - Return the size of a value in bytes.
     ///
@@ -262,7 +262,7 @@ namespace llvm {
 
     /// EmitValue - Emit integer of appropriate size.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of integer value in bytes.
     ///
@@ -288,7 +288,7 @@ namespace llvm {
 
     /// EmitValue - Emit string value.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of string value in bytes.
     ///
@@ -315,7 +315,7 @@ namespace llvm {
 
     /// EmitValue - Emit label value.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of label value in bytes.
     ///
@@ -341,7 +341,7 @@ namespace llvm {
 
     /// EmitValue - Emit label value.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of label value in bytes.
     ///
@@ -374,7 +374,7 @@ namespace llvm {
 
     /// EmitValue - Emit section offset.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of section offset value in bytes.
     ///
@@ -403,7 +403,7 @@ namespace llvm {
 
     /// EmitValue - Emit delta value.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of delta value in bytes.
     ///
@@ -432,7 +432,7 @@ namespace llvm {
 
     /// EmitValue - Emit debug information entry offset.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of debug information entry in bytes.
     ///
@@ -474,7 +474,7 @@ namespace llvm {
 
     /// EmitValue - Emit block data.
     ///
-    virtual void EmitValue(Dwarf *D, unsigned Form) const;
+    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
 
     /// SizeOf - Determine size of block data in bytes.
     ///

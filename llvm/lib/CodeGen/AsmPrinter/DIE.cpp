@@ -186,7 +186,7 @@ void DIEValue::dump() {
 
 /// EmitValue - Emit integer of appropriate size.
 ///
-void DIEInteger::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEInteger::EmitValue(DwarfPrinter *D, unsigned Form) const {
   const AsmPrinter *Asm = D->getAsm();
   unsigned Size = ~0U;
   switch (Form) {
@@ -239,7 +239,7 @@ void DIEInteger::print(raw_ostream &O) {
 
 /// EmitValue - Emit string value.
 ///
-void DIEString::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEString::EmitValue(DwarfPrinter *D, unsigned Form) const {
   D->getAsm()->EmitString(Str);
 }
 
@@ -255,7 +255,7 @@ void DIEString::print(raw_ostream &O) {
 
 /// EmitValue - Emit label value.
 ///
-void DIEDwarfLabel::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEDwarfLabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitReference(Label, false, IsSmall);
 }
@@ -280,7 +280,7 @@ void DIEDwarfLabel::print(raw_ostream &O) {
 
 /// EmitValue - Emit label value.
 ///
-void DIEObjectLabel::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEObjectLabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitReference(Sym, false, IsSmall);
 }
@@ -304,7 +304,7 @@ void DIEObjectLabel::print(raw_ostream &O) {
 
 /// EmitValue - Emit delta value.
 ///
-void DIESectionOffset::EmitValue(Dwarf *D, unsigned Form) const {
+void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitSectionOffset(Label.getTag(), Section.getTag(),
                        Label.getNumber(), Section.getNumber(),
@@ -334,7 +334,7 @@ void DIESectionOffset::print(raw_ostream &O) {
 
 /// EmitValue - Emit delta value.
 ///
-void DIEDelta::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEDelta::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitDifference(LabelHi, LabelLo, IsSmall);
 }
@@ -361,7 +361,7 @@ void DIEDelta::print(raw_ostream &O) {
 
 /// EmitValue - Emit debug information entry offset.
 ///
-void DIEEntry::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEEntry::EmitValue(DwarfPrinter *D, unsigned Form) const {
   D->getAsm()->EmitInt32(Entry->getOffset());
 }
 
@@ -389,7 +389,7 @@ unsigned DIEBlock::ComputeSize(const TargetData *TD) {
 
 /// EmitValue - Emit block data.
 ///
-void DIEBlock::EmitValue(Dwarf *D, unsigned Form) const {
+void DIEBlock::EmitValue(DwarfPrinter *D, unsigned Form) const {
   const AsmPrinter *Asm = D->getAsm();
   switch (Form) {
   case dwarf::DW_FORM_block1: Asm->EmitInt8(Size);         break;

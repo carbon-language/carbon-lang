@@ -57,7 +57,7 @@ public:
   unsigned getLabelID() const { return LabelID; }
 };
 
-class DwarfDebug : public Dwarf {
+class DwarfDebug : public DwarfPrinter {
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
   //

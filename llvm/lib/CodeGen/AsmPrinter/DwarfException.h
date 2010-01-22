@@ -32,7 +32,7 @@ class raw_ostream;
 //===----------------------------------------------------------------------===//
 /// DwarfException - Emits Dwarf exception handling directives.
 ///
-class DwarfException : public Dwarf {
+class DwarfException : public DwarfPrinter {
   struct FunctionEHFrameInfo {
     const MCSymbol *FunctionEHSym;  // L_foo.eh
     unsigned Number;
