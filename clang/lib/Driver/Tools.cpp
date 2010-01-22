@@ -1925,13 +1925,6 @@ void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
   }
 }
 
-void darwin::DarwinTool::AddDarwinSubArch(const ArgList &Args,
-                                          ArgStringList &CmdArgs) const {
-  // Derived from darwin_subarch spec, not sure what the distinction
-  // exists for but at least for this chain it is the same.
-  AddDarwinArch(Args, CmdArgs);
-}
-
 void darwin::Link::AddLinkArgs(const ArgList &Args,
                                ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
@@ -1946,11 +1939,10 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   }
 
   if (!Args.hasArg(options::OPT_dynamiclib)) {
-    if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
-      AddDarwinArch(Args, CmdArgs);
-      CmdArgs.push_back("-force_cpusubtype_ALL");
-    } else
-      AddDarwinSubArch(Args, CmdArgs);
+    AddDarwinArch(Args, CmdArgs);
+
+    // FIXME: Why do this only on this path?
+    CmdArgs.push_back("-force_cpusubtype_ALL");
 
     Args.AddLastArg(CmdArgs, options::OPT_bundle);
     Args.AddAllArgs(CmdArgs, options::OPT_bundle__loader);
@@ -1984,11 +1976,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_current__version,
                               "-dylib_current_version");
 
-    if (Args.hasArg(options::OPT_force__cpusubtype__ALL)) {
-      AddDarwinArch(Args, CmdArgs);
-      // NOTE: We don't add -force_cpusubtype_ALL on this path. Ok.
-    } else
-      AddDarwinSubArch(Args, CmdArgs);
+    AddDarwinArch(Args, CmdArgs);
 
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_install__name,
                               "-dylib_install_name");

@@ -130,7 +130,6 @@ namespace darwin {
   class VISIBILITY_HIDDEN DarwinTool : public Tool {
   protected:
     void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
 
     const toolchains::Darwin &getDarwinToolChain() const {
       return reinterpret_cast<const toolchains::Darwin&>(getToolChain());
