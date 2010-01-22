@@ -14,6 +14,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
 
@@ -107,6 +108,8 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
     for (MachineBasicBlock::iterator miItr = mbb->begin(), miEnd = mbb->end();
          miItr != miEnd; ++miItr) {
       MachineInstr *mi = &*miItr;
+      if (mi->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+        continue;
 
       if (miItr == mbb->getFirstTerminator()) {
         push_back(createEntry(0, index));

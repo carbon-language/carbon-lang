@@ -140,7 +140,10 @@ void LiveIntervals::printInstrs(raw_ostream &OS) const {
        << ":\t\t# derived from " << mbbi->getName() << "\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
-      OS << getInstructionIndex(mii) << '\t' << *mii;
+      if (mii->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+        OS << SlotIndex::getEmptyKey() << '\t' << *mii;
+      else
+        OS << getInstructionIndex(mii) << '\t' << *mii;
     }
   }
 }
@@ -672,8 +675,6 @@ void LiveIntervals::computeIntervals() {
     SlotIndex MIIndex = getMBBStartIdx(MBB);
     DEBUG(dbgs() << MBB->getName() << ":\n");
 
-    MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
-
     // Create intervals for live-ins to this BB first.
     for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
            LE = MBB->livein_end(); LI != LE; ++LI) {
@@ -689,8 +690,11 @@ void LiveIntervals::computeIntervals() {
     if (getInstructionFromIndex(MIIndex) == 0)
       MIIndex = indexes_->getNextNonNullIndex(MIIndex);
     
-    for (; MI != miEnd; ++MI) {
+    for (MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
+         MI != miEnd; ++MI) {
       DEBUG(dbgs() << MIIndex << "\t" << *MI);
+      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+        continue;
 
       // Handle defs.
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
