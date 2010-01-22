@@ -1077,7 +1077,21 @@ class test21_D : public test21_B, public test21_B1 {
 // CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
 
 
+struct test22_s1 { virtual void dtor() { } }; 
+struct test22_s2 { virtual void dtor() { } }; 
+struct test22_s3 : test22_s1, test22_s2 { virtual void dtor() { } }; 
+struct test22_D : test22_s3 { virtual void dtor() { } }; 
 
+// CHECK-LP64:     __ZTV8test22_D:
+// CHECK-LP64-NEXT:        .quad   0
+// CHECK-LP64-NEXT:        .quad   __ZTI8test22_D
+// CHECK-LP64-NEXT:        .quad   __ZN8test22_D4dtorEv
+// CHECK-LP64-NEXT:        .quad   18446744073709551608
+// CHECK-LP64-NEXT:        .quad   __ZTI8test22_D
+// CHECK-LP64-NEXT:        .quad   __ZThn8_N8test22_D4dtorEv
+
+
+test22_D d22;
 test21_D d21;
 test20_D d20;
 test19_D d19;

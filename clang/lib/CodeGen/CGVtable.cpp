@@ -431,12 +431,11 @@ public:
         continue;
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
-        uint64_t o = Offset + Layout.getBaseClassOffset(Base);
-        StartNewTable();
-        GenerateVtableForBase(Base, o, MorallyVirtual, false,
-                              CurrentVBaseOffset, Path);
-      }
+      uint64_t o = Offset + Layout.getBaseClassOffset(Base);
+      StartNewTable();
+      GenerateVtableForBase(Base, o, MorallyVirtual, false,
+                            true, Base == PrimaryBase && !PrimaryBaseWasVirtual,
+                            CurrentVBaseOffset, Path);
     }
     Path->pop_back();
   }
@@ -493,6 +492,7 @@ public:
   void FinishGenerateVtable(const CXXRecordDecl *RD,
                             const ASTRecordLayout &Layout,
                             const CXXRecordDecl *PrimaryBase,
+                            bool ForNPNVBases, bool WasPrimaryBase,
                             bool PrimaryBaseWasVirtual,
                             bool MorallyVirtual, int64_t Offset,
                             bool ForVirtualBase, int64_t CurrentVBaseOffset,
@@ -505,23 +505,27 @@ public:
 
     StartNewTable();
     extra = 0;
-    bool DeferVCalls = MorallyVirtual || ForVirtualBase;
-    int VCallInsertionPoint = VtableComponents.size();
-    if (!DeferVCalls) {
-      insertVCalls(VCallInsertionPoint);
-    } else
-      // FIXME: just for extra, or for all uses of VCalls.size post this?
-      extra = -VCalls.size();
+    Index_t AddressPoint = 0;
+    int VCallInsertionPoint = 0;
+    if (!ForNPNVBases || !WasPrimaryBase) {
+      bool DeferVCalls = MorallyVirtual || ForVirtualBase;
+      VCallInsertionPoint = VtableComponents.size();
+      if (!DeferVCalls) {
+        insertVCalls(VCallInsertionPoint);
+      } else
+        // FIXME: just for extra, or for all uses of VCalls.size post this?
+        extra = -VCalls.size();
 
-    // Add the offset to top.
-    VtableComponents.push_back(BuildVtable ? wrap(-((Offset-LayoutOffset)/8)) : 0);
+      // Add the offset to top.
+      VtableComponents.push_back(BuildVtable ? wrap(-((Offset-LayoutOffset)/8)) : 0);
     
-    // Add the RTTI information.
-    VtableComponents.push_back(rtti);
+      // Add the RTTI information.
+      VtableComponents.push_back(rtti);
     
-    Index_t AddressPoint = VtableComponents.size();
+      AddressPoint = VtableComponents.size();
 
-    AppendMethodsToVtable();
+      AppendMethodsToVtable();
+    }
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
@@ -539,7 +543,8 @@ public:
       insertVCalls(VCallInsertionPoint);
     }
     
-    AddAddressPoints(RD, Offset, AddressPoint);
+    if (!ForNPNVBases || !WasPrimaryBase)
+      AddAddressPoints(RD, Offset, AddressPoint);
 
     if (alloc) {
       delete Path;
@@ -611,6 +616,8 @@ public:
   void GenerateVtableForBase(const CXXRecordDecl *RD, int64_t Offset = 0,
                              bool MorallyVirtual = false, 
                              bool ForVirtualBase = false,
+                             bool ForNPNVBases = false,
+                             bool WasPrimaryBase = true,
                              int CurrentVBaseOffset = 0,
                              Path_t *Path = 0) {
     if (!RD->isDynamicClass())
@@ -633,15 +640,17 @@ public:
     if (ForVirtualBase)
       extra = VCalls.size();
 
-    VBPrimaries(RD, MorallyVirtual, Offset, !ForVirtualBase, 0, ForVirtualBase,
-                CurrentVBaseOffset, true);
+    if (!ForNPNVBases || !WasPrimaryBase) {
+      VBPrimaries(RD, MorallyVirtual, Offset, !ForVirtualBase, 0,
+                  ForVirtualBase, CurrentVBaseOffset, true);
 
-    if (Path)
-      OverrideMethods(Path, MorallyVirtual, Offset, CurrentVBaseOffset);
+      if (Path)
+        OverrideMethods(Path, MorallyVirtual, Offset, CurrentVBaseOffset);
+    }
 
-    FinishGenerateVtable(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
-                         MorallyVirtual, Offset, ForVirtualBase,
-                         CurrentVBaseOffset, Path);
+    FinishGenerateVtable(RD, Layout, PrimaryBase, ForNPNVBases, WasPrimaryBase,
+                         PrimaryBaseWasVirtual, MorallyVirtual, Offset,
+                         ForVirtualBase, CurrentVBaseOffset, Path);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
@@ -668,8 +677,8 @@ public:
         int64_t CurrentVBaseOffset = BaseOffset;
         D1(printf("vtable %s virtual base %s\n",
                   MostDerivedClass->getNameAsCString(), Base->getNameAsCString()));
-        GenerateVtableForBase(Base, BaseOffset, true, true, CurrentVBaseOffset,
-                              Path);
+        GenerateVtableForBase(Base, BaseOffset, true, true, false,
+                              true, CurrentVBaseOffset, Path);
       }
       int64_t BaseOffset;
       if (i->isVirtual())
