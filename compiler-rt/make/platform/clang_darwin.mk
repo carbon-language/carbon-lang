@@ -22,6 +22,10 @@ UniversalArchs.armv6 := armv6
 
 CC := gcc
 
+# Forcibly strip off any -arch, as that totally breaks our universal support.
+override CC := $(subst -arch ,-arch_,$(CC))
+override CC := $(patsubst -arch_%,,$(CC))
+
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
