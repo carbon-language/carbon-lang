@@ -1394,6 +1394,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 /// \return true if this is a forbidden redeclaration
 static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
                                          Scope *S,
+                                         DeclContext *Owner,
                                          DeclarationName Name,
                                          SourceLocation NameLoc,
                                          unsigned diagnostic) {
@@ -1406,6 +1407,11 @@ static bool CheckAnonMemberRedeclaration(Sema &SemaRef,
 
   // Pick a representative declaration.
   NamedDecl *PrevDecl = R.getRepresentativeDecl()->getUnderlyingDecl();
+  if (PrevDecl && Owner->isRecord()) {
+    RecordDecl *Record = cast<RecordDecl>(Owner);
+    if (!SemaRef.isDeclInScope(PrevDecl, Record, S))
+      return false;
+  }
 
   SemaRef.Diag(NameLoc, diagnostic) << Name;
   SemaRef.Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
@@ -1440,7 +1446,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
                                FEnd = AnonRecord->field_end();
        F != FEnd; ++F) {
     if ((*F)->getDeclName()) {
-      if (CheckAnonMemberRedeclaration(*this, S, (*F)->getDeclName(),
+      if (CheckAnonMemberRedeclaration(*this, S, Owner, (*F)->getDeclName(),
                                        (*F)->getLocation(), diagKind)) {
         // C++ [class.union]p2:
         //   The names of the members of an anonymous union shall be
