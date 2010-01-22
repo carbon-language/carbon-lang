@@ -232,8 +232,8 @@ public:
     return llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
   }
 
-#define D1(x)
-//#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
+//#define D1(x)
+#define D1(X) do { if (getenv("DEBUG")) { X; } } while (0)
 
   void GenerateVBaseOffsets(const CXXRecordDecl *RD, uint64_t Offset,
                             bool updateVBIndex, Index_t current_vbindex) {
@@ -254,7 +254,7 @@ public:
         D1(printf("  vbase for %s at %d delta %d most derived %s\n",
                   Base->getNameAsCString(),
                   (int)-VCalls.size()-3, (int)BaseOffset,
-                  Class->getNameAsCString()));
+                  MostDerivedClass->getNameAsCString()));
       }
       // We also record offsets for non-virtual bases to closest enclosing
       // virtual base.  We do this so that we don't have to search
@@ -380,8 +380,9 @@ public:
     // entry.
     Methods.AddMethod(GD);
 
-    D1(printf("  vfn for %s at %d\n", MD->getNameAsString().c_str(),
-              (int)Index[GD]));
+    D1(printf("  vfn for %s at %d\n",
+              dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
+              666 /* (int)Index[GD] */));
 
     VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
@@ -392,7 +393,8 @@ public:
         idx = VCalls.size()+1;
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d\n",
-                  MD->getNameAsString().c_str(), (int)-VCalls.size()-3, 0));
+                  dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
+                  (int)-VCalls.size()-3, 0));
       }
     }
   }
@@ -463,7 +465,7 @@ public:
   void AddAddressPoints(const CXXRecordDecl *RD, uint64_t Offset,
                        Index_t AddressPoint) {
     D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
-              RD->getNameAsCString(), Class->getNameAsCString(),
+              RD->getNameAsCString(), MostDerivedClass->getNameAsCString(),
               LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
     subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
     AddressPoints[BaseSubobject(RD, Offset)] = AddressPoint;
@@ -480,7 +482,7 @@ public:
           BLayout.getVBaseClassOffset(RD) != Offset)
         break;
       D1(printf("XXX address point for %s in %s layout %s at offset %d is %d\n",
-                RD->getNameAsCString(), Class->getNameAsCString(),
+                RD->getNameAsCString(), MostDerivedClass->getNameAsCString(),
                 LayoutClass->getNameAsCString(), (int)Offset, (int)AddressPoint));
       subAddressPoints[std::make_pair(RD, Offset)] = AddressPoint;
       AddressPoints[BaseSubobject(RD, Offset)] = AddressPoint;
@@ -557,13 +559,13 @@ public:
     // vtables are composed from the chain of primaries.
     if (PrimaryBase && !PrimaryBaseWasVirtual) {
       D1(printf(" doing primaries for %s most derived %s\n",
-                RD->getNameAsCString(), Class->getNameAsCString()));
+                RD->getNameAsCString(), MostDerivedClass->getNameAsCString()));
       Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
                 updateVBIndex, current_vbindex, CurrentVBaseOffset);
     }
 
     D1(printf(" doing vcall entries for %s most derived %s\n",
-              RD->getNameAsCString(), Class->getNameAsCString()));
+              RD->getNameAsCString(), MostDerivedClass->getNameAsCString()));
 
     // And add the virtuals for the class to the primary vtable.
     AddMethods(RD, MorallyVirtual, Offset, CurrentVBaseOffset);
@@ -589,7 +591,7 @@ public:
       }
 
       D1(printf(" doing primaries for %s most derived %s\n",
-                RD->getNameAsCString(), Class->getNameAsCString()));
+                RD->getNameAsCString(), MostDerivedClass->getNameAsCString()));
       
       VBPrimaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset,
                   updateVBIndex, current_vbindex, PrimaryBaseWasVirtual,
@@ -597,7 +599,7 @@ public:
     }
 
     D1(printf(" doing vbase entries for %s most derived %s\n",
-              RD->getNameAsCString(), Class->getNameAsCString()));
+              RD->getNameAsCString(), MostDerivedClass->getNameAsCString()));
     GenerateVBaseOffsets(RD, Offset, updateVBIndex, current_vbindex);
 
     if (RDisVirtualBase || bottom) {
@@ -626,7 +628,7 @@ public:
 
     extra = 0;
     D1(printf("building entries for base %s most derived %s\n",
-              RD->getNameAsCString(), Class->getNameAsCString()));
+              RD->getNameAsCString(), MostDerivedClass->getNameAsCString()));
 
     if (ForVirtualBase)
       extra = VCalls.size();
@@ -665,7 +667,7 @@ public:
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         int64_t CurrentVBaseOffset = BaseOffset;
         D1(printf("vtable %s virtual base %s\n",
-                  Class->getNameAsCString(), Base->getNameAsCString()));
+                  MostDerivedClass->getNameAsCString(), Base->getNameAsCString()));
         GenerateVtableForBase(Base, BaseOffset, true, true, CurrentVBaseOffset,
                               Path);
       }
@@ -823,14 +825,14 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
         VCalls.push_back(0);
         D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
-                  (int)VCalls[idx-1], Class->getNameAsCString()));
+                  (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       } else {
         NonVirtualOffset[GD] = NonVirtualOffset[OGD];
         VCallOffset[GD] = VCallOffset[OGD];
         VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
         D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
-                  (int)VCalls[idx-1], Class->getNameAsCString()));
+                  (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       }
       int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
       int64_t VirtualAdjustment = 
