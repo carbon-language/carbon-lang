@@ -1650,6 +1650,72 @@ MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
 }  
 
 
+
+/// PrintParentLoopComment - Print comments about parent loops of this one.
+static void PrintParentLoopComment(raw_ostream &OS, const MachineLoop *Loop,
+                                   unsigned FunctionNumber) {
+  if (Loop == 0) return;
+  PrintParentLoopComment(OS, Loop->getParentLoop(), FunctionNumber);
+  OS.indent(Loop->getLoopDepth()*2)
+    << "Parent Loop BB" << FunctionNumber << "_"
+    << Loop->getHeader()->getNumber()
+    << " Depth=" << Loop->getLoopDepth() << '\n';
+}
+
+
+/// PrintChildLoopComment - Print comments about child loops within
+/// the loop for this basic block, with nesting.
+static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
+                                  unsigned FunctionNumber) {
+  // Add child loop information
+  for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
+    OS.indent((*CL)->getLoopDepth()*2)
+      << "Child Loop BB" << FunctionNumber << "_"
+      << (*CL)->getHeader()->getNumber() << " Depth " << (*CL)->getLoopDepth()
+      << '\n';
+    PrintChildLoopComment(OS, *CL, FunctionNumber);
+  }
+}
+
+/// EmitComments - Pretty-print comments for basic blocks.
+static void PrintBasicBlockLoopComments(const MachineBasicBlock &MBB,
+                                        const MachineLoopInfo *LI,
+                                        const AsmPrinter &AP) {
+  // Add loop depth information
+  const MachineLoop *Loop = LI->getLoopFor(&MBB);
+  if (Loop == 0) return;
+  
+  MachineBasicBlock *Header = Loop->getHeader();
+  assert(Header && "No header for loop");
+  
+  // If this block is not a loop header, just print out what is the loop header
+  // and return.
+  if (Header != &MBB) {
+    AP.OutStreamer.AddComment("  in Loop: Header=BB" +
+                              Twine(AP.getFunctionNumber())+"_" +
+                              Twine(Loop->getHeader()->getNumber())+
+                              " Depth="+Twine(Loop->getLoopDepth()));
+    return;
+  }
+  
+  // Otherwise, it is a loop header.  Print out information about child and
+  // parent loops.
+  raw_ostream &OS = AP.OutStreamer.GetCommentOS();
+  
+  PrintParentLoopComment(OS, Loop->getParentLoop(), AP.getFunctionNumber()); 
+  
+  OS << "=>";
+  OS.indent(Loop->getLoopDepth()*2-2);
+  
+  OS << "This ";
+  if (Loop->empty())
+    OS << "Inner ";
+  OS << "Loop Header: Depth=" + Twine(Loop->getLoopDepth()) << '\n';
+  
+  PrintChildLoopComment(OS, Loop, AP.getFunctionNumber());
+}
+
+
 /// EmitBasicBlockStart - This method prints the label for the specified
 /// MachineBasicBlock, an alignment (if present) and a comment describing
 /// it if appropriate.
@@ -1678,7 +1744,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
       
-      EmitComments(*MBB);
+      PrintBasicBlockLoopComments(*MBB, LI, *this);
       OutStreamer.AddBlankLine();
     }
   } else {
@@ -1686,7 +1752,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())
           OutStreamer.AddComment("%" + BB->getName());
-      EmitComments(*MBB);
+      PrintBasicBlockLoopComments(*MBB, LI, *this);
     }
 
     OutStreamer.EmitLabel(GetMBBSymbol(MBB->getNumber()));
@@ -1845,67 +1911,3 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   }
 }
 
-/// PrintParentLoopComment - Print comments about parent loops of this one.
-static void PrintParentLoopComment(raw_ostream &OS, const MachineLoop *Loop,
-                                   unsigned FunctionNumber) {
-  if (Loop == 0) return;
-  
-  PrintParentLoopComment(OS, Loop->getParentLoop(), FunctionNumber);
-  
-  OS.indent(Loop->getLoopDepth()*2)
-    << "Parent Loop BB" << FunctionNumber << "_"
-    << Loop->getHeader()->getNumber()
-    << " Depth=" << Loop->getLoopDepth() << '\n';
-}
-
-
-/// PrintChildLoopComment - Print comments about child loops within
-/// the loop for this basic block, with nesting.
-static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
-                                  unsigned FunctionNumber) {
-  // Add child loop information
-  for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
-    OS.indent((*CL)->getLoopDepth()*2)
-      << "Child Loop BB" << FunctionNumber << "_"
-      << (*CL)->getHeader()->getNumber() << " Depth " << (*CL)->getLoopDepth()
-      << '\n';
-    PrintChildLoopComment(OS, *CL, FunctionNumber);
-  }
-}
-
-/// EmitComments - Pretty-print comments for basic blocks
-void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const {
-  assert(VerboseAsm && "Shouldn't be called unless in verbose asm mode");
-  
-  // Add loop depth information
-  const MachineLoop *Loop = LI->getLoopFor(&MBB);
-  if (Loop == 0) return;
-
-  MachineBasicBlock *Header = Loop->getHeader();
-  assert(Header && "No header for loop");
-
-  // If this block is not a loop header, just print out what is the loop header
-  // and return.
-  if (Header != &MBB) {
-    OutStreamer.AddComment("  in Loop: Header=BB" + Twine(getFunctionNumber())+
-                           "_" + Twine(Loop->getHeader()->getNumber())+
-                           " Depth="+Twine(Loop->getLoopDepth()));
-    return;
-  }
-
-  // Otherwise, it is a loop header.  Print out information about child and
-  // parent loops.
-  raw_ostream &OS = OutStreamer.GetCommentOS();
-
-  PrintParentLoopComment(OS, Loop->getParentLoop(), getFunctionNumber()); 
-
-  OS << "=>";
-  OS.indent(Loop->getLoopDepth()*2-2);
-  
-  OS << "This ";
-  if (Loop->empty())
-    OS << "Inner ";
-  OS << "Loop Header: Depth=" + Twine(Loop->getLoopDepth()) << '\n';
-
-  PrintChildLoopComment(OS, Loop, getFunctionNumber());
-}
