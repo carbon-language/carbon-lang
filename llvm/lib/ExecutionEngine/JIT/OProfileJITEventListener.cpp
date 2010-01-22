@@ -18,10 +18,12 @@
 
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 #include "llvm/Function.h"
+#include "llvm/Metadata.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Errno.h"
 #include "llvm/Config/config.h"
@@ -70,15 +72,15 @@ OProfileJITEventListener::~OProfileJITEventListener() {
 
 class FilenameCache {
   // Holds the filename of each Scope, so that we can pass a null-terminated
-  // string into oprofile.
-  DenseMap<MDNode*, std::string> Filenames;
+  // string into oprofile.  Use an AssertingVH rather than a ValueMap because we
+  // shouldn't be modifying any MDNodes while this map is alive.
+  DenseMap<AssertingVH<MDNode>, std::string> Filenames;
 
  public:
-  const char *getFilename(MDNode *Scope) {
-    std::string &Filename = Filenames[Scope];
+  const char *getFilename(DIScope Scope) {
+    std::string &Filename = Filenames[Scope.getNode()];
     if (Filename.empty()) {
-      DIScope S(Scope);
-      Filename = S.getFilename();
+      Filename = Scope.getFilename();
     }
     return Filename.c_str();
   }
@@ -89,9 +91,9 @@ static debug_line_info LineStartToOProfileFormat(
     uintptr_t Address, DebugLoc Loc) {
   debug_line_info Result;
   Result.vma = Address;
-  const DebugLocTuple &tuple = MF.getDebugLocTuple(Loc);
-  Result.lineno = tuple.Line;
-  Result.filename = Filenames.getFilename(tuple.Scope);
+  DILocation DILoc = MF.getDILocation(Loc);
+  Result.lineno = DILoc.getLineNumber();
+  Result.filename = Filenames.getFilename(DILoc.getScope());
   DEBUG(dbgs() << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
                << Result.filename << ":" << Result.lineno << "\n");
   return Result;
