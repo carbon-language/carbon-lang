@@ -19,6 +19,7 @@
   on Clang for developers who are new to the Clang and/or LLVM
   codebases.</p>
     <ul>
+      <li><a href="#style">Coding Standards</a></li>
       <li><a href="#docs">Developer Documentation</a></li>
       <li><a href="#debugging">Debugging</a></li>
       <li><a href="#testing">Testing</a></li>
@@ -30,6 +31,27 @@
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
     
+  <!--=====================================================================-->
+  <h2 id="docs">Coding Standards</h2>
+  <!--=====================================================================-->
+  
+  <p>Clang follows the
+  LLVM <a href="http://llvm.org/docs/CodingStandards.html">Coding
+  Standards</a>. When submitting patches, please take care to follow these standards
+  and to match the style of the code to that present in Clang (for example, in
+  terms of indentation, bracing, and statement spacing).</p>
+
+  <p>Clang has a few additional coding standards:</p>
+  <ul>
+    <li><i>cstdio is forbidden</i>: library code should not output diagnostics
+      or other information using <tt>cstdio</tt>; debugging routines should
+      use <tt>llvm::errs()</tt>. Other uses of <tt>cstdio</tt> impose behavior
+      upon clients and block integrating Clang as a library. Libraries should
+      support <tt>raw_ostream</tt> based interfaces for textual
+      output. See <a href="http://llvm.org/docs/CodingStandards.html#ll_raw_ostream">Coding
+      Standards</a>.</li>
+  </ul>
+
   <!--=====================================================================-->
   <h2 id="docs">Developer Documentation</h2>
   <!--=====================================================================-->
