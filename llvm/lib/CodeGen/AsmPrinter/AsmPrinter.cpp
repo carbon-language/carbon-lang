@@ -50,6 +50,15 @@ static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
 
+static bool getVerboseAsm(bool VDef) {
+  switch (AsmVerbose) {
+  default:
+  case cl::BOU_UNSET: return VDef;
+  case cl::BOU_TRUE:  return true;
+  case cl::BOU_FALSE: return false;
+  }      
+}
+
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const MCAsmInfo *T, bool VDef)
@@ -59,15 +68,12 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     OutContext(*new MCContext()),
     // FIXME: Pass instprinter to streamer.
     OutStreamer(*createAsmStreamer(OutContext, O, *T,
-                                   TM.getTargetData()->isLittleEndian(), 0)),
+                                   TM.getTargetData()->isLittleEndian(),
+                                   getVerboseAsm(VDef), 0)),
 
     LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
   DW = 0; MMI = 0;
-  switch (AsmVerbose) {
-  case cl::BOU_UNSET: VerboseAsm = VDef;  break;
-  case cl::BOU_TRUE:  VerboseAsm = true;  break;
-  case cl::BOU_FALSE: VerboseAsm = false; break;
-  }
+  VerboseAsm = getVerboseAsm(VDef);
 }
 
 AsmPrinter::~AsmPrinter() {

@@ -236,6 +236,7 @@ namespace llvm {
   /// assembler.
   MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS,
                                 const MCAsmInfo &MAI, bool isLittleEndian,
+                                bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0);
 

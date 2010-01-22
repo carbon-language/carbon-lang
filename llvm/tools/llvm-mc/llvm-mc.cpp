@@ -266,7 +266,7 @@ static int AssembleInput(const char *ProgName) {
       CE.reset(TheTarget->createCodeEmitter(*TM));
     Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
                                 TM->getTargetData()->isLittleEndian(),
-                                IP.get(), CE.get()));
+                                /*asmverbose*/true, IP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));

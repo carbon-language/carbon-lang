@@ -28,15 +28,15 @@ namespace {
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const MCAsmInfo &MAI;
-  bool IsLittleEndian;
+  bool IsLittleEndian, IsVerboseAsm;
   MCInstPrinter *InstPrinter;
   MCCodeEmitter *Emitter;
 public:
-  MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
-                bool isLittleEndian, MCInstPrinter *_Printer,
-                MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), OS(_OS), MAI(tai), IsLittleEndian(isLittleEndian),
-      InstPrinter(_Printer), Emitter(_Emitter) {}
+  MCAsmStreamer(MCContext &Context, raw_ostream &os, const MCAsmInfo &mai,
+                bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
+                MCCodeEmitter *emitter)
+    : MCStreamer(Context), OS(os), MAI(mai), IsLittleEndian(isLittleEndian),
+      IsVerboseAsm(isVerboseAsm), InstPrinter(printer), Emitter(emitter) {}
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -351,7 +351,8 @@ void MCAsmStreamer::Finish() {
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
                                     const MCAsmInfo &MAI, bool isLittleEndian,
-                                    MCInstPrinter *IP,
+                                    bool isVerboseAsm, MCInstPrinter *IP,
                                     MCCodeEmitter *CE) {
-  return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, IP, CE);
+  return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, isVerboseAsm,
+                           IP, CE);
 }
