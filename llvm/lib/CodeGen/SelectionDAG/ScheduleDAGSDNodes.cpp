@@ -24,16 +24,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(LoadsClustered, "Number of loads clustered together");
-
-static cl::opt<bool>
-ClusterLoads("cluster-loads", cl::Hidden,
-           cl::desc("Schedule nearby loads together and in order"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
   : ScheduleDAG(mf) {
@@ -360,8 +355,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
 /// flagged together nodes with a single SUnit.
 void ScheduleDAGSDNodes::BuildSchedGraph(AliasAnalysis *AA) {
   // Cluster loads from "near" addresses into combined SUnits.
-  if (ClusterLoads)
-    ClusterNeighboringLoads();
+  ClusterNeighboringLoads();
   // Populate the SUnits array.
   BuildSchedUnits();
   // Compute all the scheduling dependencies between nodes.
