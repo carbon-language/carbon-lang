@@ -1845,17 +1845,30 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   }
 }
 
+/// PrintParentLoopComment - Print comments about parent loops of this one.
+static void PrintParentLoopComment(raw_ostream &OS, const MachineLoop *Loop,
+                                   unsigned FunctionNumber) {
+  if (Loop == 0) return;
+  
+  PrintParentLoopComment(OS, Loop->getParentLoop(), FunctionNumber);
+  
+  OS.indent(Loop->getLoopDepth()*2)
+    << "Parent Loop BB" << FunctionNumber << "_"
+    << Loop->getHeader()->getNumber()
+    << " Depth=" << Loop->getLoopDepth() << '\n';
+}
+
+
 /// PrintChildLoopComment - Print comments about child loops within
 /// the loop for this basic block, with nesting.
 static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
                                   unsigned FunctionNumber) {
   // Add child loop information
   for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
-    MachineBasicBlock *Header = (*CL)->getHeader();
-    assert(Header && "No header for loop");
-    OS.indent(((*CL)->getLoopDepth()-1)*2)
+    OS.indent((*CL)->getLoopDepth()*2)
       << "Child Loop BB" << FunctionNumber << "_"
-      << Header->getNumber() << " Depth " << (*CL)->getLoopDepth() << '\n';
+      << (*CL)->getHeader()->getNumber() << " Depth " << (*CL)->getLoopDepth()
+      << '\n';
     PrintChildLoopComment(OS, *CL, FunctionNumber);
   }
 }
@@ -1884,20 +1897,15 @@ void AsmPrinter::EmitComments(const MachineBasicBlock &MBB) const {
   // parent loops.
   raw_ostream &OS = OutStreamer.GetCommentOS();
 
+  PrintParentLoopComment(OS, Loop->getParentLoop(), getFunctionNumber()); 
+
+  OS << "=>";
+  OS.indent(Loop->getLoopDepth()*2-2);
+  
+  OS << "This ";
   if (Loop->empty())
     OS << "Inner ";
   OS << "Loop Header: Depth=" + Twine(Loop->getLoopDepth()) << '\n';
 
   PrintChildLoopComment(OS, Loop, getFunctionNumber());
-
-  // Add parent loop information.
-  for (const MachineLoop *CurLoop = Loop->getParentLoop(); CurLoop;
-       CurLoop = CurLoop->getParentLoop()) {
-    MachineBasicBlock *Header = CurLoop->getHeader();
-    assert(Header && "No header for loop");
-
-    OS.indent(CurLoop->getLoopDepth()*2)
-      << "Inside Loop BB" << getFunctionNumber() << "_"
-      << Header->getNumber() << " Depth " << CurLoop->getLoopDepth() << '\n';
-  }
 }
