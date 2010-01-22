@@ -29,7 +29,6 @@ namespace llvm {
   class Instruction;
   class Constant;
   class GlobalValue;
-  class MetadataBase;
   class MDString;
   class MDNode;
 

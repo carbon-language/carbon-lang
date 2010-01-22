@@ -31,26 +31,10 @@ template<typename ValueSubClass, typename ItemParentClass>
   
   
 //===----------------------------------------------------------------------===//
-// MetadataBase  - A base class for MDNode and MDString.
-class MetadataBase : public Value {
-protected:
-  MetadataBase(const Type *Ty, unsigned scid)
-    : Value(Ty, scid) {}
-
-public:
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MetadataBase *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueID() == MDStringVal || V->getValueID() == MDNodeVal;
-  }
-};
-
-//===----------------------------------------------------------------------===//
 /// MDString - a single uniqued string.
 /// These are used to efficiently contain a byte sequence for metadata.
 /// MDString is always unnamd.
-class MDString : public MetadataBase {
+class MDString : public Value {
   MDString(const MDString &);            // DO NOT IMPLEMENT
 
   StringRef Str;
@@ -87,7 +71,7 @@ class MDNodeOperand;
   
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
-class MDNode : public MetadataBase, public FoldingSetNode {
+class MDNode : public Value, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
   friend class MDNodeOperand;

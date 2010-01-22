@@ -28,7 +28,7 @@ using namespace llvm;
 //
 
 MDString::MDString(LLVMContext &C, StringRef S)
-  : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
+  : Value(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
 
 MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   LLVMContextImpl *pImpl = Context.pImpl;
@@ -93,7 +93,7 @@ static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
 
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
                bool isFunctionLocal)
-: MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
+: Value(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = NumVals;
 
   if (isFunctionLocal)

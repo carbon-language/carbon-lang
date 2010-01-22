@@ -1910,8 +1910,7 @@ void DwarfDebug::collectVariableInfo() {
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
-    MetadataBase *MB = VI->first;
-    MDNode *Var = dyn_cast_or_null<MDNode>(MB);
+    MDNode *Var = VI->first;
     if (!Var) continue;
     DIVariable DV (Var);
     std::pair< unsigned, MDNode *> VP = VI->second;

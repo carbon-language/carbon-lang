@@ -392,7 +392,7 @@ static Value *RemapOperand(const Value *In,
       assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
       llvm_unreachable("Unknown type of derived type constant value!");
     }
-  } else if (isa<MetadataBase>(In)) {
+  } else if (isa<MDNode>(In) ||  isa<MDString>(In)) {
     Result = const_cast<Value*>(In);
   } else if (isa<InlineAsm>(In)) {
     Result = const_cast<Value*>(In);

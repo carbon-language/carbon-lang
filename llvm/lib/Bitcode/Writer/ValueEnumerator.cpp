@@ -140,7 +140,7 @@ void ValueEnumerator::setInstructionID(const Instruction *I) {
 }
 
 unsigned ValueEnumerator::getValueID(const Value *V) const {
-  if (isa<MetadataBase>(V)) {
+  if (isa<MDNode>(V) || isa<MDString>(V)) {
     ValueMapType::const_iterator I = MDValueMap.find(V);
     assert(I != MDValueMap.end() && "Value not in slotcalculator!");
     return I->second-1;
@@ -229,7 +229,8 @@ void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
   MDValueMap[MD] = Values.size();
 }
 
-void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
+void ValueEnumerator::EnumerateMetadata(const Value *MD) {
+  assert(isa<MDNode>(MD) || isa<MDString>(MD) && "Invalid metadata kind");
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[MD];
   if (MDValueID) {
@@ -262,8 +263,8 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
 
 void ValueEnumerator::EnumerateValue(const Value *V) {
   assert(!V->getType()->isVoidTy() && "Can't insert void values!");
-  if (const MetadataBase *MB = dyn_cast<MetadataBase>(V))
-    return EnumerateMetadata(MB);
+  if (isa<MDNode>(V) || isa<MDString>(V))
+    return EnumerateMetadata(V);
   else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(V))
     return EnumerateNamedMDNode(NMD);
 

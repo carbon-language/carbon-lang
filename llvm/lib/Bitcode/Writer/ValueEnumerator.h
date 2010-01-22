@@ -127,7 +127,7 @@ public:
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
     
-  void EnumerateMetadata(const MetadataBase *MD);
+  void EnumerateMetadata(const Value *MD);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
