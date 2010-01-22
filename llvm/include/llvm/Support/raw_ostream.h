@@ -456,8 +456,10 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream();
 
-  /// clear - Flush the stream and clear the underlying vector.
-  void clear();
+  /// resync - This is called when the SmallVector we're appending to is changed
+  /// outside of the raw_svector_ostream's control.  It is only safe to do this
+  /// if the raw_svector_ostream has previously been flushed.
+  void resync();
   
   /// str - Flushes the stream contents to the target vector and return a
   /// StringRef for the vector contents.
