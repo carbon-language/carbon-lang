@@ -146,7 +146,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   unsigned LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
   unsigned FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
 
-  char Augmentation[5] = { 0 };
+  char Augmentation[6] = { 0 };
   unsigned AugmentationSize = 0;
   char *APtr = Augmentation + 1;
 
@@ -171,7 +171,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   if (APtr != Augmentation + 1)
     Augmentation[0] = 'z';
 
-  Asm->EmitString(Augmentation);
+  Asm->OutStreamer.EmitBytes(StringRef(Augmentation, strlen(Augmentation)+1),0);
   EOL("CIE Augmentation");
 
   // Round out reader.

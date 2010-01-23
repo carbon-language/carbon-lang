@@ -242,7 +242,9 @@ void DIEInteger::print(raw_ostream &O) {
 /// EmitValue - Emit string value.
 ///
 void DIEString::EmitValue(DwarfPrinter *D, unsigned Form) const {
-  D->getAsm()->EmitString(Str);
+  D->getAsm()->OutStreamer.EmitBytes(Str, /*addrspace*/0);
+  // Emit nul terminator.
+  D->getAsm()->OutStreamer.EmitIntValue(0, 1, /*addrspace*/0);
 }
 
 #ifndef NDEBUG

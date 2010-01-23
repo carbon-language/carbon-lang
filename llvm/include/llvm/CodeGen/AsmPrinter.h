@@ -265,12 +265,6 @@ namespace llvm {
     ///
     void EmitInt64(uint64_t Value) const;
 
-    /// EmitString - Emit a string with quotes and a null terminator.
-    /// Special characters are emitted properly.
-    /// @verbatim (Eg. '\t') @endverbatim
-    void EmitString(const StringRef String) const;
-    void EmitString(const char *String, unsigned Size) const;
-
     /// EmitFile - Emit a .file directive.
     void EmitFile(unsigned Number, StringRef Name) const;
 

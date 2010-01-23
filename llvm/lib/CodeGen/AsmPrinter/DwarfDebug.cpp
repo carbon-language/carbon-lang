@@ -344,7 +344,7 @@ void DwarfDebug::addSInt(DIE *Die, unsigned Attribute,
 /// addString - Add a string attribute data and value. DIEString only
 /// keeps string reference. 
 void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
-                           const StringRef String) {
+                           StringRef String) {
   DIEValue *Value = new DIEString(String);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
@@ -2526,8 +2526,9 @@ void DwarfDebug::emitDebugLines() {
 
   // Emit directories.
   for (unsigned DI = 1, DE = getNumSourceDirectories()+1; DI != DE; ++DI) {
-    Asm->EmitString(getSourceDirectoryName(DI));
-    EOL("Directory");
+    const std::string &Dir = getSourceDirectoryName(DI);
+    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("Directory");
+    Asm->OutStreamer.EmitBytes(StringRef(Dir.c_str(), Dir.size()+1), 0);
   }
 
   Asm->EmitInt8(0); EOL("End of directories");
@@ -2536,8 +2537,10 @@ void DwarfDebug::emitDebugLines() {
   for (unsigned SI = 1, SE = getNumSourceIds()+1; SI != SE; ++SI) {
     // Remember source id starts at 1.
     std::pair<unsigned, unsigned> Id = getSourceDirectoryAndFileIds(SI);
-    Asm->EmitString(getSourceFileName(Id.second));
-    EOL("Source");
+    const std::string &FN = getSourceFileName(Id.second);
+    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("Source");
+    Asm->OutStreamer.EmitBytes(StringRef(FN.c_str(), FN.size()+1), 0);
+    
     EmitULEB128(Id.first, "Directory #");
     EmitULEB128(0, "Mod date");
     EmitULEB128(0, "File size");
@@ -2661,7 +2664,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   EOL("CIE Identifier Tag");
   Asm->EmitInt8(dwarf::DW_CIE_VERSION);
   EOL("CIE Version");
-  Asm->EmitString("");
+  Asm->OutStreamer.EmitIntValue(0, 1, /*addrspace*/0); // nul terminator.
   EOL("CIE Augmentation");
   EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
@@ -2743,7 +2746,10 @@ void DwarfDebug::emitDebugPubNames() {
     DIE * Entity = GI->second;
 
     Asm->EmitInt32(Entity->getOffset()); EOL("DIE offset");
-    Asm->EmitString(Name, strlen(Name)); EOL("External Name");
+    
+    if (Asm->VerboseAsm)
+      Asm->OutStreamer.AddComment("External Name");
+    Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
   }
 
   Asm->EmitInt32(0); EOL("End Mark");
@@ -2778,7 +2784,9 @@ void DwarfDebug::emitDebugPubTypes() {
     DIE * Entity = GI->second;
 
     Asm->EmitInt32(Entity->getOffset()); EOL("DIE offset");
-    Asm->EmitString(Name, strlen(Name)); EOL("External Name");
+    
+    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("External Name");
+    Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)), 0);
   }
 
   Asm->EmitInt32(0); EOL("End Mark");
@@ -2803,8 +2811,7 @@ void DwarfDebug::emitDebugStr() {
 
       // Emit the string itself.
       const std::string &String = StringPool[StringID];
-      Asm->EmitString(String);
-      Asm->O << '\n';
+      Asm->OutStreamer.EmitBytes(StringRef(String.c_str(), String.size()+1), 0);
     }
 
     Asm->O << '\n';
@@ -2920,11 +2927,12 @@ void DwarfDebug::emitDebugInlineInfo() {
     StringRef LName = SP.getLinkageName();
     StringRef Name = SP.getName();
 
-    if (LName.empty())
-      Asm->EmitString(Name);
-    else 
+    if (LName.empty()) {
+      Asm->OutStreamer.EmitBytes(Name, 0);
+      Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
+    } else 
       EmitSectionOffset("string", "section_str",
-                        StringPool.idFor(getRealLinkageName(LName)), false, true);
+                      StringPool.idFor(getRealLinkageName(LName)), false, true);
 
     EOL("MIPS linkage name");
     EmitSectionOffset("string", "section_str",

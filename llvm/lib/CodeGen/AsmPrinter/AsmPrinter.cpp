@@ -715,29 +715,6 @@ static void printStringChar(formatted_raw_ostream &O, unsigned char C) {
   }
 }
 
-/// EmitString - Emit a string with quotes and a null terminator.
-/// Special characters are emitted properly.
-/// \literal (Eg. '\t') \endliteral
-void AsmPrinter::EmitString(const StringRef String) const {
-  EmitString(String.data(), String.size());
-}
-
-void AsmPrinter::EmitString(const char *String, unsigned Size) const {
-  const char* AscizDirective = MAI->getAscizDirective();
-  if (AscizDirective)
-    O << AscizDirective;
-  else
-    O << MAI->getAsciiDirective();
-  O << '\"';
-  for (unsigned i = 0; i < Size; ++i)
-    printStringChar(O, String[i]);
-  if (AscizDirective)
-    O << '\"';
-  else
-    O << "\\0\"";
-}
-
-
 /// EmitFile - Emit a .file directive.
 void AsmPrinter::EmitFile(unsigned Number, StringRef Name) const {
   O << "\t.file\t" << Number << " \"";
