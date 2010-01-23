@@ -465,6 +465,10 @@ struct InstructionInfo {
     if (Operands.size() != RHS.Operands.size())
       return false;
 
+    // Otherwise, make sure the ordering of the two instructions is unambiguous
+    // by checking that either (a) a token or operand kind discriminates them,
+    // or (b) the ordering among equivalent kinds is consistent.
+
     // Tokens and operand kinds are unambiguous (assuming a correct target
     // specific parser).
     for (unsigned i = 0, e = Operands.size(); i != e; ++i)
