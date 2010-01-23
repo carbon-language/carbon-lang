@@ -221,35 +221,10 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   argv.push_back("-Xclang");
   argv.push_back("-code-completion-macros");
   
+  // Remap any unsaved files to temporary files.
   std::vector<std::string> RemapArgs;
-  for (unsigned i = 0; i != num_unsaved_files; ++i) {
-    char tmpFile[L_tmpnam];
-    char *tmpFileName = tmpnam(tmpFile);
-
-    // Write the contents of this unsaved file into the temporary file.
-    llvm::sys::Path SavedFile(tmpFileName);
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream OS(SavedFile.c_str(), ErrorInfo);
-    if (!ErrorInfo.empty())
-      continue;
-    
-    OS.write(unsaved_files[i].Contents, unsaved_files[i].Length);
-    OS.close();
-    if (OS.has_error()) {
-      SavedFile.eraseFromDisk();
-      continue;
-    }
-
-    // Remap the file.
-    std::string RemapArg = unsaved_files[i].Filename;
-    RemapArg += ';';
-    RemapArg += tmpFileName;
-    RemapArgs.push_back("-Xclang");
-    RemapArgs.push_back("-remap-file");
-    RemapArgs.push_back("-Xclang");
-    RemapArgs.push_back(RemapArg);
-    TemporaryFiles.push_back(SavedFile);
-  }
+  if (RemapFiles(num_unsaved_files, unsaved_files, RemapArgs, TemporaryFiles))
+    return 0;
 
   // The pointers into the elements of RemapArgs are stable because we
   // won't be adding anything to RemapArgs after this point.

@@ -21,6 +21,11 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <utility>
+
+namespace llvm {
+  class MemoryBuffer;
+}
 
 namespace clang {
 class ASTContext;
@@ -111,6 +116,10 @@ public:
     return TopLevelDecls;
   }
 
+  /// \brief A mapping from a file name to the memory buffer that stores the
+  /// remapped contents of that file.
+  typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
+  
   /// \brief Create a ASTUnit from a PCH file.
   ///
   /// \param Filename - The PCH file to load.
@@ -122,7 +131,9 @@ public:
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls = false,
-                                  bool UseBumpAllocator = false);
+                                  bool UseBumpAllocator = false,
+                                  RemappedFile *RemappedFiles = 0,
+                                  unsigned NumRemappedFiles = 0);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
@@ -158,7 +169,9 @@ public:
                                       Diagnostic &Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
-                                      bool UseBumpAllocator = false);
+                                      bool UseBumpAllocator = false,
+                                      RemappedFile *RemappedFiles = 0,
+                                      unsigned NumRemappedFiles = 0);
 };
 
 } // namespace clang

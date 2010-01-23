@@ -39,6 +39,99 @@ static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
   return 1;
 }
 
+void free_remapped_files(struct CXUnsavedFile *unsaved_files,
+                         int num_unsaved_files) {
+  int i;
+  for (i = 0; i != num_unsaved_files; ++i) {
+    free((char *)unsaved_files[i].Filename);
+    free((char *)unsaved_files[i].Contents);
+  }
+}
+
+int parse_remapped_files(int argc, const char **argv, int start_arg,
+                         struct CXUnsavedFile **unsaved_files,
+                         int *num_unsaved_files) {
+  int i;
+  int arg;
+  int prefix_len = strlen("-remap-file=");
+  *unsaved_files = 0;
+  *num_unsaved_files = 0;
+  
+  /* Count the number of remapped files. */
+  for (arg = start_arg; arg < argc; ++arg) {
+    if (strncmp(argv[arg], "-remap-file=", prefix_len))
+      break;
+    
+    ++*num_unsaved_files;
+  }
+  
+  if (*num_unsaved_files == 0)
+    return 0;
+  
+  *unsaved_files
+  = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) * 
+                                   *num_unsaved_files);
+  for (arg = start_arg, i = 0; i != *num_unsaved_files; ++i, ++arg) {
+    struct CXUnsavedFile *unsaved = *unsaved_files + i;
+    const char *arg_string = argv[arg] + prefix_len;
+    int filename_len;
+    char *filename;
+    char *contents;
+    FILE *to_file;
+    const char *semi = strchr(arg_string, ';');
+    if (!semi) {
+      fprintf(stderr, 
+              "error: -remap-file=from;to argument is missing semicolon\n");
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
+    
+    /* Open the file that we're remapping to. */
+    to_file = fopen(semi + 1, "r");
+    if (!to_file) {
+      fprintf(stderr, "error: cannot open file %s that we are remapping to\n",
+              semi + 1);
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
+    
+    /* Determine the length of the file we're remapping to. */
+    fseek(to_file, 0, SEEK_END);
+    unsaved->Length = ftell(to_file);
+    fseek(to_file, 0, SEEK_SET);
+    
+    /* Read the contents of the file we're remapping to. */
+    contents = (char *)malloc(unsaved->Length + 1);
+    if (fread(contents, 1, unsaved->Length, to_file) != unsaved->Length) {
+      fprintf(stderr, "error: unexpected %s reading 'to' file %s\n",
+              (feof(to_file) ? "EOF" : "error"), semi + 1);
+      fclose(to_file);
+      free_remapped_files(*unsaved_files, i);
+      *unsaved_files = 0;
+      *num_unsaved_files = 0;
+      return -1;
+    }
+    contents[unsaved->Length] = 0;
+    unsaved->Contents = contents;
+    
+    /* Close the file. */
+    fclose(to_file);
+    
+    /* Copy the file name that we're remapping from. */
+    filename_len = semi - arg_string;
+    filename = (char *)malloc(filename_len + 1);
+    memcpy(filename, arg_string, filename_len);
+    filename[filename_len] = 0;
+    unsaved->Filename = filename;
+  }
+  
+  return 0;
+}
+
 /******************************************************************************/
 /* Pretty-printing.                                                           */
 /******************************************************************************/
@@ -258,6 +351,10 @@ int perform_test_load_source(int argc, const char **argv, const char *filter,
     getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
   CXTranslationUnit TU;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  int result;
+  
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
                           !strcmp(filter, "local") ? 1 : 0,
                           /* displayDiagnostics */ 1);
@@ -265,13 +362,22 @@ int perform_test_load_source(int argc, const char **argv, const char *filter,
   if (UseExternalASTs && strlen(UseExternalASTs))
     clang_setUseExternalASTGeneration(Idx, 1);
 
-  TU = clang_createTranslationUnitFromSourceFile(Idx, 0, argc, argv);
+  if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files))
+    return -1;
+
+  TU = clang_createTranslationUnitFromSourceFile(Idx, 0, 
+                                                 argc - num_unsaved_files, 
+                                                 argv + num_unsaved_files,
+                                                 num_unsaved_files,
+                                                 unsaved_files);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     return 1;
   }
 
-  return perform_test_load(Idx, TU, filter, NULL, Visitor);
+  result = perform_test_load(Idx, TU, filter, NULL, Visitor);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  return result;
 }
 
 /******************************************************************************/
@@ -477,99 +583,6 @@ void print_completion_result(CXCompletionResult *completion_result,
   fprintf(file, "\n");
 }
 
-void free_remapped_files(struct CXUnsavedFile *unsaved_files,
-                         int num_unsaved_files) {
-  int i;
-  for (i = 0; i != num_unsaved_files; ++i) {
-    free((char *)unsaved_files[i].Filename);
-    free((char *)unsaved_files[i].Contents);
-  }
-}
-
-int parse_remapped_files(int argc, const char **argv, int start_arg,
-                         struct CXUnsavedFile **unsaved_files,
-                          int *num_unsaved_files) {
-  int i;
-  int arg;
-  int prefix_len = strlen("-remap-file=");
-  *unsaved_files = 0;
-  *num_unsaved_files = 0;
-
-  /* Count the number of remapped files. */
-  for (arg = start_arg; arg < argc; ++arg) {
-    if (strncmp(argv[arg], "-remap-file=", prefix_len))
-      break;
-
-    ++*num_unsaved_files;
-  }
-
-  if (*num_unsaved_files == 0)
-    return 0;
-
-  *unsaved_files
-    = (struct CXUnsavedFile *)malloc(sizeof(struct CXUnsavedFile) * 
-                                     *num_unsaved_files);
-  for (arg = start_arg, i = 0; i != *num_unsaved_files; ++i, ++arg) {
-    struct CXUnsavedFile *unsaved = *unsaved_files + i;
-    const char *arg_string = argv[arg] + prefix_len;
-    int filename_len;
-    char *filename;
-    char *contents;
-    FILE *to_file;
-    const char *semi = strchr(arg_string, ';');
-    if (!semi) {
-      fprintf(stderr, 
-              "error: -remap-file=from;to argument is missing semicolon\n");
-      free_remapped_files(*unsaved_files, i);
-      *unsaved_files = 0;
-      *num_unsaved_files = 0;
-      return -1;
-    }
-
-    /* Open the file that we're remapping to. */
-    to_file = fopen(semi + 1, "r");
-    if (!to_file) {
-      fprintf(stderr, "error: cannot open file %s that we are remapping to\n",
-              semi + 1);
-      free_remapped_files(*unsaved_files, i);
-      *unsaved_files = 0;
-      *num_unsaved_files = 0;
-      return -1;
-    }
-
-    /* Determine the length of the file we're remapping to. */
-    fseek(to_file, 0, SEEK_END);
-    unsaved->Length = ftell(to_file);
-    fseek(to_file, 0, SEEK_SET);
-    
-    /* Read the contents of the file we're remapping to. */
-    contents = (char *)malloc(unsaved->Length + 1);
-    if (fread(contents, 1, unsaved->Length, to_file) != unsaved->Length) {
-      fprintf(stderr, "error: unexpected %s reading 'to' file %s\n",
-              (feof(to_file) ? "EOF" : "error"), semi + 1);
-      fclose(to_file);
-      free_remapped_files(*unsaved_files, i);
-      *unsaved_files = 0;
-      *num_unsaved_files = 0;
-      return -1;
-    }
-    contents[unsaved->Length] = 0;
-    unsaved->Contents = contents;
-
-    /* Close the file. */
-    fclose(to_file);
-    
-    /* Copy the file name that we're remapping from. */
-    filename_len = semi - arg_string;
-    filename = (char *)malloc(filename_len + 1);
-    memcpy(filename, arg_string, filename_len);
-    filename[filename_len] = 0;
-    unsaved->Filename = filename;
-  }
-
-  return 0;
-}
-
 int perform_code_completion(int argc, const char **argv) {
   const char *input = argv[1];
   char *filename = 0;
@@ -624,7 +637,7 @@ int inspect_cursor_at(int argc, const char **argv) {
   CXCursor Cursor;
   CursorSourceLocation *Locations = 0;
   unsigned NumLocations = 0, Loc;
-  
+
   /* Count the number of locations. */ 
   while (strstr(argv[NumLocations+1], "-cursor-at=") == argv[NumLocations+1])
     ++NumLocations;
@@ -645,15 +658,12 @@ int inspect_cursor_at(int argc, const char **argv) {
                            &num_unsaved_files))
     return -1;
   
-  if (num_unsaved_files > 0) {
-    fprintf(stderr, "cannot remap files when looking for a cursor\n");
-    return -1;
-  }
-  
   CIdx = clang_createIndex(0, 1);
   TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
                                   argc - num_unsaved_files - 2 - NumLocations,
-                                   argv + num_unsaved_files + 1 + NumLocations);
+                                   argv + num_unsaved_files + 1 + NumLocations,
+                                                 num_unsaved_files,
+                                                 unsaved_files);
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     return -1;

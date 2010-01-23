@@ -873,10 +873,22 @@ CXTranslationUnit
 clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           const char *source_filename,
                                           int num_command_line_args,
-                                          const char **command_line_args) {
+                                          const char **command_line_args,
+                                          unsigned num_unsaved_files,
+                                          struct CXUnsavedFile *unsaved_files) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
+  llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
+  for (unsigned I = 0; I != num_unsaved_files; ++I) {
+    const llvm::MemoryBuffer *Buffer 
+    = llvm::MemoryBuffer::getMemBuffer(unsaved_files[I].Contents,
+                                       unsaved_files[I].Contents + unsaved_files[I].Length,
+                                       unsaved_files[I].Filename);
+    RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
+                                           Buffer));
+  }
+    
   if (!CXXIdx->getUseExternalASTGeneration()) {
     llvm::SmallVector<const char *, 16> Args;
 
@@ -899,7 +911,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    CXXIdx->getDiags(),
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
-                                   /* UseBumpAllocator = */ true));
+                                   /* UseBumpAllocator = */ true,
+                                   RemappedFiles.data(),
+                                   RemappedFiles.size()));
     
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
@@ -930,6 +944,17 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
 
+  // Remap any unsaved files to temporary files.
+  std::vector<llvm::sys::Path> TemporaryFiles;
+  std::vector<std::string> RemapArgs;
+  if (RemapFiles(num_unsaved_files, unsaved_files, RemapArgs, TemporaryFiles))
+    return 0;
+  
+  // The pointers into the elements of RemapArgs are stable because we
+  // won't be adding anything to RemapArgs after this point.
+  for (unsigned i = 0, e = RemapArgs.size(); i != e; ++i)
+    argv.push_back(RemapArgs[i].c_str());
+  
   // Process the compiler options, stripping off '-o', '-c', '-fsyntax-only'.
   for (int i = 0; i < num_command_line_args; ++i)
     if (const char *arg = command_line_args[i]) {
@@ -970,11 +995,17 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     llvm::errs() << '\n';
   }
 
-  // Finally, we create the translation unit from the ast file.
-  ASTUnit *ATU = static_cast<ASTUnit *>(
-    clang_createTranslationUnit(CIdx, astTmpFile));
+  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, CXXIdx->getDiags(),
+                                          CXXIdx->getOnlyLocalDecls(),
+                                          /* UseBumpAllocator = */ true,
+                                          RemappedFiles.data(),
+                                          RemappedFiles.size());
   if (ATU)
     ATU->unlinkTemporaryFile();
+  
+  for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
+    TemporaryFiles[i].eraseFromDisk();
+  
   return ATU;
 }
 

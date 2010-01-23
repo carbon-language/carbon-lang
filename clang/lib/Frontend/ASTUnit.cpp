@@ -30,6 +30,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 using namespace clang;
@@ -103,11 +104,31 @@ const std::string &ASTUnit::getPCHFileName() {
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls,
-                                  bool UseBumpAllocator) {
+                                  bool UseBumpAllocator,
+                                  RemappedFile *RemappedFiles,
+                                  unsigned NumRemappedFiles) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
+  for (unsigned I = 0; I != NumRemappedFiles; ++I) {
+    // Create the file entry for the file that we're mapping from.
+    const FileEntry *FromFile
+      = AST->getFileManager().getVirtualFile(RemappedFiles[I].first,
+                                    RemappedFiles[I].second->getBufferSize(),
+                                             0);
+    if (!FromFile) {
+      Diags.Report(diag::err_fe_remap_missing_from_file)
+        << RemappedFiles[I].first;
+      continue;
+    }
+    
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    AST->getSourceManager().overrideFileContents(FromFile, 
+                                                 RemappedFiles[I].second);    
+  }
+  
   // Gather Info for preprocessor construction later on.
 
   LangOptions LangInfo;
@@ -289,7 +310,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       Diagnostic &Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
-                                      bool UseBumpAllocator) {
+                                      bool UseBumpAllocator,
+                                      RemappedFile *RemappedFiles,
+                                      unsigned NumRemappedFiles) {
   llvm::SmallVector<const char *, 16> Args;
   Args.push_back("<clang>"); // FIXME: Remove dummy argument.
   Args.insert(Args.end(), ArgBegin, ArgEnd);
@@ -327,6 +350,11 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                      (const char**) CCArgs.data()+CCArgs.size(),
                                      Diags);
 
+  // Override any files that need remapping
+  for (unsigned I = 0; I != NumRemappedFiles; ++I)
+    CI.getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+                                             RemappedFiles[I].second);
+  
   // Override the resources path.
   CI.getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 

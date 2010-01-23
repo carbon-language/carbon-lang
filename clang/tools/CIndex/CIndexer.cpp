@@ -94,3 +94,40 @@ std::string CIndexer::getClangResourcesPath() {
 
   return P.str();
 }
+
+bool clang::RemapFiles(unsigned num_unsaved_files,
+                       struct CXUnsavedFile *unsaved_files,
+                       std::vector<std::string> &RemapArgs,
+                       std::vector<llvm::sys::Path> &TemporaryFiles) {
+  for (unsigned i = 0; i != num_unsaved_files; ++i) {
+    char tmpFile[L_tmpnam];
+    char *tmpFileName = tmpnam(tmpFile);
+    
+    // Write the contents of this unsaved file into the temporary file.
+    llvm::sys::Path SavedFile(tmpFileName);
+    std::string ErrorInfo;
+    llvm::raw_fd_ostream OS(SavedFile.c_str(), ErrorInfo);
+    if (!ErrorInfo.empty())
+      return true;
+    
+    OS.write(unsaved_files[i].Contents, unsaved_files[i].Length);
+    OS.close();
+    if (OS.has_error()) {
+      SavedFile.eraseFromDisk();
+      return true;
+    }
+    
+    // Remap the file.
+    std::string RemapArg = unsaved_files[i].Filename;
+    RemapArg += ';';
+    RemapArg += tmpFileName;
+    RemapArgs.push_back("-Xclang");
+    RemapArgs.push_back("-remap-file");
+    RemapArgs.push_back("-Xclang");
+    RemapArgs.push_back(RemapArg);
+    TemporaryFiles.push_back(SavedFile);
+  }
+  
+  return false;
+}
+

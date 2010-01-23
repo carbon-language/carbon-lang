@@ -222,13 +222,21 @@ CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
  *
  * \param source_filename - The name of the source file to load, or NULL if the
  * source file is included in clang_command_line_args.
+ *
+ * \param num_unsaved_files the number of unsaved file entries in \p
+ * unsaved_files.
+ *
+ * \param unsaved_files the files that have not yet been saved to disk
+ * but may be required for code completion, including the contents of
+ * those files.
  */
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
-  CXIndex CIdx,
-  const char *source_filename,
-  int num_clang_command_line_args, 
-  const char **clang_command_line_args
-);
+                                        CXIndex CIdx,
+                                        const char *source_filename,
+                                        int num_clang_command_line_args, 
+                                        const char **clang_command_line_args,
+                                        unsigned num_unsaved_files,
+                                        struct CXUnsavedFile *unsaved_files);
 
 /**
  * \defgroup CINDEX_FILES File manipulation routines

@@ -19,6 +19,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/System/Path.h"
+#include <vector>
 
 using namespace clang;
 
@@ -76,5 +77,18 @@ public:
 
   static CXString createCXString(const char *String, bool DupString = false);
 };
+
+namespace clang {
+  /**
+   * \brief Given a set of "unsaved" files, create temporary files and 
+   * construct the clang -cc1 argument list needed to perform the remapping.
+   *
+   * \returns true if an error occurred.
+   */
+  bool RemapFiles(unsigned num_unsaved_files,
+                  struct CXUnsavedFile *unsaved_files,
+                  std::vector<std::string> &RemapArgs,
+                  std::vector<llvm::sys::Path> &TemporaryFiles);
+}
 
 #endif
