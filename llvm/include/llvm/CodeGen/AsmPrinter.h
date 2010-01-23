@@ -347,10 +347,6 @@ namespace llvm {
     void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
     
   protected:
-    /// EmitConstantValueOnly - Print out the specified constant, without a
-    /// storage class.  Only constants of first-class type are allowed here.
-    void EmitConstantValueOnly(const Constant *CV);
-
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     /// processDebugLoc - Processes the debug information of each machine

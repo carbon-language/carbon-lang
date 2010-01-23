@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
@@ -758,36 +759,26 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   OutStreamer.EmitValueToAlignment(1 << NumBits, FillValue, 1, 0);
 }
 
-// Print out the specified constant, without a storage class.  Only the
-// constants valid in constant expressions can occur here.
-void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
-  if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    O << '0';
-    return;
-  }
+/// LowerConstant - Lower the specified LLVM Constant to an MCExpr.
+///
+static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
+  MCContext &Ctx = AP.OutContext;
+  
+  if (CV->isNullValue() || isa<UndefValue>(CV))
+    return MCConstantExpr::Create(0, Ctx);
 
-  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    O << CI->getZExtValue();
-    return;
-  }
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV))
+    return MCConstantExpr::Create(CI->getZExtValue(), Ctx);
   
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
-    // This is a constant address for a global variable or function. Use the
-    // name of the variable or function as the address value.
-    O << *GetGlobalValueSymbol(GV);
-    return;
-  }
-  
-  if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV)) {
-    O << *GetBlockAddressSymbol(BA);
-    return;
-  }
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV))
+    return MCSymbolRefExpr::Create(AP.GetGlobalValueSymbol(GV), Ctx);
+  if (const BlockAddress *BA = dyn_cast<BlockAddress>(CV))
+    return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
   
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
   if (CE == 0) {
-    llvm_unreachable("Unknown constant value!");
-    O << '0';
-    return;
+    llvm_unreachable("Unknown constant value to lower!");
+    return MCConstantExpr::Create(0, Ctx);
   }
   
   switch (CE->getOpcode()) {
@@ -799,67 +790,27 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   case Instruction::SIToFP:
   case Instruction::FPToUI:
   case Instruction::FPToSI:
-  default:
-    llvm_unreachable("FIXME: Don't support this constant cast expr");
+  default: llvm_unreachable("FIXME: Don't support this constant cast expr");
   case Instruction::GetElementPtr: {
-    // generate a symbolic expression for the byte address
-    const TargetData *TD = TM.getTargetData();
-    const Constant *ptrVal = CE->getOperand(0);
-    SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
-    int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
-                                          idxVec.size());
+    const TargetData &TD = *AP.TM.getTargetData();
+    // Generate a symbolic expression for the byte address
+    const Constant *PtrVal = CE->getOperand(0);
+    SmallVector<Value*, 8> IdxVec(CE->op_begin()+1, CE->op_end());
+    int64_t Offset = TD.getIndexedOffset(PtrVal->getType(), &IdxVec[0],
+                                         IdxVec.size());
+    
+    const MCExpr *Base = LowerConstant(CE->getOperand(0), AP);
     if (Offset == 0)
-      return EmitConstantValueOnly(ptrVal);
+      return Base;
     
     // Truncate/sext the offset to the pointer size.
-    if (TD->getPointerSizeInBits() != 64) {
-      int SExtAmount = 64-TD->getPointerSizeInBits();
+    if (TD.getPointerSizeInBits() != 64) {
+      int SExtAmount = 64-TD.getPointerSizeInBits();
       Offset = (Offset << SExtAmount) >> SExtAmount;
     }
     
-    if (Offset)
-      O << '(';
-    EmitConstantValueOnly(ptrVal);
-    if (Offset > 0)
-      O << ") + " << Offset;
-    else
-      O << ") - " << -Offset;
-    return;
-  }
-  case Instruction::BitCast:
-    return EmitConstantValueOnly(CE->getOperand(0));
-
-  case Instruction::IntToPtr: {
-    // Handle casts to pointers by changing them into casts to the appropriate
-    // integer type.  This promotes constant folding and simplifies this code.
-    const TargetData *TD = TM.getTargetData();
-    Constant *Op = CE->getOperand(0);
-    Op = ConstantExpr::getIntegerCast(Op, TD->getIntPtrType(CV->getContext()),
-                                      false/*ZExt*/);
-    return EmitConstantValueOnly(Op);
-  }
-    
-  case Instruction::PtrToInt: {
-    // Support only foldable casts to/from pointers that can be eliminated by
-    // changing the pointer to the appropriately sized integer type.
-    Constant *Op = CE->getOperand(0);
-    const Type *Ty = CE->getType();
-    const TargetData *TD = TM.getTargetData();
-
-    // We can emit the pointer value into this slot if the slot is an
-    // integer slot greater or equal to the size of the pointer.
-    if (TD->getTypeAllocSize(Ty) == TD->getTypeAllocSize(Op->getType()))
-      return EmitConstantValueOnly(Op);
-
-    O << "((";
-    EmitConstantValueOnly(Op);
-    APInt ptrMask =
-      APInt::getAllOnesValue(TD->getTypeAllocSizeInBits(Op->getType()));
-    
-    SmallString<40> S;
-    ptrMask.toStringUnsigned(S);
-    O << ") & " << S.str() << ')';
-    return;
+    return MCBinaryExpr::CreateAdd(Base, MCConstantExpr::Create(Offset, Ctx),
+                                   Ctx);
   }
       
   case Instruction::Trunc:
@@ -867,39 +818,58 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     // expression properly.  This is important for differences between
     // blockaddress labels.  Since the two labels are in the same function, it
     // is reasonable to treat their delta as a 32-bit value.
-    return EmitConstantValueOnly(CE->getOperand(0));
+    // FALL THROUGH.
+  case Instruction::BitCast:
+    return LowerConstant(CE->getOperand(0), AP);
+
+  case Instruction::IntToPtr: {
+    const TargetData &TD = *AP.TM.getTargetData();
+    // Handle casts to pointers by changing them into casts to the appropriate
+    // integer type.  This promotes constant folding and simplifies this code.
+    Constant *Op = CE->getOperand(0);
+    Op = ConstantExpr::getIntegerCast(Op, TD.getIntPtrType(CV->getContext()),
+                                      false/*ZExt*/);
+    return LowerConstant(Op, AP);
+  }
+    
+  case Instruction::PtrToInt: {
+    const TargetData &TD = *AP.TM.getTargetData();
+    // Support only foldable casts to/from pointers that can be eliminated by
+    // changing the pointer to the appropriately sized integer type.
+    Constant *Op = CE->getOperand(0);
+    const Type *Ty = CE->getType();
+
+    const MCExpr *OpExpr = LowerConstant(Op, AP);
+
+    // We can emit the pointer value into this slot if the slot is an
+    // integer slot equal to the size of the pointer.
+    if (TD.getTypeAllocSize(Ty) == TD.getTypeAllocSize(Op->getType()))
+      return OpExpr;
+
+    // Otherwise the pointer is smaller than the resultant integer, mask off
+    // the high bits so we are sure to get a proper truncation if the input is
+    // a constant expr.
+    unsigned InBits = TD.getTypeAllocSizeInBits(Op->getType());
+    const MCExpr *MaskExpr = MCConstantExpr::Create(~0ULL >> (64-InBits), Ctx);
+    return MCBinaryExpr::CreateAnd(OpExpr, MaskExpr, Ctx);
+  }
       
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::And:
   case Instruction::Or:
-  case Instruction::Xor:
-    O << '(';
-    EmitConstantValueOnly(CE->getOperand(0));
-    O << ')';
+  case Instruction::Xor: {
+    const MCExpr *LHS = LowerConstant(CE->getOperand(0), AP);
+    const MCExpr *RHS = LowerConstant(CE->getOperand(1), AP);
     switch (CE->getOpcode()) {
-    case Instruction::Add:
-     O << " + ";
-     break;
-    case Instruction::Sub:
-     O << " - ";
-     break;
-    case Instruction::And:
-     O << " & ";
-     break;
-    case Instruction::Or:
-     O << " | ";
-     break;
-    case Instruction::Xor:
-     O << " ^ ";
-     break;
-    default:
-     break;
+    default: llvm_unreachable("Unknown binary operator constant cast expr");
+    case Instruction::Add: return MCBinaryExpr::CreateAdd(LHS, RHS, Ctx);
+    case Instruction::Sub: return MCBinaryExpr::CreateSub(LHS, RHS, Ctx);
+    case Instruction::And: return MCBinaryExpr::CreateAnd(LHS, RHS, Ctx);
+    case Instruction::Or:  return MCBinaryExpr::CreateOr (LHS, RHS, Ctx);
+    case Instruction::Xor: return MCBinaryExpr::CreateXor(LHS, RHS, Ctx);
     }
-    O << '(';
-    EmitConstantValueOnly(CE->getOperand(1));
-    O << ')';
-    break;
+  }
   }
 }
 
@@ -1083,26 +1053,11 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
     return;
   }
   
-  // Otherwise, it must be a ConstantExpr.  Emit the data directive, then emit
-  // the expression value.
-  switch (TM.getTargetData()->getTypeAllocSize(CV->getType())) {
-  case 0: return;
-  case 1: O << MAI->getData8bitsDirective(AddrSpace); break;
-  case 2: O << MAI->getData16bitsDirective(AddrSpace); break;
-  case 4: O << MAI->getData32bitsDirective(AddrSpace); break;
-  case 8:
-    if (const char *Dir = MAI->getData64bitsDirective(AddrSpace)) {
-      O << Dir;
-      break;
-    }
-    // FALL THROUGH.
-  default:
-    llvm_unreachable("Target cannot handle given data directive width!");
-    return;
-  }
-  
-  EmitConstantValueOnly(CV);
-  O << '\n';
+  // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
+  // thread the streamer with EmitValue.
+  OutStreamer.EmitValue(LowerConstant(CV, *this),
+                        TM.getTargetData()->getTypeAllocSize(CV->getType()),
+                        AddrSpace);
 }
 
 void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
@@ -1671,8 +1626,8 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
       return GMP;
     }
   
-  errs() << "no GCMetadataPrinter registered for GC: " << Name << "\n";
-  llvm_unreachable(0);
+  llvm_report_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
+  return 0;
 }
 
 /// EmitComments - Pretty-print comments for instructions
