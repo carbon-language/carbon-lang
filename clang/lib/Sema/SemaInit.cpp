@@ -202,7 +202,8 @@ class InitListChecker {
   std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
   InitListExpr *FullyStructuredList;
 
-  void CheckImplicitInitList(InitListExpr *ParentIList, QualType T,
+  void CheckImplicitInitList(const InitializedEntity *Entity,
+                             InitListExpr *ParentIList, QualType T,
                              unsigned &Index, InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
@@ -506,7 +507,8 @@ int InitListChecker::numStructUnionElements(QualType DeclType) {
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
 }
 
-void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
+void InitListChecker::CheckImplicitInitList(const InitializedEntity *Entity,
+                                            InitListExpr *ParentIList,
                                             QualType T, unsigned &Index,
                                             InitListExpr *StructuredList,
                                             unsigned &StructuredIndex,
@@ -540,7 +542,8 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
 
   // Check the element types and build the structural subobject.
   unsigned StartIndex = Index;
-  CheckListElementTypes(0, ParentIList, T, false, Index,
+  CheckListElementTypes(Entity, ParentIList, T, 
+                        /*SubobjectIsDesignatorContext=*/false, Index,
                         StructuredSubobjectInitList,
                         StructuredSubobjectInitIndex,
                         TopLevelObject);
@@ -750,7 +753,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity *Entity,
     //   considered for the initialization of the first member of
     //   the subaggregate.
     if (ElemType->isAggregateType() || ElemType->isVectorType()) {
-      CheckImplicitInitList(IList, ElemType, Index, StructuredList,
+      CheckImplicitInitList(Entity, IList, ElemType, Index, StructuredList,
                             StructuredIndex);
       ++StructuredIndex;
     } else {
@@ -1185,12 +1188,26 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
       << *Field;
   }
 
-  if (isa<InitListExpr>(IList->getInit(Index)))
-    CheckSubElementType(0, IList, Field->getType(), Index, StructuredList,
-                        StructuredIndex);
-  else
-    CheckImplicitInitList(IList, Field->getType(), Index, StructuredList,
-                          StructuredIndex);
+  // FIXME: Once we know Entity is not null, we can get rid of the check
+  // and the else block.
+  if (Entity) {
+    InitializedEntity MemberEntity =
+      InitializedEntity::InitializeMember(*Field, Entity);
+    
+    if (isa<InitListExpr>(IList->getInit(Index)))
+      CheckSubElementType(&MemberEntity, IList, Field->getType(), Index, 
+                          StructuredList, StructuredIndex);
+    else
+      CheckImplicitInitList(&MemberEntity, IList, Field->getType(), Index, 
+                            StructuredList, StructuredIndex);
+  } else {
+    if (isa<InitListExpr>(IList->getInit(Index)))
+      CheckSubElementType(0, IList, Field->getType(), Index, 
+                          StructuredList, StructuredIndex);
+    else
+      CheckImplicitInitList(0, IList, Field->getType(), Index, 
+                            StructuredList, StructuredIndex);
+  }    
 }
 
 /// \brief Expand a field designator that refers to a member of an
