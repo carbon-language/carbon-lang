@@ -390,7 +390,16 @@ namespace clang {
     ovl_fail_too_many_arguments,
     ovl_fail_too_few_arguments,
     ovl_fail_bad_conversion,
-    ovl_fail_bad_deduction
+    ovl_fail_bad_deduction,
+
+    /// This conversion candidate was not considered because it
+    /// duplicates the work of a trivial or derived-to-base
+    /// conversion.
+    ovl_fail_trivial_conversion,
+
+    /// This conversion candidate is not viable because its result
+    /// type is not implicitly convertible to the desired type.
+    ovl_fail_bad_final_conversion
   };
 
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).

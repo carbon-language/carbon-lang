@@ -2783,7 +2783,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   QualType ToCanon = Context.getCanonicalType(ToType).getUnqualifiedType();
   if (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon)) {
     Candidate.Viable = false;
-    Candidate.FailureKind = ovl_fail_bad_conversion;
+    Candidate.FailureKind = ovl_fail_trivial_conversion;
     return;
   }
   
@@ -2821,7 +2821,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
 
   case ImplicitConversionSequence::BadConversion:
     Candidate.Viable = false;
-    Candidate.FailureKind = ovl_fail_bad_conversion;
+    Candidate.FailureKind = ovl_fail_bad_final_conversion;
     break;
 
   default:
@@ -2896,6 +2896,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   if (ObjectInit.isBad()) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_bad_conversion;
+    Candidate.Conversions[0] = ObjectInit;
     return;
   }
 
@@ -4530,6 +4531,8 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     return DiagnoseArityMismatch(S, Cand, NumArgs);
 
   case ovl_fail_bad_deduction:
+  case ovl_fail_trivial_conversion:
+  case ovl_fail_bad_final_conversion:
     return S.NoteOverloadCandidate(Fn);
 
   case ovl_fail_bad_conversion:
@@ -4650,6 +4653,38 @@ struct CompareOverloadCandidatesForDisplay {
           R->FailureKind == ovl_fail_too_few_arguments)
         return true;
 
+      // 2. Bad conversions come first and are ordered by the number
+      // of bad conversions and quality of good conversions.
+      if (L->FailureKind == ovl_fail_bad_conversion) {
+        if (R->FailureKind != ovl_fail_bad_conversion)
+          return true;
+
+        // If there's any ordering between the defined conversions...
+        // FIXME: this might not be transitive.
+        assert(L->Conversions.size() == R->Conversions.size());
+
+        int leftBetter = 0;
+        for (unsigned I = 0, E = L->Conversions.size(); I != E; ++I) {
+          switch (S.CompareImplicitConversionSequences(L->Conversions[I],
+                                                       R->Conversions[I])) {
+          case ImplicitConversionSequence::Better:
+            leftBetter++;
+            break;
+
+          case ImplicitConversionSequence::Worse:
+            leftBetter--;
+            break;
+
+          case ImplicitConversionSequence::Indistinguishable:
+            break;
+          }
+        }
+        if (leftBetter > 0) return true;
+        if (leftBetter < 0) return false;
+
+      } else if (R->FailureKind == ovl_fail_bad_conversion)
+        return false;
+
       // TODO: others?
     }
 
@@ -4664,6 +4699,73 @@ struct CompareOverloadCandidatesForDisplay {
     return S.SourceMgr.isBeforeInTranslationUnit(LLoc, RLoc);
   }
 };
+
+/// CompleteNonViableCandidate - Normally, overload resolution only
+/// computes up to the first
+void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
+                                Expr **Args, unsigned NumArgs) {
+  assert(!Cand->Viable);
+
+  // Don't do anything on failures other than bad conversion.
+  if (Cand->FailureKind != ovl_fail_bad_conversion) return;
+
+  // Skip forward to the first bad conversion.
+  unsigned ConvIdx = 0;
+  unsigned ConvCount = Cand->Conversions.size();
+  while (true) {
+    assert(ConvIdx != ConvCount && "no bad conversion in candidate");
+    ConvIdx++;
+    if (Cand->Conversions[ConvIdx - 1].isBad())
+      break;
+  }
+
+  if (ConvIdx == ConvCount)
+    return;
+
+  // FIXME: these should probably be preserved from the overload
+  // operation somehow.
+  bool SuppressUserConversions = false;
+  bool ForceRValue = false;
+
+  const FunctionProtoType* Proto;
+  unsigned ArgIdx = ConvIdx;
+
+  if (Cand->IsSurrogate) {
+    QualType ConvType
+      = Cand->Surrogate->getConversionType().getNonReferenceType();
+    if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
+      ConvType = ConvPtrType->getPointeeType();
+    Proto = ConvType->getAs<FunctionProtoType>();
+    ArgIdx--;
+  } else if (Cand->Function) {
+    Proto = Cand->Function->getType()->getAs<FunctionProtoType>();
+    if (isa<CXXMethodDecl>(Cand->Function) &&
+        !isa<CXXConstructorDecl>(Cand->Function))
+      ArgIdx--;
+  } else {
+    // Builtin binary operator with a bad first conversion.
+    assert(ConvCount <= 3);
+    for (; ConvIdx != ConvCount; ++ConvIdx)
+      Cand->Conversions[ConvIdx]
+        = S.TryCopyInitialization(Args[ConvIdx],
+                                  Cand->BuiltinTypes.ParamTypes[ConvIdx],
+                                  SuppressUserConversions, ForceRValue,
+                                  /*InOverloadResolution*/ true);
+    return;
+  }
+
+  // Fill in the rest of the conversions.
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  for (; ConvIdx != ConvCount; ++ConvIdx, ++ArgIdx) {
+    if (ArgIdx < NumArgsInProto)
+      Cand->Conversions[ConvIdx]
+        = S.TryCopyInitialization(Args[ArgIdx], Proto->getArgType(ArgIdx),
+                                  SuppressUserConversions, ForceRValue,
+                                  /*InOverloadResolution=*/true);
+    else
+      Cand->Conversions[ConvIdx].setEllipsis();
+  }
+}
 
 } // end anonymous namespace
 
@@ -4682,9 +4784,15 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   if (OCD == OCD_AllCandidates) Cands.reserve(CandidateSet.size());
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                   LastCand = CandidateSet.end();
-       Cand != LastCand; ++Cand)
-    if (Cand->Viable || OCD == OCD_AllCandidates)
+       Cand != LastCand; ++Cand) {
+    if (Cand->Viable)
       Cands.push_back(Cand);
+    else if (OCD == OCD_AllCandidates) {
+      CompleteNonViableCandidate(*this, Cand, Args, NumArgs);
+      Cands.push_back(Cand);
+    }
+  }
+
   std::sort(Cands.begin(), Cands.end(),
             CompareOverloadCandidatesForDisplay(*this));
   
