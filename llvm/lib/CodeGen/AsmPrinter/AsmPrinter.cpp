@@ -345,11 +345,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   // to be executable. Some targets have a directive to declare this.
   Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
   if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
-    // FIXME: This is actually a section switch on linux/x86 and systemz, use
-    // switch section.
-    if (MAI->getNonexecutableStackDirective())
-      O << MAI->getNonexecutableStackDirective() << '\n';
-
+    if (MCSection *S = MAI->getNonexecutableStackSection(OutContext))
+      OutStreamer.SwitchSection(S);
   
   // Allow the target to emit any magic that it wants at the end of the file,
   // after everything else has gone out.

@@ -19,9 +19,9 @@
 using namespace llvm;
 
 MCAsmInfo::MCAsmInfo() {
+  HasSubsectionsViaSymbols = false;
   HasMachoZeroFillDirective = false;
   HasStaticCtorDtorReferenceInStaticMode = false;
-  NonexecutableStackDirective = 0;
   NeedsSet = false;
   MaxInstLength = 4;
   PCSymbol = "$";

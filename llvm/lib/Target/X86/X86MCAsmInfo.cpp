@@ -14,6 +14,7 @@
 #include "X86MCAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -87,10 +88,11 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
   // Exceptions handling
   ExceptionsType = ExceptionHandling::Dwarf;
   AbsoluteEHSectionOffsets = false;
+}
 
-  // On Linux we must declare when we can use a non-executable stack.
-  if (Triple.getOS() == Triple::Linux)
-    NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
+MCSection *X86ELFMCAsmInfo::getNonexecutableStackSection(MCContext &Ctx) const {
+  return MCSectionELF::Create(".note.GNU-stack", MCSectionELF::SHT_PROGBITS,
+                              0, SectionKind::getMetadata(), false, Ctx);
 }
 
 X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {

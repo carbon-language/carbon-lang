@@ -20,6 +20,9 @@
 #include <cassert>
 
 namespace llvm {
+  class MCSection;
+  class MCContext;
+  
   /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   namespace ExceptionHandling { enum ExceptionsType { None, Dwarf, SjLj }; }
@@ -30,11 +33,10 @@ namespace llvm {
     // Properties to be set by the target writer, used to configure asm printer.
     //
 
-    /// NonexecutableStackDirective - Directive for declaring to the
-    /// linker and beyond that the emitted code does not require stack
-    /// memory to be executable.
-    const char *NonexecutableStackDirective; // Default is null.
-
+    /// HasSubsectionsViaSymbols - True if this target has the MachO
+    /// .subsections_via_symbols directive.
+    bool HasSubsectionsViaSymbols;           // Default is false.
+    
     /// HasMachoZeroFillDirective - True if this is a MachO target that supports
     /// the macho-specific .zerofill directive for emitting BSS Symbols.
     bool HasMachoZeroFillDirective;               // Default is false.
@@ -288,14 +290,12 @@ namespace llvm {
     explicit MCAsmInfo();
     virtual ~MCAsmInfo();
 
-    /// getSLEB128Size - Compute the number of bytes required for a signed
-    /// leb128 value.
+    // FIXME: move these methods to DwarfPrinter when the JIT stops using them.
     static unsigned getSLEB128Size(int Value);
-
-    /// getULEB128Size - Compute the number of bytes required for an unsigned
-    /// leb128 value.
     static unsigned getULEB128Size(unsigned Value);
 
+    bool hasSubsectionsViaSymbols() const { return HasSubsectionsViaSymbols; }
+    
     // Data directive accessors.
     //
     const char *getData8bitsDirective(unsigned AS = 0) const {
@@ -311,6 +311,12 @@ namespace llvm {
       return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
 
+    /// getNonexecutableStackSection - Targets can implement this method to
+    /// specify a section to switch to if the translation unit doesn't have any
+    /// trampolines that require an executable stack.
+    virtual MCSection *getNonexecutableStackSection(MCContext &Ctx) const {
+      return 0;
+    }
     
     bool usesSunStyleELFSectionSwitchSyntax() const {
       return SunStyleELFSectionSwitchSyntax;
@@ -325,9 +331,6 @@ namespace llvm {
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
     bool hasStaticCtorDtorReferenceInStaticMode() const {
       return HasStaticCtorDtorReferenceInStaticMode;
-    }
-    const char *getNonexecutableStackDirective() const {
-      return NonexecutableStackDirective;
     }
     bool needsSet() const {
       return NeedsSet;

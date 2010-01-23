@@ -24,6 +24,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   NeedsSet = true;
   AllowQuotesInName = true;
   HasSingleParameterDotFile = false;
+  HasSubsectionsViaSymbols = true;
 
   AlignmentIsInBytes = false;
   InlineAsmStart = " InlineAsm Start";

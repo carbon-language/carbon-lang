@@ -31,7 +31,7 @@ class MCSectionELF : public MCSection {
   unsigned Flags;
 
   /// IsExplicit - Indicates that this section comes from globals with an
-  /// explicit section specfied.
+  /// explicit section specified.
   bool IsExplicit;
   
 protected:
