@@ -1424,9 +1424,9 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   
   // Unless PredBB ends with an unconditional branch, split the edge so that we
   // can just clone the bits from BB into the end of the new PredBB.
-  BranchInst *OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
+  BranchInst *OldPredBranch = dyn_cast<BranchInst>(PredBB->getTerminator());
   
-  if (!OldPredBranch->isUnconditional()) {
+  if (OldPredBranch == 0 || !OldPredBranch->isUnconditional()) {
     PredBB = SplitEdge(PredBB, BB, this);
     OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
   }
