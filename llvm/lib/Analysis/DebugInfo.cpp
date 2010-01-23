@@ -599,7 +599,7 @@ void DIVariable::dump() const {
 //===----------------------------------------------------------------------===//
 
 DIFactory::DIFactory(Module &m)
-  : M(m), VMContext(M.getContext()), DeclareFn(0) {}
+  : M(m), VMContext(M.getContext()), DeclareFn(0), ValueFn(0) {}
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
