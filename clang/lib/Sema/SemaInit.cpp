@@ -66,38 +66,52 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
   return 0;
 }
 
-static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
-                                   bool DirectInit, Sema &S) {
+static Sema::OwningExprResult 
+CheckSingleInitializer(const InitializedEntity *Entity,
+                       Sema::OwningExprResult Init, QualType DeclType, Sema &S){
+  Expr *InitExpr = Init.takeAs<Expr>();
+
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
-  QualType InitType = Init->getType();
+  QualType InitType = InitExpr->getType();
 
   if (S.getLangOptions().CPlusPlus) {
     // FIXME: I dislike this error message. A lot.
-    if (S.PerformImplicitConversion(Init, DeclType, 
-                                    Sema::AA_Initializing, DirectInit)) {
+    if (S.PerformImplicitConversion(InitExpr, DeclType, 
+                                    Sema::AA_Initializing, 
+                                    /*DirectInit=*/false)) {
       ImplicitConversionSequence ICS;
       OverloadCandidateSet CandidateSet;
-      if (S.IsUserDefinedConversion(Init, DeclType, ICS.UserDefined,
+      if (S.IsUserDefinedConversion(InitExpr, DeclType, ICS.UserDefined,
                               CandidateSet,
-                              true, false, false) != OR_Ambiguous)
-        return S.Diag(Init->getSourceRange().getBegin(),
+                              true, false, false) != OR_Ambiguous) {
+        S.Diag(InitExpr->getSourceRange().getBegin(),
                       diag::err_typecheck_convert_incompatible)
-                      << DeclType << Init->getType() << Sema::AA_Initializing
-                      << Init->getSourceRange();
-      S.Diag(Init->getSourceRange().getBegin(),
+                      << DeclType << InitExpr->getType() << Sema::AA_Initializing
+                      << InitExpr->getSourceRange();
+        return S.ExprError();
+      }
+      S.Diag(InitExpr->getSourceRange().getBegin(),
              diag::err_typecheck_convert_ambiguous)
-            << DeclType << Init->getType() << Init->getSourceRange();
-      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, &Init, 1);
-      return true;
+            << DeclType << InitExpr->getType() << InitExpr->getSourceRange();
+      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, 
+                                &InitExpr, 1);
+      
+      return S.ExprError();
     }
-    return false;
+    
+    Init.release();
+    return S.Owned(InitExpr);
   }
 
   Sema::AssignConvertType ConvTy =
-    S.CheckSingleAssignmentConstraints(DeclType, Init);
-  return S.DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
-                                    InitType, Init, Sema::AA_Initializing);
+    S.CheckSingleAssignmentConstraints(DeclType, InitExpr);
+  if (S.DiagnoseAssignmentResult(ConvTy, InitExpr->getLocStart(), DeclType,
+                                 InitType, InitExpr, Sema::AA_Initializing))
+    return S.ExprError();
+
+  Init.release();
+  return S.Owned(InitExpr);
 }
 
 static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
@@ -745,17 +759,25 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType DeclType,
       return;
     }
 
-    Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-    if (CheckSingleInitializer(expr, DeclType, false, SemaRef))
+    Sema::OwningExprResult Result =
+      CheckSingleInitializer(0, SemaRef.Owned(expr), DeclType, SemaRef);
+
+    Expr *ResultExpr;
+
+    if (Result.isInvalid())
       hadError = true; // types weren't compatible.
-    else if (savExpr != expr) {
-      // The type was promoted, update initializer list.
-      IList->setInit(Index, expr);
+    else {
+      ResultExpr = Result.takeAs<Expr>();
+      
+      if (ResultExpr != expr) {
+        // The type was promoted, update initializer list.
+        IList->setInit(Index, ResultExpr);
+      }
     }
     if (hadError)
       ++StructuredIndex;
     else
-      UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+      UpdateStructuredListElement(StructuredList, StructuredIndex, ResultExpr);
     ++Index;
   } else {
     SemaRef.Diag(IList->getLocStart(), diag::err_empty_scalar_initializer)
