@@ -131,6 +131,7 @@ public:
                Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
     : ResultKind(NotFound),
       Paths(0),
+      NamingClass(0),
       SemaRef(SemaRef),
       Name(Name),
       NameLoc(NameLoc),
@@ -150,6 +151,7 @@ public:
   LookupResult(TemporaryToken _, const LookupResult &Other)
     : ResultKind(NotFound),
       Paths(0),
+      NamingClass(0),
       SemaRef(Other.SemaRef),
       Name(Other.Name),
       NameLoc(Other.NameLoc),
@@ -243,6 +245,37 @@ public:
   /// \brief Returns the identifier namespace mask for this lookup.
   unsigned getIdentifierNamespace() const {
     return IDNS;
+  }
+
+  /// \brief Returns whether these results arose from performing a
+  /// lookup into a class.
+  bool isClassLookup() const {
+    return NamingClass != 0;
+  }
+
+  /// \brief Returns the 'naming class' for this lookup, i.e. the
+  /// class which was looked into to find these results.
+  ///
+  /// C++0x [class.access.base]p5:
+  ///   The access to a member is affected by the class in which the
+  ///   member is named. This naming class is the class in which the
+  ///   member name was looked up and found. [Note: this class can be
+  ///   explicit, e.g., when a qualified-id is used, or implicit,
+  ///   e.g., when a class member access operator (5.2.5) is used
+  ///   (including cases where an implicit "this->" is added). If both
+  ///   a class member access operator and a qualified-id are used to
+  ///   name the member (as in p->T::m), the class naming the member
+  ///   is the class named by the nested-name-specifier of the
+  ///   qualified-id (that is, T). -- end note ]
+  ///
+  /// This is set by the lookup routines when they find results in a class.
+  CXXRecordDecl *getNamingClass() const {
+    return NamingClass;
+  }
+
+  /// \brief Sets the 'naming class' for this lookup.
+  void setNamingClass(CXXRecordDecl *Record) {
+    NamingClass = Record;
   }
 
   /// \brief Add a declaration to these results with its natural access.
@@ -465,6 +498,8 @@ private:
   void diagnose() {
     if (isAmbiguous())
       SemaRef.DiagnoseAmbiguousLookup(*this);
+    else if (isClassLookup() && SemaRef.getLangOptions().AccessControl)
+      SemaRef.CheckAccess(*this);
   }
 
   void setAmbiguous(AmbiguityKind AK) {
@@ -504,6 +539,7 @@ private:
   AmbiguityKind Ambiguity; // ill-defined unless ambiguous
   UnresolvedSet<8> Decls;
   CXXBasePaths *Paths;
+  CXXRecordDecl *NamingClass;
 
   // Parameters.
   Sema &SemaRef;

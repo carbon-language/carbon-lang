@@ -68,13 +68,14 @@ namespace clang {
     bool ModeAttr : 1;
   };  
 
-  /// AccessSpecifier - A C++ access specifier (none, public, private,
-  /// protected).
+  /// AccessSpecifier - A C++ access specifier (public, private,
+  /// protected), plus the special value "none" which means
+  /// different things in different contexts.
   enum AccessSpecifier {
-    AS_none,
     AS_public,
     AS_protected,
-    AS_private
+    AS_private,
+    AS_none
   };
 }
 

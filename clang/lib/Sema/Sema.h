@@ -2361,6 +2361,9 @@ public:
                                                CXXBasePaths &Paths,
                                                bool NoPrivileges = false);
 
+  void CheckAccess(const LookupResult &R);
+  bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);
+
   bool CheckBaseClassAccess(QualType Derived, QualType Base,
                             unsigned InaccessibleBaseID,
                             CXXBasePaths& Paths, SourceLocation AccessLoc,

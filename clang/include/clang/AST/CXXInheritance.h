@@ -65,12 +65,21 @@ struct CXXBasePathElement {
 /// subobject is being used.
 class CXXBasePath : public llvm::SmallVector<CXXBasePathElement, 4> {
 public:
-  /// \brief The access along this inheritance path.
+  CXXBasePath() : Access(AS_public) {}
+
+  /// \brief The access along this inheritance path.  This is only
+  /// calculated when recording paths.  AS_none is a special value
+  /// used to indicate a path which permits no legal access.
   AccessSpecifier Access;
 
   /// \brief The set of declarations found inside this base class
   /// subobject.
   DeclContext::lookup_result Decls;
+
+  void clear() {
+    llvm::SmallVectorImpl<CXXBasePathElement>::clear();
+    Access = AS_public;
+  }
 };
 
 /// BasePaths - Represents the set of paths from a derived class to
@@ -138,10 +147,6 @@ class CXXBasePaths {
   /// to help build the set of paths.
   CXXBasePath ScratchPath;
 
-  /// ScratchAccess - A stack of accessibility annotations used by
-  /// Sema::lookupInBases.
-  llvm::SmallVector<AccessSpecifier, 4> ScratchAccess;
-  
   /// DetectedVirtual - The base class that is virtual.
   const RecordType *DetectedVirtual;
   

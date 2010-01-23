@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "Lookup.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
@@ -136,4 +137,102 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
   }
 
   return false;
+}
+
+/// Diagnose the path which caused the given declaration to become
+/// inaccessible.
+static void DiagnoseAccessPath(Sema &S, const LookupResult &R, NamedDecl *D,
+                               AccessSpecifier Access) {
+  // Easy case: the decl's natural access determined its path access.
+  if (Access == D->getAccess() || D->getAccess() == AS_private) {
+    S.Diag(D->getLocation(), diag::note_access_natural)
+      << (unsigned) (Access == AS_protected);
+    return;
+  }
+
+  // TODO: flesh this out
+  S.Diag(D->getLocation(), diag::note_access_constrained_by_path)
+    << (unsigned) (Access == AS_protected);
+}
+
+/// Checks access to the given declaration in the current context.
+///
+/// \param R the means via which the access was made; must have a naming
+///   class set
+/// \param D the declaration accessed
+/// \param Access the best access along any inheritance path from the
+///   naming class to the declaration.  AS_none means the path is impossible
+bool Sema::CheckAccess(const LookupResult &R, NamedDecl *D,
+                       AccessSpecifier Access) {
+  assert(R.getNamingClass() && "performing access check without naming class");
+
+  // If the access path is public, it's accessible everywhere.
+  if (Access == AS_public)
+    return false;
+
+  // Otherwise, derive the current class context.
+  DeclContext *DC = CurContext;
+  while (isa<CXXRecordDecl>(DC) &&
+         cast<CXXRecordDecl>(DC)->isAnonymousStructOrUnion())
+    DC = DC->getParent();
+
+  CXXRecordDecl *CurRecord;
+  if (isa<CXXRecordDecl>(DC))
+    CurRecord = cast<CXXRecordDecl>(DC);
+  else if (isa<CXXMethodDecl>(DC))
+    CurRecord = cast<CXXMethodDecl>(DC)->getParent();
+  else {
+    Diag(R.getNameLoc(), diag::err_access_outside_class)
+      << (Access == AS_protected);
+    DiagnoseAccessPath(*this, R, D, Access);
+    return true;
+  }
+
+  CXXRecordDecl *NamingClass = R.getNamingClass();
+  while (NamingClass->isAnonymousStructOrUnion())
+    // This should be guaranteed by the fact that the decl has
+    // non-public access.  If not, we should make it guaranteed!
+    NamingClass = cast<CXXRecordDecl>(NamingClass);
+
+  // White-list accesses from within the declaring class.
+  if (Access != AS_none &&
+      CurRecord->getCanonicalDecl() == NamingClass->getCanonicalDecl())
+    return false;
+
+  // Protected access.
+  if (Access == AS_protected) {
+    // FIXME: implement [class.protected]p1
+    if (CurRecord->isDerivedFrom(NamingClass))
+      return false;
+
+    // FIXME: dependent classes
+  }
+
+  // FIXME: friends
+
+  // Okay, it's a bad access, reject it.
+
+  
+  CXXRecordDecl *DeclaringClass = cast<CXXRecordDecl>(D->getDeclContext());
+
+  if (Access == AS_protected) {
+    Diag(R.getNameLoc(), diag::err_access_protected)
+      << Context.getTypeDeclType(DeclaringClass)
+      << Context.getTypeDeclType(CurRecord);
+    DiagnoseAccessPath(*this, R, D, Access);
+    return true;
+  }
+
+  assert(Access == AS_private || Access == AS_none);
+  Diag(R.getNameLoc(), diag::err_access_private)
+    << Context.getTypeDeclType(DeclaringClass)
+    << Context.getTypeDeclType(CurRecord);
+  DiagnoseAccessPath(*this, R, D, Access);
+  return true;
+}
+
+/// Checks access to all the declarations in the given result set.
+void Sema::CheckAccess(const LookupResult &R) {
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+    CheckAccess(R, *I, I.getAccess());
 }

@@ -983,7 +983,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
 
   // Parse an (optional) access specifier.
   AccessSpecifier Access = getAccessSpecifierIfPresent();
-  if (Access)
+  if (Access != AS_none)
     ConsumeToken();
 
   // Parse the 'virtual' keyword (again!), in case it came after the

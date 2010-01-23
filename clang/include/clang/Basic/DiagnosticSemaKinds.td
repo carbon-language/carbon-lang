@@ -412,6 +412,15 @@ def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;
 def note_previous_access_declaration : Note<
   "previously declared '%1' here">;
+def err_access_outside_class : Error<
+  "access to %select{private|protected}0 member outside any class context">;
+def note_access_natural : Note<"declared %select{private|protected}0 here">;
+def note_access_constrained_by_path : Note<
+  "access to decl constrained by %select{private|protected}0 inheritance">;
+def err_access_protected : Error<
+  "access to protected member of %0 from %1, which is not a subclass">;
+def err_access_private : Error<
+  "access to private member of %0 from %1">;
   
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<

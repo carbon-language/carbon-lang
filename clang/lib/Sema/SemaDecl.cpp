@@ -5732,8 +5732,10 @@ Sema::DeclPtrTy Sema::ActOnEnumConstant(Scope *S, DeclPtrTy theEnumDecl,
                                             IdLoc, Id, Owned(Val));
 
   // Register this decl in the current scope stack.
-  if (New)
+  if (New) {
+    New->setAccess(TheEnumDecl->getAccess());
     PushOnScopeChains(New, S);
+  }
 
   return DeclPtrTy::make(New);
 }

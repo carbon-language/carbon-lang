@@ -817,6 +817,15 @@ public:
   /// GraphViz.
   void viewInheritance(ASTContext& Context) const;
 
+  /// MergeAccess - Calculates the access of a decl that is reached
+  /// along a path.
+  static AccessSpecifier MergeAccess(AccessSpecifier PathAccess,
+                                     AccessSpecifier DeclAccess) {
+    assert(DeclAccess != AS_none);
+    if (DeclAccess == AS_private) return AS_none;
+    return (PathAccess > DeclAccess ? PathAccess : DeclAccess);
+  }
+
   static bool classof(const Decl *D) {
     return D->getKind() == CXXRecord ||
            D->getKind() == ClassTemplateSpecialization ||

@@ -967,6 +967,8 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // Perform qualified name lookup into the LookupCtx.
   if (LookupDirect(R, LookupCtx)) {
     R.resolveKind();
+    if (isa<CXXRecordDecl>(LookupCtx))
+      R.setNamingClass(cast<CXXRecordDecl>(LookupCtx));
     return true;
   }
 
@@ -1038,6 +1040,8 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   if (!LookupRec->lookupInBases(BaseCallback,
                                 R.getLookupName().getAsOpaquePtr(), Paths))
     return false;
+
+  R.setNamingClass(LookupRec);
 
   // C++ [class.member.lookup]p2:
   //   [...] If the resulting set of declarations are not all from
@@ -1111,8 +1115,12 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // Lookup in a base class succeeded; return these results.
 
   DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I,E) = Paths.front().Decls; I != E; ++I)
-    R.addDecl(*I, std::max(SubobjectAccess, (*I)->getAccess()));
+  for (llvm::tie(I,E) = Paths.front().Decls; I != E; ++I) {
+    NamedDecl *D = *I;
+    AccessSpecifier AS = CXXRecordDecl::MergeAccess(SubobjectAccess,
+                                                    D->getAccess());
+    R.addDecl(D, AS);
+  }
   R.resolveKind();
   return true;
 }
