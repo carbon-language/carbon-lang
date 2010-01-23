@@ -292,6 +292,11 @@ public:
   // FIXME: LabelStmt label?
   bool VisitIfStmt(IfStmt *S);
   bool VisitSwitchStmt(SwitchStmt *S);
+  
+  // Expression visitors
+  bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+  bool VisitExplicitCastExpr(ExplicitCastExpr *E);
+  bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
 };
   
 } // end anonymous namespace
@@ -822,6 +827,33 @@ bool CursorVisitor::VisitSwitchStmt(SwitchStmt *S) {
     return true;
   
   return false;
+}
+
+bool CursorVisitor::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  if (E->isArgumentType()) {
+    if (TypeSourceInfo *TSInfo = E->getArgumentTypeInfo())
+      return Visit(TSInfo->getTypeLoc());
+    
+    return false;
+  }
+  
+  return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitExplicitCastExpr(ExplicitCastExpr *E) {
+  if (TypeSourceInfo *TSInfo = E->getTypeInfoAsWritten())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  return VisitCastExpr(E);
+}
+
+bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+  
+  return VisitExpr(E);
 }
 
 CXString CIndexer::createCXString(const char *String, bool DupString){
