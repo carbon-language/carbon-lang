@@ -30,3 +30,7 @@ NonAggr4 na4 = { 17 }; // expected-error{{non-aggregate type 'struct NonAggr4' c
 // PR5817
 typedef int type[][2];
 const type foo = {0};
+
+// Vector initialization.
+typedef short __v4hi __attribute__ ((__vector_size__ (8)));
+__v4hi v1 = { (void *)1, 2, 3 }; // expected-error {{cannot initialize a vector element of type 'short' with an rvalue of type 'void *'}}
