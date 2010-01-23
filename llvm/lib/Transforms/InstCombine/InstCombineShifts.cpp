@@ -394,16 +394,16 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
   
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1))
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
+      unsigned BitWidth = Op0->getType()->getScalarSizeInBits();
       // ctlz.i32(x)>>5  --> zext(x == 0)
       // cttz.i32(x)>>5  --> zext(x == 0)
       // ctpop.i32(x)>>5 --> zext(x == -1)
       if ((II->getIntrinsicID() == Intrinsic::ctlz ||
            II->getIntrinsicID() == Intrinsic::cttz ||
            II->getIntrinsicID() == Intrinsic::ctpop) &&
-          (1ULL << Op1C->getZExtValue()) ==
-            Op0->getType()->getScalarSizeInBits()) {
+          isPowerOf2_32(BitWidth) && Log2_32(BitWidth) == Op1C->getZExtValue()){
         bool isCtPop = II->getIntrinsicID() == Intrinsic::ctpop;
-        Constant *RHS = ConstantInt::getSigned(Op0->getType(), isCtPop ? -1 : 0);
+        Constant *RHS = ConstantInt::getSigned(Op0->getType(), isCtPop ? -1:0);
         Value *Cmp = Builder->CreateICmpEQ(II->getOperand(1), RHS);
         return new ZExtInst(Cmp, II->getType());
       }
