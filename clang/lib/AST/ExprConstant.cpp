@@ -506,7 +506,9 @@ APValue PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
 
 APValue PointerExprEvaluator::VisitCallExpr(CallExpr *E) {
   if (E->isBuiltinCall(Info.Ctx) ==
-        Builtin::BI__builtin___CFStringMakeConstantString)
+        Builtin::BI__builtin___CFStringMakeConstantString ||
+      E->isBuiltinCall(Info.Ctx) ==
+        Builtin::BI__builtin___NSStringMakeConstantString)
     return APValue(E);
   return APValue();
 }

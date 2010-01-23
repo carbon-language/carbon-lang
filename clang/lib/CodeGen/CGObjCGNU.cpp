@@ -124,7 +124,7 @@ private:
   void EmitClassRef(const std::string &className);
 public:
   CGObjCGNU(CodeGen::CodeGenModule &cgm);
-  virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *);
+  virtual llvm::Constant *GenerateConstantString(const StringLiteral *);
   virtual CodeGen::RValue
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       QualType ResultType,
@@ -240,15 +240,23 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   Zeros[1] = Zeros[0];
   NULLPtr = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   // Get the selector Type.
-  SelectorTy = cast<llvm::PointerType>(
-    CGM.getTypes().ConvertType(CGM.getContext().getObjCSelType()));
+  QualType selTy = CGM.getContext().getObjCSelType();
+  if (QualType() == selTy) {
+    SelectorTy = PtrToInt8Ty;
+  } else {
+    SelectorTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(selTy));
+  }
 
   PtrToIntTy = llvm::PointerType::getUnqual(IntTy);
   PtrTy = PtrToInt8Ty;
 
   // Object type
   ASTIdTy = CGM.getContext().getObjCIdType();
-  IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
+  if (QualType() == ASTIdTy) {
+    IdTy = PtrToInt8Ty;
+  } else {
+    IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
+  }
 
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
@@ -348,12 +356,9 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
 }
 
 /// Generate an NSConstantString object.
-//TODO: In case there are any crazy people still using the GNU runtime without
-//an OpenStep implementation, this should let them select their own class for
-//constant strings.
-llvm::Constant *CGObjCGNU::GenerateConstantString(const ObjCStringLiteral *SL) {
-  std::string Str(SL->getString()->getStrData(),
-                  SL->getString()->getByteLength());
+llvm::Constant *CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
+  std::string Str(SL->getStrData(), SL->getByteLength());
+
   std::vector<llvm::Constant*> Ivars;
   Ivars.push_back(NULLPtr);
   Ivars.push_back(MakeConstantString(Str));

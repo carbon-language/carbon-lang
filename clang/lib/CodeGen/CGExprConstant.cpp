@@ -742,7 +742,8 @@ public:
       return CGM.GetAddrOfConstantStringFromObjCEncode(cast<ObjCEncodeExpr>(E));
     case Expr::ObjCStringLiteralClass: {
       ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
-      llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(SL);
+      llvm::Constant *C =
+          CGM.getObjCRuntime().GenerateConstantString(SL->getString());
       return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
     }
     case Expr::PredefinedExprClass: {
@@ -764,11 +765,18 @@ public:
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
-      if (CE->isBuiltinCall(CGM.getContext()) !=
-            Builtin::BI__builtin___CFStringMakeConstantString)
+      unsigned builtin = CE->isBuiltinCall(CGM.getContext());
+      if (builtin !=
+            Builtin::BI__builtin___CFStringMakeConstantString &&
+          builtin !=
+            Builtin::BI__builtin___NSStringMakeConstantString)
         break;
       const Expr *Arg = CE->getArg(0)->IgnoreParenCasts();
       const StringLiteral *Literal = cast<StringLiteral>(Arg);
+      if (builtin ==
+            Builtin::BI__builtin___NSStringMakeConstantString) {
+        return CGM.getObjCRuntime().GenerateConstantString(Literal);
+      }
       // FIXME: need to deal with UCN conversion issues.
       return CGM.GetAddrOfConstantCFString(Literal);
     }

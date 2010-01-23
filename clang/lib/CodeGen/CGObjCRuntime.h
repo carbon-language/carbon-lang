@@ -106,7 +106,7 @@ public:
                                    const ObjCMethodDecl *Method) = 0;
 
   /// Generate a constant string object.
-  virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *) = 0;
+  virtual llvm::Constant *GenerateConstantString(const StringLiteral *) = 0;
 
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.

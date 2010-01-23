@@ -67,6 +67,15 @@ CodeGenModule::~CodeGenModule() {
   delete DebugInfo;
 }
 
+void CodeGenModule::createObjCRuntime() {
+  if (!Features.NeXTRuntime)
+    Runtime = CreateGNUObjCRuntime(*this);
+  else if (Features.ObjCNonFragileABI)
+    Runtime = CreateMacNonFragileABIObjCRuntime(*this);
+  else
+    Runtime = CreateMacObjCRuntime(*this);
+}
+
 void CodeGenModule::Release() {
   EmitDeferred();
   EmitCXXGlobalInitFunc();

@@ -161,6 +161,9 @@ class CodeGenModule : public BlockModule {
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
 
+  /// Lazily create the Objective-C runtime
+  void createObjCRuntime();
+
   llvm::LLVMContext &VMContext;
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
@@ -174,7 +177,7 @@ public:
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.
   CGObjCRuntime &getObjCRuntime() {
-    assert(Runtime && "No Objective-C runtime has been configured.");
+    if (!Runtime) createObjCRuntime();
     return *Runtime;
   }
 

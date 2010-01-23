@@ -952,7 +952,7 @@ public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) :
     CGM(cgm), VMContext(cgm.getLLVMContext()) { }
 
-  virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *SL);
+  virtual llvm::Constant *GenerateConstantString(const StringLiteral *SL);
 
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
                                          const ObjCContainerDecl *CD=0);
@@ -1454,8 +1454,8 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
 */
 
 llvm::Constant *CGObjCCommonMac::GenerateConstantString(
-  const ObjCStringLiteral *SL) {
-  return CGM.GetAddrOfConstantCFString(SL->getString());
+  const StringLiteral *SL) {
+  return CGM.GetAddrOfConstantCFString(SL);
 }
 
 /// Generates a message send where the super is the receiver.  This is
