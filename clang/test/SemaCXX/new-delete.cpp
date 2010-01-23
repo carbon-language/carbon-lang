@@ -65,7 +65,7 @@ void bad_news(int *ip)
   (void)new S(1); // expected-error {{no matching constructor}}
   (void)new S(1, 1); // expected-error {{call to constructor of 'struct S' is ambiguous}}
   (void)new const int; // expected-error {{default initialization of an object of const type 'int const'}}
-  (void)new float*(ip); // expected-error {{cannot initialize a value of type 'float *' with an lvalue of type 'int *'}}
+  (void)new float*(ip); // expected-error {{cannot initialize a new value of type 'float *' with an lvalue of type 'int *'}}
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}

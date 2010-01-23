@@ -546,8 +546,9 @@ def err_destructor_name : Error<
 // C++ initialization
 def err_init_conversion_failed : Error<
   "cannot initialize %select{a variable|a parameter|return object|an "
-  "exception object|a value|a base class|a member subobject|an array element}0"
-  " of type %1 with an %select{rvalue|lvalue}2 of type %3">;
+  "exception object|a member subobject|an array element|a new value|a value|a "
+  "base class|an array element}0 of type %1 with an %select{rvalue|lvalue}2 of "
+  "type %3">;
 
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
 def err_invalid_initialization : Error<
