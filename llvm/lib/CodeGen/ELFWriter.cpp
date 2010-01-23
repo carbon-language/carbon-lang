@@ -703,10 +703,6 @@ bool ELFWriter::doFinalization(Module &M) {
        I != E; ++I)
     SymbolList.push_back(ELFSym::getExtSym(*I));
 
-  // Emit non-executable stack note
-  if (MAI->getNonexecutableStackDirective())
-    getNonExecStackSection();
-
   // Emit a symbol for each section created until now, skip null section
   for (unsigned i = 1, e = SectionList.size(); i < e; ++i) {
     ELFSection &ES = *SectionList[i];
