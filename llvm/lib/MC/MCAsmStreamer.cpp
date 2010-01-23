@@ -271,13 +271,57 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   EmitEOL();
 }
 
+static inline char toOctal(int X) { return (X&7)+'0'; }
+
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  const char *Directive = MAI.getData8bitsDirective(AddrSpace);
-  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-    OS << Directive << (unsigned)(unsigned char)Data[i];
+  if (Data.empty()) return;
+  
+  if (Data.size() == 1) {
+    OS << MAI.getData8bitsDirective(AddrSpace);
+    OS << (unsigned)(unsigned char)Data[0];
     EmitEOL();
+    return;
   }
+
+  // If the data ends with 0 and the target supports .asciz, use it, otherwise
+  // use .ascii
+  if (MAI.getAscizDirective() && Data.back() == 0) {
+    OS << MAI.getAscizDirective();
+    Data = Data.substr(0, Data.size()-1);
+  } else {
+    OS << MAI.getAsciiDirective();
+  }
+
+  OS << " \"";
+  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+    unsigned char C = Data[i];
+    if (C == '"' || C == '\\') {
+      OS << '\\' << (char)C;
+      continue;
+    }
+    
+    if (isprint((unsigned char)C)) {
+      OS << (char)C;
+      continue;
+    }
+    
+    switch (C) {
+    case '\b': OS << "\\b"; break;
+    case '\f': OS << "\\f"; break;
+    case '\n': OS << "\\n"; break;
+    case '\r': OS << "\\r"; break;
+    case '\t': OS << "\\t"; break;
+    default:
+      OS << '\\';
+      OS << toOctal(C >> 6);
+      OS << toOctal(C >> 3);
+      OS << toOctal(C >> 0);
+      break;
+    }
+  }
+  OS << '"';
+  EmitEOL();
 }
 
 /// EmitIntValue - Special case of EmitValue that avoids the client having
