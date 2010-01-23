@@ -109,15 +109,15 @@ altret:
 
 ; CHECK: dont_merge_oddly:
 ; CHECK-NOT:   ret
-; CHECK:        ucomiss %xmm0, %xmm1
+; CHECK:        ucomiss %xmm1, %xmm2
 ; CHECK-NEXT:   jbe .LBB3_3
-; CHECK-NEXT:   ucomiss %xmm2, %xmm0
+; CHECK-NEXT:   ucomiss %xmm0, %xmm1
 ; CHECK-NEXT:   ja .LBB3_4
 ; CHECK-NEXT: .LBB3_2:
 ; CHECK-NEXT:   movb $1, %al
 ; CHECK-NEXT:   ret
 ; CHECK-NEXT: .LBB3_3:
-; CHECK-NEXT:   ucomiss %xmm2, %xmm1
+; CHECK-NEXT:   ucomiss %xmm0, %xmm2
 ; CHECK-NEXT:   jbe .LBB3_2
 ; CHECK-NEXT: .LBB3_4:
 ; CHECK-NEXT:   xorb %al, %al
