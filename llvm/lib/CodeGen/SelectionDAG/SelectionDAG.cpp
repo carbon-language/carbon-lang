@@ -593,7 +593,7 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
   NodeAllocator.Deallocate(AllNodes.remove(N));
 
   // Remove the ordering of this node.
-  if (Ordering) Ordering->remove(N);
+  Ordering->remove(N);
 }
 
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
@@ -790,8 +790,7 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
               getVTList(MVT::Other)),
     Root(getEntryNode()), Ordering(0) {
   AllNodes.push_back(&EntryNode);
-  if (DisableScheduling)
-    Ordering = new SDNodeOrdering();
+  Ordering = new SDNodeOrdering();
 }
 
 void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
@@ -830,8 +829,7 @@ void SelectionDAG::clear() {
   EntryNode.UseList = 0;
   AllNodes.push_back(&EntryNode);
   Root = getEntryNode();
-  if (DisableScheduling)
-    Ordering = new SDNodeOrdering();
+  Ordering = new SDNodeOrdering();
 }
 
 SDValue SelectionDAG::getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
@@ -5241,14 +5239,13 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
 /// AssignOrdering - Assign an order to the SDNode.
 void SelectionDAG::AssignOrdering(SDNode *SD, unsigned Order) {
   assert(SD && "Trying to assign an order to a null node!");
-  if (Ordering)
-    Ordering->add(SD, Order);
+  Ordering->add(SD, Order);
 }
 
 /// GetOrdering - Get the order for the SDNode.
 unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
   assert(SD && "Trying to get the order of a null node!");
-  return Ordering ? Ordering->getOrder(SD) : 0;
+  return Ordering->getOrder(SD);
 }
 
 

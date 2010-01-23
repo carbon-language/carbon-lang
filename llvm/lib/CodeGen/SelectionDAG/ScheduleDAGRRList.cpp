@@ -46,6 +46,11 @@ static RegisterScheduler
   tdrListrDAGScheduler("list-tdrr",
                        "Top-down register reduction list scheduling",
                        createTDRRListDAGScheduler);
+static RegisterScheduler
+  sourceListDAGScheduler("source",
+                         "Similar to list-burr but schedules in source "
+                         "order when possible",
+                         createSourceListDAGScheduler);
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -931,6 +936,16 @@ namespace {
     
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
+
+  struct src_ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    RegReductionPriorityQueue<src_ls_rr_sort> *SPQ;
+    src_ls_rr_sort(RegReductionPriorityQueue<src_ls_rr_sort> *spq)
+      : SPQ(spq) {}
+    src_ls_rr_sort(const src_ls_rr_sort &RHS)
+      : SPQ(RHS.SPQ) {}
+    
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
 }  // end anonymous namespace
 
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
@@ -981,9 +996,9 @@ namespace {
 
   public:
     RegReductionPriorityQueue(const TargetInstrInfo *tii,
-                              const TargetRegisterInfo *tri) :
-    Queue(SF(this)), currentQueueId(0),
-    TII(tii), TRI(tri), scheduleDAG(NULL) {}
+                              const TargetRegisterInfo *tri)
+      : Queue(SF(this)), currentQueueId(0),
+        TII(tii), TRI(tri), scheduleDAG(NULL) {}
     
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
@@ -1089,6 +1104,9 @@ namespace {
 
   typedef RegReductionPriorityQueue<td_ls_rr_sort>
     TDRegReductionPriorityQueue;
+
+  typedef RegReductionPriorityQueue<src_ls_rr_sort>
+    SrcRegReductionPriorityQueue;
 }
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
@@ -1122,16 +1140,9 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   return Scratches;
 }
 
-// Bottom up
-bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LOrder = SPQ->getNodeOrdering(left);
-  unsigned ROrder = SPQ->getNodeOrdering(right);
-
-  // Prefer an ordering where the lower the non-zero order number, the higher
-  // the preference.
-  if ((LOrder || ROrder) && LOrder != ROrder)
-    return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
-
+template <typename RRSort>
+static bool BURRSort(const SUnit *left, const SUnit *right,
+                     const RegReductionPriorityQueue<RRSort> *SPQ) {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority)
@@ -1176,6 +1187,24 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return (left->NodeQueueId > right->NodeQueueId);
 }
 
+// Bottom up
+bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+  return BURRSort(left, right, SPQ);
+}
+
+// Source order, otherwise bottom up.
+bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
+  unsigned LOrder = SPQ->getNodeOrdering(left);
+  unsigned ROrder = SPQ->getNodeOrdering(right);
+
+  // Prefer an ordering where the lower the non-zero order number, the higher
+  // the preference.
+  if ((LOrder || ROrder) && LOrder != ROrder)
+    return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
+
+  return BURRSort(left, right, SPQ);
+}
+
 template<class SF>
 bool
 RegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
@@ -1195,7 +1224,6 @@ RegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
   }
   return false;
 }
-
 
 /// hasCopyToRegUse - Return true if SU has a value successor that is a
 /// CopyToReg node.
@@ -1543,4 +1571,18 @@ llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
     new ScheduleDAGRRList(*IS->MF, false, PQ);
   PQ->setScheduleDAG(SD);
   return SD;
+}
+
+llvm::ScheduleDAGSDNodes *
+llvm::createSourceListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
+  const TargetMachine &TM = IS->TM;
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  
+  SrcRegReductionPriorityQueue *PQ = new SrcRegReductionPriorityQueue(TII, TRI);
+
+  ScheduleDAGRRList *SD =
+    new ScheduleDAGRRList(*IS->MF, true, PQ);
+  PQ->setScheduleDAG(SD);
+  return SD;  
 }

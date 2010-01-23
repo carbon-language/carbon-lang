@@ -144,7 +144,7 @@ namespace llvm {
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
       return createTDListDAGScheduler(IS, OptLevel);
     assert(TLI.getSchedulingPreference() ==
-         TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
+           TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
     return createBURRListDAGScheduler(IS, OptLevel);
   }
 }
