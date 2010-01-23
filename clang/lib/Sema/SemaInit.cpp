@@ -242,7 +242,8 @@ class InitListChecker {
                              InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
-  void CheckArrayType(InitListExpr *IList, QualType &DeclType,
+  void CheckArrayType(const InitializedEntity *Entity,
+                      InitListExpr *IList, QualType &DeclType,
                       llvm::APSInt elementIndex,
                       bool SubobjectIsDesignatorContext, unsigned &Index,
                       InitListExpr *StructuredList,
@@ -640,7 +641,8 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity *Entity,
       llvm::APSInt Zero(
                       SemaRef.Context.getTypeSize(SemaRef.Context.getSizeType()),
                       false);
-      CheckArrayType(IList, DeclType, Zero, SubobjectIsDesignatorContext, Index,
+      CheckArrayType(Entity, IList, DeclType, Zero, 
+                     SubobjectIsDesignatorContext, Index,
                      StructuredList, StructuredIndex);
     } else
       assert(0 && "Aggregate that isn't a structure or array?!");
@@ -932,7 +934,8 @@ void InitListChecker::CheckVectorType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
+void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
+                                     InitListExpr *IList, QualType &DeclType,
                                      llvm::APSInt elementIndex,
                                      bool SubobjectIsDesignatorContext,
                                      unsigned &Index,
@@ -1020,9 +1023,20 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
     if (maxElementsKnown && elementIndex == maxElements)
       break;
 
-    // Check this element.
-    CheckSubElementType(0, IList, elementType, Index,
-                        StructuredList, StructuredIndex);
+    // FIXME: Once we know that Entity is not null, we can remove this check,
+    // and the else block.
+    if (Entity) {
+      InitializedEntity ElementEntity =
+      InitializedEntity::InitializeElement(SemaRef.Context, StructuredIndex, 
+                                           *Entity);
+      // Check this element.
+      CheckSubElementType(&ElementEntity, IList, elementType, Index,
+                          StructuredList, StructuredIndex);
+    } else {
+      // Check this element.
+      CheckSubElementType(0, IList, elementType, Index,
+                          StructuredList, StructuredIndex);
+    }      
     ++elementIndex;
 
     // If the array is of incomplete type, keep track of the number of
@@ -1649,7 +1663,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
   // Check the remaining elements within this array subobject.
   bool prevHadError = hadError;
-  CheckArrayType(IList, CurrentObjectType, DesignatedStartIndex, false, Index,
+  CheckArrayType(0, IList, CurrentObjectType, DesignatedStartIndex, 
+                 /*SubobjectIsDesignatorContext=*/false, Index,
                  StructuredList, ElementIndex);
   return hadError && !prevHadError;
 }

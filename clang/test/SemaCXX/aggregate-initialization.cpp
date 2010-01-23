@@ -34,3 +34,6 @@ const type foo = {0};
 // Vector initialization.
 typedef short __v4hi __attribute__ ((__vector_size__ (8)));
 __v4hi v1 = { (void *)1, 2, 3 }; // expected-error {{cannot initialize a vector element of type 'short' with an rvalue of type 'void *'}}
+
+// Array initialization.
+int a[] = { (void *)1 }; // expected-error {{cannot initialize an array element of type 'int' with an rvalue of type 'void *'}}
