@@ -65,7 +65,7 @@ namespace clang {
   /// \brief Retrieves a string representing the complete clang version,
   ///   which includes the clang version number, the repository version, 
   ///   and the vendor tag.
-  const char *getClangFullVendorVersion();
+  const char *getClangFullVersion();
 }
 
 #endif // LLVM_CLANG_BASIC_VERSION_H

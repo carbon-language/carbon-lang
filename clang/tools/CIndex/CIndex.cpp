@@ -1865,7 +1865,7 @@ void clang_disposeString(CXString string) {
 extern "C" {
 
 const char *clang_getClangVersion() {
-  return getClangFullVendorVersion();
+  return getClangFullVersion();
 }
 
 } // end: extern "C"

@@ -71,7 +71,7 @@ llvm::StringRef getClangFullRepositoryVersion() {
   return buf;
 }
   
-const char *getClangFullVendorVersion() {
+const char *getClangFullVersion() {
   static std::string buf;
   if (buf.empty()) {
     llvm::raw_string_ostream OS(buf);
