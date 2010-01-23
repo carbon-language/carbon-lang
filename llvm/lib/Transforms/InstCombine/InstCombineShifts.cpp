@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -69,10 +70,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   if (Op1->uge(TypeBits)) {
     if (I.getOpcode() != Instruction::AShr)
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
-    else {
-      I.setOperand(1, ConstantInt::get(I.getType(), TypeBits-1));
-      return &I;
-    }
+    // ashr i32 X, 32 --> ashr i32 X, 31
+    I.setOperand(1, ConstantInt::get(I.getType(), TypeBits-1));
+    return &I;
   }
   
   // ((X*C1) << C2) == (X * (C1 << C2))
@@ -387,7 +387,29 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
-  return commonShiftTransforms(I);
+  if (Instruction *R = commonShiftTransforms(I))
+    return R;
+  
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1))
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Op0)) {
+      // ctlz.i32(x)>>5  --> zext(x == 0)
+      // cttz.i32(x)>>5  --> zext(x == 0)
+      // ctpop.i32(x)>>5 --> zext(x == -1)
+      if ((II->getIntrinsicID() == Intrinsic::ctlz ||
+           II->getIntrinsicID() == Intrinsic::cttz ||
+           II->getIntrinsicID() == Intrinsic::ctpop) &&
+          (1ULL << Op1C->getZExtValue()) ==
+            Op0->getType()->getScalarSizeInBits()) {
+        bool isCtPop = II->getIntrinsicID() == Intrinsic::ctpop;
+        Constant *RHS = ConstantInt::getSigned(Op0->getType(), isCtPop ? -1 : 0);
+        Value *Cmp = Builder->CreateICmpEQ(II->getOperand(1), RHS);
+        return new ZExtInst(Cmp, II->getType());
+      }
+    }
+  
+  return 0;
 }
 
 Instruction *InstCombiner::visitAShr(BinaryOperator &I) {

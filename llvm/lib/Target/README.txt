@@ -237,24 +237,6 @@ define void @test(i32* %P) {
 
 //===---------------------------------------------------------------------===//
 
-dag/inst combine "clz(x)>>5 -> x==0" for 32-bit x.
-
-Compile:
-
-int bar(int x)
-{
-  int t = __builtin_clz(x);
-  return -(t>>5);
-}
-
-to:
-
-_bar:   addic r3,r3,-1
-        subfe r3,r3,r3
-        blr
-
-//===---------------------------------------------------------------------===//
-
 quantum_sigma_x in 462.libquantum contains the following loop:
 
       for(i=0; i<reg->size; i++)
@@ -293,6 +275,8 @@ unsigned long reverse(unsigned v) {
 }
 
 //===---------------------------------------------------------------------===//
+
+[LOOP RECOGNITION]
 
 These idioms should be recognized as popcount (see PR1488):
 

@@ -144,3 +144,18 @@ entry:
 ; CHECK-NEXT: %pop.cmp = icmp eq i32 %b, 0
 ; CHECK-NEXT: volatile store i1 %pop.cmp, i1* %c
 }
+
+
+define i32 @cttz_simplify1(i32 %x) nounwind readnone ssp {
+  %tmp1 = tail call i32 @llvm.ctlz.i32(i32 %x)    ; <i32> [#uses=1]
+  %shr3 = lshr i32 %tmp1, 5                       ; <i32> [#uses=1]
+  ret i32 %shr3
+  
+; CHECK: @cttz_simplify1
+; CHECK: icmp eq i32 %x, 0
+; CHECK-NEXT: zext i1 
+; CHECK-NEXT: ret i32
+}
+
+declare i32 @llvm.ctlz.i32(i32) nounwind readnone
+
