@@ -4414,7 +4414,8 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   QualType FromTy = Conv.Bad.getFromType();
   QualType ToTy = Conv.Bad.getToType();
 
-  // Do some hand-waving analysis to see if the non-viability is due to a
+  // Do some hand-waving analysis to see if the non-viability is due
+  // to a qualifier mismatch.
   CanQualType CFromTy = S.Context.getCanonicalType(FromTy);
   CanQualType CToTy = S.Context.getCanonicalType(ToTy);
   if (CanQual<ReferenceType> RT = CToTy->getAs<ReferenceType>())
@@ -4461,6 +4462,20 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
         << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
         << FromTy << (CVR - 1) << I+1;
     }
+    return;
+  }
+
+  // Diagnose references or pointers to incomplete types differently,
+  // since it's far from impossible that the incompleteness triggered
+  // the failure.
+  QualType TempFromTy = FromTy.getNonReferenceType();
+  if (const PointerType *PTy = TempFromTy->getAs<PointerType>())
+    TempFromTy = PTy->getPointeeType();
+  if (TempFromTy->isIncompleteType()) {
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_conv_incomplete)
+      << (unsigned) FnKind << FnDesc
+      << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << FromTy << ToTy << (unsigned) isObjectArgument << I+1;
     return;
   }
 

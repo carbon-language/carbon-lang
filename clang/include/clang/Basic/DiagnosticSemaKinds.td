@@ -923,10 +923,24 @@ def note_ovl_candidate_arity : Note<"candidate "
     "function (the implicit copy assignment operator)}0 not viable: requires"
     "%select{ at least| at most|}2 %3 argument%s3, but %4 %plural{1:was|:were}4 "
     "provided">;
+
 def note_ovl_candidate_deleted : Note<
   "candidate %select{function|function|constructor|"
   "function |function |constructor |||}0%1 "
   "has been explicitly %select{made unavailable|deleted}2">;
+
+// Giving the index of the bad argument really clutters this message, and
+// it's relatively unimportant because 1) it's generally obvious which
+// argument(s) are of the given object type and 2) the fix is usually
+// to complete the type, which doesn't involve changes to the call line
+// anyway.  If people complain, we can change it.
+def note_ovl_candidate_bad_conv_incomplete : Note<"candidate "
+    "%select{function|function|constructor|"
+    "function |function |constructor |"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0%1 "
+    "not viable: cannot convert argument of incomplete type %2 to %3">;
 def note_ovl_candidate_bad_conv : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"

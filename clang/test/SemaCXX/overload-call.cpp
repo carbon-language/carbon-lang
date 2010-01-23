@@ -333,3 +333,17 @@ namespace test2 {
     inline bool operator!=(const qrgb666 &v) const { return !(*this == v); }
   };
 }
+
+// PR 6117
+namespace test3 {
+  struct Base {};
+  struct Incomplete;
+
+  void foo(Base *); // expected-note 2 {{cannot convert argument of incomplete type}}
+  void foo(Base &); // expected-note 2 {{cannot convert argument of incomplete type}}
+
+  void test(Incomplete *P) {
+    foo(P); // expected-error {{no matching function for call to 'foo'}}
+    foo(*P); // expected-error {{no matching function for call to 'foo'}}
+  }
+}
