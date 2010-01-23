@@ -854,7 +854,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                          StringRef DisplayName,
                                          StringRef LinkageName,
                                          DICompileUnit CompileUnit,
-                                         unsigned LineNo, DIType Type,
+                                         unsigned LineNo, DIType Ty,
                                          bool isLocalToUnit,
                                          bool isDefinition,
                                          unsigned VK, unsigned VIndex,
@@ -869,7 +869,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     MDString::get(VMContext, LinkageName),
     CompileUnit.getNode(),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    Ty.getNode(),
     ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
     ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
@@ -911,7 +911,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
                                 StringRef DisplayName,
                                 StringRef LinkageName,
                                 DICompileUnit CompileUnit,
-                                unsigned LineNo, DIType Type,bool isLocalToUnit,
+                                unsigned LineNo, DIType Ty,bool isLocalToUnit,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
@@ -922,7 +922,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
     MDString::get(VMContext, LinkageName),
     CompileUnit.getNode(),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    Ty.getNode(),
     ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
     Val
@@ -943,14 +943,14 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
 DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                      StringRef Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
-                                     DIType Type) {
+                                     DIType Ty) {
   Value *Elts[] = {
     GetTagConstant(Tag),
     Context.getNode(),
     MDString::get(VMContext, Name),
     CompileUnit.getNode(),
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
-    Type.getNode(),
+    Ty.getNode(),
   };
   return DIVariable(MDNode::get(VMContext, &Elts[0], 6));
 }
@@ -962,14 +962,15 @@ DIVariable DIFactory::CreateComplexVariable(unsigned Tag, DIDescriptor Context,
                                             const std::string &Name,
                                             DICompileUnit CompileUnit,
                                             unsigned LineNo,
-                                   DIType Type, SmallVector<Value *, 9> &addr) {
+                                            DIType Ty, 
+                                            SmallVector<Value *, 9> &addr) {
   SmallVector<Value *, 9> Elts;
   Elts.push_back(GetTagConstant(Tag));
   Elts.push_back(Context.getNode());
   Elts.push_back(MDString::get(VMContext, Name));
   Elts.push_back(CompileUnit.getNode());
   Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), LineNo));
-  Elts.push_back(Type.getNode());
+  Elts.push_back(Ty.getNode());
   Elts.insert(Elts.end(), addr.begin(), addr.end());
 
   return DIVariable(MDNode::get(VMContext, &Elts[0], 6+addr.size()));
@@ -1137,9 +1138,9 @@ void DebugInfoFinder::processType(DIType DT) {
     if (!DA.isNull())
       for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
         DIDescriptor D = DA.getElement(i);
-        DIType TypeE = DIType(D.getNode());
-        if (!TypeE.isNull())
-          processType(TypeE);
+        DIType TyE = DIType(D.getNode());
+        if (!TyE.isNull())
+          processType(TyE);
         else
           processSubprogram(DISubprogram(D.getNode()));
       }

@@ -587,7 +587,7 @@ namespace llvm {
                                   StringRef DisplayName,
                                   StringRef LinkageName,
                                   DICompileUnit CompileUnit, unsigned LineNo,
-                                  DIType Type, bool isLocalToUnit,
+                                  DIType Ty, bool isLocalToUnit,
                                   bool isDefinition,
                                   unsigned VK = 0,
                                   unsigned VIndex = 0,
@@ -603,21 +603,21 @@ namespace llvm {
                          StringRef DisplayName,
                          StringRef LinkageName,
                          DICompileUnit CompileUnit,
-                         unsigned LineNo, DIType Type, bool isLocalToUnit,
+                         unsigned LineNo, DIType Ty, bool isLocalToUnit,
                          bool isDefinition, llvm::GlobalVariable *GV);
 
     /// CreateVariable - Create a new descriptor for the specified variable.
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
                               StringRef Name,
                               DICompileUnit CompileUnit, unsigned LineNo,
-                              DIType Type);
+                              DIType Ty);
 
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     DIVariable CreateComplexVariable(unsigned Tag, DIDescriptor Context,
                                      const std::string &Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
-                                     DIType Type,
+                                     DIType Ty,
                                      SmallVector<Value *, 9> &addr);
 
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
