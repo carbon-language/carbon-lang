@@ -230,7 +230,7 @@ void ValueEnumerator::EnumerateNamedMDNode(const NamedMDNode *MD) {
 }
 
 void ValueEnumerator::EnumerateMetadata(const Value *MD) {
-  assert(isa<MDNode>(MD) || isa<MDString>(MD) && "Invalid metadata kind");
+  assert((isa<MDNode>(MD) || isa<MDString>(MD)) && "Invalid metadata kind");
   // Check to see if it's already in!
   unsigned &MDValueID = MDValueMap[MD];
   if (MDValueID) {
