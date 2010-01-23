@@ -3390,17 +3390,10 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
     if (DAG.InferPtrAlignment(Ptr) < 16) {
       if (MFI->isFixedObjectIndex(FI)) {
-        // Can't change the alignment. Reference stack + offset explicitly
-        // if stack pointer is at least 16-byte aligned.
-        unsigned StackAlign = Subtarget->getStackAlignment();
-        if (StackAlign < 16)
-          return SDValue();
-        Offset = MFI->getObjectOffset(FI) + Offset;
-        SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr,
-                                              getPointerTy());
-        Ptr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
-                          DAG.getConstant(Offset & ~15, getPointerTy()));
-        Offset %= 16;
+        // Can't change the alignment. FIXME: It's possible to compute
+        // the exact stack offset and reference FI + adjust offset instead.
+        // If someone *really* cares about this. That's the way to implement it.
+        return SDValue();
       } else {
         MFI->setObjectAlignment(FI, 16);
       }
