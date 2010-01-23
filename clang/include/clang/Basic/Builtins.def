@@ -277,7 +277,7 @@ BUILTIN(__builtin_va_copy, "vAA", "n")
 BUILTIN(__builtin_stdarg_start, "vA.", "n")
 BUILTIN(__builtin_bcmp, "iv*v*z", "n")
 BUILTIN(__builtin_bcopy, "vv*v*z", "n")
-BUILTIN(__builtin_bzero, "vv*z", "n")
+BUILTIN(__builtin_bzero, "vv*z", "nF")
 BUILTIN(__builtin_memchr, "v*vC*iz", "nF")
 BUILTIN(__builtin_memcmp, "ivC*vC*z", "nF")
 BUILTIN(__builtin_memcpy, "v*v*vC*z", "nF")
@@ -527,6 +527,7 @@ LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h")
 // POSIX strings.h
 LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h")
 LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h")
+LIBBUILTIN(bzero, "vv*z",         "f",     "strings.h")
 // POSIX unistd.h
 LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h")
 // POSIX setjmp.h
