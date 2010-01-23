@@ -1390,9 +1390,7 @@ static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                  "return " + utostr(i + 1) + ";"));
   }
   
-  OS << "unsigned " << Target.getName() 
-     << AsmParser->getValueAsString("AsmParserClassName")
-     << "::MatchRegisterName(const StringRef &Name) {\n";
+  OS << "static unsigned MatchRegisterName(const StringRef &Name) {\n";
 
   EmitStringMatcher("Name", Matches, OS);
   
@@ -1451,6 +1449,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Emit the function to match a register name to number.
   EmitMatchRegisterName(Target, AsmParser, OS);
+  
+  OS << "#ifndef REGISTERS_ONLY\n\n";
 
   // Generate the unified function to convert operands into an MCInst.
   EmitConvertToMCInst(Target, Info.Instructions, OS);
@@ -1550,4 +1550,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  return true;\n";
   OS << "}\n\n";
+  
+  OS << "#endif // REGISTERS_ONLY\n";
 }

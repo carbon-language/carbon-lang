@@ -50,10 +50,6 @@ private:
   bool MatchInstruction(const SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCInst &Inst);
 
-  /// MatchRegisterName - Match the given string to a register name, or 0 if
-  /// there is no match.
-  unsigned MatchRegisterName(const StringRef &Name);
-
   /// }
 
 public:
@@ -68,6 +64,12 @@ public:
   
 } // end anonymous namespace
 
+/// @name Auto-generated Match Functions
+/// {  
+
+static unsigned MatchRegisterName(const StringRef &Name);
+
+/// }
 
 namespace {
 
