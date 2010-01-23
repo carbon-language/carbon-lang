@@ -47,6 +47,7 @@ namespace llvm {
       IndirectSymbol, /// .indirect_symbol (Apple)
       Internal,       /// .internal (ELF)
       LazyReference,  /// .lazy_reference (Apple)
+      Local,          /// .local (ELF)
       NoDeadStrip,    /// .no_dead_strip (Apple)
       PrivateExtern,  /// .private_extern (Apple)
       Protected,      /// .protected (ELF)

@@ -321,6 +321,12 @@ namespace llvm {
     /// block label.
     MCSymbol *GetMBBSymbol(unsigned MBBID) const;
     
+    /// GetCPISymbol - Return the symbol for the specified constant pool entry.
+    MCSymbol *GetCPISymbol(unsigned CPID) const;
+
+    /// GetJTISymbol - Return the symbol for the specified jump table entry.
+    MCSymbol *GetJTISymbol(unsigned JTID, bool isLinkerPrivate = false) const;
+
     /// GetBlockAddressSymbol - Return the MCSymbol used to satisfy BlockAddress
     /// uses of the specified basic block.
     MCSymbol *GetBlockAddressSymbol(const BlockAddress *BA,

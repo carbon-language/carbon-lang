@@ -115,9 +115,9 @@ bool AsmPrinter::doInitialization(Module &M) {
   EmitStartOfAsmFile(M);
 
   if (MAI->hasSingleParameterDotFile()) {
-    /* Very minimal debug info. It is ignored if we emit actual
-       debug info. If we don't, this at least helps the user find where
-       a function came from. */
+    // Very minimal debug info. It is ignored if we emit actual
+    // debug info. If we don't, this at least helps the user find where
+    // a function came from.
     O << "\t.file\t\"" << M.getModuleIdentifier() << "\"\n";
   }
 
@@ -197,13 +197,12 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     
     if (const char *LComm = MAI->getLCOMMDirective()) {
       // .lcomm _foo, 42
-      O << LComm << *GVSym << ',' << Size;
-      O << '\n';
+      O << LComm << *GVSym << ',' << Size << '\n';
       return;
     }
     
     // .local _foo
-    O << "\t.local\t" << *GVSym << '\n';
+    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Local);
     // .comm _foo, 42, 4
     OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
     return;
@@ -302,12 +301,14 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      O << MAI->getWeakRefDirective() << *GetGlobalValueSymbol(I) << '\n';
+      OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(I),
+                                      MCStreamer::WeakReference);
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
-      O << MAI->getWeakRefDirective() << *GetGlobalValueSymbol(I) << '\n';
+      OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(I),
+                                      MCStreamer::WeakReference);
     }
   }
 
@@ -321,9 +322,9 @@ bool AsmPrinter::doFinalization(Module &M) {
       MCSymbol *Target = GetGlobalValueSymbol(GV);
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
-        O << "\t.globl\t" << *Name << '\n';
+        OutStreamer.EmitSymbolAttribute(Name, MCStreamer::Global);
       else if (I->hasWeakLinkage())
-        O << MAI->getWeakRefDirective() << *Name << '\n';
+        OutStreamer.EmitSymbolAttribute(Name, MCStreamer::WeakReference);
       else
         assert(I->hasLocalLinkage() && "Invalid alias linkage");
 
@@ -343,6 +344,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   // to be executable. Some targets have a directive to declare this.
   Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
   if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
+    // FIXME: This is actually a section switch on linux/x86 and systemz, use
+    // switch section.
     if (MAI->getNonexecutableStackDirective())
       O << MAI->getNonexecutableStackDirective() << '\n';
 
@@ -449,14 +452,15 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       const Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
 
-      O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-        << CPI << ':';
+      // Emit the label with a comment on it.
       if (VerboseAsm) {
-        O.PadToColumn(MAI->getCommentColumn());
-        O << MAI->getCommentString() << " constant ";
-        WriteTypeSymbolic(O, CPE.getType(), MF->getFunction()->getParent());
+        OutStreamer.GetCommentOS() << "constant pool ";
+        WriteTypeSymbolic(OutStreamer.GetCommentOS(), CPE.getType(),
+                          MF->getFunction()->getParent());
+        OutStreamer.GetCommentOS() << '\n';
       }
-      O << '\n';
+      OutStreamer.EmitLabel(GetCPISymbol(CPI));
+
       if (CPE.isMachineConstantPoolEntry())
         EmitMachineConstantPoolValue(CPE.Val.MachineCPVal);
       else
@@ -518,14 +522,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // before each jump table.  The first label is never referenced, but tells
     // the assembler and linker the extents of the jump table object.  The
     // second label is actually referenced by the code.
-    if (JTInDiffSection && MAI->getLinkerPrivateGlobalPrefix()[0]) {
-      O << MAI->getLinkerPrivateGlobalPrefix()
-        << "JTI" << getFunctionNumber() << '_' << i << ":\n";
-    }
-    
-    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-      << '_' << i << ":\n";
-    
+    if (JTInDiffSection && MAI->getLinkerPrivateGlobalPrefix()[0])
+      OutStreamer.EmitLabel(GetJTISymbol(i, true));
+
+    OutStreamer.EmitLabel(GetJTISymbol(i));
+
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
       printPICJumpTableEntry(MJTI, JTBBs[ii], i);
       O << '\n';
@@ -564,8 +565,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     // If the arch uses custom Jump Table directives, don't calc relative to
     // JT
     if (!HadJTEntryDirective) 
-      O << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
-        << getFunctionNumber() << '_' << uid;
+      O << '-' << *GetJTISymbol(uid);
   }
 }
 
@@ -1445,7 +1445,24 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BB"
     << getFunctionNumber() << '_' << MBBID;
-  
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+/// GetCPISymbol - Return the symbol for the specified constant pool entry.
+MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "CPI"
+    << getFunctionNumber() << '_' << CPID;
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+/// GetJTISymbol - Return the symbol for the specified jump table entry.
+MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
+  const char *Prefix = isLinkerPrivate ? MAI->getLinkerPrivateGlobalPrefix() :
+                                         MAI->getPrivateGlobalPrefix();
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << Prefix << "JTI" << getFunctionNumber() << '_'
+    << JTID;
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
@@ -1597,8 +1614,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ','
     << *GetMBBSymbol(MBB->getNumber())
-    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-    << '_' << uid << '\n';
+    << '-' << *GetJTISymbol(uid) << '\n';
 }
 
 void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
