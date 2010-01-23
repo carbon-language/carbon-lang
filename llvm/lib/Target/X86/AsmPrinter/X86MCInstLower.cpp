@@ -163,6 +163,8 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
 
 MCSymbol *X86MCInstLower::GetJumpTableSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
+  // FIXME: Use AsmPrinter.GetJTISymbol.  @TLSGD shouldn't be part of the symbol
+  // name!
   raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "JTI"
     << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
   
@@ -194,6 +196,8 @@ MCSymbol *X86MCInstLower::GetJumpTableSymbol(const MachineOperand &MO) const {
 MCSymbol *X86MCInstLower::
 GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
+  // FIXME: USe AsmPrinter.GetCPISymbol.  @TLSGD shouldn't be part of the symbol
+  // name!
   raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "CPI"
     << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
   

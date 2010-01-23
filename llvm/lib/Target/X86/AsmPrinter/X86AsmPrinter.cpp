@@ -204,12 +204,10 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
-    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
-      << MO.getIndex();
+    O << *GetJTISymbol(MO.getIndex());
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-      << MO.getIndex();
+    O << *GetCPISymbol(MO.getIndex());
     printOffset(MO.getOffset());
     break;
   case MachineOperand::MO_GlobalAddress: {
@@ -468,8 +466,7 @@ void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   O << *GetMBBSymbol(MBB->getNumber());
   
   if (Subtarget->isPICStyleRIPRel())
-    O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << uid << '\n';
+    O << '-' << *GetJTISymbol(uid) << '\n';
   else {
     O << '-';
     PrintPICBaseSymbol();
