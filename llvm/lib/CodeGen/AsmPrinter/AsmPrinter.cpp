@@ -196,9 +196,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
       return;
     }
     
-    if (const char *LComm = MAI->getLCOMMDirective()) {
+    if (MAI->hasLCOMMDirective()) {
       // .lcomm _foo, 42
-      O << LComm << *GVSym << ',' << Size << '\n';
+      OutStreamer.EmitLocalCommonSymbol(GVSym, Size);
       return;
     }
     

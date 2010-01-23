@@ -52,8 +52,7 @@ MCAsmInfo::MCAsmInfo() {
   PICJumpTableDirective = 0;
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
-  LCOMMDirective = 0;
-  COMMDirective = "\t.comm\t";
+  HasLCOMMDirective = false;
   COMMDirectiveTakesAlignment = true;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;

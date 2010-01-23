@@ -129,15 +129,21 @@ namespace llvm {
     /// @param DescValue - The value to set into the n_desc field.
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) = 0;
 
-    /// EmitCommonSymbol - Emit a common or local common symbol.
+    /// EmitCommonSymbol - Emit a common symbol.
     ///
     /// @param Symbol - The common symbol to emit.
     /// @param Size - The size of the common symbol.
     /// @param ByteAlignment - The alignment of the symbol if
-    /// non-zero. This must be a power of 2 on some targets.
-    virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+    /// non-zero. This must be a power of 2.
+    virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) = 0;
 
+    /// EmitLocalCommonSymbol - Emit a local common (.lcomm) symbol.
+    ///
+    /// @param Symbol - The common symbol to emit.
+    /// @param Size - The size of the common symbol.
+    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) = 0;
+    
     /// EmitZerofill - Emit a the zerofill section and an option symbol.
     ///
     /// @param Section - The zerofill section to create and or to put the symbol

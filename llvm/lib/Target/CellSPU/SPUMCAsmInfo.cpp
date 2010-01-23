@@ -19,7 +19,7 @@ SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   SetDirective = "\t.set";
   Data64bitsDirective = "\t.quad\t";
   AlignmentIsInBytes = false;
-  LCOMMDirective = "\t.lcomm\t";
+  HasLCOMMDirective = true;
       
   PCSymbol = ".";
   CommentString = "#";

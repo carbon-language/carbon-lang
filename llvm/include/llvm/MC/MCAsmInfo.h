@@ -191,15 +191,10 @@ namespace llvm {
     /// the assembler to set the value of a variable to some expression.
     const char *SetDirective;                // Defaults to null.
     
-    /// LCOMMDirective - This is the name of a directive (if supported) that can
-    /// be used to efficiently declare a local (internal) block of zero
-    /// initialized data in the .bss/.data section.  The syntax expected is:
-    /// @verbatim <LCOMMDirective> SYMBOLNAME LENGTHINBYTES
-    /// @endverbatim
-    const char *LCOMMDirective;              // Defaults to null.
+    /// HasLCOMMDirective - This is true if the target supports the .lcomm
+    /// directive.
+    bool HasLCOMMDirective;              // Defaults to false.
     
-    const char *COMMDirective;               // Defaults to "\t.comm\t".
-
     /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
     /// argument that specifies the alignment of the declaration.
     bool COMMDirectiveTakesAlignment;        // Defaults to true.
@@ -404,12 +399,7 @@ namespace llvm {
     const char *getSetDirective() const {
       return SetDirective;
     }
-    const char *getLCOMMDirective() const {
-      return LCOMMDirective;
-    }
-    const char *getCOMMDirective() const {
-      return COMMDirective;
-    }
+    bool hasLCOMMDirective() const { return HasLCOMMDirective; }
     bool getCOMMDirectiveTakesAlignment() const {
       return COMMDirectiveTakesAlignment;
     }

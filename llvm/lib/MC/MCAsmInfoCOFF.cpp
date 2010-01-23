@@ -18,7 +18,7 @@ using namespace llvm;
 
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
-  LCOMMDirective = "\t.lcomm\t";
+  HasLCOMMDirective = true;
   COMMDirectiveTakesAlignment = false;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;

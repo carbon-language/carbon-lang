@@ -39,8 +39,9 @@ namespace {
 
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
 
-    virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+    virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) {}
+    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {}
 
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0, unsigned ByteAlignment = 0) {}

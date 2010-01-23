@@ -122,8 +122,11 @@ public:
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
-  virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+  virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
+  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
+    assert(0 && "macho doesn't support this directive");
+  }
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
@@ -270,7 +273,7 @@ void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   getSymbolData(*Symbol).setFlags(DescValue & SF_DescFlagsMask);
 }
 
-void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {
   // FIXME: Darwin 'as' does appear to allow redef of a .comm by itself.
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
