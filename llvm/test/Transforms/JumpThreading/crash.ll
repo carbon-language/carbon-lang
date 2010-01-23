@@ -259,3 +259,30 @@ for.cond:                                         ; preds = %for.body, %lor.end
 for.body:                                         ; preds = %for.cond
   br label %for.cond
 }
+
+; PR6119
+define i32 @test9(i32 %action) nounwind {
+entry:
+  switch i32 %action, label %lor.rhs [
+    i32 1, label %if.then
+    i32 0, label %lor.end
+  ]
+
+if.then:                                          ; preds = %for.cond, %lor.end, %entry
+  ret i32 undef
+
+lor.rhs:                                          ; preds = %entry
+  br label %lor.end
+
+lor.end:                                          ; preds = %lor.rhs, %entry
+  %0 = phi i1 [ undef, %lor.rhs ], [ true, %entry ] ; <i1> [#uses=1]
+  %cmp103 = xor i1 undef, %0                      ; <i1> [#uses=1]
+  br i1 %cmp103, label %for.cond, label %if.then
+
+for.cond:                                         ; preds = %for.body, %lor.end
+  br i1 undef, label %if.then, label %for.body
+
+for.body:                                         ; preds = %for.cond
+  br label %for.cond
+}
+

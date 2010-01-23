@@ -1123,6 +1123,11 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
       isa<ConstantInt>(BO->getOperand(1)))
     return false;
   
+  // If the first instruction in BB isn't a phi, we won't be able to infer
+  // anything special about any particular predecessor.
+  if (!isa<PHINode>(BB->front()))
+    return false;
+  
   // If we have a xor as the branch input to this block, and we know that the
   // LHS or RHS of the xor in any predecessor is true/false, then we can clone
   // the condition into the predecessor and fix that value to true, saving some
@@ -1178,6 +1183,26 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
     if (XorOpValues[i].first != SplitVal && XorOpValues[i].first != 0) continue;
 
     BlocksToFoldInto.push_back(XorOpValues[i].second);
+  }
+  
+  // If we inferred a value for all of the predecessors, then duplication won't
+  // help us.  However, we can just replace the LHS or RHS with the constant.
+  if (BlocksToFoldInto.size() ==
+      cast<PHINode>(BB->front()).getNumIncomingValues()) {
+    if (SplitVal == 0) {
+      // If all preds provide undef, just nuke the xor, because it is undef too.
+      BO->replaceAllUsesWith(UndefValue::get(BO->getType()));
+      BO->eraseFromParent();
+    } else if (SplitVal->isZero()) {
+      // If all preds provide 0, replace the xor with the other input.
+      BO->replaceAllUsesWith(BO->getOperand(isLHS));
+      BO->eraseFromParent();
+    } else {
+      // If all preds provide 1, set the computed value to 1.
+      BO->setOperand(!isLHS, SplitVal);
+    }
+    
+    return true;
   }
   
   // Try to duplicate BB into PredBB.
