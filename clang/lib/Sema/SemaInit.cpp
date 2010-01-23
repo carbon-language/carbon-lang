@@ -76,32 +76,46 @@ CheckSingleInitializer(const InitializedEntity *Entity,
   QualType InitType = InitExpr->getType();
 
   if (S.getLangOptions().CPlusPlus) {
-    // FIXME: I dislike this error message. A lot.
-    if (S.PerformImplicitConversion(InitExpr, DeclType, 
-                                    Sema::AA_Initializing, 
-                                    /*DirectInit=*/false)) {
-      ImplicitConversionSequence ICS;
-      OverloadCandidateSet CandidateSet;
-      if (S.IsUserDefinedConversion(InitExpr, DeclType, ICS.UserDefined,
-                              CandidateSet,
-                              true, false, false) != OR_Ambiguous) {
+    if (Entity) {
+      assert(Entity->getType() == DeclType);
+      
+      // C++ [dcl.init.aggr]p2:
+      //   Each member is copy-initialized from the corresponding
+      //   initializer-clause
+      Sema::OwningExprResult Result = 
+        S.PerformCopyInitialization(*Entity, InitExpr->getLocStart(),
+                                    S.Owned(InitExpr));
+
+      return move(Result);
+    } else {
+      // FIXME: I dislike this error message. A lot.
+      if (S.PerformImplicitConversion(InitExpr, DeclType, 
+                                      Sema::AA_Initializing, 
+                                      /*DirectInit=*/false)) {
+        ImplicitConversionSequence ICS;
+        OverloadCandidateSet CandidateSet;
+        if (S.IsUserDefinedConversion(InitExpr, DeclType, ICS.UserDefined,
+                                      CandidateSet,
+                                      true, false, false) != OR_Ambiguous) {
+          S.Diag(InitExpr->getSourceRange().getBegin(),
+                        diag::err_typecheck_convert_incompatible)
+                          << DeclType << InitExpr->getType() 
+                          << Sema::AA_Initializing
+                          << InitExpr->getSourceRange();
+          return S.ExprError();
+        }
         S.Diag(InitExpr->getSourceRange().getBegin(),
-                      diag::err_typecheck_convert_incompatible)
-                      << DeclType << InitExpr->getType() << Sema::AA_Initializing
-                      << InitExpr->getSourceRange();
+               diag::err_typecheck_convert_ambiguous)
+              << DeclType << InitExpr->getType() << InitExpr->getSourceRange();
+        S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, 
+                                  &InitExpr, 1);
+      
         return S.ExprError();
       }
-      S.Diag(InitExpr->getSourceRange().getBegin(),
-             diag::err_typecheck_convert_ambiguous)
-            << DeclType << InitExpr->getType() << InitExpr->getSourceRange();
-      S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, 
-                                &InitExpr, 1);
-      
-      return S.ExprError();
-    }
     
-    Init.release();
-    return S.Owned(InitExpr);
+      Init.release();
+      return S.Owned(InitExpr);
+    }
   }
 
   Sema::AssignConvertType ConvTy =
