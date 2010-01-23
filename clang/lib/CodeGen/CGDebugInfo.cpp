@@ -78,10 +78,9 @@ llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   std::string NS = FD->getNameAsString();
 
   // Copy this name on the side and use its reference.
-  unsigned Length = NS.length() + 1;
-  char *StrPtr = FunctionNames.Allocate<char>(Length);
-  strncpy(StrPtr, NS.c_str(), Length);
-  return llvm::StringRef(StrPtr);
+  char *StrPtr = FunctionNames.Allocate<char>(NS.length());
+  memcpy(StrPtr, NS.data(), NS.length());
+  return llvm::StringRef(StrPtr, NS.length());
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
