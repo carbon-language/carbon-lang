@@ -382,7 +382,8 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
     if (hadError)
       return;
 
-    if (ElementEntity.getKind() == InitializedEntity::EK_ArrayOrVectorElement)
+    if (ElementEntity.getKind() == InitializedEntity::EK_ArrayElement ||
+        ElementEntity.getKind() == InitializedEntity::EK_VectorElement)
       ElementEntity.setElementIndex(Init);
 
     if (Init >= NumInits || !ILE->getInit(Init)) {
@@ -1828,12 +1829,15 @@ bool Sema::CheckInitList(const InitializedEntity &Entity,
 
 InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index, 
                                      const InitializedEntity &Parent)
-  : Kind(EK_ArrayOrVectorElement), Parent(&Parent), Index(Index) 
+  : Parent(&Parent), Index(Index) 
 {
-  if (const ArrayType *AT = Context.getAsArrayType(Parent.getType()))
+  if (const ArrayType *AT = Context.getAsArrayType(Parent.getType())) {
+    Kind = EK_ArrayElement;
     Type = AT->getElementType();
-  else
+  } else {
+    Kind = EK_VectorElement;
     Type = Parent.getType()->getAs<VectorType>()->getElementType();
+  }
 }
 
 InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context, 
@@ -1862,7 +1866,8 @@ DeclarationName InitializedEntity::getName() const {
   case EK_New:
   case EK_Temporary:
   case EK_Base:
-  case EK_ArrayOrVectorElement:
+  case EK_ArrayElement:
+  case EK_VectorElement:
     return DeclarationName();
   }
   
@@ -1882,7 +1887,8 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_New:
   case EK_Temporary:
   case EK_Base:
-  case EK_ArrayOrVectorElement:
+  case EK_ArrayElement:
+  case EK_VectorElement:
     return 0;
   }
   
@@ -2916,7 +2922,8 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Casting;
     
   case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_ArrayOrVectorElement:
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_VectorElement:
     return Sema::AA_Initializing;
   }
 
@@ -2934,7 +2941,8 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_ArrayOrVectorElement:
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_VectorElement:
     return false;
     
   case InitializedEntity::EK_Parameter:
@@ -2980,7 +2988,8 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_ArrayOrVectorElement:
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_VectorElement:
     // We don't need to copy for any of these initialized entities.
     return move(CurInit);
   }
