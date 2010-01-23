@@ -30,6 +30,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -50,7 +51,7 @@ namespace {
     /// argument.  Used so that arguments and return values can be used
     /// interchangably.
     struct RetOrArg {
-      RetOrArg(const Function* F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
+      RetOrArg(const Function *F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
                IsArg(IsArg) {}
       const Function *F;
       unsigned Idx;
@@ -140,6 +141,7 @@ namespace {
     void MarkLive(const Function &F);
     void PropagateLiveness(const RetOrArg &RA);
     bool RemoveDeadStuffFromFunction(Function *F);
+    bool RemoveDeadParamsFromCallersOf(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
   };
 }
@@ -280,7 +282,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 /// for void functions and 1 for functions not returning a struct. It returns
 /// the number of struct elements for functions returning a struct.
 static unsigned NumRetVals(const Function *F) {
-  if (F->getReturnType() == Type::getVoidTy(F->getContext()))
+  if (F->getReturnType()->isVoidTy())
     return 0;
   else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType()))
     return STy->getNumElements();
@@ -305,7 +307,7 @@ DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
 
 /// SurveyUse - This looks at a single use of an argument or return value
 /// and determines if it should be alive or not. Adds this use to MaybeLiveUses
-/// if it causes the used value to become MaybeAlive.
+/// if it causes the used value to become MaybeLive.
 ///
 /// RetValNum is the return value number to use when this use is used in a
 /// return instruction. This is used in the recursion, you should always leave
@@ -396,7 +398,7 @@ DAE::Liveness DAE::SurveyUses(Value *V, UseVector &MaybeLiveUses) {
 // any callers use the return value.  This fills in the LiveValues set and Uses
 // map.
 //
-// We consider arguments of non-internal functions to be intrinsically alive as
+// We consider arguments of overridable functions to be intrinsically alive as
 // well as arguments to functions which have their "address taken".
 //
 void DAE::SurveyFunction(Function &F) {
@@ -420,9 +422,16 @@ void DAE::SurveyFunction(Function &F) {
         return;
       }
 
-  if (!F.hasLocalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
+  if ((F.isDeclaration() || F.mayBeOverridden()) &&
+      (!ShouldHackArguments() || F.isIntrinsic())) {
     MarkLive(F);
     return;
+  } else if (!F.hasLocalLinkage()) {
+    DEBUG(dbgs() << "DAE - Intrinsically live return from " << F.getName()
+                 << "\n");
+    // Mark the return values alive.
+    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+      MarkLive(CreateRet(&F, i));
   }
 
   DEBUG(dbgs() << "DAE - Inspecting callers for fn: " << F.getName() << "\n");
@@ -531,14 +540,14 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
 /// values (according to Uses) live as well.
 void DAE::MarkLive(const Function &F) {
   DEBUG(dbgs() << "DAE - Intrinsically live fn: " << F.getName() << "\n");
-    // Mark the function as live.
-    LiveFunctions.insert(&F);
-    // Mark all arguments as live.
-    for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
-      PropagateLiveness(CreateArg(&F, i));
-    // Mark all return values as live.
-    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
-      PropagateLiveness(CreateRet(&F, i));
+  // Mark the function as live.
+  LiveFunctions.insert(&F);
+  // Mark all arguments as live.
+  for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
+    PropagateLiveness(CreateArg(&F, i));
+  // Mark all return values as live.
+  for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+    PropagateLiveness(CreateRet(&F, i));
 }
 
 /// MarkLive - Mark the given return value or argument as live. Additionally,
@@ -603,8 +612,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
-  if (RetTy == Type::getVoidTy(F->getContext())) {
-    NRetTy = Type::getVoidTy(F->getContext());
+  if (RetTy->isVoidTy()) {
+    NRetTy = RetTy;
   } else {
     const StructType *STy = dyn_cast<StructType>(RetTy);
     if (STy)
@@ -653,7 +662,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // values. Otherwise, ensure that we don't have any conflicting attributes
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
-  if (NRetTy == Type::getVoidTy(F->getContext()))
+  if (NRetTy->isVoidTy())
     RAttrs &= ~Attribute::typeIncompatible(NRetTy);
   else
     assert((RAttrs & Attribute::typeIncompatible(NRetTy)) == 0 
@@ -705,8 +714,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   // Create the new function type based on the recomputed parameters.
-  FunctionType *NFTy = FunctionType::get(NRetTy, Params,
-                                                FTy->isVarArg());
+  FunctionType *NFTy = FunctionType::get(NRetTy, Params, FTy->isVarArg());
 
   // No change?
   if (NFTy == FTy)
@@ -791,7 +799,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Return type not changed? Just replace users then.
         Call->replaceAllUsesWith(New);
         New->takeName(Call);
-      } else if (New->getType() == Type::getVoidTy(F->getContext())) {
+      } else if (New->getType()->isVoidTy()) {
         // Our return value has uses, but they will get removed later on.
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
@@ -867,7 +875,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
         Value *RetVal;
 
-        if (NFTy->getReturnType() == Type::getVoidTy(F->getContext())) {
+        if (NFTy->getReturnType()->isVoidTy()) {
           RetVal = 0;
         } else {
           assert (isa<StructType>(RetTy));
@@ -908,6 +916,42 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   return true;
 }
 
+bool DAE::RemoveDeadParamsFromCallersOf(Function *F) {
+  // Don't modify fully live functions
+  if (LiveFunctions.count(F))
+    return false;
+
+  // Make a list of the dead arguments.
+  SmallVector<int, 10> ArgDead;
+  unsigned i = 0;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I, ++i) {
+    RetOrArg Arg = CreateArg(F, i);
+    if (!LiveValues.count(Arg))
+      ArgDead.push_back(i);
+  }
+  if (ArgDead.empty())
+    return false;
+
+  bool MadeChange = false;
+  for (Function::use_iterator I = F->use_begin(), E = F->use_end();
+       I != E; ++I) {
+    CallSite CS = CallSite::get(*I);
+    if (CS.getInstruction() && CS.isCallee(I)) {
+      for (unsigned i = 0, e = ArgDead.size(); i != e; ++i) {
+        Value *A = CS.getArgument(ArgDead[i]);
+        if (!isa<UndefValue>(A)) {
+          MadeChange = true;
+          CS.setArgument(ArgDead[i], UndefValue::get(A->getType()));
+          RecursivelyDeleteTriviallyDeadInstructions(A);
+        }
+      }
+    }
+  }
+
+  return MadeChange;
+}
+
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
 
@@ -931,12 +975,15 @@ bool DAE::runOnModule(Module &M) {
     SurveyFunction(*I);
   
   // Now, remove all dead arguments and return values from each function in
-  // turn
+  // turn.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    // Increment now, because the function will probably get removed (ie
+    // Increment now, because the function will probably get removed (ie.
     // replaced by a new one).
     Function *F = I++;
-    Changed |= RemoveDeadStuffFromFunction(F);
+    if (F->hasLocalLinkage())
+      Changed |= RemoveDeadStuffFromFunction(F);
+    else
+      Changed |= RemoveDeadParamsFromCallersOf(F);
   }
   return Changed;
 }
