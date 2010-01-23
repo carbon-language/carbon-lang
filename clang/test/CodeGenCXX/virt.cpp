@@ -373,11 +373,11 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT: .quad __ZN8test16_D4foo1Ev
 // CHECK-LP64-NEXT: .quad 0
 // CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad -16
 // CHECK-LP64-NEXT: .quad 0
 // CHECK-LP64-NEXT: .quad 0
 // CHECK-LP64-NEXT: .quad 16
-// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad -16
 // CHECK-LP64-NEXT: .quad __ZTI8test16_D
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV16fooNV1Ev
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV17foo_NV1Ev
@@ -388,11 +388,11 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT .quad 16
 // CHECK-LP64-NEXT: .quad 0
 // CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64: .quad 18446744073709551600
-// CHECK-LP64-NEXT: .quad 18446744073709551584
+// CHECK-LP64: .quad -16
+// CHECK-LP64-NEXT: .quad -32
 // CHECK-LP64-NEXT: .quad 0
 // CHECK-LP64-NEXT: .quad 0
-// CHECK-LP64-NEXT: .quad 18446744073709551584
+// CHECK-LP64-NEXT: .quad -32
 // CHECK-LP64-NEXT: .quad __ZTI8test16_D
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV16fooNV1Ev
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV17foo_NV1Ev
@@ -400,7 +400,7 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT: .quad __ZTcv0_n48_v0_n24_N9test16_B24foo2Ev
 // CHECK-LP64-NEXT: .quad __ZN8test16_B4foo3Ev
 // CHECK-LP64-NEXT: .quad __ZN8test16_B5foo_BEv
-// CHECK-LP64-NEXT: .quad 18446744073709551568
+// CHECK-LP64-NEXT: .quad -48
 // CHECK-LP64-NEXT: .quad __ZTI8test16_D
 // CHECK-LP64-NEXT .quad __ZTcvn16_n40_v16_n32_N8test16_D4foo1Ev
 // CHECK-LP64: .quad __ZN10test16_NV27foo_NV2Ev
@@ -514,15 +514,15 @@ struct test19_D : virtual test19_B4 {
 
 // FIXME:
 // CHECK-LP64:     __ZTT8test19_D:
-// CHECK-LP64-NEXT: .quad   (__ZTV8test19_D) + 144
-// CHECK-LP64-NEXT: .quad   (__ZTV8test19_D) + 144
-// CHECK-LP64-NEXT .quad   (__ZTV8test19_D) + 144
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B4) + 136
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B3) + 104
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B3) + 104
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B4) + 136
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B2) + 88
-// CHECK-LP64-NEXT .quad   (__ZTC8test19_D0_9test19_B1) + 24
+// CHECK-LP64-NEXT: .quad __ZTV8test19_D+144
+// CHECK-LP64-NEXT: .quad __ZTV8test19_D+144
+// CHECK-LP64-NEXT .quad __ZTV8test19_D+144
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B4+136
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B3+104
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B3+104
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B4+136
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B2+88
+// CHECK-LP64-NEXT .quad __ZTC8test19_D0_9test19_B1+24
 
 class test20_V {
   virtual void foo1();
@@ -545,14 +545,14 @@ class test20_D : public test20_B, public test20_B1 {
 
 // FIXME: 
 // CHECK-LP64:     __ZTT8test20_D:
-// CHECK-LP64-NEXT: .quad   (__ZTV8test20_D) + 40
-// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D0_8test20_B) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D0_8test20_B) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D8_9test20_B1) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test20_D8_9test20_B1) + 32
-// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 40
-// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 80
-// CHECK-LP64-NEXT .quad   (__ZTV8test20_D) + 80
+// CHECK-LP64-NEXT: .quad __ZTV8test20_D+40
+// CHECK-LP64-NEXT: .quad __ZTC8test20_D0_8test20_B+32
+// CHECK-LP64-NEXT: .quad __ZTC8test20_D0_8test20_B+32
+// CHECK-LP64-NEXT: .quad __ZTC8test20_D8_9test20_B1+32
+// CHECK-LP64-NEXT: .quad __ZTC8test20_D8_9test20_B1+32
+// CHECK-LP64-NEXT .quad __ZTV8test20_D+40
+// CHECK-LP64-NEXT .quad __ZTV8test20_D+80
+// CHECK-LP64-NEXT .quad __ZTV8test20_D+80
 
 
 class test21_V {
@@ -577,14 +577,14 @@ class test21_D : public test21_B, public test21_B1 {
 
 // FIXME:
 // CHECK-LP64:     __ZTT8test21_D:
-// CHECK-LP64-NEXT: .quad   (__ZTV8test21_D) + 40
-// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D0_8test21_B) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D0_8test21_B) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D8_9test21_B1) + 32
-// CHECK-LP64-NEXT: .quad   (__ZTC8test21_D8_9test21_B1) + 32
-// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 40
-// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
-// CHECK-LP64-NEXT .quad   (__ZTV8test21_D) + 80
+// CHECK-LP64-NEXT: .quad __ZTV8test21_D+40
+// CHECK-LP64-NEXT: .quad __ZTC8test21_D0_8test21_B+32
+// CHECK-LP64-NEXT: .quad __ZTC8test21_D0_8test21_B+32
+// CHECK-LP64-NEXT: .quad __ZTC8test21_D8_9test21_B1+32
+// CHECK-LP64-NEXT: .quad __ZTC8test21_D8_9test21_B1+32
+// CHECK-LP64-NEXT .quad __ZTV8test21_D+40
+// CHECK-LP64-NEXT .quad __ZTV8test21_D+80
+// CHECK-LP64-NEXT .quad __ZTV8test21_D+80
 
 
 struct test22_s1 { virtual void dtor() { } }; 
@@ -624,12 +624,12 @@ class test23_D: virtual test23_s4 {
 // CHECK-LP64-NEXT	.quad	8
 // CHECK-LP64:  	.quad	0
 // CHECK-LP64-NEXT:	.quad	0
-// CHECK-LP64:  	.quad	18446744073709551608
-// CHECK-LP64-NEXT:	.quad	18446744073709551608
+// CHECK-LP64:  	.quad	-8
+// CHECK-LP64-NEXT:	.quad	-8
 // CHECK-LP64-NEXT:	.quad	__ZTI8test23_D
 // CHECK-LP64-NEXT:	.quad	__ZN9test23_s24fun2EPc
 // CHECK-LP64-NEXT:	.quad	__ZN9test23_s44fun4EPc
-// CHECK-LP64-NEXT:	.quad	18446744073709551600
+// CHECK-LP64-NEXT:	.quad	-16
 // CHECK-LP64-NEXT:	.quad	__ZTI8test23_D
 // CHECK-LP64-NEXT:	.quad	__ZN9test23_s34fun3EPc
 
