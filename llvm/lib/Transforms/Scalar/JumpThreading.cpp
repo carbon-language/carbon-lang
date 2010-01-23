@@ -451,6 +451,12 @@ static unsigned GetBestDestForJumpOnUndef(BasicBlock *BB) {
 /// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {
+  // If the block is trivially dead, just return and let the caller nuke it.
+  // This simplifies other transformations.
+  if (pred_begin(BB) == pred_end(BB) &&
+      BB != &BB->getParent()->getEntryBlock())
+    return false;
+  
   // If this block has a single predecessor, and if that pred has a single
   // successor, merge the blocks.  This encourages recursive jump threading
   // because now the condition in this block can be threaded through
