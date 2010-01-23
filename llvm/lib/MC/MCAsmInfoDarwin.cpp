@@ -32,12 +32,16 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Directives:
   WeakDefDirective = "\t.weak_definition ";
   WeakRefDirective = "\t.weak_reference ";
-  HiddenDirective = "\t.private_extern ";
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   HasMachoZeroFillDirective = true;  // Uses .zerofill
   HasStaticCtorDtorReferenceInStaticMode = true;
   SetDirective = "\t.set";
-  ProtectedDirective = "\t.globl\t";
+  
+  HiddenVisibilityAttr = MCSA_PrivateExtern;
+  // Doesn't support protected visibility.
+  ProtectedVisibilityAttr = MCSA_Global;
+
+  
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
   // Note: Even though darwin has the .lcomm directive, it is just a synonym for

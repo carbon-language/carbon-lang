@@ -230,8 +230,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
   // If corresponding function is hidden, this should be too.
   if (TheFunc->hasHiddenVisibility())
-    if (const char *HiddenDirective = MAI->getHiddenDirective())
-      O << HiddenDirective << *EHFrameInfo.FunctionEHSym << '\n';
+    if (MCSymbolAttr HiddenAttr = MAI->getHiddenVisibilityAttr())
+      Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
+                                           HiddenAttr);
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If

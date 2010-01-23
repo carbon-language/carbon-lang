@@ -16,6 +16,7 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
+#include "llvm/MC/MCDirectives.h"
 #include <cassert>
 
 namespace llvm {
@@ -225,13 +226,13 @@ namespace llvm {
     /// global as being a weak defined symbol.  This is used on cygwin/mingw.
     const char *LinkOnceDirective;           // Defaults to NULL.
     
-    /// HiddenDirective - This directive, if non-null, is used to declare a
-    /// global or function as having hidden visibility.
-    const char *HiddenDirective;             // Defaults to "\t.hidden\t".
+    /// HiddenVisibilityAttr - This attribute, if not MCSA_Invalid, is used to
+    /// declare a symbol as having hidden visibility.
+    MCSymbolAttr HiddenVisibilityAttr;       // Defaults to MCSA_Hidden.
 
-    /// ProtectedDirective - This directive, if non-null, is used to declare a
-    /// global or function as having protected visibility.
-    const char *ProtectedDirective;          // Defaults to "\t.protected\t".
+    /// ProtectedVisibilityAttr - This attribute, if not MCSA_Invalid, is used
+    /// to declare a symbol as having protected visibility.
+    MCSymbolAttr ProtectedVisibilityAttr;    // Defaults to MCSA_Protected
 
     //===--- Dwarf Emission Directives -----------------------------------===//
 
@@ -415,11 +416,10 @@ namespace llvm {
     const char *getWeakRefDirective() const { return WeakRefDirective; }
     const char *getWeakDefDirective() const { return WeakDefDirective; }
     const char *getLinkOnceDirective() const { return LinkOnceDirective; }
-    const char *getHiddenDirective() const {
-      return HiddenDirective;
-    }
-    const char *getProtectedDirective() const {
-      return ProtectedDirective;
+    
+    MCSymbolAttr getHiddenVisibilityAttr() const { return HiddenVisibilityAttr;}
+    MCSymbolAttr getProtectedVisibilityAttr() const {
+      return ProtectedVisibilityAttr;
     }
     bool isAbsoluteDebugSectionOffsets() const {
       return AbsoluteDebugSectionOffsets;

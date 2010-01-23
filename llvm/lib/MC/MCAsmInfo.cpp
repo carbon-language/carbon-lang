@@ -61,9 +61,8 @@ MCAsmInfo::MCAsmInfo() {
   WeakRefDirective = 0;
   WeakDefDirective = 0;
   LinkOnceDirective = 0;
-  // FIXME: These are ELFish - move to ELFMAI.
-  HiddenDirective = "\t.hidden\t";
-  ProtectedDirective = "\t.protected\t";
+  HiddenVisibilityAttr = MCSA_Hidden;
+  ProtectedVisibilityAttr = MCSA_Protected;
   AbsoluteDebugSectionOffsets = false;
   AbsoluteEHSectionOffsets = false;
   HasLEB128 = false;

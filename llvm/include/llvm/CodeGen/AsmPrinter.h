@@ -376,7 +376,7 @@ namespace llvm {
     
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
-    void printVisibility(const MCSymbol *Sym, unsigned Visibility) const;
+    void printVisibility(MCSymbol *Sym, unsigned Visibility) const;
     
     /// printOffset - This is just convenient handler for printing offsets.
     void printOffset(int64_t Offset) const;

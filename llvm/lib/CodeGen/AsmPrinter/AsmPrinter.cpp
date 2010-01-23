@@ -1588,15 +1588,21 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
     << '_' << uid << '_' << uid2 << '\n';
 }
 
-void AsmPrinter::printVisibility(const MCSymbol *Sym,
-                                 unsigned Visibility) const {
-  if (Visibility == GlobalValue::HiddenVisibility) {
-    if (const char *Directive = MAI->getHiddenDirective())
-      O << Directive << *Sym << '\n';
-  } else if (Visibility == GlobalValue::ProtectedVisibility) {
-    if (const char *Directive = MAI->getProtectedDirective())
-      O << Directive << *Sym << '\n';
+void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {
+  MCSymbolAttr Attr = MCSA_Invalid;
+  
+  switch (Visibility) {
+  default: break;
+  case GlobalValue::HiddenVisibility:
+    Attr = MAI->getHiddenVisibilityAttr();
+    break;
+  case GlobalValue::ProtectedVisibility:
+    Attr = MAI->getProtectedVisibilityAttr();
+    break;
   }
+
+  if (Attr != MCSA_Invalid)
+    OutStreamer.EmitSymbolAttribute(Sym, Attr);
 }
 
 void AsmPrinter::printOffset(int64_t Offset) const {
