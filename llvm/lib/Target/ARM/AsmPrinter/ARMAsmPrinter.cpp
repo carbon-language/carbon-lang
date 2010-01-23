@@ -398,12 +398,10 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getIndex();
+    O << *GetCPISymbol(MO.getIndex());
     break;
   case MachineOperand::MO_JumpTableIndex:
-    O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getIndex();
+    O << *GetJTISymbol(MO.getIndex());
     break;
   }
 }
@@ -891,8 +889,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
   // data itself.
   if (!strcmp(Modifier, "label")) {
     unsigned ID = MI->getOperand(OpNum).getImm();
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << ID << ":\n";
+    O << *GetCPISymbol(ID) << ":\n";
   } else {
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
     unsigned CPI = MI->getOperand(OpNum).getIndex();
@@ -912,6 +909,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
 
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
+  
   unsigned JTI = MO1.getIndex();
   O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
     << '_' << JTI << '_' << MO2.getImm() << ":\n";
@@ -1264,12 +1262,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     unsigned CPIdx   = (unsigned)MI->getOperand(1).getIndex();
 
     EmitAlignment(2);
-
-    const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label = OutContext.GetOrCreateSymbol(Twine(Prefix)+"CPI"+
-                                                   Twine(getFunctionNumber())+
-                                                   "_"+ Twine(LabelId));
-    OutStreamer.EmitLabel(Label);
+    OutStreamer.EmitLabel(GetCPISymbol(LabelId));
 
     const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIdx];
     if (MCPE.isMachineConstantPoolEntry())
