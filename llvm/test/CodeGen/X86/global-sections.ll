@@ -75,14 +75,14 @@
 ; LINUX:   .section	.gnu.linkonce.r.G6,"a",@progbits
 ; LINUX:   .weak	G6
 ; LINUX: G6:
-; LINUX:   .ascii	"\001"
+; LINUX:   .byte	1
 ; LINUX:   .size	G6, 1
 
 ; DARWIN:  .section __TEXT,__const_coal,coalesced
 ; DARWIN:  .globl _G6
 ; DARWIN:  .weak_definition _G6
 ; DARWIN:_G6:
-; DARWIN:  .ascii "\001"
+; DARWIN:  .byte 1
 
 
 @G7 = constant [10 x i8] c"abcdefghi\00"

@@ -683,6 +683,7 @@ void AsmPrinter::EmitInt64(uint64_t Value) const {
   OutStreamer.EmitIntValue(Value, 8, 0/*addrspace*/);
 }
 
+
 /// toOctal - Convert the low order bits of X into an octal digit.
 ///
 static inline char toOctal(int X) {
@@ -900,45 +901,22 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   }
 }
 
-/// printAsCString - Print the specified array as a C compatible string, only if
-/// the predicate isString is true.
-///
-static void printAsCString(formatted_raw_ostream &O, const ConstantArray *CVA,
-                           unsigned LastElt) {
-  assert(CVA->isString() && "Array is not string compatible!");
-
-  O << '\"';
-  for (unsigned i = 0; i != LastElt; ++i) {
-    unsigned char C =
-        (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getZExtValue();
-    printStringChar(O, C);
-  }
-  O << '\"';
-}
-
-/// EmitString - Emit a zero-byte-terminated string constant.
-///
-void AsmPrinter::EmitString(const ConstantArray *CVA) const {
-  unsigned NumElts = CVA->getNumOperands();
-  if (MAI->getAscizDirective() && NumElts && 
-      cast<ConstantInt>(CVA->getOperand(NumElts-1))->getZExtValue() == 0) {
-    O << MAI->getAscizDirective();
-    printAsCString(O, CVA, NumElts-1);
-  } else {
-    O << MAI->getAsciiDirective();
-    printAsCString(O, CVA, NumElts);
-  }
-  O << '\n';
-}
-
 static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
                                     AsmPrinter &AP) {
-  if (AddrSpace == 0 && CA->isString()) {
-    AP.EmitString(CA);
-  } else { // Not a string.  Print the values in successive locations
+  if (AddrSpace != 0 || !CA->isString()) {
+    // Not a string.  Print the values in successive locations
     for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
       AP.EmitGlobalConstant(CA->getOperand(i), AddrSpace);
+    return;
   }
+  
+  // Otherwise, it can be emitted as .ascii.
+  SmallVector<char, 128> TmpVec;
+  TmpVec.reserve(CA->getNumOperands());
+  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+    TmpVec.push_back(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
+
+  AP.OutStreamer.EmitBytes(StringRef(TmpVec.data(), TmpVec.size()), AddrSpace);
 }
 
 static void EmitGlobalConstantVector(const ConstantVector *CV,

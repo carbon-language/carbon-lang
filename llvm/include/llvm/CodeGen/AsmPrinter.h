@@ -340,10 +340,6 @@ namespace llvm {
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
     
-    /// EmitString - Emit a zero-byte-terminated string constant.
-    ///
-    virtual void EmitString(const ConstantArray *CVA) const;
-
   protected:
     /// EmitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
