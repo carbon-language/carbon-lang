@@ -197,7 +197,7 @@ template struct InitList1<APair, int*>;
 template<typename T, typename Val1, typename Val2>
 struct InitList2 {
   void f(Val1 val1, Val2 val2) { 
-    T x = { val1, val2 }; // expected-error{{incompatible}}
+    T x = { val1, val2 }; // expected-error{{cannot initialize}}
   }
 };
 

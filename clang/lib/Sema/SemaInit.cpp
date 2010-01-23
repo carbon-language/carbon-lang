@@ -236,7 +236,8 @@ class InitListChecker {
                        InitListExpr *IList, QualType DeclType, unsigned &Index,
                        InitListExpr *StructuredList,
                        unsigned &StructuredIndex);
-  void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType,
+  void CheckStructUnionTypes(const InitializedEntity *Entity,
+                             InitListExpr *IList, QualType DeclType,
                              RecordDecl::field_iterator Field,
                              bool SubobjectIsDesignatorContext, unsigned &Index,
                              InitListExpr *StructuredList,
@@ -633,7 +634,7 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity *Entity,
   } else if (DeclType->isAggregateType()) {
     if (DeclType->isRecordType()) {
       RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
-      CheckStructUnionTypes(IList, DeclType, RD->field_begin(),
+      CheckStructUnionTypes(Entity, IList, DeclType, RD->field_begin(),
                             SubobjectIsDesignatorContext, Index,
                             StructuredList, StructuredIndex,
                             TopLevelObject);
@@ -1060,7 +1061,8 @@ void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
+void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
+                                            InitListExpr *IList,
                                             QualType DeclType,
                                             RecordDecl::field_iterator Field,
                                             bool SubobjectIsDesignatorContext,
@@ -1138,8 +1140,17 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
       continue;
     }
 
-    CheckSubElementType(0, IList, Field->getType(), Index,
-                        StructuredList, StructuredIndex);
+    // FIXME: Once we know Entity is not null, we can get rid of the check
+    // and the else block.
+    if (Entity) {
+      InitializedEntity MemberEntity =
+        InitializedEntity::InitializeMember(*Field, Entity);
+      CheckSubElementType(&MemberEntity, IList, Field->getType(), Index,
+                          StructuredList, StructuredIndex);
+    } else {
+      CheckSubElementType(0, IList, Field->getType(), Index,
+                          StructuredList, StructuredIndex);
+    }
     InitializedSomething = true;
 
     if (DeclType->isUnionType()) {
@@ -1549,7 +1560,8 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
 
     // Check the remaining fields within this class/struct/union subobject.
     bool prevHadError = hadError;
-    CheckStructUnionTypes(IList, CurrentObjectType, Field, false, Index,
+    
+    CheckStructUnionTypes(0, IList, CurrentObjectType, Field, false, Index,
                           StructuredList, FieldIndex);
     return hadError && !prevHadError;
   }

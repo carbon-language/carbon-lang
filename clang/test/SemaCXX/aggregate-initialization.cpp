@@ -37,3 +37,6 @@ __v4hi v1 = { (void *)1, 2, 3 }; // expected-error {{cannot initialize a vector 
 
 // Array initialization.
 int a[] = { (void *)1 }; // expected-error {{cannot initialize an array element of type 'int' with an rvalue of type 'void *'}}
+
+// Struct initialization.
+struct S { int a; } s = { (void *)1 }; // expected-error {{cannot initialize a member subobject of type 'int' with an rvalue of type 'void *'}}
