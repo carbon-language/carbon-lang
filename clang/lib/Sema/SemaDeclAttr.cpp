@@ -542,17 +542,16 @@ static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  const char *TypeStr = Str->getStrData();
-  unsigned TypeLen = Str->getByteLength();
+  llvm::StringRef TypeStr = Str->getString();
   VisibilityAttr::VisibilityTypes type;
 
-  if (TypeLen == 7 && !memcmp(TypeStr, "default", 7))
+  if (TypeStr == "default")
     type = VisibilityAttr::DefaultVisibility;
-  else if (TypeLen == 6 && !memcmp(TypeStr, "hidden", 6))
+  else if (TypeStr == "hidden")
     type = VisibilityAttr::HiddenVisibility;
-  else if (TypeLen == 8 && !memcmp(TypeStr, "internal", 8))
+  else if (TypeStr == "internal")
     type = VisibilityAttr::HiddenVisibility; // FIXME
-  else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
+  else if (TypeStr == "protected")
     type = VisibilityAttr::ProtectedVisibility;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_unknown_visibility) << TypeStr;
