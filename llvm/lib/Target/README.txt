@@ -356,9 +356,33 @@ this construct.
 
 //===---------------------------------------------------------------------===//
 
+[LOOP RECOGNITION]
+
 viterbi speeds up *significantly* if the various "history" related copy loops
 are turned into memcpy calls at the source level.  We need a "loops to memcpy"
 pass.
+
+//===---------------------------------------------------------------------===//
+
+[LOOP OPTIMIZATION]
+
+SingleSource/Benchmarks/Misc/dt.c shows several interesting optimization
+opportunities in its double_array_divs_variable function: it needs loop
+interchange, memory promotion (which LICM already does), vectorization and
+variable trip count loop unrolling (since it has a constant trip count). ICC
+apparently produces this very nice code with -ffast-math:
+
+..B1.70:                        # Preds ..B1.70 ..B1.69
+       mulpd     %xmm0, %xmm1                                  #108.2
+       mulpd     %xmm0, %xmm1                                  #108.2
+       mulpd     %xmm0, %xmm1                                  #108.2
+       mulpd     %xmm0, %xmm1                                  #108.2
+       addl      $8, %edx                                      #
+       cmpl      $131072, %edx                                 #108.2
+       jb        ..B1.70       # Prob 99%                      #108.2
+
+It would be better to count down to zero, but this is a lot better than what we
+do.
 
 //===---------------------------------------------------------------------===//
 
@@ -1218,8 +1242,15 @@ store->load.
 
 //===---------------------------------------------------------------------===//
 
+[ALIAS ANALYSIS]
+
 Type based alias analysis:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
+
+We should do better analysis of posix_memalign.  At the least it should
+no-capture its pointer argument, at best, we should know that the out-value
+result doesn't point to anything (like malloc).  One example of this is in
+SingleSource/Benchmarks/Misc/dt.c
 
 //===---------------------------------------------------------------------===//
 
