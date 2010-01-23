@@ -488,10 +488,13 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
+extern "C" void LLVMInitializeX86AsmLexer();
+
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
+  LLVMInitializeX86AsmLexer();
 }
 
 #include "X86GenAsmMatcher.inc"
