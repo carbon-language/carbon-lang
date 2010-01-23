@@ -167,13 +167,10 @@ void test() {
   if (f5() != ORDER4(5, 3, 7, 2))
     error();
 
-// FIXME: Clang/LLVM currently can't fold this to a constant. If the error check
-// is present (since it avoids single-caller inlining). PR5645.
-
-//  CHECK: call void @print(i8* {{.*}}, i32 1251552576)
+// CHECK: call void @print(i8* {{.*}}, i32 1251552576)
   print("f6", f6());
-//  if (f6() != ORDER6(3, 7, 11, 5, 13, 2))
-//    error();
+  if (f6() != ORDER6(3, 7, 11, 5, 13, 2))
+    error();
 }
 
 
