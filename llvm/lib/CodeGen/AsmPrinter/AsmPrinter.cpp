@@ -313,7 +313,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   }
 
   if (MAI->getSetDirective()) {
-    O << '\n';
+    OutStreamer.AddBlankLine();
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
       MCSymbol *Name = GetGlobalValueSymbol(I);
@@ -563,7 +563,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   } else {
     O << *GetMBBSymbol(MBB->getNumber());
     // If the arch uses custom Jump Table directives, don't calc relative to
-    // JT
+    // JT.
     if (!HadJTEntryDirective) 
       O << '-' << *GetJTISymbol(uid);
   }
@@ -575,7 +575,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 /// do nothing and return false.
 bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   if (GV->getName() == "llvm.used") {
-    if (MAI->getUsedDirective() != 0)    // No need to emit this at all.
+    if (MAI->hasNoDeadStrip())    // No need to emit this at all.
       EmitLLVMUsedList(GV->getInitializer());
     return true;
   }
@@ -597,8 +597,11 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     EmitXXStructorList(GV->getInitializer());
     
     if (TM.getRelocationModel() == Reloc::Static &&
-        MAI->hasStaticCtorDtorReferenceInStaticMode())
-      O << ".reference .constructors_used\n";
+        MAI->hasStaticCtorDtorReferenceInStaticMode()) {
+      StringRef Sym(".constructors_used");
+      OutStreamer.EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
+                                      MCStreamer::Reference);
+    }
     return true;
   } 
   
@@ -608,8 +611,11 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     EmitXXStructorList(GV->getInitializer());
 
     if (TM.getRelocationModel() == Reloc::Static &&
-        MAI->hasStaticCtorDtorReferenceInStaticMode())
-      O << ".reference .destructors_used\n";
+        MAI->hasStaticCtorDtorReferenceInStaticMode()) {
+      StringRef Sym(".destructors_used");
+      OutStreamer.EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
+                                      MCStreamer::Reference);
+    }
     return true;
   }
   
@@ -620,8 +626,6 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 /// global in the specified llvm.used list for which emitUsedDirectiveFor
 /// is true, as being used with this directive.
 void AsmPrinter::EmitLLVMUsedList(Constant *List) {
-  const char *Directive = MAI->getUsedDirective();
-
   // Should be an array of 'i8*'.
   ConstantArray *InitList = dyn_cast<ConstantArray>(List);
   if (InitList == 0) return;
@@ -629,11 +633,9 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
     const GlobalValue *GV =
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
-    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang)) {
-      O << Directive;
-      EmitConstantValueOnly(InitList->getOperand(i));
-      O << '\n';
-    }
+    if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang))
+      OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(GV),
+                                      MCStreamer::NoDeadStrip);
   }
 }
 
@@ -1584,6 +1586,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   // Print the main label for the block.
   if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
     if (VerboseAsm) {
+      // NOTE: Want this comment at start of line.
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
       if (const BasicBlock *BB = MBB->getBasicBlock())
         if (BB->hasName())

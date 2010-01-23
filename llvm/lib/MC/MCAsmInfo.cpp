@@ -57,7 +57,7 @@ MCAsmInfo::MCAsmInfo() {
   COMMDirectiveTakesAlignment = true;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
-  UsedDirective = 0;
+  HasNoDeadStrip = false;
   WeakRefDirective = 0;
   WeakDefDirective = 0;
   LinkOnceDirective = 0;

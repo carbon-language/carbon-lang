@@ -245,8 +245,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
-    if (const char *UsedDirective = MAI->getUsedDirective())
-      O << UsedDirective << *EHFrameInfo.FunctionEHSym << "\n\n";
+    if (MAI->hasNoDeadStrip())
+      Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
+                                           MCStreamer::NoDeadStrip);
   } else {
     O << *EHFrameInfo.FunctionEHSym << ":\n";
 
@@ -313,8 +314,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
     if (MMI->isUsedFunction(EHFrameInfo.function))
-      if (const char *UsedDirective = MAI->getUsedDirective())
-        O << UsedDirective << *EHFrameInfo.FunctionEHSym << "\n\n";
+      if (MAI->hasNoDeadStrip())
+        Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
+                                             MCStreamer::NoDeadStrip);
   }
   Asm->O << '\n';
 }
@@ -982,7 +984,7 @@ void DwarfException::EndFunction() {
   EmitLabel("eh_func_end", SubprogramCount);
   EmitExceptionTable();
 
-  const MCSymbol *FunctionEHSym =
+  MCSymbol *FunctionEHSym =
     Asm->GetSymbolWithGlobalValueBase(MF->getFunction(), ".eh",
                                       Asm->MAI->is_EHSymbolPrivate());
   

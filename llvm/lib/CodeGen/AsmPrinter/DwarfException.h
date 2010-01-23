@@ -34,7 +34,7 @@ class raw_ostream;
 ///
 class DwarfException : public DwarfPrinter {
   struct FunctionEHFrameInfo {
-    const MCSymbol *FunctionEHSym;  // L_foo.eh
+    MCSymbol *FunctionEHSym;  // L_foo.eh
     unsigned Number;
     unsigned PersonalityIndex;
     bool hasCalls;
@@ -42,7 +42,7 @@ class DwarfException : public DwarfPrinter {
     std::vector<MachineMove> Moves;
     const Function *function;
 
-    FunctionEHFrameInfo(const MCSymbol *EHSym, unsigned Num, unsigned P,
+    FunctionEHFrameInfo(MCSymbol *EHSym, unsigned Num, unsigned P,
                         bool hC, bool hL,
                         const std::vector<MachineMove> &M,
                         const Function *f):

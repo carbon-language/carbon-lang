@@ -209,10 +209,9 @@ namespace llvm {
     /// .file directive, this is true for ELF targets.
     bool HasSingleParameterDotFile;          // Defaults to true.
 
-    /// UsedDirective - This directive, if non-null, is used to declare a global
-    /// as being used somehow that the assembler can't see.  This prevents dead
-    /// code elimination on some targets.
-    const char *UsedDirective;               // Defaults to NULL.
+    /// HasNoDeadStrip - True if this target supports the MachO .no_dead_strip
+    /// directive.
+    bool HasNoDeadStrip;                     // Defaults to false.
 
     /// WeakRefDirective - This directive, if non-null, is used to declare a
     /// global as being a weak undefined symbol.
@@ -410,15 +409,9 @@ namespace llvm {
     bool getCOMMDirectiveTakesAlignment() const {
       return COMMDirectiveTakesAlignment;
     }
-    bool hasDotTypeDotSizeDirective() const {
-      return HasDotTypeDotSizeDirective;
-    }
-    bool hasSingleParameterDotFile() const {
-      return HasSingleParameterDotFile;
-    }
-    const char *getUsedDirective() const {
-      return UsedDirective;
-    }
+    bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
+    bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
+    bool hasNoDeadStrip() const { return HasNoDeadStrip; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }
     const char *getWeakDefDirective() const { return WeakDefDirective; }
     const char *getLinkOnceDirective() const { return LinkOnceDirective; }

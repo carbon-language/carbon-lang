@@ -39,7 +39,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   SetDirective = "\t.set";
   ProtectedDirective = "\t.globl\t";
   HasDotTypeDotSizeDirective = false;
-  UsedDirective = "\t.no_dead_strip\t";
+  HasNoDeadStrip = true;
   // Note: Even though darwin has the .lcomm directive, it is just a synonym for
   // zerofill, so we prefer to use .zerofill.
 

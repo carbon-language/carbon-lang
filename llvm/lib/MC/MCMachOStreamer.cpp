@@ -234,6 +234,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCStreamer::Internal:
   case MCStreamer::Protected:
   case MCStreamer::Weak:
+  case MCStreamer::Local:
     assert(0 && "Invalid symbol attribute for Mach-O!");
     break;
 
