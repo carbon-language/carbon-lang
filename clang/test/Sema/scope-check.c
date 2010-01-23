@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu99 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu99 %s -Wno-unreachable-code
 
 int test1(int x) {
   goto L;    // expected-error{{illegal goto into protected scope}}

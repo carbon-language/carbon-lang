@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -emit-llvm-only -verify %s -Wno-unreachable-code
 
 int val = 42;
 int& test1() {
