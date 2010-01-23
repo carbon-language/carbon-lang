@@ -67,8 +67,9 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
 }
 
 static Sema::OwningExprResult 
-CheckSingleInitializer(const InitializedEntity *Entity,
+CheckSingleInitializer(const InitializedEntity &Entity,
                        Sema::OwningExprResult Init, QualType DeclType, Sema &S){
+  assert(Entity.getType() == DeclType);
   Expr *InitExpr = Init.takeAs<Expr>();
 
   // Get the type before calling CheckSingleAssignmentConstraints(), since
@@ -76,46 +77,14 @@ CheckSingleInitializer(const InitializedEntity *Entity,
   QualType InitType = InitExpr->getType();
 
   if (S.getLangOptions().CPlusPlus) {
-    if (Entity) {
-      assert(Entity->getType() == DeclType);
-      
-      // C++ [dcl.init.aggr]p2:
-      //   Each member is copy-initialized from the corresponding
-      //   initializer-clause
-      Sema::OwningExprResult Result = 
-        S.PerformCopyInitialization(*Entity, InitExpr->getLocStart(),
-                                    S.Owned(InitExpr));
+    // C++ [dcl.init.aggr]p2:
+    //   Each member is copy-initialized from the corresponding
+    //   initializer-clause
+    Sema::OwningExprResult Result = 
+      S.PerformCopyInitialization(Entity, InitExpr->getLocStart(),
+                                  S.Owned(InitExpr));
 
       return move(Result);
-    } else {
-      // FIXME: I dislike this error message. A lot.
-      if (S.PerformImplicitConversion(InitExpr, DeclType, 
-                                      Sema::AA_Initializing, 
-                                      /*DirectInit=*/false)) {
-        ImplicitConversionSequence ICS;
-        OverloadCandidateSet CandidateSet;
-        if (S.IsUserDefinedConversion(InitExpr, DeclType, ICS.UserDefined,
-                                      CandidateSet,
-                                      true, false, false) != OR_Ambiguous) {
-          S.Diag(InitExpr->getSourceRange().getBegin(),
-                        diag::err_typecheck_convert_incompatible)
-                          << DeclType << InitExpr->getType() 
-                          << Sema::AA_Initializing
-                          << InitExpr->getSourceRange();
-          return S.ExprError();
-        }
-        S.Diag(InitExpr->getSourceRange().getBegin(),
-               diag::err_typecheck_convert_ambiguous)
-              << DeclType << InitExpr->getType() << InitExpr->getSourceRange();
-        S.PrintOverloadCandidates(CandidateSet, Sema::OCD_AllCandidates, 
-                                  &InitExpr, 1);
-      
-        return S.ExprError();
-      }
-    
-      Init.release();
-      return S.Owned(InitExpr);
-    }
   }
 
   Sema::AssignConvertType ConvTy =
@@ -202,55 +171,56 @@ class InitListChecker {
   std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
   InitListExpr *FullyStructuredList;
 
-  void CheckImplicitInitList(const InitializedEntity *Entity,
+  void CheckImplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *ParentIList, QualType T,
                              unsigned &Index, InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
-  void CheckExplicitInitList(const InitializedEntity *Entity,
+  void CheckExplicitInitList(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType &T,
                              unsigned &Index, InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
-  void CheckListElementTypes(const InitializedEntity *Entity,
+  void CheckListElementTypes(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType &DeclType,
                              bool SubobjectIsDesignatorContext,
                              unsigned &Index,
                              InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
-  void CheckSubElementType(const InitializedEntity *Entity,
+  void CheckSubElementType(const InitializedEntity &Entity,
                            InitListExpr *IList, QualType ElemType,
                            unsigned &Index,
                            InitListExpr *StructuredList,
                            unsigned &StructuredIndex);
-  void CheckScalarType(const InitializedEntity *Entity,
+  void CheckScalarType(const InitializedEntity &Entity,
                        InitListExpr *IList, QualType DeclType,
                        unsigned &Index,
                        InitListExpr *StructuredList,
                        unsigned &StructuredIndex);
-  void CheckReferenceType(InitListExpr *IList, QualType DeclType,
+  void CheckReferenceType(const InitializedEntity &Entity,
+                          InitListExpr *IList, QualType DeclType,
                           unsigned &Index,
                           InitListExpr *StructuredList,
                           unsigned &StructuredIndex);
-  void CheckVectorType(const InitializedEntity *Entity,
+  void CheckVectorType(const InitializedEntity &Entity,
                        InitListExpr *IList, QualType DeclType, unsigned &Index,
                        InitListExpr *StructuredList,
                        unsigned &StructuredIndex);
-  void CheckStructUnionTypes(const InitializedEntity *Entity,
+  void CheckStructUnionTypes(const InitializedEntity &Entity,
                              InitListExpr *IList, QualType DeclType,
                              RecordDecl::field_iterator Field,
                              bool SubobjectIsDesignatorContext, unsigned &Index,
                              InitListExpr *StructuredList,
                              unsigned &StructuredIndex,
                              bool TopLevelObject = false);
-  void CheckArrayType(const InitializedEntity *Entity,
+  void CheckArrayType(const InitializedEntity &Entity,
                       InitListExpr *IList, QualType &DeclType,
                       llvm::APSInt elementIndex,
                       bool SubobjectIsDesignatorContext, unsigned &Index,
                       InitListExpr *StructuredList,
                       unsigned &StructuredIndex);
-  bool CheckDesignatedInitializer(const InitializedEntity *Entity,
+  bool CheckDesignatedInitializer(const InitializedEntity &Entity,
                                   InitListExpr *IList, DesignatedInitExpr *DIE,
                                   unsigned DesigIdx,
                                   QualType &CurrentObjectType,
@@ -470,7 +440,7 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
   unsigned newStructuredIndex = 0;
   FullyStructuredList
     = getStructuredSubobjectInit(IL, newIndex, T, 0, 0, IL->getSourceRange());
-  CheckExplicitInitList(&Entity, IL, T, newIndex, 
+  CheckExplicitInitList(Entity, IL, T, newIndex, 
                         FullyStructuredList, newStructuredIndex,
                         /*TopLevelObject=*/true);
 
@@ -508,7 +478,7 @@ int InitListChecker::numStructUnionElements(QualType DeclType) {
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
 }
 
-void InitListChecker::CheckImplicitInitList(const InitializedEntity *Entity,
+void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *ParentIList,
                                             QualType T, unsigned &Index,
                                             InitListExpr *StructuredList,
@@ -560,7 +530,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckExplicitInitList(const InitializedEntity *Entity,
+void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
                                             InitListExpr *IList, QualType &T,
                                             unsigned &Index,
                                             InitListExpr *StructuredList,
@@ -621,7 +591,7 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity *Entity,
       << CodeModificationHint::CreateRemoval(IList->getLocEnd());
 }
 
-void InitListChecker::CheckListElementTypes(const InitializedEntity *Entity,
+void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
                                             InitListExpr *IList,
                                             QualType &DeclType,
                                             bool SubobjectIsDesignatorContext,
@@ -670,7 +640,8 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity *Entity,
       << DeclType << IList->getSourceRange();
     hadError = true;
   } else if (DeclType->isReferenceType()) {
-    CheckReferenceType(IList, DeclType, Index, StructuredList, StructuredIndex);
+    CheckReferenceType(Entity, IList, DeclType, Index,
+                       StructuredList, StructuredIndex);
   } else {
     // In C, all types are either scalars or aggregates, but
     // additional handling is needed here for C++ (and possibly others?).
@@ -678,7 +649,7 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckSubElementType(const InitializedEntity *Entity,
+void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                                           InitListExpr *IList,
                                           QualType ElemType,
                                           unsigned &Index,
@@ -704,7 +675,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity *Entity,
     CheckScalarType(Entity, IList, ElemType, Index, 
                     StructuredList, StructuredIndex);
   } else if (ElemType->isReferenceType()) {
-    CheckReferenceType(IList, ElemType, Index, StructuredList, StructuredIndex);
+    CheckReferenceType(Entity, IList, ElemType, Index,
+                       StructuredList, StructuredIndex);
   } else {
     if (SemaRef.getLangOptions().CPlusPlus) {
       // C++ [dcl.init.aggr]p12:
@@ -768,7 +740,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckScalarType(const InitializedEntity *Entity,
+void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
                                       InitListExpr *IList, QualType DeclType,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
@@ -823,7 +795,8 @@ void InitListChecker::CheckScalarType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
+void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
+                                         InitListExpr *IList, QualType DeclType,
                                          unsigned &Index,
                                          InitListExpr *StructuredList,
                                          unsigned &StructuredIndex) {
@@ -870,7 +843,7 @@ void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
   }
 }
 
-void InitListChecker::CheckVectorType(const InitializedEntity *Entity,
+void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
                                       InitListExpr *IList, QualType DeclType,
                                       unsigned &Index,
                                       InitListExpr *StructuredList,
@@ -882,40 +855,33 @@ void InitListChecker::CheckVectorType(const InitializedEntity *Entity,
     QualType elementType = VT->getElementType();
 
     if (!SemaRef.getLangOptions().OpenCL) {
-      // FIXME: Once we know Entity is never null we can remove this check,
-      // as well as the else block.
-      if (Entity) {
-        InitializedEntity ElementEntity =
-          InitializedEntity::InitializeElement(SemaRef.Context, 0, *Entity);
+      InitializedEntity ElementEntity =
+        InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
 
-        for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
-          // Don't attempt to go past the end of the init list
-          if (Index >= IList->getNumInits())
-            break;
+      for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
+        // Don't attempt to go past the end of the init list
+        if (Index >= IList->getNumInits())
+          break;
         
-          ElementEntity.setElementIndex(Index);
-          CheckSubElementType(&ElementEntity, IList, elementType, Index,
-                              StructuredList, StructuredIndex);
-        }
-      } else {
-        for (unsigned i = 0; i < maxElements; ++i, ++numEltsInit) {
-          // Don't attempt to go past the end of the init list
-          if (Index >= IList->getNumInits())
-            break;
-          
-          CheckSubElementType(0, IList, elementType, Index,
-                              StructuredList, StructuredIndex);
-        }
-      }        
+        ElementEntity.setElementIndex(Index);
+        CheckSubElementType(ElementEntity, IList, elementType, Index,
+                            StructuredList, StructuredIndex);
+      }
     } else {
+      InitializedEntity ElementEntity =
+        InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
+      
       // OpenCL initializers allows vectors to be constructed from vectors.
       for (unsigned i = 0; i < maxElements; ++i) {
         // Don't attempt to go past the end of the init list
         if (Index >= IList->getNumInits())
           break;
+        
+        ElementEntity.setElementIndex(Index);
+
         QualType IType = IList->getInit(Index)->getType();
         if (!IType->isVectorType()) {
-          CheckSubElementType(0, IList, elementType, Index,
+          CheckSubElementType(ElementEntity, IList, elementType, Index,
                               StructuredList, StructuredIndex);
           ++numEltsInit;
         } else {
@@ -923,7 +889,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity *Entity,
           unsigned numIElts = IVT->getNumElements();
           QualType VecType = SemaRef.Context.getExtVectorType(elementType,
                                                               numIElts);
-          CheckSubElementType(0, IList, VecType, Index,
+          CheckSubElementType(ElementEntity, IList, VecType, Index,
                               StructuredList, StructuredIndex);
           numEltsInit += numIElts;
         }
@@ -939,7 +905,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
+void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
                                      InitListExpr *IList, QualType &DeclType,
                                      llvm::APSInt elementIndex,
                                      bool SubobjectIsDesignatorContext,
@@ -1028,20 +994,12 @@ void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
     if (maxElementsKnown && elementIndex == maxElements)
       break;
 
-    // FIXME: Once we know that Entity is not null, we can remove this check,
-    // and the else block.
-    if (Entity) {
-      InitializedEntity ElementEntity =
+    InitializedEntity ElementEntity =
       InitializedEntity::InitializeElement(SemaRef.Context, StructuredIndex, 
-                                           *Entity);
-      // Check this element.
-      CheckSubElementType(&ElementEntity, IList, elementType, Index,
-                          StructuredList, StructuredIndex);
-    } else {
-      // Check this element.
-      CheckSubElementType(0, IList, elementType, Index,
-                          StructuredList, StructuredIndex);
-    }      
+                                           Entity);
+    // Check this element.
+    CheckSubElementType(ElementEntity, IList, elementType, Index,
+                        StructuredList, StructuredIndex);
     ++elementIndex;
 
     // If the array is of incomplete type, keep track of the number of
@@ -1065,7 +1023,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
   }
 }
 
-void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
+void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
                                             InitListExpr *IList,
                                             QualType DeclType,
                                             RecordDecl::field_iterator Field,
@@ -1144,17 +1102,10 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
       continue;
     }
 
-    // FIXME: Once we know Entity is not null, we can get rid of the check
-    // and the else block.
-    if (Entity) {
-      InitializedEntity MemberEntity =
-        InitializedEntity::InitializeMember(*Field, Entity);
-      CheckSubElementType(&MemberEntity, IList, Field->getType(), Index,
-                          StructuredList, StructuredIndex);
-    } else {
-      CheckSubElementType(0, IList, Field->getType(), Index,
-                          StructuredList, StructuredIndex);
-    }
+    InitializedEntity MemberEntity =
+      InitializedEntity::InitializeMember(*Field, &Entity);
+    CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
+                        StructuredList, StructuredIndex);
     InitializedSomething = true;
 
     if (DeclType->isUnionType()) {
@@ -1189,26 +1140,15 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
       << *Field;
   }
 
-  // FIXME: Once we know Entity is not null, we can get rid of the check
-  // and the else block.
-  if (Entity) {
-    InitializedEntity MemberEntity =
-      InitializedEntity::InitializeMember(*Field, Entity);
+  InitializedEntity MemberEntity =
+    InitializedEntity::InitializeMember(*Field, &Entity);
     
-    if (isa<InitListExpr>(IList->getInit(Index)))
-      CheckSubElementType(&MemberEntity, IList, Field->getType(), Index, 
+  if (isa<InitListExpr>(IList->getInit(Index)))
+    CheckSubElementType(MemberEntity, IList, Field->getType(), Index, 
+                        StructuredList, StructuredIndex);
+  else
+    CheckImplicitInitList(MemberEntity, IList, Field->getType(), Index, 
                           StructuredList, StructuredIndex);
-    else
-      CheckImplicitInitList(&MemberEntity, IList, Field->getType(), Index, 
-                            StructuredList, StructuredIndex);
-  } else {
-    if (isa<InitListExpr>(IList->getInit(Index)))
-      CheckSubElementType(0, IList, Field->getType(), Index, 
-                          StructuredList, StructuredIndex);
-    else
-      CheckImplicitInitList(0, IList, Field->getType(), Index, 
-                            StructuredList, StructuredIndex);
-  }    
 }
 
 /// \brief Expand a field designator that refers to a member of an
@@ -1305,7 +1245,7 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
 ///
 /// @returns true if there was an error, false otherwise.
 bool
-InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
+InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
                                             InitListExpr *IList,
                                       DesignatedInitExpr *DIE,
                                       unsigned DesigIdx,
@@ -1535,8 +1475,12 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
       unsigned newStructuredIndex = FieldIndex;
       unsigned OldIndex = Index;
       IList->setInit(Index, DIE->getInit());
-      CheckSubElementType(0, IList, Field->getType(), Index,
+
+      InitializedEntity MemberEntity =
+        InitializedEntity::InitializeMember(*Field, &Entity);
+      CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
                           StructuredList, newStructuredIndex);
+
       IList->setInit(OldIndex, DIE);
       if (hadError && !prevHadError) {
         ++Field;
@@ -1552,8 +1496,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
       unsigned newStructuredIndex = FieldIndex;
       
       InitializedEntity MemberEntity =
-        InitializedEntity::InitializeMember(*Field, Entity);
-      if (CheckDesignatedInitializer(&MemberEntity, IList, DIE, DesigIdx + 1, 
+        InitializedEntity::InitializeMember(*Field, &Entity);
+      if (CheckDesignatedInitializer(MemberEntity, IList, DIE, DesigIdx + 1, 
                                      FieldType, 0, 0, Index, 
                                      StructuredList, newStructuredIndex,
                                      true, false))
@@ -1584,7 +1528,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
     // Check the remaining fields within this class/struct/union subobject.
     bool prevHadError = hadError;
     
-    CheckStructUnionTypes(0, IList, CurrentObjectType, Field, false, Index,
+    CheckStructUnionTypes(Entity, IList, CurrentObjectType, Field, false, Index,
                           StructuredList, FieldIndex);
     return hadError && !prevHadError;
   }
@@ -1671,7 +1615,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
   unsigned OldIndex = Index;
   
   InitializedEntity ElementEntity =
-    InitializedEntity::InitializeElement(SemaRef.Context, 0, *Entity);
+    InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity);
 
   while (DesignatedStartIndex <= DesignatedEndIndex) {
     // Recurse to check later designated subobjects.
@@ -1679,7 +1623,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
     Index = OldIndex;
     
     ElementEntity.setElementIndex(ElementIndex);
-    if (CheckDesignatedInitializer(&ElementEntity, IList, DIE, DesigIdx + 1, 
+    if (CheckDesignatedInitializer(ElementEntity, IList, DIE, DesigIdx + 1, 
                                    ElementType, 0, 0, Index, 
                                    StructuredList, ElementIndex,
                                    (DesignatedStartIndex == DesignatedEndIndex),
@@ -1705,7 +1649,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
 
   // Check the remaining elements within this array subobject.
   bool prevHadError = hadError;
-  CheckArrayType(0, IList, CurrentObjectType, DesignatedStartIndex, 
+  CheckArrayType(Entity, IList, CurrentObjectType, DesignatedStartIndex, 
                  /*SubobjectIsDesignatorContext=*/false, Index,
                  StructuredList, ElementIndex);
   return hadError && !prevHadError;
