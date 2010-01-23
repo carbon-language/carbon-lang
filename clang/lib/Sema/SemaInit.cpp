@@ -250,7 +250,8 @@ class InitListChecker {
                       bool SubobjectIsDesignatorContext, unsigned &Index,
                       InitListExpr *StructuredList,
                       unsigned &StructuredIndex);
-  bool CheckDesignatedInitializer(InitListExpr *IList, DesignatedInitExpr *DIE,
+  bool CheckDesignatedInitializer(const InitializedEntity *Entity,
+                                  InitListExpr *IList, DesignatedInitExpr *DIE,
                                   unsigned DesigIdx,
                                   QualType &CurrentObjectType,
                                   RecordDecl::field_iterator *NextField,
@@ -1000,7 +1001,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity *Entity,
 
       // Handle this designated initializer. elementIndex will be
       // updated to be the next array element we'll initialize.
-      if (CheckDesignatedInitializer(IList, DIE, 0,
+      if (CheckDesignatedInitializer(Entity, IList, DIE, 0,
                                      DeclType, 0, &elementIndex, Index,
                                      StructuredList, StructuredIndex, true,
                                      false)) {
@@ -1114,7 +1115,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity *Entity,
 
       // Handle this designated initializer. Field will be updated to
       // the next field that we'll be initializing.
-      if (CheckDesignatedInitializer(IList, DIE, 0,
+      if (CheckDesignatedInitializer(Entity, IList, DIE, 0,
                                      DeclType, &Field, 0, Index,
                                      StructuredList, StructuredIndex,
                                      true, TopLevelObject))
@@ -1304,7 +1305,8 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
 ///
 /// @returns true if there was an error, false otherwise.
 bool
-InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
+InitListChecker::CheckDesignatedInitializer(const InitializedEntity *Entity,
+                                            InitListExpr *IList,
                                       DesignatedInitExpr *DIE,
                                       unsigned DesigIdx,
                                       QualType &CurrentObjectType,
@@ -1325,7 +1327,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     unsigned OldIndex = Index;
     IList->setInit(OldIndex, DIE->getInit());
 
-    CheckSubElementType(0, IList, CurrentObjectType, Index,
+    CheckSubElementType(Entity, IList, CurrentObjectType, Index,
                         StructuredList, StructuredIndex);
 
     // Restore the designated initializer expression in the syntactic
@@ -1548,8 +1550,12 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
       // Recurse to check later designated subobjects.
       QualType FieldType = (*Field)->getType();
       unsigned newStructuredIndex = FieldIndex;
-      if (CheckDesignatedInitializer(IList, DIE, DesigIdx + 1, FieldType, 0, 0,
-                                     Index, StructuredList, newStructuredIndex,
+      
+      InitializedEntity MemberEntity =
+        InitializedEntity::InitializeMember(*Field, Entity);
+      if (CheckDesignatedInitializer(&MemberEntity, IList, DIE, DesigIdx + 1, 
+                                     FieldType, 0, 0, Index, 
+                                     StructuredList, newStructuredIndex,
                                      true, false))
         return true;
     }
@@ -1663,12 +1669,19 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
   // Move to the next designator
   unsigned ElementIndex = DesignatedStartIndex.getZExtValue();
   unsigned OldIndex = Index;
+  
+  InitializedEntity ElementEntity =
+    InitializedEntity::InitializeElement(SemaRef.Context, 0, *Entity);
+
   while (DesignatedStartIndex <= DesignatedEndIndex) {
     // Recurse to check later designated subobjects.
     QualType ElementType = AT->getElementType();
     Index = OldIndex;
-    if (CheckDesignatedInitializer(IList, DIE, DesigIdx + 1, ElementType, 0, 0,
-                                   Index, StructuredList, ElementIndex,
+    
+    ElementEntity.setElementIndex(ElementIndex);
+    if (CheckDesignatedInitializer(&ElementEntity, IList, DIE, DesigIdx + 1, 
+                                   ElementType, 0, 0, Index, 
+                                   StructuredList, ElementIndex,
                                    (DesignatedStartIndex == DesignatedEndIndex),
                                    false))
       return true;
