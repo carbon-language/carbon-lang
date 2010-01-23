@@ -11,6 +11,36 @@
 
 // RUN: export TENFOUR_X86_MACHINE=localhost
 // RUN: export TENFIVE_X86_MACHINE=localhost
+// RUN: export ARM_MACHINE=localhost
+// RUN: export ARM_SYSROOT=$(xcodebuild -sdk iphoneos -version Path)
+
+// RUN: echo iPhoneOS, ARM, v6, thumb
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv6 -mthumb -c %s -o %t.o
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv6 -mthumb -v -Wl,-t,-v -o %t %t.o 1>&2
+// RUN: rsync -arv %t $ARM_MACHINE:/tmp/a.out
+// RUN: ssh $ARM_MACHINE /tmp/a.out
+// RUN: echo
+
+// RUN: echo iPhoneOS, ARM, v6, no-thumb
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv6 -mno-thumb -c %s -o %t.o
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv6 -mno-thumb -v -Wl,-t,-v -o %t %t.o 1>&2
+// RUN: rsync -arv %t $ARM_MACHINE:/tmp/a.out
+// RUN: ssh $ARM_MACHINE /tmp/a.out
+// RUN: echo
+
+// RUN: echo iPhoneOS, ARM, v7, thumb
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv7 -mthumb -c %s -o %t.o
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv7 -mthumb -v -Wl,-t,-v -o %t %t.o 1>&2
+// RUN: rsync -arv %t $ARM_MACHINE:/tmp/a.out
+// RUN: ssh $ARM_MACHINE /tmp/a.out
+// RUN: echo
+
+// RUN: echo iPhoneOS, ARM, v7, no-thumb
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv7 -mno-thumb -c %s -o %t.o
+// RUN: %clang -isysroot $ARM_SYSROOT -arch armv7 -mno-thumb -v -Wl,-t,-v -o %t %t.o 1>&2
+// RUN: rsync -arv %t $ARM_MACHINE:/tmp/a.out
+// RUN: ssh $ARM_MACHINE /tmp/a.out
+// RUN: echo
 
 // RUN: echo 10.4, i386
 // RUN: %clang -arch i386 -mmacosx-version-min=10.4 -c %s -o %t.o
@@ -179,17 +209,33 @@ long double _Complex __mulxc3(long double a, long double b,
 long double _Complex __divxc3(long double a, long double b,
                               long double c, long double d);
 
+#ifndef __arm
+#define HAS_LONG_DOUBLE
+#endif
+
 int main(int argc, char **argv) {
   du_int du_tmp;
   struct utsname name;
-  unsigned target = __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__;
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+  const char *target_name = "OS X";
+  unsigned target_version = __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__;
+  unsigned target_maj = target_version / 100;
+  unsigned target_min = (target_version / 10) % 10;
+  unsigned target_micro = target_version % 10;
+#else
+  const char *target_name = "iPhoneOS";
+  unsigned target_version = __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__;
+  unsigned target_maj = target_version / 10000;
+  unsigned target_min = (target_version / 100) % 100;
+  unsigned target_micro = target_version % 100;
+#endif
 
   if (uname(&name))
     return 1;
 
   fprintf(stderr, "%s: clang_rt test:\n", argv[0]);
-  fprintf(stderr, "  target  : %d.%d.%d\n\n", target/100, (target/10) % 10,
-          target % 10);
+  fprintf(stderr, "  target  : %s %d.%d.%d\n\n", target_name,
+          target_maj, target_min, target_micro);
   fprintf(stderr, "  sysname : %s\n", name.sysname);
   fprintf(stderr, "  nodename: %s\n", name.nodename);
   fprintf(stderr, "  release : %s\n", name.release);
@@ -229,28 +275,62 @@ int main(int argc, char **argv) {
   assert(__ucmpdi2(3, 2) == 2);
   assert(__fixsfdi(2.0) == 2);
   assert(__fixdfdi(2.0) == 2);
-  assert(__fixxfdi(2.0) == 2);
   assert(__fixunssfsi(2.0) == 2);
   assert(__fixunsdfsi(2.0) == 2);
-  assert(__fixunsxfsi(2.0) == 2);
   assert(__fixunssfdi(2.0) == 2);
   assert(__fixunsdfdi(2.0) == 2);
-  assert(__fixunsxfdi(2.0) == 2);
   assert(__floatdisf(2) == 2.0);
   assert(__floatdidf(2) == 2.0);
-  assert(__floatdixf(2) == 2.0);
   assert(__floatundisf(2) == 2.0);
   assert(__floatundidf(2) == 2.0);
-  assert(__floatundixf(2) == 2);
   assert(__powisf2(2.0, 2) == 4.0);
   assert(__powidf2(2.0, 2) == 4.0);
-  assert(__powixf2(2.0, 2) == 4.0);
+
+  // FIXME: Clang/LLVM seems to be miscompiling _Complex currently, probably an
+  // ABI issue.
+#ifndef __arm
+  {
+    _Complex float a = __mulsc3(1.0, 2.0, 4.0, 8.0);
+    _Complex float b = (-12.0 + 16.0j);
+    fprintf(stderr, "a: (%f + %f), b: (%f + %f)\n",
+            __real a, __imag a, __real b, __imag b);
+  }
   assert(__mulsc3(1.0, 2.0, 4.0, 8.0) == (-12.0 + 16.0j));
   assert(__muldc3(1.0, 2.0, 4.0, 8.0) == (-12.0 + 16.0j));
-  assert(__mulxc3(1.0, 2.0, 4.0, 8.0) == (-12.0 + 16.0j));
   assert(__divsc3(1.0, 2.0, 4.0, 8.0) == (0.25 + 0j));
   assert(__divdc3(1.0, 2.0, 4.0, 8.0) == (0.25 + 0j));
+#endif
+
+#ifdef HAS_LONG_DOUBLE
   assert(__divxc3(1.0, 2.0, 4.0, 8.0) == (0.25 + 0j));
+  assert(__fixunsxfdi(2.0) == 2);
+  assert(__fixunsxfsi(2.0) == 2);
+  assert(__fixxfdi(2.0) == 2);
+  assert(__floatdixf(2) == 2.0);
+  assert(__floatundixf(2) == 2);
+  assert(__mulxc3(1.0, 2.0, 4.0, 8.0) == (-12.0 + 16.0j));
+  assert(__powixf2(2.0, 2) == 4.0);
+#endif
+
+  // Test some calls which are used on armv6/thumb. The calls/prototypes are
+  // fake, it would be nice to test correctness, but mostly we just want to
+  // make sure we resolve symbols correctly.
+#if defined(__arm) && defined(__ARM_ARCH_6K__) && defined(__thumb__)
+  if (argc == 100) {
+    extern void __restore_vfp_d8_d15_regs(void), __save_vfp_d8_d15_regs(void);
+    extern void __switch8(void), __switchu8(void),
+      __switch16(void), __switch32(void);
+    extern void __addsf3vfp(void);
+
+    __addsf3vfp();
+    __restore_vfp_d8_d15_regs();
+    __save_vfp_d8_d15_regs();
+    __switch8();
+    __switchu8();
+    __switch16();
+    __switch32();
+  }
+#endif
 
   fprintf(stderr, "    OK!\n");
 
