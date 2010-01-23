@@ -1205,7 +1205,7 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     // implementation of multiple entry points).  If this doesn't occur, the
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
-    OutStreamer.EmitAssemblerFlag(MCStreamer::SubsectionsViaSymbols);
+    OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 }
 

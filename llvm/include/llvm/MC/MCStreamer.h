@@ -15,6 +15,7 @@
 #define LLVM_MC_MCSTREAMER_H
 
 #include "llvm/System/DataTypes.h"
+#include "llvm/MC/MCDirectives.h"
 
 namespace llvm {
   class MCAsmInfo;
@@ -40,31 +41,6 @@ namespace llvm {
   /// a .s file, and implementations that write out .o files of various formats.
   ///
   class MCStreamer {
-  public:
-    enum SymbolAttr {
-      Global,         /// .globl
-      Hidden,         /// .hidden (ELF)
-      IndirectSymbol, /// .indirect_symbol (Apple)
-      Internal,       /// .internal (ELF)
-      LazyReference,  /// .lazy_reference (Apple)
-      Local,          /// .local (ELF)
-      NoDeadStrip,    /// .no_dead_strip (Apple)
-      PrivateExtern,  /// .private_extern (Apple)
-      Protected,      /// .protected (ELF)
-      Reference,      /// .reference (Apple)
-      Weak,           /// .weak
-      WeakDefinition, /// .weak_definition (Apple)
-      WeakReference,  /// .weak_reference (Apple)
-
-      SymbolAttrFirst = Global,
-      SymbolAttrLast = WeakReference
-    };
-
-    enum AssemblerFlag {
-      SubsectionsViaSymbols  /// .subsections_via_symbols (Apple)
-    };
-
-  private:
     MCContext &Context;
 
     MCStreamer(const MCStreamer&); // DO NOT IMPLEMENT
@@ -128,7 +104,7 @@ namespace llvm {
     virtual void EmitLabel(MCSymbol *Symbol) = 0;
 
     /// EmitAssemblerFlag - Note in the output the specified @param Flag
-    virtual void EmitAssemblerFlag(AssemblerFlag Flag) = 0;
+    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
 
     /// EmitAssignment - Emit an assignment of @param Value to @param Symbol.
     ///
@@ -145,7 +121,7 @@ namespace llvm {
 
     /// EmitSymbolAttribute - Add the given @param Attribute to @param Symbol.
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,
-                                     SymbolAttr Attribute) = 0;
+                                     MCSymbolAttr Attribute) = 0;
 
     /// EmitSymbolDesc - Set the @param DescValue for the @param Symbol.
     ///

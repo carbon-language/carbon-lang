@@ -203,7 +203,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     }
     
     // .local _foo
-    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Local);
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Local);
     // .comm _foo, 42, 4
     OutStreamer.EmitCommonSymbol(GVSym, Size, 1 << AlignLog);
     return;
@@ -216,7 +216,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // emission.
   if (GVKind.isBSSExtern() && MAI->hasMachoZeroFillDirective()) {
     // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
     // .zerofill __DATA, __common, _foo, 400, 5
     OutStreamer.EmitZerofill(TheSection, GVSym, Size, 1 << AlignLog);
     return;
@@ -235,17 +235,17 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::LinkerPrivateLinkage:
     if (MAI->getWeakDefDirective() != 0) {
       // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
       // .weak_definition _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::WeakDefinition);
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
     } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
       // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
       // .linkonce same_size
       O << LinkOnce;
     } else {
       // .weak _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Weak);
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
     }
     break;
   case GlobalValue::DLLExportLinkage:
@@ -255,7 +255,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol.
     // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVSym, MCStreamer::Global);
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
     break;
   case GlobalValue::PrivateLinkage:
   case GlobalValue::InternalLinkage:
@@ -303,13 +303,13 @@ bool AsmPrinter::doFinalization(Module &M) {
          I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
       OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(I),
-                                      MCStreamer::WeakReference);
+                                      MCSA_WeakReference);
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       if (!I->hasExternalWeakLinkage()) continue;
       OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(I),
-                                      MCStreamer::WeakReference);
+                                      MCSA_WeakReference);
     }
   }
 
@@ -323,9 +323,9 @@ bool AsmPrinter::doFinalization(Module &M) {
       MCSymbol *Target = GetGlobalValueSymbol(GV);
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
-        OutStreamer.EmitSymbolAttribute(Name, MCStreamer::Global);
+        OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
       else if (I->hasWeakLinkage())
-        OutStreamer.EmitSymbolAttribute(Name, MCStreamer::WeakReference);
+        OutStreamer.EmitSymbolAttribute(Name, MCSA_WeakReference);
       else
         assert(I->hasLocalLinkage() && "Invalid alias linkage");
 
@@ -601,7 +601,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
       StringRef Sym(".constructors_used");
       OutStreamer.EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
-                                      MCStreamer::Reference);
+                                      MCSA_Reference);
     }
     return true;
   } 
@@ -615,7 +615,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
       StringRef Sym(".destructors_used");
       OutStreamer.EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
-                                      MCStreamer::Reference);
+                                      MCSA_Reference);
     }
     return true;
   }
@@ -636,7 +636,7 @@ void AsmPrinter::EmitLLVMUsedList(Constant *List) {
       dyn_cast<GlobalValue>(InitList->getOperand(i)->stripPointerCasts());
     if (GV && getObjFileLowering().shouldEmitUsedDirectiveFor(GV, Mang))
       OutStreamer.EmitSymbolAttribute(GetGlobalValueSymbol(GV),
-                                      MCStreamer::NoDeadStrip);
+                                      MCSA_NoDeadStrip);
   }
 }
 

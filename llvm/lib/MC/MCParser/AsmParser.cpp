@@ -702,29 +702,29 @@ bool AsmParser::ParseStatement() {
     // Symbol attribute directives
 
     if (IDVal == ".globl" || IDVal == ".global")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Global);
+      return ParseDirectiveSymbolAttribute(MCSA_Global);
     if (IDVal == ".hidden")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Hidden);
+      return ParseDirectiveSymbolAttribute(MCSA_Hidden);
     if (IDVal == ".indirect_symbol")
-      return ParseDirectiveSymbolAttribute(MCStreamer::IndirectSymbol);
+      return ParseDirectiveSymbolAttribute(MCSA_IndirectSymbol);
     if (IDVal == ".internal")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Internal);
+      return ParseDirectiveSymbolAttribute(MCSA_Internal);
     if (IDVal == ".lazy_reference")
-      return ParseDirectiveSymbolAttribute(MCStreamer::LazyReference);
+      return ParseDirectiveSymbolAttribute(MCSA_LazyReference);
     if (IDVal == ".no_dead_strip")
-      return ParseDirectiveSymbolAttribute(MCStreamer::NoDeadStrip);
+      return ParseDirectiveSymbolAttribute(MCSA_NoDeadStrip);
     if (IDVal == ".private_extern")
-      return ParseDirectiveSymbolAttribute(MCStreamer::PrivateExtern);
+      return ParseDirectiveSymbolAttribute(MCSA_PrivateExtern);
     if (IDVal == ".protected")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Protected);
+      return ParseDirectiveSymbolAttribute(MCSA_Protected);
     if (IDVal == ".reference")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Reference);
+      return ParseDirectiveSymbolAttribute(MCSA_Reference);
     if (IDVal == ".weak")
-      return ParseDirectiveSymbolAttribute(MCStreamer::Weak);
+      return ParseDirectiveSymbolAttribute(MCSA_Weak);
     if (IDVal == ".weak_definition")
-      return ParseDirectiveSymbolAttribute(MCStreamer::WeakDefinition);
+      return ParseDirectiveSymbolAttribute(MCSA_WeakDefinition);
     if (IDVal == ".weak_reference")
-      return ParseDirectiveSymbolAttribute(MCStreamer::WeakReference);
+      return ParseDirectiveSymbolAttribute(MCSA_WeakReference);
 
     if (IDVal == ".comm")
       return ParseDirectiveComm(/*IsLocal=*/false);
@@ -1238,7 +1238,7 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 
 /// ParseDirectiveSymbolAttribute
 ///  ::= { ".globl", ".weak", ... } [ identifier ( , identifier )* ]
-bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
+bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       StringRef Name;
@@ -1463,7 +1463,7 @@ bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
   
   Lex();
 
-  Out.EmitAssemblerFlag(MCStreamer::SubsectionsViaSymbols);
+  Out.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
 
   return false;
 }

@@ -247,7 +247,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // dead-stripping unconditionally.
     if (MAI->hasNoDeadStrip())
       Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
-                                           MCStreamer::NoDeadStrip);
+                                           MCSA_NoDeadStrip);
   } else {
     O << *EHFrameInfo.FunctionEHSym << ":\n";
 
@@ -316,7 +316,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     if (MMI->isUsedFunction(EHFrameInfo.function))
       if (MAI->hasNoDeadStrip())
         Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
-                                             MCStreamer::NoDeadStrip);
+                                             MCSA_NoDeadStrip);
   }
   Asm->O << '\n';
 }

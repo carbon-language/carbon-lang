@@ -84,7 +84,7 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
     break;
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
     break;
   case Function::LinkerPrivateLinkage:
   case Function::LinkOnceAnyLinkage:
@@ -92,10 +92,10 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   case Function::WeakAnyLinkage:
   case Function::WeakODRLinkage:
     if (Subtarget->isTargetDarwin()) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
       O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
     } else if (Subtarget->isTargetCygMing()) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCStreamer::Global);
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
       O << "\t.linkonce discard\n";
     } else {
       O << "\t.weak\t" << *CurrentFnSym << '\n';
@@ -709,7 +709,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // implementation of multiple entry points).  If this doesn't occur, the
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
-    OutStreamer.EmitAssemblerFlag(MCStreamer::SubsectionsViaSymbols);
+    OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 
   if (Subtarget->isTargetCOFF()) {

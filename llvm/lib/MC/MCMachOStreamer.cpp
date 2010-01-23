@@ -117,36 +117,23 @@ public:
   /// @{
 
   virtual void SwitchSection(const MCSection *Section);
-
   virtual void EmitLabel(MCSymbol *Symbol);
-
-  virtual void EmitAssemblerFlag(AssemblerFlag Flag);
-
+  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
-
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
-
+  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
-
   virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                 unsigned ByteAlignment);
-
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
-
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
-
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
-
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
-
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
-
   virtual void EmitInstruction(const MCInst &Inst);
-
   virtual void Finish();
 
   /// @}
@@ -183,9 +170,9 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   Symbol->setSection(*CurSection);
 }
 
-void MCMachOStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
+void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   switch (Flag) {
-  case SubsectionsViaSymbols:
+  case MCAF_SubsectionsViaSymbols:
     Assembler.setSubsectionsViaSymbols(true);
     return;
   }
@@ -204,10 +191,10 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 }
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
-                                          SymbolAttr Attribute) {
+                                          MCSymbolAttr Attribute) {
   // Indirect symbols are handled differently, to match how 'as' handles
   // them. This makes writing matching .o files easier.
-  if (Attribute == MCStreamer::IndirectSymbol) {
+  if (Attribute == MCSA_IndirectSymbol) {
     // Note that we intentionally cannot use the symbol data here; this is
     // important for matching the string table that 'as' generates.
     IndirectSymbolData ISD;
@@ -229,20 +216,21 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // In the future it might be worth trying to make these operations more well
   // defined.
   switch (Attribute) {
-  case MCStreamer::IndirectSymbol:
-  case MCStreamer::Hidden:
-  case MCStreamer::Internal:
-  case MCStreamer::Protected:
-  case MCStreamer::Weak:
-  case MCStreamer::Local:
+  case MCSA_Invalid:
+  case MCSA_IndirectSymbol:
+  case MCSA_Hidden:
+  case MCSA_Internal:
+  case MCSA_Protected:
+  case MCSA_Weak:
+  case MCSA_Local:
     assert(0 && "Invalid symbol attribute for Mach-O!");
     break;
 
-  case MCStreamer::Global:
+  case MCSA_Global:
     SD.setExternal(true);
     break;
 
-  case MCStreamer::LazyReference:
+  case MCSA_LazyReference:
     // FIXME: This requires -dynamic.
     SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
     if (Symbol->isUndefined())
@@ -251,23 +239,23 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
     // Since .reference sets the no dead strip bit, it is equivalent to
     // .no_dead_strip in practice.
-  case MCStreamer::Reference:
-  case MCStreamer::NoDeadStrip:
+  case MCSA_Reference:
+  case MCSA_NoDeadStrip:
     SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
     break;
 
-  case MCStreamer::PrivateExtern:
+  case MCSA_PrivateExtern:
     SD.setExternal(true);
     SD.setPrivateExtern(true);
     break;
 
-  case MCStreamer::WeakReference:
+  case MCSA_WeakReference:
     // FIXME: This requires -dynamic.
     if (Symbol->isUndefined())
       SD.setFlags(SD.getFlags() | SF_WeakReference);
     break;
 
-  case MCStreamer::WeakDefinition:
+  case MCSA_WeakDefinition:
     // FIXME: 'as' enforces that this is defined and global. The manual claims
     // it has to be in a coalesced section, but this isn't enforced.
     SD.setFlags(SD.getFlags() | SF_WeakDefinition);

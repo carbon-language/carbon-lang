@@ -31,11 +31,11 @@ namespace {
 
     virtual void EmitLabel(MCSymbol *Symbol) {}
 
-    virtual void EmitAssemblerFlag(AssemblerFlag Flag) {}
+    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
 
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
 
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute) {}
+    virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
 
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
 

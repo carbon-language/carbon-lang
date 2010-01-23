@@ -85,11 +85,11 @@ public:
 
   virtual void EmitLabel(MCSymbol *Symbol);
 
-  virtual void EmitAssemblerFlag(AssemblerFlag Flag);
+  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
 
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
+  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
@@ -195,10 +195,10 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   Symbol->setSection(*CurSection);
 }
 
-void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
+void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   switch (Flag) {
   default: assert(0 && "Invalid flag!");
-  case SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
+  case MCAF_SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
   }
   EmitEOL();
 }
@@ -217,21 +217,23 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
-                                        SymbolAttr Attribute) {
+                                        MCSymbolAttr Attribute) {
   switch (Attribute) {
-  case Global:         OS << MAI.getGlobalDirective(); break; // .globl
-  case Hidden:         OS << ".hidden ";          break;
-  case IndirectSymbol: OS << ".indirect_symbol "; break;
-  case Internal:       OS << ".internal ";        break;
-  case LazyReference:  OS << ".lazy_reference ";  break;
-  case Local:          OS << ".local ";           break;
-  case NoDeadStrip:    OS << ".no_dead_strip ";   break;
-  case PrivateExtern:  OS << ".private_extern ";  break;
-  case Protected:      OS << ".protected ";       break;
-  case Reference:      OS << ".reference ";       break;
-  case Weak:           OS << ".weak ";            break;
-  case WeakDefinition: OS << ".weak_definition "; break;
-  case WeakReference:  OS << MAI.getWeakRefDirective(); break;// .weak_reference
+  case MCSA_Invalid: assert(0 && "Invalid symbol attribute");
+  case MCSA_Global:         OS << MAI.getGlobalDirective(); break; // .globl
+  case MCSA_Hidden:         OS << ".hidden ";          break;
+  case MCSA_IndirectSymbol: OS << ".indirect_symbol "; break;
+  case MCSA_Internal:       OS << ".internal ";        break;
+  case MCSA_LazyReference:  OS << ".lazy_reference ";  break;
+  case MCSA_Local:          OS << ".local ";           break;
+  case MCSA_NoDeadStrip:    OS << ".no_dead_strip ";   break;
+  case MCSA_PrivateExtern:  OS << ".private_extern ";  break;
+  case MCSA_Protected:      OS << ".protected ";       break;
+  case MCSA_Reference:      OS << ".reference ";       break;
+  case MCSA_Weak:           OS << ".weak ";            break;
+  case MCSA_WeakDefinition: OS << ".weak_definition "; break;
+      // .weak_reference
+  case MCSA_WeakReference:  OS << MAI.getWeakRefDirective(); break;
   }
 
   OS << *Symbol;
