@@ -141,37 +141,30 @@ class Cursor(Structure):
         """Return the null cursor object."""
         return Cursor_null()
 
-    @property
     def is_declaration(self):
         """Return True if the cursor points to a declaration."""
         return Cursor_is_decl(self.kind)
 
-    @property
     def is_reference(self):
         """Return True if the cursor points to a refernce."""
         return Cursor_is_ref(self.kind)
 
-    @property
     def is_expression(self):
         """Return True if the cursor points to an expression."""
         return Cursor_is_expr(self.kind)
 
-    @property
     def is_statement(self):
         """Return True if the cursor points to a statement."""
         return Cursor_is_stmt(self.kind)
 
-    @property
     def is_translation_unit(self):
         """Return True if the cursor points to a translation unit."""
         return Cursor_is_tu(self.kind)
 
-    @property
     def is_invalid(self):
         """Return  True if the cursor points to an invalid entity."""
         return Cursor_is_inv(self.kind)
 
-    @property
     def is_definition(self):
         """
         Returns true if the declaration pointed at by the cursor is also a
@@ -185,7 +178,7 @@ class Cursor(Structure):
         is a declaration, then this simpy returns the declaration. If the
         cursor is a reference, then this returns the referenced declaration.
         """
-        if not self.is_declaration:
+        if not self.is_declaration():
             raise Exception("Cursor does not refer to a Declaration")
         return Cursor_decl(self)
 
@@ -202,6 +195,9 @@ class Cursor(Structure):
     @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
+        if not self.is_declaration():
+            # FIXME: This should be documented in Index.h
+            raise ValueError("Cursor does not refer to a Declaration")
         return Cursor_spelling(self)
 
     @property
