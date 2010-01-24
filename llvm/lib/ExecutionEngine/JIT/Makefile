@@ -9,7 +9,6 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMJIT
-CXXFLAGS = -fno-rtti
 
 # Get the $(ARCH) setting
 include $(LEVEL)/Makefile.config

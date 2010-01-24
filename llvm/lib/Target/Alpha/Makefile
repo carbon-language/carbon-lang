@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMAlphaCodeGen
 TARGET = Alpha
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = AlphaGenRegisterInfo.h.inc AlphaGenRegisterNames.inc \

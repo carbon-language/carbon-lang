@@ -386,9 +386,9 @@ ifdef REQUIRES_FRAME_POINTER
 endif
 
 # If REQUIRES_RTTI=1 is specified then don't disable run-time type id.
-ifeq ($(REQUIRES_RTTI), 1)
-  CXX.Flags := $(filter-out -fno-rtti,$(CXX.Flags))
-  CXXFLAGS := $(filter-out -fno-rtti,$(CXXFLAGS))
+ifneq ($(REQUIRES_RTTI), 1)
+  CXX.Flags += -fno-rtti
+  CXXFLAGS += -fno-rtti
 endif
 
 ifdef ENABLE_COVERAGE

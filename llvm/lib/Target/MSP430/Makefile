@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMMSP430CodeGen
 TARGET = MSP430
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = MSP430GenRegisterInfo.h.inc MSP430GenRegisterNames.inc \

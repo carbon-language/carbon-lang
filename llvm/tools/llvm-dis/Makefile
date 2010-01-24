@@ -10,7 +10,6 @@ LEVEL = ../..
 
 TOOLNAME = llvm-dis
 LINK_COMPONENTS := bitreader
-CXXFLAGS = -fno-rtti
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

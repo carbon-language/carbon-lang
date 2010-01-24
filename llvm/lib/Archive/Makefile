@@ -9,7 +9,6 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMArchive
-CXXFLAGS = -fno-rtti
 
 # We only want an archive so only those modules actually used by a tool are
 # included.

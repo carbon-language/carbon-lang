@@ -13,6 +13,7 @@ include $(LEVEL)/Makefile.config
 
 LIBRARYNAME = GoogleTest
 BUILD_ARCHIVE = 1
+REQUIRES_RTTI = 1
 CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include
 CPP.Flags += $(NO_MISSING_FIELD_INITIALIZERS) $(NO_VARIADIC_MACROS)
 

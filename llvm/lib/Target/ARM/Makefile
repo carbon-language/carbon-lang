@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMARMCodeGen
 TARGET = ARM
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = ARMGenRegisterInfo.h.inc ARMGenRegisterNames.inc \

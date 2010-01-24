@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMBlackfinCodeGen
 TARGET = Blackfin
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = BlackfinGenRegisterInfo.h.inc BlackfinGenRegisterNames.inc \

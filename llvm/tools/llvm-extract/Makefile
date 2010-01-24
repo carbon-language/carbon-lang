@@ -11,7 +11,6 @@ LEVEL = ../..
 
 TOOLNAME = llvm-extract
 LINK_COMPONENTS := ipo bitreader bitwriter asmparser
-CXXFLAGS = -fno-rtti
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

@@ -14,6 +14,8 @@
 # Set up variables for building a unit test.
 ifdef TESTNAME
 
+REQUIRES_RTTI = 1
+
 include $(LEVEL)/Makefile.common
 
 LLVMUnitTestExe = $(BuildMode)/$(TESTNAME)Tests$(EXEEXT)

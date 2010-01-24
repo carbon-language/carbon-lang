@@ -9,7 +9,6 @@
 
 LEVEL = ../../../..
 LIBRARYNAME = LLVMCellSPUAsmPrinter
-CXXFLAGS = -fno-rtti
 
 # Hack: we need to include 'main' CellSPU target directory to grab
 # private headers

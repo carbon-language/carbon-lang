@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMTransformUtils
 BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common
 

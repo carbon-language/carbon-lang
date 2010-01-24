@@ -11,6 +11,5 @@ LEVEL = ../..
 
 TOOLNAME = llvm-ld
 LINK_COMPONENTS = ipo scalaropts linker archive bitwriter
-CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

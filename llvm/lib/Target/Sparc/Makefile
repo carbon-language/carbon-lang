@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMSparcCodeGen
 TARGET = Sparc
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \

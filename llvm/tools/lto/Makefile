@@ -17,7 +17,6 @@ include $(LEVEL)/Makefile.config
 
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
-CXXFLAGS = -fno-rtti
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bitreader bitwriter
 

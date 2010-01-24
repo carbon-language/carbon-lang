@@ -9,6 +9,5 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMSelectionDAG
-CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

@@ -10,7 +10,6 @@ LEVEL = ../../../..
 TARGET = PIC16
 LIBRARYNAME = LLVMpic16passes
 BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common
 

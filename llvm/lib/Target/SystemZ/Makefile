@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMSystemZCodeGen
 TARGET = SystemZ
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SystemZGenRegisterInfo.h.inc SystemZGenRegisterNames.inc \

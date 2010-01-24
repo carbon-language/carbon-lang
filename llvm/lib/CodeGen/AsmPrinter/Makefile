@@ -9,6 +9,5 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMAsmPrinter
-CXXFLAGS = -fno-rtti
 
 include $(LEVEL)/Makefile.common

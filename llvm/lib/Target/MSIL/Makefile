@@ -9,8 +9,6 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMMSIL
-CXXFLAGS = -fno-rtti
-
 DIRS = TargetInfo
 
 include $(LEVEL)/Makefile.common

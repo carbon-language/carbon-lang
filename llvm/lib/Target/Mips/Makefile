@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMMipsCodeGen
 TARGET = Mips
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = MipsGenRegisterInfo.h.inc MipsGenRegisterNames.inc \

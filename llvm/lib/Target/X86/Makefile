@@ -10,7 +10,6 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMX86CodeGen
 TARGET = X86
-CXXFLAGS = -fno-rtti
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \

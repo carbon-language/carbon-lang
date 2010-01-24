@@ -9,7 +9,6 @@
 
 LEVEL    := ../..
 TOOLNAME := lli
-CXXFLAGS = -fno-rtti
 LINK_COMPONENTS := jit interpreter nativecodegen bitreader selectiondag
 
 # Enable JIT support
