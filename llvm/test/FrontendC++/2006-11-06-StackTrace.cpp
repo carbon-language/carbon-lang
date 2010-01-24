@@ -5,14 +5,14 @@
 // RUN: %compile_c %t.s -o %t.o
 // RUN: %link %t.o -o %t.exe
 // RUN: echo {break DeepStack::deepest\nrun 17\nwhere\n} > %t.in 
-// RUN: gdb -q -batch -n -x %t.in %t.exe | tee %t.out | \
-// RUN:   grep {#0  DeepStack::deepest.*(this=.*,.*x=33)}
-// RUN: gdb -q -batch -n -x %t.in %t.exe | \
-// RUN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
+// RN: gdb -q -batch -n -x %t.in %t.exe | tee %t.out | \
+// RN:   grep {#0  DeepStack::deepest.*(this=.*,.*x=33)}
+// RN: gdb -q -batch -n -x %t.in %t.exe | \
+// RN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
 
 // Only works on ppc (but not apple-darwin9), x86 and x86_64.  Should
 // generalize?
-// XFAIL: alpha,arm,powerpc-apple-darwin9
+// XAIL: alpha,arm,powerpc-apple-darwin9
 
 #include <stdlib.h>
 
