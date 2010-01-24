@@ -79,7 +79,8 @@ CheckSingleInitializer(const InitializedEntity &Entity,
   if (S.getLangOptions().CPlusPlus) {
     // C++ [dcl.init.aggr]p2:
     //   Each member is copy-initialized from the corresponding
-    //   initializer-clause
+    //   initializer-clause.
+    // FIXME: Use a better EqualLoc here.
     Sema::OwningExprResult Result = 
       S.PerformCopyInitialization(Entity, InitExpr->getLocStart(),
                                   S.Owned(InitExpr));
@@ -684,17 +685,21 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       //   initializing the aggregate member with an ini- tializer from
       //   an initializer-list. If the initializer can initialize a
       //   member, the member is initialized. [...]
-      ImplicitConversionSequence ICS
-        = SemaRef.TryCopyInitialization(expr, ElemType,
-                                        /*SuppressUserConversions=*/false,
-                                        /*ForceRValue=*/false,
-                                        /*InOverloadResolution=*/false);
 
-      if (!ICS.isBad()) {
-        if (SemaRef.PerformImplicitConversion(expr, ElemType, ICS,
-                                              Sema::AA_Initializing))
+      // FIXME: Better EqualLoc?
+      InitializationKind Kind = 
+        InitializationKind::CreateCopy(expr->getLocStart(), SourceLocation());
+      InitializationSequence Seq(SemaRef, Entity, Kind, &expr, 1);
+      
+      if (Seq) {
+        Sema::OwningExprResult Result = 
+          Seq.Perform(SemaRef, Entity, Kind,
+                      Sema::MultiExprArg(SemaRef, (void **)&expr, 1));
+        if (Result.isInvalid())
           hadError = true;
-        UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+        
+        UpdateStructuredListElement(StructuredList, StructuredIndex, 
+                                    Result.takeAs<Expr>());
         ++Index;
         return;
       }
@@ -3004,13 +3009,13 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
   case InitializedEntity::EK_Exception:
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_Member:
     return !IsCopy;
       
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_VectorElement:
     return false;
     
@@ -3029,6 +3034,8 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
                                             const InitializedEntity &Entity,
                                              const InitializationKind &Kind,
                                              Sema::OwningExprResult CurInit) {
+  Expr *CurInitExpr = (Expr *)CurInit.get();
+  
   SourceLocation Loc;
   
   switch (Entity.getKind()) {
@@ -3049,6 +3056,14 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     Loc = Entity.getDecl()->getLocation();
     break;
 
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_Member:
+    if (Entity.getType()->isReferenceType() ||
+        Kind.getKind() != InitializationKind::IK_Copy)
+      return move(CurInit);
+    Loc = CurInitExpr->getLocStart();
+    break;
+
   case InitializedEntity::EK_Parameter:
     // FIXME: Do we need this initialization for a parameter?
     return move(CurInit);
@@ -3056,14 +3071,11 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Member:
-  case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_VectorElement:
     // We don't need to copy for any of these initialized entities.
     return move(CurInit);
   }
   
-  Expr *CurInitExpr = (Expr *)CurInit.get();
   CXXRecordDecl *Class = 0; 
   if (const RecordType *Record = CurInitExpr->getType()->getAs<RecordType>())
     Class = cast<CXXRecordDecl>(Record->getDecl());

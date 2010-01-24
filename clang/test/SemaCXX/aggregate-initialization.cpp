@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s 
 
 // Verify that we can't initialize non-aggregates with an initializer
 // list.
@@ -40,3 +40,30 @@ int a[] = { (void *)1 }; // expected-error {{cannot initialize an array element 
 
 // Struct initialization.
 struct S { int a; } s = { (void *)1 }; // expected-error {{cannot initialize a member subobject of type 'int' with an rvalue of type 'void *'}}
+
+// Check that we're copy-initializing the structs.
+struct A {
+  A();
+  A(int);
+  ~A();
+  
+  A(const A&) = delete; // expected-note 2 {{function has been explicitly marked deleted here}}
+};
+
+struct B {
+  A a;
+};
+
+struct C {
+  const A& a;
+};
+
+void f() {
+  A as1[1] = { };
+  A as2[1] = { 1 }; // expected-error {{copying array element of type 'struct A' invokes deleted copy constructor}}
+
+  B b1 = { };
+  B b2 = { 1 }; // expected-error {{copying member subobject of type 'struct A' invokes deleted copy constructor}}
+  
+  C c1 = { 1 };
+}

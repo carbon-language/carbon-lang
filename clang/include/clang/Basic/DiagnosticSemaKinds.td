@@ -597,13 +597,16 @@ def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
 
 def err_temp_copy_no_viable : Error<
   "no viable copy constructor %select{copying variable|copying parameter|"
-  "returning object|throwing object}0 of type %1">;
+  "returning object|throwing object|copying member subobject|copying array "
+  "element}0 of type %1">;
 def err_temp_copy_ambiguous : Error<
   "ambiguous copy constructor call when %select{copying variable|copying "
-  "parameter|returning object|throwing object}0 of type %1">;
+  "parameter|returning object|throwing object|copying member subobject|copying "
+  "array element}0 of type %1">;
 def err_temp_copy_deleted : Error<
   "%select{copying variable|copying parameter|returning object|throwing "
-  "object}0 of type %1 invokes deleted copy constructor">;
+  "object|copying member subobject|copying array element}0 of type %1 invokes "
+  "deleted copy constructor">;
   
 // C++0x decltype
 def err_cannot_determine_declared_type_of_overloaded_function : Error<
