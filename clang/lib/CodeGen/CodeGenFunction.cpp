@@ -431,7 +431,11 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBranchOnBoolExpr(CondBOp->getLHS(), LHSTrue, FalseBlock);
       EmitBlock(LHSTrue);
 
+      // Any temporaries created here are conditional.
+      StartConditionalBranch();
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      FinishConditionalBranch();
+
       return;
     } else if (CondBOp->getOpcode() == BinaryOperator::LOr) {
       // If we have "0 || X", simplify the code.  "1 || X" would have constant
@@ -454,7 +458,11 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBranchOnBoolExpr(CondBOp->getLHS(), TrueBlock, LHSFalse);
       EmitBlock(LHSFalse);
 
+      // Any temporaries created here are conditional.
+      StartConditionalBranch();
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
+      FinishConditionalBranch();
+
       return;
     }
   }

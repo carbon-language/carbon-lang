@@ -129,10 +129,30 @@ static unsigned f6() {
   return tt.Product;
 }
 
+// 5, 2
+static unsigned f7() {
+  TempTracker tt;
+  {
+    (void)((A(tt, 2, false) && A(tt, 3, false)) || A(tt, 5, false));
+  }
+  return tt.Product;
+}
+
+// 5, 2
+static unsigned f8() {
+  TempTracker tt;
+  
+  {
+    (void)((A(tt, 2) || A(tt, 3)) && A(tt, 5));
+  }
+  return tt.Product;
+}
+
 extern "C" void error();
 extern "C" void print(const char *Name, unsigned N);
 
-#define ORDER3(a, b, c) (pow(a, 1) * pow(b, 2) * pow(c, 3))
+#define ORDER2(a, b) (pow(a, 1) * pow(b, 2))
+#define ORDER3(a, b, c) (ORDER2(a, b) * pow(c, 3))
 #define ORDER4(a, b, c, d) (ORDER3(a, b, c) * pow(d, 4))
 #define ORDER5(a, b, c, d, e) (ORDER4(a, b, c, d) * pow(e, 5))
 #define ORDER6(a, b, c, d, e, f) (ORDER5(a, b, c, d, e) * pow(f, 6))
@@ -170,6 +190,16 @@ void test() {
 // CHECK: call void @print(i8* {{.*}}, i32 1251552576)
   print("f6", f6());
   if (f6() != ORDER6(3, 7, 11, 5, 13, 2))
+    error();
+
+//  CHECK: call void @print(i8* {{.*}}, i32 20)
+  print("f7", f7());
+  if (f7() != ORDER2(5, 2))
+    error();
+
+//  CHECK: call void @print(i8* {{.*}}, i32 20)
+  print("f8", f8());
+  if (f8() != ORDER2(5, 2))
     error();
 }
 

@@ -283,6 +283,9 @@ public:
   /// FinishConditionalBranch - Should be called after a conditional part of an
   /// expression has been emitted.
   void FinishConditionalBranch() {
+    assert(ConditionalBranchLevel != 0 &&
+           "Conditional branch mismatch!");
+    
     --ConditionalBranchLevel;
   }
 
