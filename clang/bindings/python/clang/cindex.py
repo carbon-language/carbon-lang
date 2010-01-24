@@ -133,11 +133,6 @@ class Cursor(Structure):
     def __ne__(self, other):
         return not Cursor_eq(self, other)
 
-    @staticmethod
-    def null():
-        """Return the null cursor object."""
-        return Cursor_null()
-
     def is_declaration(self):
         """Return True if the cursor points to a declaration."""
         return Cursor_is_decl(self.kind)
@@ -204,15 +199,26 @@ class Cursor(Structure):
         return Cursor_extent(self)
 
     def get_children(self):
-        """Return an iterator for the accessing children of this cursor."""
+        """Return an iterator for the accessing the children of this cursor."""
 
         # FIXME: Expose iteration from CIndex, PR6125.
         def visitor(child, parent, children):
+            # FIXME: Document this assertion in API.
+            # FIXME: There should just be an isNull method.
+            assert child != Cursor_null()
             children.append(child)
             return 1 # continue
         children = []
         Cursor_visit(self, Callback(visitor), children)
         return iter(children)
+
+    @staticmethod
+    def from_result(res, fn, args):
+        assert isinstance(res, Cursor)
+        # FIXME: There should just be an isNull method.
+        if res == Cursor_null():
+            return None
+        return res
 
 ## CIndex Objects ##
 
@@ -391,6 +397,7 @@ Cursor_is_def.restype = bool
 Cursor_def = lib.clang_getCursorDefinition
 Cursor_def.argtypes = [Cursor]
 Cursor_def.restype = Cursor
+Cursor_def.errcheck = Cursor.from_result
 
 Cursor_eq = lib.clang_equalCursors
 Cursor_eq.argtypes = [Cursor, Cursor]
@@ -412,6 +419,7 @@ Cursor_extent.restype = SourceRange
 Cursor_ref = lib.clang_getCursorReferenced
 Cursor_ref.argtypes = [Cursor]
 Cursor_ref.restype = Cursor
+Cursor_ref.errcheck = Cursor.from_result
 
 Cursor_visit = lib.clang_visitChildren
 Cursor_visit.argtypes = [Cursor, Callback, py_object]
@@ -438,6 +446,7 @@ TranslationUnit_parse.restype = c_object_p
 TranslationUnit_cursor = lib.clang_getTranslationUnitCursor
 TranslationUnit_cursor.argtypes = [TranslationUnit]
 TranslationUnit_cursor.restype = Cursor
+TranslationUnit_cursor.errcheck = Cursor.from_result
 
 TranslationUnit_spelling = lib.clang_getTranslationUnitSpelling
 TranslationUnit_spelling.argtypes = [TranslationUnit]
