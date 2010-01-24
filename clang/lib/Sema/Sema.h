@@ -1373,6 +1373,8 @@ public:
                                        SourceLocation ElseLoc, StmtArg ElseVal);
   virtual OwningStmtResult ActOnStartOfSwitchStmt(FullExprArg Cond, 
                                                   DeclPtrTy CondVar);
+  virtual void ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
+                                    StmtArg Body);
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body);
   virtual OwningStmtResult ActOnWhileStmt(SourceLocation WhileLoc,

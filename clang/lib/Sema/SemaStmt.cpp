@@ -482,6 +482,16 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
   return false;
 }
 
+/// ActOnSwitchBodyError - This is called if there is an error parsing the
+/// body of the switch stmt instead of ActOnFinishSwitchStmt.
+void Sema::ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
+                                StmtArg Body) {
+  // Keep the switch stack balanced.
+  assert(getSwitchStack().back() == (SwitchStmt*)Switch.get() &&
+         "switch stack missing push/pop!");
+  getSwitchStack().pop_back();
+}
+
 Action::OwningStmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
                             StmtArg Body) {

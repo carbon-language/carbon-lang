@@ -808,6 +808,11 @@ public:
     return StmtEmpty();
   }
 
+  /// ActOnSwitchBodyError - This is called if there is an error parsing the
+  /// body of the switch stmt instead of ActOnFinishSwitchStmt.
+  virtual void ActOnSwitchBodyError(SourceLocation SwitchLoc, StmtArg Switch,
+                                    StmtArg Body) {}
+  
   virtual OwningStmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                                  StmtArg Switch, StmtArg Body) {
     return StmtEmpty();

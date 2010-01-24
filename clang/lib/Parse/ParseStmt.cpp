@@ -741,19 +741,19 @@ Parser::OwningStmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
   // Read the body statement.
   OwningStmtResult Body(ParseStatement());
 
-  // Pop the body scope if needed.
+  // Pop the scopes.
   InnerScope.Exit();
-
-  if (Body.isInvalid()) {
-    Body = Actions.ActOnNullStmt(Tok.getLocation());
-    // FIXME: Remove the case statement list from the Switch statement.
-  }
-
   SwitchScope.Exit();
 
-  if (Cond.isInvalid() && !CondVar.get())
+  if (Cond.isInvalid() && !CondVar.get()) {
+    Actions.ActOnSwitchBodyError(SwitchLoc, move(Switch), move(Body));
     return StmtError();
+  }
 
+  if (Body.isInvalid())
+    // FIXME: Remove the case statement list from the Switch statement.
+    Body = Actions.ActOnNullStmt(Tok.getLocation());
+  
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, move(Switch), move(Body));
 }
 
