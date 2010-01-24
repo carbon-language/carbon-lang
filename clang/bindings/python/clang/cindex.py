@@ -13,8 +13,8 @@ def get_cindex_library():
     elif name == 'Windows':
         return cdll.LoadLibrary('libCIndex.dll')
     else:
-        return cdll.LoadLibrary('libCIndex.so')    
-    
+        return cdll.LoadLibrary('libCIndex.so')
+
 ## Utility Types and Functions ##
 def alloc_string_vector(strs):
     """
@@ -56,9 +56,6 @@ c_object_p = POINTER(c_void_p)
 
 lib = get_cindex_library()
 
-## Typedefs ##
-CursorKind = c_int
-
 ### Structures and Utility Classes ###
 
 class _CXString(Structure):
@@ -73,7 +70,7 @@ class _CXString(Structure):
     def from_result(res, fn, args):
         assert isinstance(res, _CXString)
         return _CXString_getCString(res)
-         
+
 class SourceLocation(Structure):
     """
     A SourceLocation represents a particular location within a source file.
@@ -137,12 +134,185 @@ class SourceRange(Structure):
     def __repr__(self):
         return "<SourceRange start %r, end %r>" % (self.start, self.end)
 
+### Cursor Kinds ###
+
+class CursorKind(object):
+    """
+    A CursorKind describes the kind of entity that a cursor points to.
+    """
+
+    # The unique kind objects, indexed by id.
+    _kinds = []
+    _name_map = None
+
+    def __init__(self, value):
+        if value >= len(CursorKind._kinds):
+            CursorKind._kinds += [None] * (value - len(CursorKind._kinds) + 1)
+        if CursorKind._kinds[value] is not None:
+            raise ValueError,'CursorKind already loaded'
+        self.value = value
+        CursorKind._kinds[value] = self
+        CursorKind._name_map = None
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this cursor kind."""
+        if self._name_map is None:
+            self._name_map = {}
+            for key,value in CursorKind.__dict__.items():
+                if isinstance(value,CursorKind):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @staticmethod
+    def from_id(id):
+        if id >= len(CursorKind._kinds) or CursorKind._kinds[id] is None:
+            raise ValueError,'Unknown cursor kind'
+        return CursorKind._kinds[id]
+
+    def __repr__(self):
+        return 'CursorKind.%s' % (self.name,)
+
+# FIXME: Is there a nicer way to expose this enumeration? We could potentially
+# represent the nested structure, or even build a class hierarchy. The main
+# things we want for sure are (a) simple external access to kinds, (b) a place
+# to hang a description and name, (c) easy to keep in sync with Index.h.
+
+# A declaration whose specific kind is not exposed via this interface.
+#
+# Unexposed declarations have the same operations as any other kind of
+# declaration; one can extract their location information, spelling, find their
+# definitions, etc. However, the specific kind of the declaration is not
+# reported.
+CursorKind.UNEXPOSED_DECL = CursorKind(1)
+
+# A C or C++ struct.
+CursorKind.STRUCT_DECL = CursorKind(2)
+
+# A C or C++ union.
+CursorKind.UNION_DECL = CursorKind(3)
+
+# A C++ class.
+CursorKind.CLASS_DECL = CursorKind(4)
+
+# An enumeration.
+CursorKind.ENUM_DECL = CursorKind(5)
+
+# A field (in C) or non-static data member (in C++) in a struct, union, or C++
+# class.
+CursorKind.FIELD_DECL = CursorKind(6)
+
+# An enumerator constant.
+CursorKind.ENUM_CONSTANT_DECL = CursorKind(7)
+
+# A function.
+CursorKind.FUNCTION_DECL = CursorKind(8)
+
+# A variable.
+CursorKind.VAR_DECL = CursorKind(9)
+
+# A function or method parameter.
+CursorKind.PARM_DECL = CursorKind(10)
+
+# An Objective-C @interface.
+CursorKind.OBJC_INTERFACE_DECL = CursorKind(11)
+
+# An Objective-C @interface for a category.
+CursorKind.OBJC_CATEGORY_DECL = CursorKind(12)
+
+# An Objective-C @protocol declaration.
+CursorKind.OBJC_PROTOCOL_DECL = CursorKind(13)
+
+# An Objective-C @property declaration.
+CursorKind.OBJC_PROPERTY_DECL = CursorKind(14)
+
+# An Objective-C instance variable.
+CursorKind.OBJC_IVAR_DECL = CursorKind(15)
+
+# An Objective-C instance method.
+CursorKind.OBJC_INSTANCE_METHOD_DECL = CursorKind(16)
+
+# An Objective-C class method.
+CursorKind.OBJC_CLASS_METHOD_DECL = CursorKind(17)
+
+# An Objective-C @implementation.
+CursorKind.OBJC_IMPLEMENTATION_DECL = CursorKind(18)
+
+# An Objective-C @implementation for a category.
+CursorKind.OBJC_CATEGORY_IMPL_DECL = CursorKind(19)
+
+# A typedef
+CursorKind.TYPEDEF_DECL = CursorKind(20)
+
+# References.
+
+CursorKind.OBJC_SUPER_CLASS_REF = CursorKind(40)
+CursorKind.OBJC_PROTOCOL_REF = CursorKind(41)
+CursorKind.OBJC_CLASS_REF = CursorKind(42)
+
+# A reference to a type declaration.
+#
+# A type reference occurs anywhere where a type is named but not
+# declared. For example, given:
+#   typedef unsigned size_type;
+#   size_type size;
+#
+# The typedef is a declaration of size_type (CXCursor_TypedefDecl),
+# while the type of the variable "size" is referenced. The cursor
+# referenced by the type of size is the typedef for size_type.
+CursorKind.TYPE_REF = CursorKind(43)
+
+
+# Error conditions.
+CursorKind.INVALID_FILE = CursorKind(70)
+CursorKind.NO_DECL_FOUND = CursorKind(71)
+CursorKind.NOT_IMPLEMENTED = CursorKind(72)
+
+# An expression whose specific kind is not exposed via this interface.
+#
+# Unexposed expressions have the same operations as any other kind of
+# expression; one can extract their location information, spelling, children,
+# etc. However, the specific kind of the expression is not reported.
+CursorKind.UNEXPOSED_EXPR = CursorKind(100)
+
+# An expression that refers to some value declaration, such as a function,
+# varible, or enumerator.
+CursorKind.DECL_REF_EXPR = CursorKind(101)
+
+# An expression that refers to a member of a struct, union, class, Objective-C
+# class, etc.
+CursorKind.MEMBER_REF_EXPR = CursorKind(102)
+
+# An expression that calls a function.
+CursorKind.CALL_EXPR = CursorKind(103)
+
+# An expression that sends a message to an Objective-C object or class.
+CursorKind.OBJC_MESSAGE_EXPR = CursorKind(104)
+
+# A statement whose specific kind is not exposed via this interface.
+#
+# Unexposed statements have the same operations as any other kind of statement;
+# one can extract their location information, spelling, children, etc. However,
+# the specific kind of the statement is not reported.
+CursorKind.UNEXPOSED_STMT = CursorKind(200)
+
+# Cursor that represents the translation unit itself.
+#
+# The translation unit cursor exists primarily to act as the root cursor for
+# traversing the contents of a translation unit.
+CursorKind.TRANSLATION_UNIT = CursorKind(300)
+
+### Cursors ###
+
 class Cursor(Structure):
     """
     The Cursor class represents a reference to an element within the AST. It
     acts as a kind of iterator.
     """
-    _fields_ = [("kind", c_int), ("data", c_void_p * 3)]
+    _fields_ = [("_kind_id", c_int), ("data", c_void_p * 3)]
 
     def __eq__(self, other):
         return Cursor_eq(self, other)
@@ -203,6 +373,11 @@ class Cursor(Structure):
         return Cursor_usr(self)
 
     @property
+    def kind(self):
+        """Return the kind of this cursor."""
+        return CursorKind.from_id(self._kind_id)
+
+    @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
         if not self.is_declaration():
@@ -228,7 +403,7 @@ class Cursor(Structure):
         return Cursor_extent(self)
 
     def get_children(self):
-        """Return an iterator for the accessing the children of this cursor."""
+        """Return an iterator for accessing the children of this cursor."""
 
         # FIXME: Expose iteration from CIndex, PR6125.
         def visitor(child, parent, children):
@@ -387,10 +562,6 @@ Cursor_get.restype = Cursor
 
 Cursor_null = lib.clang_getNullCursor
 Cursor_null.restype = Cursor
-
-Cursor_kind = lib.clang_getCursorKind
-Cursor_kind.argtypes = [Cursor]
-Cursor_kind.restype = c_int
 
 Cursor_usr = lib.clang_getCursorUSR
 Cursor_usr.argtypes = [Cursor]
