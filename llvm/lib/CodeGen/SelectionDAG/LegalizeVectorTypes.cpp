@@ -1172,6 +1172,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SIGN_EXTEND_INREG: Res = WidenVecRes_InregOp(N); break;
   case ISD::SELECT:            Res = WidenVecRes_SELECT(N); break;
   case ISD::SELECT_CC:         Res = WidenVecRes_SELECT_CC(N); break;
+  case ISD::SETCC:             Res = WidenVecRes_SETCC(N); break;
   case ISD::UNDEF:             Res = WidenVecRes_UNDEF(N); break;
   case ISD::VECTOR_SHUFFLE:
     Res = WidenVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N));
@@ -1716,6 +1717,14 @@ SDValue DAGTypeLegalizer::WidenVecRes_SELECT_CC(SDNode *N) {
   return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(),
                      InOp1.getValueType(), N->getOperand(0),
                      N->getOperand(1), InOp1, InOp2, N->getOperand(4));
+}
+
+SDValue DAGTypeLegalizer::WidenVecRes_SETCC(SDNode *N) {
+  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue InOp1 = GetWidenedVector(N->getOperand(0));
+  SDValue InOp2 = GetWidenedVector(N->getOperand(1));
+  return DAG.getNode(ISD::SETCC, N->getDebugLoc(), WidenVT,
+                     InOp1, InOp2, N->getOperand(2));
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_UNDEF(SDNode *N) {
