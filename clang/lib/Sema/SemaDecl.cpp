@@ -2783,6 +2783,28 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
 
+  // C++ [dcl.fct.spec]p6:
+  //  The explicit specifier shall be used only in the declaration of a
+  //  constructor or conversion function within its class definition; see 12.3.1
+  //  and 12.3.2.
+  if (isExplicit && !NewFD->isInvalidDecl()) {
+    if (!CurContext->isRecord()) {
+      // 'explicit' was specified outside of the class.
+      Diag(D.getDeclSpec().getExplicitSpecLoc(), 
+           diag::err_explicit_out_of_class)
+        << CodeModificationHint::CreateRemoval(
+                                          D.getDeclSpec().getExplicitSpecLoc());
+    } else if (!isa<CXXConstructorDecl>(NewFD) && 
+               !isa<CXXConversionDecl>(NewFD)) {
+      // 'explicit' was specified on a function that wasn't a constructor
+      // or conversion function.
+      Diag(D.getDeclSpec().getExplicitSpecLoc(),
+           diag::err_explicit_non_ctor_or_conv_function)
+        << CodeModificationHint::CreateRemoval(
+                                          D.getDeclSpec().getExplicitSpecLoc());
+    }      
+  }
+
   // Filter out previous declarations that don't match the scope.
   FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage());
 
