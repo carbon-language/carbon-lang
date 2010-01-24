@@ -2366,6 +2366,9 @@ void DwarfDebug::emitDIE(DIE *Die) {
     unsigned Form = AbbrevData[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
 
+    if (Asm->VerboseAsm)
+      Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
+    
     switch (Attr) {
     case dwarf::DW_AT_sibling:
       Asm->EmitInt32(Die->getSiblingOffset());
@@ -2382,8 +2385,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
       Values[i]->EmitValue(this, Form);
       break;
     }
-
-    EOL(dwarf::AttributeString(Attr));
   }
 
   // Emit the DIE children if any.
