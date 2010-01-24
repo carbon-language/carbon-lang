@@ -171,14 +171,15 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
       isInExternCSystemHeader(D->getLocation()))
     return false;
 
-  // Variables at global scope are not mangled.
+  // Variables at global scope with non-internal linkage are not mangled
   if (!FD) {
     const DeclContext *DC = D->getDeclContext();
     // Check for extern variable declared locally.
     if (isa<FunctionDecl>(DC) && D->hasLinkage())
       while (!DC->isNamespace() && !DC->isTranslationUnit())
         DC = DC->getParent();
-    if (DC->isTranslationUnit())
+    if (DC->isTranslationUnit() &&
+        D->getLinkage() != NamedDecl::InternalLinkage)
       return false;
   }
 
@@ -199,13 +200,10 @@ void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
     return;
   }
 
-  // <mangled-name> ::= _Z [L] <encoding>
+  // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
   Out << Prefix;
-  if (D->getLinkage() == NamedDecl::InternalLinkage) // match gcc behavior
-    Out << 'L';
-
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     mangleFunctionEncoding(FD);
   else
@@ -419,6 +417,13 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     }
 
     if (const IdentifierInfo *II = Name.getAsIdentifierInfo()) {
+      // We must avoid conflicts between internally- and externally-
+      // linked names in the same TU. This naming convention is the
+      // same as that followed by GCC, though it shouldn't actually matter.
+      if (ND->getLinkage() == NamedDecl::InternalLinkage &&
+          ND->getDeclContext()->isFileContext())
+        Out << 'L';
+
       mangleSourceName(II);
       break;
     }

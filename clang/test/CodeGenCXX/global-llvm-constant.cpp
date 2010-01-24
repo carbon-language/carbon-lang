@@ -7,4 +7,4 @@ struct A {
 
 const A x;
 
-// CHECK: @x = internal global
+// CHECK: @_ZL1x = internal global

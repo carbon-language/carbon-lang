@@ -5,7 +5,7 @@ extern void* foo;
 static void* const a = foo;
 void* bar() { return a; }
 
-// CHECK: @a = internal global i8* null
+// CHECK: @_ZL1a = internal global i8* null
 
 // CHECK: define internal void @__cxx_global_var_init
 // CHECK: load i8** @foo

@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks | FileCheck %s
-
 struct X { };
 struct Y { };
 
@@ -8,6 +7,9 @@ struct Y { };
 // CHECK: @_ZZN1N1fEiiE1b = internal global
 // CHECK: @_ZZN1N1gEvE1a = internal global
 // CHECK: @_ZGVZN1N1gEvE1a = internal global
+
+//CHECK: @pr5966_i = external global
+//CHECK: @_ZL8pr5966_i = internal global
 
 // CHECK: define zeroext i1 @_ZplRK1YRA100_P1X
 bool operator+(const Y&, X* (&xs)[100]) { return false; }
@@ -310,7 +312,13 @@ template class Alloc<char>;
 // CHECK: define void @_Z1fU13block_pointerFiiiE
 void f(int (^)(int, int)) { }
 
-// PR5869
-// CHECK: define internal void @_ZL2f2v
-static void f2() {}
-void f3() { f2(); }
+void pr5966_foo() {
+  extern int pr5966_i;
+  pr5966_i = 0;
+}
+
+static int pr5966_i;
+
+void pr5966_bar() {
+  pr5966_i = 0;
+}
