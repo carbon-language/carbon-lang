@@ -214,7 +214,7 @@ external create_context : unit -> llcontext = "llvm_create_context"
 
 (** [destroy_context ()] destroys a context. See the destructor
     [llvm::LLVMContext::~LLVMContext]. *)
-external dispose_context : unit -> llcontext = "llvm_dispose_context"
+external dispose_context : llcontext -> unit = "llvm_dispose_context"
 
 (** See the function [llvm::getGlobalContext]. *)
 external global_context : unit -> llcontext = "llvm_global_context"
