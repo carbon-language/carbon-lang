@@ -374,6 +374,9 @@ endif
 # IF REQUIRES_EH=1 is specified then don't disable exceptions
 ifndef REQUIRES_EH
   CXX.Flags += -fno-exceptions
+else
+  # If the library requires EH, it also requires RTTI.
+  REQUIRES_RTTI := 1
 endif
 
 ifdef REQUIRES_FRAME_POINTER
