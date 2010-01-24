@@ -1084,8 +1084,9 @@ public:
 /// };
 /// @endcode
 class CXXConstructorDecl : public CXXMethodDecl {
-  /// Explicit - Whether this constructor is explicit.
-  bool Explicit : 1;
+  /// Explicit - Whether this constructor declaration has the
+  /// 'explicit' keyword specified.
+  bool IsExplicitSpecified : 1;
 
   /// ImplicitlyDefined - Whether this constructor was implicitly
   /// defined by the compiler. When false, the constructor was defined
@@ -1103,9 +1104,10 @@ class CXXConstructorDecl : public CXXMethodDecl {
 
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
                      DeclarationName N, QualType T, TypeSourceInfo *TInfo,
-                     bool isExplicit, bool isInline, bool isImplicitlyDeclared)
+                     bool isExplicitSpecified, bool isInline, 
+                     bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, L, N, T, TInfo, false, isInline),
-      Explicit(isExplicit), ImplicitlyDefined(false),
+      IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -1118,8 +1120,15 @@ public:
                                     bool isExplicit,
                                     bool isInline, bool isImplicitlyDeclared);
 
+  /// isExplicitSpecified - Whether this constructor declaration has the
+  /// 'explicit' keyword specified.
+  bool isExplicitSpecified() const { return IsExplicitSpecified; }
+  
   /// isExplicit - Whether this constructor was marked "explicit" or not.
-  bool isExplicit() const { return Explicit; }
+  bool isExplicit() const {
+    return cast<CXXConstructorDecl>(getFirstDeclaration())
+      ->isExplicitSpecified();
+  }
 
   /// isImplicitlyDefined - Whether this constructor was implicitly
   /// defined. If false, then this constructor was defined by the
@@ -1290,16 +1299,16 @@ public:
 /// };
 /// @endcode
 class CXXConversionDecl : public CXXMethodDecl {
-  /// Explicit - Whether this conversion function is marked
-  /// "explicit", meaning that it can only be applied when the user
+  /// IsExplicitSpecified - Whether this conversion function declaration is 
+  /// marked "explicit", meaning that it can only be applied when the user
   /// explicitly wrote a cast. This is a C++0x feature.
-  bool Explicit : 1;
+  bool IsExplicitSpecified : 1;
 
   CXXConversionDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T, TypeSourceInfo *TInfo,
-                    bool isInline, bool isExplicit)
+                    bool isInline, bool isExplicitSpecified)
     : CXXMethodDecl(CXXConversion, RD, L, N, T, TInfo, false, isInline),
-      Explicit(isExplicit) { }
+      IsExplicitSpecified(isExplicitSpecified) { }
 
 public:
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -1307,10 +1316,18 @@ public:
                                    QualType T, TypeSourceInfo *TInfo,
                                    bool isInline, bool isExplicit);
 
+  /// IsExplicitSpecified - Whether this conversion function declaration is 
+  /// marked "explicit", meaning that it can only be applied when the user
+  /// explicitly wrote a cast. This is a C++0x feature.
+  bool isExplicitSpecified() const { return IsExplicitSpecified; }
+
   /// isExplicit - Whether this is an explicit conversion operator
   /// (C++0x only). Explicit conversion operators are only considered
   /// when the user has explicitly written a cast.
-  bool isExplicit() const { return Explicit; }
+  bool isExplicit() const {
+    return cast<CXXConversionDecl>(getFirstDeclaration())
+      ->isExplicitSpecified();
+  }
 
   /// getConversionType - Returns the type that this conversion
   /// function is converting to.
