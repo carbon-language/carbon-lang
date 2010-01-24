@@ -16,8 +16,6 @@
 using namespace llvm;
 
 SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT) {
-  AlignmentIsInBytes = true;
-
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";
