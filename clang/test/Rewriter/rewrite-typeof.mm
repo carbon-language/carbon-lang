@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc -o - %s
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
+// RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
 
 extern "C" {
 extern "C" void *_Block_copy(const void *aBlock);
@@ -17,4 +18,6 @@ int main() {
 
     return 0;
 }
+
+// CHECK-LP: ((void (^)(void))_Block_copy((const void *)(b)))
 
