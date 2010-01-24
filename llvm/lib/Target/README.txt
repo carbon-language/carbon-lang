@@ -175,7 +175,7 @@ _foo:
 	mulsd	%xmm2, %xmm0
 	ret
 
-Instcombine should be able to turn it into:
+Reassociate should be able to turn it into:
 
 double foo(double x, double y) {
   return ((x + 0.1234 * y) * (x - 0.1234 * y));
