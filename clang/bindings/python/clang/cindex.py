@@ -221,6 +221,17 @@ class Cursor(Structure):
         """
         return self.location.file
 
+    def get_children(self):
+        """Return an iterator for the accessing children of this cursor."""
+
+        # FIXME: Expose iteration from CIndex, PR6125.
+        def visitor(child, parent, children):
+            children.append(child)
+            return 1 # continue
+        children = []
+        Cursor_visit(self, Callback(visitor), children)
+        return iter(children)
+
 ## CIndex Objects ##
 
 # CIndex objects (derived from ClangObject) are essentially lightweight
@@ -326,8 +337,8 @@ class File(ClangObject):
 
 # Additional Functions and Types
 
-# Wrap calls to Cursor_visit.
-Callback = CFUNCTYPE(None, c_void_p, Cursor, c_void_p)
+# Wrap calls to TranslationUnit._load and Decl._load.
+Callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 
 # String Functions
 String_dispose = lib.clang_disposeString
@@ -350,7 +361,7 @@ SourceRange_end.restype = SourceLocation
 # Cursor Functions
 # TODO: Implement this function
 Cursor_get = lib.clang_getCursor
-Cursor_get.argtypes = [TranslationUnit, c_char_p, c_uint, c_uint]
+Cursor_get.argtypes = [TranslationUnit, SourceLocation]
 Cursor.restype = Cursor
 
 Cursor_null = lib.clang_getNullCursor
@@ -414,6 +425,10 @@ Cursor_extent.restype = SourceRange
 Cursor_ref = lib.clang_getCursorReferenced
 Cursor_ref.argtypes = [Cursor]
 Cursor_ref.restype = Cursor
+
+Cursor_visit = lib.clang_visitChildren
+Cursor_visit.argtypes = [Cursor, Callback, py_object]
+Cursor_visit.restype = c_uint
 
 # Index Functions
 Index_create = lib.clang_createIndex
