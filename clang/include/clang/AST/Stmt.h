@@ -1129,7 +1129,7 @@ class AsmStmt : public Stmt {
 public:
   AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile, bool msasm,
           unsigned numoutputs, unsigned numinputs,
-          std::string *names, StringLiteral **constraints,
+          const std::string *names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 

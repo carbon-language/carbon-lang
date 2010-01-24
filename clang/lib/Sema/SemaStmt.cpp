@@ -1131,6 +1131,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
 /// This method checks to see if the argument is an acceptable l-value and
 /// returns false if it is a case we can handle.
 static bool CheckAsmLValue(const Expr *E, Sema &S) {
+  // Type dependent expressions will be checked during instantiation.
+  if (E->isTypeDependent())
+    return false;
+  
   if (E->isLvalue(S.Context) == Expr::LV_Valid)
     return false;  // Cool, this is an lvalue.
 
@@ -1158,7 +1162,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                           bool IsVolatile,
                                           unsigned NumOutputs,
                                           unsigned NumInputs,
-                                          std::string *Names,
+                                          const std::string *Names,
                                           MultiExprArg constraints,
                                           MultiExprArg exprs,
                                           ExprArg asmString,

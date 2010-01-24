@@ -776,6 +776,28 @@ public:
                                               StartLoc, EndLoc));
   }
 
+  /// \brief Build a new inline asm statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningStmtResult RebuildAsmStmt(SourceLocation AsmLoc,
+                                  bool IsSimple,
+                                  bool IsVolatile,
+                                  unsigned NumOutputs,
+                                  unsigned NumInputs,
+                                  const std::string *Names,
+                                  MultiExprArg Constraints,
+                                  MultiExprArg Exprs,
+                                  ExprArg AsmString,
+                                  MultiExprArg Clobbers,
+                                  SourceLocation RParenLoc,
+                                  bool MSAsm) {
+    return getSema().ActOnAsmStmt(AsmLoc, IsSimple, IsVolatile, NumOutputs, 
+                                  NumInputs, Names, move(Constraints),
+                                  move(Exprs), move(AsmString), move(Clobbers),
+                                  RParenLoc, MSAsm);
+  }
+  
   /// \brief Build a new C++ exception declaration.
   ///
   /// By default, performs semantic analysis to build the new decaration.
@@ -3327,9 +3349,68 @@ TreeTransform<Derived>::TransformSwitchCase(SwitchCase *S) {
 template<typename Derived>
 Sema::OwningStmtResult
 TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
-  // FIXME: Implement!
-  assert(false && "Inline assembly cannot be transformed");
-  return SemaRef.Owned(S->Retain());
+  
+  ASTOwningVector<&ActionBase::DeleteExpr> Constraints(getSema());
+  ASTOwningVector<&ActionBase::DeleteExpr> Exprs(getSema());
+  OwningExprResult AsmString(SemaRef);
+  ASTOwningVector<&ActionBase::DeleteExpr> Clobbers(getSema());
+
+  bool ExprsChanged = false;
+  
+  // Go through the outputs.
+  for (unsigned I = 0, E = S->getNumOutputs(); I != E; ++I) {
+    // No need to transform the constraint literal.
+    Constraints.push_back(S->getOutputConstraintLiteral(I)->Retain());
+    
+    // Transform the output expr.
+    Expr *OutputExpr = S->getOutputExpr(I);
+    OwningExprResult Result = getDerived().TransformExpr(OutputExpr);
+    if (Result.isInvalid())
+      return SemaRef.StmtError();
+    
+    ExprsChanged |= Result.get() != OutputExpr;
+    
+    Exprs.push_back(Result.takeAs<Expr>());
+  }
+  
+  // Go through the inputs.
+  for (unsigned I = 0, E = S->getNumInputs(); I != E; ++I) {
+    // No need to transform the constraint literal.
+    Constraints.push_back(S->getInputConstraintLiteral(I)->Retain());
+    
+    // Transform the input expr.
+    Expr *InputExpr = S->getInputExpr(I);
+    OwningExprResult Result = getDerived().TransformExpr(InputExpr);
+    if (Result.isInvalid())
+      return SemaRef.StmtError();
+    
+    ExprsChanged |= Result.get() != InputExpr;
+    
+    Exprs.push_back(Result.takeAs<Expr>());
+  }
+  
+  if (!getDerived().AlwaysRebuild() && !ExprsChanged)
+    return SemaRef.Owned(S->Retain());
+
+  // Go through the clobbers.
+  for (unsigned I = 0, E = S->getNumClobbers(); I != E; ++I)
+    Clobbers.push_back(S->getClobber(I)->Retain());
+
+  // No need to transform the asm string literal.
+  AsmString = SemaRef.Owned(S->getAsmString());
+
+  return getDerived().RebuildAsmStmt(S->getAsmLoc(),
+                                     S->isSimple(),
+                                     S->isVolatile(),
+                                     S->getNumOutputs(),
+                                     S->getNumInputs(),
+                                     S->begin_output_names(),
+                                     move_arg(Constraints),
+                                     move_arg(Exprs),
+                                     move(AsmString),
+                                     move_arg(Clobbers),
+                                     S->getRParenLoc(),
+                                     S->isMSAsm());
 }
 
 

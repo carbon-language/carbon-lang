@@ -338,7 +338,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
 
 AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
                  bool msasm, unsigned numoutputs, unsigned numinputs,
-                 std::string *names, StringLiteral **constraints,
+                 const std::string *names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
