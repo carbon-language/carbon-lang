@@ -36,23 +36,23 @@ extern "C" {
 
 /** \defgroup CINDEX C Interface to Clang
  *
- * The C Interface to Clang provides a relatively small API that exposes 
+ * The C Interface to Clang provides a relatively small API that exposes
  * facilities for parsing source code into an abstract syntax tree (AST),
  * loading already-parsed ASTs, traversing the AST, associating
  * physical source locations with elements within the AST, and other
  * facilities that support Clang-based development tools.
  *
- * This C interface to Clang will never provide all of the information 
+ * This C interface to Clang will never provide all of the information
  * representation stored in Clang's C++ AST, nor should it: the intent is to
  * maintain an API that is relatively stable from one release to the next,
  * providing only the basic functionality needed to support development tools.
- * 
- * To avoid namespace pollution, data types are prefixed with "CX" and 
+ *
+ * To avoid namespace pollution, data types are prefixed with "CX" and
  * functions are prefixed with "clang_".
  *
  * @{
  */
-  
+
 /**
  * \brief An "index" that consists of a set of translation units that would
  * typically be linked together into an executable or library.
@@ -69,7 +69,7 @@ typedef void *CXTranslationUnit;  /* A translation unit instance. */
  * to various callbacks and visitors.
  */
 typedef void *CXClientData;
-  
+
 /**
  * \brief Provides the contents of a file that has not yet been saved to disk.
  *
@@ -78,14 +78,14 @@ typedef void *CXClientData;
  * yet been saved to disk.
  */
 struct CXUnsavedFile {
-  /** 
-   * \brief The file whose contents have not yet been saved. 
+  /**
+   * \brief The file whose contents have not yet been saved.
    *
    * This file must already exist in the file system.
    */
   const char *Filename;
 
-  /** 
+  /**
    * \brief A null-terminated buffer containing the unsaved contents
    * of this file.
    */
@@ -103,7 +103,7 @@ struct CXUnsavedFile {
  *
  * @{
  */
-  
+
 /**
  * \brief A character string.
  *
@@ -132,14 +132,14 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
 /**
  * @}
  */
-  
-/**  
+
+/**
  * \brief clang_createIndex() provides a shared context for creating
  * translation units. It provides two options:
  *
  * - excludeDeclarationsFromPCH: When non-zero, allows enumeration of "local"
  * declarations (when loading any new translation units). A "local" declaration
- * is one that belongs in the translation unit itself and not in a precompiled 
+ * is one that belongs in the translation unit itself and not in a precompiled
  * header that was used by the translation unit. If zero, all declarations
  * will be enumerated.
  *
@@ -156,7 +156,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *   TU = clang_createTranslationUnit(Idx, "IndexTest.pch");
  *
  *   // This will load all the symbols from 'IndexTest.pch'
- *   clang_visitChildren(clang_getTranslationUnitCursor(TU), 
+ *   clang_visitChildren(clang_getTranslationUnitCursor(TU),
  *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
  *
@@ -175,11 +175,15 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
 CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics);
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
+
+/**
+ * \brief Get the original translation unit source file name.
+ */
 CINDEX_LINKAGE CXString
 clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 /**
- * \brief Request that AST's be generated external for API calls which parse
+ * \brief Request that AST's be generated externally for API calls which parse
  * source code on the fly, e.g. \see createTranslationUnitFromSourceFile.
  *
  * Note: This is for debugging purposes only, and may be removed at a later
@@ -200,7 +204,7 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(
 
 /**
  * \brief Destroy the specified CXTranslationUnit object.
- */ 
+ */
 CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /**
@@ -233,7 +237,7 @@ CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                         CXIndex CIdx,
                                         const char *source_filename,
-                                        int num_clang_command_line_args, 
+                                        int num_clang_command_line_args,
                                         const char **clang_command_line_args,
                                         unsigned num_unsaved_files,
                                         struct CXUnsavedFile *unsaved_files);
@@ -243,18 +247,18 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
  *
  * @{
  */
-  
+
 /**
  * \brief A particular source file that is part of a translation unit.
  */
 typedef void *CXFile;
-  
+
 
 /**
  * \brief Retrieve the complete file and path name of the given file.
  */
 CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
-  
+
 /**
  * \brief Retrieve the last modification time of the given file.
  */
@@ -264,15 +268,15 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
  * \brief Retrieve a file handle within the given translation unit.
  *
  * \param tu the translation unit
- * 
+ *
  * \param file_name the name of the file.
  *
  * \returns the file handle for the named file in the translation unit \p tu,
  * or a NULL file handle if the file was not a part of this translation unit.
  */
-CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu, 
+CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu,
                                     const char *file_name);
-  
+
 /**
  * @}
  */
@@ -289,7 +293,7 @@ CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu,
  *
  * @{
  */
-  
+
 /**
  * \brief Identifies a specific source location within a translation
  * unit.
@@ -318,10 +322,10 @@ typedef struct {
  * \brief Retrieve a NULL (invalid) source location.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getNullLocation();
-  
+
 /**
  * \determine Determine whether two source locations, which must refer into
- * the same translation unit, refer to exactly the same point in the source 
+ * the same translation unit, refer to exactly the same point in the source
  * code.
  *
  * \returns non-zero if the source locations refer to the same location, zero
@@ -329,38 +333,38 @@ CINDEX_LINKAGE CXSourceLocation clang_getNullLocation();
  */
 CINDEX_LINKAGE unsigned clang_equalLocations(CXSourceLocation loc1,
                                              CXSourceLocation loc2);
-  
+
 /**
- * \brief Retrieves the source location associated with a given 
- * file/line/column in a particular translation unit.
+ * \brief Retrieves the source location associated with a given file/line/column
+ * in a particular translation unit.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                                   CXFile file,
                                                   unsigned line,
                                                   unsigned column);
-  
+
 /**
  * \brief Retrieve a source range given the beginning and ending source
  * locations.
  */
 CINDEX_LINKAGE CXSourceRange clang_getRange(CXSourceLocation begin,
                                             CXSourceLocation end);
-  
+
 /**
- * \brief Retrieve the file, line, and column represented by the
- * given source location.
+ * \brief Retrieve the file, line, and column represented by the given source
+ * location.
  *
- * \param location the location within a source file that will be
- * decomposed into its parts.
+ * \param location the location within a source file that will be decomposed
+ * into its parts.
  *
- * \param file if non-NULL, will be set to the file to which the given
+ * \param file [out] if non-NULL, will be set to the file to which the given
  * source location points.
  *
- * \param line if non-NULL, will be set to the line to which the given
+ * \param line [out] if non-NULL, will be set to the line to which the given
  * source location points.
  *
- * \param column if non-NULL, will be set to the column to which the
- * given source location points.
+ * \param column [out] if non-NULL, will be set to the column to which the given
+ * source location points.
  */
 CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
                                                    CXFile *file,
@@ -368,14 +372,14 @@ CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
                                                    unsigned *column);
 
 /**
- * \brief Retrieve a source location representing the first
- * character within a source range.
+ * \brief Retrieve a source location representing the first character within a
+ * source range.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getRangeStart(CXSourceRange range);
 
 /**
- * \brief Retrieve a source location representing the last
- * character within a source range.
+ * \brief Retrieve a source location representing the last character within a
+ * source range.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 
@@ -389,9 +393,9 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
 enum CXCursorKind {
   /* Declarations */
   CXCursor_FirstDecl                     = 1,
-  /** 
+  /**
    * \brief A declaration whose specific kind is not exposed via this
-   * interface. 
+   * interface.
    *
    * Unexposed declarations have the same operations as any other kind
    * of declaration; one can extract their location information,
@@ -400,14 +404,14 @@ enum CXCursorKind {
    */
   CXCursor_UnexposedDecl                 = 1,
   /** \brief A C or C++ struct. */
-  CXCursor_StructDecl                    = 2, 
+  CXCursor_StructDecl                    = 2,
   /** \brief A C or C++ union. */
   CXCursor_UnionDecl                     = 3,
   /** \brief A C++ class. */
   CXCursor_ClassDecl                     = 4,
   /** \brief An enumeration. */
   CXCursor_EnumDecl                      = 5,
-  /** 
+  /**
    * \brief A field (in C) or non-static data member (in C++) in a
    * struct, union, or C++ class.
    */
@@ -441,10 +445,10 @@ enum CXCursorKind {
   /** \brief A typedef */
   CXCursor_TypedefDecl                   = 20,
   CXCursor_LastDecl                      = 20,
-  
+
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
-  CXCursor_ObjCSuperClassRef             = 40,            
+  CXCursor_ObjCSuperClassRef             = 40,
   CXCursor_ObjCProtocolRef               = 41,
   CXCursor_ObjCClassRef                  = 42,
   /**
@@ -464,20 +468,20 @@ enum CXCursorKind {
    */
   CXCursor_TypeRef                       = 43,
   CXCursor_LastRef                       = 43,
-  
+
   /* Error conditions */
   CXCursor_FirstInvalid                  = 70,
   CXCursor_InvalidFile                   = 70,
   CXCursor_NoDeclFound                   = 71,
   CXCursor_NotImplemented                = 72,
   CXCursor_LastInvalid                   = 72,
-  
+
   /* Expressions */
   CXCursor_FirstExpr                     = 100,
-  
+
   /**
    * \brief An expression whose specific kind is not exposed via this
-   * interface. 
+   * interface.
    *
    * Unexposed expressions have the same operations as any other kind
    * of expression; one can extract their location information,
@@ -485,27 +489,27 @@ enum CXCursorKind {
    * expression is not reported.
    */
   CXCursor_UnexposedExpr                 = 100,
-  
+
   /**
    * \brief An expression that refers to some value declaration, such
    * as a function, varible, or enumerator.
    */
   CXCursor_DeclRefExpr                   = 101,
-  
+
   /**
    * \brief An expression that refers to a member of a struct, union,
    * class, Objective-C class, etc.
    */
   CXCursor_MemberRefExpr                 = 102,
-  
+
   /** \brief An expression that calls a function. */
   CXCursor_CallExpr                      = 103,
-  
+
   /** \brief An expression that sends a message to an Objective-C
    object or class. */
   CXCursor_ObjCMessageExpr               = 104,
   CXCursor_LastExpr                      = 104,
-  
+
   /* Statements */
   CXCursor_FirstStmt                     = 200,
   /**
@@ -519,7 +523,7 @@ enum CXCursorKind {
    */
   CXCursor_UnexposedStmt                 = 200,
   CXCursor_LastStmt                      = 200,
-  
+
   /**
    * \brief Cursor that represents the translation unit itself.
    *
@@ -533,7 +537,7 @@ enum CXCursorKind {
  * \brief A cursor representing some element in the abstract syntax tree for
  * a translation unit.
  *
- * The cursor abstraction unifies the different kinds of entities in a 
+ * The cursor abstraction unifies the different kinds of entities in a
  * program--declaration, statements, expressions, references to declarations,
  * etc.--under a single "cursor" abstraction with a common set of operations.
  * Common operation for a cursor include: getting the physical location in
@@ -550,19 +554,19 @@ enum CXCursorKind {
 typedef struct {
   enum CXCursorKind kind;
   void *data[3];
-} CXCursor;  
+} CXCursor;
 
 /**
  * \defgroup CINDEX_CURSOR_MANIP Cursor manipulations
  *
  * @{
  */
-  
+
 /**
  * \brief Retrieve the NULL cursor, which represents no entity.
  */
 CINDEX_LINKAGE CXCursor clang_getNullCursor(void);
-  
+
 /**
  * \brief Retrieve the cursor that represents the given translation unit.
  *
@@ -575,7 +579,7 @@ CINDEX_LINKAGE CXCursor clang_getTranslationUnitCursor(CXTranslationUnit);
  * \brief Determine whether two cursors are equivalent.
  */
 CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
-  
+
 /**
  * \brief Retrieve the kind of the given cursor.
  */
@@ -607,21 +611,21 @@ CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
 
 /**
- * \brief Determine whether the given cursor kind represents an invalid 
+ * \brief Determine whether the given cursor kind represents an invalid
  * cursor.
- */  
+ */
 CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 /**
- * \brief Determine whether the given cursor kind represents a translation 
- * unit.   
+ * \brief Determine whether the given cursor kind represents a translation
+ * unit.
  */
 CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
-  
+
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_CURSOR_SOURCE Mapping between cursors and source code
  *
@@ -632,16 +636,16 @@ CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
  *
  * @{
  */
-  
+
 /**
  * \brief Map a source location to the cursor that describes the entity at that
  * location in the source code.
  *
  * clang_getCursor() maps an arbitrary source location within a translation
  * unit down to the most specific cursor that describes the entity at that
- * location. For example, given an expression \c x + y, invoking 
+ * location. For example, given an expression \c x + y, invoking
  * clang_getCursor() with a source location pointing to "x" will return the
- * cursor for "x"; similarly for "y". If the cursor points anywhere between 
+ * cursor for "x"; similarly for "y". If the cursor points anywhere between
  * "x" or "y" (e.g., on the + or the whitespace around it), clang_getCursor()
  * will return a cursor referring to the "+" expression.
  *
@@ -649,15 +653,15 @@ CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
  * a NULL cursor if no such entity can be found.
  */
 CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, CXSourceLocation);
-  
+
 /**
  * \brief Retrieve the physical location of the source constructor referenced
  * by the given cursor.
  *
  * The location of a declaration is typically the location of the name of that
- * declaration, where the name of that declaration would occur if it is 
- * unnamed, or some keyword that introduces that particular declaration. 
- * The location of a reference is where that reference occurs within the 
+ * declaration, where the name of that declaration would occur if it is
+ * unnamed, or some keyword that introduces that particular declaration.
+ * The location of a reference is where that reference occurs within the
  * source code.
  */
 CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
@@ -668,7 +672,7 @@ CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
  *
  * The extent of a cursor starts with the file/line/column pointing at the
  * first character within the source construct that the cursor refers to and
- * ends with the last character withinin that source construct. For a 
+ * ends with the last character withinin that source construct. For a
  * declaration, the extent covers the declaration itself. For a reference,
  * the extent covers the location of the reference (e.g., where the referenced
  * entity was actually used).
@@ -678,7 +682,7 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_CURSOR_TRAVERSAL Traversing the AST with cursors
  *
@@ -687,7 +691,7 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
  *
  * @{
  */
-  
+
 /**
  * \brief Describes how the traversal of the children of a particular
  * cursor should proceed after visiting a particular child cursor.
@@ -697,10 +701,10 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
  */
 enum CXChildVisitResult {
   /**
-   * \brief Terminates the cursor traversal. 
+   * \brief Terminates the cursor traversal.
    */
   CXChildVisit_Break,
-  /** 
+  /**
    * \brief Continues the cursor traversal with the next sibling of
    * the cursor just visited, without visiting its children.
    */
@@ -724,8 +728,8 @@ enum CXChildVisitResult {
  * The visitor should return one of the \c CXChildVisitResult values
  * to direct clang_visitCursorChildren().
  */
-typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor, 
-                                                   CXCursor parent, 
+typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
+                                                   CXCursor parent,
                                                    CXClientData client_data);
 
 /**
@@ -752,25 +756,25 @@ typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
  * \returns a non-zero value if the traversal was terminated
  * prematurely by the visitor returning \c CXChildVisit_Break.
  */
-CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent, 
+CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent,
                                             CXCursorVisitor visitor,
                                             CXClientData client_data);
-  
+
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_CURSOR_XREF Cross-referencing in the AST
  *
- * These routines provide the ability to determine references within and 
+ * These routines provide the ability to determine references within and
  * across translation units, by providing the names of the entities referenced
  * by cursors, follow reference cursors to the declarations they reference,
  * and associate declarations with their definitions.
  *
  * @{
  */
-  
+
 /**
  * \brief Retrieve a Unified Symbol Resolution (USR) for the entity referenced
  * by the given cursor.
@@ -792,14 +796,14 @@ CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
  *
  * Reference cursors refer to other entities in the AST. For example, an
  * Objective-C superclass reference cursor refers to an Objective-C class.
- * This function produces the cursor for the Objective-C class from the 
+ * This function produces the cursor for the Objective-C class from the
  * cursor for the superclass reference. If the input cursor is a declaration or
  * definition, it returns that declaration or definition unchanged.
- * Othewise, returns the NULL cursor.
+ * Otherwise, returns the NULL cursor.
  */
 CINDEX_LINKAGE CXCursor clang_getCursorReferenced(CXCursor);
 
-/** 
+/**
  *  \brief For a cursor that is either a reference to or a declaration
  *  of some entity, retrieve a cursor that describes the definition of
  *  that entity.
@@ -829,7 +833,7 @@ CINDEX_LINKAGE CXCursor clang_getCursorReferenced(CXCursor);
  */
 CINDEX_LINKAGE CXCursor clang_getCursorDefinition(CXCursor);
 
-/** 
+/**
  * \brief Determine whether the declaration pointed to by this cursor
  * is also a definition of that entity.
  */
@@ -838,7 +842,7 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_DEBUG Debugging facilities
  *
@@ -847,11 +851,11 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
  *
  * @{
  */
-  
+
 /* for debug/testing */
-CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
-CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor, 
-                                          const char **startBuf, 
+CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind);
+CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
+                                          const char **startBuf,
                                           const char **endBuf,
                                           unsigned *startLine,
                                           unsigned *startColumn,
@@ -861,7 +865,7 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_CODE_COMPLET Code completion
  *
@@ -873,7 +877,7 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
  *
  * @{
  */
-  
+
 /**
  * \brief A semantic string that describes a code-completion result.
  *
@@ -885,18 +889,18 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
  * the name of the entity being referenced, whether the text chunk is part of
  * the template, or whether it is a "placeholder" that the user should replace
  * with actual code,of a specific kind. See \c CXCompletionChunkKind for a
- * description of the different kinds of chunks. 
+ * description of the different kinds of chunks.
  */
 typedef void *CXCompletionString;
-  
+
 /**
  * \brief A single result of code completion.
  */
 typedef struct {
   /**
-   * \brief The kind of entity that this completion refers to. 
+   * \brief The kind of entity that this completion refers to.
    *
-   * The cursor kind will be a macro, keyword, or a declaration (one of the 
+   * The cursor kind will be a macro, keyword, or a declaration (one of the
    * *Decl cursor kinds), describing the entity that the completion is
    * referring to.
    *
@@ -904,8 +908,8 @@ typedef struct {
    * the client to extract additional information from declaration.
    */
   enum CXCursorKind CursorKind;
-  
-  /** 
+
+  /**
    * \brief The code-completion string that describes how to insert this
    * code-completion result into the editing buffer.
    */
@@ -915,8 +919,8 @@ typedef struct {
 /**
  * \brief Describes a single piece of text within a code-completion string.
  *
- * Each "chunk" within a code-completion string (\c CXCompletionString) is 
- * either a piece of text with a specific "kind" that describes how that text 
+ * Each "chunk" within a code-completion string (\c CXCompletionString) is
+ * either a piece of text with a specific "kind" that describes how that text
  * should be interpreted by the client or is another completion string.
  */
 enum CXCompletionChunkKind {
@@ -925,7 +929,7 @@ enum CXCompletionChunkKind {
    * could be a part of the template (but is not required).
    *
    * The Optional chunk is the only kind of chunk that has a code-completion
-   * string for its representation, which is accessible via 
+   * string for its representation, which is accessible via
    * \c clang_getCompletionChunkCompletionString(). The code-completion string
    * describes an additional part of the template that is completely optional.
    * For example, optional chunks can be used to describe the placeholders for
@@ -956,10 +960,10 @@ enum CXCompletionChunkKind {
   CXCompletionChunk_Optional,
   /**
    * \brief Text that a user would be expected to type to get this
-   * code-completion result. 
+   * code-completion result.
    *
-   * There will be exactly one "typed text" chunk in a semantic string, which 
-   * will typically provide the spelling of a keyword or the name of a 
+   * There will be exactly one "typed text" chunk in a semantic string, which
+   * will typically provide the spelling of a keyword or the name of a
    * declaration that could be used at the current code point. Clients are
    * expected to filter the code-completion results based on the text in this
    * chunk.
@@ -987,7 +991,7 @@ enum CXCompletionChunkKind {
   /**
    * \brief Informative text that should be displayed but never inserted as
    * part of the template.
-   * 
+   *
    * An "informative" chunk contains annotations that can be displayed to
    * help the user decide whether a particular code-completion result is the
    * right option, but which is not part of the actual template to be inserted
@@ -1010,7 +1014,7 @@ enum CXCompletionChunkKind {
    * "(", the code-completion string will contain a "current parameter" chunk
    * for "int x", indicating that the current argument will initialize that
    * parameter. After typing further, to \c add(17, (where the code-completion
-   * point is after the ","), the code-completion string will contain a 
+   * point is after the ","), the code-completion string will contain a
    * "current paremeter" chunk to "int y".
    */
   CXCompletionChunk_CurrentParameter,
@@ -1053,10 +1057,10 @@ enum CXCompletionChunkKind {
    */
   CXCompletionChunk_Comma,
   /**
-   * \brief Text that specifies the result type of a given result. 
+   * \brief Text that specifies the result type of a given result.
    *
    * This special kind of informative chunk is not meant to be inserted into
-   * the text buffer. Rather, it is meant to illustrate the type that an 
+   * the text buffer. Rather, it is meant to illustrate the type that an
    * expression using the given completion string would have.
    */
   CXCompletionChunk_ResultType,
@@ -1082,7 +1086,7 @@ enum CXCompletionChunkKind {
    */
   CXCompletionChunk_VerticalSpace
 };
-  
+
 /**
  * \brief Determine the kind of a particular chunk within a completion string.
  *
@@ -1092,12 +1096,12 @@ enum CXCompletionChunkKind {
  *
  * \returns the kind of the chunk at the index \c chunk_number.
  */
-CINDEX_LINKAGE enum CXCompletionChunkKind 
+CINDEX_LINKAGE enum CXCompletionChunkKind
 clang_getCompletionChunkKind(CXCompletionString completion_string,
                              unsigned chunk_number);
-  
+
 /**
- * \brief Retrieve the text associated with a particular chunk within a 
+ * \brief Retrieve the text associated with a particular chunk within a
  * completion string.
  *
  * \param completion_string the completion string to query.
@@ -1111,7 +1115,7 @@ clang_getCompletionChunkText(CXCompletionString completion_string,
                              unsigned chunk_number);
 
 /**
- * \brief Retrieve the completion string associated with a particular chunk 
+ * \brief Retrieve the completion string associated with a particular chunk
  * within a completion string.
  *
  * \param completion_string the completion string to query.
@@ -1125,7 +1129,7 @@ clang_getCompletionChunkText(CXCompletionString completion_string,
 CINDEX_LINKAGE CXCompletionString
 clang_getCompletionChunkCompletionString(CXCompletionString completion_string,
                                          unsigned chunk_number);
-  
+
 /**
  * \brief Retrieve the number of chunks in the given code-completion string.
  */
@@ -1136,7 +1140,7 @@ clang_getNumCompletionChunks(CXCompletionString completion_string);
  * \brief Contains the results of code-completion.
  *
  * This data structure contains the results of code completion, as
- * produced by \c clang_codeComplete. Its contents must be freed by 
+ * produced by \c clang_codeComplete. Its contents must be freed by
  * \c clang_disposeCodeCompleteResults.
  */
 typedef struct {
@@ -1162,12 +1166,12 @@ typedef struct {
  * performing syntax checking up to the location where code-completion has
  * been requested. At that point, a special code-completion token is passed
  * to the parser, which recognizes this token and determines, based on the
- * current location in the C/Objective-C/C++ grammar and the state of 
+ * current location in the C/Objective-C/C++ grammar and the state of
  * semantic analysis, what completions to provide. These completions are
  * returned via a new \c CXCodeCompleteResults structure.
  *
  * Code completion itself is meant to be triggered by the client when the
- * user types punctuation characters or whitespace, at which point the 
+ * user types punctuation characters or whitespace, at which point the
  * code-completion location will coincide with the cursor. For example, if \c p
  * is a pointer, code-completion might be triggered after the "-" and then
  * after the ">" in \c p->. When the code-completion location is afer the ">",
@@ -1196,9 +1200,9 @@ typedef struct {
  * \p command_line_args.
  *
  * \param command_line_args the command-line arguments to pass to the Clang
- * compiler to build the given source file. This should include all of the 
+ * compiler to build the given source file. This should include all of the
  * necessary include paths, language-dialect switches, precompiled header
- * includes, etc., but should not include any information specific to 
+ * includes, etc., but should not include any information specific to
  * code completion.
  *
  * \param num_unsaved_files the number of unsaved file entries in \p
@@ -1210,13 +1214,13 @@ typedef struct {
  *
  * \param complete_filename the name of the source file where code completion
  * should be performed. In many cases, this name will be the same as the
- * source filename. However, the completion filename may also be a file 
- * included by the source file, which is required when producing 
+ * source filename. However, the completion filename may also be a file
+ * included by the source file, which is required when producing
  * code-completion results for a header.
  *
  * \param complete_line the line at which code-completion should occur.
  *
- * \param complete_column the column at which code-completion should occur. 
+ * \param complete_column the column at which code-completion should occur.
  * Note that the column should point just after the syntactic construct that
  * initiated code completion, and not in the middle of a lexical token.
  *
@@ -1225,28 +1229,28 @@ typedef struct {
  * freed with \c clang_disposeCodeCompleteResults(). If code
  * completion fails, returns NULL.
  */
-CINDEX_LINKAGE 
-CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx, 
+CINDEX_LINKAGE
+CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           const char *source_filename,
-                                          int num_command_line_args, 
+                                          int num_command_line_args,
                                           const char **command_line_args,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,
                                           unsigned complete_line,
                                           unsigned complete_column);
-  
+
 /**
  * \brief Free the given set of code-completion results.
  */
-CINDEX_LINKAGE 
+CINDEX_LINKAGE
 void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
-  
+
 /**
  * @}
  */
-  
-  
+
+
 /**
  * \defgroup CINDEX_MISC Miscellaneous utility functions
  *
@@ -1262,11 +1266,11 @@ CINDEX_LINKAGE const char *clang_getClangVersion();
 /**
  * @}
  */
-    
+
 /**
  * @}
  */
-  
+
 #ifdef __cplusplus
 }
 #endif
