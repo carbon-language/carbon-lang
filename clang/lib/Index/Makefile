@@ -16,7 +16,6 @@ include $(LEVEL)/Makefile.config
 
 LIBRARYNAME := clangIndex
 BUILD_ARCHIVE = 1
-CXXFLAGS = -fno-rtti 
 
 ifeq ($(ARCH),PowerPC)
 CXXFLAGS += -maltivec
