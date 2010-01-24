@@ -156,6 +156,11 @@ namespace llvm {
       /// relative displacements.
       WrapperRIP,
 
+      /// MOVQ2DQ - Copies a 64-bit value from a vector to another vector.
+      /// Can be used to move a vector value from a MMX register to a XMM
+      /// register.
+      MOVQ2DQ,
+
       /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.
       PEXTRB,
@@ -634,6 +639,7 @@ namespace llvm {
     SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
                                    SelectionDAG &DAG);
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG);

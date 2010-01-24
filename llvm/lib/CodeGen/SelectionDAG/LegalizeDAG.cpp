@@ -1533,10 +1533,10 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
     Idx = DAG.getNode(ISD::ADD, dl, FIPtr.getValueType(), FIPtr, Idx);
 
     // If EltVT smaller than OpVT, only store the bits necessary.
-    if (EltVT.bitsLT(OpVT))
+    if (!OpVT.isVector() && EltVT.bitsLT(OpVT)) {
       Stores.push_back(DAG.getTruncStore(DAG.getEntryNode(), dl,
                           Node->getOperand(i), Idx, SV, Offset, EltVT));
-    else
+    } else
       Stores.push_back(DAG.getStore(DAG.getEntryNode(), dl, 
                                     Node->getOperand(i), Idx, SV, Offset));
   }

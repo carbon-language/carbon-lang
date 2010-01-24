@@ -747,6 +747,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v2f64, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v2i64, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i8, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i16, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i32, Custom);
+
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (unsigned i = (unsigned)MVT::v16i8; i != (unsigned)MVT::v2i64; ++i) {
       EVT VT = (MVT::SimpleValueType)i;
@@ -3684,6 +3690,33 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   }
 
   return SDValue();
+}
+
+SDValue
+X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
+  // We support concatenate two MMX registers and place them in a MMX
+  // register.  This is better than doing a stack convert.
+  DebugLoc dl = Op.getDebugLoc();
+  EVT ResVT = Op.getValueType();
+  assert(Op.getNumOperands() == 2);
+  assert(ResVT == MVT::v2i64 || ResVT == MVT::v4i32 ||
+         ResVT == MVT::v8i16 || ResVT == MVT::v16i8);
+  int Mask[2];
+  SDValue InVec = DAG.getNode(ISD::BIT_CONVERT,dl, MVT::v1i64, Op.getOperand(0));
+  SDValue VecOp = DAG.getNode(X86ISD::MOVQ2DQ, dl, MVT::v2i64, InVec);
+  InVec = Op.getOperand(1);
+  if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    unsigned NumElts = ResVT.getVectorNumElements();
+    VecOp = DAG.getNode(ISD::BIT_CONVERT, dl, ResVT, VecOp);
+    VecOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, ResVT, VecOp,
+                       InVec.getOperand(0), DAG.getIntPtrConstant(NumElts/2+1));
+  } else {
+    InVec = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::v1i64, InVec);
+    SDValue VecOp2 = DAG.getNode(X86ISD::MOVQ2DQ, dl, MVT::v2i64, InVec);
+    Mask[0] = 0; Mask[1] = 2;
+    VecOp = DAG.getVectorShuffle(MVT::v2i64, dl, VecOp, VecOp2, Mask);
+  }
+  return DAG.getNode(ISD::BIT_CONVERT, dl, ResVT, VecOp);
 }
 
 // v8i16 shuffles - Prefer shuffles in the following order:
@@ -7238,6 +7271,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
+  case ISD::CONCAT_VECTORS:     return LowerCONCAT_VECTORS(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::INSERT_VECTOR_ELT:  return LowerINSERT_VECTOR_ELT(Op, DAG);

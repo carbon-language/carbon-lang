@@ -2,10 +2,8 @@
 ; CHECK: pextrd
 ; CHECK: pextrd
 ; CHECK: movd
-; CHECK: pextrd
-; CHECK: pextrd
-; CHECK: pextrd
-; CHECK: movd
+; CHECK: movaps
+
 
 ; bitcast v14i16 to v7i32
 

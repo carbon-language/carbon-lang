@@ -3,7 +3,7 @@
 
 ; This load should be before the call, not after.
 
-; CHECK: movq    compl+128(%rip), %xmm0
+; CHECK: movaps    compl+128(%rip), %xmm0
 ; CHECK: movaps  %xmm0, (%rsp)
 ; CHECK: callq   killcommon
 
