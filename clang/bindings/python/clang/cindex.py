@@ -179,16 +179,6 @@ class Cursor(Structure):
         """
         return Cursor_is_def(self)
 
-    def get_declaration(self):
-        """
-        Return the underlying declaration for the cursor. If the cursor kind
-        is a declaration, then this simpy returns the declaration. If the
-        cursor is a reference, then this returns the referenced declaration.
-        """
-        if not self.is_declaration():
-            raise Exception("Cursor does not refer to a Declaration")
-        return Cursor_decl(self)
-
     def get_definition(self):
         """
         If the cursor is a reference to a declaration or a declaration of
@@ -334,48 +324,9 @@ class File(ClangObject):
         """Return the last modification time of the file, if valid."""
         return File_time(self)
 
-class Declaration(ClangObject):
-    """
-    The Declaration class represents a declaration with a translation unit.
-    """
-    def __init__(self, obj):
-        ClangObject.__init__(self, obj)
-
-        # Figure out the kind of cursor and inject a base class that provides
-        # some declaration-specific functionality.
-        self.cursor = Declaration_cursor(self)
-
-    @property
-    def kind(self):
-        """Retur the kind of cursor."""
-        return self.cursor.kind
-
-    @property
-    def spelling(self):
-        """Return the spelling (name) of the declaration."""
-        return Declaration_spelling(self)
-
-    def load(self, fun, data = None):
-        """
-        Recursively visit any elements declared or referenced within this
-        declaration.
-        """
-        f = lambda d, c, x: fun(Declaration(d), c, x)
-        Declaration_load(self, Callback(f), data)
-
-# Specific declaration kinds
-class ClassDeclaration:
-    pass
-
-class FunctionDeclaration:
-    pass
-
-class TypedefDeclaration:
-    pass
-
 # Additional Functions and Types
 
-# Wrap calls to TranslationUnit._load and Decl._load.
+# Wrap calls to Cursor_visit.
 Callback = CFUNCTYPE(None, c_void_p, Cursor, c_void_p)
 
 # String Functions
