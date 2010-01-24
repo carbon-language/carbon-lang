@@ -156,6 +156,45 @@ void f () {  /* this can be optimized to four additions... */
 This requires reassociating to forms of expressions that are already available,
 something that reassoc doesn't think about yet.
 
+
+//===---------------------------------------------------------------------===//
+
+This function: (derived from GCC PR19988)
+double foo(double x, double y) {
+  return ((x + 0.1234 * y) * (x + -0.1234 * y));
+}
+
+compiles to:
+_foo:
+	movapd	%xmm1, %xmm2
+	mulsd	LCPI1_1(%rip), %xmm1
+	mulsd	LCPI1_0(%rip), %xmm2
+	addsd	%xmm0, %xmm1
+	addsd	%xmm0, %xmm2
+	movapd	%xmm1, %xmm0
+	mulsd	%xmm2, %xmm0
+	ret
+
+Instcombine should be able to turn it into:
+
+double foo(double x, double y) {
+  return ((x + 0.1234 * y) * (x - 0.1234 * y));
+}
+
+Which allows the multiply by constant to be CSE'd, producing:
+
+_foo:
+	mulsd	LCPI1_0(%rip), %xmm1
+	movapd	%xmm1, %xmm2
+	addsd	%xmm0, %xmm2
+	subsd	%xmm1, %xmm0
+	mulsd	%xmm2, %xmm0
+	ret
+
+This doesn't need -ffast-math support at all.  This is particularly bad because
+the llvm-gcc frontend is canonicalizing the later into the former, but clang
+doesn't have this problem.
+
 //===---------------------------------------------------------------------===//
 
 These two functions should generate the same code on big-endian systems:
