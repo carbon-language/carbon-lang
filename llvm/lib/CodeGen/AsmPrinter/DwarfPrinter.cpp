@@ -247,6 +247,7 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
     PrintRelDirective(IsSmall);
     PrintLabelName("set", SetCounter, Flavor);
     ++SetCounter;
+    O << "\n";
   } else {
     PrintRelDirective(IsSmall, true);
     PrintLabelName(Label, LabelNumber);
@@ -255,6 +256,7 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
       O << "-";
       PrintLabelName(Section, SectionNumber);
     }
+    O << "\n";
   }
 }
 

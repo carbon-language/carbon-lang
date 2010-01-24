@@ -2383,6 +2383,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
     default:
       // Emit an attribute using the defined form.
       Values[i]->EmitValue(this, Form);
+      O << "\n"; // REMOVE This once all EmitValue impls emit their own newline.
       break;
     }
   }
