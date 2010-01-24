@@ -300,8 +300,8 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
   
   // We have to disambiguate a parenthesized expression "(4+5)" from the start
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
-  // only way to do this without lookahead is to eat the ( and see what is after
-  // it.
+  // only way to do this without lookahead is to eat the '(' and see what is
+  // after it.
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getLexer().isNot(AsmToken::LParen)) {
     SMLoc ExprEnd;

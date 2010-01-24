@@ -331,10 +331,9 @@ bool AsmParser::ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
 }
 
 bool AsmParser::ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
-  if (ParseParenExpr(Res, EndLoc))
-    return true;
-
-  return false;
+  Res = 0;
+  return ParseParenExpr(Res, EndLoc) ||
+         ParseBinOpRHS(1, Res, EndLoc);
 }
 
 bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
