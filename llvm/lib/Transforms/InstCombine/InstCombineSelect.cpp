@@ -326,44 +326,6 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
         break;
       }
       }
-
-      // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
-      // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
-      CmpInst::Predicate Pred = CmpInst::BAD_ICMP_PREDICATE;
-      if (match(TrueVal, m_ConstantInt<-1>()) &&
-          match(FalseVal, m_ConstantInt<0>()))
-        Pred = ICI->getPredicate();
-      else if (match(TrueVal, m_ConstantInt<0>()) &&
-               match(FalseVal, m_ConstantInt<-1>()))
-        Pred = CmpInst::getInversePredicate(ICI->getPredicate());
-      
-      if (Pred != CmpInst::BAD_ICMP_PREDICATE) {
-        // If we are just checking for a icmp eq of a single bit and zext'ing it
-        // to an integer, then shift the bit to the appropriate place and then
-        // cast to integer to avoid the comparison.
-        const APInt &Op1CV = CI->getValue();
-    
-        // sext (x <s  0) to i32 --> x>>s31      true if signbit set.
-        // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
-        if ((Pred == ICmpInst::ICMP_SLT && Op1CV == 0) ||
-            (Pred == ICmpInst::ICMP_SGT && Op1CV.isAllOnesValue())) {
-          Value *In = ICI->getOperand(0);
-          Value *Sh = ConstantInt::get(In->getType(),
-                                       In->getType()->getScalarSizeInBits()-1);
-          In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
-                                                        In->getName()+".lobit"),
-                                   *ICI);
-          if (In->getType() != SI.getType())
-            In = CastInst::CreateIntegerCast(In, SI.getType(),
-                                             true/*SExt*/, "tmp", ICI);
-    
-          if (Pred == ICmpInst::ICMP_SGT)
-            In = InsertNewInstBefore(BinaryOperator::CreateNot(In,
-                                       In->getName()+".not"), *ICI);
-    
-          return ReplaceInstUsesWith(SI, In);
-        }
-      }
     }
 
   if (CmpLHS == TrueVal && CmpRHS == FalseVal) {
@@ -516,16 +478,25 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (ConstantInt *TrueValC = dyn_cast<ConstantInt>(TrueVal))
     if (ConstantInt *FalseValC = dyn_cast<ConstantInt>(FalseVal)) {
       // select C, 1, 0 -> zext C to int
-      if (FalseValC->isZero() && TrueValC->getValue() == 1) {
-        return CastInst::Create(Instruction::ZExt, CondVal, SI.getType());
-      } else if (TrueValC->isZero() && FalseValC->getValue() == 1) {
-        // select C, 0, 1 -> zext !C to int
-        Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
-                                               "not."+CondVal->getName()), SI);
-        return CastInst::Create(Instruction::ZExt, NotCond, SI.getType());
+      if (FalseValC->isZero() && TrueValC->getValue() == 1)
+        return new ZExtInst(CondVal, SI.getType());
+
+      // select C, -1, 0 -> sext C to int
+      if (FalseValC->isZero() && TrueValC->isAllOnesValue())
+        return new SExtInst(CondVal, SI.getType());
+      
+      // select C, 0, 1 -> zext !C to int
+      if (TrueValC->isZero() && FalseValC->getValue() == 1) {
+        Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
+        return new ZExtInst(NotCond, SI.getType());
       }
 
+      // select C, 0, -1 -> sext !C to int
+      if (TrueValC->isZero() && FalseValC->isAllOnesValue()) {
+        Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
+        return new SExtInst(NotCond, SI.getType());
+      }
+      
       if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
         // If one of the constants is zero (we know they can't both be) and we
         // have an icmp instruction with zero, and we have an 'and' with the
@@ -547,8 +518,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                 ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
                 Value *V = ICA;
                 if (ShouldNotVal)
-                  V = InsertNewInstBefore(BinaryOperator::Create(
-                                  Instruction::Xor, V, ICA->getOperand(1)), SI);
+                  V = Builder->CreateXor(V, ICA->getOperand(1));
                 return ReplaceInstUsesWith(SI, V);
               }
       }

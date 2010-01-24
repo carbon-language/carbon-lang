@@ -640,22 +640,19 @@ We compile:
 define i32 @bar(i32 %x) nounwind readnone ssp {
 entry:
   %0 = icmp eq i32 %x, 0                          ; <i1> [#uses=1]
-  %neg = select i1 %0, i32 -1, i32 0              ; <i32> [#uses=1]
+  %neg = sext i1 %0 to i32              ; <i32> [#uses=1]
   ret i32 %neg
 }
 
 to:
 
 _bar:
-	cmplwi cr0, r3, 0
-	li r3, -1
-	beq cr0, LBB1_2
-; BB#1:                                                     ; %entry
-	li r3, 0
-LBB1_2:                                                     ; %entry
+	cntlzw r2, r3
+	slwi r2, r2, 26
+	srawi r3, r2, 31
 	blr 
 
-it would be much better to produce:
+it would be better to produce:
 
 _bar: 
         addic r3,r3,-1

@@ -423,7 +423,7 @@ m_Select(const Cond &C, const LHS &L, const RHS &R) {
 }
 
 /// m_SelectCst - This matches a select of two constants, e.g.:
-///    m_SelectCst(m_Value(V), -1, 0)
+///    m_SelectCst<-1, 0>(m_Value(V))
 template<int64_t L, int64_t R, typename Cond>
 inline SelectClass_match<Cond, constantint_ty<L>, constantint_ty<R> >
 m_SelectCst(const Cond &C) {
@@ -465,6 +465,20 @@ template<typename OpTy>
 inline CastClass_match<OpTy, Instruction::Trunc>
 m_Trunc(const OpTy &Op) {
   return CastClass_match<OpTy, Instruction::Trunc>(Op);
+}
+
+/// m_SExt
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::SExt>
+m_SExt(const OpTy &Op) {
+  return CastClass_match<OpTy, Instruction::SExt>(Op);
+}
+
+/// m_ZExt
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::ZExt>
+m_ZExt(const OpTy &Op) {
+  return CastClass_match<OpTy, Instruction::ZExt>(Op);
 }
   
 

@@ -923,12 +923,6 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   Value *Src = CI.getOperand(0);
   const Type *SrcTy = Src->getType(), *DestTy = CI.getType();
 
-  // Canonicalize sign-extend from i1 to a select.
-  if (Src->getType()->isInteger(1))
-    return SelectInst::Create(Src,
-                              Constant::getAllOnesValue(CI.getType()),
-                              Constant::getNullValue(CI.getType()));
-  
   // Attempt to extend the entire input expression tree to the destination
   // type.   Only do this if the dest type is a simple type, don't convert the
   // expression tree to something weird like i93 unless the source is also
@@ -967,6 +961,30 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
       Value *Res = Builder->CreateShl(TI->getOperand(0), ShAmt, "sext");
       return BinaryOperator::CreateAShr(Res, ShAmt);
     }
+  
+  
+  // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
+  // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
+  {
+  ICmpInst::Predicate Pred; Value *CmpLHS; ConstantInt *CmpRHS;
+  if (match(Src, m_ICmp(Pred, m_Value(CmpLHS), m_ConstantInt(CmpRHS)))) {
+    // sext (x <s  0) to i32 --> x>>s31       true if signbit set.
+    // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
+    if ((Pred == ICmpInst::ICMP_SLT && CmpRHS->isZero()) ||
+        (Pred == ICmpInst::ICMP_SGT && CmpRHS->isAllOnesValue())) {
+      Value *Sh = ConstantInt::get(CmpLHS->getType(),
+                                   CmpLHS->getType()->getScalarSizeInBits()-1);
+      Value *In = Builder->CreateAShr(CmpLHS, Sh, CmpLHS->getName()+".lobit");
+      if (In->getType() != CI.getType())
+        In = Builder->CreateIntCast(In, CI.getType(), true/*SExt*/, "tmp");
+      
+      if (Pred == ICmpInst::ICMP_SGT)
+        In = Builder->CreateNot(In, In->getName()+".not");
+      return ReplaceInstUsesWith(CI, In);
+    }
+  }
+  }
+  
   
   // If the input is a shl/ashr pair of a same constant, then this is a sign
   // extension from a smaller value.  If we could trust arbitrary bitwidth
