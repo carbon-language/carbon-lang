@@ -48,11 +48,6 @@ def create_string_vector(strs):
     copy_string_vector(vec, strs)
     return vec
 
-# Aliases for convenience
-c_int_p = POINTER(c_int)
-c_uint_p = POINTER(c_uint)
-c_bool = c_uint
-
 # ctypes doesn't implicitly convert c_void_p to the appropriate wrapper
 # object. This is a problem, because it means that from_parameter will see an
 # integer and pass the wrong value on platforms where int != void*. Work around
@@ -338,8 +333,8 @@ String_dispose.argtypes = [String]
 
 # Source Location Functions
 SourceLocation_loc = lib.clang_getInstantiationLocation
-SourceLocation_loc.argtypes = [SourceLocation, POINTER(c_object_p), c_uint_p,
-                               c_uint_p]
+SourceLocation_loc.argtypes = [SourceLocation, POINTER(c_object_p),
+                               POINTER(c_uint), POINTER(c_uint)]
 
 # Source Range Functions
 SourceRange_start = lib.clang_getRangeStart
@@ -354,45 +349,45 @@ SourceRange_end.restype = SourceLocation
 # TODO: Implement this function
 Cursor_get = lib.clang_getCursor
 Cursor_get.argtypes = [TranslationUnit, SourceLocation]
-Cursor.restype = Cursor
+Cursor_get.restype = Cursor
 
 Cursor_null = lib.clang_getNullCursor
 Cursor_null.restype = Cursor
 
 Cursor_kind = lib.clang_getCursorKind
 Cursor_kind.argtypes = [Cursor]
-Cursor_kind.res = c_int
+Cursor_kind.restype = c_int
 
 # FIXME: Not really sure what a USR is or what this function actually does...
 Cursor_usr = lib.clang_getCursorUSR
 
 Cursor_is_decl = lib.clang_isDeclaration
 Cursor_is_decl.argtypes = [CursorKind]
-Cursor_is_decl.restype = c_bool
+Cursor_is_decl.restype = bool
 
 Cursor_is_ref = lib.clang_isReference
 Cursor_is_ref.argtypes = [CursorKind]
-Cursor_is_ref.restype = c_bool
+Cursor_is_ref.restype = bool
 
 Cursor_is_expr = lib.clang_isExpression
 Cursor_is_expr.argtypes = [CursorKind]
-Cursor_is_expr.restype = c_bool
+Cursor_is_expr.restype = bool
 
 Cursor_is_stmt = lib.clang_isStatement
 Cursor_is_stmt.argtypes = [CursorKind]
-Cursor_is_stmt.restype = c_bool
+Cursor_is_stmt.restype = bool
 
 Cursor_is_inv = lib.clang_isInvalid
 Cursor_is_inv.argtypes = [CursorKind]
-Cursor_is_inv.restype = c_bool
+Cursor_is_inv.restype = bool
 
 Cursor_is_tu = lib.clang_isTranslationUnit
 Cursor_is_tu.argtypes = [CursorKind]
-Cursor_is_tu.restype = c_bool
+Cursor_is_tu.restype = bool
 
 Cursor_is_def = lib.clang_isCursorDefinition
 Cursor_is_def.argtypes = [Cursor]
-Cursor_is_def.restype = c_bool
+Cursor_is_def.restype = bool
 
 Cursor_def = lib.clang_getCursorDefinition
 Cursor_def.argtypes = [Cursor]
