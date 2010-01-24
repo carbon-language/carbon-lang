@@ -266,8 +266,6 @@ class Index(ClangObject):
     primarily by providing an interface for reading and parsing translation
     units.
     """
-    def __init__(self, obj):
-        ClangObject.__init__(self, obj)
 
     @staticmethod
     def create(excludeDecls=False, displayDiags=False):
@@ -300,13 +298,9 @@ class TranslationUnit(ClangObject):
     The TranslationUnit class represents a source code translation unit and
     provides read-only access to its top-level declarations.
     """
-    def __init__(self, obj, free=False):
-        ClangObject.__init__(self, obj)
-        self.free = free
 
     def __del__(self):
-        if self.free and self.obj:
-            TranslationUnit_dispose(self)
+        TranslationUnit_dispose(self)
 
     @property
     def cursor(self):
@@ -322,7 +316,7 @@ class TranslationUnit(ClangObject):
     def read(ix, path):
         """Create a translation unit from the given AST file."""
         ptr = TranslationUnit_read(ix, path)
-        return TranslationUnit(ptr, True) if ptr else None
+        return TranslationUnit(ptr) if ptr else None
 
     @staticmethod
     def parse(ix, path, args = []):
@@ -333,7 +327,7 @@ class TranslationUnit(ClangObject):
         # TODO: Support unsaved files.
         argc, argv = len(args), create_string_vector(args)
         ptr = TranslationUnit_parse(ix, path, argc, byref(argv), 0, 0)
-        return TranslationUnit(ptr, True) if ptr else None
+        return TranslationUnit(ptr) if ptr else None
 
 class File(ClangObject):
     """
