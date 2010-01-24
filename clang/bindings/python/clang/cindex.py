@@ -79,16 +79,30 @@ class SourceLocation(Structure):
     A SourceLocation represents a particular location within a source file.
     """
     _fields_ = [("ptr_data", c_void_p), ("int_data", c_uint)]
+    _data = None
 
-    def init(self):
-        """
-        Initialize the source location, setting its file, line and column.
-        """
-        f, l, c = c_object_p(), c_uint(), c_uint()
-        SourceLocation_loc(self, byref(f), byref(l), byref(c))
-        f = File(f) if f else None
-        self.file, self.line, self.column = f, int(l.value), int(c.value)
-        return self
+    def _get_instantiation(self):
+        if self._data is None:
+            f, l, c = c_object_p(), c_uint(), c_uint()
+            SourceLocation_loc(self, byref(f), byref(l), byref(c))
+            f = File(f) if f else None
+            self._data = (f, int(l.value), int(c.value))
+        return self._data
+
+    @property
+    def file(self):
+        """Get the file represented by this source location."""
+        return self._get_instantiation()[0]
+
+    @property
+    def line(self):
+        """Get the line represented by this source location."""
+        return self._get_instantiation()[1]
+
+    @property
+    def column(self):
+        """Get the column represented by this source location."""
+        return self._get_instantiation()[2]
 
     def __repr__(self):
         return "<SourceLocation file %r, line %r, column %r>" % (
@@ -110,7 +124,7 @@ class SourceRange(Structure):
         Return a SourceLocation representing the first character within a
         source range.
         """
-        return SourceRange_start(self).init()
+        return SourceRange_start(self)
 
     @property
     def end(self):
@@ -118,7 +132,10 @@ class SourceRange(Structure):
         Return a SourceLocation representing the last character within a
         source range.
         """
-        return SourceRange_end(self).init()
+        return SourceRange_end(self)
+
+    def __repr__(self):
+        return "<SourceRange start %r, end %r>" % (self.start, self.end)
 
 class Cursor(Structure):
     """
@@ -200,7 +217,7 @@ class Cursor(Structure):
         Return the source location (the starting character) of the entity
         pointed at by the cursor.
         """
-        return Cursor_loc(self).init()
+        return Cursor_loc(self)
 
     @property
     def extent(self):
