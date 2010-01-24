@@ -741,10 +741,8 @@ typedef enum CXChildVisitResult (*CXCursorVisitor)(CXCursor cursor,
  * \c CXChildVisit_Recurse. The traversal may also be ended prematurely, if
  * the visitor returns \c CXChildVisit_Break.
  *
- * \param tu the translation unit into which the cursor refers.
- *
  * \param parent the cursor whose child may be visited. All kinds of
- * cursors can be visited, including invalid visitors (which, by
+ * cursors can be visited, including invalid cursors (which, by
  * definition, have no children).
  *
  * \param visitor the visitor function that will be invoked for each
