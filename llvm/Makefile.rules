@@ -365,6 +365,12 @@ endif
 #    CXX.Flags += -fvisibility-inlines-hidden
 #endif
 
+ifdef ENABLE_EXPENSIVE_CHECKS
+  # GNU libstdc++ uses RTTI if you define _GLIBCXX_DEBUG, which we did above.
+  # See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40160
+  REQUIRES_RTTI := 1
+endif
+
 # IF REQUIRES_EH=1 is specified then don't disable exceptions
 ifndef REQUIRES_EH
   CXX.Flags += -fno-exceptions
@@ -466,13 +472,6 @@ endif
 
 ifeq ($(ARCH),Alpha)
   LD.Flags += -Wl,--no-relax
-endif
-
-ifdef ENABLE_EXPENSIVE_CHECKS
-  # GNU libstdc++ uses RTTI if you define _GLIBCXX_DEBUG, which we did above.
-  # See http://gcc.gnu.org/bugzilla/show_bug.cgi?id=40160
-  CXX.Flags := $(filter-out -fno-rtti,$(CXX.Flags))
-  CXXFLAGS := $(filter-out -fno-rtti,$(CXXFLAGS))
 endif
 
 #--------------------------------------------------------------------
