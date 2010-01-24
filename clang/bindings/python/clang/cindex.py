@@ -173,6 +173,30 @@ class CursorKind(object):
             raise ValueError,'Unknown cursor kind'
         return CursorKind._kinds[id]
 
+    @staticmethod
+    def get_all_kinds():
+        return filter(None, CursorKind._kinds)
+
+    def is_declaration(self):
+        """Test if this is a declaration kind."""
+        return CursorKind_is_decl(self)
+
+    def is_reference(self):
+        """Test if this is a reference kind."""
+        return CursorKind_is_ref(self)
+
+    def is_expression(self):
+        """Test if this is an expression kind."""
+        return CursorKind_is_expr(self)
+
+    def is_statement(self):
+        """Test if this is a statement kind."""
+        return CursorKind_is_stmt(self)
+
+    def is_invalid(self):
+        """Test if this is an invalid kind."""
+        return CursorKind_is_inv(self)
+
     def __repr__(self):
         return 'CursorKind.%s' % (self.name,)
 
@@ -180,6 +204,9 @@ class CursorKind(object):
 # represent the nested structure, or even build a class hierarchy. The main
 # things we want for sure are (a) simple external access to kinds, (b) a place
 # to hang a description and name, (c) easy to keep in sync with Index.h.
+
+###
+# Declaration Kinds
 
 # A declaration whose specific kind is not exposed via this interface.
 #
@@ -244,10 +271,11 @@ CursorKind.OBJC_IMPLEMENTATION_DECL = CursorKind(18)
 # An Objective-C @implementation for a category.
 CursorKind.OBJC_CATEGORY_IMPL_DECL = CursorKind(19)
 
-# A typedef
+# A typedef.
 CursorKind.TYPEDEF_DECL = CursorKind(20)
 
-# References.
+###
+# Reference Kinds
 
 CursorKind.OBJC_SUPER_CLASS_REF = CursorKind(40)
 CursorKind.OBJC_PROTOCOL_REF = CursorKind(41)
@@ -265,11 +293,15 @@ CursorKind.OBJC_CLASS_REF = CursorKind(42)
 # referenced by the type of size is the typedef for size_type.
 CursorKind.TYPE_REF = CursorKind(43)
 
+###
+# Invalid/Error Kinds
 
-# Error conditions.
 CursorKind.INVALID_FILE = CursorKind(70)
 CursorKind.NO_DECL_FOUND = CursorKind(71)
 CursorKind.NOT_IMPLEMENTED = CursorKind(72)
+
+###
+# Expression Kinds
 
 # An expression whose specific kind is not exposed via this interface.
 #
@@ -299,6 +331,9 @@ CursorKind.OBJC_MESSAGE_EXPR = CursorKind(104)
 # the specific kind of the statement is not reported.
 CursorKind.UNEXPOSED_STMT = CursorKind(200)
 
+###
+# Other Kinds
+
 # Cursor that represents the translation unit itself.
 #
 # The translation unit cursor exists primarily to act as the root cursor for
@@ -319,30 +354,6 @@ class Cursor(Structure):
 
     def __ne__(self, other):
         return not Cursor_eq(self, other)
-
-    def is_declaration(self):
-        """Return True if the cursor points to a declaration."""
-        return Cursor_is_decl(self.kind)
-
-    def is_reference(self):
-        """Return True if the cursor points to a reference."""
-        return Cursor_is_ref(self.kind)
-
-    def is_expression(self):
-        """Return True if the cursor points to an expression."""
-        return Cursor_is_expr(self.kind)
-
-    def is_statement(self):
-        """Return True if the cursor points to a statement."""
-        return Cursor_is_stmt(self.kind)
-
-    def is_translation_unit(self):
-        """Return True if the cursor points to a translation unit."""
-        return Cursor_is_tu(self.kind)
-
-    def is_invalid(self):
-        """Return  True if the cursor points to an invalid entity."""
-        return Cursor_is_inv(self.kind)
 
     def is_definition(self):
         """
@@ -380,7 +391,7 @@ class Cursor(Structure):
     @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
-        if not self.is_declaration():
+        if not self.kind.is_declaration():
             # FIXME: clang_getCursorSpelling should be fixed to not assert on
             # this, for consistency with clang_getCursorUSR.
             return None
@@ -554,6 +565,27 @@ SourceRange_end = lib.clang_getRangeEnd
 SourceRange_end.argtypes = [SourceRange]
 SourceRange_end.restype = SourceLocation
 
+# CursorKind Functions
+CursorKind_is_decl = lib.clang_isDeclaration
+CursorKind_is_decl.argtypes = [CursorKind]
+CursorKind_is_decl.restype = bool
+
+CursorKind_is_ref = lib.clang_isReference
+CursorKind_is_ref.argtypes = [CursorKind]
+CursorKind_is_ref.restype = bool
+
+CursorKind_is_expr = lib.clang_isExpression
+CursorKind_is_expr.argtypes = [CursorKind]
+CursorKind_is_expr.restype = bool
+
+CursorKind_is_stmt = lib.clang_isStatement
+CursorKind_is_stmt.argtypes = [CursorKind]
+CursorKind_is_stmt.restype = bool
+
+CursorKind_is_inv = lib.clang_isInvalid
+CursorKind_is_inv.argtypes = [CursorKind]
+CursorKind_is_inv.restype = bool
+
 # Cursor Functions
 # TODO: Implement this function
 Cursor_get = lib.clang_getCursor
@@ -567,30 +599,6 @@ Cursor_usr = lib.clang_getCursorUSR
 Cursor_usr.argtypes = [Cursor]
 Cursor_usr.restype = _CXString
 Cursor_usr.errcheck = _CXString.from_result
-
-Cursor_is_decl = lib.clang_isDeclaration
-Cursor_is_decl.argtypes = [CursorKind]
-Cursor_is_decl.restype = bool
-
-Cursor_is_ref = lib.clang_isReference
-Cursor_is_ref.argtypes = [CursorKind]
-Cursor_is_ref.restype = bool
-
-Cursor_is_expr = lib.clang_isExpression
-Cursor_is_expr.argtypes = [CursorKind]
-Cursor_is_expr.restype = bool
-
-Cursor_is_stmt = lib.clang_isStatement
-Cursor_is_stmt.argtypes = [CursorKind]
-Cursor_is_stmt.restype = bool
-
-Cursor_is_inv = lib.clang_isInvalid
-Cursor_is_inv.argtypes = [CursorKind]
-Cursor_is_inv.restype = bool
-
-Cursor_is_tu = lib.clang_isTranslationUnit
-Cursor_is_tu.argtypes = [CursorKind]
-Cursor_is_tu.restype = bool
 
 Cursor_is_def = lib.clang_isCursorDefinition
 Cursor_is_def.argtypes = [Cursor]

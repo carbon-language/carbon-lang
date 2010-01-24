@@ -15,4 +15,4 @@ def test_cursor():
     tu = index.parse(path)
     c = tu.cursor
     assert isinstance(c, Cursor)
-    assert c.is_translation_unit
+    assert c.kind is CursorKind.TRANSLATION_UNIT
