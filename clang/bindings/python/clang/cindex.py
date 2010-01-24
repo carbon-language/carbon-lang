@@ -213,14 +213,6 @@ class Cursor(Structure):
         """
         return Cursor_extent(self)
 
-    @property
-    def file(self):
-        """
-        Return the file containing the pointed-at entity. This is an alias for
-        location.file.
-        """
-        return self.location.file
-
     def get_children(self):
         """Return an iterator for the accessing children of this cursor."""
 
