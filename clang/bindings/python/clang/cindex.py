@@ -308,14 +308,14 @@ class TranslationUnit(ClangObject):
         if self.free and self.obj:
             TranslationUnit_dispose(self)
 
-    def load(self, fun, data = None):
-        # Actually call this over a lambda that attaches an object the
-        # underlying void pointer.
-        f = lambda t, c, x: fun(TranslationUnit(t), c, x)
-        TranslationUnit_load(self.obj, Callback(f), data)
+    @property
+    def cursor(self):
+        """Retrieve the cursor that represents the given translation unit."""
+        return TranslationUnit_cursor(self)
 
     @property
     def spelling(self):
+        """Get the original translation unit source file name."""
         return TranslationUnit_spelling(self)
 
     @staticmethod
@@ -503,6 +503,10 @@ TranslationUnit_parse = lib.clang_createTranslationUnitFromSourceFile
 TranslationUnit_parse.argtypes = [Index, c_char_p, c_int, c_void_p,
                                   c_int, c_void_p]
 TranslationUnit_parse.restype = c_object_p
+
+TranslationUnit_cursor = lib.clang_getTranslationUnitCursor
+TranslationUnit_cursor.argtypes = [TranslationUnit]
+TranslationUnit_cursor.restype = Cursor
 
 TranslationUnit_spelling = lib.clang_getTranslationUnitSpelling
 TranslationUnit_spelling.argtypes = [TranslationUnit]
