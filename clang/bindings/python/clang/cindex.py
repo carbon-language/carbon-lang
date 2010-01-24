@@ -174,12 +174,24 @@ class Cursor(Structure):
         # declaration prior to issuing the lookup.
         return Cursor_def(self)
 
+    def get_usr(self):
+        """Return the Unified Symbol Resultion (USR) for the entity referenced
+        by the given cursor (or None).
+
+        A Unified Symbol Resolution (USR) is a string that identifies a
+        particular entity (function, class, variable, etc.) within a
+        program. USRs can be compared across translation units to determine,
+        e.g., when references in one translation refer to an entity defined in
+        another translation unit."""
+        return Cursor_usr(self)
+
     @property
     def spelling(self):
         """Return the spelling of the entity pointed at by the cursor."""
         if not self.is_declaration():
-            # FIXME: This should be documented in Index.h
-            raise ValueError("Cursor does not refer to a Declaration")
+            # FIXME: clang_getCursorSpelling should be fixed to not assert on
+            # this, for consistency with clang_getCursorUSR.
+            return None
         return Cursor_spelling(self)
 
     @property
@@ -363,8 +375,10 @@ Cursor_kind = lib.clang_getCursorKind
 Cursor_kind.argtypes = [Cursor]
 Cursor_kind.restype = c_int
 
-# FIXME: Not really sure what a USR is or what this function actually does...
 Cursor_usr = lib.clang_getCursorUSR
+Cursor_usr.argtypes = [Cursor]
+Cursor_usr.restype = _CXString
+Cursor_usr.errcheck = _CXString.from_result
 
 Cursor_is_decl = lib.clang_isDeclaration
 Cursor_is_decl.argtypes = [CursorKind]
