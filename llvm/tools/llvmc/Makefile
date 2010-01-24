@@ -11,6 +11,7 @@ LEVEL = ../..
 
 export LLVMC_BASED_DRIVER_NAME = llvmc
 export LLVMC_BUILTIN_PLUGINS = Base Clang
+REQUIRES_RTTI = 1
 
 DIRS = plugins driver
 

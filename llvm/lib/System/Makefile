@@ -10,7 +10,7 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMSystem
 BUILD_ARCHIVE = 1
-
+REQUIRES_RTTI = 1
 include $(LEVEL)/Makefile.config
 
 ifeq ($(HOST_OS),MingW)

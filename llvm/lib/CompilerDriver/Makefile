@@ -22,6 +22,7 @@ else
 endif
 
 REQUIRES_EH := 1
+REQUIRES_RTTI := 1
 
 include $(LEVEL)/Makefile.common
 
