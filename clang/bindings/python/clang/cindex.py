@@ -86,7 +86,7 @@ class String(Structure):
 
 class SourceLocation(Structure):
     """
-    A SourceLocation Represents a particular location within a source file.
+    A SourceLocation represents a particular location within a source file.
     """
     _fields_ = [("ptr_data", c_void_p), ("int_data", c_uint)]
 
@@ -153,7 +153,7 @@ class Cursor(Structure):
         return Cursor_is_decl(self.kind)
 
     def is_reference(self):
-        """Return True if the cursor points to a refernce."""
+        """Return True if the cursor points to a reference."""
         return Cursor_is_ref(self.kind)
 
     def is_expression(self):
@@ -230,17 +230,6 @@ class Cursor(Structure):
         location.file.
         """
         return self.location.file
-
-# FIXME: Implement this class.
-class Entity(Structure):
-    """
-    An Entity is a uniqe token for accessing "visible" declarations within
-    a translation unit.
-    """
-    # NOTE: Index is written here as a void*, but given in the API as CXIndex.
-    # Be careful to translate back to Index when returning this member.
-    # TODO: Rename as _index and write a property?
-    _fields_ = [("index", c_void_p), ("data", c_void_p)]
 
 ## CIndex Objects ##
 
@@ -360,11 +349,6 @@ class Declaration(ClangObject):
     def kind(self):
         """Retur the kind of cursor."""
         return self.cursor.kind
-
-    @property
-    def entity(self):
-        """Return an entity that represents this declaration."""
-        return Entity(Declaration_entity(self))
 
     @property
     def spelling(self):
