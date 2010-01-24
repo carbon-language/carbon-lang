@@ -61,24 +61,19 @@ CursorKind = c_int
 
 ### Structures and Utility Classes ###
 
-class String(Structure):
-    """
-    The String class is a simple wrapper around constant string data returned
-    from functions in the CIndex library.
+class _CXString(Structure):
+    """Helper for transforming CXString results."""
 
-    String objects do not provide any of the operations that Python strings
-    support. However, these objects can be explicitly cast using the str()
-    function.
-    """
     _fields_ = [("spelling", c_char_p), ("free", c_int)]
 
     def __del__(self):
-        if self.free:
-            String_dispose(self)
+        _CXString_dispose(self)
 
-    def __str__(self):
-        return self.spelling
-
+    @staticmethod
+    def from_result(res, fn, args):
+        assert isinstance(res, _CXString)
+        return _CXString_getCString(res)
+         
 class SourceLocation(Structure):
     """
     A SourceLocation represents a particular location within a source file.
@@ -328,8 +323,12 @@ class File(ClangObject):
 Callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 
 # String Functions
-String_dispose = lib.clang_disposeString
-String_dispose.argtypes = [String]
+_CXString_dispose = lib.clang_disposeString
+_CXString_dispose.argtypes = [_CXString]
+
+_CXString_getCString = lib.clang_getCString
+_CXString_getCString.argtypes = [_CXString]
+_CXString_getCString.restype = c_char_p
 
 # Source Location Functions
 SourceLocation_loc = lib.clang_getInstantiationLocation
@@ -399,7 +398,8 @@ Cursor_eq.restype = c_uint
 
 Cursor_spelling = lib.clang_getCursorSpelling
 Cursor_spelling.argtypes = [Cursor]
-Cursor_spelling.restype = String
+Cursor_spelling.restype = _CXString
+Cursor_spelling.errcheck = _CXString.from_result
 
 Cursor_loc = lib.clang_getCursorLocation
 Cursor_loc.argtypes = [Cursor]
@@ -441,7 +441,8 @@ TranslationUnit_cursor.restype = Cursor
 
 TranslationUnit_spelling = lib.clang_getTranslationUnitSpelling
 TranslationUnit_spelling.argtypes = [TranslationUnit]
-TranslationUnit_spelling.restype = String
+TranslationUnit_spelling.restype = _CXString
+TranslationUnit_spelling.errcheck = _CXString.from_result
 
 TranslationUnit_dispose = lib.clang_disposeTranslationUnit
 TranslationUnit_dispose.argtypes = [TranslationUnit]

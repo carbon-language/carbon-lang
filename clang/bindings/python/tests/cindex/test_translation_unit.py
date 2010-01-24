@@ -7,7 +7,7 @@ def test_spelling():
     path = os.path.join(kInputsDir, 'hello.cpp')
     index = Index.create()
     tu = index.parse(path)
-    assert str(tu.spelling) == path
+    assert tu.spelling == path
 
 def test_cursor():
     path = os.path.join(kInputsDir, 'hello.cpp')
