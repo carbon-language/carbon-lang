@@ -94,10 +94,15 @@ class SourceLocation(Structure):
         """
         Initialize the source location, setting its file, line and column.
         """
-        f, l, c = c_void_p(), c_uint(), c_uint()
+        f, l, c = c_object_p(), c_uint(), c_uint()
         SourceLocation_loc(self, byref(f), byref(l), byref(c))
-        self.file, self.line, self.column = File(f), l, c
+        f = File(f) if f else None
+        self.file, self.line, self.column = f, int(l.value), int(c.value)
         return self
+
+    def __repr__(self):
+        return "<SourceLocation file %r, line %r, column %r>" % (
+            self.file.name if self.file else None, self.line, self.column)
 
 class SourceRange(Structure):
     """
@@ -109,6 +114,7 @@ class SourceRange(Structure):
         ("begin_int_data", c_uint),
         ("end_int_data", c_uint)]
 
+    @property
     def start(self):
         """
         Return a SourceLocation representing the first character within a
@@ -116,6 +122,7 @@ class SourceRange(Structure):
         """
         return SourceRange_start(self).init()
 
+    @property
     def end(self):
         """
         Return a SourceLocation representing the last character within a
@@ -330,24 +337,19 @@ class TranslationUnit(ClangObject):
 
 class File(ClangObject):
     """
-    The File class...
+    The File class represents a particular source file that is part of a
+    translation unit.
     """
-    def __init__(self, obj):
-        ClangObject.__init__(self, obj)
-
-    @property
-    def is_valid(self):
-        return self.obj is not None
 
     @property
     def name(self):
-        """Return the name of the file, if valid. Otherwise, an empty string."""
-        return File_name(self) if self.obj else ""
+        """Return the complete file and path name of the file, if valid."""
+        return File_name(self)
 
     @property
     def time(self):
-        """Return the time of the file, if valid. Otherwise, -1."""
-        return File_time(self) if self.obj else -1
+        """Return the last modification time of the file, if valid."""
+        return File_time(self)
 
 class Declaration(ClangObject):
     """
@@ -404,16 +406,17 @@ String_dispose.argtypes = [String]
 
 # Source Location Functions
 SourceLocation_loc = lib.clang_getInstantiationLocation
-SourceLocation_loc.argtypes = [SourceLocation, POINTER(c_void_p), c_uint_p, c_uint_p]
+SourceLocation_loc.argtypes = [SourceLocation, POINTER(c_object_p), c_uint_p,
+                               c_uint_p]
 
 # Source Range Functions
 SourceRange_start = lib.clang_getRangeStart
-SourceRange_start.argtypes = [SourceLocation]
-SourceRange_start.restype = SourceRange
+SourceRange_start.argtypes = [SourceRange]
+SourceRange_start.restype = SourceLocation
 
 SourceRange_end = lib.clang_getRangeEnd
-SourceRange_end.argtypes = [SourceLocation]
-SourceRange_end.restype = SourceRange
+SourceRange_end.argtypes = [SourceRange]
+SourceRange_end.restype = SourceLocation
 
 # Cursor Functions
 # TODO: Implement this function
