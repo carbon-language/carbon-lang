@@ -1522,8 +1522,6 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   while (TmpBB->getSinglePredecessor()) {
     isSinglePred = true;
     TmpBB = TmpBB->getSinglePredecessor();
-    if (!TmpBB) // If haven't found any, bail now.
-      return false;
     if (TmpBB == LoadBB) // Infinite (unreachable) loop.
       return false;
     if (Blockers.count(TmpBB))
