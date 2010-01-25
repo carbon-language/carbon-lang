@@ -9,6 +9,7 @@
 
 #include "llvm/Target/TargetAsmLexer.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "X86.h"
@@ -19,8 +20,21 @@ namespace {
   
 class X86AsmLexer : public TargetAsmLexer {
   const MCAsmInfo &AsmInfo;
+  
+  AsmToken LexTokenATT();
+  AsmToken LexTokenIntel();
 protected:
-  AsmToken LexToken();
+  AsmToken LexToken() {
+    switch (AsmInfo.getAssemblerDialect()) {
+    default:
+      SetError(SMLoc(), "Unhandled dialect");
+      return AsmToken(AsmToken::Error, "", 0);
+    case 0:
+      return LexTokenATT();
+    case 1:
+      return LexTokenIntel();
+    }
+  }
 public:
   X86AsmLexer(const Target &T, const MCAsmInfo &MAI)
     : TargetAsmLexer(T), AsmInfo(MAI) {
@@ -29,7 +43,11 @@ public:
 
 }
 
-AsmToken X86AsmLexer::LexToken() {
+AsmToken X86AsmLexer::LexTokenATT() {
+  return AsmToken(AsmToken::Error, "", 0);
+}
+
+AsmToken X86AsmLexer::LexTokenIntel() {
   return AsmToken(AsmToken::Error, "", 0);
 }
 
