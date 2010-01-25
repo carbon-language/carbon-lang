@@ -950,8 +950,8 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
 
     if (UseSet && isNew) {
       O << MAI->getSetDirective() << ' '
-        << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB) << '-'
-        << *JTISymbol << '\n';
+        << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB) << ','
+        << *GetMBBSymbol(MBB->getNumber()) << '-' << *JTISymbol << '\n';
     }
 
     O << JTEntryDirective << ' ';
