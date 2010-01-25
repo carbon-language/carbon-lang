@@ -783,7 +783,7 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
 bool CursorVisitor::VisitStmt(Stmt *S) {
   for (Stmt::child_iterator Child = S->child_begin(), ChildEnd = S->child_end();
        Child != ChildEnd; ++Child) {
-    if (Visit(MakeCXCursor(*Child, StmtParent, TU)))
+    if (*Child && Visit(MakeCXCursor(*Child, StmtParent, TU)))
       return true;
   }
   
