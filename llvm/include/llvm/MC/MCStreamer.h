@@ -188,6 +188,13 @@ namespace llvm {
     /// to pass in a MCExpr for constant integers.
     virtual void EmitIntValue(uint64_t Value, unsigned Size,unsigned AddrSpace);
     
+    /// EmitGPRel32Value - Emit the expression @param Value into the output as a
+    /// gprel32 (32-bit GP relative) value.
+    ///
+    /// This is used to implement assembler directives such as .gprel32 on
+    /// targets that support them.
+    virtual void EmitGPRel32Value(const MCExpr *Value) = 0;
+    
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.
     virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,

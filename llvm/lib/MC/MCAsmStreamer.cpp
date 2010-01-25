@@ -110,6 +110,8 @@ public:
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitIntValue(uint64_t Value, unsigned Size, unsigned AddrSpace);
+  virtual void EmitGPRel32Value(const MCExpr *Value);
+  
 
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
                         unsigned AddrSpace);
@@ -180,12 +182,6 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   assert(Bytes && "Invalid size!");
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
-}
-
-static inline const MCExpr *truncateToSize(const MCExpr *Value,
-                                           unsigned Bytes) {
-  // FIXME: Do we really need this routine?
-  return Value;
 }
 
 void MCAsmStreamer::SwitchSection(const MCSection *Section) {
@@ -425,9 +421,16 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   }
   
   assert(Directive && "Invalid size for machine code value!");
-  OS << Directive << *truncateToSize(Value, Size);
+  OS << Directive << *Value;
   EmitEOL();
 }
+
+void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
+  assert(MAI.getGPRel32Directive() != 0);
+  OS << MAI.getGPRel32Directive() << *Value;
+  EmitEOL();
+}
+
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.

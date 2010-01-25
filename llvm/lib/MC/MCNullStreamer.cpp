@@ -50,7 +50,7 @@ namespace {
 
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
                            unsigned AddrSpace) {}
-
+    virtual void EmitGPRel32Value(const MCExpr *Value) {}
     virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                       unsigned ValueSize = 1,
                                       unsigned MaxBytesToEmit = 0) {}

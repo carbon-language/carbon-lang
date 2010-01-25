@@ -544,8 +544,9 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         const MachineBasicBlock *MBB,
                                         unsigned uid)  const {
   // If the target supports GPRel, use it.
-  if (const char *GPRel32Dir = MAI->getGPRel32Directive()) {
-    O << GPRel32Dir << *GetMBBSymbol(MBB->getNumber()) << '\n';
+  if (MAI->getGPRel32Directive() != 0) {
+    MCSymbol *MBBSym = GetMBBSymbol(MBB->getNumber());
+    OutStreamer.EmitGPRel32Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
     return;
   }
   

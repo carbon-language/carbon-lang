@@ -46,13 +46,9 @@ class MCMachOStreamer : public MCStreamer {
 
 private:
   MCAssembler Assembler;
-
   MCCodeEmitter *Emitter;
-
   MCSectionData *CurSectionData;
-
   DenseMap<const MCSection*, MCSectionData*> SectionMap;
-  
   DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
 
 private:
@@ -134,6 +130,9 @@ public:
                             unsigned Size = 0, unsigned ByteAlignment = 0);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitGPRel32Value(const MCExpr *Value) {
+    assert(0 && "macho doesn't support this directive");
+  }
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
