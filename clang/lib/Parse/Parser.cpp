@@ -836,7 +836,12 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   SourceLocation Loc = ConsumeToken();
 
   if (Tok.is(tok::kw_volatile)) {
-    Diag(Tok, diag::warn_file_asm_volatile);
+    // Remove from the end of 'asm' to the end of 'volatile'.
+    SourceRange RemovalRange(PP.getLocForEndOfToken(Loc),
+                             PP.getLocForEndOfToken(Tok.getLocation()));
+
+    Diag(Tok, diag::warn_file_asm_volatile)
+      << CodeModificationHint::CreateRemoval(RemovalRange);
     ConsumeToken();
   }
 
