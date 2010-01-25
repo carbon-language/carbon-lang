@@ -162,8 +162,9 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *
  *   // This will load all the symbols from 'IndexTest.c', excluding symbols
  *   // from 'IndexTest.pch'.
- *   char *args[] = { "-Xclang", "-include-pch=IndexTest.pch", 0 };
- *   TU = clang_createTranslationUnitFromSourceFile(Idx, "IndexTest.c", 2, args);
+ *   char *args[] = { "-Xclang", "-include-pch=IndexTest.pch" };
+ *   TU = clang_createTranslationUnitFromSourceFile(Idx, "IndexTest.c", 2, args,
+ *                                                  0, 0);
  *   clang_visitChildren(clang_getTranslationUnitCursor(TU),
  *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
