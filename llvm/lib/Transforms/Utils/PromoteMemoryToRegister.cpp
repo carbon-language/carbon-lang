@@ -23,7 +23,6 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/DenseMap.h"
@@ -164,7 +163,6 @@ namespace {
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
     DominanceFrontier &DF;
-    DIFactory *DIF;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
     ///
@@ -201,7 +199,7 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DF(df), DIF(0), AST(ast) {}
+      : Allocas(A), DT(dt), DF(df), AST(ast) {}
 
     void run();
 
@@ -243,9 +241,8 @@ namespace {
                                   LargeBlockInfo &LBI);
     void PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                   LargeBlockInfo &LBI);
-    void ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI, StoreInst* SI,
-                                         uint64_t Offset);
-                                  
+
+    
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                     RenamePassData::ValVector &IncVals,
                     std::vector<RenamePassData> &Worklist);
@@ -309,19 +306,6 @@ namespace {
 }  // end of anonymous namespace
 
 
-/// Finds the llvm.dbg.declare intrinsic corresponding to an alloca if any.
-static DbgDeclareInst *findDbgDeclare(AllocaInst *AI) {
-  Function *F = AI->getParent()->getParent();
-  for (Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-    for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end();
-         BI != BE; ++BI)
-      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
-        if (DDI->getAddress() == AI)
-          return DDI;
-
-  return 0;
-}
-
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
@@ -360,8 +344,6 @@ void PromoteMem2Reg::run() {
 
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
-        // Record debuginfo for the store before removing it.
-        ConvertDebugDeclareToDebugValue(findDbgDeclare(AI), Info.OnlyStore, 0);
         // Remove the (now dead) store and alloca.
         Info.OnlyStore->eraseFromParent();
         LBI.deleteValue(Info.OnlyStore);
@@ -388,11 +370,8 @@ void PromoteMem2Reg::run() {
       if (Info.UsingBlocks.empty()) {
         
         // Remove the (now dead) stores and alloca.
-        DbgDeclareInst *DDI = findDbgDeclare(AI);
         while (!AI->use_empty()) {
           StoreInst *SI = cast<StoreInst>(AI->use_back());
-          // Record debuginfo for the store before removing it.
-          ConvertDebugDeclareToDebugValue(DDI, SI, 0);
           SI->eraseFromParent();
           LBI.deleteValue(SI);
         }
@@ -854,18 +833,6 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
   }
 }
 
-// Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
-// that has an associated llvm.dbg.decl intrinsic.
-void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
-                                                     StoreInst* SI,
-                                                     uint64_t Offset) {
-  if (!DDI) return;
-
-  if (!DIF)
-    DIF = new DIFactory(*SI->getParent()->getParent()->getParent());
-  DIF->InsertDbgValueIntrinsic(SI->getOperand(0), Offset,
-                               DIVariable(DDI->getVariable()), SI);
-}
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
@@ -979,8 +946,6 @@ NextIteration:
       
       // what value were we writing?
       IncomingVals[ai->second] = SI->getOperand(0);
-      // Record debuginfo for the store before removing it.
-      ConvertDebugDeclareToDebugValue(findDbgDeclare(Dest), SI, 0);
       BB->getInstList().erase(SI);
     }
   }
