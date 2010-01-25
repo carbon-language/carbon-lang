@@ -4308,7 +4308,16 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
                 TypeAsString.c_str(), TypeAsString.size());
     return;
   }
-  
+  if (QT->isObjCObjectPointerType()) {
+    QualType ptee = QT->getAs<ObjCObjectPointerType>()->getPointeeType();
+    std::string TypeAsString = "(struct ";
+    TypeAsString += ptee.getAsString();
+    TypeAsString += "_IMPL *";
+    TypeAsString += ")";
+    ReplaceText(LocStart, endBuf-startBuf+1, 
+                TypeAsString.c_str(), TypeAsString.size());
+      return;    
+  }
   // advance the location to startArgList.
   const char *argPtr = startBuf;
 
