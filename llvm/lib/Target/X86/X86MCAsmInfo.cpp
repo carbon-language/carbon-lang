@@ -55,9 +55,6 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   if (!is64Bit)
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
 
-  // Leopard and above support aligned common symbols.
-  COMMDirectiveTakesAlignment = Triple.getDarwinMajorNumber() >= 9;
-
   CommentString = "##";
   PCSymbol = ".";
 
