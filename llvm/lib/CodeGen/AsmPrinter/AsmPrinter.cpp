@@ -525,6 +525,8 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     OutStreamer.EmitLabel(GetJTISymbol(i));
 
     if (!IsPic) {
+      // In non-pic mode, the entries in the jump table are direct references
+      // to the basic blocks.
       unsigned EntrySize = MJTI->getEntrySize();
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
         MCSymbol *MBBSym = GetMBBSymbol(JTBBs[ii]->getNumber());
@@ -546,25 +548,23 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     O << GPRel32Dir << *GetMBBSymbol(MBB->getNumber()) << '\n';
     return;
   }
-
-  const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
-     MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
-  O << JTEntryDirective << ' ';
-
+  
   // If we have emitted set directives for the jump table entries, print 
   // them rather than the entries themselves.  If we're emitting PIC, then
   // emit the table entries as differences between two text section labels.
-  // If we're emitting non-PIC code, then emit the entries as direct
-  // references to the target basic blocks.
+  const MCExpr *Val;
   if (MAI->getSetDirective()) {
-    O << *GetJTSetSymbol(uid, MBB->getNumber());
+    // If we used .set, reference the .set's symbol.
+    Val = MCSymbolRefExpr::Create(GetJTSetSymbol(uid, MBB->getNumber()),
+                                  OutContext);
   } else {
-    O << *GetMBBSymbol(MBB->getNumber());
-    // If the arch uses custom Jump Table directives, don't calc relative to
-    // JT.
-    O << '-' << *GetJTISymbol(uid);
+    // Otherwise, use the difference as the jump table entry.
+    Val = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
+    const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(uid), OutContext);
+    Val = MCBinaryExpr::CreateSub(Val, JTI, OutContext);
   }
-  O << '\n';
+  
+  OutStreamer.EmitValue(Val, MJTI->getEntrySize(), /*addrspace*/0);
 }
 
 
