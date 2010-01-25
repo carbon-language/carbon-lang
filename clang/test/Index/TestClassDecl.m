@@ -25,7 +25,7 @@ void function(Foo * arg)
 // CHECK-scan: {start_line=13 start_col=15 end_line=13 end_col=17} ObjCClassRef=Foo:10:12
 // CHECK-scan: {start_line=13 start_col=18 end_line=13 end_col=23} ParmDecl=arg:13:21 (Definition)
 // CHECK-scan: {start_line=13 start_col=24 end_line=13 end_col=25} FunctionDecl=function:13:6 (Definition)
-// CHECK-scan: {start_line=14 start_col=1 end_line=16 end_col=1} UnexposedStmt=function
+// CHECK-scan: {start_line=14 start_col=1 end_line=16 end_col=1} UnexposedStmt=
 
 // CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 [Extent=10:1:11:4]
 // CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) [Extent=13:6:16:1]

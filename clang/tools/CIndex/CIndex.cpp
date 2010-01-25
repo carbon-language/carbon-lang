@@ -1349,7 +1349,10 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return CIndexer::createCXString("");
   }
 
-  return getDeclSpelling(getCursorDecl(C));
+  if (clang_isDeclaration(C.kind))
+    return getDeclSpelling(getCursorDecl(C));
+  
+  return CIndexer::createCXString("");
 }
 
 const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
