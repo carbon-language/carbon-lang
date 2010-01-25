@@ -14,6 +14,7 @@
 
 #include "CIndexer.h"
 #include "CXCursor.h"
+#include "CXSourceLocation.h"
 
 #include "clang/Basic/Version.h"
 #include "clang/AST/DeclVisitor.h"
@@ -115,34 +116,6 @@ public:
 }
 #endif
 #endif
-
-typedef llvm::PointerIntPair<ASTContext *, 1, bool> CXSourceLocationPtr;
-
-/// \brief Translate a Clang source location into a CIndex source location.
-static CXSourceLocation translateSourceLocation(ASTContext &Context,
-                                                SourceLocation Loc,
-                                                bool AtEnd = false) {
-  CXSourceLocationPtr Ptr(&Context, AtEnd);
-  CXSourceLocation Result = { Ptr.getOpaqueValue(), Loc.getRawEncoding() };
-  return Result;
-}
-
-/// \brief Translate a Clang source range into a CIndex source range.
-static CXSourceRange translateSourceRange(ASTContext &Context, SourceRange R) {
-  CXSourceRange Result = { &Context, 
-                           R.getBegin().getRawEncoding(),
-                           R.getEnd().getRawEncoding() };
-  return Result;
-}
-
-static SourceLocation translateSourceLocation(CXSourceLocation L) {
-  return SourceLocation::getFromRawEncoding(L.int_data);
-}
-
-static SourceRange translateSourceRange(CXSourceRange R) {
-  return SourceRange(SourceLocation::getFromRawEncoding(R.begin_int_data),
-                     SourceLocation::getFromRawEncoding(R.end_int_data));
-}
 
 /// \brief The result of comparing two source ranges.
 enum RangeComparisonResult {
@@ -315,7 +288,7 @@ RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
 }
 
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(CXSourceRange CXR) {
-  return CompareRegionOfInterest(translateSourceRange(CXR));
+  return CompareRegionOfInterest(cxloc::translateSourceRange(CXR));
 }
 
 /// \brief Visit the given cursor and, if requested by the visitor,
@@ -346,7 +319,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   // we're done.
   if (RegionOfInterest.isValid() && !CheckedRegionOfInterest) {
     CXSourceRange Range = clang_getCursorExtent(Cursor);
-    if (translateSourceRange(Range).isInvalid() || 
+    if (cxloc::translateSourceRange(Range).isInvalid() || 
         CompareRegionOfInterest(Range))
       return false;
   }
@@ -1122,7 +1095,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                         static_cast<const FileEntry *>(file), 
                                               line, column);
   
-  return translateSourceLocation(CXXUnit->getASTContext(), SLoc, false);
+  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc, false);
 }
 
 CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
@@ -1139,8 +1112,8 @@ void clang_getInstantiationLocation(CXSourceLocation location,
                                     CXFile *file,
                                     unsigned *line,
                                     unsigned *column) {
-  CXSourceLocationPtr Ptr
-    = CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
+  cxloc::CXSourceLocationPtr Ptr
+    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
   if (!Ptr.getPointer() || Loc.isInvalid()) {
@@ -1411,7 +1384,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
 
-  SourceLocation SLoc = translateSourceLocation(Loc);
+  SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
     SourceRange RegionOfInterest(SLoc, 
@@ -1482,24 +1455,24 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     case CXCursor_ObjCSuperClassRef: {       
       std::pair<ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCSuperClassRef(C);
-      return translateSourceLocation(P.first->getASTContext(), P.second);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCProtocolRef: {       
       std::pair<ObjCProtocolDecl *, SourceLocation> P
         = getCursorObjCProtocolRef(C);
-      return translateSourceLocation(P.first->getASTContext(), P.second);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCClassRef: {       
       std::pair<ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCClassRef(C);
-      return translateSourceLocation(P.first->getASTContext(), P.second);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_TypeRef: {       
       std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
-      return translateSourceLocation(P.first->getASTContext(), P.second);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
       
     default:
@@ -1509,7 +1482,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   }
 
   if (clang_isExpression(C.kind))
-    return translateSourceLocation(getCursorContext(C), 
+    return cxloc::translateSourceLocation(getCursorContext(C), 
                                    getLocationFromExpr(getCursorExpr(C)));
 
   if (!getCursorDecl(C)) {
@@ -1521,7 +1494,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   SourceLocation Loc = D->getLocation();
   if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
     Loc = Class->getClassLoc();
-  return translateSourceLocation(D->getASTContext(), Loc);
+  return cxloc::translateSourceLocation(D->getASTContext(), Loc);
 }
 
 CXSourceRange clang_getCursorExtent(CXCursor C) {
@@ -1530,25 +1503,25 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
       case CXCursor_ObjCSuperClassRef: {       
         std::pair<ObjCInterfaceDecl *, SourceLocation> P
           = getCursorObjCSuperClassRef(C);
-        return translateSourceRange(P.first->getASTContext(), P.second);
+        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
       }
         
       case CXCursor_ObjCProtocolRef: {       
         std::pair<ObjCProtocolDecl *, SourceLocation> P
           = getCursorObjCProtocolRef(C);
-        return translateSourceRange(P.first->getASTContext(), P.second);
+        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
       }
         
       case CXCursor_ObjCClassRef: {       
         std::pair<ObjCInterfaceDecl *, SourceLocation> P
           = getCursorObjCClassRef(C);
         
-        return translateSourceRange(P.first->getASTContext(), P.second);
+        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
       }
 
       case CXCursor_TypeRef: {       
         std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
-        return translateSourceRange(P.first->getASTContext(), P.second);
+        return cxloc::translateSourceRange(P.first->getASTContext(), P.second);
       }
         
       default:
@@ -1558,11 +1531,11 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   }
 
   if (clang_isExpression(C.kind))
-    return translateSourceRange(getCursorContext(C), 
+    return cxloc::translateSourceRange(getCursorContext(C), 
                                 getCursorExpr(C)->getSourceRange());
 
   if (clang_isStatement(C.kind))
-    return translateSourceRange(getCursorContext(C), 
+    return cxloc::translateSourceRange(getCursorContext(C), 
                                 getCursorStmt(C)->getSourceRange());
   
   if (!getCursorDecl(C)) {
@@ -1571,7 +1544,7 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   }
   
   Decl *D = getCursorDecl(C);
-  return translateSourceRange(D->getASTContext(), D->getSourceRange());
+  return cxloc::translateSourceRange(D->getASTContext(), D->getSourceRange());
 }
 
 CXCursor clang_getCursorReferenced(CXCursor C) {
