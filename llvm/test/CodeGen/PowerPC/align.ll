@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=ppc32 | \
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
 ; RUN:   grep align.4 | count 1
-; RUN: llc < %s -march=ppc32 | \
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
 ; RUN:   grep align.2 | count 1
-; RUN: llc < %s -march=ppc32 | \
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
 ; RUN:   grep align.3 | count 1
 
 @A = global <4 x i32> < i32 10, i32 20, i32 30, i32 40 >                ; <<4 x i32>*> [#uses=0]
