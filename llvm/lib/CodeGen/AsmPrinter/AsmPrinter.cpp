@@ -557,8 +557,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   // If we're emitting non-PIC code, then emit the entries as direct
   // references to the target basic blocks.
   if (MAI->getSetDirective()) {
-    O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
-      << '_' << uid << "_set_" << MBB->getNumber();
+    O << *GetJTSetSymbol(uid, MBB->getNumber());
   } else {
     O << *GetMBBSymbol(MBB->getNumber());
     // If the arch uses custom Jump Table directives, don't calc relative to
@@ -1379,6 +1378,15 @@ MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
+/// GetJTSetSymbol - Return the symbol for the specified jump table .set
+/// FIXME: privatize to AsmPrinter.
+MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << UID << "_set_" << MBBID;
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
 /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
 /// value.
 MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
@@ -1526,9 +1534,8 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     return;
   
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ','
-    << *GetMBBSymbol(MBB->getNumber())
-    << '-' << *GetJTISymbol(uid) << '\n';
+    << *GetJTSetSymbol(uid, MBB->getNumber()) << ','
+    << *GetMBBSymbol(MBB->getNumber()) << '-' << *GetJTISymbol(uid) << '\n';
 }
 
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {

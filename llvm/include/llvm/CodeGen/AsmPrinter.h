@@ -324,6 +324,10 @@ namespace llvm {
     /// GetJTISymbol - Return the symbol for the specified jump table entry.
     MCSymbol *GetJTISymbol(unsigned JTID, bool isLinkerPrivate = false) const;
 
+    /// GetJTSetSymbol - Return the symbol for the specified jump table .set
+    /// FIXME: privatize to AsmPrinter.
+    MCSymbol *GetJTSetSymbol(unsigned UID, unsigned MBBID) const;
+
     /// GetBlockAddressSymbol - Return the MCSymbol used to satisfy BlockAddress
     /// uses of the specified basic block.
     MCSymbol *GetBlockAddressSymbol(const BlockAddress *BA,
