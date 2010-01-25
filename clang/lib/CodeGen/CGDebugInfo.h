@@ -91,6 +91,12 @@ class CGDebugInfo {
                                  llvm::DICompileUnit U,
                                  llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
                                  llvm::DICompositeType &T);
+  void CollectCXXBases(const CXXRecordDecl *Decl,
+                       llvm::DICompileUnit Unit,
+                       llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                       llvm::DICompositeType &RecordTy);
+
+
   void CollectRecordFields(const RecordDecl *Decl, llvm::DICompileUnit U,
                            llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
 public:

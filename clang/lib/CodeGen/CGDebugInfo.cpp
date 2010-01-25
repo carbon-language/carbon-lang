@@ -586,6 +586,40 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
   }
 }                                 
 
+/// CollectCXXBases - A helper function to collect debug info for
+/// C++ base classes. This is used while creating debug info entry for 
+/// a Record.
+void CGDebugInfo::
+CollectCXXBases(const CXXRecordDecl *Decl,
+                llvm::DICompileUnit Unit,
+                llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                llvm::DICompositeType &RecordTy) {
+
+    const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
+    for (CXXRecordDecl::base_class_const_iterator BI = Decl->bases_begin(),
+           BE = Decl->bases_end(); BI != BE; ++BI) {
+      unsigned BFlags = 0;
+      if (BI->isVirtual())
+        BFlags = llvm::DIType::FlagVirtual;
+      AccessSpecifier Access = BI->getAccessSpecifier();
+      if (Access == clang::AS_private)
+        BFlags |= llvm::DIType::FlagPrivate;
+      else if (Access == clang::AS_protected)
+        BFlags |= llvm::DIType::FlagProtected;
+
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
+      llvm::DIType DTy =
+        DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_inheritance,
+                                       RecordTy, llvm::StringRef(), 
+                                       llvm::DICompileUnit(), 0, 0, 0,
+                                       RL.getBaseClassOffset(Base), BFlags,
+                                       getOrCreateType(BI->getType(),
+                                                       Unit));
+      EltTys.push_back(DTy);
+    }
+}
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
@@ -643,8 +677,10 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
   CollectRecordFields(Decl, Unit, EltTys);
-  if (CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl))
+  if (CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl)) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
+    CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
+  }
 
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
