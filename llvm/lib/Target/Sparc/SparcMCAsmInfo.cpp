@@ -21,7 +21,6 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT) {
   Data64bitsDirective = 0;  // .xword is only supported by V9.
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
-  COMMDirectiveTakesAlignment = true;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
