@@ -285,10 +285,11 @@ public:
   /// getUnderlyingObject - This method strips off any GEP address adjustments
   /// and pointer casts from the specified value, returning the original object
   /// being addressed.  Note that the returned value has pointer type if the
-  /// specified value does.
-  Value *getUnderlyingObject();
-  const Value *getUnderlyingObject() const {
-    return const_cast<Value*>(this)->getUnderlyingObject();
+  /// specified value does.  If the MaxLookup value is non-zero, it limits the
+  /// number of instructions to be stripped off.
+  Value *getUnderlyingObject(unsigned MaxLookup = 6);
+  const Value *getUnderlyingObject(unsigned MaxLookup = 6) const {
+    return const_cast<Value*>(this)->getUnderlyingObject(MaxLookup);
   }
   
   /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,

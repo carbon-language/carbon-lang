@@ -341,12 +341,11 @@ Value *Value::stripPointerCasts() {
   } while (1);
 }
 
-Value *Value::getUnderlyingObject() {
+Value *Value::getUnderlyingObject(unsigned MaxLookup) {
   if (!isa<PointerType>(getType()))
     return this;
   Value *V = this;
-  unsigned MaxLookup = 6;
-  do {
+  for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
@@ -359,7 +358,7 @@ Value *Value::getUnderlyingObject() {
       return V;
     }
     assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
-  } while (--MaxLookup);
+  }
   return V;
 }
 
