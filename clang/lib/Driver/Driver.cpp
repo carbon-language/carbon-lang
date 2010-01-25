@@ -50,8 +50,8 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
     Host(0),
-    CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
-    CCCGenericGCCName("gcc"), CCCUseClang(true),
+    CCCGenericGCCName("gcc"), CCCIsCXX(false), CCCEcho(false),
+    CCCPrintBindings(false), CheckInputsExist(true), CCCUseClang(true),
     CCCUseClangCXX(true), CCCUseClangCPP(true), CCCUsePCH(true),
     SuppressMissingInputWarning(false) {
   if (IsProduction) {
@@ -579,10 +579,9 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
         Ty = InputType;
       }
 
-      // Check that the file exists. It isn't clear this is worth doing, since
-      // the tool presumably does this anyway, and this just adds an extra stat
-      // to the equation, but this is gcc compatible.
-      if (memcmp(Value, "-", 2) != 0 && !llvm::sys::Path(Value).exists())
+      // Check that the file exists, if enabled.
+      if (CheckInputsExist && memcmp(Value, "-", 2) != 0 &&
+          !llvm::sys::Path(Value).exists())
         Diag(clang::diag::err_drv_no_such_file) << A->getValue(Args);
       else
         Inputs.push_back(std::make_pair(Ty, A));
