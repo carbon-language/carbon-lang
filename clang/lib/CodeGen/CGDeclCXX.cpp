@@ -80,8 +80,13 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     EmitDeclInit(*this, D, DeclPtr);
     return;
   }
-  RValue RV = EmitReferenceBindingToExpr(Init, T, /*IsInitializer=*/true);
-  EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, T);
+  if (Init->isLvalue(getContext()) == Expr::LV_Valid) {
+    RValue RV = EmitReferenceBindingToExpr(Init, T, /*IsInitializer=*/true);
+    EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, T);
+    return;
+  }
+  ErrorUnsupported(Init, 
+                   "global variable that binds reference to a non-lvalue");
 }
 
 void
