@@ -479,6 +479,11 @@ class ClangObject(object):
     def from_param(self):
         return self._as_parameter_
 
+
+class _CXUnsavedFile(Structure):
+    """Helper for passing unsaved file arguments."""
+    _fields_ = [("name", c_char_p), ("contents", c_char_p), ('length', c_ulong)]
+
 class Index(ClangObject):
     """
     The Index type provides the primary interface to the Clang CIndex library,
@@ -503,13 +508,18 @@ class Index(ClangObject):
         """Load the translation unit from the given AST file."""
         return TranslationUnit.read(self, path)
 
-    def parse(self, path, args = []):
+    def parse(self, path, args = [], unsaved_files = []):
         """
         Load the translation unit from the given source code file by running
         clang and generating the AST before loading. Additional command line
         parameters can be passed to clang via the args parameter.
+
+        In-memory contents for files can be provided by passing a list of pairs
+        to as unsaved_files, the first item should be the filenames to be mapped
+        and the second should be the contents to be substituted for the
+        file. The contents may be passed as strings or file objects.
         """
-        return TranslationUnit.parse(self, path, args)
+        return TranslationUnit.parse(self, path, args, unsaved_files)
 
 
 class TranslationUnit(ClangObject):
@@ -549,7 +559,12 @@ class TranslationUnit(ClangObject):
             arg_array = (c_char_p * len(args))(* args)
         unsaved_files_array = 0
         if len(unsaved_files):
-            raise NotImplementedError,'Unsaved files not yet implemented.'
+            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
+            for i,(name,value) in enumerate(unsaved_files):
+                # FIXME: Support file objects.
+                unsaved_files_array[i].name = name
+                unsaved_files_array[i].contents = value
+                unsaved_files_array[i].length = len(value)
         ptr = TranslationUnit_parse(ix, path, len(args), arg_array,
                                     len(unsaved_files), unsaved_files_array)
         return TranslationUnit(ptr) if ptr else None

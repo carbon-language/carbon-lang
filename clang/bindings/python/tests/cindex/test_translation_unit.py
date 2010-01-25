@@ -24,3 +24,20 @@ def test_parse_arguments():
     spellings = [c.spelling for c in tu.cursor.get_children()]
     assert spellings[-2] == 'hello'
     assert spellings[-1] == 'hi'
+
+def test_unsaved_files():
+    index = Index.create()
+    # FIXME: Why can't we just use "fake.h" here (instead of /tmp/fake.h)?
+    tu = index.parse('fake.c', unsaved_files = [
+            ('fake.c', """
+#include "/tmp/fake.h"
+int x;
+int SOME_DEFINE;
+"""),
+            ('/tmp/fake.h', """
+#define SOME_DEFINE y
+""")
+            ])
+    spellings = [c.spelling for c in tu.cursor.get_children()]
+    assert spellings[-2] == 'x'
+    assert spellings[-1] == 'y'
