@@ -275,6 +275,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   EmitGlobalConstant(GV->getInitializer());
 
   if (MAI->hasDotTypeDotSizeDirective())
+    // .size foo, 42
     OutStreamer.EmitELFSize(GVSym, MCConstantExpr::Create(Size, OutContext));
   
   OutStreamer.AddBlankLine();
