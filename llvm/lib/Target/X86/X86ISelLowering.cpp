@@ -1094,8 +1094,6 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
 /// jumptable.
 SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                       SelectionDAG &DAG) const {
-  if (usesGlobalOffsetTable())
-    return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
   if (!Subtarget->is64Bit())
     // This doesn't have DebugLoc associated with it, but is not really the
     // same as a Register.
