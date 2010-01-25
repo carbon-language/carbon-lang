@@ -1498,30 +1498,21 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
 
   CharUnits offset = CGF->BlockDecls[Decl];
   llvm::SmallVector<llvm::Value *, 9> addr;
-  llvm::LLVMContext &VMContext = CGM.getLLVMContext();
-  addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                        llvm::DIFactory::OpDeref));
-  addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                        llvm::DIFactory::OpPlus));
-  addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                        offset.getQuantity()));
+  const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
+  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
+  addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+  addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   if (BDRE->isByRef()) {
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          llvm::DIFactory::OpDeref));
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          llvm::DIFactory::OpPlus));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
     // offset of __forwarding field
     offset = CharUnits::fromQuantity(CGF->LLVMPointerWidth/8);
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          offset.getQuantity()));
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          llvm::DIFactory::OpDeref));
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          llvm::DIFactory::OpPlus));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
     // offset of x field
     offset = CharUnits::fromQuantity(XOffset/8);
-    addr.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                          offset.getQuantity()));
+    addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   }
 
   // Create the descriptor for the variable.

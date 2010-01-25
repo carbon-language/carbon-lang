@@ -777,10 +777,9 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   if (CGDebugInfo *DI = getDebugInfo()) {
     // Emit debug information for all the BlockDeclRefDecls.
-    for (unsigned i=0; i < BlockDeclRefDecls.size(); ++i) {
-      const Expr *E = BlockDeclRefDecls[i];
-      const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
-      if (BDRE) {
+    for (unsigned i = 0, e = BlockDeclRefDecls.size(); i != e; ++i) {
+      if (const BlockDeclRefExpr *BDRE = 
+            dyn_cast<BlockDeclRefExpr>(BlockDeclRefDecls[i])) {
         const ValueDecl *D = BDRE->getDecl();
         DI->setLocation(D->getLocation());
         DI->EmitDeclareOfBlockDeclRefVariable(BDRE,
