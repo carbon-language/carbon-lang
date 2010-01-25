@@ -254,7 +254,7 @@ void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment) {
   OS << "\t.comm\t" << *Symbol << ',' << Size;
-  if (ByteAlignment != 0 && MAI.getCOMMDirectiveTakesAlignment()) {
+  if (ByteAlignment != 0) {
     if (MAI.getAlignmentIsInBytes())
       OS << ',' << ByteAlignment;
     else

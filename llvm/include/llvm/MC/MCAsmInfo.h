@@ -195,10 +195,6 @@ namespace llvm {
     /// directive.
     bool HasLCOMMDirective;              // Defaults to false.
     
-    /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
-    /// argument that specifies the alignment of the declaration.
-    bool COMMDirectiveTakesAlignment;        // Defaults to true.
-    
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;         // Defaults to true.
@@ -400,9 +396,6 @@ namespace llvm {
       return SetDirective;
     }
     bool hasLCOMMDirective() const { return HasLCOMMDirective; }
-    bool getCOMMDirectiveTakesAlignment() const {
-      return COMMDirectiveTakesAlignment;
-    }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
     bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
