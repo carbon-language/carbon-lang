@@ -922,7 +922,7 @@ MCSymbol *ARMAsmPrinter::
 GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
-    << getFunctionNumber() << '_' << uid << '_' << uid2 << '\n';
+    << getFunctionNumber() << '_' << uid << '_' << uid2;
   return OutContext.GetOrCreateSymbol(Name.str());
 }
 
