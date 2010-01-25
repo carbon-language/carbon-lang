@@ -11,7 +11,6 @@ void f(int x) {
 }
 
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
-// CHECK: load-stmts.cpp:3:6: UnexposedStmt= [Extent=3:15:11:1]
 // CHECK: load-stmts.cpp:3:6: UnexposedStmt= [Extent=4:3:5:3]
 // CHECK: load-stmts.cpp:3:6: UnexposedStmt= [Extent=4:8:4:15]
 // CHECK: load-stmts.cpp:4:10: VarDecl=y:4:10 (Definition) [Extent=4:8:4:14]
