@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_CXCURSOR_H
-#define LLVM_CLANG_CXCursor_H
+#define LLVM_CLANG_CXCURSOR_H
 
 #include "clang-c/Index.h"
 #include "clang/Basic/SourceLocation.h"
