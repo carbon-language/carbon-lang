@@ -41,3 +41,11 @@ int SOME_DEFINE;
     spellings = [c.spelling for c in tu.cursor.get_children()]
     assert spellings[-2] == 'x'
     assert spellings[-1] == 'y'
+
+def test_unsaved_files_2():
+    import StringIO
+    index = Index.create()
+    tu = index.parse('fake.c', unsaved_files = [
+            ('fake.c', StringIO.StringIO('int x;'))])
+    spellings = [c.spelling for c in tu.cursor.get_children()]
+    assert spellings[-1] == 'x'

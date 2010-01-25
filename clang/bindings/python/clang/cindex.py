@@ -553,7 +553,6 @@ class TranslationUnit(ClangObject):
         Construct a translation unit from the given source file, using
         the given command line argument.
         """
-        # TODO: Support unsaved files.
         arg_array = 0
         if len(args):
             arg_array = (c_char_p * len(args))(* args)
@@ -561,7 +560,13 @@ class TranslationUnit(ClangObject):
         if len(unsaved_files):
             unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
             for i,(name,value) in enumerate(unsaved_files):
-                # FIXME: Support file objects.
+                if not isinstance(value, str):
+                    # FIXME: It would be great to support an efficient version
+                    # of this, one day.
+                    value = value.read()
+                    print value
+                if not isinstance(value, str):
+                    raise TypeError,'Unexpected unsaved file contents.'
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
