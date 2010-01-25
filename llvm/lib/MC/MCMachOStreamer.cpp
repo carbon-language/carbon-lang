@@ -139,6 +139,14 @@ public:
                                     unsigned MaxBytesToEmit = 0);
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
+  
+  virtual void EmitFileDirective(StringRef Filename) {
+    errs() << "FIXME: MCMachoStreamer:EmitFileDirective not implemented\n";
+  }
+  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename) {
+    errs() << "FIXME: MCMachoStreamer:EmitDwarfFileDirective not implemented\n";
+  }
+  
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void Finish();
 

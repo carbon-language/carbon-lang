@@ -115,11 +115,11 @@ bool AsmPrinter::doInitialization(Module &M) {
   // Allow the target to emit any magic that it wants at the start of the file.
   EmitStartOfAsmFile(M);
 
+  // Very minimal debug info. It is ignored if we emit actual debug info. If we
+  // don't, this at least helps the user find where a global came from.
   if (MAI->hasSingleParameterDotFile()) {
-    // Very minimal debug info. It is ignored if we emit actual
-    // debug info. If we don't, this at least helps the user find where
-    // a function came from.
-    O << "\t.file\t\"" << M.getModuleIdentifier() << "\"\n";
+    // .file "foo.c"
+    OutStreamer.EmitFileDirective(M.getModuleIdentifier());
   }
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
@@ -236,6 +236,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
       // .globl _foo
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+      // FIXME: linkonce should be a section attribute, handled by COFF Section
+      // assignment.
+      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
       // .linkonce same_size
       O << LinkOnce;
     } else {
@@ -678,48 +681,6 @@ void AsmPrinter::EmitInt32(int Value) const {
 void AsmPrinter::EmitInt64(uint64_t Value) const {
   OutStreamer.EmitIntValue(Value, 8, 0/*addrspace*/);
 }
-
-
-/// toOctal - Convert the low order bits of X into an octal digit.
-///
-static inline char toOctal(int X) {
-  return (X&7)+'0';
-}
-
-/// printStringChar - Print a char, escaped if necessary.
-///
-static void printStringChar(formatted_raw_ostream &O, unsigned char C) {
-  if (C == '"') {
-    O << "\\\"";
-  } else if (C == '\\') {
-    O << "\\\\";
-  } else if (isprint((unsigned char)C)) {
-    O << C;
-  } else {
-    switch(C) {
-    case '\b': O << "\\b"; break;
-    case '\f': O << "\\f"; break;
-    case '\n': O << "\\n"; break;
-    case '\r': O << "\\r"; break;
-    case '\t': O << "\\t"; break;
-    default:
-      O << '\\';
-      O << toOctal(C >> 6);
-      O << toOctal(C >> 3);
-      O << toOctal(C >> 0);
-      break;
-    }
-  }
-}
-
-/// EmitFile - Emit a .file directive.
-void AsmPrinter::EmitFile(unsigned Number, StringRef Name) const {
-  O << "\t.file\t" << Number << " \"";
-  for (unsigned i = 0, N = Name.size(); i < N; ++i)
-    printStringChar(O, Name[i]);
-  O << '\"';
-}
-
 
 //===----------------------------------------------------------------------===//
 

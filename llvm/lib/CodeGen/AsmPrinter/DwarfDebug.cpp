@@ -1779,8 +1779,7 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
         FullPath.appendComponent(getSourceFileName(Id.second));
       assert(AppendOk && "Could not append filename to directory!");
       AppendOk = false;
-      Asm->EmitFile(i, FullPath.str());
-      Asm->O << '\n';
+      Asm->OutStreamer.EmitDwarfFileDirective(i, FullPath.str());
     }
   }
 

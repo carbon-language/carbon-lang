@@ -265,9 +265,6 @@ namespace llvm {
     ///
     void EmitInt64(uint64_t Value) const;
 
-    /// EmitFile - Emit a .file directive.
-    void EmitFile(unsigned Number, StringRef Name) const;
-
     //===------------------------------------------------------------------===//
 
     /// EmitAlignment - Emit an alignment directive to the specified power of

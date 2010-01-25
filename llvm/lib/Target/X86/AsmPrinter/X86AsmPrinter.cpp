@@ -96,6 +96,9 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
       O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
     } else if (Subtarget->isTargetCygMing()) {
       OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
+      // FIXME: linkonce should be a section attribute, handled by COFF Section
+      // assignment.
+      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
       O << "\t.linkonce discard\n";
     } else {
       O << "\t.weak\t" << *CurrentFnSym << '\n';
@@ -105,7 +108,7 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  if (Subtarget->isTargetELF()) {
+  if (MAI->hasDotTypeDotSizeDirective()) {
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
   } else if (Subtarget->isTargetCygMing()) {
     O << "\t.def\t " << *CurrentFnSym;

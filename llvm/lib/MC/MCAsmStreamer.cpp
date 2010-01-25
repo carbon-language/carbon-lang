@@ -120,9 +120,12 @@ public:
 
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
-  
-  virtual void EmitInstruction(const MCInst &Inst);
 
+  virtual void EmitFileDirective(StringRef Filename);
+  virtual void EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
+
+  virtual void EmitInstruction(const MCInst &Inst);
+  
   virtual void Finish();
   
   /// @}
@@ -320,6 +323,40 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
 static inline char toOctal(int X) { return (X&7)+'0'; }
 
+static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
+  OS << '"';
+  
+  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+    unsigned char C = Data[i];
+    if (C == '"' || C == '\\') {
+      OS << '\\' << (char)C;
+      continue;
+    }
+    
+    if (isprint((unsigned char)C)) {
+      OS << (char)C;
+      continue;
+    }
+    
+    switch (C) {
+      case '\b': OS << "\\b"; break;
+      case '\f': OS << "\\f"; break;
+      case '\n': OS << "\\n"; break;
+      case '\r': OS << "\\r"; break;
+      case '\t': OS << "\\t"; break;
+      default:
+        OS << '\\';
+        OS << toOctal(C >> 6);
+        OS << toOctal(C >> 3);
+        OS << toOctal(C >> 0);
+        break;
+    }
+  }
+  
+  OS << '"';
+}
+
+
 void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   if (Data.empty()) return;
@@ -340,34 +377,8 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
     OS << MAI.getAsciiDirective();
   }
 
-  OS << " \"";
-  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-    unsigned char C = Data[i];
-    if (C == '"' || C == '\\') {
-      OS << '\\' << (char)C;
-      continue;
-    }
-    
-    if (isprint((unsigned char)C)) {
-      OS << (char)C;
-      continue;
-    }
-    
-    switch (C) {
-    case '\b': OS << "\\b"; break;
-    case '\f': OS << "\\f"; break;
-    case '\n': OS << "\\n"; break;
-    case '\r': OS << "\\r"; break;
-    case '\t': OS << "\\t"; break;
-    default:
-      OS << '\\';
-      OS << toOctal(C >> 6);
-      OS << toOctal(C >> 3);
-      OS << toOctal(C >> 0);
-      break;
-    }
-  }
-  OS << '"';
+  OS << ' ';
+  PrintQuotedString(Data, OS);
   EmitEOL();
 }
 
@@ -491,6 +502,21 @@ void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
   OS << ".org " << *Offset << ", " << (unsigned) Value;
   EmitEOL();
 }
+
+
+void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
+  assert(MAI.hasSingleParameterDotFile());
+  OS << "\t.file\t";
+  PrintQuotedString(Filename, OS);
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
+  OS << "\t.file\t" << FileNo << ' ';
+  PrintQuotedString(Filename, OS);
+  EmitEOL();
+}
+
 
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");

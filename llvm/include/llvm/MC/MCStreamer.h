@@ -233,6 +233,15 @@ namespace llvm {
                                    unsigned char Value = 0) = 0;
     
     /// @}
+    
+    /// EmitFileDirective - Switch to a new logical file.  This is used to
+    /// implement the '.file "foo.c"' assembler directive.
+    virtual void EmitFileDirective(StringRef Filename) = 0;
+    
+    /// EmitDwarfFileDirective - Associate a filename with a specified logical
+    /// file number.  This implements the DWARF2 '.file 4 "foo.c"' assembler
+    /// directive.
+    virtual void EmitDwarfFileDirective(unsigned FileNo,StringRef Filename) = 0;
 
     /// EmitInstruction - Emit the given @param Instruction into the current
     /// section.
