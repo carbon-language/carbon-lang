@@ -206,7 +206,8 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   TD = ((ARMTargetMachine&)MF.getTarget()).getTargetData();
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   MCPEs = &MF.getConstantPool()->getConstants();
-  MJTEs = &MF.getJumpTableInfo()->getJumpTables();
+  MJTEs = 0;
+  if (MF.getJumpTableInfo()) MJTEs = &MF.getJumpTableInfo()->getJumpTables();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
   JTI->Initialize(MF, IsPIC);
   MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());

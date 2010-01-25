@@ -1624,6 +1624,8 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   // FIXME: After the tables are shrunk, can we get rid some of the
   // constantpool tables?
   MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
+  if (MJTI == 0) return false;
+  
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
@@ -1730,6 +1732,8 @@ bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
   bool MadeChange = false;
 
   MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
+  if (MJTI == 0) return false;
+  
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];

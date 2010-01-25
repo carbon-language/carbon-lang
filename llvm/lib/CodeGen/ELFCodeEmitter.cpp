@@ -62,7 +62,8 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
   // They need to be emitted before the function because in some targets
   // the later may reference JT or CP entry address.
   emitConstantPool(MF.getConstantPool());
-  emitJumpTables(MF.getJumpTableInfo());
+  if (MF.getJumpTableInfo())
+    emitJumpTables(MF.getJumpTableInfo());
 }
 
 /// finishFunction - This callback is invoked after the function is completely
@@ -84,7 +85,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
 
   // Patch up Jump Table Section relocations to use the real MBBs offsets
   // now that the MBB label offsets inside the function are known.
-  if (!MF.getJumpTableInfo()->isEmpty()) {
+  if (MF.getJumpTableInfo()) {
     ELFSection &JTSection = EW.getJumpTableSection();
     for (std::vector<MachineRelocation>::iterator MRI = JTRelocations.begin(),
          MRE = JTRelocations.end(); MRI != MRE; ++MRI) {
@@ -172,7 +173,7 @@ void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
          "PIC codegen not yet handled for elf jump tables!");
 
   const TargetELFWriterInfo *TEW = TM.getELFWriterInfo();
-  unsigned EntrySize = MJTI->getEntrySize();
+  unsigned EntrySize = 4; //MJTI->getEntrySize();
 
   // Get the ELF Section to emit the jump table
   ELFSection &JTSection = EW.getJumpTableSection();
