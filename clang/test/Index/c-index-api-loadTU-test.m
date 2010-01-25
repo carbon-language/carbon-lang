@@ -65,7 +65,7 @@ int main (int argc, const char * argv[]) {
 // CHECK: <invalid loc>:87:81: FieldDecl=overflow_arg_area:87:81 (Definition)
 // CHECK: <invalid loc>:87:107: FieldDecl=reg_save_area:87:107 (Definition)
 // CHECK: <invalid loc>:87:123: TypedefDecl=__va_list_tag:87:123 (Definition)
-// CHECK: <invalid loc>:87:9: TypeRef=struct __va_list_tag:87:16
+// CHECK: <invalid loc>:87:16: TypeRef=struct __va_list_tag:87:16
 // CHECK: <invalid loc>:87:159: TypedefDecl=__builtin_va_list:87:159 (Definition)
 // CHECK: <invalid loc>:87:145: TypeRef=__va_list_tag:87:123
 // CHECK: <invalid loc>:87:177: UnexposedExpr=

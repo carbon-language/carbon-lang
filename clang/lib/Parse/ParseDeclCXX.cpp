@@ -917,7 +917,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   const char *PrevSpec = 0;
   unsigned DiagID;
 
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, DiagID,
+  // FIXME: The DeclSpec should keep the locations of both the keyword and the
+  // name (if there is one).
+  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
+  
+  if (DS.SetTypeSpecType(TagType, TSTLoc, PrevSpec, DiagID,
                          Result, Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
 }

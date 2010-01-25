@@ -1878,10 +1878,12 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
 
-  // TODO: semantic analysis on the declspec for enums.
+  // FIXME: The DeclSpec should keep the locations of both the keyword and the
+  // name (if there is one).
+  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
   const char *PrevSpec = 0;
   unsigned DiagID;
-  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc, PrevSpec, DiagID,
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, TSTLoc, PrevSpec, DiagID,
                          TagDecl.getAs<void>(), Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
 }

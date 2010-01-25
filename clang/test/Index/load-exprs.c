@@ -10,4 +10,5 @@ void f(void *ptr) {
 
 // CHECK: load-exprs.c:4:15: TypeRef=T:1:13 [Extent=4:15:4:15]
 // CHECK: load-exprs.c:5:16: TypeRef=T:1:13 [Extent=5:16:5:16]
-// FIXME: the source location for "struct X" points at "struct", not "X"
+// CHECK: load-exprs.c:6:10: TypeRef=struct X:2:8 [Extent=6:10:6:10]
+// CHECK: load-exprs.c:6:24: TypeRef=struct X:2:8 [Extent=6:24:6:24]
