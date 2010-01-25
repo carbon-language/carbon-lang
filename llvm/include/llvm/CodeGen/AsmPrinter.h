@@ -365,8 +365,6 @@ namespace llvm {
     /// specified MachineBasicBlock for a jumptable entry.
     virtual void printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const;
-    virtual void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
-                                           const MachineBasicBlock *MBB) const;
     virtual void printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         const MachineBasicBlock *MBB,
                                         unsigned uid) const;

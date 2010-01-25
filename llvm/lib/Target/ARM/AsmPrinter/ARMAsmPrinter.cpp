@@ -167,6 +167,9 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
 
+    virtual void printPICJumpTableSetLabel2(unsigned uid, unsigned uid2,
+                                            const MachineBasicBlock *MBB) const;
+
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
@@ -904,6 +907,19 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
   }
 }
 
+void ARMAsmPrinter::printPICJumpTableSetLabel2(unsigned uid, unsigned uid2,
+                                           const MachineBasicBlock *MBB) const {
+  if (!MAI->getSetDirective())
+    return;
+  
+  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << uid << '_' << uid2
+    << "_set_" << MBB->getNumber() << ','
+    << *GetMBBSymbol(MBB->getNumber())
+    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    << '_' << uid << '_' << uid2 << '\n';
+}
+
 void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   assert(!Subtarget->isThumb2() && "Thumb2 should use double-jump jumptables!");
 
@@ -927,7 +943,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
     bool isNew = JTSets.insert(MBB);
 
     if (UseSet && isNew)
-      printPICJumpTableSetLabel(JTI, MO2.getImm(), MBB);
+      printPICJumpTableSetLabel2(JTI, MO2.getImm(), MBB);
 
     O << JTEntryDirective << ' ';
     if (UseSet)

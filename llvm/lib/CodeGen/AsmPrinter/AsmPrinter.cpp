@@ -1529,19 +1529,6 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     << '-' << *GetJTISymbol(uid) << '\n';
 }
 
-void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
-                                           const MachineBasicBlock *MBB) const {
-  if (!MAI->getSetDirective())
-    return;
-  
-  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << '_' << uid2
-    << "_set_" << MBB->getNumber() << ','
-    << *GetMBBSymbol(MBB->getNumber())
-    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-    << '_' << uid << '_' << uid2 << '\n';
-}
-
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {
   MCSymbolAttr Attr = MCSA_Invalid;
   
