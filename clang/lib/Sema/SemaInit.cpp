@@ -66,38 +66,6 @@ static Expr *IsStringInit(Expr *Init, QualType DeclType, ASTContext &Context) {
   return 0;
 }
 
-static Sema::OwningExprResult 
-CheckSingleInitializer(const InitializedEntity &Entity,
-                       Sema::OwningExprResult Init, QualType DeclType, Sema &S){
-  assert(Entity.getType() == DeclType);
-  Expr *InitExpr = Init.takeAs<Expr>();
-
-  // Get the type before calling CheckSingleAssignmentConstraints(), since
-  // it can promote the expression.
-  QualType InitType = InitExpr->getType();
-
-  if (S.getLangOptions().CPlusPlus) {
-    // C++ [dcl.init.aggr]p2:
-    //   Each member is copy-initialized from the corresponding
-    //   initializer-clause.
-    // FIXME: Use a better EqualLoc here.
-    Sema::OwningExprResult Result = 
-      S.PerformCopyInitialization(Entity, InitExpr->getLocStart(),
-                                  S.Owned(InitExpr));
-
-      return move(Result);
-  }
-
-  Sema::AssignConvertType ConvTy =
-    S.CheckSingleAssignmentConstraints(DeclType, InitExpr);
-  if (S.DiagnoseAssignmentResult(ConvTy, InitExpr->getLocStart(), DeclType,
-                                 InitType, InitExpr, Sema::AA_Initializing))
-    return S.ExprError();
-
-  Init.release();
-  return S.Owned(InitExpr);
-}
-
 static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
   // Get the length of the string as parsed.
   uint64_t StrLength =
@@ -771,7 +739,8 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
     }
 
     Sema::OwningExprResult Result =
-      CheckSingleInitializer(Entity, SemaRef.Owned(expr), DeclType, SemaRef);
+      SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
+                                        SemaRef.Owned(expr));
 
     Expr *ResultExpr;
 
