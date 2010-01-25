@@ -17,6 +17,6 @@ using namespace llvm;
 AlphaMCAsmInfo::AlphaMCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = false;
   PrivateGlobalPrefix = "$";
-  PICJumpTableDirective = ".gprel32";
+  GPRel32Directive = ".gprel32";
   WeakRefDirective = "\t.weak\t";
 }

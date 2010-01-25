@@ -134,6 +134,11 @@ namespace llvm {
     const char *Data32bitsDirective;         // Defaults to "\t.long\t"
     const char *Data64bitsDirective;         // Defaults to "\t.quad\t"
 
+    /// GPRel32Directive - if non-null, a directive that is used to emit a word
+    /// which should be relocated as a 32-bit GP-relative offset, e.g. .gpword
+    /// on Mips or .gprel32 on Alpha.
+    const char *GPRel32Directive;            // Defaults to NULL.
+    
     /// getDataASDirective - Return the directive that should be used to emit
     /// data of the specified size to the specified numeric address space.
     virtual const char *getDataASDirective(unsigned Size, unsigned AS) const {
@@ -167,13 +172,6 @@ namespace llvm {
     /// TextAlignFillValue - If non-zero, this is used to fill the executable
     /// space created as the result of a alignment directive.
     unsigned TextAlignFillValue;             // Defaults to 0
-
-    //===--- Section Switching Directives ---------------------------------===//
-    
-    /// PICJumpTableDirective - if non-null, the directive to emit before jump
-    /// table entries.  FIXME: REMOVE THIS.
-    const char *PICJumpTableDirective;       // Defaults to NULL.
-
 
     //===--- Global Variable Emission Directives --------------------------===//
     
@@ -300,6 +298,7 @@ namespace llvm {
     const char *getData64bitsDirective(unsigned AS = 0) const {
       return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
+    const char *getGPRel32Directive() const { return GPRel32Directive; }
 
     /// getNonexecutableStackSection - Targets can implement this method to
     /// specify a section to switch to if the translation unit doesn't have any
@@ -372,9 +371,6 @@ namespace llvm {
     }
     const char *getAscizDirective() const {
       return AscizDirective;
-    }
-    const char *getPICJumpTableDirective() const {
-      return PICJumpTableDirective;
     }
     const char *getAlignDirective() const {
       return AlignDirective;

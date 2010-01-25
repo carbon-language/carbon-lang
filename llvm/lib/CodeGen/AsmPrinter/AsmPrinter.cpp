@@ -541,15 +541,14 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         const MachineBasicBlock *MBB,
                                         unsigned uid)  const {
-  // Use JumpTableDirective otherwise honor the entry size from the jump table
-  // info.
-  const char *JTEntryDirective = MAI->getPICJumpTableDirective();
-  bool HadJTEntryDirective = JTEntryDirective != NULL;
-  if (!HadJTEntryDirective) {
-    JTEntryDirective = MJTI->getEntrySize() == 4 ?
-      MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
+  // If the target supports GPRel, use it.
+  if (const char *GPRel32Dir = MAI->getGPRel32Directive()) {
+    O << GPRel32Dir << *GetMBBSymbol(MBB->getNumber()) << '\n';
+    return;
   }
 
+  const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
+     MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
   O << JTEntryDirective << ' ';
 
   // If we have emitted set directives for the jump table entries, print 
@@ -564,8 +563,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     O << *GetMBBSymbol(MBB->getNumber());
     // If the arch uses custom Jump Table directives, don't calc relative to
     // JT.
-    if (!HadJTEntryDirective) 
-      O << '-' << *GetJTISymbol(uid);
+    O << '-' << *GetJTISymbol(uid);
   }
   O << '\n';
 }

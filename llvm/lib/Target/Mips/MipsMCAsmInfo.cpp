@@ -22,5 +22,5 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
   PrivateGlobalPrefix         = "$";
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
-  PICJumpTableDirective       = "\t.gpword\t";
+  GPRel32Directive            = "\t.gpword\t";
 }

@@ -48,7 +48,7 @@ MCAsmInfo::MCAsmInfo() {
   AlignDirective = "\t.align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
-  PICJumpTableDirective = 0;
+  GPRel32Directive = 0;
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
   HasLCOMMDirective = false;
