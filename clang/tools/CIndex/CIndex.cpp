@@ -292,6 +292,8 @@ public:
   // FIXME: LabelStmt label?
   bool VisitIfStmt(IfStmt *S);
   bool VisitSwitchStmt(SwitchStmt *S);
+  bool VisitWhileStmt(WhileStmt *S);
+  bool VisitForStmt(ForStmt *S);
   
   // Expression visitors
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
@@ -793,7 +795,7 @@ bool CursorVisitor::VisitStmt(Stmt *S) {
 bool CursorVisitor::VisitDeclStmt(DeclStmt *S) {
   for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
        D != DEnd; ++D) {
-    if (Visit(MakeCXCursor(*D, TU)))
+    if (*D && Visit(MakeCXCursor(*D, TU)))
       return true;
   }
   
@@ -804,12 +806,12 @@ bool CursorVisitor::VisitIfStmt(IfStmt *S) {
   if (VarDecl *Var = S->getConditionVariable()) {
     if (Visit(MakeCXCursor(Var, TU)))
       return true;
-  } else if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
-    return true;
+  } 
   
+  if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
   if (S->getThen() && Visit(MakeCXCursor(S->getThen(), StmtParent, TU)))
     return true;
-
   if (S->getElse() && Visit(MakeCXCursor(S->getElse(), StmtParent, TU)))
     return true;
 
@@ -820,9 +822,42 @@ bool CursorVisitor::VisitSwitchStmt(SwitchStmt *S) {
   if (VarDecl *Var = S->getConditionVariable()) {
     if (Visit(MakeCXCursor(Var, TU)))
       return true;
-  } else if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+  } 
+  
+  if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
+  if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
+    return true;
+  
+  return false;
+}
+
+bool CursorVisitor::VisitWhileStmt(WhileStmt *S) {
+  if (VarDecl *Var = S->getConditionVariable()) {
+    if (Visit(MakeCXCursor(Var, TU)))
+      return true;
+  } 
+  
+  if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
+  if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
     return true;
 
+  return false;
+}
+
+bool CursorVisitor::VisitForStmt(ForStmt *S) {
+  if (S->getInit() && Visit(MakeCXCursor(S->getInit(), StmtParent, TU)))
+    return true;
+  if (VarDecl *Var = S->getConditionVariable()) {
+    if (Visit(MakeCXCursor(Var, TU)))
+      return true;
+  } 
+  
+  if (S->getCond() && Visit(MakeCXCursor(S->getCond(), StmtParent, TU)))
+    return true;
+  if (S->getInc() && Visit(MakeCXCursor(S->getInc(), StmtParent, TU)))
+    return true;
   if (S->getBody() && Visit(MakeCXCursor(S->getBody(), StmtParent, TU)))
     return true;
   
