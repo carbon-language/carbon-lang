@@ -53,11 +53,9 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
 }
 
 ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
-  AlignmentIsInBytes = false;
   Data64bitsDirective = 0;
   CommentString = "@";
-  COMMDirectiveTakesAlignment = false;
-  
+
   NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
