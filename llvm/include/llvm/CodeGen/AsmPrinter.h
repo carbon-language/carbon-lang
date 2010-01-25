@@ -234,7 +234,7 @@ namespace llvm {
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
     ///
-    void EmitJumpTableInfo(MachineJumpTableInfo *MJTI, MachineFunction &MF);
+    void EmitJumpTableInfo(MachineFunction &MF);
     
     /// EmitGlobalVariable - Emit the specified global variable to the .s file.
     virtual void EmitGlobalVariable(const GlobalVariable *GV);

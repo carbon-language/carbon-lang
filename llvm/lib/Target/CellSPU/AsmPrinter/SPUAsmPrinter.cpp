@@ -458,7 +458,7 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.size\t" << *CurrentFnSym << ",.-" << *CurrentFnSym << "\n";
 
   // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  EmitJumpTableInfo(MF);
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);

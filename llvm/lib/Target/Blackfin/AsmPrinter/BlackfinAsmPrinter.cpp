@@ -96,7 +96,7 @@ void BlackfinAsmPrinter::emitLinkage(const MCSymbol *GVSym,
 bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   EmitConstantPool(MF.getConstantPool());
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  EmitJumpTableInfo(MF);
 
   const Function *F = MF.getFunction();
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));

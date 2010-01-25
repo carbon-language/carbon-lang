@@ -671,7 +671,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  EmitJumpTableInfo(MF);
 
   // We didn't modify anything.
   return false;
@@ -765,7 +765,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  EmitJumpTableInfo(MF);
 
   // We didn't modify anything.
   return false;

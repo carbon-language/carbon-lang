@@ -133,7 +133,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  EmitJumpTableInfo(MF);
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
