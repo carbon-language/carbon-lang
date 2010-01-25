@@ -1708,14 +1708,18 @@ bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (Lexer.isNot(AsmToken::String))
     return TokError("unexpected token in '.file' directive");
   
-  StringRef ATTRIBUTE_UNUSED FileName = getTok().getString();
+  StringRef Filename = getTok().getString();
+  Filename = Filename.substr(1, Filename.size()-2);
   Lex();
 
   if (Lexer.isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.file' directive");
 
-  // FIXME: Do something with the .file.
-
+  if (FileNumber == -1)
+    Out.EmitFileDirective(Filename);
+  else
+    Out.EmitDwarfFileDirective(FileNumber, Filename);
+  
   return false;
 }
 
