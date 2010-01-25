@@ -44,7 +44,6 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
   AsmTransCBE = arm_asm_table;
   Data64bitsDirective = 0;
   CommentString = "@";
-  COMMDirectiveTakesAlignment = false;
   SupportsDebugInformation = true;
 
   // Exceptions handling
