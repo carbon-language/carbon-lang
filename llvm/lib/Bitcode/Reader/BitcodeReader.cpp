@@ -1702,12 +1702,12 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         if (Opc == Instruction::Add ||
             Opc == Instruction::Sub ||
             Opc == Instruction::Mul) {
-          if (Record[3] & (1 << bitc::OBO_NO_SIGNED_WRAP))
+          if (Record[OpNum] & (1 << bitc::OBO_NO_SIGNED_WRAP))
             cast<BinaryOperator>(I)->setHasNoSignedWrap(true);
-          if (Record[3] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
+          if (Record[OpNum] & (1 << bitc::OBO_NO_UNSIGNED_WRAP))
             cast<BinaryOperator>(I)->setHasNoUnsignedWrap(true);
         } else if (Opc == Instruction::SDiv) {
-          if (Record[3] & (1 << bitc::SDIV_EXACT))
+          if (Record[OpNum] & (1 << bitc::SDIV_EXACT))
             cast<BinaryOperator>(I)->setIsExact(true);
         }
       }
