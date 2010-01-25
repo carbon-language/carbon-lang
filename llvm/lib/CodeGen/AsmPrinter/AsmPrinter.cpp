@@ -156,13 +156,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   MCSymbol *GVSym = GetGlobalValueSymbol(GV);
   printVisibility(GVSym, GV->getVisibility());
 
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    O << "\t.type\t" << *GVSym;
-    if (MAI->getCommentString()[0] != '@')
-      O << ",@object\n";
-    else
-      O << ",%object\n";
-  }
+  if (MAI->hasDotTypeDotSizeDirective())
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
   
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
 

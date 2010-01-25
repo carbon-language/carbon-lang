@@ -106,7 +106,7 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   printVisibility(CurrentFnSym, F->getVisibility());
 
   if (Subtarget->isTargetELF()) {
-    O << "\t.type\t" << *CurrentFnSym << ",@function\n";
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
   } else if (Subtarget->isTargetCygMing()) {
     O << "\t.def\t " << *CurrentFnSym;
     O << ";\t.scl\t" <<
