@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/BugReporter.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Checker/LocalCheckers.h"
 

@@ -14,8 +14,8 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/Checker/PathSensitive/BugReporter.h"
-#include "clang/Checker/PathDiagnostic.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 
 using namespace clang;

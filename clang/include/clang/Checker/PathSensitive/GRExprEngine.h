@@ -22,7 +22,7 @@
 #include "clang/Checker/PathSensitive/GRState.h"
 #include "clang/Checker/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
-#include "clang/Checker/PathSensitive/BugReporter.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"

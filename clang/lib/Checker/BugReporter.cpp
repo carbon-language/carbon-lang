@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/BugReporter.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/CFG.h"
@@ -21,7 +21,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/ProgramPoint.h"
-#include "clang/Checker/PathDiagnostic.h"
+#include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"

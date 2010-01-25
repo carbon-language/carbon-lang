@@ -15,7 +15,7 @@
 #include "clang/Checker/LocalCheckers.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
-#include "clang/Checker/PathSensitive/BugReporter.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Basic/Diagnostic.h"

@@ -19,7 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 #include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/PathSensitive/BugType.h"
+#include "clang/Checker/BugReporter/BugType.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"

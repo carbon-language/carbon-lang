@@ -16,8 +16,8 @@
 #define LLVM_CLANG_ANALYSIS_ANALYSISMANAGER_H
 
 #include "clang/Analysis/AnalysisContext.h"
-#include "clang/Checker/PathSensitive/BugReporter.h"
-#include "clang/Checker/PathDiagnostic.h"
+#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/Checker/BugReporter/PathDiagnostic.h"
 
 namespace clang {
 
