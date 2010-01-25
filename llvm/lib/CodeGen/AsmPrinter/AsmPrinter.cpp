@@ -498,8 +498,9 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     OutStreamer.SwitchSection(ReadOnlySection);
     JTInDiffSection = true;
   }
-  
-  EmitAlignment(Log2_32(MJTI->getAlignment()));
+
+  unsigned EntrySize = MJTI->getEntrySize(*TM.getTargetData());
+  EmitAlignment(Log2_32(MJTI->getEntryAlignment(*TM.getTargetData())));
   
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
@@ -528,7 +529,6 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     if (!IsPic) {
       // In non-pic mode, the entries in the jump table are direct references
       // to the basic blocks.
-      unsigned EntrySize = MJTI->getEntrySize();
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
         MCSymbol *MBBSym = GetMBBSymbol(JTBBs[ii]->getNumber());
         OutStreamer.EmitValue(MCSymbolRefExpr::Create(MBBSym, OutContext),
@@ -566,7 +566,8 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     Val = MCBinaryExpr::CreateSub(Val, JTI, OutContext);
   }
   
-  OutStreamer.EmitValue(Val, MJTI->getEntrySize(), /*addrspace*/0);
+  unsigned EntrySize = MJTI->getEntrySize(*TM.getTargetData());
+  OutStreamer.EmitValue(Val, EntrySize, /*addrspace*/0);
 }
 
 

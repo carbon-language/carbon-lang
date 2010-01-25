@@ -96,15 +96,7 @@ MachineFunction::MachineFunction(Function *F,
                      MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
 
-  // Set up jump table.
-  const TargetData &TD = *TM.getTargetData();
-  bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
-  unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
-  unsigned TyAlignment = IsPic ?
-                       TD.getABITypeAlignment(Type::getInt32Ty(F->getContext()))
-                               : TD.getPointerABIAlignment();
-  JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
-                      MachineJumpTableInfo(EntrySize, TyAlignment);
+  JumpTableInfo = 0;
 }
 
 MachineFunction::~MachineFunction() {
@@ -121,9 +113,23 @@ MachineFunction::~MachineFunction() {
   }
   FrameInfo->~MachineFrameInfo();         Allocator.Deallocate(FrameInfo);
   ConstantPool->~MachineConstantPool();   Allocator.Deallocate(ConstantPool);
-  JumpTableInfo->~MachineJumpTableInfo(); Allocator.Deallocate(JumpTableInfo);
+  
+  if (JumpTableInfo) {
+    JumpTableInfo->~MachineJumpTableInfo();
+    Allocator.Deallocate(JumpTableInfo);
+  }
 }
 
+/// getOrCreateJumpTableInfo - Get the JumpTableInfo for this function, if it
+/// does already exist, allocate one.
+MachineJumpTableInfo *MachineFunction::
+getOrCreateJumpTableInfo(unsigned EntryKind) {
+  if (JumpTableInfo) return JumpTableInfo;
+  
+  JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
+    MachineJumpTableInfo((MachineJumpTableInfo::JTEntryKind)EntryKind);
+  return JumpTableInfo;
+}
 
 /// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
 /// recomputes them.  This guarantees that the MBB numbers are sequential,
@@ -311,7 +317,8 @@ void MachineFunction::print(raw_ostream &OS) const {
   FrameInfo->print(*this, OS);
   
   // Print JumpTable Information
-  JumpTableInfo->print(OS);
+  if (JumpTableInfo)
+    JumpTableInfo->print(OS);
 
   // Print Constant Pool
   ConstantPool->print(OS);
@@ -527,6 +534,37 @@ void MachineFrameInfo::dump(const MachineFunction &MF) const {
 //===----------------------------------------------------------------------===//
 //  MachineJumpTableInfo implementation
 //===----------------------------------------------------------------------===//
+
+/// getEntrySize - Return the size of each entry in the jump table.
+unsigned MachineJumpTableInfo::getEntrySize(const TargetData &TD) const {
+  // The size of a jump table entry is 4 bytes unless the entry is just the
+  // address of a block, in which case it is the pointer size.
+  switch (getEntryKind()) {
+  case MachineJumpTableInfo::EK_BlockAddress:
+    return TD.getPointerSize();
+  case MachineJumpTableInfo::EK_GPRel32BlockAddress:
+  case MachineJumpTableInfo::EK_LabelDifference32:
+    return 4;
+  }
+  assert(0 && "Unknown jump table encoding!");
+  return ~0;
+}
+
+/// getEntryAlignment - Return the alignment of each entry in the jump table.
+unsigned MachineJumpTableInfo::getEntryAlignment(const TargetData &TD) const {
+  // The alignment of a jump table entry is the alignment of int32 unless the
+  // entry is just the address of a block, in which case it is the pointer
+  // alignment.
+  switch (getEntryKind()) {
+  case MachineJumpTableInfo::EK_BlockAddress:
+    return TD.getPointerABIAlignment();
+  case MachineJumpTableInfo::EK_GPRel32BlockAddress:
+  case MachineJumpTableInfo::EK_LabelDifference32:
+    return TD.getABIIntegerTypeAlignment(32);
+  }
+  assert(0 && "Unknown jump table encoding!");
+  return ~0;
+}
 
 /// getJumpTableIndex - Create a new jump table entry in the jump table info
 /// or return an existing one.

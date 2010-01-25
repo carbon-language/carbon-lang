@@ -847,9 +847,7 @@ static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI) {
   for (unsigned i = 0, e = JT.size(); i != e; ++i)
     NumEntries += JT[i].MBBs.size();
 
-  unsigned EntrySize = MJTI->getEntrySize();
-
-  return NumEntries * EntrySize;
+  return NumEntries * MJTI->getEntrySize(*TheJIT->getTargetData());
 }
 
 static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
@@ -1017,7 +1015,6 @@ void JITEmitter::startFunction(MachineFunction &F) {
   if (MemMgr->NeedsExactSize()) {
     DEBUG(dbgs() << "JIT: ExactSize\n");
     const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
-    MachineJumpTableInfo *MJTI = F.getJumpTableInfo();
     MachineConstantPool *MCP = F.getConstantPool();
 
     // Ensure the constant pool/jump table info is at least 4-byte aligned.
@@ -1029,11 +1026,14 @@ void JITEmitter::startFunction(MachineFunction &F) {
     // Add the constant pool size
     ActualSize += GetConstantPoolSizeInBytes(MCP, TheJIT->getTargetData());
 
-    // Add the aligment of the jump table info
-    ActualSize = RoundUpToAlign(ActualSize, MJTI->getAlignment());
+    if (MachineJumpTableInfo *MJTI = F.getJumpTableInfo()) {
+      // Add the aligment of the jump table info
+      ActualSize = RoundUpToAlign(ActualSize,
+                             MJTI->getEntryAlignment(*TheJIT->getTargetData()));
 
-    // Add the jump table size
-    ActualSize += GetJumpTableSizeInBytes(MJTI);
+      // Add the jump table size
+      ActualSize += GetJumpTableSizeInBytes(MJTI);
+    }
 
     // Add the alignment for the function
     ActualSize = RoundUpToAlign(ActualSize,
@@ -1062,7 +1062,8 @@ void JITEmitter::startFunction(MachineFunction &F) {
   emitAlignment(16);
 
   emitConstantPool(F.getConstantPool());
-  initJumpTableInfo(F.getJumpTableInfo());
+  if (MachineJumpTableInfo *MJTI = F.getJumpTableInfo())
+    initJumpTableInfo(MJTI);
 
   // About to start emitting the machine code for the function.
   emitAlignment(std::max(F.getFunction()->getAlignment(), 8U));
@@ -1084,7 +1085,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     return true;
   }
 
-  emitJumpTableInfo(F.getJumpTableInfo());
+  if (MachineJumpTableInfo *MJTI = F.getJumpTableInfo())
+    emitJumpTableInfo(MJTI);
 
   // FnStart is the start of the text, not the start of the constant pool and
   // other per-function data.
@@ -1404,13 +1406,14 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
   for (unsigned i = 0, e = JT.size(); i != e; ++i)
     NumEntries += JT[i].MBBs.size();
 
-  unsigned EntrySize = MJTI->getEntrySize();
+  unsigned EntrySize = MJTI->getEntrySize(*TheJIT->getTargetData());
 
   // Just allocate space for all the jump tables now.  We will fix up the actual
   // MBB entries in the tables after we emit the code for each block, since then
   // we will know the final locations of the MBBs in memory.
   JumpTable = MJTI;
-  JumpTableBase = allocateSpace(NumEntries * EntrySize, MJTI->getAlignment());
+  JumpTableBase = allocateSpace(NumEntries * EntrySize,
+                             MJTI->getEntryAlignment(*TheJIT->getTargetData()));
 }
 
 void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
@@ -1420,8 +1423,10 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
 
+  // FIXME: This should use MachineJumpTableInfo::getEntryKind() instead of
+  // checking for PIC etc.
   if (TargetMachine::getRelocationModel() == Reloc::PIC_) {
-    assert(MJTI->getEntrySize() == 4 && "Cross JIT'ing?");
+    assert(MJTI->getEntrySize(*TheJIT->getTargetData()) == 4&&"Cross JIT'ing?");
     // For each jump table, place the offset from the beginning of the table
     // to the target address.
     int *SlotPtr = (int*)JumpTableBase;
@@ -1437,7 +1442,8 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       }
     }
   } else {
-    assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");
+    assert(MJTI->getEntrySize(*TheJIT->getTargetData()) == sizeof(void*) &&
+           "Cross JIT'ing?");
 
     // For each jump table, map each target in the jump table to the address of
     // an emitted MachineBasicBlock.
@@ -1505,9 +1511,9 @@ uintptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
   const std::vector<MachineJumpTableEntry> &JT = JumpTable->getJumpTables();
   assert(Index < JT.size() && "Invalid jump table index!");
 
-  unsigned Offset = 0;
-  unsigned EntrySize = JumpTable->getEntrySize();
+  unsigned EntrySize = JumpTable->getEntrySize(*TheJIT->getTargetData());
 
+  unsigned Offset = 0;
   for (unsigned i = 0; i < Index; ++i)
     Offset += JT[i].MBBs.size();
 

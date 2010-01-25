@@ -2816,9 +2816,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     SDValue Index = Node->getOperand(2);
 
     EVT PTy = TLI.getPointerTy();
-    MachineFunction &MF = DAG.getMachineFunction();
-    unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize();
-    Index= DAG.getNode(ISD::MUL, dl, PTy,
+
+    const TargetData &TD = *TLI.getTargetData();
+    unsigned EntrySize =
+      DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(TD);
+    
+    Index = DAG.getNode(ISD::MUL, dl, PTy,
                         Index, DAG.getConstant(EntrySize, PTy));
     SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
 

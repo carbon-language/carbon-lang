@@ -488,7 +488,7 @@ void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
 void X86AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                            const MachineBasicBlock *MBB,
                                            unsigned uid) const {
-  const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
+  const char *JTEntryDirective = MJTI->getEntrySize(*TM.getTargetData()) == 4 ?
     MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
 
   O << JTEntryDirective << ' ';

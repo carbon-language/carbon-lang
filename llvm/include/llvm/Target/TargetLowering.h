@@ -752,6 +752,11 @@ public:
     return false;
   }
   
+  /// getJumpTableEncoding - Return the entry encoding for a jump table in the
+  /// current function.  The returned value is a member of the
+  /// MachineJumpTableInfo::JTEntryKind enum.
+  virtual unsigned getJumpTableEncoding() const;
+  
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
   /// jumptable.
   virtual SDValue getPICJumpTableRelocBase(SDValue Table,

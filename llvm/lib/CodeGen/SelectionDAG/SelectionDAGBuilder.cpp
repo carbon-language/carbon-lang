@@ -1733,8 +1733,8 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
   std::vector<MachineBasicBlock*> DestBBs;
   APInt TEI = First;
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++TEI) {
-    const APInt& Low = cast<ConstantInt>(I->Low)->getValue();
-    const APInt& High = cast<ConstantInt>(I->High)->getValue();
+    const APInt &Low = cast<ConstantInt>(I->Low)->getValue();
+    const APInt &High = cast<ConstantInt>(I->High)->getValue();
 
     if (Low.sle(TEI) && TEI.sle(High)) {
       DestBBs.push_back(I->BB);
@@ -1757,7 +1757,9 @@ bool SelectionDAGBuilder::handleJTSwitchCase(CaseRec& CR,
 
   // Create a jump table index for this jump table, or return an existing
   // one.
-  unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
+  unsigned JTEncoding = TLI.getJumpTableEncoding();
+  unsigned JTI = CurMF->getOrCreateJumpTableInfo(JTEncoding)
+                       ->getJumpTableIndex(DestBBs);
 
   // Set the jump table information so that we can codegen it as a second
   // MachineBasicBlock

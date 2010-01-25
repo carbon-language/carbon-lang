@@ -206,52 +206,55 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
   // See if any jump tables have become mergable or dead as the code generator
   // did its thing.
   MachineJumpTableInfo *JTI = MF.getJumpTableInfo();
+  if (JTI == 0) {
+    delete RS;
+    return MadeChange;
+  }
+  
   const std::vector<MachineJumpTableEntry> &JTs = JTI->getJumpTables();
-  if (!JTs.empty()) {
-    // Figure out how these jump tables should be merged.
-    std::vector<unsigned> JTMapping;
-    JTMapping.reserve(JTs.size());
+  // Figure out how these jump tables should be merged.
+  std::vector<unsigned> JTMapping;
+  JTMapping.reserve(JTs.size());
 
-    // We always keep the 0th jump table.
-    JTMapping.push_back(0);
+  // We always keep the 0th jump table.
+  JTMapping.push_back(0);
 
-    // Scan the jump tables, seeing if there are any duplicates.  Note that this
-    // is N^2, which should be fixed someday.
-    for (unsigned i = 1, e = JTs.size(); i != e; ++i) {
-      if (JTs[i].MBBs.empty())
-        JTMapping.push_back(i);
-      else
-        JTMapping.push_back(JTI->getJumpTableIndex(JTs[i].MBBs));
-    }
+  // Scan the jump tables, seeing if there are any duplicates.  Note that this
+  // is N^2, which should be fixed someday.
+  for (unsigned i = 1, e = JTs.size(); i != e; ++i) {
+    if (JTs[i].MBBs.empty())
+      JTMapping.push_back(i);
+    else
+      JTMapping.push_back(JTI->getJumpTableIndex(JTs[i].MBBs));
+  }
 
-    // If a jump table was merge with another one, walk the function rewriting
-    // references to jump tables to reference the new JT ID's.  Keep track of
-    // whether we see a jump table idx, if not, we can delete the JT.
-    BitVector JTIsLive(JTs.size());
-    for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
-         BB != E; ++BB) {
-      for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
-           I != E; ++I)
-        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-          MachineOperand &Op = I->getOperand(op);
-          if (!Op.isJTI()) continue;
-          unsigned NewIdx = JTMapping[Op.getIndex()];
-          Op.setIndex(NewIdx);
+  // If a jump table was merge with another one, walk the function rewriting
+  // references to jump tables to reference the new JT ID's.  Keep track of
+  // whether we see a jump table idx, if not, we can delete the JT.
+  BitVector JTIsLive(JTs.size());
+  for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
+       BB != E; ++BB) {
+    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+         I != E; ++I)
+      for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
+        MachineOperand &Op = I->getOperand(op);
+        if (!Op.isJTI()) continue;
+        unsigned NewIdx = JTMapping[Op.getIndex()];
+        Op.setIndex(NewIdx);
 
-          // Remember that this JT is live.
-          JTIsLive.set(NewIdx);
-        }
-    }
-
-    // Finally, remove dead jump tables.  This happens either because the
-    // indirect jump was unreachable (and thus deleted) or because the jump
-    // table was merged with some other one.
-    for (unsigned i = 0, e = JTIsLive.size(); i != e; ++i)
-      if (!JTIsLive.test(i)) {
-        JTI->RemoveJumpTable(i);
-        MadeChange = true;
+        // Remember that this JT is live.
+        JTIsLive.set(NewIdx);
       }
   }
+
+  // Finally, remove dead jump tables.  This happens either because the
+  // indirect jump was unreachable (and thus deleted) or because the jump
+  // table was merged with some other one.
+  for (unsigned i = 0, e = JTIsLive.size(); i != e; ++i)
+    if (!JTIsLive.test(i)) {
+      JTI->RemoveJumpTable(i);
+      MadeChange = true;
+    }
 
   delete RS;
   return MadeChange;
@@ -957,7 +960,8 @@ ReoptimizeBlock:
       }
       // If MBB was the target of a jump table, update jump tables to go to the
       // fallthrough instead.
-      MF.getJumpTableInfo()->ReplaceMBBInJumpTables(MBB, FallThrough);
+      if (MachineJumpTableInfo *MJTI = MF.getJumpTableInfo())
+        MJTI->ReplaceMBBInJumpTables(MBB, FallThrough);
       MadeChange = true;
     }
     return MadeChange;
@@ -1191,7 +1195,8 @@ ReoptimizeBlock:
           }
 
           // Change any jumptables to go to the new MBB.
-          MF.getJumpTableInfo()->ReplaceMBBInJumpTables(MBB, CurTBB);
+          if (MachineJumpTableInfo *MJTI = MF.getJumpTableInfo())
+            MJTI->ReplaceMBBInJumpTables(MBB, CurTBB);
           if (DidChange) {
             ++NumBranchOpts;
             MadeChange = true;

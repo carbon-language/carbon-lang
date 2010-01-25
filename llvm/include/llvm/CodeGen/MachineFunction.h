@@ -143,11 +143,16 @@ public:
   const MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
 
   /// getJumpTableInfo - Return the jump table info object for the current 
-  /// function.  This object contains information about jump tables for switch
-  /// instructions in the current function.
-  ///
-  MachineJumpTableInfo *getJumpTableInfo() { return JumpTableInfo; }
+  /// function.  This object contains information about jump tables in the
+  /// current function.  If the current function has no jump tables, this will
+  /// return null.
   const MachineJumpTableInfo *getJumpTableInfo() const { return JumpTableInfo; }
+  MachineJumpTableInfo *getJumpTableInfo() { return JumpTableInfo; }
+
+  /// getOrCreateJumpTableInfo - Get the JumpTableInfo for this function, if it
+  /// does already exist, allocate one.
+  MachineJumpTableInfo *getOrCreateJumpTableInfo(unsigned JTEntryKind);
+
   
   /// getConstantPool - Return the constant pool object for the current
   /// function.

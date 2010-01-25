@@ -21,6 +21,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -791,6 +792,22 @@ EVT TargetLowering::getWidenVectorType(EVT VT) const {
 /// alignment, not its logarithm.
 unsigned TargetLowering::getByValTypeAlignment(const Type *Ty) const {
   return TD->getCallFrameTypeAlignment(Ty);
+}
+
+/// getJumpTableEncoding - Return the entry encoding for a jump table in the
+/// current function.  The returned value is a member of the
+/// MachineJumpTableInfo::JTEntryKind enum.
+unsigned TargetLowering::getJumpTableEncoding() const {
+  // In non-pic modes, just use the address of a block.
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_)
+    return MachineJumpTableInfo::EK_BlockAddress;
+  
+  // In PIC mode, if the target supports a GPRel32 directive, use it.
+  if (getTargetMachine().getMCAsmInfo()->getGPRel32Directive() != 0)
+    return MachineJumpTableInfo::EK_GPRel32BlockAddress;
+  
+  // Otherwise, use a label difference.
+  return MachineJumpTableInfo::EK_LabelDifference32;
 }
 
 SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
