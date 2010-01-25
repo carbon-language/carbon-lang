@@ -14,6 +14,8 @@
 let Component = "Parse" in {
 
 def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">;
+def warn_file_asm_volatile : Warning<
+  "meaningless 'volatile' on asm outside function">;
 
 def ext_empty_source_file : Extension<"ISO C forbids an empty source file">;
 def ext_top_level_semi : Extension<
