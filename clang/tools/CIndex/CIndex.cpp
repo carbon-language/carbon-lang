@@ -362,7 +362,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
     return VisitChildren(Cursor);
   }
 
-  llvm_unreachable("Silly GCC, we can't get here");
+  return false;
 }
 
 /// \brief Visit the children of the given cursor.
