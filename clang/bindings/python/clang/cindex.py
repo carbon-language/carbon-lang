@@ -1,4 +1,62 @@
-# -*- coding: utf-8 -*-
+#===- cindex.py - Python Indexing Library Bindings -----------*- python -*--===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+#
+#===------------------------------------------------------------------------===#
+
+r"""
+Clang Indexing Library Bindings
+===============================
+
+This module provides an interface to the Clang indexing library. It is a
+low-level interface to the indexing library which attempts to match the Clang
+API directly while also being "pythonic". Notable differences from the C API
+are:
+
+ * string results are returned as Python strings, not CXString objects.
+
+ * null cursors are translated to None.
+
+ * access to child cursors is done via iteration, not visitation.
+
+The major indexing objects are:
+
+  Index
+
+    The top-level object which manages some global library state.
+
+  TranslationUnit
+
+    High-level object encapsulating the AST for a single translation unit. These
+    can be loaded from .ast files or parsed on the fly.
+
+  Cursor
+
+    Generic object for representing a node in the AST.
+
+  SourceRange, SourceLocation, and File
+
+    Objects representing information about the input source.
+
+Most object information is exposed using properties, when the underlying API
+call is efficient.
+"""
+
+# TODO
+# ====
+#
+# o fix memory management issues (currently client must hold on to index and
+#   translation unit, or risk crashes).
+#
+# o expose code completion APIs.
+#
+# o cleanup ctypes wrapping, would be nice to separate the ctypes details more
+#   clearly, and hide from the external interface (i.e., help(cindex)).
+#
+# o implement additional SourceLocation, SourceRange, and File methods.
 
 from ctypes import *
 
@@ -175,6 +233,7 @@ class CursorKind(object):
 
     @staticmethod
     def get_all_kinds():
+        """Return all CursorKind enumeration instances."""
         return filter(None, CursorKind._kinds)
 
     def is_declaration(self):
@@ -530,12 +589,12 @@ class File(ClangObject):
 
     @property
     def name(self):
-        """Return the complete file and path name of the file, if valid."""
+        """Return the complete file and path name of the file."""
         return File_name(self)
 
     @property
     def time(self):
-        """Return the last modification time of the file, if valid."""
+        """Return the last modification time of the file."""
         return File_time(self)
 
 # Additional Functions and Types
@@ -674,3 +733,8 @@ File_name.restype = c_char_p
 File_time = lib.clang_getFileTime
 File_time.argtypes = [File]
 File_time.restype = c_uint
+
+###
+
+__all__ = ['Index', 'TranslationUnit', 'Cursor', 'CursorKind',
+           'SourceRange', 'SourceLocation', 'File']
