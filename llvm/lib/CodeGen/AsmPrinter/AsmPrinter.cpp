@@ -538,7 +538,8 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   
   // Use JumpTableDirective otherwise honor the entry size from the jump table
   // info.
-  const char *JTEntryDirective = MAI->getJumpTableDirective(isPIC);
+  const char *JTEntryDirective = 0;
+  if (isPIC) JTEntryDirective = MAI->getPICJumpTableDirective();
   bool HadJTEntryDirective = JTEntryDirective != NULL;
   if (!HadJTEntryDirective) {
     JTEntryDirective = MJTI->getEntrySize() == 4 ?

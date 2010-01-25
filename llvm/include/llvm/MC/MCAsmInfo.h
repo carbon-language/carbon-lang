@@ -170,9 +170,8 @@ namespace llvm {
 
     //===--- Section Switching Directives ---------------------------------===//
     
-    /// JumpTableDirective - if non-null, the directive to emit before jump
+    /// PICJumpTableDirective - if non-null, the directive to emit before jump
     /// table entries.  FIXME: REMOVE THIS.
-    const char *JumpTableDirective;          // Defaults to NULL.
     const char *PICJumpTableDirective;       // Defaults to NULL.
 
 
@@ -374,8 +373,8 @@ namespace llvm {
     const char *getAscizDirective() const {
       return AscizDirective;
     }
-    const char *getJumpTableDirective(bool isPIC) const {
-      return isPIC ? PICJumpTableDirective : JumpTableDirective;
+    const char *getPICJumpTableDirective() const {
+      return PICJumpTableDirective;
     }
     const char *getAlignDirective() const {
       return AlignDirective;

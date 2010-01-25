@@ -460,7 +460,7 @@ void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     return;
 
   // We don't need .set machinery if we have GOT-style relocations
-  if (Subtarget->isPICStyleGOT())
+  if (Subtarget->isPICStyleGOT())  // X86-32 on ELF.
     return;
 
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
