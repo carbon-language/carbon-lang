@@ -39,5 +39,4 @@
 
 @bar = common global [75 x i8] zeroinitializer, align 128
 ;ELF: .comm bar,75,128
-; no alignment on darwin?
-;DARWIN: .comm _bar,75
+;DARWIN: .comm _bar,75,7
