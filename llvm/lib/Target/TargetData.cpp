@@ -545,6 +545,13 @@ unsigned char TargetData::getABITypeAlignment(const Type *Ty) const {
   return getAlignment(Ty, true);
 }
 
+/// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
+/// an integer type of the specified bitwidth.
+unsigned char TargetData::getABIIntegerTypeAlignment(unsigned BitWidth) const {
+  return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, 0);
+}
+
+
 unsigned char TargetData::getCallFrameTypeAlignment(const Type *Ty) const {
   for (unsigned i = 0, e = Alignments.size(); i != e; ++i)
     if (Alignments[i].AlignType == STACK_ALIGN)

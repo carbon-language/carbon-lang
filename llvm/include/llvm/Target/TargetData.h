@@ -224,6 +224,11 @@ public:
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
   unsigned char getABITypeAlignment(const Type *Ty) const;
+  
+  /// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
+  /// an integer type of the specified bitwidth.
+  unsigned char getABIIntegerTypeAlignment(unsigned BitWidth) const;
+  
 
   /// getCallFrameTypeAlignment - Return the minimum ABI-required alignment
   /// for the specified type when it is part of a call frame.
