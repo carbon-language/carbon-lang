@@ -16,3 +16,11 @@ def test_cursor():
     c = tu.cursor
     assert isinstance(c, Cursor)
     assert c.kind is CursorKind.TRANSLATION_UNIT
+
+def test_parse_arguments():
+    path = os.path.join(kInputsDir, 'parse_arguments.c')
+    index = Index.create()
+    tu = index.parse(path, ['-DDECL_ONE=hello', '-DDECL_TWO=hi'])
+    spellings = [c.spelling for c in tu.cursor.get_children()]
+    assert spellings[-2] == 'hello'
+    assert spellings[-1] == 'hi'

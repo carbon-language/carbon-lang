@@ -73,39 +73,6 @@ def get_cindex_library():
     else:
         return cdll.LoadLibrary('libCIndex.so')
 
-## Utility Types and Functions ##
-def alloc_string_vector(strs):
-    """
-    Allocate a string buffer large enough to accommodate the given list of
-    python strings.
-    """
-    n = 0
-    for i in strs: n += len(i) + 1
-    return create_string_buffer(n)
-
-def copy_string_vector(vec, strs):
-    """
-    Copy the contents of each string into the vector, preserving null
-    terminated elements.
-    """
-    n = 0
-    for i in strs:
-        # This is terribly inefficient, but I can't figure out how to copy a
-        # chunk of characters into the resultant vector. t should be: something
-        # like this: vec[n:n + len(i)] = i[:]; n += len(i) + 1
-        for j in i:
-            vec[n] = j
-            n += 1
-        n += 1
-
-def create_string_vector(strs):
-    """
-    Create a string vector (char *[]) from the given list of strings.
-    """
-    vec = alloc_string_vector(strs)
-    copy_string_vector(vec, strs)
-    return vec
-
 # ctypes doesn't implicitly convert c_void_p to the appropriate wrapper
 # object. This is a problem, because it means that from_parameter will see an
 # integer and pass the wrong value on platforms where int != void*. Work around
@@ -571,14 +538,20 @@ class TranslationUnit(ClangObject):
         return TranslationUnit(ptr) if ptr else None
 
     @staticmethod
-    def parse(ix, path, args = []):
+    def parse(ix, path, args = [], unsaved_files = []):
         """
-        Construct a translation unit from the given source file, applying
+        Construct a translation unit from the given source file, using
         the given command line argument.
         """
         # TODO: Support unsaved files.
-        argc, argv = len(args), create_string_vector(args)
-        ptr = TranslationUnit_parse(ix, path, argc, byref(argv), 0, 0)
+        arg_array = 0
+        if len(args):
+            arg_array = (c_char_p * len(args))(* args)
+        unsaved_files_array = 0
+        if len(unsaved_files):
+            raise NotImplementedError,'Unsaved files not yet implemented.'
+        ptr = TranslationUnit_parse(ix, path, len(args), arg_array,
+                                    len(unsaved_files), unsaved_files_array)
         return TranslationUnit(ptr) if ptr else None
 
 class File(ClangObject):
