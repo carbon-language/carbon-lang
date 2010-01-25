@@ -167,8 +167,9 @@ namespace {
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
 
-    virtual void printPICJumpTableSetLabel2(unsigned uid, unsigned uid2,
-                                            const MachineBasicBlock *MBB) const;
+    MCSymbol *GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
+                                          const MachineBasicBlock *MBB) const;
+    MCSymbol *GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const;
 
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
@@ -907,17 +908,22 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
   }
 }
 
-void ARMAsmPrinter::printPICJumpTableSetLabel2(unsigned uid, unsigned uid2,
-                                           const MachineBasicBlock *MBB) const {
-  if (!MAI->getSetDirective())
-    return;
-  
-  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
+MCSymbol *ARMAsmPrinter::
+GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
+                            const MachineBasicBlock *MBB) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << '_' << uid2
-    << "_set_" << MBB->getNumber() << ','
-    << *GetMBBSymbol(MBB->getNumber())
-    << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-    << '_' << uid << '_' << uid2 << '\n';
+    << "_set_" << MBB->getNumber();
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+MCSymbol *ARMAsmPrinter::
+GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
+    << getFunctionNumber() << '_' << uid << '_' << uid2 << '\n';
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
@@ -927,8 +933,8 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   
   unsigned JTI = MO1.getIndex();
-  O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-    << '_' << JTI << '_' << MO2.getImm() << ":\n";
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  OutStreamer.EmitLabel(JTISymbol);
 
   const char *JTEntryDirective = MAI->getData32bitsDirective();
 
@@ -942,21 +948,20 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
     MachineBasicBlock *MBB = JTBBs[i];
     bool isNew = JTSets.insert(MBB);
 
-    if (UseSet && isNew)
-      printPICJumpTableSetLabel2(JTI, MO2.getImm(), MBB);
+    if (UseSet && isNew) {
+      O << MAI->getSetDirective() << ' '
+        << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB) << '-'
+        << *JTISymbol << '\n';
+    }
 
     O << JTEntryDirective << ' ';
     if (UseSet)
-      O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
-        << '_' << JTI << '_' << MO2.getImm()
-        << "_set_" << MBB->getNumber();
-    else if (TM.getRelocationModel() == Reloc::PIC_) {
-      O << *GetMBBSymbol(MBB->getNumber())
-        << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
-        << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
-    } else {
+      O << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB);
+    else if (TM.getRelocationModel() == Reloc::PIC_)
+      O << *GetMBBSymbol(MBB->getNumber()) << '-' << *JTISymbol;
+    else
       O << *GetMBBSymbol(MBB->getNumber());
-    }
+
     if (i != e-1)
       O << '\n';
   }
@@ -966,8 +971,9 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
-  O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-    << '_' << JTI << '_' << MO2.getImm() << ":\n";
+  
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  OutStreamer.EmitLabel(JTISymbol);
 
   const MachineFunction *MF = MI->getParent()->getParent();
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
@@ -985,13 +991,12 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
       O << MAI->getData8bitsDirective();
     else if (HalfWordOffset)
       O << MAI->getData16bitsDirective();
-    if (ByteOffset || HalfWordOffset) {
-      O << '(' << *GetMBBSymbol(MBB->getNumber());
-      O << "-" << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-        << '_' << JTI << '_' << MO2.getImm() << ")/2";
-    } else {
+    
+    if (ByteOffset || HalfWordOffset)
+      O << '(' << *GetMBBSymbol(MBB->getNumber()) << "-" << *JTISymbol << ")/2";
+    else
       O << "\tb.w " << *GetMBBSymbol(MBB->getNumber());
-    }
+
     if (i != e-1)
       O << '\n';
   }
