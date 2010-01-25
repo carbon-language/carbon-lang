@@ -1517,12 +1517,13 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
 
   // Create the descriptor for the variable.
   llvm::DIVariable D =
-    DebugFactory.CreateComplexVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
+    DebugFactory.CreateComplexVariable(Tag,
+                                       llvm::DIDescriptor(RegionStack.back()),
                                        Decl->getName(), Unit, Line, Ty,
                                        addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
-    DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertPoint());
+    DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
 
   llvm::DIScope DS(RegionStack.back());
   llvm::DILocation DO(NULL);
