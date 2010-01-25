@@ -93,6 +93,7 @@ public:
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
 
+  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
 
@@ -249,6 +250,11 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   OS << ".desc" << ' ' << *Symbol << ',' << DescValue;
   EmitEOL();
+}
+
+void MCAsmStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
+  assert(MAI.hasDotTypeDotSizeDirective());
+  OS << "\t.size\t" << *Symbol << ", " << *Value << '\n';
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,

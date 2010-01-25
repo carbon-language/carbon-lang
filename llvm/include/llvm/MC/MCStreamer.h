@@ -129,6 +129,14 @@ namespace llvm {
     /// @param DescValue - The value to set into the n_desc field.
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) = 0;
 
+    
+    /// EmitELFSize - Emit an ELF .size directive.
+    ///
+    /// This corresponds to an assembler statement such as:
+    ///  .size symbol, expression
+    ///
+    virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) = 0;
+    
     /// EmitCommonSymbol - Emit a common symbol.
     ///
     /// @param Symbol - The common symbol to emit.

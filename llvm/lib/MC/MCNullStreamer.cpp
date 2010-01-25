@@ -38,7 +38,7 @@ namespace {
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
 
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
-
+    virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
     virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                   unsigned ByteAlignment) {}
     virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {}

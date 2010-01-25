@@ -124,6 +124,9 @@ public:
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
+  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
+    assert(0 && "macho doesn't support this directive");
+  }
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size) {
     assert(0 && "macho doesn't support this directive");
   }
