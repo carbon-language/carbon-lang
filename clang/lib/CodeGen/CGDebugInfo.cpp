@@ -562,14 +562,24 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
       MethodLine = PLoc.getLine();
     }
 
+    // Collect virtual method info.
+    llvm::DIType ContainingType;
+    unsigned Virtuality = 0; 
+    unsigned VIndex = 0;
+    if (Method->isVirtual()) {
+      // FIXME: Identify pure virtual functions.
+      Virtuality = llvm::dwarf::DW_VIRTUALITY_virtual;
+      VIndex = CGM.getVtableInfo().getMethodVtableIndex(Method);
+      ContainingType = RecordTy;
+    }
+
     llvm::DISubprogram SP =
       DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
                                     MethodLinkageName,
                                     MethodDefUnit, MethodLine,
                                     MethodTy, false, 
                                     Method->isThisDeclarationADefinition(),
-                                    0 /*Virtuality*/, 0 /*VIndex*/, 
-                                    llvm::DIType() /*ContainingType*/);
+                                    Virtuality, VIndex, ContainingType);
     if (Method->isThisDeclarationADefinition())
       SPCache[cast<FunctionDecl>(Method)] = llvm::WeakVH(SP.getNode());
     EltTys.push_back(SP);
