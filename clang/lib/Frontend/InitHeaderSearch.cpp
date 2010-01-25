@@ -483,10 +483,10 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddPath("/usr/include/c++/4.1", System, true, false, false);
     break;
   case llvm::Triple::Linux:
-    // Exherbo (2009-10-26)
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
+    // Exherbo (2010-01-25)
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.3",
                                 "x86_64-pc-linux-gnu", "32", "", triple);
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.3",
                                 "i686-pc-linux-gnu", "", "", triple);
     // Debian sid
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
