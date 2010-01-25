@@ -80,8 +80,8 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     EmitDeclInit(*this, D, DeclPtr);
     return;
   }
-
-  ErrorUnsupported(Init, "global variable that binds to a reference");
+  RValue RV = EmitReferenceBindingToExpr(Init, T, /*IsInitializer=*/true);
+  EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, T);
 }
 
 void
