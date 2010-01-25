@@ -498,8 +498,9 @@ void X86AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
       << '_' << uid << "_set_" << MBB->getNumber();
   } else if (Subtarget->isPICStyleGOT())
     O << *GetMBBSymbol(MBB->getNumber()) << "@GOTOFF";
-  else
+  else  // mdynamic-no-pic
     O << *GetMBBSymbol(MBB->getNumber());
+  O << '\n';
 }
 
 bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {

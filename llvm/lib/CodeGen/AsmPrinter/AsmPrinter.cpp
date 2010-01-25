@@ -524,9 +524,16 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 
     OutStreamer.EmitLabel(GetJTISymbol(i));
 
-    for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-      printPICJumpTableEntry(MJTI, JTBBs[ii], i);
-      O << '\n';
+    if (!IsPic) {
+      unsigned EntrySize = MJTI->getEntrySize();
+      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
+        MCSymbol *MBBSym = GetMBBSymbol(JTBBs[ii]->getNumber());
+        OutStreamer.EmitValue(MCSymbolRefExpr::Create(MBBSym, OutContext),
+                              EntrySize, /*addrspace*/0);
+      }      
+    } else {
+      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
+        printPICJumpTableEntry(MJTI, JTBBs[ii], i);
     }
   }
 }
@@ -534,12 +541,9 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         const MachineBasicBlock *MBB,
                                         unsigned uid)  const {
-  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
-  
   // Use JumpTableDirective otherwise honor the entry size from the jump table
   // info.
-  const char *JTEntryDirective = 0;
-  if (isPIC) JTEntryDirective = MAI->getPICJumpTableDirective();
+  const char *JTEntryDirective = MAI->getPICJumpTableDirective();
   bool HadJTEntryDirective = JTEntryDirective != NULL;
   if (!HadJTEntryDirective) {
     JTEntryDirective = MJTI->getEntrySize() == 4 ?
@@ -553,9 +557,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   // emit the table entries as differences between two text section labels.
   // If we're emitting non-PIC code, then emit the entries as direct
   // references to the target basic blocks.
-  if (!isPIC) {
-    O << *GetMBBSymbol(MBB->getNumber());
-  } else if (MAI->getSetDirective()) {
+  if (MAI->getSetDirective()) {
     O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else {
@@ -565,6 +567,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     if (!HadJTEntryDirective) 
       O << '-' << *GetJTISymbol(uid);
   }
+  O << '\n';
 }
 
 
