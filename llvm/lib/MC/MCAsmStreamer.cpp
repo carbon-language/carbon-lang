@@ -227,7 +227,29 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         MCSymbolAttr Attribute) {
   switch (Attribute) {
   case MCSA_Invalid: assert(0 && "Invalid symbol attribute");
-  case MCSA_Global:         OS << MAI.getGlobalDirective(); break; // .globl
+  case MCSA_ELF_TypeFunction:    /// .type _foo, STT_FUNC  # aka @function
+  case MCSA_ELF_TypeIndFunction: /// .type _foo, STT_GNU_IFUNC
+  case MCSA_ELF_TypeObject:      /// .type _foo, STT_OBJECT  # aka @object
+  case MCSA_ELF_TypeTLS:         /// .type _foo, STT_TLS     # aka @tls_object
+  case MCSA_ELF_TypeCommon:      /// .type _foo, STT_COMMON  # aka @common
+  case MCSA_ELF_TypeNoType:      /// .type _foo, STT_NOTYPE  # aka @notype
+    assert(MAI.hasDotTypeDotSizeDirective() && "Symbol Attr not supported");
+    OS << ".type " << *Symbol << ','
+       << ((MAI.getCommentString()[0] != '@') ? '@' : '%');
+    switch (Attribute) {
+    default: assert(0 && "Unknown ELF .type");
+    case MCSA_ELF_TypeFunction:    OS << "function"; break;
+    case MCSA_ELF_TypeIndFunction: OS << "gnu_indirect_function"; break;
+    case MCSA_ELF_TypeObject:      OS << "object"; break;
+    case MCSA_ELF_TypeTLS:         OS << "tls_object"; break;
+    case MCSA_ELF_TypeCommon:      OS << "common"; break;
+    case MCSA_ELF_TypeNoType:      OS << "no_type"; break;
+    }
+    EmitEOL();
+    return;
+  case MCSA_Global: // .globl/.global
+    OS << MAI.getGlobalDirective();
+    break;
   case MCSA_Hidden:         OS << ".hidden ";          break;
   case MCSA_IndirectSymbol: OS << ".indirect_symbol "; break;
   case MCSA_Internal:       OS << ".internal ";        break;

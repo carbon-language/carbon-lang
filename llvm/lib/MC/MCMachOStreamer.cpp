@@ -223,6 +223,12 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // defined.
   switch (Attribute) {
   case MCSA_Invalid:
+  case MCSA_ELF_TypeFunction:
+  case MCSA_ELF_TypeIndFunction:
+  case MCSA_ELF_TypeObject:
+  case MCSA_ELF_TypeTLS:
+  case MCSA_ELF_TypeCommon:
+  case MCSA_ELF_TypeNoType:
   case MCSA_IndirectSymbol:
   case MCSA_Hidden:
   case MCSA_Internal:
