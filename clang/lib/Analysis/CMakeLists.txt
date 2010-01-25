@@ -2,67 +2,9 @@ set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangAnalysis
   AnalysisContext.cpp
-  ArrayBoundChecker.cpp
-  AttrNonNullChecker.cpp
-  BasicConstraintManager.cpp
-  BasicObjCFoundationChecks.cpp
-  BasicStore.cpp
-  BasicValueFactory.cpp
-  BugReporter.cpp
-  BugReporterVisitors.cpp
-  BuiltinFunctionChecker.cpp
   CFG.cpp
-  CFRefCount.cpp
-  CallAndMessageChecker.cpp
-  CallInliner.cpp
-  CastToStructChecker.cpp
-  CheckDeadStores.cpp
-  CheckObjCDealloc.cpp
-  CheckObjCInstMethSignature.cpp
-  CheckObjCUnusedIVars.cpp
-  CheckSecuritySyntaxOnly.cpp
-  CheckSizeofPointer.cpp
-  Checker.cpp
-  DereferenceChecker.cpp
-  DivZeroChecker.cpp
-  Environment.cpp
-  ExplodedGraph.cpp
-  FixedAddressChecker.cpp
-  GRBlockCounter.cpp
-  GRCoreEngine.cpp
-  GRExprEngine.cpp
-  GRExprEngineExperimentalChecks.cpp
-  GRState.cpp
   LiveVariables.cpp
-  MallocChecker.cpp
-  ManagerRegistry.cpp
-  MemRegion.cpp
-  NoReturnFunctionChecker.cpp
-  NSAutoreleasePoolChecker.cpp
-  NSErrorChecker.cpp
-  OSAtomicChecker.cpp
-  PathDiagnostic.cpp
-  PointerArithChecker.cpp
-  PointerSubChecker.cpp
-  PthreadLockChecker.cpp
-  RangeConstraintManager.cpp
-  RegionStore.cpp
-  ReturnPointerRangeChecker.cpp
-  ReturnStackAddressChecker.cpp
-  ReturnUndefChecker.cpp
-  SVals.cpp
-  SValuator.cpp
-  SimpleConstraintManager.cpp
-  SimpleSValuator.cpp
-  Store.cpp
-  SymbolManager.cpp
-  UndefBranchChecker.cpp
-  UndefResultChecker.cpp
-  UndefinedArraySubscriptChecker.cpp
-  UndefinedAssignmentChecker.cpp
   UninitializedValues.cpp
-  VLASizeChecker.cpp
-  ValueManager.cpp
   )
 
 add_dependencies(clangAnalysis ClangDiagnosticAnalysis)

@@ -12,10 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/PathSensitive/AnalysisContext.h"
-#include "clang/Analysis/PathSensitive/MemRegion.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -87,12 +86,6 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D) {
   return AC;
 }
 
-const BlockDecl *BlockInvocationContext::getBlockDecl() const {
-  return Data.is<const BlockDataRegion*>() ?
-    Data.get<const BlockDataRegion*>()->getDecl()
-  : Data.get<const BlockDecl*>();
-}
-
 //===----------------------------------------------------------------------===//
 // FoldingSet profiling.
 //===----------------------------------------------------------------------===//
@@ -117,11 +110,7 @@ void ScopeContext::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void BlockInvocationContext::Profile(llvm::FoldingSetNodeID &ID) {
-  if (const BlockDataRegion *BR = getBlockRegion())
-    Profile(ID, getAnalysisContext(), getParent(), BR);
-  else
-    Profile(ID, getAnalysisContext(), getParent(),
-            Data.get<const BlockDecl*>());    
+  Profile(ID, getAnalysisContext(), getParent(), BD);
 }
 
 //===----------------------------------------------------------------------===//
@@ -168,15 +157,6 @@ LocationContextManager::getScope(AnalysisContext *ctx,
                                  const LocationContext *parent,
                                  const Stmt *s) {
   return getLocationContext<ScopeContext, Stmt>(ctx, parent, s);
-}
-
-const BlockInvocationContext *
-LocationContextManager::getBlockInvocation(AnalysisContext *ctx,
-                                 const LocationContext *parent,
-                                 const BlockDataRegion *BR) {
-  return getLocationContext<BlockInvocationContext, BlockDataRegion>(ctx,
-                                                                     parent,
-                                                                     BR);
 }
 
 //===----------------------------------------------------------------------===//

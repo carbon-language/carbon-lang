@@ -70,5 +70,8 @@ public:
   void InitializeValues(const CFG& cfg);
 };
 
+
+void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
+                              bool FullUninitTaint=false);
 } // end namespace clang
 #endif

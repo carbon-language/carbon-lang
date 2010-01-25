@@ -9,7 +9,7 @@
 LEVEL = ../../..
 
 PARALLEL_DIRS = Headers Runtime Basic Lex Parse AST Sema CodeGen Analysis \
-                Rewrite Frontend Index Driver
+                Checker Rewrite Frontend Index Driver
 
 include $(LEVEL)/Makefile.common
 

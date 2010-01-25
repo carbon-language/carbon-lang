@@ -13,7 +13,6 @@
 
 #include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
-#include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/AnalysisDiagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
