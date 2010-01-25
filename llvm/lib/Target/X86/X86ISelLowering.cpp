@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
@@ -1088,6 +1089,20 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned Align,
   if (Subtarget->is64Bit() && Size >= 8)
     return MVT::i64;
   return MVT::i32;
+}
+
+/// getJumpTableEncoding - Return the entry encoding for a jump table in the
+/// current function.  The returned value is a member of the
+/// MachineJumpTableInfo::JTEntryKind enum.
+unsigned X86TargetLowering::getJumpTableEncoding() const {
+  // In GOT pic mode, each entry in the jump table is emitted as a @GOTOFF
+  // symbol.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+      Subtarget->isPICStyleGOT())
+    return MachineJumpTableInfo::EK_GPRel32BlockAddress;
+  
+  // Otherwise, use the normal jump table encoding heuristics.
+  return TargetLowering::getJumpTableEncoding();
 }
 
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC

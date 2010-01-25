@@ -376,6 +376,8 @@ namespace llvm {
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
 
+    unsigned getJumpTableEncoding() const;
+
     /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
     /// jumptable.
     SDValue getPICJumpTableRelocBase(SDValue Table,
