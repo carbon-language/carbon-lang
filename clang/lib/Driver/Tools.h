@@ -66,7 +66,8 @@ namespace gcc {
 
     /// RenderExtraToolArgs - Render any arguments necessary to force
     /// the particular tool mode.
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const = 0;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const = 0;
   };
 
 
@@ -78,7 +79,8 @@ namespace gcc {
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const;
   };
 
   class VISIBILITY_HIDDEN Precompile : public Common  {
@@ -89,7 +91,8 @@ namespace gcc {
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return true; }
 
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const;
   };
 
   class VISIBILITY_HIDDEN Compile : public Common  {
@@ -100,7 +103,8 @@ namespace gcc {
     virtual bool canPipeOutput() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const;
   };
 
   class VISIBILITY_HIDDEN Assemble : public Common  {
@@ -111,7 +115,8 @@ namespace gcc {
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const;
   };
 
   class VISIBILITY_HIDDEN Link : public Common  {
@@ -122,7 +127,8 @@ namespace gcc {
     virtual bool canPipeOutput() const { return false; }
     virtual bool hasIntegratedCPP() const { return false; }
 
-    virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const;
+    virtual void RenderExtraToolArgs(const JobAction &JA,
+                                     ArgStringList &CmdArgs) const;
   };
 } // end namespace gcc
 

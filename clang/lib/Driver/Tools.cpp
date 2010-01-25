@@ -1213,7 +1213,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  RenderExtraToolArgs(CmdArgs);
+  RenderExtraToolArgs(JA, CmdArgs);
 
   // If using a driver driver, force the arch.
   const std::string &Arch = getToolChain().getArchName();
@@ -1291,23 +1291,32 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   Dest.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
-void gcc::Preprocess::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
+void gcc::Preprocess::RenderExtraToolArgs(const JobAction &JA,
+                                          ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-E");
 }
 
-void gcc::Precompile::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
+void gcc::Precompile::RenderExtraToolArgs(const JobAction &JA,
+                                          ArgStringList &CmdArgs) const {
   // The type is good enough.
 }
 
-void gcc::Compile::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
-  CmdArgs.push_back("-S");
+void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
+                                       ArgStringList &CmdArgs) const {
+  // If -flto, etc. are present then make sure not to force assembly output.
+  if (JA.getType() == types::TY_LLVMBC)
+    CmdArgs.push_back("-c");
+  else
+    CmdArgs.push_back("-S");
 }
 
-void gcc::Assemble::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
+void gcc::Assemble::RenderExtraToolArgs(const JobAction &JA,
+                                        ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-c");
 }
 
-void gcc::Link::RenderExtraToolArgs(ArgStringList &CmdArgs) const {
+void gcc::Link::RenderExtraToolArgs(const JobAction &JA,
+                                    ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
 }
 
