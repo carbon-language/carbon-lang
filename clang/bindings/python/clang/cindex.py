@@ -506,7 +506,8 @@ class Index(ClangObject):
 
     def read(self, path):
         """Load the translation unit from the given AST file."""
-        return TranslationUnit.read(self, path)
+        ptr = TranslationUnit_read(self, path)
+        return TranslationUnit(ptr) if ptr else None
 
     def parse(self, path, args = [], unsaved_files = []):
         """
@@ -519,7 +520,26 @@ class Index(ClangObject):
         and the second should be the contents to be substituted for the
         file. The contents may be passed as strings or file objects.
         """
-        return TranslationUnit.parse(self, path, args, unsaved_files)
+        arg_array = 0
+        if len(args):
+            arg_array = (c_char_p * len(args))(* args)
+        unsaved_files_array = 0
+        if len(unsaved_files):
+            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
+            for i,(name,value) in enumerate(unsaved_files):
+                if not isinstance(value, str):
+                    # FIXME: It would be great to support an efficient version
+                    # of this, one day.
+                    value = value.read()
+                    print value
+                if not isinstance(value, str):
+                    raise TypeError,'Unexpected unsaved file contents.'
+                unsaved_files_array[i].name = name
+                unsaved_files_array[i].contents = value
+                unsaved_files_array[i].length = len(value)
+        ptr = TranslationUnit_parse(self, path, len(args), arg_array,
+                                    len(unsaved_files), unsaved_files_array)
+        return TranslationUnit(ptr) if ptr else None
 
 
 class TranslationUnit(ClangObject):
@@ -540,39 +560,6 @@ class TranslationUnit(ClangObject):
     def spelling(self):
         """Get the original translation unit source file name."""
         return TranslationUnit_spelling(self)
-
-    @staticmethod
-    def read(ix, path):
-        """Create a translation unit from the given AST file."""
-        ptr = TranslationUnit_read(ix, path)
-        return TranslationUnit(ptr) if ptr else None
-
-    @staticmethod
-    def parse(ix, path, args = [], unsaved_files = []):
-        """
-        Construct a translation unit from the given source file, using
-        the given command line argument.
-        """
-        arg_array = 0
-        if len(args):
-            arg_array = (c_char_p * len(args))(* args)
-        unsaved_files_array = 0
-        if len(unsaved_files):
-            unsaved_files_array = (_CXUnsavedFile * len(unsaved_files))()
-            for i,(name,value) in enumerate(unsaved_files):
-                if not isinstance(value, str):
-                    # FIXME: It would be great to support an efficient version
-                    # of this, one day.
-                    value = value.read()
-                    print value
-                if not isinstance(value, str):
-                    raise TypeError,'Unexpected unsaved file contents.'
-                unsaved_files_array[i].name = name
-                unsaved_files_array[i].contents = value
-                unsaved_files_array[i].length = len(value)
-        ptr = TranslationUnit_parse(ix, path, len(args), arg_array,
-                                    len(unsaved_files), unsaved_files_array)
-        return TranslationUnit(ptr) if ptr else None
 
 class File(ClangObject):
     """
