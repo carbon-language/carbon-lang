@@ -817,6 +817,17 @@ SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
   return Table;
 }
 
+/// getPICJumpTableRelocBaseExpr - This returns the relocation base for the
+/// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
+/// MCExpr.
+const MCExpr *
+TargetLowering::getPICJumpTableRelocBaseExpr(const MachineJumpTableInfo *MJTI,
+                                             unsigned JTI,
+                                             MCContext &Ctx) const {
+  assert(0 && "FIXME: IMPLEMENT ME");
+}
+
+
 bool
 TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // Assume that everything is safe in static mode.

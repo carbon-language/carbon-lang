@@ -772,6 +772,13 @@ public:
   virtual SDValue getPICJumpTableRelocBase(SDValue Table,
                                            SelectionDAG &DAG) const;
 
+  /// getPICJumpTableRelocBaseExpr - This returns the relocation base for the
+  /// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
+  /// MCExpr.
+  virtual const MCExpr *
+  getPICJumpTableRelocBaseExpr(const MachineJumpTableInfo *MJTI,
+                               unsigned JTI, MCContext &Ctx) const;
+  
   /// isOffsetFoldingLegal - Return true if folding a constant offset
   /// with the given GlobalAddress is legal.  It is frequently not legal in
   /// PIC relocation models.
