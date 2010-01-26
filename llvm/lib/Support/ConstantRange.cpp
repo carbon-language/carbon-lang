@@ -540,6 +540,9 @@ ConstantRange::add(const ConstantRange &Other) const {
 
 ConstantRange
 ConstantRange::multiply(const ConstantRange &Other) const {
+  // TODO: If either operand is a single element, round the result min anx
+  // max value to the appropriate multiple of that element.
+
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
   if (isFullSet() || Other.isFullSet())
