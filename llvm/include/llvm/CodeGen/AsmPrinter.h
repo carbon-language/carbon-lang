@@ -352,9 +352,6 @@ namespace llvm {
     /// specified MachineBasicBlock for a jumptable entry.
     virtual void printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const;
-    virtual void printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                                        const MachineBasicBlock *MBB,
-                                        unsigned uid) const;
     
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
@@ -364,6 +361,9 @@ namespace llvm {
     void printOffset(int64_t Offset) const;
  
   private:
+    void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                            const MachineBasicBlock *MBB,
+                            unsigned uid) const;
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);

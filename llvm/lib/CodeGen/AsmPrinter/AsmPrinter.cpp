@@ -503,7 +503,6 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     JTInDiffSection = true;
   }
 
-  unsigned EntrySize = MJTI->getEntrySize(*TM.getTargetData());
   EmitAlignment(Log2_32(MJTI->getEntryAlignment(*TM.getTargetData())));
   
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
@@ -530,28 +529,20 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
 
     OutStreamer.EmitLabel(GetJTISymbol(i));
 
-    if (!IsPic) {
-      // In non-pic mode, the entries in the jump table are direct references
-      // to the basic blocks.
-      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-        MCSymbol *MBBSym = JTBBs[ii]->getSymbol(OutContext);
-        OutStreamer.EmitValue(MCSymbolRefExpr::Create(MBBSym, OutContext),
-                              EntrySize, /*addrspace*/0);
-      }      
-    } else {
-      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
-        printPICJumpTableEntry(MJTI, JTBBs[ii], i);
-    }
+    for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
+      EmitJumpTableEntry(MJTI, JTBBs[ii], i);
   }
 }
 
-void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                                        const MachineBasicBlock *MBB,
-                                        unsigned uid) const {
+/// EmitJumpTableEntry - Emit a jump table entry for the specified MBB to the
+/// current stream.
+void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                    const MachineBasicBlock *MBB,
+                                    unsigned UID) const {
   const MCExpr *Value = 0;
   switch (MJTI->getEntryKind()) {
   case MachineJumpTableInfo::EK_Custom32:
-    Value = TM.getTargetLowering()->LowerCustomJumpTableEntry(MJTI, MBB, uid,
+    Value = TM.getTargetLowering()->LowerCustomJumpTableEntry(MJTI, MBB, UID,
                                                               OutContext);
     break;
   case MachineJumpTableInfo::EK_BlockAddress:
@@ -582,13 +573,13 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     // emit the table entries as differences between two text section labels.
     if (MAI->getSetDirective()) {
       // If we used .set, reference the .set's symbol.
-      Value = MCSymbolRefExpr::Create(GetJTSetSymbol(uid, MBB->getNumber()),
+      Value = MCSymbolRefExpr::Create(GetJTSetSymbol(UID, MBB->getNumber()),
                                       OutContext);
       break;
     }
     // Otherwise, use the difference as the jump table entry.
     Value = MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
-    const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(uid), OutContext);
+    const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(UID), OutContext);
     Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
     break;
   }
