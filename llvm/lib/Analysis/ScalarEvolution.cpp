@@ -3358,19 +3358,19 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   std::pair<std::map<const Loop *, BackedgeTakenInfo>::iterator, bool> Pair =
     BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
   if (Pair.second) {
-    BackedgeTakenInfo ItCount = ComputeBackedgeTakenCount(L);
-    if (ItCount.Exact != getCouldNotCompute()) {
-      assert(ItCount.Exact->isLoopInvariant(L) &&
-             ItCount.Max->isLoopInvariant(L) &&
-             "Computed trip count isn't loop invariant for loop!");
+    BackedgeTakenInfo BECount = ComputeBackedgeTakenCount(L);
+    if (BECount.Exact != getCouldNotCompute()) {
+      assert(BECount.Exact->isLoopInvariant(L) &&
+             BECount.Max->isLoopInvariant(L) &&
+             "Computed backedge-taken count isn't loop invariant for loop!");
       ++NumTripCountsComputed;
 
       // Update the value in the map.
-      Pair.first->second = ItCount;
+      Pair.first->second = BECount;
     } else {
-      if (ItCount.Max != getCouldNotCompute())
+      if (BECount.Max != getCouldNotCompute())
         // Update the value in the map.
-        Pair.first->second = ItCount;
+        Pair.first->second = BECount;
       if (isa<PHINode>(L->getHeader()->begin()))
         // Only count loops that have phi nodes as not being computable.
         ++NumTripCountsNotComputed;
@@ -3381,7 +3381,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
     // conservative estimates made without the benefit of trip count
     // information. This is similar to the code in forgetLoop, except that
     // it handles SCEVUnknown PHI nodes specially.
-    if (ItCount.hasAnyInfo()) {
+    if (BECount.hasAnyInfo()) {
       SmallVector<Instruction *, 16> Worklist;
       PushLoopPHIs(L, Worklist);
 
