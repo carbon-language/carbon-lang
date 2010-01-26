@@ -543,31 +543,54 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
 
 void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         const MachineBasicBlock *MBB,
-                                        unsigned uid)  const {
-  // If the target supports GPRel, use it.
-  if (MAI->getGPRel32Directive() != 0) {
+                                        unsigned uid) const {
+  const MCExpr *Value = 0;
+  switch (MJTI->getEntryKind()) {
+  case MachineJumpTableInfo::EK_BlockAddress:
+    // EK_BlockAddress - Each entry is a plain address of block, e.g.:
+    //     .word LBB123
+    Value = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
+    break;
+      
+  case MachineJumpTableInfo::EK_GPRel32BlockAddress: {
+    // EK_GPRel32BlockAddress - Each entry is an address of block, encoded
+    // with a relocation as gp-relative, e.g.:
+    //     .gprel32 LBB123
     MCSymbol *MBBSym = GetMBBSymbol(MBB->getNumber());
     OutStreamer.EmitGPRel32Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
     return;
   }
-  
-  // If we have emitted set directives for the jump table entries, print 
-  // them rather than the entries themselves.  If we're emitting PIC, then
-  // emit the table entries as differences between two text section labels.
-  const MCExpr *Val;
-  if (MAI->getSetDirective()) {
-    // If we used .set, reference the .set's symbol.
-    Val = MCSymbolRefExpr::Create(GetJTSetSymbol(uid, MBB->getNumber()),
-                                  OutContext);
-  } else {
+      
+  case MachineJumpTableInfo::EK_LabelDifference32: {
+    // EK_LabelDifference32 - Each entry is the address of the block minus
+    // the address of the jump table.  This is used for PIC jump tables where
+    // gprel32 is not supported.  e.g.:
+    //      .word LBB123 - LJTI1_2
+    // If the .set directive is supported, this is emitted as:
+    //      .set L4_5_set_123, LBB123 - LJTI1_2
+    //      .word L4_5_set_123
+    
+    // If we have emitted set directives for the jump table entries, print 
+    // them rather than the entries themselves.  If we're emitting PIC, then
+    // emit the table entries as differences between two text section labels.
+    if (MAI->getSetDirective()) {
+      // If we used .set, reference the .set's symbol.
+      Value = MCSymbolRefExpr::Create(GetJTSetSymbol(uid, MBB->getNumber()),
+                                      OutContext);
+      break;
+    }
     // Otherwise, use the difference as the jump table entry.
-    Val = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
+    Value = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
     const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(uid), OutContext);
-    Val = MCBinaryExpr::CreateSub(Val, JTI, OutContext);
+    Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
+    break;
+  }
   }
   
+  assert(Value && "Unknown entry kind!");
+ 
   unsigned EntrySize = MJTI->getEntrySize(*TM.getTargetData());
-  OutStreamer.EmitValue(Val, EntrySize, /*addrspace*/0);
+  OutStreamer.EmitValue(Value, EntrySize, /*addrspace*/0);
 }
 
 
