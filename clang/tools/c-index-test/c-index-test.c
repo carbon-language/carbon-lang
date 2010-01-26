@@ -810,8 +810,13 @@ int perform_token_annotation(int argc, const char **argv) {
                                    0, &start_line, &start_column);
     clang_getInstantiationLocation(clang_getRangeEnd(extent),
                                    0, &end_line, &end_column);
-    printf("%s: \"%s\" [%d:%d - %d:%d]\n", kind, clang_getCString(spelling),
+    printf("%s: \"%s\" [%d:%d - %d:%d]", kind, clang_getCString(spelling),
            start_line, start_column, end_line, end_column);
+    if (!clang_isInvalid(cursors[i].kind)) {
+      printf(" ");
+      PrintCursor(cursors[i]);
+    }
+    printf("\n");
   }
   free(cursors);
 

@@ -861,7 +861,11 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
  */
 
 /**
- * \defgroup CINDEX_LEX Lexing and syntactic analysis
+ * \defgroup CINDEX_LEX Token extraction and manipulation
+ *
+ * The routines in this group provide access to the tokens within a
+ * translation unit, along with a semantic mapping of those tokens to
+ * their corresponding cursors.
  *
  * @{
  */
@@ -876,7 +880,7 @@ typedef enum CXTokenKind {
   CXToken_Punctuation,
   
   /**
-   * \brief A a language keyword.
+   * \brief A language keyword.
    */
   CXToken_Keyword,
   
@@ -952,9 +956,22 @@ CINDEX_LINKAGE void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
  * \brief Annotate the given set of tokens by providing cursors for each token
  * that can be mapped to a specific entity within the abstract syntax tree.
  *
- * This token-annotation routine is equivalent to invoking clang_getCursor() 
- * for the source locations of each of the tokens, then accepting only those
- * cursors that refer to a specific token.
+ * This token-annotation routine is equivalent to invoking
+ * clang_getCursor() for the source locations of each of the
+ * tokens. The cursors provided are filtered, so that only those
+ * cursors that have a direct correspondence to the token are
+ * accepted. For example, given a function call \c f(x),
+ * clang_getCursor() would provide the following cursors:
+ *
+ *   * when the cursor is over the 'f', a DeclRefExpr cursor referring to 'f'.
+ *   * when the cursor is over the '(' or the ')', a CallExpr referring to 'f'.
+ *   * when the cursor is over the 'x', a DeclRefExpr cursor referring to 'x'.
+ *
+ * Only the first and last of these cursors will occur within the
+ * annotate, since the tokens "f" and "x' directly refer to a function
+ * and a variable, respectively, but the parentheses are just a small
+ * part of the full syntax of the function call expression, which is
+ * not provided as an annotation.
  *
  * \param TU the translation unit that owns the given tokens.
  *
