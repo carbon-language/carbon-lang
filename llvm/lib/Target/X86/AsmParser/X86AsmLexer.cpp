@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Target/TargetAsmLexer.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -113,7 +114,32 @@ AsmToken X86AsmLexer::LexTokenATT() {
 }
 
 AsmToken X86AsmLexer::LexTokenIntel() {
-  return AsmToken(AsmToken::Error, "", 0);
+  const AsmToken &lexedToken = lexDefinite();
+  
+  switch(lexedToken.getKind()) {
+  default:
+    return AsmToken(lexedToken);
+  case AsmToken::Error:
+    SetError(Lexer->getErrLoc(), Lexer->getErr());
+    return AsmToken(lexedToken);
+  case AsmToken::Identifier:
+  {
+    std::string upperCase = lexedToken.getString().str();
+    std::string lowerCase = LowercaseString(upperCase);
+    StringRef lowerRef(lowerCase);
+    
+    unsigned regID = MatchRegisterName(lowerRef);
+    
+    if (regID) {
+      return AsmToken(AsmToken::Register,
+                      lexedToken.getString(),
+                      static_cast<int64_t>(regID));
+    }
+    else {
+      return AsmToken(lexedToken);
+    }
+  }
+  }
 }
 
 extern "C" void LLVMInitializeX86AsmLexer() {
