@@ -505,8 +505,8 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
 
   EmitAlignment(Log2_32(MJTI->getEntryAlignment(*TM.getTargetData())));
   
-  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
-    const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
+  for (unsigned JTI = 0, e = JT.size(); JTI != e; ++JTI) {
+    const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
     
     // If this jump table was deleted, ignore it. 
     if (JTBBs.empty()) continue;
@@ -516,11 +516,19 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     // relocations the assembler will generate for the jump table.
     if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32 &&
         MAI->getSetDirective()) {
-      SmallPtrSet<MachineBasicBlock*, 16> EmittedSets;
-      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
-        if (EmittedSets.insert(JTBBs[ii]))
-          printPICJumpTableSetLabel(i, JTBBs[ii]);
-    }
+      SmallPtrSet<const MachineBasicBlock*, 16> EmittedSets;
+      const TargetLowering *TLI = TM.getTargetLowering();
+      const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(&MF, JTI,
+                                                             OutContext);
+      for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
+        const MachineBasicBlock *MBB = JTBBs[ii];
+        if (!EmittedSets.insert(MBB)) continue;
+        
+        O << MAI->getSetDirective() << ' '
+          << *GetJTSetSymbol(JTI, MBB->getNumber()) << ','
+          << *MBB->getSymbol(OutContext) << '-' << *Base << '\n';
+      }
+    }          
     
     // On some targets (e.g. Darwin) we want to emit two consequtive labels
     // before each jump table.  The first label is never referenced, but tells
@@ -529,12 +537,12 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     if (JTInDiffSection && MAI->getLinkerPrivateGlobalPrefix()[0])
       // FIXME: This doesn't have to have any specific name, just any randomly
       // named and numbered 'l' label would work.  Simplify GetJTISymbol.
-      OutStreamer.EmitLabel(GetJTISymbol(i, true));
+      OutStreamer.EmitLabel(GetJTISymbol(JTI, true));
 
-    OutStreamer.EmitLabel(GetJTISymbol(i));
+    OutStreamer.EmitLabel(GetJTISymbol(JTI));
 
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
-      EmitJumpTableEntry(MJTI, JTBBs[ii], i);
+      EmitJumpTableEntry(MJTI, JTBBs[ii], JTI);
   }
 }
 
@@ -1540,18 +1548,6 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 
     OutStreamer.EmitLabel(MBB->getSymbol(OutContext));
   }
-}
-
-/// printPICJumpTableSetLabel - This method prints a set label for the
-/// specified MachineBasicBlock for a jumptable entry.
-void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
-                                           const MachineBasicBlock *MBB) const {
-  const TargetLowering *TLI = TM.getTargetLowering();
-  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
-    << *GetJTSetSymbol(uid, MBB->getNumber()) << ','
-    << *MBB->getSymbol(OutContext) << '-'
-    << *TLI->getPICJumpTableRelocBaseExpr(MF, uid, OutContext)
-    << '\n';
 }
 
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {

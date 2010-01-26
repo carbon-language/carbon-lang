@@ -348,11 +348,6 @@ namespace llvm {
     /// printKill - This method prints the specified kill machine instruction.
     void printKill(const MachineInstr *MI) const;
 
-    /// printPICJumpTableSetLabel - This method prints a set label for the
-    /// specified MachineBasicBlock for a jumptable entry.
-    virtual void printPICJumpTableSetLabel(unsigned uid,
-                                           const MachineBasicBlock *MBB) const;
-    
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
     void printVisibility(MCSymbol *Sym, unsigned Visibility) const;
