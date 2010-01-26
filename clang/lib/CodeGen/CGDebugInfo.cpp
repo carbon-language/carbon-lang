@@ -518,6 +518,67 @@ CollectRecordFields(const RecordDecl *Decl,
   }
 }
 
+/// CreateCXXMemberFunction - A helper function to create a DISubprogram for
+/// a single member function GlobalDecl.
+llvm::DISubprogram
+CGDebugInfo::CreateCXXMemberFunction(GlobalDecl GD,
+                                     llvm::DICompileUnit Unit,
+                                     llvm::DICompositeType &RecordTy) {
+  const CXXMethodDecl *Method = cast<CXXMethodDecl>(GD.getDecl());
+
+  llvm::StringRef MethodName;
+  llvm::StringRef MethodLinkageName;
+  llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
+  if (const CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(Method)) {
+    (void)CDecl;
+    MethodName = Method->getName();
+    // FIXME : Find linkage name.
+  } else if (const CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(Method)) {
+    (void)DDecl;
+    MethodName = getFunctionName(Method);
+    // FIXME : Find linkage name.
+  } else {
+    // regular method
+    MethodName = getFunctionName(Method);
+    MethodLinkageName = CGM.getMangledName(Method);
+  }
+  SourceManager &SM = CGM.getContext().getSourceManager();
+
+  // Get the location for the method.
+  SourceLocation MethodDefLoc = Method->getLocation();
+  PresumedLoc PLoc = SM.getPresumedLoc(MethodDefLoc);
+  llvm::DICompileUnit MethodDefUnit;
+  unsigned MethodLine = 0;
+
+  if (!PLoc.isInvalid()) {
+    MethodDefUnit = getOrCreateCompileUnit(MethodDefLoc);
+    MethodLine = PLoc.getLine();
+  }
+
+  // Collect virtual method info.
+  llvm::DIType ContainingType;
+  unsigned Virtuality = 0; 
+  unsigned VIndex = 0;
+  if (Method->isVirtual()) {
+    // FIXME: Identify pure virtual functions.
+    Virtuality = llvm::dwarf::DW_VIRTUALITY_virtual;
+    VIndex = CGM.getVtableInfo().getMethodVtableIndex(Method);
+    ContainingType = RecordTy;
+  }
+
+  llvm::DISubprogram SP =
+    DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
+                                  MethodLinkageName,
+                                  MethodDefUnit, MethodLine,
+                                  MethodTy, /*isLocalToUnit=*/false, 
+                                  Method->isThisDeclarationADefinition(),
+                                  Virtuality, VIndex, ContainingType);
+  if (Method->isThisDeclarationADefinition())
+    SPCache[cast<FunctionDecl>(Method)] = llvm::WeakVH(SP.getNode());
+
+  return SP;
+}
+
 /// CollectCXXMemberFunctions - A helper function to collect debug info for
 /// C++ member functions.This is used while creating debug info entry for 
 /// a Record.
@@ -526,63 +587,14 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
                           llvm::DICompileUnit Unit,
                           llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
                           llvm::DICompositeType &RecordTy) {
-  SourceManager &SM = CGM.getContext().getSourceManager();
   for(CXXRecordDecl::method_iterator I = Decl->method_begin(),
         E = Decl->method_end(); I != E; ++I) {
-    CXXMethodDecl *Method = *I;
+    const CXXMethodDecl *Method = *I;
     
     if (Method->isImplicit())
       continue;
-    
-    llvm::StringRef MethodName;
-    llvm::StringRef MethodLinkageName;
-    llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
-    if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(Method)) {
-      (void)CDecl;
-      MethodName = Decl->getName();
-      // FIXME : Find linkage name.
-    } else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(Method)) {
-      (void)DDecl;
-      MethodName = getFunctionName(Method);
-      // FIXME : Find linkage name.
-    } else {
-      // regular method
-      MethodName = getFunctionName(Method);
-      MethodLinkageName = CGM.getMangledName(Method);
-    }
 
-    // Get the location for the method.
-    SourceLocation MethodDefLoc = Method->getLocation();
-    PresumedLoc PLoc = SM.getPresumedLoc(MethodDefLoc);
-    llvm::DICompileUnit MethodDefUnit;
-    unsigned MethodLine = 0;
-
-    if (!PLoc.isInvalid()) {
-      MethodDefUnit = getOrCreateCompileUnit(MethodDefLoc);
-      MethodLine = PLoc.getLine();
-    }
-
-    // Collect virtual method info.
-    llvm::DIType ContainingType;
-    unsigned Virtuality = 0; 
-    unsigned VIndex = 0;
-    if (Method->isVirtual()) {
-      // FIXME: Identify pure virtual functions.
-      Virtuality = llvm::dwarf::DW_VIRTUALITY_virtual;
-      VIndex = CGM.getVtableInfo().getMethodVtableIndex(Method);
-      ContainingType = RecordTy;
-    }
-
-    llvm::DISubprogram SP =
-      DebugFactory.CreateSubprogram(RecordTy , MethodName, MethodName, 
-                                    MethodLinkageName,
-                                    MethodDefUnit, MethodLine,
-                                    MethodTy, false, 
-                                    Method->isThisDeclarationADefinition(),
-                                    Virtuality, VIndex, ContainingType);
-    if (Method->isThisDeclarationADefinition())
-      SPCache[cast<FunctionDecl>(Method)] = llvm::WeakVH(SP.getNode());
-    EltTys.push_back(SP);
+    EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
   }
 }                                 
 

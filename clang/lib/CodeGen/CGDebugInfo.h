@@ -87,6 +87,11 @@ class CGDebugInfo {
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);
+  
+  llvm::DISubprogram CreateCXXMemberFunction(GlobalDecl GD,
+                                             llvm::DICompileUnit Unit,
+                                             llvm::DICompositeType &RecordTy);
+  
   void CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
                                  llvm::DICompileUnit U,
                                  llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
