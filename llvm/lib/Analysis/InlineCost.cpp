@@ -87,8 +87,8 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       Reduction += 10;
     else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
       // If the GEP has variable indices, we won't be able to do much with it.
-      if (!GEP->hasAllConstantIndices())
-        Reduction += CountCodeReductionForAlloca(GEP)+15;
+      if (GEP->hasAllConstantIndices())
+        Reduction += CountCodeReductionForAlloca(GEP);
     } else {
       // If there is some other strange instruction, we're not going to be able
       // to do much if we inline this.
