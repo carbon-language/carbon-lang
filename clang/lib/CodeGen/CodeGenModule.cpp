@@ -580,9 +580,8 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
       
   // Static data may be deferred, but out-of-line static data members
   // cannot be.
-  if (VD->isInAnonymousNamespace())
-    return true;
-  if (VD->getLinkage() == VarDecl::InternalLinkage) {
+  if (VD->getLinkage() == VarDecl::InternalLinkage ||
+      VD->isInAnonymousNamespace()) {
     // Initializer has side effects?
     if (VD->getInit() && VD->getInit()->HasSideEffects(Context))
       return false;
