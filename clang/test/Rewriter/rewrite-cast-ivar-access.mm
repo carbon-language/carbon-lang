@@ -20,5 +20,11 @@
 }
 @end
 
+void objc_assign_strongCast(id);
+void __CFAssignWithWriteBarrier(void **location, void *value) {
+        objc_assign_strongCast((id)value);
+}
+
 // CHECK-LP: ((struct G_IMPL *)arg)->ivar
 
+// CHECK-LP: objc_assign_strongCast((id)value)
