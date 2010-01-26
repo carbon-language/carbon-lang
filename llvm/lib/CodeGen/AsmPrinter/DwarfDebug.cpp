@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
@@ -166,7 +167,8 @@ public:
 class DbgScope {
   DbgScope *Parent;                   // Parent to this scope.
   DIDescriptor Desc;                  // Debug info descriptor for scope.
-  MDNode * InlinedAtLocation;           // Location at which scope is inlined.
+  // Location at which this scope is inlined.
+  AssertingVH<MDNode> InlinedAtLocation;  
   bool AbstractScope;                 // Abstract Scope
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
@@ -189,7 +191,7 @@ public:
   void setParent(DbgScope *P)          { Parent = P; }
   DIDescriptor getDesc()         const { return Desc; }
   MDNode *getInlinedAt()         const {
-    return dyn_cast_or_null<MDNode>(InlinedAtLocation);
+    return InlinedAtLocation;
   }
   MDNode *getScopeNode()         const { return Desc.getNode(); }
   unsigned getStartLabelID()     const { return StartLabelID; }
