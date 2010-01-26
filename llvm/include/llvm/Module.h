@@ -211,11 +211,13 @@ public:
   /// Set the module-scope inline assembly blocks.
   void setModuleInlineAsm(StringRef Asm) { GlobalScopeAsm = Asm; }
 
-  /// Append to the module-scope inline assembly blocks, automatically
-  /// appending a newline to the end.
+  /// Append to the module-scope inline assembly blocks, automatically inserting
+  /// a separating newline if necessary.
   void appendModuleInlineAsm(StringRef Asm) {
+    if (!GlobalScopeAsm.empty() &&
+        GlobalScopeAsm[GlobalScopeAsm.size()-1] != '\n')
+      GlobalScopeAsm += '\n';
     GlobalScopeAsm += Asm;
-    GlobalScopeAsm += '\n';
   }
 
 /// @}
