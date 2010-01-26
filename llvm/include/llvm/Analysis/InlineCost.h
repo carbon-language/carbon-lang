@@ -64,7 +64,9 @@ namespace llvm {
 
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
-    const int CallPenalty = 5;
+    const int InstrCost = 5;
+    const int IndirectCallBonus = 500;
+    const int CallPenalty = 5;  // In instrs, so multiply by InstrCost.
     const int LastCallToStaticBonus = -15000;
     const int ColdccPenalty = 2000;
     const int NoreturnPenalty = 10000;

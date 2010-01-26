@@ -25,23 +25,28 @@ unsigned InlineCostAnalyzer::FunctionInfo::
          CountCodeReductionForConstant(Value *V) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
-    if (isa<BranchInst>(*UI))
-      Reduction += 40;          // Eliminating a conditional branch is a big win
-    else if (SwitchInst *SI = dyn_cast<SwitchInst>(*UI))
-      // Eliminating a switch is a big win, proportional to the number of edges
-      // deleted.
-      Reduction += (SI->getNumSuccessors()-1) * 40;
-    else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
+    if (isa<BranchInst>(*UI) || isa<SwitchInst>(*UI)) {
+      // We will be able to eliminate all but one of the successors.
+      const TerminatorInst &TI = cast<TerminatorInst>(**UI);
+      const unsigned NumSucc = TI.getNumSuccessors();
+      unsigned Instrs = 0;
+      for (unsigned I = 0; I != NumSucc; ++I)
+        Instrs += TI.getSuccessor(I)->size();
+      // We don't know which blocks will be eliminated, so use the average size.
+      Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
+    } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Turning an indirect call into a direct call is a BIG win
-      Reduction += CI->getCalledValue() == V ? 500 : 0;
+      if (CI->getCalledValue() == V)
+        Reduction += InlineConstants::IndirectCallBonus;
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
       // Turning an indirect call into a direct call is a BIG win
-      Reduction += II->getCalledValue() == V ? 500 : 0;
+      if (II->getCalledValue() == V)
+        Reduction += InlineConstants::IndirectCallBonus;
     } else {
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
       Instruction &Inst = cast<Instruction>(**UI);
-      
+
       // We can't constant propagate instructions which have effects or
       // read memory.
       //
@@ -50,7 +55,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       // Unfortunately, we don't know the pointer that may get propagated here,
       // so we can't make this decision.
       if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
-          isa<AllocaInst>(Inst)) 
+          isa<AllocaInst>(Inst))
         continue;
 
       bool AllOperandsConstant = true;
@@ -62,7 +67,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 
       if (AllOperandsConstant) {
         // We will get to remove this instruction...
-        Reduction += 7;
+        Reduction += InlineConstants::InstrCost;
 
         // And any other instructions that use it which become constants
         // themselves.
@@ -84,11 +89,14 @@ unsigned InlineCostAnalyzer::FunctionInfo::
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
     Instruction *I = cast<Instruction>(*UI);
     if (isa<LoadInst>(I) || isa<StoreInst>(I))
-      Reduction += 10;
+      Reduction += InlineConstants::InstrCost;
     else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
       // If the GEP has variable indices, we won't be able to do much with it.
       if (GEP->hasAllConstantIndices())
         Reduction += CountCodeReductionForAlloca(GEP);
+    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
+      // Track pointer through bitcasts.
+      Reduction += CountCodeReductionForAlloca(BCI);
     } else {
       // If there is some other strange instruction, we're not going to be able
       // to do much if we inline this.
@@ -155,10 +163,10 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           NeverInline = true;
 
-      // Calls often compile into many machine instructions.  Bump up their
-      // cost to reflect this.
+      // Each argument to a call takes on average one instruction to set up.
+      // Add an extra penalty because calls can take a long time to execute.
       if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction()))
-        NumInsts += InlineConstants::CallPenalty;
+        NumInsts += InlineConstants::CallPenalty + CS.arg_size();
     }
     
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
@@ -316,23 +324,18 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
        I != E; ++I, ++ArgNo) {
     // Each argument passed in has a cost at both the caller and the callee
-    // sides.  This favors functions that take many arguments over functions
-    // that take few arguments.
-    InlineCost -= 20;
-    
-    // If this is a function being passed in, it is very likely that we will be
-    // able to turn an indirect function call into a direct function call.
-    if (isa<Function>(I))
-      InlineCost -= 100;
-    
+    // sides.  Measurements show that each argument costs about the same as an
+    // instruction.
+    InlineCost -= InlineConstants::InstrCost;
+
     // If an alloca is passed in, inlining this function is likely to allow
     // significant future optimization possibilities (like scalar promotion, and
     // scalarization), so encourage the inlining of the function.
     //
-    else if (isa<AllocaInst>(I)) {
+    if (isa<AllocaInst>(I)) {
       if (ArgNo < CalleeFI.ArgumentWeights.size())
         InlineCost -= CalleeFI.ArgumentWeights[ArgNo].AllocaWeight;
-      
+
       // If this is a constant being passed into the function, use the argument
       // weights calculated for the callee to determine how much will be folded
       // away with this information.
@@ -351,7 +354,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   InlineCost += Caller->size()/15;
   
   // Look at the size of the callee. Each instruction counts as 5.
-  InlineCost += CalleeFI.Metrics.NumInsts*5;
+  InlineCost += CalleeFI.Metrics.NumInsts*InlineConstants::InstrCost;
 
   return llvm::InlineCost::get(InlineCost);
 }
