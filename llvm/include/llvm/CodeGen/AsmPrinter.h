@@ -360,6 +360,8 @@ namespace llvm {
     void printOffset(int64_t Offset) const;
  
   private:
+    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym);
+    
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB,
                             unsigned uid) const;

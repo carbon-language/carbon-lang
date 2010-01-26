@@ -150,6 +150,50 @@ bool AsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
+void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) {
+  switch ((GlobalValue::LinkageTypes)Linkage) {
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+    if (MAI->getWeakDefDirective() != 0) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+      // .weak_definition _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
+    } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
+      // .globl _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+      // FIXME: linkonce should be a section attribute, handled by COFF Section
+      // assignment.
+      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
+      // .linkonce same_size
+      O << LinkOnce;
+    } else {
+      // .weak _foo
+      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
+    }
+    break;
+  case GlobalValue::DLLExportLinkage:
+  case GlobalValue::AppendingLinkage:
+    // FIXME: appending linkage variables should go into a section of
+    // their name or something.  For now, just emit them as external.
+  case GlobalValue::ExternalLinkage:
+    // If external or appending, declare as a global symbol.
+    // .globl _foo
+    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+    break;
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::InternalLinkage:
+    break;
+  default:
+    llvm_unreachable("Unknown linkage type!");
+  }
+}
+
+
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
 void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (!GV->hasInitializer())   // External globals require no code.
@@ -225,50 +269,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   OutStreamer.SwitchSection(TheSection);
 
-  // TODO: Factor into an 'emit linkage' thing that is shared with function
-  // bodies.
-  switch (GV->getLinkage()) {
-  case GlobalValue::CommonLinkage:
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-    if (MAI->getWeakDefDirective() != 0) {
-      // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-      // .weak_definition _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_WeakDefinition);
-    } else if (const char *LinkOnce = MAI->getLinkOnceDirective()) {
-      // .globl _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-      // FIXME: linkonce should be a section attribute, handled by COFF Section
-      // assignment.
-      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
-      // .linkonce same_size
-      O << LinkOnce;
-    } else {
-      // .weak _foo
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
-    }
-    break;
-  case GlobalValue::DLLExportLinkage:
-  case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-  case GlobalValue::ExternalLinkage:
-    // If external or appending, declare as a global symbol.
-    // .globl _foo
-    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
-    break;
-  case GlobalValue::PrivateLinkage:
-  case GlobalValue::InternalLinkage:
-     break;
-  default:
-    llvm_unreachable("Unknown linkage type!");
-  }
-
+  EmitLinkage(GV->getLinkage(), GVSym);
   EmitAlignment(AlignLog, GV);
+
   if (VerboseAsm) {
     WriteAsOperand(OutStreamer.GetCommentOS(), GV,
                    /*PrintType=*/false, GV->getParent());
