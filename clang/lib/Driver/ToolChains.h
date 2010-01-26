@@ -67,8 +67,6 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   /// The default iphoneos-version-min of this tool chain.
   std::string IPhoneOSVersionMin;
 
-  const char *getMacosxVersionMin() const;
-
 public:
   Darwin(const HostInfo &Host, const llvm::Triple& Triple,
          const unsigned (&DarwinVersion)[3], bool IsIPhoneOS);
@@ -110,14 +108,6 @@ public:
                                 unsigned V0, unsigned V1=0, unsigned V2=0) {
     unsigned B[3] = { V0, V1, V2 };
     return isMacosxVersionLT(A, B);
-  }
-
-  const char *getMacosxVersionStr() const {
-    return MacosxVersionMin.c_str();
-  }
-
-  const char *getIPhoneOSVersionStr() const {
-    return IPhoneOSVersionMin.c_str();
   }
 
   /// AddLinkSearchPathArgs - Add the linker search paths to \arg CmdArgs.

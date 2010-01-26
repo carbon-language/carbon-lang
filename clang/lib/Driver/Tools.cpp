@@ -1948,20 +1948,11 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_image__base);
   Args.AddAllArgs(CmdArgs, options::OPT_init);
 
-  if (!Args.hasArg(options::OPT_mmacosx_version_min_EQ) &&
-      !Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
-    // Add default version min.
-    if (!getDarwinToolChain().isIPhoneOS()) {
-      CmdArgs.push_back("-macosx_version_min");
-      CmdArgs.push_back(getDarwinToolChain().getMacosxVersionStr());
-    } else {
-      CmdArgs.push_back("-iphoneos_version_min");
-      CmdArgs.push_back(getDarwinToolChain().getIPhoneOSVersionStr());
-    }
-  }
-
-  // Adding all arguments doesn't make sense here but this is what
-  // gcc does.
+  // Adding all arguments doesn't make sense here but this is what gcc does. One
+  // of this should always be present thanks to argument translation.
+  assert((Args.hasArg(options::OPT_mmacosx_version_min_EQ) ||
+          Args.hasArg(options::OPT_miphoneos_version_min_EQ)) &&
+         "Missing version argument (lost in translation)?");
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
                             "-macosx_version_min");
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_miphoneos_version_min_EQ,
