@@ -292,11 +292,10 @@ void AsmPrinter::EmitFunctionHeader() {
   EmitConstantPool(MF->getConstantPool());
   
   // Print the 'header' of function.
-  unsigned FnAlign = MF->getAlignment();
   const Function *F = MF->getFunction();
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  EmitAlignment(FnAlign, F);
+  printVisibility(CurrentFnSym, F->getVisibility());
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -327,7 +326,8 @@ void AsmPrinter::EmitFunctionHeader() {
     break;
   }
 
-  printVisibility(CurrentFnSym, F->getVisibility());
+  EmitAlignment(MF->getAlignment(), F);
+
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
