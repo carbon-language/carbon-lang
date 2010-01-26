@@ -620,6 +620,11 @@ public:
   /// initializer.
   const Expr *getDefinition(const VarDecl *&Def) const;
 
+  const Expr *getDefinition() const {
+    const VarDecl* Definition;
+    return getDefinition(Definition);
+  }
+  
   void setThreadSpecified(bool T) { ThreadSpecified = T; }
   bool isThreadSpecified() const {
     return ThreadSpecified;
