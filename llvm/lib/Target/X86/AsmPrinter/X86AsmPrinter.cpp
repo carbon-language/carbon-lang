@@ -63,104 +63,42 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
                                                                     OutContext);
 }
 
-void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
-  unsigned FnAlign = MF.getAlignment();
-  const Function *F = MF.getFunction();
-
-  if (Subtarget->isTargetCygMing()) {
-    X86COFFMachineModuleInfo &COFFMMI = 
-      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-    COFFMMI.DecorateCygMingName(CurrentFnSym, OutContext, F,
-                                *TM.getTargetData());
-  }
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  EmitAlignment(FnAlign, F);
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-    break;
-  case Function::DLLExportLinkage:
-  case Function::ExternalLinkage:
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-    break;
-  case Function::LinkerPrivateLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    if (Subtarget->isTargetDarwin()) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-      O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
-    } else if (Subtarget->isTargetCygMing()) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-      // FIXME: linkonce should be a section attribute, handled by COFF Section
-      // assignment.
-      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
-      O << "\t.linkonce discard\n";
-    } else {
-      O << "\t.weak\t" << *CurrentFnSym << '\n';
-    }
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  if (MAI->hasDotTypeDotSizeDirective()) {
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
-  } else if (Subtarget->isTargetCygMing()) {
-    O << "\t.def\t " << *CurrentFnSym;
-    O << ";\t.scl\t" <<
-      (F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT)
-      << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
-      << ";\t.endef\n";
-  }
-
-  O << *CurrentFnSym << ':';
-  if (VerboseAsm) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << ' ';
-    WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
-  }
-  O << '\n';
-
-  // Add some workaround for linkonce linkage on Cygwin\MinGW
-  if (Subtarget->isTargetCygMing() &&
-      (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
-    O << "Lllvm$workaround$fake$stub$" << *CurrentFnSym << ":\n";
-}
-
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  const Function *F = MF.getFunction();
-  CallingConv::ID CC = F->getCallingConv();
-
   SetupMachineFunction(MF);
   O << "\n\n";
-
+  
+  // COFF and Cygwin specific mangling stuff.  This should be moved out to the
+  // mangler or handled some other way?
   if (Subtarget->isTargetCOFF()) {
     X86COFFMachineModuleInfo &COFFMMI = 
-    MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
 
     // Populate function information map.  Don't want to populate
     // non-stdcall or non-fastcall functions' information right now.
+    const Function *F = MF.getFunction();
+    CallingConv::ID CC = F->getCallingConv();
     if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
       COFFMMI.AddFunctionInfo(F, *MF.getInfo<X86MachineFunctionInfo>());
   }
-
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print the 'header' of function
-  emitFunctionHeader(MF);
-
-  // Emit pre-function debug and/or EH information.
-  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
-    DW->BeginFunction(&MF);
+  if (Subtarget->isTargetCygMing()) {
+    const Function *F = MF.getFunction();
+    X86COFFMachineModuleInfo &COFFMMI = 
+      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+    COFFMMI.DecorateCygMingName(CurrentFnSym, OutContext,F,*TM.getTargetData());
+    
+    O << "\t.def\t " << *CurrentFnSym;
+    O << ";\t.scl\t" <<
+    (F->hasInternalLinkage() ? COFF::C_STAT : COFF::C_EXT)
+    << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
+    << ";\t.endef\n";
+  }
+  
+  // Have common code print out the function header with linkage info etc.
+  EmitFunctionHeader();
+  
 
   // Print out code for the function.
   bool hasAnyRealCode = false;
@@ -181,7 +119,6 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     // If the function is empty, then we need to emit *something*. Otherwise,
     // the function's label might be associated with something that it wasn't
     // meant to be associated with. We emit a noop in this situation.
-    // We are assuming inline asms are code.
     O << "\tnop\n";
   }
 

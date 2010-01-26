@@ -285,6 +285,73 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.AddBlankLine();
 }
 
+/// EmitFunctionHeader - This method emits the header for the current
+/// function.
+void AsmPrinter::EmitFunctionHeader() {
+  // Print out constants referenced by the function
+  EmitConstantPool(MF->getConstantPool());
+  
+  // Print the 'header' of function.
+  unsigned FnAlign = MF->getAlignment();
+  const Function *F = MF->getFunction();
+
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  EmitAlignment(FnAlign, F);
+
+  switch (F->getLinkage()) {
+  default: llvm_unreachable("Unknown linkage type!");
+  case Function::InternalLinkage:  // Symbols default to internal.
+  case Function::PrivateLinkage:
+    break;
+  case Function::DLLExportLinkage:
+  case Function::ExternalLinkage:
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
+    break;
+  case Function::LinkerPrivateLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+    if (MAI->getWeakDefDirective() != 0) {
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
+      O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
+    } else if (MAI->getLinkOnceDirective() != 0) {
+      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
+      // FIXME: linkonce should be a section attribute, handled by COFF Section
+      // assignment.
+      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
+      O << "\t.linkonce discard\n";
+    } else {
+      O << "\t.weak\t" << *CurrentFnSym << '\n';
+    }
+    break;
+  }
+
+  printVisibility(CurrentFnSym, F->getVisibility());
+
+  if (MAI->hasDotTypeDotSizeDirective())
+    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
+
+  O << *CurrentFnSym << ':';
+  if (VerboseAsm) {
+    O.PadToColumn(MAI->getCommentColumn());
+    O << MAI->getCommentString() << ' ';
+    WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
+  }
+  O << '\n';
+
+  // Add some workaround for linkonce linkage on Cygwin\MinGW.
+  if (MAI->getLinkOnceDirective() != 0 &&
+      (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
+    O << "Lllvm$workaround$fake$stub$" << *CurrentFnSym << ":\n";
+  
+  // Emit pre-function debug and/or EH information.
+  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
+    DW->BeginFunction(MF);
+}
+
+
+
 
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
@@ -390,7 +457,7 @@ namespace {
 /// used to print out constants which have been "spilled to memory" by
 /// the code generator.
 ///
-void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
+void AsmPrinter::EmitConstantPool(const MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
 
@@ -1556,6 +1623,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 }
 
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {
+  // FIXME: RENAME TO EmitVisibility.
   MCSymbolAttr Attr = MCSA_Invalid;
   
   switch (Visibility) {

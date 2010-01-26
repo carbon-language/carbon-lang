@@ -211,12 +211,16 @@ namespace llvm {
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
     
+    /// EmitFunctionHeader - This method emits the header for the current
+    /// function.
+    void EmitFunctionHeader();
+
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
     /// used to print out constants which have been "spilled to memory" by
     /// the code generator.
     ///
-    void EmitConstantPool(MachineConstantPool *MCP);
+    void EmitConstantPool(const MachineConstantPool *MCP);
 
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
