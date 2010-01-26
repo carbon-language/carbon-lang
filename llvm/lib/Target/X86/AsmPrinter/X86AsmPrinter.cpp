@@ -340,7 +340,7 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *GetMBBSymbol(MO.getMBB()->getNumber());
+    O << *MO.getMBB()->getSymbol(OutContext);
     return;
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
@@ -465,7 +465,7 @@ void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   
-  O << *GetMBBSymbol(MBB->getNumber());
+  O << *MBB->getSymbol(OutContext);
   
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << *GetJTISymbol(uid) << '\n';
@@ -495,9 +495,9 @@ void X86AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC()) {
     O << *GetJTSetSymbol(uid, MBB->getNumber());
   } else if (Subtarget->isPICStyleGOT())
-    O << *GetMBBSymbol(MBB->getNumber()) << "@GOTOFF";
+    O << *MBB->getSymbol(OutContext) << "@GOTOFF";
   else  // mdynamic-no-pic
-    O << *GetMBBSymbol(MBB->getNumber());
+    O << *MBB->getSymbol(OutContext);
   O << '\n';
 }
 

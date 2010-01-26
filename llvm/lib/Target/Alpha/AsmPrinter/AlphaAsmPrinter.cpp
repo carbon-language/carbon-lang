@@ -93,7 +93,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    O << *GetMBBSymbol(MO.getMBB()->getNumber());
+    O << *MO.getMBB()->getSymbol(OutContext);
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:

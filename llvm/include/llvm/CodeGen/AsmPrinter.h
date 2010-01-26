@@ -301,10 +301,6 @@ namespace llvm {
     /// ExternalSymbol.
     MCSymbol *GetExternalSymbolSymbol(StringRef Sym) const;
     
-    /// GetMBBSymbol - Return the MCSymbol corresponding to the specified basic
-    /// block label.
-    MCSymbol *GetMBBSymbol(unsigned MBBID) const;
-    
     /// GetCPISymbol - Return the symbol for the specified constant pool entry.
     MCSymbol *GetCPISymbol(unsigned CPID) const;
 

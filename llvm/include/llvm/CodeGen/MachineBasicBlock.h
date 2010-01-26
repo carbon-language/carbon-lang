@@ -352,6 +352,10 @@ public:
   int getNumber() const { return Number; }
   void setNumber(int N) { Number = N; }
 
+  /// getSymbol - Return the MCSymbol for this basic block.
+  ///
+  MCSymbol *getSymbol(MCContext &Ctx) const;
+  
 private:   // Methods used to maintain doubly linked list of blocks...
   friend struct ilist_traits<MachineBasicBlock>;
 

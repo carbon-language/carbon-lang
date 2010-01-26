@@ -297,7 +297,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *GetMBBSymbol(MO.getMBB()->getNumber());
+    O << *MO.getMBB()->getSymbol(OutContext);
     break;
   case MachineOperand::MO_GlobalAddress:
     O << *GetGlobalValueSymbol(MO.getGlobal());

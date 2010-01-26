@@ -534,7 +534,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
       // In non-pic mode, the entries in the jump table are direct references
       // to the basic blocks.
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-        MCSymbol *MBBSym = GetMBBSymbol(JTBBs[ii]->getNumber());
+        MCSymbol *MBBSym = JTBBs[ii]->getSymbol(OutContext);
         OutStreamer.EmitValue(MCSymbolRefExpr::Create(MBBSym, OutContext),
                               EntrySize, /*addrspace*/0);
       }      
@@ -557,13 +557,13 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   case MachineJumpTableInfo::EK_BlockAddress:
     // EK_BlockAddress - Each entry is a plain address of block, e.g.:
     //     .word LBB123
-    Value = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
+    Value = MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
     break;
   case MachineJumpTableInfo::EK_GPRel32BlockAddress: {
     // EK_GPRel32BlockAddress - Each entry is an address of block, encoded
     // with a relocation as gp-relative, e.g.:
     //     .gprel32 LBB123
-    MCSymbol *MBBSym = GetMBBSymbol(MBB->getNumber());
+    MCSymbol *MBBSym = MBB->getSymbol(OutContext);
     OutStreamer.EmitGPRel32Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
     return;
   }
@@ -587,7 +587,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
       break;
     }
     // Otherwise, use the difference as the jump table entry.
-    Value = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
+    Value = MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
     const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(uid), OutContext);
     Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
     break;
@@ -1286,7 +1286,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0] == 'l')  // labels are target independent
-            O << *GetMBBSymbol(MI->getOperand(OpNo).getMBB()->getNumber());
+            O << *MI->getOperand(OpNo).getMBB()->getSymbol(OutContext);
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
@@ -1384,13 +1384,6 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
                           Mangler::Private);
 
   return OutContext.GetOrCreateSymbol(NameResult.str());
-}
-
-MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BB"
-    << getFunctionNumber() << '_' << MBBID;
-  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 /// GetCPISymbol - Return the symbol for the specified constant pool entry.
@@ -1555,7 +1548,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       PrintBasicBlockLoopComments(*MBB, LI, *this);
     }
 
-    OutStreamer.EmitLabel(GetMBBSymbol(MBB->getNumber()));
+    OutStreamer.EmitLabel(MBB->getSymbol(OutContext));
   }
 }
 
@@ -1568,7 +1561,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << *GetJTSetSymbol(uid, MBB->getNumber()) << ','
-    << *GetMBBSymbol(MBB->getNumber()) << '-' << *GetJTISymbol(uid) << '\n';
+    << *MBB->getSymbol(OutContext) << '-' << *GetJTISymbol(uid) << '\n';
 }
 
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {

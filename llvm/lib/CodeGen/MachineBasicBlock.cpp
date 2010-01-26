@@ -14,15 +14,18 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Assembly/Writer.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -35,6 +38,18 @@ MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
 MachineBasicBlock::~MachineBasicBlock() {
   LeakDetector::removeGarbageObject(this);
 }
+
+/// getSymbol - Return the MCSymbol for this basic block.
+///
+MCSymbol *MachineBasicBlock::getSymbol(MCContext &Ctx) const {
+  SmallString<60> Name;
+  const MachineFunction *MF = getParent();
+  raw_svector_ostream(Name)
+    << MF->getTarget().getMCAsmInfo()->getPrivateGlobalPrefix() << "BB"
+    << MF->getFunctionNumber() << '_' << getNumber();
+  return Ctx.GetOrCreateSymbol(Name.str());
+}
+
 
 raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   MBB.print(OS);
