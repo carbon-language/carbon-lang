@@ -730,3 +730,31 @@ void rdar_7527292() {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7515938> - Handle initialization of incomplete arrays
+//  in structures using a compound value.  Previously this crashed.
+//===----------------------------------------------------------------------===//
+
+struct rdar_7515938 {
+  int x;
+  int y[];
+};
+
+const struct rdar_7515938 *rdar_7515938() {
+  static const struct rdar_7515938 z = { 0, { 1, 2 } };
+  if (z.y[0] != 1) {
+    int *p = 0;
+    *p = 0xDEADBEEF; // no-warning
+  }
+  return &z;
+}
+
+struct rdar_7515938_str {
+  int x;
+  char y[];
+};
+
+const struct rdar_7515938_str *rdar_7515938_str() {
+  static const struct rdar_7515938_str z = { 0, "hello" };
+  return &z;
+}

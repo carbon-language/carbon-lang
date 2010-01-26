@@ -1572,13 +1572,16 @@ const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
 const GRState *RegionStoreManager::BindArray(const GRState *state,
                                              const TypedRegion* R,
                                              SVal Init) {
-
-  QualType T = R->getValueType(getContext());
-  ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
-  QualType ElementTy = CAT->getElementType();
-
-  uint64_t size = CAT->getSize().getZExtValue();
-
+  
+  ASTContext &Ctx = getContext();
+  const ArrayType *AT =
+    cast<ArrayType>(Ctx.getCanonicalType(R->getValueType(Ctx)));
+  QualType ElementTy = AT->getElementType();  
+  Optional<uint64_t> Size;
+  
+  if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(AT))
+    Size = CAT->getSize().getZExtValue();
+    
   // Check if the init expr is a StringLiteral.
   if (isa<loc::MemRegionVal>(Init)) {
     const MemRegion* InitR = cast<loc::MemRegionVal>(Init).getRegion();
@@ -1590,6 +1593,11 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     // Copy bytes from the string literal into the target array. Trailing bytes
     // in the array that are not covered by the string literal are initialized
     // to zero.
+    
+    // We assume that string constants are bound to
+    // constant arrays.
+    uint64_t size = Size;
+    
     for (uint64_t i = 0; i < size; ++i, ++j) {
       if (j >= len)
         break;
@@ -1618,7 +1626,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
   uint64_t i = 0;
 
-  for (; i < size; ++i, ++VI) {
+  for (; Size.hasValue() ? i < Size.getValue() : true ; ++i, ++VI) {
     // The init list might be shorter than the array length.
     if (VI == VE)
       break;
@@ -1626,16 +1634,15 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     SVal Idx = ValMgr.makeArrayIndex(i);
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
-    if (CAT->getElementType()->isStructureType())
+    if (ElementTy->isStructureType())
       state = BindStruct(state, ER, *VI);
     else
-      // FIXME: Do we need special handling of nested arrays?
       state = Bind(state, ValMgr.makeLoc(ER), *VI);
   }
 
   // If the init list is shorter than the array length, set the
   // array default value.
-  if (i < size)
+  if (Size.hasValue() && i < Size.getValue())
     state = setImplicitDefaultValue(state, R, ElementTy);
 
   return state;
