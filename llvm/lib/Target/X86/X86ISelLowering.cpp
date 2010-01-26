@@ -1696,13 +1696,11 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // Some CCs need callee pop.
   if (IsCalleePop(isVarArg, CallConv)) {
     BytesToPopOnReturn  = StackSize; // Callee pops everything.
-    BytesCallerReserves = 0;
   } else {
     BytesToPopOnReturn  = 0; // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
     if (!Is64Bit && CallConv != CallingConv::Fast && ArgsAreStructReturn(Ins))
       BytesToPopOnReturn = 4;
-    BytesCallerReserves = StackSize;
   }
 
   if (!Is64Bit) {

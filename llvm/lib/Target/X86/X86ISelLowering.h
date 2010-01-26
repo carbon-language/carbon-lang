@@ -376,7 +376,6 @@ namespace llvm {
     unsigned VarArgsGPOffset;         // X86-64 vararg func int reg offset.
     unsigned VarArgsFPOffset;         // X86-64 vararg func fp reg offset.
     int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
-    int BytesCallerReserves;          // Number of arg bytes caller makes.
 
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
@@ -404,10 +403,6 @@ namespace llvm {
     //
     unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
 
-    // Return the number of bytes that the caller reserves for arguments passed
-    // to this function.
-    unsigned getBytesCallerReserves() const { return BytesCallerReserves; }
- 
     /// getStackPtrReg - Return the stack pointer register we are using: either
     /// ESP or RSP.
     unsigned getStackPtrReg() const { return X86StackPtr; }
