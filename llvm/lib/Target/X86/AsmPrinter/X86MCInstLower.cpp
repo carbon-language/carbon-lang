@@ -427,8 +427,9 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     O << V.getName();
     O << " <- ";
     if (NOps==3) {
-      // Variable is in register
-      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
+      // Register or immediate value
+      assert(MI->getOperand(0).getType()==MachineOperand::MO_Register ||
+             MI->getOperand(0).getType()==MachineOperand::MO_Immediate);
       printOperand(MI, 0);
     } else {
       // Frame address.  Currently handles register +- offset only.
