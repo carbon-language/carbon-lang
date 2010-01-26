@@ -511,14 +511,16 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     // If this jump table was deleted, ignore it. 
     if (JTBBs.empty()) continue;
 
-    // For PIC codegen, if possible we want to use the SetDirective to reduce
-    // the number of relocations the assembler will generate for the jump table.
-    // Set directives are all printed before the jump table itself.
-    SmallPtrSet<MachineBasicBlock*, 16> EmittedSets;
-    if (MAI->getSetDirective() && IsPic)
+    // For the EK_LabelDifference32 entry, if the target supports .set, emit a
+    // .set directive for each unique entry.  This reduces the number of
+    // relocations the assembler will generate for the jump table.
+    if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32 &&
+        MAI->getSetDirective()) {
+      SmallPtrSet<MachineBasicBlock*, 16> EmittedSets;
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
         if (EmittedSets.insert(JTBBs[ii]))
           printPICJumpTableSetLabel(i, JTBBs[ii]);
+    }
     
     // On some targets (e.g. Darwin) we want to emit two consequtive labels
     // before each jump table.  The first label is never referenced, but tells

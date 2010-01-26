@@ -455,17 +455,8 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 
 void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
-  if (!MAI->getSetDirective())
-    return;
-
-  // We don't need .set machinery if we have GOT-style relocations
-  if (Subtarget->isPICStyleGOT())  // X86-32 on ELF.
-    return;
-
-  O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  
-  O << *MBB->getSymbol(OutContext);
+  O << MAI->getSetDirective() << ' ' << *GetJTSetSymbol(uid, MBB->getNumber())
+    << ',' << *MBB->getSymbol(OutContext);
   
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << *GetJTISymbol(uid) << '\n';
