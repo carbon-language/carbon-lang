@@ -1033,6 +1033,8 @@ DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       Instruction *InsertBefore) {
+  assert(Storage && "no storage passed to dbg.declare");
+  assert(D.getNode() && "empty DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1044,6 +1046,8 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
 Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
                                       BasicBlock *InsertAtEnd) {
+  assert(Storage && "no storage passed to dbg.declare");
+  assert(D.getNode() && "empty DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1057,6 +1061,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
+  assert(D.getNode() && "empty DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -1071,6 +1076,7 @@ Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable D,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
+  assert(D.getNode() && "empty DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
