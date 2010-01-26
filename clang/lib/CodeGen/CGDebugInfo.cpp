@@ -530,22 +530,22 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
   for(CXXRecordDecl::method_iterator I = Decl->method_begin(),
         E = Decl->method_end(); I != E; ++I) {
     CXXMethodDecl *Method = *I;
+    
+    if (Method->isImplicit())
+      continue;
+    
     llvm::StringRef MethodName;
     llvm::StringRef MethodLinkageName;
     llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
     if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(Method)) {
-      if (CDecl->isImplicit())
-        continue;
+      (void)CDecl;
       MethodName = Decl->getName();
       // FIXME : Find linkage name.
     } else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(Method)) {
-      if (DDecl->isImplicit())
-        continue;
+      (void)DDecl;
       MethodName = getFunctionName(Method);
       // FIXME : Find linkage name.
     } else {
-      if (Method->isImplicit())
-        continue;
       // regular method
       MethodName = getFunctionName(Method);
       MethodLinkageName = CGM.getMangledName(Method);
