@@ -249,17 +249,20 @@ public:
 
 class ElementRegion;
 
-class RegionRawOffset : public std::pair<const MemRegion*, int64_t> {
+class RegionRawOffset {
 private:
   friend class ElementRegion;
 
+  const MemRegion *Region;
+  int64_t Offset;
+
   RegionRawOffset(const MemRegion* reg, int64_t offset = 0)
-    : std::pair<const MemRegion*, int64_t>(reg, offset) {}
+    : Region(reg), Offset(offset) {}
 
 public:
   // FIXME: Eventually support symbolic offsets.
-  int64_t getByteOffset() const { return second; }
-  const MemRegion *getRegion() const { return first; }
+  int64_t getByteOffset() const { return Offset; }
+  const MemRegion *getRegion() const { return Region; }
 
   void dumpToStream(llvm::raw_ostream& os) const;
   void dump() const;
