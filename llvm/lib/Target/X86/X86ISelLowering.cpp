@@ -1444,7 +1444,6 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     const CCValAssign &VA,
                                     MachineFrameInfo *MFI,
                                     unsigned i) {
-
   // Create the nodes corresponding to a load from this parameter slot.
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
   bool AlwaysUseMutable = X86::IsEligibleForTailCallOpt(CallConv);
@@ -1776,7 +1775,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) {
-
   MachineFunction &MF = DAG.getMachineFunction();
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Outs);
