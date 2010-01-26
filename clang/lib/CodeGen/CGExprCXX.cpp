@@ -656,8 +656,9 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   QualType SizeTy;
   if (DeleteFTy->getNumArgs() == 2) {
     SizeTy = DeleteFTy->getArgType(1);
-    uint64_t DeleteTypeSize = getContext().getTypeSize(DeleteTy) / 8;
-    Size = llvm::ConstantInt::get(ConvertType(SizeTy), DeleteTypeSize);
+    CharUnits DeleteTypeSize = getContext().getTypeSizeInChars(DeleteTy);
+    Size = llvm::ConstantInt::get(ConvertType(SizeTy), 
+                                  DeleteTypeSize.getQuantity());
   }
   
   if (DeleteFD->getOverloadedOperator() == OO_Array_Delete &&
