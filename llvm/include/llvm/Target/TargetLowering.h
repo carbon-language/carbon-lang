@@ -763,7 +763,7 @@ public:
   virtual const MCExpr *
   LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB, unsigned uid,
-                            MCContext &Ctx) {
+                            MCContext &Ctx) const {
     assert(0 && "Need to implement this hook if target has custom JTIs");
   }
   
