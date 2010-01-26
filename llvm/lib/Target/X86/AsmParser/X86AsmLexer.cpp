@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Target/TargetAsmLexer.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -20,11 +21,36 @@ namespace {
   
 class X86AsmLexer : public TargetAsmLexer {
   const MCAsmInfo &AsmInfo;
+  MCAsmLexer *Lexer;
+  
+  bool tentativeIsValid;
+  AsmToken tentativeToken;
+  
+  const AsmToken &lexTentative() {
+    tentativeToken = Lexer->Lex();
+    tentativeIsValid = true;
+    return tentativeToken;
+  }
+  
+  const AsmToken &lexDefinite() {
+    if(tentativeIsValid) {
+      tentativeIsValid = false;
+      return tentativeToken;
+    }
+    else {
+      return Lexer->Lex();
+    }
+  }
   
   AsmToken LexTokenATT();
   AsmToken LexTokenIntel();
 protected:
   AsmToken LexToken() {
+    if (!Lexer) {
+      SetError(SMLoc(), "No MCAsmLexer installed");
+      return AsmToken(AsmToken::Error, "", 0);
+    }
+    
     switch (AsmInfo.getAssemblerDialect()) {
     default:
       SetError(SMLoc(), "Unhandled dialect");
@@ -37,14 +63,53 @@ protected:
   }
 public:
   X86AsmLexer(const Target &T, const MCAsmInfo &MAI)
-    : TargetAsmLexer(T), AsmInfo(MAI) {
+    : TargetAsmLexer(T), AsmInfo(MAI), Lexer(NULL), tentativeIsValid(false) {
+  }
+  
+  void InstallLexer(MCAsmLexer &L) {
+    Lexer = &L;
   }
 };
 
 }
 
+static unsigned MatchRegisterName(const StringRef &Name);
+
 AsmToken X86AsmLexer::LexTokenATT() {
-  return AsmToken(AsmToken::Error, "", 0);
+  const AsmToken &lexedToken = lexDefinite();
+  
+  switch (lexedToken.getKind()) {
+  default:
+    return AsmToken(lexedToken);
+  case AsmToken::Error:
+    SetError(Lexer->getErrLoc(), Lexer->getErr());
+    return AsmToken(lexedToken);
+  case AsmToken::Percent:
+  {
+    const AsmToken &nextToken = lexTentative();
+    if (nextToken.getKind() == AsmToken::Identifier) {
+      unsigned regID = MatchRegisterName(nextToken.getString());
+      
+      if (regID) {
+        lexDefinite();
+        
+        StringRef regStr(lexedToken.getString().data(),
+                         lexedToken.getString().size() + 
+                         nextToken.getString().size());
+        
+        return AsmToken(AsmToken::Register, 
+                        regStr, 
+                        static_cast<int64_t>(regID));
+      }
+      else {
+        return AsmToken(lexedToken);
+      }
+    }
+    else {
+      return AsmToken(lexedToken);
+    }
+  }    
+  }
 }
 
 AsmToken X86AsmLexer::LexTokenIntel() {
@@ -56,6 +121,6 @@ extern "C" void LLVMInitializeX86AsmLexer() {
   RegisterAsmLexer<X86AsmLexer> Y(TheX86_64Target);
 }
 
-//#define REGISTERS_ONLY
-//#include "../X86GenAsmMatcher.inc"
-//#undef REGISTERS_ONLY
+#define REGISTERS_ONLY
+#include "../X86GenAsmMatcher.inc"
+#undef REGISTERS_ONLY
