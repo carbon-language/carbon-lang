@@ -1648,8 +1648,8 @@ LValue CodeGenFunction::EmitNullInitializationLValue(
   QualType Ty = E->getType();
   const llvm::Type *LTy = ConvertTypeForMem(Ty);
   llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
-  unsigned Align = getContext().getTypeAlign(Ty)/8;
-  Alloc->setAlignment(Align);
+  CharUnits Align = getContext().getTypeAlignInChars(Ty);
+  Alloc->setAlignment(Align.getQuantity());
   LValue lvalue = LValue::MakeAddr(Alloc, Qualifiers());
   EmitMemSetToZero(lvalue.getAddress(), Ty);
   return lvalue;
