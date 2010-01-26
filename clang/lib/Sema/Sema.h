@@ -103,6 +103,7 @@ namespace clang {
   class InitializationSequence;
   class VisibleDeclConsumer;
   class TargetAttributesSema;
+  class ADLResult;
 
 /// BlockSemaInfo - When a block is being parsed, this contains information
 /// about the block.  It is pointed to from Sema::CurBlock.
@@ -950,8 +951,6 @@ public:
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
   // TODO: make this is a typesafe union.
   typedef llvm::SmallPtrSet<DeclContext   *, 16> AssociatedNamespaceSet;
-  // Members have to be a function or function template.
-  typedef llvm::SmallPtrSet<NamedDecl*, 16> ADLFunctionSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 
   void AddOverloadCandidate(NamedDecl *Function,
@@ -1240,7 +1239,7 @@ public:
   
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
-                               ADLFunctionSet &Functions);
+                               ADLResult &Functions);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer);

@@ -587,6 +587,44 @@ private:
     virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, 
                            bool InBaseClass) = 0;
   };
+
+/// \brief A class for storing results from argument-dependent lookup.
+class ADLResult {
+private:
+  /// A map from canonical decls to the 'most recent' decl.
+  llvm::DenseMap<NamedDecl*, NamedDecl*> Decls;
+
+public:
+  /// Adds a new ADL candidate to this map.
+  void insert(NamedDecl *D);
+
+  /// Removes any data associated with a given decl.
+  void erase(NamedDecl *D) {
+    Decls.erase(cast<NamedDecl>(D->getCanonicalDecl()));
+  }
+
+  class iterator {
+    typedef llvm::DenseMap<NamedDecl*,NamedDecl*>::iterator inner_iterator;
+    inner_iterator iter;
+
+    friend class ADLResult;
+    iterator(const inner_iterator &iter) : iter(iter) {}
+  public:
+    iterator() {}
+
+    iterator &operator++() { ++iter; return *this; }
+    iterator operator++(int) { return iterator(iter++); }
+
+    NamedDecl *operator*() const { return iter->second; }
+
+    bool operator==(const iterator &other) const { return iter == other.iter; }
+    bool operator!=(const iterator &other) const { return iter != other.iter; }
+  };
+
+  iterator begin() { return iterator(Decls.begin()); }
+  iterator end() { return iterator(Decls.end()); }
+};
+
 }
 
 #endif

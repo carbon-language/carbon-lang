@@ -4131,7 +4131,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
-  ADLFunctionSet Functions;
+  ADLResult Fns;
 
   // FIXME: This approach for uniquing ADL results (and removing
   // redundant candidates from the set) relies on pointer-equality,
@@ -4141,22 +4141,21 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   // we supposed to consider on ADL candidates, anyway?
 
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Functions);
+  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Fns);
 
   // Erase all of the candidates we already knew about.
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand)
     if (Cand->Function) {
-      Functions.erase(Cand->Function);
+      Fns.erase(Cand->Function);
       if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
-        Functions.erase(FunTmpl);
+        Fns.erase(FunTmpl);
     }
 
   // For each of the ADL candidates we found, add it to the overload
   // set.
-  for (ADLFunctionSet::iterator I = Functions.begin(),
-         E = Functions.end(); I != E; ++I) {
+  for (ADLResult::iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       if (ExplicitTemplateArgs)
         continue;

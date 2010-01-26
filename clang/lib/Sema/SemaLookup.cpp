@@ -1731,9 +1731,46 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
+void ADLResult::insert(NamedDecl *New) {
+  NamedDecl *&Old = Decls[cast<NamedDecl>(New->getCanonicalDecl())];
+
+  // If we haven't yet seen a decl for this key, or the last decl
+  // was exactly this one, we're done.
+  if (Old == 0 || Old == New) {
+    Old = New;
+    return;
+  }
+
+  // Otherwise, decide which is a more recent redeclaration.
+  FunctionDecl *OldFD, *NewFD;
+  if (isa<FunctionTemplateDecl>(New)) {
+    OldFD = cast<FunctionTemplateDecl>(Old)->getTemplatedDecl();
+    NewFD = cast<FunctionTemplateDecl>(New)->getTemplatedDecl();
+  } else {
+    OldFD = cast<FunctionDecl>(Old);
+    NewFD = cast<FunctionDecl>(New);
+  }
+
+  FunctionDecl *Cursor = NewFD;
+  while (true) {
+    Cursor = Cursor->getPreviousDeclaration();
+
+    // If we got to the end without finding OldFD, OldFD is the newer
+    // declaration;  leave things as they are.
+    if (!Cursor) return;
+
+    // If we do find OldFD, then NewFD is newer.
+    if (Cursor == OldFD) break;
+
+    // Otherwise, keep looking.
+  }
+
+  Old = New;
+}
+
 void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                    Expr **Args, unsigned NumArgs,
-                                   ADLFunctionSet &Functions) {
+                                   ADLResult &Result) {
   // Find all of the associated namespaces and classes based on the
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
@@ -1788,17 +1825,15 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
       if (isa<UsingShadowDecl>(D))
         D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
-      // FIXME: canonical decls.
-      // See comment in AddArgumentDependentLookupCandidates().
-
       if (isa<FunctionDecl>(D)) {
         if (Operator &&
             !IsAcceptableNonMemberOperatorCandidate(cast<FunctionDecl>(D),
                                                     T1, T2, Context))
           continue;
-        Functions.insert(D);
-      } else if (isa<FunctionTemplateDecl>(D))
-        Functions.insert(D);
+      } else if (!isa<FunctionTemplateDecl>(D))
+        continue;
+
+      Result.insert(D);
     }
   }
 }
