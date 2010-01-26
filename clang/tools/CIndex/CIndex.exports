@@ -29,7 +29,6 @@ _clang_getFile
 _clang_getFileName
 _clang_getFileTime
 _clang_getInstantiationLocation
-_clang_getInstantiationLocationOffset
 _clang_getLocation
 _clang_getNullCursor
 _clang_getNullLocation

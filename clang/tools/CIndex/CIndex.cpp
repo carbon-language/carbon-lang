@@ -1123,10 +1123,26 @@ CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
   return Result;
 }
 
-static SourceLocation getAdjustedSourceLocation(CXSourceLocation location) {
+void clang_getInstantiationLocation(CXSourceLocation location,
+                                    CXFile *file,
+                                    unsigned *line,
+                                    unsigned *column,
+                                    unsigned *offset) {
   cxloc::CXSourceLocationPtr Ptr
     = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
+
+  if (!Ptr.getPointer() || Loc.isInvalid()) {
+    if (file)
+      *file = 0;
+    if (line)
+      *line = 0;
+    if (column)
+      *column = 0;
+    if (offset)
+      *offset = 0;
+    return;
+  }
 
   // FIXME: This is largely copy-paste from
   ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
@@ -1159,53 +1175,14 @@ static SourceLocation getAdjustedSourceLocation(CXSourceLocation location) {
       InstLoc = InstLoc.getFileLocWithOffset(Length - 1);
   }
 
-  return InstLoc;
-}
-
-void clang_getInstantiationLocation(CXSourceLocation location,
-                                    CXFile *file,
-                                    unsigned *line,
-                                    unsigned *column) {
-  cxloc::CXSourceLocationPtr Ptr
-    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
-  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
-
-  if (!Ptr.getPointer() || Loc.isInvalid()) {
-    if (file)
-      *file = 0;
-    if (line)
-      *line = 0;
-    if (column)
-      *column = 0;
-    return;
-  }
-
-  SourceLocation InstLoc = getAdjustedSourceLocation(location);
-  ASTContext &Context = *Ptr.getPointer();
-  SourceManager &SM = Context.getSourceManager();
   if (file)
     *file = (void *)SM.getFileEntryForID(SM.getFileID(InstLoc));
   if (line)
     *line = SM.getInstantiationLineNumber(InstLoc);
   if (column)
     *column = SM.getInstantiationColumnNumber(InstLoc);
-}
-
-void clang_getInstantiationLocationOffset(CXSourceLocation location,
-                                          CXFile *file,
-                                          unsigned *offset) {
-  cxloc::CXSourceLocationPtr Ptr
-    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
-  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
-
-  ASTContext &Context = *Ptr.getPointer();
-  SourceManager &SM = Context.getSourceManager();
-  SourceLocation InstLoc = getAdjustedSourceLocation(location);
-  std::pair<FileID, unsigned> Decomposed = SM.getDecomposedLoc(InstLoc);
-  if (file)
-    *file = (void *)SM.getFileEntryForID(Decomposed.first);
   if (offset)
-    *offset = Decomposed.second;
+    *offset = SM.getDecomposedLoc(InstLoc).second;
 }
 
 CXSourceLocation clang_getRangeStart(CXSourceRange range) {

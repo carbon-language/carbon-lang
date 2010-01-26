@@ -151,7 +151,7 @@ static void PrintCursor(CXCursor Cursor) {
     Referenced = clang_getCursorReferenced(Cursor);
     if (!clang_equalCursors(Referenced, clang_getNullCursor())) {
       CXSourceLocation Loc = clang_getCursorLocation(Referenced);
-      clang_getInstantiationLocation(Loc, 0, &line, &column);
+      clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
       printf(":%d:%d", line, column);
     }
 
@@ -164,7 +164,7 @@ static const char* GetCursorSource(CXCursor Cursor) {
   CXSourceLocation Loc = clang_getCursorLocation(Cursor);
   const char *source;
   CXFile file;
-  clang_getInstantiationLocation(Loc, &file, 0, 0);
+  clang_getInstantiationLocation(Loc, &file, 0, 0, 0);
   source = clang_getFileName(file);
   if (!source)
     return "<invalid loc>";  
@@ -189,9 +189,9 @@ static void PrintCursorExtent(CXCursor C) {
   unsigned begin_line, begin_column, end_line, end_column;
   
   clang_getInstantiationLocation(clang_getRangeStart(extent),
-                                 &begin_file, &begin_line, &begin_column);
+                                 &begin_file, &begin_line, &begin_column, 0);
   clang_getInstantiationLocation(clang_getRangeEnd(extent),
-                                 &end_file, &end_line, &end_column);
+                                 &end_file, &end_line, &end_column, 0);
   if (!begin_file || !end_file)
     return;
 
@@ -213,7 +213,7 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
   if (!Data->Filter || (Cursor.kind == *(enum CXCursorKind *)Data->Filter)) {
     CXSourceLocation Loc = clang_getCursorLocation(Cursor);
     unsigned line, column;
-    clang_getInstantiationLocation(Loc, 0, &line, &column);
+    clang_getInstantiationLocation(Loc, 0, &line, &column, 0);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), line, column);
     PrintCursor(Cursor);
@@ -257,7 +257,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
       curColumn++;
           
     Loc = clang_getCursorLocation(Cursor);
-    clang_getInstantiationLocation(Loc, &file, 0, 0);
+    clang_getInstantiationLocation(Loc, &file, 0, 0, 0);
     source = clang_getFileName(file);
     if (source) {
       CXSourceLocation RefLoc
@@ -807,9 +807,9 @@ int perform_token_annotation(int argc, const char **argv) {
     case CXToken_Comment: kind = "Comment"; break;
     }
     clang_getInstantiationLocation(clang_getRangeStart(extent), 
-                                   0, &start_line, &start_column);
+                                   0, &start_line, &start_column, 0);
     clang_getInstantiationLocation(clang_getRangeEnd(extent),
-                                   0, &end_line, &end_column);
+                                   0, &end_line, &end_column, 0);
     printf("%s: \"%s\" [%d:%d - %d:%d]", kind, clang_getCString(spelling),
            start_line, start_column, end_line, end_column);
     if (!clang_isInvalid(cursors[i].kind)) {
