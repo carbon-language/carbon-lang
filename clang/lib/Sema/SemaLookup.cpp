@@ -1785,16 +1785,20 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
           continue;
       }
 
-      // FIXME: using decls?  canonical decls?
+      if (isa<UsingShadowDecl>(D))
+        D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
-      FunctionDecl *Fn;
-      if (!Operator || !(Fn = dyn_cast<FunctionDecl>(D)) ||
-          IsAcceptableNonMemberOperatorCandidate(Fn, T1, T2, Context)) {
-        if (isa<FunctionDecl>(D))
-          Functions.insert(D);
-        else if (isa<FunctionTemplateDecl>(D))
-          Functions.insert(D);
-      }
+      // FIXME: canonical decls.
+      // See comment in AddArgumentDependentLookupCandidates().
+
+      if (isa<FunctionDecl>(D)) {
+        if (Operator &&
+            !IsAcceptableNonMemberOperatorCandidate(cast<FunctionDecl>(D),
+                                                    T1, T2, Context))
+          continue;
+        Functions.insert(D);
+      } else if (isa<FunctionTemplateDecl>(D))
+        Functions.insert(D);
     }
   }
 }

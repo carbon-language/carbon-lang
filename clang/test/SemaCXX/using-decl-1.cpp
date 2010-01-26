@@ -60,3 +60,20 @@ namespace P {
     g(f);
   }
 }
+
+// Make sure that ADL can find names brought in by using decls.
+namespace test0 {
+  namespace ns {
+    class Foo {};
+    
+    namespace inner {
+      void foo(char *); // expected-note {{no known conversion}} 
+    }
+
+    using inner::foo;
+  }
+
+  void test(ns::Foo *p) {
+    foo(*p); // expected-error {{no matching function for call to 'foo'}}
+  }
+}

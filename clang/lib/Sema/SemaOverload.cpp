@@ -4133,8 +4133,13 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            bool PartialOverloading) {
   ADLFunctionSet Functions;
 
-  // FIXME: Should we be trafficking in canonical function decls throughout?
-  
+  // FIXME: This approach for uniquing ADL results (and removing
+  // redundant candidates from the set) relies on pointer-equality,
+  // which means we need to key off the canonical decl.  However,
+  // always going back to the canonical decl might not get us the
+  // right set of default arguments.  What default arguments are
+  // we supposed to consider on ADL candidates, anyway?
+
   // FIXME: Pass in the explicit template arguments?
   ArgumentDependentLookup(Name, Operator, Args, NumArgs, Functions);
 
