@@ -4112,10 +4112,12 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
          Constructor->isDefaultConstructor())) {
       if (ConstructorTmpl)
         SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl,
+                                             ConstructorTmpl->getAccess(),
                                              /*ExplicitArgs*/ 0,
                                              Args, NumArgs, CandidateSet);
       else
-        SemaRef.AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+        SemaRef.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+                                     Args, NumArgs, CandidateSet);
     }
   }
 }
@@ -4509,10 +4511,11 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       if (Conv->getConversionType()->isLValueReferenceType() &&
           (AllowExplicit || !Conv->isExplicit())) {
         if (ConvTemplate)
-          AddTemplateConversionCandidate(ConvTemplate, ActingDC,
+          AddTemplateConversionCandidate(ConvTemplate, I.getAccess(), ActingDC,
                                          Init, DeclType, CandidateSet);
         else
-          AddConversionCandidate(Conv, ActingDC, Init, DeclType, CandidateSet);
+          AddConversionCandidate(Conv, I.getAccess(), ActingDC, Init,
+                                 DeclType, CandidateSet);
       }
     }
 

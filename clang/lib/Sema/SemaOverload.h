@@ -446,6 +446,14 @@ namespace clang {
     /// Actually an OverloadFailureKind.
     unsigned char FailureKind;
 
+    /// PathAccess - The 'path access' to the given function/conversion.
+    /// Actually an AccessSpecifier.
+    unsigned Access;
+
+    AccessSpecifier getAccess() const {
+      return AccessSpecifier(Access);
+    }
+
     /// FinalConversion - For a conversion function (where Function is
     /// a CXXConversionDecl), the standard conversion that occurs
     /// after the call to the overload candidate to convert the result

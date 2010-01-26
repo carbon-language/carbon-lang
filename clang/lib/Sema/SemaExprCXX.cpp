@@ -643,7 +643,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // static, so don't use AddMemberCandidate.
     if (FunctionDecl *Fn = 
           dyn_cast<FunctionDecl>((*Alloc)->getUnderlyingDecl())) {
-      AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
+      AddOverloadCandidate(Fn, Alloc.getAccess(), Args, NumArgs, Candidates,
                            /*SuppressUserConversions=*/false);
       continue;
     } 

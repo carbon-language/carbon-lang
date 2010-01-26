@@ -2172,10 +2172,13 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       if (!Constructor->isInvalidDecl() &&
           Constructor->isConvertingConstructor(AllowExplicit)) {
         if (ConstructorTmpl)
-          S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+          S.AddTemplateOverloadCandidate(ConstructorTmpl,
+                                         ConstructorTmpl->getAccess(),
+                                         /*ExplicitArgs*/ 0,
                                          &Initializer, 1, CandidateSet);
         else
-          S.AddOverloadCandidate(Constructor, &Initializer, 1, CandidateSet);
+          S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+                                 &Initializer, 1, CandidateSet);
       }
     }    
   }
@@ -2215,11 +2218,12 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       if ((AllowExplicit || !Conv->isExplicit()) &&
           (AllowRValues || Conv->getConversionType()->isLValueReferenceType())){
         if (ConvTemplate)
-          S.AddTemplateConversionCandidate(ConvTemplate, ActingDC, Initializer,
+          S.AddTemplateConversionCandidate(ConvTemplate, I.getAccess(),
+                                           ActingDC, Initializer,
                                            ToType, CandidateSet);
         else
-          S.AddConversionCandidate(Conv, ActingDC, Initializer, cv1T1,
-                                   CandidateSet);
+          S.AddConversionCandidate(Conv, I.getAccess(), ActingDC,
+                                   Initializer, cv1T1, CandidateSet);
       }
     }
   }
@@ -2532,10 +2536,13 @@ static void TryConstructorInitialization(Sema &S,
     if (!Constructor->isInvalidDecl() &&
         (AllowExplicit || !Constructor->isExplicit())) {
       if (ConstructorTmpl)
-        S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+        S.AddTemplateOverloadCandidate(ConstructorTmpl,
+                                       ConstructorTmpl->getAccess(),
+                                       /*ExplicitArgs*/ 0,
                                        Args, NumArgs, CandidateSet);
       else
-        S.AddOverloadCandidate(Constructor, Args, NumArgs, CandidateSet);
+        S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+                               Args, NumArgs, CandidateSet);
     }
   }    
     
@@ -2690,10 +2697,13 @@ static void TryUserDefinedConversion(Sema &S,
       if (!Constructor->isInvalidDecl() &&
           Constructor->isConvertingConstructor(AllowExplicit)) {
         if (ConstructorTmpl)
-          S.AddTemplateOverloadCandidate(ConstructorTmpl, /*ExplicitArgs*/ 0,
+          S.AddTemplateOverloadCandidate(ConstructorTmpl,
+                                         ConstructorTmpl->getAccess(),
+                                         /*ExplicitArgs*/ 0,
                                          &Initializer, 1, CandidateSet);
         else
-          S.AddOverloadCandidate(Constructor, &Initializer, 1, CandidateSet);
+          S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+                                 &Initializer, 1, CandidateSet);
       }
     }    
   }
@@ -2729,12 +2739,12 @@ static void TryUserDefinedConversion(Sema &S,
         
         if (AllowExplicit || !Conv->isExplicit()) {
           if (ConvTemplate)
-            S.AddTemplateConversionCandidate(ConvTemplate, ActingDC,
-                                             Initializer, DestType,
+            S.AddTemplateConversionCandidate(ConvTemplate, I.getAccess(),
+                                             ActingDC, Initializer, DestType,
                                              CandidateSet);
           else
-            S.AddConversionCandidate(Conv, ActingDC, Initializer, DestType,
-                                     CandidateSet);
+            S.AddConversionCandidate(Conv, I.getAccess(), ActingDC,
+                                     Initializer, DestType, CandidateSet);
         }
       }
     }
@@ -3065,7 +3075,8 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
         !Constructor->isCopyConstructor())
       continue;
     
-    S.AddOverloadCandidate(Constructor, &CurInitExpr, 1, CandidateSet);
+    S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+                           &CurInitExpr, 1, CandidateSet);
   }    
   
   OverloadCandidateSet::iterator Best;
