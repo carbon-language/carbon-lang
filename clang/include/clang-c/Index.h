@@ -373,6 +373,24 @@ CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
                                                    unsigned *column);
 
 /**
+ * \brief Retrieve the file and offset within that file represented by
+ * the given source location.
+ *
+ * \param location the location within a source file that will be decomposed
+ * into its parts.
+ *
+ * \param file [out] if non-NULL, will be set to the file to which the
+ * given source location points.
+ *
+ * \param offset [out] if non-NULL, will be set to the offset into the
+ * \p file to which the given source location points.
+ */
+CINDEX_LINKAGE void clang_getInstantiationLocationOffset(
+                                                     CXSourceLocation location,
+                                                     CXFile *File,
+                                                     unsigned *Offset);
+
+/**
  * \brief Retrieve a source location representing the first character within a
  * source range.
  */
