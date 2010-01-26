@@ -50,6 +50,12 @@ def OptList : OptionList<[
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_option "mtune",
     (help "Target a specific CPU type"), (hidden)),
+
+ // TODO: Add a conditional compilation mechanism to make Darwin-only options
+ // like '-arch' really Darwin-only.
+
+ (parameter_option "arch",
+    (help "Compile for the specified target architecture"), (hidden)),
  (parameter_option "march",
     (help "A synonym for -mtune"), (hidden)),
  (parameter_option "mcpu",
@@ -137,6 +143,7 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (not_empty "I"), (forward "I"),
          (not_empty "F"), (forward "F"),
          (not_empty "D"), (forward "D"),
+         (not_empty "arch"), (forward "arch"),
          (not_empty "march"), (forward "march"),
          (not_empty "mtune"), (forward "mtune"),
          (not_empty "mcpu"), (forward "mcpu"),
@@ -187,6 +194,7 @@ def llvm_gcc_assembler : Tool<
  (cmd_line "@LLVMGCCCOMMAND@ -c -x assembler $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "c"), (stop_compilation),
+          (not_empty "arch"), (forward "arch"),
           (not_empty "Wa,"), (forward_value "Wa,")))
 ]>;
 
@@ -222,6 +230,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (switch_on "pthread"), (append_cmd "-lpthread"),
           (not_empty "L"), (forward "L"),
           (not_empty "F"), (forward "F"),
+          (not_empty "arch"), (forward "arch"),
           (not_empty "framework"), (forward "framework"),
           (not_empty "weak_framework"), (forward "weak_framework"),
           (switch_on "m32"), (forward "m32"),
