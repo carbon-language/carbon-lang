@@ -593,8 +593,8 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   // Block literal size. For global blocks we just use the size of the generic
   // block literal struct.
-  CharUnits BlockLiteralSize = CharUnits::fromQuantity(
-    TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType()) / 8);
+  CharUnits BlockLiteralSize = 
+    CGM.GetTargetTypeStoreSize(getGenericBlockLiteralType());
   DescriptorFields[1] =
     llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize.getQuantity());
 
@@ -698,9 +698,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
       LocalDeclMap[VD] = i->second;
   }
 
-  BlockOffset = CharUnits::fromQuantity(
-      CGM.getTargetData()
-        .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8);
+  BlockOffset = 
+      CGM.GetTargetTypeStoreSize(CGM.getGenericBlockLiteralType());
   BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();

@@ -20,6 +20,7 @@
 #include "TargetInfo.h"
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecordLayout.h"
@@ -966,6 +967,11 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
     return CodeGenModule::GVA_Internal;
 
   return CodeGenModule::GVA_StrongExternal;
+}
+
+CharUnits CodeGenModule::GetTargetTypeStoreSize(const llvm::Type *Ty) const {
+    return CharUnits::fromQuantity(
+      TheTargetData.getTypeStoreSizeInBits(Ty) / Context.getCharWidth());
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {

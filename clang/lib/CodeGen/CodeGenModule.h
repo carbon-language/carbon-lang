@@ -53,6 +53,7 @@ namespace clang {
   class ObjCProtocolDecl;
   class ObjCEncodeExpr;
   class BlockExpr;
+  class CharUnits;
   class Decl;
   class Expr;
   class Stmt;
@@ -417,6 +418,10 @@ public:
   /// and type information of the given class.
   static llvm::GlobalVariable::LinkageTypes 
   getVtableLinkage(const CXXRecordDecl *RD);
+
+  /// GetTargetTypeStoreSize - Return the store size, in character units, of
+  /// the given LLVM type.
+  CharUnits GetTargetTypeStoreSize(const llvm::Type *Ty) const;
   
 private:
   /// UniqueMangledName - Unique a name by (if necessary) inserting it into the

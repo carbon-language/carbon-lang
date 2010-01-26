@@ -559,8 +559,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
     V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                               (CGM.getTargetData().getTypeStoreSizeInBits(V1)
-                                / 8));
+                               CGM.GetTargetTypeStoreSize(V1).getQuantity());
     Builder.CreateStore(V, size_field);
 
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
