@@ -615,21 +615,28 @@ CollectCXXBases(const CXXRecordDecl *Decl,
     for (CXXRecordDecl::base_class_const_iterator BI = Decl->bases_begin(),
            BE = Decl->bases_end(); BI != BE; ++BI) {
       unsigned BFlags = 0;
-      if (BI->isVirtual())
+      uint64_t BaseOffset;
+      
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
+
+      if (BI->isVirtual()) {
+        BaseOffset = RL.getVBaseClassOffset(Base);
         BFlags = llvm::DIType::FlagVirtual;
+      } else
+        BaseOffset = RL.getBaseClassOffset(Base);
+
       AccessSpecifier Access = BI->getAccessSpecifier();
       if (Access == clang::AS_private)
         BFlags |= llvm::DIType::FlagPrivate;
       else if (Access == clang::AS_protected)
         BFlags |= llvm::DIType::FlagProtected;
 
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
       llvm::DIType DTy =
         DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_inheritance,
                                        RecordTy, llvm::StringRef(), 
                                        llvm::DICompileUnit(), 0, 0, 0,
-                                       RL.getBaseClassOffset(Base), BFlags,
+                                       BaseOffset, BFlags,
                                        getOrCreateType(BI->getType(),
                                                        Unit));
       EltTys.push_back(DTy);

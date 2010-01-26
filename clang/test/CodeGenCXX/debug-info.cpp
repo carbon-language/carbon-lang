@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -g
+// RUN: %clang_cc1 -emit-llvm-only -g %s
 template<typename T> struct Identity {
   typedef T Type;
 };
@@ -40,4 +40,13 @@ namespace VirtualDtor {
   };
   
   Y::~Y() { }
+}
+
+namespace VirtualBase {
+  struct A { };
+  struct B : virtual A { };
+
+  void f() {
+    B b;
+  }
 }
