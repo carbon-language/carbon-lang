@@ -1607,9 +1607,15 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     if (!IntegerMode)
       NewTy = S.Context.DoubleTy;
     else if (OldTy->isSignedIntegerType())
-      NewTy = S.Context.LongLongTy;
+      if (S.Context.Target.getLongWidth() == 64)
+        NewTy = S.Context.LongTy;
+      else
+        NewTy = S.Context.LongLongTy;
     else
-      NewTy = S.Context.UnsignedLongLongTy;
+      if (S.Context.Target.getLongWidth() == 64)
+        NewTy = S.Context.UnsignedLongTy;
+      else
+        NewTy = S.Context.UnsignedLongLongTy;
     break;
   case 96:
     NewTy = S.Context.LongDoubleTy;
