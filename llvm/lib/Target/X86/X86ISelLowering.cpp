@@ -37,7 +37,6 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1448,7 +1447,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
 
   // Create the nodes corresponding to a load from this parameter slot.
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
-  bool AlwaysUseMutable = (CallConv==CallingConv::Fast) && PerformTailCallOpt;
+  bool AlwaysUseMutable = X86::IsEligibleForTailCallOpt(CallConv);
   bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
   EVT ValVT;
 
@@ -1586,7 +1585,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
   unsigned StackSize = CCInfo.getNextStackOffset();
   // align stack specially for tail calls
-  if (PerformTailCallOpt && CallConv == CallingConv::Fast)
+  if (X86::IsEligibleForTailCallOpt(CallConv))
     StackSize = GetAlignedArgumentStackSize(StackSize, DAG);
 
   // If the function takes variable number of arguments, make a frame index for
@@ -1738,12 +1737,9 @@ X86TargetLowering::LowerMemOpCallTo(SDValue Chain,
 /// optimization is performed and it is required.
 SDValue
 X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
-                                           SDValue &OutRetAddr,
-                                           SDValue Chain,
-                                           bool IsTailCall,
-                                           bool Is64Bit,
-                                           int FPDiff,
-                                           DebugLoc dl) {
+                                           SDValue &OutRetAddr, SDValue Chain,
+                                           bool IsTailCall, bool Is64Bit,
+                                           int FPDiff, DebugLoc dl) {
   if (!IsTailCall || FPDiff==0) return Chain;
 
   // Adjust the Return address stack slot.
@@ -1766,8 +1762,7 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
   // Calculate the new stack slot for the return address.
   int SlotSize = Is64Bit ? 8 : 4;
   int NewReturnAddrFI =
-    MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize,
-                                         true, false);
+    MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize, true,false);
   EVT VT = Is64Bit ? MVT::i64 : MVT::i32;
   SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
   Chain = DAG.getStore(Chain, dl, RetAddrFrIdx, NewRetAddrFrIdx,
@@ -1788,9 +1783,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Outs);
 
-  assert((!isTailCall ||
-          (CallConv == CallingConv::Fast && PerformTailCallOpt)) &&
-         "IsEligibleForTailCallOptimization missed a case!");
+  assert((!isTailCall || X86::IsEligibleForTailCallOpt(CallConv)) &&
+         "Call is not eligible for tail call optimization!");
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
 
@@ -1802,7 +1796,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
-  if (PerformTailCallOpt && CallConv == CallingConv::Fast)
+  if (X86::IsEligibleForTailCallOpt(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -2240,21 +2234,18 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
-  MachineFunction &MF = DAG.getMachineFunction();
-  CallingConv::ID CallerCC = MF.getFunction()->getCallingConv();
-  return CalleeCC == CallingConv::Fast && CallerCC == CalleeCC;
+  return X86::IsEligibleForTailCallOpt(CalleeCC) &&
+    DAG.getMachineFunction().getFunction()->getCallingConv() == CalleeCC;
 }
 
 FastISel *
-X86TargetLowering::createFastISel(MachineFunction &mf,
-                                  MachineModuleInfo *mmo,
-                                  DwarfWriter *dw,
-                                  DenseMap<const Value *, unsigned> &vm,
-                                  DenseMap<const BasicBlock *,
-                                           MachineBasicBlock *> &bm,
-                                  DenseMap<const AllocaInst *, int> &am
+X86TargetLowering::createFastISel(MachineFunction &mf, MachineModuleInfo *mmo,
+                            DwarfWriter *dw,
+                            DenseMap<const Value *, unsigned> &vm,
+                            DenseMap<const BasicBlock*, MachineBasicBlock*> &bm,
+                            DenseMap<const AllocaInst *, int> &am
 #ifndef NDEBUG
-                                  , SmallSet<Instruction*, 8> &cil
+                          , SmallSet<Instruction*, 8> &cil
 #endif
                                   ) {
   return X86::createFastISel(mf, mmo, dw, vm, bm, am
@@ -2315,6 +2306,10 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
     return true;
 
   return false;
+}
+
+bool X86::IsEligibleForTailCallOpt(CallingConv::ID CC) {
+  return PerformTailCallOpt && CC == CallingConv::Fast;
 }
 
 /// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86

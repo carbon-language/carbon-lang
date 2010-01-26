@@ -19,6 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -361,6 +362,10 @@ namespace llvm {
     /// fit into displacement field of the instruction.
     bool isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                       bool hasSymbolicDisplacement = true);
+
+    /// IsEligibleForTailCallOpt - Return true if it's legal to perform tail call
+    /// optimization for the given calling convention.
+    bool IsEligibleForTailCallOpt(CallingConv::ID CC);
   }
 
   //===--------------------------------------------------------------------===//

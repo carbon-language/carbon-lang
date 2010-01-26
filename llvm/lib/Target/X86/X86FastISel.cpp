@@ -31,7 +31,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 namespace {
@@ -1246,7 +1245,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
   // tail call optimization. Fastisel doesn't know how to do that.
-  if (CC == CallingConv::Fast && PerformTailCallOpt)
+  if (X86::IsEligibleForTailCallOpt(CC))
     return false;
 
   // Let SDISel handle vararg functions.
