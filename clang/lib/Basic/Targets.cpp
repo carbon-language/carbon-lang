@@ -74,7 +74,8 @@ public:
 } // end anonymous namespace
 
 
-static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts) {
+static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
+                             const llvm::Triple &Triple) {
   Builder.defineMacro("__APPLE_CC__", "5621");
   Builder.defineMacro("__APPLE__");
   Builder.defineMacro("__MACH__");
@@ -96,51 +97,45 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts) {
 
   if (Opts.POSIXThreads)
     Builder.defineMacro("_REENTRANT");
-}
 
-static void getDarwinOSXDefines(MacroBuilder &Builder,
-                                const llvm::Triple &Triple) {
-  if (Triple.getOS() != llvm::Triple::Darwin)
-    return;
-
-  // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
+  // Get the OS version number from the triple.
   unsigned Maj, Min, Rev;
-  Triple.getDarwinNumber(Maj, Min, Rev);
 
-  char MacOSXStr[] = "1000";
-  if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
-    // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
-    MacOSXStr[2] = '0' + Maj-4;
+  // If no version was given, default to to 10.4.0, for simplifying tests.
+  if (Triple.getOSName() == "darwin") {
+    Min = Rev = 0;
+    Maj = 8;
+  } else
+    Triple.getDarwinNumber(Maj, Min, Rev);
+
+  // Set the appropriate OS version define.
+  if (Triple.getEnvironmentName() == "iphoneos") {
+    assert(Maj < 10 && Min < 99 && Rev < 99 && "Invalid version!");
+    char Str[6];
+    Str[0] = '0' + Maj;
+    Str[1] = '0' + (Min / 10);
+    Str[2] = '0' + (Min % 10);
+    Str[3] = '0' + (Rev / 10);
+    Str[4] = '0' + (Rev % 10);
+    Str[5] = '\0';
+    Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
+  } else {
+    // For historical reasons that make little sense, the version passed here is
+    // the "darwin" version, which drops the 10 and offsets by 4.
+    Rev = Min;
+    Min = Maj - 4;
+    Maj = 10;
+
+    assert(Triple.getEnvironmentName().empty() && "Invalid environment!");
+    assert(Maj < 99 && Min < 10 && Rev < 10 && "Invalid version!");
+    char Str[5];
+    Str[0] = '0' + (Maj / 10);
+    Str[1] = '0' + (Maj % 10);
+    Str[2] = '0' + Min;
+    Str[3] = '0' + Rev;
+    Str[4] = '\0';
+    Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
   }
-
-  // Handle minor version: 10.4.9 -> darwin8.9 -> "1049"
-  // Cap 10.4.11 -> darwin8.11 -> "1049"
-  MacOSXStr[3] = std::min(Min, 9U)+'0';
-  Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",
-                      MacOSXStr);
-}
-
-static void getDarwinIPhoneOSDefines(MacroBuilder &Builder,
-                                     const llvm::Triple &Triple) {
-  if (Triple.getOS() != llvm::Triple::Darwin)
-    return;
-
-  // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
-  unsigned Maj, Min, Rev;
-  Triple.getDarwinNumber(Maj, Min, Rev);
-
-  // When targetting iPhone OS, interpret the minor version and
-  // revision as the iPhone OS version
-  char iPhoneOSStr[] = "10000";
-  if (Min >= 2 && Min <= 9) { // iPhone OS 2.0-9.0
-    // darwin9.2.0 -> 20000, darwin9.3.0 -> 30000, etc.
-    iPhoneOSStr[0] = '0' + Min;
-  }
-
-  // Handle minor version: 2.2 -> darwin9.2.2 -> 20200
-  iPhoneOSStr[2] = std::min(Rev, 9U)+'0';
-  Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__",
-                      iPhoneOSStr);
 }
 
 namespace {
@@ -149,8 +144,7 @@ class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
-    getDarwinDefines(Builder, Opts);
-    getDarwinOSXDefines(Builder, Triple);
+    getDarwinDefines(Builder, Opts, Triple);
   }
 
 public:
@@ -1461,8 +1455,7 @@ class DarwinARMTargetInfo :
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
-    getDarwinDefines(Builder, Opts);
-    getDarwinIPhoneOSDefines(Builder, Triple);
+    getDarwinDefines(Builder, Opts, Triple);
   }
 
 public:
