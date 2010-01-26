@@ -212,7 +212,7 @@ namespace test1 {
 // non-lexical scope.
 namespace test2 {
   namespace ns {
-    int *count_ptr;
+    extern int *count_ptr;
   }
   namespace {
     int count = 0;

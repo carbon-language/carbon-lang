@@ -15,4 +15,4 @@ namespace A {
 }
 
 class Ident<int> GlobalIdent;
-union Ident<int> GlobalIdent; // expected-error {{ tag type that does not match }}
+union Ident<int> GlobalIdent2; // expected-error {{ tag type that does not match }}
