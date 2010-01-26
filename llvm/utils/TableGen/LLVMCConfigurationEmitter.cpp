@@ -116,7 +116,7 @@ bool IsDagEmpty (const DagInit& d) {
 // EscapeVariableName - Escape commas and other symbols not allowed
 // in the C++ variable names. Makes it possible to use options named
 // like "Wa," (useful for prefix options).
-std::string EscapeVariableName(const std::string& Var) {
+std::string EscapeVariableName (const std::string& Var) {
   std::string ret;
   for (unsigned i = 0; i != Var.size(); ++i) {
     char cur_char = Var[i];
@@ -128,6 +128,21 @@ std::string EscapeVariableName(const std::string& Var) {
     }
     else if (cur_char == '-') {
       ret += "_dash_";
+    }
+    else {
+      ret.push_back(cur_char);
+    }
+  }
+  return ret;
+}
+
+/// EscapeQuotes - Replace '"' with '\"'.
+std::string EscapeQuotes (const std::string& Var) {
+  std::string ret;
+  for (unsigned i = 0; i != Var.size(); ++i) {
+    char cur_char = Var[i];
+    if (cur_char == '"') {
+      ret += "\\\"";
     }
     else {
       ret.push_back(cur_char);
@@ -594,7 +609,7 @@ private:
 
   void onHelp (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
-    optDesc_.Help = InitPtrToString(d.getArg(0));
+    optDesc_.Help = EscapeQuotes(InitPtrToString(d.getArg(0)));
   }
 
   void onHidden (const DagInit& d) {
