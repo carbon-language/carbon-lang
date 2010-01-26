@@ -1423,9 +1423,30 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
 
-  // FIXME: This should use MachineJumpTableInfo::getEntryKind() instead of
-  // checking for PIC etc.
-  if (TargetMachine::getRelocationModel() == Reloc::PIC_) {
+  
+  switch (MJTI->getEntryKind()) {
+  case MachineJumpTableInfo::EK_BlockAddress: {
+    // EK_BlockAddress - Each entry is a plain address of block, e.g.:
+    //     .word LBB123
+    assert(MJTI->getEntrySize(*TheJIT->getTargetData()) == sizeof(void*) &&
+           "Cross JIT'ing?");
+    
+    // For each jump table, map each target in the jump table to the address of
+    // an emitted MachineBasicBlock.
+    intptr_t *SlotPtr = (intptr_t*)JumpTableBase;
+    
+    for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+      const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+      // Store the address of the basic block for this jump table slot in the
+      // memory we allocated for the jump table in 'initJumpTableInfo'
+      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
+        *SlotPtr++ = getMachineBasicBlockAddress(MBBs[mi]);
+    }
+    break;
+  }
+      
+  case MachineJumpTableInfo::EK_GPRel32BlockAddress:
+  case MachineJumpTableInfo::EK_LabelDifference32: {
     assert(MJTI->getEntrySize(*TheJIT->getTargetData()) == 4&&"Cross JIT'ing?");
     // For each jump table, place the offset from the beginning of the table
     // to the target address.
@@ -1438,24 +1459,12 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       uintptr_t Base = (uintptr_t)SlotPtr;
       for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
         uintptr_t MBBAddr = getMachineBasicBlockAddress(MBBs[mi]);
+        /// FIXME: USe EntryKind instead of magic "getPICJumpTableEntry" hook.
         *SlotPtr++ = TheJIT->getJITInfo().getPICJumpTableEntry(MBBAddr, Base);
       }
     }
-  } else {
-    assert(MJTI->getEntrySize(*TheJIT->getTargetData()) == sizeof(void*) &&
-           "Cross JIT'ing?");
-
-    // For each jump table, map each target in the jump table to the address of
-    // an emitted MachineBasicBlock.
-    intptr_t *SlotPtr = (intptr_t*)JumpTableBase;
-
-    for (unsigned i = 0, e = JT.size(); i != e; ++i) {
-      const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
-      // Store the address of the basic block for this jump table slot in the
-      // memory we allocated for the jump table in 'initJumpTableInfo'
-      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
-        *SlotPtr++ = getMachineBasicBlockAddress(MBBs[mi]);
-    }
+    break;
+  }
   }
 }
 
