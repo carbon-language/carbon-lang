@@ -402,8 +402,8 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP64-NEXT: .quad __ZN8test16_B5foo_BEv
 // CHECK-LP64-NEXT: .quad -48
 // CHECK-LP64-NEXT: .quad __ZTI8test16_D
-// CHECK-LP64-NEXT .quad __ZTcvn16_n40_v16_n32_N8test16_D4foo1Ev
-// CHECK-LP64: .quad __ZN10test16_NV27foo_NV2Ev
+// CHECK-LP64-NEXT: .quad __ZTcvn16_n40_v16_n32_N8test16_D4foo1Ev
+// CHECK-LP64-NEXT: .quad __ZN10test16_NV27foo_NV2Ev
 // CHECK-LP64-NEXT: .quad __ZN10test16_NV28foo_NV2bEv
 
 

@@ -634,7 +634,8 @@ public:
     // entry.
     Methods.AddMethod(GD);
 
-    VCallOffset[GD] = Offset/8;
+    VCallOffset[GD] = Offset/8 - CurrentVBaseOffset/8;
+
     if (MorallyVirtual) {
       GlobalDecl UGD = getUnique(GD);
       const CXXMethodDecl *UMD = cast<CXXMethodDecl>(UGD.getDecl());
@@ -645,7 +646,7 @@ public:
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
         VCallOffsetForVCall[UGD] = Offset/8;
-        NonVirtualOffset[UMD] = -CurrentVBaseOffset/8 + Offset/8;
+        NonVirtualOffset[UMD] = Offset/8 - CurrentVBaseOffset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(Offset/8 - CurrentVBaseOffset/8);
         D1(printf("  vcall for %s at %d with delta %d\n",
@@ -715,6 +716,9 @@ public:
     }
     VCalls.clear();
     VCall.clear();
+    VCallOffsetForVCall.clear();
+    VCallOffset.clear();
+    NonVirtualOffset.clear();
   }
 
   void AddAddressPoints(const CXXRecordDecl *RD, uint64_t Offset,
@@ -1044,6 +1048,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
   for (CXXMethodDecl::method_iterator mi = MD->begin_overridden_methods(),
        e = MD->end_overridden_methods(); mi != e; ++mi) {
     GlobalDecl OGD;
+    GlobalDecl OGD2;
     
     const CXXMethodDecl *OMD = *mi;
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(OMD))
@@ -1056,6 +1061,8 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
     uint64_t Index;
     if (!Methods.getIndex(OGD, Index))
       continue;
+
+    OGD2 = OGD;
 
     // Get the original method, which we should be computing thunks, etc,
     // against.
@@ -1087,10 +1094,12 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
     ThisAdjustments.erase(Index);
     if (MorallyVirtual || VCall.count(UMD)) {
+
       Index_t &idx = VCall[UMD];
       if (idx == 0) {
-        NonVirtualOffset[UMD] = CurrentVBaseOffset/8 - OverrideOffset/8;
-        VCallOffset[GD] = OverrideOffset/8;
+        VCallOffset[GD] = VCallOffset[OGD];
+        // NonVirtualOffset[UMD] = CurrentVBaseOffset/8 - OverrideOffset/8;
+        NonVirtualOffset[UMD] = VCallOffset[OGD];
         VCallOffsetForVCall[UMD] = OverrideOffset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(OverrideOffset/8 - CurrentVBaseOffset/8);
@@ -1098,13 +1107,13 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       } else {
-        VCallOffset[GD] = VCallOffset[OGD];
+        VCallOffset[GD] = NonVirtualOffset[UMD];
         VCalls[idx-1] = -VCallOffsetForVCall[UGD] + OverrideOffset/8;
         D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       }
-      int64_t NonVirtualAdjustment = NonVirtualOffset[UMD];
+      int64_t NonVirtualAdjustment = -VCallOffset[OGD];
       int64_t VirtualAdjustment = 
         -((idx + extra + 2) * LLVMPointerWidth / 8);
       
@@ -1123,8 +1132,16 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       return true;
     }
 
-    int64_t NonVirtualAdjustment = -VCallOffset[OGD] + OverrideOffset/8;
+    VCallOffset[GD] = VCallOffset[OGD2] - OverrideOffset/8;
 
+    int64_t NonVirtualAdjustment = -VCallOffset[GD];
+    QualType DerivedType = MD->getThisType(CGM.getContext());
+    QualType BaseType = cast<const CXXMethodDecl>(OGD.getDecl())->getThisType(CGM.getContext());
+    int64_t NonVirtualAdjustment2 = -(getNVOffset(BaseType, DerivedType)/8);
+    if (NonVirtualAdjustment2 != NonVirtualAdjustment) {
+      NonVirtualAdjustment = NonVirtualAdjustment2;
+    }
+      
     if (NonVirtualAdjustment) {
       ThunkAdjustment ThisAdjustment(NonVirtualAdjustment, 0);
       
