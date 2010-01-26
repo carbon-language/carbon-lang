@@ -138,9 +138,7 @@ public:
   void EmitReference(const MCSymbol *Sym, bool IsPCRelative = false,
                      bool Force32Bit = false) const;
 
-  /// EmitDifference - Emit the difference between two labels.  Some
-  /// assemblers do not behave with absolute expressions with data directives,
-  /// so there is an option (needsSet) to use an intermediary set expression.
+  /// EmitDifference - Emit the difference between two labels.
   void EmitDifference(const DWLabel &LabelHi, const DWLabel &LabelLo,
                       bool IsSmall = false) {
     EmitDifference(LabelHi.getTag(), LabelHi.getNumber(),

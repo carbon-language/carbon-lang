@@ -47,17 +47,6 @@ namespace llvm {
     /// emitted in Static relocation model.
     bool HasStaticCtorDtorReferenceInStaticMode;  // Default is false.
     
-    /// NeedsSet - True if target asm treats expressions in data directives
-    /// as linktime-relocatable.  For assembly-time computation, we need to
-    /// use a .set.  Thus:
-    /// .set w, x-y
-    /// .long w
-    /// is computed at assembly time, while
-    /// .long x-y
-    /// is relocated if the relative locations of x and y change at linktime.
-    /// We want both these things in different places.
-    bool NeedsSet;                           // Defaults to false.
-    
     /// MaxInstLength - This is the maximum possible length of an instruction,
     /// which is needed to compute the size of an inline asm.
     unsigned MaxInstLength;                  // Defaults to 4.
@@ -320,9 +309,6 @@ namespace llvm {
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
     bool hasStaticCtorDtorReferenceInStaticMode() const {
       return HasStaticCtorDtorReferenceInStaticMode;
-    }
-    bool needsSet() const {
-      return NeedsSet;
     }
     unsigned getMaxInstLength() const {
       return MaxInstLength;

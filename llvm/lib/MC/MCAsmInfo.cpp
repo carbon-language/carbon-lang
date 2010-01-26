@@ -22,7 +22,6 @@ MCAsmInfo::MCAsmInfo() {
   HasSubsectionsViaSymbols = false;
   HasMachoZeroFillDirective = false;
   HasStaticCtorDtorReferenceInStaticMode = false;
-  NeedsSet = false;
   MaxInstLength = 4;
   PCSymbol = "$";
   SeparatorChar = ';';

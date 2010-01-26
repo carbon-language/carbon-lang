@@ -31,7 +31,6 @@ SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   HasDotLocAndDotFile = true;
 
   SupportsDebugInformation = true;
-  NeedsSet = true;
 
   // Exception handling is not supported on CellSPU (think about it: you only
   // have 256K for code+data. Would you support exception handling?)

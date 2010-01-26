@@ -21,7 +21,6 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
   LinkerPrivateGlobalPrefix = "l";
-  NeedsSet = true;
   AllowQuotesInName = true;
   HasSingleParameterDotFile = false;
   HasSubsectionsViaSymbols = true;
