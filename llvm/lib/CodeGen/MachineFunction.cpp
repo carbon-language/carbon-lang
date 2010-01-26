@@ -16,7 +16,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -26,12 +25,16 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -578,11 +581,29 @@ unsigned MachineJumpTableInfo::getJumpTableIndex(
   return JumpTables.size()-1;
 }
 
+/// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
+/// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
+/// normal 'L' label is returned.
+MCSymbol *MachineJumpTableInfo::getJTISymbol(unsigned JTI, MCContext &Ctx, 
+                                             bool isLinkerPrivate) const {
+  assert(JTI < JumpTables.size() && !JumpTables[JTI].MBBs.empty() &&
+         "Invalid JTI!");
+  const MachineFunction *MF = JumpTables[JTI].MBBs[0]->getParent();
+  const MCAsmInfo &MAI = *MF->getTarget().getMCAsmInfo();
+  
+  const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
+                                         MAI.getPrivateGlobalPrefix();
+  SmallString<60> Name;
+  raw_svector_ostream(Name)
+    << Prefix << "JTI" << MF->getFunctionNumber() << '_' << JTI;
+  return Ctx.GetOrCreateSymbol(Name.str());
+}
+
+
 /// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
 /// the jump tables to branch to New instead.
-bool
-MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
-                                             MachineBasicBlock *New) {
+bool MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
+                                                  MachineBasicBlock *New) {
   assert(Old != New && "Not making a change?");
   bool MadeChange = false;
   for (size_t i = 0, e = JumpTables.size(); i != e; ++i)
@@ -592,10 +613,9 @@ MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
 
 /// ReplaceMBBInJumpTable - If Old is a target of the jump tables, update
 /// the jump table to branch to New instead.
-bool
-MachineJumpTableInfo::ReplaceMBBInJumpTable(unsigned Idx,
-                                            MachineBasicBlock *Old,
-                                            MachineBasicBlock *New) {
+bool MachineJumpTableInfo::ReplaceMBBInJumpTable(unsigned Idx,
+                                                 MachineBasicBlock *Old,
+                                                 MachineBasicBlock *New) {
   assert(Old != New && "Not making a change?");
   bool MadeChange = false;
   MachineJumpTableEntry &JTE = JumpTables[Idx];

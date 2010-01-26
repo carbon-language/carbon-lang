@@ -527,6 +527,8 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     // the assembler and linker the extents of the jump table object.  The
     // second label is actually referenced by the code.
     if (JTInDiffSection && MAI->getLinkerPrivateGlobalPrefix()[0])
+      // FIXME: This doesn't have to have any specific name, just any randomly
+      // named and numbered 'l' label would work.  Simplify GetJTISymbol.
       OutStreamer.EmitLabel(GetJTISymbol(i, true));
 
     OutStreamer.EmitLabel(GetJTISymbol(i));
@@ -1389,12 +1391,7 @@ MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
 
 /// GetJTISymbol - Return the symbol for the specified jump table entry.
 MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
-  const char *Prefix = isLinkerPrivate ? MAI->getLinkerPrivateGlobalPrefix() :
-                                         MAI->getPrivateGlobalPrefix();
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << Prefix << "JTI" << getFunctionNumber() << '_'
-    << JTID;
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return MF->getJumpTableInfo()->getJTISymbol(JTID, OutContext,isLinkerPrivate);
 }
 
 /// GetJTSetSymbol - Return the symbol for the specified jump table .set
@@ -1549,12 +1546,13 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 /// specified MachineBasicBlock for a jumptable entry.
 void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
                                            const MachineBasicBlock *MBB) const {
-  if (!MAI->getSetDirective())
-    return;
-  
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const TargetLowering *TLI = TM.getTargetLowering();
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << *GetJTSetSymbol(uid, MBB->getNumber()) << ','
-    << *MBB->getSymbol(OutContext) << '-' << *GetJTISymbol(uid) << '\n';
+    << *MBB->getSymbol(OutContext) << '-'
+    << *TLI->getPICJumpTableRelocBaseExpr(MJTI,uid,OutContext)
+    << '\n';
 }
 
 void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {

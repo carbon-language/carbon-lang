@@ -13,6 +13,7 @@
 
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -812,6 +813,7 @@ unsigned TargetLowering::getJumpTableEncoding() const {
 
 SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                  SelectionDAG &DAG) const {
+  // FIXME: Eliminate usesGlobalOffsetTable() in favor of JTEntryKind.
   if (usesGlobalOffsetTable())
     return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
   return Table;
@@ -824,9 +826,9 @@ const MCExpr *
 TargetLowering::getPICJumpTableRelocBaseExpr(const MachineJumpTableInfo *MJTI,
                                              unsigned JTI,
                                              MCContext &Ctx) const {
-  assert(0 && "FIXME: IMPLEMENT ME");
+  // The normal PIC reloc base is the label at the start of the jump table.
+  return MCSymbolRefExpr::Create(MJTI->getJTISymbol(JTI, Ctx), Ctx);
 }
-
 
 bool
 TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
