@@ -1243,11 +1243,6 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
       CC != CallingConv::X86_FastCall)
     return false;
 
-  // fastcc with -tailcallopt is intended to provide a guaranteed
-  // tail call optimization. Fastisel doesn't know how to do that.
-  if (X86::IsEligibleForTailCallOpt(CC))
-    return false;
-
   // Let SDISel handle vararg functions.
   const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
