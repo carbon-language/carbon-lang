@@ -512,13 +512,9 @@ def GR64_ABCD : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX, RBX]> {
   let SubRegClassList = [GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD, GR32_ABCD];
 }
 
-// GR8_NOREX, GR16_NOREX, GR32_NOREX, GR64_NOREX - Subclasses of
-// GR8, GR16, GR32, and GR64 which contain only the first 8 GPRs.
-// On x86-64, GR64_NOREX, GR32_NOREX and GR16_NOREX are the classes
-// of registers which do not by themselves require a REX prefix.
+// GR8_NOREX - GR8 registers which do not require a REX prefix.
 def GR8_NOREX : RegisterClass<"X86", [i8], 8,
-                              [AL, CL, DL, AH, CH, DH, BL, BH,
-                               SIL, DIL, BPL, SPL]> {
+                              [AL, CL, DL, AH, CH, DH, BL, BH]> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -556,6 +552,7 @@ def GR8_NOREX : RegisterClass<"X86", [i8], 8,
     }
   }];
 }
+// GR16_NOREX - GR16 registers which do not require a REX prefix.
 def GR16_NOREX : RegisterClass<"X86", [i16], 16,
                                [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let SubRegClassList = [GR8_NOREX, GR8_NOREX];
