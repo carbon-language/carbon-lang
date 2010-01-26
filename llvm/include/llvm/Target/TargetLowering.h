@@ -761,6 +761,7 @@ public:
                             const MachineBasicBlock *MBB, unsigned uid,
                             MCContext &Ctx) const {
     assert(0 && "Need to implement this hook if target has custom JTIs");
+    return 0;
   }
   
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
