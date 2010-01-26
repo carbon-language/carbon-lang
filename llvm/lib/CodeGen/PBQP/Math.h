@@ -1,4 +1,4 @@
-//===-- PBQPMath.h - PBQP Vector and Matrix classes -------------*- C++ -*-===//
+//===------ Math.h - PBQP Vector and Matrix classes -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_PBQP_PBQPMATH_H 
-#define LLVM_CODEGEN_PBQP_PBQPMATH_H
+#ifndef LLVM_CODEGEN_PBQP_MATH_H 
+#define LLVM_CODEGEN_PBQP_MATH_H
 
 #include <cassert>
 #include <algorithm>
@@ -16,7 +16,7 @@
 
 namespace PBQP {
 
-typedef double PBQPNum;
+typedef float PBQPNum;
 
 /// \brief PBQP Vector class.
 class Vector {
@@ -285,4 +285,4 @@ OStream& operator<<(OStream &os, const Matrix &m) {
 
 }
 
-#endif // LLVM_CODEGEN_PBQP_PBQPMATH_HPP
+#endif // LLVM_CODEGEN_PBQP_MATH_H

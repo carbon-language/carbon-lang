@@ -19,364 +19,452 @@
 #define LLVM_CODEGEN_PBQP_HEURISTICS_BRIGGS_H
 
 #include "../HeuristicSolver.h"
+#include "../HeuristicBase.h"
 
 #include <set>
+#include <limits>
 
 namespace PBQP {
-namespace Heuristics {
+  namespace Heuristics {
 
-class Briggs {
-  public:
+    /// \brief PBQP Heuristic which applies an allocability test based on
+    ///        Briggs.
+    /// 
+    /// This heuristic assumes that the elements of cost vectors in the PBQP
+    /// problem represent storage options, with the first being the spill
+    /// option and subsequent elements representing legal registers for the
+    /// corresponding node. Edge cost matrices are likewise assumed to represent
+    /// register constraints.
+    /// If one or more nodes can be proven allocable by this heuristic (by
+    /// inspection of their constraint matrices) then the allocable node of
+    /// highest degree is selected for the next reduction and pushed to the
+    /// solver stack. If no nodes can be proven allocable then the node with
+    /// the lowest estimated spill cost is selected and push to the solver stack
+    /// instead.
+    /// 
+    /// This implementation is built on top of HeuristicBase.       
+    class Briggs : public HeuristicBase<Briggs> {
+    private:
 
-    class NodeData;
-    class EdgeData;
-
-  private:
-
-    typedef HeuristicSolverImpl<Briggs> Solver;
-    typedef HSITypes<NodeData, EdgeData> HSIT;
-    typedef HSIT::SolverGraph SolverGraph;
-    typedef HSIT::GraphNodeIterator GraphNodeIterator;
-    typedef HSIT::GraphEdgeIterator GraphEdgeIterator;
-
-    class LinkDegreeComparator {
+      class LinkDegreeComparator {
       public:
-        LinkDegreeComparator() : g(0) {}
-        LinkDegreeComparator(SolverGraph *g) : g(g) {}
-
-        bool operator()(const GraphNodeIterator &node1Itr,
-                        const GraphNodeIterator &node2Itr) const {
-          assert((g != 0) && "Graph object not set, cannot access node data.");
-          unsigned n1Degree = g->getNodeData(node1Itr).getLinkDegree(),
-                   n2Degree = g->getNodeData(node2Itr).getLinkDegree();
-          if (n1Degree > n2Degree) {
+        LinkDegreeComparator(HeuristicSolverImpl<Briggs> &s) : s(&s) {}
+        bool operator()(Graph::NodeItr n1Itr, Graph::NodeItr n2Itr) const {
+          if (s->getSolverDegree(n1Itr) > s->getSolverDegree(n2Itr))
             return true;
-          }
-          else if (n1Degree < n2Degree) {
+          if (s->getSolverDegree(n1Itr) < s->getSolverDegree(n2Itr))
             return false;
-          }
-          // else they're "equal" by degree, differentiate based on ID.
-          return g->getNodeID(node1Itr) < g->getNodeID(node2Itr);
+          return (&*n1Itr < &*n2Itr);
         }
-
       private:
-        SolverGraph *g;
-    };
+        HeuristicSolverImpl<Briggs> *s;
+      };
 
-    class SpillPriorityComparator {
+      class SpillCostComparator {
       public:
-        SpillPriorityComparator() : g(0) {}
-        SpillPriorityComparator(SolverGraph *g) : g(g) {}
-
-        bool operator()(const GraphNodeIterator &node1Itr,
-                        const GraphNodeIterator &node2Itr) const {
-          assert((g != 0) && "Graph object not set, cannot access node data.");
-          PBQPNum cost1 =
-            g->getNodeCosts(node1Itr)[0] /
-            g->getNodeData(node1Itr).getLinkDegree(),
-            cost2 =
-              g->getNodeCosts(node2Itr)[0] /
-              g->getNodeData(node2Itr).getLinkDegree();
-
-          if (cost1 < cost2) {
+        SpillCostComparator(HeuristicSolverImpl<Briggs> &s)
+          : s(&s), g(&s.getGraph()) {}
+        bool operator()(Graph::NodeItr n1Itr, Graph::NodeItr n2Itr) const {
+          PBQPNum cost1 = g->getNodeCosts(n1Itr)[0] / s->getSolverDegree(n1Itr),
+                  cost2 = g->getNodeCosts(n2Itr)[0] / s->getSolverDegree(n2Itr);
+          if (cost1 < cost2)
             return true;
-          }
-          else if (cost1 > cost2) {
+          if (cost1 > cost2)
             return false;
-          }
-          // else they'er "equal" again, differentiate based on address again.
-          return g->getNodeID(node1Itr) < g->getNodeID(node2Itr);
+          return (&*n1Itr < &*n2Itr);
         }
 
       private:
-        SolverGraph *g;
-    };
+        HeuristicSolverImpl<Briggs> *s;
+        Graph *g;
+      };
 
-    typedef std::set<GraphNodeIterator, LinkDegreeComparator>
-      RNAllocableNodeList;
-    typedef RNAllocableNodeList::iterator RNAllocableNodeListIterator;
+      typedef std::list<Graph::NodeItr> RNAllocableList;
+      typedef RNAllocableList::iterator RNAllocableListItr;
 
-    typedef std::set<GraphNodeIterator, SpillPriorityComparator>
-      RNUnallocableNodeList;
-    typedef RNUnallocableNodeList::iterator RNUnallocableNodeListIterator;
+      typedef std::list<Graph::NodeItr> RNUnallocableList;  
+      typedef RNUnallocableList::iterator RNUnallocableListItr;
 
-  public:
+    public:
 
-    class NodeData {
-      private:
-        RNAllocableNodeListIterator rNAllocableNodeListItr;
-        RNUnallocableNodeListIterator rNUnallocableNodeListItr;
-        unsigned numRegOptions, numDenied, numSafe;
-        std::vector<unsigned> unsafeDegrees;
-        bool allocable;
+      struct NodeData {
+        typedef std::vector<unsigned> UnsafeDegreesArray;
+        bool isHeuristic, isAllocable, isInitialized;
+        unsigned numDenied, numSafe;
+        UnsafeDegreesArray unsafeDegrees;
+        RNAllocableListItr rnaItr;
+        RNUnallocableListItr rnuItr;
 
-        void addRemoveLink(SolverGraph &g, const GraphNodeIterator &nodeItr,
-            const GraphEdgeIterator &edgeItr, bool add) {
+        NodeData()
+          : isHeuristic(false), isAllocable(false), isInitialized(false),
+            numDenied(0), numSafe(0) { }
+      };
 
-          //assume we're adding...
-          unsigned udTarget = 0, dir = 1;
-
-          if (!add) {
-            udTarget = 1;
-            dir = ~0;
-          }
-
-          EdgeData &linkEdgeData = g.getEdgeData(edgeItr).getHeuristicData();
-
-          EdgeData::ConstUnsafeIterator edgeUnsafeBegin, edgeUnsafeEnd;
-
-          if (nodeItr == g.getEdgeNode1Itr(edgeItr)) {
-            numDenied += (dir * linkEdgeData.getWorstDegree());
-            edgeUnsafeBegin = linkEdgeData.unsafeBegin();
-            edgeUnsafeEnd = linkEdgeData.unsafeEnd();
-          }
-          else {
-            numDenied += (dir * linkEdgeData.getReverseWorstDegree());
-            edgeUnsafeBegin = linkEdgeData.reverseUnsafeBegin();
-            edgeUnsafeEnd = linkEdgeData.reverseUnsafeEnd();
-          }
-
-          assert((unsafeDegrees.size() ==
-                static_cast<unsigned>(
-                  std::distance(edgeUnsafeBegin, edgeUnsafeEnd)))
-              && "Unsafe array size mismatch.");
-
-          std::vector<unsigned>::iterator unsafeDegreesItr =
-            unsafeDegrees.begin();
-
-          for (EdgeData::ConstUnsafeIterator edgeUnsafeItr = edgeUnsafeBegin;
-              edgeUnsafeItr != edgeUnsafeEnd;
-              ++edgeUnsafeItr, ++unsafeDegreesItr) {
-
-            if ((*edgeUnsafeItr == 1) && (*unsafeDegreesItr == udTarget))  {
-              numSafe -= dir;
-            }
-            *unsafeDegreesItr += (dir * (*edgeUnsafeItr));
-          }
-
-          allocable = (numDenied < numRegOptions) || (numSafe > 0);
-        }
-
-      public:
-
-        void setup(SolverGraph &g, const GraphNodeIterator &nodeItr) {
-
-          numRegOptions = g.getNodeCosts(nodeItr).getLength() - 1;
-
-          numSafe = numRegOptions; // Optimistic, correct below.
-          numDenied = 0; // Also optimistic.
-          unsafeDegrees.resize(numRegOptions, 0);
-
-          HSIT::NodeData &nodeData = g.getNodeData(nodeItr);
-
-          for (HSIT::NodeData::AdjLinkIterator
-              adjLinkItr = nodeData.adjLinksBegin(),
-              adjLinkEnd = nodeData.adjLinksEnd();
-              adjLinkItr != adjLinkEnd; ++adjLinkItr) {
-
-            addRemoveLink(g, nodeItr, *adjLinkItr, true);
-          }
-        }
-
-        bool isAllocable() const { return allocable; }
-
-        void handleAddLink(SolverGraph &g, const GraphNodeIterator &nodeItr,
-            const GraphEdgeIterator &adjEdge) {
-          addRemoveLink(g, nodeItr, adjEdge, true);
-        }
-
-        void handleRemoveLink(SolverGraph &g, const GraphNodeIterator &nodeItr,
-            const GraphEdgeIterator &adjEdge) {
-          addRemoveLink(g, nodeItr, adjEdge, false);
-        }
-
-        void setRNAllocableNodeListItr(
-            const RNAllocableNodeListIterator &rNAllocableNodeListItr) {
-
-          this->rNAllocableNodeListItr = rNAllocableNodeListItr;
-        }
-
-        RNAllocableNodeListIterator getRNAllocableNodeListItr() const {
-          return rNAllocableNodeListItr;
-        }
-
-        void setRNUnallocableNodeListItr(
-            const RNUnallocableNodeListIterator &rNUnallocableNodeListItr) {
-
-          this->rNUnallocableNodeListItr = rNUnallocableNodeListItr;
-        }
-
-        RNUnallocableNodeListIterator getRNUnallocableNodeListItr() const {
-          return rNUnallocableNodeListItr;
-        }
-
-
-    };
-
-    class EdgeData {
-      private:
-
+      struct EdgeData {
         typedef std::vector<unsigned> UnsafeArray;
-
-        unsigned worstDegree,
-                 reverseWorstDegree;
+        unsigned worst, reverseWorst;
         UnsafeArray unsafe, reverseUnsafe;
+        bool isUpToDate;
 
-      public:
+        EdgeData() : worst(0), reverseWorst(0), isUpToDate(false) {}
+      };
 
-        EdgeData() : worstDegree(0), reverseWorstDegree(0) {}
+      /// \brief Construct an instance of the Briggs heuristic.
+      /// @param solver A reference to the solver which is using this heuristic.
+      Briggs(HeuristicSolverImpl<Briggs> &solver) :
+        HeuristicBase<Briggs>(solver) {}
 
-        typedef UnsafeArray::const_iterator ConstUnsafeIterator;
+      /// \brief Determine whether a node should be reduced using optimal
+      ///        reduction.
+      /// @param nItr Node iterator to be considered.
+      /// @return True if the given node should be optimally reduced, false
+      ///         otherwise.
+      ///
+      /// Selects nodes of degree 0, 1 or 2 for optimal reduction, with one
+      /// exception. Nodes whose spill cost (element 0 of their cost vector) is
+      /// infinite are checked for allocability first. Allocable nodes may be
+      /// optimally reduced, but nodes whose allocability cannot be proven are
+      /// selected for heuristic reduction instead.
+      bool shouldOptimallyReduce(Graph::NodeItr nItr) {
+        if (getSolver().getSolverDegree(nItr) < 3) {
+          if (getGraph().getNodeCosts(nItr)[0] !=
+                std::numeric_limits<PBQPNum>::infinity()) {
+            return true;
+          }
+          // Otherwise we have an infinite spill cost node.
+          initializeNode(nItr);
+          NodeData &nd = getHeuristicNodeData(nItr);
+          return nd.isAllocable;
+        }
+        // else
+        return false;
+      }
 
-        void setup(SolverGraph &g, const GraphEdgeIterator &edgeItr) {
-          const Matrix &edgeCosts = g.getEdgeCosts(edgeItr);
-          unsigned numRegs = edgeCosts.getRows() - 1,
-                   numReverseRegs = edgeCosts.getCols() - 1;
+      /// \brief Add a node to the heuristic reduce list.
+      /// @param nItr Node iterator to add to the heuristic reduce list.
+      void addToHeuristicReduceList(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+        initializeNode(nItr);
+        nd.isHeuristic = true;
+        if (nd.isAllocable) {
+          nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nItr);
+        } else {
+          nd.rnuItr = rnUnallocableList.insert(rnUnallocableList.end(), nItr);
+        }
+      }
 
-          unsafe.resize(numRegs, 0);
-          reverseUnsafe.resize(numReverseRegs, 0);
+      /// \brief Heuristically reduce one of the nodes in the heuristic
+      ///        reduce list.
+      /// @return True if a reduction takes place, false if the heuristic reduce
+      ///         list is empty.
+      ///
+      /// If the list of allocable nodes is non-empty a node is selected
+      /// from it and pushed to the stack. Otherwise if the non-allocable list
+      /// is non-empty a node is selected from it and pushed to the stack.
+      /// If both lists are empty the method simply returns false with no action
+      /// taken.
+      bool heuristicReduce() {
+        if (!rnAllocableList.empty()) {
+          RNAllocableListItr rnaItr =
+            min_element(rnAllocableList.begin(), rnAllocableList.end(),
+                        LinkDegreeComparator(getSolver()));
+          Graph::NodeItr nItr = *rnaItr;
+          rnAllocableList.erase(rnaItr);
+          handleRemoveNode(nItr);
+          getSolver().pushToStack(nItr);
+          return true;
+        } else if (!rnUnallocableList.empty()) {
+          RNUnallocableListItr rnuItr =
+            min_element(rnUnallocableList.begin(), rnUnallocableList.end(),
+                        SpillCostComparator(getSolver()));
+          Graph::NodeItr nItr = *rnuItr;
+          rnUnallocableList.erase(rnuItr);
+          handleRemoveNode(nItr);
+          getSolver().pushToStack(nItr);
+          return true;
+        }
+        // else
+        return false;
+      }
 
-          std::vector<unsigned> rowInfCounts(numRegs, 0),
-                                colInfCounts(numReverseRegs, 0);
+      /// \brief Prepare a change in the costs on the given edge.
+      /// @param eItr Edge iterator.    
+      void preUpdateEdgeCosts(Graph::EdgeItr eItr) {
+        Graph &g = getGraph();
+        Graph::NodeItr n1Itr = g.getEdgeNode1(eItr),
+                       n2Itr = g.getEdgeNode2(eItr);
+        NodeData &n1 = getHeuristicNodeData(n1Itr),
+                 &n2 = getHeuristicNodeData(n2Itr);
 
-          for (unsigned i = 0; i < numRegs; ++i) {
-            for (unsigned j = 0; j < numReverseRegs; ++j) {
-              if (edgeCosts[i + 1][j + 1] ==
+        if (n1.isHeuristic)
+          subtractEdgeContributions(eItr, getGraph().getEdgeNode1(eItr));
+        if (n2.isHeuristic)
+          subtractEdgeContributions(eItr, getGraph().getEdgeNode2(eItr));
+
+        EdgeData &ed = getHeuristicEdgeData(eItr);
+        ed.isUpToDate = false;
+      }
+
+      /// \brief Handle the change in the costs on the given edge.
+      /// @param eItr Edge iterator.
+      void postUpdateEdgeCosts(Graph::EdgeItr eItr) {
+        // This is effectively the same as adding a new edge now, since
+        // we've factored out the costs of the old one.
+        handleAddEdge(eItr);
+      }
+
+      /// \brief Handle the addition of a new edge into the PBQP graph.
+      /// @param eItr Edge iterator for the added edge.
+      ///
+      /// Updates allocability of any nodes connected by this edge which are
+      /// being managed by the heuristic. If allocability changes they are
+      /// moved to the appropriate list.
+      void handleAddEdge(Graph::EdgeItr eItr) {
+        Graph &g = getGraph();
+        Graph::NodeItr n1Itr = g.getEdgeNode1(eItr),
+                       n2Itr = g.getEdgeNode2(eItr);
+        NodeData &n1 = getHeuristicNodeData(n1Itr),
+                 &n2 = getHeuristicNodeData(n2Itr);
+
+        // If neither node is managed by the heuristic there's nothing to be
+        // done.
+        if (!n1.isHeuristic && !n2.isHeuristic)
+          return;
+
+        // Ok - we need to update at least one node.
+        computeEdgeContributions(eItr);
+
+        // Update node 1 if it's managed by the heuristic.
+        if (n1.isHeuristic) {
+          bool n1WasAllocable = n1.isAllocable;
+          addEdgeContributions(eItr, n1Itr);
+          updateAllocability(n1Itr);
+          if (n1WasAllocable && !n1.isAllocable) {
+            rnAllocableList.erase(n1.rnaItr);
+            n1.rnuItr =
+              rnUnallocableList.insert(rnUnallocableList.end(), n1Itr);
+          }
+        }
+
+        // Likewise for node 2.
+        if (n2.isHeuristic) {
+          bool n2WasAllocable = n2.isAllocable;
+          addEdgeContributions(eItr, n2Itr);
+          updateAllocability(n2Itr);
+          if (n2WasAllocable && !n2.isAllocable) {
+            rnAllocableList.erase(n2.rnaItr);
+            n2.rnuItr =
+              rnUnallocableList.insert(rnUnallocableList.end(), n2Itr);
+          }
+        }
+      }
+
+      /// \brief Handle disconnection of an edge from a node.
+      /// @param eItr Edge iterator for edge being disconnected.
+      /// @param nItr Node iterator for the node being disconnected from.
+      ///
+      /// Updates allocability of the given node and, if appropriate, moves the
+      /// node to a new list.
+      void handleRemoveEdge(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+
+        // If the node is not managed by the heuristic there's nothing to be
+        // done.
+        if (!nd.isHeuristic)
+          return;
+
+        EdgeData &ed = getHeuristicEdgeData(eItr);
+
+        assert(ed.isUpToDate && "Edge data is not up to date.");
+
+        // Update node.
+        bool ndWasAllocable = nd.isAllocable;
+        subtractEdgeContributions(eItr, nItr);
+        updateAllocability(nItr);
+
+        // If the node has gone optimal...
+        if (shouldOptimallyReduce(nItr)) {
+          nd.isHeuristic = false;
+          addToOptimalReduceList(nItr);
+          if (ndWasAllocable) {
+            rnAllocableList.erase(nd.rnaItr);
+          } else {
+            rnUnallocableList.erase(nd.rnuItr);
+          }
+        } else {
+          // Node didn't go optimal, but we might have to move it
+          // from "unallocable" to "allocable".
+          if (!ndWasAllocable && nd.isAllocable) {
+            rnUnallocableList.erase(nd.rnuItr);
+            nd.rnaItr = rnAllocableList.insert(rnAllocableList.end(), nItr);
+          }
+        }
+      }
+
+    private:
+
+      NodeData& getHeuristicNodeData(Graph::NodeItr nItr) {
+        return getSolver().getHeuristicNodeData(nItr);
+      }
+
+      EdgeData& getHeuristicEdgeData(Graph::EdgeItr eItr) {
+        return getSolver().getHeuristicEdgeData(eItr);
+      }
+
+      // Work out what this edge will contribute to the allocability of the
+      // nodes connected to it.
+      void computeEdgeContributions(Graph::EdgeItr eItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
+
+        if (ed.isUpToDate)
+          return; // Edge data is already up to date.
+
+        Matrix &eCosts = getGraph().getEdgeCosts(eItr);
+
+        unsigned numRegs = eCosts.getRows() - 1,
+                 numReverseRegs = eCosts.getCols() - 1;
+
+        std::vector<unsigned> rowInfCounts(numRegs, 0),
+                              colInfCounts(numReverseRegs, 0);        
+
+        ed.worst = 0;
+        ed.reverseWorst = 0;
+        ed.unsafe.clear();
+        ed.unsafe.resize(numRegs, 0);
+        ed.reverseUnsafe.clear();
+        ed.reverseUnsafe.resize(numReverseRegs, 0);
+
+        for (unsigned i = 0; i < numRegs; ++i) {
+          for (unsigned j = 0; j < numReverseRegs; ++j) {
+            if (eCosts[i + 1][j + 1] ==
                   std::numeric_limits<PBQPNum>::infinity()) {
-                unsafe[i] = 1;
-                reverseUnsafe[j] = 1;
-                ++rowInfCounts[i];
-                ++colInfCounts[j];
+              ed.unsafe[i] = 1;
+              ed.reverseUnsafe[j] = 1;
+              ++rowInfCounts[i];
+              ++colInfCounts[j];
 
-                if (colInfCounts[j] > worstDegree) {
-                  worstDegree = colInfCounts[j];
-                }
+              if (colInfCounts[j] > ed.worst) {
+                ed.worst = colInfCounts[j];
+              }
 
-                if (rowInfCounts[i] > reverseWorstDegree) {
-                  reverseWorstDegree = rowInfCounts[i];
-                }
+              if (rowInfCounts[i] > ed.reverseWorst) {
+                ed.reverseWorst = rowInfCounts[i];
               }
             }
           }
         }
 
-        unsigned getWorstDegree() const { return worstDegree; }
-        unsigned getReverseWorstDegree() const { return reverseWorstDegree; }
-        ConstUnsafeIterator unsafeBegin() const { return unsafe.begin(); }
-        ConstUnsafeIterator unsafeEnd() const { return unsafe.end(); }
-        ConstUnsafeIterator reverseUnsafeBegin() const {
-          return reverseUnsafe.begin();
+        ed.isUpToDate = true;
+      }
+
+      // Add the contributions of the given edge to the given node's 
+      // numDenied and safe members. No action is taken other than to update
+      // these member values. Once updated these numbers can be used by clients
+      // to update the node's allocability.
+      void addEdgeContributions(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
+
+        assert(ed.isUpToDate && "Using out-of-date edge numbers.");
+
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
+        
+        bool nIsNode1 = nItr == getGraph().getEdgeNode1(eItr);
+        EdgeData::UnsafeArray &unsafe =
+          nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
+        nd.numDenied += nIsNode1 ? ed.worst : ed.reverseWorst;
+
+        for (unsigned r = 0; r < numRegs; ++r) {
+          if (unsafe[r]) {
+            if (nd.unsafeDegrees[r]==0) {
+              --nd.numSafe;
+            }
+            ++nd.unsafeDegrees[r];
+          }
         }
-        ConstUnsafeIterator reverseUnsafeEnd() const {
-          return reverseUnsafe.end();
+      }
+
+      // Subtract the contributions of the given edge to the given node's 
+      // numDenied and safe members. No action is taken other than to update
+      // these member values. Once updated these numbers can be used by clients
+      // to update the node's allocability.
+      void subtractEdgeContributions(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
+        EdgeData &ed = getHeuristicEdgeData(eItr);
+
+        assert(ed.isUpToDate && "Using out-of-date edge numbers.");
+
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
+        
+        bool nIsNode1 = nItr == getGraph().getEdgeNode1(eItr);
+        EdgeData::UnsafeArray &unsafe =
+          nIsNode1 ? ed.unsafe : ed.reverseUnsafe;
+        nd.numDenied -= nIsNode1 ? ed.worst : ed.reverseWorst;
+
+        for (unsigned r = 0; r < numRegs; ++r) {
+          if (unsafe[r]) { 
+            if (nd.unsafeDegrees[r] == 1) {
+              ++nd.numSafe;
+            }
+            --nd.unsafeDegrees[r];
+          }
         }
+      }
+
+      void updateAllocability(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
+        nd.isAllocable = nd.numDenied < numRegs || nd.numSafe > 0;
+      }
+
+      void initializeNode(Graph::NodeItr nItr) {
+        NodeData &nd = getHeuristicNodeData(nItr);
+
+        if (nd.isInitialized)
+          return; // Node data is already up to date.
+
+        unsigned numRegs = getGraph().getNodeCosts(nItr).getLength() - 1;
+
+        nd.numDenied = 0;
+        nd.numSafe = numRegs;
+        nd.unsafeDegrees.resize(numRegs, 0);
+
+        typedef HeuristicSolverImpl<Briggs>::SolverEdgeItr SolverEdgeItr;
+
+        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(nItr),
+                           aeEnd = getSolver().solverEdgesEnd(nItr);
+             aeItr != aeEnd; ++aeItr) {
+          
+          Graph::EdgeItr eItr = *aeItr;
+          computeEdgeContributions(eItr);
+          addEdgeContributions(eItr, nItr);
+        }
+
+        updateAllocability(nItr);
+        nd.isInitialized = true;
+      }
+
+      void handleRemoveNode(Graph::NodeItr xnItr) {
+        typedef HeuristicSolverImpl<Briggs>::SolverEdgeItr SolverEdgeItr;
+        std::vector<Graph::EdgeItr> edgesToRemove;
+        for (SolverEdgeItr aeItr = getSolver().solverEdgesBegin(xnItr),
+                           aeEnd = getSolver().solverEdgesEnd(xnItr);
+             aeItr != aeEnd; ++aeItr) {
+          Graph::NodeItr ynItr = getGraph().getEdgeOtherNode(*aeItr, xnItr);
+          handleRemoveEdge(*aeItr, ynItr);
+          edgesToRemove.push_back(*aeItr);
+        }
+        while (!edgesToRemove.empty()) {
+          getSolver().removeSolverEdge(edgesToRemove.back());
+          edgesToRemove.pop_back();
+        }
+      }
+
+      RNAllocableList rnAllocableList;
+      RNUnallocableList rnUnallocableList;
     };
 
-  void initialise(Solver &solver) {
-    this->s = &solver;
-    g = &s->getGraph();
-    rNAllocableBucket = RNAllocableNodeList(LinkDegreeComparator(g));
-    rNUnallocableBucket =
-      RNUnallocableNodeList(SpillPriorityComparator(g));
-    
-    for (GraphEdgeIterator
-         edgeItr = g->edgesBegin(), edgeEnd = g->edgesEnd();
-         edgeItr != edgeEnd; ++edgeItr) {
-
-      g->getEdgeData(edgeItr).getHeuristicData().setup(*g, edgeItr);
-    }
-
-    for (GraphNodeIterator
-         nodeItr = g->nodesBegin(), nodeEnd = g->nodesEnd();
-         nodeItr != nodeEnd; ++nodeItr) {
-
-      g->getNodeData(nodeItr).getHeuristicData().setup(*g, nodeItr);
-    }
   }
-
-  void addToRNBucket(const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g->getNodeData(nodeItr).getHeuristicData();
-
-    if (nodeData.isAllocable()) {
-      nodeData.setRNAllocableNodeListItr(
-        rNAllocableBucket.insert(rNAllocableBucket.begin(), nodeItr));
-    }
-    else {
-      nodeData.setRNUnallocableNodeListItr(
-        rNUnallocableBucket.insert(rNUnallocableBucket.begin(), nodeItr));
-    }
-  }
-
-  void removeFromRNBucket(const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g->getNodeData(nodeItr).getHeuristicData();
-
-    if (nodeData.isAllocable()) {
-      rNAllocableBucket.erase(nodeData.getRNAllocableNodeListItr());
-    }
-    else {
-      rNUnallocableBucket.erase(nodeData.getRNUnallocableNodeListItr());
-    }
-  }
-
-  void handleAddLink(const GraphEdgeIterator &edgeItr) {
-    // We assume that if we got here this edge is attached to at least
-    // one high degree node.
-    g->getEdgeData(edgeItr).getHeuristicData().setup(*g, edgeItr);
-
-    GraphNodeIterator n1Itr = g->getEdgeNode1Itr(edgeItr),
-                      n2Itr = g->getEdgeNode2Itr(edgeItr);
-   
-    HSIT::NodeData &n1Data = g->getNodeData(n1Itr),
-                   &n2Data = g->getNodeData(n2Itr);
-
-    if (n1Data.getLinkDegree() > 2) {
-      n1Data.getHeuristicData().handleAddLink(*g, n1Itr, edgeItr);
-    }
-    if (n2Data.getLinkDegree() > 2) {
-      n2Data.getHeuristicData().handleAddLink(*g, n2Itr, edgeItr);
-    }
-  }
-
-  void handleRemoveLink(const GraphEdgeIterator &edgeItr,
-                        const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g->getNodeData(nodeItr).getHeuristicData();
-    nodeData.handleRemoveLink(*g, nodeItr, edgeItr);
-  }
-
-  void processRN() {
-    
-    if (!rNAllocableBucket.empty()) {
-      GraphNodeIterator selectedNodeItr = *rNAllocableBucket.begin();
-      //std::cerr << "RN safely pushing " << g->getNodeID(selectedNodeItr) << "\n";
-      rNAllocableBucket.erase(rNAllocableBucket.begin());
-      s->pushStack(selectedNodeItr);
-      s->unlinkNode(selectedNodeItr);
-    }
-    else {
-      GraphNodeIterator selectedNodeItr = *rNUnallocableBucket.begin();
-      //std::cerr << "RN optimistically pushing " << g->getNodeID(selectedNodeItr) << "\n";
-      rNUnallocableBucket.erase(rNUnallocableBucket.begin());
-      s->pushStack(selectedNodeItr);
-      s->unlinkNode(selectedNodeItr);
-    }
- 
-  }
-
-  bool rNBucketEmpty() const {
-    return (rNAllocableBucket.empty() && rNUnallocableBucket.empty());
-  }
-
-private:
-
-  Solver *s;
-  SolverGraph *g;
-  RNAllocableNodeList rNAllocableBucket;
-  RNUnallocableNodeList rNUnallocableBucket;
-};
-
-
-
-}
 }
 
 

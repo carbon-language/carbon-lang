@@ -1,4 +1,4 @@
-//===-- HeuristicSolver.h - Heuristic PBQP Solver ---------------*- C++ -*-===//
+//===-- HeuristicSolver.h - Heuristic PBQP Solver --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,773 +16,577 @@
 #ifndef LLVM_CODEGEN_PBQP_HEURISTICSOLVER_H
 #define LLVM_CODEGEN_PBQP_HEURISTICSOLVER_H
 
-#include "Solver.h"
-#include "AnnotatedGraph.h"
+#include "Graph.h"
+#include "Solution.h"
 #include "llvm/Support/raw_ostream.h"
+#include <vector>
 #include <limits>
 
 namespace PBQP {
 
-/// \brief Important types for the HeuristicSolverImpl.
-/// 
-/// Declared seperately to allow access to heuristic classes before the solver
-/// is fully constructed.
-template <typename HeuristicNodeData, typename HeuristicEdgeData>
-class HSITypes {
-public:
-
-  class NodeData;
-  class EdgeData;
-
-  typedef AnnotatedGraph<NodeData, EdgeData> SolverGraph;
-  typedef typename SolverGraph::NodeIterator GraphNodeIterator;
-  typedef typename SolverGraph::EdgeIterator GraphEdgeIterator;
-  typedef typename SolverGraph::AdjEdgeIterator GraphAdjEdgeIterator;
-
-  typedef std::list<GraphNodeIterator> NodeList;
-  typedef typename NodeList::iterator NodeListIterator;
-
-  typedef std::vector<GraphNodeIterator> NodeStack;
-  typedef typename NodeStack::iterator NodeStackIterator;
-
-  class NodeData {
-    friend class EdgeData;
-
-  private:
-
-    typedef std::list<GraphEdgeIterator> LinksList;
-
-    unsigned numLinks;
-    LinksList links, solvedLinks;
-    NodeListIterator bucketItr;
-    HeuristicNodeData heuristicData;
-
-  public:
-
-    typedef typename LinksList::iterator AdjLinkIterator;
-
-  private:
-
-    AdjLinkIterator addLink(const GraphEdgeIterator &edgeItr) {
-      ++numLinks;
-      return links.insert(links.end(), edgeItr);
-    }
-
-    void delLink(const AdjLinkIterator &adjLinkItr) {
-      --numLinks;
-      links.erase(adjLinkItr);
-    }
-
-  public:
-
-    NodeData() : numLinks(0) {}
-
-    unsigned getLinkDegree() const { return numLinks; }
-
-    HeuristicNodeData& getHeuristicData() { return heuristicData; }
-    const HeuristicNodeData& getHeuristicData() const {
-      return heuristicData;
-    }
-
-    void setBucketItr(const NodeListIterator &bucketItr) {
-      this->bucketItr = bucketItr;
-    }
-
-    const NodeListIterator& getBucketItr() const {
-      return bucketItr;
-    }
-
-    AdjLinkIterator adjLinksBegin() {
-      return links.begin();
-    }
-
-    AdjLinkIterator adjLinksEnd() {
-      return links.end();
-    }
-
-    void addSolvedLink(const GraphEdgeIterator &solvedLinkItr) {
-      solvedLinks.push_back(solvedLinkItr);
-    }
-
-    AdjLinkIterator solvedLinksBegin() {
-      return solvedLinks.begin();
-    }
-
-    AdjLinkIterator solvedLinksEnd() {
-      return solvedLinks.end();
-    }
-
-  };
-
-  class EdgeData {
-  private:
-
-    SolverGraph &g;
-    GraphNodeIterator node1Itr, node2Itr;
-    HeuristicEdgeData heuristicData;
-    typename NodeData::AdjLinkIterator node1ThisEdgeItr, node2ThisEdgeItr;
-
-  public:
-
-    EdgeData(SolverGraph &g) : g(g) {}
-
-    HeuristicEdgeData& getHeuristicData() { return heuristicData; }
-    const HeuristicEdgeData& getHeuristicData() const {
-      return heuristicData;
-    }
-
-    void setup(const GraphEdgeIterator &thisEdgeItr) {
-      node1Itr = g.getEdgeNode1Itr(thisEdgeItr);
-      node2Itr = g.getEdgeNode2Itr(thisEdgeItr);
-
-      node1ThisEdgeItr = g.getNodeData(node1Itr).addLink(thisEdgeItr);
-      node2ThisEdgeItr = g.getNodeData(node2Itr).addLink(thisEdgeItr);
-    }
-
-    void unlink() {
-      g.getNodeData(node1Itr).delLink(node1ThisEdgeItr);
-      g.getNodeData(node2Itr).delLink(node2ThisEdgeItr);
-    }
-
-  };
-
-};
-
-template <typename Heuristic>
-class HeuristicSolverImpl {
-public:
-  // Typedefs to make life easier:
-  typedef HSITypes<typename Heuristic::NodeData,
-                   typename Heuristic::EdgeData> HSIT;
-  typedef typename HSIT::SolverGraph SolverGraph;
-  typedef typename HSIT::NodeData NodeData;
-  typedef typename HSIT::EdgeData EdgeData;
-  typedef typename HSIT::GraphNodeIterator GraphNodeIterator;
-  typedef typename HSIT::GraphEdgeIterator GraphEdgeIterator;
-  typedef typename HSIT::GraphAdjEdgeIterator GraphAdjEdgeIterator;
-
-  typedef typename HSIT::NodeList NodeList;
-  typedef typename HSIT::NodeListIterator NodeListIterator;
-
-  typedef std::vector<GraphNodeIterator> NodeStack;
-  typedef typename NodeStack::iterator NodeStackIterator;
-
-  /// \brief Constructor, which performs all the actual solver work.
-  HeuristicSolverImpl(const SimpleGraph &orig) :
-    solution(orig.getNumNodes(), true)
-  {
-    copyGraph(orig);
-    simplify();
-    setup();
-    computeSolution();
-    computeSolutionCost(orig);
-  }
-
-  /// \brief Returns the graph for this solver.
-  SolverGraph& getGraph() { return g; }
-
-  /// \brief Return the solution found by this solver.
-  const Solution& getSolution() const { return solution; }
-
-private:
-
-  /// \brief Add the given node to the appropriate bucket for its link
-  /// degree.
-  void addToBucket(const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g.getNodeData(nodeItr);
-
-    switch (nodeData.getLinkDegree()) {
-      case 0: nodeData.setBucketItr(
-                r0Bucket.insert(r0Bucket.end(), nodeItr));
-              break;                                            
-      case 1: nodeData.setBucketItr(
-                r1Bucket.insert(r1Bucket.end(), nodeItr));
-              break;
-      case 2: nodeData.setBucketItr(
-                r2Bucket.insert(r2Bucket.end(), nodeItr));
-              break;
-      default: heuristic.addToRNBucket(nodeItr);
-               break;
-    }
-  }
-
-  /// \brief Remove the given node from the appropriate bucket for its link
-  /// degree.
-  void removeFromBucket(const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g.getNodeData(nodeItr);
-
-    switch (nodeData.getLinkDegree()) {
-      case 0: r0Bucket.erase(nodeData.getBucketItr()); break;
-      case 1: r1Bucket.erase(nodeData.getBucketItr()); break;
-      case 2: r2Bucket.erase(nodeData.getBucketItr()); break;
-      default: heuristic.removeFromRNBucket(nodeItr); break;
-    }
-  }
-
-public:
-
-  /// \brief Add a link.
-  void addLink(const GraphEdgeIterator &edgeItr) {
-    g.getEdgeData(edgeItr).setup(edgeItr);
-
-    if ((g.getNodeData(g.getEdgeNode1Itr(edgeItr)).getLinkDegree() > 2) ||
-        (g.getNodeData(g.getEdgeNode2Itr(edgeItr)).getLinkDegree() > 2)) {
-      heuristic.handleAddLink(edgeItr);
-    }
-  }
-
-  /// \brief Remove link, update info for node.
+  /// \brief Heuristic PBQP solver implementation.
   ///
-  /// Only updates information for the given node, since usually the other
-  /// is about to be removed.
-  void removeLink(const GraphEdgeIterator &edgeItr,
-                  const GraphNodeIterator &nodeItr) {
+  /// This class should usually be created (and destroyed) indirectly via a call
+  /// to HeuristicSolver<HImpl>::solve(Graph&).
+  /// See the comments for HeuristicSolver.
+  ///
+  /// HeuristicSolverImpl provides the R0, R1 and R2 reduction rules,
+  /// backpropagation phase, and maintains the internal copy of the graph on
+  /// which the reduction is carried out (the original being kept to facilitate
+  /// backpropagation).
+  template <typename HImpl>
+  class HeuristicSolverImpl {
+  private:
 
-    if (g.getNodeData(nodeItr).getLinkDegree() > 2) {
-      heuristic.handleRemoveLink(edgeItr, nodeItr);
-    }
-    g.getEdgeData(edgeItr).unlink();
-  }
+    typedef typename HImpl::NodeData HeuristicNodeData;
+    typedef typename HImpl::EdgeData HeuristicEdgeData;
 
-  /// \brief Remove link, update info for both nodes. Useful for R2 only.
-  void removeLinkR2(const GraphEdgeIterator &edgeItr) {
-    GraphNodeIterator node1Itr = g.getEdgeNode1Itr(edgeItr);
+    typedef std::list<Graph::EdgeItr> SolverEdges;
 
-    if (g.getNodeData(node1Itr).getLinkDegree() > 2) {
-      heuristic.handleRemoveLink(edgeItr, node1Itr);
-    }
-    removeLink(edgeItr, g.getEdgeNode2Itr(edgeItr));
-  }
+  public:
+  
+    /// \brief Iterator type for edges in the solver graph.
+    typedef SolverEdges::iterator SolverEdgeItr;
 
-  /// \brief Removes all links connected to the given node.
-  void unlinkNode(const GraphNodeIterator &nodeItr) {
-    NodeData &nodeData = g.getNodeData(nodeItr);
+  private:
 
-    typedef std::vector<GraphEdgeIterator> TempEdgeList;
+    class NodeData {
+    public:
+      NodeData() : solverDegree(0) {}
 
-    TempEdgeList edgesToUnlink;
-    edgesToUnlink.reserve(nodeData.getLinkDegree());
+      HeuristicNodeData& getHeuristicData() { return hData; }
 
-    // Copy adj edges into a temp vector. We want to destroy them during
-    // the unlink, and we can't do that while we're iterating over them.
-    std::copy(nodeData.adjLinksBegin(), nodeData.adjLinksEnd(),
-              std::back_inserter(edgesToUnlink));
-
-    for (typename TempEdgeList::iterator
-         edgeItr = edgesToUnlink.begin(), edgeEnd = edgesToUnlink.end();
-         edgeItr != edgeEnd; ++edgeItr) {
-
-      GraphNodeIterator otherNode = g.getEdgeOtherNode(*edgeItr, nodeItr);
-
-      removeFromBucket(otherNode);
-      removeLink(*edgeItr, otherNode);
-      addToBucket(otherNode);
-    }
-  }
-
-  /// \brief Push the given node onto the stack to be solved with
-  /// backpropagation.
-  void pushStack(const GraphNodeIterator &nodeItr) {
-    stack.push_back(nodeItr);
-  }
-
-  /// \brief Set the solution of the given node.
-  void setSolution(const GraphNodeIterator &nodeItr, unsigned solIndex) {
-    solution.setSelection(g.getNodeID(nodeItr), solIndex);
-
-    for (GraphAdjEdgeIterator adjEdgeItr = g.adjEdgesBegin(nodeItr),
-         adjEdgeEnd = g.adjEdgesEnd(nodeItr);
-         adjEdgeItr != adjEdgeEnd; ++adjEdgeItr) {
-      GraphEdgeIterator edgeItr(*adjEdgeItr);
-      GraphNodeIterator adjNodeItr(g.getEdgeOtherNode(edgeItr, nodeItr));
-      g.getNodeData(adjNodeItr).addSolvedLink(edgeItr);
-    }
-  }
-
-private:
-
-  SolverGraph g;
-  Heuristic heuristic;
-  Solution solution;
-
-  NodeList r0Bucket,
-           r1Bucket,
-           r2Bucket;
-
-  NodeStack stack;
-
-  // Copy the SimpleGraph into an annotated graph which we can use for reduction.
-  void copyGraph(const SimpleGraph &orig) {
-
-    assert((g.getNumEdges() == 0) && (g.getNumNodes() == 0) &&
-           "Graph should be empty prior to solver setup.");
-
-    assert(orig.areNodeIDsValid() &&
-           "Cannot copy from a graph with invalid node IDs.");
-
-    std::vector<GraphNodeIterator> newNodeItrs;
-
-    for (unsigned nodeID = 0; nodeID < orig.getNumNodes(); ++nodeID) {
-      newNodeItrs.push_back(
-        g.addNode(orig.getNodeCosts(orig.getNodeItr(nodeID)), NodeData()));
-    }
-
-    for (SimpleGraph::ConstEdgeIterator
-         origEdgeItr = orig.edgesBegin(), origEdgeEnd = orig.edgesEnd();
-         origEdgeItr != origEdgeEnd; ++origEdgeItr) {
-
-      unsigned id1 = orig.getNodeID(orig.getEdgeNode1Itr(origEdgeItr)),
-               id2 = orig.getNodeID(orig.getEdgeNode2Itr(origEdgeItr));
-
-      g.addEdge(newNodeItrs[id1], newNodeItrs[id2],
-                orig.getEdgeCosts(origEdgeItr), EdgeData(g));
-    }
-
-    // Assign IDs to the new nodes using the ordering from the old graph,
-    // this will lead to nodes in the new graph getting the same ID as the
-    // corresponding node in the old graph.
-    g.assignNodeIDs(newNodeItrs);
-  }
-
-  // Simplify the annotated graph by eliminating independent edges and trivial
-  // nodes. 
-  void simplify() {
-    disconnectTrivialNodes();
-    eliminateIndependentEdges();
-  }
-
-  // Eliminate trivial nodes.
-  void disconnectTrivialNodes() {
-    for (GraphNodeIterator nodeItr = g.nodesBegin(), nodeEnd = g.nodesEnd();
-         nodeItr != nodeEnd; ++nodeItr) {
-
-      if (g.getNodeCosts(nodeItr).getLength() == 1) {
-
-        std::vector<GraphEdgeIterator> edgesToRemove;
-
-        for (GraphAdjEdgeIterator adjEdgeItr = g.adjEdgesBegin(nodeItr),
-             adjEdgeEnd = g.adjEdgesEnd(nodeItr);
-             adjEdgeItr != adjEdgeEnd; ++adjEdgeItr) {
-
-          GraphEdgeIterator edgeItr = *adjEdgeItr;
-
-          if (g.getEdgeNode1Itr(edgeItr) == nodeItr) {
-            GraphNodeIterator otherNodeItr = g.getEdgeNode2Itr(edgeItr);
-            g.getNodeCosts(otherNodeItr) +=
-              g.getEdgeCosts(edgeItr).getRowAsVector(0);
-          }
-          else {
-            GraphNodeIterator otherNodeItr = g.getEdgeNode1Itr(edgeItr);
-            g.getNodeCosts(otherNodeItr) +=
-              g.getEdgeCosts(edgeItr).getColAsVector(0);
-          }
-
-          edgesToRemove.push_back(edgeItr);
-        }
-
-        while (!edgesToRemove.empty()) {
-          g.removeEdge(edgesToRemove.back());
-          edgesToRemove.pop_back();
-        }
-      }
-    }
-  }
-
-  void eliminateIndependentEdges() {
-    std::vector<GraphEdgeIterator> edgesToProcess;
-
-    for (GraphEdgeIterator edgeItr = g.edgesBegin(), edgeEnd = g.edgesEnd();
-         edgeItr != edgeEnd; ++edgeItr) {
-      edgesToProcess.push_back(edgeItr);
-    }
-
-    while (!edgesToProcess.empty()) {
-      tryToEliminateEdge(edgesToProcess.back());
-      edgesToProcess.pop_back();
-    }
-  }
-
-  void tryToEliminateEdge(const GraphEdgeIterator &edgeItr) {
-    if (tryNormaliseEdgeMatrix(edgeItr)) {
-      g.removeEdge(edgeItr); 
-    }
-  }
-
-  bool tryNormaliseEdgeMatrix(const GraphEdgeIterator &edgeItr) {
-
-    Matrix &edgeCosts = g.getEdgeCosts(edgeItr);
-    Vector &uCosts = g.getNodeCosts(g.getEdgeNode1Itr(edgeItr)),
-               &vCosts = g.getNodeCosts(g.getEdgeNode2Itr(edgeItr));
-
-    for (unsigned r = 0; r < edgeCosts.getRows(); ++r) {
-      PBQPNum rowMin = edgeCosts.getRowMin(r);
-      uCosts[r] += rowMin;
-      if (rowMin != std::numeric_limits<PBQPNum>::infinity()) {
-        edgeCosts.subFromRow(r, rowMin);
-      }
-      else {
-        edgeCosts.setRow(r, 0);
-      }
-    }
-
-    for (unsigned c = 0; c < edgeCosts.getCols(); ++c) {
-      PBQPNum colMin = edgeCosts.getColMin(c);
-      vCosts[c] += colMin;
-      if (colMin != std::numeric_limits<PBQPNum>::infinity()) {
-        edgeCosts.subFromCol(c, colMin);
-      }
-      else {
-        edgeCosts.setCol(c, 0);
-      }
-    }
-
-    return edgeCosts.isZero();
-  }
-
-  void setup() {
-    setupLinks();
-    heuristic.initialise(*this);
-    setupBuckets();
-  }
-
-  void setupLinks() {
-    for (GraphEdgeIterator edgeItr = g.edgesBegin(), edgeEnd = g.edgesEnd();
-         edgeItr != edgeEnd; ++edgeItr) {
-      g.getEdgeData(edgeItr).setup(edgeItr);
-    }
-  }
-
-  void setupBuckets() {
-    for (GraphNodeIterator nodeItr = g.nodesBegin(), nodeEnd = g.nodesEnd();
-         nodeItr != nodeEnd; ++nodeItr) {
-      addToBucket(nodeItr);
-    }
-  }
-
-  void computeSolution() {
-    assert(g.areNodeIDsValid() &&
-           "Nodes cannot be added/removed during reduction.");
-
-    reduce();
-    computeTrivialSolutions();
-    backpropagate();
-  }
-
-  void printNode(const GraphNodeIterator &nodeItr) {
-    llvm::errs() << "Node " << g.getNodeID(nodeItr) << " (" << &*nodeItr << "):\n"
-                 << "  costs = " << g.getNodeCosts(nodeItr) << "\n"
-                 << "  link degree = " << g.getNodeData(nodeItr).getLinkDegree() << "\n"
-                 << "  links = [ ";
-
-    for (typename HSIT::NodeData::AdjLinkIterator 
-         aeItr = g.getNodeData(nodeItr).adjLinksBegin(),
-         aeEnd = g.getNodeData(nodeItr).adjLinksEnd();
-         aeItr != aeEnd; ++aeItr) {
-      llvm::errs() << "(" << g.getNodeID(g.getEdgeNode1Itr(*aeItr))
-                   << ", " << g.getNodeID(g.getEdgeNode2Itr(*aeItr))
-                   << ") ";
-    }
-    llvm::errs() << "]\n";
-  }
-
-  void dumpState() {
-    llvm::errs() << "\n";
-
-    for (GraphNodeIterator nodeItr = g.nodesBegin(), nodeEnd = g.nodesEnd();
-         nodeItr != nodeEnd; ++nodeItr) {
-      printNode(nodeItr);
-    }
-
-    NodeList* buckets[] = { &r0Bucket, &r1Bucket, &r2Bucket };
-
-    for (unsigned b = 0; b < 3; ++b) {
-      NodeList &bucket = *buckets[b];
-
-      llvm::errs() << "Bucket " << b << ": [ ";
-
-      for (NodeListIterator nItr = bucket.begin(), nEnd = bucket.end();
-           nItr != nEnd; ++nItr) {
-        llvm::errs() << g.getNodeID(*nItr) << " ";
+      SolverEdgeItr addSolverEdge(Graph::EdgeItr eItr) {
+        ++solverDegree;
+        return solverEdges.insert(solverEdges.end(), eItr);
       }
 
-      llvm::errs() << "]\n";
-    }
-
-    llvm::errs() << "Stack: [ ";
-    for (NodeStackIterator nsItr = stack.begin(), nsEnd = stack.end();
-         nsItr != nsEnd; ++nsItr) {
-      llvm::errs() << g.getNodeID(*nsItr) << " ";
-    }
-    llvm::errs() << "]\n";
-  }
-
-  void reduce() {
-    bool reductionFinished = r1Bucket.empty() && r2Bucket.empty() &&
-      heuristic.rNBucketEmpty();
-
-    while (!reductionFinished) {
-
-      if (!r1Bucket.empty()) {
-        processR1();
+      void removeSolverEdge(SolverEdgeItr seItr) {
+        --solverDegree;
+        solverEdges.erase(seItr);
       }
-      else if (!r2Bucket.empty()) {
-        processR2();
+
+      SolverEdgeItr solverEdgesBegin() { return solverEdges.begin(); }
+      SolverEdgeItr solverEdgesEnd() { return solverEdges.end(); }
+      unsigned getSolverDegree() const { return solverDegree; }
+      void clearSolverEdges() {
+        solverDegree = 0;
+        solverEdges.clear(); 
       }
-      else if (!heuristic.rNBucketEmpty()) {
-        solution.setProvedOptimal(false);
-        solution.incRNReductions();
-        heuristic.processRN();
-      } 
-      else reductionFinished = true;
-    }
       
-  }
+    private:
+      HeuristicNodeData hData;
+      unsigned solverDegree;
+      SolverEdges solverEdges;
+    };
+ 
+    class EdgeData {
+    public:
+      HeuristicEdgeData& getHeuristicData() { return hData; }
 
-  void processR1() {
+      void setN1SolverEdgeItr(SolverEdgeItr n1SolverEdgeItr) {
+        this->n1SolverEdgeItr = n1SolverEdgeItr;
+      }
 
-    // Remove the first node in the R0 bucket:
-    GraphNodeIterator xNodeItr = r1Bucket.front();
-    r1Bucket.pop_front();
+      SolverEdgeItr getN1SolverEdgeItr() { return n1SolverEdgeItr; }
 
-    solution.incR1Reductions();
+      void setN2SolverEdgeItr(SolverEdgeItr n2SolverEdgeItr){
+        this->n2SolverEdgeItr = n2SolverEdgeItr;
+      }
 
-    //llvm::errs() << "Applying R1 to " << g.getNodeID(xNodeItr) << "\n";
+      SolverEdgeItr getN2SolverEdgeItr() { return n2SolverEdgeItr; }
 
-    assert((g.getNodeData(xNodeItr).getLinkDegree() == 1) &&
-           "Node in R1 bucket has degree != 1");
+    private:
 
-    GraphEdgeIterator edgeItr = *g.getNodeData(xNodeItr).adjLinksBegin();
+      HeuristicEdgeData hData;
+      SolverEdgeItr n1SolverEdgeItr, n2SolverEdgeItr;
+    };
 
-    const Matrix &edgeCosts = g.getEdgeCosts(edgeItr);
+    Graph &g;
+    HImpl h;
+    Solution s;
+    std::vector<Graph::NodeItr> stack;
 
-    const Vector &xCosts = g.getNodeCosts(xNodeItr);
-    unsigned xLen = xCosts.getLength();
+    std::vector<NodeData> nodeData;
+    std::vector<EdgeData> edgeData;
 
-    // Duplicate a little code to avoid transposing matrices:
-    if (xNodeItr == g.getEdgeNode1Itr(edgeItr)) {
-      GraphNodeIterator yNodeItr = g.getEdgeNode2Itr(edgeItr);
-      Vector &yCosts = g.getNodeCosts(yNodeItr);
-      unsigned yLen = yCosts.getLength();
+  public:
 
-      for (unsigned j = 0; j < yLen; ++j) {
-        PBQPNum min = edgeCosts[0][j] + xCosts[0];
-        for (unsigned i = 1; i < xLen; ++i) {
-          PBQPNum c = edgeCosts[i][j] + xCosts[i];
-          if (c < min)
-            min = c;
-        }
-        yCosts[j] += min;
+    /// \brief Construct a heuristic solver implementation to solve the given
+    ///        graph.
+    /// @param g The graph representing the problem instance to be solved.
+    HeuristicSolverImpl(Graph &g) : g(g), h(*this) {}  
+
+    /// \brief Get the graph being solved by this solver.
+    /// @return The graph representing the problem instance being solved by this
+    ///         solver.
+    Graph& getGraph() { return g; }
+
+    /// \brief Get the heuristic data attached to the given node.
+    /// @param nItr Node iterator.
+    /// @return The heuristic data attached to the given node.
+    HeuristicNodeData& getHeuristicNodeData(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).getHeuristicData();
+    }
+
+    /// \brief Get the heuristic data attached to the given edge.
+    /// @param eItr Edge iterator.
+    /// @return The heuristic data attached to the given node.
+    HeuristicEdgeData& getHeuristicEdgeData(Graph::EdgeItr eItr) {
+      return getSolverEdgeData(eItr).getHeuristicData();
+    }
+
+    /// \brief Begin iterator for the set of edges adjacent to the given node in
+    ///        the solver graph.
+    /// @param nItr Node iterator.
+    /// @return Begin iterator for the set of edges adjacent to the given node
+    ///         in the solver graph. 
+    SolverEdgeItr solverEdgesBegin(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).solverEdgesBegin();
+    }
+
+    /// \brief End iterator for the set of edges adjacent to the given node in
+    ///        the solver graph.
+    /// @param nItr Node iterator.
+    /// @return End iterator for the set of edges adjacent to the given node in
+    ///         the solver graph. 
+    SolverEdgeItr solverEdgesEnd(Graph::NodeItr nItr) {
+      return getSolverNodeData(nItr).solverEdgesEnd();
+    }
+
+    /// \brief Remove a node from the solver graph.
+    /// @param eItr Edge iterator for edge to be removed.
+    ///
+    /// Does <i>not</i> notify the heuristic of the removal. That should be
+    /// done manually if necessary.
+    void removeSolverEdge(Graph::EdgeItr eItr) {
+      EdgeData &eData = getSolverEdgeData(eItr);
+      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eItr)),
+               &n2Data = getSolverNodeData(g.getEdgeNode2(eItr));
+
+      n1Data.removeSolverEdge(eData.getN1SolverEdgeItr());
+      n2Data.removeSolverEdge(eData.getN2SolverEdgeItr());
+    }
+
+    /// \brief Compute a solution to the PBQP problem instance with which this
+    ///        heuristic solver was constructed.
+    /// @return A solution to the PBQP problem.
+    ///
+    /// Performs the full PBQP heuristic solver algorithm, including setup,
+    /// calls to the heuristic (which will call back to the reduction rules in
+    /// this class), and cleanup.
+    Solution computeSolution() {
+      setup();
+      h.setup();
+      h.reduce();
+      backpropagate();
+      h.cleanup();
+      cleanup();
+      return s;
+    }
+
+    /// \brief Add to the end of the stack.
+    /// @param nItr Node iterator to add to the reduction stack.
+    void pushToStack(Graph::NodeItr nItr) {
+      getSolverNodeData(nItr).clearSolverEdges();
+      stack.push_back(nItr);
+    }
+
+    /// \brief Returns the solver degree of the given node.
+    /// @param nItr Node iterator for which degree is requested.
+    /// @return Node degree in the <i>solver</i> graph (not the original graph).
+    unsigned getSolverDegree(Graph::NodeItr nItr) {
+      return  getSolverNodeData(nItr).getSolverDegree();
+    }
+
+    /// \brief Set the solution of the given node.
+    /// @param nItr Node iterator to set solution for.
+    /// @param selection Selection for node.
+    void setSolution(const Graph::NodeItr &nItr, unsigned selection) {
+      s.setSelection(nItr, selection);
+
+      for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nItr),
+                             aeEnd = g.adjEdgesEnd(nItr);
+           aeItr != aeEnd; ++aeItr) {
+        Graph::EdgeItr eItr(*aeItr);
+        Graph::NodeItr anItr(g.getEdgeOtherNode(eItr, nItr));
+        getSolverNodeData(anItr).addSolverEdge(eItr);
       }
     }
-    else {
-      GraphNodeIterator yNodeItr = g.getEdgeNode1Itr(edgeItr);
-      Vector &yCosts = g.getNodeCosts(yNodeItr);
-      unsigned yLen = yCosts.getLength();
+
+    /// \brief Apply rule R0.
+    /// @param nItr Node iterator for node to apply R0 to.
+    ///
+    /// Node will be automatically pushed to the solver stack.
+    void applyR0(Graph::NodeItr nItr) {
+      assert(getSolverNodeData(nItr).getSolverDegree() == 0 &&
+             "R0 applied to node with degree != 0.");
+
+      // Nothing to do. Just push the node onto the reduction stack.
+      pushToStack(nItr);
+    }
+
+    /// \brief Apply rule R1.
+    /// @param nItr Node iterator for node to apply R1 to.
+    ///
+    /// Node will be automatically pushed to the solver stack.
+    void applyR1(Graph::NodeItr xnItr) {
+      NodeData &nd = getSolverNodeData(xnItr);
+      assert(nd.getSolverDegree() == 1 &&
+             "R1 applied to node with degree != 1.");
+
+      Graph::EdgeItr eItr = *nd.solverEdgesBegin();
+
+      const Matrix &eCosts = g.getEdgeCosts(eItr);
+      const Vector &xCosts = g.getNodeCosts(xnItr);
+      
+      // Duplicate a little to avoid transposing matrices.
+      if (xnItr == g.getEdgeNode1(eItr)) {
+        Graph::NodeItr ynItr = g.getEdgeNode2(eItr);
+        Vector &yCosts = g.getNodeCosts(ynItr);
+        for (unsigned j = 0; j < yCosts.getLength(); ++j) {
+          PBQPNum min = eCosts[0][j] + xCosts[0];
+          for (unsigned i = 1; i < xCosts.getLength(); ++i) {
+            PBQPNum c = eCosts[i][j] + xCosts[i];
+            if (c < min)
+              min = c;
+          }
+          yCosts[j] += min;
+        }
+        h.handleRemoveEdge(eItr, ynItr);
+     } else {
+        Graph::NodeItr ynItr = g.getEdgeNode1(eItr);
+        Vector &yCosts = g.getNodeCosts(ynItr);
+        for (unsigned i = 0; i < yCosts.getLength(); ++i) {
+          PBQPNum min = eCosts[i][0] + xCosts[0];
+          for (unsigned j = 1; j < xCosts.getLength(); ++j) {
+            PBQPNum c = eCosts[i][j] + xCosts[j];
+            if (c < min)
+              min = c;
+          }
+          yCosts[i] += min;
+        }
+        h.handleRemoveEdge(eItr, ynItr);
+      }
+      removeSolverEdge(eItr);
+      assert(nd.getSolverDegree() == 0 &&
+             "Degree 1 with edge removed should be 0.");
+      pushToStack(xnItr);
+    }
+
+    /// \brief Apply rule R2.
+    /// @param nItr Node iterator for node to apply R2 to.
+    ///
+    /// Node will be automatically pushed to the solver stack.
+    void applyR2(Graph::NodeItr xnItr) {
+      assert(getSolverNodeData(xnItr).getSolverDegree() == 2 &&
+             "R2 applied to node with degree != 2.");
+
+      NodeData &nd = getSolverNodeData(xnItr);
+      const Vector &xCosts = g.getNodeCosts(xnItr);
+
+      SolverEdgeItr aeItr = nd.solverEdgesBegin();
+      Graph::EdgeItr yxeItr = *aeItr,
+                     zxeItr = *(++aeItr);
+
+      Graph::NodeItr ynItr = g.getEdgeOtherNode(yxeItr, xnItr),
+                     znItr = g.getEdgeOtherNode(zxeItr, xnItr);
+
+      bool flipEdge1 = (g.getEdgeNode1(yxeItr) == xnItr),
+           flipEdge2 = (g.getEdgeNode1(zxeItr) == xnItr);
+
+      const Matrix *yxeCosts = flipEdge1 ?
+        new Matrix(g.getEdgeCosts(yxeItr).transpose()) :
+        &g.getEdgeCosts(yxeItr);
+
+      const Matrix *zxeCosts = flipEdge2 ?
+        new Matrix(g.getEdgeCosts(zxeItr).transpose()) :
+        &g.getEdgeCosts(zxeItr);
+
+      unsigned xLen = xCosts.getLength(),
+               yLen = yxeCosts->getRows(),
+               zLen = zxeCosts->getRows();
+               
+      Matrix delta(yLen, zLen);
 
       for (unsigned i = 0; i < yLen; ++i) {
-        PBQPNum min = edgeCosts[i][0] + xCosts[0];
-
-        for (unsigned j = 1; j < xLen; ++j) {
-          PBQPNum c = edgeCosts[i][j] + xCosts[j];
-          if (c < min)
-            min = c;
+        for (unsigned j = 0; j < zLen; ++j) {
+          PBQPNum min = (*yxeCosts)[i][0] + (*zxeCosts)[j][0] + xCosts[0];
+          for (unsigned k = 1; k < xLen; ++k) {
+            PBQPNum c = (*yxeCosts)[i][k] + (*zxeCosts)[j][k] + xCosts[k];
+            if (c < min) {
+              min = c;
+            }
+          }
+          delta[i][j] = min;
         }
-        yCosts[i] += min;
+      }
+
+      if (flipEdge1)
+        delete yxeCosts;
+
+      if (flipEdge2)
+        delete zxeCosts;
+
+      Graph::EdgeItr yzeItr = g.findEdge(ynItr, znItr);
+      bool addedEdge = false;
+
+      if (yzeItr == g.edgesEnd()) {
+        yzeItr = g.addEdge(ynItr, znItr, delta);
+        addedEdge = true;
+      } else {
+        Matrix &yzeCosts = g.getEdgeCosts(yzeItr);
+        h.preUpdateEdgeCosts(yzeItr);
+        if (ynItr == g.getEdgeNode1(yzeItr)) {
+          yzeCosts += delta;
+        } else {
+          yzeCosts += delta.transpose();
+        }
+      }
+
+      bool nullCostEdge = tryNormaliseEdgeMatrix(yzeItr);
+
+      if (!addedEdge) {
+        // If we modified the edge costs let the heuristic know.
+        h.postUpdateEdgeCosts(yzeItr);
+      }
+ 
+      if (nullCostEdge) {
+        // If this edge ended up null remove it.
+        if (!addedEdge) {
+          // We didn't just add it, so we need to notify the heuristic
+          // and remove it from the solver.
+          h.handleRemoveEdge(yzeItr, ynItr);
+          h.handleRemoveEdge(yzeItr, znItr);
+          removeSolverEdge(yzeItr);
+        }
+        g.removeEdge(yzeItr);
+      } else if (addedEdge) {
+        // If the edge was added, and non-null, finish setting it up, add it to
+        // the solver & notify heuristic.
+        edgeData.push_back(EdgeData());
+        g.setEdgeData(yzeItr, &edgeData.back());
+        addSolverEdge(yzeItr);
+        h.handleAddEdge(yzeItr);
+      }
+
+      h.handleRemoveEdge(yxeItr, ynItr);
+      removeSolverEdge(yxeItr);
+      h.handleRemoveEdge(zxeItr, znItr);
+      removeSolverEdge(zxeItr);
+
+      pushToStack(xnItr);
+    }
+
+  private:
+
+    NodeData& getSolverNodeData(Graph::NodeItr nItr) {
+      return *static_cast<NodeData*>(g.getNodeData(nItr));
+    }
+
+    EdgeData& getSolverEdgeData(Graph::EdgeItr eItr) {
+      return *static_cast<EdgeData*>(g.getEdgeData(eItr));
+    }
+
+    void addSolverEdge(Graph::EdgeItr eItr) {
+      EdgeData &eData = getSolverEdgeData(eItr);
+      NodeData &n1Data = getSolverNodeData(g.getEdgeNode1(eItr)),
+               &n2Data = getSolverNodeData(g.getEdgeNode2(eItr));
+
+      eData.setN1SolverEdgeItr(n1Data.addSolverEdge(eItr));
+      eData.setN2SolverEdgeItr(n2Data.addSolverEdge(eItr));
+    }
+
+    void setup() {
+      if (h.solverRunSimplify()) {
+        simplify();
+      }
+
+      // Reserve space for the node and edge data.
+      nodeData.resize(g.getNumNodes());
+      edgeData.resize(g.getNumEdges());
+
+      // Create node data objects.
+      unsigned ndIndex = 0;     
+      for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
+	       nItr != nEnd; ++nItr, ++ndIndex) {
+        g.setNodeData(nItr, &nodeData[ndIndex]);
+      }
+
+      // Create edge data objects.
+      unsigned edIndex = 0;
+      for (Graph::EdgeItr eItr = g.edgesBegin(), eEnd = g.edgesEnd();
+           eItr != eEnd; ++eItr, ++edIndex) {
+        g.setEdgeData(eItr, &edgeData[edIndex]);
+        addSolverEdge(eItr);
       }
     }
 
-    unlinkNode(xNodeItr);
-    pushStack(xNodeItr);
-  }
+    void simplify() {
+      disconnectTrivialNodes();
+      eliminateIndependentEdges();
+    }
 
-  void processR2() {
+    // Eliminate trivial nodes.
+    void disconnectTrivialNodes() {
+      unsigned numDisconnected = 0;
 
-    GraphNodeIterator xNodeItr = r2Bucket.front();
-    r2Bucket.pop_front();
+      for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
+           nItr != nEnd; ++nItr) {
 
-    solution.incR2Reductions();
+        if (g.getNodeCosts(nItr).getLength() == 1) {
 
-    // Unlink is unsafe here. At some point it may optimistically more a node
-    // to a lower-degree list when its degree will later rise, or vice versa,
-    // violating the assumption that node degrees monotonically decrease
-    // during the reduction phase. Instead we'll bucket shuffle manually.
-    pushStack(xNodeItr);
+          std::vector<Graph::EdgeItr> edgesToRemove;
 
-    assert((g.getNodeData(xNodeItr).getLinkDegree() == 2) &&
-           "Node in R2 bucket has degree != 2");
+          for (Graph::AdjEdgeItr aeItr = g.adjEdgesBegin(nItr),
+                                 aeEnd = g.adjEdgesEnd(nItr);
+               aeItr != aeEnd; ++aeItr) {
 
-    const Vector &xCosts = g.getNodeCosts(xNodeItr);
+            Graph::EdgeItr eItr = *aeItr;
 
-    typename NodeData::AdjLinkIterator tempItr =
-      g.getNodeData(xNodeItr).adjLinksBegin();
+            if (g.getEdgeNode1(eItr) == nItr) {
+              Graph::NodeItr otherNodeItr = g.getEdgeNode2(eItr);
+              g.getNodeCosts(otherNodeItr) +=
+                g.getEdgeCosts(eItr).getRowAsVector(0);
+            }
+            else {
+              Graph::NodeItr otherNodeItr = g.getEdgeNode1(eItr);
+              g.getNodeCosts(otherNodeItr) +=
+                g.getEdgeCosts(eItr).getColAsVector(0);
+            }
 
-    GraphEdgeIterator yxEdgeItr = *tempItr,
-                      zxEdgeItr = *(++tempItr);
+            edgesToRemove.push_back(eItr);
+          }
 
-    GraphNodeIterator yNodeItr = g.getEdgeOtherNode(yxEdgeItr, xNodeItr),
-                      zNodeItr = g.getEdgeOtherNode(zxEdgeItr, xNodeItr);
+          if (!edgesToRemove.empty())
+            ++numDisconnected;
 
-    removeFromBucket(yNodeItr);
-    removeFromBucket(zNodeItr);
-
-    removeLink(yxEdgeItr, yNodeItr);
-    removeLink(zxEdgeItr, zNodeItr);
-
-    // Graph some of the costs:
-    bool flipEdge1 = (g.getEdgeNode1Itr(yxEdgeItr) == xNodeItr),
-         flipEdge2 = (g.getEdgeNode1Itr(zxEdgeItr) == xNodeItr);
-
-    const Matrix *yxCosts = flipEdge1 ?
-      new Matrix(g.getEdgeCosts(yxEdgeItr).transpose()) :
-      &g.getEdgeCosts(yxEdgeItr),
-                     *zxCosts = flipEdge2 ?
-      new Matrix(g.getEdgeCosts(zxEdgeItr).transpose()) :
-        &g.getEdgeCosts(zxEdgeItr);
-
-    unsigned xLen = xCosts.getLength(),
-             yLen = yxCosts->getRows(),
-             zLen = zxCosts->getRows();
-
-    // Compute delta:
-    Matrix delta(yLen, zLen);
-
-    for (unsigned i = 0; i < yLen; ++i) {
-      for (unsigned j = 0; j < zLen; ++j) {
-        PBQPNum min = (*yxCosts)[i][0] + (*zxCosts)[j][0] + xCosts[0];
-        for (unsigned k = 1; k < xLen; ++k) {
-          PBQPNum c = (*yxCosts)[i][k] + (*zxCosts)[j][k] + xCosts[k];
-          if (c < min) {
-            min = c;
+          while (!edgesToRemove.empty()) {
+            g.removeEdge(edgesToRemove.back());
+            edgesToRemove.pop_back();
           }
         }
-        delta[i][j] = min;
       }
     }
 
-    if (flipEdge1)
-      delete yxCosts;
+    void eliminateIndependentEdges() {
+      std::vector<Graph::EdgeItr> edgesToProcess;
+      unsigned numEliminated = 0;
 
-    if (flipEdge2)
-      delete zxCosts;
-
-    // Deal with the potentially induced yz edge.
-    GraphEdgeIterator yzEdgeItr = g.findEdge(yNodeItr, zNodeItr);
-    if (yzEdgeItr == g.edgesEnd()) {
-      yzEdgeItr = g.addEdge(yNodeItr, zNodeItr, delta, EdgeData(g));
-    }
-    else {
-      // There was an edge, but we're going to screw with it. Delete the old
-      // link, update the costs. We'll re-link it later.
-      removeLinkR2(yzEdgeItr);
-      g.getEdgeCosts(yzEdgeItr) +=
-        (yNodeItr == g.getEdgeNode1Itr(yzEdgeItr)) ?
-        delta : delta.transpose();
-    }
-
-    bool nullCostEdge = tryNormaliseEdgeMatrix(yzEdgeItr);
-
-    // Nulled the edge, remove it entirely.
-    if (nullCostEdge) {
-      g.removeEdge(yzEdgeItr);
-    }
-    else {
-      // Edge remains - re-link it.
-      addLink(yzEdgeItr);
-    }
-
-    addToBucket(yNodeItr);
-    addToBucket(zNodeItr);
-    }
-
-  void computeTrivialSolutions() {
-
-    for (NodeListIterator r0Itr = r0Bucket.begin(), r0End = r0Bucket.end();
-         r0Itr != r0End; ++r0Itr) {
-      GraphNodeIterator nodeItr = *r0Itr;
-
-      solution.incR0Reductions();
-      setSolution(nodeItr, g.getNodeCosts(nodeItr).minIndex());
-    }
-
-  }
-
-  void backpropagate() {
-    while (!stack.empty()) {
-      computeSolution(stack.back());
-      stack.pop_back();
-    }
-  }
-
-  void computeSolution(const GraphNodeIterator &nodeItr) {
-
-    NodeData &nodeData = g.getNodeData(nodeItr);
-
-    Vector v(g.getNodeCosts(nodeItr));
-
-    // Solve based on existing links.
-    for (typename NodeData::AdjLinkIterator
-         solvedLinkItr = nodeData.solvedLinksBegin(),
-         solvedLinkEnd = nodeData.solvedLinksEnd();
-         solvedLinkItr != solvedLinkEnd; ++solvedLinkItr) {
-
-      GraphEdgeIterator solvedEdgeItr(*solvedLinkItr);
-      Matrix &edgeCosts = g.getEdgeCosts(solvedEdgeItr);
-
-      if (nodeItr == g.getEdgeNode1Itr(solvedEdgeItr)) {
-        GraphNodeIterator adjNode(g.getEdgeNode2Itr(solvedEdgeItr));
-        unsigned adjSolution =
-          solution.getSelection(g.getNodeID(adjNode));
-        v += edgeCosts.getColAsVector(adjSolution);
-      }
-      else {
-        GraphNodeIterator adjNode(g.getEdgeNode1Itr(solvedEdgeItr));
-        unsigned adjSolution =
-          solution.getSelection(g.getNodeID(adjNode));
-        v += edgeCosts.getRowAsVector(adjSolution);
+      for (Graph::EdgeItr eItr = g.edgesBegin(), eEnd = g.edgesEnd();
+           eItr != eEnd; ++eItr) {
+        edgesToProcess.push_back(eItr);
       }
 
+      while (!edgesToProcess.empty()) {
+        if (tryToEliminateEdge(edgesToProcess.back()))
+          ++numEliminated;
+        edgesToProcess.pop_back();
+      }
     }
 
-    setSolution(nodeItr, v.minIndex());
-  }
-
-  void computeSolutionCost(const SimpleGraph &orig) {
-    PBQPNum cost = 0.0;
-
-    for (SimpleGraph::ConstNodeIterator
-         nodeItr = orig.nodesBegin(), nodeEnd = orig.nodesEnd();
-         nodeItr != nodeEnd; ++nodeItr) {
-
-      unsigned nodeId = orig.getNodeID(nodeItr);
-
-      cost += orig.getNodeCosts(nodeItr)[solution.getSelection(nodeId)];
+    bool tryToEliminateEdge(Graph::EdgeItr eItr) {
+      if (tryNormaliseEdgeMatrix(eItr)) {
+        g.removeEdge(eItr);
+        return true; 
+      }
+      return false;
     }
 
-    for (SimpleGraph::ConstEdgeIterator
-         edgeItr = orig.edgesBegin(), edgeEnd = orig.edgesEnd();
-         edgeItr != edgeEnd; ++edgeItr) {
+    bool tryNormaliseEdgeMatrix(Graph::EdgeItr &eItr) {
 
-      SimpleGraph::ConstNodeIterator n1 = orig.getEdgeNode1Itr(edgeItr),
-                                     n2 = orig.getEdgeNode2Itr(edgeItr);
-      unsigned sol1 = solution.getSelection(orig.getNodeID(n1)),
-               sol2 = solution.getSelection(orig.getNodeID(n2));
+      Matrix &edgeCosts = g.getEdgeCosts(eItr);
+      Vector &uCosts = g.getNodeCosts(g.getEdgeNode1(eItr)),
+             &vCosts = g.getNodeCosts(g.getEdgeNode2(eItr));
 
-      cost += orig.getEdgeCosts(edgeItr)[sol1][sol2];
+      for (unsigned r = 0; r < edgeCosts.getRows(); ++r) {
+        PBQPNum rowMin = edgeCosts.getRowMin(r);
+        uCosts[r] += rowMin;
+        if (rowMin != std::numeric_limits<PBQPNum>::infinity()) {
+          edgeCosts.subFromRow(r, rowMin);
+        }
+        else {
+          edgeCosts.setRow(r, 0);
+        }
+      }
+
+      for (unsigned c = 0; c < edgeCosts.getCols(); ++c) {
+        PBQPNum colMin = edgeCosts.getColMin(c);
+        vCosts[c] += colMin;
+        if (colMin != std::numeric_limits<PBQPNum>::infinity()) {
+          edgeCosts.subFromCol(c, colMin);
+        }
+        else {
+          edgeCosts.setCol(c, 0);
+        }
+      }
+
+      return edgeCosts.isZero();
     }
 
-    solution.setSolutionCost(cost);
-  }
+    void backpropagate() {
+      while (!stack.empty()) {
+        computeSolution(stack.back());
+        stack.pop_back();
+      }
+    }
 
-};
+    void computeSolution(Graph::NodeItr nItr) {
 
-template <typename Heuristic>
-class HeuristicSolver : public Solver {
-public:
-  Solution solve(const SimpleGraph &g) const {
-    HeuristicSolverImpl<Heuristic> solverImpl(g);
-    return solverImpl.getSolution();
-  }
-};
+      NodeData &nodeData = getSolverNodeData(nItr);
+
+      Vector v(g.getNodeCosts(nItr));
+
+      // Solve based on existing solved edges.
+      for (SolverEdgeItr solvedEdgeItr = nodeData.solverEdgesBegin(),
+                         solvedEdgeEnd = nodeData.solverEdgesEnd();
+           solvedEdgeItr != solvedEdgeEnd; ++solvedEdgeItr) {
+
+        Graph::EdgeItr eItr(*solvedEdgeItr);
+        Matrix &edgeCosts = g.getEdgeCosts(eItr);
+
+        if (nItr == g.getEdgeNode1(eItr)) {
+          Graph::NodeItr adjNode(g.getEdgeNode2(eItr));
+          unsigned adjSolution = s.getSelection(adjNode);
+          v += edgeCosts.getColAsVector(adjSolution);
+        }
+        else {
+          Graph::NodeItr adjNode(g.getEdgeNode1(eItr));
+          unsigned adjSolution = s.getSelection(adjNode);
+          v += edgeCosts.getRowAsVector(adjSolution);
+        }
+
+      }
+
+      setSolution(nItr, v.minIndex());
+    }
+
+    void cleanup() {
+      h.cleanup();
+      nodeData.clear();
+      edgeData.clear();
+    }
+  };
+
+  /// \brief PBQP heuristic solver class.
+  ///
+  /// Given a PBQP Graph g representing a PBQP problem, you can find a solution
+  /// by calling
+  /// <tt>Solution s = HeuristicSolver<H>::solve(g);</tt>
+  ///
+  /// The choice of heuristic for the H parameter will affect both the solver
+  /// speed and solution quality. The heuristic should be chosen based on the
+  /// nature of the problem being solved.
+  /// Currently the only solver included with LLVM is the Briggs heuristic for
+  /// register allocation.
+  template <typename HImpl>
+  class HeuristicSolver {
+  public:
+    static Solution solve(Graph &g) {
+      HeuristicSolverImpl<HImpl> hs(g);
+      return hs.computeSolution();
+    }
+  };
 
 }
 

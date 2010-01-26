@@ -7,81 +7,51 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Annotated PBQP Graph class. This class is used internally by the PBQP solver
-// to cache information to speed up reduction.
+// PBQP Solution class.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_PBQP_SOLUTION_H
 #define LLVM_CODEGEN_PBQP_SOLUTION_H
 
-#include "PBQPMath.h"
+#include "Math.h"
+#include "Graph.h"
+
+#include <map>
 
 namespace PBQP {
 
-class Solution {
+  /// \brief Represents a solution to a PBQP problem.
+  ///
+  /// To get the selection for each node in the problem use the getSelection method.
+  class Solution {
+  private:
+    typedef std::map<Graph::NodeItr, unsigned, NodeItrComparator> SelectionsMap;
+    SelectionsMap selections;
 
-  friend class SolverImplementation;
+  public:
 
-private:
+    /// \brief Number of nodes for which selections have been made.
+    /// @return Number of nodes for which selections have been made.
+    unsigned numNodes() const { return selections.size(); }
 
-  std::vector<unsigned> selections;
-  PBQPNum solutionCost;
-  bool provedOptimal;
-  unsigned r0Reductions, r1Reductions,
-           r2Reductions, rNReductions;
+    /// \brief Set the selection for a given node.
+    /// @param nItr Node iterator.
+    /// @param selection Selection for nItr.
+    void setSelection(Graph::NodeItr nItr, unsigned selection) {
+      selections[nItr] = selection;
+    }
 
-public:
+    /// \brief Get a node's selection.
+    /// @param nItr Node iterator.
+    /// @return The selection for nItr;
+    unsigned getSelection(Graph::NodeItr nItr) const {
+      SelectionsMap::const_iterator sItr = selections.find(nItr);
+      assert(sItr != selections.end() && "No selection for node.");
+      return sItr->second;
+    }
 
-  Solution() :
-    solutionCost(0.0), provedOptimal(false),
-    r0Reductions(0), r1Reductions(0), r2Reductions(0), rNReductions(0) {}
-
-  Solution(unsigned length, bool assumeOptimal) :
-    selections(length), solutionCost(0.0), provedOptimal(assumeOptimal),
-    r0Reductions(0), r1Reductions(0), r2Reductions(0), rNReductions(0) {}
-
-  void setProvedOptimal(bool provedOptimal) {
-    this->provedOptimal = provedOptimal;
-  }
-
-  void setSelection(unsigned nodeID, unsigned selection) {
-    selections[nodeID] = selection;
-  }
-
-  void setSolutionCost(PBQPNum solutionCost) {
-    this->solutionCost = solutionCost;
-  }
-
-  void incR0Reductions() { ++r0Reductions; }
-  void incR1Reductions() { ++r1Reductions; }
-  void incR2Reductions() { ++r2Reductions; }
-  void incRNReductions() { ++rNReductions; }
-
-  unsigned numNodes() const { return selections.size(); }
-
-  unsigned getSelection(unsigned nodeID) const {
-    return selections[nodeID];
-  }
-
-  PBQPNum getCost() const { return solutionCost; }
-
-  bool isProvedOptimal() const { return provedOptimal; }
-
-  unsigned getR0Reductions() const { return r0Reductions; }
-  unsigned getR1Reductions() const { return r1Reductions; }
-  unsigned getR2Reductions() const { return r2Reductions; }
-  unsigned getRNReductions() const { return rNReductions; }
-
-  bool operator==(const Solution &other) const {
-    return (selections == other.selections);
-  }
-
-  bool operator!=(const Solution &other) const {
-    return !(*this == other);
-  }
-
-};
+  };
 
 }
 
