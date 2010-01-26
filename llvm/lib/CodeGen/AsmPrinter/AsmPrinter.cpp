@@ -479,12 +479,10 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
-  TargetLowering *LoweringInfo = TM.getTargetLowering();
-
   const Function *F = MF.getFunction();
   bool JTInDiffSection = false;
   if (F->isWeakForLinker() ||
-      (IsPic && !LoweringInfo->usesGlobalOffsetTable())) {
+      (IsPic && !TM.getTargetLowering()->usesGlobalOffsetTable())) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
@@ -546,12 +544,15 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                         unsigned uid) const {
   const MCExpr *Value = 0;
   switch (MJTI->getEntryKind()) {
+  case MachineJumpTableInfo::EK_Custom32:
+    Value = TM.getTargetLowering()->LowerCustomJumpTableEntry(MJTI, MBB, uid,
+                                                              OutContext);
+    break;
   case MachineJumpTableInfo::EK_BlockAddress:
     // EK_BlockAddress - Each entry is a plain address of block, e.g.:
     //     .word LBB123
     Value = MCSymbolRefExpr::Create(GetMBBSymbol(MBB->getNumber()), OutContext);
     break;
-      
   case MachineJumpTableInfo::EK_GPRel32BlockAddress: {
     // EK_GPRel32BlockAddress - Each entry is an address of block, encoded
     // with a relocation as gp-relative, e.g.:
@@ -560,7 +561,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     OutStreamer.EmitGPRel32Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
     return;
   }
-      
+
   case MachineJumpTableInfo::EK_LabelDifference32: {
     // EK_LabelDifference32 - Each entry is the address of the block minus
     // the address of the jump table.  This is used for PIC jump tables where

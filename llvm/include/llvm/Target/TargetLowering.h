@@ -46,7 +46,10 @@ namespace llvm {
   class MachineFunction;
   class MachineFrameInfo;
   class MachineInstr;
+  class MachineJumpTableInfo;
   class MachineModuleInfo;
+  class MCContext;
+  class MCExpr;
   class DwarfWriter;
   class SDNode;
   class SDValue;
@@ -757,10 +760,17 @@ public:
   /// MachineJumpTableInfo::JTEntryKind enum.
   virtual unsigned getJumpTableEncoding() const;
   
+  virtual const MCExpr *
+  LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                            const MachineBasicBlock *MBB, unsigned uid,
+                            MCContext &Ctx) {
+    assert(0 && "Need to implement this hook if target has custom JTIs");
+  }
+  
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
   /// jumptable.
   virtual SDValue getPICJumpTableRelocBase(SDValue Table,
-                                             SelectionDAG &DAG) const;
+                                           SelectionDAG &DAG) const;
 
   /// isOffsetFoldingLegal - Return true if folding a constant offset
   /// with the given GlobalAddress is legal.  It is frequently not legal in

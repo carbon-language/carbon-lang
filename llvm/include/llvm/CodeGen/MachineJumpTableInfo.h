@@ -60,7 +60,11 @@ public:
     /// If the .set directive is supported, this is emitted as:
     ///      .set L4_5_set_123, LBB123 - LJTI1_2
     ///      .word L4_5_set_123
-    EK_LabelDifference32
+    EK_LabelDifference32,
+    
+    /// EK_Custom32 - Each entry is a 32-bit value that is custom lowered by the
+    /// TargetLowering::LowerCustomJumpTableEntry hook.
+    EK_Custom32
   };
 private:
   JTEntryKind EntryKind;

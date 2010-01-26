@@ -544,6 +544,7 @@ unsigned MachineJumpTableInfo::getEntrySize(const TargetData &TD) const {
     return TD.getPointerSize();
   case MachineJumpTableInfo::EK_GPRel32BlockAddress:
   case MachineJumpTableInfo::EK_LabelDifference32:
+  case MachineJumpTableInfo::EK_Custom32:
     return 4;
   }
   assert(0 && "Unknown jump table encoding!");
@@ -560,6 +561,7 @@ unsigned MachineJumpTableInfo::getEntryAlignment(const TargetData &TD) const {
     return TD.getPointerABIAlignment();
   case MachineJumpTableInfo::EK_GPRel32BlockAddress:
   case MachineJumpTableInfo::EK_LabelDifference32:
+  case MachineJumpTableInfo::EK_Custom32:
     return TD.getABIIntegerTypeAlignment(32);
   }
   assert(0 && "Unknown jump table encoding!");
