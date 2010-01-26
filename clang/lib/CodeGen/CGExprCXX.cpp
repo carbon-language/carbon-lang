@@ -343,14 +343,14 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
                            E->arg_begin(), E->arg_end());
 }
 
-static uint64_t CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
+static CharUnits CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
   const RecordType *RT = ElementType->getAs<RecordType>();
   if (!RT)
-    return 0;
+    return CharUnits::Zero();
   
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
   if (!RD)
-    return 0;
+    return CharUnits::Zero();
   
   // Check if the class has a trivial destructor.
   if (RD->hasTrivialDestructor()) {
@@ -372,25 +372,25 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, QualType ElementType) {
     
     // No usual deallocation function, we don't need a cookie.
     if (!UsualDeallocationFunction)
-      return 0;
+      return CharUnits::Zero();
     
     // The usual deallocation function doesn't take a size_t argument, so we
     // don't need a cookie.
     if (UsualDeallocationFunction->getNumParams() == 1)
-      return 0;
+      return CharUnits::Zero();
         
     assert(UsualDeallocationFunction->getNumParams() == 2 && 
            "Unexpected deallocation function type!");
   }  
   
   // Padding is the maximum of sizeof(size_t) and alignof(ElementType)
-  return std::max(Ctx.getTypeSize(Ctx.getSizeType()),
-                  static_cast<uint64_t>(Ctx.getTypeAlign(ElementType))) / 8;
+  return std::max(Ctx.getTypeSizeInChars(Ctx.getSizeType()),
+                  Ctx.getTypeAlignInChars(ElementType));
 }
 
-static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
+static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   if (!E->isArray())
-    return 0;
+    return CharUnits::Zero();
 
   // No cookie is required if the new operator being used is 
   // ::operator new[](size_t, void*).
@@ -401,7 +401,7 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
         Ctx.getCanonicalType(OperatorNew->getParamDecl(1)->getType());
       
       if (ParamType == Ctx.VoidPtrTy)
-        return 0;
+        return CharUnits::Zero();
     }
   }
       
@@ -412,25 +412,25 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
                                         const CXXNewExpr *E,
                                         llvm::Value *& NumElements) {
   QualType Type = E->getAllocatedType();
-  uint64_t TypeSizeInBytes = CGF.getContext().getTypeSize(Type) / 8;
+  CharUnits TypeSize = CGF.getContext().getTypeSizeInChars(Type);
   const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
   
   if (!E->isArray())
-    return llvm::ConstantInt::get(SizeTy, TypeSizeInBytes);
+    return llvm::ConstantInt::get(SizeTy, TypeSize.getQuantity());
 
-  uint64_t CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
+  CharUnits CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
   
   Expr::EvalResult Result;
   if (E->getArraySize()->Evaluate(Result, CGF.getContext()) &&
       !Result.HasSideEffects && Result.Val.isInt()) {
 
-    uint64_t AllocSize = 
-      Result.Val.getInt().getZExtValue() * TypeSizeInBytes + CookiePadding;
+    CharUnits AllocSize = 
+      Result.Val.getInt().getZExtValue() * TypeSize + CookiePadding;
     
     NumElements = 
       llvm::ConstantInt::get(SizeTy, Result.Val.getInt().getZExtValue());
     
-    return llvm::ConstantInt::get(SizeTy, AllocSize);
+    return llvm::ConstantInt::get(SizeTy, AllocSize.getQuantity());
   }
   
   // Emit the array size expression.
@@ -439,11 +439,13 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
   // Multiply with the type size.
   llvm::Value *V = 
     CGF.Builder.CreateMul(NumElements, 
-                          llvm::ConstantInt::get(SizeTy, TypeSizeInBytes));
+                          llvm::ConstantInt::get(SizeTy, 
+                                                 TypeSize.getQuantity()));
 
   // And add the cookie padding if necessary.
-  if (CookiePadding)
-    V = CGF.Builder.CreateAdd(V, llvm::ConstantInt::get(SizeTy, CookiePadding));
+  if (!CookiePadding.isZero())
+    V = CGF.Builder.CreateAdd(V, 
+        llvm::ConstantInt::get(SizeTy, CookiePadding.getQuantity()));
   
   return V;
 }
@@ -567,20 +569,22 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     Builder.CreateCondBr(IsNull, NewNull, NewNotNull);
     EmitBlock(NewNotNull);
   }
-
-  if (uint64_t CookiePadding = CalculateCookiePadding(getContext(), E)) {
-    uint64_t CookieOffset = 
-      CookiePadding - getContext().getTypeSize(SizeTy) / 8;
+  
+  CharUnits CookiePadding = CalculateCookiePadding(getContext(), E);
+  if (!CookiePadding.isZero()) {
+    CharUnits CookieOffset = 
+      CookiePadding - getContext().getTypeSizeInChars(SizeTy);
     
     llvm::Value *NumElementsPtr = 
-      Builder.CreateConstInBoundsGEP1_64(NewPtr, CookieOffset);
+      Builder.CreateConstInBoundsGEP1_64(NewPtr, CookieOffset.getQuantity());
     
     NumElementsPtr = Builder.CreateBitCast(NumElementsPtr, 
                                            ConvertType(SizeTy)->getPointerTo());
     Builder.CreateStore(NumElements, NumElementsPtr);
 
     // Now add the padding to the new ptr.
-    NewPtr = Builder.CreateConstInBoundsGEP1_64(NewPtr, CookiePadding);
+    NewPtr = Builder.CreateConstInBoundsGEP1_64(NewPtr, 
+                                                CookiePadding.getQuantity());
   }
   
   NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
@@ -611,23 +615,24 @@ GetAllocatedObjectPtrAndNumElements(CodeGenFunction &CGF,
   QualType SizeTy = CGF.getContext().getSizeType();
   const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
   
-  uint64_t DeleteTypeAlign = CGF.getContext().getTypeAlign(DeleteTy);
-  uint64_t CookiePadding = std::max(CGF.getContext().getTypeSize(SizeTy),
-                                    DeleteTypeAlign) / 8;
-  assert(CookiePadding && "CookiePadding should not be 0.");
+  CharUnits DeleteTypeAlign = CGF.getContext().getTypeAlignInChars(DeleteTy);
+  CharUnits CookiePadding = 
+    std::max(CGF.getContext().getTypeSizeInChars(SizeTy),
+             DeleteTypeAlign);
+  assert(!CookiePadding.isZero() && "CookiePadding should not be 0.");
 
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  uint64_t CookieOffset = 
-    CookiePadding - CGF.getContext().getTypeSize(SizeTy) / 8;
+  CharUnits CookieOffset = 
+    CookiePadding - CGF.getContext().getTypeSizeInChars(SizeTy);
 
   llvm::Value *AllocatedObjectPtr = CGF.Builder.CreateBitCast(Ptr, Int8PtrTy);
   AllocatedObjectPtr = 
     CGF.Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr,
-                                           -CookiePadding);
+                                           -CookiePadding.getQuantity());
 
   llvm::Value *NumElementsPtr =
     CGF.Builder.CreateConstInBoundsGEP1_64(AllocatedObjectPtr, 
-                                           CookieOffset);
+                                           CookieOffset.getQuantity());
   NumElementsPtr = 
     CGF.Builder.CreateBitCast(NumElementsPtr, SizeLTy->getPointerTo());
   
@@ -656,8 +661,7 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   }
   
   if (DeleteFD->getOverloadedOperator() == OO_Array_Delete &&
-      
-      CalculateCookiePadding(getContext(), DeleteTy)) {
+      !CalculateCookiePadding(getContext(), DeleteTy).isZero()) {
     // We need to get the number of elements in the array from the cookie.
     llvm::Value *AllocatedObjectPtr;
     llvm::Value *NumElements;
