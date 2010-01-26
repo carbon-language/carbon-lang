@@ -177,8 +177,9 @@ public:
   /// BlockOffset - The offset in bytes for the next allocation of an
   /// imported block variable.
   CharUnits BlockOffset;
-  /// BlockAlign - Maximal alignment needed for the Block expressed in bytes.
-  uint64_t BlockAlign;
+  /// BlockAlign - Maximal alignment needed for the Block expressed in 
+  /// characters.
+  CharUnits BlockAlign;
 
   /// getBlockOffset - Allocate an offset for the ValueDecl from a
   /// BlockDeclRefExpr in a block literal (BlockExpr).

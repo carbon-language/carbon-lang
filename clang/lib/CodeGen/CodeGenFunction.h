@@ -475,7 +475,7 @@ public:
                                         const BlockInfo& Info,
                                         const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
-                                        CharUnits &Size, uint64_t &Align,
+                                        CharUnits &Size, CharUnits &Align,
                       llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                         bool &subBlockHasCopyDispose);
 

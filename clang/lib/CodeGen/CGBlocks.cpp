@@ -176,7 +176,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // block literal.
     // __invoke
     CharUnits subBlockSize; 
-    uint64_t subBlockAlign;
+    CharUnits subBlockAlign;
     llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
     bool subBlockHasCopyDispose = false;
     llvm::Function *Fn
@@ -249,7 +249,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     llvm::StructType *Ty = llvm::StructType::get(VMContext, Types, true);
 
     llvm::AllocaInst *A = CreateTempAlloca(Ty);
-    A->setAlignment(subBlockAlign);
+    A->setAlignment(subBlockAlign.getQuantity());
     V = A;
 
     std::vector<HelperInfo> NoteForHelper(subBlockDeclRefDecls.size());
@@ -615,7 +615,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   CodeGenFunction::BlockInfo Info(0, n);
   CharUnits subBlockSize; 
-  uint64_t subBlockAlign;
+  CharUnits subBlockAlign;
   llvm::SmallVector<const Expr *, 8> subBlockDeclRefDecls;
   bool subBlockHasCopyDispose = false;
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -678,7 +678,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
                                        const Decl *OuterFuncDecl,
                                   llvm::DenseMap<const Decl*, llvm::Value*> ldm,
                                        CharUnits &Size,
-                                       uint64_t &Align,
+                                       CharUnits &Align,
                        llvm::SmallVector<const Expr *, 8> &subBlockDeclRefDecls,
                                        bool &subBlockHasCopyDispose) {
 
@@ -700,7 +700,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   BlockOffset = 
       CGM.GetTargetTypeStoreSize(CGM.getGenericBlockLiteralType());
-  BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
+  BlockAlign = getContext().getTypeAlignInChars(getContext().VoidPtrTy);
 
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
   QualType ResultType;
@@ -796,9 +796,10 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
 
   // The runtime needs a minimum alignment of a void *.
-  uint64_t MinAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
+  CharUnits MinAlign = getContext().getTypeAlignInChars(getContext().VoidPtrTy);
   BlockOffset = CharUnits::fromQuantity(
-      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), MinAlign));
+      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), 
+                               MinAlign.getQuantity()));
 
   Size = BlockOffset;
   Align = BlockAlign;
@@ -811,20 +812,21 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
   const ValueDecl *D = dyn_cast<ValueDecl>(BDRE->getDecl());
 
   CharUnits Size = getContext().getTypeSizeInChars(D->getType());
-  uint64_t Align = getContext().getDeclAlignInBytes(D);
+  CharUnits Align = 
+    CharUnits::fromQuantity(getContext().getDeclAlignInBytes(D));
 
   if (BDRE->isByRef()) {
     Size = getContext().getTypeSizeInChars(getContext().VoidPtrTy);
-    Align = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
+    Align = getContext().getTypeAlignInChars(getContext().VoidPtrTy);
   }
 
-  assert ((Align > 0) && "alignment must be 1 byte or more");
+  assert ((Align.isPositive()) && "alignment must be 1 byte or more");
 
   CharUnits OldOffset = BlockOffset;
 
   // Ensure proper alignment, even if it means we have to have a gap
   BlockOffset = CharUnits::fromQuantity(
-      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), Align));
+      llvm::RoundUpToAlignment(BlockOffset.getQuantity(), Align.getQuantity()));
   BlockAlign = std::max(Align, BlockAlign);
 
   CharUnits Pad = BlockOffset - OldOffset;
