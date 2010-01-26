@@ -650,7 +650,12 @@ ConstantRange::lshr(const ConstantRange &Amount) const {
 /// print - Print out the bounds to a stream...
 ///
 void ConstantRange::print(raw_ostream &OS) const {
-  OS << "[" << Lower << "," << Upper << ")";
+  if (isFullSet())
+    OS << "full-set";
+  else if (isEmptySet())
+    OS << "empty-set";
+  else
+    OS << "[" << Lower << "," << Upper << ")";
 }
 
 /// dump - Allow printing from a debugger easily...
