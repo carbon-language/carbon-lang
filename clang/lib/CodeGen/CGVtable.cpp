@@ -415,8 +415,17 @@ private:
     }
     return U;
   }
-  const CXXMethodDecl *getUnique(GlobalDecl GD) {
-    return getUnique(cast<CXXMethodDecl>(GD.getDecl()));
+
+  GlobalDecl getUnique(GlobalDecl GD) {
+    const CXXMethodDecl *Unique = getUnique(cast<CXXMethodDecl>(GD.getDecl()));
+    
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(Unique))
+      return GlobalDecl(CD, GD.getCtorType());
+    
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(Unique))
+      return GlobalDecl(DD, GD.getDtorType());
+    
+    return Unique;
   }
 
   /// getPureVirtualFn - Return the __cxa_pure_virtual function.
@@ -627,13 +636,15 @@ public:
 
     VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
-      const CXXMethodDecl *UMD = getUnique(GD);
+      GlobalDecl UGD = getUnique(GD);
+      const CXXMethodDecl *UMD = cast<CXXMethodDecl>(UGD.getDecl());
+  
       assert(UMD && "final overrider not found");
 
       Index_t &idx = VCall[UMD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
-        VCallOffsetForVCall[UMD] = Offset/8;
+        VCallOffsetForVCall[UGD] = Offset/8;
         NonVirtualOffset[UMD] = -CurrentVBaseOffset/8 + Offset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(Offset/8 - CurrentVBaseOffset/8);
@@ -1069,9 +1080,10 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
     Methods.OverrideMethod(OGD, GD);
 
-    const CXXMethodDecl *UMD = getUnique(GD);
-    assert(UMD && "unique overrider not found");
-    assert(UMD == getUnique(OGD) && "unique overrider not unique");
+    GlobalDecl UGD = getUnique(GD);
+    const CXXMethodDecl *UMD = cast<CXXMethodDecl>(UGD.getDecl());
+    assert(UGD.getDecl() && "unique overrider not found");
+    assert(UGD == getUnique(OGD) && "unique overrider not unique");
 
     ThisAdjustments.erase(Index);
     if (MorallyVirtual || VCall.count(UMD)) {
@@ -1087,7 +1099,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       } else {
         VCallOffset[GD] = VCallOffset[OGD];
-        VCalls[idx-1] = -VCallOffsetForVCall[UMD] + OverrideOffset/8;
+        VCalls[idx-1] = -VCallOffsetForVCall[UGD] + OverrideOffset/8;
         D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
