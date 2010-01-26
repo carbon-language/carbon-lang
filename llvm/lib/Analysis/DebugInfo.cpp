@@ -794,7 +794,8 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                unsigned Flags,
                                                DIType DerivedFrom,
                                                DIArray Elements,
-                                               unsigned RuntimeLang) {
+                                               unsigned RuntimeLang,
+                                               MDNode *ContainingType) {
 
   Value *Elts[] = {
     GetTagConstant(Tag),
@@ -808,9 +809,10 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     DerivedFrom.getNode(),
     Elements.getNode(),
-    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
+    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
+    ContainingType
   };
-  return DICompositeType(MDNode::get(VMContext, &Elts[0], 12));
+  return DICompositeType(MDNode::get(VMContext, &Elts[0], 13));
 }
 
 

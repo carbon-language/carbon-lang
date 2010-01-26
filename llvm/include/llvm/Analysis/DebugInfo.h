@@ -298,6 +298,9 @@ namespace llvm {
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     unsigned getRunTimeLang() const { return getUnsignedField(11); }
+    DICompositeType getContainingType() const {
+      return getFieldAs<DICompositeType>(12);
+    }
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
@@ -567,7 +570,8 @@ namespace llvm {
                                         uint64_t OffsetInBits, unsigned Flags,
                                         DIType DerivedFrom,
                                         DIArray Elements,
-                                        unsigned RunTimeLang = 0);
+                                        unsigned RunTimeLang = 0,
+                                        MDNode *ContainingType = 0);
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,
