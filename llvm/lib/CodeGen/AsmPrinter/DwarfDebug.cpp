@@ -2100,9 +2100,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   collectVariableInfo();
 
-  // Begin accumulating function debug information.
-  MMI->BeginFunction((MachineFunction*)MF);
-
   // Assumes in correct section after the entry point.
   EmitLabel("func_begin", ++SubprogramCount);
 

@@ -157,10 +157,6 @@ public:
   bool doInitialization();
   bool doFinalization();
 
-  /// BeginFunction - Begin gathering function meta information.
-  ///
-  void BeginFunction(MachineFunction *) {}
-  
   /// EndFunction - Discard function meta information.
   ///
   void EndFunction();
