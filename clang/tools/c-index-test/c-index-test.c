@@ -303,29 +303,33 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
 static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
                              const char *filter, const char *prefix,
                              CXCursorVisitor Visitor) {
-  enum CXCursorKind K = CXCursor_NotImplemented;
-  enum CXCursorKind *ck = &K;
-  VisitorData Data;
   
   if (prefix)
     FileCheckPrefix = prefix;  
+
+  if (Visitor) {
+    enum CXCursorKind K = CXCursor_NotImplemented;
+    enum CXCursorKind *ck = &K;
+    VisitorData Data;
   
-  /* Perform some simple filtering. */
-  if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
-  else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
-  else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
-  else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
-  else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
-  else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
-  else if (!strcmp(filter, "scan-function")) Visitor = FunctionScanVisitor;
-  else {
-    fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
-    return 1;
+    /* Perform some simple filtering. */
+    if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
+    else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
+    else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
+    else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
+    else if (!strcmp(filter, "function")) K = CXCursor_FunctionDecl;
+    else if (!strcmp(filter, "typedef")) K = CXCursor_TypedefDecl;
+    else if (!strcmp(filter, "scan-function")) Visitor = FunctionScanVisitor;
+    else {
+      fprintf(stderr, "Unknown filter for -test-load-tu: %s\n", filter);
+      return 1;
+    }
+  
+    Data.TU = TU;
+    Data.Filter = ck;
+    clang_visitChildren(clang_getTranslationUnitCursor(TU), Visitor, &Data);
   }
-  
-  Data.TU = TU;
-  Data.Filter = ck;
-  clang_visitChildren(clang_getTranslationUnitCursor(TU), Visitor, &Data);
+
   clang_disposeTranslationUnit(TU);
   return 0;
 }
