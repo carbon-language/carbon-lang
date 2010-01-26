@@ -2912,61 +2912,69 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return ConstantRange(C->getValue()->getValue());
 
+  unsigned BitWidth = getTypeSizeInBits(S->getType());
+  ConstantRange ConservativeResult(BitWidth, /*isFullSet=*/true);
+
+  // If the value has known zeros, the maximum signed value will have those
+  // known zeros as well.
+  uint32_t TZ = GetMinTrailingZeros(S);
+  if (TZ != 0)
+    ConservativeResult =
+      ConstantRange(APInt::getSignedMinValue(BitWidth),
+                    APInt::getSignedMaxValue(BitWidth).ashr(TZ).shl(TZ) + 1);
+
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     ConstantRange X = getSignedRange(Add->getOperand(0));
     for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
       X = X.add(getSignedRange(Add->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     ConstantRange X = getSignedRange(Mul->getOperand(0));
     for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
       X = X.multiply(getSignedRange(Mul->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
     ConstantRange X = getSignedRange(SMax->getOperand(0));
     for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
       X = X.smax(getSignedRange(SMax->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
     ConstantRange X = getSignedRange(UMax->getOperand(0));
     for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
       X = X.umax(getSignedRange(UMax->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
     ConstantRange X = getSignedRange(UDiv->getLHS());
     ConstantRange Y = getSignedRange(UDiv->getRHS());
-    return X.udiv(Y);
+    return ConservativeResult.intersectWith(X.udiv(Y));
   }
 
   if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
     ConstantRange X = getSignedRange(ZExt->getOperand());
-    return X.zeroExtend(cast<IntegerType>(ZExt->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.zeroExtend(BitWidth));
   }
 
   if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
     ConstantRange X = getSignedRange(SExt->getOperand());
-    return X.signExtend(cast<IntegerType>(SExt->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.signExtend(BitWidth));
   }
 
   if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
     ConstantRange X = getSignedRange(Trunc->getOperand());
-    return X.truncate(cast<IntegerType>(Trunc->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.truncate(BitWidth));
   }
-
-  ConstantRange FullSet(getTypeSizeInBits(S->getType()), true);
 
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
     const SCEV *T = getBackedgeTakenCount(AddRec->getLoop());
     const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
-    ConstantRange ConservativeResult = FullSet;
 
     // If there's no signed wrap, and all the operands have the same sign or
     // zero, the value won't ever change sign.
@@ -2977,20 +2985,21 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
         if (!isKnownNonNegative(AddRec->getOperand(i))) AllNonNeg = false;
         if (!isKnownNonPositive(AddRec->getOperand(i))) AllNonPos = false;
       }
-      unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
       if (AllNonNeg)
-        ConservativeResult = ConstantRange(APInt(BitWidth, 0),
-                                           APInt::getSignedMinValue(BitWidth));
+        ConservativeResult = ConservativeResult.intersectWith(
+          ConstantRange(APInt(BitWidth, 0),
+                        APInt::getSignedMinValue(BitWidth)));
       else if (AllNonPos)
-        ConservativeResult = ConstantRange(APInt::getSignedMinValue(BitWidth),
-                                           APInt(BitWidth, 1));
+        ConservativeResult = ConservativeResult.intersectWith(
+          ConstantRange(APInt::getSignedMinValue(BitWidth),
+                        APInt(BitWidth, 1)));
     }
 
     // TODO: non-affine addrec
     if (Trip && AddRec->isAffine()) {
       const Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
-      if (getTypeSizeInBits(MaxBECount->getType()) <= getTypeSizeInBits(Ty)) {
+      if (getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
         MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
 
         const SCEV *Start = AddRec->getStart();
@@ -3008,7 +3017,7 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
                                    EndRange.getSignedMax());
         if (Min.isMinSignedValue() && Max.isMaxSignedValue())
           return ConservativeResult;
-        return ConstantRange(Min, Max+1);
+        return ConservativeResult.intersectWith(ConstantRange(Min, Max+1));
       }
     }
 
@@ -3017,18 +3026,17 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    unsigned BitWidth = getTypeSizeInBits(U->getType());
     if (!U->getValue()->getType()->isInteger() && !TD)
-      return FullSet;
+      return ConservativeResult;
     unsigned NS = ComputeNumSignBits(U->getValue(), TD);
     if (NS == 1)
-      return FullSet;
-    return
+      return ConservativeResult;
+    return ConservativeResult.intersectWith(
       ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
-                    APInt::getSignedMaxValue(BitWidth).ashr(NS - 1)+1);
+                    APInt::getSignedMaxValue(BitWidth).ashr(NS - 1)+1));
   }
 
-  return FullSet;
+  return ConservativeResult;
 }
 
 /// createSCEV - We know that there is no SCEV for the specified value.
@@ -4947,6 +4955,9 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
                                         const SCEV *End,
                                         const SCEV *Step,
                                         bool NoWrap) {
+  assert(!isKnownNegative(Step) &&
+         "This code doesn't handle negative strides yet!");
+
   const Type *Ty = Start->getType();
   const SCEV *NegOne = getIntegerSCEV(-1, Ty);
   const SCEV *Diff = getMinusSCEV(End, Start);
@@ -4989,39 +5000,35 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                            AddRec->hasNoUnsignedWrap();
 
   if (AddRec->isAffine()) {
-    // FORNOW: We only support unit strides.
     unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
     const SCEV *Step = AddRec->getStepRecurrence(*this);
 
-    // TODO: handle non-constant strides.
-    const SCEVConstant *CStep = dyn_cast<SCEVConstant>(Step);
-    if (!CStep || CStep->isZero())
+    if (Step->isZero())
       return getCouldNotCompute();
-    if (CStep->isOne()) {
+    if (Step->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
-    } else if (CStep->getValue()->getValue().isStrictlyPositive()) {
-      if (NoWrap) {
-        // We know the iteration won't step past the maximum value for its type.
-        ;
-      } else if (const SCEVConstant *CLimit = dyn_cast<SCEVConstant>(RHS)) {
-        // Test whether a positive iteration iteration can step past the limit
-        // value and past the maximum value for its type in a single step.
-        if (isSigned) {
-          APInt Max = APInt::getSignedMaxValue(BitWidth);
-          if ((Max - CStep->getValue()->getValue())
-                .slt(CLimit->getValue()->getValue()))
-            return getCouldNotCompute();
-        } else {
-          APInt Max = APInt::getMaxValue(BitWidth);
-          if ((Max - CStep->getValue()->getValue())
-                .ult(CLimit->getValue()->getValue()))
-            return getCouldNotCompute();
-        }
-      } else
-        // TODO: handle non-constant limit values below.
-        return getCouldNotCompute();
+    } else if (isKnownPositive(Step)) {
+      // Test whether a positive iteration iteration can step past the limit
+      // value and past the maximum value for its type in a single step.
+      // Note that it's not sufficient to check NoWrap here, because even
+      // though the value after a wrap is undefined, it's not undefined
+      // behavior, so if wrap does occur, the loop could either terminate or
+      // loop infinately, but in either case, the loop is guaranteed to
+      // iterate at least until the iteration where the wrapping occurs.
+      const SCEV *One = getIntegerSCEV(1, Step->getType());
+      if (isSigned) {
+        APInt Max = APInt::getSignedMaxValue(BitWidth);
+        if ((Max - getSignedRange(getMinusSCEV(Step, One)).getSignedMax())
+              .slt(getSignedRange(RHS).getSignedMax()))
+          return getCouldNotCompute();
+      } else {
+        APInt Max = APInt::getMaxValue(BitWidth);
+        if ((Max - getUnsignedRange(getMinusSCEV(Step, One)).getUnsignedMax())
+              .ult(getUnsignedRange(RHS).getUnsignedMax()))
+          return getCouldNotCompute();
+      }
     } else
-      // TODO: handle negative strides below.
+      // TODO: Handle negative strides here and below.
       return getCouldNotCompute();
 
     // We know the LHS is of the form {n,+,s} and the RHS is some loop-invariant
@@ -5053,6 +5060,20 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     const SCEV *MaxEnd = getConstant(isSigned ?
       getSignedRange(End).getSignedMax() :
       getUnsignedRange(End).getUnsignedMax());
+
+    // If MaxEnd is within a step of the maximum integer value in its type,
+    // adjust it down to the minimum value which would produce the same effect.
+    // This allows the subsequent ceiling divison of (N+(step-1))/step to
+    // compute the correct value.
+    const SCEV *StepMinusOne = getMinusSCEV(Step,
+                                            getIntegerSCEV(1, Step->getType()));
+    MaxEnd = isSigned ?
+      getSMinExpr(MaxEnd,
+                  getMinusSCEV(getConstant(APInt::getSignedMaxValue(BitWidth)),
+                               StepMinusOne)) :
+      getUMinExpr(MaxEnd,
+                  getMinusSCEV(getConstant(APInt::getMaxValue(BitWidth)),
+                               StepMinusOne));
 
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.

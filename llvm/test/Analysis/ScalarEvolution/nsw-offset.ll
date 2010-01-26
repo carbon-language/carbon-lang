@@ -6,8 +6,9 @@
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
-define void @foo(i32 %n, double* nocapture %d, double* nocapture %q) nounwind {
+define void @foo(i32 %no, double* nocapture %d, double* nocapture %q) nounwind {
 entry:
+  %n = and i32 %no, 4294967294
   %0 = icmp sgt i32 %n, 0                         ; <i1> [#uses=1]
   br i1 %0, label %bb.nph, label %return
 
@@ -73,4 +74,4 @@ return:                                           ; preds = %bb1.return_crit_edg
 }
 
 ; CHECK: Loop %bb: backedge-taken count is ((-1 + %n) /u 2)
-; CHECK: Loop %bb: max backedge-taken count is 1073741823
+; CHECK: Loop %bb: max backedge-taken count is 1073741822
