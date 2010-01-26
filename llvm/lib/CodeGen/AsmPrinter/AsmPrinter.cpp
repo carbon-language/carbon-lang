@@ -1391,7 +1391,7 @@ MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
 
 /// GetJTISymbol - Return the symbol for the specified jump table entry.
 MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
-  return MF->getJumpTableInfo()->getJTISymbol(JTID, OutContext,isLinkerPrivate);
+  return MF->getJTISymbol(JTID, OutContext, isLinkerPrivate);
 }
 
 /// GetJTSetSymbol - Return the symbol for the specified jump table .set
@@ -1546,12 +1546,11 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
 /// specified MachineBasicBlock for a jumptable entry.
 void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
                                            const MachineBasicBlock *MBB) const {
-  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const TargetLowering *TLI = TM.getTargetLowering();
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << *GetJTSetSymbol(uid, MBB->getNumber()) << ','
     << *MBB->getSymbol(OutContext) << '-'
-    << *TLI->getPICJumpTableRelocBaseExpr(MJTI,uid,OutContext)
+    << *TLI->getPICJumpTableRelocBaseExpr(MF, uid, OutContext)
     << '\n';
 }
 

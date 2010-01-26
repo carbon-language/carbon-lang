@@ -58,9 +58,9 @@ void X86AsmPrinter::printMCInst(const MCInst *MI) {
 }
 
 void X86AsmPrinter::PrintPICBaseSymbol() const {
-  // FIXME: Gross const cast hack.
-  X86AsmPrinter *AP = const_cast<X86AsmPrinter*>(this);
-  O << *X86MCInstLower(OutContext, 0, *AP).GetPICBaseSymbol();
+  const TargetLowering *TLI = TM.getTargetLowering();
+  O << *static_cast<const X86TargetLowering*>(TLI)->getPICBaseSymbol(MF,
+                                                                    OutContext);
 }
 
 void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -452,21 +452,6 @@ void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   }
   printLeaMemReference(MI, Op, Modifier);
 }
-
-void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
-                                           const MachineBasicBlock *MBB) const {
-  O << MAI->getSetDirective() << ' ' << *GetJTSetSymbol(uid, MBB->getNumber())
-    << ',' << *MBB->getSymbol(OutContext);
-  
-  if (Subtarget->isPICStyleRIPRel())
-    O << '-' << *GetJTISymbol(uid) << '\n';
-  else {
-    O << '-';
-    PrintPICBaseSymbol();
-    O << '\n';
-  }
-}
-
 
 void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   PrintPICBaseSymbol();

@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -823,11 +824,10 @@ SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
 /// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
 /// MCExpr.
 const MCExpr *
-TargetLowering::getPICJumpTableRelocBaseExpr(const MachineJumpTableInfo *MJTI,
-                                             unsigned JTI,
-                                             MCContext &Ctx) const {
+TargetLowering::getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
+                                             unsigned JTI,MCContext &Ctx) const{
   // The normal PIC reloc base is the label at the start of the jump table.
-  return MCSymbolRefExpr::Create(MJTI->getJTISymbol(JTI, Ctx), Ctx);
+  return MCSymbolRefExpr::Create(MF->getJTISymbol(JTI, Ctx), Ctx);
 }
 
 bool

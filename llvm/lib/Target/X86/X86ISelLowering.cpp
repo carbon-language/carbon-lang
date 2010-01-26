@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
@@ -1108,6 +1109,16 @@ unsigned X86TargetLowering::getJumpTableEncoding() const {
   return TargetLowering::getJumpTableEncoding();
 }
 
+/// getPICBaseSymbol - Return the X86-32 PIC base.
+MCSymbol *
+X86TargetLowering::getPICBaseSymbol(const MachineFunction *MF,
+                                    MCContext &Ctx) const {
+  const MCAsmInfo &MAI = *getTargetMachine().getMCAsmInfo();
+  return Ctx.GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix())+
+                               Twine(MF->getFunctionNumber())+"$pb");
+}
+
+
 const MCExpr *
 X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                              const MachineBasicBlock *MBB,
@@ -1125,13 +1136,27 @@ X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
 /// jumptable.
 SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
-                                                      SelectionDAG &DAG) const {
+                                                    SelectionDAG &DAG) const {
   if (!Subtarget->is64Bit())
     // This doesn't have DebugLoc associated with it, but is not really the
     // same as a Register.
     return DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc::getUnknownLoc(),
                        getPointerTy());
   return Table;
+}
+
+/// getPICJumpTableRelocBaseExpr - This returns the relocation base for the
+/// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
+/// MCExpr.
+const MCExpr *X86TargetLowering::
+getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
+                             MCContext &Ctx) const {
+  // X86-64 uses RIP relative addressing based on the jump table label.
+  if (Subtarget->isPICStyleRIPRel())
+    return TargetLowering::getPICJumpTableRelocBaseExpr(MF, JTI, Ctx);
+
+  // Otherwise, the reference is relative to the PIC base.
+  return MCSymbolRefExpr::Create(getPICBaseSymbol(MF, Ctx), Ctx);
 }
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.

@@ -445,6 +445,27 @@ DILocation MachineFunction::getDILocation(DebugLoc DL) const {
   return DILocation(DebugLocInfo.DebugLocations[Idx]);
 }
 
+
+/// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
+/// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
+/// normal 'L' label is returned.
+MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx, 
+                                        bool isLinkerPrivate) const {
+  assert(JumpTableInfo && "No jump tables");
+  
+  const std::vector<MachineJumpTableEntry> &JTs =JumpTableInfo->getJumpTables();
+  assert(JTI < JTs.size() && "Invalid JTI!");
+  const MCAsmInfo &MAI = *getTarget().getMCAsmInfo();
+  
+  const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
+                                         MAI.getPrivateGlobalPrefix();
+  SmallString<60> Name;
+  raw_svector_ostream(Name)
+    << Prefix << "JTI" << getFunctionNumber() << '_' << JTI;
+  return Ctx.GetOrCreateSymbol(Name.str());
+}
+
+
 //===----------------------------------------------------------------------===//
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
@@ -579,24 +600,6 @@ unsigned MachineJumpTableInfo::getJumpTableIndex(
   assert(!DestBBs.empty() && "Cannot create an empty jump table!");
   JumpTables.push_back(MachineJumpTableEntry(DestBBs));
   return JumpTables.size()-1;
-}
-
-/// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
-/// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
-/// normal 'L' label is returned.
-MCSymbol *MachineJumpTableInfo::getJTISymbol(unsigned JTI, MCContext &Ctx, 
-                                             bool isLinkerPrivate) const {
-  assert(JTI < JumpTables.size() && !JumpTables[JTI].MBBs.empty() &&
-         "Invalid JTI!");
-  const MachineFunction *MF = JumpTables[JTI].MBBs[0]->getParent();
-  const MCAsmInfo &MAI = *MF->getTarget().getMCAsmInfo();
-  
-  const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
-                                         MAI.getPrivateGlobalPrefix();
-  SmallString<60> Name;
-  raw_svector_ostream(Name)
-    << Prefix << "JTI" << MF->getFunctionNumber() << '_' << JTI;
-  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
 

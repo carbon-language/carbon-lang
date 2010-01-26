@@ -39,8 +39,9 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
-  return Ctx.GetOrCreateSymbol(Twine(AsmPrinter.MAI->getPrivateGlobalPrefix())+
-                               Twine(AsmPrinter.getFunctionNumber())+"$pb");
+  const TargetLowering *TLI = AsmPrinter.TM.getTargetLowering();
+  return static_cast<const X86TargetLowering*>(TLI)->
+    getPICBaseSymbol(AsmPrinter.MF, Ctx);
 }
 
 /// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an

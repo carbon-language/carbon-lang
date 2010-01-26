@@ -376,6 +376,9 @@ namespace llvm {
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
 
+    /// getPICBaseSymbol - Return the X86-32 PIC base.
+    MCSymbol *getPICBaseSymbol(const MachineFunction *MF, MCContext &Ctx) const;
+    
     virtual unsigned getJumpTableEncoding() const;
 
     virtual const MCExpr *
@@ -387,7 +390,10 @@ namespace llvm {
     /// jumptable.
     virtual SDValue getPICJumpTableRelocBase(SDValue Table,
                                              SelectionDAG &DAG) const;
-
+    virtual const MCExpr *
+    getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
+                                 unsigned JTI, MCContext &Ctx) const;
+    
     // Return the number of bytes that a function should pop when it returns (in
     // addition to the space used by the return address).
     //

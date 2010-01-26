@@ -91,12 +91,6 @@ public:
     return JumpTables;
   }
 
-  /// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
-  /// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
-  /// normal 'L' label is returned.
-  MCSymbol *getJTISymbol(unsigned JTI, MCContext &Ctx, 
-                         bool isLinkerPrivate = false) const;
-  
   /// RemoveJumpTable - Mark the specific index as being dead.  This will
   /// prevent it from being emitted.
   void RemoveJumpTable(unsigned Idx) {

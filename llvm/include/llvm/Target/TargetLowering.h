@@ -776,7 +776,7 @@ public:
   /// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
   /// MCExpr.
   virtual const MCExpr *
-  getPICJumpTableRelocBaseExpr(const MachineJumpTableInfo *MJTI,
+  getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
                                unsigned JTI, MCContext &Ctx) const;
   
   /// isOffsetFoldingLegal - Return true if folding a constant offset
