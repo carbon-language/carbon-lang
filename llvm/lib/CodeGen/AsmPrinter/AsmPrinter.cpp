@@ -169,7 +169,9 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) {
       // FIXME: linkonce should be a section attribute, handled by COFF Section
       // assignment.
       // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
-      // .linkonce same_size
+      // .linkonce discard
+      // FIXME: It would be nice to use .linkonce samesize for non-common
+      // globals.
       O << LinkOnce;
     } else {
       // .weak _foo
@@ -300,37 +302,8 @@ void AsmPrinter::EmitFunctionHeader() {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-    break;
-  case Function::DLLExportLinkage:
-  case Function::ExternalLinkage:
-    OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-    break;
-  case Function::LinkerPrivateLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    if (MAI->getWeakDefDirective() != 0) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-      O << MAI->getWeakDefDirective() << *CurrentFnSym << '\n';
-    } else if (MAI->getLinkOnceDirective() != 0) {
-      OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_Global);
-      // FIXME: linkonce should be a section attribute, handled by COFF Section
-      // assignment.
-      // http://sourceware.org/binutils/docs-2.20/as/Linkonce.html#Linkonce
-      O << "\t.linkonce discard\n";
-    } else {
-      O << "\t.weak\t" << *CurrentFnSym << '\n';
-    }
-    break;
-  }
-
+  EmitLinkage(F->getLinkage(), CurrentFnSym);
   EmitAlignment(MF->getAlignment(), F);
-
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
