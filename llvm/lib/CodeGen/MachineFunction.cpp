@@ -70,9 +70,9 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(raw_ostream &OS,
   return new Printer(OS, Banner);
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // MachineFunction implementation
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 // Out of line virtual method.
 MachineFunctionInfo::~MachineFunctionInfo() {}
@@ -81,8 +81,8 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
   MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }
 
-MachineFunction::MachineFunction(Function *F,
-                                 const TargetMachine &TM)
+MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
+                                 unsigned FunctionNum)
   : Fn(F), Target(TM) {
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
@@ -95,7 +95,7 @@ MachineFunction::MachineFunction(Function *F,
   ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
                      MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
-
+  FunctionNumber = FunctionNum;
   JumpTableInfo = 0;
 }
 

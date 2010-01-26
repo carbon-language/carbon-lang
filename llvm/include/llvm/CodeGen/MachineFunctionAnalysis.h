@@ -28,7 +28,7 @@ private:
   const TargetMachine &TM;
   CodeGenOpt::Level OptLevel;
   MachineFunction *MF;
-
+  unsigned NextFnNum;
 public:
   static char ID;
   explicit MachineFunctionAnalysis(const TargetMachine &tm,
@@ -39,6 +39,7 @@ public:
   CodeGenOpt::Level getOptLevel() const { return OptLevel; }
 
 private:
+  virtual bool doInitialization(Module &) { NextFnNum = 1; return false; }
   virtual bool runOnFunction(Function &F);
   virtual void releaseMemory();
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;

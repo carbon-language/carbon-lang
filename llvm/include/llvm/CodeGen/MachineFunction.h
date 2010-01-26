@@ -112,6 +112,11 @@ class MachineFunction {
   // Tracks debug locations.
   DebugLocTracker DebugLocInfo;
 
+  /// FunctionNumber - This provides a unique ID for each function emitted in
+  /// this translation unit.
+  ///
+  unsigned FunctionNumber;
+  
   // The alignment of the function.
   unsigned Alignment;
 
@@ -119,13 +124,17 @@ class MachineFunction {
   void operator=(const MachineFunction&);   // intentionally unimplemented
 
 public:
-  MachineFunction(Function *Fn, const TargetMachine &TM);
+  MachineFunction(Function *Fn, const TargetMachine &TM, unsigned FunctionNum);
   ~MachineFunction();
 
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   Function *getFunction() const { return Fn; }
 
+  /// getFunctionNumber - Return a unique ID for the current function.
+  ///
+  unsigned getFunctionNumber() const { return FunctionNumber; }
+  
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }

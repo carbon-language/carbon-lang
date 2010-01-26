@@ -921,7 +921,7 @@ public:
       FunctionType::get(llvm::Type::getVoidTy(getGlobalContext()), false);
     DummyF = Function::Create(FTy, GlobalValue::InternalLinkage);
     DummyTD = new TargetData("");
-    DummyMF = new MachineFunction(DummyF, TM);
+    DummyMF = new MachineFunction(DummyF, TM, 0);
     DummyMBB = DummyMF->CreateMachineBasicBlock();
 
     InstrEmitter = new MCSingleInstructionCodeEmitter();

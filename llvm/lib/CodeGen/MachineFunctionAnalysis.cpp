@@ -36,7 +36,7 @@ MachineFunctionAnalysis::~MachineFunctionAnalysis() {
 
 bool MachineFunctionAnalysis::runOnFunction(Function &F) {
   assert(!MF && "MachineFunctionAnalysis already initialized!");
-  MF = new MachineFunction(&F, TM);
+  MF = new MachineFunction(&F, TM, NextFnNum++);
   return false;
 }
 

@@ -64,7 +64,7 @@ static bool getVerboseAsm(bool VDef) {
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const MCAsmInfo *T, bool VDef)
-  : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
+  : MachineFunctionPass(&ID), O(o),
     TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
 
     OutContext(*new MCContext()),
@@ -85,6 +85,12 @@ AsmPrinter::~AsmPrinter() {
   
   delete &OutStreamer;
   delete &OutContext;
+}
+
+/// getFunctionNumber - Return a unique ID for the current function.
+///
+unsigned AsmPrinter::getFunctionNumber() const {
+  return MF->getFunctionNumber();
 }
 
 TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
@@ -359,9 +365,9 @@ bool AsmPrinter::doFinalization(Module &M) {
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
+  this->MF = &MF;
   // Get the function symbol.
   CurrentFnSym = GetGlobalValueSymbol(MF.getFunction());
-  IncrementFunctionNumber();
 
   if (VerboseAsm)
     LI = &getAnalysis<MachineLoopInfo>();
