@@ -18,7 +18,7 @@
 #include "clang/Checker/LocalCheckers.h"
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/PathSensitive/Checkers/DereferenceChecker.h"
+#include "clang/Checker/Checkers/DereferenceChecker.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
