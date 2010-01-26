@@ -1114,6 +1114,12 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       }
       int64_t NonVirtualAdjustment = -VCallOffset[OGD];
+      QualType DerivedType = MD->getThisType(CGM.getContext());
+      QualType BaseType = cast<const CXXMethodDecl>(OGD.getDecl())->getThisType(CGM.getContext());
+      int64_t NonVirtualAdjustment2 = -(getNVOffset(BaseType, DerivedType)/8);
+      if (NonVirtualAdjustment2 != NonVirtualAdjustment) {
+        NonVirtualAdjustment = NonVirtualAdjustment2;
+      }
       int64_t VirtualAdjustment = 
         -((idx + extra + 2) * LLVMPointerWidth / 8);
       
