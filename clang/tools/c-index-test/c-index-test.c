@@ -172,6 +172,12 @@ static const char* GetCursorSource(CXCursor Cursor) {
 }
 
 /******************************************************************************/
+/* Callbacks.                                                                 */
+/******************************************************************************/
+
+typedef void (*PostVisitTU)(CXTranslationUnit);
+
+/******************************************************************************/
 /* Logic for testing traversal.                                               */
 /******************************************************************************/
 
@@ -302,7 +308,8 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
 
 static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
                              const char *filter, const char *prefix,
-                             CXCursorVisitor Visitor) {
+                             CXCursorVisitor Visitor,
+                             PostVisitTU PV) {
   
   if (prefix)
     FileCheckPrefix = prefix;  
@@ -329,14 +336,17 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
     Data.Filter = ck;
     clang_visitChildren(clang_getTranslationUnitCursor(TU), Visitor, &Data);
   }
+  
+  if (PV)
+    PV(TU);
 
   clang_disposeTranslationUnit(TU);
   return 0;
 }
 
 int perform_test_load_tu(const char *file, const char *filter,
-                         const char *prefix,
-                         CXCursorVisitor Visitor) {
+                         const char *prefix, CXCursorVisitor Visitor,
+                         PostVisitTU PV) {
   CXIndex Idx;
   CXTranslationUnit TU;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
@@ -346,11 +356,12 @@ int perform_test_load_tu(const char *file, const char *filter,
   if (!CreateTranslationUnit(Idx, file, &TU))
     return 1;
 
-  return perform_test_load(Idx, TU, filter, prefix, Visitor);
+  return perform_test_load(Idx, TU, filter, prefix, Visitor, PV);
 }
 
-int perform_test_load_source(int argc, const char **argv, const char *filter,
-                             CXCursorVisitor Visitor) {
+int perform_test_load_source(int argc, const char **argv,
+                             const char *filter, CXCursorVisitor Visitor,
+                             PostVisitTU PV) {
   const char *UseExternalASTs =
     getenv("CINDEXTEST_USE_EXTERNAL_AST_GENERATION");
   CXIndex Idx;
@@ -379,7 +390,7 @@ int perform_test_load_source(int argc, const char **argv, const char *filter,
     return 1;
   }
 
-  result = perform_test_load(Idx, TU, filter, NULL, Visitor);
+  result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
   free_remapped_files(unsaved_files, num_unsaved_files);
   return result;
 }
@@ -857,12 +868,13 @@ int main(int argc, const char **argv) {
   else if (argc >= 4 && strncmp(argv[1], "-test-load-tu", 13) == 0) {
     CXCursorVisitor I = GetVisitor(argv[1] + 13);
     if (I)
-      return perform_test_load_tu(argv[2], argv[3], argc >= 5 ? argv[4] : 0, I);
+      return perform_test_load_tu(argv[2], argv[3], argc >= 5 ? argv[4] : 0, I,
+                                  NULL);
   }
   else if (argc >= 4 && strncmp(argv[1], "-test-load-source", 17) == 0) {
     CXCursorVisitor I = GetVisitor(argv[1] + 17);
     if (I)
-      return perform_test_load_source(argc - 3, argv + 3, argv[2], I);
+      return perform_test_load_source(argc - 3, argv + 3, argv[2], I, NULL);
   }
   else if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
     return perform_file_scan(argv[2], argv[3],
