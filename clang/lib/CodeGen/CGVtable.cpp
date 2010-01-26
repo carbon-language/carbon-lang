@@ -57,10 +57,10 @@ private:
   llvm::LLVMContext &VMContext;
   CodeGenModule &CGM;  // Per-module state.
   
-  llvm::DenseMap<GlobalDecl, Index_t> VCall;
+  llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<GlobalDecl, Index_t> VCallOffset;
   // This is the offset to the nearest virtual base
-  llvm::DenseMap<GlobalDecl, Index_t> NonVirtualOffset;
+  llvm::DenseMap<const CXXMethodDecl *, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
 
   /// PureVirtualFunction - Points to __cxa_pure_virtual.
@@ -180,6 +180,244 @@ private:
     return *ref;
   }
   
+#if 0
+  bool TemplateParameterListsAreEqual(TemplateParameterList *New,
+                                      TemplateParameterList *Old,
+                                      TemplateParameterListEqualKind Kind) {
+    assert(0 && "template in vtable");
+    if (Old->size() != New->size()) {
+      return false;
+    }
+
+    for (TemplateParameterList::iterator OldParm = Old->begin(),
+           OldParmEnd = Old->end(), NewParm = New->begin();
+         OldParm != OldParmEnd; ++OldParm, ++NewParm) {
+      if ((*OldParm)->getKind() != (*NewParm)->getKind()) {
+        return false;
+      }
+
+      if (isa<TemplateTypeParmDecl>(*OldParm)) {
+        // Okay; all template type parameters are equivalent (since we
+        // know we're at the same index).
+      } else if (NonTypeTemplateParmDecl *OldNTTP
+                 = dyn_cast<NonTypeTemplateParmDecl>(*OldParm)) {
+        // The types of non-type template parameters must agree.
+        NonTypeTemplateParmDecl *NewNTTP
+          = cast<NonTypeTemplateParmDecl>(*NewParm);
+      
+        // If we are matching a template template argument to a template
+        // template parameter and one of the non-type template parameter types
+        // is dependent, then we must wait until template instantiation time
+        // to actually compare the arguments.
+        if (Kind == TPL_TemplateTemplateArgumentMatch &&
+            (OldNTTP->getType()->isDependentType() ||
+             NewNTTP->getType()->isDependentType()))
+          continue;
+
+        if (Context.getCanonicalType(OldNTTP->getType()) !=
+            Context.getCanonicalType(NewNTTP->getType())) {
+          return false;
+        }
+      } else {
+        // The template parameter lists of template template
+        // parameters must agree.
+        assert(isa<TemplateTemplateParmDecl>(*OldParm) &&
+               "Only template template parameters handled here");
+        TemplateTemplateParmDecl *OldTTP
+          = cast<TemplateTemplateParmDecl>(*OldParm);
+        TemplateTemplateParmDecl *NewTTP
+          = cast<TemplateTemplateParmDecl>(*NewParm);
+        if (!TemplateParameterListsAreEqual(NewTTP->getTemplateParameters(),
+                                            OldTTP->getTemplateParameters(),
+             (Kind == TPL_TemplateMatch? TPL_TemplateTemplateParmMatch : Kind)))
+          return false;
+      }
+    }
+    
+    return true;
+  }
+#endif
+
+  bool DclIsSame(const FunctionDecl *New, const FunctionDecl *Old) {
+    FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
+    FunctionTemplateDecl *NewTemplate = New->getDescribedFunctionTemplate();
+
+    // C++ [temp.fct]p2:
+    //   A function template can be overloaded with other function templates
+    //   and with normal (non-template) functions.
+    if ((OldTemplate == 0) != (NewTemplate == 0))
+      return false;
+
+    // Is the function New an overload of the function Old?
+    QualType OldQType = CGM.getContext().getCanonicalType(Old->getType());
+    QualType NewQType = CGM.getContext().getCanonicalType(New->getType());
+
+    // Compare the signatures (C++ 1.3.10) of the two functions to
+    // determine whether they are overloads. If we find any mismatch
+    // in the signature, they are overloads.
+
+    // If either of these functions is a K&R-style function (no
+    // prototype), then we consider them to have matching signatures.
+    if (isa<FunctionNoProtoType>(OldQType.getTypePtr()) ||
+        isa<FunctionNoProtoType>(NewQType.getTypePtr()))
+      return true;
+
+    FunctionProtoType* OldType = cast<FunctionProtoType>(OldQType);
+    FunctionProtoType* NewType = cast<FunctionProtoType>(NewQType);
+
+    // The signature of a function includes the types of its
+    // parameters (C++ 1.3.10), which includes the presence or absence
+    // of the ellipsis; see C++ DR 357).
+    if (OldQType != NewQType &&
+        (OldType->getNumArgs() != NewType->getNumArgs() ||
+         OldType->isVariadic() != NewType->isVariadic() ||
+         !std::equal(OldType->arg_type_begin(), OldType->arg_type_end(),
+                     NewType->arg_type_begin())))
+      return false;
+
+#if 0
+    // C++ [temp.over.link]p4:
+    //   The signature of a function template consists of its function
+    //   signature, its return type and its template parameter list. The names
+    //   of the template parameters are significant only for establishing the
+    //   relationship between the template parameters and the rest of the
+    //   signature.
+    //
+    // We check the return type and template parameter lists for function
+    // templates first; the remaining checks follow.
+    if (NewTemplate &&
+        (!TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
+                                         OldTemplate->getTemplateParameters(),
+                                         TPL_TemplateMatch) ||
+         OldType->getResultType() != NewType->getResultType()))
+      return false;
+#endif
+
+    // If the function is a class member, its signature includes the
+    // cv-qualifiers (if any) on the function itself.
+    //
+    // As part of this, also check whether one of the member functions
+    // is static, in which case they are not overloads (C++
+    // 13.1p2). While not part of the definition of the signature,
+    // this check is important to determine whether these functions
+    // can be overloaded.
+    const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
+    const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
+    if (OldMethod && NewMethod &&
+        !OldMethod->isStatic() && !NewMethod->isStatic() &&
+        OldMethod->getTypeQualifiers() != NewMethod->getTypeQualifiers())
+      return false;
+  
+    // The signatures match; this is not an overload.
+    return true;
+  }
+
+  typedef llvm::DenseMap<const CXXMethodDecl *, const CXXMethodDecl*>
+    ForwardUnique_t;
+  ForwardUnique_t ForwardUnique;
+  llvm::DenseMap<const CXXMethodDecl*, const CXXMethodDecl*> UniqueOverrider;
+
+  void BuildUniqueOverrider(const CXXMethodDecl *U, const CXXMethodDecl *MD) {
+    const CXXMethodDecl *PrevU = UniqueOverrider[MD];
+    assert(U && "no unique overrider");
+    if (PrevU == U)
+      return;
+    if (PrevU != U && PrevU != 0) {
+      // If already set, note the two sets as the same
+      if (0)
+        printf("%s::%s same as %s::%s\n",
+               PrevU->getParent()->getNameAsCString(),
+               PrevU->getNameAsCString(),
+               U->getParent()->getNameAsCString(),
+               U->getNameAsCString());
+      ForwardUnique[PrevU] = U;
+      return;
+    }
+
+    // Not set, set it now
+    if (0)
+      printf("marking %s::%s %p override as %s::%s\n",
+             MD->getParent()->getNameAsCString(),
+             MD->getNameAsCString(),
+             (void*)MD,
+             U->getParent()->getNameAsCString(),
+             U->getNameAsCString());
+    UniqueOverrider[MD] = U;
+
+    for (CXXMethodDecl::method_iterator mi = MD->begin_overridden_methods(),
+           me = MD->end_overridden_methods(); mi != me; ++mi) {
+      BuildUniqueOverrider(U, *mi);
+    }
+  }
+
+  void BuildUniqueOverriders(const CXXRecordDecl *RD) {
+    if (0) printf("walking %s\n", RD->getNameAsCString());
+    for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+           e = RD->method_end(); i != e; ++i) {
+      const CXXMethodDecl *MD = *i;
+      if (!MD->isVirtual())
+        continue;
+
+      if (UniqueOverrider[MD] == 0) {
+        // Only set this, if it hasn't been set yet.
+        BuildUniqueOverrider(MD, MD);
+        if (0)
+          printf("top set is %s::%s %p\n",
+                  MD->getParent()->getNameAsCString(),
+                  MD->getNameAsCString(),
+                  (void*)MD);
+        ForwardUnique[MD] = MD;
+      }
+    }
+    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+           e = RD->bases_end(); i != e; ++i) {
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      BuildUniqueOverriders(Base);
+    }
+  }
+
+  static int DclCmp(const void *p1, const void *p2) {
+    const CXXMethodDecl *MD1 = (const CXXMethodDecl *)p1;
+    const CXXMethodDecl *MD2 = (const CXXMethodDecl *)p2;
+    return (MD1->getIdentifier() - MD2->getIdentifier());
+  }
+  
+  void MergeForwarding() {
+    typedef llvm::SmallVector<const CXXMethodDecl *, 100>  A_t;
+    A_t A;
+    for (ForwardUnique_t::iterator I = ForwardUnique.begin(),
+           E = ForwardUnique.end(); I != E; ++I) {
+      if (I->first == I->second)
+        // Only add the roots of all trees
+        A.push_back(I->first);
+    }
+    llvm::array_pod_sort(A.begin(), A.end(), DclCmp);
+    for (A_t::iterator I = A.begin(),
+           E = A.end(); I != E; ++I) {
+      A_t::iterator J = I;
+      while (++J != E  && DclCmp(*I, *J) == 0)
+        if (DclIsSame(*I, *J)) {
+          printf("connecting %s\n", (*I)->getNameAsCString());
+          ForwardUnique[*J] = *I;
+        }
+    }
+  }
+
+  const CXXMethodDecl *getUnique(const CXXMethodDecl *MD) {
+    const CXXMethodDecl *U = UniqueOverrider[MD];
+    assert(U && "unique overrider not found");
+    while (ForwardUnique.count(U)) {
+      const CXXMethodDecl *NU = ForwardUnique[U];
+      if (NU == U) break;
+      U = NU;
+    }
+    return U;
+  }
+  const CXXMethodDecl *getUnique(GlobalDecl GD) {
+    return getUnique(cast<CXXMethodDecl>(GD.getDecl()));
+  }
+
   /// getPureVirtualFn - Return the __cxa_pure_virtual function.
   llvm::Constant* getPureVirtualFn() {
     if (!PureVirtualFn) {
@@ -209,6 +447,8 @@ public:
       QualType ClassType = CGM.getContext().getTagDeclType(MostDerivedClass);
       rtti = CGM.GetAddrOfRTTIDescriptor(ClassType);
     }
+    BuildUniqueOverriders(MostDerivedClass);
+    MergeForwarding();
   }
 
   // getVtableComponents - Returns a reference to the vtable components.
@@ -386,15 +626,18 @@ public:
 
     VCallOffset[GD] = Offset/8;
     if (MorallyVirtual) {
-      Index_t &idx = VCall[GD];
+      const CXXMethodDecl *UMD = getUnique(GD);
+      assert(UMD && "final overrider not found");
+
+      Index_t &idx = VCall[UMD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
-        NonVirtualOffset[GD] = CurrentVBaseOffset/8 - Offset/8;
+        NonVirtualOffset[UMD] = -CurrentVBaseOffset/8 + Offset/8;
         idx = VCalls.size()+1;
-        VCalls.push_back(0);
+        VCalls.push_back(Offset/8 - CurrentVBaseOffset/8);
         D1(printf("  vcall for %s at %d with delta %d\n",
                   dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
-                  (int)-VCalls.size()-3, 0));
+                  (int)-VCalls.size()-3, (int)VCalls[idx-1]));
       }
     }
   }
@@ -824,11 +1067,15 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
 
     Methods.OverrideMethod(OGD, GD);
 
+    const CXXMethodDecl *UMD = getUnique(GD);
+    assert(UMD && "unique overrider not found");
+    assert(UMD == getUnique(OGD) && "unique overrider not unique");
+
     ThisAdjustments.erase(Index);
-    if (MorallyVirtual || VCall.count(OGD)) {
-      Index_t &idx = VCall[OGD];
+    if (MorallyVirtual || VCall.count(UMD)) {
+      Index_t &idx = VCall[UMD];
       if (idx == 0) {
-        NonVirtualOffset[GD] = -OverrideOffset/8 + CurrentVBaseOffset/8;
+        NonVirtualOffset[UMD] = CurrentVBaseOffset/8 - OverrideOffset/8;
         VCallOffset[GD] = OverrideOffset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(0);
@@ -836,14 +1083,13 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       } else {
-        NonVirtualOffset[GD] = NonVirtualOffset[OGD];
         VCallOffset[GD] = VCallOffset[OGD];
         VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
         D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       }
-      int64_t NonVirtualAdjustment = NonVirtualOffset[GD];
+      int64_t NonVirtualAdjustment = NonVirtualOffset[UMD];
       int64_t VirtualAdjustment = 
         -((idx + extra + 2) * LLVMPointerWidth / 8);
       
@@ -859,7 +1105,6 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
         SavedAdjustments.push_back(
             std::make_pair(GD, std::make_pair(OGD, ThisAdjustment)));
       }
-      VCall[GD] = idx;
       return true;
     }
 
