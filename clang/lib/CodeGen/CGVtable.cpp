@@ -59,6 +59,7 @@ private:
   
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<GlobalDecl, Index_t> VCallOffset;
+  llvm::DenseMap<GlobalDecl, Index_t> VCallOffsetForVCall;
   // This is the offset to the nearest virtual base
   llvm::DenseMap<const CXXMethodDecl *, Index_t> NonVirtualOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
@@ -632,6 +633,7 @@ public:
       Index_t &idx = VCall[UMD];
       // Allocate the first one, after that, we reuse the previous one.
       if (idx == 0) {
+        VCallOffsetForVCall[UMD] = Offset/8;
         NonVirtualOffset[UMD] = -CurrentVBaseOffset/8 + Offset/8;
         idx = VCalls.size()+1;
         VCalls.push_back(Offset/8 - CurrentVBaseOffset/8);
@@ -1077,14 +1079,15 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       if (idx == 0) {
         NonVirtualOffset[UMD] = CurrentVBaseOffset/8 - OverrideOffset/8;
         VCallOffset[GD] = OverrideOffset/8;
+        VCallOffsetForVCall[UMD] = OverrideOffset/8;
         idx = VCalls.size()+1;
-        VCalls.push_back(0);
+        VCalls.push_back(OverrideOffset/8 - CurrentVBaseOffset/8);
         D1(printf("  vcall for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
       } else {
         VCallOffset[GD] = VCallOffset[OGD];
-        VCalls[idx-1] = -VCallOffset[OGD] + OverrideOffset/8;
+        VCalls[idx-1] = -VCallOffsetForVCall[UMD] + OverrideOffset/8;
         D1(printf("  vcall patch for %s at %d with delta %d most derived %s\n",
                   MD->getNameAsString().c_str(), (int)-idx-3,
                   (int)VCalls[idx-1], MostDerivedClass->getNameAsCString()));
