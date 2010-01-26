@@ -1149,6 +1149,9 @@ public:
   decls_iterator decls_begin() const { return Results.begin(); }
   decls_iterator decls_end() const { return Results.end(); }
 
+  /// Retrieves the decls as an unresolved set.
+  const UnresolvedSetImpl &getDecls() { return Results; }
+
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
@@ -1804,6 +1807,9 @@ public:
   decls_iterator decls_end() const { return Results.end(); }
 
   unsigned getNumDecls() const { return Results.size(); }
+
+  /// Retrieves the decls as an unresolved set.
+  const UnresolvedSetImpl &getDecls() { return Results; }
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source

@@ -4903,36 +4903,34 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   bool HasExplicitTemplateArgs = false;
   TemplateArgumentListInfo ExplicitTemplateArgs;
-
-  llvm::SmallVector<NamedDecl*,8> Fns;
+  const UnresolvedSetImpl *Fns;
   
   // Look into the overloaded expression.
   if (UnresolvedLookupExpr *UL
                = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
-    Fns.append(UL->decls_begin(), UL->decls_end());
+    Fns = &UL->getDecls();
     if (UL->hasExplicitTemplateArgs()) {
       HasExplicitTemplateArgs = true;
       UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
     }
   } else if (UnresolvedMemberExpr *ME
                = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
-    Fns.append(ME->decls_begin(), ME->decls_end());
+    Fns = &ME->getDecls();
     if (ME->hasExplicitTemplateArgs()) {
       HasExplicitTemplateArgs = true;
       ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
     }
-  }
+  } else return 0;
 
   // If we didn't actually find anything, we're done.
-  if (Fns.empty())
+  if (Fns->empty())
     return 0;
 
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   llvm::SmallPtrSet<FunctionDecl *, 4> Matches;
   bool FoundNonTemplateFunction = false;
-  for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
-         E = Fns.end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = Fns->begin(), E = Fns->end(); I != E; ++I) {
     // Look through any using declarations to find the underlying function.
     NamedDecl *Fn = (*I)->getUnderlyingDecl();
 
@@ -5088,35 +5086,33 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
   
   bool HasExplicitTemplateArgs = false;
   TemplateArgumentListInfo ExplicitTemplateArgs;
-  
-  llvm::SmallVector<NamedDecl*,8> Fns;
+  const UnresolvedSetImpl *Fns;
   
   // Look into the overloaded expression.
   if (UnresolvedLookupExpr *UL
       = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
-    Fns.append(UL->decls_begin(), UL->decls_end());
+    Fns = &UL->getDecls();
     if (UL->hasExplicitTemplateArgs()) {
       HasExplicitTemplateArgs = true;
       UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
     }
   } else if (UnresolvedMemberExpr *ME
              = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
-    Fns.append(ME->decls_begin(), ME->decls_end());
+    Fns = &ME->getDecls();
     if (ME->hasExplicitTemplateArgs()) {
       HasExplicitTemplateArgs = true;
       ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
     }
-  }
+  } else return 0;
   
   // If we didn't actually find any template-ids, we're done.
-  if (Fns.empty() || !HasExplicitTemplateArgs)
+  if (Fns->empty() || !HasExplicitTemplateArgs)
     return 0;
   
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   FunctionDecl *Matched = 0;
-  for (llvm::SmallVectorImpl<NamedDecl*>::iterator I = Fns.begin(),
-       E = Fns.end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = Fns->begin(), E = Fns->end(); I != E; ++I) {
     // C++0x [temp.arg.explicit]p3:
     //   [...] In contexts where deduction is done and fails, or in contexts
     //   where deduction is not done, if a template argument list is 
