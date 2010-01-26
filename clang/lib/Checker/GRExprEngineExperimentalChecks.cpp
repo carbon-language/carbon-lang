@@ -14,7 +14,7 @@
 
 #include "GRExprEngineInternalChecks.h"
 #include "GRExprEngineExperimentalChecks.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 
 using namespace clang;
 

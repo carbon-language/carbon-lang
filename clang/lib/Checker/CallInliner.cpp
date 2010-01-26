@@ -13,7 +13,7 @@
 
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 
 using namespace clang;
 

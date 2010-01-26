@@ -20,7 +20,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Analyses/UninitializedValues.h"
 #include "clang/Analysis/CFG.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/Checker/ManagerRegistry.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/PathSensitive/AnalysisManager.h"

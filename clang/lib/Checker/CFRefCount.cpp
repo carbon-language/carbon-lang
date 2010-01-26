@@ -17,7 +17,7 @@
 #include "clang/Checker/PathSensitive/GRExprEngineBuilders.h"
 #include "clang/Checker/PathSensitive/GRStateTrait.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/SymbolManager.h"

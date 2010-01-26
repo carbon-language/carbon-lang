@@ -13,7 +13,7 @@
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 

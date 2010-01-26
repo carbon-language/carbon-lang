@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/AST/ExprObjC.h"

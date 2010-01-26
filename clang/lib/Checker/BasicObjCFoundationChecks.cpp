@@ -23,7 +23,7 @@
 #include "clang/Checker/PathSensitive/MemRegion.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"

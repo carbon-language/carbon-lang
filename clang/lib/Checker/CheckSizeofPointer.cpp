@@ -14,7 +14,7 @@
 
 #include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Checker/LocalCheckers.h"
+#include "clang/Checker/Checkers/LocalCheckers.h"
 
 using namespace clang;
 
