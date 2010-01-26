@@ -58,6 +58,7 @@ std::string DumpFunction(const Function *F) {
   return Result;
 }
 
+#if 0
 class RecordingJITMemoryManager : public JITMemoryManager {
   const OwningPtr<JITMemoryManager> Base;
 public:
@@ -178,6 +179,7 @@ public:
     return Base->endExceptionTable(F, TableStart, TableEnd, FrameRegister);
   }
 };
+#endif
 
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
@@ -195,11 +197,15 @@ class JITTest : public testing::Test {
   virtual void SetUp() {
     M = new Module("<main>", Context);
     MP = new ExistingModuleProvider(M);
+#if 0
     RJMM = new RecordingJITMemoryManager;
     RJMM->setPoisonMemory(true);
+#endif
     std::string Error;
     TheJIT.reset(EngineBuilder(MP).setEngineKind(EngineKind::JIT)
+#if 0
                  .setJITMemoryManager(RJMM)
+#endif
                  .setErrorStr(&Error).create());
     ASSERT_TRUE(TheJIT.get() != NULL) << Error;
   }
@@ -211,7 +217,9 @@ class JITTest : public testing::Test {
   LLVMContext Context;
   Module *M;  // Owned by MP.
   ModuleProvider *MP;  // Owned by ExecutionEngine.
+#if 0
   RecordingJITMemoryManager *RJMM;
+#endif
   OwningPtr<ExecutionEngine> TheJIT;
 };
 
@@ -430,6 +438,7 @@ TEST_F(JITTest, ModuleDeletion) {
   TheJIT->getPointerToFunction(func);
   TheJIT->deleteModuleProvider(MP);
 
+#if 0
   SmallPtrSet<const void*, 2> FunctionsDeallocated;
   for (unsigned i = 0, e = RJMM->deallocateFunctionBodyCalls.size();
        i != e; ++i) {
@@ -463,6 +472,7 @@ TEST_F(JITTest, ModuleDeletion) {
   }
   EXPECT_EQ(RJMM->startExceptionTableCalls.size(),
             NumTablesDeallocated);
+#endif
 }
 
 // ARM and PPC still emit stubs for calls since the target may be too far away
@@ -497,14 +507,18 @@ TEST_F(JITTest, NoStubs) {
 
   // We should now allocate no more stubs, we have the code to foo
   // and the existing stub for bar.
+#if 0
   int stubsBefore = RJMM->stubsAllocated;
+#endif
   Function *func = M->getFunction("main");
   TheJIT->getPointerToFunction(func);
 
   Function *bar = M->getFunction("bar");
   TheJIT->getPointerToFunction(bar);
 
+#if 0
   ASSERT_EQ(stubsBefore, RJMM->stubsAllocated);
+#endif
 }
 #endif  // !ARM && !PPC
 

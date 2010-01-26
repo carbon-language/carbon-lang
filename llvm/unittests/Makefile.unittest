@@ -14,11 +14,7 @@
 # Set up variables for building a unit test.
 ifdef TESTNAME
 
-CXXFLAGS += -DGTEST_HAS_RTTI=0
-# gcc's TR1 <tuple> header depends on RTTI, so force googletest to use
-# its own tuple implementation.  When we import googletest >=1.4.0, we
-# can drop this line.
-CXXFLAGS += -DGTEST_HAS_TR1_TUPLE=0
+REQUIRES_RTTI = 1
 
 include $(LEVEL)/Makefile.common
 
