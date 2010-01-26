@@ -52,6 +52,9 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
 }
 
 ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
+  // ".comm align is in bytes but .align is pow-2."
+  AlignmentIsInBytes = false;
+
   Data64bitsDirective = 0;
   CommentString = "@";
 

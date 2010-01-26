@@ -51,6 +51,7 @@ MCAsmInfo::MCAsmInfo() {
   GlobalDirective = "\t.globl\t";
   SetDirective = 0;
   HasLCOMMDirective = false;
+  COMMDirectiveAlignmentIsInBytes = true;
   HasDotTypeDotSizeDirective = true;
   HasSingleParameterDotFile = true;
   HasNoDeadStrip = false;

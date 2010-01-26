@@ -26,6 +26,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasSubsectionsViaSymbols = true;
 
   AlignmentIsInBytes = false;
+  COMMDirectiveAlignmentIsInBytes = false;
   InlineAsmStart = " InlineAsm Start";
   InlineAsmEnd = " InlineAsm End";
 

@@ -181,6 +181,10 @@ namespace llvm {
     /// directive.
     bool HasLCOMMDirective;              // Defaults to false.
     
+    /// COMMDirectiveAlignmentIsInBytes - True is COMMDirective's optional
+    /// alignment is to be specified in bytes instead of log2(n).
+    bool COMMDirectiveAlignmentIsInBytes;    // Defaults to true;
+    
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;         // Defaults to true.
@@ -378,6 +382,9 @@ namespace llvm {
     }
     bool hasLCOMMDirective() const { return HasLCOMMDirective; }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
+    bool getCOMMDirectiveAlignmentIsInBytes() const {
+      return COMMDirectiveAlignmentIsInBytes;
+    }
     bool hasSingleParameterDotFile() const { return HasSingleParameterDotFile; }
     bool hasNoDeadStrip() const { return HasNoDeadStrip; }
     const char *getWeakRefDirective() const { return WeakRefDirective; }

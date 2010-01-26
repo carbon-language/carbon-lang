@@ -67,9 +67,9 @@ define i32 @test1() {
 ; LinuxPIC: 	ldr r0, [r0]
 ; LinuxPIC: 	bx lr
 
-; LinuxPIC: .align 4
+; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI1_0:
 ; LinuxPIC:     .long _GLOBAL_OFFSET_TABLE_-(.LPC1_0+8)
-; LinuxPIC: .align 4
+; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI1_1:
 ; LinuxPIC:     .long	G(GOT)

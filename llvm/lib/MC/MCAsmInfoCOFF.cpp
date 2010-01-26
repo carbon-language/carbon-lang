@@ -18,6 +18,7 @@ using namespace llvm;
 
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
+  COMMDirectiveAlignmentIsInBytes = false;
   HasLCOMMDirective = true;
   HasDotTypeDotSizeDirective = false;
   HasSingleParameterDotFile = false;
@@ -36,4 +37,3 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   SupportsDebugInformation = true;
   DwarfSectionOffsetDirective = "\t.secrel32\t";
 }
-
