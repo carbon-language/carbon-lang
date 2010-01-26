@@ -148,5 +148,5 @@ extern "C" void LLVMInitializeX86AsmLexer() {
 }
 
 #define REGISTERS_ONLY
-#include "../X86GenAsmMatcher.inc"
+#include "X86GenAsmMatcher.inc"
 #undef REGISTERS_ONLY
