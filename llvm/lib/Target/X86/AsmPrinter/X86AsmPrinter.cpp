@@ -484,23 +484,6 @@ void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << ':';
 }
 
-void X86AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                                           const MachineBasicBlock *MBB,
-                                           unsigned uid) const {
-  const char *JTEntryDirective = MJTI->getEntrySize(*TM.getTargetData()) == 4 ?
-    MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
-
-  O << JTEntryDirective << ' ';
-
-  if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC()) {
-    O << *GetJTSetSymbol(uid, MBB->getNumber());
-  } else if (Subtarget->isPICStyleGOT())
-    O << *MBB->getSymbol(OutContext) << "@GOTOFF";
-  else  // mdynamic-no-pic
-    O << *MBB->getSymbol(OutContext);
-  O << '\n';
-}
-
 bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
   unsigned Reg = MO.getReg();
   switch (Mode) {

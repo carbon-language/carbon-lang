@@ -126,9 +126,6 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
                             const char *Modifier=NULL);
   void printPICJumpTableSetLabel(unsigned uid,
                                  const MachineBasicBlock *MBB) const;
-  void printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                              const MachineBasicBlock *MBB,
-                              unsigned uid) const;
 
   void printPICLabel(const MachineInstr *MI, unsigned Op);
 

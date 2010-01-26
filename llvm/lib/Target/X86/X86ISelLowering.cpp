@@ -26,8 +26,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -35,13 +33,18 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -1099,10 +1102,24 @@ unsigned X86TargetLowering::getJumpTableEncoding() const {
   // symbol.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
       Subtarget->isPICStyleGOT())
-    return MachineJumpTableInfo::EK_GPRel32BlockAddress;
+    return MachineJumpTableInfo::EK_Custom32;
   
   // Otherwise, use the normal jump table encoding heuristics.
   return TargetLowering::getJumpTableEncoding();
+}
+
+const MCExpr *
+X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                             const MachineBasicBlock *MBB,
+                                             unsigned uid,MCContext &Ctx) const{
+  assert(getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+         Subtarget->isPICStyleGOT());
+  // In 32-bit ELF systems, our jump table entries are formed with @GOTOFF
+  // entries.
+
+  // FIXME: @GOTOFF should be a property of MCSymbolRefExpr not in the MCSymbol.
+  std::string Name = MBB->getSymbol(Ctx)->getName() + "@GOTOFF";
+  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(StringRef(Name)), Ctx);
 }
 
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC

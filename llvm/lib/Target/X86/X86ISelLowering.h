@@ -376,12 +376,17 @@ namespace llvm {
   public:
     explicit X86TargetLowering(X86TargetMachine &TM);
 
-    unsigned getJumpTableEncoding() const;
+    virtual unsigned getJumpTableEncoding() const;
 
+    virtual const MCExpr *
+    LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                              const MachineBasicBlock *MBB, unsigned uid,
+                              MCContext &Ctx) const;
+    
     /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
     /// jumptable.
-    SDValue getPICJumpTableRelocBase(SDValue Table,
-                                       SelectionDAG &DAG) const;
+    virtual SDValue getPICJumpTableRelocBase(SDValue Table,
+                                             SelectionDAG &DAG) const;
 
     // Return the number of bytes that a function should pop when it returns (in
     // addition to the space used by the return address).
