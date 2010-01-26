@@ -523,11 +523,11 @@ public:
 
   /// beginFunction - Gather pre-function debug information.  Assumes being
   /// emitted immediately after the function entry point.
-  void beginFunction(MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF);
 
   /// endFunction - Gather and emit post-function debug information.
   ///
-  void endFunction(MachineFunction *MF);
+  void endFunction(const MachineFunction *MF);
 
   /// recordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
@@ -550,7 +550,7 @@ public:
 
   /// extractScopeInformation - Scan machine instructions in this function
   /// and collect DbgScopes. Return true, if atleast one scope was found.
-  bool extractScopeInformation(MachineFunction *MF);
+  bool extractScopeInformation();
 
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
   void collectVariableInfo();

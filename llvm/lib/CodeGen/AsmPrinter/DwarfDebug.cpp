@@ -1992,7 +1992,7 @@ void DwarfDebug::createDbgScope(MDNode *Scope, MDNode *InlinedAt) {
 
 /// extractScopeInformation - Scan machine instructions in this function
 /// and collect DbgScopes. Return true, if atleast one scope was found.
-bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
+bool DwarfDebug::extractScopeInformation() {
   // If scope information was extracted using .dbg intrinsics then there is not
   // any need to extract these information by scanning each instruction.
   if (!DbgScopeMap.empty())
@@ -2087,7 +2087,7 @@ bool DwarfDebug::extractScopeInformation(MachineFunction *MF) {
 
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
-void DwarfDebug::beginFunction(MachineFunction *MF) {
+void DwarfDebug::beginFunction(const MachineFunction *MF) {
   this->MF = MF;
 
   if (!ShouldEmitDwarfDebug()) return;
@@ -2095,13 +2095,13 @@ void DwarfDebug::beginFunction(MachineFunction *MF) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  if (!extractScopeInformation(MF))
+  if (!extractScopeInformation())
     return;
 
   collectVariableInfo();
 
   // Begin accumulating function debug information.
-  MMI->BeginFunction(MF);
+  MMI->BeginFunction((MachineFunction*)MF);
 
   // Assumes in correct section after the entry point.
   EmitLabel("func_begin", ++SubprogramCount);
@@ -2129,7 +2129,7 @@ void DwarfDebug::beginFunction(MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function debug information.
 ///
-void DwarfDebug::endFunction(MachineFunction *MF) {
+void DwarfDebug::endFunction(const MachineFunction *MF) {
   if (!ShouldEmitDwarfDebug()) return;
 
   if (TimePassesIsEnabled)

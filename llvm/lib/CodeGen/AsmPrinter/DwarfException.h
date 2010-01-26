@@ -197,7 +197,7 @@ public:
 
   /// BeginFunction - Gather pre-function exception information.  Assumes being
   /// emitted immediately after the function entry point.
-  void BeginFunction(MachineFunction *MF);
+  void BeginFunction(const MachineFunction *MF);
 
   /// EndFunction - Gather and emit post-function exception information.
   void EndFunction();

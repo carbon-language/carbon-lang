@@ -57,14 +57,14 @@ void DwarfWriter::EndModule() {
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
-void DwarfWriter::BeginFunction(MachineFunction *MF) {
+void DwarfWriter::BeginFunction(const MachineFunction *MF) {
   DE->BeginFunction(MF);
   DD->beginFunction(MF);
 }
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
-void DwarfWriter::EndFunction(MachineFunction *MF) {
+void DwarfWriter::EndFunction(const MachineFunction *MF) {
   DD->endFunction(MF);
   DE->EndFunction();
 

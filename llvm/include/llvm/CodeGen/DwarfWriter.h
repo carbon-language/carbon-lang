@@ -76,11 +76,11 @@ public:
   
   /// BeginFunction - Gather pre-function debug information.  Assumes being 
   /// emitted immediately after the function entry point.
-  void BeginFunction(MachineFunction *MF);
+  void BeginFunction(const MachineFunction *MF);
   
   /// EndFunction - Gather and emit post-function debug information.
   ///
-  void EndFunction(MachineFunction *MF);
+  void EndFunction(const MachineFunction *MF);
 
   /// RecordSourceLine - Register a source line with debug info. Returns a
   /// unique label ID used to generate a label and provide correspondence to

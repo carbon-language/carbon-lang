@@ -943,7 +943,7 @@ void DwarfException::EndModule() {
 
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
-void DwarfException::BeginFunction(MachineFunction *MF) {
+void DwarfException::BeginFunction(const MachineFunction *MF) {
   if (!MMI || !MAI->doesSupportExceptionHandling()) return;
 
   if (TimePassesIsEnabled)

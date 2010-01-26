@@ -56,7 +56,7 @@ protected:
   Module *M;
 
   /// MF - Current machine function.
-  MachineFunction *MF;
+  const MachineFunction *MF;
 
   /// MMI - Collected machine module information.
   MachineModuleInfo *MMI;
