@@ -25,7 +25,6 @@ using namespace llvm;
 
 int dummy;
 
-#if 0
 namespace {
 
 struct FunctionEmittedEvent {
@@ -238,4 +237,3 @@ testing::Environment* const jit_env =
   testing::AddGlobalTestEnvironment(new JITEnvironment);
 
 }  // anonymous namespace
-#endif
