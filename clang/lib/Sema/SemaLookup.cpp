@@ -1693,7 +1693,7 @@ ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
 
 void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                         QualType T1, QualType T2,
-                                        FunctionSet &Functions) {
+                                        UnresolvedSetImpl &Functions) {
   // C++ [over.match.oper]p3:
   //     -- The set of non-member candidates is the result of the
   //        unqualified lookup of operator@ in the context of the
@@ -1719,29 +1719,21 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
        Op != OpEnd; ++Op) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Op)) {
       if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-        Functions.insert(FD); // FIXME: canonical FD
+        Functions.addDecl(FD, Op.getAccess()); // FIXME: canonical FD
     } else if (FunctionTemplateDecl *FunTmpl
                  = dyn_cast<FunctionTemplateDecl>(*Op)) {
       // FIXME: friend operators?
       // FIXME: do we need to check IsAcceptableNonMemberOperatorCandidate,
       // later?
       if (!FunTmpl->getDeclContext()->isRecord())
-        Functions.insert(FunTmpl);
+        Functions.addDecl(FunTmpl, Op.getAccess());
     }
   }
 }
 
-static void CollectFunctionDecl(Sema::FunctionSet &Functions,
-                                Decl *D) {
-  if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
-    Functions.insert(Func);
-  else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
-    Functions.insert(FunTmpl);
-}
-
 void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                    Expr **Args, unsigned NumArgs,
-                                   FunctionSet &Functions) {
+                                   ADLFunctionSet &Functions) {
   // Find all of the associated namespaces and classes based on the
   // arguments we have.
   AssociatedNamespaceSet AssociatedNamespaces;
@@ -1784,7 +1776,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
     //        lookup (11.4).
     DeclContext::lookup_iterator I, E;
     for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
-      Decl *D = *I;
+      NamedDecl *D = *I;
       // If the only declaration here is an ordinary friend, consider
       // it only if it was declared in an associated classes.
       if (D->getIdentifierNamespace() == Decl::IDNS_OrdinaryFriend) {
@@ -1793,10 +1785,16 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
           continue;
       }
 
+      // FIXME: using decls?  canonical decls?
+
       FunctionDecl *Fn;
       if (!Operator || !(Fn = dyn_cast<FunctionDecl>(D)) ||
-          IsAcceptableNonMemberOperatorCandidate(Fn, T1, T2, Context))
-        CollectFunctionDecl(Functions, D);
+          IsAcceptableNonMemberOperatorCandidate(Fn, T1, T2, Context)) {
+        if (isa<FunctionDecl>(D))
+          Functions.insert(D);
+        else if (isa<FunctionTemplateDecl>(D))
+          Functions.insert(D);
+      }
     }
   }
 }

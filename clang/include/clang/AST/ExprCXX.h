@@ -1137,6 +1137,10 @@ public:
                                 UnresolvedSetImpl::const_iterator End,
                                 const TemplateArgumentListInfo *Args);
 
+  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
+    Results.append(Begin, End);
+  }
+
   void addDecl(NamedDecl *Decl) {
     Results.addDecl(Decl);
   }

@@ -224,6 +224,10 @@ public:
     return Ambiguity;
   }
 
+  const UnresolvedSetImpl &asUnresolvedSet() const {
+    return Decls;
+  }
+
   iterator begin() const { return iterator(Decls.begin()); }
   iterator end() const { return iterator(Decls.end()); }
 

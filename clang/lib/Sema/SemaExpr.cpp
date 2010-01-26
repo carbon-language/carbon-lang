@@ -6337,17 +6337,11 @@ Action::OwningExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
     // point. We perform both an operator-name lookup from the local
     // scope and an argument-dependent lookup based on the types of
     // the arguments.
-    FunctionSet Functions;
+    UnresolvedSet<16> Functions;
     OverloadedOperatorKind OverOp = BinaryOperator::getOverloadedOperator(Opc);
-    if (OverOp != OO_None) {
-      if (S)
-        LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
-                                     Functions);
-      Expr *Args[2] = { lhs, rhs };
-      DeclarationName OpName
-        = Context.DeclarationNames.getCXXOperatorName(OverOp);
-      ArgumentDependentLookup(OpName, /*Operator*/true, Args, 2, Functions);
-    }
+    if (S && OverOp != OO_None)
+      LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
+                                   Functions);
     
     // Build the (potentially-overloaded, potentially-dependent)
     // binary operation.
@@ -6456,16 +6450,11 @@ Action::OwningExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
     // point. We perform both an operator-name lookup from the local
     // scope and an argument-dependent lookup based on the types of
     // the arguments.
-    FunctionSet Functions;
+    UnresolvedSet<16> Functions;
     OverloadedOperatorKind OverOp = UnaryOperator::getOverloadedOperator(Opc);
-    if (OverOp != OO_None) {
-      if (S)
-        LookupOverloadedOperatorName(OverOp, S, Input->getType(), QualType(),
-                                     Functions);
-      DeclarationName OpName
-        = Context.DeclarationNames.getCXXOperatorName(OverOp);
-      ArgumentDependentLookup(OpName, /*Operator*/true, &Input, 1, Functions);
-    }
+    if (S && OverOp != OO_None)
+      LookupOverloadedOperatorName(OverOp, S, Input->getType(), QualType(),
+                                   Functions);
     
     return CreateOverloadedUnaryOp(OpLoc, Opc, Functions, move(input));
   }

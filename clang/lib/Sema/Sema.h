@@ -950,9 +950,14 @@ public:
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
   // TODO: make this is a typesafe union.
   typedef llvm::SmallPtrSet<DeclContext   *, 16> AssociatedNamespaceSet;
-
-  typedef llvm::SmallPtrSet<AnyFunctionDecl, 16> FunctionSet;
+  // Members have to be a function or function template.
+  typedef llvm::SmallPtrSet<NamedDecl*, 16> ADLFunctionSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
+
+  void AddOverloadCandidate(NamedDecl *Function,
+                            AccessSpecifier Access,
+                            Expr **Args, unsigned NumArgs,
+                            OverloadCandidateSet &CandidateSet);
 
   void AddOverloadCandidate(FunctionDecl *Function,
                             AccessSpecifier Access,
@@ -961,7 +966,7 @@ public:
                             bool SuppressUserConversions = false,
                             bool ForceRValue = false,
                             bool PartialOverloading = false);
-  void AddFunctionCandidates(const FunctionSet &Functions,
+  void AddFunctionCandidates(const UnresolvedSetImpl &Functions,
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
                              bool SuppressUserConversions = false);
@@ -1029,6 +1034,7 @@ public:
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet);
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
+                                            bool Operator,
                                             Expr **Args, unsigned NumArgs,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
@@ -1080,12 +1086,12 @@ public:
 
   OwningExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                            unsigned Opc,
-                                           FunctionSet &Functions,
+                                           const UnresolvedSetImpl &Fns,
                                            ExprArg input);
 
   OwningExprResult CreateOverloadedBinOp(SourceLocation OpLoc,
                                          unsigned Opc,
-                                         FunctionSet &Functions,
+                                         const UnresolvedSetImpl &Fns,
                                          Expr *LHS, Expr *RHS);
 
   OwningExprResult CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
@@ -1230,11 +1236,11 @@ public:
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
                                     QualType T1, QualType T2,
-                                    FunctionSet &Functions);
+                                    UnresolvedSetImpl &Functions);
   
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
-                               FunctionSet &Functions);
+                               ADLFunctionSet &Functions);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer);

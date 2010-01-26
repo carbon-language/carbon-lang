@@ -2475,17 +2475,15 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 
 /// \brief Add all of the function declarations in the given function set to
 /// the overload canddiate set.
-void Sema::AddFunctionCandidates(const FunctionSet &Functions,
+void Sema::AddFunctionCandidates(const UnresolvedSetImpl &Fns,
                                  Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
                                  bool SuppressUserConversions) {
-  for (FunctionSet::const_iterator F = Functions.begin(),
-                                FEnd = Functions.end();
-       F != FEnd; ++F) {
+  for (UnresolvedSetIterator F = Fns.begin(), E = Fns.end(); F != E; ++F) {
     // FIXME: using declarations
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*F)) {
       if (isa<CXXMethodDecl>(FD) && !cast<CXXMethodDecl>(FD)->isStatic())
-        AddMethodCandidate(cast<CXXMethodDecl>(FD), /*FIXME*/ FD->getAccess(),
+        AddMethodCandidate(cast<CXXMethodDecl>(FD), F.getAccess(),
                            cast<CXXMethodDecl>(FD)->getParent(),
                            Args[0]->getType(), Args + 1, NumArgs - 1, 
                            CandidateSet, SuppressUserConversions);
@@ -2496,7 +2494,7 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
       FunctionTemplateDecl *FunTmpl = cast<FunctionTemplateDecl>(*F);
       if (isa<CXXMethodDecl>(FunTmpl->getTemplatedDecl()) &&
           !cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())->isStatic())
-        AddMethodTemplateCandidate(FunTmpl, /*FIXME*/ FunTmpl->getAccess(),
+        AddMethodTemplateCandidate(FunTmpl, F.getAccess(),
                               cast<CXXRecordDecl>(FunTmpl->getDeclContext()),
                                    /*FIXME: explicit args */ 0,
                                    Args[0]->getType(), Args + 1, NumArgs - 1,
@@ -2986,7 +2984,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                                  Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
                                  SourceRange OpRange) {
-  FunctionSet Functions;
+  UnresolvedSet<16> Fns;
 
   QualType T1 = Args[0]->getType();
   QualType T2;
@@ -2995,9 +2993,10 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
 
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
   if (S)
-    LookupOverloadedOperatorName(Op, S, T1, T2, Functions);
-  ArgumentDependentLookup(OpName, /*Operator*/true, Args, NumArgs, Functions);
-  AddFunctionCandidates(Functions, Args, NumArgs, CandidateSet);
+    LookupOverloadedOperatorName(Op, S, T1, T2, Fns);
+  AddFunctionCandidates(Fns, Args, NumArgs, CandidateSet, false);
+  AddArgumentDependentLookupCandidates(OpName, false, Args, NumArgs, 0,
+                                       CandidateSet);
   AddMemberOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet, OpRange);
   AddBuiltinOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet);
 }
@@ -4127,31 +4126,19 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 /// candidate set (C++ [basic.lookup.argdep]).
 void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
+                                           bool Operator,
                                            Expr **Args, unsigned NumArgs,
                        const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
                                            bool PartialOverloading) {
-  FunctionSet Functions;
+  ADLFunctionSet Functions;
 
   // FIXME: Should we be trafficking in canonical function decls throughout?
   
-  // Record all of the function candidates that we've already
-  // added to the overload set, so that we don't add those same
-  // candidates a second time.
-  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
-                                   CandEnd = CandidateSet.end();
-       Cand != CandEnd; ++Cand)
-    if (Cand->Function) {
-      Functions.insert(Cand->Function);
-      if (FunctionTemplateDecl *FunTmpl = Cand->Function->getPrimaryTemplate())
-        Functions.insert(FunTmpl);
-    }
-
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, /*Operator*/false, Args, NumArgs, Functions);
+  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Functions);
 
   // Erase all of the candidates we already knew about.
-  // FIXME: This is suboptimal. Is there a better way?
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand)
@@ -4163,17 +4150,16 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
 
   // For each of the ADL candidates we found, add it to the overload
   // set.
-  for (FunctionSet::iterator Func = Functions.begin(),
-                          FuncEnd = Functions.end();
-       Func != FuncEnd; ++Func) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func)) {
+  for (ADLFunctionSet::iterator I = Functions.begin(),
+         E = Functions.end(); I != E; ++I) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       if (ExplicitTemplateArgs)
         continue;
       
       AddOverloadCandidate(FD, AS_none, Args, NumArgs, CandidateSet,
                            false, false, PartialOverloading);
     } else
-      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*Func),
+      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*I),
                                    AS_none, ExplicitTemplateArgs,
                                    Args, NumArgs, CandidateSet);
   }
@@ -5242,7 +5228,8 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                PartialOverloading);
 
   if (ULE->requiresADL())
-    AddArgumentDependentLookupCandidates(ULE->getName(), Args, NumArgs,
+    AddArgumentDependentLookupCandidates(ULE->getName(), /*Operator*/ false,
+                                         Args, NumArgs,
                                          ExplicitTemplateArgs,
                                          CandidateSet,
                                          PartialOverloading);  
@@ -5392,7 +5379,7 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
   return ExprError();
 }
 
-static bool IsOverloaded(const Sema::FunctionSet &Functions) {
+static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
   return Functions.size() > 1 ||
     (Functions.size() == 1 && isa<FunctionTemplateDecl>(*Functions.begin()));
 }
@@ -5413,10 +5400,10 @@ static bool IsOverloaded(const Sema::FunctionSet &Functions) {
 /// by CreateOverloadedUnaryOp().
 ///
 /// \param input The input argument.
-Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
-                                                     unsigned OpcIn,
-                                                     FunctionSet &Functions,
-                                                     ExprArg input) {
+Sema::OwningExprResult
+Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
+                              const UnresolvedSetImpl &Fns,
+                              ExprArg input) {
   UnaryOperator::Opcode Opc = static_cast<UnaryOperator::Opcode>(OpcIn);
   Expr *Input = (Expr *)input.get();
 
@@ -5441,11 +5428,8 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
                                      0, SourceRange(), OpName, OpLoc,
-                                     /*ADL*/ true, IsOverloaded(Functions));
-    for (FunctionSet::iterator Func = Functions.begin(),
-                            FuncEnd = Functions.end();
-         Func != FuncEnd; ++Func)
-      Fn->addDecl(*Func);
+                                     /*ADL*/ true, IsOverloaded(Fns));
+    Fn->addDecls(Fns.begin(), Fns.end());
 
     input.release();
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
@@ -5458,10 +5442,16 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
   OverloadCandidateSet CandidateSet;
 
   // Add the candidates from the given function set.
-  AddFunctionCandidates(Functions, &Args[0], NumArgs, CandidateSet, false);
+  AddFunctionCandidates(Fns, &Args[0], NumArgs, CandidateSet, false);
 
   // Add operator candidates that are member functions.
   AddMemberOperatorCandidates(Op, OpLoc, &Args[0], NumArgs, CandidateSet);
+
+  // Add candidates from ADL.
+  AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
+                                       Args, 1,
+                                       /*ExplicitTemplateArgs*/ 0,
+                                       CandidateSet);
 
   // Add builtin operator candidates.
   AddBuiltinOperatorCandidates(Op, OpLoc, &Args[0], NumArgs, CandidateSet);
@@ -5575,7 +5565,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
 Sema::OwningExprResult
 Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                             unsigned OpcIn,
-                            FunctionSet &Functions,
+                            const UnresolvedSetImpl &Fns,
                             Expr *LHS, Expr *RHS) {
   Expr *Args[2] = { LHS, RHS };
   LHS=RHS=0; //Please use only Args instead of LHS/RHS couple
@@ -5587,7 +5577,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // If either side is type-dependent, create an appropriate dependent
   // expression.
   if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
-    if (Functions.empty()) {
+    if (Fns.empty()) {
       // If there are no functions to store, just build a dependent 
       // BinaryOperator or CompoundAssignment.
       if (Opc <= BinaryOperator::Assign || Opc > BinaryOperator::OrAssign)
@@ -5600,17 +5590,14 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                         Context.DependentTy,
                                                         OpLoc));
     }
-    
+
+    // FIXME: save results of ADL from here?
     UnresolvedLookupExpr *Fn
       = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
                                      0, SourceRange(), OpName, OpLoc,
-                                     /* ADL */ true, IsOverloaded(Functions));
-                                     
-    for (FunctionSet::iterator Func = Functions.begin(),
-                            FuncEnd = Functions.end();
-         Func != FuncEnd; ++Func)
-      Fn->addDecl(*Func);
+                                     /*ADL*/ true, IsOverloaded(Fns));
 
+    Fn->addDecls(Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    Args, 2,
                                                    Context.DependentTy,
@@ -5635,10 +5622,16 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   OverloadCandidateSet CandidateSet;
 
   // Add the candidates from the given function set.
-  AddFunctionCandidates(Functions, Args, 2, CandidateSet, false);
+  AddFunctionCandidates(Fns, Args, 2, CandidateSet, false);
 
   // Add operator candidates that are member functions.
   AddMemberOperatorCandidates(Op, OpLoc, Args, 2, CandidateSet);
+
+  // Add candidates from ADL.
+  AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
+                                       Args, 2,
+                                       /*ExplicitTemplateArgs*/ 0,
+                                       CandidateSet);
 
   // Add builtin operator candidates.
   AddBuiltinOperatorCandidates(Op, OpLoc, Args, 2, CandidateSet);

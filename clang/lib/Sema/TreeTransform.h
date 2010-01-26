@@ -5644,28 +5644,21 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
 
   // Compute the transformed set of functions (and function templates) to be
   // used during overload resolution.
-  Sema::FunctionSet Functions;
+  UnresolvedSet<16> Functions;
 
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(CalleeExpr)) {
     assert(ULE->requiresADL());
 
     // FIXME: Do we have to check
     // IsAcceptableNonMemberOperatorCandidate for each of these?
-    for (UnresolvedLookupExpr::decls_iterator I = ULE->decls_begin(),
-           E = ULE->decls_end(); I != E; ++I)
-      Functions.insert(AnyFunctionDecl::getFromNamedDecl(*I));
+    Functions.append(ULE->decls_begin(), ULE->decls_end());
   } else {
-    Functions.insert(AnyFunctionDecl::getFromNamedDecl(
-                        cast<DeclRefExpr>(CalleeExpr)->getDecl()));
+    Functions.addDecl(cast<DeclRefExpr>(CalleeExpr)->getDecl());
   }
 
   // Add any functions found via argument-dependent lookup.
   Expr *Args[2] = { FirstExpr, SecondExpr };
   unsigned NumArgs = 1 + (SecondExpr != 0);
-  DeclarationName OpName
-    = SemaRef.Context.DeclarationNames.getCXXOperatorName(Op);
-  SemaRef.ArgumentDependentLookup(OpName, /*Operator*/true, Args, NumArgs,
-                                  Functions);
 
   // Create the overloaded operator invocation for unary operators.
   if (NumArgs == 1 || isPostIncDec) {
