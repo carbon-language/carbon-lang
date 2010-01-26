@@ -52,6 +52,7 @@
 // * -> pointer
 // & -> reference
 // C -> const
+// D -> volatile
 
 // The third value provided to the macro specifies information about attributes
 // of the function.  These must be kept in sync with the predicates in the
@@ -439,18 +440,18 @@ BUILTIN(__sync_nand_and_fetch_16, "LLLiLLLi*LLLi.", "n")
 
 
 BUILTIN(__sync_bool_compare_and_swap, "v.", "")
-BUILTIN(__sync_bool_compare_and_swap_1, "bc*cc.", "n")
-BUILTIN(__sync_bool_compare_and_swap_2, "bs*ss.", "n")
-BUILTIN(__sync_bool_compare_and_swap_4, "bi*ii.", "n")
-BUILTIN(__sync_bool_compare_and_swap_8, "bLLi*LLi.", "n")
-BUILTIN(__sync_bool_compare_and_swap_16, "bLLLi*LLLiLLLi.", "n")
+BUILTIN(__sync_bool_compare_and_swap_1, "bcD*cc.", "n")
+BUILTIN(__sync_bool_compare_and_swap_2, "bsD*ss.", "n")
+BUILTIN(__sync_bool_compare_and_swap_4, "biD*ii.", "n")
+BUILTIN(__sync_bool_compare_and_swap_8, "bLLiD*LLiLLi.", "n")
+BUILTIN(__sync_bool_compare_and_swap_16, "bLLLiD*LLLiLLLi.", "n")
 
 BUILTIN(__sync_val_compare_and_swap, "v.", "")
-BUILTIN(__sync_val_compare_and_swap_1, "cc*cc.", "n")
-BUILTIN(__sync_val_compare_and_swap_2, "ss*ss.", "n")
-BUILTIN(__sync_val_compare_and_swap_4, "ii*ii.", "n")
-BUILTIN(__sync_val_compare_and_swap_8, "LLiLLi*LLi.", "n")
-BUILTIN(__sync_val_compare_and_swap_16, "LLLiLLLi*LLLiLLLi.", "n")
+BUILTIN(__sync_val_compare_and_swap_1, "ccD*cc.", "n")
+BUILTIN(__sync_val_compare_and_swap_2, "ssD*ss.", "n")
+BUILTIN(__sync_val_compare_and_swap_4, "iiD*ii.", "n")
+BUILTIN(__sync_val_compare_and_swap_8, "LLiLLiD*LLiLLi.", "n")
+BUILTIN(__sync_val_compare_and_swap_16, "LLLiLLLiD*LLLiLLLi.", "n")
 
 BUILTIN(__sync_lock_test_and_set, "v.", "")
 BUILTIN(__sync_lock_test_and_set_1, "cc*c.", "n")

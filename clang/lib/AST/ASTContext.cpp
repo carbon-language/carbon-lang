@@ -4793,6 +4793,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
       case 'C':
         Type = Type.withConst();
         break;
+      case 'D':
+        Type = Context.getVolatileType(Type);
+        break;
     }
   }
 
