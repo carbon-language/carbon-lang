@@ -44,205 +44,6 @@ TypeLoc TypeSourceInfo::getTypeLoc() const {
 }
 
 //===----------------------------------------------------------------------===//
-// Decl Allocation/Deallocation Method Implementations
-//===----------------------------------------------------------------------===//
-
-
-TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
-  return new (C) TranslationUnitDecl(C);
-}
-
-NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation L, IdentifierInfo *Id) {
-  return new (C) NamespaceDecl(DC, L, Id);
-}
-
-void NamespaceDecl::Destroy(ASTContext& C) {
-  // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
-  // together. They are all top-level Decls.
-
-  this->~NamespaceDecl();
-  C.Deallocate((void *)this);
-}
-
-
-ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
-    SourceLocation L, IdentifierInfo *Id, QualType T) {
-  return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
-}
-
-const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
-  switch (SC) {
-  case VarDecl::None:          break;
-  case VarDecl::Auto:          return "auto"; break;
-  case VarDecl::Extern:        return "extern"; break;
-  case VarDecl::PrivateExtern: return "__private_extern__"; break;
-  case VarDecl::Register:      return "register"; break;
-  case VarDecl::Static:        return "static"; break;
-  }
-
-  assert(0 && "Invalid storage class");
-  return 0;
-}
-
-ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, TypeSourceInfo *TInfo,
-                                 StorageClass S, Expr *DefArg) {
-  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo, S, DefArg);
-}
-
-Expr *ParmVarDecl::getDefaultArg() {
-  assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
-  assert(!hasUninstantiatedDefaultArg() &&
-         "Default argument is not yet instantiated!");
-  
-  Expr *Arg = getInit();
-  if (CXXExprWithTemporaries *E = dyn_cast_or_null<CXXExprWithTemporaries>(Arg))
-    return E->getSubExpr();
-  
-  return Arg;
-}
-
-unsigned ParmVarDecl::getNumDefaultArgTemporaries() const {
-  if (const CXXExprWithTemporaries *E = 
-        dyn_cast<CXXExprWithTemporaries>(getInit()))
-    return E->getNumTemporaries();
-
-  return 0;
-}
-
-CXXTemporary *ParmVarDecl::getDefaultArgTemporary(unsigned i) {
-  assert(getNumDefaultArgTemporaries() && 
-         "Default arguments does not have any temporaries!");
-
-  CXXExprWithTemporaries *E = cast<CXXExprWithTemporaries>(getInit());
-  return E->getTemporary(i);
-}
-
-SourceRange ParmVarDecl::getDefaultArgRange() const {
-  if (const Expr *E = getInit())
-    return E->getSourceRange();
-  
-  if (hasUninstantiatedDefaultArg())
-    return getUninstantiatedDefaultArg()->getSourceRange();
-    
-  return SourceRange();
-}
-
-void VarDecl::setInit(ASTContext &C, Expr *I) {
-  if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
-    Eval->~EvaluatedStmt();
-    C.Deallocate(Eval);
-  }
-
-  Init = I;
-}
-
-bool VarDecl::isExternC() const {
-  ASTContext &Context = getASTContext();
-  if (!Context.getLangOptions().CPlusPlus)
-    return (getDeclContext()->isTranslationUnit() &&
-            getStorageClass() != Static) ||
-      (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
-
-  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
-       DC = DC->getParent()) {
-    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
-      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != Static;
-
-      break;
-    }
-
-    if (DC->isFunctionOrMethod())
-      return false;
-  }
-
-  return false;
-}
-
-FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
-                                   SourceLocation L,
-                                   DeclarationName N, QualType T,
-                                   TypeSourceInfo *TInfo,
-                                   StorageClass S, bool isInline,
-                                   bool hasWrittenPrototype) {
-  FunctionDecl *New
-    = new (C) FunctionDecl(Function, DC, L, N, T, TInfo, S, isInline);
-  New->HasWrittenPrototype = hasWrittenPrototype;
-  return New;
-}
-
-BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
-  return new (C) BlockDecl(DC, L);
-}
-
-FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                             IdentifierInfo *Id, QualType T,
-                             TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, TInfo, BW, Mutable);
-}
-
-bool FieldDecl::isAnonymousStructOrUnion() const {
-  if (!isImplicit() || getDeclName())
-    return false;
-
-  if (const RecordType *Record = getType()->getAs<RecordType>())
-    return Record->getDecl()->isAnonymousStructOrUnion();
-
-  return false;
-}
-
-EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
-                                           SourceLocation L,
-                                           IdentifierInfo *Id, QualType T,
-                                           Expr *E, const llvm::APSInt &V) {
-  return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
-}
-
-void EnumConstantDecl::Destroy(ASTContext& C) {
-  if (Init) Init->Destroy(C);
-  Decl::Destroy(C);
-}
-
-TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, IdentifierInfo *Id,
-                                 TypeSourceInfo *TInfo) {
-  return new (C) TypedefDecl(DC, L, Id, TInfo);
-}
-
-// Anchor TypedefDecl's vtable here.
-TypedefDecl::~TypedefDecl() {}
-
-EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           IdentifierInfo *Id, SourceLocation TKL,
-                           EnumDecl *PrevDecl) {
-  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL);
-  C.getTypeDeclType(Enum, PrevDecl);
-  return Enum;
-}
-
-void EnumDecl::Destroy(ASTContext& C) {
-  Decl::Destroy(C);
-}
-
-void EnumDecl::completeDefinition(ASTContext &C,
-                                  QualType NewType,
-                                  QualType NewPromotionType) {
-  assert(!isDefinition() && "Cannot redefine enums!");
-  IntegerType = NewType;
-  PromotionType = NewPromotionType;
-  TagDecl::completeDefinition();
-}
-
-FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
-                                           SourceLocation L,
-                                           StringLiteral *Str) {
-  return new (C) FileScopeAsmDecl(DC, L, Str);
-}
-
-//===----------------------------------------------------------------------===//
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -606,6 +407,20 @@ SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
 // VarDecl Implementation
 //===----------------------------------------------------------------------===//
 
+const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
+  switch (SC) {
+  case VarDecl::None:          break;
+  case VarDecl::Auto:          return "auto"; break;
+  case VarDecl::Extern:        return "extern"; break;
+  case VarDecl::PrivateExtern: return "__private_extern__"; break;
+  case VarDecl::Register:      return "register"; break;
+  case VarDecl::Static:        return "static"; break;
+  }
+
+  assert(0 && "Invalid storage class");
+  return 0;
+}
+
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S) {
@@ -638,6 +453,45 @@ SourceRange VarDecl::getSourceRange() const {
   return SourceRange(Start, getLocation());
 }
 
+bool VarDecl::isExternC() const {
+  ASTContext &Context = getASTContext();
+  if (!Context.getLangOptions().CPlusPlus)
+    return (getDeclContext()->isTranslationUnit() &&
+            getStorageClass() != Static) ||
+      (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
+
+  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
+       DC = DC->getParent()) {
+    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
+      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
+        return getStorageClass() != Static;
+
+      break;
+    }
+
+    if (DC->isFunctionOrMethod())
+      return false;
+  }
+
+  return false;
+}
+
+VarDecl *VarDecl::getCanonicalDecl() {
+  return getFirstDeclaration();
+}
+
+const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
+  redecl_iterator I = redecls_begin(), E = redecls_end();
+  while (I != E && !I->getInit())
+    ++I;
+
+  if (I != E) {
+    Def = *I;
+    return I->getInit();
+  }
+  return 0;
+}
+
 bool VarDecl::isOutOfLine() const {
   if (!isStaticDataMember())
     return false;
@@ -665,6 +519,24 @@ VarDecl *VarDecl::getOutOfLineDefinition() {
   }
   
   return 0;
+}
+
+bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
+  if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
+    return false;
+
+  const VarDecl *Def = 0;
+  return (!getDefinition(Def) &&
+          (getStorageClass() == None || getStorageClass() == Static));
+}
+
+void VarDecl::setInit(ASTContext &C, Expr *I) {
+  if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
+    Eval->~EvaluatedStmt();
+    C.Deallocate(Eval);
+  }
+
+  Init = I;
 }
 
 VarDecl *VarDecl::getInstantiatedFromStaticDataMember() const {
@@ -697,29 +569,53 @@ void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
     MSI->setPointOfInstantiation(PointOfInstantiation);
 }
 
-bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
-  if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
-    return false;
+//===----------------------------------------------------------------------===//
+// ParmVarDecl Implementation
+//===----------------------------------------------------------------------===//
 
-  const VarDecl *Def = 0;
-  return (!getDefinition(Def) &&
-          (getStorageClass() == None || getStorageClass() == Static));
+ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 QualType T, TypeSourceInfo *TInfo,
+                                 StorageClass S, Expr *DefArg) {
+  return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, TInfo, S, DefArg);
 }
 
-const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
-  redecl_iterator I = redecls_begin(), E = redecls_end();
-  while (I != E && !I->getInit())
-    ++I;
+Expr *ParmVarDecl::getDefaultArg() {
+  assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
+  assert(!hasUninstantiatedDefaultArg() &&
+         "Default argument is not yet instantiated!");
+  
+  Expr *Arg = getInit();
+  if (CXXExprWithTemporaries *E = dyn_cast_or_null<CXXExprWithTemporaries>(Arg))
+    return E->getSubExpr();
 
-  if (I != E) {
-    Def = *I;
-    return I->getInit();
-  }
+  return Arg;
+}
+
+unsigned ParmVarDecl::getNumDefaultArgTemporaries() const {
+  if (const CXXExprWithTemporaries *E = 
+        dyn_cast<CXXExprWithTemporaries>(getInit()))
+    return E->getNumTemporaries();
+
   return 0;
 }
 
-VarDecl *VarDecl::getCanonicalDecl() {
-  return getFirstDeclaration();
+CXXTemporary *ParmVarDecl::getDefaultArgTemporary(unsigned i) {
+  assert(getNumDefaultArgTemporaries() && 
+         "Default arguments does not have any temporaries!");
+
+  CXXExprWithTemporaries *E = cast<CXXExprWithTemporaries>(getInit());
+  return E->getTemporary(i);
+}
+
+SourceRange ParmVarDecl::getDefaultArgRange() const {
+  if (const Expr *E = getInit())
+    return E->getSourceRange();
+
+  if (hasUninstantiatedDefaultArg())
+    return getUninstantiatedDefaultArg()->getSourceRange();
+
+  return SourceRange();
 }
 
 //===----------------------------------------------------------------------===//
@@ -824,6 +720,26 @@ bool FunctionDecl::isGlobal() const {
   }
 
   return true;
+}
+
+void
+FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
+  redeclarable_base::setPreviousDeclaration(PrevDecl);
+
+  if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
+    FunctionTemplateDecl *PrevFunTmpl
+      = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
+    assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
+    FunTmpl->setPreviousDeclaration(PrevFunTmpl);
+  }
+}
+
+const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
+  return getFirstDeclaration();
+}
+
+FunctionDecl *FunctionDecl::getCanonicalDecl() {
+  return getFirstDeclaration();
 }
 
 /// \brief Returns a value indicating whether this function
@@ -1012,26 +928,6 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   //   function, and does not forbid an external definition in another 
   //   translation unit.
   return false;
-}
-
-void
-FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
-  redeclarable_base::setPreviousDeclaration(PrevDecl);
-
-  if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
-    FunctionTemplateDecl *PrevFunTmpl
-      = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
-    assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
-    FunTmpl->setPreviousDeclaration(PrevFunTmpl);
-  }
-}
-
-const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
-  return getFirstDeclaration();
-}
-
-FunctionDecl *FunctionDecl::getCanonicalDecl() {
-  return getFirstDeclaration();
 }
 
 /// getOverloadedOperator - Which C++ overloaded operator this
@@ -1254,6 +1150,26 @@ bool FunctionDecl::isOutOfLine() const {
 }
 
 //===----------------------------------------------------------------------===//
+// FieldDecl Implementation
+//===----------------------------------------------------------------------===//
+
+FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                             IdentifierInfo *Id, QualType T,
+                             TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, TInfo, BW, Mutable);
+}
+
+bool FieldDecl::isAnonymousStructOrUnion() const {
+  if (!isImplicit() || getDeclName())
+    return false;
+
+  if (const RecordType *Record = getType()->getAs<RecordType>())
+    return Record->getDecl()->isAnonymousStructOrUnion();
+
+  return false;
+}
+
+//===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
@@ -1302,6 +1218,31 @@ TagDecl::TagKind TagDecl::getTagKindForTypeSpec(unsigned TypeSpec) {
   case DeclSpec::TST_union: return TK_union;
   case DeclSpec::TST_enum: return TK_enum;
   }
+}
+
+//===----------------------------------------------------------------------===//
+// EnumDecl Implementation
+//===----------------------------------------------------------------------===//
+
+EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
+                           IdentifierInfo *Id, SourceLocation TKL,
+                           EnumDecl *PrevDecl) {
+  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL);
+  C.getTypeDeclType(Enum, PrevDecl);
+  return Enum;
+}
+
+void EnumDecl::Destroy(ASTContext& C) {
+  Decl::Destroy(C);
+}
+
+void EnumDecl::completeDefinition(ASTContext &C,
+                                  QualType NewType,
+                                  QualType NewPromotionType) {
+  assert(!isDefinition() && "Cannot redefine enums!");
+  IntegerType = NewType;
+  PromotionType = NewPromotionType;
+  TagDecl::completeDefinition();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1379,4 +1320,75 @@ void BlockDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
 
 unsigned BlockDecl::getNumParams() const {
   return NumParams;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Other Decl Allocation/Deallocation Method Implementations
+//===----------------------------------------------------------------------===//
+
+TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
+  return new (C) TranslationUnitDecl(C);
+}
+
+NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation L, IdentifierInfo *Id) {
+  return new (C) NamespaceDecl(DC, L, Id);
+}
+
+void NamespaceDecl::Destroy(ASTContext& C) {
+  // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
+  // together. They are all top-level Decls.
+
+  this->~NamespaceDecl();
+  C.Deallocate((void *)this);
+}
+
+
+ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
+    SourceLocation L, IdentifierInfo *Id, QualType T) {
+  return new (C) ImplicitParamDecl(ImplicitParam, DC, L, Id, T);
+}
+
+FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
+                                   SourceLocation L,
+                                   DeclarationName N, QualType T,
+                                   TypeSourceInfo *TInfo,
+                                   StorageClass S, bool isInline,
+                                   bool hasWrittenPrototype) {
+  FunctionDecl *New
+    = new (C) FunctionDecl(Function, DC, L, N, T, TInfo, S, isInline);
+  New->HasWrittenPrototype = hasWrittenPrototype;
+  return New;
+}
+
+BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
+  return new (C) BlockDecl(DC, L);
+}
+
+EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
+                                           SourceLocation L,
+                                           IdentifierInfo *Id, QualType T,
+                                           Expr *E, const llvm::APSInt &V) {
+  return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
+}
+
+void EnumConstantDecl::Destroy(ASTContext& C) {
+  if (Init) Init->Destroy(C);
+  Decl::Destroy(C);
+}
+
+TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 TypeSourceInfo *TInfo) {
+  return new (C) TypedefDecl(DC, L, Id, TInfo);
+}
+
+// Anchor TypedefDecl's vtable here.
+TypedefDecl::~TypedefDecl() {}
+
+FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
+                                           SourceLocation L,
+                                           StringLiteral *Str) {
+  return new (C) FileScopeAsmDecl(DC, L, Str);
 }

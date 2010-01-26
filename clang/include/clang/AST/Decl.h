@@ -474,13 +474,113 @@ public:
                          SourceLocation L, IdentifierInfo *Id,
                          QualType T, TypeSourceInfo *TInfo, StorageClass S);
 
-  virtual ~VarDecl();
   virtual void Destroy(ASTContext& C);
+  virtual ~VarDecl();
+
+  virtual SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
   void setStorageClass(StorageClass SC) { SClass = SC; }
 
-  virtual SourceRange getSourceRange() const;
+  void setThreadSpecified(bool T) { ThreadSpecified = T; }
+  bool isThreadSpecified() const {
+    return ThreadSpecified;
+  }
+
+  /// hasLocalStorage - Returns true if a variable with function scope
+  ///  is a non-static local variable.
+  bool hasLocalStorage() const {
+    if (getStorageClass() == None)
+      return !isFileVarDecl();
+
+    // Return true for:  Auto, Register.
+    // Return false for: Extern, Static, PrivateExtern.
+
+    return getStorageClass() <= Register;
+  }
+
+  /// hasExternStorage - Returns true if a variable has extern or
+  /// __private_extern__ storage.
+  bool hasExternalStorage() const {
+    return getStorageClass() == Extern || getStorageClass() == PrivateExtern;
+  }
+
+  /// hasGlobalStorage - Returns true for all variables that do not
+  ///  have local storage.  This includs all global variables as well
+  ///  as static variables declared within a function.
+  bool hasGlobalStorage() const { return !hasLocalStorage(); }
+
+  /// \brief Determines whether this variable is a variable with
+  /// external, C linkage.
+  bool isExternC() const;
+
+  /// isBlockVarDecl - Returns true for local variable declarations.  Note that
+  /// this includes static variables inside of functions.
+  ///
+  ///   void foo() { int x; static int y; extern int z; }
+  ///
+  bool isBlockVarDecl() const {
+    if (getKind() != Decl::Var)
+      return false;
+    if (const DeclContext *DC = getDeclContext())
+      return DC->getLookupContext()->isFunctionOrMethod();
+    return false;
+  }
+
+  /// \brief Determines whether this is a static data member.
+  ///
+  /// This will only be true in C++, and applies to, e.g., the
+  /// variable 'x' in:
+  /// \code
+  /// struct S {
+  ///   static int x;
+  /// };
+  /// \endcode
+  bool isStaticDataMember() const {
+    return getDeclContext()->isRecord();
+  }
+
+  virtual VarDecl *getCanonicalDecl();
+  const VarDecl *getCanonicalDecl() const {
+    return const_cast<VarDecl*>(this)->getCanonicalDecl();
+  }
+
+  /// \brief Retrieve the definition of this variable, which may come
+  /// from a previous declaration. Def will be set to the VarDecl that
+  /// contains the initializer, and the result will be that
+  /// initializer.
+  const Expr *getDefinition(const VarDecl *&Def) const;
+
+  const Expr *getDefinition() const {
+    const VarDecl* Definition;
+    return getDefinition(Definition);
+  }
+
+  /// \brief Determine whether this is or was instantiated from an out-of-line 
+  /// definition of a static data member.
+  bool isOutOfLine() const;
+
+  /// \brief If this is a static data member, find its out-of-line definition.
+  VarDecl *getOutOfLineDefinition();
+  
+  /// isFileVarDecl - Returns true for file scoped variable declaration.
+  bool isFileVarDecl() const {
+    if (getKind() != Decl::Var)
+      return false;
+    if (const DeclContext *Ctx = getDeclContext()) {
+      Ctx = Ctx->getLookupContext();
+      if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
+        return true;
+    }
+    if (isStaticDataMember())
+      return true;
+
+    return false;
+  }
+
+  /// \brief Determine whether this is a tentative definition of a
+  /// variable in C.
+  bool isTentativeDefinition(ASTContext &Context) const;
 
   const Expr *getInit() const {
     if (Init.isNull())
@@ -614,22 +714,6 @@ public:
     Eval->IsICE = IsICE;
   }
 
-  /// \brief Retrieve the definition of this variable, which may come
-  /// from a previous declaration. Def will be set to the VarDecl that
-  /// contains the initializer, and the result will be that
-  /// initializer.
-  const Expr *getDefinition(const VarDecl *&Def) const;
-
-  const Expr *getDefinition() const {
-    const VarDecl* Definition;
-    return getDefinition(Definition);
-  }
-  
-  void setThreadSpecified(bool T) { ThreadSpecified = T; }
-  bool isThreadSpecified() const {
-    return ThreadSpecified;
-  }
-
   void setCXXDirectInitializer(bool T) { HasCXXDirectInit = T; }
 
   /// hasCXXDirectInitializer - If true, the initializer was a direct
@@ -653,67 +737,6 @@ public:
   void setDeclaredInCondition(bool InCondition) {
     DeclaredInCondition = InCondition;
   }
-
-  virtual VarDecl *getCanonicalDecl();
-  const VarDecl *getCanonicalDecl() const {
-    return const_cast<VarDecl*>(this)->getCanonicalDecl();
-  }
-
-  /// hasLocalStorage - Returns true if a variable with function scope
-  ///  is a non-static local variable.
-  bool hasLocalStorage() const {
-    if (getStorageClass() == None)
-      return !isFileVarDecl();
-
-    // Return true for:  Auto, Register.
-    // Return false for: Extern, Static, PrivateExtern.
-
-    return getStorageClass() <= Register;
-  }
-
-  /// hasExternStorage - Returns true if a variable has extern or
-  /// __private_extern__ storage.
-  bool hasExternalStorage() const {
-    return getStorageClass() == Extern || getStorageClass() == PrivateExtern;
-  }
-
-  /// hasGlobalStorage - Returns true for all variables that do not
-  ///  have local storage.  This includs all global variables as well
-  ///  as static variables declared within a function.
-  bool hasGlobalStorage() const { return !hasLocalStorage(); }
-
-  /// isBlockVarDecl - Returns true for local variable declarations.  Note that
-  /// this includes static variables inside of functions.
-  ///
-  ///   void foo() { int x; static int y; extern int z; }
-  ///
-  bool isBlockVarDecl() const {
-    if (getKind() != Decl::Var)
-      return false;
-    if (const DeclContext *DC = getDeclContext())
-      return DC->getLookupContext()->isFunctionOrMethod();
-    return false;
-  }
-
-  /// \brief Determines whether this is a static data member.
-  ///
-  /// This will only be true in C++, and applies to, e.g., the
-  /// variable 'x' in:
-  /// \code
-  /// struct S {
-  ///   static int x;
-  /// };
-  /// \endcode
-  bool isStaticDataMember() const {
-    return getDeclContext()->isRecord();
-  }
-
-  /// \brief Determine whether this is or was instantiated from an out-of-line 
-  /// definition of a static data member.
-  bool isOutOfLine() const;
-
-  /// \brief If this is a static data member, find its out-of-line definition.
-  VarDecl *getOutOfLineDefinition();
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
@@ -733,29 +756,6 @@ public:
   /// data member of a class template, set the template specialiation kind.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK,
                         SourceLocation PointOfInstantiation = SourceLocation());
-  
-  /// isFileVarDecl - Returns true for file scoped variable declaration.
-  bool isFileVarDecl() const {
-    if (getKind() != Decl::Var)
-      return false;
-    if (const DeclContext *Ctx = getDeclContext()) {
-      Ctx = Ctx->getLookupContext();
-      if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
-        return true;
-    }
-    if (isStaticDataMember())
-      return true;
-
-    return false;
-  }
-
-  /// \brief Determine whether this is a tentative definition of a
-  /// variable in C.
-  bool isTentativeDefinition(ASTContext &Context) const;
-
-  /// \brief Determines whether this variable is a variable with
-  /// external, C linkage.
-  bool isExternC() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -1101,8 +1101,6 @@ public:
 
   unsigned getBuiltinID() const;
 
-  unsigned getNumParmVarDeclsFromType() const;
-
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
@@ -1115,7 +1113,7 @@ public:
   param_const_iterator param_end() const   { return ParamInfo+param_size(); }
 
   /// getNumParams - Return the number of parameters this function must have
-  /// based on its functiontype.  This is the length of the PararmInfo array
+  /// based on its FunctionType.  This is the length of the ParamInfo array
   /// after it has been created.
   unsigned getNumParams() const;
 
@@ -1564,6 +1562,8 @@ public:
   ///  there is no TagDecl that defines the struct/union/class/enum.
   TagDecl* getDefinition(ASTContext& C) const;
 
+  void setDefinition(bool V) { IsDefinition = V; }
+
   const char *getKindName() const {
     return ElaboratedType::getNameForTagKind(getTagKind());
   }
@@ -1599,8 +1599,6 @@ public:
   static TagDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<TagDecl *>(const_cast<DeclContext*>(DC));
   }
-
-  void setDefinition(bool V) { IsDefinition = V; }
 };
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
