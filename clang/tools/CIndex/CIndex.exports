@@ -28,6 +28,7 @@ _clang_getDefinitionSpellingAndExtent
 _clang_getFile
 _clang_getFileName
 _clang_getFileTime
+_clang_getInclusions
 _clang_getInstantiationLocation
 _clang_getLocation
 _clang_getNullCursor

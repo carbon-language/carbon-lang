@@ -303,6 +303,29 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
 }
 
 /******************************************************************************/
+/* Inclusion stack testing.                                                   */
+/******************************************************************************/
+
+void InclusionVisitor(CXFile includedFile, CXSourceLocation *includeStack,
+                      unsigned includeStackLen, CXClientData data) {
+  
+  unsigned i;
+  printf("file: %s\nincluded by:\n", clang_getFileName(includedFile));
+  for (i = 0; i < includeStackLen; ++i) {
+    CXFile includingFile;
+    unsigned line, column;
+    clang_getInstantiationLocation(includeStack[i], &includingFile, &line,
+                                   &column, 0);
+    printf("  %s:%d:%d\n", clang_getFileName(includingFile), line, column);
+  }
+  printf("\n");
+}
+
+void PrintInclusionStack(CXTranslationUnit TU) {
+  clang_getInclusions(TU, InclusionVisitor, NULL);  
+}
+
+/******************************************************************************/
 /* Loading ASTs/source.                                                       */
 /******************************************************************************/
 
@@ -853,7 +876,9 @@ static void print_usage(void) {
     "       c-index-test -test-load-source <symbol filter> {<args>}*\n"
     "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n");
   fprintf(stderr,
-    "       c-index-test -test-annotate-tokens=<range> {<args>}* \n\n"
+    "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
+    "       c-index-test -test-inclusion-stack-source {<args>}*\n"
+    "       c-index-test -test-inclusion-stack-tu <AST file>\n\n"
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
@@ -886,6 +911,13 @@ int main(int argc, const char **argv) {
                              argc >= 5 ? argv[4] : 0);
   else if (argc > 2 && strstr(argv[1], "-test-annotate-tokens=") == argv[1])
     return perform_token_annotation(argc, argv);
+  else if (argc > 2 && strcmp(argv[1], "-test-inclusion-stack-source") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all", NULL,
+                                    PrintInclusionStack);
+  else if (argc > 2 && strcmp(argv[1], "-test-inclusion-stack-tu") == 0)
+    return perform_test_load_tu(argv[2], "all", NULL, NULL,
+                                PrintInclusionStack);
+    
   print_usage();
   return 1;
 }

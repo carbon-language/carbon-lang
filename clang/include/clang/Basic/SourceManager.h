@@ -675,6 +675,11 @@ public:
   void PrintStats() const;
 
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
+  
+  // FIXME: Exposing this is a little gross; what we want is a good way
+  //  to iterate the entries that were not defined in a PCH file (or
+  //  any other external source).
+  unsigned sloc_loaded_entry_size() const { return SLocEntryLoaded.size(); }
 
   const SrcMgr::SLocEntry &getSLocEntry(unsigned ID) const {
     assert(ID < SLocEntryTable.size() && "Invalid id");

@@ -1403,6 +1403,38 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
 CINDEX_LINKAGE const char *clang_getClangVersion();
 
 /**
+ * \brief Return a version string, suitable for showing to a user, but not
+ *        intended to be parsed (the format is not guaranteed to be stable).
+ */
+ 
+ 
+ /**
+  * \brief Visitor invoked for each file in a translation unit 
+  *        (used with clang_getInclusions()).
+  *
+  * This visitor function will be invoked by clang_getInclusions() for each
+  * file included (either at the top-level or by #include directives) within
+  * a translation unit.  The first argument is the file being included, and
+  * the second and third arguments provide the inclusion stack.  The
+  * array is sorted in order of immediate inclusion.  For example,
+  * the first element refers to the location that included 'included_file'.
+  */
+typedef void (*CXInclusionVisitor)(CXFile included_file,
+                                   CXSourceLocation* inclusion_stack,
+                                   unsigned include_len,
+                                   CXClientData client_data);
+
+/**
+ * \brief Visit the set of preprocessor inclusions in a translation unit.
+ *   The visitor function is called with the provided data for every included
+ *   file.  This does not include headers included by the PCH file (unless one
+ *   is inspecting the inclusions in the PCH file itself).
+ */
+CINDEX_LINKAGE void clang_getInclusions(CXTranslationUnit tu,
+                                        CXInclusionVisitor visitor,
+                                        CXClientData client_data);
+
+/**
  * @}
  */
 
