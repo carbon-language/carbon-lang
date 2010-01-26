@@ -403,22 +403,38 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
           << OSXVersion->getAsString(Args)
           << iPhoneVersion->getAsString(Args);
   } else if (!OSXVersion && !iPhoneVersion) {
-    // Chose the default version based on the arch.
-    //
-    // FIXME: Are there iPhone overrides for this?
+    // If neither OS X nor iPhoneOS targets were specified, check for
+    // environment defines.
+    const char *OSXTarget = ::getenv("MACOSX_DEPLOYMENT_TARGET");
+    const char *iPhoneOSTarget = ::getenv("IPHONEOS_DEPLOYMENT_TARGET");
 
-    if (!isIPhoneOS()) {
-      // Look for MACOSX_DEPLOYMENT_TARGET, otherwise use the version
-      // from the host.
-      const char *Version = ::getenv("MACOSX_DEPLOYMENT_TARGET");
-      if (!Version)
-        Version = MacosxVersionMin.c_str();
+    // Ignore empty strings.
+    if (OSXTarget && OSXTarget[0] == '\0')
+      OSXTarget = 0;
+    if (iPhoneOSTarget && iPhoneOSTarget[0] == '\0')
+      iPhoneOSTarget = 0;
+
+    if (OSXTarget && iPhoneOSTarget) {
+      getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
+        << OSXTarget << iPhoneOSTarget;
+    } else if (OSXTarget) {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      DAL->append(DAL->MakeJoinedArg(0, O, Version));
-    } else {
-      const char *Version = IPhoneOSVersionMin.c_str();
+      DAL->append(DAL->MakeJoinedArg(0, O, OSXTarget));
+    } else if (iPhoneOSTarget) {
       const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-      DAL->append(DAL->MakeJoinedArg(0, O, Version));
+      DAL->append(DAL->MakeJoinedArg(0, O, iPhoneOSTarget));
+    } else {
+      // Otherwise, choose the default version based on the toolchain.
+
+      // FIXME: This is confusing it should be more explicit what the default
+      // target is.
+      if (isIPhoneOS()) {
+        const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
+        DAL->append(DAL->MakeJoinedArg(0, O, IPhoneOSVersionMin));
+      } else {
+        const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+        DAL->append(DAL->MakeJoinedArg(0, O, MacosxVersionMin));
+      }
     }
   }
 

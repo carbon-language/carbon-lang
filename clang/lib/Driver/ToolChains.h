@@ -54,11 +54,15 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   //
   // FIXME: This should go away, such differences should be completely
   // determined by the target triple.
+  //
+  // FIXME: It is also broken, we need to distinguish the "default target" from
+  // the actual target. The -m...-version-min strings and deployment targets can
+  // change this.
   bool IsIPhoneOS;
 
   /// The default macosx-version-min of this tool chain; empty until
   /// initialized.
-  mutable std::string MacosxVersionMin;
+  std::string MacosxVersionMin;
 
   /// The default iphoneos-version-min of this tool chain.
   std::string IPhoneOSVersionMin;
