@@ -49,8 +49,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setShiftAmountType(MVT::i64);
   setBooleanContents(ZeroOrOneBooleanContent);
 
-  setUsesGlobalOffsetTable(true);
-
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);

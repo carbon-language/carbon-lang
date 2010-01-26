@@ -60,9 +60,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // setcc operations results (slt, sgt, ...). 
   setBooleanContents(ZeroOrOneBooleanContent);
 
-  // JumpTable targets must use GOT when using PIC_
-  setUsesGlobalOffsetTable(true);
-
   // Set up the register classes
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
   addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);

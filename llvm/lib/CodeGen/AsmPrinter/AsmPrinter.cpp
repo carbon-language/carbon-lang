@@ -481,18 +481,19 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
 
-  bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
-  
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
   const Function *F = MF.getFunction();
   bool JTInDiffSection = false;
-  if (F->isWeakForLinker() ||
-      (IsPic && !TM.getTargetLowering()->usesGlobalOffsetTable())) {
-    // In PIC mode, we need to emit the jump table to the same section as the
-    // function body itself, otherwise the label differences won't make sense.
-    // We should also do if the section name is NULL or function is declared in
-    // discardable section.
+  if (// In PIC mode, we need to emit the jump table to the same section as the
+      // function body itself, otherwise the label differences won't make sense.
+      // FIXME: Need a better predicate for this: what about custom entries?
+      MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32 ||
+      // We should also do if the section name is NULL or function is declared
+      // in discardable section
+      // FIXME: this isn't the right predicate, should be based on the MCSection
+      // for the function.
+      F->isWeakForLinker()) {
     OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang,
                                                                     TM));
   } else {

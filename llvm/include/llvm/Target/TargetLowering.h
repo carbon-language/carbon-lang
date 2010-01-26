@@ -118,10 +118,6 @@ public:
   MVT getPointerTy() const { return PointerTy; }
   MVT getShiftAmountTy() const { return ShiftAmountTy; }
 
-  /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
-  /// codegen.
-  bool usesGlobalOffsetTable() const { return UsesGlobalOffsetTable; }
-
   /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.
   bool isSelectExpensive() const { return SelectIsExpensive; }
@@ -908,10 +904,6 @@ public:
   //
 
 protected:
-  /// setUsesGlobalOffsetTable - Specify that this target does or doesn't use a
-  /// GOT for PC-relative code.
-  void setUsesGlobalOffsetTable(bool V) { UsesGlobalOffsetTable = V; }
-
   /// setShiftAmountType - Describe the type that should be used for shift
   /// amounts.  This type defaults to the pointer type.
   void setShiftAmountType(MVT VT) { ShiftAmountTy = VT; }
@@ -1594,10 +1586,6 @@ private:
   ///
   bool IsLittleEndian;
 
-  /// UsesGlobalOffsetTable - True if this target uses a GOT for PIC codegen.
-  ///
-  bool UsesGlobalOffsetTable;
-  
   /// SelectIsExpensive - Tells the code generator not to expand operations
   /// into sequences that use the select operations if possible.
   bool SelectIsExpensive;
