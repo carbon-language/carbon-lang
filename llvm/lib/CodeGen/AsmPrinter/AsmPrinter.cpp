@@ -308,17 +308,17 @@ void AsmPrinter::EmitFunctionHeader() {
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(CurrentFnSym, MCSA_ELF_TypeFunction);
 
-  O << *CurrentFnSym << ':';
   if (VerboseAsm) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << ' ';
-    WriteAsOperand(O, F, /*PrintType=*/false, F->getParent());
+    WriteAsOperand(OutStreamer.GetCommentOS(), F,
+                   /*PrintType=*/false, F->getParent());
+    OutStreamer.GetCommentOS() << '\n';
   }
-  O << '\n';
+  OutStreamer.EmitLabel(CurrentFnSym);
 
   // Add some workaround for linkonce linkage on Cygwin\MinGW.
   if (MAI->getLinkOnceDirective() != 0 &&
       (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
+    // FIXME: What is this?
     O << "Lllvm$workaround$fake$stub$" << *CurrentFnSym << ":\n";
   
   // Emit pre-function debug and/or EH information.
