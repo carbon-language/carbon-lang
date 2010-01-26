@@ -336,7 +336,9 @@ bool AsmPrinter::doFinalization(Module &M) {
 
       printVisibility(Name, I->getVisibility());
 
-      O << "\t.set\t" << *Name << ", " << *Target << '\n';
+      // Emit the directives as assignments aka .set:
+      OutStreamer.EmitAssignment(Name, 
+                                 MCSymbolRefExpr::Create(Target, OutContext));
     }
   }
 
@@ -525,9 +527,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
         const MachineBasicBlock *MBB = JTBBs[ii];
         if (!EmittedSets.insert(MBB)) continue;
         
-        O << "\t.set\t"
-          << *GetJTSetSymbol(JTI, MBB->getNumber()) << ','
-          << *MBB->getSymbol(OutContext) << '-' << *Base << '\n';
+        // .set LJTSet, LBB32-base
+        const MCExpr *LHS =
+          MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
+        OutStreamer.EmitAssignment(GetJTSetSymbol(JTI, MBB->getNumber()),
+                                MCBinaryExpr::CreateSub(LHS, Base, OutContext));
       }
     }          
     

@@ -201,6 +201,7 @@ void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
                                   const char *TagLo, unsigned NumberLo,
                                   bool IsSmall) {
   if (MAI->hasSetDirective()) {
+    // FIXME: switch to OutStreamer.EmitAssignment.
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
@@ -232,6 +233,7 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
     printAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
   if (MAI->hasSetDirective() && useSet) {
+    // FIXME: switch to OutStreamer.EmitAssignment.
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
