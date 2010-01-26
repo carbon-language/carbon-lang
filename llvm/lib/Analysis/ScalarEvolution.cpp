@@ -2797,62 +2797,67 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return ConstantRange(C->getValue()->getValue());
 
+  unsigned BitWidth = getTypeSizeInBits(S->getType());
+  ConstantRange ConservativeResult(BitWidth, /*isFullSet=*/true);
+
+  // If the value has known zeros, the maximum unsigned value will have those
+  // known zeros as well.
+  uint32_t TZ = GetMinTrailingZeros(S);
+  if (TZ != 0)
+    ConservativeResult =
+      ConstantRange(APInt::getMinValue(BitWidth),
+                    APInt::getMaxValue(BitWidth).lshr(TZ).shl(TZ) + 1);
+
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     ConstantRange X = getUnsignedRange(Add->getOperand(0));
     for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
       X = X.add(getUnsignedRange(Add->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     ConstantRange X = getUnsignedRange(Mul->getOperand(0));
     for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
       X = X.multiply(getUnsignedRange(Mul->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
     ConstantRange X = getUnsignedRange(SMax->getOperand(0));
     for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
       X = X.smax(getUnsignedRange(SMax->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
     ConstantRange X = getUnsignedRange(UMax->getOperand(0));
     for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
       X = X.umax(getUnsignedRange(UMax->getOperand(i)));
-    return X;
+    return ConservativeResult.intersectWith(X);
   }
 
   if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
     ConstantRange X = getUnsignedRange(UDiv->getLHS());
     ConstantRange Y = getUnsignedRange(UDiv->getRHS());
-    return X.udiv(Y);
+    return ConservativeResult.intersectWith(X.udiv(Y));
   }
 
   if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
     ConstantRange X = getUnsignedRange(ZExt->getOperand());
-    return X.zeroExtend(cast<IntegerType>(ZExt->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.zeroExtend(BitWidth));
   }
 
   if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
     ConstantRange X = getUnsignedRange(SExt->getOperand());
-    return X.signExtend(cast<IntegerType>(SExt->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.signExtend(BitWidth));
   }
 
   if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
     ConstantRange X = getUnsignedRange(Trunc->getOperand());
-    return X.truncate(cast<IntegerType>(Trunc->getType())->getBitWidth());
+    return ConservativeResult.intersectWith(X.truncate(BitWidth));
   }
 
-  ConstantRange FullSet(getTypeSizeInBits(S->getType()), true);
-
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
-    const SCEV *T = getBackedgeTakenCount(AddRec->getLoop());
-    const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
-    ConstantRange ConservativeResult = FullSet;
-
     // If there's no unsigned wrap, the value will never be less than its
     // initial value.
     if (AddRec->hasNoUnsignedWrap())
@@ -2862,10 +2867,11 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
                         APInt(getTypeSizeInBits(C->getType()), 0));
 
     // TODO: non-affine addrec
-    if (Trip && AddRec->isAffine()) {
+    if (AddRec->isAffine()) {
       const Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
-      if (getTypeSizeInBits(MaxBECount->getType()) <= getTypeSizeInBits(Ty)) {
+      if (!isa<SCEVCouldNotCompute>(MaxBECount) &&
+          getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
         MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
 
         const SCEV *Start = AddRec->getStart();
@@ -2883,7 +2889,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
                                    EndRange.getUnsignedMax());
         if (Min.isMinValue() && Max.isMaxValue())
           return ConservativeResult;
-        return ConstantRange(Min, Max+1);
+        return ConservativeResult.intersectWith(ConstantRange(Min, Max+1));
       }
     }
 
@@ -2897,11 +2903,11 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
     if (Ones == ~Zeros + 1)
-      return FullSet;
-    return ConstantRange(Ones, ~Zeros + 1);
+      return ConservativeResult;
+    return ConservativeResult.intersectWith(ConstantRange(Ones, ~Zeros + 1));
   }
 
-  return FullSet;
+  return ConservativeResult;
 }
 
 /// getSignedRange - Determine the signed range for a particular SCEV.
@@ -2973,9 +2979,6 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
   }
 
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
-    const SCEV *T = getBackedgeTakenCount(AddRec->getLoop());
-    const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
-
     // If there's no signed wrap, and all the operands have the same sign or
     // zero, the value won't ever change sign.
     if (AddRec->hasNoSignedWrap()) {
@@ -2996,10 +2999,11 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
     }
 
     // TODO: non-affine addrec
-    if (Trip && AddRec->isAffine()) {
+    if (AddRec->isAffine()) {
       const Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
-      if (getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
+      if (!isa<SCEVCouldNotCompute>(MaxBECount) &&
+          getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
         MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
 
         const SCEV *Start = AddRec->getStart();
