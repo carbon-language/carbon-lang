@@ -186,43 +186,50 @@ void MDNode::destroy() {
 }
 
 MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
-                          unsigned NumVals, FunctionLocalness FL) {
+                          unsigned NumVals, FunctionLocalness FL,
+                          bool Insert) {
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
 
   void *InsertPoint;
-  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  if (!N) {
-    bool isFunctionLocal = false;
-    switch (FL) {
-    case FL_Unknown:
-      for (unsigned i = 0; i != NumVals; ++i) {
-        Value *V = Vals[i];
-        if (!V) continue;
-        if (isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
-            (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal())) {
-          isFunctionLocal = true;
-          break;
-        }
+  MDNode *N = NULL;
+  
+  if ((N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint)))
+    return N;
+    
+  if (!Insert)
+    return NULL;
+    
+  bool isFunctionLocal = false;
+  switch (FL) {
+  case FL_Unknown:
+    for (unsigned i = 0; i != NumVals; ++i) {
+      Value *V = Vals[i];
+      if (!V) continue;
+      if (isa<Instruction>(V) || isa<Argument>(V) || isa<BasicBlock>(V) ||
+          (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal())) {
+        isFunctionLocal = true;
+        break;
       }
-      break;
-    case FL_No:
-      isFunctionLocal = false;
-      break;
-    case FL_Yes:
-      isFunctionLocal = true;
-      break;
     }
-
-    // Coallocate space for the node and Operands together, then placement new.
-    void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
-    N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
-
-    // InsertPoint will have been set by the FindNodeOrInsertPos call.
-    pImpl->MDNodeSet.InsertNode(N, InsertPoint);
+    break;
+  case FL_No:
+    isFunctionLocal = false;
+    break;
+  case FL_Yes:
+    isFunctionLocal = true;
+    break;
   }
+
+  // Coallocate space for the node and Operands together, then placement new.
+  void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
+  N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
+
+  // InsertPoint will have been set by the FindNodeOrInsertPos call.
+  pImpl->MDNodeSet.InsertNode(N, InsertPoint);
+
   return N;
 }
 
@@ -230,9 +237,14 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   return getMDNode(Context, Vals, NumVals, FL_Unknown);
 }
 
-MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context, Value*const* Vals,
+MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
                                       unsigned NumVals, bool isFunctionLocal) {
   return getMDNode(Context, Vals, NumVals, isFunctionLocal ? FL_Yes : FL_No);
+}
+
+MDNode *MDNode::getIfExists(LLVMContext &Context, Value *const *Vals,
+                            unsigned NumVals) {
+  return getMDNode(Context, Vals, NumVals, FL_Unknown, false);
 }
 
 /// getOperand - Return specified operand.

@@ -112,7 +112,7 @@ protected:
                   bool isFunctionLocal);
   
   static MDNode *getMDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-                           FunctionLocalness FL);
+                           FunctionLocalness FL, bool Insert = true);
 public:
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, Value *const *Vals,
@@ -121,6 +121,9 @@ public:
   // from isFunctionLocal argument, not by analyzing Vals.
   static MDNode *getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
                                        unsigned NumVals, bool isFunctionLocal);
+                                       
+  static MDNode *getIfExists(LLVMContext &Context, Value *const *Vals,
+                             unsigned NumVals);
   
   /// getOperand - Return specified operand.
   Value *getOperand(unsigned i) const;
