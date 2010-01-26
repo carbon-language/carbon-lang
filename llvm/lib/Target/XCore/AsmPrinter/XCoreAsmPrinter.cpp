@@ -231,10 +231,7 @@ void XCoreAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
-{
-  this->MF = &MF;
-
+bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

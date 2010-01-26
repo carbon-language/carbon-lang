@@ -403,8 +403,6 @@ void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
   O << "\n\n";
 

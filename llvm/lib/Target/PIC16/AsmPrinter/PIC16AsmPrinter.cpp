@@ -96,8 +96,6 @@ void PIC16AsmPrinter::ColorAutoSection(const Function *F) {
 /// directive and file begin debug directive (if required) for the function.
 ///
 bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   // This calls the base class function required to be called at beginning
   // of runOnMachineFunction.
   SetupMachineFunction(MF);

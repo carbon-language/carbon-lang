@@ -248,8 +248,6 @@ void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

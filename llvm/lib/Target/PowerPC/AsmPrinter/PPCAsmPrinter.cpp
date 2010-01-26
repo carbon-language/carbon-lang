@@ -598,8 +598,6 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -701,8 +699,6 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 /// method to print assembly for each instruction.
 ///
 bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
   O << "\n\n";
 

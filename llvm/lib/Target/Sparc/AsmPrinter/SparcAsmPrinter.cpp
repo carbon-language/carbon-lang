@@ -85,8 +85,6 @@ namespace {
 /// method to print assembly for each instruction.
 ///
 bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function

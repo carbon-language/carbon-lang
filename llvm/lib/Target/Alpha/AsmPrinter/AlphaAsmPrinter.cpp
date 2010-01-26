@@ -124,8 +124,6 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 /// method to print assembly for each instruction.
 ///
 bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  this->MF = &MF;
-
   SetupMachineFunction(MF);
   O << "\n\n";
 

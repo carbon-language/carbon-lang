@@ -137,7 +137,6 @@ void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  this->MF = &MF;
   CallingConv::ID CC = F->getCallingConv();
 
   SetupMachineFunction(MF);
