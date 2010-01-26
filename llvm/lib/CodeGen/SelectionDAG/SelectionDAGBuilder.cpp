@@ -5122,9 +5122,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
 
   // Check if we can potentially perform a tail call. More detailed checking is
   // be done within LowerCallTo, after more information about the call is known.
-  bool isTailCall = PerformTailCallOpt && I.isTailCall();
-
-  LowerCallTo(&I, Callee, isTailCall);
+  LowerCallTo(&I, Callee, I.isTailCall());
 }
 
 /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
@@ -6118,9 +6116,6 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl,
                             unsigned Order) {
-  assert((!isTailCall || PerformTailCallOpt) &&
-         "isTailCall set when tail-call optimizations are disabled!");
-
   // Handle all of the outgoing arguments.
   SmallVector<ISD::OutputArg, 32> Outs;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
