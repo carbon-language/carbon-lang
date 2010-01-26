@@ -1213,8 +1213,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
   ObjCIvarDecl *D = IV->getDecl();
   const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
-    if (BaseExpr->getType()->isObjCObjectPointerType() && 
-        isa<DeclRefExpr>(BaseExpr)) {
+    if (BaseExpr->getType()->isObjCObjectPointerType()) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
@@ -4307,18 +4306,6 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
     ReplaceText(LocStart, endBuf-startBuf+1, 
                 TypeAsString.c_str(), TypeAsString.size());
     return;
-  }
-  if (LangOpts.Microsoft && QT->isObjCObjectPointerType()) {
-    if (isa<ObjCInterfaceType>(QT->getPointeeType())) {
-      QualType ptee = QT->getAs<ObjCObjectPointerType>()->getPointeeType();
-      std::string TypeAsString = "(struct ";
-      TypeAsString += ptee.getAsString();
-      TypeAsString += "_IMPL *";
-      TypeAsString += ")";
-      ReplaceText(LocStart, endBuf-startBuf+1, 
-                  TypeAsString.c_str(), TypeAsString.size());
-      return;
-    }  
   }
   // advance the location to startArgList.
   const char *argPtr = startBuf;

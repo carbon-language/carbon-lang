@@ -1037,6 +1037,7 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 				35544B840F5C7F9D00D92AA9 /* Path-Sensitive */,
 				3507E4CC0E27FEB900FB7B57 /* Flow-Sensitive Analyses */,
 				3507E4C30E27FE3800FB7B57 /* Checks */,
@@ -1265,7 +1266,6 @@
 				BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */,
 				35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */,
 				1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */,
-				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 				1AE4EE3B103B89CA00888A23 /* TreeTransform.h */,
 			);
 			name = Sema;
