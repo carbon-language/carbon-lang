@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | FileCheck %s
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
 ; CHECK: %tmp3 = sext i8 %tmp2 to i32
 ; CHECK: -->  (sext i8 {0,+,1}<%bb1> to i32)   Exits: -1

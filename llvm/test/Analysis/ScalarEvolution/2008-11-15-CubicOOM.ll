@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output
+; RUN: opt < %s -analyze -scalar-evolution
 ; PR2602
 
 define i32 @a() nounwind  {

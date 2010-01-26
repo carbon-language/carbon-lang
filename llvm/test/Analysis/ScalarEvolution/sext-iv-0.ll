@@ -1,4 +1,4 @@
-; RUN: opt < %s -disable-output -scalar-evolution -analyze \
+; RUN: opt < %s -scalar-evolution -analyze \
 ; RUN:  | grep { -->  \{-128,+,1\}<%bb1>		Exits: 127} | count 5
 
 ; Convert (sext {-128,+,1}) to {sext(-128),+,sext(1)}, since the

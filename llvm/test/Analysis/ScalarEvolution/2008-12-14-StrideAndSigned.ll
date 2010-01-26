@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output |& \
+; RUN: opt < %s -analyze -scalar-evolution |& \
 ; RUN: grep {(((-1 \\* %i0) + (100005 smax %i0)) /u 5)}
 ; XFAIL: *
 

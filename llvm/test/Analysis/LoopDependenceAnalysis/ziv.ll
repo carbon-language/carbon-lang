@@ -1,4 +1,4 @@
-; RUN: opt < %s -disable-output -analyze -lda | FileCheck %s
+; RUN: opt < %s -analyze -lda | FileCheck %s
 
 @x = common global [256 x i32] zeroinitializer, align 4
 

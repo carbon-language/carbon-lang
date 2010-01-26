@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze -disable-output \
+; RUN: opt < %s -scalar-evolution -analyze \
 ; RUN:  | grep {Loop %bb3\\.i: Unpredictable backedge-taken count\\.}
 
 ; ScalarEvolution can't compute a trip count because it doesn't know if

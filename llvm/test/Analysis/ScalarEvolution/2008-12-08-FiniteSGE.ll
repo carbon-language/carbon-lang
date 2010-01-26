@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep {backedge-taken count is 255}
+; RUN: opt < %s -analyze -scalar-evolution | grep {backedge-taken count is 255}
 ; XFAIL: *
 
 define i32 @foo(i32 %x, i32 %y, i32* %lam, i32* %alp) nounwind {

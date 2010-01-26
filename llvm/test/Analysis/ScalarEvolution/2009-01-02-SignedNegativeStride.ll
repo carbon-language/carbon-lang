@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | not grep {/u -1}
+; RUN: opt < %s -analyze -scalar-evolution | not grep {/u -1}
 ; PR3275
 
 @g_16 = external global i16		; <i16*> [#uses=3]

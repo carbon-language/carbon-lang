@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep smax
+; RUN: opt < %s -analyze -scalar-evolution | grep smax
 ; PR1614
 
 define i32 @f(i32 %x, i32 %y) {

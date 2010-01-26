@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -analyze -scalar-evolution -disable-output | FileCheck %s
+; RUN: opt < %s -S -analyze -scalar-evolution | FileCheck %s
 
 ; ScalarEvolution should be able to fold away the sign-extensions
 ; on this loop with a primary induction variable incremented with

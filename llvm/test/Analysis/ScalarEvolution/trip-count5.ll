@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output > %t
+; RUN: opt < %s -analyze -scalar-evolution > %t
 ; RUN: grep sext %t | count 2
 ; RUN: not grep {(sext} %t
 

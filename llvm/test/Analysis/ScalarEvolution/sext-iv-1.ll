@@ -1,4 +1,4 @@
-; RUN: opt < %s -disable-output -scalar-evolution -analyze \
+; RUN: opt < %s -scalar-evolution -analyze \
 ; RUN:  | grep { -->  (sext i. \{.\*,+,.\*\}<%bb1> to i64)} | count 5
 
 ; Don't convert (sext {...,+,...}) to {sext(...),+,sext(...)} in cases

@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output \
+; RUN: opt < %s -analyze -scalar-evolution \
 ; RUN:   | grep {sext.*trunc.*Exits: 11}
 
 ; ScalarEvolution should be able to compute a loop exit value for %indvar.i8.

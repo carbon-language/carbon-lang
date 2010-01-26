@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -disable-output -scalar-evolution \
+; RUN: opt < %s -analyze -scalar-evolution \
 ; RUN:  | grep {max backedge-taken count is 1\$}
 
 @mode_table = global [4 x i32] zeroinitializer          ; <[4 x i32]*> [#uses=1]

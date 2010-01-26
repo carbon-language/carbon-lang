@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep { -->  {.*,+,.*}<%bb>} | count 8
+; RUN: opt < %s -analyze -scalar-evolution | grep { -->  {.*,+,.*}<%bb>} | count 8
 
 ; The addrecs in this loop are analyzable only by using nsw information.
 

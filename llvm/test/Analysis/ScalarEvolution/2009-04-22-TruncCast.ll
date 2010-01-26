@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep {(trunc i} | not grep ext
+; RUN: opt < %s -analyze -scalar-evolution | grep {(trunc i} | not grep ext
 
 define i16 @test1(i8 %x) {
   %A = sext i8 %x to i32

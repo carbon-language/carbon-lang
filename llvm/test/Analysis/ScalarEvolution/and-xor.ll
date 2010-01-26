@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze -disable-output \
+; RUN: opt < %s -scalar-evolution -analyze \
 ; RUN:   | grep {\\-->  (zext} | count 2
 
 define i32 @foo(i32 %x) {

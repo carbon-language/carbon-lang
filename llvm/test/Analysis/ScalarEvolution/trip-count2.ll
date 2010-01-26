@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | \
+; RUN: opt < %s -analyze -scalar-evolution | \
 ; RUN:   grep {backedge-taken count is 4}
 ; PR1101
 

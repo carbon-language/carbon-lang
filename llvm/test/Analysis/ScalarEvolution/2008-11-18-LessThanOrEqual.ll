@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output |& \
+; RUN: opt < %s -analyze -scalar-evolution |& \
 ; RUN: grep {Loop %bb: backedge-taken count is (7 + (-1 \\* %argc))}
 ; XFAIL: *
 

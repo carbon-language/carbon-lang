@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | FileCheck %s
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 ; PR1810
 
 define void @fun() {

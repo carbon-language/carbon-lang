@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -iv-users -disable-output | grep {Stride i64 {3,+,2}<%loop>:}
+; RUN: opt < %s -analyze -iv-users | grep {Stride i64 {3,+,2}<%loop>:}
 
 ; The value of %r is dependent on a polynomial iteration expression.
 

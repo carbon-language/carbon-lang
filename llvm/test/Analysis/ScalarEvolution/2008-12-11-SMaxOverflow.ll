@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep {0 smax}
+; RUN: opt < %s -analyze -scalar-evolution | grep {0 smax}
 ; XFAIL: *
 
 define i32 @f(i32 %c.idx.val) {

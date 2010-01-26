@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output |& grep {/u 5}
+; RUN: opt < %s -analyze -scalar-evolution |& grep {/u 5}
 ; XFAIL: *
 
 define i8 @foo0(i8 %i0) nounwind {

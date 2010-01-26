@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output \
+; RUN: opt < %s -analyze -scalar-evolution \
 ; RUN:   -scalar-evolution-max-iterations=0 | grep {backedge-taken count is 13}
 ; PR1706
 

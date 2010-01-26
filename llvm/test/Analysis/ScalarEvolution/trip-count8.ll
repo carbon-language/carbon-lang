@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output \
+; RUN: opt < %s -analyze -scalar-evolution \
 ; RUN:  | grep {Loop %for\\.body: backedge-taken count is (-1 + \[%\]ecx)}
 ; PR4599
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze -disable-output | grep {Loop %loop: backedge-taken count is (100 + (-100 smax %n))}
+; RUN: opt < %s -scalar-evolution -analyze | grep {Loop %loop: backedge-taken count is (100 + (-100 smax %n))}
 ; PR2002
 
 define void @foo(i8 %n) {
