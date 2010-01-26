@@ -55,7 +55,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   Data64bitsDirective = 0;
   CommentString = "@";
 
-  NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
   PrivateGlobalPrefix = ".L";
