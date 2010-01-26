@@ -1150,24 +1150,24 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
   Instruction::CastOps opc = Instruction::CastOps(oc);
   assert(Instruction::isCast(opc) && "opcode out of range");
   assert(C && Ty && "Null arguments to getCast");
-  assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
+  assert(CastInst::castIsValid(opc, C, Ty) && "Invalid constantexpr cast!");
 
   switch (opc) {
-    default:
-      llvm_unreachable("Invalid cast opcode");
-      break;
-    case Instruction::Trunc:    return getTrunc(C, Ty);
-    case Instruction::ZExt:     return getZExt(C, Ty);
-    case Instruction::SExt:     return getSExt(C, Ty);
-    case Instruction::FPTrunc:  return getFPTrunc(C, Ty);
-    case Instruction::FPExt:    return getFPExtend(C, Ty);
-    case Instruction::UIToFP:   return getUIToFP(C, Ty);
-    case Instruction::SIToFP:   return getSIToFP(C, Ty);
-    case Instruction::FPToUI:   return getFPToUI(C, Ty);
-    case Instruction::FPToSI:   return getFPToSI(C, Ty);
-    case Instruction::PtrToInt: return getPtrToInt(C, Ty);
-    case Instruction::IntToPtr: return getIntToPtr(C, Ty);
-    case Instruction::BitCast:  return getBitCast(C, Ty);
+  default:
+    llvm_unreachable("Invalid cast opcode");
+    break;
+  case Instruction::Trunc:    return getTrunc(C, Ty);
+  case Instruction::ZExt:     return getZExt(C, Ty);
+  case Instruction::SExt:     return getSExt(C, Ty);
+  case Instruction::FPTrunc:  return getFPTrunc(C, Ty);
+  case Instruction::FPExt:    return getFPExtend(C, Ty);
+  case Instruction::UIToFP:   return getUIToFP(C, Ty);
+  case Instruction::SIToFP:   return getSIToFP(C, Ty);
+  case Instruction::FPToUI:   return getFPToUI(C, Ty);
+  case Instruction::FPToSI:   return getFPToSI(C, Ty);
+  case Instruction::PtrToInt: return getPtrToInt(C, Ty);
+  case Instruction::IntToPtr: return getIntToPtr(C, Ty);
+  case Instruction::BitCast:  return getBitCast(C, Ty);
   }
   return 0;
 } 
@@ -1347,20 +1347,8 @@ Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
 }
 
 Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
-  // BitCast implies a no-op cast of type only. No bits change.  However, you 
-  // can't cast pointers to anything but pointers.
-#ifndef NDEBUG
-  const Type *SrcTy = C->getType();
-  assert((isa<PointerType>(SrcTy) == isa<PointerType>(DstTy)) &&
-         "BitCast cannot cast pointer to non-pointer and vice versa");
-
-  // Now we know we're not dealing with mismatched pointer casts (ptr->nonptr
-  // or nonptr->ptr). For all the other types, the cast is okay if source and 
-  // destination bit widths are identical.
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DstBitSize = DstTy->getPrimitiveSizeInBits();
-#endif
-  assert(SrcBitSize == DstBitSize && "BitCast requires types of same width");
+  assert(CastInst::castIsValid(Instruction::BitCast, C, DstTy) &&
+         "Invalid constantexpr bitcast!");
   
   // It is common to ask for a bitcast of a value to its own type, handle this
   // speedily.

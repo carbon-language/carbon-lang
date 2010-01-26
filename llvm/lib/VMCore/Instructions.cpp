@@ -2504,7 +2504,8 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
 
   // Check for type sanity on the arguments
   const Type *SrcTy = S->getType();
-  if (!SrcTy->isFirstClassType() || !DstTy->isFirstClassType())
+  if (!SrcTy->isFirstClassType() || !DstTy->isFirstClassType() ||
+      SrcTy->isAggregateType() || DstTy->isAggregateType())
     return false;
 
   // Get the size of the types in bits, we'll need this later
