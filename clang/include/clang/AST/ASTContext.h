@@ -835,7 +835,7 @@ public:
     return getTypeInfo(T).second;
   }
 
-  /// getTypeAlign - Return the ABI-specified alignment of a type, in 
+  /// getTypeAlignInChars - Return the ABI-specified alignment of a type, in 
   /// characters. This method does not work on incomplete types.
   CharUnits getTypeAlignInChars(QualType T);
   CharUnits getTypeAlignInChars(const Type *T);
