@@ -949,6 +949,11 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (RLang)
       addUInt(&Buffer, dwarf::DW_AT_APPLE_runtime_class,
               dwarf::DW_FORM_data1, RLang);
+
+    DICompositeType ContainingType = CTy.getContainingType();
+    if (!ContainingType.isNull())
+      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, 
+                  getOrCreateTypeDIE(DIType(ContainingType.getNode())));
     break;
   }
   default:
