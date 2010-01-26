@@ -203,7 +203,7 @@ namespace {
     /// AllocaDbgDeclares - For each alloca, we keep track of the dbg.declare
     /// intrinsic that describes it, if any, so that we can convert it to a
     /// dbg.value intrinsic if the alloca gets promoted.
-    std::vector<DbgDeclareInst*> AllocaDbgDeclares;
+    SmallVector<DbgDeclareInst*, 8> AllocaDbgDeclares;
 
     /// Visited - The set of basic blocks the renamer has already visited.
     ///
@@ -219,6 +219,9 @@ namespace {
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast)
       : Allocas(A), DT(dt), DF(df), DIF(0), AST(ast) {}
+    ~PromoteMem2Reg() {
+      if (DIF) delete DIF;
+    }
 
     void run();
 
