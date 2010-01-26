@@ -106,7 +106,7 @@ void XCoreAsmPrinter::emitArrayBound(const MCSymbol *Sym,
     cast<PointerType>(GV->getType())->getElementType())) {
     O << MAI->getGlobalDirective() << *Sym;
     O << ".globound" << "\n";
-    O << MAI->getSetDirective() << *Sym;
+    O << "\t.set\t" << *Sym;
     O << ".globound" << "," << ATy->getNumElements() << "\n";
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
       // TODO Use COMDAT groups for LinkOnceLinkage

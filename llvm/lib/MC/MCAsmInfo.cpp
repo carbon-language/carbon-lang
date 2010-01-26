@@ -49,7 +49,7 @@ MCAsmInfo::MCAsmInfo() {
   TextAlignFillValue = 0;
   GPRel32Directive = 0;
   GlobalDirective = "\t.globl\t";
-  SetDirective = 0;
+  HasSetDirective = true;
   HasLCOMMDirective = false;
   COMMDirectiveAlignmentIsInBytes = true;
   HasDotTypeDotSizeDirective = true;

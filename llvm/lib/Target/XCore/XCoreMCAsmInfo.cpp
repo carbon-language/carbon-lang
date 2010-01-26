@@ -22,7 +22,6 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, const StringRef &TT) {
   AscizDirective = ".asciiz";
   WeakDefDirective = "\t.weak\t";
   WeakRefDirective = "\t.weak\t";
-  SetDirective = "\t.set\t";
 
   // Debug
   HasLEB128 = true;

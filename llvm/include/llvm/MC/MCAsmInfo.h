@@ -173,13 +173,12 @@ namespace llvm {
     ///
     const char *ExternDirective;             // Defaults to NULL.
     
-    /// SetDirective - This is the name of a directive that can be used to tell
-    /// the assembler to set the value of a variable to some expression.
-    const char *SetDirective;                // Defaults to null.
+    /// HasSetDirective - True if the assembler supports the .set directive.
+    bool HasSetDirective;                    // Defaults to true.
     
     /// HasLCOMMDirective - This is true if the target supports the .lcomm
     /// directive.
-    bool HasLCOMMDirective;              // Defaults to false.
+    bool HasLCOMMDirective;                  // Defaults to false.
     
     /// COMMDirectiveAlignmentIsInBytes - True is COMMDirective's optional
     /// alignment is to be specified in bytes instead of log2(n).
@@ -377,9 +376,7 @@ namespace llvm {
     const char *getExternDirective() const {
       return ExternDirective;
     }
-    const char *getSetDirective() const {
-      return SetDirective;
-    }
+    bool hasSetDirective() const { return HasSetDirective; }
     bool hasLCOMMDirective() const { return HasLCOMMDirective; }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
     bool getCOMMDirectiveAlignmentIsInBytes() const {

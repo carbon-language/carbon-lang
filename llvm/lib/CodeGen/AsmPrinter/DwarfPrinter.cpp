@@ -200,7 +200,7 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
 void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
                                   const char *TagLo, unsigned NumberLo,
                                   bool IsSmall) {
-  if (MAI->getSetDirective() != 0) {
+  if (MAI->hasSetDirective()) {
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
@@ -231,7 +231,7 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
   else
     printAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
-  if (MAI->getSetDirective() != 0 && useSet) {
+  if (MAI->hasSetDirective() && useSet) {
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";

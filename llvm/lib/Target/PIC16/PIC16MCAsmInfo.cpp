@@ -37,7 +37,7 @@ PIC16MCAsmInfo::PIC16MCAsmInfo(const Target &T, const StringRef &TT) {
   RomData8bitsDirective = " dw ";
   RomData16bitsDirective = " rom_di ";
   RomData32bitsDirective = " rom_dl ";
-    
+  HasSetDirective = false;  
     
   // Set it to false because we weed to generate c file name and not bc file
   // name.

@@ -18,7 +18,6 @@ using namespace llvm;
 SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, const StringRef &TT) {
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
-  SetDirective = "\t.set\t";
   PCSymbol = ".";
 }
 

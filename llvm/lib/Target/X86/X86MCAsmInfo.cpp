@@ -72,7 +72,6 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
 
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
-  SetDirective = "\t.set\t";
   PCSymbol = ".";
 
   // Set up DWARF directives

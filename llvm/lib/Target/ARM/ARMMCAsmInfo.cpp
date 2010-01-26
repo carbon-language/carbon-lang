@@ -62,7 +62,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   AbsoluteDebugSectionOffsets = true;
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
-  SetDirective = "\t.set\t";
   HasLCOMMDirective = true;
 
   DwarfRequiresFrameSection = false;

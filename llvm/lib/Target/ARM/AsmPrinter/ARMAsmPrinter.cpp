@@ -939,14 +939,14 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-  bool UseSet= MAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
+  bool UseSet= MAI->hasSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
   SmallPtrSet<MachineBasicBlock*, 8> JTSets;
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     bool isNew = JTSets.insert(MBB);
 
     if (UseSet && isNew) {
-      O << MAI->getSetDirective() << ' '
+      O << "\t.set\t"
         << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB) << ','
         << *MBB->getSymbol(OutContext) << '-' << *JTISymbol << '\n';
     }

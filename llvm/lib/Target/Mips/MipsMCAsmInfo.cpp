@@ -23,4 +23,5 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, const StringRef &TT) {
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
   GPRel32Directive            = "\t.gpword\t";
+  HasSetDirective             = false;
 }

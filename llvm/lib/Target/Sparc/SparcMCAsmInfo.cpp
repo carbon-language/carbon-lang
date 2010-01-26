@@ -29,7 +29,6 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, const StringRef &TT) {
   UsesELFSectionDirectiveForBSS = true;
 
   WeakRefDirective = "\t.weak\t";
-  SetDirective = "\t.set\t";
 
   PrivateGlobalPrefix = ".L";
 }

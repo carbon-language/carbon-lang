@@ -25,7 +25,6 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   PrivateGlobalPrefix = "L";  // Prefix for private global symbols
   WeakRefDirective = "\t.weak\t";
   LinkOnceDirective = "\t.linkonce same_size\n";
-  SetDirective = "\t.set\t";
   
   // Doesn't support visibility:
   HiddenVisibilityAttr = ProtectedVisibilityAttr = MCSA_Invalid;

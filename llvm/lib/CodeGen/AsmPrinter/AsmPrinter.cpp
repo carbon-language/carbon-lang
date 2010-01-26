@@ -318,7 +318,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     }
   }
 
-  if (MAI->getSetDirective()) {
+  if (MAI->hasSetDirective()) {
     OutStreamer.AddBlankLine();
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
@@ -336,7 +336,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
       printVisibility(Name, I->getVisibility());
 
-      O << MAI->getSetDirective() << ' ' << *Name << ", " << *Target << '\n';
+      O << "\t.set\t" << *Name << ", " << *Target << '\n';
     }
   }
 
@@ -516,7 +516,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
     // .set directive for each unique entry.  This reduces the number of
     // relocations the assembler will generate for the jump table.
     if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32 &&
-        MAI->getSetDirective()) {
+        MAI->hasSetDirective()) {
       SmallPtrSet<const MachineBasicBlock*, 16> EmittedSets;
       const TargetLowering *TLI = TM.getTargetLowering();
       const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(&MF, JTI,
@@ -525,7 +525,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
         const MachineBasicBlock *MBB = JTBBs[ii];
         if (!EmittedSets.insert(MBB)) continue;
         
-        O << MAI->getSetDirective() << ' '
+        O << "\t.set\t"
           << *GetJTSetSymbol(JTI, MBB->getNumber()) << ','
           << *MBB->getSymbol(OutContext) << '-' << *Base << '\n';
       }
@@ -584,7 +584,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
     // If we have emitted set directives for the jump table entries, print 
     // them rather than the entries themselves.  If we're emitting PIC, then
     // emit the table entries as differences between two text section labels.
-    if (MAI->getSetDirective()) {
+    if (MAI->hasSetDirective()) {
       // If we used .set, reference the .set's symbol.
       Value = MCSymbolRefExpr::Create(GetJTSetSymbol(UID, MBB->getNumber()),
                                       OutContext);
