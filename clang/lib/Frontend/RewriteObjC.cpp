@@ -1216,6 +1216,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
     if (BaseExpr->getType()->isObjCObjectPointerType()) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
+      assert(iFaceDecl && "RewriteObjCIvarRefExpr - iFaceDecl is null");
       // lookup which class implements the instance variable.
       ObjCInterfaceDecl *clsDeclared = 0;
       iFaceDecl->getDecl()->lookupInstanceVariable(D->getIdentifier(),
