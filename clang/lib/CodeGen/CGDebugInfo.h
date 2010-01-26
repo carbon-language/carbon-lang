@@ -88,7 +88,7 @@ class CGDebugInfo {
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);
   
-  llvm::DISubprogram CreateCXXMemberFunction(GlobalDecl GD,
+  llvm::DISubprogram CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                              llvm::DICompileUnit Unit,
                                              llvm::DICompositeType &RecordTy);
   

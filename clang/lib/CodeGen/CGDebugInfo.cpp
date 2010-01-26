@@ -521,27 +521,21 @@ CollectRecordFields(const RecordDecl *Decl,
 /// CreateCXXMemberFunction - A helper function to create a DISubprogram for
 /// a single member function GlobalDecl.
 llvm::DISubprogram
-CGDebugInfo::CreateCXXMemberFunction(GlobalDecl GD,
+CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                      llvm::DICompileUnit Unit,
                                      llvm::DICompositeType &RecordTy) {
-  const CXXMethodDecl *Method = cast<CXXMethodDecl>(GD.getDecl());
-
-  llvm::StringRef MethodName;
+  bool IsCtorOrDtor = 
+    isa<CXXConstructorDecl>(Method) || isa<CXXDestructorDecl>(Method);
+  
+  llvm::StringRef MethodName = getFunctionName(Method);
   llvm::StringRef MethodLinkageName;
   llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
-  if (const CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(Method)) {
-    (void)CDecl;
-    MethodName = Method->getName();
-    // FIXME : Find linkage name.
-  } else if (const CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(Method)) {
-    (void)DDecl;
-    MethodName = getFunctionName(Method);
-    // FIXME : Find linkage name.
-  } else {
-    // regular method
-    MethodName = getFunctionName(Method);
+  
+  // Since a single ctor/dtor corresponds to multiple functions, it doesn't
+  // make sense to give a single ctor/dtor a linkage name.
+  if (!IsCtorOrDtor)
     MethodLinkageName = CGM.getMangledName(Method);
-  }
+
   SourceManager &SM = CGM.getContext().getSourceManager();
 
   // Get the location for the method.
@@ -559,10 +553,17 @@ CGDebugInfo::CreateCXXMemberFunction(GlobalDecl GD,
   llvm::DIType ContainingType;
   unsigned Virtuality = 0; 
   unsigned VIndex = 0;
+  
   if (Method->isVirtual()) {
-    // FIXME: Identify pure virtual functions.
-    Virtuality = llvm::dwarf::DW_VIRTUALITY_virtual;
-    VIndex = CGM.getVtableInfo().getMethodVtableIndex(Method);
+    if (Method->isPure())
+      Virtuality = llvm::dwarf::DW_VIRTUALITY_pure_virtual;
+    else
+      Virtuality = llvm::dwarf::DW_VIRTUALITY_virtual;
+    
+    // It doesn't make sense to give a virtual destructor a vtable index,
+    // since a single destructor has two entries in the vtable.
+    if (!isa<CXXDestructorDecl>(Method))
+      VIndex = CGM.getVtableInfo().getMethodVtableIndex(Method);
     ContainingType = RecordTy;
   }
 
@@ -573,8 +574,11 @@ CGDebugInfo::CreateCXXMemberFunction(GlobalDecl GD,
                                   MethodTy, /*isLocalToUnit=*/false, 
                                   Method->isThisDeclarationADefinition(),
                                   Virtuality, VIndex, ContainingType);
-  if (Method->isThisDeclarationADefinition())
-    SPCache[cast<FunctionDecl>(Method)] = llvm::WeakVH(SP.getNode());
+  
+  // Don't cache ctors or dtors since we have to emit multiple functions for
+  // a single ctor or dtor.
+  if (!IsCtorOrDtor && Method->isThisDeclarationADefinition())
+    SPCache[Method] = llvm::WeakVH(SP.getNode());
 
   return SP;
 }

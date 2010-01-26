@@ -24,3 +24,20 @@ namespace EmptyNameCrash {
   typedef struct { A x; } B;
   B x;
 }
+
+// PR4890
+namespace PR4890 {
+  struct X {
+    ~X();
+  };
+
+  X::~X() { }
+}
+
+namespace VirtualDtor {
+  struct Y {
+    virtual ~Y();
+  };
+  
+  Y::~Y() { }
+}
