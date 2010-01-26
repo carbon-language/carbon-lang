@@ -23,6 +23,8 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Metadata.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/DenseMap.h"
@@ -81,6 +83,17 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
     }
 
   return true;
+}
+
+/// Finds the llvm.dbg.declare intrinsic describing V, if any.
+static DbgDeclareInst *findDbgDeclare(Value *V) {
+  if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), &V, 1))
+    for (Value::use_iterator UI = DebugNode->use_begin(),
+         E = DebugNode->use_end(); UI != E; ++UI)
+      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+        return DDI;
+
+  return 0;
 }
 
 namespace {
@@ -163,6 +176,7 @@ namespace {
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
     DominanceFrontier &DF;
+    DIFactory *DIF;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
     ///
@@ -186,6 +200,11 @@ namespace {
     ///
     std::vector<Value*> PointerAllocaValues;
 
+    /// AllocaDbgDeclares - For each alloca, we keep track of the dbg.declare
+    /// intrinsic that describes it, if any, so that we can convert it to a
+    /// dbg.value intrinsic if the alloca gets promoted.
+    std::vector<DbgDeclareInst*> AllocaDbgDeclares;
+
     /// Visited - The set of basic blocks the renamer has already visited.
     ///
     SmallPtrSet<BasicBlock*, 16> Visited;
@@ -199,7 +218,7 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DF(df), AST(ast) {}
+      : Allocas(A), DT(dt), DF(df), DIF(0), AST(ast) {}
 
     void run();
 
@@ -241,6 +260,8 @@ namespace {
                                   LargeBlockInfo &LBI);
     void PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                   LargeBlockInfo &LBI);
+    void ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI, StoreInst *SI,
+                                         uint64_t Offset);
 
     
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
@@ -259,6 +280,7 @@ namespace {
     bool OnlyUsedInOneBlock;
     
     Value *AllocaPointerVal;
+    DbgDeclareInst *DbgDeclare;
     
     void clear() {
       DefiningBlocks.clear();
@@ -267,6 +289,7 @@ namespace {
       OnlyBlock = 0;
       OnlyUsedInOneBlock = true;
       AllocaPointerVal = 0;
+      DbgDeclare = 0;
     }
     
     /// AnalyzeAlloca - Scan the uses of the specified alloca, filling in our
@@ -301,6 +324,8 @@ namespace {
             OnlyUsedInOneBlock = false;
         }
       }
+      
+      DbgDeclare = findDbgDeclare(AI);
     }
   };
 }  // end of anonymous namespace
@@ -310,6 +335,7 @@ void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
   if (AST) PointerAllocaValues.resize(Allocas.size());
+  AllocaDbgDeclares.resize(Allocas.size());
 
   AllocaInfo Info;
   LargeBlockInfo LBI;
@@ -344,6 +370,8 @@ void PromoteMem2Reg::run() {
 
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
+        // Record debuginfo for the store before removing it.
+        ConvertDebugDeclareToDebugValue(Info.DbgDeclare, Info.OnlyStore, 0);
         // Remove the (now dead) store and alloca.
         Info.OnlyStore->eraseFromParent();
         LBI.deleteValue(Info.OnlyStore);
@@ -372,6 +400,8 @@ void PromoteMem2Reg::run() {
         // Remove the (now dead) stores and alloca.
         while (!AI->use_empty()) {
           StoreInst *SI = cast<StoreInst>(AI->use_back());
+          // Record debuginfo for the store before removing it.
+          ConvertDebugDeclareToDebugValue(Info.DbgDeclare, SI, 0);
           SI->eraseFromParent();
           LBI.deleteValue(SI);
         }
@@ -400,6 +430,9 @@ void PromoteMem2Reg::run() {
     // stored into the alloca.
     if (AST)
       PointerAllocaValues[AllocaNum] = Info.AllocaPointerVal;
+      
+    // Remember the dbg.declare intrinsic describing this alloca, if any.
+    if (Info.DbgDeclare) AllocaDbgDeclares[AllocaNum] = Info.DbgDeclare;
     
     // Keep the reverse mapping of the 'Allocas' array for the rename pass.
     AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
@@ -833,6 +866,22 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
   }
 }
 
+// Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
+// that has an associated llvm.dbg.decl intrinsic.
+void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
+                                                     StoreInst *SI,
+                                                     uint64_t Offset) {
+  if (!DDI)
+    return;
+
+  DIVariable DIVar(DDI->getVariable());
+  if (!DIVar.getNode())
+    return;
+
+  if (!DIF)
+    DIF = new DIFactory(*SI->getParent()->getParent()->getParent());
+  DIF->InsertDbgValueIntrinsic(SI->getOperand(0), Offset, DIVar, SI);
+}
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
 // Alloca returns true if there wasn't already a phi-node for that variable
@@ -946,6 +995,8 @@ NextIteration:
       
       // what value were we writing?
       IncomingVals[ai->second] = SI->getOperand(0);
+      // Record debuginfo for the store before removing it.
+      ConvertDebugDeclareToDebugValue(AllocaDbgDeclares[ai->second], SI, 0);
       BB->getInstList().erase(SI);
     }
   }
