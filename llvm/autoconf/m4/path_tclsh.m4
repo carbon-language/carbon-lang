@@ -19,7 +19,7 @@ if test x"${with_tclinclude}" != x ; then
   else
     AC_MSG_ERROR([${with_tclinclude} directory doesn't contain tclsh])
   fi
-fi
+fi])
 
 dnl see if one is installed
 if test x"${ac_cv_path_tclsh}" = x ; then
@@ -35,5 +35,5 @@ else
   TCLSH="${ac_cv_path_tclsh}"
   AC_SUBST(TCLSH)
 fi
-])])
+])
 
