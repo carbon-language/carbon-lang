@@ -5013,7 +5013,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
       // Note that it's not sufficient to check NoWrap here, because even
       // though the value after a wrap is undefined, it's not undefined
       // behavior, so if wrap does occur, the loop could either terminate or
-      // loop infinately, but in either case, the loop is guaranteed to
+      // loop infinitely, but in either case, the loop is guaranteed to
       // iterate at least until the iteration where the wrapping occurs.
       const SCEV *One = getIntegerSCEV(1, Step->getType());
       if (isSigned) {
