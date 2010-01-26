@@ -861,6 +861,125 @@ CINDEX_LINKAGE unsigned clang_isCursorDefinition(CXCursor);
  */
 
 /**
+ * \defgroup CINDEX_LEX Lexing and syntactic analysis
+ *
+ * @{
+ */
+
+/**
+ * \brief Describes a kind of token.
+ */
+typedef enum CXTokenKind {
+  /**
+   * \brief A token that contains some kind of punctuation.
+   */
+  CXToken_Punctuation,
+  
+  /**
+   * \brief A a language keyword.
+   */
+  CXToken_Keyword,
+  
+  /**
+   * \brief An identifier (that is not a keyword).
+   */
+  CXToken_Identifier,
+  
+  /**
+   * \brief A numeric, string, or character literal.
+   */
+  CXToken_Literal,
+  
+  /**
+   * \brief A comment.
+   */
+  CXToken_Comment
+} CXTokenKind;
+
+/**
+ * \brief Describes a single preprocessing token.
+ */
+typedef struct {
+  unsigned int_data[4];
+  void *ptr_data;
+} CXToken;
+
+/**
+ * \brief Determine the kind of the given token.
+ */
+CINDEX_LINKAGE CXTokenKind clang_getTokenKind(CXToken);
+  
+/**
+ * \brief Determine the spelling of the given token.
+ *
+ * The spelling of a token is the textual representation of that token, e.g.,
+ * the text of an identifier or keyword.
+ */
+CINDEX_LINKAGE CXString clang_getTokenSpelling(CXTranslationUnit, CXToken);
+  
+/**
+ * \brief Retrieve the source location of the given token.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getTokenLocation(CXTranslationUnit, 
+                                                       CXToken);
+  
+/**
+ * \brief Retrieve a source range that covers the given token.
+ */
+CINDEX_LINKAGE CXSourceRange clang_getTokenExtent(CXTranslationUnit, CXToken);
+
+/**
+ * \brief Tokenize the source code described by the given range into raw
+ * lexical tokens.
+ *
+ * \param TU the translation unit whose text is being tokenized.
+ *
+ * \param Range the source range in which text should be tokenized. All of the
+ * tokens produced by tokenization will fall within this source range,
+ *
+ * \param Tokens this pointer will be set to point to the array of tokens
+ * that occur within the given source range. The returned pointer must be
+ * freed with clang_disposeTokens() before the translation unit is destroyed.
+ *
+ * \param NumTokens will be set to the number of tokens in the \c *Tokens
+ * array.
+ *
+ */
+CINDEX_LINKAGE void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
+                                   CXToken **Tokens, unsigned *NumTokens);
+  
+/**
+ * \brief Annotate the given set of tokens by providing cursors for each token
+ * that can be mapped to a specific entity within the abstract syntax tree.
+ *
+ * This token-annotation routine is equivalent to invoking clang_getCursor() 
+ * for the source locations of each of the tokens, then accepting only those
+ * cursors that refer to a specific token.
+ *
+ * \param TU the translation unit that owns the given tokens.
+ *
+ * \param Tokens the set of tokens to annotate.
+ *
+ * \param NumTokens the number of tokens in \p Tokens.
+ *
+ * \param Cursors an array of \p NumTokens cursors, whose contents will be
+ * replaced with the cursors corresponding to each token.
+ */
+CINDEX_LINKAGE void clang_annotateTokens(CXTranslationUnit TU,
+                                         CXToken *Tokens, unsigned NumTokens,
+                                         CXCursor *Cursors);
+  
+/**
+ * \brief Free the given set of tokens.
+ */
+CINDEX_LINKAGE void clang_disposeTokens(CXTranslationUnit TU, 
+                                        CXToken *Tokens, unsigned NumTokens);
+  
+/**
+ * @}
+ */
+  
+/**
  * \defgroup CINDEX_DEBUG Debugging facilities
  *
  * These routines are used for testing and debugging, only, and should not

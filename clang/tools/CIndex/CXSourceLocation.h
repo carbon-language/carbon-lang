@@ -38,8 +38,8 @@ static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
 static inline CXSourceRange translateSourceRange(ASTContext &Context,
                                                  SourceRange R) {
   CXSourceRange Result = { &Context, 
-    R.getBegin().getRawEncoding(),
-    R.getEnd().getRawEncoding() };
+                           R.getBegin().getRawEncoding(),
+                           R.getEnd().getRawEncoding() };
   return Result;
 }
 

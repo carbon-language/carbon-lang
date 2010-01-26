@@ -481,42 +481,62 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
    on failure. If successful, the pointer *filename will contain newly-allocated
    memory (that will be owned by the caller) to store the file name. */
 int parse_file_line_column(const char *input, char **filename, unsigned *line, 
-                           unsigned *column) {
+                           unsigned *column, unsigned *second_line,
+                           unsigned *second_column) {
   /* Find the second colon. */
-  const char *second_colon = strrchr(input, ':'), *first_colon;
+  const char *last_colon = strrchr(input, ':');
+  unsigned values[4], i;
+  unsigned num_values = (second_line && second_column)? 4 : 2;
+
   char *endptr = 0;
-  if (!second_colon || second_colon == input) {
-    fprintf(stderr, "could not parse filename:line:column in '%s'\n", input);
+  if (!last_colon || last_colon == input) {
+    if (num_values == 4)
+      fprintf(stderr, "could not parse filename:line:column:line:column in "
+              "'%s'\n", input);
+    else
+      fprintf(stderr, "could not parse filename:line:column in '%s'\n", input);
     return 1;
   }
 
-  /* Parse the column number. */
-  *column = strtol(second_colon + 1, &endptr, 10);
-  if (*endptr != 0) {
-    fprintf(stderr, "could not parse column in '%s'\n", input);
-    return 1;
+  for (i = 0; i != num_values; ++i) {
+    const char *prev_colon;
+
+    /* Parse the next line or column. */
+    values[num_values - i - 1] = strtol(last_colon + 1, &endptr, 10);
+    if (*endptr != 0 && *endptr != ':') {
+      fprintf(stderr, "could not parse %s in '%s'\n", 
+              (i % 2 ? "column" : "line"), input);
+      return 1;
+    }
+    
+    if (i + 1 == num_values)
+      break;
+
+    /* Find the previous colon. */
+    prev_colon = last_colon - 1;
+    while (prev_colon != input && *prev_colon != ':')
+      --prev_colon;
+    if (prev_colon == input) {
+      fprintf(stderr, "could not parse %s in '%s'\n", 
+              (i % 2 == 0? "column" : "line"), input);
+      return 1;    
+    }
+
+    last_colon = prev_colon;
   }
 
-  /* Find the first colon. */
-  first_colon = second_colon - 1;
-  while (first_colon != input && *first_colon != ':')
-    --first_colon;
-  if (first_colon == input) {
-    fprintf(stderr, "could not parse line in '%s'\n", input);
-    return 1;    
-  }
-
-  /* Parse the line number. */
-  *line = strtol(first_colon + 1, &endptr, 10);
-  if (*endptr != ':') {
-    fprintf(stderr, "could not parse line in '%s'\n", input);
-    return 1;
-  }
+  *line = values[0];
+  *column = values[1];
   
+  if (second_line && second_column) {
+    *second_line = values[2];
+    *second_column = values[3];
+  }
+
   /* Copy the file name. */
-  *filename = (char*)malloc(first_colon - input + 1);
-  memcpy(*filename, input, first_colon - input);
-  (*filename)[first_colon - input] = 0;
+  *filename = (char*)malloc(last_colon - input + 1);
+  memcpy(*filename, input, last_colon - input);
+  (*filename)[last_colon - input] = 0;
   return 0;
 }
 
@@ -595,7 +615,8 @@ int perform_code_completion(int argc, const char **argv) {
   CXCodeCompleteResults *results = 0;
 
   input += strlen("-code-completion-at=");
-  if ((errorCode = parse_file_line_column(input, &filename, &line, &column)))
+  if ((errorCode = parse_file_line_column(input, &filename, &line, &column, 
+                                          0, 0)))
     return errorCode;
 
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
@@ -650,7 +671,7 @@ int inspect_cursor_at(int argc, const char **argv) {
     const char *input = argv[Loc + 1] + strlen("-cursor-at=");
     if ((errorCode = parse_file_line_column(input, &Locations[Loc].filename, 
                                             &Locations[Loc].line, 
-                                            &Locations[Loc].column)))
+                                            &Locations[Loc].column, 0, 0)))
       return errorCode;
   }
   
@@ -689,6 +710,104 @@ int inspect_cursor_at(int argc, const char **argv) {
   return 0;
 }
 
+int perform_token_annotation(int argc, const char **argv) {
+  const char *input = argv[1];
+  char *filename = 0;
+  unsigned line, second_line;
+  unsigned column, second_column;
+  CXIndex CIdx;
+  CXTranslationUnit TU = 0;
+  int errorCode;
+  struct CXUnsavedFile *unsaved_files = 0;
+  int num_unsaved_files = 0;
+  CXToken *tokens;
+  unsigned num_tokens;
+  CXSourceRange range;
+  CXSourceLocation startLoc, endLoc;
+  CXFile file = 0;
+  CXCursor *cursors = 0;
+  unsigned i;
+
+  input += strlen("-test-annotate-tokens=");
+  if ((errorCode = parse_file_line_column(input, &filename, &line, &column,
+                                          &second_line, &second_column)))
+    return errorCode;
+
+  if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
+    return -1;
+
+  CIdx = clang_createIndex(0, 0);
+  TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
+                                                 argc - num_unsaved_files - 3,
+                                                 argv + num_unsaved_files + 2,
+                                                 num_unsaved_files,
+                                                 unsaved_files);
+  if (!TU) {
+    fprintf(stderr, "unable to parse input\n");
+    clang_disposeIndex(CIdx);
+    free(filename);
+    free_remapped_files(unsaved_files, num_unsaved_files);
+    return -1;
+  }  
+  errorCode = 0;
+
+  file = clang_getFile(TU, filename);
+  if (!file) {
+    fprintf(stderr, "file %s is not in this translation unit\n", filename);
+    errorCode = -1;
+    goto teardown;
+  }
+
+  startLoc = clang_getLocation(TU, file, line, column);
+  if (clang_equalLocations(clang_getNullLocation(), startLoc)) {
+    fprintf(stderr, "invalid source location %s:%d:%d\n", filename, line, 
+            column);
+    errorCode = -1;
+    goto teardown;    
+  }
+
+  endLoc = clang_getLocation(TU, file, second_line, second_column);
+  if (clang_equalLocations(clang_getNullLocation(), endLoc)) {
+    fprintf(stderr, "invalid source location %s:%d:%d\n", filename, 
+            second_line, second_column);
+    errorCode = -1;
+    goto teardown;    
+  }
+
+  range = clang_getRange(startLoc, endLoc);
+  clang_tokenize(TU, range, &tokens, &num_tokens);
+  cursors = (CXCursor *)malloc(num_tokens * sizeof(CXCursor));
+  clang_annotateTokens(TU, tokens, num_tokens, cursors);
+  for (i = 0; i != num_tokens; ++i) {
+    const char *kind = "<unknown>";
+    CXString spelling = clang_getTokenSpelling(TU, tokens[i]);
+    CXSourceRange extent = clang_getTokenExtent(TU, tokens[i]);
+    unsigned start_line, start_column, end_line, end_column;
+
+    switch (clang_getTokenKind(tokens[i])) {
+    case CXToken_Punctuation: kind = "Punctuation"; break;
+    case CXToken_Keyword: kind = "Keyword"; break;
+    case CXToken_Identifier: kind = "Identifier"; break;
+    case CXToken_Literal: kind = "Literal"; break;
+    case CXToken_Comment: kind = "Comment"; break;
+    }
+    clang_getInstantiationLocation(clang_getRangeStart(extent), 
+                                   0, &start_line, &start_column);
+    clang_getInstantiationLocation(clang_getRangeEnd(extent),
+                                   0, &end_line, &end_column);
+    printf("%s: \"%s\" [%d:%d - %d:%d]\n", kind, clang_getCString(spelling),
+           start_line, start_column, end_line, end_column);
+  }
+  free(cursors);
+
+ teardown:
+  clang_disposeTranslationUnit(TU);
+  clang_disposeIndex(CIdx);
+  free(filename);
+  free_remapped_files(unsaved_files, num_unsaved_files);
+  return errorCode;
+}
+
 /******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
@@ -712,8 +831,9 @@ static void print_usage(void) {
     "       c-index-test -test-load-tu-usrs <AST file> <symbol filter> "
            "[FileCheck prefix]\n"
     "       c-index-test -test-load-source <symbol filter> {<args>}*\n"
-    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n\n");
+    "       c-index-test -test-load-source-usrs <symbol filter> {<args>}*\n");
   fprintf(stderr,
+    "       c-index-test -test-annotate-tokens=<range> {<args>}* \n\n"
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
@@ -743,7 +863,8 @@ int main(int argc, const char **argv) {
   else if (argc >= 4 && strcmp(argv[1], "-test-file-scan") == 0)
     return perform_file_scan(argv[2], argv[3],
                              argc >= 5 ? argv[4] : 0);
-
+  else if (argc > 2 && strstr(argv[1], "-test-annotate-tokens=") == argv[1])
+    return perform_token_annotation(argc, argv);
   print_usage();
   return 1;
 }

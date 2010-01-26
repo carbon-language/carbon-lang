@@ -199,6 +199,9 @@ public:
   /// the current file.
   SourceLocation getSourceLocation() { return getSourceLocation(BufferPtr); }
 
+  /// \brief Return the current location in the buffer.
+  const char *getBufferLocation() const { return BufferPtr; }
+  
   /// Stringify - Convert the specified string into a C string by escaping '\'
   /// and " characters.  This does not add surrounding ""'s to the string.
   /// If Charify is true, this escapes the ' character instead of ".

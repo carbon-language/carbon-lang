@@ -1,3 +1,4 @@
+_clang_annotateTokens
 _clang_codeComplete
 _clang_createIndex
 _clang_createTranslationUnit
@@ -5,6 +6,7 @@ _clang_createTranslationUnitFromSourceFile
 _clang_disposeCodeCompleteResults
 _clang_disposeIndex
 _clang_disposeString
+_clang_disposeTokens
 _clang_disposeTranslationUnit
 _clang_equalCursors
 _clang_equalLocations
@@ -35,6 +37,10 @@ _clang_getNumCompletionChunks
 _clang_getRange
 _clang_getRangeEnd
 _clang_getRangeStart
+_clang_getTokenExtent
+_clang_getTokenKind
+_clang_getTokenLocation
+_clang_getTokenSpelling
 _clang_getTranslationUnitCursor
 _clang_getTranslationUnitSpelling
 _clang_isCursorDefinition
@@ -45,4 +51,5 @@ _clang_isReference
 _clang_isStatement
 _clang_isTranslationUnit
 _clang_setUseExternalASTGeneration
+_clang_tokenize
 _clang_visitChildren

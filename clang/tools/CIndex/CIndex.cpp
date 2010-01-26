@@ -876,6 +876,21 @@ CXString CIndexer::createCXString(const char *String, bool DupString){
   return Str;
 }
 
+CXString CIndexer::createCXString(llvm::StringRef String, bool DupString) {
+  CXString Result;
+  if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
+    char *Spelling = (char *)malloc(String.size() + 1);
+    memmove(Spelling, String.data(), String.size());
+    Spelling[String.size()] = 0;
+    Result.Spelling = Spelling;
+    Result.MustFreeString = 1;
+  } else {
+    Result.Spelling = String.data();
+    Result.MustFreeString = 0;
+  }
+  return Result;
+}
+
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
@@ -1877,6 +1892,183 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *startColumn = SM.getSpellingColumnNumber(Body->getLBracLoc());
   *endLine = SM.getSpellingLineNumber(Body->getRBracLoc());
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
+}
+  
+} // end: extern "C"
+
+//===----------------------------------------------------------------------===//
+// Token-based Operations.
+//===----------------------------------------------------------------------===//
+
+/* CXToken layout:
+ *   int_data[0]: a CXTokenKind
+ *   int_data[1]: starting token location
+ *   int_data[2]: token length
+ *   int_data[3]: reserved
+ *   ptr_data: for identifiers and keywords, an IdentifierInfo*. 
+ *   otherwise unused.
+ */
+extern "C" {
+
+CXTokenKind clang_getTokenKind(CXToken CXTok) {
+  return static_cast<CXTokenKind>(CXTok.int_data[0]);
+}
+
+CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
+  switch (clang_getTokenKind(CXTok)) {
+  case CXToken_Identifier:
+  case CXToken_Keyword:
+    // We know we have an IdentifierInfo*, so use that.
+    return CIndexer::createCXString(
+              static_cast<IdentifierInfo *>(CXTok.ptr_data)->getNameStart());
+
+  case CXToken_Literal: {
+    // We have stashed the starting pointer in the ptr_data field. Use it.
+    const char *Text = static_cast<const char *>(CXTok.ptr_data);
+    return CIndexer::createCXString(llvm::StringRef(Text, CXTok.int_data[2]), 
+                                    true);
+  }
+      
+  case CXToken_Punctuation:
+  case CXToken_Comment:
+    break;
+  }
+  
+  // We have to find the starting buffer pointer the hard way, by 
+  // deconstructing the source location.
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+  if (!CXXUnit)
+    return CIndexer::createCXString("");
+  
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(CXTok.int_data[1]);
+  std::pair<FileID, unsigned> LocInfo
+    = CXXUnit->getSourceManager().getDecomposedLoc(Loc);
+  std::pair<const char *,const char *> Buffer
+    = CXXUnit->getSourceManager().getBufferData(LocInfo.first);
+
+  return CIndexer::createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
+                                                  CXTok.int_data[2]), 
+                                  true);
+}
+ 
+CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+  if (!CXXUnit)
+    return clang_getNullLocation();
+  
+  return cxloc::translateSourceLocation(CXXUnit->getASTContext(),
+                        SourceLocation::getFromRawEncoding(CXTok.int_data[1]));
+}
+
+CXSourceRange clang_getTokenExtent(CXTranslationUnit TU, CXToken CXTok) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+  if (!CXXUnit) {
+    CXSourceRange Result = { 0, 0, 0 };
+    return Result;
+  }
+  
+  return cxloc::translateSourceRange(CXXUnit->getASTContext(), 
+                        SourceLocation::getFromRawEncoding(CXTok.int_data[1]));
+}
+  
+void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
+                    CXToken **Tokens, unsigned *NumTokens) {
+  if (Tokens)
+    *Tokens = 0;
+  if (NumTokens)
+    *NumTokens = 0;
+  
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
+  if (!CXXUnit || !Tokens || !NumTokens)
+    return;
+  
+  SourceRange R = cxloc::translateSourceRange(Range);
+  if (R.isInvalid())
+    return;
+  
+  SourceManager &SourceMgr = CXXUnit->getSourceManager();
+  std::pair<FileID, unsigned> BeginLocInfo
+    = SourceMgr.getDecomposedLoc(R.getBegin());
+  std::pair<FileID, unsigned> EndLocInfo
+    = SourceMgr.getDecomposedLoc(R.getEnd());
+  
+  // Cannot tokenize across files.
+  if (BeginLocInfo.first != EndLocInfo.first)
+    return;
+  
+  // Create a lexer 
+  std::pair<const char *,const char *> Buffer
+    = SourceMgr.getBufferData(BeginLocInfo.first);
+  Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
+            CXXUnit->getASTContext().getLangOptions(),
+            Buffer.first, Buffer.first + BeginLocInfo.second, Buffer.second);
+  Lex.SetCommentRetentionState(true);
+  
+  // Lex tokens until we hit the end of the range.
+  const char *EffectiveBufferEnd = Buffer.first + EndLocInfo.second;
+  llvm::SmallVector<CXToken, 32> CXTokens;
+  Token Tok;
+  do {
+    // Lex the next token
+    Lex.LexFromRawLexer(Tok);
+    if (Tok.is(tok::eof))
+      break;
+    
+    // Initialize the CXToken.
+    CXToken CXTok;
+    
+    //   - Common fields
+    CXTok.int_data[1] = Tok.getLocation().getRawEncoding();
+    CXTok.int_data[2] = Tok.getLength();
+    CXTok.int_data[3] = 0;
+    
+    //   - Kind-specific fields
+    if (Tok.isLiteral()) {
+      CXTok.int_data[0] = CXToken_Literal;
+      CXTok.ptr_data = (void *)Tok.getLiteralData();
+    } else if (Tok.is(tok::identifier)) {
+      // Lookup the identifier to determine whether we have a 
+      std::pair<FileID, unsigned> LocInfo
+        = SourceMgr.getDecomposedLoc(Tok.getLocation());
+      const char *StartPos 
+        = CXXUnit->getSourceManager().getBufferData(LocInfo.first).first + 
+          LocInfo.second;
+      IdentifierInfo *II
+        = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
+      CXTok.int_data[0] = II->getTokenID() == tok::identifier?
+                               CXToken_Identifier
+                             : CXToken_Keyword;
+      CXTok.ptr_data = II;
+    } else if (Tok.is(tok::comment)) {
+      CXTok.int_data[0] = CXToken_Comment;
+      CXTok.ptr_data = 0;
+    } else {
+      CXTok.int_data[0] = CXToken_Punctuation;
+      CXTok.ptr_data = 0;
+    }
+    CXTokens.push_back(CXTok);
+  } while (Lex.getBufferLocation() <= EffectiveBufferEnd);
+  
+  if (CXTokens.empty())
+    return;
+  
+  *Tokens = (CXToken *)malloc(sizeof(CXToken) * CXTokens.size());
+  memmove(*Tokens, CXTokens.data(), sizeof(CXToken) * CXTokens.size());
+  *NumTokens = CXTokens.size();
+}
+  
+void clang_annotateTokens(CXTranslationUnit TU,
+                          CXToken *Tokens, unsigned NumTokens,
+                          CXCursor *Cursors) {
+  // FIXME: Actually perform some meaningful lookup here.
+  for (unsigned I = 0; I != NumTokens; ++I)
+    Cursors[I] = clang_getNullCursor();
+}
+
+void clang_disposeTokens(CXTranslationUnit TU, 
+                         CXToken *Tokens, unsigned NumTokens) {
+  if (Tokens)
+    free(Tokens);
 }
   
 } // end: extern "C"

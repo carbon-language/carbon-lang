@@ -18,6 +18,7 @@
 #include "clang-c/Index.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/System/Path.h"
 #include <vector>
 
@@ -76,6 +77,8 @@ public:
   std::string getClangResourcesPath();
 
   static CXString createCXString(const char *String, bool DupString = false);
+  static CXString createCXString(llvm::StringRef String, 
+                                 bool DupString = false);
 };
 
 namespace clang {
