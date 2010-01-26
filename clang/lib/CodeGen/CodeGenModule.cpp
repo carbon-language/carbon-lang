@@ -1501,8 +1501,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   if (Sect)
     GV->setSection(Sect);
   if (isUTF16) {
-    unsigned Align = getContext().getTypeAlign(getContext().ShortTy)/8;
-    GV->setAlignment(Align);
+    CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
+    GV->setAlignment(Align.getQuantity());
   }
   Fields[2] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
 
