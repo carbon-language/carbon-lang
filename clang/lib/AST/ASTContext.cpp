@@ -820,6 +820,15 @@ CharUnits ASTContext::getTypeSizeInChars(const Type *T) {
   return CharUnits::fromQuantity(getTypeSize(T) / getCharWidth());
 }
 
+/// getTypeAlign - Return the ABI-specified alignment of a type, in 
+/// characters. This method does not work on incomplete types.
+CharUnits ASTContext::getTypeAlignInChars(QualType T) {
+  return CharUnits::fromQuantity(getTypeAlign(T) / getCharWidth());
+}
+CharUnits ASTContext::getTypeAlignInChars(const Type *T) {
+  return CharUnits::fromQuantity(getTypeAlign(T) / getCharWidth());
+}
+
 /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
 /// type for the current target in bits.  This can be different than the ABI
 /// alignment in cases where it is beneficial for performance to overalign
