@@ -156,7 +156,7 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
-  int getFrameIndexOffset(MachineFunction &MF, int FI) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
   // Exception handling queries.

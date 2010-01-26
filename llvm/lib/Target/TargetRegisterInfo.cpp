@@ -86,9 +86,10 @@ BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
 /// getFrameIndexOffset - Returns the displacement from the frame register to
 /// the stack frame of the specified index. This is the default implementation
 /// which is overridden for some targets.
-int TargetRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+int TargetRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
+                                            int FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->getObjectOffset(FI) + MFI->getStackSize() -
     TFI.getOffsetOfLocalArea() + MFI->getOffsetAdjustment();
 }
@@ -96,7 +97,7 @@ int TargetRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
 /// getInitialFrameState - Returns a list of machine moves that are assumed
 /// on entry to a function.
 void
-TargetRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+TargetRegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const{
   // Default is to do nothing.
 }
 

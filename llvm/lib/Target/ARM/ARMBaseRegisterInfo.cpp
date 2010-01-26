@@ -803,10 +803,10 @@ ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 }
 
 int
-ARMBaseRegisterInfo::getFrameIndexReference(MachineFunction &MF, int FI,
+ARMBaseRegisterInfo::getFrameIndexReference(const MachineFunction &MF, int FI,
                                             unsigned &FrameReg) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
   bool isFixed = MFI->isFixedObjectIndex(FI);
 
@@ -845,7 +845,8 @@ ARMBaseRegisterInfo::getFrameIndexReference(MachineFunction &MF, int FI,
 
 
 int
-ARMBaseRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+ARMBaseRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
+                                         int FI) const {
   unsigned FrameReg;
   return getFrameIndexReference(MF, FI, FrameReg);
 }

@@ -107,9 +107,9 @@ public:
   // Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
-  int getFrameIndexReference(MachineFunction &MF, int FI,
+  int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const;
-  int getFrameIndexOffset(MachineFunction &MF, int FI) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;

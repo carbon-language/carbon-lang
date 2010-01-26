@@ -473,9 +473,9 @@ bool X86RegisterInfo::hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
 }
 
 int
-X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+X86RegisterInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   int Offset = MFI->getObjectOffset(FI) - TFI.getOffsetOfLocalArea();
   uint64_t StackSize = MFI->getStackSize();
 
@@ -498,7 +498,7 @@ X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
     Offset += SlotSize;
 
     // Skip the RETADDR move area
-    X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+    const X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
     int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
     if (TailCallReturnAddrDelta < 0)
       Offset -= TailCallReturnAddrDelta;

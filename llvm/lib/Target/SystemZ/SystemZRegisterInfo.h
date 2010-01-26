@@ -49,7 +49,7 @@ struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
   bool hasReservedCallFrame(MachineFunction &MF) const { return true; }
   bool hasFP(const MachineFunction &MF) const;
 
-  int getFrameIndexOffset(MachineFunction &MF, int FI) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
