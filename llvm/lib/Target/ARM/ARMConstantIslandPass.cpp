@@ -302,9 +302,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // Thumb1 functions containing constant pools get 4-byte alignment.
   // This is so we can keep exact track of where the alignment padding goes.
 
-  // Set default. Thumb1 function is 2-byte aligned, ARM and Thumb2 are 4-byte
-  // aligned.
-  AFI->setAlign(isThumb1 ? 1U : 2U);
+  // ARM and Thumb2 functions need to be 4-byte aligned.
+  if (!isThumb1)
+    MF.EnsureAlignment(2);  // 2 = log2(4)
 
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
@@ -312,7 +312,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   if (!MCP.isEmpty()) {
     DoInitialPlacement(MF, CPEMIs);
     if (isThumb1)
-      AFI->setAlign(2U);
+      MF.EnsureAlignment(2);  // 2 = log2(4)
   }
 
   /// The next UID to take is the first unused one.
@@ -506,7 +506,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         case ARM::tBR_JTr:
           // A Thumb1 table jump may involve padding; for the offsets to
           // be right, functions containing these must be 4-byte aligned.
-          AFI->setAlign(2U);
+          MF.EnsureAlignment(2U);
           if ((Offset+MBBSize)%4 != 0 || HasInlineAsm)
             // FIXME: Add a pseudo ALIGN instruction instead.
             MBBSize += 2;           // padding

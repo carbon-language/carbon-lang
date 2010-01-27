@@ -35,11 +35,6 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// 'isThumb'.
   bool hasThumb2;
 
-  /// Align - required alignment.  ARM functions and Thumb functions with
-  /// constant pools require 4-byte alignment; other Thumb functions
-  /// require only 2-byte alignment.
-  unsigned Align;
-
   /// VarArgsRegSaveSize - Size of the register save area for vararg functions.
   ///
   unsigned VarArgsRegSaveSize;
@@ -94,7 +89,6 @@ public:
   ARMFunctionInfo() :
     isThumb(false),
     hasThumb2(false),
-    Align(2U),
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
@@ -105,7 +99,6 @@ public:
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
-    Align(isThumb ? 1U : 2U),
     VarArgsRegSaveSize(0), HasStackFrame(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
@@ -117,9 +110,6 @@ public:
   bool isThumbFunction() const { return isThumb; }
   bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
   bool isThumb2Function() const { return isThumb && hasThumb2; }
-
-  unsigned getAlign() const { return Align; }
-  void setAlign(unsigned a) { Align = a; }
 
   unsigned getVarArgsRegSaveSize() const { return VarArgsRegSaveSize; }
   void setVarArgsRegSaveSize(unsigned s) { VarArgsRegSaveSize = s; }

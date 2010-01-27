@@ -280,16 +280,13 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   printVisibility(CurrentFnSym, F->getVisibility());
 
-  unsigned FnAlign = 1 << MF.getAlignment();  // MF alignment is log2.
+  EmitAlignment(1 << MF.getAlignment(), F);
   if (AFI->isThumbFunction()) {
-    EmitAlignment(FnAlign, F, AFI->getAlign());
     O << "\t.code\t16\n";
     O << "\t.thumb_func";
     if (Subtarget->isTargetDarwin())
       O << "\t" << *CurrentFnSym;
     O << "\n";
-  } else {
-    EmitAlignment(FnAlign, F);
   }
 
   O << *CurrentFnSym << ":\n";
