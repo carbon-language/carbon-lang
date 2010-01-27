@@ -34,13 +34,9 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
                const unsigned (&_DarwinVersion)[3])
   : ToolChain(Host, Triple), TargetInitialized(false)
 {
-  DarwinVersion[0] = _DarwinVersion[0];
-  DarwinVersion[1] = _DarwinVersion[1];
-  DarwinVersion[2] = _DarwinVersion[2];
-
   llvm::raw_string_ostream(MacosxVersionMin)
-    << "10." << std::max(0, (int)DarwinVersion[0] - 4) << '.'
-    << DarwinVersion[1];
+    << "10." << std::max(0, (int)_DarwinVersion[0] - 4) << '.'
+    << _DarwinVersion[1];
 }
 
 // FIXME: Can we tablegen this?

@@ -47,9 +47,6 @@ public:
 class VISIBILITY_HIDDEN Darwin : public ToolChain {
   mutable llvm::DenseMap<unsigned, Tool*> Tools;
 
-  /// Darwin version of tool chain.
-  unsigned DarwinVersion[3];
-
   /// Whether the information on the target has been initialized.
   //
   // FIXME: This should be eliminated. What we want to do is make this part of
@@ -106,12 +103,6 @@ public:
     Res[2] = TargetVersion[2];
   }
 
-  void getDarwinVersion(unsigned (&Res)[3]) const {
-    Res[0] = DarwinVersion[0];
-    Res[1] = DarwinVersion[1];
-    Res[2] = DarwinVersion[2];
-  }
-
   /// getDarwinArchName - Get the "Darwin" arch name for a particular compiler
   /// invocation. For example, Darwin treats different ARM variations as
   /// distinct architectures.
@@ -160,18 +151,20 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
   virtual bool IsBlocksDefault() const {
-    // Blocks default to on for 10.6 (darwin10) and beyond.
-    return (DarwinVersion[0] > 9);
+    // Blocks default to on for OS X 10.6 and iPhoneOS 3.0 and beyond.
+    if (isTargetIPhoneOS())
+      return !isIPhoneOSVersionLT(3);
+    else
+      return !isMacosxVersionLT(10, 6);
   }
   virtual bool IsObjCNonFragileABIDefault() const {
-    // Non-fragile ABI default to on for 10.5 (darwin9) and beyond on x86-64.
-    return (DarwinVersion[0] >= 9 &&
-            getTriple().getArch() == llvm::Triple::x86_64);
+    // Non-fragile ABI default to on for iPhoneOS and x86-64.
+    return isTargetIPhoneOS() || getTriple().getArch() == llvm::Triple::x86_64;
   }
   virtual bool IsUnwindTablesDefault() const;
   virtual unsigned GetDefaultStackProtectorLevel() const {
-    // Stack protectors default to on for 10.6 (darwin10) and beyond.
-    return (DarwinVersion[0] > 9) ? 1 : 0;
+    // Stack protectors default to on for 10.6 and beyond.
+    return !isTargetIPhoneOS() && !isMacosxVersionLT(10, 6);
   }
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
