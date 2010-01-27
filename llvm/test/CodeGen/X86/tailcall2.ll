@@ -4,7 +4,7 @@
 define void @bar(i32 %x) nounwind ssp {
 entry:
 ; CHECK: bar:
-; CHECK: jmp _foo
+; CHECK: jmp {{_?}}foo
   tail call void @foo() nounwind
   ret void
 }
