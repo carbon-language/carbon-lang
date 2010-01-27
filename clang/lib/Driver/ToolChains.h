@@ -141,6 +141,12 @@ public:
     return isMacosxVersionLT(A, B);
   }
 
+  bool isIPhoneOSVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
+    assert(isTargetIPhoneOS() && "Unexpected call for OS X target!");
+    unsigned B[3] = { V0, V1, V2 };
+    return isMacosxVersionLT(TargetVersion, B);
+  }
+
   /// AddLinkSearchPathArgs - Add the linker search paths to \arg CmdArgs.
   ///
   /// \param Args - The input argument list.

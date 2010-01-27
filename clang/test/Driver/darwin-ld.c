@@ -39,5 +39,38 @@
 // RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch i386 -arch x86_64 -g %s 2> %t.log
 // RUN: grep dsymutil %t.log | count 0
 
+// Check linker changes that came with new linkedit format.
+// RUN: touch %t.o
+// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 %t.o 2> %t.log
+// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 -dynamiclib %t.o 2>> %t.log
+// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 -bundle %t.o 2>> %t.log
+// RUN: FileCheck -check-prefix=LINK_IPHONE_3_0 %s < %t.log
 
+// LINK_IPHONE_3_0: ld"
+// LINK_IPHONE_3_0-NOT: -lcrt1.3.1.o
+// LINK_IPHONE_3_0: -lcrt1.o
+// LINK_IPHONE_3_0: -lSystem
+// LINK_IPHONE_3_0: ld"
+// LINK_IPHONE_3_0: -dylib
+// LINK_IPHONE_3_0: -ldylib1.o
+// LINK_IPHONE_3_0: -lSystem
+// LINK_IPHONE_3_0: ld"
+// LINK_IPHONE_3_0: -lbundle1.o
+// LINK_IPHONE_3_0: -lSystem
 
+// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 %t.o 2> %t.log
+// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 -dynamiclib %t.o 2>> %t.log
+// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 -bundle %t.o 2>> %t.log
+// RUN: FileCheck -check-prefix=LINK_IPHONE_3_1 %s < %t.log
+
+// LINK_IPHONE_3_1: ld"
+// LINK_IPHONE_3_1-NOT: -lcrt1.o
+// LINK_IPHONE_3_1: -lcrt1.3.1.o
+// LINK_IPHONE_3_1: -lSystem
+// LINK_IPHONE_3_1: ld"
+// LINK_IPHONE_3_1: -dylib
+// LINK_IPHONE_3_1-NOT: -ldylib1.o
+// LINK_IPHONE_3_1: -lSystem
+// LINK_IPHONE_3_1: ld"
+// LINK_IPHONE_3_1-NOT: -lbundle1.o
+// LINK_IPHONE_3_1: -lSystem

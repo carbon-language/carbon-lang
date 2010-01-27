@@ -2039,16 +2039,26 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // Derived from startfile spec.
     if (Args.hasArg(options::OPT_dynamiclib)) {
       // Derived from darwin_dylib1 spec.
-      if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 5))
-        CmdArgs.push_back("-ldylib1.o");
-      else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 6))
-        CmdArgs.push_back("-ldylib1.10.5.o");
+      if (getDarwinToolChain().isTargetIPhoneOS()) {
+        if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
+          CmdArgs.push_back("-ldylib1.o");
+      } else {
+        if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 5))
+          CmdArgs.push_back("-ldylib1.o");
+        else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10,6))
+          CmdArgs.push_back("-ldylib1.10.5.o");
+      }
     } else {
       if (Args.hasArg(options::OPT_bundle)) {
         if (!Args.hasArg(options::OPT_static)) {
           // Derived from darwin_bundle1 spec.
-          if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 6))
-            CmdArgs.push_back("-lbundle1.o");
+          if (getDarwinToolChain().isTargetIPhoneOS()) {
+            if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
+              CmdArgs.push_back("-lbundle1.o");
+          } else {
+            if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 6))
+              CmdArgs.push_back("-lbundle1.o");
+          }
         }
       } else {
         if (Args.hasArg(options::OPT_pg)) {
@@ -2069,7 +2079,10 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
           } else {
             // Derived from darwin_crt1 spec.
             if (getDarwinToolChain().isTargetIPhoneOS()) {
-              CmdArgs.push_back("-lcrt1.o");
+              if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
+                CmdArgs.push_back("-lcrt1.o");
+              else
+                CmdArgs.push_back("-lcrt1.3.1.o");
             } else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin,
                                                               10, 5))
               CmdArgs.push_back("-lcrt1.o");
