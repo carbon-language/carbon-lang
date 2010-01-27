@@ -637,9 +637,13 @@ class X86TargetInfo : public TargetInfo {
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
   } SSELevel;
+  enum AMD3DNowEnum {
+    NoAMD3DNow, AMD3DNow, AMD3DNowAthlon
+  } AMD3DNowLevel;
+
 public:
   X86TargetInfo(const std::string& triple)
-    : TargetInfo(triple), SSELevel(NoMMXSSE) {
+    : TargetInfo(triple), SSELevel(NoMMXSSE), AMD3DNowLevel(NoAMD3DNow) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -804,6 +808,14 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       .Case("mmx", MMX)
       .Default(NoMMXSSE);
     SSELevel = std::max(SSELevel, Level);
+    
+    AMD3DNowEnum ThreeDNowLevel = 
+      llvm::StringSwitch<AMD3DNowEnum>(Features[i].substr(1))
+        .Case("3dnowa", AMD3DNowAthlon)
+        .Case("3dnow", AMD3DNow)
+        .Default(NoAMD3DNow);
+    
+    AMD3DNowLevel = std::max(AMD3DNowLevel, ThreeDNowLevel);
   }
 }
 
@@ -856,6 +868,16 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case MMX:
     Builder.defineMacro("__MMX__");
   case NoMMXSSE:
+    break;
+  }
+  
+  // Each case falls through to the previous one here.
+  switch (AMD3DNowLevel) {
+  case AMD3DNowAthlon:
+    Builder.defineMacro("__3dNOW_A__");
+  case AMD3DNow:
+    Builder.defineMacro("__3dNOW__");
+  case NoAMD3DNow:
     break;
   }
 }
