@@ -205,11 +205,27 @@ is used in the file argument.</p>
 <h2 id="vectors">Vectors and Extended Vectors</h2>
 <!-- ======================================================================= -->
 
-<p>Supports the GCC vector extensions, plus some stuff like V[1].  ext_vector
-with V.xyzw syntax and other tidbits.  See also <a 
-href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
+<p>Supports the GCC vector extensions, plus some stuff like V[1].</p>
+
+<p>Also supports <tt>ext_vector</tt>, which additionally support for V.xyzw
+syntax and other tidbits as seen in OpenCL. An example is:</p>
+
+<blockquote>
+<pre>
+typedef float float4 <b>__attribute__((ext_vector_type(4)))</b>;
+typedef float float2 <b>__attribute__((ext_vector_type(2)))</b>;
+
+float4 foo(float2 a, float2 b) {
+  float4 c;
+  c.xz = a;
+  c.yw = b;
+  return c;
+}
+</blockquote>
 
 <p>Query for this feature with __has_feature(attribute_ext_vector_type).</p>
+
+<p>See also <a href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
