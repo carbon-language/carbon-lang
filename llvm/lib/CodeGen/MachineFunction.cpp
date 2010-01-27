@@ -453,8 +453,7 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
                                         bool isLinkerPrivate) const {
   assert(JumpTableInfo && "No jump tables");
   
-  const std::vector<MachineJumpTableEntry> &JTs =JumpTableInfo->getJumpTables();
-  assert(JTI < JTs.size() && "Invalid JTI!");
+  assert(JTI < JumpTableInfo->getJumpTables().size() && "Invalid JTI!");
   const MCAsmInfo &MAI = *getTarget().getMCAsmInfo();
   
   const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
