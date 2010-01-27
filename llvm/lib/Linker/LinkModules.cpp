@@ -404,9 +404,7 @@ static Value *RemapOperand(const Value *In,
     } else {
       Result = const_cast<Value*>(In);
     }
-  } else if (isa<MDString>(In)) {
-    Result = const_cast<Value*>(In);
-  } else if (isa<InlineAsm>(In)) {
+  } else if (isa<MDString>(In) || isa<InlineAsm>(In)) {
     Result = const_cast<Value*>(In);
   }
 
