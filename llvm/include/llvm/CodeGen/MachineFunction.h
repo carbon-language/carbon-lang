@@ -177,6 +177,11 @@ public:
   ///
   void setAlignment(unsigned A) { Alignment = A; }
 
+  /// EnsureAlignment - Make sure the function is at least 'A' bits aligned.
+  void EnsureAlignment(unsigned A) {
+    if (Alignment < A) Alignment = A;
+  }
+  
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.
   ///
