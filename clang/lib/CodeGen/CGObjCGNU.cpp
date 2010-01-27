@@ -65,6 +65,7 @@ private:
   std::vector<llvm::Constant*> Classes;
   std::vector<llvm::Constant*> Categories;
   std::vector<llvm::Constant*> ConstantStrings;
+  llvm::StringMap<llvm::Constant*> ObjCStrings;
   llvm::Function *LoadFunction;
   llvm::StringMap<llvm::Constant*> ExistingProtocols;
   typedef std::pair<std::string, std::string> TypedSelector;
@@ -357,7 +358,13 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
 
 /// Generate an NSConstantString object.
 llvm::Constant *CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
+
   std::string Str(SL->getStrData(), SL->getByteLength());
+
+  // Look for an existing one
+  llvm::StringMap<llvm::Constant*>::iterator old = ObjCStrings.find(Str);
+  if (old != ObjCStrings.end())
+    return old->getValue();
 
   std::vector<llvm::Constant*> Ivars;
   Ivars.push_back(NULLPtr);
@@ -366,8 +373,9 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
   llvm::Constant *ObjCStr = MakeGlobal(
     llvm::StructType::get(VMContext, PtrToInt8Ty, PtrToInt8Ty, IntTy, NULL),
     Ivars, ".objc_str");
-  ConstantStrings.push_back(
-      llvm::ConstantExpr::getBitCast(ObjCStr, PtrToInt8Ty));
+  ObjCStr = llvm::ConstantExpr::getBitCast(ObjCStr, PtrToInt8Ty);
+  ObjCStrings[Str] = ObjCStr;
+  ConstantStrings.push_back(ObjCStr);
   return ObjCStr;
 }
 
