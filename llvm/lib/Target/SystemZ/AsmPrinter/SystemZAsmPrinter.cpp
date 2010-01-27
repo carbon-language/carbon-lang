@@ -69,7 +69,6 @@ namespace {
 
     void printMachineInstruction(const MachineInstr * MI);
 
-    void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -81,46 +80,14 @@ namespace {
 
 #include "SystemZGenAsmWriter.inc"
 
-void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
-  unsigned FnAlign = MF.getAlignment();
-  const Function *F = MF.getFunction();
 
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  EmitAlignment(FnAlign, F);
-
-  switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << '\n';
-    break;
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    O << "\t.weak\t" << *CurrentFnSym << '\n';
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  O << "\t.type\t" << *CurrentFnSym << ",@function\n";
-  O << *CurrentFnSym << ":\n";
-}
 
 bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
   // Print the 'header' of function
-  emitFunctionHeader(MF);
+  EmitFunctionHeader();
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

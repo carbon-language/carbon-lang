@@ -406,38 +406,7 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out labels for the function.
-  const Function *F = MF.getFunction();
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  EmitAlignment(MF.getAlignment(), F);
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
-  case Function::InternalLinkage:  // Symbols default to internal.
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.global\t" << *CurrentFnSym << "\n" << "\t.type\t";
-    O << *CurrentFnSym << ", @function\n";
-    break;
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-    O << "\t.global\t" << *CurrentFnSym << "\n";
-    O << "\t.weak_definition\t" << *CurrentFnSym << "\n";
-    break;
-  }
-  
-  O << *CurrentFnSym << ":\n";
-
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
+  EmitFunctionHeader();
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

@@ -78,7 +78,6 @@ namespace {
                                const char *ExtraCode);
     void printInstructionThroughMCStreamer(const MachineInstr *MI);
 
-    void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -89,43 +88,11 @@ namespace {
 } // end of anonymous namespace
 
 
-void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
-  const Function *F = MF.getFunction();
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  unsigned FnAlign = MF.getAlignment();
-  EmitAlignment(FnAlign, F);
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << '\n';
-    break;
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    O << "\t.weak\t" << *CurrentFnSym << '\n';
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  O << "\t.type\t" << *CurrentFnSym << ",@function\n";
-  O << *CurrentFnSym << ":\n";
-}
-
 bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
-
-  // Print the 'header' of function
-  emitFunctionHeader(MF);
+  
+  EmitFunctionHeader();
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

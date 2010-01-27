@@ -237,9 +237,6 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF);
-
   // Emit the function start directives
   emitFunctionStart(MF);
   
@@ -268,6 +265,9 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Emit function end directives
   emitFunctionEnd(MF);
   
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF);
+
   // Emit post-function debug information.
   DW->EndFunction(&MF);
 

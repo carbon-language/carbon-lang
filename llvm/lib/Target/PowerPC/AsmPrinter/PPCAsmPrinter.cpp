@@ -601,6 +601,8 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
+  EmitFunctionHeader();
+
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -702,38 +704,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out labels for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::PrivateLinkage:
-  case Function::InternalLinkage:  // Symbols default to internal.
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << '\n';
-    break;
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::LinkerPrivateLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << '\n';
-    O << "\t.weak_definition\t" << *CurrentFnSym << '\n';
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  EmitAlignment(MF.getAlignment(), F);
-  O << *CurrentFnSym << ":\n";
-
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
+  EmitFunctionHeader();
 
   // If the function is empty, then we need to emit *something*. Otherwise, the
   // function's label might be associated with something that it wasn't meant to

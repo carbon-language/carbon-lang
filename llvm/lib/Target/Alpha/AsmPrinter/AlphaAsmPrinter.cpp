@@ -127,39 +127,9 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF);
-
-  // Print out labels for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  EmitAlignment(MF.getAlignment(), F);
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::InternalLinkage:  // Symbols default to internal.
-  case Function::PrivateLinkage:
-  case Function::LinkerPrivateLinkage:
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.globl " << *CurrentFnSym << '\n';
-    break;
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-    O << MAI->getWeakRefDirective() << *CurrentFnSym << '\n';
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
+  EmitFunctionHeader();
+  
   O << "\t.ent " << *CurrentFnSym << "\n";
-
-  O << *CurrentFnSym << ":\n";
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -183,6 +153,9 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << "\t.end " << *CurrentFnSym << "\n";
 
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF);
+  
   // We didn't modify anything.
   return false;
 }

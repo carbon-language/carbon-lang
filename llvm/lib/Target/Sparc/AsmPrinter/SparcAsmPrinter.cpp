@@ -74,7 +74,6 @@ namespace {
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode);
 
-    void emitFunctionHeader(const MachineFunction &MF);
     bool printGetPCX(const MachineInstr *MI, unsigned OpNo);
   };
 } // end of anonymous namespace
@@ -87,18 +86,10 @@ namespace {
 bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
+  EmitFunctionHeader();
 
   // BBNumber is used here so that a given Printer will never give two
   // BBs the same name. (If you have a better way, please let me know!)
-
-  O << "\n\n";
-  emitFunctionHeader(MF);
-  
-  
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
 
   // Number each basic block so that we can consistently refer to them
   // in PC-relative references.
@@ -136,38 +127,6 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // We didn't modify anything.
   O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
   return false;
-}
-
-void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  EmitAlignment(MF.getAlignment(), F);
-  
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type");
-  case Function::PrivateLinkage:
-  case Function::InternalLinkage:
-    // Function is internal.
-    break;
-  case Function::DLLExportLinkage:
-  case Function::ExternalLinkage:
-    // Function is externally visible
-    O << "\t.global\t" << *CurrentFnSym << '\n';
-    break;
-  case Function::LinkerPrivateLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-    // Function is weak
-    O << "\t.weak\t" << *CurrentFnSym << '\n';
-    break;
-  }
-  
-  printVisibility(CurrentFnSym, F->getVisibility());
-  
-  O << "\t.type\t" << *CurrentFnSym << ", #function\n";
-  O << *CurrentFnSym << ":\n";
 }
 
 
