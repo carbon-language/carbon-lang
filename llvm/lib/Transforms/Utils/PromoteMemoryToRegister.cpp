@@ -220,7 +220,7 @@ namespace {
                    DominanceFrontier &df, AliasSetTracker *ast)
       : Allocas(A), DT(dt), DF(df), DIF(0), AST(ast) {}
     ~PromoteMem2Reg() {
-      if (DIF) delete DIF;
+      delete DIF;
     }
 
     void run();
