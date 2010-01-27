@@ -164,6 +164,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
+    virtual void EmitFunctionEntryLabel();
     void EmitStartOfAsmFile(Module &M);
     void EmitEndOfAsmFile(Module &M);
 
@@ -237,6 +238,18 @@ namespace {
 
 #include "ARMGenAsmWriter.inc"
 
+void ARMAsmPrinter::EmitFunctionEntryLabel() {
+  if (AFI->isThumbFunction()) {
+    O << "\t.code\t16\n";
+    O << "\t.thumb_func";
+    if (Subtarget->isTargetDarwin())
+      O << '\t' << *CurrentFnSym;
+    O << '\n';
+  }
+  
+  OutStreamer.EmitLabel(CurrentFnSym);
+}
+
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -249,50 +262,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // NOTE: we don't print out constant pools here, they are handled as
   // instructions.
-
-  O << '\n';
-
-  // Print out labels for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::PrivateLinkage:
-  case Function::InternalLinkage:
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.globl\t" << *CurrentFnSym << "\n";
-    break;
-  case Function::LinkerPrivateLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-    if (Subtarget->isTargetDarwin()) {
-      O << "\t.globl\t" << *CurrentFnSym << "\n";
-      O << "\t.weak_definition\t" << *CurrentFnSym << "\n";
-    } else {
-      O << MAI->getWeakRefDirective() << *CurrentFnSym << "\n";
-    }
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  EmitAlignment(1 << MF.getAlignment(), F);
-  if (AFI->isThumbFunction()) {
-    O << "\t.code\t16\n";
-    O << "\t.thumb_func";
-    if (Subtarget->isTargetDarwin())
-      O << "\t" << *CurrentFnSym;
-    O << "\n";
-  }
-
-  O << *CurrentFnSym << ":\n";
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
-
+  EmitFunctionHeader();
+  
   if (Subtarget->isTargetDarwin()) {
     // If the function is empty, then we need to emit *something*. Otherwise,
     // the function's label might be associated with something that it wasn't
