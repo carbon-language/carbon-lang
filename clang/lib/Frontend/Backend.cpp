@@ -17,7 +17,6 @@
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -56,7 +55,6 @@ namespace {
     llvm::Module *TheModule;
     llvm::TargetData *TheTargetData;
 
-    mutable llvm::ModuleProvider *ModuleProvider;
     mutable FunctionPassManager *CodeGenPasses;
     mutable PassManager *PerModulePasses;
     mutable FunctionPassManager *PerFunctionPasses;
@@ -89,7 +87,7 @@ namespace {
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
-      TheModule(0), TheTargetData(0), ModuleProvider(0),
+      TheModule(0), TheTargetData(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
 
       if (AsmOutStream)
@@ -101,7 +99,7 @@ namespace {
 
     ~BackendConsumer() {
       delete TheTargetData;
-      delete ModuleProvider;
+      delete TheModule;
       delete CodeGenPasses;
       delete PerModulePasses;
       delete PerFunctionPasses;
@@ -116,7 +114,6 @@ namespace {
       Gen->Initialize(Ctx);
 
       TheModule = Gen->GetModule();
-      ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
 
       if (llvm::TimePassesIsEnabled)
@@ -172,7 +169,7 @@ namespace {
 
 FunctionPassManager *BackendConsumer::getCodeGenPasses() const {
   if (!CodeGenPasses) {
-    CodeGenPasses = new FunctionPassManager(ModuleProvider);
+    CodeGenPasses = new FunctionPassManager(TheModule);
     CodeGenPasses->add(new TargetData(*TheTargetData));
   }
 
@@ -190,7 +187,7 @@ PassManager *BackendConsumer::getPerModulePasses() const {
 
 FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
   if (!PerFunctionPasses) {
-    PerFunctionPasses = new FunctionPassManager(ModuleProvider);
+    PerFunctionPasses = new FunctionPassManager(TheModule);
     PerFunctionPasses->add(new TargetData(*TheTargetData));
   }
 
@@ -392,7 +389,6 @@ void BackendConsumer::EmitAssembly() {
   if (!M) {
     // The module has been released by IR gen on failures, do not
     // double free.
-    ModuleProvider->releaseModule();
     TheModule = 0;
     return;
   }
