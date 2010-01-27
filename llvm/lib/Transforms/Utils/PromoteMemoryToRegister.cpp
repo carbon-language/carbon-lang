@@ -85,8 +85,9 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   return true;
 }
 
-/// Finds the llvm.dbg.declare intrinsic describing V, if any.
-static DbgDeclareInst *findDbgDeclare(Value *V) {
+/// FindAllocaDbgDeclare - Finds the llvm.dbg.declare intrinsic describing the
+/// alloca 'V', if any.
+static DbgDeclareInst *FindAllocaDbgDeclare(Value *V) {
   if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), &V, 1))
     for (Value::use_iterator UI = DebugNode->use_begin(),
          E = DebugNode->use_end(); UI != E; ++UI)
@@ -263,8 +264,7 @@ namespace {
                                   LargeBlockInfo &LBI);
     void PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                   LargeBlockInfo &LBI);
-    void ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI, StoreInst *SI,
-                                         uint64_t Offset);
+    void ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI, StoreInst *SI);
 
     
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
@@ -328,7 +328,7 @@ namespace {
         }
       }
       
-      DbgDeclare = findDbgDeclare(AI);
+      DbgDeclare = FindAllocaDbgDeclare(AI);
     }
   };
 }  // end of anonymous namespace
@@ -374,7 +374,8 @@ void PromoteMem2Reg::run() {
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
         // Record debuginfo for the store before removing it.
-        ConvertDebugDeclareToDebugValue(Info.DbgDeclare, Info.OnlyStore, 0);
+        if (DbgDeclareInst *DDI = Info.DbgDeclare)
+          ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore);
         // Remove the (now dead) store and alloca.
         Info.OnlyStore->eraseFromParent();
         LBI.deleteValue(Info.OnlyStore);
@@ -404,7 +405,8 @@ void PromoteMem2Reg::run() {
         while (!AI->use_empty()) {
           StoreInst *SI = cast<StoreInst>(AI->use_back());
           // Record debuginfo for the store before removing it.
-          ConvertDebugDeclareToDebugValue(Info.DbgDeclare, SI, 0);
+          if (DbgDeclareInst *DDI = Info.DbgDeclare)
+            ConvertDebugDeclareToDebugValue(DDI, SI);
           SI->eraseFromParent();
           LBI.deleteValue(SI);
         }
@@ -872,19 +874,17 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
 // Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
 // that has an associated llvm.dbg.decl intrinsic.
 void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
-                                                     StoreInst *SI,
-                                                     uint64_t Offset) {
-  if (!DDI)
-    return;
-
+                                                     StoreInst *SI) {
   DIVariable DIVar(DDI->getVariable());
   if (!DIVar.getNode())
     return;
 
   if (!DIF)
     DIF = new DIFactory(*SI->getParent()->getParent()->getParent());
-  Instruction *DbgVal = DIF->InsertDbgValueIntrinsic(SI->getOperand(0), Offset,
+  Instruction *DbgVal = DIF->InsertDbgValueIntrinsic(SI->getOperand(0), 0,
                                                      DIVar, SI);
+  
+  // Propagate any debug metadata from the store onto the dbg.value.
   if (MDNode *SIMD = SI->getMetadata("dbg"))
     DbgVal->setMetadata("dbg", SIMD);
 }
@@ -1002,7 +1002,8 @@ NextIteration:
       // what value were we writing?
       IncomingVals[ai->second] = SI->getOperand(0);
       // Record debuginfo for the store before removing it.
-      ConvertDebugDeclareToDebugValue(AllocaDbgDeclares[ai->second], SI, 0);
+      if (DbgDeclareInst *DDI = AllocaDbgDeclares[ai->second])
+        ConvertDebugDeclareToDebugValue(DDI, SI);
       BB->getInstList().erase(SI);
     }
   }
