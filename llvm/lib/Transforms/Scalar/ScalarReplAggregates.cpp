@@ -681,7 +681,7 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
     Val->takeName(GEPI);
   }
   if (Val->getType() != GEPI->getType())
-    Val = new BitCastInst(Val, GEPI->getType(), Val->getNameStr(), GEPI);
+    Val = new BitCastInst(Val, GEPI->getType(), Val->getName(), GEPI);
   GEPI->replaceAllUsesWith(Val);
   DeadInsts.push_back(GEPI);
 }
@@ -769,7 +769,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       Value *Idx[2] = { Zero,
                       ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
       OtherElt = GetElementPtrInst::CreateInBounds(OtherPtr, Idx, Idx + 2,
-                                           OtherPtr->getNameStr()+"."+Twine(i),
+                                              OtherPtr->getName()+"."+Twine(i),
                                                    MI);
       uint64_t EltOffset;
       const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
@@ -853,12 +853,11 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     
     // Cast the element pointer to BytePtrTy.
     if (EltPtr->getType() != BytePtrTy)
-      EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getNameStr(), MI);
+      EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getName(), MI);
     
     // Cast the other pointer (if we have one) to BytePtrTy. 
     if (OtherElt && OtherElt->getType() != BytePtrTy)
-      OtherElt = new BitCastInst(OtherElt, BytePtrTy,OtherElt->getNameStr(),
-                                 MI);
+      OtherElt = new BitCastInst(OtherElt, BytePtrTy, OtherElt->getName(), MI);
     
     unsigned EltSize = TD->getTypeAllocSize(EltTy);
     
