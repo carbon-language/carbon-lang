@@ -78,7 +78,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 static bool isRefType(QualType RetTy, const char* prefix,
-                      ASTContext* Ctx = 0, const char* name = 0) {
+                      const char* name = 0) {
 
   // Recursively walk the typedef stack, allowing typedefs of reference types.
   while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
@@ -89,12 +89,12 @@ static bool isRefType(QualType RetTy, const char* prefix,
     RetTy = TD->getDecl()->getUnderlyingType();
   }
 
-  if (!Ctx || !name)
+  if (!name)
     return false;
 
   // Is the type void*?
   const PointerType* PT = RetTy->getAs<PointerType>();
-  if (!(PT->getPointeeType().getUnqualifiedType() == Ctx->VoidTy))
+  if (!(PT->getPointeeType().getUnqualifiedType()->isVoidType()))
     return false;
 
   // Does the name start with the prefix?
@@ -1192,7 +1192,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
     if (RetTy->isPointerType()) {
       // For CoreFoundation ('CF') types.
-      if (isRefType(RetTy, "CF", &Ctx, FName)) {
+      if (isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
         else if (strstr(FName, "MakeCollectable"))
@@ -1204,7 +1204,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       }
 
       // For CoreGraphics ('CG') types.
-      if (isRefType(RetTy, "CG", &Ctx, FName)) {
+      if (isRefType(RetTy, "CG", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
         else
