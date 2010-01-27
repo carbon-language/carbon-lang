@@ -193,6 +193,9 @@ public:
                                 ImplementationControl impControl = None);
 
   virtual ObjCMethodDecl *getCanonicalDecl();
+  const ObjCMethodDecl *getCanonicalDecl() const {
+    return const_cast<ObjCMethodDecl*>(this)->getCanonicalDecl();
+  }
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
