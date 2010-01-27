@@ -820,14 +820,13 @@ let Defs =
                               "mov\tr12, r1\t@ begin eh.setjmp\n"
                               "\tmov\tr1, sp\n"
                               "\tstr\tr1, [$src, #8]\n"
-                              "\tadr\tr1, 0f\n"
-                              "\tadds\tr1, #1\n"
+                              "\tmov\tr1, pc\n"
+                              "\tadds\tr1, #9\n"
                               "\tstr\tr1, [$src, #4]\n"
                               "\tmov\tr1, r12\n"
                               "\tmovs\tr0, #0\n"
                               "\tb\t1f\n"
-                              ".align 2\n"
-                              "0:\tmovs\tr0, #1\t@ end eh.setjmp\n"
+                              "\tmovs\tr0, #1\t@ end eh.setjmp\n"
                               "1:", "",
                               [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
 }
