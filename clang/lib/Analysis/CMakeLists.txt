@@ -4,6 +4,7 @@ add_clang_library(clangAnalysis
   AnalysisContext.cpp
   CFG.cpp
   LiveVariables.cpp
+  PrintfFormatString.cpp
   UninitializedValues.cpp
   )
 
