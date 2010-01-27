@@ -106,7 +106,7 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     if (Arg *A = Args.getLastArg(options::OPT_arch)) {
       // The gcc driver behavior with multiple -arch flags wasn't consistent for
       // things which rely on a default architecture. We just use the last -arch
-      // to find the default tool chain (assuming it is valid..
+      // to find the default tool chain (assuming it is valid).
       Arch = llvm::Triple::getArchTypeForDarwinArchName(A->getValue(Args));
 
       // If it was invalid just use the host, we will reject this command line
@@ -159,8 +159,7 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
 
 // Unknown Host Info
 
-/// UnknownHostInfo - Generic host information to use for unknown
-/// hosts.
+/// UnknownHostInfo - Generic host information to use for unknown hosts.
 class UnknownHostInfo : public HostInfo {
   /// Cache of tool chains we have created.
   mutable llvm::StringMap<ToolChain*> ToolChains;

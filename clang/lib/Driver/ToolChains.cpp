@@ -32,8 +32,7 @@ using namespace clang::driver::toolchains;
 
 Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
                const unsigned (&_DarwinVersion)[3], bool _IsIPhoneOS)
-  : ToolChain(Host, Triple),
-    IsIPhoneOS(_IsIPhoneOS)
+  : ToolChain(Host, Triple), TargetInitialized(false), IsIPhoneOS(_IsIPhoneOS)
 {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
@@ -394,14 +393,13 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
   // have something that works, we should reevaluate each translation
   // and try to push it down into tool specific logic.
 
-  Arg *OSXVersion =
-    Args.getLastArgNoClaim(options::OPT_mmacosx_version_min_EQ);
-  Arg *iPhoneVersion =
-    Args.getLastArgNoClaim(options::OPT_miphoneos_version_min_EQ);
+  Arg *OSXVersion = Args.getLastArg(options::OPT_mmacosx_version_min_EQ);
+  Arg *iPhoneVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
   if (OSXVersion && iPhoneVersion) {
     getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
           << iPhoneVersion->getAsString(Args);
+    iPhoneVersion = 0;
   } else if (!OSXVersion && !iPhoneVersion) {
     // If neither OS X nor iPhoneOS targets were specified, check for
     // environment defines.
@@ -419,10 +417,12 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
         << OSXTarget << iPhoneOSTarget;
     } else if (OSXTarget) {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-      DAL->append(DAL->MakeJoinedArg(0, O, OSXTarget));
+      OSXVersion = DAL->MakeJoinedArg(0, O, OSXTarget);
+      DAL->append(OSXVersion);
     } else if (iPhoneOSTarget) {
       const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-      DAL->append(DAL->MakeJoinedArg(0, O, iPhoneOSTarget));
+      iPhoneVersion = DAL->MakeJoinedArg(0, O, iPhoneOSTarget);
+      DAL->append(iPhoneVersion);
     } else {
       // Otherwise, choose the default version based on the toolchain.
 
@@ -430,13 +430,35 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
       // target is.
       if (isIPhoneOS()) {
         const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-        DAL->append(DAL->MakeJoinedArg(0, O, IPhoneOSVersionMin));
+        iPhoneVersion = DAL->MakeJoinedArg(0, O, IPhoneOSVersionMin) ;
+        DAL->append(iPhoneVersion);
       } else {
         const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
-        DAL->append(DAL->MakeJoinedArg(0, O, MacosxVersionMin));
+        OSXVersion = DAL->MakeJoinedArg(0, O, MacosxVersionMin);
+        DAL->append(OSXVersion);
       }
     }
   }
+
+  // Set the tool chain target information.
+  unsigned Major, Minor, Micro;
+  bool HadExtra;
+  if (OSXVersion) {
+    assert(!iPhoneVersion && "Unknown target platform!");
+    if (!Driver::GetReleaseVersion(OSXVersion->getValue(Args), Major, Minor,
+                                   Micro, HadExtra) || HadExtra ||
+        Major != 10 || Minor >= 10 || Micro >= 10)
+      getDriver().Diag(clang::diag::err_drv_invalid_version_number)
+        << OSXVersion->getAsString(Args);
+  } else {
+    assert(iPhoneVersion && "Unknown target platform!");
+    if (!Driver::GetReleaseVersion(iPhoneVersion->getValue(Args), Major, Minor,
+                                   Micro, HadExtra) || HadExtra ||
+        Major >= 10 || Minor >= 100 || Micro >= 100)
+      getDriver().Diag(clang::diag::err_drv_invalid_version_number)
+        << iPhoneVersion->getAsString(Args);
+  }
+  setTarget(iPhoneVersion, Major, Minor, Micro);
 
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;

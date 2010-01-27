@@ -50,6 +50,19 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   /// Darwin version of tool chain.
   unsigned DarwinVersion[3];
 
+  /// Whether the information on the target has been initialized.
+  //
+  // FIXME: This should be eliminated. What we want to do is make this part of
+  // the "default target for arguments" selection process, once we get out of
+  // the argument translation business.
+  mutable bool TargetInitialized;
+
+  /// Whether we are targetting iPhoneOS target.
+  mutable bool TargetIsIPhoneOS;
+  
+  /// The OS version we are targetting.
+  mutable unsigned TargetVersion[3];
+
   /// Whether this is this an iPhoneOS toolchain.
   //
   // FIXME: This should go away, such differences should be completely
@@ -74,6 +87,37 @@ public:
 
   /// @name Darwin Specific Toolchain API
   /// {
+
+  // FIXME: Eliminate these ...Target functions and derive separate tool chains
+  // for these targets and put version in constructor.
+  void setTarget(bool isIPhoneOS, unsigned Major, unsigned Minor,
+                 unsigned Micro) const {
+    // FIXME: For now, allow reinitialization as long as values don't
+    // change. This will go away when we move away from argument translation.
+    if (TargetInitialized && TargetIsIPhoneOS == isIPhoneOS &&
+        TargetVersion[0] == Major && TargetVersion[1] == Minor &&
+        TargetVersion[2] == Micro)
+      return;
+
+    assert(!TargetInitialized && "Target already initialized!");
+    TargetInitialized = true;
+    TargetIsIPhoneOS = isIPhoneOS;
+    TargetVersion[0] = Major;
+    TargetVersion[1] = Minor;
+    TargetVersion[2] = Micro;
+  }
+
+  bool isTargetIPhoneOS() const {
+    assert(TargetInitialized && "Target not initialized!");
+    return TargetIsIPhoneOS;
+  }
+
+  void getTargetVersion(unsigned (&Res)[3]) const {
+    assert(TargetInitialized && "Target not initialized!");
+    Res[0] = TargetVersion[0];
+    Res[1] = TargetVersion[1];
+    Res[2] = TargetVersion[2];
+  }
 
   void getDarwinVersion(unsigned (&Res)[3]) const {
     Res[0] = DarwinVersion[0];
