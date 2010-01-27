@@ -895,7 +895,7 @@ do { \
   (row0) = _mm_movelh_ps(tmp0, tmp2); \
   (row1) = _mm_movehl_ps(tmp2, tmp0); \
   (row2) = _mm_movelh_ps(tmp1, tmp3); \
-  (row3) = _mm_movelh_ps(tmp3, tmp1); \
+  (row3) = _mm_movehl_ps(tmp3, tmp1); \
 } while (0)
 
 /* Ugly hack for backwards-compatibility (compatible with gcc) */
