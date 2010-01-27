@@ -174,7 +174,7 @@ DefCodeModel("code-model",
     clEnumValEnd));
 static cl::opt<bool, true>
 EnablePerformTailCallOpt("tailcallopt",
-  cl::desc("Turn on tail call optimization."),
+  cl::desc("Turn fastcc calls into tail calls by (potentially) changing ABI."),
   cl::location(PerformTailCallOpt),
   cl::init(false));
 static cl::opt<unsigned, true>
