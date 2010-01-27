@@ -281,9 +281,55 @@ public:
   llvm::DenseMap<DeclarationName, VarDecl *> TentativeDefinitions;
   std::vector<DeclarationName> TentativeDefinitionList;
 
-  /// \brief The collection of delayed deprecation warnings.
-  llvm::SmallVector<std::pair<SourceLocation,NamedDecl*>, 8>
-    DelayedDeprecationWarnings;
+  struct DelayedDiagnostic {
+    enum DDKind { Deprecation, Access };
+
+    unsigned char Kind; // actually a DDKind
+    bool Triggered;
+
+    SourceLocation Loc;
+
+    union {
+      /// Deprecation.
+      struct { NamedDecl *Decl; } DeprecationData;
+
+      /// Access control.
+      struct {
+        NamedDecl *Decl;
+        AccessSpecifier Access; 
+        CXXRecordDecl *NamingClass;
+      } AccessData;
+    };
+
+    static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
+                                             NamedDecl *D) {
+      DelayedDiagnostic DD;
+      DD.Kind = Deprecation;
+      DD.Triggered = false;
+      DD.Loc = Loc;
+      DD.DeprecationData.Decl = D;
+      return DD;
+    }
+
+    static DelayedDiagnostic makeAccess(SourceLocation Loc,
+                                        NamedDecl *Decl,
+                                        AccessSpecifier AS,
+                                        CXXRecordDecl *NamingClass) {
+      DelayedDiagnostic DD;
+      DD.Kind = Access;
+      DD.Triggered = false;
+      DD.Loc = Loc;
+      DD.AccessData.Decl = Decl;
+      DD.AccessData.Access = AS;
+      DD.AccessData.NamingClass = NamingClass;
+      return DD;
+    }
+
+  };
+
+  /// \brief The stack of diagnostics that were delayed due to being
+  /// produced during the parsing of a declaration.
+  llvm::SmallVector<DelayedDiagnostic, 8> DelayedDiagnostics;
 
   /// \brief The depth of the current ParsingDeclaration stack.
   /// If nonzero, we are currently parsing a declaration (and
@@ -1482,6 +1528,8 @@ public:
   void PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy D);
   void EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc);
 
+  void HandleDelayedDeprecationCheck(DelayedDiagnostic &DD, Decl *Ctx);
+
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
@@ -2385,6 +2433,11 @@ public:
                                    AccessSpecifier Access);
   bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);
   void CheckAccess(const LookupResult &R);
+
+  void HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx);
+  bool CheckEffectiveAccess(DeclContext *EffectiveContext,
+                            const LookupResult &R, NamedDecl *D,
+                            AccessSpecifier Access);
 
   bool CheckBaseClassAccess(QualType Derived, QualType Base,
                             unsigned InaccessibleBaseID,
@@ -4008,7 +4061,6 @@ private:
                         const PartialDiagnostic &PD,
                         bool Equality = false);
   void CheckImplicitConversion(Expr *E, QualType Target);
-
 };
 
 //===--------------------------------------------------------------------===//

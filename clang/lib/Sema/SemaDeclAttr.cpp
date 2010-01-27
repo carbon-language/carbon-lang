@@ -2067,7 +2067,47 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
 /// on the warning stack.
 Action::ParsingDeclStackState Sema::PushParsingDeclaration() {
   ParsingDeclDepth++;
-  return (ParsingDeclStackState) DelayedDeprecationWarnings.size();
+  return (ParsingDeclStackState) DelayedDiagnostics.size();
+}
+
+void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
+  assert(ParsingDeclDepth > 0 && "empty ParsingDeclaration stack");
+  ParsingDeclDepth--;
+
+  if (DelayedDiagnostics.empty())
+    return;
+
+  unsigned SavedIndex = (unsigned) S;
+  assert(SavedIndex <= DelayedDiagnostics.size() &&
+         "saved index is out of bounds");
+
+  // We only want to actually emit delayed diagnostics when we
+  // successfully parsed a decl.
+  Decl *D = Ctx ? Ctx.getAs<Decl>() : 0;
+  if (D) {
+    // We really do want to start with 0 here.  We get one push for a
+    // decl spec and another for each declarator;  in a decl group like:
+    //   deprecated_typedef foo, *bar, baz();
+    // only the declarator pops will be passed decls.  This is correct;
+    // we really do need to consider delayed diagnostics from the decl spec
+    // for each of the different declarations.
+    for (unsigned I = 0, E = DelayedDiagnostics.size(); I != E; ++I) {
+      if (DelayedDiagnostics[I].Triggered)
+        continue;
+
+      switch (DelayedDiagnostics[I].Kind) {
+      case DelayedDiagnostic::Deprecation:
+        HandleDelayedDeprecationCheck(DelayedDiagnostics[I], D);
+        break;
+
+      case DelayedDiagnostic::Access:
+        HandleDelayedAccessCheck(DelayedDiagnostics[I], D);
+        break;
+      }
+    }
+  }
+
+  DelayedDiagnostics.set_size(SavedIndex);
 }
 
 static bool isDeclDeprecated(Decl *D) {
@@ -2078,37 +2118,20 @@ static bool isDeclDeprecated(Decl *D) {
   return false;
 }
 
-void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
-  assert(ParsingDeclDepth > 0 && "empty ParsingDeclaration stack");
-  ParsingDeclDepth--;
-
-  if (DelayedDeprecationWarnings.empty())
+void Sema::HandleDelayedDeprecationCheck(Sema::DelayedDiagnostic &DD,
+                                         Decl *Ctx) {
+  if (isDeclDeprecated(Ctx))
     return;
 
-  unsigned SavedIndex = (unsigned) S;
-  assert(SavedIndex <= DelayedDeprecationWarnings.size() &&
-         "saved index is out of bounds");
-
-  if (Ctx && !isDeclDeprecated(Ctx.getAs<Decl>())) {
-    for (unsigned I = 0, E = DelayedDeprecationWarnings.size(); I != E; ++I) {
-      SourceLocation Loc = DelayedDeprecationWarnings[I].first;
-      NamedDecl *&ND = DelayedDeprecationWarnings[I].second;
-      if (ND) {
-        Diag(Loc, diag::warn_deprecated) << ND->getDeclName();
-
-        // Prevent this from triggering multiple times.
-        ND = 0;
-      }
-    }
-  }
-
-  DelayedDeprecationWarnings.set_size(SavedIndex);
+  DD.Triggered = true;
+  Diag(DD.Loc, diag::warn_deprecated)
+    << DD.DeprecationData.Decl->getDeclName();
 }
 
 void Sema::EmitDeprecationWarning(NamedDecl *D, SourceLocation Loc) {
   // Delay if we're currently parsing a declaration.
   if (ParsingDeclDepth) {
-    DelayedDeprecationWarnings.push_back(std::make_pair(Loc, D));
+    DelayedDiagnostics.push_back(DelayedDiagnostic::makeDeprecation(Loc, D));
     return;
   }
 

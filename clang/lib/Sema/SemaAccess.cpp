@@ -172,8 +172,25 @@ bool Sema::CheckAccess(const LookupResult &R, NamedDecl *D,
   if (Access == AS_public)
     return false;
 
-  // Otherwise, derive the current class context.
-  DeclContext *DC = CurContext;
+  // If we're currently parsing a top-level declaration, delay
+  // diagnostics.  This is the only case where parsing a declaration
+  // can actually change our effective context for the purposes of
+  // access control.
+  if (CurContext->isFileContext() && ParsingDeclDepth) {
+    DelayedDiagnostics.push_back(
+        DelayedDiagnostic::makeAccess(R.getNameLoc(), D, Access,
+                                      R.getNamingClass()));
+    return false;
+  }
+
+  return CheckEffectiveAccess(CurContext, R, D, Access);
+}
+
+/// Checks access from the given effective context.
+bool Sema::CheckEffectiveAccess(DeclContext *EffectiveContext,
+                                const LookupResult &R,
+                                NamedDecl *D, AccessSpecifier Access) {
+  DeclContext *DC = EffectiveContext;
   while (isa<CXXRecordDecl>(DC) &&
          cast<CXXRecordDecl>(DC)->isAnonymousStructOrUnion())
     DC = DC->getParent();
@@ -231,6 +248,22 @@ bool Sema::CheckAccess(const LookupResult &R, NamedDecl *D,
     << Context.getTypeDeclType(CurRecord);
   DiagnoseAccessPath(*this, R, D, Access);
   return true;
+}
+
+void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
+  NamedDecl *D = DD.AccessData.Decl;
+
+  // Fake up a lookup result.
+  LookupResult R(*this, D->getDeclName(), DD.Loc, LookupOrdinaryName);
+  R.suppressDiagnostics();
+  R.setNamingClass(DD.AccessData.NamingClass);
+
+  // Pretend we did this from the context of the newly-parsed
+  // declaration.
+  DeclContext *EffectiveContext = Ctx->getDeclContext();
+
+  if (CheckEffectiveAccess(EffectiveContext, R, D, DD.AccessData.Access))
+    DD.Triggered = true;
 }
 
 bool Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
