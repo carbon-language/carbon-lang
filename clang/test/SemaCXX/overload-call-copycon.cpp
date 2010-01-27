@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s -Wnon-pod-varargs
+// RUN: %clang_cc1 -fsyntax-only -verify %s -Wnon-pod-varargs
 class X { };
 
 int& copycon(X x);
@@ -36,7 +36,6 @@ void test_copycon3(B b, const B bc) {
   int& i1 = copycon3(b);
   float& f1 = copycon3(bc); // expected-warning {{cannot pass object of non-POD type}}
 }
-
 
 class C : public B { };
 

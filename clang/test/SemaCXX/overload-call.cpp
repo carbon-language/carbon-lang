@@ -347,3 +347,15 @@ namespace test3 {
     foo(*P); // expected-error {{no matching function for call to 'foo'}}
   }
 }
+
+namespace DerivedToBaseVsVoid {
+  struct A { };
+  struct B : A { };
+  
+  float &f(void *);
+  int &f(const A*);
+  
+  void g(B *b) {
+    int &ir = f(b);
+  }
+}

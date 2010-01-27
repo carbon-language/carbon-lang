@@ -1487,9 +1487,9 @@ QualType Sema::CheckPointerToMemberOperands(
 static QualType TargetType(const ImplicitConversionSequence &ICS) {
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion:
-    return ICS.Standard.getToType();
+    return ICS.Standard.getToType(2);
   case ImplicitConversionSequence::UserDefinedConversion:
-    return ICS.UserDefined.After.getToType();
+    return ICS.UserDefined.After.getToType(2);
   case ImplicitConversionSequence::AmbiguousConversion:
     return ICS.Ambiguous.getToType();
   case ImplicitConversionSequence::EllipsisConversion:

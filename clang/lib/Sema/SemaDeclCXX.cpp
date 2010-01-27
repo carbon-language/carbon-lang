@@ -4455,7 +4455,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
       ICS->Standard.Third = ICK_Identity;
       ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
-      ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
+      ICS->Standard.setToType(0, T2);
+      ICS->Standard.setToType(1, T1);
+      ICS->Standard.setToType(2, T1);
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.DirectBinding = true;
       ICS->Standard.RRefBinding = false;
@@ -4645,7 +4647,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.Second = DerivedToBase? ICK_Derived_To_Base : ICK_Identity;
       ICS->Standard.Third = ICK_Identity;
       ICS->Standard.FromTypePtr = T2.getAsOpaquePtr();
-      ICS->Standard.ToTypePtr = T1.getAsOpaquePtr();
+      ICS->Standard.setToType(0, T2);
+      ICS->Standard.setToType(1, T1);
+      ICS->Standard.setToType(2, T1);
       ICS->Standard.ReferenceBinding = true;
       ICS->Standard.DirectBinding = false;
       ICS->Standard.RRefBinding = isRValRef;

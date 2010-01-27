@@ -148,7 +148,7 @@ bool StandardConversionSequence::isPointerConversionToBool() const {
   // array-to-pointer or function-to-pointer implicit conversions, so
   // check for their presence as well as checking whether FromType is
   // a pointer.
-  if (getToType()->isBooleanType() &&
+  if (getToType(1)->isBooleanType() &&
       (getFromType()->isPointerType() || getFromType()->isBlockPointerType() ||
        First == ICK_Array_To_Pointer || First == ICK_Function_To_Pointer))
     return true;
@@ -164,7 +164,7 @@ bool
 StandardConversionSequence::
 isPointerConversionToVoidPointer(ASTContext& Context) const {
   QualType FromType = getFromType();
-  QualType ToType = getToType();
+  QualType ToType = getToType(1);
 
   // Note that FromType has not necessarily been transformed by the
   // array-to-pointer implicit conversion, so check for its presence
@@ -477,7 +477,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
         ICS.setStandard();
         ICS.Standard.setAsIdentityConversion();
         ICS.Standard.setFromType(From->getType());
-        ICS.Standard.setToType(ToType);
+        ICS.Standard.setAllToTypes(ToType);
         ICS.Standard.CopyConstructor = Constructor;
         if (ToCanon != FromCanon)
           ICS.Standard.Second = ICK_Derived_To_Base;
@@ -595,7 +595,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
       // conversion (4.4). (C++ 4.2p2)
       SCS.Second = ICK_Identity;
       SCS.Third = ICK_Qualification;
-      SCS.setToType(ToType);
+      SCS.setAllToTypes(FromType);
       return true;
     }
   } else if (FromType->isFunctionType() && argIsLvalue == Expr::LV_Valid) {
@@ -634,6 +634,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // We don't require any conversions for the first step.
     SCS.First = ICK_Identity;
   }
+  SCS.setToType(0, FromType);
 
   // The second conversion can be an integral promotion, floating
   // point promotion, integral conversion, floating point conversion,
@@ -714,6 +715,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // No second conversion required.
     SCS.Second = ICK_Identity;
   }
+  SCS.setToType(1, FromType);
 
   QualType CanonFrom;
   QualType CanonTo;
@@ -740,13 +742,13 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
       CanonFrom = CanonTo;
     }
   }
+  SCS.setToType(2, FromType);
 
   // If we have not converted the argument type to the parameter type,
   // this is a bad conversion sequence.
   if (CanonFrom != CanonTo)
     return false;
 
-  SCS.setToType(FromType);
   return true;
 }
 
@@ -1605,7 +1607,7 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         User.After.setAsIdentityConversion();
         User.After.setFromType(
           ThisType->getAs<PointerType>()->getPointeeType());
-        User.After.setToType(ToType);
+        User.After.setAllToTypes(ToType);
         return OR_Success;
       } else if (CXXConversionDecl *Conversion
                    = dyn_cast<CXXConversionDecl>(Best->Function)) {
@@ -1722,6 +1724,43 @@ Sema::CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,
   return ImplicitConversionSequence::Indistinguishable;
 }
 
+// Per 13.3.3.2p3, compare the given standard conversion sequences to
+// determine if one is a proper subset of the other.
+static ImplicitConversionSequence::CompareKind
+compareStandardConversionSubsets(ASTContext &Context,
+                                 const StandardConversionSequence& SCS1,
+                                 const StandardConversionSequence& SCS2) {
+  ImplicitConversionSequence::CompareKind Result
+    = ImplicitConversionSequence::Indistinguishable;
+
+  if (SCS1.Second != SCS2.Second) {
+    if (SCS1.Second == ICK_Identity)
+      Result = ImplicitConversionSequence::Better;
+    else if (SCS2.Second == ICK_Identity)
+      Result = ImplicitConversionSequence::Worse;
+    else
+      return ImplicitConversionSequence::Indistinguishable;
+  } else if (!Context.hasSameType(SCS1.getToType(1), SCS2.getToType(1)))
+    return ImplicitConversionSequence::Indistinguishable;
+
+  if (SCS1.Third == SCS2.Third) {
+    return Context.hasSameType(SCS1.getToType(2), SCS2.getToType(2))? Result
+                             : ImplicitConversionSequence::Indistinguishable;
+  }
+
+  if (SCS1.Third == ICK_Identity)
+    return Result == ImplicitConversionSequence::Worse
+             ? ImplicitConversionSequence::Indistinguishable
+             : ImplicitConversionSequence::Better;
+
+  if (SCS2.Third == ICK_Identity)
+    return Result == ImplicitConversionSequence::Better
+             ? ImplicitConversionSequence::Indistinguishable
+             : ImplicitConversionSequence::Worse;
+       
+  return ImplicitConversionSequence::Indistinguishable;
+}
+
 /// CompareStandardConversionSequences - Compare two standard
 /// conversion sequences to determine whether one is better than the
 /// other or if they are indistinguishable (C++ 13.3.3.2p3).
@@ -1737,21 +1776,9 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
   //     excluding any Lvalue Transformation; the identity conversion
   //     sequence is considered to be a subsequence of any
   //     non-identity conversion sequence) or, if not that,
-  if (SCS1.Second == SCS2.Second && SCS1.Third == SCS2.Third)
-    // Neither is a proper subsequence of the other. Do nothing.
-    ;
-  else if ((SCS1.Second == ICK_Identity && SCS1.Third == SCS2.Third) ||
-           (SCS1.Third == ICK_Identity && SCS1.Second == SCS2.Second) ||
-           (SCS1.Second == ICK_Identity &&
-            SCS1.Third == ICK_Identity))
-    // SCS1 is a proper subsequence of SCS2.
-    return ImplicitConversionSequence::Better;
-  else if ((SCS2.Second == ICK_Identity && SCS2.Third == SCS1.Third) ||
-           (SCS2.Third == ICK_Identity && SCS2.Second == SCS1.Second) ||
-           (SCS2.Second == ICK_Identity &&
-            SCS2.Third == ICK_Identity))
-    // SCS2 is a proper subsequence of SCS1.
-    return ImplicitConversionSequence::Worse;
+  if (ImplicitConversionSequence::CompareKind CK
+        = compareStandardConversionSubsets(Context, SCS1, SCS2))
+    return CK;
 
   //  -- the rank of S1 is better than the rank of S2 (by the rules
   //     defined below), or, if not that,
@@ -1856,8 +1883,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
     //      top-level cv-qualifiers, and the type to which the reference
     //      initialized by S2 refers is more cv-qualified than the type
     //      to which the reference initialized by S1 refers.
-    QualType T1 = SCS1.getToType();
-    QualType T2 = SCS2.getToType();
+    QualType T1 = SCS1.getToType(2);
+    QualType T2 = SCS2.getToType(2);
     T1 = Context.getCanonicalType(T1);
     T2 = Context.getCanonicalType(T2);
     Qualifiers T1Quals, T2Quals;
@@ -1898,8 +1925,8 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
 
   // FIXME: the example in the standard doesn't use a qualification
   // conversion (!)
-  QualType T1 = QualType::getFromOpaquePtr(SCS1.ToTypePtr);
-  QualType T2 = QualType::getFromOpaquePtr(SCS2.ToTypePtr);
+  QualType T1 = SCS1.getToType(2);
+  QualType T2 = SCS2.getToType(2);
   T1 = Context.getCanonicalType(T1);
   T2 = Context.getCanonicalType(T2);
   Qualifiers T1Quals, T2Quals;
@@ -1988,9 +2015,9 @@ ImplicitConversionSequence::CompareKind
 Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
                                       const StandardConversionSequence& SCS2) {
   QualType FromType1 = SCS1.getFromType();
-  QualType ToType1 = SCS1.getToType();
+  QualType ToType1 = SCS1.getToType(1);
   QualType FromType2 = SCS2.getFromType();
-  QualType ToType2 = SCS2.getToType();
+  QualType ToType2 = SCS2.getToType(1);
 
   // Adjust the types we're converting from via the array-to-pointer
   // conversion, if we need to.
@@ -2280,7 +2307,7 @@ Sema::TryObjectArgumentInitialization(QualType OrigFromType,
   // Success. Mark this as a reference binding.
   ICS.setStandard();
   ICS.Standard.setFromType(FromType);
-  ICS.Standard.setToType(ImplicitParamType);
+  ICS.Standard.setAllToTypes(ImplicitParamType);
   ICS.Standard.ReferenceBinding = true;
   ICS.Standard.DirectBinding = true;
   ICS.Standard.RRefBinding = false;
@@ -2767,7 +2794,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.IgnoreObjectArgument = false;
   Candidate.FinalConversion.setAsIdentityConversion();
   Candidate.FinalConversion.setFromType(Conversion->getConversionType());
-  Candidate.FinalConversion.setToType(ToType);
+  Candidate.FinalConversion.setAllToTypes(ToType);
 
   // Determine the implicit conversion sequence for the implicit
   // object parameter.
