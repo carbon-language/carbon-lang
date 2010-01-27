@@ -601,8 +601,6 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  EmitFunctionHeader();
-
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
