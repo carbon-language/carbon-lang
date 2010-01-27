@@ -35,7 +35,7 @@ SourceMgr::~SourceMgr() {
   // Delete the line # cache if allocated.
   if (LineNoCacheTy *Cache = getCache(LineNoCache))
     delete Cache;
-    
+
   while (!Buffers.empty()) {
     delete Buffers.back().Buffer;
     Buffers.pop_back();
@@ -47,7 +47,7 @@ SourceMgr::~SourceMgr() {
 /// ~0, otherwise it returns the buffer ID of the stacked file.
 unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
                                    SMLoc IncludeLoc) {
-  
+
   MemoryBuffer *NewBuf = MemoryBuffer::getFile(Filename.c_str());
 
   // If the file didn't exist directly, see if it's in an include path.
@@ -55,7 +55,7 @@ unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
     std::string IncFile = IncludeDirectories[i] + "/" + Filename;
     NewBuf = MemoryBuffer::getFile(IncFile.c_str());
   }
- 
+
   if (NewBuf == 0) return ~0U;
 
   return AddNewSourceBuffer(NewBuf, IncludeLoc);
@@ -79,20 +79,20 @@ int SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
 unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
   assert(BufferID != -1 && "Invalid Location!");
-  
+
   MemoryBuffer *Buff = getBufferInfo(BufferID).Buffer;
-  
+
   // Count the number of \n's between the start of the file and the specified
   // location.
   unsigned LineNo = 1;
-  
+
   const char *Ptr = Buff->getBufferStart();
 
   // If we have a line number cache, and if the query is to a later point in the
   // same file, start searching from the last query location.  This optimizes
   // for the case when multiple diagnostics come out of one file in order.
   if (LineNoCacheTy *Cache = getCache(LineNoCache))
-    if (Cache->LastQueryBufferID == BufferID && 
+    if (Cache->LastQueryBufferID == BufferID &&
         Cache->LastQuery <= Loc.getPointer()) {
       Ptr = Cache->LastQuery;
       LineNo = Cache->LineNoOfQuery;
@@ -102,12 +102,12 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
   // we see.
   for (; SMLoc::getFromPointer(Ptr) != Loc; ++Ptr)
     if (*Ptr == '\n') ++LineNo;
-  
-  
+
+
   // Allocate the line number cache if it doesn't exist.
   if (LineNoCache == 0)
     LineNoCache = new LineNoCacheTy();
-  
+
   // Update the line # cache.
   LineNoCacheTy &Cache = *getCache(LineNoCache);
   Cache.LastQueryBufferID = BufferID;
@@ -118,12 +118,12 @@ unsigned SourceMgr::FindLineNumber(SMLoc Loc, int BufferID) const {
 
 void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
   if (IncludeLoc == SMLoc()) return;  // Top of stack.
-  
+
   int CurBuf = FindBufferContainingLoc(IncludeLoc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
 
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
-  
+
   OS << "Included from "
      << getBufferInfo(CurBuf).Buffer->getBufferIdentifier()
      << ":" << FindLineNumber(IncludeLoc, CurBuf) << ":\n";
@@ -137,12 +137,12 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 /// prefixed to the message.
 SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
                                    const char *Type, bool ShowLine) const {
-  
+
   // First thing to do: find the current buffer containing the specified
   // location.
   int CurBuf = FindBufferContainingLoc(Loc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
-  
+
   MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
 
   // Scan backward to find the start of the line.
@@ -160,7 +160,7 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
       ++LineEnd;
     LineStr = std::string(LineStart, LineEnd);
   }
-  
+
   std::string PrintedMsg;
   if (Type) {
     PrintedMsg = Type;
@@ -173,7 +173,7 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
                       LineStr, ShowLine);
 }
 
-void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg, 
+void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
                              const char *Type, bool ShowLine) const {
   raw_ostream &OS = errs();
 
@@ -197,7 +197,7 @@ void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) {
       S << "<stdin>";
     else
       S << Filename;
-  
+
     if (LineNo != -1) {
       S << ':' << LineNo;
       if (ColumnNo != -1)
@@ -205,12 +205,12 @@ void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) {
     }
     S << ": ";
   }
-  
+
   S << Message << '\n';
 
   if (LineNo != -1 && ColumnNo != -1 && ShowLine) {
     S << LineContents << '\n';
-    
+
     // Print out spaces/tabs before the caret.
     for (unsigned i = 0; i != unsigned(ColumnNo); ++i)
       S << (LineContents[i] == '\t' ? '\t' : ' ');
