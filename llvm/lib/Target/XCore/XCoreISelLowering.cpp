@@ -611,11 +611,13 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
 SDValue
 XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
-                               bool isTailCall,
+                               bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) {
+  // XCore target does not yet support tail call optimization.
+  isTailCall = false;
 
   // For now, only CallingConv::C implemented
   switch (CallConv)

@@ -1436,6 +1436,12 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                        /*AlwaysInline=*/true, NULL, 0, NULL, 0);
 }
 
+/// FuncIsMadeTailCallSafe - Return true if the function is being made into
+/// a tailcall target by changing its ABI.
+static bool FuncIsMadeTailCallSafe(CallingConv::ID CC) {
+  return PerformTailCallOpt && CC == CallingConv::Fast;
+}
+
 SDValue
 X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     CallingConv::ID CallConv,
@@ -1446,7 +1452,7 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     unsigned i) {
   // Create the nodes corresponding to a load from this parameter slot.
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
-  bool AlwaysUseMutable = X86::IsEligibleForTailCallOpt(CallConv);
+  bool AlwaysUseMutable = FuncIsMadeTailCallSafe(CallConv);
   bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
   EVT ValVT;
 
@@ -1583,8 +1589,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   unsigned StackSize = CCInfo.getNextStackOffset();
-  // align stack specially for tail calls
-  if (X86::IsEligibleForTailCallOpt(CallConv))
+  // Align stack specially for tail calls.
+  if (FuncIsMadeTailCallSafe(CallConv))
     StackSize = GetAlignedArgumentStackSize(StackSize, DAG);
 
   // If the function takes variable number of arguments, make a frame index for
@@ -1770,7 +1776,7 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 SDValue
 X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool isTailCall,
+                             bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
@@ -1779,8 +1785,11 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Outs);
 
-  assert((!isTailCall || X86::IsEligibleForTailCallOpt(CallConv)) &&
-         "Call is not eligible for tail call optimization!");
+  if (isTailCall)
+    // Check if it's really possible to do a tail call.
+    isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
+                                                   Ins, DAG);
+
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
 
@@ -1792,7 +1801,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
-  if (X86::IsEligibleForTailCallOpt(CallConv))
+  if (FuncIsMadeTailCallSafe(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -2230,8 +2239,10 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
-  return X86::IsEligibleForTailCallOpt(CalleeCC) &&
-    DAG.getMachineFunction().getFunction()->getCallingConv() == CalleeCC;
+  if (CalleeCC == CallingConv::Fast &&
+      DAG.getMachineFunction().getFunction()->getCallingConv() == CalleeCC)
+    return true;
+  return false;
 }
 
 FastISel *
@@ -2302,10 +2313,6 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
     return true;
 
   return false;
-}
-
-bool X86::IsEligibleForTailCallOpt(CallingConv::ID CC) {
-  return PerformTailCallOpt && CC == CallingConv::Fast;
 }
 
 /// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86

@@ -362,10 +362,6 @@ namespace llvm {
     /// fit into displacement field of the instruction.
     bool isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                       bool hasSymbolicDisplacement = true);
-
-    /// IsEligibleForTailCallOpt - Return true if it's legal to perform tail call
-    /// optimization for the given calling convention.
-    bool IsEligibleForTailCallOpt(CallingConv::ID CC);
   }
 
   //===--------------------------------------------------------------------===//
@@ -550,16 +546,6 @@ namespace llvm {
       return !X86ScalarSSEf64 || VT == MVT::f80;
     }
     
-    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
-    /// for tail call optimization. Targets which want to do tail call
-    /// optimization should implement this function.
-    virtual bool
-    IsEligibleForTailCallOptimization(SDValue Callee,
-                                      CallingConv::ID CalleeCC,
-                                      bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      SelectionDAG& DAG) const;
-
     virtual const X86Subtarget* getSubtarget() {
       return Subtarget;
     }
@@ -637,6 +623,15 @@ namespace llvm {
                              ISD::ArgFlagsTy Flags);
 
     // Call lowering helpers.
+
+    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// for tail call optimization. Targets which want to do tail call
+    /// optimization should implement this function.
+    bool IsEligibleForTailCallOptimization(SDValue Callee,
+                                           CallingConv::ID CalleeCC,
+                                           bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                           SelectionDAG& DAG) const;
     bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
@@ -712,7 +707,7 @@ namespace llvm {
                            SmallVectorImpl<SDValue> &InVals);
     virtual SDValue
       LowerCall(SDValue Chain, SDValue Callee,
-                CallingConv::ID CallConv, bool isVarArg, bool isTailCall,
+                CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,
                 DebugLoc dl, SelectionDAG &DAG,

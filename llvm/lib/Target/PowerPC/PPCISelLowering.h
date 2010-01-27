@@ -345,13 +345,6 @@ namespace llvm {
     /// the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
-    virtual bool
-    IsEligibleForTailCallOptimization(SDValue Callee,
-                                      CallingConv::ID CalleeCC,
-                                      bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      SelectionDAG& DAG) const;
-
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     
     virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
@@ -364,6 +357,13 @@ namespace llvm {
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
+
+    bool
+    IsEligibleForTailCallOptimization(SDValue Callee,
+                                      CallingConv::ID CalleeCC,
+                                      bool isVarArg,
+                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                      SelectionDAG& DAG) const;
 
     SDValue EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
                                          int SPDiff,
@@ -431,7 +431,7 @@ namespace llvm {
 
     virtual SDValue
       LowerCall(SDValue Chain, SDValue Callee,
-                CallingConv::ID CallConv, bool isVarArg, bool isTailCall,
+                CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,
                 DebugLoc dl, SelectionDAG &DAG,

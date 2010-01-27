@@ -1140,11 +1140,13 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
 SDValue
 SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool isTailCall,
+                             bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) {
+  // CellSPU target does not yet support tail call optimization.
+  isTailCall = false;
 
   const SPUSubtarget *ST = SPUTM.getSubtargetImpl();
   unsigned NumOps     = Outs.size();

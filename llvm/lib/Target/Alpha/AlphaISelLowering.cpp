@@ -221,11 +221,13 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
 SDValue
 AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
-                               bool isTailCall,
+                               bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) {
+  // Alpha target does not yet support tail call optimization.
+  isTailCall = false;
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;

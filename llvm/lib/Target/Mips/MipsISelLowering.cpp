@@ -686,11 +686,13 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
 SDValue
 MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                               CallingConv::ID CallConv, bool isVarArg,
-                              bool isTailCall,
+                              bool &isTailCall,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
                               DebugLoc dl, SelectionDAG &DAG,
                               SmallVectorImpl<SDValue> &InVals) {
+  // MIPs target does not yet support tail call optimization.
+  isTailCall = false;
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();

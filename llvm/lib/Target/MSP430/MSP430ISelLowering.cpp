@@ -273,11 +273,13 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
 SDValue
 MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                 CallingConv::ID CallConv, bool isVarArg,
-                                bool isTailCall,
+                                bool &isTailCall,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                                 const SmallVectorImpl<ISD::InputArg> &Ins,
                                 DebugLoc dl, SelectionDAG &DAG,
                                 SmallVectorImpl<SDValue> &InVals) {
+  // MSP430 target does not yet support tail call optimization.
+  isTailCall = false;
 
   switch (CallConv) {
   default:

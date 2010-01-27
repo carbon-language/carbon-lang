@@ -1167,15 +1167,9 @@ public:
   /// described by the Ins array. The implementation should fill in the
   /// InVals array with legal-type return values from the call, and return
   /// the resulting token chain value.
-  ///
-  /// The isTailCall flag here is normative. If it is true, the
-  /// implementation must emit a tail call. The
-  /// IsEligibleForTailCallOptimization hook should be used to catch
-  /// cases that cannot be handled.
-  ///
   virtual SDValue
     LowerCall(SDValue Chain, SDValue Callee,
-              CallingConv::ID CallConv, bool isVarArg, bool isTailCall,
+              CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
               const SmallVectorImpl<ISD::OutputArg> &Outs,
               const SmallVectorImpl<ISD::InputArg> &Ins,
               DebugLoc dl, SelectionDAG &DAG,

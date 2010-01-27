@@ -252,11 +252,13 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
 SDValue
 SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
-                               bool isTailCall,
+                               bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) {
+  // Sparc target does not yet support tail call optimization.
+  isTailCall = false;
 
 #if 0
   // Analyze operands of the call, assigning locations to each operand.

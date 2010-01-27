@@ -1355,11 +1355,13 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
 SDValue
 PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
-                               bool isTailCall,
+                               bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                DebugLoc dl, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) {
+    // PIC16 target does not yet support tail call optimization.
+    isTailCall = false;
 
     assert(Callee.getValueType() == MVT::i16 &&
            "Don't know how to legalize this call node!!!");

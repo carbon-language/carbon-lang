@@ -2673,11 +2673,15 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 SDValue
 PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool isTailCall,
+                             bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
                              DebugLoc dl, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &InVals) {
+  if (isTailCall)
+    isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
+                                                   Ins, DAG);
+
   if (PPCSubTarget.isSVR4ABI() && !PPCSubTarget.isPPC64()) {
     return LowerCall_SVR4(Chain, Callee, CallConv, isVarArg,
                           isTailCall, Outs, Ins,
@@ -2699,10 +2703,6 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
                                   SmallVectorImpl<SDValue> &InVals) {
   // See PPCTargetLowering::LowerFormalArguments_SVR4() for a description
   // of the 32-bit SVR4 ABI stack frame layout.
-
-  assert((!isTailCall ||
-          (CallConv == CallingConv::Fast && PerformTailCallOpt)) &&
-         "IsEligibleForTailCallOptimization missed a case!");
 
   assert((CallConv == CallingConv::C ||
           CallConv == CallingConv::Fast) && "Unknown calling convention!");

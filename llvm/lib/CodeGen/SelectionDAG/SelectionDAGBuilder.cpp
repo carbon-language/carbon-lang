@@ -4651,9 +4651,6 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-/// For target-dependent requirements, a target should override
-/// TargetLowering::IsEligibleForTailCallOptimization.
-///
 static bool
 isInTailCallPosition(const Instruction *I, Attributes CalleeRetAttr,
                      const TargetLowering &TLI) {
@@ -6203,12 +6200,6 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       Ins.push_back(MyFlags);
     }
   }
-
-  // Check if target-dependent constraints permit a tail call here.
-  // Target-independent constraints should be checked by the caller.
-  if (isTailCall &&
-      !IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg, Ins, DAG))
-    isTailCall = false;
 
   SmallVector<SDValue, 4> InVals;
   Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
