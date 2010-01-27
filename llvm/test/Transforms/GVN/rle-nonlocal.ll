@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | grep {%DEAD = phi i32. }
+; RUN: opt < %s -gvn -S | FileCheck %s
 
 define i32 @main(i32** %p) {
 block1:
@@ -13,7 +13,12 @@ block3:
   br label %block4
 
 block4:
+; CHECK-NOT: %existingPHI = phi
+; CHECK: %DEAD = phi
+  %existingPHI = phi i32* [ %a, %block2 ], [ %b, %block3 ] 
   %DEAD = load i32** %p
   %c = load i32* %DEAD
-  ret i32 %c
+  %d = load i32* %existingPHI
+  %e = add i32 %c, %d
+  ret i32 %e
 }
