@@ -358,6 +358,8 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   const RecordType *RT = Ty->getAs<RecordType>();
   if (!RT) return false;
 
+  // FIXME: Traverse bases here too.
+
   // Structure types are passed in register if all fields would be
   // passed in a register.
   for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(),
@@ -404,7 +406,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     return ABIArgInfo::getDirect();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-    if (const RecordType *RT = RetTy->getAsStructureType()) {
+    if (const RecordType *RT = RetTy->getAs<RecordType>()) {
       // Structures with either a non-trivial destructor or a non-trivial
       // copy constructor are always indirect.
       if (hasNonTrivialDestructorOrCopyConstructor(RT))
@@ -484,10 +486,16 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
   // FIXME: Set alignment on indirect arguments.
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     // Structures with flexible arrays are always indirect.
-    if (const RecordType *RT = Ty->getAsStructureType())
+    if (const RecordType *RT = Ty->getAs<RecordType>()) {
+      // Structures with either a non-trivial destructor or a non-trivial
+      // copy constructor are always indirect.
+      if (hasNonTrivialDestructorOrCopyConstructor(RT))
+        return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+        
       if (RT->getDecl()->hasFlexibleArrayMember())
         return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty,
                                                                     Context));
+    }
 
     // Ignore empty structs.
     if (Ty->isStructureType() && Context.getTypeSize(Ty) == 0)
