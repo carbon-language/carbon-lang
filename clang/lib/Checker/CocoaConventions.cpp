@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Checker/DomainSpecific/CocoaConventions.h"
+#include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
@@ -126,4 +129,68 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
   // We will get here if there wasn't more than one word
   // after the prefix.
   return C;
+}
+
+bool cocoa::isRefType(QualType RetTy, const char* prefix,
+                      const char* name) {
+  
+  // Recursively walk the typedef stack, allowing typedefs of reference types.
+  while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+    llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getName();
+    if (TDName.startswith(prefix) && TDName.endswith("Ref"))
+      return true;
+    
+    RetTy = TD->getDecl()->getUnderlyingType();
+  }
+  
+  if (!name)
+    return false;
+  
+  // Is the type void*?
+  const PointerType* PT = RetTy->getAs<PointerType>();
+  if (!(PT->getPointeeType().getUnqualifiedType()->isVoidType()))
+    return false;
+  
+  // Does the name start with the prefix?
+  return llvm::StringRef(name).startswith(prefix);
+}
+
+bool cocoa::isCFObjectRef(QualType T) {
+  return isRefType(T, "CF") || // Core Foundation.
+         isRefType(T, "CG") || // Core Graphics.
+         isRefType(T, "DADisk") || // Disk Arbitration API.
+         isRefType(T, "DADissenter") ||
+         isRefType(T, "DASessionRef");
+}
+
+
+bool cocoa::isCocoaObjectRef(QualType Ty) {
+  if (!Ty->isObjCObjectPointerType())
+    return false;
+  
+  const ObjCObjectPointerType *PT = Ty->getAs<ObjCObjectPointerType>();
+  
+  // Can be true for objects with the 'NSObject' attribute.
+  if (!PT)
+    return true;
+  
+  // We assume that id<..>, id, and "Class" all represent tracked objects.
+  if (PT->isObjCIdType() || PT->isObjCQualifiedIdType() ||
+      PT->isObjCClassType())
+    return true;
+  
+  // Does the interface subclass NSObject?
+  // FIXME: We can memoize here if this gets too expensive.
+  const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
+  
+  // Assume that anything declared with a forward declaration and no
+  // @interface subclasses NSObject.
+  if (ID->isForwardDecl())
+    return true;
+  
+  for ( ; ID ; ID = ID->getSuperClass())
+    if (ID->getIdentifier()->getName() == "NSObject")
+      return true;
+  
+  return false;
 }

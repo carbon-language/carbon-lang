@@ -74,34 +74,6 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// Type querying functions.
-//===----------------------------------------------------------------------===//
-
-static bool isRefType(QualType RetTy, const char* prefix,
-                      const char* name = 0) {
-
-  // Recursively walk the typedef stack, allowing typedefs of reference types.
-  while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
-    llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getName();
-    if (TDName.startswith(prefix) && TDName.endswith("Ref"))
-      return true;
-
-    RetTy = TD->getDecl()->getUnderlyingType();
-  }
-
-  if (!name)
-    return false;
-
-  // Is the type void*?
-  const PointerType* PT = RetTy->getAs<PointerType>();
-  if (!(PT->getPointeeType().getUnqualifiedType()->isVoidType()))
-    return false;
-
-  // Does the name start with the prefix?
-  return llvm::StringRef(name).startswith(prefix);
-}
-
-//===----------------------------------------------------------------------===//
 // Primitives used for constructing summaries for function/method calls.
 //===----------------------------------------------------------------------===//
 
@@ -760,10 +732,6 @@ public:
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
-
-  bool isTrackedObjCObjectType(QualType T);
-  bool isTrackedCFObjectType(QualType T);
-
 private:
 
   void addClsMethSummary(IdentifierInfo* ClsII, Selector S,
@@ -949,51 +917,6 @@ RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
   RetainSummary *Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
   new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff, isEndPath);
   return Summ;
-}
-
-//===----------------------------------------------------------------------===//
-// Predicates.
-//===----------------------------------------------------------------------===//
-
-bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
-  if (!Ty->isObjCObjectPointerType())
-    return false;
-
-  const ObjCObjectPointerType *PT = Ty->getAs<ObjCObjectPointerType>();
-
-  // Can be true for objects with the 'NSObject' attribute.
-  if (!PT)
-    return true;
-
-  // We assume that id<..>, id, and "Class" all represent tracked objects.
-  if (PT->isObjCIdType() || PT->isObjCQualifiedIdType() ||
-      PT->isObjCClassType())
-    return true;
-
-  // Does the interface subclass NSObject?
-  // FIXME: We can memoize here if this gets too expensive.
-  const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
-
-  // Assume that anything declared with a forward declaration and no
-  // @interface subclasses NSObject.
-  if (ID->isForwardDecl())
-    return true;
-
-  IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
-
-  for ( ; ID ; ID = ID->getSuperClass())
-    if (ID->getIdentifier() == NSObjectII)
-      return true;
-
-  return false;
-}
-
-bool RetainSummaryManager::isTrackedCFObjectType(QualType T) {
-  return isRefType(T, "CF") || // Core Foundation.
-         isRefType(T, "CG") || // Core Graphics.
-         isRefType(T, "DADisk") || // Disk Arbitration API.
-         isRefType(T, "DADissenter") ||
-         isRefType(T, "DASessionRef");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1192,7 +1115,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
     if (RetTy->isPointerType()) {
       // For CoreFoundation ('CF') types.
-      if (isRefType(RetTy, "CF", FName)) {
+      if (cocoa::isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
         else if (strstr(FName, "MakeCollectable"))
@@ -1204,7 +1127,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       }
 
       // For CoreGraphics ('CG') types.
-      if (isRefType(RetTy, "CG", FName)) {
+      if (cocoa::isRefType(RetTy, "CG", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
         else
@@ -1214,9 +1137,9 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       }
 
       // For the Disk Arbitration API (DiskArbitration/DADisk.h)
-      if (isRefType(RetTy, "DADisk") ||
-          isRefType(RetTy, "DADissenter") ||
-          isRefType(RetTy, "DASessionRef")) {
+      if (cocoa::isRefType(RetTy, "DADisk") ||
+          cocoa::isRefType(RetTy, "DADissenter") ||
+          cocoa::isRefType(RetTy, "DASessionRef")) {
         S = getCFCreateGetRuleSummary(FD, FName);
         break;
       }
@@ -1351,7 +1274,7 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
   assert(ScratchArgs.isEmpty());
   // 'init' methods conceptually return a newly allocated object and claim
   // the receiver.
-  if (isTrackedObjCObjectType(RetTy) || isTrackedCFObjectType(RetTy))
+  if (cocoa::isCocoaObjectRef(RetTy) || cocoa::isCFObjectRef(RetTy))
     return getPersistentSummary(ObjCInitRetE, DecRefMsg);
 
   return getDefaultSummary();
@@ -1366,7 +1289,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   QualType RetTy = FD->getResultType();
 
   // Determine if there is a special return effect for this method.
-  if (isTrackedObjCObjectType(RetTy)) {
+  if (cocoa::isCocoaObjectRef(RetTy)) {
     if (FD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
     }
@@ -1390,7 +1313,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   bool isTrackedLoc = false;
 
   // Determine if there is a special return effect for this method.
-  if (isTrackedObjCObjectType(MD->getResultType())) {
+  if (cocoa::isCocoaObjectRef(MD->getResultType())) {
     if (MD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
       return;
@@ -1440,7 +1363,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   }
 
   // Look for methods that return an owned object.
-  if (isTrackedObjCObjectType(RetTy)) {
+  if (cocoa::isCocoaObjectRef(RetTy)) {
     // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
     //  by instance methods.
     RetEffect E = cocoa::followsFundamentalRule(S)
@@ -1450,7 +1373,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   }
 
   // Look for methods that return an owned core foundation object.
-  if (isTrackedCFObjectType(RetTy)) {
+  if (cocoa::isCFObjectRef(RetTy)) {
     RetEffect E = cocoa::followsFundamentalRule(S)
       ? RetEffect::MakeOwned(RetEffect::CF, true)
       : RetEffect::MakeNotOwned(RetEffect::CF);
