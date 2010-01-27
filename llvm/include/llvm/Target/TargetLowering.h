@@ -1295,19 +1295,6 @@ public:
     assert(0 && "ReplaceNodeResults not implemented for this target!");
   }
 
-  /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
-  /// tail call optimization. Targets which want to do tail call optimization
-  /// should override this function.
-  virtual bool
-  IsEligibleForTailCallOptimization(SDValue Callee,
-                                    CallingConv::ID CalleeCC,
-                                    bool isVarArg,
-                                    const SmallVectorImpl<ISD::InputArg> &Ins,
-                                    SelectionDAG& DAG) const {
-    // Conservative default: no calls are eligible.
-    return false;
-  }
-
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
