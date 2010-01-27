@@ -1596,7 +1596,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     
     // We assume that string constants are bound to
     // constant arrays.
-    uint64_t size = Size;
+    uint64_t size = Size.getValue();
     
     for (uint64_t i = 0; i < size; ++i, ++j) {
       if (j >= len)
