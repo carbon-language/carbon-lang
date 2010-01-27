@@ -16,7 +16,6 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Debug.h"

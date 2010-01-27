@@ -17,7 +17,6 @@
 #include "llvm/Constants.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -69,14 +68,13 @@ bool LTOModule::isBitcodeFileForTarget(const char* path,
 // takes ownership of buffer
 bool LTOModule::isTargetMatch(MemoryBuffer* buffer, const char* triplePrefix)
 {
-    OwningPtr<ModuleProvider> mp(getBitcodeModuleProvider(buffer,
-                                                          getGlobalContext()));
-    // on success, mp owns buffer and both are deleted at end of this method
-    if (!mp) {
+    OwningPtr<Module> m(getLazyBitcodeModule(buffer, getGlobalContext()));
+    // on success, m owns buffer and both are deleted at end of this method
+    if (!m) {
         delete buffer;
         return false;
     }
-    std::string actualTarget = mp->getModule()->getTargetTriple();
+    std::string actualTarget = m->getTargetTriple();
     return (strncmp(actualTarget.c_str(), triplePrefix, 
                     strlen(triplePrefix)) == 0);
 }

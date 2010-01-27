@@ -19,12 +19,14 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/Metadata.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/System/DataTypes.h"
 #include <vector>
 
 namespace llvm {
 
 class FunctionType;
+class GVMaterializer;
 class LLVMContext;
 class MDSymbolTable;
 
@@ -145,6 +147,7 @@ private:
   std::string GlobalScopeAsm;     ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;    ///< Symbol table for values
   TypeSymbolTable *TypeSymTab;    ///< Symbol table for types
+  OwningPtr<GVMaterializer> Materializer;  ///< Used to materialize GlobalValues
   std::string ModuleID;           ///< Human readable identifier for the module
   std::string TargetTriple;       ///< Platform target triple Module compiled on
   std::string DataLayout;         ///< Target data description
@@ -345,6 +348,50 @@ public:
   /// getTypeByName - Return the type with the specified name in this module, or
   /// null if there is none by that name.
   const Type *getTypeByName(StringRef Name) const;
+
+/// @}
+/// @name Materialization
+/// @{
+
+  /// setMaterializer - Sets the GVMaterializer to GVM.  This module must not
+  /// yet have a Materializer.  To reset the materializer for a module that
+  /// already has one, call MaterializeAllPermanently first.  Destroying this
+  /// module will destroy its materializer without materializing any more
+  /// GlobalValues.  Without destroying the Module, there is no way to detach or
+  /// destroy a materializer without materializing all the GVs it controls, to
+  /// avoid leaving orphan unmaterialized GVs.
+  void setMaterializer(GVMaterializer *GVM);
+  /// getMaterializer - Retrieves the GVMaterializer, if any, for this Module.
+  GVMaterializer *getMaterializer() const { return Materializer.get(); }
+
+  /// isMaterializable - True if the definition of GV has yet to be materialized
+  /// from the GVMaterializer.
+  bool isMaterializable(const GlobalValue *GV) const;
+  /// isDematerializable - Returns true if this GV was loaded from this Module's
+  /// GVMaterializer and the GVMaterializer knows how to dematerialize the GV.
+  bool isDematerializable(const GlobalValue *GV) const;
+
+  /// Materialize - Make sure the GlobalValue is fully read.  If the module is
+  /// corrupt, this returns true and fills in the optional string with
+  /// information about the problem.  If successful, this returns false.
+  bool Materialize(GlobalValue *GV, std::string *ErrInfo = 0);
+  /// Dematerialize - If the GlobalValue is read in, and if the GVMaterializer
+  /// supports it, release the memory for the function, and set it up to be
+  /// materialized lazily.  If !isDematerializable(), this method is a noop.
+  void Dematerialize(GlobalValue *GV);
+
+  /// MaterializeAll - Make sure all GlobalValues in this Module are fully read.
+  /// If the module is corrupt, this returns true and fills in the optional
+  /// string with information about the problem.  If successful, this returns
+  /// false.
+  bool MaterializeAll(std::string *ErrInfo = 0);
+
+  /// MaterializeAllPermanently - Make sure all GlobalValues in this Module are
+  /// fully read and clear the Materializer.  If the module is corrupt, this
+  /// returns true, fills in the optional string with information about the
+  /// problem, and DOES NOT clear the old Materializer.  If successful, this
+  /// returns false.
+  bool MaterializeAllPermanently(std::string *ErrInfo = 0);
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table

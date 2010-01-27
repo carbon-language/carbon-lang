@@ -23,44 +23,39 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/ModuleProvider.h"
 
 namespace llvm {
 
-  /// If the given MemoryBuffer holds a bitcode image, return a ModuleProvider
-  /// for it which does lazy deserialization of function bodies.  Otherwise,
-  /// attempt to parse it as LLVM Assembly and return a fully populated
-  /// ModuleProvider. This function *always* takes ownership of the given
-  /// MemoryBuffer.
-  inline ModuleProvider *getIRModuleProvider(MemoryBuffer *Buffer,
-                                             SMDiagnostic &Err,
-                                             LLVMContext &Context) {
+  /// If the given MemoryBuffer holds a bitcode image, return a Module for it
+  /// which does lazy deserialization of function bodies.  Otherwise, attempt to
+  /// parse it as LLVM Assembly and return a fully populated Module. This
+  /// function *always* takes ownership of the given MemoryBuffer.
+  inline Module *getIRModule(MemoryBuffer *Buffer,
+                             SMDiagnostic &Err,
+                             LLVMContext &Context) {
     if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                   (const unsigned char *)Buffer->getBufferEnd())) {
       std::string ErrMsg;
-      ModuleProvider *MP = getBitcodeModuleProvider(Buffer, Context, &ErrMsg);
-      if (MP == 0) {
+      Module *M = getLazyBitcodeModule(Buffer, Context, &ErrMsg);
+      if (M == 0) {
         Err = SMDiagnostic(Buffer->getBufferIdentifier(), -1, -1, ErrMsg, "");
         // ParseBitcodeFile does not take ownership of the Buffer in the
         // case of an error.
         delete Buffer;
       }
-      return MP;
+      return M;
     }
 
-    Module *M = ParseAssembly(Buffer, 0, Err, Context);
-    if (M == 0)
-      return 0;
-    return new ExistingModuleProvider(M);
+    return ParseAssembly(Buffer, 0, Err, Context);
   }
 
-  /// If the given file holds a bitcode image, return a ModuleProvider
+  /// If the given file holds a bitcode image, return a Module
   /// for it which does lazy deserialization of function bodies.  Otherwise,
   /// attempt to parse it as LLVM Assembly and return a fully populated
-  /// ModuleProvider.
-  inline ModuleProvider *getIRFileModuleProvider(const std::string &Filename,
-                                                 SMDiagnostic &Err,
-                                                 LLVMContext &Context) {
+  /// Module.
+  inline Module *getIRFileModule(const std::string &Filename,
+                                 SMDiagnostic &Err,
+                                 LLVMContext &Context) {
     std::string ErrMsg;
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
@@ -69,7 +64,7 @@ namespace llvm {
       return 0;
     }
 
-    return getIRModuleProvider(F, Err, Context);
+    return getIRModule(F, Err, Context);
   }
 
   /// If the given MemoryBuffer holds a bitcode image, return a Module

@@ -15,7 +15,6 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Triple.h"
@@ -334,8 +333,7 @@ int main(int argc, char **argv) {
     PM.run(mod);
   } else {
     // Build up all of the passes that we want to do to the module.
-    ExistingModuleProvider Provider(M.release());
-    FunctionPassManager Passes(&Provider);
+    FunctionPassManager Passes(M.get());
 
     // Add the target data from the target machine, if it exists, or the module.
     if (const TargetData *TD = Target.getTargetData())

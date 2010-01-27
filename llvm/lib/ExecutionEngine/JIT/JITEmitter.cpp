@@ -63,7 +63,7 @@ static JIT *TheJIT = 0;
 // A declaration may stop being a declaration once it's fully read from bitcode.
 // This function returns true if F is fully read and is still a declaration.
 static bool isNonGhostDeclaration(const Function *F) {
-  return F->isDeclaration() && !F->hasNotBeenReadFromBitcode();
+  return F->isDeclaration() && !F->isMaterializable();
 }
 
 //===----------------------------------------------------------------------===//

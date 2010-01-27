@@ -59,8 +59,8 @@ LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
                                       char **OutMessage) {
   std::string Message;
 
-  *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), getGlobalContext(), 
-                                         &Message));
+  *OutMP = reinterpret_cast<LLVMModuleProviderRef>(
+    getLazyBitcodeModule(unwrap(MemBuf), getGlobalContext(), &Message));
                                          
   if (!*OutMP) {
     if (OutMessage)
@@ -77,8 +77,8 @@ LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
                                                char **OutMessage) {
   std::string Message;
   
-  *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), *unwrap(ContextRef),
-                                         &Message));
+  *OutMP = reinterpret_cast<LLVMModuleProviderRef>(
+    getLazyBitcodeModule(unwrap(MemBuf), *unwrap(ContextRef), &Message));
   if (!*OutMP) {
     if (OutMessage)
       *OutMessage = strdup(Message.c_str());

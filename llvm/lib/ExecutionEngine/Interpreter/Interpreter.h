@@ -94,7 +94,7 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 
 public:
-  explicit Interpreter(ModuleProvider *M);
+  explicit Interpreter(Module *M);
   ~Interpreter();
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to
@@ -108,7 +108,7 @@ public:
   
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(ModuleProvider *M, std::string *ErrorStr = 0);
+  static ExecutionEngine *create(Module *M, std::string *ErrorStr = 0);
 
   /// run - Start execution with the specified function and arguments.
   ///

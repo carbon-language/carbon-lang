@@ -23,7 +23,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -194,11 +193,10 @@ class JITTest : public testing::Test {
  protected:
   virtual void SetUp() {
     M = new Module("<main>", Context);
-    MP = new ExistingModuleProvider(M);
     RJMM = new RecordingJITMemoryManager;
     RJMM->setPoisonMemory(true);
     std::string Error;
-    TheJIT.reset(EngineBuilder(MP).setEngineKind(EngineKind::JIT)
+    TheJIT.reset(EngineBuilder(M).setEngineKind(EngineKind::JIT)
                  .setJITMemoryManager(RJMM)
                  .setErrorStr(&Error).create());
     ASSERT_TRUE(TheJIT.get() != NULL) << Error;
@@ -209,8 +207,7 @@ class JITTest : public testing::Test {
   }
 
   LLVMContext Context;
-  Module *M;  // Owned by MP.
-  ModuleProvider *MP;  // Owned by ExecutionEngine.
+  Module *M;  // Owned by ExecutionEngine.
   RecordingJITMemoryManager *RJMM;
   OwningPtr<ExecutionEngine> TheJIT;
 };
@@ -223,14 +220,13 @@ class JITTest : public testing::Test {
 TEST(JIT, GlobalInFunction) {
   LLVMContext context;
   Module *M = new Module("<main>", context);
-  ExistingModuleProvider *MP = new ExistingModuleProvider(M);
 
   JITMemoryManager *MemMgr = JITMemoryManager::CreateDefaultMemManager();
   // Tell the memory manager to poison freed memory so that accessing freed
   // memory is more easily tested.
   MemMgr->setPoisonMemory(true);
   std::string Error;
-  OwningPtr<ExecutionEngine> JIT(EngineBuilder(MP)
+  OwningPtr<ExecutionEngine> JIT(EngineBuilder(M)
                                  .setEngineKind(EngineKind::JIT)
                                  .setErrorStr(&Error)
                                  .setJITMemoryManager(MemMgr)
@@ -428,7 +424,8 @@ TEST_F(JITTest, ModuleDeletion) {
                "} ");
   Function *func = M->getFunction("main");
   TheJIT->getPointerToFunction(func);
-  TheJIT->deleteModuleProvider(MP);
+  TheJIT->removeModule(M);
+  delete M;
 
   SmallPtrSet<const void*, 2> FunctionsDeallocated;
   for (unsigned i = 0, e = RJMM->deallocateFunctionBodyCalls.size();
@@ -647,34 +644,68 @@ std::string AssembleToBitcode(LLVMContext &Context, const char *Assembly) {
 }
 
 // Returns a newly-created ExecutionEngine that reads the bitcode in 'Bitcode'
-// lazily.  The associated ModuleProvider (owned by the ExecutionEngine) is
-// returned in MP.  Both will be NULL on an error.  Bitcode must live at least
-// as long as the ExecutionEngine.
+// lazily.  The associated Module (owned by the ExecutionEngine) is returned in
+// M.  Both will be NULL on an error.  Bitcode must live at least as long as the
+// ExecutionEngine.
 ExecutionEngine *getJITFromBitcode(
-  LLVMContext &Context, const std::string &Bitcode, ModuleProvider *&MP) {
+  LLVMContext &Context, const std::string &Bitcode, Module *&M) {
   // c_str() is null-terminated like MemoryBuffer::getMemBuffer requires.
   MemoryBuffer *BitcodeBuffer =
     MemoryBuffer::getMemBuffer(Bitcode.c_str(),
                                Bitcode.c_str() + Bitcode.size(),
                                "Bitcode for test");
   std::string errMsg;
-  MP = getBitcodeModuleProvider(BitcodeBuffer, Context, &errMsg);
-  if (MP == NULL) {
+  M = getLazyBitcodeModule(BitcodeBuffer, Context, &errMsg);
+  if (M == NULL) {
     ADD_FAILURE() << errMsg;
     delete BitcodeBuffer;
     return NULL;
   }
-  ExecutionEngine *TheJIT = EngineBuilder(MP)
+  ExecutionEngine *TheJIT = EngineBuilder(M)
     .setEngineKind(EngineKind::JIT)
     .setErrorStr(&errMsg)
     .create();
   if (TheJIT == NULL) {
     ADD_FAILURE() << errMsg;
-    delete MP;
-    MP = NULL;
+    delete M;
+    M = NULL;
     return NULL;
   }
   return TheJIT;
+}
+
+TEST(LazyLoadedJITTest, MaterializableAvailableExternallyFunctionIsntCompiled) {
+  LLVMContext Context;
+  const std::string Bitcode =
+    AssembleToBitcode(Context,
+                      "define available_externally i32 "
+                      "    @JITTest_AvailableExternallyFunction() { "
+                      "  ret i32 7 "
+                      "} "
+                      " "
+                      "define i32 @func() { "
+                      "  %result = tail call i32 "
+                      "    @JITTest_AvailableExternallyFunction() "
+                      "  ret i32 %result "
+                      "} ");
+  ASSERT_FALSE(Bitcode.empty()) << "Assembling failed";
+  Module *M;
+  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, M));
+  ASSERT_TRUE(TheJIT.get()) << "Failed to create JIT.";
+  TheJIT->DisableLazyCompilation(true);
+
+  Function *funcIR = M->getFunction("func");
+  Function *availableFunctionIR =
+    M->getFunction("JITTest_AvailableExternallyFunction");
+
+  // Double-check that the available_externally function is still unmaterialized
+  // when getPointerToFunction needs to find out if it's available_externally.
+  EXPECT_TRUE(availableFunctionIR->isMaterializable());
+
+  int32_t (*func)() = reinterpret_cast<int32_t(*)()>(
+    (intptr_t)TheJIT->getPointerToFunction(funcIR));
+  EXPECT_EQ(42, func()) << "func should return 42 from the static version,"
+                        << " not 7 from the IR version.";
 }
 
 TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
@@ -697,16 +728,15 @@ TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
                       "  ret i32 %result "
                       "} ");
   ASSERT_FALSE(Bitcode.empty()) << "Assembling failed";
-  ModuleProvider *MP;
-  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, MP));
+  Module *M;
+  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, M));
   ASSERT_TRUE(TheJIT.get()) << "Failed to create JIT.";
   TheJIT->DisableLazyCompilation(true);
 
-  Module *M = MP->getModule();
   Function *recur1IR = M->getFunction("recur1");
   Function *recur2IR = M->getFunction("recur2");
-  EXPECT_TRUE(recur1IR->hasNotBeenReadFromBitcode());
-  EXPECT_TRUE(recur2IR->hasNotBeenReadFromBitcode());
+  EXPECT_TRUE(recur1IR->isMaterializable());
+  EXPECT_TRUE(recur2IR->isMaterializable());
 
   int32_t (*recur1)(int32_t) = reinterpret_cast<int32_t(*)(int32_t)>(
     (intptr_t)TheJIT->getPointerToFunction(recur1IR));

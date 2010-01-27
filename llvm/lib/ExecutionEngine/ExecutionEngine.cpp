@@ -18,7 +18,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
@@ -36,25 +35,25 @@ using namespace llvm;
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
 STATISTIC(NumGlobals  , "Number of global vars initialized");
 
-ExecutionEngine *(*ExecutionEngine::JITCtor)(ModuleProvider *MP,
+ExecutionEngine *(*ExecutionEngine::JITCtor)(Module *M,
                                              std::string *ErrorStr,
                                              JITMemoryManager *JMM,
                                              CodeGenOpt::Level OptLevel,
                                              bool GVsWithCode,
 					     CodeModel::Model CMM) = 0;
-ExecutionEngine *(*ExecutionEngine::InterpCtor)(ModuleProvider *MP,
+ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
                                                 std::string *ErrorStr) = 0;
 ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
 
 
-ExecutionEngine::ExecutionEngine(ModuleProvider *P)
+ExecutionEngine::ExecutionEngine(Module *M)
   : EEState(*this),
     LazyFunctionCreator(0) {
   CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
-  Modules.push_back(P);
-  assert(P && "ModuleProvider is null?");
+  Modules.push_back(M);
+  assert(M && "Module is null?");
 }
 
 ExecutionEngine::~ExecutionEngine() {
@@ -69,38 +68,18 @@ char* ExecutionEngine::getMemoryForGV(const GlobalVariable* GV) {
   return new char[GVSize];
 }
 
-/// removeModuleProvider - Remove a ModuleProvider from the list of modules.
-/// Relases the Module from the ModuleProvider, materializing it in the
-/// process, and returns the materialized Module.
-Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P, 
-                                              std::string *ErrInfo) {
-  for(SmallVector<ModuleProvider *, 1>::iterator I = Modules.begin(), 
+/// removeModule - Remove a Module from the list of modules.
+bool ExecutionEngine::removeModule(Module *M) {
+  for(SmallVector<Module *, 1>::iterator I = Modules.begin(), 
         E = Modules.end(); I != E; ++I) {
-    ModuleProvider *MP = *I;
-    if (MP == P) {
+    Module *Found = *I;
+    if (Found == M) {
       Modules.erase(I);
-      clearGlobalMappingsFromModule(MP->getModule());
-      return MP->releaseModule(ErrInfo);
+      clearGlobalMappingsFromModule(M);
+      return true;
     }
   }
-  return NULL;
-}
-
-/// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
-/// and deletes the ModuleProvider and owned Module.  Avoids materializing 
-/// the underlying module.
-void ExecutionEngine::deleteModuleProvider(ModuleProvider *P, 
-                                           std::string *ErrInfo) {
-  for(SmallVector<ModuleProvider *, 1>::iterator I = Modules.begin(), 
-      E = Modules.end(); I != E; ++I) {
-    ModuleProvider *MP = *I;
-    if (MP == P) {
-      Modules.erase(I);
-      clearGlobalMappingsFromModule(MP->getModule());
-      delete MP;
-      return;
-    }
-  }
+  return false;
 }
 
 /// FindFunctionNamed - Search all of the active modules to find the one that
@@ -108,7 +87,7 @@ void ExecutionEngine::deleteModuleProvider(ModuleProvider *P,
 /// general code.
 Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
   for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
-    if (Function *F = Modules[i]->getModule()->getFunction(FnName))
+    if (Function *F = Modules[i]->getFunction(FnName))
       return F;
   }
   return 0;
@@ -316,7 +295,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   // Execute global ctors/dtors for each module in the program.
   for (unsigned m = 0, e = Modules.size(); m != e; ++m)
-    runStaticConstructorsDestructors(Modules[m]->getModule(), isDtors);
+    runStaticConstructorsDestructors(Modules[m], isDtors);
 }
 
 #ifndef NDEBUG
@@ -393,12 +372,12 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 /// Interpreter or there's an error. If even an Interpreter cannot be created,
 /// NULL is returned.
 ///
-ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
+ExecutionEngine *ExecutionEngine::create(Module *M,
                                          bool ForceInterpreter,
                                          std::string *ErrorStr,
                                          CodeGenOpt::Level OptLevel,
                                          bool GVsWithCode) {
-  return EngineBuilder(MP)
+  return EngineBuilder(M)
       .setEngineKind(ForceInterpreter
                      ? EngineKind::Interpreter
                      : EngineKind::JIT)
@@ -410,12 +389,6 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
 
 ExecutionEngine *ExecutionEngine::create(Module *M) {
   return EngineBuilder(M).create();
-}
-
-/// EngineBuilder - Overloaded constructor that automatically creates an
-/// ExistingModuleProvider for an existing module.
-EngineBuilder::EngineBuilder(Module *m) : MP(new ExistingModuleProvider(m)) {
-  InitEngine();
 }
 
 ExecutionEngine *EngineBuilder::create() {
@@ -442,7 +415,7 @@ ExecutionEngine *EngineBuilder::create() {
   if (WhichEngine & EngineKind::JIT) {
     if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
-        ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
+        ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel,
                                  AllocateGVsWithCode, CMModel);
       if (EE) return EE;
     }
@@ -452,7 +425,7 @@ ExecutionEngine *EngineBuilder::create() {
   // an interpreter instead.
   if (WhichEngine & EngineKind::Interpreter) {
     if (ExecutionEngine::InterpCtor)
-      return ExecutionEngine::InterpCtor(MP, ErrorStr);
+      return ExecutionEngine::InterpCtor(M, ErrorStr);
     if (ErrorStr)
       *ErrorStr = "Interpreter has not been linked in.";
     return 0;
@@ -968,7 +941,7 @@ void ExecutionEngine::emitGlobals() {
 
   if (Modules.size() != 1) {
     for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
-      Module &M = *Modules[m]->getModule();
+      Module &M = *Modules[m];
       for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I) {
         const GlobalValue *GV = I;
@@ -1002,7 +975,7 @@ void ExecutionEngine::emitGlobals() {
   
   std::vector<const GlobalValue*> NonCanonicalGlobals;
   for (unsigned m = 0, e = Modules.size(); m != e; ++m) {
-    Module &M = *Modules[m]->getModule();
+    Module &M = *Modules[m];
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       // In the multi-module case, see what this global maps to.

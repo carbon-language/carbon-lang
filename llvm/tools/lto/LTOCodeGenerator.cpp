@@ -21,7 +21,6 @@
 #include "llvm/Linker.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -392,8 +391,7 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
     // Make sure everything is still good.
     passes.add(createVerifierPass());
 
-    FunctionPassManager* codeGenPasses =
-            new FunctionPassManager(new ExistingModuleProvider(mergedModule));
+    FunctionPassManager* codeGenPasses = new FunctionPassManager(mergedModule);
 
     codeGenPasses->add(new TargetData(*_target->getTargetData()));
 

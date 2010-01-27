@@ -18,21 +18,20 @@
 
 namespace llvm {
   class Module;
-  class ModuleProvider;
   class MemoryBuffer;
   class ModulePass;
   class BitstreamWriter;
   class LLVMContext;
   class raw_ostream;
   
-  /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer
+  /// getLazyBitcodeModule - Read the header of the specified bitcode buffer
   /// and prepare for lazy deserialization of function bodies.  If successful,
   /// this takes ownership of 'buffer' and returns a non-null pointer.  On
   /// error, this returns null, *does not* take ownership of Buffer, and fills
   /// in *ErrMsg with an error description if ErrMsg is non-null.
-  ModuleProvider *getBitcodeModuleProvider(MemoryBuffer *Buffer,
-                                           LLVMContext& Context,
-                                           std::string *ErrMsg = 0);
+  Module *getLazyBitcodeModule(MemoryBuffer *Buffer,
+                               LLVMContext& Context,
+                               std::string *ErrMsg = 0);
 
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
   /// If an error occurs, this returns null and fills in *ErrMsg if it is

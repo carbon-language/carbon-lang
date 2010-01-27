@@ -14,7 +14,7 @@
 #ifndef BITCODE_READER_H
 #define BITCODE_READER_H
 
-#include "llvm/ModuleProvider.h"
+#include "llvm/GVMaterializer.h"
 #include "llvm/Attributes.h"
 #include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
@@ -121,9 +121,11 @@ public:
   void AssignValue(Value *V, unsigned Idx);
 };
 
-class BitcodeReader : public ModuleProvider {
+class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
+  Module *TheModule;
   MemoryBuffer *Buffer;
+  bool BufferOwned;
   BitstreamReader StreamFile;
   BitstreamCursor Stream;
   
@@ -160,9 +162,9 @@ class BitcodeReader : public ModuleProvider {
   bool HasReversedFunctionsWithBodies;
   
   /// DeferredFunctionInfo - When function bodies are initially scanned, this
-  /// map contains info about where to find deferred function body (in the
-  /// stream) and what linkage the original function had.
-  DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
+  /// map contains info about where to find deferred function body in the
+  /// stream.
+  DenseMap<Function*, uint64_t> DeferredFunctionInfo;
   
   /// BlockAddrFwdRefs - These are blockaddr references to basic blocks.  These
   /// are resolved lazily when functions are loaded.
@@ -171,7 +173,8 @@ class BitcodeReader : public ModuleProvider {
   
 public:
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
-    : Context(C), Buffer(buffer), ErrorString(0), ValueList(C), MDValueList(C) {
+    : Context(C), TheModule(0), Buffer(buffer), BufferOwned(false),
+      ErrorString(0), ValueList(C), MDValueList(C) {
     HasReversedFunctionsWithBodies = false;
   }
   ~BitcodeReader() {
@@ -180,17 +183,15 @@ public:
   
   void FreeState();
   
-  /// releaseMemoryBuffer - This causes the reader to completely forget about
-  /// the memory buffer it contains, which prevents the buffer from being
-  /// destroyed when it is deleted.
-  void releaseMemoryBuffer() {
-    Buffer = 0;
-  }
+  /// setBufferOwned - If this is true, the reader will destroy the MemoryBuffer
+  /// when the reader is destroyed.
+  void setBufferOwned(bool Owned) { BufferOwned = Owned; }
   
-  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0);
-  virtual Module *materializeModule(std::string *ErrInfo = 0);
-  virtual void dematerializeFunction(Function *F);
-  virtual Module *releaseModule(std::string *ErrInfo = 0);
+  virtual bool isMaterializable(const GlobalValue *GV) const;
+  virtual bool isDematerializable(const GlobalValue *GV) const;
+  virtual bool Materialize(GlobalValue *GV, std::string *ErrInfo = 0);
+  virtual bool MaterializeModule(Module *M, std::string *ErrInfo = 0);
+  virtual void Dematerialize(GlobalValue *GV);
 
   bool Error(const char *Str) {
     ErrorString = Str;
@@ -200,7 +201,7 @@ public:
   
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
-  bool ParseBitcode();
+  bool ParseBitcodeInto(Module *M);
 private:
   const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
   Value *getFnValueByID(unsigned ID, const Type *Ty) {
@@ -248,7 +249,7 @@ private:
   }
 
   
-  bool ParseModule(const std::string &ModuleID);
+  bool ParseModule();
   bool ParseAttributeBlock();
   bool ParseTypeTable();
   bool ParseTypeSymbolTable();

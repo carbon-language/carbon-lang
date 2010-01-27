@@ -150,8 +150,6 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::PrivateLinkage:
   case GlobalValue::LinkerPrivateLinkage:
     break;
-  case GlobalValue::GhostLinkage:
-    llvm_unreachable("Should not have any unmaterialized functions!");
   case GlobalValue::DLLImportLinkage:
     llvm_unreachable("DLLImport linkage is not supported by this target!");
   case GlobalValue::DLLExportLinkage:

@@ -47,7 +47,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/TypeSymbolTable.h"
@@ -413,10 +412,10 @@ void Verifier::visit(Instruction &I) {
 
 void Verifier::visitGlobalValue(GlobalValue &GV) {
   Assert1(!GV.isDeclaration() ||
+          GV.isMaterializable() ||
           GV.hasExternalLinkage() ||
           GV.hasDLLImportLinkage() ||
           GV.hasExternalWeakLinkage() ||
-          GV.hasGhostLinkage() ||
           (isa<GlobalAlias>(GV) &&
            (GV.hasLocalLinkage() || GV.hasWeakLinkage())),
   "Global is external, but doesn't have external or dllimport or weak linkage!",
@@ -648,9 +647,11 @@ void Verifier::visitFunction(Function &F) {
               "Function takes metadata but isn't an intrinsic", I, &F);
   }
 
-  if (F.isDeclaration()) {
+  if (F.isMaterializable()) {
+    // Function has a body somewhere we can't see.
+  } else if (F.isDeclaration()) {
     Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
-            F.hasExternalWeakLinkage() || F.hasGhostLinkage(),
+            F.hasExternalWeakLinkage(),
             "invalid linkage type for function declaration", &F);
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
@@ -1913,12 +1914,10 @@ bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isDeclaration() && "Cannot verify external functions");
 
-  ExistingModuleProvider MP(F.getParent());
-  FunctionPassManager FPM(&MP);
+  FunctionPassManager FPM(F.getParent());
   Verifier *V = new Verifier(action);
   FPM.add(V);
   FPM.run(F);
-  MP.releaseModule();
   return V->Broken;
 }
 

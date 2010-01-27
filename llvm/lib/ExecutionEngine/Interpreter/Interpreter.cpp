@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include <cstring>
 using namespace llvm;
 
@@ -33,20 +32,20 @@ extern "C" void LLVMLinkInInterpreter() { }
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr) {
-  // Tell this ModuleProvide to materialize and release the module
-  if (!MP->materializeModule(ErrStr))
+ExecutionEngine *Interpreter::create(Module *M, std::string* ErrStr) {
+  // Tell this Module to materialize everything and release the GVMaterializer.
+  if (M->MaterializeAllPermanently(ErrStr))
     // We got an error, just return 0
     return 0;
 
-  return new Interpreter(MP);
+  return new Interpreter(M);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(ModuleProvider *M)
-  : ExecutionEngine(M), TD(M->getModule()) {
+Interpreter::Interpreter(Module *M)
+  : ExecutionEngine(M), TD(M) {
       
   memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
   setTargetData(&TD);

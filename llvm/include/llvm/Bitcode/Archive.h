@@ -27,7 +27,6 @@ namespace llvm {
   class MemoryBuffer;
 
 // Forward declare classes
-class ModuleProvider;      // From VMCore
 class Module;              // From VMCore
 class Archive;             // Declared below
 class ArchiveMemberHeader; // Internal implementation class
@@ -374,14 +373,14 @@ class Archive {
     /// returns the associated module that defines that symbol. This method can
     /// be called as many times as necessary. This is handy for linking the
     /// archive into another module based on unresolved symbols. Note that the
-    /// ModuleProvider returned by this accessor should not be deleted by the
-    /// caller. It is managed internally by the Archive class. It is possible
-    /// that multiple calls to this accessor will return the same ModuleProvider
-    /// instance because the associated module defines multiple symbols.
-    /// @returns The ModuleProvider* found or null if the archive does not
-    /// contain a module that defines the \p symbol.
+    /// Module returned by this accessor should not be deleted by the caller. It
+    /// is managed internally by the Archive class. It is possible that multiple
+    /// calls to this accessor will return the same Module instance because the
+    /// associated module defines multiple symbols.
+    /// @returns The Module* found or null if the archive does not contain a
+    /// module that defines the \p symbol.
     /// @brief Look up a module by symbol name.
-    ModuleProvider* findModuleDefiningSymbol(
+    Module* findModuleDefiningSymbol(
       const std::string& symbol,  ///< Symbol to be sought
       std::string* ErrMessage     ///< Error message storage, if non-zero
     );
@@ -397,7 +396,7 @@ class Archive {
     /// @brief Look up multiple symbols in the archive.
     bool findModulesDefiningSymbols(
       std::set<std::string>& symbols,     ///< Symbols to be sought
-      std::set<ModuleProvider*>& modules, ///< The modules matching \p symbols
+      std::set<Module*>& modules,         ///< The modules matching \p symbols
       std::string* ErrMessage             ///< Error msg storage, if non-zero
     );
 
@@ -513,9 +512,9 @@ class Archive {
 
     /// This type is used to keep track of bitcode modules loaded from the
     /// symbol table. It maps the file offset to a pair that consists of the
-    /// associated ArchiveMember and the ModuleProvider.
+    /// associated ArchiveMember and the Module.
     /// @brief Module mapping type
-    typedef std::map<unsigned,std::pair<ModuleProvider*,ArchiveMember*> >
+    typedef std::map<unsigned,std::pair<Module*,ArchiveMember*> >
       ModuleMap;
 
 

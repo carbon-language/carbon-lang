@@ -14,7 +14,6 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Config/config.h"
@@ -139,8 +138,10 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   do {
     CurrentlyUndefinedSymbols = UndefinedSymbols;
 
-    // Find the modules we need to link into the target module
-    std::set<ModuleProvider*> Modules;
+    // Find the modules we need to link into the target module.  Note that arch
+    // keeps ownership of these modules and may return the same Module* from a
+    // subsequent call.
+    std::set<Module*> Modules;
     if (!arch->findModulesDefiningSymbols(UndefinedSymbols, Modules, &ErrMsg))
       return error("Cannot find symbols in '" + Filename.str() + 
                    "': " + ErrMsg);
@@ -156,19 +157,17 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
     NotDefinedByArchive.insert(UndefinedSymbols.begin(),
         UndefinedSymbols.end());
 
-    // Loop over all the ModuleProviders that we got back from the archive
-    for (std::set<ModuleProvider*>::iterator I=Modules.begin(), E=Modules.end();
+    // Loop over all the Modules that we got back from the archive
+    for (std::set<Module*>::iterator I=Modules.begin(), E=Modules.end();
          I != E; ++I) {
 
       // Get the module we must link in.
       std::string moduleErrorMsg;
-      std::auto_ptr<Module> AutoModule((*I)->releaseModule( &moduleErrorMsg ));
-      if (!moduleErrorMsg.empty())
-        return error("Could not load a module: " + moduleErrorMsg);
-
-      Module* aModule = AutoModule.get();
-
+      Module* aModule = *I;
       if (aModule != NULL) {
+        if (aModule->MaterializeAll(&moduleErrorMsg))
+          return error("Could not load a module: " + moduleErrorMsg);
+
         verbose("  Linking in module: " + aModule->getModuleIdentifier());
 
         // Link it in

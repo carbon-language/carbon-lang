@@ -53,9 +53,9 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasDLLImportLinkage())
     return X86II::MO_DLLIMPORT;
 
-  // GV with ghost linkage (in JIT lazy compilation mode) do not require an
+  // Materializable GVs (in JIT lazy compilation mode) do not require an
   // extra load from stub.
-  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+  bool isDecl = GV->isDeclaration() && !GV->isMaterializable();
 
   // X86-64 in PIC mode.
   if (isPICStyleRIPRel()) {

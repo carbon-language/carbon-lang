@@ -14,7 +14,6 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -427,7 +426,7 @@ int main(int argc, char **argv) {
 
   FunctionPassManager *FPasses = NULL;
   if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-    FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
+    FPasses = new FunctionPassManager(M.get());
     if (TD)
       FPasses->add(new TargetData(*TD));
   }

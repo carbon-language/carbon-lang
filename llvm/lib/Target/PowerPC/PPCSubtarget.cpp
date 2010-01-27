@@ -130,7 +130,7 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
     return false;
   // If symbol visibility is hidden, the extra load is not needed if
   // the symbol is definitely defined in the current translation unit.
-  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+  bool isDecl = GV->isDeclaration() && !GV->isMaterializable();
   if (GV->hasHiddenVisibility() && !isDecl && !GV->hasCommonLinkage())
     return false;
   return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||

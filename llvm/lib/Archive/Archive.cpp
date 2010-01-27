@@ -14,7 +14,6 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Process.h"
@@ -173,8 +172,8 @@ void Archive::cleanUpMemory() {
     foreignST = 0;
   }
   
-  // Delete any ModuleProviders and ArchiveMember's we've allocated as a result
-  // of symbol table searches.
+  // Delete any Modules and ArchiveMember's we've allocated as a result of
+  // symbol table searches.
   for (ModuleMap::iterator I=modules.begin(), E=modules.end(); I != E; ++I ) {
     delete I->second.first;
     delete I->second.second;
@@ -221,51 +220,37 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
     return true;
   }
   
-  ModuleProvider *MP = getBitcodeModuleProvider(Buffer.get(), Context, ErrMsg);
-  if (!MP)
+  Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
+  if (!M)
     return true;
-  
-  // Get the module from the provider
-  Module* M = MP->materializeModule();
-  if (M == 0) {
-    delete MP;
-    return true;
-  }
   
   // Get the symbols
   getSymbols(M, symbols);
   
   // Done with the module.
-  delete MP;
+  delete M;
   return true;
 }
 
-ModuleProvider*
+Module*
 llvm::GetBitcodeSymbols(const unsigned char *BufPtr, unsigned Length,
                         const std::string& ModuleID,
                         LLVMContext& Context,
                         std::vector<std::string>& symbols,
                         std::string* ErrMsg) {
-  // Get the module provider
-  MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str());
+  // Get the module.
+  std::auto_ptr<MemoryBuffer> Buffer(
+    MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str()));
   memcpy((char*)Buffer->getBufferStart(), BufPtr, Length);
   
-  ModuleProvider *MP = getBitcodeModuleProvider(Buffer, Context, ErrMsg);
-  if (!MP)
+  Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
+  if (!M)
     return 0;
-  
-  // Get the module from the provider
-  Module* M = MP->materializeModule();
-  if (M == 0) {
-    delete MP;
-    return 0;
-  }
   
   // Get the symbols
   getSymbols(M, symbols);
   
-  // Done with the module. Note that ModuleProvider will delete the
-  // Module when it is deleted. Also note that its the caller's responsibility
-  // to delete the ModuleProvider.
-  return MP;
+  // Done with the module. Note that it's the caller's responsibility to delete
+  // the Module.
+  return M;
 }

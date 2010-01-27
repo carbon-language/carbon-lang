@@ -2566,7 +2566,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       return Error(LinkageLoc, "invalid linkage for function declaration");
     break;
   case GlobalValue::AppendingLinkage:
-  case GlobalValue::GhostLinkage:
   case GlobalValue::CommonLinkage:
     return Error(LinkageLoc, "invalid function linkage type");
   }

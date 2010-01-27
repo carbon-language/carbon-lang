@@ -122,9 +122,9 @@ ARMSubtarget::GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) const {
   if (RelocM == Reloc::Static)
     return false;
 
-  // GV with ghost linkage (in JIT lazy compilation mode) do not require an
-  // extra load from stub.
-  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+  // Materializable GVs (in JIT lazy compilation mode) do not require an extra
+  // load from stub.
+  bool isDecl = GV->isDeclaration() && !GV->isMaterializable();
 
   if (!isTargetDarwin()) {
     // Extra load is needed for all externally visible.

@@ -1402,8 +1402,6 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT,
   case GlobalValue::AvailableExternallyLinkage:
     Out << "available_externally ";
     break;
-    // This is invalid syntax and just a debugging aid.
-  case GlobalValue::GhostLinkage:	  Out << "ghost ";	    break;
   }
 }
 

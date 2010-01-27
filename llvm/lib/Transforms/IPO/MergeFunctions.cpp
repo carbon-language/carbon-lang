@@ -467,7 +467,6 @@ static LinkageCategory categorize(const Function *F) {
   case GlobalValue::AppendingLinkage:
   case GlobalValue::DLLImportLinkage:
   case GlobalValue::DLLExportLinkage:
-  case GlobalValue::GhostLinkage:
   case GlobalValue::CommonLinkage:
     return ExternalStrong;
   }

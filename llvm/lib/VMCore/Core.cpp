@@ -20,12 +20,13 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/TypeSymbolTable.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -932,8 +933,6 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMDLLExportLinkage;
   case GlobalValue::ExternalWeakLinkage:
     return LLVMExternalWeakLinkage;
-  case GlobalValue::GhostLinkage:
-    return LLVMGhostLinkage;
   case GlobalValue::CommonLinkage:
     return LLVMCommonLinkage;
   }
@@ -988,7 +987,8 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
     GV->setLinkage(GlobalValue::ExternalWeakLinkage);
     break;
   case LLVMGhostLinkage:
-    GV->setLinkage(GlobalValue::GhostLinkage);
+    DEBUG(errs()
+          << "LLVMSetLinkage(): LLVMGhostLinkage is no longer supported.");
     break;
   case LLVMCommonLinkage:
     GV->setLinkage(GlobalValue::CommonLinkage);
@@ -1965,7 +1965,7 @@ LLVMValueRef LLVMBuildPtrDiff(LLVMBuilderRef B, LLVMValueRef LHS,
 
 LLVMModuleProviderRef
 LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M) {
-  return wrap(new ExistingModuleProvider(unwrap(M)));
+  return reinterpret_cast<LLVMModuleProviderRef>(M);
 }
 
 void LLVMDisposeModuleProvider(LLVMModuleProviderRef MP) {

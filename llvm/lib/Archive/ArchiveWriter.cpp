@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchiveInternals.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Module.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
-#include "llvm/ModuleProvider.h"
+#include "llvm/System/Signals.h"
 #include <fstream>
 #include <ostream>
 #include <iomanip>
@@ -225,12 +225,12 @@ Archive::writeMember(
     std::vector<std::string> symbols;
     std::string FullMemberName = archPath.str() + "(" + member.getPath().str()
       + ")";
-    ModuleProvider* MP = 
+    Module* M = 
       GetBitcodeSymbols((const unsigned char*)data,fSize,
                         FullMemberName, Context, symbols, ErrMsg);
 
     // If the bitcode parsed successfully
-    if ( MP ) {
+    if ( M ) {
       for (std::vector<std::string>::iterator SI = symbols.begin(),
            SE = symbols.end(); SI != SE; ++SI) {
 
@@ -244,7 +244,7 @@ Archive::writeMember(
         }
       }
       // We don't need this module any more.
-      delete MP;
+      delete M;
     } else {
       delete mFile;
       if (ErrMsg)

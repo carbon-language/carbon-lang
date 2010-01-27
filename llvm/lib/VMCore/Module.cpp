@@ -15,6 +15,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GVMaterializer.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -56,7 +57,7 @@ template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
 //
 
 Module::Module(StringRef MID, LLVMContext& C)
-  : Context(C), ModuleID(MID), DataLayout("")  {
+  : Context(C), Materializer(NULL), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
   NamedMDSymTab = new MDSymbolTable();
@@ -369,6 +370,52 @@ std::string Module::getTypeName(const Type *Ty) const {
   if (TI != TE)  // Must have found an entry!
     return TI->first;
   return "";     // Must not have found anything...
+}
+
+//===----------------------------------------------------------------------===//
+// Methods to control the materialization of GlobalValues in the Module.
+//
+void Module::setMaterializer(GVMaterializer *GVM) {
+  assert(!Materializer &&
+         "Module already has a GVMaterializer.  Call MaterializeAllPermanently"
+         " to clear it out before setting another one.");
+  Materializer.reset(GVM);
+}
+
+bool Module::isMaterializable(const GlobalValue *GV) const {
+  if (Materializer)
+    return Materializer->isMaterializable(GV);
+  return false;
+}
+
+bool Module::isDematerializable(const GlobalValue *GV) const {
+  if (Materializer)
+    return Materializer->isDematerializable(GV);
+  return false;
+}
+
+bool Module::Materialize(GlobalValue *GV, std::string *ErrInfo) {
+  if (Materializer)
+    return Materializer->Materialize(GV, ErrInfo);
+  return false;
+}
+
+void Module::Dematerialize(GlobalValue *GV) {
+  if (Materializer)
+    return Materializer->Dematerialize(GV);
+}
+
+bool Module::MaterializeAll(std::string *ErrInfo) {
+  if (!Materializer)
+    return false;
+  return Materializer->MaterializeModule(this, ErrInfo);
+}
+
+bool Module::MaterializeAllPermanently(std::string *ErrInfo) {
+  if (MaterializeAll(ErrInfo))
+    return true;
+  Materializer.reset();
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

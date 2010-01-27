@@ -307,8 +307,6 @@ namespace {
       Out << "GlobalValue::DLLExportLinkage"; break;
     case GlobalValue::ExternalWeakLinkage:
       Out << "GlobalValue::ExternalWeakLinkage"; break;
-    case GlobalValue::GhostLinkage:
-      Out << "GlobalValue::GhostLinkage"; break;
     case GlobalValue::CommonLinkage:
       Out << "GlobalValue::CommonLinkage"; break;
     }

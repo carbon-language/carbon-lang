@@ -30,20 +30,20 @@ class TargetMachine;
 class JITState {
 private:
   FunctionPassManager PM;  // Passes to compile a function
-  ModuleProvider *MP;      // ModuleProvider used to create the PM
+  Module *M;               // Module used to create the PM
 
   /// PendingFunctions - Functions which have not been code generated yet, but
   /// were called from a function being code generated.
   std::vector<AssertingVH<Function> > PendingFunctions;
 
 public:
-  explicit JITState(ModuleProvider *MP) : PM(MP), MP(MP) {}
+  explicit JITState(Module *M) : PM(M), M(M) {}
 
   FunctionPassManager &getPM(const MutexGuard &L) {
     return PM;
   }
   
-  ModuleProvider *getMP() const { return MP; }
+  Module *getModule() const { return M; }
   std::vector<AssertingVH<Function> > &getPendingFunctions(const MutexGuard &L){
     return PendingFunctions;
   }
@@ -63,7 +63,7 @@ class JIT : public ExecutionEngine {
 
   JITState *jitstate;
 
-  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
+  JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
       JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
       bool AllocateGVsWithCode);
 public:
@@ -80,35 +80,22 @@ public:
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP,
+  static ExecutionEngine *create(Module *M,
                                  std::string *Err,
                                  JITMemoryManager *JMM,
                                  CodeGenOpt::Level OptLevel =
                                    CodeGenOpt::Default,
                                  bool GVsWithCode = true,
 				 CodeModel::Model CMM = CodeModel::Default) {
-    return ExecutionEngine::createJIT(MP, Err, JMM, OptLevel, GVsWithCode,
+    return ExecutionEngine::createJIT(M, Err, JMM, OptLevel, GVsWithCode,
 				      CMM);
   }
 
-  virtual void addModuleProvider(ModuleProvider *MP);
+  virtual void addModule(Module *M);
   
-  /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
-  /// Relases the Module from the ModuleProvider, materializing it in the
-  /// process, and returns the materialized Module.
-  virtual Module *removeModuleProvider(ModuleProvider *MP,
-                                       std::string *ErrInfo = 0);
-
-  /// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
-  /// and deletes the ModuleProvider and owned Module.  Avoids materializing 
-  /// the underlying module.
-  virtual void deleteModuleProvider(ModuleProvider *P,std::string *ErrInfo = 0);
-
-  /// materializeFunction - make sure the given function is fully read.  If the
-  /// module is corrupt, this returns true and fills in the optional string with
-  /// information about the problem.  If successful, this returns false.
-  ///
-  bool materializeFunction(Function *F, std::string *ErrInfo = 0);
+  /// removeModule - Remove a Module from the list of modules.  Returns true if
+  /// M is found.
+  virtual bool removeModule(Module *M);
 
   /// runFunction - Start execution with the specified function and arguments.
   ///
@@ -177,9 +164,9 @@ public:
 
   /// selectTarget - Pick a target either via -march or by guessing the native
   /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(ModuleProvider *MP, std::string *Err);
+  static TargetMachine *selectTarget(Module *M, std::string *Err);
 
-  static ExecutionEngine *createJIT(ModuleProvider *MP,
+  static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel,

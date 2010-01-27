@@ -15,7 +15,6 @@
 
 #include "JIT.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -43,10 +42,8 @@ MAttrs("mattr",
 
 /// selectTarget - Pick a target either via -march or by guessing the native
 /// arch.  Add any CPU features specified via -mcpu or -mattr.
-TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
-  Module &Mod = *MP->getModule();
-
-  Triple TheTriple(Mod.getTargetTriple());
+TargetMachine *JIT::selectTarget(Module *Mod, std::string *ErrorStr) {
+  Triple TheTriple(Mod->getTargetTriple());
   if (TheTriple.getTriple().empty())
     TheTriple.setTriple(sys::getHostTriple());
 

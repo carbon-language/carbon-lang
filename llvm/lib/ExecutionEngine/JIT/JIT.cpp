@@ -18,7 +18,6 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -193,17 +192,17 @@ void DarwinRegisterFrame(void* FrameBegin) {
 
 /// createJIT - This is the factory method for creating a JIT for the current
 /// machine, it does not fall back to the interpreter.  This takes ownership
-/// of the module provider.
-ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
+/// of the module.
+ExecutionEngine *ExecutionEngine::createJIT(Module *M,
                                             std::string *ErrorStr,
                                             JITMemoryManager *JMM,
                                             CodeGenOpt::Level OptLevel,
                                             bool GVsWithCode,
 					    CodeModel::Model CMM) {
-  return JIT::createJIT(MP, ErrorStr, JMM, OptLevel, GVsWithCode, CMM);
+  return JIT::createJIT(M, ErrorStr, JMM, OptLevel, GVsWithCode, CMM);
 }
 
-ExecutionEngine *JIT::createJIT(ModuleProvider *MP,
+ExecutionEngine *JIT::createJIT(Module *M,
                                 std::string *ErrorStr,
                                 JITMemoryManager *JMM,
                                 CodeGenOpt::Level OptLevel,
@@ -215,13 +214,13 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP,
     return 0;
 
   // Pick a target either via -march or by guessing the native arch.
-  TargetMachine *TM = JIT::selectTarget(MP, ErrorStr);
+  TargetMachine *TM = JIT::selectTarget(M, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
   TM->setCodeModel(CMM);
 
   // If the target supports JIT code generation, create a the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo()) {
-    return new JIT(MP, *TM, *TJ, JMM, OptLevel, GVsWithCode);
+    return new JIT(M, *TM, *TJ, JMM, OptLevel, GVsWithCode);
   } else {
     if (ErrorStr)
       *ErrorStr = "target does not support JIT code generation";
@@ -229,12 +228,12 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP,
   }
 }
 
-JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
+JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
          JITMemoryManager *JMM, CodeGenOpt::Level OptLevel, bool GVsWithCode)
-  : ExecutionEngine(MP), TM(tm), TJI(tji), AllocateGVsWithCode(GVsWithCode) {
+  : ExecutionEngine(M), TM(tm), TJI(tji), AllocateGVsWithCode(GVsWithCode) {
   setTargetData(TM.getTargetData());
 
-  jitstate = new JITState(MP);
+  jitstate = new JITState(M);
 
   // Initialize JCE
   JCE = createEmitter(*this, JMM, TM);
@@ -278,16 +277,15 @@ JIT::~JIT() {
   delete &TM;
 }
 
-/// addModuleProvider - Add a new ModuleProvider to the JIT.  If we previously
-/// removed the last ModuleProvider, we need re-initialize jitstate with a valid
-/// ModuleProvider.
-void JIT::addModuleProvider(ModuleProvider *MP) {
+/// addModule - Add a new Module to the JIT.  If we previously removed the last
+/// Module, we need re-initialize jitstate with a valid Module.
+void JIT::addModule(Module *M) {
   MutexGuard locked(lock);
 
   if (Modules.empty()) {
     assert(!jitstate && "jitstate should be NULL if Modules vector is empty!");
 
-    jitstate = new JITState(MP);
+    jitstate = new JITState(M);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
     PM.add(new TargetData(*TM.getTargetData()));
@@ -302,18 +300,17 @@ void JIT::addModuleProvider(ModuleProvider *MP) {
     PM.doInitialization();
   }
   
-  ExecutionEngine::addModuleProvider(MP);
+  ExecutionEngine::addModule(M);
 }
 
-/// removeModuleProvider - If we are removing the last ModuleProvider, 
-/// invalidate the jitstate since the PassManager it contains references a
-/// released ModuleProvider.
-Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
-  Module *result = ExecutionEngine::removeModuleProvider(MP, E);
+/// removeModule - If we are removing the last Module, invalidate the jitstate
+/// since the PassManager it contains references a released Module.
+bool JIT::removeModule(Module *M) {
+  bool result = ExecutionEngine::removeModule(M);
   
   MutexGuard locked(lock);
   
-  if (jitstate->getMP() == MP) {
+  if (jitstate->getModule() == M) {
     delete jitstate;
     jitstate = 0;
   }
@@ -334,62 +331,6 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
     PM.doInitialization();
   }    
   return result;
-}
-
-/// deleteModuleProvider - Remove a ModuleProvider from the list of modules,
-/// and deletes the ModuleProvider and owned Module.  Avoids materializing 
-/// the underlying module.
-void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
-  ExecutionEngine::deleteModuleProvider(MP, E);
-  
-  MutexGuard locked(lock);
-  
-  if (jitstate->getMP() == MP) {
-    delete jitstate;
-    jitstate = 0;
-  }
-
-  if (!jitstate && !Modules.empty()) {
-    jitstate = new JITState(Modules[0]);
-    
-    FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new TargetData(*TM.getTargetData()));
-    
-    // Turn the machine code intermediate representation into bytes in memory
-    // that may be executed.
-    if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      llvm_report_error("Target does not support machine code emission!");
-    }
-    
-    // Initialize passes.
-    PM.doInitialization();
-  }    
-}
-
-/// materializeFunction - make sure the given function is fully read.  If the
-/// module is corrupt, this returns true and fills in the optional string with
-/// information about the problem.  If successful, this returns false.
-bool JIT::materializeFunction(Function *F, std::string *ErrInfo) {
-  // Read in the function if it exists in this Module.
-  if (F->hasNotBeenReadFromBitcode()) {
-    // Determine the module provider this function is provided by.
-    Module *M = F->getParent();
-    ModuleProvider *MP = 0;
-    for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
-      if (Modules[i]->getModule() == M) {
-        MP = Modules[i];
-        break;
-      }
-    }
-    if (MP)
-      return MP->materializeFunction(F, ErrInfo);
-
-    if (ErrInfo)
-      *ErrInfo = "Function isn't in a module we know about!";
-    return true;
-  }
-  // Succeed if the function is already read.
-  return false;
 }
 
 /// run - Start execution with the specified function and arguments.
@@ -661,7 +602,7 @@ void *JIT::getPointerToFunction(Function *F) {
   // Now that this thread owns the lock, make sure we read in the function if it
   // exists in this Module.
   std::string ErrorMsg;
-  if (materializeFunction(F, &ErrorMsg)) {
+  if (F->Materialize(&ErrorMsg)) {
     llvm_report_error("Error reading function '" + F->getName()+
                       "' from bitcode file: " + ErrorMsg);
   }

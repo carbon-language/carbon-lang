@@ -18,7 +18,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1194,15 +1193,13 @@ bool BBPassManager::doFinalization(Function &F) {
 // FunctionPassManager implementation
 
 /// Create new Function pass manager
-FunctionPassManager::FunctionPassManager(ModuleProvider *P) {
+FunctionPassManager::FunctionPassManager(Module *m) : M(m) {
   FPM = new FunctionPassManagerImpl(0);
   // FPM is the top level manager.
   FPM->setTopLevelManager(FPM);
 
   AnalysisResolver *AR = new AnalysisResolver(*FPM);
   FPM->setResolver(AR);
-  
-  MP = P;
 }
 
 FunctionPassManager::~FunctionPassManager() {
@@ -1224,7 +1221,7 @@ void FunctionPassManager::add(Pass *P) {
 ///
 bool FunctionPassManager::run(Function &F) {
   std::string errstr;
-  if (MP->materializeFunction(&F, &errstr)) {
+  if (F.Materialize(&errstr)) {
     llvm_report_error("Error reading bitcode file: " + errstr);
   }
   return FPM->run(F);
@@ -1234,13 +1231,13 @@ bool FunctionPassManager::run(Function &F) {
 /// doInitialization - Run all of the initializers for the function passes.
 ///
 bool FunctionPassManager::doInitialization() {
-  return FPM->doInitialization(*MP->getModule());
+  return FPM->doInitialization(*M);
 }
 
 /// doFinalization - Run all of the finalizers for the function passes.
 ///
 bool FunctionPassManager::doFinalization() {
-  return FPM->doFinalization(*MP->getModule());
+  return FPM->doFinalization(*M);
 }
 
 //===----------------------------------------------------------------------===//

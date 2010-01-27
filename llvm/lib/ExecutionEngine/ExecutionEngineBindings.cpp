@@ -174,20 +174,16 @@ void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F) {
 }
 
 void LLVMAddModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP){
-  unwrap(EE)->addModuleProvider(unwrap(MP));
+  unwrap(EE)->addModule(unwrap(MP));
 }
 
 LLVMBool LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE,
                                   LLVMModuleProviderRef MP,
                                   LLVMModuleRef *OutMod, char **OutError) {
-  std::string Error;
-  if (Module *Gone = unwrap(EE)->removeModuleProvider(unwrap(MP), &Error)) {
-    *OutMod = wrap(Gone);
-    return 0;
-  }
-  if (OutError)
-    *OutError = strdup(Error.c_str());
-  return 1;
+  Module *M = unwrap(MP);
+  unwrap(EE)->removeModule(M);
+  *OutMod = wrap(M);
+  return 0;
 }
 
 LLVMBool LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,

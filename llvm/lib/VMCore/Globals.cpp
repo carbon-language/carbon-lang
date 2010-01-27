@@ -43,6 +43,19 @@ static bool removeDeadUsersOfConstant(const Constant *C) {
   return true;
 }
 
+bool GlobalValue::isMaterializable() const {
+  return getParent()->isMaterializable(this);
+}
+bool GlobalValue::isDematerializable() const {
+  return getParent()->isDematerializable(this);
+}
+bool GlobalValue::Materialize(std::string *ErrInfo) {
+  return getParent()->Materialize(this, ErrInfo);
+}
+void GlobalValue::Dematerialize() {
+  getParent()->Dematerialize(this);
+}
+
 /// removeDeadConstantUsers - If there are any dead constant users dangling
 /// off of this global value, remove them.  This method is useful for clients
 /// that want to check to see if a global is unused, but don't want to deal
