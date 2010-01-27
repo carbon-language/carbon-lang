@@ -19,6 +19,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <ctime>
 using namespace clang;
@@ -627,7 +628,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
 
   ++NumBuiltinMacroExpanded;
 
-  char TmpBuffer[100];
+  llvm::SmallString<128> TmpBuffer;
+  llvm::raw_svector_ostream OS(TmpBuffer);
 
   // Set up the return result.
   Tok.setIdentifierInfo(0);
@@ -652,9 +654,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
 
     // __LINE__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", PLoc.getLine());
+    OS << PLoc.getLine();
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     // C99 6.10.8: "__FILE__: The presumed name of the current source file (a
     // character string literal)". This can be affected by #line.
@@ -671,10 +672,11 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
 
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
-    std::string FN = PLoc.getFilename();
-    FN = '"' + Lexer::Stringify(FN) + '"';
+    llvm::SmallString<128> FN;
+    FN += PLoc.getFilename();
+    Lexer::Stringify(FN);
+    OS << '"' << FN.str() << '"';
     Tok.setKind(tok::string_literal);
-    CreateString(&FN[0], FN.size(), Tok, Tok.getLocation());
   } else if (II == Ident__DATE__) {
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
@@ -683,6 +685,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setLocation(SourceMgr.createInstantiationLoc(DATELoc, Tok.getLocation(),
                                                      Tok.getLocation(),
                                                      Tok.getLength()));
+    return;
   } else if (II == Ident__TIME__) {
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, *this);
@@ -691,6 +694,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setLocation(SourceMgr.createInstantiationLoc(TIMELoc, Tok.getLocation(),
                                                      Tok.getLocation(),
                                                      Tok.getLength()));
+    return;
   } else if (II == Ident__INCLUDE_LEVEL__) {
     // Compute the presumed include depth of this token.  This can be affected
     // by GNU line markers.
@@ -702,9 +706,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       PLoc = SourceMgr.getPresumedLoc(PLoc.getIncludeLoc());
 
     // __INCLUDE_LEVEL__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", Depth);
+    OS << Depth;
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
@@ -725,17 +728,13 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     } else {
       Result = "??? ??? ?? ??:??:?? ????\n";
     }
-    TmpBuffer[0] = '"';
-    unsigned Len = strlen(Result);
-    memcpy(TmpBuffer+1, Result, Len-1); // Copy string without the newline.
-    TmpBuffer[Len] = '"';
+    // Surround the string with " and strip the trailing newline.
+    OS << '"' << llvm::StringRef(Result, strlen(Result)-1) << '"';
     Tok.setKind(tok::string_literal);
-    CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
   } else if (II == Ident__COUNTER__) {
     // __COUNTER__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", CounterValue++);
+    OS << CounterValue++;
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__has_feature ||
              II == Ident__has_builtin) {
     // The argument to these two builtins should be a parenthesized identifier.
@@ -770,9 +769,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Value = HasFeature(*this, FeatureII);
     }
 
-    sprintf(TmpBuffer, "%d", (int)Value);
+    OS << (int)Value;
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else if (II == Ident__has_include ||
              II == Ident__has_include_next) {
     // The argument to these two builtins should be a parenthesized
@@ -784,10 +782,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       IsValid = EvaluateHasInclude(Value, Tok, II, *this);
     else
       IsValid = EvaluateHasIncludeNext(Value, Tok, II, *this);
-    sprintf(TmpBuffer, "%d", (int)Value);
+    OS << (int)Value;
     Tok.setKind(tok::numeric_constant);
-    CreateString(TmpBuffer, strlen(TmpBuffer), Tok, Tok.getLocation());
   } else {
     assert(0 && "Unknown identifier!");
   }
+  CreateString(OS.str().data(), OS.str().size(), Tok, Tok.getLocation());
 }
