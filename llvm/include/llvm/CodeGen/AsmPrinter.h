@@ -335,6 +335,8 @@ namespace llvm {
     void EmitGlobalConstant(const Constant* CV, unsigned AddrSpace = 0);
     
   protected:
+    virtual void EmitFunctionEntryLabel();
+    
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     /// processDebugLoc - Processes the debug information of each machine

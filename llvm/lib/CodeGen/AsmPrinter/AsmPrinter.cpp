@@ -313,8 +313,11 @@ void AsmPrinter::EmitFunctionHeader() {
                    /*PrintType=*/false, F->getParent());
     OutStreamer.GetCommentOS() << '\n';
   }
-  OutStreamer.EmitLabel(CurrentFnSym);
 
+  // Emit the CurrentFnSym.  This is is a virtual function to allow targets to
+  // do their wild and crazy things as required.
+  EmitFunctionEntryLabel();
+  
   // Add some workaround for linkonce linkage on Cygwin\MinGW.
   if (MAI->getLinkOnceDirective() != 0 &&
       (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))
@@ -326,7 +329,11 @@ void AsmPrinter::EmitFunctionHeader() {
     DW->BeginFunction(MF);
 }
 
-
+/// EmitFunctionEntryLabel - Emit the label that is the entrypoint for the
+/// function.  This can be overridden by targets as required to do custom stuff.
+void AsmPrinter::EmitFunctionEntryLabel() {
+  OutStreamer.EmitLabel(CurrentFnSym);
+}
 
 
 bool AsmPrinter::doFinalization(Module &M) {

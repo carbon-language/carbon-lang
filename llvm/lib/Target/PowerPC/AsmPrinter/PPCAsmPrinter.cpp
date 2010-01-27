@@ -337,6 +337,8 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doFinalization(Module &M);
 
+    virtual void EmitFunctionEntryLabel();
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
@@ -594,76 +596,44 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   processDebugLoc(MI, false);
 }
 
+void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
+  if (!Subtarget.isPPC64())  // linux/ppc32 - Normal entry label.
+    return AsmPrinter::EmitFunctionEntryLabel();
+    
+  // Emit an official procedure descriptor.
+  // FIXME 64-bit SVR4: Use MCSection here!
+  O << "\t.section\t\".opd\",\"aw\"\n";
+  O << "\t.align 3\n";
+  OutStreamer.EmitLabel(CurrentFnSym);
+  O << "\t.quad .L." << *CurrentFnSym << ",.TOC.@tocbase\n";
+  O << "\t.previous\n";
+  O << ".L." << *CurrentFnSym << ":\n";
+}
+
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
 bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
-
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out labels for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  switch (F->getLinkage()) {
-  default: llvm_unreachable("Unknown linkage type!");
-  case Function::PrivateLinkage:
-  case Function::InternalLinkage:  // Symbols default to internal.
-    break;
-  case Function::ExternalLinkage:
-    O << "\t.global\t" << *CurrentFnSym << '\n' << "\t.type\t";
-    O << *CurrentFnSym << ", @function\n";
-    break;
-  case Function::LinkerPrivateLinkage:
-  case Function::WeakAnyLinkage:
-  case Function::WeakODRLinkage:
-  case Function::LinkOnceAnyLinkage:
-  case Function::LinkOnceODRLinkage:
-    O << "\t.global\t" << *CurrentFnSym << '\n';
-    O << "\t.weak\t" << *CurrentFnSym << '\n';
-    break;
-  }
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  EmitAlignment(MF.getAlignment(), F);
-
-  if (Subtarget.isPPC64()) {
-    // Emit an official procedure descriptor.
-    // FIXME 64-bit SVR4: Use MCSection here!
-    O << "\t.section\t\".opd\",\"aw\"\n";
-    O << "\t.align 3\n";
-    O << *CurrentFnSym << ":\n";
-    O << "\t.quad .L." << *CurrentFnSym << ",.TOC.@tocbase\n";
-    O << "\t.previous\n";
-    O << ".L." << *CurrentFnSym << ":\n";
-  } else {
-    O << *CurrentFnSym << ":\n";
-  }
-
-  // Emit pre-function debug information.
-  DW->BeginFunction(&MF);
+  
+  EmitFunctionHeader();
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin()) {
+    if (I != MF.begin())
       EmitBasicBlockStart(I);
-    }
+
+    // Print the assembly for the instructions.
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II) {
-      // Print the assembly for the instruction.
+         II != E; ++II)
       printMachineInstruction(II);
-    }
   }
 
   O << "\t.size\t" << *CurrentFnSym << ",.-" << *CurrentFnSym << '\n';
-
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);
