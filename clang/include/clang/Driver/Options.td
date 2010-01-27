@@ -416,7 +416,10 @@ def mno_sse4a : Flag<"-mno-sse4a">, Group<m_x86_Features_Group>;
 def mno_sse4 : Flag<"-mno-sse4">, Group<m_x86_Features_Group>;
 def mno_sse : Flag<"-mno-sse">, Group<m_x86_Features_Group>;
 def mno_ssse3 : Flag<"-mno-ssse3">, Group<m_x86_Features_Group>;
+
 def mno_thumb : Flag<"-mno-thumb">, Group<m_Group>;
+def marm : Flag<"-marm">, Alias<mno_thumb>;
+
 def mno_warn_nonportable_cfstrings : Flag<"-mno-warn-nonportable-cfstrings">, Group<m_Group>;
 def mpascal_strings : Flag<"-mpascal-strings">, Group<m_Group>;
 def mred_zone : Flag<"-mred-zone">, Group<m_Group>;
