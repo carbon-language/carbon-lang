@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "x86-isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
@@ -39,6 +40,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -47,6 +49,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+STATISTIC(NumTailCalls, "Number of tail calls");
 
 static cl::opt<bool>
 DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
@@ -1788,7 +1792,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (isTailCall)
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
-                                                   Ins, DAG);
+                                                   Outs, Ins, DAG);
 
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
@@ -1806,6 +1810,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   int FPDiff = 0;
   if (isTailCall) {
+    ++NumTailCalls;
+
     // Lower arguments at fp - stackoffset + fpdiff.
     unsigned NumBytesCallerPushed =
       MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn();
@@ -2237,11 +2243,29 @@ bool
 X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      CallingConv::ID CalleeCC,
                                                      bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
-  if (CalleeCC == CallingConv::Fast &&
-      DAG.getMachineFunction().getFunction()->getCallingConv() == CalleeCC)
+  // If -tailcallopt is specified, make fastcc functions tail-callable.
+  const Function *F = DAG.getMachineFunction().getFunction();
+  if (PerformTailCallOpt &&
+      CalleeCC == CallingConv::Fast && F->getCallingConv() == CalleeCC)
     return true;
+
+  if (CalleeCC != CallingConv::Fast &&
+      CalleeCC != CallingConv::C)
+    return false;
+
+  // Look for obvious safe cases to perform tail call optimization.
+  // For now, only consider callees which take no arguments and no return
+  // values.
+  if (!Outs.empty())
+    return false;
+
+  if (Ins.empty())
+    // If the caller does not return a value, then this is obviously safe.
+    return F->getReturnType()->isVoidTy();
+
   return false;
 }
 

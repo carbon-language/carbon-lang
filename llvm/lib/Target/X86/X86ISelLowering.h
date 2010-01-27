@@ -630,7 +630,8 @@ namespace llvm {
     bool IsEligibleForTailCallOptimization(SDValue Callee,
                                            CallingConv::ID CalleeCC,
                                            bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
+                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                    const SmallVectorImpl<ISD::InputArg> &Ins,
                                            SelectionDAG& DAG) const;
     bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,

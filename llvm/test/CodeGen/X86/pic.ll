@@ -190,7 +190,7 @@ bb12:
 ; LINUX: .L8$pb:
 ; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref8-.L8$pb),
 ; LINUX:   addl	.LJTI8_0@GOTOFF(
-; LINUX:   jmpl	*%ecx
+; LINUX:   jmpl	*
 
 ; LINUX: .LJTI8_0:
 ; LINUX:   .long	 .LBB8_2@GOTOFF
