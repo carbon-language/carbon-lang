@@ -23,7 +23,7 @@ class Optional {
   T x;
   unsigned hasVal : 1;
 public:
-  explicit Optional() : hasVal(false) {}
+  explicit Optional() : x(), hasVal(false) {}
   Optional(const T &y) : x(y), hasVal(true) {}
 
   static inline Optional create(const T* y) {
