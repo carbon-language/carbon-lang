@@ -1077,6 +1077,13 @@ class UnresolvedLookupExpr : public Expr {
   /// The name declared.
   DeclarationName Name;
 
+  /// The naming class (C++ [class.access.base]p5) of the lookup, if
+  /// any.  This can generally be recalculated from the context chain,
+  /// but that can be fairly expensive for unqualified lookups.  If we
+  /// want to improve memory use here, this could go in a union
+  /// against the qualified-lookup bits.
+  CXXRecordDecl *NamingClass;
+
   /// The qualifier given, if any.
   NestedNameSpecifier *Qualifier;
 
@@ -1099,12 +1106,13 @@ class UnresolvedLookupExpr : public Expr {
   /// This requires all the results to be function templates.  
   bool HasExplicitTemplateArgs;
 
-  UnresolvedLookupExpr(QualType T, bool Dependent,
+  UnresolvedLookupExpr(QualType T, bool Dependent, CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
                        bool RequiresADL, bool Overloaded, bool HasTemplateArgs)
     : Expr(UnresolvedLookupExprClass, T, Dependent, Dependent),
-      Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
+      Name(Name), NamingClass(NamingClass),
+      Qualifier(Qualifier), QualifierRange(QRange),
       NameLoc(NameLoc), RequiresADL(RequiresADL), Overloaded(Overloaded),
       HasExplicitTemplateArgs(HasTemplateArgs)
   {}
@@ -1112,18 +1120,21 @@ class UnresolvedLookupExpr : public Expr {
 public:
   static UnresolvedLookupExpr *Create(ASTContext &C,
                                       bool Dependent,
+                                      CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
                                       DeclarationName Name,
                                       SourceLocation NameLoc,
                                       bool ADL, bool Overloaded) {
     return new(C) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
-                                       Dependent, Qualifier, QualifierRange,
+                                       Dependent, NamingClass,
+                                       Qualifier, QualifierRange,
                                        Name, NameLoc, ADL, Overloaded, false);
   }
 
   static UnresolvedLookupExpr *Create(ASTContext &C,
                                       bool Dependent,
+                                      CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
                                       DeclarationName Name,
@@ -1139,10 +1150,6 @@ public:
 
   void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
     Results.append(Begin, End);
-  }
-
-  void addDecl(NamedDecl *Decl) {
-    Results.addDecl(Decl);
   }
 
   typedef UnresolvedSetImpl::iterator decls_iterator;
@@ -1164,6 +1171,11 @@ public:
 
   /// Gets the location of the name.
   SourceLocation getNameLoc() const { return NameLoc; }
+
+  /// Gets the 'naming class' (in the sense of C++0x
+  /// [class.access.base]p5) of the lookup.  This is the scope
+  /// that was looked in to find these results.
+  CXXRecordDecl *getNamingClass() const { return NamingClass; }
 
   /// Fetches the nested-name qualifier, if one was given.
   NestedNameSpecifier *getQualifier() const { return Qualifier; }
@@ -1798,8 +1810,8 @@ public:
   /// Adds a declaration to the unresolved set.  By assumption, all of
   /// these happen at initialization time and properties like
   /// 'Dependent' and 'HasUnresolvedUsing' take them into account.
-  void addDecl(NamedDecl *Decl) {
-    Results.addDecl(Decl);
+  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
+    Results.append(Begin, End);
   }
 
   typedef UnresolvedSetImpl::iterator decls_iterator;
@@ -1842,6 +1854,9 @@ public:
   /// \brief Retrieve the source range covering the nested-name-specifier
   /// that qualifies the member name.
   SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Retrieves the naming class of this lookup.
+  CXXRecordDecl *getNamingClass() const;
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.

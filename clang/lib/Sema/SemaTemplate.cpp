@@ -1525,17 +1525,19 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
     Qualifier = static_cast<NestedNameSpecifier*>(SS.getScopeRep());
     QualifierRange = SS.getRange();
   }
+
+  // We don't want lookup warnings at this point.
+  R.suppressDiagnostics();
   
   bool Dependent
     = UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(),
                                               &TemplateArgs);
   UnresolvedLookupExpr *ULE
-    = UnresolvedLookupExpr::Create(Context, Dependent,
+    = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
                                    Qualifier, QualifierRange,
                                    R.getLookupName(), R.getNameLoc(),
                                    RequiresADL, TemplateArgs);
-  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    ULE->addDecl(*I);
+  ULE->addDecls(R.begin(), R.end());
 
   return Owned(ULE);
 }
@@ -3817,8 +3819,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                           LookupResult &Previous) {
   // The set of function template specializations that could match this
   // explicit function template specialization.
-  typedef llvm::SmallVector<FunctionDecl *, 8> CandidateSet;
-  CandidateSet Candidates;
+  UnresolvedSet<8> Candidates;
   
   DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
@@ -3851,22 +3852,24 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
       }
       
       // Record this candidate.
-      Candidates.push_back(Specialization);
+      Candidates.addDecl(Specialization, I.getAccess());
     }
   }
   
   // Find the most specialized function template.
-  FunctionDecl *Specialization = getMostSpecialized(Candidates.data(),
-                                                    Candidates.size(),
-                                                    TPOC_Other,
-                                                    FD->getLocation(),
+  UnresolvedSetIterator Result
+    = getMostSpecialized(Candidates.begin(), Candidates.end(),
+                         TPOC_Other, FD->getLocation(),
                   PartialDiagnostic(diag::err_function_template_spec_no_match) 
                     << FD->getDeclName(),
                   PartialDiagnostic(diag::err_function_template_spec_ambiguous)
                     << FD->getDeclName() << (ExplicitTemplateArgs != 0),
                   PartialDiagnostic(diag::note_function_template_spec_matched));
-  if (!Specialization)
+  if (Result == Candidates.end())
     return true;
+
+  // Ignore access information;  it doesn't figure into redeclaration checking.
+  FunctionDecl *Specialization = cast<FunctionDecl>(*Result);
   
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of .
@@ -4568,7 +4571,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   //   A member function [...] of a class template can be explicitly 
   //  instantiated from the member definition associated with its class 
   //  template.
-  llvm::SmallVector<FunctionDecl *, 8> Matches;
+  UnresolvedSet<8> Matches;
   for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
        P != PEnd; ++P) {
     NamedDecl *Prev = *P;
@@ -4577,7 +4580,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
         if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
           Matches.clear();
 
-          Matches.push_back(Method);
+          Matches.addDecl(Method, P.getAccess());
           if (Method->getTemplateSpecializationKind() == TSK_Undeclared)
             break;
         }
@@ -4599,19 +4602,22 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
       continue;
     }
     
-    Matches.push_back(Specialization);
+    Matches.addDecl(Specialization, P.getAccess());
   }
   
   // Find the most specialized function template specialization.
-  FunctionDecl *Specialization
-    = getMostSpecialized(Matches.data(), Matches.size(), TPOC_Other, 
+  UnresolvedSetIterator Result
+    = getMostSpecialized(Matches.begin(), Matches.end(), TPOC_Other, 
                          D.getIdentifierLoc(), 
           PartialDiagnostic(diag::err_explicit_instantiation_not_known) << Name,
           PartialDiagnostic(diag::err_explicit_instantiation_ambiguous) << Name,
                 PartialDiagnostic(diag::note_explicit_instantiation_candidate));
 
-  if (!Specialization)
+  if (Result == Matches.end())
     return true;
+
+  // Ignore access control bits, we don't need them for redeclaration checking.
+  FunctionDecl *Specialization = cast<FunctionDecl>(*Result);
   
   if (Specialization->getTemplateSpecializationKind() == TSK_Undeclared) {
     Diag(D.getIdentifierLoc(), 

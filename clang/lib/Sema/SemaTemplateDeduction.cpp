@@ -1987,11 +1987,11 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// \brief Retrieve the most specialized of the given function template
 /// specializations.
 ///
-/// \param Specializations the set of function template specializations that
-/// we will be comparing.
+/// \param SpecBegin the start iterator of the function template
+/// specializations that we will be comparing.
 ///
-/// \param NumSpecializations the number of function template specializations in
-/// \p Specializations
+/// \param SpecEnd the end iterator of the function template
+/// specializations, paired with \p SpecBegin.
 ///
 /// \param TPOC the partial ordering context to use to compare the function
 /// template specializations.
@@ -2015,41 +2015,37 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// specialization.
 ///
 /// \returns the most specialized function template specialization, if 
-/// found. Otherwise, returns NULL.
+/// found. Otherwise, returns SpecEnd.
 ///
 /// \todo FIXME: Consider passing in the "also-ran" candidates that failed 
 /// template argument deduction.
-FunctionDecl *Sema::getMostSpecialized(FunctionDecl **Specializations,
-                                       unsigned NumSpecializations,
-                                       TemplatePartialOrderingContext TPOC,
-                                       SourceLocation Loc,
-                                       const PartialDiagnostic &NoneDiag,
-                                       const PartialDiagnostic &AmbigDiag,
-                                       const PartialDiagnostic &CandidateDiag,
-                                       unsigned *Index) {
-  if (NumSpecializations == 0) {
+UnresolvedSetIterator
+Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
+                         UnresolvedSetIterator SpecEnd,
+                         TemplatePartialOrderingContext TPOC,
+                         SourceLocation Loc,
+                         const PartialDiagnostic &NoneDiag,
+                         const PartialDiagnostic &AmbigDiag,
+                         const PartialDiagnostic &CandidateDiag) {
+  if (SpecBegin == SpecEnd) {
     Diag(Loc, NoneDiag);
-    return 0;
+    return SpecEnd;
   }
   
-  if (NumSpecializations == 1) {
-    if (Index)
-      *Index = 0;
-    
-    return Specializations[0];
-  }
-    
+  if (SpecBegin + 1 == SpecEnd)    
+    return SpecBegin;
   
   // Find the function template that is better than all of the templates it
   // has been compared to.
-  unsigned Best = 0;
+  UnresolvedSetIterator Best = SpecBegin;
   FunctionTemplateDecl *BestTemplate 
-    = Specializations[Best]->getPrimaryTemplate();
+    = cast<FunctionDecl>(*Best)->getPrimaryTemplate();
   assert(BestTemplate && "Not a function template specialization?");
-  for (unsigned I = 1; I != NumSpecializations; ++I) {
-    FunctionTemplateDecl *Challenger = Specializations[I]->getPrimaryTemplate();
+  for (UnresolvedSetIterator I = SpecBegin + 1; I != SpecEnd; ++I) {
+    FunctionTemplateDecl *Challenger
+      = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     assert(Challenger && "Not a function template specialization?");
-    if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
+    if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
                                                   TPOC),
                        Challenger)) {
       Best = I;
@@ -2060,8 +2056,9 @@ FunctionDecl *Sema::getMostSpecialized(FunctionDecl **Specializations,
   // Make sure that the "best" function template is more specialized than all
   // of the others.
   bool Ambiguous = false;
-  for (unsigned I = 0; I != NumSpecializations; ++I) {
-    FunctionTemplateDecl *Challenger = Specializations[I]->getPrimaryTemplate();
+  for (UnresolvedSetIterator I = SpecBegin; I != SpecEnd; ++I) {
+    FunctionTemplateDecl *Challenger
+      = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     if (I != Best &&
         !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
                                                   TPOC),
@@ -2073,22 +2070,20 @@ FunctionDecl *Sema::getMostSpecialized(FunctionDecl **Specializations,
   
   if (!Ambiguous) {
     // We found an answer. Return it.
-    if (Index)
-      *Index = Best;
-    return Specializations[Best];
+    return Best;
   }
   
   // Diagnose the ambiguity.
   Diag(Loc, AmbigDiag);
   
   // FIXME: Can we order the candidates in some sane way?
-  for (unsigned I = 0; I != NumSpecializations; ++I)
-    Diag(Specializations[I]->getLocation(), CandidateDiag)
+  for (UnresolvedSetIterator I = SpecBegin; I != SpecEnd; ++I)
+    Diag((*I)->getLocation(), CandidateDiag)
       << getTemplateArgumentBindingsText(
-            Specializations[I]->getPrimaryTemplate()->getTemplateParameters(),
-                         *Specializations[I]->getTemplateSpecializationArgs());
+        cast<FunctionDecl>(*I)->getPrimaryTemplate()->getTemplateParameters(),
+                    *cast<FunctionDecl>(*I)->getTemplateSpecializationArgs());
   
-  return 0;
+  return SpecEnd;
 }
 
 /// \brief Returns the more specialized class template partial specialization

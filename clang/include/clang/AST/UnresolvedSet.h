@@ -137,6 +137,11 @@ public:
     *I.ir = DeclEntry(New, AS);
   }
 
+  void erase(unsigned I) {
+    decls()[I] = decls().back();
+    decls().pop_back();
+  }
+
   void erase(iterator I) {
     *I.ir = decls().back();
     decls().pop_back();

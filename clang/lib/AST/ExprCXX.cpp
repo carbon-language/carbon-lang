@@ -116,6 +116,7 @@ Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
 // UnresolvedLookupExpr
 UnresolvedLookupExpr *
 UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
+                             CXXRecordDecl *NamingClass,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange, DeclarationName Name,
                              SourceLocation NameLoc, bool ADL,
@@ -125,7 +126,8 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
                          ExplicitTemplateArgumentList::sizeFor(Args));
   UnresolvedLookupExpr *ULE
     = new (Mem) UnresolvedLookupExpr(Dependent ? C.DependentTy : C.OverloadTy,
-                                     Dependent, Qualifier, QualifierRange,
+                                     Dependent, NamingClass,
+                                     Qualifier, QualifierRange,
                                      Name, NameLoc, ADL,
                                      /*Overload*/ true,
                                      /*ExplicitTemplateArgs*/ true);
@@ -649,6 +651,35 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
                              Dependent, HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, Qualifier, QualifierRange,
                              Member, MemberLoc, TemplateArgs);
+}
+
+CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
+  // Unlike for UnresolvedLookupExpr, it is very easy to re-derive this.
+
+  // If there was a nested name specifier, it names the naming class.
+  // It can't be dependent: after all, we were actually able to do the
+  // lookup.
+  const RecordType *RT;
+  if (Qualifier) {
+    Type *T = Qualifier->getAsType();
+    assert(T && "qualifier in member expression does not name type");
+    RT = T->getAs<RecordType>();
+    assert(RT && "qualifier in member expression does not name record");
+
+  // Otherwise the naming class must have been the base class.
+  } else {
+    QualType BaseType = getBaseType().getNonReferenceType();
+    if (isArrow()) {
+      const PointerType *PT = BaseType->getAs<PointerType>();
+      assert(PT && "base of arrow member access is not pointer");
+      BaseType = PT->getPointeeType();
+    }
+    
+    RT = BaseType->getAs<RecordType>();
+    assert(RT && "base of member expression does not name record");
+  }
+  
+  return cast<CXXRecordDecl>(RT->getDecl());
 }
 
 Stmt::child_iterator UnresolvedMemberExpr::child_begin() {

@@ -4851,6 +4851,14 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   }
 }
 
+static bool CheckUnresolvedAccess(Sema &S, Expr *E, NamedDecl *D,
+                                  AccessSpecifier AS) {
+  if (isa<UnresolvedLookupExpr>(E))
+    return S.CheckUnresolvedLookupAccess(cast<UnresolvedLookupExpr>(E), D, AS);
+
+  return S.CheckUnresolvedMemberAccess(cast<UnresolvedMemberExpr>(E), D, AS);
+}
+
 /// ResolveAddressOfOverloadedFunction - Try to resolve the address of
 /// an overloaded function (C++ [over.over]), where @p From is an
 /// expression with overloaded function type and @p ToType is the type
@@ -4928,7 +4936,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
-  llvm::SmallPtrSet<FunctionDecl *, 4> Matches;
+  UnresolvedSet<4> Matches;  // contains only FunctionDecls
   bool FoundNonTemplateFunction = false;
   for (UnresolvedSetIterator I = Fns->begin(), E = Fns->end(); I != E; ++I) {
     // Look through any using declarations to find the underlying function.
@@ -4972,8 +4980,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         // a candidate? Find a testcase before changing the code.
         assert(FunctionType
                  == Context.getCanonicalType(Specialization->getType()));
-        Matches.insert(
-                cast<FunctionDecl>(Specialization->getCanonicalDecl()));
+        Matches.addDecl(cast<FunctionDecl>(Specialization->getCanonicalDecl()),
+                        I.getAccess());
       }
 
       continue;
@@ -4996,7 +5004,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       if (Context.hasSameUnqualifiedType(FunctionType, FunDecl->getType()) ||
           IsNoReturnConversion(Context, FunDecl->getType(), FunctionType, 
                                ResultTy)) {
-        Matches.insert(cast<FunctionDecl>(FunDecl->getCanonicalDecl()));
+        Matches.addDecl(cast<FunctionDecl>(FunDecl->getCanonicalDecl()),
+                        I.getAccess());
         FoundNonTemplateFunction = true;
       }
     }
@@ -5006,14 +5015,15 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   if (Matches.empty())
     return 0;
   else if (Matches.size() == 1) {
-    FunctionDecl *Result = *Matches.begin();
+    FunctionDecl *Result = cast<FunctionDecl>(*Matches.begin());
     MarkDeclarationReferenced(From->getLocStart(), Result);
+    if (Complain)
+      CheckUnresolvedAccess(*this, OvlExpr, Result, Matches.begin().getAccess());
     return Result;
   }
 
   // C++ [over.over]p4:
   //   If more than one function is selected, [...]
-  typedef llvm::SmallPtrSet<FunctionDecl *, 4>::iterator MatchIter;
   if (!FoundNonTemplateFunction) {
     //   [...] and any given function template specialization F1 is
     //   eliminated if the set contains a second function template
@@ -5025,41 +5035,50 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // two-pass algorithm (similar to the one used to identify the
     // best viable function in an overload set) that identifies the
     // best function template (if it exists).
-    llvm::SmallVector<FunctionDecl *, 8> TemplateMatches(Matches.begin(),
-                                                         Matches.end());
-    FunctionDecl *Result =
-        getMostSpecialized(TemplateMatches.data(), TemplateMatches.size(),
+    
+    UnresolvedSetIterator Result =
+        getMostSpecialized(Matches.begin(), Matches.end(),
                            TPOC_Other, From->getLocStart(),
                            PDiag(),
                            PDiag(diag::err_addr_ovl_ambiguous)
-                               << TemplateMatches[0]->getDeclName(),
+                               << Matches[0]->getDeclName(),
                            PDiag(diag::note_ovl_candidate)
                                << (unsigned) oc_function_template);
-    MarkDeclarationReferenced(From->getLocStart(), Result);
-    return Result;
+    assert(Result != Matches.end() && "no most-specialized template");
+    MarkDeclarationReferenced(From->getLocStart(), *Result);
+    if (Complain)
+      CheckUnresolvedAccess(*this, OvlExpr, *Result, Result.getAccess());
+    return cast<FunctionDecl>(*Result);
   }
 
   //   [...] any function template specializations in the set are
   //   eliminated if the set also contains a non-template function, [...]
-  llvm::SmallVector<FunctionDecl *, 4> RemainingMatches;
-  for (MatchIter M = Matches.begin(), MEnd = Matches.end(); M != MEnd; ++M)
-    if ((*M)->getPrimaryTemplate() == 0)
-      RemainingMatches.push_back(*M);
+  for (unsigned I = 0, N = Matches.size(); I != N; ) {
+    if (cast<FunctionDecl>(Matches[I].getDecl())->getPrimaryTemplate() == 0)
+      ++I;
+    else {
+      Matches.erase(I);
+      --N;
+    }
+  }
   
   // [...] After such eliminations, if any, there shall remain exactly one
   // selected function.
-  if (RemainingMatches.size() == 1) {
-    FunctionDecl *Result = RemainingMatches.front();
-    MarkDeclarationReferenced(From->getLocStart(), Result);
-    return Result;
+  if (Matches.size() == 1) {
+    UnresolvedSetIterator Match = Matches.begin();
+    MarkDeclarationReferenced(From->getLocStart(), *Match);
+    if (Complain)
+      CheckUnresolvedAccess(*this, OvlExpr, *Match, Match.getAccess());
+    return cast<FunctionDecl>(*Match);
   }
 
   // FIXME: We should probably return the same thing that BestViableFunction
   // returns (even if we issue the diagnostics here).
   Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
-    << RemainingMatches[0]->getDeclName();
-  for (unsigned I = 0, N = RemainingMatches.size(); I != N; ++I)
-    NoteOverloadCandidate(RemainingMatches[I]);
+    << Matches[0]->getDeclName();
+  for (UnresolvedSetIterator I = Matches.begin(),
+         E = Matches.end(); I != E; ++I)
+    NoteOverloadCandidate(cast<FunctionDecl>(*I));
   return 0;
 }
 
@@ -5345,6 +5364,7 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
   switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
   case OR_Success: {
     FunctionDecl *FDecl = Best->Function;
+    CheckUnresolvedLookupAccess(ULE, FDecl, Best->getAccess());
     Fn = FixOverloadedFunctionReference(Fn, FDecl);
     return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs, RParenLoc);
   }
@@ -5425,8 +5445,9 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   }
 
   if (Input->isTypeDependent()) {
+    CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, OpLoc,
                                      /*ADL*/ true, IsOverloaded(Fns));
     Fn->addDecls(Fns.begin(), Fns.end());
@@ -5466,6 +5487,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     if (FnDecl) {
       // We matched an overloaded operator. Build a call to that
       // operator.
+
+      // FIXME: access control
 
       // Convert the arguments.
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
@@ -5592,8 +5615,9 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     }
 
     // FIXME: save results of ADL from here?
+    CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, OpLoc,
                                      /*ADL*/ true, IsOverloaded(Fns));
 
@@ -5646,6 +5670,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       if (FnDecl) {
         // We matched an overloaded operator. Build a call to that
         // operator.
+
+        // FIXME: access control
 
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
@@ -5783,8 +5809,9 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
   // expression.
   if (Args[0]->isTypeDependent() || Args[1]->isTypeDependent()) {
 
+    CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true,
+      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
                                      0, SourceRange(), OpName, LLoc,
                                      /*ADL*/ true, /*Overloaded*/ false);
     // Can't add any actual overloads yet
@@ -5818,6 +5845,8 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
       if (FnDecl) {
         // We matched an overloaded operator. Build a call to that
         // operator.
+
+        // FIXME: access control
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
@@ -5968,6 +5997,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     switch (BestViableFunction(CandidateSet, UnresExpr->getLocStart(), Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
+      CheckUnresolvedMemberAccess(UnresExpr, Method, Best->getAccess());
       break;
 
     case OR_No_Viable_Function:

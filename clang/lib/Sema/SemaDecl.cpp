@@ -135,6 +135,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::NotFoundInCurrentInstantiation:
   case LookupResult::FoundOverloaded:
   case LookupResult::FoundUnresolvedValue:
+    Result.suppressDiagnostics();
     return 0;
 
   case LookupResult::Ambiguous:

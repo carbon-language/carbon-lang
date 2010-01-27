@@ -1497,16 +1497,20 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       CheckDeclInExpr(*this, R.getNameLoc(), R.getFoundDecl()))
     return ExprError();
 
+  // Otherwise, just build an unresolved lookup expression.  Suppress
+  // any lookup-related diagnostics; we'll hash these out later, when
+  // we've picked a target.
+  R.suppressDiagnostics();
+
   bool Dependent
     = UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(), 0);
   UnresolvedLookupExpr *ULE
-    = UnresolvedLookupExpr::Create(Context, Dependent,
+    = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
                                    (NestedNameSpecifier*) SS.getScopeRep(),
                                    SS.getRange(),
                                    R.getLookupName(), R.getNameLoc(),
                                    NeedsADL, R.isOverloadedResult());
-  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    ULE->addDecl(*I);
+  ULE->addDecls(R.begin(), R.end());
 
   return Owned(ULE);
 }
@@ -2544,6 +2548,10 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
       R.isUnresolvableResult() ||
       UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(), TemplateArgs);
 
+    // Suppress any lookup-related diagnostics; we'll do these when we
+    // pick a member.
+    R.suppressDiagnostics();
+
     UnresolvedMemberExpr *MemExpr
       = UnresolvedMemberExpr::Create(Context, Dependent,
                                      R.isUnresolvableResult(),
@@ -2552,8 +2560,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
                                      Qualifier, SS.getRange(),
                                      MemberName, MemberLoc,
                                      TemplateArgs);
-    for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-      MemExpr->addDecl(*I);
+    MemExpr->addDecls(R.begin(), R.end());
 
     return Owned(MemExpr);
   }

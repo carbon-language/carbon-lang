@@ -60,6 +60,7 @@ namespace clang {
   class CallExpr;
   class DeclRefExpr;
   class UnresolvedLookupExpr;
+  class UnresolvedMemberExpr;
   class VarDecl;
   class ParmVarDecl;
   class TypedefDecl;
@@ -2376,8 +2377,14 @@ public:
                                                CXXBasePaths &Paths,
                                                bool NoPrivileges = false);
 
-  void CheckAccess(const LookupResult &R);
+  bool CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
+                                   NamedDecl *D,
+                                   AccessSpecifier Access);
+  bool CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
+                                   NamedDecl *D,
+                                   AccessSpecifier Access);
   bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);
+  void CheckAccess(const LookupResult &R);
 
   bool CheckBaseClassAccess(QualType Derived, QualType Base,
                             unsigned InaccessibleBaseID,
@@ -2882,14 +2889,13 @@ public:
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
                                            TemplatePartialOrderingContext TPOC);
-  FunctionDecl *getMostSpecialized(FunctionDecl **Specializations,
-                                   unsigned NumSpecializations,
-                                   TemplatePartialOrderingContext TPOC,
-                                   SourceLocation Loc,
-                                   const PartialDiagnostic &NoneDiag,
-                                   const PartialDiagnostic &AmbigDiag,
-                                   const PartialDiagnostic &CandidateDiag,
-                                   unsigned *Index = 0);
+  UnresolvedSetIterator getMostSpecialized(UnresolvedSetIterator SBegin,
+                                           UnresolvedSetIterator SEnd,
+                                           TemplatePartialOrderingContext TPOC,
+                                           SourceLocation Loc,
+                                           const PartialDiagnostic &NoneDiag,
+                                           const PartialDiagnostic &AmbigDiag,
+                                        const PartialDiagnostic &CandidateDiag);
                                    
   ClassTemplatePartialSpecializationDecl *
   getMoreSpecializedPartialSpecialization(

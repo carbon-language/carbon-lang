@@ -16,6 +16,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/ExprCXX.h"
+
 using namespace clang;
 
 /// SetMemberAccessSpecifier - Set the access specifier of a member.
@@ -229,6 +231,46 @@ bool Sema::CheckAccess(const LookupResult &R, NamedDecl *D,
     << Context.getTypeDeclType(CurRecord);
   DiagnoseAccessPath(*this, R, D, Access);
   return true;
+}
+
+bool Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
+                                       NamedDecl *D, AccessSpecifier Access) {
+  if (!getLangOptions().AccessControl || !E->getNamingClass())
+    return false;
+
+  // Fake up a lookup result.
+  LookupResult R(*this, E->getName(), E->getNameLoc(), LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  R.setNamingClass(E->getNamingClass());
+  R.addDecl(D, Access);
+
+  // FIXME: protected check (triggers for member-address expressions)
+
+  return CheckAccess(R, D, Access);
+}
+
+/// Perform access-control checking on a previously-unresolved member
+/// access which has now been resolved to a member.
+bool Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
+                                       NamedDecl *D, AccessSpecifier Access) {
+  if (!getLangOptions().AccessControl)
+    return false;
+
+  // Fake up a lookup result.
+  LookupResult R(*this, E->getMemberName(), E->getMemberLoc(),
+                 LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  R.setNamingClass(E->getNamingClass());
+  R.addDecl(D, Access);
+
+  if (CheckAccess(R, D, Access))
+    return true;
+
+  // FIXME: protected check
+
+  return false;
 }
 
 /// Checks access to all the declarations in the given result set.
