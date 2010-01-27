@@ -241,8 +241,7 @@ void DarwinGCC::AddLinkSearchPathArgs(const ArgList &Args,
 
 void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
                                       ArgStringList &CmdArgs) const {
-  unsigned MacosxVersionMin[3];
-  getMacosxVersionMin(Args, MacosxVersionMin);
+  // Note that this routine is only used for targetting OS X.
 
   // Derived from libgcc and lib specs but refactored.
   if (Args.hasArg(options::OPT_static)) {
@@ -262,20 +261,20 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
                             options::OPT_fno_exceptions) ||
                Args.hasArg(options::OPT_fgnu_runtime)) {
       // FIXME: This is probably broken on 10.3?
-      if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+      if (isMacosxVersionLT(10, 5))
         CmdArgs.push_back("-lgcc_s.10.4");
-      else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+      else if (isMacosxVersionLT(10, 6))
         CmdArgs.push_back("-lgcc_s.10.5");
     } else {
-      if (isMacosxVersionLT(MacosxVersionMin, 10, 3, 9))
+      if (isMacosxVersionLT(10, 3, 9))
         ; // Do nothing.
-      else if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+      else if (isMacosxVersionLT(10, 5))
         CmdArgs.push_back("-lgcc_s.10.4");
-      else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+      else if (isMacosxVersionLT(10, 6))
         CmdArgs.push_back("-lgcc_s.10.5");
     }
 
-    if (isTargetIPhoneOS() || isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
+    if (isTargetIPhoneOS() || isMacosxVersionLT(10, 6)) {
       CmdArgs.push_back("-lgcc");
       CmdArgs.push_back("-lSystem");
     } else {
@@ -328,20 +327,17 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     if (getDarwinArchName(Args) == "armv6")
       DarwinStaticLib = "libclang_rt.armv6.a";
   } else {
-    unsigned MacosxVersionMin[3];
-    getMacosxVersionMin(Args, MacosxVersionMin);
-
     // The dynamic runtime library was merged with libSystem for 10.6 and
     // beyond; only 10.4 and 10.5 need an additional runtime library.
-    if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+    if (isMacosxVersionLT(10, 5))
       CmdArgs.push_back("-lgcc_s.10.4");
-    else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+    else if (isMacosxVersionLT(10, 6))
       CmdArgs.push_back("-lgcc_s.10.5");
 
     // For OS X, we only need a static runtime library when targetting 10.4, to
     // provide versions of the static functions which were omitted from
     // 10.4.dylib.
-    if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+    if (isMacosxVersionLT(10, 5))
       DarwinStaticLib = "libclang_rt.10.4.a";
   }
 
@@ -360,21 +356,6 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     else
       CmdArgs.push_back(Args.MakeArgString(P.str()));
   }
-}
-
-void Darwin::getMacosxVersionMin(const ArgList &Args,
-                                 unsigned (&Res)[3]) const {
-  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
-    bool HadExtra;
-    if (!Driver::GetReleaseVersion(A->getValue(Args), Res[0], Res[1], Res[2],
-                                   HadExtra) ||
-        HadExtra) {
-      const Driver &D = getDriver();
-      D.Diag(clang::diag::err_drv_invalid_version_number)
-        << A->getAsString(Args);
-    }
-  } else
-    return getMacosxVersion(Res);
 }
 
 DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,

@@ -112,22 +112,12 @@ public:
     Res[2] = DarwinVersion[2];
   }
 
-  void getMacosxVersion(unsigned (&Res)[3]) const {
-    Res[0] = 10;
-    Res[1] = DarwinVersion[0] - 4;
-    Res[2] = DarwinVersion[1];
-  }
-
   /// getDarwinArchName - Get the "Darwin" arch name for a particular compiler
   /// invocation. For example, Darwin treats different ARM variations as
   /// distinct architectures.
   llvm::StringRef getDarwinArchName(const ArgList &Args) const;
 
-  /// getMacosxVersionMin - Get the effective -mmacosx-version-min, which is
-  /// either the -mmacosx-version-min, or the current version if unspecified.
-  void getMacosxVersionMin(const ArgList &Args, unsigned (&Res)[3]) const;
-
-  static bool isMacosxVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
+  static bool isVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
     for (unsigned i=0; i < 3; ++i) {
       if (A[i] > B[i]) return false;
       if (A[i] < B[i]) return true;
@@ -135,16 +125,16 @@ public:
     return false;
   }
 
-  static bool isMacosxVersionLT(unsigned (&A)[3],
-                                unsigned V0, unsigned V1=0, unsigned V2=0) {
-    unsigned B[3] = { V0, V1, V2 };
-    return isMacosxVersionLT(A, B);
-  }
-
   bool isIPhoneOSVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
     assert(isTargetIPhoneOS() && "Unexpected call for OS X target!");
     unsigned B[3] = { V0, V1, V2 };
-    return isMacosxVersionLT(TargetVersion, B);
+    return isVersionLT(TargetVersion, B);
+  }
+
+  bool isMacosxVersionLT(unsigned V0, unsigned V1=0, unsigned V2=0) const {
+    assert(!isTargetIPhoneOS() && "Unexpected call for iPhoneOS target!");
+    unsigned B[3] = { V0, V1, V2 };
+    return isVersionLT(TargetVersion, B);
   }
 
   /// AddLinkSearchPathArgs - Add the linker search paths to \arg CmdArgs.
