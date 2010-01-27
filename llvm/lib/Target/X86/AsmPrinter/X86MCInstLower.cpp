@@ -428,10 +428,16 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     O << V.getName();
     O << " <- ";
     if (NOps==3) {
-      // Register or immediate value
+      // Register or immediate value. Register 0 means undef.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register ||
              MI->getOperand(0).getType()==MachineOperand::MO_Immediate);
-      printOperand(MI, 0);
+      if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
+          MI->getOperand(0).getReg()==0) {
+        // Suppress offset in this case, it is not meaningful.
+        O << "undef";
+        return;
+      } else
+        printOperand(MI, 0);
     } else {
       // Frame address.  Currently handles register +- offset only.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
