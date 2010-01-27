@@ -1084,7 +1084,7 @@ public:
 /// };
 /// @endcode
 class CXXConstructorDecl : public CXXMethodDecl {
-  /// Explicit - Whether this constructor declaration has the
+  /// IsExplicitSpecified - Whether this constructor declaration has the
   /// 'explicit' keyword specified.
   bool IsExplicitSpecified : 1;
 
