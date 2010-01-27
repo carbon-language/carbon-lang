@@ -1813,7 +1813,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   // Derived from asm spec.
   AddDarwinArch(Args, CmdArgs);
 
-  if (!getDarwinToolChain().isIPhoneOS() ||
+  if (!getDarwinToolChain().isTargetIPhoneOS() ||
       Args.hasArg(options::OPT_force__cpusubtype__ALL))
     CmdArgs.push_back("-force_cpusubtype_ALL");
 
@@ -1936,7 +1936,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddLastArg(CmdArgs, options::OPT_all__load);
   Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
   Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
-  if (getDarwinToolChain().isIPhoneOS())
+  if (getDarwinToolChain().isTargetIPhoneOS())
     Args.AddLastArg(CmdArgs, options::OPT_arch__errors__fatal);
   Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
   Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
@@ -1984,7 +1984,7 @@ void darwin::Link::AddLinkArgs(const ArgList &Args,
   Args.AddAllArgs(CmdArgs, options::OPT_sub__umbrella);
 
   Args.AddAllArgsTranslated(CmdArgs, options::OPT_isysroot, "-syslibroot");
-  if (getDarwinToolChain().isIPhoneOS()) {
+  if (getDarwinToolChain().isTargetIPhoneOS()) {
     if (!Args.hasArg(options::OPT_isysroot)) {
       CmdArgs.push_back("-syslibroot");
       CmdArgs.push_back("/Developer/SDKs/Extra");
@@ -2082,7 +2082,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
             CmdArgs.push_back("-lcrt0.o");
           } else {
             // Derived from darwin_crt1 spec.
-            if (getDarwinToolChain().isIPhoneOS()) {
+            if (getDarwinToolChain().isTargetIPhoneOS()) {
               CmdArgs.push_back("-lcrt1.o");
             } else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin,
                                                               10, 5))

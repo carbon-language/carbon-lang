@@ -255,7 +255,7 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
       CmdArgs.push_back("-lgcc_eh");
     } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
       // Derived from darwin_iphoneos_libgcc spec.
-      if (isIPhoneOS()) {
+      if (isTargetIPhoneOS()) {
         CmdArgs.push_back("-lgcc_s.1");
       } else {
         CmdArgs.push_back("-lgcc_s.10.5");
@@ -278,7 +278,7 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
         CmdArgs.push_back("-lgcc_s.10.5");
     }
 
-    if (isIPhoneOS() || isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
+    if (isTargetIPhoneOS() || isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
       CmdArgs.push_back("-lgcc");
       CmdArgs.push_back("-lSystem");
     } else {
@@ -324,7 +324,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
   // Select the dynamic runtime library and the target specific static library.
   const char *DarwinStaticLib = 0;
-  if (isIPhoneOS()) {
+  if (isTargetIPhoneOS()) {
     CmdArgs.push_back("-lgcc_s.1");
 
     // We may need some static functions for armv6/thumb which are required to
