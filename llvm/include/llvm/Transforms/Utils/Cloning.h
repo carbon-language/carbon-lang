@@ -19,6 +19,7 @@
 #define LLVM_TRANSFORMS_UTILS_CLONING_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 
@@ -101,7 +102,7 @@ struct ClonedCodeInfo {
 ///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             DenseMap<const Value*, Value*> &ValueMap,
-                            const char *NameSuffix = "", Function *F = 0,
+                            const Twine &NameSuffix = "", Function *F = 0,
                             ClonedCodeInfo *CodeInfo = 0);
 
 

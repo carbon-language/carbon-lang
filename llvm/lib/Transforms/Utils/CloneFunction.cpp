@@ -33,7 +33,7 @@ using namespace llvm;
 // CloneBasicBlock - See comments in Cloning.h
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   DenseMap<const Value*, Value*> &ValueMap,
-                                  const char *NameSuffix, Function *F,
+                                  const Twine &NameSuffix, Function *F,
                                   ClonedCodeInfo *CodeInfo) {
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "", F);
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);

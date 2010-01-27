@@ -29,7 +29,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <cstdio>
 
 using namespace llvm;
 
@@ -204,15 +203,12 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
   Latches.push_back(LatchBlock);
 
   for (unsigned It = 1; It != Count; ++It) {
-    char SuffixBuffer[100];
-    sprintf(SuffixBuffer, ".%d", It);
-    
     std::vector<BasicBlock*> NewBlocks;
     
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
       ValueMapTy ValueMap;
-      BasicBlock *New = CloneBasicBlock(*BB, ValueMap, SuffixBuffer);
+      BasicBlock *New = CloneBasicBlock(*BB, ValueMap, "." + Twine(It));
       Header->getParent()->getBasicBlockList().push_back(New);
 
       // Loop over all of the PHI nodes in the block, changing them to use the
