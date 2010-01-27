@@ -586,50 +586,36 @@ static std::string getEffectiveClangTriple(const Driver &D,
                                            const ArgList &Args) {
   llvm::Triple Triple(getLLVMTriple(TC, Args));
 
-  // Honor -mmacosx-version-min and -miphoneos-version-min.
-  Arg *VersionArg = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
-                                    options::OPT_miphoneos_version_min_EQ);
+  // Handle -mmacosx-version-min and -miphoneos-version-min.
   if (Triple.getOS() != llvm::Triple::Darwin) {
     // Diagnose use of -mmacosx-version-min and -miphoneos-version-min on
     // non-Darwin.
-    if (VersionArg)
-      D.Diag(clang::diag::err_drv_clang_unsupported)
-        << VersionArg->getAsString(Args);
+    if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
+                                 options::OPT_miphoneos_version_min_EQ))
+      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
   } else {
-    bool isIPhoneTarget =
-      VersionArg->getOption().matches(options::OPT_miphoneos_version_min_EQ);
-    assert(VersionArg && "Missing version argument (lost in translation)?");
-
-    // Validate the version number.
-    unsigned Major, Minor, Micro;
-    bool HadExtra;
-    if (!Driver::GetReleaseVersion(VersionArg->getValue(Args), Major, Minor,
-                                   Micro, HadExtra) || HadExtra)
-      D.Diag(clang::diag::err_drv_invalid_version_number)
-        << VersionArg->getAsString(Args);
+    const toolchains::Darwin &DarwinTC(
+      reinterpret_cast<const toolchains::Darwin&>(TC));
+    unsigned Version[3];
+    DarwinTC.getTargetVersion(Version);
 
     // Mangle the target version into the OS triple component.  For historical
     // reasons that make little sense, the version passed here is the "darwin"
     // version, which drops the 10 and offsets by 4. See inverse code when
     // setting the OS version preprocessor define.
-    if (!isIPhoneTarget) {
-      if (Major != 10 || Minor >= 10 || Micro >= 10)
-        D.Diag(clang::diag::err_drv_invalid_version_number)
-          << VersionArg->getAsString(Args);
-
-      Major = Minor + 4;
-      Minor = Micro;
-      Micro = 0;
+    if (!DarwinTC.isTargetIPhoneOS()) {
+      Version[0] = Version[1] + 4;
+      Version[1] = Version[2];
+      Version[2] = 0;
+    } else {
+      // Use the environment to communicate that we are targetting iPhoneOS.
+      Triple.setEnvironmentName("iphoneos");
     }
 
     llvm::SmallString<16> Str;
-    llvm::raw_svector_ostream(Str) << "darwin" << Major << "." << Minor
-                                   << "." << Micro;
+    llvm::raw_svector_ostream(Str) << "darwin" << Version[0]
+                                   << "." << Version[1] << "." << Version[2];
     Triple.setOSName(Str.str());
-
-    // Use the environment to communicate OS we are targetting.
-    if (isIPhoneTarget)
-        Triple.setEnvironmentName("iphoneos");
   }
 
   return Triple.getTriple();
