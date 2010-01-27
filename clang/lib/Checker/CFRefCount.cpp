@@ -23,6 +23,7 @@
 #include "clang/Checker/PathSensitive/SymbolManager.h"
 #include "clang/Checker/PathSensitive/GRTransferFuncs.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/Checker/DomainSpecific/CocoaConventions.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/DenseMap.h"
@@ -34,129 +35,8 @@
 #include <stdarg.h>
 
 using namespace clang;
-
-//===----------------------------------------------------------------------===//
-// Utility functions.
-//===----------------------------------------------------------------------===//
-
-// The "fundamental rule" for naming conventions of methods:
-//  (url broken into two lines)
-//  http://developer.apple.com/documentation/Cocoa/Conceptual/
-//     MemoryMgmt/Tasks/MemoryManagementRules.html
-//
-// "You take ownership of an object if you create it using a method whose name
-//  begins with "alloc" or "new" or contains "copy" (for example, alloc,
-//  newObject, or mutableCopy), or if you send it a retain message. You are
-//  responsible for relinquishing ownership of objects you own using release
-//  or autorelease. Any other time you receive an object, you must
-//  not release it."
-//
-
-using llvm::StrInStrNoCase;
 using llvm::StringRef;
-
-enum NamingConvention { NoConvention, CreateRule, InitRule };
-
-static inline bool isWordEnd(char ch, char prev, char next) {
-  return ch == '\0'
-      || (islower(prev) && isupper(ch)) // xxxC
-      || (isupper(prev) && isupper(ch) && islower(next)) // XXCreate
-      || !isalpha(ch);
-}
-
-static inline const char* parseWord(const char* s) {
-  char ch = *s, prev = '\0';
-  assert(ch != '\0');
-  char next = *(s+1);
-  while (!isWordEnd(ch, prev, next)) {
-    prev = ch;
-    ch = next;
-    next = *((++s)+1);
-  }
-  return s;
-}
-
-static NamingConvention deriveNamingConvention(Selector S) {
-  IdentifierInfo *II = S.getIdentifierInfoForSlot(0);
-
-  if (!II)
-    return NoConvention;
-
-  const char *s = II->getNameStart();
-
-  // A method/function name may contain a prefix.  We don't know it is there,
-  // however, until we encounter the first '_'.
-  bool InPossiblePrefix = true;
-  bool AtBeginning = true;
-  NamingConvention C = NoConvention;
-
-  while (*s != '\0') {
-    // Skip '_'.
-    if (*s == '_') {
-      if (InPossiblePrefix) {
-        // If we already have a convention, return it.  Otherwise, skip
-        // the prefix as if it wasn't there.
-        if (C != NoConvention)
-          break;
-        
-        InPossiblePrefix = false;
-        AtBeginning = true;
-        assert(C == NoConvention);
-      }
-      ++s;
-      continue;
-    }
-
-    // Skip numbers, ':', etc.
-    if (!isalpha(*s)) {
-      ++s;
-      continue;
-    }
-
-    const char *wordEnd = parseWord(s);
-    assert(wordEnd > s);
-    unsigned len = wordEnd - s;
-
-    switch (len) {
-    default:
-      break;
-    case 3:
-      // Methods starting with 'new' follow the create rule.
-      if (AtBeginning && StringRef(s, len).equals_lower("new"))
-        C = CreateRule;
-      break;
-    case 4:
-      // Methods starting with 'alloc' or contain 'copy' follow the
-      // create rule
-      if (C == NoConvention && StringRef(s, len).equals_lower("copy"))
-        C = CreateRule;
-      else // Methods starting with 'init' follow the init rule.
-        if (AtBeginning && StringRef(s, len).equals_lower("init"))
-          C = InitRule;
-      break;
-    case 5:
-      if (AtBeginning && StringRef(s, len).equals_lower("alloc"))
-        C = CreateRule;
-      break;
-    }
-
-    // If we aren't in the prefix and have a derived convention then just
-    // return it now.
-    if (!InPossiblePrefix && C != NoConvention)
-      return C;
-
-    AtBeginning = false;
-    s = wordEnd;
-  }
-
-  // We will get here if there wasn't more than one word
-  // after the prefix.
-  return C;
-}
-
-static bool followsFundamentalRule(Selector S) {
-  return deriveNamingConvention(S) == CreateRule;
-}
+using llvm::StrInStrNoCase;
 
 static const ObjCMethodDecl*
 ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
@@ -1563,7 +1443,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   if (isTrackedObjCObjectType(RetTy)) {
     // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
     //  by instance methods.
-    RetEffect E = followsFundamentalRule(S)
+    RetEffect E = cocoa::followsFundamentalRule(S)
                   ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
 
     return getPersistentSummary(E, ReceiverEff, MayEscape);
@@ -1571,7 +1451,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
 
   // Look for methods that return an owned core foundation object.
   if (isTrackedCFObjectType(RetTy)) {
-    RetEffect E = followsFundamentalRule(S)
+    RetEffect E = cocoa::followsFundamentalRule(S)
       ? RetEffect::MakeOwned(RetEffect::CF, true)
       : RetEffect::MakeNotOwned(RetEffect::CF);
 
@@ -1653,7 +1533,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
     assert(ScratchArgs.isEmpty());
 
     // "initXXX": pass-through for receiver.
-    if (deriveNamingConvention(S) == InitRule)
+    if (cocoa::deriveNamingConvention(S) == cocoa::InitRule)
       Summ = getInitMethodSummary(RetTy);
     else
       Summ = getCommonMethodSummary(MD, S, RetTy);
