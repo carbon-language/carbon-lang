@@ -883,7 +883,10 @@ void PromoteMem2Reg::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 
   if (!DIF)
     DIF = new DIFactory(*SI->getParent()->getParent()->getParent());
-  DIF->InsertDbgValueIntrinsic(SI->getOperand(0), Offset, DIVar, SI);
+  Instruction *DbgVal = DIF->InsertDbgValueIntrinsic(SI->getOperand(0), Offset,
+                                                     DIVar, SI);
+  if (MDNode *SIMD = SI->getMetadata("dbg"))
+    DbgVal->setMetadata("dbg", SIMD);
 }
 
 // QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
