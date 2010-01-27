@@ -51,12 +51,12 @@ typedef int (*EDRegisterReaderCallback)(uint64_t *value, unsigned regID,
  @typedef EDAssemblySyntax_t
  An assembly syntax for use in tokenizing instructions.
  */
-typedef uint32_t EDAssemblySyntax_t;
-
+typedef enum {
 /*! @constant kEDAssemblySyntaxX86Intel Intel syntax for i386 and x86_64. */
-const EDAssemblySyntax_t kEDAssemblySyntaxX86Intel  = 0;
+  kEDAssemblySyntaxX86Intel  = 0,
 /*! @constant kEDAssemblySyntaxX86ATT AT&T syntax for i386 and x86_64. */
-const EDAssemblySyntax_t kEDAssemblySyntaxX86ATT    = 1;  
+  kEDAssemblySyntaxX86ATT    = 1
+} EDAssemblySyntax_t;
 
 /*!
  @typedef EDDisassemblerRef
