@@ -8,17 +8,17 @@ add_llvm_library(LLVMCore
   Core.cpp
   Dominators.cpp
   Function.cpp
+  GVMaterializer.cpp
   Globals.cpp
+  IRBuilder.cpp
   InlineAsm.cpp
   Instruction.cpp
   Instructions.cpp
   IntrinsicInst.cpp
-  IRBuilder.cpp
   LLVMContext.cpp
   LeakDetector.cpp
   Metadata.cpp
   Module.cpp
-  ModuleProvider.cpp
   Pass.cpp
   PassManager.cpp
   PrintModulePass.cpp
