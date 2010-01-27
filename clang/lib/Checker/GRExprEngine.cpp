@@ -2475,7 +2475,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
     }
   }
   else  // Get alignment of the type.
-    amt = CharUnits::fromQuantity(getContext().getTypeAlign(T) / 8);
+    amt = getContext().getTypeAlignInChars(T);
 
   MakeNode(Dst, Ex, Pred,
            GetState(Pred)->BindExpr(Ex, 
