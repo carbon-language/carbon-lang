@@ -398,10 +398,10 @@ def mfix_and_continue : Flag<"-mfix-and-continue">, Group<clang_ignored_m_Group>
 def mfloat_abi_EQ : Joined<"-mfloat-abi=">, Group<m_Group>;
 def mfpu_EQ : Joined<"-mfpu=">, Group<m_Group>;
 def mhard_float : Flag<"-mhard-float">, Group<m_Group>;
-def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>;
+def miphoneos_version_min_EQ : Joined<"-miphoneos-version-min=">, Group<m_Group>, Flags<[DriverOption]>;
 def mkernel : Flag<"-mkernel">, Group<m_Group>;
 def mllvm : Separate<"-mllvm">;
-def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>;
+def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>, Flags<[DriverOption]>;
 def mmmx : Flag<"-mmmx">, Group<m_x86_Features_Group>;
 def mno_3dnowa : Flag<"-mno-3dnowa">, Group<m_x86_Features_Group>;
 def mno_3dnow : Flag<"-mno-3dnow">, Group<m_x86_Features_Group>;
