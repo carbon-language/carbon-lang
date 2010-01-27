@@ -1333,10 +1333,11 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
       FieldOffset += FieldSize;
     }
     
-    unsigned Align = CGM.getContext().getDeclAlignInBytes(Decl);
-    if (Align > CGM.getContext().Target.getPointerAlign(0) / 8) {
+    CharUnits Align = CGM.getContext().getDeclAlign(Decl);
+    if (Align > CharUnits::fromQuantity(
+          CGM.getContext().Target.getPointerAlign(0) / 8)) {
       unsigned AlignedOffsetInBytes
-        = llvm::RoundUpToAlignment(FieldOffset/8, Align);
+        = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
       unsigned NumPaddingBytes
         = AlignedOffsetInBytes - FieldOffset/8;
 
@@ -1359,7 +1360,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FType = Type;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = Align*8;
+    FieldAlign = Align.getQuantity()*8;
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
                                              Decl->getName(), DefUnit,
@@ -1510,10 +1511,11 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
       FieldOffset += FieldSize;
     }
     
-    unsigned Align = CGM.getContext().getDeclAlignInBytes(Decl);
-    if (Align > CGM.getContext().Target.getPointerAlign(0) / 8) {
+    CharUnits Align = CGM.getContext().getDeclAlign(Decl);
+    if (Align > CharUnits::fromQuantity(
+          CGM.getContext().Target.getPointerAlign(0) / 8)) {
       unsigned AlignedOffsetInBytes
-        = llvm::RoundUpToAlignment(FieldOffset/8, Align);
+        = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
       unsigned NumPaddingBytes
         = AlignedOffsetInBytes - FieldOffset/8;
 
@@ -1536,7 +1538,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
     FType = Type;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = Align*8;
+    FieldAlign = Align.getQuantity()*8;
     
     XOffset = FieldOffset;
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,

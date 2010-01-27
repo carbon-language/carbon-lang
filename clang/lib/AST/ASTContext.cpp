@@ -533,12 +533,12 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
   }
 }
 
-/// getDeclAlignInBytes - Return a conservative estimate of the alignment of the
+/// getDeclAlign - Return a conservative estimate of the alignment of the
 /// specified decl.  Note that bitfields do not have a valid alignment, so
 /// this method will assert on them.
 /// If @p RefAsPointee, references are treated like their underlying type
 /// (for alignof), else they're treated like pointers (for CodeGen).
-unsigned ASTContext::getDeclAlignInBytes(const Decl *D, bool RefAsPointee) {
+CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
   unsigned Align = Target.getCharWidth();
 
   if (const AlignedAttr* AA = D->getAttr<AlignedAttr>())
@@ -561,7 +561,7 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D, bool RefAsPointee) {
     }
   }
 
-  return Align / Target.getCharWidth();
+  return CharUnits::fromQuantity(Align / Target.getCharWidth());
 }
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method

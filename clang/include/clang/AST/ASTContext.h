@@ -846,7 +846,12 @@ public:
   /// a data type.
   unsigned getPreferredTypeAlign(const Type *T);
 
-  unsigned getDeclAlignInBytes(const Decl *D, bool RefAsPointee = false);
+  /// getDeclAlign - Return a conservative estimate of the alignment of
+  /// the specified decl.  Note that bitfields do not have a valid alignment, so
+  /// this method will assert on them.
+  /// If @p RefAsPointee, references are treated like their underlying type
+  /// (for alignof), else they're treated like pointers (for CodeGen).
+  CharUnits getDeclAlign(const Decl *D, bool RefAsPointee = false);
 
   /// getASTRecordLayout - Get or compute information about the layout of the
   /// specified record (struct/union/class), which indicates its size and field

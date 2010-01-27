@@ -812,8 +812,7 @@ CharUnits BlockFunction::getBlockOffset(const BlockDeclRefExpr *BDRE) {
   const ValueDecl *D = dyn_cast<ValueDecl>(BDRE->getDecl());
 
   CharUnits Size = getContext().getTypeSizeInChars(D->getType());
-  CharUnits Align = 
-    CharUnits::fromQuantity(getContext().getDeclAlignInBytes(D));
+  CharUnits Align = getContext().getDeclAlign(D);
 
   if (BDRE->isByRef()) {
     Size = getContext().getTypeSizeInChars(getContext().VoidPtrTy);

@@ -120,7 +120,7 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
                              Ty.isConstant(getContext()), Linkage,
                              CGM.EmitNullConstant(D.getType()), Name, 0,
                              D.isThreadSpecified(), Ty.getAddressSpace());
-  GV->setAlignment(getContext().getDeclAlignInBytes(&D));
+  GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   return GV;
 }
 
@@ -286,8 +286,8 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   }
 
   bool Packed = false;
-  unsigned Align = getContext().getDeclAlignInBytes(D);
-  if (Align > Target.getPointerAlign(0) / 8) {
+  CharUnits Align = getContext().getDeclAlign(D);
+  if (Align > CharUnits::fromQuantity(Target.getPointerAlign(0) / 8)) {
     // We have to insert padding.
     
     // The struct above has 2 32-bit integers.
@@ -299,7 +299,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
     
     // Align the offset.
     unsigned AlignedOffsetInBytes = 
-      llvm::RoundUpToAlignment(CurrentOffsetInBytes, Align);
+      llvm::RoundUpToAlignment(CurrentOffsetInBytes, Align.getQuantity());
     
     unsigned NumPaddingBytes = AlignedOffsetInBytes - CurrentOffsetInBytes;
     if (NumPaddingBytes > 0) {
@@ -339,7 +339,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
   bool isByRef = D.hasAttr<BlocksAttr>();
   bool needsDispose = false;
-  unsigned Align = 0;
+  CharUnits Align = CharUnits::Zero();
   bool IsSimpleConstantInitializer = false;
 
   llvm::Value *DeclPtr;
@@ -369,10 +369,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
       Alloc->setName(D.getNameAsString());
 
-      Align = getContext().getDeclAlignInBytes(&D);
+      Align = getContext().getDeclAlign(&D);
       if (isByRef)
-        Align = std::max(Align, unsigned(Target.getPointerAlign(0) / 8));
-      Alloc->setAlignment(Align);
+        Align = std::max(Align, 
+            CharUnits::fromQuantity(Target.getPointerAlign(0) / 8));
+      Alloc->setAlignment(Align.getQuantity());
       DeclPtr = Alloc;
     } else {
       // Targets that don't support recursion emit locals as globals.
@@ -425,7 +426,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // Allocate memory for the array.
     llvm::AllocaInst *VLA = 
       Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext), VLASize, "vla");
-    VLA->setAlignment(getContext().getDeclAlignInBytes(&D));
+    VLA->setAlignment(getContext().getDeclAlign(&D).getQuantity());
 
     DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
   }
@@ -473,7 +474,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       assert(Init != 0 && "Wasn't a simple constant init?");
       
       llvm::Value *AlignVal = 
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), Align);
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
+            Align.getQuantity());
       const llvm::Type *IntPtr =
         llvm::IntegerType::get(VMContext, LLVMPointerWidth);
       llvm::Value *SizeVal =
@@ -497,7 +499,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
           new llvm::GlobalVariable(CGM.getModule(), Init->getType(), true,
                                    llvm::GlobalValue::InternalLinkage,
                                    Init, Name, 0, false, 0);
-        GV->setAlignment(Align);
+        GV->setAlignment(Align.getQuantity());
 
         llvm::Value *SrcPtr = GV;
         if (SrcPtr->getType() != BP)
@@ -565,12 +567,13 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
       BlockHasCopyDispose = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
-      Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, Align),
+      Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, 
+                                               Align.getQuantity()),
                           copy_helper);
 
       llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
       Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag,
-                                                  Align),
+                                                  Align.getQuantity()),
                           destroy_helper);
     }
   }

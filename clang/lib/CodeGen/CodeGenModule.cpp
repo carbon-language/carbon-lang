@@ -1065,7 +1065,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (!NonConstInit && DeclIsConstantGlobal(Context, D))
     GV->setConstant(true);
 
-  GV->setAlignment(getContext().getDeclAlignInBytes(D));
+  GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
 
   // Set the llvm linkage type as appropriate.
   GVALinkage Linkage = GetLinkageForVariable(getContext(), D);

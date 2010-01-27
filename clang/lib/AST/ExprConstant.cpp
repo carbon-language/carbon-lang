@@ -849,8 +849,8 @@ public:
   bool VisitUnaryImag(const UnaryOperator *E);
 
 private:
-  unsigned GetAlignOfExpr(const Expr *E);
-  unsigned GetAlignOfType(QualType T);
+  CharUnits GetAlignOfExpr(const Expr *E);
+  CharUnits GetAlignOfType(QualType T);
   // FIXME: Missing: array subscript of vector, member of vector
 };
 } // end anonymous namespace
@@ -1288,7 +1288,7 @@ bool IntExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
   return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
-unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
+CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
   // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
   //   the result is the size of the referenced type."
   // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
@@ -1300,20 +1300,22 @@ unsigned IntExprEvaluator::GetAlignOfType(QualType T) {
   unsigned CharSize = Info.Ctx.Target.getCharWidth();
 
   // __alignof is defined to return the preferred alignment.
-  return Info.Ctx.getPreferredTypeAlign(T.getTypePtr()) / CharSize;
+  return CharUnits::fromQuantity(
+      Info.Ctx.getPreferredTypeAlign(T.getTypePtr()) / CharSize);
 }
 
-unsigned IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
+CharUnits IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
   E = E->IgnoreParens();
 
   // alignof decl is always accepted, even if it doesn't make sense: we default
   // to 1 in those cases.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    return Info.Ctx.getDeclAlignInBytes(DRE->getDecl(), /*RefAsPointee*/true);
+    return Info.Ctx.getDeclAlign(DRE->getDecl(), 
+                                 /*RefAsPointee*/true);
 
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    return Info.Ctx.getDeclAlignInBytes(ME->getMemberDecl(),
-                                        /*RefAsPointee*/true);
+    return Info.Ctx.getDeclAlign(ME->getMemberDecl(),
+                                 /*RefAsPointee*/true);
 
   return GetAlignOfType(E->getType());
 }
@@ -1325,9 +1327,9 @@ bool IntExprEvaluator::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   // Handle alignof separately.
   if (!E->isSizeOf()) {
     if (E->isArgumentType())
-      return Success(GetAlignOfType(E->getArgumentType()), E);
+      return Success(GetAlignOfType(E->getArgumentType()).getQuantity(), E);
     else
-      return Success(GetAlignOfExpr(E->getArgumentExpr()), E);
+      return Success(GetAlignOfExpr(E->getArgumentExpr()).getQuantity(), E);
   }
 
   QualType SrcTy = E->getTypeOfArgument();
