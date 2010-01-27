@@ -31,8 +31,8 @@ using namespace clang::driver::toolchains;
 /// Darwin - Darwin tool chain for i386 and x86_64.
 
 Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
-               const unsigned (&_DarwinVersion)[3], bool _IsIPhoneOS)
-  : ToolChain(Host, Triple), TargetInitialized(false), IsIPhoneOS(_IsIPhoneOS)
+               const unsigned (&_DarwinVersion)[3])
+  : ToolChain(Host, Triple), TargetInitialized(false)
 {
   DarwinVersion[0] = _DarwinVersion[0];
   DarwinVersion[1] = _DarwinVersion[1];
@@ -41,9 +41,6 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
   llvm::raw_string_ostream(MacosxVersionMin)
     << "10." << std::max(0, (int)DarwinVersion[0] - 4) << '.'
     << DarwinVersion[1];
-
-  // FIXME: Lift default up.
-  IPhoneOSVersionMin = "3.0";
 }
 
 // FIXME: Can we tablegen this?
@@ -111,8 +108,8 @@ llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
 
 DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
                      const unsigned (&DarwinVersion)[3],
-                     const unsigned (&_GCCVersion)[3], bool IsIPhoneOS)
-  : Darwin(Host, Triple, DarwinVersion, IsIPhoneOS)
+                     const unsigned (&_GCCVersion)[3])
+  : Darwin(Host, Triple, DarwinVersion)
 {
   GCCVersion[0] = _GCCVersion[0];
   GCCVersion[1] = _GCCVersion[1];
@@ -289,9 +286,8 @@ void DarwinGCC::AddLinkRuntimeLibArgs(const ArgList &Args,
 }
 
 DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
-                         const unsigned (&DarwinVersion)[3],
-                         bool IsIPhoneOS)
-  : Darwin(Host, Triple, DarwinVersion, IsIPhoneOS)
+                         const unsigned (&DarwinVersion)[3])
+  : Darwin(Host, Triple, DarwinVersion)
 {
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getDriver().Dir);
@@ -424,13 +420,13 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
       iPhoneVersion = DAL->MakeJoinedArg(0, O, iPhoneOSTarget);
       DAL->append(iPhoneVersion);
     } else {
-      // Otherwise, choose the default version based on the toolchain.
-
-      // FIXME: This is confusing it should be more explicit what the default
-      // target is.
-      if (isIPhoneOS()) {
+      // Otherwise, choose a default platform based on the tool chain.
+      //
+      // FIXME: Don't hardcode default here.
+      if (getTriple().getArch() == llvm::Triple::arm ||
+          getTriple().getArch() == llvm::Triple::thumb) {
         const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-        iPhoneVersion = DAL->MakeJoinedArg(0, O, IPhoneOSVersionMin) ;
+        iPhoneVersion = DAL->MakeJoinedArg(0, O, "3.0");
         DAL->append(iPhoneVersion);
       } else {
         const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);

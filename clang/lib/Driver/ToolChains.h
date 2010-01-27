@@ -63,26 +63,13 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   /// The OS version we are targetting.
   mutable unsigned TargetVersion[3];
 
-  /// Whether this is this an iPhoneOS toolchain.
-  //
-  // FIXME: This should go away, such differences should be completely
-  // determined by the target triple.
-  //
-  // FIXME: It is also broken, we need to distinguish the "default target" from
-  // the actual target. The -m...-version-min strings and deployment targets can
-  // change this.
-  bool IsIPhoneOS;
-
   /// The default macosx-version-min of this tool chain; empty until
   /// initialized.
   std::string MacosxVersionMin;
 
-  /// The default iphoneos-version-min of this tool chain.
-  std::string IPhoneOSVersionMin;
-
 public:
   Darwin(const HostInfo &Host, const llvm::Triple& Triple,
-         const unsigned (&DarwinVersion)[3], bool IsIPhoneOS);
+         const unsigned (&DarwinVersion)[3]);
   ~Darwin();
 
   /// @name Darwin Specific Toolchain API
@@ -167,8 +154,6 @@ public:
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const = 0;
 
-  bool isIPhoneOS() const { return IsIPhoneOS; }
-
   /// }
   /// @name ToolChain Implementation
   /// {
@@ -204,7 +189,7 @@ public:
 class VISIBILITY_HIDDEN DarwinClang : public Darwin {
 public:
   DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
-              const unsigned (&DarwinVersion)[3], bool IsIPhoneOS);
+              const unsigned (&DarwinVersion)[3]);
 
   /// @name Darwin ToolChain Implementation
   /// {
@@ -228,8 +213,8 @@ class VISIBILITY_HIDDEN DarwinGCC : public Darwin {
 
 public:
   DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-            const unsigned (&DarwinVersion)[3], const unsigned (&GCCVersion)[3],
-            bool IsIPhoneOS);
+            const unsigned (&DarwinVersion)[3],
+            const unsigned (&GCCVersion)[3]);
 
   /// @name Darwin ToolChain Implementation
   /// {
