@@ -107,6 +107,20 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
          MIE = MBB->rend(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
+      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE) {
+        // Don't delete the DEBUG_VALUE itself, but if its Value operand is
+        // a vreg and this is the only use, substitute an undef operand;
+        // the former operand will then be deleted normally.
+        if (MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
+          unsigned Reg = MI->getOperand(0).getReg();
+          MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg);
+          assert(I != MRI->use_end());
+          if (++I == MRI->use_end())
+            // only one use, which must be this DEBUG_VALUE.
+            MI->getOperand(0).setReg(0U);
+        }
+      }
+
       // If the instruction is dead, delete it!
       if (isDead(MI)) {
         DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
