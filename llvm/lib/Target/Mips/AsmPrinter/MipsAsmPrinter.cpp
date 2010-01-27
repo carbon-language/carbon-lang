@@ -74,7 +74,6 @@ namespace {
     void printHex32(unsigned int Value);
 
     const char *emitCurrentABIString();
-    void emitFunctionStart(MachineFunction &MF);
     void emitFunctionEnd(MachineFunction &MF);
     void emitFrameDirective(MachineFunction &MF);
 
@@ -82,6 +81,7 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
     bool runOnMachineFunction(MachineFunction &F);
+    virtual void EmitFunctionEntryLabel();
     void EmitStartOfAsmFile(Module &M);
   };
 } // end of anonymous namespace
@@ -207,31 +207,6 @@ const char *MipsAsmPrinter::emitCurrentABIString() {
   return NULL;
 }  
 
-/// Emit the directives used by GAS on the start of functions
-void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
-  // Print out the label for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-
-  // 2 bits aligned
-  EmitAlignment(MF.getAlignment(), F);
-
-  O << "\t.globl\t" << *CurrentFnSym << '\n';
-  O << "\t.ent\t" << *CurrentFnSym << '\n';
-
-  printVisibility(CurrentFnSym, F->getVisibility());
-
-  if ((MAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
-    O << "\t.type\t" << *CurrentFnSym << ", @function\n";
-
-  O << *CurrentFnSym << ":\n";
-
-  emitFrameDirective(MF);
-  printSavedRegsBitmask(MF);
-
-  O << '\n';
-}
-
 /// Emit the directives used by GAS on the end of functions
 void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   // There are instruction for this macros, but they must
@@ -245,30 +220,30 @@ void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 }
 
+void MipsAsmPrinter::EmitFunctionEntryLabel() {
+  O << "\t.ent\t" << *CurrentFnSym << '\n';
+  OutStreamer.EmitLabel(CurrentFnSym);
+}
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
-
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF);
-
-  O << "\n\n";
-
-  // Emit the function start directives
-  emitFunctionStart(MF);
-
+  
+  EmitFunctionHeader();
+  
+  emitFrameDirective(MF);
+  printSavedRegsBitmask(MF);
+  
+  O << '\n';
+  
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
 
     // Print a label for the basic block.
-    if (I != MF.begin()) {
+    if (I != MF.begin())
       EmitBasicBlockStart(I);
-    }
 
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
@@ -291,7 +266,10 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Emit function end directives
   emitFunctionEnd(MF);
-
+  
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF);
+    
   // We didn't modify anything.
   return false;
 }
