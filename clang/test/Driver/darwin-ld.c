@@ -41,9 +41,9 @@
 
 // Check linker changes that came with new linkedit format.
 // RUN: touch %t.o
-// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 %t.o 2> %t.log
-// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 -dynamiclib %t.o 2>> %t.log
-// RUN: %clang -### -arch armv6 -miphoneos-version-min=3.0 -bundle %t.o 2>> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv6 -miphoneos-version-min=3.0 %t.o 2> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv6 -miphoneos-version-min=3.0 -dynamiclib %t.o 2>> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv6 -miphoneos-version-min=3.0 -bundle %t.o 2>> %t.log
 // RUN: FileCheck -check-prefix=LINK_IPHONE_3_0 %s < %t.log
 
 // LINK_IPHONE_3_0: ld"
@@ -58,9 +58,9 @@
 // LINK_IPHONE_3_0: -lbundle1.o
 // LINK_IPHONE_3_0: -lSystem
 
-// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 %t.o 2> %t.log
-// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 -dynamiclib %t.o 2>> %t.log
-// RUN: %clang -### -arch armv7 -miphoneos-version-min=3.1 -bundle %t.o 2>> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv7 -miphoneos-version-min=3.1 %t.o 2> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv7 -miphoneos-version-min=3.1 -dynamiclib %t.o 2>> %t.log
+// RUN: %clang -ccc-host-triple i386-apple-darwin9 -### -arch armv7 -miphoneos-version-min=3.1 -bundle %t.o 2>> %t.log
 // RUN: FileCheck -check-prefix=LINK_IPHONE_3_1 %s < %t.log
 
 // LINK_IPHONE_3_1: ld"
