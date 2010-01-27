@@ -44,17 +44,10 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   class SparcAsmPrinter : public AsmPrinter {
-    /// We name each basic block in a Function with a unique number, so
-    /// that we can consistently refer to them later. This is cleared
-    /// at the beginning of each call to runOnMachineFunction().
-    ///
-    typedef std::map<const Value *, unsigned> ValueMapTy;
-    ValueMapTy NumberForBB;
-    unsigned BBNumber;
   public:
     explicit SparcAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                              const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V), BBNumber(0) {}
+      : AsmPrinter(O, TM, T, V) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";
@@ -88,25 +81,13 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   EmitFunctionHeader();
 
-  // BBNumber is used here so that a given Printer will never give two
-  // BBs the same name. (If you have a better way, please let me know!)
-
-  // Number each basic block so that we can consistently refer to them
-  // in PC-relative references.
-  // FIXME: Why not use the MBB numbers?
-  NumberForBB.clear();
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    NumberForBB[I->getBasicBlock()] = BBNumber++;
-  }
-
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin()) {
+    if (I != MF.begin())
       EmitBasicBlockStart(I);
-    }
+
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -209,7 +190,7 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum) {
     break;
   }
 
-  unsigned bbNum = NumberForBB[MI->getParent()->getBasicBlock()];
+  unsigned bbNum = MI->getParent()->getNumber();
 
   O << '\n' << ".LLGETPCH" << bbNum << ":\n";
   O << "\tcall\t.LLGETPC" << bbNum << '\n' ;
