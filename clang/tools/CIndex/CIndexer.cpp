@@ -69,7 +69,7 @@ const llvm::sys::Path& CIndexer::getClangPath() {
 
   // We now have the CIndex directory, locate clang relative to it.
   CIndexPath.eraseComponent();
-  CIndexPath.eraseComponent();
+  CIndexPath.appendComponent("..");
   CIndexPath.appendComponent("bin");
   CIndexPath.appendComponent("clang");
 #endif
