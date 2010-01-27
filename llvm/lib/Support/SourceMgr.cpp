@@ -188,7 +188,7 @@ void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
 // SMDiagnostic Implementation
 //===----------------------------------------------------------------------===//
 
-void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) {
+void SMDiagnostic::Print(const char *ProgName, raw_ostream &S) const {
   if (ProgName && ProgName[0])
     S << ProgName << ": ";
 

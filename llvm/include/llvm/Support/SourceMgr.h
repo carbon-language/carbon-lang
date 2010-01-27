@@ -139,7 +139,7 @@ public:
     : Filename(FN), LineNo(Line), ColumnNo(Col), Message(Msg),
       LineContents(LineStr), ShowLine(showline) {}
 
-  void Print(const char *ProgName, raw_ostream &S);
+  void Print(const char *ProgName, raw_ostream &S) const;
 };
 
 }  // end llvm namespace
