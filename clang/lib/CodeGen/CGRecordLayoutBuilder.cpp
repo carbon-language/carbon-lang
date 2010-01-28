@@ -162,6 +162,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   uint64_t Size = 0;
   unsigned Align = 0;
 
+  bool HasOnlyZeroSizedBitFields = true;
+  
   unsigned FieldNo = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
@@ -181,6 +183,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     } else
       Types.addFieldInfo(*Field, 0);
 
+    HasOnlyZeroSizedBitFields = false;
+    
     const llvm::Type *FieldTy =
       Types.ConvertTypeForMemRecursive(Field->getType());
     unsigned FieldAlign = Types.getTargetData().getABITypeAlignment(FieldTy);
@@ -207,7 +211,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     }
   }
   if (!Align) {
-    assert((D->field_begin() == D->field_end()) && "LayoutUnion - Align 0");
+    assert(HasOnlyZeroSizedBitFields &&
+           "0-align record did not have all zero-sized bit-fields!");
     Align = 1;
   }
   
