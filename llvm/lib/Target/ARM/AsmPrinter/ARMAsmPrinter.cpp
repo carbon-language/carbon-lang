@@ -256,12 +256,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
   MCP = MF.getConstantPool();
 
-  SetupMachineFunction(MF);
-  O << "\n";
-
-  EmitFunctionHeader();
-  EmitFunctionBody();
-  return false;
+  return AsmPrinter::runOnMachineFunction(MF);
 }
 
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,

@@ -47,13 +47,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
-
-STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   class PPCAsmPrinter : public AsmPrinter {
@@ -98,7 +95,7 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
 
-    void printMachineInstruction(const MachineInstr *MI);
+    virtual void EmitInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
 
     /// stripRegisterPrefix - This method strips the character prefix from a
@@ -332,7 +329,6 @@ namespace {
       return "Linux PPC Assembly Printer";
     }
 
-    bool runOnMachineFunction(MachineFunction &F);
     bool doFinalization(Module &M);
 
     virtual void EmitFunctionEntryLabel();
@@ -358,7 +354,6 @@ namespace {
       return "Darwin PPC Assembly Printer";
     }
 
-    bool runOnMachineFunction(MachineFunction &F);
     bool doFinalization(Module &M);
     void EmitStartOfAsmFile(Module &M);
 
@@ -535,20 +530,16 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 
-/// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
+/// EmitInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
 ///
-void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  ++EmittedInsts;
-  
-  processDebugLoc(MI, true);
-
+void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Check for slwi/srwi mnemonics.
-  bool useSubstituteMnemonic = false;
   if (MI->getOpcode() == PPC::RLWINM) {
     unsigned char SH = MI->getOperand(2).getImm();
     unsigned char MB = MI->getOperand(3).getImm();
     unsigned char ME = MI->getOperand(4).getImm();
+    bool useSubstituteMnemonic = false;
     if (SH <= 31 && MB == 0 && ME == (31-SH)) {
       O << "\tslwi "; useSubstituteMnemonic = true;
     }
@@ -561,37 +552,34 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       O << ", ";
       printOperand(MI, 1);
       O << ", " << (unsigned int)SH;
+      return;
     }
-  } else if (MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) {
-    if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
-      useSubstituteMnemonic = true;
-      O << "\tmr ";
-      printOperand(MI, 0);
-      O << ", ";
-      printOperand(MI, 1);
-    }
-  } else if (MI->getOpcode() == PPC::RLDICR) {
+  }
+  
+  if ((MI->getOpcode() == PPC::OR || MI->getOpcode() == PPC::OR8) &&
+      MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+    O << "\tmr ";
+    printOperand(MI, 0);
+    O << ", ";
+    printOperand(MI, 1);
+    return;
+  }
+  
+  if (MI->getOpcode() == PPC::RLDICR) {
     unsigned char SH = MI->getOperand(2).getImm();
     unsigned char ME = MI->getOperand(3).getImm();
     // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
     if (63-SH == ME) {
-      useSubstituteMnemonic = true;
       O << "\tsldi ";
       printOperand(MI, 0);
       O << ", ";
       printOperand(MI, 1);
       O << ", " << (unsigned int)SH;
+      return;
     }
   }
 
-  if (!useSubstituteMnemonic)
-    printInstruction(MI);
-
-  if (VerboseAsm)
-    EmitComments(*MI);
-  O << '\n';
-
-  processDebugLoc(MI, false);
+  printInstruction(MI);
 }
 
 void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
@@ -608,39 +596,6 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   O << ".L." << *CurrentFnSym << ":\n";
 }
 
-
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  O << "\n\n";
-  
-  EmitFunctionHeader();
-
-  // Print out code for the function.
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    // Print a label for the basic block.
-    EmitBasicBlockStart(I);
-
-    // Print the assembly for the instructions.
-    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II)
-      printMachineInstruction(II);
-  }
-
-  O << "\t.size\t" << *CurrentFnSym << ",.-" << *CurrentFnSym << '\n';
-
-  // Emit post-function debug information.
-  DW->EndFunction(&MF);
-
-  // Print out jump tables referenced by the function.
-  EmitJumpTableInfo();
-
-  // We didn't modify anything.
-  return false;
-}
 
 bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
@@ -661,46 +616,6 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
 
   return AsmPrinter::doFinalization(M);
 }
-
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  O << "\n\n";
-
-  EmitFunctionHeader();
-
-  // If the function is empty, then we need to emit *something*. Otherwise, the
-  // function's label might be associated with something that it wasn't meant to
-  // be associated with. We emit a noop in this situation.
-  MachineFunction::iterator I = MF.begin();
-
-  if (++I == MF.end() && MF.front().empty())
-    O << "\tnop\n";
-
-  // Print out code for the function.
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    // Print a label for the basic block.
-    EmitBasicBlockStart(I);
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      // Print the assembly for the instruction.
-      printMachineInstruction(II);
-    }
-  }
-
-  // Emit post-function debug information.
-  DW->EndFunction(&MF);
-
-  // Print out jump tables referenced by the function.
-  EmitJumpTableInfo();
-
-  // We didn't modify anything.
-  return false;
-}
-
 
 void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   static const char *const CPUDirectives[] = {

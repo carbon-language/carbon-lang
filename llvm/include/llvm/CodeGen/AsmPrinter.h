@@ -207,6 +207,15 @@ namespace llvm {
                                        unsigned AsmVariant, 
                                        const char *ExtraCode);
     
+    /// runOnMachineFunction - Emit the specified function out to the
+    /// OutStreamer.
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      SetupMachineFunction(MF);
+      EmitFunctionHeader();
+      EmitFunctionBody();
+      return false;
+    }      
+    
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);

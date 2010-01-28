@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 | grep nop
+; RUN: llc < %s -march=ppc32 | grep .byte
 target triple = "powerpc-apple-darwin8"
 
 

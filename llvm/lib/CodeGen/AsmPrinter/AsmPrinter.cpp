@@ -344,7 +344,6 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
-  
   // Print out code for the function.
   bool HasAnyRealCode = false;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
@@ -374,8 +373,8 @@ void AsmPrinter::EmitFunctionBody() {
   }
   
   // If the function is empty and the object file uses .subsections_via_symbols,
-  // then we need to emit *some* thing to the function body to prevent the
-  // labels from collapsing together.
+  // then we need to emit *something* to the function body to prevent the
+  // labels from collapsing together.  Just emit a 0 byte.
   if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode)
     OutStreamer.EmitIntValue(0, 1, 0/*addrspace*/);
   
