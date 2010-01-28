@@ -6231,7 +6231,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       = cast<CXXConversionDecl>(
                          Best->Conversions[0].UserDefined.ConversionFunction);
 
-    // FIXME: access control
+    CheckMemberOperatorAccess(LParenLoc, Object, Conv, Best->getAccess());
 
     // We selected one of the surrogate functions that converts the
     // object parameter to a function pointer. Perform the conversion
@@ -6246,8 +6246,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                          CommaLocs, RParenLoc).release();
   }
 
-  if (getLangOptions().AccessControl)
-    CheckAccess(R, Best->Function, Best->getAccess());
+  CheckMemberOperatorAccess(LParenLoc, Object,
+                            Best->Function, Best->getAccess());
 
   // We found an overloaded operator(). Build a CXXOperatorCallExpr
   // that calls this method, using Object for the implicit object

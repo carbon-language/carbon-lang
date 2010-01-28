@@ -147,6 +147,10 @@ public:
     decls().pop_back();
   }
 
+  void setAccess(iterator I, AccessSpecifier AS) {
+    I.ir->setInt(AS);
+  }
+
   void clear() { decls().clear(); }
   void set_size(unsigned N) { decls().set_size(N); }
 

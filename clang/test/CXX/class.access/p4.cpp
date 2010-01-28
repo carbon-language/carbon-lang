@@ -39,15 +39,21 @@ namespace test1 {
     void operator+(Public&);
     void operator[](Public&);
     void operator()(Public&);
+    typedef void (*PublicSurrogate)(Public&);
+    operator PublicSurrogate() const;
   protected:
     void operator+(Protected&); // expected-note {{declared protected here}}
     void operator[](Protected&); // expected-note {{declared protected here}}
     void operator()(Protected&); // expected-note {{declared protected here}}
+    typedef void (*ProtectedSurrogate)(Protected&);
+    operator ProtectedSurrogate() const; // expected-note {{declared protected here}}
   private:
     void operator+(Private&); // expected-note {{declared private here}}
     void operator[](Private&); // expected-note {{declared private here}}
     void operator()(Private&); // expected-note {{declared private here}}
     void operator-(); // expected-note {{declared private here}}
+    typedef void (*PrivateSurrogate)(Private&);
+    operator PrivateSurrogate() const; // expected-note {{declared private here}}
   };
   void operator+(const A &, Public&);
   void operator+(const A &, Protected&);
@@ -71,5 +77,9 @@ namespace test1 {
     ca + prot;
     ca + priv;
     -ca;
+    // These are all surrogate calls
+    ca(pub);
+    ca(prot); // expected-error {{access to protected member}}
+    ca(priv); // expected-error {{access to private member}}
   }
 }

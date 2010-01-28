@@ -2086,6 +2086,11 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   if (Record->isInvalidDecl())
     return;
 
+  // Set access bits correctly on the directly-declared conversions.
+  UnresolvedSetImpl *Convs = Record->getConversionFunctions();
+  for (UnresolvedSetIterator I = Convs->begin(), E = Convs->end(); I != E; ++I)
+    Convs->setAccess(I, (*I)->getAccess());
+
   if (!Record->isAbstract()) {
     // Collect all the pure virtual methods and see if this is an abstract
     // class after all.
