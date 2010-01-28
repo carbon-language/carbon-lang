@@ -342,6 +342,11 @@ public:
 
   void CopyValueToVirtualRegister(Value *V, unsigned Reg);
 
+  /// AssignOrderingToNode - Assign an ordering to the node. The order is gotten
+  /// from how the code appeared in the source. The ordering is used by the
+  /// scheduler to effectively turn off scheduling.
+  void AssignOrderingToNode(const SDNode *Node);
+
   void visit(Instruction &I);
 
   void visit(unsigned Opcode, User &I);

@@ -5237,7 +5237,7 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
 }
 
 /// AssignOrdering - Assign an order to the SDNode.
-void SelectionDAG::AssignOrdering(SDNode *SD, unsigned Order) {
+void SelectionDAG::AssignOrdering(const SDNode *SD, unsigned Order) {
   assert(SD && "Trying to assign an order to a null node!");
   Ordering->add(SD, Order);
 }

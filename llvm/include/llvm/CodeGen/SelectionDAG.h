@@ -841,7 +841,7 @@ public:
   }
 
   /// AssignOrdering - Assign an order to the SDNode.
-  void AssignOrdering(SDNode *SD, unsigned Order);
+  void AssignOrdering(const SDNode *SD, unsigned Order);
 
   /// GetOrdering - Get the order for the SDNode.
   unsigned GetOrdering(const SDNode *SD) const;
