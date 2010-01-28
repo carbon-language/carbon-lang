@@ -35,17 +35,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
-
-STATISTIC(EmittedInsts, "Number of machine instrs printed");
-
-static cl::opt<bool>
-EnableMCInst("enable-msp430-mcinst-printer", cl::Hidden,
-             cl::desc("enable experimental mcinst gunk in the msp430 backend"));
 
 namespace {
   class MSP430AsmPrinter : public AsmPrinter {
@@ -76,9 +67,7 @@ namespace {
     bool PrintAsmMemoryOperand(const MachineInstr *MI,
                                unsigned OpNo, unsigned AsmVariant,
                                const char *ExtraCode);
-    void printInstructionThroughMCStreamer(const MachineInstr *MI);
-
-    bool runOnMachineFunction(MachineFunction &F);
+    void EmitInstruction(const MachineInstr *MI);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -88,52 +77,11 @@ namespace {
 } // end of anonymous namespace
 
 
-bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  O << "\n\n";
-  
-  EmitFunctionHeader();
-
-  // Print out code for the function.
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    // Print a label for the basic block.
-    EmitBasicBlockStart(I);
-
-    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II)
-      // Print the assembly for the instruction.
-      printMachineInstruction(II);
-  }
-
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
-
-  // Print out constants referenced by the function
-  EmitJumpTableInfo();
-  
-  // We didn't modify anything
-  return false;
-}
-
-void MSP430AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  ++EmittedInsts;
-
-  processDebugLoc(MI, true);
-
-  printInstructionThroughMCStreamer(MI);
-
-  if (VerboseAsm)
-    EmitComments(*MI);
-  O << '\n';
-
-  processDebugLoc(MI, false);
-}
-
 void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                     const char* Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
+  default: assert(0 && "Not implemented yet!");
   case MachineOperand::MO_Register:
     O << MSP430InstPrinter::getRegisterName(MO.getReg());
     return;
@@ -166,8 +114,6 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MAI->getGlobalPrefix() << MO.getSymbolName();
     return;
   }
-  default:
-    llvm_unreachable("Not implemented yet!");
   }
 }
 
@@ -196,30 +142,14 @@ void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
 }
 
 void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
-  unsigned CC = MI->getOperand(OpNum).getImm();
-
-  switch (CC) {
-  default:
-   llvm_unreachable("Unsupported CC code");
-   break;
-  case MSP430CC::COND_E:
-   O << "eq";
-   break;
-  case MSP430CC::COND_NE:
-   O << "ne";
-   break;
-  case MSP430CC::COND_HS:
-   O << "hs";
-   break;
-  case MSP430CC::COND_LO:
-   O << "lo";
-   break;
-  case MSP430CC::COND_GE:
-   O << "ge";
-   break;
-  case MSP430CC::COND_L:
-   O << 'l';
-   break;
+  switch (MI->getOperand(OpNum).getImm()) {
+  default: assert(0 && "Unknown cond");
+  case MSP430CC::COND_E:  O << "eq"; break;
+  case MSP430CC::COND_NE: O << "ne"; break;
+  case MSP430CC::COND_HS: O << "hs"; break;
+  case MSP430CC::COND_LO: O << "lo"; break;
+  case MSP430CC::COND_GE: O << "ge"; break;
+  case MSP430CC::COND_L:  O << 'l';  break;
   }
 }
 
@@ -247,8 +177,7 @@ bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 //===----------------------------------------------------------------------===//
-void MSP430AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI){
-
+void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MSP430MCInstLower MCInstLowering(OutContext, *Mang, *this);
 
   switch (MI->getOpcode()) {
