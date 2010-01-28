@@ -120,10 +120,12 @@ namespace sys {
     /// @brief Construct a Program by finding it by name.
     static Path FindProgramByName(const std::string& name);
 
-    // These methods change the specified standard stream (stdin or stdout) to
-    // binary mode. They return true if an error occurred
+    // These methods change the specified standard stream (stdin,
+    // stdout, or stderr) to binary mode. They return true if an error
+    // occurred
     static bool ChangeStdinToBinary();
     static bool ChangeStdoutToBinary();
+    static bool ChangeStderrToBinary();
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// prg.Wait(..);

@@ -323,4 +323,9 @@ bool Program::ChangeStdoutToBinary(){
   return false;
 }
 
+bool Program::ChangeStderrToBinary(){
+  // Do nothing, as Unix doesn't differentiate between text and binary.
+  return false;
+}
+
 }

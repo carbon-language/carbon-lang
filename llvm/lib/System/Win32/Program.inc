@@ -379,4 +379,9 @@ bool Program::ChangeStdoutToBinary(){
   return result == -1;
 }
 
+bool Program::ChangeStderrToBinary(){
+  int result = _setmode( _fileno(stderr), _O_BINARY );
+  return result == -1;
+}
+
 }
