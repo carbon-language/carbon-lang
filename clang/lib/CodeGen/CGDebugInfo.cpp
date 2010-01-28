@@ -738,9 +738,18 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
   CollectRecordFields(Decl, Unit, EltTys);
+  llvm::MDNode *ContainingType = NULL;
   if (CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl)) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
     CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
+
+    // A class's primary base or the class itself contains the vtable.
+    const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
+    if (const CXXRecordDecl *PBase = RL.getPrimaryBase())
+      ContainingType = 
+        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), Unit).getNode();
+    else if (CXXDecl->isDynamicClass()) 
+      ContainingType = FwdDecl.getNode();
   }
 
   llvm::DIArray Elements =
@@ -753,7 +762,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, Unit, Decl->getName(),
                                      DefUnit, Line, Size, Align, 0, 0, 
-                                     llvm::DIType(), Elements);
+                                     llvm::DIType(), Elements, 
+                                     0, ContainingType);
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
