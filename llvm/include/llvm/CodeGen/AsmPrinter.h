@@ -233,6 +233,14 @@ namespace llvm {
       assert(0 && "EmitInstruction not implemented");
     }
     
+    /// EmitFunctionBodyStart - Targets can override this to emit stuff before
+    /// the first basic block in the function.
+    virtual void EmitFunctionBodyStart() {}
+
+    /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
+    /// the last basic block in the function.
+    virtual void EmitFunctionBodyEnd() {}
+    
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
     /// used to print out constants which have been "spilled to memory" by

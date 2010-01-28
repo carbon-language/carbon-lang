@@ -344,6 +344,9 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
+  // Emit target-specific gunk before the function body.
+  EmitFunctionBodyStart();
+  
   // Print out code for the function.
   bool HasAnyRealCode = false;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
@@ -377,6 +380,9 @@ void AsmPrinter::EmitFunctionBody() {
   // labels from collapsing together.  Just emit a 0 byte.
   if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode)
     OutStreamer.EmitIntValue(0, 1, 0/*addrspace*/);
+  
+  // Emit target-specific gunk after the function body.
+  EmitFunctionBodyEnd();
   
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
