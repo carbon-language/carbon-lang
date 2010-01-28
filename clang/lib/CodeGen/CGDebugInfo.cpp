@@ -518,6 +518,44 @@ CollectRecordFields(const RecordDecl *Decl,
   }
 }
 
+/// getOrCreateMethodType - CXXMethodDecl's type is a FunctionType. This
+/// function type is not updated to include implicit "this" pointer. Use this
+/// routine to get a method type which includes "this" pointer.
+llvm::DIType
+CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
+                                   llvm::DICompileUnit Unit) {
+  llvm::DIType FnTy = getOrCreateType(Method->getType(), Unit);
+
+  // Add "this" pointer.
+
+  llvm::DIArray Args = llvm::DICompositeType(FnTy.getNode()).getTypeArray();
+  assert (Args.getNumElements() && "Invalid number of arguments!");
+
+  llvm::SmallVector<llvm::DIDescriptor, 16> Elts;
+
+  // First element is always return type. For 'void' functions it is NULL.
+  Elts.push_back(Args.getElement(0));
+
+  // "this" pointer is always first argument.
+  ASTContext &Context = CGM.getContext();
+  QualType ThisPtr = 
+    Context.getPointerType(Context.getTagDeclType(Method->getParent()));
+  Elts.push_back(getOrCreateType(ThisPtr, Unit));
+
+  // Copy rest of the arguments.
+  for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
+    Elts.push_back(Args.getElement(i));
+
+  llvm::DIArray EltTypeArray =
+    DebugFactory.GetOrCreateArray(Elts.data(), Elts.size());
+
+  return
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
+                                     Unit, "", llvm::DICompileUnit(),
+                                     0, 0, 0, 0, 0,
+                                     llvm::DIType(), EltTypeArray);
+}
+
 /// CreateCXXMemberFunction - A helper function to create a DISubprogram for
 /// a single member function GlobalDecl.
 llvm::DISubprogram
@@ -529,7 +567,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   
   llvm::StringRef MethodName = getFunctionName(Method);
   llvm::StringRef MethodLinkageName;
-  llvm::DIType MethodTy = getOrCreateType(Method->getType(), Unit);
+  llvm::DIType MethodTy = getOrCreateMethodType(Method, Unit);
   
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.

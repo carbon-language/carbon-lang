@@ -83,6 +83,8 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DICompileUnit U);
+  llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
+                                     llvm::DICompileUnit Unit);
   
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
