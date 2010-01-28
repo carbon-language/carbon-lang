@@ -89,16 +89,15 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
   // Look for a '%' character that indicates the start of a format specifier.
-  while (I != E) {
+  for ( ; I != E ; ++I) {
     char c = *I;
-    ++I;    
     if (c == '\0') {
       // Detect spurious null characters, which are likely errors.
       H.HandleNullChar(I);
       return true;
     }
     if (c == '%') {
-      Start = I;  // Record the start of the format specifier.
+      Start = I++;  // Record the start of the format specifier.
       break;
     }
   }
