@@ -176,9 +176,9 @@ public:
   
   virtual void HandleInvalidConversionSpecifier(const char *conversionChar) {}
   
-  virtual void HandleFormatSpecifier(const FormatSpecifier &FS,
+  virtual bool HandleFormatSpecifier(const FormatSpecifier &FS,
                                      const char *startSpecifier,
-                                     const char *endSpecifier) {}
+                                     const char *endSpecifier) { return false; }
 };
   
 bool ParseFormatString(FormatStringHandler &H,

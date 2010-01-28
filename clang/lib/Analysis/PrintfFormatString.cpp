@@ -233,7 +233,8 @@ bool ParseFormatSring(FormatStringHandler &H, const char *I, const char *E) {
     if (!FSR.hasValue())
       break;    
     // We have a format specifier.  Pass it to the callback.
-    H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(), I);
+    if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(), I))
+      return false;
   }  
   assert(I == E && "Format string not exhausted");      
   return false;
