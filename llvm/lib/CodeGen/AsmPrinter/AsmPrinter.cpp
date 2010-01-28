@@ -376,10 +376,8 @@ void AsmPrinter::EmitFunctionBody() {
   // If the function is empty and the object file uses .subsections_via_symbols,
   // then we need to emit *some* thing to the function body to prevent the
   // labels from collapsing together.
-  if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode) {
-    // FIXME: EmitByte(0).
-    O << "\tnop\n";
-  }
+  if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode)
+    OutStreamer.EmitIntValue(0, 1, 0/*addrspace*/);
   
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
