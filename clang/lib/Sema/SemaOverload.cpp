@@ -5515,10 +5515,10 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       // We matched an overloaded operator. Build a call to that
       // operator.
 
-      // FIXME: access control
-
       // Convert the arguments.
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+        CheckMemberOperatorAccess(OpLoc, Args[0], Method, Best->getAccess());
+
         if (PerformObjectArgumentInitialization(Input, Method))
           return ExprError();
       } else {
@@ -5698,10 +5698,11 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         // We matched an overloaded operator. Build a call to that
         // operator.
 
-        // FIXME: access control
-
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
+          // Best->Access is only meaningful for class members.
+          CheckMemberOperatorAccess(OpLoc, Args[0], Method, Best->getAccess());
+
           OwningExprResult Arg1
             = PerformCopyInitialization(
                                         InitializedEntity::InitializeParameter(
@@ -5873,7 +5874,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // We matched an overloaded operator. Build a call to that
         // operator.
 
-        // FIXME: access control
+        CheckMemberOperatorAccess(LLoc, Args[0], FnDecl, Best->getAccess());
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);

@@ -2431,6 +2431,8 @@ public:
   bool CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
                                    NamedDecl *D,
                                    AccessSpecifier Access);
+  bool CheckMemberOperatorAccess(SourceLocation Loc, Expr *ObjectExpr,
+                                 NamedDecl *D, AccessSpecifier Access);
   bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);
   void CheckAccess(const LookupResult &R);
 

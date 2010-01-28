@@ -306,6 +306,30 @@ bool Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
   return false;
 }
 
+/// Checks access to an overloaded member operator.
+bool Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
+                                     Expr *ObjectExpr,
+                                     NamedDecl *MemberOperator,
+                                     AccessSpecifier Access) {
+  if (!getLangOptions().AccessControl)
+    return false;
+
+  const RecordType *RT = ObjectExpr->getType()->getAs<RecordType>();
+  assert(RT && "found member operator but object expr not of record type");
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
+
+  LookupResult R(*this, DeclarationName(), OpLoc, LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  R.setNamingClass(NamingClass);
+  if (CheckAccess(R, MemberOperator, Access))
+    return true;
+
+  // FIXME: protected check
+
+  return false;
+}
+
 /// Checks access to all the declarations in the given result set.
 void Sema::CheckAccess(const LookupResult &R) {
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)

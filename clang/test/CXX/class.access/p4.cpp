@@ -31,3 +31,39 @@ namespace test0 {
     void (A::*c)(Private&) = &A::foo; // expected-error {{access to private member outside any class}}
   }
 }
+
+// Member operators.
+namespace test1 {
+  class A {
+  public:
+    void operator+(Public&);
+    void operator[](Public&);
+  protected:
+    void operator+(Protected&); // expected-note {{declared protected here}}
+    void operator[](Protected&); // expected-note {{declared protected here}}
+  private:
+    void operator+(Private&); // expected-note {{declared private here}}
+    void operator[](Private&); // expected-note {{declared private here}}
+    void operator-(); // expected-note {{declared private here}}
+  };
+  void operator+(const A &, Public&);
+  void operator+(const A &, Protected&);
+  void operator+(const A &, Private&);
+  void operator-(const A &);
+
+  void test(A &a, Public &pub, Protected &prot, Private &priv) {
+    a + pub;
+    a + prot; // expected-error {{access to protected member}}
+    a + priv; // expected-error {{access to private member}}
+    a[pub];
+    a[prot]; // expected-error {{access to protected member}}
+    a[priv]; // expected-error {{access to private member}}
+    -a;       // expected-error {{access to private member}}
+
+    const A &ca = a;
+    ca + pub;
+    ca + prot;
+    ca + priv;
+    -ca;
+  }
+}
