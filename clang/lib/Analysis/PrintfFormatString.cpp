@@ -189,39 +189,42 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   }
   
   // Finally, look for the conversion specifier.
-  ConversionSpecifier::Kind cs;
-  switch (*I) {
+  const char *conversionPosition = I++;
+  ConversionSpecifier::Kind k;
+  switch (*conversionPosition) {
     default:
-      H.HandleInvalidConversionSpecifier(I);
+      H.HandleInvalidConversionSpecifier(conversionPosition);
       return true;      
     // C99: 7.19.6.1 (section 8).
-    case 'd': cs = ConversionSpecifier::dArg; break;
-    case 'i': cs = ConversionSpecifier::iArg; break;
-    case 'o': cs = ConversionSpecifier::oArg; break;
-    case 'u': cs = ConversionSpecifier::uArg; break;
-    case 'x': cs = ConversionSpecifier::xArg; break;
-    case 'X': cs = ConversionSpecifier::XArg; break;
-    case 'f': cs = ConversionSpecifier::fArg; break;
-    case 'F': cs = ConversionSpecifier::FArg; break;
-    case 'e': cs = ConversionSpecifier::eArg; break;
-    case 'E': cs = ConversionSpecifier::EArg; break;
-    case 'g': cs = ConversionSpecifier::gArg; break;
-    case 'G': cs = ConversionSpecifier::GArg; break;
-    case 'a': cs = ConversionSpecifier::aArg; break;
-    case 'A': cs = ConversionSpecifier::AArg; break;
-    case 'c': cs = ConversionSpecifier::IntAsCharArg; break;
-    case 's': cs = ConversionSpecifier::CStrArg;      break;
-    case 'p': cs = ConversionSpecifier::VoidPtrArg;   break;
-    case 'n': cs = ConversionSpecifier::OutIntPtrArg; break;
-    case '%': cs = ConversionSpecifier::PercentArg;   break;      
+    case 'd': k = ConversionSpecifier::dArg; break;
+    case 'i': k = ConversionSpecifier::iArg; break;
+    case 'o': k = ConversionSpecifier::oArg; break;
+    case 'u': k = ConversionSpecifier::uArg; break;
+    case 'x': k = ConversionSpecifier::xArg; break;
+    case 'X': k = ConversionSpecifier::XArg; break;
+    case 'f': k = ConversionSpecifier::fArg; break;
+    case 'F': k = ConversionSpecifier::FArg; break;
+    case 'e': k = ConversionSpecifier::eArg; break;
+    case 'E': k = ConversionSpecifier::EArg; break;
+    case 'g': k = ConversionSpecifier::gArg; break;
+    case 'G': k = ConversionSpecifier::GArg; break;
+    case 'a': k = ConversionSpecifier::aArg; break;
+    case 'A': k = ConversionSpecifier::AArg; break;
+    case 'c': k = ConversionSpecifier::IntAsCharArg; break;
+    case 's': k = ConversionSpecifier::CStrArg;      break;
+    case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
+    case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
+    case '%': k = ConversionSpecifier::PercentArg;   break;      
     // Objective-C.
-    case '@': cs = ConversionSpecifier::ObjCObjArg; break;      
+    case '@': k = ConversionSpecifier::ObjCObjArg; break;      
   }
-  FS.setConversionSpecifier(cs);
+  FS.setConversionSpecifier(ConversionSpecifier(conversionPosition, k));
   return FormatSpecifierResult(Start, FS);
 }
 
-bool ParseFormatSring(FormatStringHandler &H, const char *I, const char *E) {
+namespace clang { namespace analyze_printf {
+bool ParseFormatString(FormatStringHandler &H,
+                       const char *I, const char *E) {
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
     const FormatSpecifierResult &FSR = ParseFormatSpecifier(H, I, E);
@@ -233,11 +236,13 @@ bool ParseFormatSring(FormatStringHandler &H, const char *I, const char *E) {
     if (!FSR.hasValue())
       break;    
     // We have a format specifier.  Pass it to the callback.
-    if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(), I))
+    if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(),
+                                 I - FSR.getStart()))
       return false;
   }  
   assert(I == E && "Format string not exhausted");      
   return false;
 }
+}}
 
 FormatStringHandler::~FormatStringHandler() {}

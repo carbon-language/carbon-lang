@@ -59,7 +59,15 @@ public:
    ObjCEnd = ObjCObjArg
   };
 
-  ConversionSpecifier(Kind k) : kind(k) {}
+  ConversionSpecifier()
+    : Position(0), kind(InvalidSpecifier) {}
+
+  ConversionSpecifier(const char *pos, Kind k)
+    : Position(pos), kind(k) {}
+
+  const char *getConversionStart() const {
+    return Position;
+  }
   
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= dArg && kind <= iArg; }
@@ -68,7 +76,8 @@ public:
   Kind getKind() const { return kind; }
   
 private:
-  const Kind kind;
+  const char *Position;
+  Kind kind;
 };
 
 enum LengthModifier {
@@ -115,19 +124,19 @@ private:
 };
 
 class FormatSpecifier {
-  unsigned conversionSpecifier : 6;
   unsigned lengthModifier : 5;
   unsigned flags : 5;
+  ConversionSpecifier conversionSpecifier;
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
-  FormatSpecifier() : conversionSpecifier(0), lengthModifier(0), flags(0) {}
+  FormatSpecifier() : lengthModifier(0), flags(0) {}
   
   static FormatSpecifier Parse(const char *beg, const char *end);
 
   // Methods for incrementally constructing the FormatSpecifier.
-  void setConversionSpecifier(ConversionSpecifier cs) {
-    conversionSpecifier = (unsigned) cs.getKind();
+  void setConversionSpecifier(const ConversionSpecifier &CS) {
+    conversionSpecifier = CS;    
   }
   void setLengthModifier(LengthModifier lm) {
     lengthModifier = (unsigned) lm;
@@ -140,8 +149,8 @@ public:
 
   // Methods for querying the format specifier.
 
-  ConversionSpecifier getConversionSpecifier() const {
-    return (ConversionSpecifier::Kind) conversionSpecifier;
+  const ConversionSpecifier &getConversionSpecifier() const {
+    return conversionSpecifier;
   }
 
   LengthModifier getLengthModifier() const {
@@ -187,7 +196,9 @@ public:
   
   virtual bool HandleFormatSpecifier(const FormatSpecifier &FS,
                                      const char *startSpecifier,
-                                     const char *endSpecifier) { return false; }
+                                     unsigned specifierLen) {
+    return true;
+  }
 };
   
 bool ParseFormatString(FormatStringHandler &H,
