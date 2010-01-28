@@ -608,7 +608,24 @@ from the previous release.</p>
 API changes are:</p>
 
 <ul>
-<li>...</li>
+<li><tt>ModuleProvider</tt> has been <a
+href="http://llvm.org/viewvc/llvm-project?view=rev&revision=94686">removed</a>
+and its methods moved to <tt>Module</tt> and <tt>GlobalValue</tt>.
+Most clients can remove uses of <tt>ExistingModuleProvider</tt>,
+replace <tt>getBitcodeModuleProvider</tt> with
+<tt>getLazyBitcodeModule</tt>, and pass their <tt>Module</tt> to
+functions that used to accept <tt>ModuleProvider</tt>.  Clients who
+wrote their own <tt>ModuleProvider</tt>s will need to derive from
+<tt>GVMaterializer</tt> instead and use
+<tt>Module::setMaterializer</tt> to attach it to a
+<tt>Module</tt>.</li>
+
+<li><tt>GhostLinkage</tt> has given up the ghost.
+<tt>GlobalValue</tt>s that have not yet been read from their backing
+storage have the same linkage they will have after being read in.
+Clients must replace calls to
+<tt>GlobalValue::hasNotBeenReadFromBitcode</tt> with
+<tt>GlobalValue::isMaterializable</tt>.</li>
 </ul>
 
 </div>
