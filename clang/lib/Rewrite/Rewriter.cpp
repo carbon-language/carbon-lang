@@ -207,9 +207,10 @@ bool Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
 /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
 /// printer to generate the replacement code.  This returns true if the input
 /// could not be rewritten, or false if successful.
-bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
+bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To, int Size) {
   // Measaure the old text.
-  int Size = getRangeSize(From->getSourceRange());
+  if (!Size)
+    Size = getRangeSize(From->getSourceRange());
   if (Size == -1)
     return true;
 

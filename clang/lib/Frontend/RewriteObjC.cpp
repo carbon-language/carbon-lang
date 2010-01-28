@@ -167,7 +167,7 @@ namespace {
 
     virtual void HandleTranslationUnit(ASTContext &C);
 
-    void ReplaceStmt(Stmt *Old, Stmt *New) {
+    void ReplaceStmt(Stmt *Old, Stmt *New, int Size=0) {
       Stmt *ReplacingStmt = ReplacedNodes[Old];
 
       if (ReplacingStmt)
@@ -177,7 +177,7 @@ namespace {
         return; // Used when rewriting the assignment of a property setter.
 
       // If replacement succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceStmt(Old, New)) {
+      if (!Rewrite.ReplaceStmt(Old, New, Size)) {
         ReplacedNodes[Old] = New;
         return;
       }
@@ -1247,8 +1247,12 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
         // delete IV; leak for now, see RewritePropertySetter() usage for more info.
         return ME;
       }
-
-      ReplaceStmt(IV->getBase(), PE);
+      // Get the old text, only to get its size.
+      std::string SStr;
+      llvm::raw_string_ostream S(SStr);
+      IV->getBase()->printPretty(S, *Context, 0, PrintingPolicy(LangOpts));
+      // Get the new text
+      ReplaceStmt(IV->getBase(), PE, S.str().size());
       // Cannot delete IV->getBase(), since PE points to it.
       // Replace the old base with the cast. This is important when doing
       // embedded rewrites. For example, [newInv->_container addObject:0].

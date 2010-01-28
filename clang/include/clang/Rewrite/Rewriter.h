@@ -190,7 +190,7 @@ public:
   /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
   /// printer to generate the replacement code.  This returns true if the input
   /// could not be rewritten, or false if successful.
-  bool ReplaceStmt(Stmt *From, Stmt *To);
+  bool ReplaceStmt(Stmt *From, Stmt *To, int Size=0);
 
   /// getRewriteBufferFor - Return the rewrite buffer for the specified FileID.
   /// If no modification has been made to it, return null.
