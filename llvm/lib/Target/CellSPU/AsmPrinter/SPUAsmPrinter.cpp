@@ -267,18 +267,6 @@ namespace {
       }
     }
   };
-
-  /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
-  class LinuxAsmPrinter : public SPUAsmPrinter {
-  public:
-    explicit LinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const MCAsmInfo *T, bool V)
-      : SPUAsmPrinter(O, TM, T, V) {}
-
-    virtual const char *getPassName() const {
-      return "STI CBEA SPU Assembly Printer";
-    }
-  };
 } // end of anonymous namespace
 
 // Include the auto-generated portion of the assembly writer
@@ -367,5 +355,5 @@ bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 // Force static initialization.
 extern "C" void LLVMInitializeCellSPUAsmPrinter() { 
-  RegisterAsmPrinter<LinuxAsmPrinter> X(TheCellSPUTarget);
+  RegisterAsmPrinter<SPUAsmPrinter> X(TheCellSPUTarget);
 }
