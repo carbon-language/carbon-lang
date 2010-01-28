@@ -4327,6 +4327,16 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.AssignOrdering(Res.getNode(), SDNodeOrder);
     return 0;
   }
+  case Intrinsic::eh_sjlj_callsite: {
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+    ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
+    assert(CI && "Non-constant call site value in eh.sjlj.callsite!");
+    assert(MMI->getCurrentCallSite() == 0 && "Overlapping call sites!");
+
+    MMI->setCurrentCallSite(CI->getZExtValue());
+    return 0;
+  }
+
   case Intrinsic::convertff:
   case Intrinsic::convertfsi:
   case Intrinsic::convertfui:
@@ -4783,6 +4793,15 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
+
+    // For SjLj, keep track of which landing pads go with which invokes
+    // so as to maintain the ordering of pads in the LSDA.
+    unsigned CallSiteIndex = MMI->getCurrentCallSite();
+    if (CallSiteIndex) {
+      MMI->setCallSiteBeginLabel(BeginLabel, CallSiteIndex);
+      // Now that the call site is handled, stop tracking it.
+      MMI->setCurrentCallSite(0);
+    }
 
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
