@@ -365,31 +365,33 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   // the indices index into the element or field type selected by the
   // preceding index.
   for (;;) {
-    const SCEV *ElSize = SE.getAllocSizeExpr(ElTy);
     // If the scale size is not 0, attempt to factor out a scale for
     // array indexing.
     SmallVector<const SCEV *, 8> ScaledOps;
-    if (ElTy->isSized() && !ElSize->isZero()) {
-      SmallVector<const SCEV *, 8> NewOps;
-      for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-        const SCEV *Op = Ops[i];
-        const SCEV *Remainder = SE.getIntegerSCEV(0, Ty);
-        if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.TD)) {
-          // Op now has ElSize factored out.
-          ScaledOps.push_back(Op);
-          if (!Remainder->isZero())
-            NewOps.push_back(Remainder);
-          AnyNonZeroIndices = true;
-        } else {
-          // The operand was not divisible, so add it to the list of operands
-          // we'll scan next iteration.
-          NewOps.push_back(Ops[i]);
+    if (ElTy->isSized()) {
+      const SCEV *ElSize = SE.getAllocSizeExpr(ElTy);
+      if (!ElSize->isZero()) {
+        SmallVector<const SCEV *, 8> NewOps;
+        for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+          const SCEV *Op = Ops[i];
+          const SCEV *Remainder = SE.getIntegerSCEV(0, Ty);
+          if (FactorOutConstant(Op, Remainder, ElSize, SE, SE.TD)) {
+            // Op now has ElSize factored out.
+            ScaledOps.push_back(Op);
+            if (!Remainder->isZero())
+              NewOps.push_back(Remainder);
+            AnyNonZeroIndices = true;
+          } else {
+            // The operand was not divisible, so add it to the list of operands
+            // we'll scan next iteration.
+            NewOps.push_back(Ops[i]);
+          }
         }
-      }
-      // If we made any changes, update Ops.
-      if (!ScaledOps.empty()) {
-        Ops = NewOps;
-        SimplifyAddOperands(Ops, Ty, SE);
+        // If we made any changes, update Ops.
+        if (!ScaledOps.empty()) {
+          Ops = NewOps;
+          SimplifyAddOperands(Ops, Ty, SE);
+        }
       }
     }
 
