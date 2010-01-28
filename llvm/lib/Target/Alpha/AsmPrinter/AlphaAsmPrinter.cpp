@@ -29,10 +29,7 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
-
-STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   struct AlphaAsmPrinter : public AsmPrinter {
@@ -47,12 +44,14 @@ namespace {
       return "Alpha Assembly Printer";
     }
     void printInstruction(const MachineInstr *MI);
+    void EmitInstruction(const MachineInstr *MI) { printInstruction(MI); }
     static const char *getRegisterName(unsigned RegNo);
 
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair(const MachineInstr *MI, int i, bool brackets=true);
-    bool runOnMachineFunction(MachineFunction &F);
+    virtual void EmitFunctionBodyStart();
+    virtual void EmitFunctionBodyEnd(); 
     void EmitStartOfAsmFile(Module &M);
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
@@ -120,44 +119,16 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  O << "\n\n";
-
-  EmitFunctionHeader();
-  
+/// EmitFunctionBodyStart - Targets can override this to emit stuff before
+/// the first basic block in the function.
+void AlphaAsmPrinter::EmitFunctionBodyStart() {
   O << "\t.ent " << *CurrentFnSym << "\n";
+}
 
-  // Print out code for the function.
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    if (I != MF.begin())
-      EmitBasicBlockStart(I);
-
-    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-         II != E; ++II) {
-      // Print the assembly for the instruction.
-      ++EmittedInsts;
-      processDebugLoc(II, true);
-      printInstruction(II);
-      
-      if (VerboseAsm)
-        EmitComments(*II);
-      O << '\n';
-      processDebugLoc(II, false);
-    }
-  }
-
+/// EmitFunctionBodyEnd - Targets can override this to emit stuff after
+/// the last basic block in the function.
+void AlphaAsmPrinter::EmitFunctionBodyEnd() {
   O << "\t.end " << *CurrentFnSym << "\n";
-
-  // Print out jump tables referenced by the function
-  EmitJumpTableInfo();
-  
-  // We didn't modify anything.
-  return false;
 }
 
 void AlphaAsmPrinter::EmitStartOfAsmFile(Module &M) {
