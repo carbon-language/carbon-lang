@@ -2263,7 +2263,9 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
       CFGBlock &b = **I;
       if (!live[b.getBlockID()])
         // Avoid excessive errors by marking everything reachable from here
-        lines.push_back(ErrLoc(MarkLiveTop(&b, live, Context.getSourceManager()), SourceRange(), SourceRange()));
+        lines.push_back(ErrLoc(MarkLiveTop(&b, live,
+                                           Context.getSourceManager()),
+                               SourceRange(), SourceRange()));
     }
   }
 
