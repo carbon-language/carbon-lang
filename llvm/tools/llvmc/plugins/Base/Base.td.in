@@ -50,6 +50,11 @@ def OptList : OptionList<[
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_option "mtune",
     (help "Target a specific CPU type"), (hidden)),
+ (parameter_option "fmessage-length",
+    (help "Format error messages to fit on lines of about n characters "),
+    (hidden)),
+ (parameter_option "std",
+    (help "Determine the language standard"), (hidden)),
 
  // TODO: Add a conditional compilation mechanism to make Darwin-only options
  // like '-arch' really Darwin-only.
@@ -148,6 +153,8 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (not_empty "mtune"), (forward "mtune"),
          (not_empty "mcpu"), (forward "mcpu"),
          (not_empty "m"), (forward "m"),
+         (not_empty "std"), (forward "std"),
+         (not_empty "fmessage-length"), (forward "fmessage-length"),
          (switch_on "m32"), (forward "m32"),
          (switch_on "m64"), (forward "m64"),
          (switch_on "O0"), (forward "O0"),
@@ -195,6 +202,7 @@ def llvm_gcc_assembler : Tool<
  (actions (case
           (switch_on "c"), (stop_compilation),
           (not_empty "arch"), (forward "arch"),
+          (not_empty "fmessage-length"), (forward "fmessage-length"),
           (not_empty "Wa,"), (forward_value "Wa,")))
 ]>;
 
@@ -235,6 +243,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (not_empty "weak_framework"), (forward "weak_framework"),
           (switch_on "m32"), (forward "m32"),
           (switch_on "m64"), (forward "m64"),
+          (not_empty "fmessage-length"), (forward "fmessage-length"),
           (not_empty "l"), (forward "l"),
           (not_empty "Wl,"), (forward "Wl,")))
 ]>;
