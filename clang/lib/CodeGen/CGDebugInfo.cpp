@@ -49,9 +49,9 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     CurLoc = CGM.getContext().getSourceManager().getInstantiationLoc(Loc);
 }
 
-/// getContext - Get context info for the decl.
-llvm::DIDescriptor CGDebugInfo::getContext(const VarDecl *Decl,
-                                           llvm::DIDescriptor &CompileUnit) {
+/// getContextDescriptor - Get context info for the decl.
+llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const VarDecl *Decl,
+                                              llvm::DIDescriptor &CompileUnit) {
   if (Decl->isFileVarDecl())
     return CompileUnit;
   if (Decl->getDeclContext()->isFunctionOrMethod()) {
@@ -1770,8 +1770,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                            ArrayType::Normal, 0);
   }
   llvm::StringRef DeclName = Decl->getName();
-  DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), DeclName, DeclName,
-                                    llvm::StringRef(), Unit, LineNo,
+  DebugFactory.CreateGlobalVariable(getContextDescriptor(Decl, Unit), DeclName,
+                                    DeclName, llvm::StringRef(), Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
