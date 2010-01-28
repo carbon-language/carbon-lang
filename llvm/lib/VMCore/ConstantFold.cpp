@@ -2021,28 +2021,6 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
                 ConstantExpr::getGetElementPtr(
                       (Constant*)CE->getOperand(0), Idxs, NumIdx);
     }
-
-    // Fold: getelementptr (i8* inttoptr (i64 1 to i8*), i32 -1)
-    // Into: inttoptr (i64 0 to i8*)
-    // This happens with pointers to member functions in C++.
-    if (CE->getOpcode() == Instruction::IntToPtr && NumIdx == 1 &&
-        isa<ConstantInt>(CE->getOperand(0)) && isa<ConstantInt>(Idxs[0]) &&
-        cast<PointerType>(CE->getType())->getElementType() ==
-            Type::getInt8Ty(Context)) {
-      Constant *Base = CE->getOperand(0);
-      Constant *Offset = Idxs[0];
-
-      // Convert the smaller integer to the larger type.
-      if (Offset->getType()->getPrimitiveSizeInBits() < 
-          Base->getType()->getPrimitiveSizeInBits())
-        Offset = ConstantExpr::getSExt(Offset, Base->getType());
-      else if (Base->getType()->getPrimitiveSizeInBits() <
-               Offset->getType()->getPrimitiveSizeInBits())
-        Base = ConstantExpr::getZExt(Base, Offset->getType());
-
-      Base = ConstantExpr::getAdd(Base, Offset);
-      return ConstantExpr::getIntToPtr(Base, CE->getType());
-    }
   }
 
   // Check to see if any array indices are not within the corresponding
