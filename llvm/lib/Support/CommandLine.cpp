@@ -507,8 +507,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 
   // Copy the program name into ProgName, making sure not to overflow it.
   std::string ProgName = sys::Path(argv[0]).getLast();
-  if (ProgName.size() > 79) ProgName.resize(79);
-  strcpy(ProgramName, ProgName.c_str());
+  size_t Len = std::min(ProgName.size(), size_t(79));
+  memcpy(ProgramName, ProgName.data(), Len);
+  ProgramName[Len] = '\0';
 
   ProgramOverview = Overview;
   bool ErrorParsing = false;

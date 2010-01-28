@@ -55,9 +55,10 @@ namespace PIC16CC {
 
   // External symbol names require memory to live till the program end.
   // So we have to allocate it and keep.
+  // FIXME: Don't leak the allocated strings.
   inline static const char *createESName (const std::string &name) {
     char *tmpName = new char[name.size() + 1];
-    strcpy (tmpName, name.c_str());
+    memcpy(tmpName, name.c_str(), name.size() + 1);
     return tmpName;
   }
 

@@ -323,8 +323,6 @@ llvm::SplitFunctionsOutOfModule(Module *M,
 Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  std::vector<BasicBlock*> &BBs,
                                                  Module *M) {
-  char *ExtraArg = NULL;
-
   sys::Path uniqueFilename(OutputPrefix + "-extractblocks");
   std::string ErrMsg;
   if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
@@ -359,9 +357,8 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   }
   BlocksToNotExtractFile.close();
 
-  const char *uniqueFN = uniqueFilename.c_str();
-  ExtraArg = (char*)malloc(23 + strlen(uniqueFN));
-  strcat(strcpy(ExtraArg, "--extract-blocks-file="), uniqueFN);
+  std::string uniqueFN = "--extract-blocks-file=" + uniqueFilename.str();
+  const char *ExtraArg = uniqueFN.c_str();
 
   std::vector<const PassInfo*> PI;
   std::vector<BasicBlock *> EmptyBBs; // This parameter is ignored.
@@ -370,7 +367,6 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
 
   if (uniqueFilename.exists())
     uniqueFilename.eraseFromDisk(); // Free disk space
-  free(ExtraArg);
 
   if (Ret == 0) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";

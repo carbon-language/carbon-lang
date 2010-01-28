@@ -179,8 +179,9 @@ static char ** CopyEnv(char ** const envp) {
   // Make a copy of the list.  Don't forget the NULL that ends the list.
   entries = 0;
   while (envp[entries] != NULL) {
-    newenv[entries] = new char[strlen (envp[entries]) + 1];
-    strcpy (newenv[entries], envp[entries]);
+    size_t len = strlen(envp[entries]) + 1;
+    newenv[entries] = new char[len];
+    memcpy(newenv[entries], envp[entries], len);
     ++entries;
   }
   newenv[entries] = NULL;

@@ -368,7 +368,7 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
 
       switch (Last) {
       case '%':
-        strcpy(Buffer, "%"); break;
+        memcpy(Buffer, "%", 2); break;
       case 'c':
         sprintf(Buffer, FmtBuf, uint32_t(Args[ArgNo++].IntVal.getZExtValue()));
         break;
@@ -400,8 +400,9 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
         errs() << "<unknown printf code '" << *FmtStr << "'!>";
         ArgNo++; break;
       }
-      strcpy(OutputBuffer, Buffer);
-      OutputBuffer += strlen(Buffer);
+      size_t Len = strlen(Buffer);
+      memcpy(OutputBuffer, Buffer, Len + 1);
+      OutputBuffer += Len;
       }
       break;
     }
