@@ -233,7 +233,7 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
+  EmitConstantPool();
 
   // Emit the function start directives
   emitFunctionStart(MF);

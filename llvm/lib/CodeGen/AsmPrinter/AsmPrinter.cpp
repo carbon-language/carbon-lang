@@ -294,7 +294,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 /// function.
 void AsmPrinter::EmitFunctionHeader() {
   // Print out constants referenced by the function
-  EmitConstantPool(MF->getConstantPool());
+  EmitConstantPool();
   
   // Print the 'header' of function.
   const Function *F = MF->getFunction();
@@ -440,7 +440,8 @@ namespace {
 /// used to print out constants which have been "spilled to memory" by
 /// the code generator.
 ///
-void AsmPrinter::EmitConstantPool(const MachineConstantPool *MCP) {
+void AsmPrinter::EmitConstantPool() {
+  const MachineConstantPool *MCP = MF->getConstantPool();
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
 

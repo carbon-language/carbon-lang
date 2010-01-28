@@ -220,7 +220,7 @@ namespace llvm {
     /// used to print out constants which have been "spilled to memory" by
     /// the code generator.
     ///
-    void EmitConstantPool(const MachineConstantPool *MCP);
+    virtual void EmitConstantPool();
 
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
