@@ -415,9 +415,38 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       return ConstantPointerNull::get(cast<PointerType>(DestTy));
     return 0;                   // Other pointer types cannot be casted
   case Instruction::PtrToInt:   // always treated as unsigned
-    if (V->isNullValue())       // is it a null pointer value?
+    // Is it a null pointer value?
+    if (V->isNullValue())
       return ConstantInt::get(DestTy, 0);
-    return 0;                   // Other pointer types cannot be casted
+    // If this is a sizeof of an array or vector, pull out a multiplication
+    // by the element size to expose it to subsequent folding.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      if (CE->getOpcode() == Instruction::GetElementPtr &&
+          CE->getNumOperands() == 2 &&
+          CE->getOperand(0)->isNullValue())
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
+          if (CI->isOne()) {
+            const Type *Ty =
+              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+            if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+              Constant *N = ConstantInt::get(DestTy, ATy->getNumElements());
+              Constant *E = ConstantExpr::getSizeOf(ATy->getElementType());
+              E = ConstantExpr::getCast(CastInst::getCastOpcode(E, false,
+                                                                DestTy, false),
+                                        E, DestTy);
+              return ConstantExpr::getMul(N, E);
+            }
+            if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+              Constant *N = ConstantInt::get(DestTy, VTy->getNumElements());
+              Constant *E = ConstantExpr::getSizeOf(VTy->getElementType());
+              E = ConstantExpr::getCast(CastInst::getCastOpcode(E, false,
+                                                                DestTy, false),
+                                        E, DestTy);
+              return ConstantExpr::getMul(N, E);
+            }
+          }
+    // Other pointer types cannot be casted
+    return 0;
   case Instruction::UIToFP:
   case Instruction::SIToFP:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {

@@ -321,15 +321,6 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << ">";
 }
 
-void SCEVFieldOffsetExpr::print(raw_ostream &OS) const {
-  // LLVM struct fields don't have names, so just print the field number.
-  OS << "offsetof(" << *STy << ", " << FieldNo << ")";
-}
-
-void SCEVAllocSizeExpr::print(raw_ostream &OS) const {
-  OS << "sizeof(" << *AllocTy << ")";
-}
-
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
   // All non-instruction values are loop invariant.  All instructions are loop
   // invariant if they are not contained in the specified loop.
@@ -356,7 +347,90 @@ const Type *SCEVUnknown::getType() const {
   return V->getType();
 }
 
+bool SCEVUnknown::isOffsetOf(const StructType *&STy, Constant *&FieldNo) const {
+  if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
+    if (VCE->getOpcode() == Instruction::PtrToInt)
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
+        if (CE->getOpcode() == Instruction::GetElementPtr)
+          if (CE->getOperand(0)->isNullValue()) {
+            const Type *Ty =
+              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+            if (const StructType *StructTy = dyn_cast<StructType>(Ty))
+              if (CE->getNumOperands() == 3 &&
+                  CE->getOperand(1)->isNullValue()) {
+                STy = StructTy;
+                FieldNo = CE->getOperand(2);
+                return true;
+              }
+          }
+
+  return false;
+}
+
+bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
+  if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
+    if (VCE->getOpcode() == Instruction::PtrToInt)
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
+        if (CE->getOpcode() == Instruction::GetElementPtr)
+          if (CE->getOperand(0)->isNullValue()) {
+            const Type *Ty =
+              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+            if (CE->getNumOperands() == 2)
+              if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
+                if (CI->isOne()) {
+                  AllocTy = Ty;
+                  return true;
+                }
+          }
+
+  return false;
+}
+
+bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
+  if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
+    if (VCE->getOpcode() == Instruction::PtrToInt)
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
+        if (CE->getOpcode() == Instruction::GetElementPtr)
+          if (CE->getOperand(0)->isNullValue()) {
+            const Type *Ty =
+              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+            if (const StructType *STy = dyn_cast<StructType>(Ty))
+              if (CE->getNumOperands() == 3 &&
+                  CE->getOperand(1)->isNullValue()) {
+                if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(2)))
+                  if (CI->isOne() &&
+                      STy->getNumElements() == 2 &&
+                      STy->getElementType(0)->isInteger(1)) {
+                    AllocTy = STy->getElementType(1);
+                    return true;
+                  }
+              }
+          }
+
+  return false;
+}
+
 void SCEVUnknown::print(raw_ostream &OS) const {
+  const Type *AllocTy;
+  if (isSizeOf(AllocTy)) {
+    OS << "sizeof(" << *AllocTy << ")";
+    return;
+  }
+  if (isAlignOf(AllocTy)) {
+    OS << "alignof(" << *AllocTy << ")";
+    return;
+  }
+
+  const StructType *STy;
+  Constant *FieldNo;
+  if (isOffsetOf(STy, FieldNo)) {
+    OS << "offsetof(" << *STy << ", ";
+    WriteAsOperand(OS, FieldNo, false);
+    OS << ")";
+    return;
+  }
+
+  // Otherwise just print it normally.
   WriteAsOperand(OS, V, false);
 }
 
@@ -513,21 +587,6 @@ namespace {
       if (const SCEVCastExpr *LC = dyn_cast<SCEVCastExpr>(LHS)) {
         const SCEVCastExpr *RC = cast<SCEVCastExpr>(RHS);
         return operator()(LC->getOperand(), RC->getOperand());
-      }
-
-      // Compare offsetof expressions.
-      if (const SCEVFieldOffsetExpr *LA = dyn_cast<SCEVFieldOffsetExpr>(LHS)) {
-        const SCEVFieldOffsetExpr *RA = cast<SCEVFieldOffsetExpr>(RHS);
-        if (CompareTypes(LA->getStructType(), RA->getStructType()) ||
-            CompareTypes(RA->getStructType(), LA->getStructType()))
-          return CompareTypes(LA->getStructType(), RA->getStructType());
-        return LA->getFieldNo() < RA->getFieldNo();
-      }
-
-      // Compare sizeof expressions by the allocation type.
-      if (const SCEVAllocSizeExpr *LA = dyn_cast<SCEVAllocSizeExpr>(LHS)) {
-        const SCEVAllocSizeExpr *RA = cast<SCEVAllocSizeExpr>(RHS);
-        return CompareTypes(LA->getAllocType(), RA->getAllocType());
       }
 
       llvm_unreachable("Unknown SCEV kind!");
@@ -2174,72 +2233,19 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
 
 const SCEV *ScalarEvolution::getFieldOffsetExpr(const StructType *STy,
                                                 unsigned FieldNo) {
-  // If we have TargetData we can determine the constant offset.
-  if (TD) {
-    const Type *IntPtrTy = TD->getIntPtrType(getContext());
-    const StructLayout &SL = *TD->getStructLayout(STy);
-    uint64_t Offset = SL.getElementOffset(FieldNo);
-    return getIntegerSCEV(Offset, IntPtrTy);
-  }
-
-  // Field 0 is always at offset 0.
-  if (FieldNo == 0) {
-    const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
-    return getIntegerSCEV(0, Ty);
-  }
-
-  // Okay, it looks like we really DO need an offsetof expr.  Check to see if we
-  // already have one, otherwise create a new one.
-  FoldingSetNodeID ID;
-  ID.AddInteger(scFieldOffset);
-  ID.AddPointer(STy);
-  ID.AddInteger(FieldNo);
-  void *IP = 0;
-  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
-  SCEV *S = SCEVAllocator.Allocate<SCEVFieldOffsetExpr>();
+  Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    C = ConstantFoldConstantExpression(CE, TD);
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
-  new (S) SCEVFieldOffsetExpr(ID, Ty, STy, FieldNo);
-  UniqueSCEVs.InsertNode(S, IP);
-  return S;
+  return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
 const SCEV *ScalarEvolution::getAllocSizeExpr(const Type *AllocTy) {
-  // If we have TargetData we can determine the constant size.
-  if (TD && AllocTy->isSized()) {
-    const Type *IntPtrTy = TD->getIntPtrType(getContext());
-    return getIntegerSCEV(TD->getTypeAllocSize(AllocTy), IntPtrTy);
-  }
-
-  // Expand an array size into the element size times the number
-  // of elements.
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(AllocTy)) {
-    const SCEV *E = getAllocSizeExpr(ATy->getElementType());
-    return getMulExpr(
-      E, getConstant(ConstantInt::get(cast<IntegerType>(E->getType()),
-                                      ATy->getNumElements())));
-  }
-
-  // Expand a vector size into the element size times the number
-  // of elements.
-  if (const VectorType *VTy = dyn_cast<VectorType>(AllocTy)) {
-    const SCEV *E = getAllocSizeExpr(VTy->getElementType());
-    return getMulExpr(
-      E, getConstant(ConstantInt::get(cast<IntegerType>(E->getType()),
-                                      VTy->getNumElements())));
-  }
-
-  // Okay, it looks like we really DO need a sizeof expr.  Check to see if we
-  // already have one, otherwise create a new one.
-  FoldingSetNodeID ID;
-  ID.AddInteger(scAllocSize);
-  ID.AddPointer(AllocTy);
-  void *IP = 0;
-  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
-  SCEV *S = SCEVAllocator.Allocate<SCEVAllocSizeExpr>();
+  Constant *C = ConstantExpr::getSizeOf(AllocTy);
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    C = ConstantFoldConstantExpression(CE, TD);
   const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
-  new (S) SCEVAllocSizeExpr(ID, Ty, AllocTy);
-  UniqueSCEVs.InsertNode(S, IP);
-  return S;
+  return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
 const SCEV *ScalarEvolution::getUnknown(Value *V) {
@@ -4241,9 +4247,6 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
       return Cast;  // must be loop invariant
     return getTruncateExpr(Op, Cast->getType());
   }
-
-  if (isa<SCEVTargetDataConstant>(V))
-    return V;
 
   llvm_unreachable("Unknown SCEV type!");
   return 0;

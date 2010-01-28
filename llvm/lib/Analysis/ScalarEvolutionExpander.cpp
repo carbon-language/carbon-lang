@@ -427,22 +427,22 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
             }
           }
       } else {
-        // Without TargetData, just check for a SCEVFieldOffsetExpr of the
+        // Without TargetData, just check for an offsetof expression of the
         // appropriate struct type.
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-          if (const SCEVFieldOffsetExpr *FO =
-                dyn_cast<SCEVFieldOffsetExpr>(Ops[i]))
-            if (FO->getStructType() == STy) {
-              unsigned FieldNo = FO->getFieldNo();
-              GepIndices.push_back(
-                  ConstantInt::get(Type::getInt32Ty(Ty->getContext()),
-                                   FieldNo));
-              ElTy = STy->getTypeAtIndex(FieldNo);
+          if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i])) {
+            const StructType *StructTy;
+            Constant *FieldNo;
+            if (U->isOffsetOf(StructTy, FieldNo) && StructTy == STy) {
+              GepIndices.push_back(FieldNo);
+              ElTy =
+                STy->getTypeAtIndex(cast<ConstantInt>(FieldNo)->getZExtValue());
               Ops[i] = SE.getConstant(Ty, 0);
               AnyNonZeroIndices = true;
               FoundFieldNo = true;
               break;
             }
+          }
       }
       // If no struct field offsets were found, tentatively assume that
       // field zero was selected (since the zero offset would obviously
@@ -999,14 +999,6 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   if (LHS->getType() != S->getType())
     LHS = InsertNoopCastOfTo(LHS, S->getType());
   return LHS;
-}
-
-Value *SCEVExpander::visitFieldOffsetExpr(const SCEVFieldOffsetExpr *S) {
-  return ConstantExpr::getOffsetOf(S->getStructType(), S->getFieldNo());
-}
-
-Value *SCEVExpander::visitAllocSizeExpr(const SCEVAllocSizeExpr *S) {
-  return ConstantExpr::getSizeOf(S->getAllocType());
 }
 
 Value *SCEVExpander::expandCodeFor(const SCEV *SH, const Type *Ty) {
