@@ -15,6 +15,7 @@
 #include "CIndexer.h"
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
+#include "CIndexDiagnostic.h"
 
 #include "clang/Basic/Version.h"
 #include "clang/AST/DeclVisitor.h"
@@ -913,13 +914,21 @@ void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
   CXXIdx->setUseExternalASTGeneration(value);
 }
 
-// FIXME: need to pass back error info.
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
-                                              const char *ast_filename) {
+                                              const char *ast_filename,
+                                             CXDiagnosticCallback diag_callback,
+                                              CXClientData diag_client_data) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  return ASTUnit::LoadFromPCHFile(ast_filename, CXXIdx->getDiags(),
+  // Configure the diagnostics.
+  DiagnosticOptions DiagOpts;
+  llvm::OwningPtr<Diagnostic> Diags;
+  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
+  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
+  Diags->setClient(&DiagClient);
+  
+  return ASTUnit::LoadFromPCHFile(ast_filename, *Diags,
                                   CXXIdx->getOnlyLocalDecls(),
                                   /* UseBumpAllocator = */ true);
 }
@@ -930,10 +939,19 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           int num_command_line_args,
                                           const char **command_line_args,
                                           unsigned num_unsaved_files,
-                                          struct CXUnsavedFile *unsaved_files) {
+                                          struct CXUnsavedFile *unsaved_files,
+                                          CXDiagnosticCallback diag_callback,
+                                          CXClientData diag_client_data) {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
+  // Configure the diagnostics.
+  DiagnosticOptions DiagOpts;
+  llvm::OwningPtr<Diagnostic> Diags;
+  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
+  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
+  Diags->setClient(&DiagClient);
+                               
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     const llvm::MemoryBuffer *Buffer 
@@ -955,7 +973,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
 
-    unsigned NumErrors = CXXIdx->getDiags().getNumErrors();
+    unsigned NumErrors = Diags->getNumErrors();
     
 #ifdef USE_CRASHTRACER
     ArgsCrashTracerInfo ACTI(Args);
@@ -963,7 +981,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     
     llvm::OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
-                                   CXXIdx->getDiags(),
+                                   *Diags, 
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
                                    /* UseBumpAllocator = */ true,
@@ -972,7 +990,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
-    if (NumErrors != CXXIdx->getDiags().getNumErrors())
+    if (NumErrors != Diags->getNumErrors())
       return 0;
 
     return Unit.take();
@@ -1050,7 +1068,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     llvm::errs() << '\n';
   }
 
-  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, CXXIdx->getDiags(),
+  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
                                           CXXIdx->getOnlyLocalDecls(),
                                           /* UseBumpAllocator = */ true,
                                           RemappedFiles.data(),
@@ -1089,7 +1107,7 @@ CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
 
 extern "C" {
 CXSourceLocation clang_getNullLocation() {
-  CXSourceLocation Result = { 0, 0 };
+  CXSourceLocation Result = { { 0, 0 }, 0 };
   return Result;
 }
 
@@ -1113,13 +1131,18 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc, false);
 }
 
-CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
-  if (begin.ptr_data != end.ptr_data) {
-    CXSourceRange Result = { 0, 0, 0 };
-    return Result;
-  }
+CXSourceRange clang_getNullRange() {
+  CXSourceRange Result = { { 0, 0 }, 0, 0 };
+  return Result;
+}
   
-  CXSourceRange Result = { begin.ptr_data, begin.int_data, end.int_data };
+CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
+  if (begin.ptr_data[0] != end.ptr_data[0] ||
+      begin.ptr_data[1] != end.ptr_data[1])
+    return clang_getNullRange();
+  
+  CXSourceRange Result = { { begin.ptr_data[0], begin.ptr_data[1] }, 
+                           begin.int_data, end.int_data };
   return Result;
 }
 
@@ -1129,7 +1152,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
                                     unsigned *column,
                                     unsigned *offset) {
   cxloc::CXSourceLocationPtr Ptr
-    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data);
+    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data[0]);
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
   if (!Ptr.getPointer() || Loc.isInvalid()) {
@@ -1147,8 +1170,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
   // FIXME: This is largely copy-paste from
   ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
   // what we want the two routines should be refactored.  
-  ASTContext &Context = *Ptr.getPointer();
-  SourceManager &SM = Context.getSourceManager();
+  const SourceManager &SM = *Ptr.getPointer();
   SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
   
   if (Ptr.getInt()) {
@@ -1170,7 +1192,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     // (CXXUnit), so that the preprocessor will be available here. At
     // that point, we can use Preprocessor::getLocForEndOfToken().
     unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, 
-                                                Context.getLangOptions());
+                             *static_cast<LangOptions *>(location.ptr_data[1]));
     if (Length > 0)
       InstLoc = InstLoc.getFileLocWithOffset(Length - 1);
   }
@@ -1186,15 +1208,17 @@ void clang_getInstantiationLocation(CXSourceLocation location,
 }
 
 CXSourceLocation clang_getRangeStart(CXSourceRange range) {
-  CXSourceLocation Result = { range.ptr_data, range.begin_int_data };
+  CXSourceLocation Result = { { range.ptr_data[0], range.ptr_data[1] }, 
+                              range.begin_int_data };
   return Result;
 }
 
 CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
-  llvm::PointerIntPair<ASTContext *, 1, bool> Ptr;
-  Ptr.setPointer(static_cast<ASTContext *>(range.ptr_data));
+  cxloc::CXSourceLocationPtr Ptr;
+  Ptr.setPointer(static_cast<SourceManager *>(range.ptr_data[0]));
   Ptr.setInt(true);
-  CXSourceLocation Result = { Ptr.getOpaqueValue(), range.end_int_data };
+  CXSourceLocation Result = { { Ptr.getOpaqueValue(), range.ptr_data[1] },
+                              range.end_int_data };
   return Result;
 }
 
@@ -1505,10 +1529,8 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return cxloc::translateSourceLocation(getCursorContext(C), 
                                    getLocationFromExpr(getCursorExpr(C)));
 
-  if (!getCursorDecl(C)) {
-    CXSourceLocation empty = { 0, 0 };
-    return empty;
-  }
+  if (!getCursorDecl(C))
+    return clang_getNullLocation();
 
   Decl *D = getCursorDecl(C);
   SourceLocation Loc = D->getLocation();
@@ -1558,10 +1580,8 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
     return cxloc::translateSourceRange(getCursorContext(C), 
                                 getCursorStmt(C)->getSourceRange());
   
-  if (!getCursorDecl(C)) {
-    CXSourceRange empty = { 0, 0, 0 };
-    return empty;
-  }
+  if (!getCursorDecl(C))
+    return clang_getNullRange();
   
   Decl *D = getCursorDecl(C);
   return cxloc::translateSourceRange(D->getASTContext(), D->getSourceRange());
@@ -1939,10 +1959,8 @@ CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
 
 CXSourceRange clang_getTokenExtent(CXTranslationUnit TU, CXToken CXTok) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
-  if (!CXXUnit) {
-    CXSourceRange Result = { 0, 0, 0 };
-    return Result;
-  }
+  if (!CXXUnit)
+    return clang_getNullRange();
   
   return cxloc::translateSourceRange(CXXUnit->getASTContext(), 
                         SourceLocation::getFromRawEncoding(CXTok.int_data[1]));

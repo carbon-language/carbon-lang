@@ -28,10 +28,13 @@ char *basename(const char* path)
 extern char *basename(const char *);
 #endif
 
+static void PrintDiagnosticCallback(CXDiagnostic Diagnostic, 
+                                    CXClientData ClientData);
+
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
                                       CXTranslationUnit *TU) {
   
-  *TU = clang_createTranslationUnit(Idx, file);
+  *TU = clang_createTranslationUnit(Idx, file, PrintDiagnosticCallback, 0);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
     return 0;
@@ -176,6 +179,41 @@ static const char* GetCursorSource(CXCursor Cursor) {
 /******************************************************************************/
 
 typedef void (*PostVisitTU)(CXTranslationUnit);
+
+static void PrintDiagnosticCallback(CXDiagnostic Diagnostic, 
+                                    CXClientData ClientData) {
+  FILE *out = (FILE *)ClientData;
+  CXFile file;
+  unsigned line, column;
+  CXString text;
+  enum CXDiagnosticSeverity severity = clang_getDiagnosticSeverity(Diagnostic);
+  
+  /* Ignore diagnostics that should be ignored. */
+  if (severity == CXDiagnostic_Ignored)
+    return;
+  
+  /* Print file:line:column. */
+  clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
+                                 &file, &line, &column, 0);
+  if (file)
+    fprintf(out, "%s:%d:%d: ", clang_getFileName(file), line, column);
+  
+  /* Print warning/error/etc. */
+  switch (severity) {
+  case CXDiagnostic_Ignored: assert(0 && "impossible"); break;
+  case CXDiagnostic_Note: fprintf(out, "note: "); break;
+  case CXDiagnostic_Warning: fprintf(out, "warning: "); break;
+  case CXDiagnostic_Error: fprintf(out, "error: "); break;
+  case CXDiagnostic_Fatal: fprintf(out, "fatal error: "); break;
+  }
+  
+  text = clang_getDiagnosticSpelling(Diagnostic);
+  if (clang_getCString(text))
+    fprintf(out, "%s\n", clang_getCString(text));
+  else
+    fprintf(out, "<no diagnostic text>\n");
+  clang_disposeString(text);
+}
 
 /******************************************************************************/
 /* Logic for testing traversal.                                               */
@@ -407,7 +445,9 @@ int perform_test_load_source(int argc, const char **argv,
                                                  argc - num_unsaved_files, 
                                                  argv + num_unsaved_files,
                                                  num_unsaved_files,
-                                                 unsaved_files);
+                                                 unsaved_files,
+                                                 PrintDiagnosticCallback,
+                                                 stderr);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     return 1;
@@ -722,7 +762,9 @@ int inspect_cursor_at(int argc, const char **argv) {
                                   argc - num_unsaved_files - 2 - NumLocations,
                                    argv + num_unsaved_files + 1 + NumLocations,
                                                  num_unsaved_files,
-                                                 unsaved_files);
+                                                 unsaved_files,
+                                                 PrintDiagnosticCallback,
+                                                 stderr);
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     return -1;
@@ -779,7 +821,9 @@ int perform_token_annotation(int argc, const char **argv) {
                                                  argc - num_unsaved_files - 3,
                                                  argv + num_unsaved_files + 2,
                                                  num_unsaved_files,
-                                                 unsaved_files);
+                                                 unsaved_files,
+                                                 PrintDiagnosticCallback,
+                                                 stderr);
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     clang_disposeIndex(CIdx);

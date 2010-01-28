@@ -178,12 +178,6 @@ CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
 
 /**
- * \brief Get the original translation unit source file name.
- */
-CINDEX_LINKAGE CXString
-clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
-
-/**
  * \brief Request that AST's be generated externally for API calls which parse
  * source code on the fly, e.g. \see createTranslationUnitFromSourceFile.
  *
@@ -195,54 +189,6 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  */
 CINDEX_LINKAGE void clang_setUseExternalASTGeneration(CXIndex index,
                                                       int value);
-
-/**
- * \brief Create a translation unit from an AST file (-emit-ast).
- */
-CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(
-  CXIndex, const char *ast_filename
-);
-
-/**
- * \brief Destroy the specified CXTranslationUnit object.
- */
-CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
-
-/**
- * \brief Return the CXTranslationUnit for a given source file and the provided
- * command line arguments one would pass to the compiler.
- *
- * Note: The 'source_filename' argument is optional.  If the caller provides a
- * NULL pointer, the name of the source file is expected to reside in the
- * specified command line arguments.
- *
- * Note: When encountered in 'clang_command_line_args', the following options
- * are ignored:
- *
- *   '-c'
- *   '-emit-ast'
- *   '-fsyntax-only'
- *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
- *
- *
- * \param source_filename - The name of the source file to load, or NULL if the
- * source file is included in clang_command_line_args.
- *
- * \param num_unsaved_files the number of unsaved file entries in \p
- * unsaved_files.
- *
- * \param unsaved_files the files that have not yet been saved to disk
- * but may be required for code completion, including the contents of
- * those files.
- */
-CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
-                                        CXIndex CIdx,
-                                        const char *source_filename,
-                                        int num_clang_command_line_args,
-                                        const char **clang_command_line_args,
-                                        unsigned num_unsaved_files,
-                                        struct CXUnsavedFile *unsaved_files);
-
 /**
  * \defgroup CINDEX_FILES File manipulation routines
  *
@@ -303,7 +249,7 @@ CINDEX_LINKAGE CXFile clang_getFile(CXTranslationUnit tu,
  * particular file, line, and column.
  */
 typedef struct {
-  void *ptr_data;
+  void *ptr_data[2];
   unsigned int_data;
 } CXSourceLocation;
 
@@ -314,7 +260,7 @@ typedef struct {
  * starting and end locations from a source range, respectively.
  */
 typedef struct {
-  void *ptr_data;
+  void *ptr_data[2];
   unsigned begin_int_data;
   unsigned end_int_data;
 } CXSourceRange;
@@ -344,6 +290,11 @@ CINDEX_LINKAGE CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                                   unsigned line,
                                                   unsigned column);
 
+/**
+ * \brief Retrieve a NULL (invalid) source range.
+ */
+CINDEX_LINKAGE CXSourceRange clang_getNullRange();
+  
 /**
  * \brief Retrieve a source range given the beginning and ending source
  * locations.
@@ -392,6 +343,285 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
  * @}
  */
 
+/**
+ * \defgroup CINDEX_DIAG Diagnostic reporting
+ *
+ * @{
+ */
+
+/**
+ * \brief Describes the severity of a particular diagnostic.
+ */
+enum CXDiagnosticSeverity {
+  /**
+   * \brief A diagnostic that has been suppressed, e.g., by a command-line 
+   * option.
+   */
+  CXDiagnostic_Ignored = 0,
+  
+  /**
+   * \brief This diagnostic is a note that should be attached to the
+   * previous (non-note) diagnostic.
+   */
+  CXDiagnostic_Note    = 1,
+
+  /**
+   * \brief This diagnostic indicates suspicious code that may not be
+   * wrong.
+   */
+  CXDiagnostic_Warning = 2,
+
+  /**
+   * \brief This diagnostic indicates that the code is ill-formed.
+   */
+  CXDiagnostic_Error   = 3,
+
+  /**
+   * \brief This diagnostic indicates that the code is ill-formed such
+   * that future parser recovery is unlikely to produce useful
+   * results.
+   */
+  CXDiagnostic_Fatal   = 4
+};
+
+/**
+ * \brief Describes the kind of fix-it hint expressed within a
+ * diagnostic.
+ */
+enum CXFixItKind {
+  /**
+   * \brief A fix-it hint that inserts code at a particular position.
+   */
+  CXFixIt_Insertion   = 0,
+
+  /**
+   * \brief A fix-it hint that removes code within a range.
+   */
+  CXFixIt_Removal     = 1,
+
+  /**
+   * \brief A fix-it hint that replaces the code within a range with another
+   * string.
+   */
+  CXFixIt_Replacement = 2
+};
+
+/**
+ * \brief A single diagnostic, containing the diagnostic's severity,
+ * location, text, source ranges, and fix-it hints.
+ */
+typedef void *CXDiagnostic;
+
+/**
+ * \brief Callback function invoked for each diagnostic emitted during
+ * translation.
+ *
+ * \param Diagnostic the diagnostic emitted during translation. This
+ * diagnostic pointer is only valid during the execution of the
+ * callback.
+ *
+ * \param ClientData the callback client data.
+ */
+typedef void (*CXDiagnosticCallback)(CXDiagnostic Diagnostic,
+                                     CXClientData ClientData);
+
+/**
+ * \brief Determine the severity of the given diagnostic.
+ */
+CINDEX_LINKAGE enum CXDiagnosticSeverity 
+clang_getDiagnosticSeverity(CXDiagnostic);
+
+/**
+ * \brief Retrieve the source location of the given diagnostic.
+ *
+ * This location is where Clang would print the caret ('^') when
+ * displaying the diagnostic on the command line.
+ */
+CINDEX_LINKAGE CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic);
+
+/**
+ * \brief Retrieve the text of the given diagnostic.
+ */
+CINDEX_LINKAGE CXString clang_getDiagnosticSpelling(CXDiagnostic);
+  
+/**
+ * \brief Retrieve the source ranges associated with the diagnostic.
+ *
+ * These source ranges highlight important elements in the source
+ * code. On the command line, Clang displays source ranges by
+ * underlining them with '~' characters. 
+ *
+ * \param Diagnostic the diagnostic whose ranges are being extracted.
+ *
+ * \param Ranges [out] will be set to a newly-allocated array
+ * containing the source ranges of this diagnostic. These ranges must
+ * be freed with \c clang_disposeDiagnosticRanges().
+ *
+ * \param NumRanges [out] will be set to the number of source ranges
+ * in the \p Ranges array.
+ */
+CINDEX_LINKAGE void clang_getDiagnosticRanges(CXDiagnostic Diagnostic, 
+                                              CXSourceRange **Ranges, 
+                                              unsigned *NumRanges);
+
+/**
+ * \brief Free the source ranges returned by \c clang_getDiagnosticRanges().
+ */
+CINDEX_LINKAGE void clang_disposeDiagnosticRanges(CXSourceRange *Ranges, 
+                                                  unsigned NumRanges);
+
+/**
+ * \brief Determine the number of fix-it hints associated with the
+ * given diagnostic.
+ */
+CINDEX_LINKAGE unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diagnostic);
+
+/**
+ * \brief Retrieve the kind of the given fix-it.
+ *
+ * \param Diagnostic the diagnostic whose fix-its are being queried.
+ *
+ * \param FixIt the zero-based index of the fix-it to query.
+ */
+CINDEX_LINKAGE enum CXFixItKind 
+clang_getDiagnosticFixItKind(CXDiagnostic Diagnostic, unsigned FixIt);
+
+/**
+ * \brief Retrieve the insertion information for an insertion fix-it.
+ *
+ * For a fix-it that describes an insertion into a text buffer,
+ * retrieve the source location where the text should be inserted and
+ * the text to be inserted.
+ *
+ * \param Diagnostic the diagnostic whose fix-its are being queried.
+ *
+ * \param FixIt the zero-based index of the insertion fix-it.
+ *
+ * \param Location will be set to the location where text should be
+ * inserted.
+ *
+ * \returns the text string to insert at the given location.
+ */
+CINDEX_LINKAGE CXString
+clang_getDiagnosticFixItInsertion(CXDiagnostic Diagnostic, unsigned FixIt,
+                                  CXSourceLocation *Location);
+
+/**
+ * \brief Retrieve the removal information for a removal fix-it.
+ *
+ * For a fix-it that describes a removal from a text buffer, retrieve
+ * the source range that should be removed.
+ *
+ * \param Diagnostic the diagnostic whose fix-its are being queried.
+ *
+ * \param FixIt the zero-based index of the removal fix-it.
+ *
+ * \returns a source range describing the text that should be removed
+ * from the buffer.
+ */
+CINDEX_LINKAGE CXSourceRange
+clang_getDiagnosticFixItRemoval(CXDiagnostic Diagnostic, unsigned FixIt);
+
+/**
+ * \brief Retrieve the replacement information for an replacement fix-it.
+ *
+ * For a fix-it that describes replacement of text in the text buffer
+ * with alternative text.
+ *
+ * \param Diagnostic the diagnostic whose fix-its are being queried.
+ *
+ * \param FixIt the zero-based index of the replacement fix-it.
+ *
+ * \param Range will be set to the source range whose text should be
+ * replaced with the returned text.
+ *
+ * \returns the text string to use as replacement text.
+ */
+CINDEX_LINKAGE CXString
+clang_getDiagnosticFixItReplacement(CXDiagnostic Diagnostic, unsigned FixIt,
+                                    CXSourceRange *Range);
+
+/**
+ * @}
+ */
+
+/**
+ * \defgroup CINDEX_TRANSLATION_UNIT Translation unit manipulation
+ *
+ * The routines in this group provide the ability to create and destroy
+ * translation units from files, either by parsing the contents of the files or
+ * by reading in a serialized representation of a translation unit.
+ *
+ * @{
+ */
+  
+/**
+ * \brief Get the original translation unit source file name.
+ */
+CINDEX_LINKAGE CXString
+clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
+
+/**
+ * \brief Return the CXTranslationUnit for a given source file and the provided
+ * command line arguments one would pass to the compiler.
+ *
+ * Note: The 'source_filename' argument is optional.  If the caller provides a
+ * NULL pointer, the name of the source file is expected to reside in the
+ * specified command line arguments.
+ *
+ * Note: When encountered in 'clang_command_line_args', the following options
+ * are ignored:
+ *
+ *   '-c'
+ *   '-emit-ast'
+ *   '-fsyntax-only'
+ *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
+ *
+ *
+ * \param source_filename - The name of the source file to load, or NULL if the
+ * source file is included in clang_command_line_args.
+ *
+ * \param num_unsaved_files the number of unsaved file entries in \p
+ * unsaved_files.
+ *
+ * \param unsaved_files the files that have not yet been saved to disk
+ * but may be required for code completion, including the contents of
+ * those files.
+ *
+ * \param diag_callback callback function that will receive any diagnostics
+ * emitted while processing this source file. If NULL, diagnostics will be
+ * suppressed.
+ *
+ * \param diag_client_data client data that will be passed to the diagnostic
+ * callback function.
+ */
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
+                                         CXIndex CIdx,
+                                         const char *source_filename,
+                                         int num_clang_command_line_args,
+                                         const char **clang_command_line_args,
+                                         unsigned num_unsaved_files,
+                                         struct CXUnsavedFile *unsaved_files,
+                                         CXDiagnosticCallback diag_callback,
+                                         CXClientData diag_client_data);
+ 
+/**
+ * \brief Create a translation unit from an AST file (-emit-ast).
+ */
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex, 
+                                             const char *ast_filename,
+                                             CXDiagnosticCallback diag_callback,
+                                             CXClientData diag_client_data);
+
+/**
+ * \brief Destroy the specified CXTranslationUnit object.
+ */
+CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
+ 
+/**
+ * @}
+ */
+  
 /**
  * \brief Describes the kind of entity that a cursor refers to.
  */

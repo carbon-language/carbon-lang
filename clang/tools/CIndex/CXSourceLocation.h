@@ -16,6 +16,9 @@
 
 #include "clang-c/Index.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/AST/ASTContext.h"
 
 namespace clang {
       
@@ -23,24 +26,44 @@ class ASTContext;
 
 namespace cxloc {
   
-typedef llvm::PointerIntPair<ASTContext *, 1, bool> CXSourceLocationPtr;
+typedef llvm::PointerIntPair<const SourceManager *, 1, bool> 
+  CXSourceLocationPtr;
 
+/// \brief Translate a Clang source location into a CIndex source location.
+static inline CXSourceLocation 
+translateSourceLocation(const SourceManager &SM, const LangOptions &LangOpts,
+                        SourceLocation Loc, bool AtEnd = false) {
+  CXSourceLocationPtr Ptr(&SM, AtEnd);
+  CXSourceLocation Result = { { Ptr.getOpaqueValue(), (void *)&LangOpts, },
+                              Loc.getRawEncoding() };
+  return Result;
+}
+  
 /// \brief Translate a Clang source location into a CIndex source location.
 static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
                                                        SourceLocation Loc,
                                                        bool AtEnd = false) {
-  CXSourceLocationPtr Ptr(&Context, AtEnd);
-  CXSourceLocation Result = { Ptr.getOpaqueValue(), Loc.getRawEncoding() };
-  return Result;
+  return translateSourceLocation(Context.getSourceManager(), 
+                                 Context.getLangOptions(),
+                                 Loc, AtEnd);
 }
 
 /// \brief Translate a Clang source range into a CIndex source range.
-static inline CXSourceRange translateSourceRange(ASTContext &Context,
+static inline CXSourceRange translateSourceRange(const SourceManager &SM, 
+                                                 const LangOptions &LangOpts,
                                                  SourceRange R) {
-  CXSourceRange Result = { &Context, 
+  CXSourceRange Result = { { (void *)&SM, (void *)&LangOpts },
                            R.getBegin().getRawEncoding(),
                            R.getEnd().getRawEncoding() };
   return Result;
+}
+  
+/// \brief Translate a Clang source range into a CIndex source range.
+static inline CXSourceRange translateSourceRange(ASTContext &Context,
+                                                 SourceRange R) {
+  return translateSourceRange(Context.getSourceManager(),
+                              Context.getLangOptions(),
+                              R);
 }
 
 static inline SourceLocation translateSourceLocation(CXSourceLocation L) {

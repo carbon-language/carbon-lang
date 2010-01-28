@@ -24,19 +24,7 @@
 
 using namespace clang;
 
-/// IgnoreDiagnosticsClient - A DiagnosticsClient that just ignores emitted
-/// warnings and errors.
-class IgnoreDiagnosticsClient : public DiagnosticClient {
-public:
-  virtual ~IgnoreDiagnosticsClient() {}
-  virtual void HandleDiagnostic(Diagnostic::Level, const DiagnosticInfo &) {}
-};
-
 class CIndexer {
-  DiagnosticOptions DiagOpts;
-  IgnoreDiagnosticsClient IgnoreDiagClient;
-  llvm::OwningPtr<Diagnostic> TextDiags;
-  Diagnostic IgnoreDiags;
   bool UseExternalASTGeneration;
   bool OnlyLocalDecls;
   bool DisplayDiagnostics;
@@ -44,11 +32,9 @@ class CIndexer {
   llvm::sys::Path ClangPath;
   
 public:
-  CIndexer() : IgnoreDiags(&IgnoreDiagClient), UseExternalASTGeneration(false),
-               OnlyLocalDecls(false), DisplayDiagnostics(false) 
-  {
-    TextDiags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
-  }
+  CIndexer() 
+    : UseExternalASTGeneration(false), OnlyLocalDecls(false), 
+      DisplayDiagnostics(false) { }
   
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all
@@ -64,10 +50,6 @@ public:
   bool getUseExternalASTGeneration() const { return UseExternalASTGeneration; }
   void setUseExternalASTGeneration(bool Value) {
     UseExternalASTGeneration = Value;
-  }
-  
-  Diagnostic &getDiags() {
-    return DisplayDiagnostics ? *TextDiags : IgnoreDiags;
   }
   
   /// \brief Get the path of the clang binary.
