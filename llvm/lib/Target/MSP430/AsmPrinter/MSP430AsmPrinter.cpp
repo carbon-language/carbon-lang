@@ -110,7 +110,6 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 
   // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
   EmitJumpTableInfo(MF);
   
   // We didn't modify anything
