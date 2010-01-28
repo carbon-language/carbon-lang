@@ -266,22 +266,11 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // instructions.
   EmitFunctionHeader();
   
-  if (Subtarget->isTargetDarwin()) {
-    // If the function is empty, then we need to emit *something*. Otherwise,
-    // the function's label might be associated with something that it wasn't
-    // meant to be associated with. We emit a noop in this situation.
-    MachineFunction::iterator I = MF.begin();
-
-    if (++I == MF.end() && MF.front().empty())
-      O << "\tnop\n";
-  }
-
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin())
-      EmitBasicBlockStart(I);
+    EmitBasicBlockStart(I);
 
     // Print the assembly for the instruction.
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -289,6 +278,15 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
   }
 
+  if (Subtarget->isTargetDarwin()) {
+    // If the function is empty, then we need to emit *something*. Otherwise,
+    // the function's label might be associated with something that it wasn't
+    // meant to be associated with. We emit a noop in this situation.
+    MachineFunction::iterator I = MF.begin();
+    if (++I == MF.end() && MF.front().empty())
+      O << "\tnop\n";
+  }
+  
   if (MAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << *CurrentFnSym << ", .-" << *CurrentFnSym << "\n";
 

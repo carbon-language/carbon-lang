@@ -264,7 +264,7 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   emitFunctionEnd(MF);
   
   // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);

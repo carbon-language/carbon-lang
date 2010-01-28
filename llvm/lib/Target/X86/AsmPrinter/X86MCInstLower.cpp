@@ -408,7 +408,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 
-void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
+void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:

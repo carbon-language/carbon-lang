@@ -57,9 +57,8 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   
   virtual void EmitEndOfAsmFile(Module &M);
   
-  void printInstructionThroughMCStreamer(const MachineInstr *MI);
-
-
+  virtual void EmitInstruction(const MachineInstr *MI);
+  
   void printMCInst(const MCInst *MI);
 
   void printSymbolOperand(const MachineOperand &MO);

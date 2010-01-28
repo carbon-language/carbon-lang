@@ -110,7 +110,7 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
 
   // Print out constants referenced by the function
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
   
   // We didn't modify anything
   return false;

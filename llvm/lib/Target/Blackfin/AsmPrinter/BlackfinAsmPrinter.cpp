@@ -97,7 +97,7 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
 
   O << "\t.size " << *CurrentFnSym << ", .-" << *CurrentFnSym << "\n";
 

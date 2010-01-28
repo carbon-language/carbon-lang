@@ -8,12 +8,10 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
-// of machine-dependent LLVM code to AT&T format assembly
-// language. This printer is the output mechanism used by `llc'.
+// of machine-dependent LLVM code to X86 machine code.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "X86AsmPrinter.h"
 #include "X86ATTInstPrinter.h"
 #include "X86IntelInstPrinter.h"
@@ -41,10 +39,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
-
-STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 //===----------------------------------------------------------------------===//
 // Primitive Helper Functions.
@@ -63,8 +58,7 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
                                                                     OutContext);
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
+/// runOnMachineFunction - Emit the function body.
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
@@ -99,38 +93,8 @@ bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Have common code print out the function header with linkage info etc.
   EmitFunctionHeader();
   
-
-  // Print out code for the function.
-  bool hasAnyRealCode = false;
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    // Print a label for the basic block.
-    EmitBasicBlockStart(I);
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      // Print the assembly for the instruction.
-      if (!II->isLabel())
-        hasAnyRealCode = true;
-      printMachineInstruction(II);
-    }
-  }
-
-  if (Subtarget->isTargetDarwin() && !hasAnyRealCode) {
-    // If the function is empty, then we need to emit *something*. Otherwise,
-    // the function's label might be associated with something that it wasn't
-    // meant to be associated with. We emit a noop in this situation.
-    O << "\tnop\n";
-  }
-
-  if (MAI->hasDotTypeDotSizeDirective())
-    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
-
-  // Emit post-function debug information.
-  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
-    DW->EndFunction(&MF);
-
-  // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF);
+  // Emit the rest of the function body.
+  EmitFunctionBody();
 
   // We didn't modify anything.
   return false;
@@ -522,24 +486,6 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-
-
-/// printMachineInstruction -- Print out a single X86 LLVM instruction MI in
-/// AT&T syntax to the current output stream.
-///
-void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  ++EmittedInsts;
-
-  processDebugLoc(MI, true);
-  
-  printInstructionThroughMCStreamer(MI);
-  
-  if (VerboseAsm)
-    EmitComments(*MI);
-  O << '\n';
-
-  processDebugLoc(MI, false);
-}
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {

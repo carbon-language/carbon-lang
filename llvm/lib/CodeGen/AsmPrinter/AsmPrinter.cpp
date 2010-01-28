@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
@@ -31,10 +32,6 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
@@ -45,8 +42,16 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/FormattedStream.h"
 #include <cerrno>
 using namespace llvm;
+
+STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
@@ -336,6 +341,58 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 }
 
 
+/// EmitFunctionBody - This method emits the body and trailer for a
+/// function.
+void AsmPrinter::EmitFunctionBody() {
+  
+  // Print out code for the function.
+  bool HasAnyRealCode = false;
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    EmitBasicBlockStart(I);
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
+      // Print the assembly for the instruction.
+      if (!II->isLabel())
+        HasAnyRealCode = true;
+      
+      ++EmittedInsts;
+      
+      // FIXME: Clean up processDebugLoc.
+      processDebugLoc(II, true);
+      
+      EmitInstruction(II);
+      
+      if (VerboseAsm)
+        EmitComments(*II);
+      O << '\n';
+      
+      // FIXME: Clean up processDebugLoc.
+      processDebugLoc(II, false);
+    }
+  }
+  
+  // If the function is empty and the object file uses .subsections_via_symbols,
+  // then we need to emit *some* thing to the function body to prevent the
+  // labels from collapsing together.
+  if (MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode) {
+    // FIXME: EmitByte(0).
+    O << "\tnop\n";
+  }
+  
+  if (MAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << *CurrentFnSym << ", .-" << *CurrentFnSym << '\n';
+  
+  // Emit post-function debug information.
+  if (MAI->doesSupportDebugInformation() || MAI->doesSupportExceptionHandling())
+    DW->EndFunction(MF);
+  
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo();
+}
+
+
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -528,15 +585,15 @@ void AsmPrinter::EmitConstantPool() {
 /// EmitJumpTableInfo - Print assembly representations of the jump tables used
 /// by the current function to the current output stream.  
 ///
-void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
-  MachineJumpTableInfo *MJTI = MF.getJumpTableInfo();
+void AsmPrinter::EmitJumpTableInfo() {
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   if (MJTI == 0) return;
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
 
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
-  const Function *F = MF.getFunction();
+  const Function *F = MF->getFunction();
   bool JTInDiffSection = false;
   if (// In PIC mode, we need to emit the jump table to the same section as the
       // function body itself, otherwise the label differences won't make sense.
@@ -547,8 +604,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
       // FIXME: this isn't the right predicate, should be based on the MCSection
       // for the function.
       F->isWeakForLinker()) {
-    OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang,
-                                                                    TM));
+    OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F,Mang,TM));
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection = 
@@ -572,8 +628,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineFunction &MF) {
         MAI->hasSetDirective()) {
       SmallPtrSet<const MachineBasicBlock*, 16> EmittedSets;
       const TargetLowering *TLI = TM.getTargetLowering();
-      const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(&MF, JTI,
-                                                             OutContext);
+      const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF,JTI,OutContext);
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
         const MachineBasicBlock *MBB = JTBBs[ii];
         if (!EmittedSets.insert(MBB)) continue;

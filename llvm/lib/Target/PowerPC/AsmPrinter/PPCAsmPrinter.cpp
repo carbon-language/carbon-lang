@@ -319,8 +319,6 @@ namespace {
 
     void printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
                                const char *Modifier);
-
-    virtual bool runOnMachineFunction(MachineFunction &F) = 0;
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
@@ -624,8 +622,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin())
-      EmitBasicBlockStart(I);
+    EmitBasicBlockStart(I);
 
     // Print the assembly for the instructions.
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
@@ -639,7 +636,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
 
   // We didn't modify anything.
   return false;
@@ -686,9 +683,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin()) {
-      EmitBasicBlockStart(I);
-    }
+    EmitBasicBlockStart(I);
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       // Print the assembly for the instruction.
@@ -700,7 +695,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // Print out jump tables referenced by the function.
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
 
   // We didn't modify anything.
   return false;

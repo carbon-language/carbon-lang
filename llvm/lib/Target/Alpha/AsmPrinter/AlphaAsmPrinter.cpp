@@ -154,7 +154,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.end " << *CurrentFnSym << "\n";
 
   // Print out jump tables referenced by the function
-  EmitJumpTableInfo(MF);
+  EmitJumpTableInfo();
   
   // We didn't modify anything.
   return false;

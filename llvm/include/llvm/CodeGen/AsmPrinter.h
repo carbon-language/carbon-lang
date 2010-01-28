@@ -214,18 +214,27 @@ namespace llvm {
     /// EmitFunctionHeader - This method emits the header for the current
     /// function.
     void EmitFunctionHeader();
+    
+    /// EmitFunctionBody - This method emits the body and trailer for a
+    /// function.
+    void EmitFunctionBody();
 
+    /// EmitInstruction - Targets should implement this to emit instructions.
+    virtual void EmitInstruction(const MachineInstr *MI) {
+      assert(0 && "EmitInstruction not implemented");
+    }
+    
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
     /// used to print out constants which have been "spilled to memory" by
     /// the code generator.
     ///
     virtual void EmitConstantPool();
-
+    
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
     ///
-    void EmitJumpTableInfo(MachineFunction &MF);
+    void EmitJumpTableInfo();
     
     /// EmitGlobalVariable - Emit the specified global variable to the .s file.
     virtual void EmitGlobalVariable(const GlobalVariable *GV);
