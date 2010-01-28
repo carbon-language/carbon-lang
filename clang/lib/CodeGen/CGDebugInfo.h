@@ -62,9 +62,9 @@ class CGDebugInfo {
 
   std::vector<llvm::TrackingVH<llvm::MDNode> > RegionStack;
 
-  /// FunctionNames - This is a storage for function names that are
+  /// DebugInfoNames - This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
-  llvm::BumpPtrAllocator FunctionNames;
+  llvm::BumpPtrAllocator DebugInfoNames;
 
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
 

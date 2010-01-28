@@ -78,7 +78,7 @@ llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
   std::string NS = FD->getNameAsString();
 
   // Copy this name on the side and use its reference.
-  char *StrPtr = FunctionNames.Allocate<char>(NS.length());
+  char *StrPtr = DebugInfoNames.Allocate<char>(NS.length());
   memcpy(StrPtr, NS.data(), NS.length());
   return llvm::StringRef(StrPtr, NS.length());
 }
@@ -716,7 +716,7 @@ llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *Decl) {
   std::string Name = "_vptr$" + Decl->getNameAsString();
 
   // Copy this name on the side and use its reference.
-  char *StrPtr = FunctionNames.Allocate<char>(Name.length());
+  char *StrPtr = DebugInfoNames.Allocate<char>(Name.length());
   memcpy(StrPtr, Name.data(), Name.length());
   return llvm::StringRef(StrPtr, Name.length());
 }
