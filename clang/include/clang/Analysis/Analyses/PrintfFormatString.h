@@ -24,6 +24,7 @@ class ConversionSpecifier {
 public:
   enum Kind {
    InvalidSpecifier = 0,
+    // C99 conversion specifiers.
    dArg, // 'd'
    iArg, // 'i',
    oArg, // 'o',
@@ -43,12 +44,19 @@ public:
    VoidPtrArg,    // 'p'
    OutIntPtrArg,  // 'n'
    PercentArg,    // '%'
+    // Objective-C specific specifiers.
+   ObjCObjArg,    // '@'
+    // Specifier ranges.
    IntArgBeg = dArg,
    IntArgEnd = iArg,
    UIntArgBeg = oArg,
    UIntArgEnd = XArg,
    DoubleArgBeg = fArg,
-   DoubleArgEnd = AArg
+   DoubleArgEnd = AArg,
+   C99Beg = IntArgBeg,
+   C99End = DoubleArgEnd,
+   ObjCBeg = ObjCObjArg,
+   ObjCEnd = ObjCObjArg
   };
 
   ConversionSpecifier(Kind k) : kind(k) {}

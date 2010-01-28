@@ -193,9 +193,8 @@ static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H
   switch (*I) {
     default:
       H.HandleInvalidConversionSpecifier(I);
-      return true;
-      
-    // Handle the cases we know about.
+      return true;      
+    // C99: 7.19.6.1 (section 8).
     case 'd': cs = ConversionSpecifier::dArg; break;
     case 'i': cs = ConversionSpecifier::iArg; break;
     case 'o': cs = ConversionSpecifier::oArg; break;
@@ -214,7 +213,9 @@ static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H
     case 's': cs = ConversionSpecifier::CStrArg;      break;
     case 'p': cs = ConversionSpecifier::VoidPtrArg;   break;
     case 'n': cs = ConversionSpecifier::OutIntPtrArg; break;
-    case '%': cs = ConversionSpecifier::PercentArg;   break;
+    case '%': cs = ConversionSpecifier::PercentArg;   break;      
+    // Objective-C.
+    case '@': cs = ConversionSpecifier::ObjCObjArg; break;      
   }
   FS.setConversionSpecifier(cs);
   return FormatSpecifierResult(Start, FS);
