@@ -681,10 +681,19 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
                                  LHSKnownZero, LHSKnownOne, Depth+1))
           return I;
 
-        if (LHSKnownZero[BitWidth-1] || ((LHSKnownZero & LowBits) == LowBits))
-          LHSKnownZero |= ~LowBits;
+        // The low bits of LHS are unchanged by the srem.
+        KnownZero |= LHSKnownZero & LowBits;
+        KnownOne |= LHSKnownOne & LowBits;
 
-        KnownZero |= LHSKnownZero & DemandedMask;
+        // If LHS is non-negative or has all low bits zero, then the upper bits
+        // are all zero.
+        if (LHSKnownZero[BitWidth-1] || ((LHSKnownZero & LowBits) == LowBits))
+          KnownZero |= ~LowBits;
+
+        // If LHS is negative and not all low bits are zero, then the upper bits
+        // are all one.
+        if (LHSKnownOne[BitWidth-1] && ((LHSKnownOne & LowBits) != 0))
+          KnownOne |= ~LowBits;
 
         assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?"); 
       }
