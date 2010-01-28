@@ -525,6 +525,11 @@ llvm::DIType
 CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                    llvm::DICompileUnit Unit) {
   llvm::DIType FnTy = getOrCreateType(Method->getType(), Unit);
+  
+  // Static methods do not need "this" pointer argument.
+  if (Method->isStatic())
+    return FnTy;
+
   // Add "this" pointer.
 
   llvm::DIArray Args = llvm::DICompositeType(FnTy.getNode()).getTypeArray();
