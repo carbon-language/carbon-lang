@@ -525,7 +525,6 @@ llvm::DIType
 CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                    llvm::DICompileUnit Unit) {
   llvm::DIType FnTy = getOrCreateType(Method->getType(), Unit);
-
   // Add "this" pointer.
 
   llvm::DIArray Args = llvm::DICompositeType(FnTy.getNode()).getTypeArray();
@@ -804,13 +803,14 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl);
-  if (CXXDecl) 
+  if (CXXDecl) {
+    CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
     CollectVtableInfo(CXXDecl, Unit, EltTys);
+  }
   CollectRecordFields(Decl, Unit, EltTys);
   llvm::MDNode *ContainingType = NULL;
   if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
-    CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
 
     // A class's primary base or the class itself contains the vtable.
     const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
