@@ -18,7 +18,7 @@
 #include <cassert>
 
 namespace clang {
-namespace printf {
+namespace analyze_printf {
 
 class ConversionSpecifier {
 public:
@@ -61,6 +61,7 @@ public:
 
   ConversionSpecifier(Kind k) : kind(k) {}
   
+  bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= dArg && kind <= iArg; }
   bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
   bool isDoubleArg() const { return kind >= fArg && kind <= AArg; }
@@ -147,12 +148,20 @@ public:
     return (LengthModifier) lengthModifier;
   }
   
+  const OptionalAmount &getFieldWidth() const {
+    return FieldWidth;
+  }
+  
   void setFieldWidth(const OptionalAmount &Amt) {
     FieldWidth = Amt;
   }
   
   void setPrecision(const OptionalAmount &Amt) {
     Precision = Amt;
+  }
+  
+  const OptionalAmount &getPrecision() const {
+    return Precision;
   }
 
   bool isLeftJustified() const { return flags & LeftJustified; }

@@ -15,7 +15,7 @@
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
 
 using namespace clang;
-using namespace printf;
+using namespace analyze_printf;
 
 namespace {
 class FormatSpecifierResult {
@@ -26,7 +26,7 @@ public:
   FormatSpecifierResult(bool err = false)
     : Start(0), HasError(err) {}
   FormatSpecifierResult(const char *start,
-                        const printf::FormatSpecifier &fs)
+                        const FormatSpecifier &fs)
     : FS(fs), Start(start), HasError(false) {}
 
   
@@ -37,7 +37,7 @@ public:
     assert(hasValue());
     return FS;
   }
-  const printf::FormatSpecifier &getValue() { return FS; }
+  const FormatSpecifier &getValue() { return FS; }
 };
 } // end anonymous namespace
 
@@ -81,7 +81,7 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   return OptionalAmount();  
 }
 
-static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H,
+static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
                                                   const char *&Beg, const char *E) {
   
   const char *I = Beg;
