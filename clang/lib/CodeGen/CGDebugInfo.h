@@ -47,6 +47,8 @@ class CGDebugInfo {
   llvm::DIFactory DebugFactory;
 
   SourceLocation CurLoc, PrevLoc;
+  
+  llvm::DIType VTablePtrType;
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
   llvm::DenseMap<unsigned, llvm::DICompileUnit> CompileUnitCache;
@@ -85,6 +87,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DICompileUnit U);
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DICompileUnit Unit);
+  llvm::DIType getOrCreateVTablePtrType(llvm::DICompileUnit Unit);
   
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
@@ -106,6 +109,11 @@ class CGDebugInfo {
 
   void CollectRecordFields(const RecordDecl *Decl, llvm::DICompileUnit U,
                            llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
+
+  void CollectVtableInfo(const CXXRecordDecl *Decl,
+                         llvm::DICompileUnit Unit,
+                         llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys);
+
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
@@ -181,6 +189,10 @@ private:
   /// name is constructred on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
   llvm::StringRef getFunctionName(const FunctionDecl *FD);
+
+  /// getVtableName - Get vtable name for the given Class.
+  llvm::StringRef getVtableName(const CXXRecordDecl *Decl);
+
 };
 } // namespace CodeGen
 } // namespace clang

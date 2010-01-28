@@ -681,6 +681,72 @@ CollectCXXBases(const CXXRecordDecl *Decl,
     }
 }
 
+/// getOrCreateVTablePtrType - Return debug info descriptor for vtable.
+llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DICompileUnit Unit) {
+  if (!VTablePtrType.isNull())
+    return VTablePtrType;
+
+  ASTContext &Context = CGM.getContext();
+
+  /* Function type */
+  llvm::SmallVector<llvm::DIDescriptor, 16> STys;
+  STys.push_back(getOrCreateType(Context.IntTy, Unit));
+  llvm::DIArray SElements =
+    DebugFactory.GetOrCreateArray(STys.data(), STys.size());
+  llvm::DIType SubTy =
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
+                                     Unit, "", llvm::DICompileUnit(),
+                                     0, 0, 0, 0, 0, llvm::DIType(), SElements);
+
+  unsigned Size = Context.getTypeSize(Context.VoidPtrTy);
+  llvm::DIType vtbl_ptr_type 
+    = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type,
+                                     Unit, "__vtbl_ptr_type", llvm::DICompileUnit(),
+                                     0, Size, 0, 0, 0, SubTy);
+
+  VTablePtrType = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type,
+                                          Unit, "", llvm::DICompileUnit(),
+                                          0, Size, 0, 0, 0, vtbl_ptr_type);
+  return VTablePtrType;
+}
+
+/// getVtableName - Get vtable name for the given Class.
+llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *Decl) {
+  // Otherwise construct gdb compatible name name.
+  std::string Name = "_vptr$" + Decl->getNameAsString();
+
+  // Copy this name on the side and use its reference.
+  char *StrPtr = FunctionNames.Allocate<char>(Name.length());
+  memcpy(StrPtr, Name.data(), Name.length());
+  return llvm::StringRef(StrPtr, Name.length());
+}
+
+
+/// CollectVtableInfo - If the C++ class has vtable info then insert appropriate
+/// debug info entry in EltTys vector.
+void CGDebugInfo::
+CollectVtableInfo(const CXXRecordDecl *Decl,
+                  llvm::DICompileUnit Unit,
+                  llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys) {
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
+
+  // If there is a primary base then it will hold vtable info.
+  if (RL.getPrimaryBase())
+    return;
+
+  // If this class is not dynamic then there is not any vtable info to collect.
+  if (!Decl->isDynamicClass())
+    return;
+
+  unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
+  llvm::DIType VPTR
+    = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                     getVtableName(Decl), llvm::DICompileUnit(),
+                                     0, Size, 0, 0, 0, 
+                                     getOrCreateVTablePtrType(Unit));
+  EltTys.push_back(VPTR);
+}
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DICompileUnit Unit) {
@@ -737,9 +803,12 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
 
+  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl);
+  if (CXXDecl) 
+    CollectVtableInfo(CXXDecl, Unit, EltTys);
   CollectRecordFields(Decl, Unit, EltTys);
   llvm::MDNode *ContainingType = NULL;
-  if (CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(Decl)) {
+  if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
     CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
 
