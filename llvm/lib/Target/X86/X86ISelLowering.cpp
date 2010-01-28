@@ -6044,7 +6044,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
           N2C && N2C->isNullValue() &&
           RHSC && RHSC->isNullValue()) {
         SDValue CmpOp0 = Cmp.getOperand(0);
-        Cmp = DAG.getNode(X86ISD::CMP, dl, Op.getValueType(),
+        Cmp = DAG.getNode(X86ISD::CMP, dl, CmpOp0.getValueType(),
                           CmpOp0, DAG.getConstant(1, CmpOp0.getValueType()));
         return DAG.getNode(X86ISD::SETCC_CARRY, dl, Op.getValueType(),
                            DAG.getConstant(X86::COND_B, MVT::i8), Cmp);
