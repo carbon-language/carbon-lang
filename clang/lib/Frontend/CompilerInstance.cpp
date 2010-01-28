@@ -83,6 +83,23 @@ void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
 }
 
 // Diagnostics
+namespace {
+  class BinaryDiagnosticSerializer : public DiagnosticClient {
+    llvm::raw_ostream &OS;
+    SourceManager *SourceMgr;
+  public:
+    explicit BinaryDiagnosticSerializer(llvm::raw_ostream &OS)
+      : OS(OS), SourceMgr(0) { }
+    
+    virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                  const DiagnosticInfo &Info);
+  };
+}
+
+void BinaryDiagnosticSerializer::HandleDiagnostic(Diagnostic::Level DiagLevel,
+                                                  const DiagnosticInfo &Info) {
+  Info.Serialize(DiagLevel, OS);
+}
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
@@ -122,8 +139,23 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 
   // Create the diagnostic client for reporting errors or for
   // implementing -verify.
-  llvm::OwningPtr<DiagnosticClient> DiagClient(
-    new TextDiagnosticPrinter(llvm::errs(), Opts));
+  llvm::OwningPtr<DiagnosticClient> DiagClient;
+  if (Opts.BinaryOutput) {
+    if (llvm::sys::Program::ChangeStderrToBinary()) {
+      // We weren't able to set standard error to binary, which is a
+      // bit of a problem. So, just create a text diagnostic printer
+      // to complain about this problem, and pretend that the user
+      // didn't try to use binary output.
+      DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
+      Diags->setClient(DiagClient.take());
+      Diags->Report(diag::err_fe_stderr_binary);
+      return Diags.take();
+    } else {
+      DiagClient.reset(new BinaryDiagnosticSerializer(llvm::errs()));
+    }
+  } else {
+    DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(), Opts));
+  }
 
   // Chain in -verify checker, if requested.
   if (Opts.VerifyDiagnostics)

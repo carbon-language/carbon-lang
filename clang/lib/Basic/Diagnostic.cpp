@@ -21,8 +21,10 @@
 #include "clang/Analysis/AnalysisDiagnostic.h"
 #include "clang/Driver/DriverDiagnostic.h"
 
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -383,6 +385,123 @@ Diagnostic::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const {
     return Diagnostic::Ignored;
 
   return Result;
+}
+
+static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
+                         unsigned &Value) {
+  if (Memory + sizeof(unsigned) > MemoryEnd)
+    return true;
+
+  memmove(&Value, Memory, sizeof(unsigned));
+  Memory += sizeof(unsigned);
+  return false;
+}
+
+static bool ReadSourceLocation(FileManager &FM, SourceManager &SM,
+                               const char *&Memory, const char *MemoryEnd,
+                               SourceLocation &Location) {
+  // Read the filename.
+  unsigned FileNameLen = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, FileNameLen) || 
+      Memory + FileNameLen > MemoryEnd)
+    return true;
+
+  llvm::StringRef FileName(Memory, FileNameLen);
+  Memory += FileNameLen;
+
+  // Read the line, column.
+  unsigned Line = 0, Column = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, Line) ||
+      ReadUnsigned(Memory, MemoryEnd, Column))
+    return true;
+
+  if (FileName.empty()) {
+    Location = SourceLocation();
+    return false;
+  }
+
+  const FileEntry *File = FM.getFile(FileName);
+  if (!File)
+    return true;
+
+  // Make sure that this file has an entry in the source manager.
+  if (!SM.hasFileInfo(File))
+    SM.createFileID(File, SourceLocation(), SrcMgr::C_User);
+
+  Location = SM.getLocation(File, Line, Column);
+  return false;
+}
+
+DiagnosticBuilder Diagnostic::Deserialize(FileManager &FM, SourceManager &SM, 
+                                          const char *&Memory, 
+                                          const char *MemoryEnd) {
+  if (Memory == MemoryEnd)
+    return DiagnosticBuilder(0);
+
+  // Read the severity level.
+  unsigned Level = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, Level) || Level > Fatal)
+    return DiagnosticBuilder(0);
+
+  // Read the source location.
+  SourceLocation Location;
+  if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, Location))
+    return DiagnosticBuilder(0);
+
+  // Read the diagnostic text.
+  if (Memory == MemoryEnd)
+    return DiagnosticBuilder(0);
+
+  unsigned MessageLen = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, MessageLen) ||
+      Memory + MessageLen > MemoryEnd)
+    return DiagnosticBuilder(0);
+  
+  llvm::StringRef Message(Memory, MessageLen);
+  Memory += MessageLen;
+
+  // At this point, we have enough information to form a diagnostic. Do so.
+  unsigned DiagID = getCustomDiagID((enum Level)Level, Message);
+  DiagnosticBuilder DB = Report(FullSourceLoc(Location, SM), DiagID);
+  if (Memory == MemoryEnd)
+    return DB;
+
+  // Read the source ranges.
+  unsigned NumSourceRanges = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, NumSourceRanges))
+    return DB;
+  for (unsigned I = 0; I != NumSourceRanges; ++I) {
+    SourceLocation Begin, End;
+    if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, Begin) ||
+        ReadSourceLocation(FM, SM, Memory, MemoryEnd, End))
+      return DB;
+
+    DB << SourceRange(Begin, End);
+  }
+
+  // Read the fix-it hints.
+  unsigned NumFixIts = 0;
+  if (ReadUnsigned(Memory, MemoryEnd, NumFixIts))
+    return DB;
+  for (unsigned I = 0; I != NumFixIts; ++I) {
+    SourceLocation RemoveBegin, RemoveEnd, InsertionLoc;
+    unsigned InsertLen = 0;
+    if (ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveBegin) ||
+        ReadSourceLocation(FM, SM, Memory, MemoryEnd, RemoveEnd) ||
+        ReadSourceLocation(FM, SM, Memory, MemoryEnd, InsertionLoc) ||
+        ReadUnsigned(Memory, MemoryEnd, InsertLen) ||
+        Memory + InsertLen > MemoryEnd)
+      return DB;
+
+    CodeModificationHint Hint;
+    Hint.RemoveRange = SourceRange(RemoveBegin, RemoveEnd);
+    Hint.InsertionLoc = InsertionLoc;
+    Hint.CodeToInsert.assign(Memory, Memory + InsertLen);
+    Memory += InsertLen;
+    DB << Hint;
+  }
+
+  return DB;
 }
 
 struct WarningOption {
@@ -914,6 +1033,104 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       FormattedArgs.push_back(std::make_pair(Diagnostic::ak_c_string,
                                         (intptr_t)getArgStdStr(ArgNo).c_str()));
     
+  }
+}
+
+static void WriteUnsigned(llvm::raw_ostream &OS, unsigned Value) {
+  OS.write((const char *)&Value, sizeof(unsigned));
+}
+
+static void WriteString(llvm::raw_ostream &OS, llvm::StringRef String) {
+  WriteUnsigned(OS, String.size());
+  OS.write(String.data(), String.size());
+}
+
+static void WriteSourceLocation(llvm::raw_ostream &OS, 
+                                SourceManager *SM,
+                                SourceLocation Location) {
+  if (!SM || Location.isInvalid()) {
+    // If we don't have a source manager or this location is invalid,
+    // just write an invalid location.
+    WriteUnsigned(OS, 0);
+    WriteUnsigned(OS, 0);
+    WriteUnsigned(OS, 0);
+    return;
+  }
+
+  Location = SM->getInstantiationLoc(Location);
+  std::pair<FileID, unsigned> Decomposed = SM->getDecomposedLoc(Location);
+  
+  WriteString(OS, SM->getFileEntryForID(Decomposed.first)->getName());
+  WriteUnsigned(OS, SM->getLineNumber(Decomposed.first, Decomposed.second));
+  WriteUnsigned(OS, SM->getColumnNumber(Decomposed.first, Decomposed.second));
+}
+
+void DiagnosticInfo::Serialize(Diagnostic::Level DiagLevel, 
+                               llvm::raw_ostream &OS) const {
+  SourceManager *SM = 0;
+  if (getLocation().isValid())
+    SM = &const_cast<SourceManager &>(getLocation().getManager());
+
+  // Write the diagnostic level and location.
+  WriteUnsigned(OS, (unsigned)DiagLevel);
+  WriteSourceLocation(OS, SM, getLocation());
+
+  // Write the diagnostic message.
+  llvm::SmallString<64> Message;
+  FormatDiagnostic(Message);
+  WriteString(OS, Message);
+  
+  // Count the number of ranges that don't point into macros, since
+  // only simple file ranges serialize well.
+  unsigned NumNonMacroRanges = 0;
+  for (unsigned I = 0, N = getNumRanges(); I != N; ++I) {
+    SourceRange R = getRange(I);
+    if (R.getBegin().isMacroID() || R.getEnd().isMacroID())
+      continue;
+
+    ++NumNonMacroRanges;
+  }
+
+  // Write the ranges.
+  WriteUnsigned(OS, NumNonMacroRanges);
+  if (NumNonMacroRanges) {
+    for (unsigned I = 0, N = getNumRanges(); I != N; ++I) {
+      SourceRange R = getRange(I);
+      if (R.getBegin().isMacroID() || R.getEnd().isMacroID())
+        continue;
+      
+      WriteSourceLocation(OS, SM, R.getBegin());
+      WriteSourceLocation(OS, SM, R.getEnd());
+    }
+  }
+
+  // Determine if all of the fix-its involve rewrites with simple file
+  // locations (not in macro instantiations). If so, we can write
+  // fix-it information.
+  unsigned NumFixIts = getNumCodeModificationHints();
+  for (unsigned I = 0; I != NumFixIts; ++I) {
+    const CodeModificationHint &Hint = getCodeModificationHint(I);
+    if (Hint.RemoveRange.isValid() &&
+        (Hint.RemoveRange.getBegin().isMacroID() ||
+         Hint.RemoveRange.getEnd().isMacroID())) {
+      NumFixIts = 0;
+      break;
+    }
+
+    if (Hint.InsertionLoc.isValid() && Hint.InsertionLoc.isMacroID()) {
+      NumFixIts = 0;
+      break;
+    }
+  }
+
+  // Write the fix-its.
+  WriteUnsigned(OS, NumFixIts);
+  for (unsigned I = 0; I != NumFixIts; ++I) {
+    const CodeModificationHint &Hint = getCodeModificationHint(I);
+    WriteSourceLocation(OS, SM, Hint.RemoveRange.getBegin());
+    WriteSourceLocation(OS, SM, Hint.RemoveRange.getEnd());
+    WriteSourceLocation(OS, SM, Hint.InsertionLoc);
+    WriteString(OS, Hint.CodeToInsert);
   }
 }
 

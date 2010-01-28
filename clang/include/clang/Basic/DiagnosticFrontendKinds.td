@@ -19,6 +19,8 @@ def err_fe_invalid_code_complete_file : Error<
     "cannot locate code-completion file %0">, DefaultFatal;
 def err_fe_stdout_binary : Error<"unable to change standard output to binary">,
   DefaultFatal;
+def err_fe_stderr_binary : Error<"unable to change standard error to binary">,
+  DefaultFatal;
 def err_fe_dependency_file_requires_MT : Error<
     "-dependency-file requires at least one -MT option">;
 def err_fe_incompatible_options : Error<

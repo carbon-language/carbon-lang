@@ -669,6 +669,9 @@ public:
       ::const_iterator fileinfo_iterator;
   fileinfo_iterator fileinfo_begin() const { return FileInfos.begin(); }
   fileinfo_iterator fileinfo_end() const { return FileInfos.end(); }
+  bool hasFileInfo(const FileEntry *File) const {
+    return FileInfos.find(File) != FileInfos.end();
+  }
 
   /// PrintStats - Print statistics to stderr.
   ///

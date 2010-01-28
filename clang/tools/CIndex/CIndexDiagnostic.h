@@ -1,4 +1,4 @@
-/*===-- CIndexDiagnostic.h - Diagnostics C Interface --------------*- C -*-===*\
+/*===-- CIndexDiagnostic.h - Diagnostics C Interface ------------*- C++ -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -17,8 +17,13 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 
+namespace llvm { namespace sys {
+class Path;
+} }
+
 namespace clang {
 
+class Diagnostic;
 class Preprocessor;
   
 /**
@@ -43,7 +48,15 @@ public:
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
-  
+
+/// \brief Given the path to a file that contains binary, serialized
+/// diagnostics produced by Clang, emit those diagnostics via the
+/// given diagnostic engine.
+void ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
+                                 Diagnostic &Diags,
+                                 unsigned num_unsaved_files,
+                                 struct CXUnsavedFile *unsaved_files);
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_CINDEX_DIAGNOSTIC_H

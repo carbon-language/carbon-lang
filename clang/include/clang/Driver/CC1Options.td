@@ -165,6 +165,7 @@ def fno_caret_diagnostics : Flag<"-fno-caret-diagnostics">,
   HelpText<"Do not include source line and caret with diagnostics">;
 def fno_diagnostics_fixit_info : Flag<"-fno-diagnostics-fixit-info">,
   HelpText<"Do not include fixit information in diagnostics">;
+def fdiagnostics_binary : Flag<"-fdiagnostics-binary">;
 def w : Flag<"-w">, HelpText<"Suppress all warnings">;
 def pedantic : Flag<"-pedantic">;
 def pedantic_errors : Flag<"-pedantic-errors">;

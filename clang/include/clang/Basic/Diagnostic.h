@@ -23,16 +23,19 @@
 
 namespace llvm {
   template <typename T> class SmallVectorImpl;
+  class raw_ostream;
 }
 
 namespace clang {
   class DeclContext;
   class DiagnosticBuilder;
   class DiagnosticClient;
+  class FileManager;
   class IdentifierInfo;
   class LangOptions;
   class PartialDiagnostic;
   class Preprocessor;
+  class SourceManager;
   class SourceRange;
 
   // Import the diagnostic enums themselves.
@@ -400,6 +403,13 @@ public:
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
 
+  /// Deserialize - Deserialize the first diagnostic within the memory
+  /// [Memory, MemoryEnd), producing a new diagnostic builder describing the
+  /// deserialized diagnostic. If the memory does not contain a
+  /// diagnostic, returns a diagnostic builder with no diagnostic ID.
+  DiagnosticBuilder Deserialize(FileManager &FM, SourceManager &SM, 
+                                const char *&Memory, const char *MemoryEnd);
+
 private:
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
@@ -567,6 +577,9 @@ public:
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
   ~DiagnosticBuilder() { Emit(); }
+
+  /// isActive - Determine whether this diagnostic is still active.
+  bool isActive() const { return DiagObj != 0; }
 
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
@@ -786,6 +799,12 @@ public:
   /// output buffer using the arguments stored in this diagnostic.
   void FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                         llvm::SmallVectorImpl<char> &OutStr) const;
+
+  /// Serialize - Serialize the given diagnostic (with its diagnostic
+  /// level) to the given stream. Serialization is a lossy operation,
+  /// since the specific diagnostic ID and any macro-instantiation
+  /// information is lost.
+  void Serialize(Diagnostic::Level DiagLevel, llvm::raw_ostream &OS) const;
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of

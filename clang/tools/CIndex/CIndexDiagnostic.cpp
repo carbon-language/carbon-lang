@@ -14,6 +14,9 @@
 #include "CIndexer.h"
 #include "CXSourceLocation.h"
 
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "llvm/Support/MemoryBuffer.h"
+
 using namespace clang;
 using namespace clang::cxloc;
 
@@ -196,3 +199,47 @@ CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
 }
   
 } // end extern "C"
+
+void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
+                                        Diagnostic &Diags,
+                                        unsigned num_unsaved_files,
+                                        struct CXUnsavedFile *unsaved_files) {
+  using llvm::MemoryBuffer;
+  using llvm::StringRef;
+  MemoryBuffer *F = MemoryBuffer::getFile(DiagnosticsPath.c_str());
+  if (!F)
+    return;
+
+  // Enter the unsaved files into the file manager.
+  SourceManager SourceMgr;
+  FileManager FileMgr;
+  for (unsigned I = 0; I != num_unsaved_files; ++I) {
+    const FileEntry *File = FileMgr.getVirtualFile(unsaved_files[I].Filename,
+                                                   unsaved_files[I].Length,
+                                                   0);
+    if (!File) {
+      Diags.Report(diag::err_fe_remap_missing_from_file)
+        << unsaved_files[I].Filename;
+      return;
+    }
+
+    MemoryBuffer *Buffer
+      = MemoryBuffer::getMemBuffer(unsaved_files[I].Contents,
+                           unsaved_files[I].Contents + unsaved_files[I].Length);
+    if (!Buffer)
+      return;
+
+    SourceMgr.overrideFileContents(File, Buffer);
+  }
+
+  // Parse the diagnostics, emitting them one by one until we've
+  // exhausted the data.
+  StringRef Buffer = F->getBuffer();
+  const char *Memory = Buffer.data(), *MemoryEnd = Memory + Buffer.size();
+  while (Memory != MemoryEnd) {
+    DiagnosticBuilder DB = Diags.Deserialize(FileMgr, SourceMgr, 
+                                             Memory, MemoryEnd);
+    if (!DB.isActive())
+      return;
+  }
+}

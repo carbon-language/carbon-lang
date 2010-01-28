@@ -31,9 +31,12 @@ public:
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
                                  /// diagnostics.
   unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.
-  unsigned VerifyDiagnostics;    /// Check that diagnostics match the expected
+  unsigned VerifyDiagnostics: 1; /// Check that diagnostics match the expected
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
+  unsigned BinaryOutput : 1;     /// Emit diagnostics via the diagnostic 
+                                 /// binary serialization mechanism, to be
+                                 /// deserialized by, e.g., the CIndex library.
 
   /// The distance between tab stops.
   unsigned TabStop;
@@ -66,6 +69,7 @@ public:
     ShowOptionNames = 0;
     ShowSourceRanges = 0;
     VerifyDiagnostics = 0;
+    BinaryOutput = 0;
   }
 };
 

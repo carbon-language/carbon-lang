@@ -252,6 +252,7 @@ def fconstant_string_class_EQ : Joined<"-fconstant-string-class=">, Group<f_Grou
 def fcreate_profile : Flag<"-fcreate-profile">, Group<f_Group>;
 def fdebug_pass_arguments : Flag<"-fdebug-pass-arguments">, Group<f_Group>;
 def fdebug_pass_structure : Flag<"-fdebug-pass-structure">, Group<f_Group>;
+def fdiagnostics_binary : Flag<"-fdiagnostics-binary">, Group<f_Group>, Flags<[HelpHidden]>;
 def fdiagnostics_fixit_info : Flag<"-fdiagnostics-fixit-info">, Group<f_Group>;
 def fdiagnostics_print_source_range_info : Flag<"-fdiagnostics-print-source-range-info">, Group<f_Group>;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">, Group<f_Group>;

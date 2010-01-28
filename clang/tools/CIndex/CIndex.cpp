@@ -1044,6 +1044,13 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
       argv.push_back(arg);
     }
 
+  // Generate a temporary name for the diagnostics file.
+  char tmpFileResults[L_tmpnam];
+  char *tmpResultsFileName = tmpnam(tmpFileResults);
+  llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
+  TemporaryFiles.push_back(DiagnosticsFile);
+  argv.push_back("-fdiagnostics-binary");
+
   // Add the null terminator.
   argv.push_back(NULL);
 
@@ -1051,7 +1058,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
                            // on Unix or NUL (Windows).
   std::string ErrMsg;
-  const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
+  const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DiagnosticsFile,
+                                         NULL };
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
       /* redirects */ &Redirects[0],
       /* secondsToWait */ 0, /* memoryLimits */ 0, &ErrMsg);
@@ -1078,6 +1086,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   if (ATU)
     ATU->unlinkTemporaryFile();
   
+  ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
+                              num_unsaved_files, unsaved_files);
+
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
   

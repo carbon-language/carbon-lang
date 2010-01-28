@@ -231,7 +231,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   argv.push_back("-no-code-completion-debug-printer");
   argv.push_back("-Xclang");
   argv.push_back("-code-completion-macros");
-  
+  argv.push_back("-fdiagnostics-binary");
+
   // Remap any unsaved files to temporary files.
   std::vector<std::string> RemapArgs;
   if (RemapFiles(num_unsaved_files, unsaved_files, RemapArgs, TemporaryFiles))
@@ -267,17 +268,24 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   // Add the null terminator.
   argv.push_back(NULL);
 
-  // Generate a temporary name for the AST file.
+  // Generate a temporary name for the code-completion results file.
   char tmpFile[L_tmpnam];
   char *tmpFileName = tmpnam(tmpFile);
   llvm::sys::Path ResultsFile(tmpFileName);
   TemporaryFiles.push_back(ResultsFile);
 
+  // Generate a temporary name for the diagnostics file.
+  char tmpFileResults[L_tmpnam];
+  char *tmpResultsFileName = tmpnam(tmpFileResults);
+  llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
+  TemporaryFiles.push_back(DiagnosticsFile);
+
   // Invoke 'clang'.
   llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
                            // on Unix or NUL (Windows).
   std::string ErrMsg;
-  const llvm::sys::Path *Redirects[] = { &DevNull, &ResultsFile, &DevNull, 0 };
+  const llvm::sys::Path *Redirects[] = { &DevNull, &ResultsFile, 
+                                         &DiagnosticsFile, 0 };
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
                                      /* redirects */ &Redirects[0],
                                      /* secondsToWait */ 0,
@@ -331,7 +339,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     Results->Buffer = F;
   }
 
-  // FIXME: Parse the (redirected) standard error to emit diagnostics.
+  ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
+                              num_unsaved_files, unsaved_files);
   
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
