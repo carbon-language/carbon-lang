@@ -644,8 +644,7 @@ public:
   ///
 
   /// getAlignOf constant expr - computes the alignment of a type in a target
-  /// independent way (Note: the return type is an i32; Note: assumes that i8
-  /// is byte aligned).
+  /// independent way (Note: the return type is an i64).
   static Constant *getAlignOf(const Type* Ty);
   
   /// getSizeOf constant expr - computes the size of a type in a target

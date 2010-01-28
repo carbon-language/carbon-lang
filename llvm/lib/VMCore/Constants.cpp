@@ -1484,12 +1484,12 @@ Constant* ConstantExpr::getAlignOf(const Type* Ty) {
   const Type *AligningTy = StructType::get(Ty->getContext(),
                                    Type::getInt1Ty(Ty->getContext()), Ty, NULL);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
-  Constant *Zero = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 0);
+  Constant *Zero = ConstantInt::get(Type::getInt64Ty(Ty->getContext()), 0);
   Constant *One = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);
   Constant *Indices[2] = { Zero, One };
   Constant *GEP = getGetElementPtr(NullPtr, Indices, 2);
   return getCast(Instruction::PtrToInt, GEP,
-                 Type::getInt32Ty(Ty->getContext()));
+                 Type::getInt64Ty(Ty->getContext()));
 }
 
 Constant* ConstantExpr::getOffsetOf(const StructType* STy, unsigned FieldNo) {
