@@ -354,15 +354,15 @@ namespace llvm {
     /// printKill - This method prints the specified kill machine instruction.
     void printKill(const MachineInstr *MI) const;
 
-    /// printVisibility - This prints visibility information about symbol, if
-    /// this is suported by the target.
-    void printVisibility(MCSymbol *Sym, unsigned Visibility) const;
-    
     /// printOffset - This is just convenient handler for printing offsets.
     void printOffset(int64_t Offset) const;
  
   private:
-    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym);
+    /// EmitVisibility - This emits visibility information about symbol, if
+    /// this is suported by the target.
+    void EmitVisibility(MCSymbol *Sym, unsigned Visibility) const;
+    
+    void EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const;
     
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB,

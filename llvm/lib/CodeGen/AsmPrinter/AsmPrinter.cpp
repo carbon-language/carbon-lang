@@ -150,7 +150,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
-void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) {
+void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
   switch ((GlobalValue::LinkageTypes)Linkage) {
   case GlobalValue::CommonLinkage:
   case GlobalValue::LinkOnceAnyLinkage:
@@ -206,7 +206,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     return;
 
   MCSymbol *GVSym = GetGlobalValueSymbol(GV);
-  printVisibility(GVSym, GV->getVisibility());
+  EmitVisibility(GVSym, GV->getVisibility());
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
@@ -300,7 +300,7 @@ void AsmPrinter::EmitFunctionHeader() {
   const Function *F = MF->getFunction();
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  printVisibility(CurrentFnSym, F->getVisibility());
+  EmitVisibility(CurrentFnSym, F->getVisibility());
 
   EmitLinkage(F->getLinkage(), CurrentFnSym);
   EmitAlignment(MF->getAlignment(), F);
@@ -384,7 +384,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       else
         assert(I->hasLocalLinkage() && "Invalid alias linkage");
 
-      printVisibility(Name, I->getVisibility());
+      EmitVisibility(Name, I->getVisibility());
 
       // Emit the directives as assignments aka .set:
       OutStreamer.EmitAssignment(Name, 
@@ -1605,8 +1605,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   }
 }
 
-void AsmPrinter::printVisibility(MCSymbol *Sym, unsigned Visibility) const {
-  // FIXME: RENAME TO EmitVisibility.
+void AsmPrinter::EmitVisibility(MCSymbol *Sym, unsigned Visibility) const {
   MCSymbolAttr Attr = MCSA_Invalid;
   
   switch (Visibility) {
