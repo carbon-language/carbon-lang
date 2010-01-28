@@ -191,11 +191,6 @@ static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H
   // Finally, look for the conversion specifier.
   ConversionSpecifier::Kind cs;
   switch (*I) {
-    case 'D':
-    case 'O':
-    case 'U':
-    case 'C':
-    case 'S':
     default:
       H.HandleInvalidConversionSpecifier(I);
       return true;

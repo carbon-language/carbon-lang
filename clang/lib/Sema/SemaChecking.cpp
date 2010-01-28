@@ -1160,9 +1160,6 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     case 'u':
     case 'x':
     case 'X':
-    case 'D':
-    case 'O':
-    case 'U':
     case 'e':
     case 'E':
     case 'f':
@@ -1172,8 +1169,6 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     case 'a':
     case 'A':
     case 'c':
-    case 'C':
-    case 'S':
     case 's':
     case 'p':
       ++numConversions;
