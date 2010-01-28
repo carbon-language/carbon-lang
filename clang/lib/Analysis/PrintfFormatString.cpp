@@ -85,7 +85,7 @@ static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H
                                                   const char *&Beg, const char *E) {
   
   const char *I = Beg;
-  const char *Start = NULL;
+  const char *Start = 0;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
   // Look for a '%' character that indicates the start of a format specifier.
@@ -191,28 +191,35 @@ static FormatSpecifierResult ParseFormatSpecifier(printf::FormatStringHandler &H
   // Finally, look for the conversion specifier.
   ConversionSpecifier::Kind cs;
   switch (*I) {
+    case 'D':
+    case 'O':
+    case 'U':
+    case 'C':
+    case 'S':
     default:
       H.HandleInvalidConversionSpecifier(I);
       return true;
-    case 'd' : cs = ConversionSpecifier::dArg; break;
-    case 'i' : cs = ConversionSpecifier::iArg; break;
-    case 'o' : cs = ConversionSpecifier::oArg; break;
-    case 'u' : cs = ConversionSpecifier::uArg; break;
-    case 'x' : cs = ConversionSpecifier::xArg; break;
-    case 'X' : cs = ConversionSpecifier::XArg; break;
-    case 'f' : cs = ConversionSpecifier::fArg; break;
-    case 'F' : cs = ConversionSpecifier::FArg; break;
-    case 'e' : cs = ConversionSpecifier::eArg; break;
-    case 'E' : cs = ConversionSpecifier::EArg; break;
-    case 'g' : cs = ConversionSpecifier::gArg; break;
-    case 'G' : cs = ConversionSpecifier::GArg; break;
-    case 'a' : cs = ConversionSpecifier::aArg; break;
-    case 'A' : cs = ConversionSpecifier::AArg; break;
-    case 'c' : cs = ConversionSpecifier::IntAsCharArg; break;
-    case 's' : cs = ConversionSpecifier::CStrArg;      break;
-    case 'p' : cs = ConversionSpecifier::VoidPtrArg;   break;
-    case 'n' : cs = ConversionSpecifier::OutIntPtrArg; break;
-    case '%' : cs = ConversionSpecifier::PercentArg;   break;
+      
+    // Handle the cases we know about.
+    case 'd': cs = ConversionSpecifier::dArg; break;
+    case 'i': cs = ConversionSpecifier::iArg; break;
+    case 'o': cs = ConversionSpecifier::oArg; break;
+    case 'u': cs = ConversionSpecifier::uArg; break;
+    case 'x': cs = ConversionSpecifier::xArg; break;
+    case 'X': cs = ConversionSpecifier::XArg; break;
+    case 'f': cs = ConversionSpecifier::fArg; break;
+    case 'F': cs = ConversionSpecifier::FArg; break;
+    case 'e': cs = ConversionSpecifier::eArg; break;
+    case 'E': cs = ConversionSpecifier::EArg; break;
+    case 'g': cs = ConversionSpecifier::gArg; break;
+    case 'G': cs = ConversionSpecifier::GArg; break;
+    case 'a': cs = ConversionSpecifier::aArg; break;
+    case 'A': cs = ConversionSpecifier::AArg; break;
+    case 'c': cs = ConversionSpecifier::IntAsCharArg; break;
+    case 's': cs = ConversionSpecifier::CStrArg;      break;
+    case 'p': cs = ConversionSpecifier::VoidPtrArg;   break;
+    case 'n': cs = ConversionSpecifier::OutIntPtrArg; break;
+    case '%': cs = ConversionSpecifier::PercentArg;   break;
   }
   FS.setConversionSpecifier(cs);
   return FormatSpecifierResult(Start, FS);
