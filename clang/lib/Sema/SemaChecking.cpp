@@ -1036,6 +1036,14 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
                              const Expr *OrigFormatExpr,
                              const CallExpr *TheCall, bool HasVAListArg,
                              unsigned format_idx, unsigned firstDataArg) {
+    
+  static bool UseAlternatePrintfChecking = false;
+  if (UseAlternatePrintfChecking) {
+    AlternateCheckPrintfString(FExpr, OrigFormatExpr, TheCall,
+                               HasVAListArg, format_idx, firstDataArg);
+    return;
+  }    
+  
 
   const ObjCStringLiteral *ObjCFExpr =
     dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
@@ -1059,7 +1067,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
       << OrigFormatExpr->getSourceRange();
     return;
   }
-
+  
   // We process the format string using a binary state machine.  The
   // current state is stored in CurrentState.
   enum {
@@ -1269,6 +1277,15 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
            diag::warn_printf_too_many_data_args)
         << OrigFormatExpr->getSourceRange();
   }
+}
+
+void
+Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
+                                 const Expr *OrigFormatExpr,
+                                 const CallExpr *TheCall, bool HasVAListArg,
+                                 unsigned format_idx, unsigned firstDataArg) {
+  
+  
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//

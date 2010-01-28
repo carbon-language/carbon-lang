@@ -4047,6 +4047,13 @@ private:
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
                               unsigned firstDataArg);
+  // FIXME: This function is placeholder for transitioning the printf
+  //  format string checking to a new codepath.  It will eventually
+  //  replace CheckPrintfString().
+  void AlternateCheckPrintfString(const StringLiteral *FExpr,
+                                  const Expr *OrigFormatExpr,
+                                  const CallExpr *TheCall, bool HasVAListArg,
+                                  unsigned format_idx, unsigned firstDataArg);  
   void CheckPrintfString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          const CallExpr *TheCall, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg);
