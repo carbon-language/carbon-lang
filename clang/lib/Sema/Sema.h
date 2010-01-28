@@ -4020,12 +4020,15 @@ public:
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
+
+public:
+  SourceLocation getLocationOfStringLiteralByte(const StringLiteral *SL,
+                                                unsigned ByteNo) const;
+
 private:
   bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
   bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
 
-  SourceLocation getLocationOfStringLiteralByte(const StringLiteral *SL,
-                                                unsigned ByteNo) const;
   bool CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall);
   bool CheckObjCString(Expr *Arg);
 

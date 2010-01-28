@@ -15,6 +15,7 @@
 #include "Sema.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/Analyses/PrintfFormatString.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
@@ -1279,13 +1280,106 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
   }
 }
 
+
+namespace {
+class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
+  Sema &S;
+  const StringLiteral *FExpr;
+  const Expr *OrigFormatExpr;
+  unsigned NumConversions;
+  const unsigned NumDataArgs;
+  const bool IsObjCLiteral;
+  const char *Beg; // Start of format string.
+public:  
+  CheckPrintfHandler(Sema &s, const StringLiteral *fexpr,
+                     const Expr *origFormatExpr,
+                     unsigned numDataArgs, bool isObjCLiteral,
+                     const char *beg)
+    : S(s), FExpr(fexpr), OrigFormatExpr(origFormatExpr),
+      NumConversions(0), NumDataArgs(numDataArgs),
+      IsObjCLiteral(isObjCLiteral), Beg(beg) {}
+    
+  void HandleNullChar(const char *nullCharacter);
+  
+  bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
+                             const char *startSpecifier,
+                             unsigned specifierLen);
+private:
+  SourceRange getFormatRange();
+  SourceLocation getLocationOfByte(const char *x);
+};
+}
+
+SourceRange CheckPrintfHandler::getFormatRange() {
+  return OrigFormatExpr->getSourceRange();
+}
+
+SourceLocation CheckPrintfHandler::getLocationOfByte(const char *x) {
+  return S.getLocationOfStringLiteralByte(FExpr, x - Beg);  
+}
+
+void CheckPrintfHandler::HandleNullChar(const char *nullCharacter) {
+  // The presence of a null character is likely an error.
+  S.Diag(getLocationOfByte(nullCharacter),
+         diag::warn_printf_format_string_contains_null_char)
+    << getFormatRange();
+}
+
+bool
+CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
+                                          const char *startSpecifier,
+                                          unsigned specifierLen) {
+
+  using namespace analyze_printf;
+  const ConversionSpecifier &CS = FS.getConversionSpecifier();
+
+  // Check for using an Objective-C specific conversion specifier
+  // in a non-ObjC literal.
+  if (!IsObjCLiteral && CS.isObjCArg()) {
+    SourceLocation Loc = getLocationOfByte(CS.getConversionStart());
+    S.Diag(Loc, diag::warn_printf_invalid_conversion)
+      << llvm::StringRef(startSpecifier, specifierLen)
+      << getFormatRange();
+    
+    // Continue checking the other format specifiers.
+    return true;
+  }
+
+  return true;
+}
+
+
 void
 Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
                                  const Expr *OrigFormatExpr,
                                  const CallExpr *TheCall, bool HasVAListArg,
                                  unsigned format_idx, unsigned firstDataArg) {
   
+  // CHECK: is the format string a wide literal?
+  if (FExpr->isWide()) {
+    Diag(FExpr->getLocStart(),
+         diag::warn_printf_format_string_is_wide_literal)
+    << OrigFormatExpr->getSourceRange();
+    return;
+  }
   
+  // Str - The format string.  NOTE: this is NOT null-terminated!
+  const char *Str = FExpr->getStrData();
+  
+  // CHECK: empty format string?
+  unsigned StrLen = FExpr->getByteLength();
+  
+  if (StrLen == 0) {
+    Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string)
+    << OrigFormatExpr->getSourceRange();
+    return;
+  }
+  
+  CheckPrintfHandler H(*this, FExpr, OrigFormatExpr,
+                       TheCall->getNumArgs() - firstDataArg,
+                       isa<ObjCStringLiteral>(OrigFormatExpr), Str);
+
+  analyze_printf::ParseFormatString(H, Str, Str + StrLen);
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//
