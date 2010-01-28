@@ -27,25 +27,17 @@ using namespace clang;
 class CIndexer {
   bool UseExternalASTGeneration;
   bool OnlyLocalDecls;
-  bool DisplayDiagnostics;
   
   llvm::sys::Path ClangPath;
   
 public:
-  CIndexer() 
-    : UseExternalASTGeneration(false), OnlyLocalDecls(false), 
-      DisplayDiagnostics(false) { }
+  CIndexer() : UseExternalASTGeneration(false), OnlyLocalDecls(false) { }
   
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all
   /// declarations.
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
-  
-  bool getDisplayDiagnostics() const { return DisplayDiagnostics; }
-  void setDisplayDiagnostics(bool Display = true) {
-    DisplayDiagnostics = Display;
-  }
   
   bool getUseExternalASTGeneration() const { return UseExternalASTGeneration; }
   void setUseExternalASTGeneration(bool Value) {

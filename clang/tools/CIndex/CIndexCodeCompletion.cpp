@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CIndexer.h"
+#include "CIndexDiagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -186,10 +188,19 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,
                                           unsigned complete_line,
-                                          unsigned complete_column) {
+                                          unsigned complete_column,
+                                          CXDiagnosticCallback diag_callback,
+                                          CXClientData diag_client_data) {
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
+  // Configure the diagnostics.
+  DiagnosticOptions DiagOpts;
+  llvm::OwningPtr<Diagnostic> Diags;
+  Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
+  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
+  Diags->setClient(&DiagClient);
+  
   // The set of temporary files that we've built.
   std::vector<llvm::sys::Path> TemporaryFiles;
 
@@ -272,15 +283,16 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                      /* secondsToWait */ 0,
                                      /* memoryLimits */ 0, &ErrMsg);
 
-  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
-    llvm::errs() << "clang_codeComplete: " << ErrMsg
-                 << '\n' << "Arguments: \n";
+  if (!ErrMsg.empty()) {
+    std::string AllArgs;
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
-         I!=E; ++I) {
+         I != E; ++I) {
+      AllArgs += ' ';
       if (*I)
-        llvm::errs() << ' ' << *I << '\n';
+        AllArgs += *I;
     }
-    llvm::errs() << '\n';
+    
+    Diags->Report(diag::err_fe_clang) << AllArgs << ErrMsg;
   }
 
   // Parse the resulting source file to find code-completion results.
@@ -319,6 +331,8 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     Results->Buffer = F;
   }
 
+  // FIXME: Parse the (redirected) standard error to emit diagnostics.
+  
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
 

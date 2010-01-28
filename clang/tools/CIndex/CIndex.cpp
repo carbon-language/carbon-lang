@@ -18,9 +18,11 @@
 #include "CIndexDiagnostic.h"
 
 #include "clang/Basic/Version.h"
+
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -893,13 +895,10 @@ CXString CIndexer::createCXString(llvm::StringRef String, bool DupString) {
 }
 
 extern "C" {
-CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
-                          int displayDiagnostics) {
+CXIndex clang_createIndex(int excludeDeclarationsFromPCH) {
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
-  if (displayDiagnostics)
-    CIdxr->setDisplayDiagnostics();
   return CIdxr;
 }
 
@@ -1054,19 +1053,22 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   std::string ErrMsg;
   const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
-      /* redirects */ !CXXIdx->getDisplayDiagnostics() ? &Redirects[0] : NULL,
+      /* redirects */ &Redirects[0],
       /* secondsToWait */ 0, /* memoryLimits */ 0, &ErrMsg);
 
-  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
-    llvm::errs() << "clang_createTranslationUnitFromSourceFile: " << ErrMsg
-                 << '\n' << "Arguments: \n";
+  if (!ErrMsg.empty()) {
+    std::string AllArgs;
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
-         I!=E; ++I) {
+         I != E; ++I) {
+      AllArgs += ' ';
       if (*I)
-        llvm::errs() << ' ' << *I << '\n';
+        AllArgs += *I;
     }
-    llvm::errs() << '\n';
+    
+    Diags->Report(diag::err_fe_clang) << AllArgs << ErrMsg;
   }
+
+  // FIXME: Parse the (redirected) standard error to emit diagnostics.
 
   ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
                                           CXXIdx->getOnlyLocalDecls(),

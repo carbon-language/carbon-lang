@@ -143,13 +143,10 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  * header that was used by the translation unit. If zero, all declarations
  * will be enumerated.
  *
- * - displayDiagnostics: when non-zero, diagnostics will be output. If zero,
- * diagnostics will be ignored.
- *
  * Here is an example:
  *
- *   // excludeDeclsFromPCH = 1, displayDiagnostics = 1
- *   Idx = clang_createIndex(1, 1);
+ *   // excludeDeclsFromPCH = 1
+ *   Idx = clang_createIndex(1);
  *
  *   // IndexTest.pch was produced with the following command:
  *   // "clang -x c IndexTest.h -emit-ast -o IndexTest.pch"
@@ -173,8 +170,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  * -include-pch) allows 'excludeDeclsFromPCH' to remove redundant callbacks
  * (which gives the indexer the same performance benefit as the compiler).
  */
-CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
-                          int displayDiagnostics);
+CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH);
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
 
 /**
@@ -1593,6 +1589,13 @@ typedef struct {
  * Note that the column should point just after the syntactic construct that
  * initiated code completion, and not in the middle of a lexical token.
  *
+ * \param diag_callback callback function that will receive any diagnostics
+ * emitted while processing this source file. If NULL, diagnostics will be
+ * suppressed.
+ *
+ * \param diag_client_data client data that will be passed to the diagnostic
+ * callback function.
+ *
  * \returns if successful, a new CXCodeCompleteResults structure
  * containing code-completion results, which should eventually be
  * freed with \c clang_disposeCodeCompleteResults(). If code
@@ -1607,7 +1610,9 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,
                                           unsigned complete_line,
-                                          unsigned complete_column);
+                                          unsigned complete_column,
+                                          CXDiagnosticCallback diag_callback,
+                                          CXClientData diag_client_data);
 
 /**
  * \brief Free the given set of code-completion results.
