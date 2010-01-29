@@ -44,7 +44,7 @@ using namespace llvm;
 /// This is closely related to Value::getUnderlyingObject but is located
 /// here to avoid making VMCore depend on TargetData.
 static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
-                                            unsigned &ByteOffset,
+                                            uint64_t &ByteOffset,
                                             unsigned MaxLookup = 6) {
   if (!isa<PointerType>(V->getType()))
     return V;
@@ -76,7 +76,7 @@ static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
 /// ScanFrom, to determine if the address is already accessed.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
                                        const TargetData *TD) {
-  unsigned ByteOffset = 0;
+  uint64_t ByteOffset = 0;
   Value *Base = V;
   if (TD)
     Base = getUnderlyingObjectWithOffset(V, TD, ByteOffset);
@@ -98,7 +98,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
     if (BaseType->isSized()) {
       // Check if the load is within the bounds of the underlying object.
       const PointerType *AddrTy = cast<PointerType>(V->getType());
-      unsigned LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
+      uint64_t LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
       if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType))
         return true;
     }
