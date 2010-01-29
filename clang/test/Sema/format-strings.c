@@ -40,11 +40,15 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
 
   // rdar://6079877
   printf("abc"
-         "%*d", (unsigned) 1, 1); // expected-warning {{field width should have type 'int'}}
+         "%*d", 1, 1); // no-warning
   printf("abc\
 def"
-         "%*d", (unsigned) 1, 1); // expected-warning {{field width should have type 'int'}}
-  
+         "%*d", 1, 1); // no-warning
+         
+  // <rdar://problem/6079850>, allow 'unsigned' (instead of 'int') to be used for both
+  // the field width and precision.  This deviates from C99, but is reasonably safe
+  // and is also accepted by GCC.
+  printf("%*d", (unsigned) 1, 1); // no-warning  
 }
 
 void check_conditional_literal(const char* s, int i) {
@@ -137,6 +141,7 @@ void test9(char *P) {
 
 void torture(va_list v8) {
   vprintf ("%*.*d", v8);  // no-warning
+  
 }
 
 void test10(int x, float f, int i) {

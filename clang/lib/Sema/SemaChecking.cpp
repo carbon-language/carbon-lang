@@ -1151,10 +1151,14 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
       }
       
       // Type check the data argument.  It should be an 'int'.
+      // Although not in conformance with C99, we also allow the argument to be
+      // an 'unsigned int' as that is a reasonably safe case.  GCC also
+      // doesn't emit a warning for that case.
       const Expr *Arg = getDataArg(NumConversions);
       QualType T = Arg->getType();
-      const BuiltinType *BT = T->getAs<BuiltinType>();
-      if (!BT || BT->getKind() != BuiltinType::Int) {
+      const BuiltinType *BT = T->getAs<BuiltinType>();            
+      if (!BT || (BT->getKind() != BuiltinType::Int &&
+                  BT->getKind() != BuiltinType::UInt)) {
         S.Diag(getLocationOfByte(Amt.getStart()), BadTypeDiag)
           << T
 		  << getFormatSpecifierRange(startSpecifier, specifierLen)
