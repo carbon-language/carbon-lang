@@ -311,6 +311,6 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
     }
 
   // FIXME: Handle other cases.
-	return ArgTypeResult();
+  return ArgTypeResult();
 }
 
