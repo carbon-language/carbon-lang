@@ -20,7 +20,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -209,7 +208,7 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 }
 
 raw_ostream &raw_ostream::operator<<(double N) {
-  return this->operator<<(ftostr(N));
+  return this->operator<<(format("%e", N));
 }
 
 
