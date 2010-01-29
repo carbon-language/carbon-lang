@@ -414,17 +414,15 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
 
   // We don't set size information, but do specify where the typedef was
   // declared.
-  SourceLocation DefLoc = Ty->getDecl()->getLocation();
-  llvm::DICompileUnit DefUnit = getOrCreateCompileUnit(DefLoc);
-
   SourceManager &SM = CGM.getContext().getSourceManager();
-  PresumedLoc PLoc = SM.getPresumedLoc(DefLoc);
+  PresumedLoc PLoc = SM.getPresumedLoc(Ty->getDecl()->getLocation());
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   llvm::DIType DbgTy = 
-    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
-                                   Ty->getDecl()->getName(),
-                                   DefUnit, Line, 0, 0, 0, 0, Src);
+    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, 
+                                   getContextDescriptor(Ty->getDecl(), Unit), 
+                                   Ty->getDecl()->getName(), Unit,
+                                   Line, 0, 0, 0, 0, Src);
   return DbgTy;
 }
 
