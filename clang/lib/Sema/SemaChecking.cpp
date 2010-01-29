@@ -1418,6 +1418,18 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
     return true;
   }
   
+  
+  // The remaining checks depend on the data arguments.
+  if (HasVAListArg)
+    return true;
+  
+  if (NumConversions > NumDataArgs) {
+    S.Diag(getLocationOfByte(CS.getStart()),
+           diag::warn_printf_insufficient_data_args)
+      << getFormatRange();    
+    // Don't do any more checking.
+    return false;
+  }
 
   return true;
 }
