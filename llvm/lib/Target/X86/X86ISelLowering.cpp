@@ -2246,27 +2246,35 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
-  // If -tailcallopt is specified, make fastcc functions tail-callable.
-  const Function *F = DAG.getMachineFunction().getFunction();
-  if (PerformTailCallOpt &&
-      CalleeCC == CallingConv::Fast && F->getCallingConv() == CalleeCC)
-    return true;
-
   if (CalleeCC != CallingConv::Fast &&
       CalleeCC != CallingConv::C)
     return false;
 
+  // If -tailcallopt is specified, make fastcc functions tail-callable.
+  const Function *CallerF = DAG.getMachineFunction().getFunction();
+  if (PerformTailCallOpt &&
+      CalleeCC == CallingConv::Fast &&
+      CallerF->getCallingConv() == CalleeCC)
+    return true;
+
   // Look for obvious safe cases to perform tail call optimization.
-  // For now, only consider callees which take no arguments and no return
-  // values.
+  // For now, only consider callees which take no arguments.
   if (!Outs.empty())
     return false;
 
-  if (Ins.empty())
-    // If the caller does not return a value, then this is obviously safe.
-    return F->getReturnType()->isVoidTy();
+  // If the caller does not return a value, then this is obviously safe.
+  // This is one case where it's safe to perform this optimization even
+  // if the return types do not match.
+  const Type *CallerRetTy = CallerF->getReturnType();
+  if (CallerRetTy->isVoidTy())
+    return true;
 
-  return false;
+  // If the return types match, then it's safe.
+  GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
+  if (!G) return false;  // FIXME: common external symbols?
+  Function *CalleeF = cast<Function>(G->getGlobal());
+  const Type *CalleeRetTy = CalleeF->getReturnType();
+  return CallerRetTy == CalleeRetTy;
 }
 
 FastISel *
