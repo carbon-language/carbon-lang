@@ -901,8 +901,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         A->render(Args, CmdArgs);
   } else {
     // Honor -std-default.
-    Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
-                              "-std=", /*Joined=*/true);
+    //
+    // FIXME: Clang doesn't correctly handle -std= when the input language
+    // doesn't match. For the time being just ignore this for C++ inputs;
+    // eventually we want to do all the standard defaulting here instead of
+    // splitting it between the driver and clang -cc1.
+    if (!types::isCXX(InputType))
+        Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
+                                  "-std=", /*Joined=*/true);
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   }
 
