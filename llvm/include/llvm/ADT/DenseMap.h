@@ -359,7 +359,7 @@ private:
     BucketT *OldBuckets = Buckets;
 
     // Double the number of buckets.
-    while (NumBuckets <= AtLeast)
+    while (NumBuckets < AtLeast)
       NumBuckets <<= 1;
     NumTombstones = 0;
     Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT)*NumBuckets));
