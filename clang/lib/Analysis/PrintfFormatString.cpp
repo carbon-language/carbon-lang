@@ -244,6 +244,6 @@ bool ParseFormatString(FormatStringHandler &H,
   assert(I == E && "Format string not exhausted");      
   return false;
 }
-}}
 
 FormatStringHandler::~FormatStringHandler() {}
+}} // end namespace clang::analyze_printf
