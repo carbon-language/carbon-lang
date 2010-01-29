@@ -30,9 +30,9 @@ namespace llvm {
   /// which does lazy deserialization of function bodies.  Otherwise, attempt to
   /// parse it as LLVM Assembly and return a fully populated Module. This
   /// function *always* takes ownership of the given MemoryBuffer.
-  inline Module *getIRModule(MemoryBuffer *Buffer,
-                             SMDiagnostic &Err,
-                             LLVMContext &Context) {
+  inline Module *getLazyIRModule(MemoryBuffer *Buffer,
+                                 SMDiagnostic &Err,
+                                 LLVMContext &Context) {
     if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                   (const unsigned char *)Buffer->getBufferEnd())) {
       std::string ErrMsg;
@@ -53,9 +53,9 @@ namespace llvm {
   /// for it which does lazy deserialization of function bodies.  Otherwise,
   /// attempt to parse it as LLVM Assembly and return a fully populated
   /// Module.
-  inline Module *getIRFileModule(const std::string &Filename,
-                                 SMDiagnostic &Err,
-                                 LLVMContext &Context) {
+  inline Module *getLazyIRFileModule(const std::string &Filename,
+                                     SMDiagnostic &Err,
+                                     LLVMContext &Context) {
     std::string ErrMsg;
     MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
     if (F == 0) {
@@ -64,7 +64,7 @@ namespace llvm {
       return 0;
     }
 
-    return getIRModule(F, Err, Context);
+    return getLazyIRModule(F, Err, Context);
   }
 
   /// If the given MemoryBuffer holds a bitcode image, return a Module
