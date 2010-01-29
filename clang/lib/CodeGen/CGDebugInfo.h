@@ -61,6 +61,7 @@ class CGDebugInfo {
   llvm::DIType BlockLiteralGeneric;
 
   std::vector<llvm::TrackingVH<llvm::MDNode> > RegionStack;
+  llvm::DenseMap<const Decl *, llvm::WeakVH> RegionMap;
 
   /// DebugInfoNames - This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
@@ -172,7 +173,7 @@ private:
                    CGBuilderTy &Builder, CodeGenFunction *CGF);
 
   /// getContextDescriptor - Get context info for the decl.
-  llvm::DIDescriptor getContextDescriptor(const VarDecl *Decl,
+  llvm::DIDescriptor getContextDescriptor(const Decl *Decl,
                                           llvm::DIDescriptor &CU);
 
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a

@@ -50,17 +50,13 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 }
 
 /// getContextDescriptor - Get context info for the decl.
-llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const VarDecl *Decl,
+llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *D,
                                               llvm::DIDescriptor &CompileUnit) {
-  if (Decl->isFileVarDecl())
-    return CompileUnit;
-  if (Decl->getDeclContext()->isFunctionOrMethod()) {
-    // Find the last subprogram in region stack.
-    for (unsigned RI = RegionStack.size(), RE = 0; RI != RE; --RI) {
-      llvm::DIDescriptor R(RegionStack[RI - 1]);
-      if (R.isSubprogram())
-        return R;
-    }
+  if (const Decl *Parent = dyn_cast<Decl>(D->getDeclContext())) {
+   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
+     I = RegionMap.find(Parent);
+   if (I != RegionMap.end())
+     return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(I->second));
   }
   return CompileUnit;
 }
@@ -1273,6 +1269,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(FI->second));
       if (!SP.isNull() && SP.isSubprogram() && SP.isDefinition()) {
         RegionStack.push_back(SP.getNode());
+        RegionMap[D] = llvm::WeakVH(SP.getNode());
         return;
       }
     }
@@ -1303,6 +1300,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 
   // Push function on region stack.
   RegionStack.push_back(SP.getNode());
+  RegionMap[D] = llvm::WeakVH(SP.getNode());
 }
 
 
