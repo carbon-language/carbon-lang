@@ -1098,6 +1098,24 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
   }
 
+  case Expr::ImplicitCastExprClass: {
+    mangleExpression(cast<ImplicitCastExpr>(E)->getSubExpr());
+    break;
+  }
+
+  case Expr::CStyleCastExprClass:
+  case Expr::CXXStaticCastExprClass:
+  case Expr::CXXDynamicCastExprClass:
+  case Expr::CXXReinterpretCastExprClass:
+  case Expr::CXXConstCastExprClass:
+  case Expr::CXXFunctionalCastExprClass: {
+    const ExplicitCastExpr *ECE = cast<ExplicitCastExpr>(E);
+    Out << "cv";
+    mangleType(ECE->getType());
+    mangleExpression(ECE->getSubExpr());
+    break;
+  }
+    
   case Expr::CXXOperatorCallExprClass: {
     const CXXOperatorCallExpr *CE = cast<CXXOperatorCallExpr>(E);
     unsigned NumArgs = CE->getNumArgs();
