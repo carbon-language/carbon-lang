@@ -280,8 +280,9 @@ public:
   bool isThisDeclarationADefinition() const { return Body; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCMethodDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCMethod; }
   static DeclContext *castToDeclContext(const ObjCMethodDecl *D) {
     return static_cast<DeclContext *>(const_cast<ObjCMethodDecl*>(D));
   }
@@ -386,11 +387,12 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= ObjCContainerFirst &&
-           D->getKind() <= ObjCContainerLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCContainerDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= ObjCContainerFirst &&
+           K <= ObjCContainerLast;
+  }
 
   static DeclContext *castToDeclContext(const ObjCContainerDecl *D) {
     return static_cast<DeclContext *>(const_cast<ObjCContainerDecl*>(D));
@@ -587,8 +589,9 @@ public:
   Type *getTypeForDecl() const { return TypeForDecl; }
   void setTypeForDecl(Type *TD) const { TypeForDecl = TD; }
 
-  static bool classof(const Decl *D) { return D->getKind() == ObjCInterface; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCInterface; }
 };
 
 /// ObjCIvarDecl - Represents an ObjC instance variable. In general, ObjC
@@ -633,8 +636,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjCIvar; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCIvarDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCIvar; }
 private:
   // NOTE: VC++ treats enums as signed, avoid using the AccessControl enum
   unsigned DeclAccess : 3;
@@ -660,8 +664,9 @@ public:
   virtual void Destroy(ASTContext& C);
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjCAtDefsField; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCAtDefsFieldDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCAtDefsField; }
 };
 
 /// ObjCProtocolDecl - Represents a protocol declaration. ObjC protocols
@@ -752,8 +757,9 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
-  static bool classof(const Decl *D) { return D->getKind() == ObjCProtocol; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCProtocolDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCProtocol; }
 };
 
 /// ObjCClassDecl - Specifies a list of forward class declarations. For example:
@@ -799,8 +805,9 @@ public:
   void setClassList(ASTContext &C, ObjCInterfaceDecl*const*List,
                     const SourceLocation *Locs, unsigned Num);
 
-  static bool classof(const Decl *D) { return D->getKind() == ObjCClass; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCClassDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCClass; }
 };
 
 /// ObjCForwardProtocolDecl - Specifies a list of forward protocol declarations.
@@ -849,10 +856,9 @@ public:
                        const SourceLocation *Locs, ASTContext &C) {
     ReferencedProtocols.set(List, Num, Locs, C);
   }
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjCForwardProtocol;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCForwardProtocolDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCForwardProtocol; }
 };
 
 /// ObjCCategoryDecl - Represents a category declaration. A category allows
@@ -953,8 +959,9 @@ public:
     return SourceRange(AtLoc, getAtEndRange().getEnd());
   }
 
-  static bool classof(const Decl *D) { return D->getKind() == ObjCCategory; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCCategory; }
 };
 
 class ObjCImplDecl : public ObjCContainerDecl {
@@ -1000,10 +1007,11 @@ public:
     return propimpl_iterator(decls_end());
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() >= ObjCImplFirst && D->getKind() <= ObjCImplLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCImplDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= ObjCImplFirst && K <= ObjCImplLast;
+  }
 };
 
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category
@@ -1071,8 +1079,9 @@ public:
     return getName();
   }
 
-  static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryImplDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCCategoryImpl;}
 };
 
 /// ObjCImplementationDecl - Represents a class definition - this is where
@@ -1155,10 +1164,9 @@ public:
     return ivar_begin() == ivar_end();
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjCImplementation;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCImplementationDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCImplementation; }
 };
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is
@@ -1179,10 +1187,9 @@ public:
   ObjCInterfaceDecl *getClassInterface() { return AliasedClass; }
   void setClassInterface(ObjCInterfaceDecl *D) { AliasedClass = D; }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjCCompatibleAlias;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCompatibleAliasDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCCompatibleAlias; }
 
 };
 
@@ -1297,10 +1304,9 @@ public:
     return PropertyIvarDecl;
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjCProperty;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCPropertyDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ObjCProperty; }
 };
 
 /// ObjCPropertyImplDecl - Represents implementation declaration of a property
@@ -1357,10 +1363,9 @@ public:
   }
   void setPropertyIvarDecl(ObjCIvarDecl *Ivar) { PropertyIvarDecl = Ivar; }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjCPropertyImpl;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCPropertyImplDecl *D) { return true; }
+  static bool classofKind(Decl::Kind K) { return K == ObjCPropertyImpl; }
 };
 
 }  // end namespace clang

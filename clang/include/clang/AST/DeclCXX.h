@@ -826,10 +826,11 @@ public:
     return (PathAccess > DeclAccess ? PathAccess : DeclAccess);
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == CXXRecord ||
-           D->getKind() == ClassTemplateSpecialization ||
-           D->getKind() == ClassTemplatePartialSpecialization;
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K == CXXRecord ||
+           K == ClassTemplateSpecialization ||
+           K == ClassTemplatePartialSpecialization;
   }
   static bool classof(const CXXRecordDecl *D) { return true; }
   static bool classof(const ClassTemplateSpecializationDecl *D) {
@@ -911,10 +912,11 @@ public:
   bool hasInlineBody() const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= CXXMethod && D->getKind() <= CXXConversion;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXMethodDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= CXXMethod && K <= CXXConversion;
+  }
 };
 
 /// CXXBaseOrMemberInitializer - Represents a C++ base or member
@@ -1221,10 +1223,9 @@ public:
   bool isCopyConstructorLikeSpecialization() const;
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == CXXConstructor;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXConstructorDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == CXXConstructor; }
 };
 
 /// CXXDestructorDecl - Represents a C++ destructor within a
@@ -1283,10 +1284,9 @@ public:
   const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == CXXDestructor;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXDestructorDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == CXXDestructor; }
 };
 
 /// CXXConversionDecl - Represents a C++ conversion function within a
@@ -1336,10 +1336,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == CXXConversion;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXConversionDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == CXXConversion; }
 };
 
 /// FriendDecl - Represents the declaration of a friend entity,
@@ -1408,10 +1407,9 @@ public:
   void setSpecialization(bool WS) { WasSpecialization = WS; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::Friend;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FriendDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::Friend; }
 };
 
 /// LinkageSpecDecl - This represents a linkage specification.  For example:
@@ -1449,10 +1447,9 @@ public:
   /// braces in its syntactic form.
   bool hasBraces() const { return HadBraces; }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == LinkageSpec;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const LinkageSpecDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == LinkageSpec; }
   static DeclContext *castToDeclContext(const LinkageSpecDecl *D) {
     return static_cast<DeclContext *>(const_cast<LinkageSpecDecl*>(D));
   }
@@ -1554,10 +1551,9 @@ public:
                                     NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::UsingDirective;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDirectiveDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::UsingDirective; }
 
   // Friend for getUsingDirectiveName.
   friend class DeclContext;
@@ -1627,10 +1623,9 @@ public:
                                     SourceLocation IdentLoc,
                                     NamedDecl *Namespace);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::NamespaceAlias;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceAliasDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::NamespaceAlias; }
 };
 
 /// UsingShadowDecl - Represents a shadow declaration introduced into
@@ -1677,10 +1672,9 @@ public:
     return Using;
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::UsingShadow;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingShadowDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::UsingShadow; }
 };
 
 /// UsingDecl - Represents a C++ using-declaration. For example:
@@ -1749,10 +1743,9 @@ public:
       SourceLocation IdentL, SourceRange NNR, SourceLocation UsingL,
       NestedNameSpecifier* TargetNNS, DeclarationName Name, bool IsTypeNameArg);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::Using;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UsingDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::Using; }
 };
 
 /// UnresolvedUsingValueDecl - Represents a dependent using
@@ -1801,10 +1794,9 @@ public:
            SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
            SourceLocation TargetNameLoc, DeclarationName TargetName);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::UnresolvedUsingValue;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingValueDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::UnresolvedUsingValue; }
 };
 
 /// UnresolvedUsingTypenameDecl - Represents a dependent using
@@ -1860,10 +1852,9 @@ public:
            SourceRange TargetNNR, NestedNameSpecifier *TargetNNS,
            SourceLocation TargetNameLoc, DeclarationName TargetName);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::UnresolvedUsingTypename;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::UnresolvedUsingTypename; }
 };
 
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.
@@ -1889,10 +1880,9 @@ public:
   virtual ~StaticAssertDecl();
   virtual void Destroy(ASTContext& C);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::StaticAssert;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(StaticAssertDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Decl::StaticAssert; }
 };
 
 /// Insertion operator for diagnostics.  This allows sending AccessSpecifier's

@@ -75,8 +75,9 @@ public:
 
   static TranslationUnitDecl *Create(ASTContext &C);
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == TranslationUnit; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TranslationUnitDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == TranslationUnit; }
   static DeclContext *castToDeclContext(const TranslationUnitDecl *D) {
     return static_cast<DeclContext *>(const_cast<TranslationUnitDecl*>(D));
   }
@@ -221,10 +222,9 @@ public:
     return const_cast<NamedDecl*>(this)->getUnderlyingDecl();
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamedDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= NamedFirst && K <= NamedLast; }
 };
 
 /// NamespaceDecl - Represent a C++ namespace.
@@ -301,8 +301,9 @@ public:
   void setRBracLoc(SourceLocation RBrace) { RBracLoc = RBrace; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Namespace; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NamespaceDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Namespace; }
   static DeclContext *castToDeclContext(const NamespaceDecl *D) {
     return static_cast<DeclContext *>(const_cast<NamespaceDecl*>(D));
   }
@@ -326,10 +327,9 @@ public:
   void setType(QualType newType) { DeclType = newType; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= ValueFirst && D->getKind() <= ValueLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ValueDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= ValueFirst && K <= ValueLast; }
 };
 
 /// \brief Represents a ValueDecl that came out of a declarator.
@@ -349,10 +349,11 @@ public:
   SourceLocation getTypeSpecStartLoc() const;
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= DeclaratorFirst && D->getKind() <= DeclaratorLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const DeclaratorDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= DeclaratorFirst && K <= DeclaratorLast;
+  }
 };
 
 /// \brief Structure used to store a statement, the constant value to
@@ -758,10 +759,9 @@ public:
                         SourceLocation PointOfInstantiation = SourceLocation());
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= VarFirst && D->getKind() <= VarLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const VarDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= VarFirst && K <= VarLast; }
 };
 
 class ImplicitParamDecl : public VarDecl {
@@ -775,7 +775,8 @@ public:
                                    QualType T);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const ImplicitParamDecl *D) { return true; }
-  static bool classof(const Decl *D) { return D->getKind() == ImplicitParam; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == ImplicitParam; }
 };
 
 /// ParmVarDecl - Represent a parameter to a function.
@@ -881,10 +882,9 @@ public:
   void setOwningFunction(DeclContext *FD) { setDeclContext(FD); }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return (D->getKind() == ParmVar);
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ParmVarDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ParmVar; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a
@@ -1298,10 +1298,11 @@ public:
   bool isOutOfLine() const;
                        
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FunctionDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= FunctionFirst && K <= FunctionLast;
+  }
   static DeclContext *castToDeclContext(const FunctionDecl *D) {
     return static_cast<DeclContext *>(const_cast<FunctionDecl*>(D));
   }
@@ -1351,10 +1352,9 @@ public:
   void setBitWidth(Expr *BW) { BitWidth = BW; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FieldDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= FieldFirst && K <= FieldLast; }
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
@@ -1388,8 +1388,9 @@ public:
   void setInitVal(const llvm::APSInt &V) { Val = V; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == EnumConstant; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const EnumConstantDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == EnumConstant; }
 
   friend class StmtIteratorBase;
 };
@@ -1421,10 +1422,9 @@ public:
   void setTypeForDecl(Type *TD) { TypeForDecl = TD; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= TypeFirst && D->getKind() <= TypeLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TypeDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= TypeFirst && K <= TypeLast; }
 };
 
 
@@ -1463,8 +1463,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Typedef; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TypedefDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Typedef; }
 };
 
 class TypedefDecl;
@@ -1588,10 +1589,9 @@ public:
   void setTypedefForAnonDecl(TypedefDecl *TDD) { TypedefForAnonDecl = TDD; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() >= TagFirst && D->getKind() <= TagLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TagDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K >= TagFirst && K <= TagLast; }
 
   static DeclContext *castToDeclContext(const TagDecl *D) {
     return static_cast<DeclContext *>(const_cast<TagDecl*>(D));
@@ -1682,8 +1682,9 @@ public:
 
   void setInstantiationOfMemberEnum(EnumDecl *IF) { InstantiatedFrom = IF; }
 
-  static bool classof(const Decl *D) { return D->getKind() == Enum; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const EnumDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Enum; }
 };
 
 
@@ -1792,10 +1793,11 @@ public:
   /// now complete.
   void completeDefinition(ASTContext& C);
 
-  static bool classof(const Decl *D) {
-    return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= RecordFirst && K <= RecordLast;
+  }
 };
 
 class FileScopeAsmDecl : public Decl {
@@ -1810,10 +1812,9 @@ public:
   StringLiteral *getAsmString() { return AsmString; }
   void setAsmString(StringLiteral *Asm) { AsmString = Asm; }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == FileScopeAsm;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FileScopeAsmDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == FileScopeAsm; }
 };
 
 /// BlockDecl - This represents a block literal declaration, which is like an
@@ -1875,8 +1876,9 @@ public:
   void setParams(ASTContext& C, ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Block; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const BlockDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Block; }
   static DeclContext *castToDeclContext(const BlockDecl *D) {
     return static_cast<DeclContext *>(const_cast<BlockDecl*>(D));
   }

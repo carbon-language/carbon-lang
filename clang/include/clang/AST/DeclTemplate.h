@@ -247,13 +247,14 @@ public:
   NamedDecl *getTemplatedDecl() const { return TemplatedDecl; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-      return D->getKind() >= TemplateFirst && D->getKind() <= TemplateLast;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateDecl *D) { return true; }
   static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
+  static bool classofKind(Kind K) {
+    return K >= TemplateFirst && K <= TemplateLast;
+  }
 
 protected:
   NamedDecl *TemplatedDecl;
@@ -510,10 +511,9 @@ public:
                                       NamedDecl *Decl);
 
   // Implement isa/cast/dyncast support
-  static bool classof(const Decl *D)
-  { return D->getKind() == FunctionTemplate; }
-  static bool classof(const FunctionTemplateDecl *D)
-  { return true; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const FunctionTemplateDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == FunctionTemplate; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -634,10 +634,9 @@ public:
   bool isParameterPack() const { return ParameterPack; }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == TemplateTypeParm;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateTypeParmDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == TemplateTypeParm; }
 };
 
 /// NonTypeTemplateParmDecl - Declares a non-type template parameter,
@@ -682,10 +681,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == NonTypeTemplateParm;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NonTypeTemplateParmDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == NonTypeTemplateParm; }
 };
 
 /// TemplateTemplateParmDecl - Declares a template template parameter,
@@ -735,10 +733,9 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == TemplateTemplateParm;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == TemplateTemplateParm; }
 };
 
 /// \brief Represents a class template specialization, which refers to
@@ -903,9 +900,10 @@ public:
       TemplateArgs[Arg].Profile(ID, Context);
   }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ClassTemplateSpecialization ||
-           D->getKind() == ClassTemplatePartialSpecialization;
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K == ClassTemplateSpecialization ||
+           K == ClassTemplatePartialSpecialization;
   }
 
   static bool classof(const ClassTemplateSpecializationDecl *) {
@@ -1039,8 +1037,9 @@ public:
     
   // FIXME: Add Profile support!
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ClassTemplatePartialSpecialization;
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K == ClassTemplatePartialSpecialization;
   }
 
   static bool classof(const ClassTemplatePartialSpecializationDecl *) {
@@ -1212,10 +1211,9 @@ public:
   }
   
   // Implement isa/cast/dyncast support
-  static bool classof(const Decl *D)
-  { return D->getKind() == ClassTemplate; }
-  static bool classof(const ClassTemplateDecl *D)
-  { return true; }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const ClassTemplateDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == ClassTemplate; }
 
   virtual void Destroy(ASTContext& C);
 };
@@ -1293,9 +1291,8 @@ public:
   }
 
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == Decl::FriendTemplate;
-  }
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == Decl::FriendTemplate; }
   static bool classof(const FriendTemplateDecl *D) { return true; }
 };
 

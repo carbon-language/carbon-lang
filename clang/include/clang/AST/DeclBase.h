@@ -480,6 +480,7 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
+  static bool classofKind(Kind K) { return true; }
   static DeclContext *castToDeclContext(const Decl *);
   static Decl *castFromDeclContext(const DeclContext *);
 
@@ -1020,23 +1021,77 @@ inline bool Decl::isTemplateParameter() const {
          getKind() == TemplateTemplateParm;
 }
 
+
+// Specialization selected when ToTy is not a known subclass of DeclContext.
+template <class ToTy,
+          bool IsKnownSubtype = ::llvm::is_base_of< DeclContext, ToTy>::value>
+struct cast_convert_decl_context {
+  static const ToTy *doit(const DeclContext *Val) {
+    return static_cast<const ToTy*>(Decl::castFromDeclContext(Val));
+  }
+
+  static ToTy *doit(DeclContext *Val) {
+    return static_cast<ToTy*>(Decl::castFromDeclContext(Val));
+  }
+};
+
+// Specialization selected when ToTy is a known subclass of DeclContext.
+template <class ToTy>
+struct cast_convert_decl_context<ToTy, true> {
+  static const ToTy *doit(const DeclContext *Val) {
+    return static_cast<const ToTy*>(Val);
+  }
+
+  static ToTy *doit(DeclContext *Val) {
+    return static_cast<ToTy*>(Val);
+  }
+};
+
+
 } // end clang.
 
 namespace llvm {
 
-/// Implement a isa_impl_wrap specialization to check whether a DeclContext is
-/// a specific Decl.
+/// isa<T>(DeclContext*)
 template<class ToTy>
 struct isa_impl_wrap<ToTy,
                      const ::clang::DeclContext,const ::clang::DeclContext> {
   static bool doit(const ::clang::DeclContext &Val) {
-    return ToTy::classof(::clang::Decl::castFromDeclContext(&Val));
+    return ToTy::classofKind(Val.getDeclKind());
   }
 };
 template<class ToTy>
 struct isa_impl_wrap<ToTy, ::clang::DeclContext, ::clang::DeclContext>
   : public isa_impl_wrap<ToTy,
                       const ::clang::DeclContext,const ::clang::DeclContext> {};
+
+/// cast<T>(DeclContext*)
+template<class ToTy>
+struct cast_convert_val<ToTy,
+                        const ::clang::DeclContext,const ::clang::DeclContext> {
+  static const ToTy &doit(const ::clang::DeclContext &Val) {
+    return *::clang::cast_convert_decl_context<ToTy>::doit(&Val);
+  }
+};
+template<class ToTy>
+struct cast_convert_val<ToTy, ::clang::DeclContext, ::clang::DeclContext> {
+  static ToTy &doit(::clang::DeclContext &Val) {
+    return *::clang::cast_convert_decl_context<ToTy>::doit(&Val);
+  }
+};
+template<class ToTy>
+struct cast_convert_val<ToTy,
+                     const ::clang::DeclContext*, const ::clang::DeclContext*> {
+  static const ToTy *doit(const ::clang::DeclContext *Val) {
+    return ::clang::cast_convert_decl_context<ToTy>::doit(Val);
+  }
+};
+template<class ToTy>
+struct cast_convert_val<ToTy, ::clang::DeclContext*, ::clang::DeclContext*> {
+  static ToTy *doit(::clang::DeclContext *Val) {
+    return ::clang::cast_convert_decl_context<ToTy>::doit(Val);
+  }
+};
 
 /// Implement cast_convert_val for Decl -> DeclContext conversions.
 template<class FromTy>
@@ -1066,31 +1121,6 @@ struct cast_convert_val< const ::clang::DeclContext, FromTy*, FromTy*> {
     return FromTy::castToDeclContext(Val);
   }
 };
-
-/// Implement cast_convert_val for DeclContext -> Decl conversions.
-template<class ToTy>
-struct cast_convert_val<ToTy,
-                        const ::clang::DeclContext,const ::clang::DeclContext> {
-  static ToTy &doit(const ::clang::DeclContext &Val) {
-    return *reinterpret_cast<ToTy*>(ToTy::castFromDeclContext(&Val));
-  }
-};
-template<class ToTy>
-struct cast_convert_val<ToTy, ::clang::DeclContext, ::clang::DeclContext>
-  : public cast_convert_val<ToTy,
-                      const ::clang::DeclContext,const ::clang::DeclContext> {};
-
-template<class ToTy>
-struct cast_convert_val<ToTy,
-                     const ::clang::DeclContext*, const ::clang::DeclContext*> {
-  static ToTy *doit(const ::clang::DeclContext *Val) {
-    return reinterpret_cast<ToTy*>(ToTy::castFromDeclContext(Val));
-  }
-};
-template<class ToTy>
-struct cast_convert_val<ToTy, ::clang::DeclContext*, ::clang::DeclContext*>
-  : public cast_convert_val<ToTy,
-                    const ::clang::DeclContext*,const ::clang::DeclContext*> {};
 
 } // end namespace llvm
 
