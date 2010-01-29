@@ -29,3 +29,18 @@ namespace test2 {
     }
   };
 }
+
+namespace PR6063 {
+  template <typename T> void f(T, T);
+  
+  namespace detail 
+  {
+    using PR6063::f;
+  }
+  
+  template <typename T>
+  void g(T a, T b)
+  {
+    detail::f(a, b);
+  }
+}
