@@ -373,9 +373,11 @@ void PromoteMem2Reg::run() {
 
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
-        // Record debuginfo for the store before removing it.
-        if (DbgDeclareInst *DDI = Info.DbgDeclare)
+        // Record debuginfo for the store and remove the declaration's debuginfo.
+        if (DbgDeclareInst *DDI = Info.DbgDeclare) {
           ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore);
+          DDI->eraseFromParent();
+        }
         // Remove the (now dead) store and alloca.
         Info.OnlyStore->eraseFromParent();
         LBI.deleteValue(Info.OnlyStore);
@@ -418,6 +420,10 @@ void PromoteMem2Reg::run() {
         // The alloca has been processed, move on.
         RemoveFromAllocasList(AllocaNum);
         
+        // The alloca's debuginfo can be removed as well.
+        if (DbgDeclareInst *DDI = Info.DbgDeclare)
+          DDI->eraseFromParent();
+
         ++NumLocalPromoted;
         continue;
       }
@@ -493,7 +499,11 @@ void PromoteMem2Reg::run() {
     A->eraseFromParent();
   }
 
-  
+  // Remove alloca's dbg.declare instrinsics from the function.
+  for (unsigned i = 0, e = AllocaDbgDeclares.size(); i != e; ++i)
+    if (DbgDeclareInst *DDI = AllocaDbgDeclares[i])
+      DDI->eraseFromParent();
+
   // Loop over all of the PHI nodes and see if there are any that we can get
   // rid of because they merge all of the same incoming values.  This can
   // happen due to undef values coming into the PHI nodes.  This process is
