@@ -116,7 +116,7 @@ public:
     : start(0), hs(NotSpecified), amt(0) {}
   
   OptionalAmount(unsigned i, const char *st) 
-    : start(start), hs(Constant), amt(i) {}
+    : start(st), hs(Constant), amt(i) {}
 
   HowSpecified getHowSpecified() const { return hs; }
   bool hasDataArgument() const { return hs == Arg; }
