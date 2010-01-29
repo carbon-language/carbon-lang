@@ -1611,30 +1611,30 @@ static bool isIntegerLikeType(QualType Ty,
        i != e; ++i, ++idx) {
     const FieldDecl *FD = *i;
 
-    // Check if this field is at offset 0.
-    uint64_t Offset = Layout.getFieldOffset(idx);
-    if (Offset != 0) {
-      // Allow padding bit-fields, but only if they are all at the end of the
-      // structure (despite the wording above, this matches gcc).
-      if (FD->isBitField() && 
-          !FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
-        for (; i != e; ++i)
-          if (!i->isBitField() ||
-              i->getBitWidth()->EvaluateAsInt(Context).getZExtValue())
-            return false;
+    // Bit-fields are not addressable, we only need to verify they are "integer
+    // like". We still have to disallow a subsequent non-bitfield, for example:
+    //   struct { int : 0; int x }
+    // is non-integer like according to gcc.
+    if (FD->isBitField()) {
+      if (!RD->isUnion())
+        HadField = true;
 
-        // All remaining fields are padding, allow this.
-        return true;
-      }
+      if (!isIntegerLikeType(FD->getType(), Context, VMContext))
+        return false;
 
-      return false;
+      continue;
     }
+
+    // Check if this field is at offset 0.
+    if (Layout.getFieldOffset(idx) != 0)
+      return false;
 
     if (!isIntegerLikeType(FD->getType(), Context, VMContext))
       return false;
     
-    // Only allow at most one field in a structure. Again this doesn't match the
-    // wording above, but follows gcc.
+    // Only allow at most one field in a structure. This doesn't match the
+    // wording above, but follows gcc in situations with a field following an
+    // empty structure.
     if (!RD->isUnion()) {
       if (HadField)
         return false;

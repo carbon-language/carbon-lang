@@ -92,3 +92,30 @@ void f15(struct s7 a0) {}
 // APCS-GNU: define arm_apcscc void @f16()
 // AAPCS: define arm_aapcscc void @f16()
 void f16(struct s8 a0) {}
+
+// APCS-GNU: define arm_apcscc i32 @f17()
+// AAPCS: define arm_aapcscc i32 @f17()
+struct s17 { short f0 : 13; char f1 : 4; };
+struct s17 f17(void) {}
+
+// APCS-GNU: define arm_apcscc i32 @f18()
+// AAPCS: define arm_aapcscc i32 @f18()
+struct s18 { short f0; char f1 : 4; };
+struct s18 f18(void) {}
+
+// APCS-GNU: define arm_apcscc void @f19(
+// APCS-GNU: struct.s19* noalias sret
+// AAPCS: define arm_aapcscc i32 @f19()
+struct s19 { int f0; struct s8 f1; };
+struct s19 f19(void) {}
+
+// APCS-GNU: define arm_apcscc void @f20(
+// APCS-GNU: struct.s20* noalias sret
+// AAPCS: define arm_aapcscc i32 @f20()
+struct s20 { struct s8 f1; int f0; };
+struct s20 f20(void) {}
+
+// APCS-GNU: define arm_apcscc i32 @f21()
+// AAPCS: define arm_aapcscc i32 @f21()
+struct s21 { struct {} f1; int f0 : 4; };
+struct s21 f21(void) {}
