@@ -785,17 +785,16 @@ void InitListChecker::CheckReferenceType(const InitializedEntity &Entity,
       return;
     }
 
-    Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-    if (SemaRef.CheckReferenceInit(expr, DeclType,
-                                   /*FIXME:*/expr->getLocStart(),
-                                   /*SuppressUserConversions=*/false,
-                                   /*AllowExplicit=*/false,
-                                   /*ForceRValue=*/false))
+    Sema::OwningExprResult Result =
+      SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
+                                        SemaRef.Owned(expr));
+
+    if (Result.isInvalid())
       hadError = true;
-    else if (savExpr != expr) {
-      // The type was promoted, update initializer list.
-      IList->setInit(Index, expr);
-    }
+
+    expr = Result.takeAs<Expr>();
+    IList->setInit(Index, expr);
+
     if (hadError)
       ++StructuredIndex;
     else
@@ -3270,7 +3269,7 @@ InitializationSequence::Perform(Sema &S,
         S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
         return S.ExprError();
       }
-        
+
       // Reference binding does not have any corresponding ASTs.
 
       // Check exception specifications
