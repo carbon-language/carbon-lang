@@ -258,7 +258,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     QualType FT = FD->getType();
 
     // FIXME: What are the right qualifiers here?
-    LValue LV = EmitLValueForField(Addr, FD, false, 0);
+    LValue LV = EmitLValueForField(Addr, FD, 0);
     if (CodeGenFunction::hasAggregateLLVMType(FT)) {
       AI = ExpandTypeFromArgs(FT, LV, AI);
     } else {
@@ -285,7 +285,7 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
     QualType FT = FD->getType();
 
     // FIXME: What are the right qualifiers here?
-    LValue LV = EmitLValueForField(Addr, FD, false, 0);
+    LValue LV = EmitLValueForField(Addr, FD, 0);
     if (CodeGenFunction::hasAggregateLLVMType(FT)) {
       ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()), Args);
     } else {

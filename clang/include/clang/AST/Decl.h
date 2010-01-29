@@ -1351,6 +1351,16 @@ public:
   Expr *getBitWidth() const { return BitWidth; }
   void setBitWidth(Expr *BW) { BitWidth = BW; }
 
+  /// getParent - Returns the parent of this field declaration, which
+  /// is the struct in which this method is defined.
+  const RecordDecl *getParent() const {
+    return cast<RecordDecl>(getDeclContext());
+  }
+
+  RecordDecl *getParent() {
+    return cast<RecordDecl>(getDeclContext());
+  }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const FieldDecl *D) { return true; }

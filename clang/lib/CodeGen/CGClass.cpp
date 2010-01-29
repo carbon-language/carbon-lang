@@ -629,8 +629,8 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-      LValue RHS = EmitLValueForField(LoadOfSrc, Field, false, 0);
+      LValue LHS = EmitLValueForField(LoadOfThis, Field, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, Field, 0);
       if (Array) {
         const llvm::Type *BasePtr = ConvertType(FieldType);
         BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -665,8 +665,8 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
       continue;
     }
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-    LValue RHS = EmitLValueForField(LoadOfSrc, Field, false, 0);
+    LValue LHS = EmitLValueForField(LoadOfThis, Field, 0);
+    LValue RHS = EmitLValueForField(LoadOfSrc, Field, 0);
 
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
@@ -745,8 +745,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
     if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
       = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+      LValue LHS = EmitLValueForField(LoadOfThis, *Field, 0);
+      LValue RHS = EmitLValueForField(LoadOfSrc, *Field, 0);
       if (Array) {
         const llvm::Type *BasePtr = ConvertType(FieldType);
         BasePtr = llvm::PointerType::getUnqual(BasePtr);
@@ -763,8 +763,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
       continue;
     }
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForField(LoadOfThis, *Field, false, 0);
-    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, false, 0);
+    LValue LHS = EmitLValueForField(LoadOfThis, *Field, 0);
+    LValue RHS = EmitLValueForField(LoadOfSrc, *Field, 0);
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
       EmitStoreThroughLValue(RVRHS, LHS, Field->getType());
@@ -854,14 +854,13 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
     LHS = LValue::MakeAddr(V, CGF.MakeQualifiers(FieldType));
   } else {
-    LHS = CGF.EmitLValueForField(ThisPtr, Field, ClassDecl->isUnion(), 0);
+    LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
   }
 
   // If we are initializing an anonymous union field, drill down to the field.
   if (MemberInit->getAnonUnionMember()) {
     Field = MemberInit->getAnonUnionMember();
-    LHS = CGF.EmitLValueForField(LHS.getAddress(), Field,
-                                 /*IsUnion=*/true, 0);
+    LHS = CGF.EmitLValueForField(LHS.getAddress(), Field, 0);
     FieldType = Field->getType();
   }
 
@@ -1002,7 +1001,6 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     llvm::Value *ThisPtr = LoadCXXThis();
 
     LValue LHS = EmitLValueForField(ThisPtr, Field, 
-                                    /*isUnion=*/false,
                                     // FIXME: Qualifiers?
                                     /*CVRQualifiers=*/0);
     if (Array) {

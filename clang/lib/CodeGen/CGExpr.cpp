@@ -1383,7 +1383,6 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
-  bool isUnion = false;
   bool isNonGC = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
@@ -1394,16 +1393,12 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     BaseValue = EmitScalarExpr(BaseExpr);
     const PointerType *PTy =
       BaseExpr->getType()->getAs<PointerType>();
-    if (PTy->getPointeeType()->isUnionType())
-      isUnion = true;
     BaseQuals = PTy->getPointeeType().getQualifiers();
   } else if (isa<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens()) ||
              isa<ObjCImplicitSetterGetterRefExpr>(
                BaseExpr->IgnoreParens())) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
     BaseValue = RV.getAggregateAddr();
-    if (BaseExpr->getType()->isUnionType())
-      isUnion = true;
     BaseQuals = BaseExpr->getType().getQualifiers();
   } else {
     LValue BaseLV = EmitLValue(BaseExpr);
@@ -1412,14 +1407,12 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
     QualType BaseTy = BaseExpr->getType();
-    if (BaseTy->isUnionType())
-      isUnion = true;
     BaseQuals = BaseTy.getQualifiers();
   }
 
   NamedDecl *ND = E->getMemberDecl();
   if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
-    LValue LV = EmitLValueForField(BaseValue, Field, isUnion,
+    LValue LV = EmitLValueForField(BaseValue, Field, 
                                    BaseQuals.getCVRQualifiers());
     LValue::SetObjCNonGC(LV, isNonGC);
     setObjCGCLValueClass(getContext(), E, LV);
@@ -1463,7 +1456,6 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
 
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                            const FieldDecl* Field,
-                                           bool isUnion,
                                            unsigned CVRQualifiers) {
   if (Field->isBitField())
     return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
@@ -1472,7 +1464,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
 
   // Match union field type.
-  if (isUnion) {
+  if (Field->getParent()->isUnion()) {
     const llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(Field->getType());
     const llvm::PointerType * BaseTy =
@@ -1850,8 +1842,7 @@ LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
       getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(ClassDecl)));
   NNSpecTy = getContext().getPointerType(NNSpecTy);
   llvm::Value *V = llvm::Constant::getNullValue(ConvertType(NNSpecTy));
-  LValue MemExpLV = EmitLValueForField(V, Field, /*isUnion=*/false, 
-                                       /*Qualifiers=*/0);
+  LValue MemExpLV = EmitLValueForField(V, Field, /*Qualifiers=*/0);
   const llvm::Type *ResultType = ConvertType(getContext().getPointerDiffType());
   V = Builder.CreatePtrToInt(MemExpLV.getAddress(), ResultType, "datamember");
   return LValue::MakeAddr(V, MakeQualifiers(Field->getType()));
