@@ -465,6 +465,10 @@ void StmtProfiler::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *S) {
          const_cast<CXXDestructorDecl *>(S->getTemporary()->getDestructor()));
 }
 
+void StmtProfiler::VisitCXXBindReferenceExpr(CXXBindReferenceExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitCXXConstructExpr(CXXConstructExpr *S) {
   VisitExpr(S);
   VisitDecl(S->getConstructor());

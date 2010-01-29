@@ -1205,6 +1205,9 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
   case CXXBindTemporaryExprClass:
     return cast<CXXBindTemporaryExpr>(this)->getSubExpr()->
       isLvalueInternal(Ctx);
+  case CXXBindReferenceExprClass:
+    // Something that's bound to a reference is always an lvalue.
+    return LV_Valid;
   case ConditionalOperatorClass: {
     // Complicated handling is only for C++.
     if (!Ctx.getLangOptions().CPlusPlus)
@@ -1594,6 +1597,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::DependentScopeDeclRefExprClass:
   case Expr::CXXConstructExprClass:
   case Expr::CXXBindTemporaryExprClass:
+  case Expr::CXXBindReferenceExprClass:
   case Expr::CXXExprWithTemporariesClass:
   case Expr::CXXTemporaryObjectExprClass:
   case Expr::CXXUnresolvedConstructExprClass:
