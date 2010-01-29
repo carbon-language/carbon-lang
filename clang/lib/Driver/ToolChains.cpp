@@ -385,10 +385,12 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
     if (iPhoneOSTarget && iPhoneOSTarget[0] == '\0')
       iPhoneOSTarget = 0;
 
-    if (OSXTarget && iPhoneOSTarget) {
-      getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
-        << OSXTarget << iPhoneOSTarget;
-    } else if (OSXTarget) {
+    if (OSXTarget) {
+      // Diagnose conflicting deployment targets.
+      if (iPhoneOSTarget)
+        getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
+          << OSXTarget << iPhoneOSTarget;
+
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = DAL->MakeJoinedArg(0, O, OSXTarget);
       DAL->append(OSXVersion);
