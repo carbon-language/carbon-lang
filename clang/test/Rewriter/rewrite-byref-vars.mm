@@ -36,9 +36,19 @@ __declspec(dllexport) extern "C" __declspec(dllexport) void XXXXBreakTheRewriter
    id list;
 }
 - (void) Meth;
+// radar 7589385 use before definition
+- (void) allObjects;
 @end
 
 @implementation I
+// radar 7589385 use before definition
+- (void) allObjects {
+    __attribute__((__blocks__(byref))) id *listp;
+
+    ^(void) {
+      *listp++ = 0;
+    };
+}
 - (void) Meth { __attribute__((__blocks__(byref))) void ** listp = (void **)list; }
 @end
 

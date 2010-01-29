@@ -4085,8 +4085,7 @@ void RewriteObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
 void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
   //fprintf(stderr,"In InsertBlockLiteralsWitinMethod\n");
   //SourceLocation FunLocStart = MD->getLocStart();
-  // FIXME: This hack works around a bug in Rewrite.InsertText().
-  SourceLocation FunLocStart = MD->getLocStart().getFileLocWithOffset(-1);
+  SourceLocation FunLocStart = MD->getLocStart();
   std::string FuncName = MD->getSelector().getAsString();
   // Convert colons to underscores.
   std::string::size_type loc = 0;
