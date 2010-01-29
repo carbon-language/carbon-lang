@@ -482,7 +482,7 @@ private:
 
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
-  const SourceRange *DiagRanges[10];
+  SourceRange DiagRanges[10];
 
   enum { MaxCodeModificationHints = 3 };
 
@@ -609,7 +609,7 @@ public:
            sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
            "Too many arguments to diagnostic!");
     if (DiagObj)
-      DiagObj->DiagRanges[NumRanges++] = &R;
+      DiagObj->DiagRanges[NumRanges++] = R;
   }
 
   void AddCodeModificationHint(const CodeModificationHint &Hint) const {
@@ -772,9 +772,9 @@ public:
     return DiagObj->NumDiagRanges;
   }
 
-  const SourceRange &getRange(unsigned Idx) const {
+  SourceRange getRange(unsigned Idx) const {
     assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
-    return *DiagObj->DiagRanges[Idx];
+    return DiagObj->DiagRanges[Idx];
   }
 
   unsigned getNumCodeModificationHints() const {

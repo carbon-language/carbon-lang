@@ -154,12 +154,21 @@ enum CXFixItKind clang_getDiagnosticFixItKind(CXDiagnostic Diag,
 CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag, 
                                            unsigned FixIt,
                                            CXSourceLocation *Location) {
+  if (Location)
+    *Location = clang_getNullLocation();
+
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints())
     return CIndexer::createCXString("");
   
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
+
+  if (Location && StoredDiag->Info.getLocation().isValid())
+    *Location = translateSourceLocation(
+                                    StoredDiag->Info.getLocation().getManager(),
+                                        StoredDiag->LangOpts, 
+                                        Hint.InsertionLoc);
   return CIndexer::createCXString(Hint.CodeToInsert);
 }
 
@@ -180,6 +189,9 @@ CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
 CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag, 
                                              unsigned FixIt,
                                              CXSourceRange *Range) {
+  if (Range)
+    *Range = clang_getNullRange();
+
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints() ||
       StoredDiag->Info.getLocation().isInvalid()) {

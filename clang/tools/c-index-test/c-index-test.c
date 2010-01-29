@@ -195,8 +195,36 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
   /* Print file:line:column. */
   clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
                                  &file, &line, &column, 0);
-  if (file)
-    fprintf(out, "%s:%d:%d: ", clang_getFileName(file), line, column);
+  if (file) {
+    CXSourceRange *ranges = 0;
+    unsigned num_ranges;
+    unsigned i;
+    unsigned printed_any_ranges = 0;
+    
+    fprintf(out, "%s:%d:%d:", clang_getFileName(file), line, column);
+  
+    clang_getDiagnosticRanges(Diagnostic, &ranges, &num_ranges);
+    for (i = 0; i != num_ranges; ++i) {
+      CXFile start_file, end_file;
+      unsigned start_line, start_column, end_line, end_column;
+      clang_getInstantiationLocation(clang_getRangeStart(ranges[i]),
+                                     &start_file, &start_line, &start_column,0);
+      clang_getInstantiationLocation(clang_getRangeEnd(ranges[i]),
+                                     &end_file, &end_line, &end_column, 0);
+      
+      if (start_file != end_file || start_file != file)
+        continue;
+      
+      fprintf(out, "{%d:%d-%d:%d}", start_line, start_column, end_line, 
+              end_column+1);
+      printed_any_ranges = 1;
+    }
+    clang_disposeDiagnosticRanges(ranges, num_ranges);
+    if (printed_any_ranges)
+      fprintf(out, ":");
+    
+    fprintf(out, " ");
+  }
   
   /* Print warning/error/etc. */
   switch (severity) {
@@ -213,6 +241,61 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
   else
     fprintf(out, "<no diagnostic text>\n");
   clang_disposeString(text);
+  
+  if (file) {
+    unsigned i, num_fixits = clang_getDiagnosticNumFixIts(Diagnostic);
+    for (i = 0; i != num_fixits; ++i) {
+      switch (clang_getDiagnosticFixItKind(Diagnostic, i)) {
+      case CXFixIt_Insertion: {
+        CXSourceLocation insertion_loc;
+        CXFile insertion_file;
+        unsigned insertion_line, insertion_column;
+        text = clang_getDiagnosticFixItInsertion(Diagnostic, i, &insertion_loc);
+        clang_getInstantiationLocation(insertion_loc, &insertion_file, 
+                                       &insertion_line, &insertion_column, 0);
+        if (insertion_file == file)
+          fprintf(out, "FIX-IT: Insert \"%s\" at %d:%d\n",
+                  clang_getCString(text), insertion_line, insertion_column);
+        clang_disposeString(text);
+        break;
+      }
+
+      case CXFixIt_Removal: {
+        CXFile start_file, end_file;
+        unsigned start_line, start_column, end_line, end_column;
+        CXSourceRange remove_range
+          = clang_getDiagnosticFixItRemoval(Diagnostic, i);
+        clang_getInstantiationLocation(clang_getRangeStart(remove_range),
+                                       &start_file, &start_line, &start_column,
+                                       0);
+        clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
+                                       &end_file, &end_line, &end_column, 0);
+        if (start_file == file && end_file == file)
+          fprintf(out, "FIX-IT: Remove %d:%d-%d:%d\n",
+                  start_line, start_column, end_line, end_column+1);
+        break;
+      }
+          
+      case CXFixIt_Replacement: {
+        CXFile start_file, end_file;
+        unsigned start_line, start_column, end_line, end_column;
+        CXSourceRange remove_range;
+        text = clang_getDiagnosticFixItReplacement(Diagnostic, i,&remove_range);
+        clang_getInstantiationLocation(clang_getRangeStart(remove_range),
+                                       &start_file, &start_line, &start_column,
+                                       0);
+        clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
+                                       &end_file, &end_line, &end_column, 0);
+        if (start_file == end_file)
+          fprintf(out, "FIX-IT: Replace %d:%d-%d:%d with \"%s\"\n",
+                  start_line, start_column, end_line, end_column+1,
+                  clang_getCString(text));
+        clang_disposeString(text);
+        break;
+      }
+      }
+    }
+  }
 }
 
 /******************************************************************************/
