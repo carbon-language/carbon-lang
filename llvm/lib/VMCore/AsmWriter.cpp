@@ -1418,6 +1418,9 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
+  if (GV->isMaterializable())
+    Out << "; Materializable\n";
+
   WriteAsOperandInternal(Out, GV, &TypePrinter, &Machine);
   Out << " = ";
 
@@ -1448,6 +1451,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {
+  if (GA->isMaterializable())
+    Out << "; Materializable\n";
+
   // Don't crash when dumping partially built GA
   if (!GA->hasName())
     Out << "<<nameless>> = ";
@@ -1520,6 +1526,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   Out << '\n';
 
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
+
+  if (F->isMaterializable())
+    Out << "; Materializable\n";
 
   if (F->isDeclaration())
     Out << "declare ";
