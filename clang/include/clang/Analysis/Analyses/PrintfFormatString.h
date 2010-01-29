@@ -200,7 +200,9 @@ public:
   
   virtual void HandleIncompletePrecision(const char *periodChar) {}
   
-  virtual void HandleInvalidConversionSpecifier(const char *conversionChar) {}
+  virtual void HandleInvalidConversionSpecifier(const FormatSpecifier &FS,
+                                                const char *startSpecifier,
+                                                unsigned specifierLen) {}
   
   virtual bool HandleFormatSpecifier(const FormatSpecifier &FS,
                                      const char *startSpecifier,

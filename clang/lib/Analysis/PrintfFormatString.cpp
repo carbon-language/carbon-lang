@@ -21,17 +21,17 @@ namespace {
 class FormatSpecifierResult {
   FormatSpecifier FS;
   const char *Start;
-  bool HasError;
+  bool Stop;
 public:
-  FormatSpecifierResult(bool err = false)
-    : Start(0), HasError(err) {}
+  FormatSpecifierResult(bool stop = false)
+    : Start(0), Stop(stop) {}
   FormatSpecifierResult(const char *start,
                         const FormatSpecifier &fs)
-    : FS(fs), Start(start), HasError(false) {}
+    : FS(fs), Start(start), Stop(false) {}
 
   
   const char *getStart() const { return Start; }
-  bool hasError() const { return HasError; }
+  bool shouldStop() const { return Stop; }
   bool hasValue() const { return Start != 0; }
   const FormatSpecifier &getValue() const {
     assert(hasValue());
@@ -194,11 +194,10 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
   
   // Finally, look for the conversion specifier.
   const char *conversionPosition = I++;
-  ConversionSpecifier::Kind k;
+  ConversionSpecifier::Kind k = ConversionSpecifier::InvalidSpecifier;
   switch (*conversionPosition) {
     default:
-      H.HandleInvalidConversionSpecifier(conversionPosition);
-      return true;      
+      break;
     // C99: 7.19.6.1 (section 8).
     case 'd': k = ConversionSpecifier::dArg; break;
     case 'i': k = ConversionSpecifier::iArg; break;
@@ -223,6 +222,11 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
     case '@': k = ConversionSpecifier::ObjCObjArg; break;      
   }
   FS.setConversionSpecifier(ConversionSpecifier(conversionPosition, k));
+
+  if (k == ConversionSpecifier::InvalidSpecifier) {
+    H.HandleInvalidConversionSpecifier(FS, Beg, I - Beg);
+    return false; // Keep processing format specifiers.
+  }
   return FormatSpecifierResult(Start, FS);
 }
 
@@ -232,13 +236,14 @@ bool ParseFormatString(FormatStringHandler &H,
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
     const FormatSpecifierResult &FSR = ParseFormatSpecifier(H, I, E);
-    // Did an error of any kind occur when parsing the specifier?  If so,
-    // don't do any more processing.
-    if (FSR.hasError())
+    // Did a fail-stop error of any kind occur when parsing the specifier?
+    // If so, don't do any more processing.
+    if (FSR.shouldStop())
       return true;;
-    // Done processing the string?
+    // Did we exhaust the string or encounter an error that
+    // we can recover from?
     if (!FSR.hasValue())
-      break;    
+      continue;
     // We have a format specifier.  Pass it to the callback.
     if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(),
                                  I - FSR.getStart()))

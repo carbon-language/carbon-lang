@@ -1306,7 +1306,16 @@ public:
       TheCall(theCall), FormatIdx(formatIdx) {}
   
   void DoneProcessing();
-    
+   
+//  void HandleIncompleteFormatSpecifier(const char *startSpecifier,
+//                                       const char *endSpecifier);
+  
+//  void HandleIncompletePrecision(const char *periodChar);
+  
+  void HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
+                                        const char *startSpecifier,
+                                        unsigned specifierLen);
+  
   void HandleNullChar(const char *nullCharacter);
   
   bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
@@ -1329,6 +1338,20 @@ SourceRange CheckPrintfHandler::getFormatRange() {
 
 SourceLocation CheckPrintfHandler::getLocationOfByte(const char *x) {
   return S.getLocationOfStringLiteralByte(FExpr, x - Beg);  
+}
+
+void CheckPrintfHandler::
+HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
+                                 const char *startSpecifier,
+                                 unsigned specifierLen) {
+  
+  ++NumConversions;
+  
+  SourceLocation Loc =
+    getLocationOfByte(FS.getConversionSpecifier().getStart());
+  S.Diag(Loc, diag::warn_printf_invalid_conversion)
+      << llvm::StringRef(startSpecifier, specifierLen)
+      << getFormatRange();  
 }
 
 void CheckPrintfHandler::HandleNullChar(const char *nullCharacter) {
@@ -1373,7 +1396,6 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
   }
   return true;
 }
-                                      
 
 bool
 CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
@@ -1397,19 +1419,16 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
     return false;
   }
 
-  ++NumConversions;  
-  
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
   if (!IsObjCLiteral && CS.isObjCArg()) {
-    SourceLocation Loc = getLocationOfByte(CS.getStart());
-    S.Diag(Loc, diag::warn_printf_invalid_conversion)
-      << llvm::StringRef(startSpecifier, specifierLen)
-      << getFormatRange();
+    HandleInvalidConversionSpecifier(FS, startSpecifier, specifierLen);
     
     // Continue checking the other format specifiers.
     return true;
   }
+  
+  ++NumConversions;  
   
   // Are we using '%n'?  Issue a warning about this being
   // a possible security issue.
