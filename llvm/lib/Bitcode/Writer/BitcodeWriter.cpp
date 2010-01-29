@@ -498,7 +498,7 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
 
     if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
-      if (!N->isFunctionLocal()) {
+      if (!N->isFunctionLocal() || !N->getFunction()) {
         if (!StartedMetadataBlock) {
           Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
           StartedMetadataBlock = true;
@@ -562,7 +562,7 @@ static void WriteFunctionLocalMetadata(const Function &F,
   
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
     if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first))
-      if (N->getFunction() == &F) {
+      if (N->isFunctionLocal() && N->getFunction() == &F) {
         if (!StartedMetadataBlock) {
           Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
           StartedMetadataBlock = true;
