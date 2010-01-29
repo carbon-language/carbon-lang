@@ -2200,6 +2200,9 @@ PPCTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG& DAG) const {
+  if (!PerformTailCallOpt)
+    return false;
+
   // Variable argument functions are not supported.
   if (isVarArg)
     return false;
