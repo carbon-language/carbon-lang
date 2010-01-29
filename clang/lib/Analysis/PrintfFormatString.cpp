@@ -14,8 +14,8 @@
 
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
 
-using namespace clang;
-using namespace clang::analyze_printf;
+using clang::analyze_printf::FormatSpecifier;
+using clang::analyze_printf::OptionalAmount;
 
 namespace {
 class FormatSpecifierResult {
@@ -83,8 +83,11 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   return OptionalAmount();  
 }
 
-static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
-                                                  const char *&Beg, const char *E) {
+static FormatSpecifierResult
+ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
+                     const char *&Beg, const char *E) {
+  
+  using namespace clang::analyze_printf;
   
   const char *I = Beg;
   const char *Start = 0;
