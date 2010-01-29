@@ -424,7 +424,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // advanced by 3 should return the location of b, not of \\.  One compounding
   // detail of this is that the escape may be made by a trigraph.
   if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
-    PhysOffset = Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
+    PhysOffset += Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
 
   return TokStart.getFileLocWithOffset(PhysOffset);
 }
