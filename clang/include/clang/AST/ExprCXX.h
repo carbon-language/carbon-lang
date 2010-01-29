@@ -587,6 +587,14 @@ public:
     return SubExpr->getSourceRange();
   }
 
+  /// requiresTemporaryCopy - Whether binding the subexpression requires a
+  /// temporary copy.
+  bool requiresTemporaryCopy() const { return RequiresTemporaryCopy; }
+
+  // extendsLifetime - Whether binding this reference extends the lifetime of
+  // the expression being bound. FIXME: Add C++ reference.
+  bool extendsLifetime() { return ExtendsLifetime; }
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXBindReferenceExprClass;
