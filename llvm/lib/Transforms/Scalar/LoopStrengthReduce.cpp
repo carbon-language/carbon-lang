@@ -1615,7 +1615,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
       DEBUG(dbgs() << " use ");
       DEBUG(WriteAsOperand(dbgs(), UsersToProcess.back().OperandValToReplace,
                            /*PrintType=*/false));
-      DEBUG(dbgs() << " in Inst: " << *User.Inst);
+      DEBUG(dbgs() << " in Inst: " << *User.Inst << '\n');
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
@@ -1801,10 +1801,10 @@ namespace {
   };
 }
 
-/// ChangeCompareStride - If a loop termination compare instruction is the
-/// only use of its stride, and the compaison is against a constant value,
-/// try eliminate the stride by moving the compare instruction to another
-/// stride and change its constant operand accordingly. e.g.
+/// ChangeCompareStride - If a loop termination compare instruction is the only
+/// use of its stride, and the comparison is against a constant value, try to
+/// eliminate the stride by moving the compare instruction to another stride and
+/// changing its constant operand accordingly. E.g.
 ///
 /// loop:
 /// ...
