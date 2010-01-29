@@ -462,7 +462,11 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <div class="doc_text">
 
 <ul>
-<li>...</li>
+<li>The JIT now <a
+href="http://llvm.org/viewvc/llvm-project?view=rev&revision=85295">defaults
+to compiling eagerly</a> to avoid a race condition in the lazy JIT.
+Clients that still want the lazy JIT can switch it on by calling
+<tt>ExecutionEngine::DisableLazyCompilation(false)</tt>.</li>
 </ul>
 
 </div>

@@ -150,6 +150,7 @@ with another <tt>Value</tt></a> </li>
     <li><a href="#shutdown">Ending execution with <tt>llvm_shutdown()</tt></a></li>
     <li><a href="#managedstatic">Lazy initialization with <tt>ManagedStatic</tt></a></li>
     <li><a href="#llvmcontext">Achieving Isolation with <tt>LLVMContext</tt></a></li>
+    <li><a href="#jitthreading">Threads and the JIT</a></li>
   </ul>
   </li>
 
@@ -2386,9 +2387,9 @@ failure of the initialization.  Failure typically indicates that your copy of
 LLVM was built without multithreading support, typically because GCC atomic
 intrinsics were not found in your system compiler.  In this case, the LLVM API
 will not be safe for concurrent calls.  However, it <em>will</em> be safe for
-hosting threaded applications in the JIT, though care must be taken to ensure
-that side exits and the like do not accidentally result in concurrent LLVM API
-calls.
+hosting threaded applications in the JIT, though <a href="#jitthreading">care
+must be taken</a> to ensure that side exits and the like do not accidentally
+result in concurrent LLVM API calls.
 </p>
 </div>
 
@@ -2482,6 +2483,34 @@ For clients that do <em>not</em> require the benefits of isolation, LLVM
 provides a convenience API <tt>getGlobalContext()</tt>.  This returns a global,
 lazily initialized <tt>LLVMContext</tt> that may be used in situations where
 isolation is not a concern.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="jitthreading">Threads and the JIT</a>
+</div>
+
+<div class="doc_text">
+<p>
+LLVM's "eager" JIT compiler is safe to use in threaded programs.  Multiple
+threads can call <tt>ExecutionEngine::getPointerToFunction()</tt> or
+<tt>ExecutionEngine::runFunction()</tt> concurrently, and multiple threads can
+run code output by the JIT concurrently.  The user must still ensure that only
+one thread accesses IR in a given <tt>LLVMContext</tt> while another thread
+might be modifying it.  One way to do that is to always hold the JIT lock while
+accessing IR outside the JIT (the JIT <em>modifies</em> the IR by adding
+<tt>CallbackVH</tt>s).  Another way is to only
+call <tt>getPointerToFunction()</tt> from the <tt>LLVMContext</tt>'s thread.
+</p>
+
+<p>When the JIT is configured to compile lazily (using
+<tt>ExecutionEngine::DisableLazyCompilation(false)</tt>), there is currently a
+<a href="http://llvm.org/bugs/show_bug.cgi?id=5184">race condition</a> in
+updating call sites after a function is lazily-jitted.  It's still possible to
+use the lazy JIT in a threaded program if you ensure that only one thread at a
+time can call any particular lazy stub and that the JIT lock guards any IR
+access, but we suggest using only the eager JIT in threaded programs.
 </p>
 </div>
 
