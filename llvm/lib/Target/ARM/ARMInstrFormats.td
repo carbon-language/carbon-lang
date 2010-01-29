@@ -1246,75 +1246,90 @@ class AXSI5<dag oops, dag iops, InstrItinClass itin,
 }
 
 // Double precision, unary
-class ADuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
-           InstrItinClass itin, string opc, string asm, list<dag> pattern>
+class ADuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
+           bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
+           string asm, list<dag> pattern>
   : VFPAI<oops, iops, VFPUnaryFrm, itin, opc, asm, pattern> {
-  let Inst{27-20} = opcod1;
-  let Inst{19-16} = opcod2;
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{19-16} = opcod3;
   let Inst{11-8}  = 0b1011;
-  let Inst{7-4}   = opcod3;
+  let Inst{7-6}   = opcod4;
+  let Inst{4}     = opcod5;
 }
 
 // Double precision, binary
-class ADbI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
-           string opc, string asm, list<dag> pattern>
+class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+       dag iops, InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
-  let Inst{27-20} = opcod;
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
   let Inst{11-8}  = 0b1011;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
 }
 
 // Single precision, unary
-class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
-           InstrItinClass itin, string opc, string asm, list<dag> pattern>
+class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
+           bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
+           string asm, list<dag> pattern>
   : VFPAI<oops, iops, VFPUnaryFrm, itin, opc, asm, pattern> {
-  // Bits 22 (D bit) and 5 (M bit) will be changed during instruction encoding.
-  let Inst{27-20} = opcod1;
-  let Inst{19-16} = opcod2;
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{19-16} = opcod3;
   let Inst{11-8}  = 0b1010;
-  let Inst{7-4}   = opcod3;
+  let Inst{7-6}   = opcod4;
+  let Inst{4}     = opcod5;
 }
 
 // Single precision unary, if no NEON
 // Same as ASuI except not available if NEON is enabled
-class ASuIn<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
-            InstrItinClass itin, string opc, string asm, list<dag> pattern>
-  : ASuI<opcod1, opcod2, opcod3, oops, iops, itin, opc, asm, pattern> {
+class ASuIn<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
+            bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
+            string asm, list<dag> pattern>
+  : ASuI<opcod1, opcod2, opcod3, opcod4, opcod5, oops, iops, itin, opc, asm,
+         pattern> {
   list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
 }
 
 // Single precision, binary
-class ASbI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
-           string opc, string asm, list<dag> pattern>
+class ASbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops, dag iops,
+           InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
-  // Bit 22 (D bit) can be changed during instruction encoding.
-  let Inst{27-20} = opcod;
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
   let Inst{11-8}  = 0b1010;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
 }
 
 // Single precision binary, if no NEON
 // Same as ASbI except not available if NEON is enabled
-class ASbIn<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : ASbI<opcod, oops, iops, itin, opc, asm, pattern> {
+class ASbIn<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+       dag iops, InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : ASbI<opcod1, opcod2, op6, op4, oops, iops, itin, opc, asm, pattern> {
   list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
 }
 
 // VFP conversion instructions
-class AVConv1I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
-               dag oops, dag iops, InstrItinClass itin,
-               string opc, string asm, list<dag> pattern>
+class AVConv1I<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<4> opcod4,
+               dag oops, dag iops, InstrItinClass itin, string opc, string asm,
+               list<dag> pattern>
   : VFPAI<oops, iops, VFPConv1Frm, itin, opc, asm, pattern> {
-  let Inst{27-20} = opcod1;
-  let Inst{19-16} = opcod2;
-  let Inst{11-8}  = opcod3;
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{19-16} = opcod3;
+  let Inst{11-8}  = opcod4;
   let Inst{6}     = 1;
+  let Inst{4}     = 0;
 }
 
 // VFP conversion instructions, if no NEON
-class AVConv1In<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
+class AVConv1In<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<4> opcod4,
                 dag oops, dag iops, InstrItinClass itin,
                 string opc, string asm, list<dag> pattern>
-  : AVConv1I<opcod1, opcod2, opcod3, oops, iops, itin, opc, asm, pattern> {
+  : AVConv1I<opcod1, opcod2, opcod3, opcod4, oops, iops, itin, opc, asm,
+             pattern> {
   list<Predicate> Predicates = [HasVFP2,DontUseNEONForFP];
 }
 
