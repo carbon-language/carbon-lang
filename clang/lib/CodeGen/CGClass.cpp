@@ -647,26 +647,9 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
       continue;
     }
     
-    if (Field->getType()->isReferenceType()) {
-      unsigned FieldIndex = CGM.getTypes().getLLVMFieldNo(Field);
- 
-      llvm::Value *LHS = Builder.CreateStructGEP(LoadOfThis, FieldIndex,
-                                                 "lhs.ref");
-      
-      llvm::Value *RHS = Builder.CreateStructGEP(LoadOfThis, FieldIndex,
-                                                 "rhs.ref");
-
-      // Load the value in RHS.
-      RHS = Builder.CreateLoad(RHS);
-      
-      // And store it in the LHS
-      Builder.CreateStore(RHS, LHS);
-
-      continue;
-    }
     // Do a built-in assignment of scalar data members.
-    LValue LHS = EmitLValueForField(LoadOfThis, Field, 0);
-    LValue RHS = EmitLValueForField(LoadOfSrc, Field, 0);
+    LValue LHS = EmitLValueForFieldInitialization(LoadOfThis, Field, 0);
+    LValue RHS = EmitLValueForFieldInitialization(LoadOfSrc, Field, 0);
 
     if (!hasAggregateLLVMType(Field->getType())) {
       RValue RVRHS = EmitLoadOfLValue(RHS, Field->getType());
