@@ -382,6 +382,11 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
     if (Buffer[i] == '\n')
       ++NumLinesForward;
 
+    // Patterns have leading whitespace stripped, so skip whitespace when
+    // looking for something which looks like a pattern.
+    if (Buffer[i] == ' ' || Buffer[i] == '\t')
+      continue;
+
     // Compute the "quality" of this match as an arbitrary combination of the
     // match distance and the number of lines skipped to get to this match.
     unsigned Distance = ComputeMatchDistance(Buffer.substr(i), VariableTable);
