@@ -34,6 +34,11 @@
 		1A535ED9107BC45E000C3AE7 /* CXXInheritance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A535ED8107BC45E000C3AE7 /* CXXInheritance.cpp */; };
 		1A5D5E580E5E81010023C059 /* CGCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D5E570E5E81010023C059 /* CGCXX.cpp */; };
 		1A621BB7110FE6AA009E6834 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621BB5110FE6AA009E6834 /* TargetInfo.cpp */; };
+		1A621C4211111D61009E6834 /* CIndexCodeCompletion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621C3A11111D61009E6834 /* CIndexCodeCompletion.cpp */; };
+		1A621C4311111D61009E6834 /* CIndexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621C3B11111D61009E6834 /* CIndexer.cpp */; };
+		1A621C4411111D61009E6834 /* CIndexInclusionStack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621C3D11111D61009E6834 /* CIndexInclusionStack.cpp */; };
+		1A621C4511111D61009E6834 /* CIndexUSRs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621C3E11111D61009E6834 /* CIndexUSRs.cpp */; };
+		1A621C4611111D61009E6834 /* CXCursor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A621C3F11111D61009E6834 /* CXCursor.cpp */; };
 		1A6B6CD410693FC900BB4A8F /* CodeCompleteConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */; };
 		1A6B6CD510693FC900BB4A8F /* SemaCodeComplete.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6CD210693FC900BB4A8F /* SemaCodeComplete.cpp */; };
 		1A6B6E9A1069833600BB4A8F /* CGExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A6B6E991069833600BB4A8F /* CGExprCXX.cpp */; };
@@ -384,6 +389,14 @@
 		1A5D5E570E5E81010023C059 /* CGCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGCXX.cpp; path = lib/CodeGen/CGCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A621BB5110FE6AA009E6834 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = TargetInfo.cpp; path = lib/CodeGen/TargetInfo.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A621BB6110FE6AA009E6834 /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TargetInfo.h; path = lib/CodeGen/TargetInfo.h; sourceTree = "<group>"; tabWidth = 2; };
+		1A621C3A11111D61009E6834 /* CIndexCodeCompletion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndexCodeCompletion.cpp; path = tools/CIndex/CIndexCodeCompletion.cpp; sourceTree = "<group>"; };
+		1A621C3B11111D61009E6834 /* CIndexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndexer.cpp; path = tools/CIndex/CIndexer.cpp; sourceTree = "<group>"; };
+		1A621C3C11111D61009E6834 /* CIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CIndexer.h; path = tools/CIndex/CIndexer.h; sourceTree = "<group>"; };
+		1A621C3D11111D61009E6834 /* CIndexInclusionStack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndexInclusionStack.cpp; path = tools/CIndex/CIndexInclusionStack.cpp; sourceTree = "<group>"; };
+		1A621C3E11111D61009E6834 /* CIndexUSRs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndexUSRs.cpp; path = tools/CIndex/CIndexUSRs.cpp; sourceTree = "<group>"; };
+		1A621C3F11111D61009E6834 /* CXCursor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CXCursor.cpp; path = tools/CIndex/CXCursor.cpp; sourceTree = "<group>"; };
+		1A621C4011111D61009E6834 /* CXCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXCursor.h; path = tools/CIndex/CXCursor.h; sourceTree = "<group>"; };
+		1A621C4111111D61009E6834 /* CXSourceLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXSourceLocation.h; path = tools/CIndex/CXSourceLocation.h; sourceTree = "<group>"; };
 		1A649E1D0F9599D9005B965E /* CGBlocks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGBlocks.h; path = lib/CodeGen/CGBlocks.h; sourceTree = "<group>"; };
 		1A649E1E0F9599DA005B965E /* CGCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGCXX.h; path = lib/CodeGen/CGCXX.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CodeCompleteConsumer.cpp; path = lib/Sema/CodeCompleteConsumer.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -544,7 +557,6 @@
 		9012911510470FCE0083456D /* Index.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Index.h; path = "clang-c/Index.h"; sourceTree = "<group>"; };
 		9012911C1048068D0083456D /* ASTUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTUnit.cpp; path = lib/Frontend/ASTUnit.cpp; sourceTree = "<group>"; };
 		9012911F104812F90083456D /* CIndex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndex.cpp; path = tools/CIndex/CIndex.cpp; sourceTree = "<group>"; };
-		90129120104812F90083456D /* CIndex.exports */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CIndex.exports; path = tools/CIndex/CIndex.exports; sourceTree = "<group>"; };
 		904753791096376F00CBDDDD /* CXXInheritance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXInheritance.h; path = clang/AST/CXXInheritance.h; sourceTree = "<group>"; };
 		9047537A1096376F00CBDDDD /* Redeclarable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Redeclarable.h; path = clang/AST/Redeclarable.h; sourceTree = "<group>"; };
 		9047537B1096376F00CBDDDD /* TypeLoc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeLoc.h; path = clang/AST/TypeLoc.h; sourceTree = "<group>"; };
@@ -1095,7 +1107,14 @@
 			isa = PBXGroup;
 			children = (
 				9012911F104812F90083456D /* CIndex.cpp */,
-				90129120104812F90083456D /* CIndex.exports */,
+				1A621C3B11111D61009E6834 /* CIndexer.cpp */,
+				1A621C3A11111D61009E6834 /* CIndexCodeCompletion.cpp */,
+				1A621C3C11111D61009E6834 /* CIndexer.h */,
+				1A621C3D11111D61009E6834 /* CIndexInclusionStack.cpp */,
+				1A621C3E11111D61009E6834 /* CIndexUSRs.cpp */,
+				1A621C3F11111D61009E6834 /* CXCursor.cpp */,
+				1A621C4011111D61009E6834 /* CXCursor.h */,
+				1A621C4111111D61009E6834 /* CXSourceLocation.h */,
 			);
 			name = CIndex;
 			sourceTree = "<group>";
@@ -1969,6 +1988,11 @@
 				1ACB57EC1105820D0047B991 /* VerifyDiagnosticsClient.cpp in Sources */,
 				1A97825B1108BA18002B98FC /* CGVTT.cpp in Sources */,
 				1A621BB7110FE6AA009E6834 /* TargetInfo.cpp in Sources */,
+				1A621C4211111D61009E6834 /* CIndexCodeCompletion.cpp in Sources */,
+				1A621C4311111D61009E6834 /* CIndexer.cpp in Sources */,
+				1A621C4411111D61009E6834 /* CIndexInclusionStack.cpp in Sources */,
+				1A621C4511111D61009E6834 /* CIndexUSRs.cpp in Sources */,
+				1A621C4611111D61009E6834 /* CXCursor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
