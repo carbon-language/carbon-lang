@@ -2369,7 +2369,7 @@ static void TryReferenceInitialization(Sema &S,
   //       non-volatile const type (i.e., cv1 shall be const), or the reference
   //       shall be an rvalue reference and the initializer expression shall 
   //       be an rvalue.
-  if (!((isLValueRef && T1Quals.hasConst()) ||
+  if (!((isLValueRef && T1Quals.hasConst() && !T1Quals.hasVolatile()) ||
         (isRValueRef && InitLvalue != Expr::LV_Valid))) {
     if (ConvOvlResult && !Sequence.getFailedCandidateSet().empty())
       Sequence.SetOverloadFailure(
@@ -3556,6 +3556,7 @@ bool InitializationSequence::Diagnose(Sema &S,
            Failure == FK_NonConstLValueReferenceBindingToTemporary
              ? diag::err_lvalue_reference_bind_to_temporary
              : diag::err_lvalue_reference_bind_to_unrelated)
+      << DestType.getNonReferenceType().isVolatileQualified()
       << DestType.getNonReferenceType()
       << Args[0]->getType()
       << Args[0]->getSourceRange();

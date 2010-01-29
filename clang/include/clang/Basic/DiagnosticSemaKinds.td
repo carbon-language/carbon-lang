@@ -560,14 +560,14 @@ def err_invalid_initialization : Error<
 def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lvalue "
                                            "due to multiple conversion functions">;
 def err_not_reference_to_const_init : Error<
-  "non-const lvalue reference to type %0 cannot be initialized "
-  "with a %select{value|temporary}1 of type %2">;
+  "%select{non-const|volatile}0 lvalue reference to type %1 cannot be "
+  "initialized with a %select{value|temporary}2 of type %3">;
 def err_lvalue_reference_bind_to_temporary : Error<
-  "non-const lvalue reference to type %0 cannot bind to a temporary of type "
-  "%1">;
+  "%select{non-const|volatile}0 lvalue reference to type %1 cannot bind to a "
+  "temporary of type %2">;
 def err_lvalue_reference_bind_to_unrelated : Error<
-  "non-const lvalue reference to type %0 cannot bind to a value of unrelated "
-  "type %1">;
+  "%select{non-const|volatile}0 lvalue reference to type %1 cannot bind to a "
+  "value of unrelated type %2">;
 def err_reference_bind_drops_quals : Error<
   "binding of reference to type %0 to a value of type %1 drops qualifiers">;
 def err_reference_bind_failed : Error<

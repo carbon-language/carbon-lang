@@ -4616,6 +4616,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   if (!isRValRef && T1.getCVRQualifiers() != Qualifiers::Const) {
     if (!ICS)
       Diag(DeclLoc, diag::err_not_reference_to_const_init)
+        << T1.isVolatileQualified()
         << T1 << int(InitLvalue != Expr::LV_Valid)
         << T2 << Init->getSourceRange();
     return true;
