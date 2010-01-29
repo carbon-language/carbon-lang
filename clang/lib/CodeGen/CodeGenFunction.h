@@ -1014,6 +1014,14 @@ public:
                               const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, const FieldDecl* Field,
                             unsigned CVRQualifiers);
+  
+  /// EmitLValueForFieldInitialization - Like EmitLValueForField, except that
+  /// if the Field is a reference, this will return the address of the reference
+  /// and not the address of the value stored in the reference.
+  LValue EmitLValueForFieldInitialization(llvm::Value* Base, 
+                                          const FieldDecl* Field,
+                                          unsigned CVRQualifiers);
+  
   LValue EmitLValueForIvar(QualType ObjectTy,
                            llvm::Value* Base, const ObjCIvarDecl *Ivar,
                            unsigned CVRQualifiers);

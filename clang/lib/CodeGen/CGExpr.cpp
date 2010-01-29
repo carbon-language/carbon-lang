@@ -1486,6 +1486,23 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   return LValue::MakeAddr(V, Quals);
 }
 
+LValue 
+CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue, 
+                                                  const FieldDecl* Field,
+                                                  unsigned CVRQualifiers) {
+  QualType FieldType = Field->getType();
+  
+  if (!FieldType->isReferenceType())
+    return EmitLValueForField(BaseValue, Field, CVRQualifiers);
+
+  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+
+  assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
+
+  return LValue::MakeAddr(V, MakeQualifiers(FieldType));
+}
+
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   const llvm::Type *LTy = ConvertType(E->getType());
   llvm::Value *DeclPtr = CreateTempAlloca(LTy, ".compoundliteral");

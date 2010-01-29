@@ -846,17 +846,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   QualType FieldType = CGF.getContext().getCanonicalType(Field->getType());
 
   llvm::Value *ThisPtr = CGF.LoadCXXThis();
-  LValue LHS;
-  if (FieldType->isReferenceType()) {
-    // FIXME: This is really ugly; should be refactored somehow
-    unsigned idx = CGF.CGM.getTypes().getLLVMFieldNo(Field);
-    llvm::Value *V = CGF.Builder.CreateStructGEP(ThisPtr, idx, "tmp");
-    assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
-    LHS = LValue::MakeAddr(V, CGF.MakeQualifiers(FieldType));
-  } else {
-    LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
-  }
-
+  LValue LHS = CGF.EmitLValueForFieldInitialization(ThisPtr, Field, 0);
+  
   // If we are initializing an anonymous union field, drill down to the field.
   if (MemberInit->getAnonUnionMember()) {
     Field = MemberInit->getAnonUnionMember();
