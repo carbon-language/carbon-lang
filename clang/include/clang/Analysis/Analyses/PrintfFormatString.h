@@ -104,21 +104,29 @@ class OptionalAmount {
 public:
   enum HowSpecified { NotSpecified, Constant, Arg };
 
-  OptionalAmount(HowSpecified h = NotSpecified) : hs(h), amt(0) {}
-  OptionalAmount(unsigned i) : hs(Constant), amt(i) {}
+  OptionalAmount(HowSpecified h, const char *st) 
+    : start(st), hs(h), amt(0) {}
+
+  OptionalAmount()
+    : start(0), hs(NotSpecified), amt(0) {}
+  
+  OptionalAmount(unsigned i, const char *st) 
+    : start(start), hs(Constant), amt(i) {}
 
   HowSpecified getHowSpecified() const { return hs; }
+  bool hasDataArgument() const { return hs == Arg; }
 
   unsigned getConstantAmount() const { 
     assert(hs == Constant);
     return amt;
   }
 
-  unsigned getArgumentsConsumed() {
-    return hs == Arg ? 1 : 0;
+  const char *getStart() const {
+    return start;
   }
   
 private:
+  const char *start;
   HowSpecified hs;
   unsigned amt;
 };
@@ -176,7 +184,7 @@ public:
   bool isLeftJustified() const { return flags & LeftJustified; }
   bool hasPlusPrefix() const { return flags & PlusPrefix; }
   bool hasAlternativeForm() const { return flags & AlternativeForm; }
-  bool hasLeadingZeros() const { return flags & LeadingZeroes; }
+  bool hasLeadingZeros() const { return flags & LeadingZeroes; }  
 };
 
   

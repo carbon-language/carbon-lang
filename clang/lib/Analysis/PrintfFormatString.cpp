@@ -15,7 +15,7 @@
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
 
 using namespace clang;
-using namespace analyze_printf;
+using namespace clang::analyze_printf;
 
 namespace {
 class FormatSpecifierResult {
@@ -70,10 +70,12 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
     }
 
     if (foundDigits)
-      return OptionalAmount(accumulator);
+      return OptionalAmount(accumulator, Beg);
     
-    if (c == '*')
-      return OptionalAmount(OptionalAmount::Arg);
+    if (c == '*') {
+      ++I;
+      return OptionalAmount(OptionalAmount::Arg, Beg);
+    }
     
     break;
   }

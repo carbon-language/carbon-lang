@@ -1290,14 +1290,20 @@ class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
   const unsigned NumDataArgs;
   const bool IsObjCLiteral;
   const char *Beg; // Start of format string.
+  const bool HasVAListArg;
+  const CallExpr *TheCall;
+  unsigned FormatIdx;
 public:  
   CheckPrintfHandler(Sema &s, const StringLiteral *fexpr,
                      const Expr *origFormatExpr,
                      unsigned numDataArgs, bool isObjCLiteral,
-                     const char *beg)
+                     const char *beg, bool hasVAListArg,
+                     const CallExpr *theCall, unsigned formatIdx)
     : S(s), FExpr(fexpr), OrigFormatExpr(origFormatExpr),
       NumConversions(0), NumDataArgs(numDataArgs),
-      IsObjCLiteral(isObjCLiteral), Beg(beg) {}
+      IsObjCLiteral(isObjCLiteral), Beg(beg),
+      HasVAListArg(hasVAListArg),
+      TheCall(theCall), FormatIdx(formatIdx) {}
     
   void HandleNullChar(const char *nullCharacter);
   
@@ -1307,6 +1313,11 @@ public:
 private:
   SourceRange getFormatRange();
   SourceLocation getLocationOfByte(const char *x);
+  
+  bool HandleAmount(const analyze_printf::OptionalAmount &Amt,
+                    unsigned MissingArgDiag, unsigned BadTypeDiag);
+  
+  const Expr *getDataArg(unsigned i) const;
 };
 }
 
@@ -1325,6 +1336,43 @@ void CheckPrintfHandler::HandleNullChar(const char *nullCharacter) {
     << getFormatRange();
 }
 
+const Expr *CheckPrintfHandler::getDataArg(unsigned i) const {
+  return TheCall->getArg(FormatIdx + i);  
+}
+
+bool
+CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
+                                 unsigned MissingArgDiag,
+                                 unsigned BadTypeDiag) {
+
+  if (Amt.hasDataArgument()) {
+    ++NumConversions;
+    if (!HasVAListArg) {
+      if (NumConversions > NumDataArgs) {
+        S.Diag(getLocationOfByte(Amt.getStart()), MissingArgDiag)
+          << getFormatRange();      
+        // Don't do any more checking.  We will just emit
+        // spurious errors.
+        return false;
+      }
+      
+      // Type check the data argument.  It should be an 'int'.
+      const Expr *Arg = getDataArg(NumConversions);
+      QualType T = Arg->getType();
+      const BuiltinType *BT = T->getAs<BuiltinType>();
+      if (!BT || BT->getKind() != BuiltinType::Int) {
+        S.Diag(getLocationOfByte(Amt.getStart()), BadTypeDiag)
+          << T << getFormatRange() << Arg->getSourceRange();
+        // Don't do any more checking.  We will just emit
+        // spurious errors.
+        return false;
+      }
+    }
+  }
+  return true;
+}
+                                      
+
 bool
 CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
                                           const char *startSpecifier,
@@ -1333,6 +1381,22 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
   using namespace analyze_printf;
   const ConversionSpecifier &CS = FS.getConversionSpecifier();
 
+  // First check if the field width, precision, and conversion specifier
+  // have matching data arguments.
+  if (!HandleAmount(FS.getFieldWidth(),
+                    diag::warn_printf_asterisk_width_missing_arg,
+                    diag::warn_printf_asterisk_width_wrong_type)) {
+    return false;
+  }
+    
+  if (!HandleAmount(FS.getPrecision(),
+                    diag::warn_printf_asterisk_precision_missing_arg,
+                    diag::warn_printf_asterisk_precision_wrong_type)) {
+    return false;
+  }
+
+  ++NumConversions;  
+  
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
   if (!IsObjCLiteral && CS.isObjCArg()) {
@@ -1377,7 +1441,8 @@ Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
   
   CheckPrintfHandler H(*this, FExpr, OrigFormatExpr,
                        TheCall->getNumArgs() - firstDataArg,
-                       isa<ObjCStringLiteral>(OrigFormatExpr), Str);
+                       isa<ObjCStringLiteral>(OrigFormatExpr), Str,
+                       HasVAListArg, TheCall, format_idx);
 
   analyze_printf::ParseFormatString(H, Str, Str + StrLen);
 }
