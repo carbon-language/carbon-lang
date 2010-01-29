@@ -6318,8 +6318,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       Arg = Args[i];
 
       // Pass the argument.
-      QualType ProtoArgType = Proto->getArgType(i);
-      IsError |= PerformCopyInitialization(Arg, ProtoArgType, AA_Passing);
+
+      OwningExprResult InputInit
+        = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                    Method->getParamDecl(i)),
+                                    SourceLocation(), Owned(Arg));
+      
+      IsError |= InputInit.isInvalid();
+      Arg = InputInit.takeAs<Expr>();
     } else {
       OwningExprResult DefArg
         = BuildCXXDefaultArgExpr(LParenLoc, Method, Method->getParamDecl(i));
