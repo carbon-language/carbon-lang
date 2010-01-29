@@ -46,6 +46,8 @@ public:
    PercentArg,    // '%'
     // Objective-C specific specifiers.
    ObjCObjArg,    // '@'
+    // GlibC specific specifiers.
+   PrintErrno,    // 'm'
     // Specifier ranges.
    IntArgBeg = dArg,
    IntArgEnd = iArg,
@@ -67,6 +69,16 @@ public:
 
   const char *getStart() const {
     return Position;
+  }
+	
+  bool consumesDataArgument() const {
+    switch (kind) {
+  	  case PercentArg:
+	  case PrintErrno:
+		return false;
+	  default:
+		return true;
+	}
   }
   
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }

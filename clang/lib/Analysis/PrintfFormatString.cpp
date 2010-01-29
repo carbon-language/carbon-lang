@@ -191,6 +191,12 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
+	
+  if (*I == '\0') {
+	// Detect spurious null characters, which are likely errors.
+	H.HandleNullChar(I);
+	return true;
+  }
   
   // Finally, look for the conversion specifier.
   const char *conversionPosition = I++;
@@ -219,7 +225,9 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
     case '%': k = ConversionSpecifier::PercentArg;   break;      
     // Objective-C.
-    case '@': k = ConversionSpecifier::ObjCObjArg; break;      
+    case '@': k = ConversionSpecifier::ObjCObjArg; break;
+	// Glibc specific.
+    case 'm': k = ConversionSpecifier::PrintErrno; break;
   }
   FS.setConversionSpecifier(ConversionSpecifier(conversionPosition, k));
 
@@ -246,7 +254,7 @@ bool clang::ParseFormatString(FormatStringHandler &H,
     // We have a format specifier.  Pass it to the callback.
     if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(),
                                  I - FSR.getStart()))
-      return false;
+      return true;
   }  
   assert(I == E && "Format string not exhausted");      
   return false;
