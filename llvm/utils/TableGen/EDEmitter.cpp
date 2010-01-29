@@ -808,10 +808,10 @@ void EDEmitter::run(raw_ostream &o) {
 }
 
 void EDEmitter::runHeader(raw_ostream &o) {
-  EmitSourceFileHeader("Semantic Information Header", o);
+  EmitSourceFileHeader("Enhanced Disassembly Info Header", o);
   
-  o << "#ifndef SemanticInfo_" << "\n";
-  o << "#define SemanticInfo_" << "\n";
+  o << "#ifndef EDInfo_" << "\n";
+  o << "#define EDInfo_" << "\n";
   o << "\n";
   o << "#include <inttypes.h>" << "\n";
   o << "\n";
