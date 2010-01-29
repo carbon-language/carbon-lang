@@ -638,8 +638,8 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V,
     } else if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
       // If we've already seen this phi node, ignore it, it has already been
       // checked.
-      if (PHIs.insert(PN))
-        return AllUsesOfValueWillTrapIfNull(PN, PHIs);
+      if (PHIs.insert(PN) && !AllUsesOfValueWillTrapIfNull(PN, PHIs))
+        return false;
     } else if (isa<ICmpInst>(*UI) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
