@@ -20,6 +20,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"
+#include <cctype>
 #include <sys/stat.h>
 #include <sys/types.h>
 
