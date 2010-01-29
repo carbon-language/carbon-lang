@@ -1066,10 +1066,10 @@ static bool isNonConstantNegative(const SCEV *Expr) {
 /// progressively move information from the Base field to the Imm field, until
 /// we eventually have the full access expression to rewrite the use.
 const SCEV *LoopStrengthReduce::CollectIVUsers(const SCEV *Stride,
-                                              IVUsersOfOneStride &Uses,
-                                              Loop *L,
-                                              bool &AllUsesAreAddresses,
-                                              bool &AllUsesAreOutsideLoop,
+                                               IVUsersOfOneStride &Uses,
+                                               Loop *L,
+                                               bool &AllUsesAreAddresses,
+                                               bool &AllUsesAreOutsideLoop,
                                        std::vector<BasedUser> &UsersToProcess) {
   // FIXME: Generalize to non-affine IV's.
   if (!Stride->isLoopInvariant(L))
@@ -1460,10 +1460,10 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
   bool AllUsesAreOutsideLoop = true;
 
   // Transform our list of users and offsets to a bit more complex table.  In
-  // this new vector, each 'BasedUser' contains 'Base' the base of the
-  // strided accessas well as the old information from Uses.  We progressively
-  // move information from the Base field to the Imm field, until we eventually
-  // have the full access expression to rewrite the use.
+  // this new vector, each 'BasedUser' contains 'Base' the base of the strided
+  // access as well as the old information from Uses. We progressively move
+  // information from the Base field to the Imm field until we eventually have
+  // the full access expression to rewrite the use.
   std::vector<BasedUser> UsersToProcess;
   const SCEV *CommonExprs = CollectIVUsers(Stride, Uses, L, AllUsesAreAddresses,
                                            AllUsesAreOutsideLoop,
@@ -1521,7 +1521,7 @@ LoopStrengthReduce::StrengthReduceIVUsersOfStride(const SCEV *Stride,
   //
   DEBUG(dbgs() << "LSR: Examining IVs of TYPE " << *ReplacedTy << " of STRIDE "
                << *Stride << ":\n"
-               << "  Common base: " << *CommonExprs << "\n");
+               << "  Common base: " << *CommonExprs << '\n');
 
   SCEVExpander Rewriter(*SE);
   SCEVExpander PreheaderRewriter(*SE);
@@ -1808,14 +1808,14 @@ namespace {
 ///
 /// loop:
 /// ...
-/// v1 = v1 + 3
-/// v2 = v2 + 1
-/// if (v2 < 10) goto loop
+///   v1 = v1 + 3
+///   v2 = v2 + 1
+///   if (v2 < 10) goto loop
 /// =>
 /// loop:
 /// ...
-/// v1 = v1 + 3
-/// if (v1 < 30) goto loop
+///   v1 = v1 + 3
+///   if (v1 < 30) goto loop
 ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                                   IVStrideUse* &CondUse,
                                                   const SCEV* &CondStride,
@@ -1823,13 +1823,14 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   // If there's only one stride in the loop, there's nothing to do here.
   if (IU->StrideOrder.size() < 2)
     return Cond;
-  // If there are other users of the condition's stride, don't bother
-  // trying to change the condition because the stride will still
-  // remain.
+
+  // If there are other users of the condition's stride, don't bother trying to
+  // change the condition because the stride will still remain.
   std::map<const SCEV *, IVUsersOfOneStride *>::iterator I =
     IU->IVUsesByStride.find(CondStride);
   if (I == IU->IVUsesByStride.end())
     return Cond;
+
   if (I->second->Users.size() > 1) {
     for (ilist<IVStrideUse>::iterator II = I->second->Users.begin(),
            EE = I->second->Users.end(); II != EE; ++II) {
@@ -1839,6 +1840,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         return Cond;
     }
   }
+
   // Only handle constant strides for now.
   const SCEVConstant *SC = dyn_cast<SCEVConstant>(CondStride);
   if (!SC) return Cond;
@@ -1860,8 +1862,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   if (ConstantInt *C = dyn_cast<ConstantInt>(Cond->getOperand(1))) {
     int64_t CmpVal = C->getValue().getSExtValue();
 
-    // Check the relevant induction variable for conformance to
-    // the pattern.
+    // Check the relevant induction variable for conformance to the pattern.
     const SCEV *IV = SE->getSCEV(Cond->getOperand(0));
     const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(IV);
     if (!AR || !AR->isAffine())
