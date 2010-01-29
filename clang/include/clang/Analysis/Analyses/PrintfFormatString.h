@@ -15,9 +15,12 @@
 #ifndef LLVM_CLANG_FPRINTF_FORMAT_H
 #define LLVM_CLANG_FPRINTF_FORMAT_H
 
-#include <cassert>
+#include "clang/AST/CanonicalType.h"
 
 namespace clang {
+    
+class ASTContext;
+  
 namespace analyze_printf {
 
 class ConversionSpecifier {
@@ -147,24 +150,45 @@ private:
   HowSpecified hs;
   unsigned amt;
 };
+  
+class ArgTypeResult {
+  enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy };
+  const Kind K;
+  QualType T;
+  ArgTypeResult(bool) : K(InvalidTy) {}  
+public:
+  ArgTypeResult() : K(UnknownTy) {}
+  ArgTypeResult(QualType t) : K(SpecificTy), T(t) {}
+  ArgTypeResult(CanQualType t) : K(SpecificTy), T(t) {}
+  
+  static ArgTypeResult Invalid() { return ArgTypeResult(true); }
+  
+  bool isValid() const { return K != InvalidTy; }
+  
+  const QualType *getSpecificType() const { 
+    return K == SpecificTy ? &T : 0;
+  }
+    
+  bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; };
+};    
 
 class FormatSpecifier {
-  unsigned lengthModifier : 5;
+  LengthModifier LM;
   unsigned flags : 5;
-  ConversionSpecifier conversionSpecifier;
+  ConversionSpecifier CS;
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
-  FormatSpecifier() : lengthModifier(0), flags(0) {}
+  FormatSpecifier() : LM(None), flags(0) {}
   
   static FormatSpecifier Parse(const char *beg, const char *end);
 
   // Methods for incrementally constructing the FormatSpecifier.
-  void setConversionSpecifier(const ConversionSpecifier &CS) {
-    conversionSpecifier = CS;    
+  void setConversionSpecifier(const ConversionSpecifier &cs) {
+    CS = cs;
   }
   void setLengthModifier(LengthModifier lm) {
-    lengthModifier = (unsigned) lm;
+    LM = lm;
   }
   void setIsLeftJustified() { flags |= LeftJustified; }
   void setHasPlusPrefix() { flags |= PlusPrefix; }
@@ -175,11 +199,11 @@ public:
   // Methods for querying the format specifier.
 
   const ConversionSpecifier &getConversionSpecifier() const {
-    return conversionSpecifier;
+    return CS;
   }
 
   LengthModifier getLengthModifier() const {
-    return (LengthModifier) lengthModifier;
+    return LM;
   }
   
   const OptionalAmount &getFieldWidth() const {
@@ -197,6 +221,13 @@ public:
   const OptionalAmount &getPrecision() const {
     return Precision;
   }
+	
+  /// \brief Returns the builtin type that a data argument
+  /// paired with this format specifier should have.  This method
+  /// will return null if the format specifier does not have
+  /// a matching data argument or the matching argument matches
+  /// more than one type.
+  ArgTypeResult getArgType(ASTContext &Ctx) const;
 
   bool isLeftJustified() const { return flags & LeftJustified; }
   bool hasPlusPrefix() const { return flags & PlusPrefix; }

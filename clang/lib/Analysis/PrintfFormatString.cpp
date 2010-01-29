@@ -13,9 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
+#include "clang/AST/ASTContext.h"
 
 using clang::analyze_printf::FormatSpecifier;
 using clang::analyze_printf::OptionalAmount;
+using clang::analyze_printf::ArgTypeResult;
 using namespace clang;
 
 namespace {
@@ -261,3 +263,54 @@ bool clang::ParseFormatString(FormatStringHandler &H,
 }
 
 FormatStringHandler::~FormatStringHandler() {}
+
+//===----------------------------------------------------------------------===//
+// Methods on FormatSpecifier.
+//===----------------------------------------------------------------------===//
+
+ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
+  if (!CS.consumesDataArgument())
+    return ArgTypeResult::Invalid();
+  
+  if (CS.isIntArg())
+    switch (LM) {
+      case AsLongDouble: 
+        return ArgTypeResult::Invalid();
+      case None: return Ctx.IntTy;
+      case AsChar: return Ctx.SignedCharTy;
+      case AsShort: return Ctx.ShortTy;
+      case AsLong: return Ctx.LongTy;
+      case AsLongLong: return Ctx.LongLongTy;
+      case AsIntMax:
+        // FIXME: Return unknown for now.
+        return ArgTypeResult();
+      case AsSizeT: return Ctx.getSizeType();
+      case AsPtrDiff: return Ctx.getPointerDiffType();
+    }
+
+  if (CS.isUIntArg())
+    switch (LM) {
+      case AsLongDouble: 
+        return ArgTypeResult::Invalid();
+      case None: return Ctx.UnsignedIntTy;
+      case AsChar: return Ctx.UnsignedCharTy;
+      case AsShort: return Ctx.UnsignedShortTy;
+      case AsLong: return Ctx.UnsignedLongTy;
+      case AsLongLong: return Ctx.UnsignedLongLongTy;
+      case AsIntMax:
+        // FIXME: Return unknown for now.
+        return ArgTypeResult();
+      case AsSizeT: 
+        // FIXME: How to get the corresponding unsigned
+        // version of size_t?
+        return ArgTypeResult();
+      case AsPtrDiff:
+        // FIXME: How to get the corresponding unsigned
+        // version of ptrdiff_t?
+        return ArgTypeResult();
+    }
+
+  // FIXME: Handle other cases.
+	return ArgTypeResult();
+}
+
