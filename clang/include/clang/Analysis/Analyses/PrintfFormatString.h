@@ -65,7 +65,7 @@ public:
   ConversionSpecifier(const char *pos, Kind k)
     : Position(pos), kind(k) {}
 
-  const char *getConversionStart() const {
+  const char *getStart() const {
     return Position;
   }
   

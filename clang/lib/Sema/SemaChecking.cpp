@@ -1400,7 +1400,7 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
   if (!IsObjCLiteral && CS.isObjCArg()) {
-    SourceLocation Loc = getLocationOfByte(CS.getConversionStart());
+    SourceLocation Loc = getLocationOfByte(CS.getStart());
     S.Diag(Loc, diag::warn_printf_invalid_conversion)
       << llvm::StringRef(startSpecifier, specifierLen)
       << getFormatRange();
@@ -1408,6 +1408,16 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
     // Continue checking the other format specifiers.
     return true;
   }
+  
+  // Are we using '%n'?  Issue a warning about this being
+  // a possible security issue.
+  if (CS.getKind() == ConversionSpecifier::OutIntPtrArg) {
+    S.Diag(getLocationOfByte(CS.getStart()), diag::warn_printf_write_back)
+      << getFormatRange();           
+    // Continue checking the other format specifiers.
+    return true;
+  }
+  
 
   return true;
 }
