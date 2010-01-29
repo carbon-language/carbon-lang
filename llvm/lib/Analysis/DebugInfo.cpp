@@ -1055,8 +1055,13 @@ Instruction *DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 
   Value *Args[] = { MDNode::get(Storage->getContext(), &Storage, 1),
                     D.getNode() };
-  return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
-}
+
+  // If this block already has a terminator then insert this intrinsic
+  // before the terminator.
+  if (TerminatorInst *T = InsertAtEnd->getTerminator()) 
+    return CallInst::Create(DeclareFn, Args, Args+2, "", T);
+  else
+    return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);}
 
 /// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
 Instruction *DIFactory::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
