@@ -22,6 +22,7 @@
 #include "CodeEmitterGen.h"
 #include "DAGISelEmitter.h"
 #include "DisassemblerEmitter.h"
+#include "EDEmitter.h"
 #include "FastISelEmitter.h"
 #include "InstrEnumEmitter.h"
 #include "InstrInfoEmitter.h"
@@ -58,6 +59,7 @@ enum ActionType {
   GenIntrinsic,
   GenTgtIntrinsic,
   GenLLVMCConf,
+  GenEDHeader, GenEDInfo,
   PrintEnums
 };
 
@@ -106,6 +108,10 @@ namespace {
                                "Generate Clang diagnostic groups"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
                                "Generate LLVMC configuration library"),
+                    clEnumValN(GenEDHeader, "gen-enhanced-disassembly-header",
+                               "Generate enhanced disassembly info header"),
+                    clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
+                               "Generate enhanced disassembly info"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValEnd));
@@ -258,6 +264,12 @@ int main(int argc, char **argv) {
       break;
     case GenLLVMCConf:
       LLVMCConfigurationEmitter(Records).run(*Out);
+      break;
+    case GenEDHeader:
+      EDEmitter(Records).runHeader(*Out);
+      break;
+    case GenEDInfo:
+      EDEmitter(Records).run(*Out);
       break;
     case PrintEnums:
     {
