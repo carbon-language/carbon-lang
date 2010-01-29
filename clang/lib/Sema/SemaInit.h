@@ -21,6 +21,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include <cassert>
 
+namespace llvm {
+  class raw_ostream;
+}
+
 namespace clang {
   
 class CXXBaseSpecifier;
@@ -658,6 +662,14 @@ public:
     assert(getKind() == FailedSequence && "Not an initialization failure!");
     return Failure;
   }
+  
+  /// \brief Dump a representation of this initialization sequence to 
+  /// the given stream, for debugging purposes.
+  void dump(llvm::raw_ostream &OS) const;
+  
+  /// \brief Dump a representation of this initialization sequence to 
+  /// standard error, for debugging purposes.
+  void dump() const;
 };
   
 } // end namespace clang

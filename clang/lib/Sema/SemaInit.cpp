@@ -2327,16 +2327,20 @@ static void TryReferenceInitialization(Sema &S,
       //   - is an lvalue (but is not a bit-field), and "cv1 T1" is 
       //     reference-compatible with "cv2 T2," or
       //
-      // Per C++ [over.best.ics]p2, we ignore whether the lvalue is a 
+      // Per C++ [over.best.ics]p2, we don't diagnose whether the lvalue is a 
       // bit-field when we're determining whether the reference initialization
-      // can occur. This property will be checked by PerformInitialization.
+      // can occur. However, we do pay attention to whether it is a bit-field
+      // to decide whether we're actually binding to a temporary created from
+      // the bit-field.
       if (DerivedToBase)
         Sequence.AddDerivedToBaseCastStep(
                          S.Context.getQualifiedType(T1, T2Quals), 
                          /*isLValue=*/true);
       if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1, /*IsLValue=*/true);
-      Sequence.AddReferenceBindingStep(cv1T1, /*bindingTemporary=*/false);
+      bool BindingTemporary = T1Quals.hasConst() && !T1Quals.hasVolatile() &&
+           Initializer->getBitField();
+      Sequence.AddReferenceBindingStep(cv1T1, BindingTemporary);
       return;
     }
     
@@ -3663,6 +3667,194 @@ bool InitializationSequence::Diagnose(Sema &S,
   }
   
   return true;
+}
+
+void InitializationSequence::dump(llvm::raw_ostream &OS) const {
+  switch (SequenceKind) {
+  case FailedSequence: {
+    OS << "Failed sequence: ";
+    switch (Failure) {
+    case FK_TooManyInitsForReference:
+      OS << "too many initializers for reference";
+      break;
+      
+    case FK_ArrayNeedsInitList:
+      OS << "array requires initializer list";
+      break;
+      
+    case FK_ArrayNeedsInitListOrStringLiteral:
+      OS << "array requires initializer list or string literal";
+      break;
+      
+    case FK_AddressOfOverloadFailed:
+      OS << "address of overloaded function failed";
+      break;
+      
+    case FK_ReferenceInitOverloadFailed:
+      OS << "overload resolution for reference initialization failed";
+      break;
+      
+    case FK_NonConstLValueReferenceBindingToTemporary:
+      OS << "non-const lvalue reference bound to temporary";
+      break;
+      
+    case FK_NonConstLValueReferenceBindingToUnrelated:
+      OS << "non-const lvalue reference bound to unrelated type";
+      break;
+      
+    case FK_RValueReferenceBindingToLValue:
+      OS << "rvalue reference bound to an lvalue";
+      break;
+      
+    case FK_ReferenceInitDropsQualifiers:
+      OS << "reference initialization drops qualifiers";
+      break;
+      
+    case FK_ReferenceInitFailed:
+      OS << "reference initialization failed";
+      break;
+      
+    case FK_ConversionFailed:
+      OS << "conversion failed";
+      break;
+      
+    case FK_TooManyInitsForScalar:
+      OS << "too many initializers for scalar";
+      break;
+      
+    case FK_ReferenceBindingToInitList:
+      OS << "referencing binding to initializer list";
+      break;
+      
+    case FK_InitListBadDestinationType:
+      OS << "initializer list for non-aggregate, non-scalar type";
+      break;
+      
+    case FK_UserConversionOverloadFailed:
+      OS << "overloading failed for user-defined conversion";
+      break;
+      
+    case FK_ConstructorOverloadFailed:
+      OS << "constructor overloading failed";
+      break;
+      
+    case FK_DefaultInitOfConst:
+      OS << "default initialization of a const variable";
+      break;
+    }   
+    OS << '\n';
+    return;
+  }
+      
+  case DependentSequence:
+    OS << "Dependent sequence: ";
+    return;
+      
+  case UserDefinedConversion:
+    OS << "User-defined conversion sequence: ";
+    break;
+      
+  case ConstructorInitialization:
+    OS << "Constructor initialization sequence: ";
+    break;
+      
+  case ReferenceBinding:
+    OS << "Reference binding: ";
+    break;
+      
+  case ListInitialization:
+    OS << "List initialization: ";
+    break;
+
+  case ZeroInitialization:
+    OS << "Zero initialization\n";
+    return;
+      
+  case NoInitialization:
+    OS << "No initialization\n";
+    return;
+      
+  case StandardConversion:
+    OS << "Standard conversion: ";
+    break;
+      
+  case CAssignment:
+    OS << "C assignment: ";
+    break;
+      
+  case StringInit:
+    OS << "String initialization: ";
+    break;
+  }
+  
+  for (step_iterator S = step_begin(), SEnd = step_end(); S != SEnd; ++S) {
+    if (S != step_begin()) {
+      OS << " -> ";
+    }
+    
+    switch (S->Kind) {
+    case SK_ResolveAddressOfOverloadedFunction:
+      OS << "resolve address of overloaded function";
+      break;
+      
+    case SK_CastDerivedToBaseRValue:
+      OS << "derived-to-base case (rvalue" << S->Type.getAsString() << ")";
+      break;
+      
+    case SK_CastDerivedToBaseLValue:
+      OS << "derived-to-base case (lvalue" << S->Type.getAsString() << ")";
+      break;
+      
+    case SK_BindReference:
+      OS << "bind reference to lvalue";
+      break;
+      
+    case SK_BindReferenceToTemporary:
+      OS << "bind reference to a temporary";
+      break;
+      
+    case SK_UserConversion:
+      OS << "user-defined conversion via " << S->Function->getNameAsString();
+      break;
+      
+    case SK_QualificationConversionRValue:
+      OS << "qualification conversion (rvalue)";
+
+    case SK_QualificationConversionLValue:
+      OS << "qualification conversion (lvalue)";
+      break;
+      
+    case SK_ConversionSequence:
+      OS << "implicit conversion sequence (";
+      S->ICS->DebugPrint(); // FIXME: use OS
+      OS << ")";
+      break;
+      
+    case SK_ListInitialization:
+      OS << "list initialization";
+      break;
+      
+    case SK_ConstructorInitialization:
+      OS << "constructor initialization";
+      break;
+      
+    case SK_ZeroInitialization:
+      OS << "zero initialization";
+      break;
+      
+    case SK_CAssignment:
+      OS << "C assignment";
+      break;
+      
+    case SK_StringInit:
+      OS << "string initialization";
+      break;
+    }
+  }
+}
+
+void InitializationSequence::dump() const {
+  dump(llvm::errs());
 }
 
 //===----------------------------------------------------------------------===//

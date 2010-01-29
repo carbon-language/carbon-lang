@@ -1958,6 +1958,13 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
 FieldDecl *Expr::getBitField() {
   Expr *E = this->IgnoreParens();
 
+  while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ICE->isLvalueCast() && ICE->getCastKind() == CastExpr::CK_NoOp)
+      E = ICE->getSubExpr()->IgnoreParens();
+    else
+      break;
+  }
+
   if (MemberExpr *MemRef = dyn_cast<MemberExpr>(E))
     if (FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl()))
       if (Field->isBitField())
