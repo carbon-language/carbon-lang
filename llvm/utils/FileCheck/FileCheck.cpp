@@ -524,6 +524,9 @@ static bool ReadCheckFile(SourceMgr &SM,
     // Scan ahead to the end of line.
     size_t EOL = Buffer.find_first_of("\n\r");
 
+    // Remember the location of the start of the pattern, for diagnostics.
+    SMLoc PatternLoc = SMLoc::getFromPointer(Buffer.data());
+
     // Parse the pattern.
     Pattern P;
     if (P.ParsePattern(Buffer.substr(0, EOL), SM))
@@ -550,7 +553,7 @@ static bool ReadCheckFile(SourceMgr &SM,
     
     // Okay, add the string we captured to the output vector and move on.
     CheckStrings.push_back(CheckString(P,
-                                       SMLoc::getFromPointer(Buffer.data()),
+                                       PatternLoc,
                                        IsCheckNext));
     std::swap(NotMatches, CheckStrings.back().NotStrings);
   }
