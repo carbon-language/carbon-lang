@@ -286,7 +286,10 @@ RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
 
   // Move the end of the input range to the end of the last token in that
   // range.
-  R.setEnd(TU->getPreprocessor().getLocForEndOfToken(R.getEnd(), 1));
+  SourceLocation NewEnd
+    = TU->getPreprocessor().getLocForEndOfToken(R.getEnd(), 1);
+  if (NewEnd.isValid())
+    R.setEnd(NewEnd);
   return RangeCompare(TU->getSourceManager(), R, RegionOfInterest);
 }
 
@@ -903,21 +906,24 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH) {
 }
 
 void clang_disposeIndex(CXIndex CIdx) {
-  assert(CIdx && "Passed null CXIndex");
-  delete static_cast<CIndexer *>(CIdx);
+  if (CIdx)
+    delete static_cast<CIndexer *>(CIdx);
 }
 
 void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
-  assert(CIdx && "Passed null CXIndex");
-  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
-  CXXIdx->setUseExternalASTGeneration(value);
+  if (CIdx) {
+    CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+    CXXIdx->setUseExternalASTGeneration(value);
+  }
 }
 
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename,
                                              CXDiagnosticCallback diag_callback,
                                               CXClientData diag_client_data) {
-  assert(CIdx && "Passed null CXIndex");
+  if (!CIdx)
+    return 0;
+  
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   // Configure the diagnostics.
@@ -941,7 +947,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           struct CXUnsavedFile *unsaved_files,
                                           CXDiagnosticCallback diag_callback,
                                           CXClientData diag_client_data) {
-  assert(CIdx && "Passed null CXIndex");
+  if (!CIdx)
+    return 0;
+  
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
   // Configure the diagnostics.
@@ -1096,12 +1104,14 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 }
 
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
-  assert(CTUnit && "Passed null CXTranslationUnit");
-  delete static_cast<ASTUnit *>(CTUnit);
+  if (CTUnit)
+    delete static_cast<ASTUnit *>(CTUnit);
 }
 
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
-  assert(CTUnit && "Passed null CXTranslationUnit");
+  if (!CTUnit)
+    return CIndexer::createCXString("");
+  
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   return CIndexer::createCXString(CXXUnit->getOriginalSourceFileName().c_str(),
                                   true);
@@ -1246,7 +1256,6 @@ const char *clang_getFileName(CXFile SFile) {
   if (!SFile)
     return 0;
   
-  assert(SFile && "Passed null CXFile");
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getName();
 }
@@ -1255,7 +1264,6 @@ time_t clang_getFileTime(CXFile SFile) {
   if (!SFile)
     return 0;
   
-  assert(SFile && "Passed null CXFile");
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
   return FEnt->getModificationTime();
 }
@@ -1339,7 +1347,6 @@ static CXString getDeclSpelling(Decl *D) {
 }
     
 CXString clang_getCursorSpelling(CXCursor C) {
-  assert(getCursorDecl(C) && "CXCursor has null decl");
   if (clang_isTranslationUnit(C.kind))
     return clang_getTranslationUnitSpelling(C.data[2]);
 
