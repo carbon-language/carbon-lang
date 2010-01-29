@@ -378,7 +378,7 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
   double BestQuality = 0;
 
   // Use an arbitrary 4k limit on how far we will search.
-  for (size_t i = 0, e = std::min(4096, int(Buffer.size())); i != e; ++i) {
+  for (size_t i = 0, e = std::min(size_t(4096), Buffer.size()); i != e; ++i) {
     if (Buffer[i] == '\n')
       ++NumLinesForward;
 
