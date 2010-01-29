@@ -5878,11 +5878,19 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
-        if (PerformObjectArgumentInitialization(Args[0], Method) ||
-            PerformCopyInitialization(Args[1],
-                                      FnDecl->getParamDecl(0)->getType(),
-                                      AA_Passing))
+        if (PerformObjectArgumentInitialization(Args[0], Method))
           return ExprError();
+
+        // Convert the arguments.
+        OwningExprResult InputInit
+          = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                      FnDecl->getParamDecl(0)),
+                                      SourceLocation(), 
+                                      Owned(Args[1]));
+        if (InputInit.isInvalid())
+          return ExprError();
+
+        Args[1] = InputInit.takeAs<Expr>();
 
         // Determine the result type
         QualType ResultTy
