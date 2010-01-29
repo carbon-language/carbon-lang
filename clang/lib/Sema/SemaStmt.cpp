@@ -991,11 +991,19 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
     // In C++ the return statement is handled via a copy initialization.
     // the C version of which boils down to CheckSingleAssignmentConstraints.
-    // FIXME: Leaks RetValExp.
-    if (PerformCopyInitialization(RetValExp, FnRetType, AA_Returning))
+    OwningExprResult Res = PerformCopyInitialization(
+                             InitializedEntity::InitializeResult(ReturnLoc, 
+                                                                 FnRetType),
+                             SourceLocation(),
+                             Owned(RetValExp));
+    if (Res.isInvalid()) {
+      // FIXME: Cleanup temporaries here, anyway?
       return StmtError();
-
-    if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+    }
+    
+    RetValExp = Res.takeAs<Expr>();
+    if (RetValExp) 
+      CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
 
   return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
