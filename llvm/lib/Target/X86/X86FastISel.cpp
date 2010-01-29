@@ -1156,6 +1156,7 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(&I);
     X86AddressMode AM;
+    assert(DI->getAddress() && "Null address should be checked earlier!");
     if (!X86SelectAddress(DI->getAddress(), AM))
       return false;
     const TargetInstrDesc &II = TII.get(TargetInstrInfo::DEBUG_VALUE);
