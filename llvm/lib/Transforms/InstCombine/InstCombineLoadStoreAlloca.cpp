@@ -117,6 +117,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         // the result of the loaded value.
         Value *NewLoad = 
           IC.Builder->CreateLoad(CastOp, LI.isVolatile(), CI->getName());
+        cast<LoadInst>(NewLoad)->setAlignment(LI.getAlignment());
         // Now cast the result of the load.
         return new BitCastInst(NewLoad, LI.getType());
       }
@@ -205,6 +206,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                         SI->getOperand(1)->getName()+".val");
         Value *V2 = Builder->CreateLoad(SI->getOperand(2),
                                         SI->getOperand(2)->getName()+".val");
+        cast<LoadInst>(V1)->setAlignment(LI.getAlignment());
+        cast<LoadInst>(V2)->setAlignment(LI.getAlignment());
         return SelectInst::Create(SI->getCondition(), V1, V2);
       }
 
