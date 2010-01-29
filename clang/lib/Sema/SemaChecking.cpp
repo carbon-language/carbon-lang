@@ -1282,7 +1282,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
 
 
 namespace {
-class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
+class CheckPrintfHandler : public FormatStringHandler {
   Sema &S;
   const StringLiteral *FExpr;
   const Expr *OrigFormatExpr;
@@ -1306,11 +1306,9 @@ public:
       TheCall(theCall), FormatIdx(formatIdx) {}
   
   void DoneProcessing();
-   
-//  void HandleIncompleteFormatSpecifier(const char *startSpecifier,
-//                                       const char *endSpecifier);
-  
-//  void HandleIncompletePrecision(const char *periodChar);
+     
+  void HandleIncompleteFormatSpecifier(const char *startSpecifier,
+                                       unsigned specifierLen);
   
   void HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                         const char *startSpecifier,
@@ -1341,16 +1339,25 @@ SourceLocation CheckPrintfHandler::getLocationOfByte(const char *x) {
 }
 
 void CheckPrintfHandler::
+HandleIncompleteFormatSpecifier(const char *startSpecifier,
+                                unsigned specifierLen) {  
+  SourceLocation Loc = getLocationOfByte(startSpecifier);
+  S.Diag(Loc, diag::warn_printf_incomplete_specifier)
+    << llvm::StringRef(startSpecifier, specifierLen)
+    << getFormatRange();
+}
+
+void CheckPrintfHandler::
 HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                  const char *startSpecifier,
                                  unsigned specifierLen) {
   
   ++NumConversions;
-  
-  SourceLocation Loc =
-    getLocationOfByte(FS.getConversionSpecifier().getStart());
+  const analyze_printf::ConversionSpecifier &CS =
+    FS.getConversionSpecifier();  
+  SourceLocation Loc = getLocationOfByte(CS.getStart());
   S.Diag(Loc, diag::warn_printf_invalid_conversion)
-      << llvm::StringRef(startSpecifier, specifierLen)
+      << llvm::StringRef(CS.getStart(), CS.getLength())
       << getFormatRange();  
 }
 
@@ -1495,8 +1502,8 @@ Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
                        isa<ObjCStringLiteral>(OrigFormatExpr), Str,
                        HasVAListArg, TheCall, format_idx);
 
-  analyze_printf::ParseFormatString(H, Str, Str + StrLen);
-  H.DoneProcessing();
+  if (!ParseFormatString(H, Str, Str + StrLen))
+    H.DoneProcessing();
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//

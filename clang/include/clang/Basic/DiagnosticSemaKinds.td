@@ -2445,6 +2445,8 @@ def warn_printf_too_many_data_args : Warning<
   "more data arguments than '%%' conversions">, InGroup<FormatExtraArgs>;
 def warn_printf_invalid_conversion : Warning<
   "invalid conversion '%0'">, InGroup<Format>;
+def warn_printf_incomplete_specifier : Warning<
+  "incomplete format specifier '%0'">, InGroup<Format>;
 def warn_printf_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
 def warn_null_arg : Warning<

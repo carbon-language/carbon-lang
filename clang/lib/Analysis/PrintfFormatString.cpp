@@ -16,6 +16,7 @@
 
 using clang::analyze_printf::FormatSpecifier;
 using clang::analyze_printf::OptionalAmount;
+using namespace clang;
 
 namespace {
 class FormatSpecifierResult {
@@ -83,9 +84,8 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   return OptionalAmount();  
 }
 
-static FormatSpecifierResult
-ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
-                     const char *&Beg, const char *E) {
+static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
+                                                  const char *&Beg, const char *E) {
   
   using namespace clang::analyze_printf;
   
@@ -113,7 +113,7 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
   
   if (I == E) {
     // No more characters left?
-    H.HandleIncompleteFormatSpecifier(Start, E);
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
       
@@ -136,7 +136,7 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
 
   if (I == E) {
     // No more characters left?
-    H.HandleIncompleteFormatSpecifier(Start, E);
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
   
@@ -145,15 +145,15 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
       
   if (I == E) {
     // No more characters left?
-    H.HandleIncompleteFormatSpecifier(Start, E);
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }  
   
   // Look for the precision (if any).  
   if (*I == '.') {
-    const char *startPrecision = I++;
+    ++I;
     if (I == E) {
-      H.HandleIncompletePrecision(I - 1);
+      H.HandleIncompleteFormatSpecifier(Start, E - Start);
       return true;
     }
     
@@ -161,7 +161,7 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
 
     if (I == E) {
       // No more characters left?
-      H.HandleIncompletePrecision(startPrecision);
+      H.HandleIncompleteFormatSpecifier(Start, E - Start);
       return true;
     }
   }
@@ -188,7 +188,7 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
   
   if (I == E) {
     // No more characters left?
-    H.HandleIncompleteFormatSpecifier(Start, E);
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
   
@@ -230,8 +230,7 @@ ParseFormatSpecifier(clang::analyze_printf::FormatStringHandler &H,
   return FormatSpecifierResult(Start, FS);
 }
 
-namespace clang { namespace analyze_printf {
-bool ParseFormatString(FormatStringHandler &H,
+bool clang::ParseFormatString(FormatStringHandler &H,
                        const char *I, const char *E) {
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
@@ -254,4 +253,3 @@ bool ParseFormatString(FormatStringHandler &H,
 }
 
 FormatStringHandler::~FormatStringHandler() {}
-}} // end namespace clang::analyze_printf

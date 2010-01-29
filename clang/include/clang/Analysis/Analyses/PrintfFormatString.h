@@ -74,6 +74,11 @@ public:
   bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
   bool isDoubleArg() const { return kind >= fArg && kind <= AArg; }
   Kind getKind() const { return kind; }
+  unsigned getLength() const {
+    // Conversion specifiers currently only are represented by
+    // single characters, but we be flexible.
+    return 1;
+  }
   
 private:
   const char *Position;
@@ -187,24 +192,24 @@ public:
   bool hasLeadingZeros() const { return flags & LeadingZeroes; }  
 };
 
-  
+} // end printf namespace
+
 class FormatStringHandler {
 public:
   FormatStringHandler() {}
   virtual ~FormatStringHandler();
   
   virtual void HandleIncompleteFormatSpecifier(const char *startSpecifier,
-                                               const char *endSpecifier) {}
+                                               unsigned specifierLen) {}
 
   virtual void HandleNullChar(const char *nullCharacter) {}
+    
+  virtual void 
+    HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
+                                     const char *startSpecifier,
+                                     unsigned specifierLen) {}
   
-  virtual void HandleIncompletePrecision(const char *periodChar) {}
-  
-  virtual void HandleInvalidConversionSpecifier(const FormatSpecifier &FS,
-                                                const char *startSpecifier,
-                                                unsigned specifierLen) {}
-  
-  virtual bool HandleFormatSpecifier(const FormatSpecifier &FS,
+  virtual bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
                                      const char *startSpecifier,
                                      unsigned specifierLen) {
     return true;
@@ -215,6 +220,5 @@ bool ParseFormatString(FormatStringHandler &H,
                        const char *beg, const char *end);
 
 
-} // end printf namespace
 } // end clang namespace
 #endif
