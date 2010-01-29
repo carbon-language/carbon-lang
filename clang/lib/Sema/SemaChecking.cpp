@@ -1304,6 +1304,8 @@ public:
       IsObjCLiteral(isObjCLiteral), Beg(beg),
       HasVAListArg(hasVAListArg),
       TheCall(theCall), FormatIdx(formatIdx) {}
+  
+  void DoneProcessing();
     
   void HandleNullChar(const char *nullCharacter);
   
@@ -1434,6 +1436,14 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
   return true;
 }
 
+void CheckPrintfHandler::DoneProcessing() {
+  // Does the number of data arguments exceed the number of
+  // format conversions in the format string?
+  if (!HasVAListArg && NumConversions < NumDataArgs)
+    S.Diag(getDataArg(NumConversions+1)->getLocStart(),
+           diag::warn_printf_too_many_data_args)
+      << getFormatRange();
+}
 
 void
 Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
@@ -1467,6 +1477,7 @@ Sema::AlternateCheckPrintfString(const StringLiteral *FExpr,
                        HasVAListArg, TheCall, format_idx);
 
   analyze_printf::ParseFormatString(H, Str, Str + StrLen);
+  H.DoneProcessing();
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//
