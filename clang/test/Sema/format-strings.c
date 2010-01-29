@@ -51,7 +51,7 @@ void check_conditional_literal(const char* s, int i) {
   printf(i == 1 ? "yes" : "no"); // no-warning
   printf(i == 0 ? (i == 1 ? "yes" : "no") : "dont know"); // no-warning
   printf(i == 0 ? (i == 1 ? s : "no") : "dont know"); // expected-warning{{format string is not a string literal}}
-  printf("yes" ?: "no %d", 1); // expected-warning{{more data arguments than '%' conversions}}
+  printf("yes" ?: "no %d", 1); // expected-warning{{more data arguments than format specifiers}}
 }
 
 void check_writeback_specifier()
@@ -65,10 +65,10 @@ void check_writeback_specifier()
 
 void check_invalid_specifier(FILE* fp, char *buf)
 {
-  printf("%s%lb%d","unix",10,20); // expected-warning {{lid conversion '%lb'}}
-  fprintf(fp,"%%%l"); // expected-warning {{lid conversion '%l'}}
+  printf("%s%lb%d","unix",10,20); // expected-warning {{invalid conversion specifier 'b'}}
+  fprintf(fp,"%%%l"); // expected-warning {{incomplete format specifier}}
   sprintf(buf,"%%%%%ld%d%d", 1, 2, 3); // no-warning
-  snprintf(buf, 2, "%%%%%ld%;%d", 1, 2, 3); // expected-warning {{sion '%;'}}
+  snprintf(buf, 2, "%%%%%ld%;%d", 1, 2, 3); // expected-warning {{invalid conversion specifier ';'}}
 }
 
 void check_null_char_string(char* b)
@@ -138,4 +138,22 @@ void test9(char *P) {
 void torture(va_list v8) {
   vprintf ("%*.*d", v8);  // no-warning
 }
+
+void test10(int x, float f, int i) {
+  printf("%@", 12); // expected-warning{{invalid conversion specifier '@'}}
+  printf("\0"); // expected-warning{{format string contains '\0' within the string body}}
+  printf("xs\0"); // expected-warning{{format string contains '\0' within the string body}}
+  printf("%*d\n"); // expected-warning{{'*' specified field width is missing a matching 'int' argument}}
+  printf("%*.*d\n", x); // expected-warning{{'.*' specified field precision is missing a matching 'int' argument}}
+  printf("%*d\n", f, x); // expected-warning{{field width should have type 'int', but argument has type 'double'}}
+  printf("%*.*d\n", x, f, x); // expected-warning{{field precision should have type 'int', but argument has type 'double'}}
+  printf("%**\n"); // expected-warning{{invalid conversion specifier '*'}}
+  printf("%n", &i); // expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
+  printf("%d%d\n", x); // expected-warning{{more '%' conversions than data arguments}}
+  printf("%d\n", x, x); // expected-warning{{more data arguments than format specifiers}}
+  printf("%W%d%Z\n", x, x, x); // expected-warning{{invalid conversion specifier 'W'}} expected-warning{{invalid conversion specifier 'Z'}}
+  printf("%"); // expected-warning{{incomplete format specifier}}
+  printf("%.d", x); // no-warning
+  printf("%.", x);  // expected-warning{{incomplete format specifier}}
+} 
 

@@ -35,7 +35,7 @@ extern void CFStringCreateWithFormat(CFStringRef format, ...) __attribute__((for
 
 void check_nslog(unsigned k) {
   NSLog(@"%d%%", k); // no-warning
-  NSLog(@"%s%lb%d", "unix", 10,20); // expected-warning {{lid conversion '%lb'}}
+  NSLog(@"%s%lb%d", "unix", 10,20); // expected-warning {{invalid conversion specifier 'b'}}
 }
 
 // Check type validation
