@@ -1650,7 +1650,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // put anywhere; this can be improved, but should be conservatively safe.
   if (!allSingleSucc &&
       // FIXME: REEVALUTE THIS.
-      !isSafeToLoadUnconditionally(LoadPtr, UnavailablePred->getTerminator())) {
+      !isSafeToLoadUnconditionally(LoadPtr,
+                                   UnavailablePred->getTerminator(), TD)) {
     assert(NewInsts.empty() && "Should not have inserted instructions");
     return false;
   }

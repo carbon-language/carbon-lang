@@ -1760,13 +1760,3 @@ entry:
 This function is equivalent to "ashr i32 %x, 5".  Testcase derived from gcc.
 
 //===---------------------------------------------------------------------===//
-
-isSafeToLoadUnconditionally should allow a GEP of a global/alloca with constant
-indicies within the bounds of the allocated object. Reduced example:
-
-const int a[] = {3,6};
-int b(int y) { int* x = y ? &a[0] : &a[1]; return *x; }
-
-All the loads should be eliminated.  Testcase derived from gcc.
-
-//===---------------------------------------------------------------------===//

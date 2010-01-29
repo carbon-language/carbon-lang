@@ -38,7 +38,8 @@ template<typename T> class SmallVectorImpl;
 /// from this value cannot trap.  If it is not obviously safe to load from the
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
-bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom);
+bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
+                                 const TargetData *TD = 0);
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation.

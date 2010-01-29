@@ -199,8 +199,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     //
     if (SelectInst *SI = dyn_cast<SelectInst>(Op)) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
-      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI) &&
-          isSafeToLoadUnconditionally(SI->getOperand(2), SI)) {
+      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, TD) &&
+          isSafeToLoadUnconditionally(SI->getOperand(2), SI, TD)) {
         Value *V1 = Builder->CreateLoad(SI->getOperand(1),
                                         SI->getOperand(1)->getName()+".val");
         Value *V2 = Builder->CreateLoad(SI->getOperand(2),

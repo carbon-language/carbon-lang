@@ -38,20 +38,73 @@ using namespace llvm;
 //  Local analysis.
 //
 
+/// getUnderlyingObjectWithOffset - Strip off up to MaxLookup GEPs and
+/// bitcasts to get back to the underlying object being addressed, keeping
+/// track of the offset in bytes from the GEPs relative to the result.
+/// This is closely related to Value::getUnderlyingObject but is located
+/// here to avoid making VMCore depend on TargetData.
+static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
+                                            unsigned &ByteOffset,
+                                            unsigned MaxLookup = 6) {
+  if (!isa<PointerType>(V->getType()))
+    return V;
+  for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+      if (!GEP->hasAllConstantIndices())
+        return V;
+      SmallVector<Value*, 8> Indices(GEP->op_begin() + 1, GEP->op_end());
+      ByteOffset += TD->getIndexedOffset(GEP->getPointerOperandType(),
+                                         &Indices[0], Indices.size());
+      V = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
+      V = cast<Operator>(V)->getOperand(0);
+    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+      if (GA->mayBeOverridden())
+        return V;
+      V = GA->getAliasee();
+    } else {
+      return V;
+    }
+    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+  }
+  return V;
+}
+
 /// isSafeToLoadUnconditionally - Return true if we know that executing a load
 /// from this value cannot trap.  If it is not obviously safe to load from the
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
-bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
-  // If it is an alloca it is always safe to load from.
-  if (isa<AllocaInst>(V)) return true;
+bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
+                                       const TargetData *TD) {
+  unsigned ByteOffset = 0;
+  Value *Base = V;
+  if (TD)
+    Base = getUnderlyingObjectWithOffset(V, TD, ByteOffset);
 
-  // If it is a global variable it is mostly safe to load from.
-  if (const GlobalValue *GV = dyn_cast<GlobalVariable>(V))
-    // Don't try to evaluate aliases.  External weak GV can be null.
-    return !isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage();
+  const Type *BaseType = 0;
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base))
+    // If it is an alloca it is always safe to load from.
+    BaseType = AI->getAllocatedType();
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(Base)) {
+    // Global variables are safe to load from but their size cannot be
+    // guaranteed if they are overridden.
+    if (!isa<GlobalAlias>(GV) && !GV->mayBeOverridden())
+      BaseType = GV->getType()->getElementType();
+  }
 
-  // Otherwise, be a little bit agressive by scanning the local block where we
+  if (BaseType) {
+    if (!TD)
+      return true; // Loading directly from an alloca or global is OK.
+    if (BaseType->isSized()) {
+      // Check if the load is within the bounds of the underlying object.
+      const PointerType *AddrTy = cast<PointerType>(V->getType());
+      unsigned LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
+      if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType))
+        return true;
+    }
+  }
+
+  // Otherwise, be a little bit aggressive by scanning the local block where we
   // want to check to see if the pointer is already being loaded or stored
   // from/to.  If so, the previous load or store would have already trapped,
   // so there is no harm doing an extra load (also, CSE will later eliminate
