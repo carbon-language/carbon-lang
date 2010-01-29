@@ -27,6 +27,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
@@ -855,7 +856,8 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       bool isDouble = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEdouble;
       double Val = isDouble ? CFP->getValueAPF().convertToDouble() :
                               CFP->getValueAPF().convertToFloat();
-      std::string StrVal = ftostr(CFP->getValueAPF());
+      SmallString<128> StrVal;
+      raw_svector_ostream(StrVal) << Val;
 
       // Check to make sure that the stringized number is not some string like
       // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
@@ -866,7 +868,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
            (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
         // Reparse stringized version!
         if (atof(StrVal.c_str()) == Val) {
-          Out << StrVal;
+          Out << StrVal.str();
           return;
         }
       }

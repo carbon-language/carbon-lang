@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/System/Path.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
@@ -139,11 +139,11 @@ static bool CompareNumbers(const char *&F1P, const char *&F2P,
       Diff = 0;  // Both zero.
     if (Diff > RelTolerance) {
       if (ErrorMsg) {
-        *ErrorMsg = "Compared: " + ftostr(V1) + " and " + ftostr(V2) + "\n";
-        *ErrorMsg += "abs. diff = " + ftostr(std::abs(V1-V2)) + 
-                     " rel.diff = " + ftostr(Diff) + "\n";
-        *ErrorMsg += "Out of tolerance: rel/abs: " + ftostr(RelTolerance) +
-                     "/" + ftostr(AbsTolerance);
+        raw_string_ostream(*ErrorMsg)
+          << "Compared: " << V1 << " and " << V2 << '\n'
+          << "abs. diff = " << std::abs(V1-V2) << " rel.diff = " << Diff << '\n'
+          << "Out of tolerance: rel/abs: " << RelTolerance << '/'
+          << AbsTolerance;
       }
       return true;
     }
