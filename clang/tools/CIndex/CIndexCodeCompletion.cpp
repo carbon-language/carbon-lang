@@ -178,6 +178,8 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// \brief The memory buffer from which we parsed the results. We
   /// retain this buffer because the completion strings point into it.
   llvm::MemoryBuffer *Buffer;
+
+  LangOptions LangOpts;
 };
 
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
@@ -339,8 +341,12 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     Results->Buffer = F;
   }
 
+  // FIXME: The LangOptions we are passing here are not at all correct. However,
+  // in the current design we must pass something in so the SourceLocations have
+  // a LangOptions object to refer to.
   ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
-                              num_unsaved_files, unsaved_files);
+                              num_unsaved_files, unsaved_files,
+                              Results->LangOpts);
   
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();

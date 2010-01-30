@@ -1095,7 +1095,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     ATU->unlinkTemporaryFile();
   
   ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
-                              num_unsaved_files, unsaved_files);
+                              num_unsaved_files, unsaved_files,
+                              ATU->getASTContext().getLangOptions());
 
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();

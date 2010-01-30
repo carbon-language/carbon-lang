@@ -24,6 +24,7 @@ class Path;
 namespace clang {
 
 class Diagnostic;
+class LangOptions;
 class Preprocessor;
   
 /**
@@ -55,7 +56,8 @@ public:
 void ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
                                  Diagnostic &Diags,
                                  unsigned num_unsaved_files,
-                                 struct CXUnsavedFile *unsaved_files);
+                                 struct CXUnsavedFile *unsaved_files,
+                                 const LangOptions &LangOpts);
 
 } // end namespace clang
 

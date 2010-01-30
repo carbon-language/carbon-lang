@@ -215,7 +215,8 @@ CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
 void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
                                         Diagnostic &Diags,
                                         unsigned num_unsaved_files,
-                                        struct CXUnsavedFile *unsaved_files) {
+                                        struct CXUnsavedFile *unsaved_files,
+                                        const LangOptions &LangOpts) {
   using llvm::MemoryBuffer;
   using llvm::StringRef;
   MemoryBuffer *F = MemoryBuffer::getFile(DiagnosticsPath.c_str());
@@ -244,6 +245,8 @@ void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
     SourceMgr.overrideFileContents(File, Buffer);
   }
 
+  Diags.getClient()->BeginSourceFile(LangOpts, 0);
+
   // Parse the diagnostics, emitting them one by one until we've
   // exhausted the data.
   StringRef Buffer = F->getBuffer();
@@ -254,4 +257,6 @@ void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
     if (!DB.isActive())
       return;
   }
+
+  Diags.getClient()->EndSourceFile();
 }
