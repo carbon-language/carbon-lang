@@ -100,7 +100,7 @@ class SourceLocation(Structure):
     """
     A SourceLocation represents a particular location within a source file.
     """
-    _fields_ = [("ptr_data", c_void_p), ("int_data", c_uint)]
+    _fields_ = [("ptr_data", c_void_p * 2), ("int_data", c_uint)]
     _data = None
 
     def _get_instantiation(self):
@@ -141,7 +141,7 @@ class SourceRange(Structure):
     code.
     """
     _fields_ = [
-        ("ptr_data", c_void_p),
+        ("ptr_data", c_void_p * 2),
         ("begin_int_data", c_uint),
         ("end_int_data", c_uint)]
 
