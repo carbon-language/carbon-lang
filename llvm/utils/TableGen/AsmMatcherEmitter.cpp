@@ -782,10 +782,16 @@ void AsmMatcherInfo::BuildRegisterClasses(CodeGenTarget &Target,
 void AsmMatcherInfo::BuildOperandClasses(CodeGenTarget &Target) {
   std::vector<Record*> AsmOperands;
   AsmOperands = Records.getAllDerivedDefinitions("AsmOperandClass");
+
+  // Pre-populate AsmOperandClasses map.
+  for (std::vector<Record*>::iterator it = AsmOperands.begin(), 
+         ie = AsmOperands.end(); it != ie; ++it)
+    AsmOperandClasses[*it] = new ClassInfo();
+
   unsigned Index = 0;
   for (std::vector<Record*>::iterator it = AsmOperands.begin(), 
          ie = AsmOperands.end(); it != ie; ++it, ++Index) {
-    ClassInfo *CI = new ClassInfo();
+    ClassInfo *CI = AsmOperandClasses[*it];
     CI->Kind = ClassInfo::UserClass0 + Index;
 
     Init *Super = (*it)->getValueInit("SuperClass");
