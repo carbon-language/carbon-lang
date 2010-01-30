@@ -185,6 +185,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     case 'z': lm = AsSizeT;      ++I; break;
     case 't': lm = AsPtrDiff;    ++I; break;
     case 'L': lm = AsLongDouble; ++I; break;
+    case 'q': lm = AsLongLong;   ++I; break;
   }
   FS.setLengthModifier(lm);
   

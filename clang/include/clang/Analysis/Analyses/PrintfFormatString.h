@@ -105,7 +105,7 @@ enum LengthModifier {
  AsChar,      // 'hh'
  AsShort,     // 'h'
  AsLong,      // 'l'
- AsLongLong,  // 'll'
+ AsLongLong,  // 'll', 'q' (BSD, deprecated)
  AsIntMax,    // 'j'
  AsSizeT,     // 'z'
  AsPtrDiff,   // 't'

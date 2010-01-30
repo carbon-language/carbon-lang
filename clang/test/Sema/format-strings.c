@@ -144,7 +144,7 @@ void torture(va_list v8) {
   
 }
 
-void test10(int x, float f, int i) {
+void test10(int x, float f, int i, long long lli) {
   printf("%@", 12); // expected-warning{{invalid conversion specifier '@'}}
   printf("\0"); // expected-warning{{format string contains '\0' within the string body}}
   printf("xs\0"); // expected-warning{{format string contains '\0' within the string body}}
@@ -161,6 +161,7 @@ void test10(int x, float f, int i) {
   printf("%.d", x); // no-warning
   printf("%.", x);  // expected-warning{{incomplete format specifier}}
   printf("%f", 4); // expected-warning{{conversion specifies type 'double' but the argument has type 'int'}}
+  printf("%qd", lli);
 } 
 
 typedef struct __aslclient *aslclient;
