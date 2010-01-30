@@ -169,7 +169,7 @@ public:
     return K == SpecificTy ? &T : 0;
   }
     
-  bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; };
+  bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; }
 };    
 
 class FormatSpecifier {
