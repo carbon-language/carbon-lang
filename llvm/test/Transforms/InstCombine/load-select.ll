@@ -4,7 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 
 @a = constant [2 x i32] [i32 3, i32 6]            ; <[2 x i32]*> [#uses=2]
 
-define arm_apcscc i32 @b(i32 %y) nounwind readonly {
+define i32 @b(i32 %y) nounwind readonly {
 ; CHECK: @b
 ; CHECK-NOT: load
 ; CHECK: ret i32
