@@ -310,7 +310,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       if (NameEnd == CurPtr)
         return diag::err_asm_empty_symbolic_operand_name;
 
-      llvm::StringRef SymbolicName(CurPtr, NameEnd - CurPtr - 1);
+      llvm::StringRef SymbolicName(CurPtr, NameEnd - CurPtr);
 
       int N = getNamedOperand(SymbolicName);
       if (N == -1) {
