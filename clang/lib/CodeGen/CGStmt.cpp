@@ -1066,10 +1066,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   // Clobbers
   for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
-    std::string Clobber(S.getClobber(i)->getStrData(),
-                        S.getClobber(i)->getByteLength());
+    llvm::StringRef Clobber = S.getClobber(i)->getString();
 
-    Clobber = Target.getNormalizedGCCRegisterName(Clobber.c_str());
+    Clobber = Target.getNormalizedGCCRegisterName(Clobber);
 
     if (i != 0 || NumConstraints != 0)
       Constraints += ',';

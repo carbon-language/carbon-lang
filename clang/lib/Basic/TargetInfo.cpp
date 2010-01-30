@@ -150,39 +150,41 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
 //===----------------------------------------------------------------------===//
 
 
-static void removeGCCRegisterPrefix(const char *&Name) {
+static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
   if (Name[0] == '%' || Name[0] == '#')
-    Name++;
+    Name = Name.substr(1);
+  
+  return Name;
 }
 
 /// isValidGCCRegisterName - Returns whether the passed in string
 /// is a valid register name according to GCC. This is used by Sema for
 /// inline asm statements.
-bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
+bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
+  if (Name.empty())
+    return false;
+  
   const char * const *Names;
   unsigned NumNames;
 
   // Get rid of any register prefix.
-  removeGCCRegisterPrefix(Name);
+  Name = removeGCCRegisterPrefix(Name);
 
-
-  if (strcmp(Name, "memory") == 0 ||
-      strcmp(Name, "cc") == 0)
+  if (Name == "memory" || Name == "cc")
     return true;
 
   getGCCRegNames(Names, NumNames);
 
   // If we have a number it maps to an entry in the register name array.
   if (isdigit(Name[0])) {
-    char *End;
-    int n = (int)strtol(Name, &End, 0);
-    if (*End == 0)
+    int n;
+    if (!Name.getAsInteger(0, n))
       return n >= 0 && (unsigned)n < NumNames;
   }
 
   // Check register names.
   for (unsigned i = 0; i < NumNames; i++) {
-    if (strcmp(Name, Names[i]) == 0)
+    if (Name == Names[i])
       return true;
   }
 
@@ -195,7 +197,7 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
         break;
-      if (strcmp(Aliases[i].Aliases[j], Name) == 0)
+      if (Aliases[i].Aliases[j] == Name)
         return true;
     }
   }
@@ -203,10 +205,12 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
   return false;
 }
 
-const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
+llvm::StringRef 
+TargetInfo::getNormalizedGCCRegisterName(llvm::StringRef Name) const {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
 
-  removeGCCRegisterPrefix(Name);
+  // Get rid of any register prefix.
+  Name = removeGCCRegisterPrefix(Name);
 
   const char * const *Names;
   unsigned NumNames;
@@ -215,9 +219,8 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
 
   // First, check if we have a number.
   if (isdigit(Name[0])) {
-    char *End;
-    int n = (int)strtol(Name, &End, 0);
-    if (*End == 0) {
+    int n;
+    if (!Name.getAsInteger(0, n)) {
       assert(n >= 0 && (unsigned)n < NumNames &&
              "Out of bounds register number!");
       return Names[n];
@@ -233,7 +236,7 @@ const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const {
     for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
       if (!Aliases[i].Aliases[j])
         break;
-      if (strcmp(Aliases[i].Aliases[j], Name) == 0)
+      if (Aliases[i].Aliases[j] == Name)
         return Aliases[i].Register;
     }
   }

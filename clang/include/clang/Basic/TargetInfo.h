@@ -226,11 +226,11 @@ public:
   /// isValidGCCRegisterName - Returns whether the passed in string
   /// is a valid register name according to GCC. This is used by Sema for
   /// inline asm statements.
-  bool isValidGCCRegisterName(const char *Name) const;
+  bool isValidGCCRegisterName(llvm::StringRef Name) const;
 
   // getNormalizedGCCRegisterName - Returns the "normalized" GCC register name.
   // For example, on x86 it will return "ax" when "eax" is passed in.
-  const char *getNormalizedGCCRegisterName(const char *Name) const;
+  llvm::StringRef getNormalizedGCCRegisterName(llvm::StringRef Name) const;
 
   struct ConstraintInfo {
     enum {
