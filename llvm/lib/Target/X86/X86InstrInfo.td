@@ -182,10 +182,6 @@ def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 // X86 Operand Definitions.
 //
 
-def i32imm_pcrel : Operand<i32> {
-  let PrintMethod = "print_pcrel_imm";
-}
-
 // A version of ptr_rc which excludes SP, ESP, and RSP. This is used for
 // the index operand of an address, to conform to x86 encoding restrictions.
 def ptr_rc_nosp : PointerLikeRegClass<1>;
@@ -210,11 +206,6 @@ def opaque32mem : X86MemOperand<"printopaquemem">;
 def opaque48mem : X86MemOperand<"printopaquemem">;
 def opaque80mem : X86MemOperand<"printopaquemem">;
 def opaque512mem : X86MemOperand<"printopaquemem">;
-
-def offset8 : Operand<i64>  { let PrintMethod = "print_pcrel_imm"; }
-def offset16 : Operand<i64> { let PrintMethod = "print_pcrel_imm"; }
-def offset32 : Operand<i64> { let PrintMethod = "print_pcrel_imm"; }
-def offset64 : Operand<i64> { let PrintMethod = "print_pcrel_imm"; }
 
 def i8mem   : X86MemOperand<"printi8mem">;
 def i16mem  : X86MemOperand<"printi16mem">;
@@ -242,6 +233,20 @@ def lea32mem : Operand<i32> {
   let ParserMatchClass = X86NoSegMemAsmOperand;
 }
 
+let PrintMethod = "print_pcrel_imm" in {
+def i32imm_pcrel : Operand<i32>;
+
+def offset8 : Operand<i64>;
+def offset16 : Operand<i64>;
+def offset32 : Operand<i64>;
+def offset64 : Operand<i64>;
+
+// Branch targets have OtherVT type and print as pc-relative values.
+def brtarget : Operand<OtherVT>;
+def brtarget8 : Operand<OtherVT>;
+
+}
+
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
 }
@@ -259,15 +264,6 @@ def i16i8imm  : Operand<i16> {
 // 32-bits but only 8 bits are significant.
 def i32i8imm  : Operand<i32> {
   let ParserMatchClass = ImmSExt8AsmOperand;
-}
-
-// Branch targets have OtherVT type and print as pc-relative values.
-def brtarget : Operand<OtherVT> {
-  let PrintMethod = "print_pcrel_imm";
-}
-
-def brtarget8 : Operand<OtherVT> {
-  let PrintMethod = "print_pcrel_imm";
 }
 
 //===----------------------------------------------------------------------===//
