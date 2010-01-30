@@ -2258,9 +2258,18 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return true;
 
   // Look for obvious safe cases to perform tail call optimization.
-  // For now, only consider callees which take no arguments.
-  if (!Outs.empty())
-    return false;
+  // If the callee takes no arguments then go on to check the results of the
+  // call.
+  if (!Outs.empty()) {
+    // Check if stack adjustment is needed. For now, do not do this if any
+    // argument is passed on the stack.
+    SmallVector<CCValAssign, 16> ArgLocs;
+    CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
+                   ArgLocs, *DAG.getContext());
+    CCInfo.AnalyzeCallOperands(Outs, CCAssignFnForNode(CalleeCC));
+    if (CCInfo.getNextStackOffset())
+      return false;
+  }
 
   // If the caller does not return a value, then this is obviously safe.
   // This is one case where it's safe to perform this optimization even
