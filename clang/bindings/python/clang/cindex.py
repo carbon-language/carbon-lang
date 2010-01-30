@@ -497,14 +497,13 @@ class Index(ClangObject):
     """
 
     @staticmethod
-    def create(excludeDecls=False, displayDiags=False):
+    def create(excludeDecls=False):
         """
         Create a new Index.
         Parameters:
         excludeDecls -- Exclude local declarations from translation units.
-        displayDiags -- Display diagnostics during translation unit creation.
         """
-        return Index(Index_create(excludeDecls, displayDiags))
+        return Index(Index_create(excludeDecls))
 
     def __del__(self):
         Index_dispose(self)
@@ -682,7 +681,7 @@ Cursor_visit.restype = c_uint
 
 # Index Functions
 Index_create = lib.clang_createIndex
-Index_create.argtypes = [c_int, c_int]
+Index_create.argtypes = [c_int]
 Index_create.restype = c_object_p
 
 Index_dispose = lib.clang_disposeIndex

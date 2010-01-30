@@ -24,7 +24,7 @@ void f0(int a0, int a1) {
 """
 
 def test_get_children():
-    index = Index.create(1, 1)
+    index = Index.create()
     tu = index.parse('t.c', unsaved_files = [('t.c',kInput)])
     
     # Skip until past start_decl.
