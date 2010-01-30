@@ -160,6 +160,7 @@ void test10(int x, float f, int i) {
   printf("%"); // expected-warning{{incomplete format specifier}}
   printf("%.d", x); // no-warning
   printf("%.", x);  // expected-warning{{incomplete format specifier}}
+  printf("%f", 4); // expected-warning{{conversion specifies type 'double' but the argument has type 'int'}}
 } 
 
 typedef struct __aslclient *aslclient;

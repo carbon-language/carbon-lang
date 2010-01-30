@@ -309,6 +309,9 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
         // version of ptrdiff_t?
         return ArgTypeResult();
     }
+  
+  if (CS.isDoubleArg())
+    return Ctx.DoubleTy;
 
   // FIXME: Handle other cases.
   return ArgTypeResult();
