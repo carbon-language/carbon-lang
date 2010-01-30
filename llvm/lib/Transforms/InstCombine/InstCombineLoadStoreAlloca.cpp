@@ -115,9 +115,9 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before the load, cast
         // the result of the loaded value.
-        Value *NewLoad = 
+        LoadInst *NewLoad = 
           IC.Builder->CreateLoad(CastOp, LI.isVolatile(), CI->getName());
-        cast<LoadInst>(NewLoad)->setAlignment(LI.getAlignment());
+        NewLoad->setAlignment(LI.getAlignment());
         // Now cast the result of the load.
         return new BitCastInst(NewLoad, LI.getType());
       }
@@ -202,12 +202,12 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
       if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, TD) &&
           isSafeToLoadUnconditionally(SI->getOperand(2), SI, TD)) {
-        Value *V1 = Builder->CreateLoad(SI->getOperand(1),
+        LoadInst *V1 = Builder->CreateLoad(SI->getOperand(1),
                                         SI->getOperand(1)->getName()+".val");
-        Value *V2 = Builder->CreateLoad(SI->getOperand(2),
+        LoadInst *V2 = Builder->CreateLoad(SI->getOperand(2),
                                         SI->getOperand(2)->getName()+".val");
-        cast<LoadInst>(V1)->setAlignment(LI.getAlignment());
-        cast<LoadInst>(V2)->setAlignment(LI.getAlignment());
+        V1->setAlignment(LI.getAlignment());
+        V2->setAlignment(LI.getAlignment());
         return SelectInst::Create(SI->getCondition(), V1, V2);
       }
 
