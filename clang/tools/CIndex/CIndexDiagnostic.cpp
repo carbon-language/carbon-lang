@@ -27,7 +27,7 @@ namespace {
   /// \brief The storage behind a CXDiagnostic
   struct CXStoredDiagnostic {
     /// \brief The translation unit this diagnostic came from.
-    const LangOptions &LangOpts;
+    const LangOptions *LangOptsPtr;
     
     /// \brief The severity level of this diagnostic.
     Diagnostic::Level Level;
@@ -44,15 +44,23 @@ CIndexDiagnosticClient::~CIndexDiagnosticClient() { }
 
 void CIndexDiagnosticClient::BeginSourceFile(const LangOptions &LangOpts,
                                              const Preprocessor *PP) {
-  this->LangOpts = LangOpts;
+  assert(!LangOptsPtr && "Invalid state!");
+  LangOptsPtr = &LangOpts;
+}
+
+void CIndexDiagnosticClient::EndSourceFile() {
+  assert(LangOptsPtr && "Invalid state!");
+  LangOptsPtr = 0;
 }
 
 void CIndexDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                               const DiagnosticInfo &Info) {
   if (!Callback)
     return;
-  
-  CXStoredDiagnostic Stored = { this->LangOpts, DiagLevel, Info };
+
+  assert((LangOptsPtr || Info.getLocation().isInvalid()) &&
+         "Missing language options with located diagnostic!");
+  CXStoredDiagnostic Stored = { this->LangOptsPtr, DiagLevel, Info };
   Callback(&Stored, ClientData);
 }
 
@@ -84,7 +92,7 @@ CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic Diag) {
     return clang_getNullLocation();
   
   return translateSourceLocation(StoredDiag->Info.getLocation().getManager(),
-                                 StoredDiag->LangOpts,
+                                 *StoredDiag->LangOptsPtr,
                                  StoredDiag->Info.getLocation());
 }
 
@@ -118,7 +126,7 @@ void clang_getDiagnosticRanges(CXDiagnostic Diag,
   for (unsigned I = 0; I != N; ++I)
     (*Ranges)[I] = translateSourceRange(
                                     StoredDiag->Info.getLocation().getManager(),
-                                        StoredDiag->LangOpts,
+                                        *StoredDiag->LangOptsPtr,
                                         StoredDiag->Info.getRange(I));
 }
 
@@ -167,7 +175,7 @@ CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
   if (Location && StoredDiag->Info.getLocation().isValid())
     *Location = translateSourceLocation(
                                     StoredDiag->Info.getLocation().getManager(),
-                                        StoredDiag->LangOpts, 
+                                        *StoredDiag->LangOptsPtr,
                                         Hint.InsertionLoc);
   return CIndexer::createCXString(Hint.CodeToInsert);
 }
@@ -182,7 +190,7 @@ CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
   return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
-                              StoredDiag->LangOpts,
+                              *StoredDiag->LangOptsPtr,
                               Hint.RemoveRange);
 }
 
@@ -205,7 +213,7 @@ CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
     = StoredDiag->Info.getCodeModificationHint(FixIt);
   if (Range)
     *Range = translateSourceRange(StoredDiag->Info.getLocation().getManager(),
-                                  StoredDiag->LangOpts,
+                                  *StoredDiag->LangOptsPtr,
                                   Hint.RemoveRange);
   return CIndexer::createCXString(Hint.CodeToInsert);  
 }

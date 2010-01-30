@@ -34,18 +34,20 @@ class Preprocessor;
 class CIndexDiagnosticClient : public DiagnosticClient {
   CXDiagnosticCallback Callback;
   CXClientData ClientData;
-  LangOptions LangOpts;
+  const LangOptions *LangOptsPtr;
   
 public:
   CIndexDiagnosticClient(CXDiagnosticCallback Callback,
                          CXClientData ClientData)
-    : Callback(Callback), ClientData(ClientData), LangOpts() { }
+    : Callback(Callback), ClientData(ClientData), LangOptsPtr(0) { }
   
   virtual ~CIndexDiagnosticClient();
   
   virtual void BeginSourceFile(const LangOptions &LangOpts,
                                const Preprocessor *PP);
   
+  virtual void EndSourceFile();
+
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };
