@@ -1244,7 +1244,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     // Jump to label or value in register.
     if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64)
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPd)).
-        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
+        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
+                         JumpTarget.getTargetFlags());
     else if (RetOpcode== X86::TCRETURNri64)
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
     else
