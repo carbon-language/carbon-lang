@@ -1261,7 +1261,6 @@ public:
     return Constraints[i + NumOutputs];
   }
 
-
   Expr *getInputExpr(unsigned i);
 
   const Expr *getInputExpr(unsigned i) const {
@@ -1282,8 +1281,6 @@ public:
   /// translate this into a numeric value needed to reference the same operand.
   /// This returns -1 if the operand name is invalid.
   int getNamedOperand(const std::string &SymbolicName) const;
-
-
 
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
@@ -1334,16 +1331,6 @@ public:
   }
   const_outputs_iterator end_outputs() const {
     return Exprs.data() + NumOutputs;
-  }
-
-  // Input name iterator.
-
-  const std::string *begin_output_names() const {
-    return &Names[0];
-  }
-
-  const std::string *end_output_names() const {
-    return &Names[0] + NumOutputs;
   }
 
   // Child iterators

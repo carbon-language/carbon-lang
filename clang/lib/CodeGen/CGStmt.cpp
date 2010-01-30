@@ -916,18 +916,18 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {
     TargetInfo::ConstraintInfo Info(S.getOutputConstraint(i),
                                     S.getOutputName(i));
-    bool result = Target.validateOutputConstraint(Info);
-    assert(result && "Failed to parse output constraint"); result=result;
+    assert(Target.validateOutputConstraint(Info) && 
+           "Failed to parse output constraint");
     OutputConstraintInfos.push_back(Info);
   }
 
   for (unsigned i = 0, e = S.getNumInputs(); i != e; i++) {
     TargetInfo::ConstraintInfo Info(S.getInputConstraint(i),
                                     S.getInputName(i));
-    bool result = Target.validateInputConstraint(OutputConstraintInfos.data(),
-                                                 S.getNumOutputs(),
-                                                 Info); result=result;
-    assert(result && "Failed to parse input constraint");
+    assert(Target.validateInputConstraint(OutputConstraintInfos.data(),
+                                          S.getNumOutputs(),
+                                          Info) &&
+           "Failed to parse input constraint");
     InputConstraintInfos.push_back(Info);
   }
 
