@@ -98,7 +98,7 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
 
 const std::string &ASTUnit::getPCHFileName() {
   assert(isMainFileAST() && "Not an ASTUnit from a PCH file!");
-  return dyn_cast<PCHReader>(Ctx->getExternalSource())->getFileName();
+  return static_cast<PCHReader *>(Ctx->getExternalSource())->getFileName();
 }
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
