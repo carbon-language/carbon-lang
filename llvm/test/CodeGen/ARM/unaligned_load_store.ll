@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=GENERIC
 ; RUN: llc < %s -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=DARWIN_V6
-; RUN: llc < %s -march=arm -mattr=+v7a | FileCheck %s -check-prefix=V7
+; RUN: llc < %s -mtriple=armv6-linux | FileCheck %s -check-prefix=GENERIC
 
 ; rdar://7113725
 
@@ -20,9 +20,6 @@ entry:
 ; DARWIN_V6: ldr r1
 ; DARWIN_V6: str r1
 
-; V7: t:
-; V7: ldr r1
-; V7: str r1
   %__src1.i = bitcast i8* %b to i32*              ; <i32*> [#uses=1]
   %__dest2.i = bitcast i8* %a to i32*             ; <i32*> [#uses=1]
   %tmp.i = load i32* %__src1.i, align 1           ; <i32> [#uses=1]

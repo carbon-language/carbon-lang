@@ -3854,8 +3854,11 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   if (!Subtarget->hasV6Ops())
     // Pre-v6 does not support unaligned mem access.
     return false;
-  else if (!Subtarget->hasV6Ops()) {
-    // v6 may or may not support unaligned mem access.
+  else {
+    // v6+ may or may not support unaligned mem access depending on the system
+    // configuration.
+    // FIXME: This is pretty conservative. Should we provide cmdline option to
+    // control the behaviour?
     if (!Subtarget->isTargetDarwin())
       return false;
   }
