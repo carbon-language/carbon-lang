@@ -1671,13 +1671,10 @@ namespace {
   public:
     MSP430TargetInfo(const std::string& triple) : TargetInfo(triple) {
       TLSSupported = false;
-      IntWidth = 16;
-      LongWidth = 32;
-      LongLongWidth = 64;
-      PointerWidth = 16;
-      IntAlign = 8;
-      LongAlign = LongLongAlign = 8;
-      PointerAlign = 8;
+      IntWidth = 16; IntAlign = 16;
+      LongWidth = 32; LongLongWidth = 64;
+      LongAlign = LongLongAlign = 16;
+      PointerWidth = 16; PointerAlign = 16;
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
