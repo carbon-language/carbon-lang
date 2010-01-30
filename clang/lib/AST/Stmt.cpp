@@ -167,16 +167,25 @@ void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
                                              unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
   this->NumInputs = NumInputs;
-  this->Names.clear();
-  this->Names.insert(this->Names.end(), Names, Names + NumOutputs + NumInputs);
-  this->Constraints.clear();
-  this->Constraints.insert(this->Constraints.end(),
-                           Constraints, Constraints + NumOutputs + NumInputs);
-  this->Exprs.clear();
-  this->Exprs.insert(this->Exprs.end(), Exprs, Exprs + NumOutputs + NumInputs);
+  this->NumClobbers = NumClobbers;
+
+  unsigned NumExprs = NumOutputs + NumInputs;
   
-  this->Clobbers.clear();
-  this->Clobbers.insert(this->Clobbers.end(), Clobbers, Clobbers + NumClobbers);
+  C.Deallocate(this->Names);
+  this->Names = new (C) IdentifierInfo*[NumExprs];
+  std::copy(Names, Names + NumExprs, this->Names);
+  
+  C.Deallocate(this->Exprs);
+  this->Exprs = new (C) Stmt*[NumExprs];
+  std::copy(Exprs, Exprs + NumExprs, this->Exprs);
+  
+  C.Deallocate(this->Constraints);
+  this->Constraints = new (C) StringLiteral*[NumExprs];
+  std::copy(Constraints, Constraints + NumExprs, this->Constraints);
+  
+  C.Deallocate(this->Clobbers);
+  this->Clobbers = new (C) StringLiteral*[NumClobbers];
+  std::copy(Clobbers, Clobbers + NumClobbers, this->Clobbers);
 }
 
 /// getNamedOperand - Given a symbolic operand reference like %[foo],
@@ -333,22 +342,29 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
 // Constructors
 //===----------------------------------------------------------------------===//
 
-AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
-                 bool msasm, unsigned numoutputs, unsigned numinputs,
+AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple, 
+                 bool isvolatile, bool msasm, 
+                 unsigned numoutputs, unsigned numinputs,
                  IdentifierInfo **names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
   , IsSimple(issimple), IsVolatile(isvolatile), MSAsm(msasm)
-  , NumOutputs(numoutputs), NumInputs(numinputs) {
-  for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
-    Names.push_back(names[i]);
-    Exprs.push_back(exprs[i]);
-    Constraints.push_back(constraints[i]);
-  }
+  , NumOutputs(numoutputs), NumInputs(numinputs), NumClobbers(numclobbers) {
 
-  for (unsigned i = 0; i != numclobbers; i++)
-    Clobbers.push_back(clobbers[i]);
+  unsigned NumExprs = NumOutputs +NumInputs;
+    
+  Names = new (C) IdentifierInfo*[NumExprs];
+  std::copy(names, names + NumExprs, Names);
+
+  Exprs = new (C) Stmt*[NumExprs];
+  std::copy(exprs, exprs + NumExprs, Exprs);
+
+  Constraints = new (C) StringLiteral*[NumExprs];
+  std::copy(constraints, constraints + NumExprs, Constraints);
+
+  Clobbers = new (C) StringLiteral*[NumClobbers];
+  std::copy(clobbers, clobbers + NumClobbers, Clobbers);
 }
 
 ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
@@ -448,6 +464,18 @@ void SwitchStmt::DoDestroy(ASTContext &C) {
 
 void WhileStmt::DoDestroy(ASTContext &C) {
   BranchDestroy(C, this, SubExprs, END_EXPR);
+}
+
+void AsmStmt::DoDestroy(ASTContext &C) {
+  DestroyChildren(C);
+  
+  C.Deallocate(Names);
+  C.Deallocate(Constraints);
+  C.Deallocate(Exprs);
+  C.Deallocate(Clobbers);
+  
+  this->~Stmt();
+  C.Deallocate((void *)this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -563,10 +591,10 @@ Stmt::child_iterator ReturnStmt::child_end() {
 
 // AsmStmt
 Stmt::child_iterator AsmStmt::child_begin() {
-  return Exprs.empty() ? 0 : &Exprs[0];
+  return NumOutputs + NumInputs == 0 ? 0 : &Exprs[0];
 }
 Stmt::child_iterator AsmStmt::child_end() {
-  return Exprs.empty() ? 0 : &Exprs[0] + Exprs.size();
+  return NumOutputs + NumInputs == 0 ? 0 : &Exprs[0] + NumOutputs + NumInputs;
 }
 
 // ObjCAtCatchStmt
