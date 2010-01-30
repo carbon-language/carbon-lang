@@ -200,14 +200,15 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     //
     if (SelectInst *SI = dyn_cast<SelectInst>(Op)) {
       // load (select (Cond, &V1, &V2))  --> select(Cond, load &V1, load &V2).
-      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, TD) &&
-          isSafeToLoadUnconditionally(SI->getOperand(2), SI, TD)) {
+      unsigned Align = LI.getAlignment();
+      if (isSafeToLoadUnconditionally(SI->getOperand(1), SI, Align, TD) &&
+          isSafeToLoadUnconditionally(SI->getOperand(2), SI, Align, TD)) {
         LoadInst *V1 = Builder->CreateLoad(SI->getOperand(1),
-                                        SI->getOperand(1)->getName()+".val");
+                                           SI->getOperand(1)->getName()+".val");
         LoadInst *V2 = Builder->CreateLoad(SI->getOperand(2),
-                                        SI->getOperand(2)->getName()+".val");
-        V1->setAlignment(LI.getAlignment());
-        V2->setAlignment(LI.getAlignment());
+                                           SI->getOperand(2)->getName()+".val");
+        V1->setAlignment(Align);
+        V2->setAlignment(Align);
         return SelectInst::Create(SI->getCondition(), V1, V2);
       }
 

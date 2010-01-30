@@ -75,31 +75,38 @@ static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
-                                       const TargetData *TD) {
+                                       unsigned Align, const TargetData *TD) {
   uint64_t ByteOffset = 0;
   Value *Base = V;
   if (TD)
     Base = getUnderlyingObjectWithOffset(V, TD, ByteOffset);
 
   const Type *BaseType = 0;
-  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base))
-    // If it is an alloca it is always safe to load from.
+  unsigned BaseAlign = 0;
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
+    // An alloca is safe to load from as load as it is suitably aligned.
     BaseType = AI->getAllocatedType();
-  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(Base)) {
+    BaseAlign = AI->getAlignment();
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(Base)) {
     // Global variables are safe to load from but their size cannot be
     // guaranteed if they are overridden.
-    if (!isa<GlobalAlias>(GV) && !GV->mayBeOverridden())
+    if (!isa<GlobalAlias>(GV) && !GV->mayBeOverridden()) {
       BaseType = GV->getType()->getElementType();
+      BaseAlign = GV->getAlignment();
+    }
   }
+  if (TD && BaseType && BaseAlign == 0)
+    BaseAlign = TD->getPrefTypeAlignment(BaseType);
 
-  if (BaseType) {
+  if (BaseType && Align <= BaseAlign) {
     if (!TD)
       return true; // Loading directly from an alloca or global is OK.
     if (BaseType->isSized()) {
       // Check if the load is within the bounds of the underlying object.
       const PointerType *AddrTy = cast<PointerType>(V->getType());
       uint64_t LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
-      if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType))
+      if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType) &&
+          (Align == 0 || (ByteOffset % Align) == 0))
         return true;
     }
   }

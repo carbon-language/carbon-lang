@@ -211,7 +211,8 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
       // FIXME: Writes to memory only matter if they may alias the pointer
       // being loaded from.
       if (CI->mayWriteToMemory() ||
-          !isSafeToLoadUnconditionally(L->getPointerOperand(), L))
+          !isSafeToLoadUnconditionally(L->getPointerOperand(), L,
+                                       L->getAlignment()))
         return false;
     }
   }

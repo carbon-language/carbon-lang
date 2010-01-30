@@ -39,7 +39,7 @@ template<typename T> class SmallVectorImpl;
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
-                                 const TargetData *TD = 0);
+                                 unsigned Align, const TargetData *TD = 0);
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation.
