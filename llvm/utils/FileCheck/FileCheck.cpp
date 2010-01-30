@@ -340,7 +340,10 @@ unsigned Pattern::ComputeMatchDistance(StringRef Buffer,
   if (ExampleString.empty())
     ExampleString = RegExStr;
 
-  return Buffer.substr(0, ExampleString.size()).edit_distance(ExampleString);
+  // Only compare up to the first line in the buffer, or the string size.
+  StringRef BufferPrefix = Buffer.substr(0, ExampleString.size());
+  BufferPrefix = BufferPrefix.split('\n').first;
+  return BufferPrefix.edit_distance(ExampleString);
 }
 
 void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
