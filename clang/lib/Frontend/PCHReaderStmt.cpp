@@ -331,7 +331,8 @@ unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
   for (unsigned I = 0; I != NumClobbers; ++I)
     Clobbers.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
 
-  S->setOutputsAndInputsAndClobbers(Names.data(), Constraints.data(), 
+  S->setOutputsAndInputsAndClobbers(*Reader.getContext(),
+                                    Names.data(), Constraints.data(), 
                                     Exprs.data(), NumOutputs, NumInputs, 
                                     Clobbers.data(), NumClobbers);
 

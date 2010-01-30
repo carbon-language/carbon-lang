@@ -1215,7 +1215,7 @@ public:
   /// getOutputConstraint - Return the constraint string for the specified
   /// output operand.  All output constraints are known to be non-empty (either
   /// '=' or '+').
-  std::string getOutputConstraint(unsigned i) const;
+  llvm::StringRef getOutputConstraint(unsigned i) const;
 
   const StringLiteral *getOutputConstraintLiteral(unsigned i) const {
     return Constraints[i];
@@ -1252,7 +1252,7 @@ public:
 
   /// getInputConstraint - Return the specified input constraint.  Unlike output
   /// constraints, these can be empty.
-  std::string getInputConstraint(unsigned i) const;
+  llvm::StringRef getInputConstraint(unsigned i) const;
 
   const StringLiteral *getInputConstraintLiteral(unsigned i) const {
     return Constraints[i + NumOutputs];
@@ -1267,7 +1267,8 @@ public:
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }
 
-  void setOutputsAndInputsAndClobbers(const std::string *Names,
+  void setOutputsAndInputsAndClobbers(ASTContext &C,
+                                      const std::string *Names,
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
                                       unsigned NumOutputs,
@@ -1280,7 +1281,7 @@ public:
   /// getNamedOperand - Given a symbolic operand reference like %[foo],
   /// translate this into a numeric value needed to reference the same operand.
   /// This returns -1 if the operand name is invalid.
-  int getNamedOperand(const std::string &SymbolicName) const;
+  int getNamedOperand(llvm::StringRef SymbolicName) const;
 
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }

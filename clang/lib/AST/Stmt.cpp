@@ -132,9 +132,8 @@ Expr *AsmStmt::getOutputExpr(unsigned i) {
 /// getOutputConstraint - Return the constraint string for the specified
 /// output operand.  All output constraints are known to be non-empty (either
 /// '=' or '+').
-std::string AsmStmt::getOutputConstraint(unsigned i) const {
-  return std::string(Constraints[i]->getStrData(),
-                     Constraints[i]->getByteLength());
+llvm::StringRef AsmStmt::getOutputConstraint(unsigned i) const {
+  return getOutputConstraintLiteral(i)->getString();
 }
 
 /// getNumPlusOperands - Return the number of output operands that have a "+"
@@ -153,13 +152,13 @@ Expr *AsmStmt::getInputExpr(unsigned i) {
 
 /// getInputConstraint - Return the specified input constraint.  Unlike output
 /// constraints, these can be empty.
-std::string AsmStmt::getInputConstraint(unsigned i) const {
-  return std::string(Constraints[i + NumOutputs]->getStrData(),
-                     Constraints[i + NumOutputs]->getByteLength());
+llvm::StringRef AsmStmt::getInputConstraint(unsigned i) const {
+  return getInputConstraintLiteral(i)->getString();
 }
 
 
-void AsmStmt::setOutputsAndInputsAndClobbers(const std::string *Names,
+void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
+                                             const std::string *Names,
                                              StringLiteral **Constraints,
                                              Stmt **Exprs,
                                              unsigned NumOutputs,
@@ -183,7 +182,7 @@ void AsmStmt::setOutputsAndInputsAndClobbers(const std::string *Names,
 /// getNamedOperand - Given a symbolic operand reference like %[foo],
 /// translate this into a numeric value needed to reference the same operand.
 /// This returns -1 if the operand name is invalid.
-int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
+int AsmStmt::getNamedOperand(llvm::StringRef SymbolicName) const {
   unsigned NumPlusOperands = 0;
 
   // Check if this is an output operand.
@@ -311,7 +310,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       if (NameEnd == CurPtr)
         return diag::err_asm_empty_symbolic_operand_name;
 
-      std::string SymbolicName(CurPtr, NameEnd);
+      llvm::StringRef SymbolicName(CurPtr, NameEnd - CurPtr - 1);
 
       int N = getNamedOperand(SymbolicName);
       if (N == -1) {
