@@ -1197,8 +1197,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getStrData(),
-                                    Literal->getByteLength(),
+    TargetInfo::ConstraintInfo Info(Literal->getString(),
                                     Names[i]);
     if (!Context.Target.validateOutputConstraint(Info))
       return StmtError(Diag(Literal->getLocStart(),
@@ -1224,9 +1223,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getStrData(),
-                                    Literal->getByteLength(),
-                                    Names[i]);
+    TargetInfo::ConstraintInfo Info(Literal->getString(), Names[i]);
     if (!Context.Target.validateInputConstraint(OutputConstraintInfos.data(),
                                                 NumOutputs, Info)) {
       return StmtError(Diag(Literal->getLocStart(),

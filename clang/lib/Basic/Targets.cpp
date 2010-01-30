@@ -157,7 +157,7 @@ public:
     return "__TEXT,__ustring";
   }
 
-  virtual std::string isValidSectionSpecifier(const llvm::StringRef &SR) const {
+  virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
     // Let MCSectionMachO validate this.
     llvm::StringRef Segment, Section;
     unsigned TAA, StubSize;

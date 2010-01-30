@@ -246,10 +246,9 @@ public:
     std::string ConstraintStr;  // constraint: "=rm"
     std::string Name;           // Operand name: [foo] with no []'s.
   public:
-    ConstraintInfo(const char *str, unsigned strlen, const std::string &name)
-      : Flags(0), TiedOperand(-1), ConstraintStr(str, str+strlen), Name(name) {}
-    explicit ConstraintInfo(const std::string &Str, const std::string &name)
-      : Flags(0), TiedOperand(-1), ConstraintStr(Str), Name(name) {}
+    ConstraintInfo(llvm::StringRef ConstraintStr, llvm::StringRef Name)
+      : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()), 
+      Name(Name.str()) {}
 
     const std::string &getConstraintStr() const { return ConstraintStr; }
     const std::string &getName() const { return Name; }
@@ -343,7 +342,7 @@ public:
   /// and give good diagnostics in cases when the assembler or code generator
   /// would otherwise reject the section specifier.
   ///
-  virtual std::string isValidSectionSpecifier(const llvm::StringRef &SR) const {
+  virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
     return "";
   }
 
