@@ -1268,11 +1268,13 @@ public:
     return const_cast<AsmStmt*>(this)->getInputExpr(i);
   }
 
-  void setOutputsAndInputs(unsigned NumOutputs,
-                           unsigned NumInputs,
-                           const std::string *Names,
-                           StringLiteral **Constraints,
-                           Stmt **Exprs);
+  void setOutputsAndInputsAndClobbers(const std::string *Names,
+                                      StringLiteral **Constraints,
+                                      Stmt **Exprs,
+                                      unsigned NumOutputs,
+                                      unsigned NumInputs,                                      
+                                      StringLiteral **Clobbers,
+                                      unsigned NumClobbers);
 
   //===--- Other ---===//
 
@@ -1286,7 +1288,6 @@ public:
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
   const StringLiteral *getClobber(unsigned i) const { return Clobbers[i]; }
-  void setClobbers(StringLiteral **Clobbers, unsigned NumClobbers);
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(AsmLoc, RParenLoc);

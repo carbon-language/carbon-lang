@@ -325,14 +325,15 @@ unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
     Constraints.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
     Exprs.push_back(StmtStack[StackIdx++]);
   }
-  S->setOutputsAndInputs(NumOutputs, NumInputs,
-                         Names.data(), Constraints.data(), Exprs.data());
 
   // Constraints
   llvm::SmallVector<StringLiteral*, 16> Clobbers;
   for (unsigned I = 0; I != NumClobbers; ++I)
     Clobbers.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
-  S->setClobbers(Clobbers.data(), NumClobbers);
+
+  S->setOutputsAndInputsAndClobbers(Names.data(), Constraints.data(), 
+                                    Exprs.data(), NumOutputs, NumInputs, 
+                                    Clobbers.data(), NumClobbers);
 
   assert(StackIdx == StmtStack.size() && "Error deserializing AsmStmt");
   return NumOutputs*2 + NumInputs*2 + NumClobbers + 1;

@@ -1197,8 +1197,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getString(),
-                                    Names[i]);
+    TargetInfo::ConstraintInfo Info(Literal->getString(), Names[i]);
     if (!Context.Target.validateOutputConstraint(Info))
       return StmtError(Diag(Literal->getLocStart(),
                             diag::err_asm_invalid_output_constraint)
@@ -1263,11 +1262,9 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    std::string Clobber(Literal->getStrData(),
-                        Literal->getStrData() +
-                        Literal->getByteLength());
+    llvm::StringRef Clobber = Literal->getString();
 
-    if (!Context.Target.isValidGCCRegisterName(Clobber.c_str()))
+    if (!Context.Target.isValidGCCRegisterName(Clobber))
       return StmtError(Diag(Literal->getLocStart(),
                   diag::err_asm_unknown_register_name) << Clobber);
   }

@@ -147,8 +147,6 @@ unsigned AsmStmt::getNumPlusOperands() const {
   return Res;
 }
 
-
-
 Expr *AsmStmt::getInputExpr(unsigned i) {
   return cast<Expr>(Exprs[i + NumOutputs]);
 }
@@ -161,11 +159,13 @@ std::string AsmStmt::getInputConstraint(unsigned i) const {
 }
 
 
-void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
-                                  unsigned NumInputs,
-                                  const std::string *Names,
-                                  StringLiteral **Constraints,
-                                  Stmt **Exprs) {
+void AsmStmt::setOutputsAndInputsAndClobbers(const std::string *Names,
+                                             StringLiteral **Constraints,
+                                             Stmt **Exprs,
+                                             unsigned NumOutputs,
+                                             unsigned NumInputs,                                      
+                                             StringLiteral **Clobbers,
+                                             unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
   this->NumInputs = NumInputs;
   this->Names.clear();
@@ -175,6 +175,9 @@ void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
                            Constraints, Constraints + NumOutputs + NumInputs);
   this->Exprs.clear();
   this->Exprs.insert(this->Exprs.end(), Exprs, Exprs + NumOutputs + NumInputs);
+  
+  this->Clobbers.clear();
+  this->Clobbers.insert(this->Clobbers.end(), Clobbers, Clobbers + NumClobbers);
 }
 
 /// getNamedOperand - Given a symbolic operand reference like %[foo],
@@ -195,11 +198,6 @@ int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
 
   // Not found.
   return -1;
-}
-
-void AsmStmt::setClobbers(StringLiteral **Clobbers, unsigned NumClobbers) {
-  this->Clobbers.clear();
-  this->Clobbers.insert(this->Clobbers.end(), Clobbers, Clobbers + NumClobbers);
 }
 
 /// AnalyzeAsmString - Analyze the asm string of the current asm, decomposing
