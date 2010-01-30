@@ -705,7 +705,9 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     } else {
       // We cannot initialize this element, so let
       // PerformCopyInitialization produce the appropriate diagnostic.
-      SemaRef.PerformCopyInitialization(expr, ElemType, Sema::AA_Initializing);
+      SemaRef.PerformCopyInitialization(Entity, SourceLocation(), 
+                                        SemaRef.Owned(expr));
+      IList->setInit(Index, 0);
       hadError = true;
       ++Index;
       ++StructuredIndex;
