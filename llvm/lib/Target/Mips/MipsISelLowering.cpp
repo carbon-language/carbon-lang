@@ -834,11 +834,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
-                             DAG.getIntPtrConstant(0, true), InFlag);
-  InFlag = Chain.getValue(1);
-
   // Create a stack location to hold GP when PIC is used. This stack 
   // location is used on function prologue to save GP and also after all 
   // emited CALL's to restore GP. 
@@ -867,6 +862,11 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                GPLoad, SDValue(0,0));
       InFlag = Chain.getValue(1);
   }      
+
+  // Create the CALLSEQ_END node.
+  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
+                             DAG.getIntPtrConstant(0, true), InFlag);
+  InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
