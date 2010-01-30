@@ -38,12 +38,17 @@ using namespace clang;
 CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
                                    bool _OwnsLLVMContext)
   : LLVMContext(_LLVMContext),
-    OwnsLLVMContext(_OwnsLLVMContext) {
-    }
+    OwnsLLVMContext(_OwnsLLVMContext),
+    Invocation(new CompilerInvocation) {
+}
 
 CompilerInstance::~CompilerInstance() {
   if (OwnsLLVMContext)
     delete LLVMContext;
+}
+
+void CompilerInstance::setInvocation(CompilerInvocation *Value) {
+  Invocation.reset(Value);
 }
 
 void CompilerInstance::setDiagnostics(Diagnostic *Value) {

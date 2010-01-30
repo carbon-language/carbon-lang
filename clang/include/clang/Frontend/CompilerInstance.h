@@ -62,7 +62,7 @@ class CompilerInstance {
   bool OwnsLLVMContext;
 
   /// The options used in this compiler instance.
-  CompilerInvocation Invocation;
+  llvm::OwningPtr<CompilerInvocation> Invocation;
 
   /// The diagnostics engine instance.
   llvm::OwningPtr<Diagnostic> Diagnostics;
@@ -161,82 +161,91 @@ public:
   /// @name Compiler Invocation and Options
   /// {
 
-  CompilerInvocation &getInvocation() { return Invocation; }
-  const CompilerInvocation &getInvocation() const { return Invocation; }
-  void setInvocation(const CompilerInvocation &Value) { Invocation = Value; }
+  bool hasInvocation() const { return Invocation != 0; }
+
+  CompilerInvocation &getInvocation() {
+    assert(Invocation && "Compiler instance has no invocation!");
+    return *Invocation;
+  }
+
+  CompilerInvocation *takeInvocation() { return Invocation.take(); }
+
+  /// setInvocation - Replace the current invocation; the compiler instance
+  /// takes ownership of \arg Value.
+  void setInvocation(CompilerInvocation *Value);
 
   /// }
   /// @name Forwarding Methods
   /// {
 
   AnalyzerOptions &getAnalyzerOpts() {
-    return Invocation.getAnalyzerOpts();
+    return Invocation->getAnalyzerOpts();
   }
   const AnalyzerOptions &getAnalyzerOpts() const {
-    return Invocation.getAnalyzerOpts();
+    return Invocation->getAnalyzerOpts();
   }
 
   CodeGenOptions &getCodeGenOpts() {
-    return Invocation.getCodeGenOpts();
+    return Invocation->getCodeGenOpts();
   }
   const CodeGenOptions &getCodeGenOpts() const {
-    return Invocation.getCodeGenOpts();
+    return Invocation->getCodeGenOpts();
   }
 
   DependencyOutputOptions &getDependencyOutputOpts() {
-    return Invocation.getDependencyOutputOpts();
+    return Invocation->getDependencyOutputOpts();
   }
   const DependencyOutputOptions &getDependencyOutputOpts() const {
-    return Invocation.getDependencyOutputOpts();
+    return Invocation->getDependencyOutputOpts();
   }
 
   DiagnosticOptions &getDiagnosticOpts() {
-    return Invocation.getDiagnosticOpts();
+    return Invocation->getDiagnosticOpts();
   }
   const DiagnosticOptions &getDiagnosticOpts() const {
-    return Invocation.getDiagnosticOpts();
+    return Invocation->getDiagnosticOpts();
   }
 
   FrontendOptions &getFrontendOpts() {
-    return Invocation.getFrontendOpts();
+    return Invocation->getFrontendOpts();
   }
   const FrontendOptions &getFrontendOpts() const {
-    return Invocation.getFrontendOpts();
+    return Invocation->getFrontendOpts();
   }
 
   HeaderSearchOptions &getHeaderSearchOpts() {
-    return Invocation.getHeaderSearchOpts();
+    return Invocation->getHeaderSearchOpts();
   }
   const HeaderSearchOptions &getHeaderSearchOpts() const {
-    return Invocation.getHeaderSearchOpts();
+    return Invocation->getHeaderSearchOpts();
   }
 
   LangOptions &getLangOpts() {
-    return Invocation.getLangOpts();
+    return Invocation->getLangOpts();
   }
   const LangOptions &getLangOpts() const {
-    return Invocation.getLangOpts();
+    return Invocation->getLangOpts();
   }
 
   PreprocessorOptions &getPreprocessorOpts() {
-    return Invocation.getPreprocessorOpts();
+    return Invocation->getPreprocessorOpts();
   }
   const PreprocessorOptions &getPreprocessorOpts() const {
-    return Invocation.getPreprocessorOpts();
+    return Invocation->getPreprocessorOpts();
   }
 
   PreprocessorOutputOptions &getPreprocessorOutputOpts() {
-    return Invocation.getPreprocessorOutputOpts();
+    return Invocation->getPreprocessorOutputOpts();
   }
   const PreprocessorOutputOptions &getPreprocessorOutputOpts() const {
-    return Invocation.getPreprocessorOutputOpts();
+    return Invocation->getPreprocessorOutputOpts();
   }
 
   TargetOptions &getTargetOpts() {
-    return Invocation.getTargetOpts();
+    return Invocation->getTargetOpts();
   }
   const TargetOptions &getTargetOpts() const {
-    return Invocation.getTargetOpts();
+    return Invocation->getTargetOpts();
   }
 
   /// }
