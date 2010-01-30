@@ -939,7 +939,16 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       DIE *ElemDie = NULL;
       if (Element.getTag() == dwarf::DW_TAG_subprogram)
         ElemDie = createSubprogramDIE(DISubprogram(Element.getNode()));
-      else
+      else if (Element.getTag() == dwarf::DW_TAG_auto_variable) {
+        DIVariable DV(Element.getNode());
+        ElemDie = new DIE(dwarf::DW_TAG_variable);
+        addString(ElemDie, dwarf::DW_AT_name, dwarf::DW_FORM_string,
+                  DV.getName());
+        addType(ElemDie, DV.getType());
+        addUInt(ElemDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+        addUInt(ElemDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
+        addSourceLine(ElemDie, &DV);
+      } else
         ElemDie = createMemberDIE(DIDerivedType(Element.getNode()));
       Buffer.addChild(ElemDie);
     }
