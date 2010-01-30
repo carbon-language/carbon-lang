@@ -196,6 +196,10 @@ def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
   let SuperClass = ?;
 }
+def X86NoSegMemAsmOperand : AsmOperandClass {
+  let Name = "NoSegMem";
+  let SuperClass = X86MemAsmOperand;
+}
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
@@ -235,7 +239,7 @@ def i8mem_NOREX : Operand<i64> {
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
-  let ParserMatchClass = X86MemAsmOperand;
+  let ParserMatchClass = X86NoSegMemAsmOperand;
 }
 
 def SSECC : Operand<i8> {

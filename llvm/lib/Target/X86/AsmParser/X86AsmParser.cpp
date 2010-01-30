@@ -172,6 +172,10 @@ struct X86Operand : public MCParsedAsmOperand {
   
   bool isMem() const { return Kind == Memory; }
 
+  bool isNoSegMem() const {
+    return Kind == Memory && !getMemSegReg();
+  }
+
   bool isReg() const { return Kind == Register; }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
@@ -191,16 +195,22 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
-    assert((N == 4 || N == 5) && "Invalid number of operands!");
+    assert((N == 5) && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
     Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+  }
 
-    // FIXME: What a hack.
-    if (N == 5)
-      Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+  void addNoSegMemOperands(MCInst &Inst, unsigned N) const {
+    assert((N == 4) && "Invalid number of operands!");
+
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::CreateImm(getMemScale()));
+    Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
+    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
