@@ -53,6 +53,10 @@ class ASTUnit {
   llvm::OwningPtr<ASTContext>       Ctx;
   bool                              tempFile;
 
+  /// Optional owned invocation, just used to make the invocation used in
+  /// LoadFromCommandLine available.
+  llvm::OwningPtr<CompilerInvocation> Invocation;
+
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
@@ -139,7 +143,8 @@ public:
   /// CompilerInvocation object.
   ///
   /// \param CI - The compiler invocation to use; it must have exactly one input
-  /// source file.
+  /// source file. The caller is responsible for ensuring the lifetime of the
+  /// invocation extends past that of the returned ASTUnit.
   ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.

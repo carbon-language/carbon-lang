@@ -238,7 +238,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   llvm::OwningPtr<ASTUnit> AST;
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
 
-  Clang.getInvocation() = CI;
+  Clang.setInvocation(const_cast<CompilerInvocation*>(&CI));
 
   Clang.setDiagnostics(&Diags);
   Clang.setDiagnosticClient(Diags.getClient());
@@ -294,6 +294,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
 
   Clang.takeDiagnosticClient();
   Clang.takeDiagnostics();
+  Clang.takeInvocation();
 
   return AST.take();
 
@@ -349,19 +350,23 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   }
 
   const driver::ArgStringList &CCArgs = Cmd->getArguments();
-  CompilerInvocation CI;
-  CompilerInvocation::CreateFromArgs(CI, (const char**) CCArgs.data(),
+  llvm::OwningPtr<CompilerInvocation> CI(new CompilerInvocation);
+  CompilerInvocation::CreateFromArgs(*CI, (const char**) CCArgs.data(),
                                      (const char**) CCArgs.data()+CCArgs.size(),
                                      Diags);
 
   // Override any files that need remapping
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
-    CI.getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
+    CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
                                              RemappedFiles[I].second);
   
   // Override the resources path.
-  CI.getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
+  CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
-  CI.getFrontendOpts().DisableFree = UseBumpAllocator;
-  return LoadFromCompilerInvocation(CI, Diags, OnlyLocalDecls);
+  CI->getFrontendOpts().DisableFree = UseBumpAllocator;
+  ASTUnit *Unit = LoadFromCompilerInvocation(*CI, Diags, OnlyLocalDecls);
+  if (Unit)
+    Unit->Invocation.reset(CI.take());
+
+  return Unit;
 }
