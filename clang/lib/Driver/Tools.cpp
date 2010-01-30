@@ -512,7 +512,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   // Select the default CPU if none was given (or detection failed).
   if (!CPUName) {
     // FIXME: Need target hooks.
-    if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
+    if (getToolChain().getOS().startswith("darwin")) {
       if (getToolChain().getArchName() == "x86_64")
         CPUName = "core2";
       else if (getToolChain().getArchName() == "i386")
