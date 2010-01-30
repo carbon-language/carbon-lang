@@ -21,27 +21,22 @@ using namespace std;
 namespace clang {
   
 llvm::StringRef getClangRepositoryPath() {
-  static const char *Path = 0;
-  if (Path)
-    return Path;
-  
-  static char URL[] = "$URL$";
-  char *End = strstr(URL, "/lib/Basic");
+  static const char URL[] = "$URL$";
+  const char *URLEnd = URL + strlen(URL);
+
+  const char *End = strstr(URL, "/lib/Basic");
   if (End)
-    *End = 0;
-  
+    URLEnd = End;
+
   End = strstr(URL, "/clang/tools/clang");
   if (End)
-    *End = 0;
-  
-  char *Begin = strstr(URL, "cfe/");
-  if (Begin) {
-    Path = Begin + 4;
-    return Path;
-  }
-  
-  Path = URL;
-  return Path;
+    URLEnd = End;
+
+  const char *Begin = strstr(URL, "cfe/");
+  if (Begin)
+    return llvm::StringRef(Begin + 4, URLEnd - Begin - 4);
+
+  return llvm::StringRef(URL, URLEnd - URL);
 }
 
 
