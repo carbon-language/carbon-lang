@@ -838,6 +838,18 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
 
+    // If a DEBUG_VALUE says something is located in a spilled register,
+    // change the DEBUG_VALUE to be undef, which prevents the register
+    // from being reloaded here.  Doing that would change the generated
+    // code, unless another use immediately follows this instruction.
+    if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE &&
+        MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
+      unsigned VirtReg = MI->getOperand(0).getReg();
+      if (VirtReg && TargetRegisterInfo::isVirtualRegister(VirtReg) &&
+          !getVirt2PhysRegMapSlot(VirtReg))
+        MI->getOperand(0).setReg(0U);
+    }
+
     // Get the used operands into registers.  This has the potential to spill
     // incoming values if we are out of registers.  Note that we completely
     // ignore physical register uses here.  We assume that if an explicit
