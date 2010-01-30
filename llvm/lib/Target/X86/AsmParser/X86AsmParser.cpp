@@ -172,6 +172,11 @@ struct X86Operand : public MCParsedAsmOperand {
   
   bool isMem() const { return Kind == Memory; }
 
+  bool isAbsMem() const {
+    return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
+      !getMemIndexReg() && !getMemScale();
+  }
+
   bool isNoSegMem() const {
     return Kind == Memory && !getMemSegReg();
   }
@@ -196,7 +201,6 @@ struct X86Operand : public MCParsedAsmOperand {
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 5) && "Invalid number of operands!");
-
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
@@ -204,9 +208,13 @@ struct X86Operand : public MCParsedAsmOperand {
     Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
+  void addAbsMemOperands(MCInst &Inst, unsigned N) const {
+    assert((N == 1) && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+  }
+
   void addNoSegMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 4) && "Invalid number of operands!");
-
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
@@ -232,10 +240,24 @@ struct X86Operand : public MCParsedAsmOperand {
     return Res;
   }
 
+  /// Create an absolute memory operand.
+  static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
+                               SMLoc EndLoc) {
+    X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
+    Res->Mem.SegReg   = 0;
+    Res->Mem.Disp     = Disp;
+    Res->Mem.BaseReg  = 0;
+    Res->Mem.IndexReg = 0;
+    Res->Mem.Scale    = 0;
+    return Res;
+  }
+
+  /// Create a generalized memory operand.
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
                                unsigned Scale, SMLoc StartLoc, SMLoc EndLoc) {
-    // We should never just have a displacement, that would be an immediate.
+    // We should never just have a displacement, that should be parsed as an
+    // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
 
     // The scale should always be one of {1,2,4,8}.
@@ -322,7 +344,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
     if (getLexer().isNot(AsmToken::LParen)) {
       // Unless we have a segment register, treat this as an immediate.
       if (SegReg == 0)
-        return X86Operand::CreateImm(Disp, MemStart, ExprEnd);
+        return X86Operand::CreateMem(Disp, MemStart, ExprEnd);
       return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
     }
     
@@ -349,7 +371,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
       if (getLexer().isNot(AsmToken::LParen)) {
         // Unless we have a segment register, treat this as an immediate.
         if (SegReg == 0)
-          return X86Operand::CreateImm(Disp, LParenLoc, ExprEnd);
+          return X86Operand::CreateMem(Disp, LParenLoc, ExprEnd);
         return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
       }
       

@@ -192,6 +192,10 @@ def X86MemAsmOperand : AsmOperandClass {
   let Name = "Mem";
   let SuperClass = ?;
 }
+def X86AbsMemAsmOperand : AsmOperandClass {
+  let Name = "AbsMem";
+  let SuperClass = X86MemAsmOperand;
+}
 def X86NoSegMemAsmOperand : AsmOperandClass {
   let Name = "NoSegMem";
   let SuperClass = X86MemAsmOperand;
@@ -233,7 +237,8 @@ def lea32mem : Operand<i32> {
   let ParserMatchClass = X86NoSegMemAsmOperand;
 }
 
-let PrintMethod = "print_pcrel_imm" in {
+let ParserMatchClass = X86AbsMemAsmOperand,
+    PrintMethod = "print_pcrel_imm" in {
 def i32imm_pcrel : Operand<i32>;
 
 def offset8 : Operand<i64>;

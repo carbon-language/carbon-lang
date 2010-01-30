@@ -16,6 +16,12 @@
         movl %eax, 10(%ebp, %ebx, 4)
 // CHECK: movl %eax, 10(,%ebx,4)
         movl %eax, 10(, %ebx, 4)
+
+// CHECK: movl 0, %eax        
+        movl 0, %eax
+// CHECK: movl $0, %eax        
+        movl $0, %eax
+        
 // CHECK: ret
         ret
         

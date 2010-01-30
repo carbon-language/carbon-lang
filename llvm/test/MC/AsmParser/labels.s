@@ -21,7 +21,7 @@ foo:
 // CHECK: b$c = 10
 "b$c" = 10
 // CHECK: addl $10, %eax
-        addl "b$c", %eax
+        addl $"b$c", %eax
 
 // CHECK: "a 0" = 11
         .set "a 0", 11
