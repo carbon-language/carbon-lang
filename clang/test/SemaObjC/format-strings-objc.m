@@ -29,6 +29,8 @@ extern void *_NSConstantStringClassReference;
 typedef const struct __CFString * CFStringRef;
 extern void CFStringCreateWithFormat(CFStringRef format, ...) __attribute__((format(CFString, 1, 2)));
 
+int printf(const char * restrict, ...) ;
+
 //===----------------------------------------------------------------------===//
 // Test cases.
 //===----------------------------------------------------------------------===//
@@ -41,3 +43,10 @@ void check_nslog(unsigned k) {
 // Check type validation
 extern void NSLog2(int format, ...) __attribute__((format(__NSString__, 1, 2))); // expected-error {{format argument not an NSString}}
 extern void CFStringCreateWithFormat2(int *format, ...) __attribute__((format(CFString, 1, 2))); // expected-error {{format argument not a CFString}}
+
+// <rdar://problem/7068334> - Catch use of long long with int arguments.
+void rdar_7068334() {
+  long long test = 500;  
+  printf("%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
+  NSLog(@"%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
+}
