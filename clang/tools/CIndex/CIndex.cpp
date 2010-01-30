@@ -1136,7 +1136,9 @@ CXSourceLocation clang_getNullLocation() {
 }
 
 unsigned clang_equalLocations(CXSourceLocation loc1, CXSourceLocation loc2) {
-  return loc1.ptr_data == loc2.ptr_data && loc1.int_data == loc2.int_data;
+  return (loc1.ptr_data[0] == loc2.ptr_data[0] &&
+          loc1.ptr_data[1] == loc2.ptr_data[1] &&
+          loc1.int_data == loc2.int_data);
 }
 
 CXSourceLocation clang_getLocation(CXTranslationUnit tu,
