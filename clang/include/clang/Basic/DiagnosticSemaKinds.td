@@ -2449,6 +2449,9 @@ def warn_printf_incomplete_specifier : Warning<
   "incomplete format specifier">, InGroup<Format>;
 def warn_printf_missing_format_string : Warning<
   "format string missing">, InGroup<Format>;
+def warn_printf_conversion_argument_type_mismatch : Warning<
+  "conversion specifies type %0 but the argument has type %1">,
+  InGroup<Format>;
 def warn_null_arg : Warning<
   "null passed to a callee which requires a non-null argument">,
   InGroup<NonNull>;
@@ -2463,10 +2466,10 @@ def warn_printf_asterisk_width_missing_arg : Warning<
 def warn_printf_asterisk_precision_missing_arg : Warning<
   "'.*' specified field precision is missing a matching 'int' argument">;
 def warn_printf_asterisk_width_wrong_type : Warning<
-  "field width should have type 'int', but argument has type %0">,
+  "field width should have type %0, but argument has type %1">,
   InGroup<Format>;
 def warn_printf_asterisk_precision_wrong_type : Warning<
-  "field precision should have type 'int', but argument has type %0">,
+  "field precision should have type %0, but argument has type %1">,
   InGroup<Format>;
 
 // CHECK: returning address/reference of stack memory

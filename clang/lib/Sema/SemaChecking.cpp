@@ -1081,6 +1081,8 @@ private:
                     unsigned MissingArgDiag, unsigned BadTypeDiag,
 					const char *startSpecifier, unsigned specifierLen);
   
+  bool MatchType(QualType A, QualType B, bool ignoreSign);
+  
   const Expr *getDataArg(unsigned i) const;
 };
 }
@@ -1132,6 +1134,47 @@ const Expr *CheckPrintfHandler::getDataArg(unsigned i) const {
   return TheCall->getArg(FormatIdx + i);  
 }
 
+bool CheckPrintfHandler::MatchType(QualType A, QualType B, bool ignoreSign) {
+  A = S.Context.getCanonicalType(A).getUnqualifiedType();
+  B = S.Context.getCanonicalType(B).getUnqualifiedType();
+  
+  if (A == B)
+    return true;
+  
+  if (ignoreSign) {
+    if (const BuiltinType *BT = B->getAs<BuiltinType>()) {
+      switch (BT->getKind()) {
+        default:
+          return false;
+        case BuiltinType::Char_S:          
+        case BuiltinType::SChar:
+          return A == S.Context.UnsignedCharTy;
+        case BuiltinType::Char_U:
+        case BuiltinType::UChar:
+          return A == S.Context.SignedCharTy;
+        case BuiltinType::Short:
+          return A == S.Context.UnsignedShortTy;
+        case BuiltinType::UShort:
+          return A == S.Context.ShortTy;          
+        case BuiltinType::Int:
+          return A == S.Context.UnsignedIntTy;
+        case BuiltinType::UInt:
+          return A == S.Context.IntTy;
+        case BuiltinType::Long:
+          return A == S.Context.UnsignedLongTy;
+        case BuiltinType::ULong:
+          return A == S.Context.LongTy;
+        case BuiltinType::LongLong:
+          return A == S.Context.UnsignedLongLongTy;
+        case BuiltinType::ULongLong:
+          return A == S.Context.LongLongTy;          
+      }
+      return A == B;
+    }
+  }
+  return false;  
+}
+
 bool
 CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
                                  unsigned MissingArgDiag,
@@ -1156,13 +1199,11 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
       // doesn't emit a warning for that case.
       const Expr *Arg = getDataArg(NumConversions);
       QualType T = Arg->getType();
-      const BuiltinType *BT = T->getAs<BuiltinType>();            
-      if (!BT || (BT->getKind() != BuiltinType::Int &&
-                  BT->getKind() != BuiltinType::UInt)) {
+      if (!MatchType(T, S.Context.IntTy, true)) {
         S.Diag(getLocationOfByte(Amt.getStart()), BadTypeDiag)
-          << T
-		  << getFormatSpecifierRange(startSpecifier, specifierLen)
-		  << Arg->getSourceRange();
+          << S.Context.IntTy << T
+          << getFormatSpecifierRange(startSpecifier, specifierLen)
+          << Arg->getSourceRange();
         // Don't do any more checking.  We will just emit
         // spurious errors.
         return false;
@@ -1233,6 +1274,22 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
       << getFormatSpecifierRange(startSpecifier, specifierLen);    
     // Don't do any more checking.
     return false;
+  }
+  
+  // Now type check the data expression that matches the
+  // format specifier.
+  const Expr *Ex = getDataArg(NumConversions);
+  const analyze_printf::ArgTypeResult &ATR = FS.getArgType(S.Context);
+    
+  if (const QualType *T = ATR.getSpecificType()) {
+    if (!MatchType(*T, Ex->getType(), true)) {
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_printf_conversion_argument_type_mismatch)
+        << *T << Ex->getType()
+        << getFormatSpecifierRange(startSpecifier, specifierLen)
+        << Ex->getSourceRange();
+    }
+    return true;
   }
 
   return true;

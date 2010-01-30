@@ -71,8 +71,8 @@ void check_invalid_specifier(FILE* fp, char *buf)
 {
   printf("%s%lb%d","unix",10,20); // expected-warning {{invalid conversion specifier 'b'}}
   fprintf(fp,"%%%l"); // expected-warning {{incomplete format specifier}}
-  sprintf(buf,"%%%%%ld%d%d", 1, 2, 3); // no-warning
-  snprintf(buf, 2, "%%%%%ld%;%d", 1, 2, 3); // expected-warning {{invalid conversion specifier ';'}}
+  sprintf(buf,"%%%%%ld%d%d", 1, 2, 3); // expected-warning{{conversion specifies type 'long' but the argument has type 'int'}}
+  snprintf(buf, 2, "%%%%%ld%;%d", 1, 2, 3); // expected-warning{{conversion specifies type 'long' but the argument has type 'int'}} expected-warning {{invalid conversion specifier ';'}}
 }
 
 void check_null_char_string(char* b)
@@ -162,3 +162,11 @@ void test10(int x, float f, int i) {
   printf("%.", x);  // expected-warning{{incomplete format specifier}}
 } 
 
+typedef struct __aslclient *aslclient;
+typedef struct __aslmsg *aslmsg;
+int asl_log(aslclient asl, aslmsg msg, int level, const char *format, ...) __attribute__((__format__ (__printf__, 4, 5)));
+void test_asl(aslclient asl) {
+  // Test case from <rdar://problem/7341605>.
+  asl_log(asl, 0, 3, "Error: %m"); // no-warning
+  asl_log(asl, 0, 3, "Error: %W"); // expected-warning{{invalid conversion specifier 'W'}}
+}
