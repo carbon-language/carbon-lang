@@ -1009,9 +1009,9 @@ private:
   OwningStmtResult ParseReturnStatement(AttributeList *Attr);
   OwningStmtResult ParseAsmStatement(bool &msAsm);
   OwningStmtResult FuzzyParseMicrosoftAsmStatement();
-  bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
-                           llvm::SmallVectorImpl<ExprTy*> &Constraints,
-                           llvm::SmallVectorImpl<ExprTy*> &Exprs);
+  bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
+                           llvm::SmallVectorImpl<ExprTy *> &Constraints,
+                           llvm::SmallVectorImpl<ExprTy *> &Exprs);
 
   //===--------------------------------------------------------------------===//
   // C++ 6: Statements and Blocks

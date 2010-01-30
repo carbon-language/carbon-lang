@@ -785,7 +785,7 @@ public:
                                   bool IsVolatile,
                                   unsigned NumOutputs,
                                   unsigned NumInputs,
-                                  const std::string *Names,
+                                  IdentifierInfo **Names,
                                   MultiExprArg Constraints,
                                   MultiExprArg Exprs,
                                   ExprArg AsmString,
@@ -3352,7 +3352,7 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
   
   ASTOwningVector<&ActionBase::DeleteExpr> Constraints(getSema());
   ASTOwningVector<&ActionBase::DeleteExpr> Exprs(getSema());
-  llvm::SmallVector<std::string, 4> Names;
+  llvm::SmallVector<IdentifierInfo *, 4> Names;
 
   OwningExprResult AsmString(SemaRef);
   ASTOwningVector<&ActionBase::DeleteExpr> Clobbers(getSema());
@@ -3361,7 +3361,7 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
   
   // Go through the outputs.
   for (unsigned I = 0, E = S->getNumOutputs(); I != E; ++I) {
-    Names.push_back(S->getOutputName(I));
+    Names.push_back(S->getOutputIdentifier(I));
     
     // No need to transform the constraint literal.
     Constraints.push_back(S->getOutputConstraintLiteral(I)->Retain());
@@ -3379,7 +3379,7 @@ TreeTransform<Derived>::TransformAsmStmt(AsmStmt *S) {
   
   // Go through the inputs.
   for (unsigned I = 0, E = S->getNumInputs(); I != E; ++I) {
-    Names.push_back(S->getInputName(I));
+    Names.push_back(S->getInputIdentifier(I));
     
     // No need to transform the constraint literal.
     Constraints.push_back(S->getInputConstraintLiteral(I)->Retain());

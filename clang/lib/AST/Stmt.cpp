@@ -158,7 +158,7 @@ llvm::StringRef AsmStmt::getInputConstraint(unsigned i) const {
 
 
 void AsmStmt::setOutputsAndInputsAndClobbers(ASTContext &C,
-                                             const std::string *Names,
+                                             IdentifierInfo **Names,
                                              StringLiteral **Constraints,
                                              Stmt **Exprs,
                                              unsigned NumOutputs,
@@ -335,7 +335,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
 
 AsmStmt::AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile,
                  bool msasm, unsigned numoutputs, unsigned numinputs,
-                 const std::string *names, StringLiteral **constraints,
+                 IdentifierInfo **names, StringLiteral **constraints,
                  Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
                  StringLiteral **clobbers, SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)

@@ -1121,7 +1121,7 @@ class AsmStmt : public Stmt {
   unsigned NumOutputs;
   unsigned NumInputs;
 
-  llvm::SmallVector<std::string, 4> Names;
+  llvm::SmallVector<IdentifierInfo *, 4> Names;
   llvm::SmallVector<StringLiteral*, 4> Constraints;
   llvm::SmallVector<Stmt*, 4> Exprs;
 
@@ -1129,7 +1129,7 @@ class AsmStmt : public Stmt {
 public:
   AsmStmt(SourceLocation asmloc, bool issimple, bool isvolatile, bool msasm,
           unsigned numoutputs, unsigned numinputs,
-          const std::string *names, StringLiteral **constraints,
+          IdentifierInfo **names, StringLiteral **constraints,
           Expr **exprs, StringLiteral *asmstr, unsigned numclobbers,
           StringLiteral **clobbers, SourceLocation rparenloc);
 
@@ -1208,8 +1208,15 @@ public:
 
   unsigned getNumOutputs() const { return NumOutputs; }
 
-  const std::string &getOutputName(unsigned i) const {
+  IdentifierInfo *getOutputIdentifier(unsigned i) const {
     return Names[i];
+  }
+
+  llvm::StringRef getOutputName(unsigned i) const {
+    if (IdentifierInfo *II = getOutputIdentifier(i))
+      return II->getName();
+    
+    return llvm::StringRef();
   }
 
   /// getOutputConstraint - Return the constraint string for the specified
@@ -1223,7 +1230,6 @@ public:
   StringLiteral *getOutputConstraintLiteral(unsigned i) {
     return Constraints[i];
   }
-
 
   Expr *getOutputExpr(unsigned i);
 
@@ -1246,8 +1252,15 @@ public:
 
   unsigned getNumInputs() const { return NumInputs; }
 
-  const std::string &getInputName(unsigned i) const {
+  IdentifierInfo *getInputIdentifier(unsigned i) const {
     return Names[i + NumOutputs];
+  }
+
+  llvm::StringRef getInputName(unsigned i) const {
+    if (IdentifierInfo *II = getInputIdentifier(i))
+      return II->getName();
+
+    return llvm::StringRef();
   }
 
   /// getInputConstraint - Return the specified input constraint.  Unlike output
@@ -1268,7 +1281,7 @@ public:
   }
 
   void setOutputsAndInputsAndClobbers(ASTContext &C,
-                                      const std::string *Names,
+                                      IdentifierInfo **Names,
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
                                       unsigned NumOutputs,

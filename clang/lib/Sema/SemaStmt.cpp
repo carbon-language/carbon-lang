@@ -1170,7 +1170,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                           bool IsVolatile,
                                           unsigned NumOutputs,
                                           unsigned NumInputs,
-                                          const std::string *Names,
+                                          IdentifierInfo **Names,
                                           MultiExprArg constraints,
                                           MultiExprArg exprs,
                                           ExprArg asmString,
@@ -1197,7 +1197,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getString(), Names[i]);
+    llvm::StringRef OutputName;
+    if (Names[i])
+      OutputName = Names[i]->getName();
+
+    TargetInfo::ConstraintInfo Info(Literal->getString(), OutputName);
     if (!Context.Target.validateOutputConstraint(Info))
       return StmtError(Diag(Literal->getLocStart(),
                             diag::err_asm_invalid_output_constraint)
@@ -1222,7 +1226,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getString(), Names[i]);
+    llvm::StringRef InputName;
+    if (Names[i])
+      InputName = Names[i]->getName();
+
+    TargetInfo::ConstraintInfo Info(Literal->getString(), InputName);
     if (!Context.Target.validateInputConstraint(OutputConstraintInfos.data(),
                                                 NumOutputs, Info)) {
       return StmtError(Diag(Literal->getLocStart(),

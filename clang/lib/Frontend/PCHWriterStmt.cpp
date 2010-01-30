@@ -287,15 +287,15 @@ void PCHStmtWriter::VisitAsmStmt(AsmStmt *S) {
   Writer.WriteSubStmt(S->getAsmString());
 
   // Outputs
-  for (unsigned I = 0, N = S->getNumOutputs(); I != N; ++I) {
-    Writer.AddString(S->getOutputName(I), Record);
+  for (unsigned I = 0, N = S->getNumOutputs(); I != N; ++I) {      
+    Writer.AddIdentifierRef(S->getOutputIdentifier(I), Record);
     Writer.WriteSubStmt(S->getOutputConstraintLiteral(I));
     Writer.WriteSubStmt(S->getOutputExpr(I));
   }
 
   // Inputs
   for (unsigned I = 0, N = S->getNumInputs(); I != N; ++I) {
-    Writer.AddString(S->getInputName(I), Record);
+    Writer.AddIdentifierRef(S->getInputIdentifier(I), Record);
     Writer.WriteSubStmt(S->getInputConstraintLiteral(I));
     Writer.WriteSubStmt(S->getInputExpr(I));
   }

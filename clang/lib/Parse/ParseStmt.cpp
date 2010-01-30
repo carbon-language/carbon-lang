@@ -1171,7 +1171,6 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) &&
              Tok.isNot(tok::eof));
   }
-  llvm::SmallVector<std::string, 4> Names;
   Token t;
   t.setKind(tok::string_literal);
   t.setLiteralData("\"FIXME: not done\"");
@@ -1181,7 +1180,7 @@ Parser::OwningStmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);
-  return Actions.ActOnAsmStmt(Tok.getLocation(), true, true, 0, 0, Names.data(),
+  return Actions.ActOnAsmStmt(Tok.getLocation(), true, true, 0, 0, 0,
                               move_arg(Constraints), move_arg(Exprs),
                               move(AsmString), move_arg(Clobbers),
                               Tok.getLocation(), true);
@@ -1245,7 +1244,7 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
   if (AsmString.isInvalid())
     return StmtError();
 
-  llvm::SmallVector<std::string, 4> Names;
+  llvm::SmallVector<IdentifierInfo *, 4> Names;
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);
@@ -1336,9 +1335,9 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 ///
 //
 // FIXME: Avoid unnecessary std::string trashing.
-bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
-                                 llvm::SmallVectorImpl<ExprTy*> &Constraints,
-                                 llvm::SmallVectorImpl<ExprTy*> &Exprs) {
+bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
+                                 llvm::SmallVectorImpl<ExprTy *> &Constraints,
+                                 llvm::SmallVectorImpl<ExprTy *> &Exprs) {
   // 'asm-operands' isn't present?
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return false;
@@ -1357,10 +1356,10 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
       IdentifierInfo *II = Tok.getIdentifierInfo();
       ConsumeToken();
 
-      Names.push_back(II->getName());
+      Names.push_back(II);
       MatchRHSPunctuation(tok::r_square, Loc);
     } else
-      Names.push_back(std::string());
+      Names.push_back(0);
 
     OwningExprResult Constraint(ParseAsmStringLiteral());
     if (Constraint.isInvalid()) {

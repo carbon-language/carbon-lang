@@ -317,11 +317,11 @@ unsigned PCHStmtReader::VisitAsmStmt(AsmStmt *S) {
   S->setAsmString(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
 
   // Outputs and inputs
-  llvm::SmallVector<std::string, 16> Names;
+  llvm::SmallVector<IdentifierInfo *, 16> Names;
   llvm::SmallVector<StringLiteral*, 16> Constraints;
   llvm::SmallVector<Stmt*, 16> Exprs;
   for (unsigned I = 0, N = NumOutputs + NumInputs; I != N; ++I) {
-    Names.push_back(Reader.ReadString(Record, Idx));
+    Names.push_back(Reader.GetIdentifierInfo(Record, Idx));
     Constraints.push_back(cast_or_null<StringLiteral>(StmtStack[StackIdx++]));
     Exprs.push_back(StmtStack[StackIdx++]);
   }
