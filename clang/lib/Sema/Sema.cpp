@@ -15,6 +15,7 @@
 #include "Sema.h"
 #include "TargetAttributesSema.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/APFloat.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -472,12 +473,14 @@ void Sema::ActOnEndOfTranslationUnit() {
   //   translation unit contains a file scope declaration of that
   //   identifier, with the composite type as of the end of the
   //   translation unit, with an initializer equal to 0.
-  for (unsigned i = 0, e = TentativeDefinitionList.size(); i != e; ++i) {
-    VarDecl *VD = TentativeDefinitions.lookup(TentativeDefinitionList[i]);
+  llvm::SmallSet<VarDecl *, 32> Seen;
+  for (unsigned i = 0, e = TentativeDefinitions.size(); i != e; ++i) {
+    VarDecl *VD = TentativeDefinitions[i]->getActingDefinition();
 
-    // If the tentative definition was completed, it will be in the list, but
-    // not the map.
-    if (VD == 0 || VD->isInvalidDecl() || !VD->isTentativeDefinition(Context))
+    // If the tentative definition was completed, getActingDefinition() returns
+    // null. If we've already seen this variable before, insert()'s second
+    // return value is false.
+    if (VD == 0 || VD->isInvalidDecl() || !Seen.insert(VD))
       continue;
 
     if (const IncompleteArrayType *ArrayT

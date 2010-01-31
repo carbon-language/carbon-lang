@@ -3570,14 +3570,6 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   // Attach the initializer to the decl.
   VDecl->setInit(Context, Init);
 
-  // If the previous declaration of VDecl was a tentative definition,
-  // remove it from the set of tentative definitions.
-  if (VDecl->getPreviousDeclaration() &&
-      VDecl->getPreviousDeclaration()->isTentativeDefinition(Context)) {
-    bool Deleted = TentativeDefinitions.erase(VDecl->getDeclName());
-    assert(Deleted && "Unrecorded tentative definition?"); Deleted=Deleted;
-  }
-
   if (getLangOptions().CPlusPlus) {
     // Make sure we mark the destructor as used if necessary.
     QualType InitType = VDecl->getType();
@@ -3602,20 +3594,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
     QualType Type = Var->getType();
 
     // Record tentative definitions.
-    if (Var->isTentativeDefinition(Context)) {
-      std::pair<llvm::DenseMap<DeclarationName, VarDecl *>::iterator, bool>
-        InsertPair =
-           TentativeDefinitions.insert(std::make_pair(Var->getDeclName(), Var));
-
-      // Keep the latest definition in the map.  If we see 'int i; int i;' we
-      // want the second one in the map.
-      InsertPair.first->second = Var;
-
-      // However, for the list, we don't care about the order, just make sure
-      // that there are no dupes for a given declaration name.
-      if (InsertPair.second)
-        TentativeDefinitionList.push_back(Var->getDeclName());
-    }
+    if (Var->isTentativeDefinitionNow())
+      TentativeDefinitions.push_back(Var);
 
     // C++ [dcl.init.ref]p3:
     //   The initializer can be omitted for a reference only in a
@@ -3794,7 +3774,8 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (IDecl->isTentativeDefinition(Context) && !IDecl->isInvalidDecl()) {
+    if (IDecl->isThisDeclarationADefinition() == VarDecl::TentativeDefinition &&
+        !IDecl->isInvalidDecl()) {
       if (const IncompleteArrayType *ArrayT
           = Context.getAsIncompleteArrayType(T)) {
         if (RequireCompleteType(IDecl->getLocation(),

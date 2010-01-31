@@ -1960,13 +1960,11 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   }
 
   // Build a record containing all of the tentative definitions in this file, in
-  // TentativeDefinitionList order.  Generally, this record will be empty for
+  // TentativeDefinitions order.  Generally, this record will be empty for
   // headers.
   RecordData TentativeDefinitions;
-  for (unsigned i = 0, e = SemaRef.TentativeDefinitionList.size(); i != e; ++i){
-    VarDecl *VD =
-      SemaRef.TentativeDefinitions.lookup(SemaRef.TentativeDefinitionList[i]);
-    if (VD) AddDeclRef(VD, TentativeDefinitions);
+  for (unsigned i = 0, e = SemaRef.TentativeDefinitions.size(); i != e; ++i) {
+    AddDeclRef(SemaRef.TentativeDefinitions[i], TentativeDefinitions);
   }
 
   // Build a record containing all of the locally-scoped external

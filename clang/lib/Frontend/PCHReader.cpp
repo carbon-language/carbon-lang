@@ -2464,11 +2464,10 @@ void PCHReader::InitializeSema(Sema &S) {
   PreloadedDecls.clear();
 
   // If there were any tentative definitions, deserialize them and add
-  // them to Sema's table of tentative definitions.
+  // them to Sema's list of tentative definitions.
   for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
     VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
-    SemaObj->TentativeDefinitions[Var->getDeclName()] = Var;
-    SemaObj->TentativeDefinitionList.push_back(Var->getDeclName());
+    SemaObj->TentativeDefinitions.push_back(Var);
   }
 
   // If there were any locally-scoped external declarations,

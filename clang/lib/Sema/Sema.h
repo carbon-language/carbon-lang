@@ -272,14 +272,8 @@ public:
   ///     not visible.
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
 
-  /// \brief The set of tentative declarations seen so far in this
-  /// translation unit for which no definition has been seen.
-  ///
-  /// The tentative declarations are indexed by the name of the
-  /// declaration, and only the most recent tentative declaration for
-  /// a given variable will be recorded here.
-  llvm::DenseMap<DeclarationName, VarDecl *> TentativeDefinitions;
-  std::vector<DeclarationName> TentativeDefinitionList;
+  /// \brief All the tentative definitions encountered in the TU.
+  std::vector<VarDecl *> TentativeDefinitions;
 
   struct DelayedDiagnostic {
     enum DDKind { Deprecation, Access };

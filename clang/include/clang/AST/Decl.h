@@ -538,6 +538,7 @@ public:
   /// };
   /// \endcode
   bool isStaticDataMember() const {
+    // If it wasn't static, it would be a FieldDecl.
     return getDeclContext()->isRecord();
   }
 
@@ -545,6 +546,26 @@ public:
   const VarDecl *getCanonicalDecl() const {
     return const_cast<VarDecl*>(this)->getCanonicalDecl();
   }
+
+  enum DefinitionKind {
+    DeclarationOnly,      ///< This declaration is only a declaration.
+    TentativeDefinition,  ///< This declaration is a tentative definition.
+    Definition            ///< This declaration is definitely a definition.
+  };
+
+  /// \brief Check whether this declaration is a definition. If this could be
+  /// a tentative definition (in C), don't check whether there's an overriding
+  /// definition.
+  DefinitionKind isThisDeclarationADefinition() const;
+
+  /// \brief Get the tentative definition that acts as the real definition in
+  /// a TU. Returns null if there is a proper definition available.
+  const VarDecl *getActingDefinition() const;
+  VarDecl *getActingDefinition();
+
+  /// \brief Determine whether this is a tentative definition of a
+  /// variable in C.
+  bool isTentativeDefinitionNow() const;
 
   /// \brief Retrieve the definition of this variable, which may come
   /// from a previous declaration. Def will be set to the VarDecl that
@@ -579,10 +600,9 @@ public:
     return false;
   }
 
-  /// \brief Determine whether this is a tentative definition of a
-  /// variable in C.
-  bool isTentativeDefinition(ASTContext &Context) const;
-
+  bool hasInit() const {
+    return !Init.isNull();
+  }
   const Expr *getInit() const {
     if (Init.isNull())
       return 0;

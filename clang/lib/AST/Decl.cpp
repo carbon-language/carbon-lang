@@ -480,6 +480,82 @@ VarDecl *VarDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }
 
+VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
+  // C++ [basic.def]p2:
+  //   A declaration is a definition unless [...] it contains the 'extern'
+  //   specifier or a linkage-specification and neither an initializer [...],
+  //   it declares a static data member in a class declaration [...].
+  // C++ [temp.expl.spec]p15:
+  //   An explicit specialization of a static data member of a template is a
+  //   definition if the declaration includes an initializer; otherwise, it is
+  //   a declaration.
+  if (isStaticDataMember()) {
+    if (isOutOfLine() && (hasInit() ||
+          getTemplateSpecializationKind() != TSK_ExplicitSpecialization))
+      return Definition;
+    else
+      return DeclarationOnly;
+  }
+  // C99 6.7p5:
+  //   A definition of an identifier is a declaration for that identifier that
+  //   [...] causes storage to be reserved for that object.
+  // Note: that applies for all non-file-scope objects.
+  // C99 6.9.2p1:
+  //   If the declaration of an identifier for an object has file scope and an
+  //   initializer, the declaration is an external definition for the identifier
+  if (hasInit())
+    return Definition;
+  // AST for 'extern "C" int foo;' is annotated with 'extern'.
+  if (hasExternalStorage())
+    return DeclarationOnly;
+
+  // C99 6.9.2p2:
+  //   A declaration of an object that has file scope without an initializer,
+  //   and without a storage class specifier or the scs 'static', constitutes
+  //   a tentative definition.
+  // No such thing in C++.
+  if (!getASTContext().getLangOptions().CPlusPlus && isFileVarDecl())
+    return TentativeDefinition;
+
+  // What's left is (in C, block-scope) declarations without initializers or
+  // external storage. These are definitions.
+  return Definition;
+}
+
+const VarDecl *VarDecl::getActingDefinition() const {
+  return const_cast<VarDecl*>(this)->getActingDefinition();
+}
+
+VarDecl *VarDecl::getActingDefinition() {
+  DefinitionKind Kind = isThisDeclarationADefinition();
+  if (Kind != TentativeDefinition)
+    return 0;
+
+  VarDecl *LastTentative = false;
+  VarDecl *First = getFirstDeclaration();
+  for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
+       I != E; ++I) {
+    Kind = (*I)->isThisDeclarationADefinition();
+    if (Kind == Definition)
+      return 0;
+    else if (Kind == TentativeDefinition)
+      LastTentative = *I;
+  }
+  return LastTentative;
+}
+
+bool VarDecl::isTentativeDefinitionNow() const {
+  DefinitionKind Kind = isThisDeclarationADefinition();
+  if (Kind != TentativeDefinition)
+    return false;
+
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if ((*I)->isThisDeclarationADefinition() == Definition)
+      return false;
+  }
+  return true;  
+}
+
 const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   redecl_iterator I = redecls_begin(), E = redecls_end();
   while (I != E && !I->getInit())
@@ -521,15 +597,6 @@ VarDecl *VarDecl::getOutOfLineDefinition() {
   return 0;
 }
 
-bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
-  if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
-    return false;
-
-  const VarDecl *Def = 0;
-  return (!getDefinition(Def) &&
-          (getStorageClass() == None || getStorageClass() == Static));
-}
-
 void VarDecl::setInit(ASTContext &C, Expr *I) {
   if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
     Eval->~EvaluatedStmt();
@@ -547,8 +614,7 @@ VarDecl *VarDecl::getInstantiatedFromStaticDataMember() const {
 }
 
 TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() const {
-  if (MemberSpecializationInfo *MSI
-        = getASTContext().getInstantiatedFromStaticDataMember(this))
+  if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
     return MSI->getTemplateSpecializationKind();
   
   return TSK_Undeclared;
