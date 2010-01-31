@@ -21,3 +21,16 @@ B *f(A *a) {
   // CHECK: ret %struct.B*
   return static_cast<B*>(a);
 }
+
+// PR5965
+namespace PR5965 {
+
+// CHECK: define %struct.A* @_ZN6PR59651fEP1B(%struct.B* %b) nounwind
+A *f(B* b) {
+  // CHECK-NOT: br label
+  // CHECK: ret %struct.A*
+  return b;
+}
+
+}
+

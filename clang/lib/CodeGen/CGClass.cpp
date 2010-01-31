@@ -67,51 +67,6 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *Class,
   return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }
 
-static llvm::Value *GetBaseClassOffset(CodeGenFunction &CGF,
-                                       llvm::Value *BaseValue,
-                                       const CXXRecordDecl *ClassDecl,
-                                       const CXXRecordDecl *BaseClassDecl) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
-  if (!const_cast<CXXRecordDecl *>(ClassDecl)->
-        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClassDecl), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return 0;
-  }
-
-  unsigned Start = 0;
-  llvm::Value *VirtualOffset = 0;
-
-  const CXXBasePath &Path = Paths.front();
-  const CXXRecordDecl *VBase = 0;
-  for (unsigned i = 0, e = Path.size(); i != e; ++i) {
-    const CXXBasePathElement& Element = Path[i];
-    if (Element.Base->isVirtual()) {
-      Start = i+1;
-      QualType VBaseType = Element.Base->getType();
-      VBase = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
-    }
-  }
-  if (VBase)
-    VirtualOffset = 
-      CGF.GetVirtualBaseClassOffset(BaseValue, ClassDecl, VBase);
-  
-  uint64_t Offset = 
-    ComputeNonVirtualBaseClassOffset(CGF.getContext(), Paths, Start);
-  
-  if (!Offset)
-    return VirtualOffset;
-  
-  const llvm::Type *PtrDiffTy = 
-    CGF.ConvertType(CGF.getContext().getPointerDiffType());
-  llvm::Value *NonVirtualOffset = llvm::ConstantInt::get(PtrDiffTy, Offset);
-  
-  if (VirtualOffset)
-    return CGF.Builder.CreateAdd(VirtualOffset, NonVirtualOffset);
-                    
-  return NonVirtualOffset;
-}
-
 // FIXME: This probably belongs in CGVtable, but it relies on 
 // the static function ComputeNonVirtualBaseClassOffset, so we should make that
 // a CodeGenModule member function as well.
@@ -162,7 +117,37 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     // Just cast back.
     return Builder.CreateBitCast(Value, BasePtrTy);
   }
+
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
+  if (!const_cast<CXXRecordDecl *>(Class)->
+        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClass), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return 0;
+  }
+
+  unsigned Start = 0;
+  llvm::Value *VirtualOffset = 0;
+
+  const CXXBasePath &Path = Paths.front();
+  const CXXRecordDecl *VBase = 0;
+  for (unsigned i = 0, e = Path.size(); i != e; ++i) {
+    const CXXBasePathElement& Element = Path[i];
+    if (Element.Base->isVirtual()) {
+      Start = i+1;
+      QualType VBaseType = Element.Base->getType();
+      VBase = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+    }
+  }
+
+  uint64_t Offset = 
+    ComputeNonVirtualBaseClassOffset(getContext(), Paths, Start);
   
+  if (!Offset && !VBase) {
+    // Just cast back.
+    return Builder.CreateBitCast(Value, BasePtrTy);
+  }    
+
   llvm::BasicBlock *CastNull = 0;
   llvm::BasicBlock *CastNotNull = 0;
   llvm::BasicBlock *CastEnd = 0;
@@ -179,15 +164,27 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     EmitBlock(CastNotNull);
   }
   
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  if (VBase)
+    VirtualOffset = GetVirtualBaseClassOffset(Value, Class, VBase);
 
-  llvm::Value *Offset = GetBaseClassOffset(*this, Value, Class, BaseClass);
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
+  llvm::Value *NonVirtualOffset = 0;
+  if (Offset)
+    NonVirtualOffset = llvm::ConstantInt::get(PtrDiffTy, Offset);
   
-  if (Offset) {
-    // Apply the offset.
-    Value = Builder.CreateBitCast(Value, Int8PtrTy);
-    Value = Builder.CreateGEP(Value, Offset, "add.ptr");
-  }
+  llvm::Value *BaseOffset;
+  if (VBase) {
+    if (NonVirtualOffset)
+      BaseOffset = Builder.CreateAdd(VirtualOffset, NonVirtualOffset);
+    else
+      BaseOffset = VirtualOffset;
+  } else
+    BaseOffset = NonVirtualOffset;
+  
+  // Apply the base offset.
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
+  Value = Builder.CreateBitCast(Value, Int8PtrTy);
+  Value = Builder.CreateGEP(Value, BaseOffset, "add.ptr");
   
   // Cast back.
   Value = Builder.CreateBitCast(Value, BasePtrTy);

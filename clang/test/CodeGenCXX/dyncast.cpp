@@ -69,14 +69,7 @@ void test1() {
 // CHECK-LL-NEXT:  [[ep:%.*]] = alloca %class.test1_E*, align 8
 // CHECK-LL-NEXT:  [[vp:%.*]] = alloca i8*, align 8
 // CHECK-LL-NEXT:  [[cvp:%.*]] = alloca i8*, align 8
-// CHECK-LL-NEXT:  br i1 false, label %[[castnull:.*]], label %[[castnotnull:.*]]
-// CHECK-LL:       [[castnotnull]]
-// CHECK-LL-NEXT:  br label %[[castend:.*]]
-// CHECK-LL:       [[castnull]]
-// CHECK-LL-NEXT:  br label %[[castend]]
-// CHECK-LL:       [[castend]]
-// CHECK-LL-NEXT:  [[v0:%.*]] = phi %class.test1_A* [ bitcast (%class.test1_D* @test1_d to %class.test1_A*), %[[castnotnull]] ], [ null, %[[castnull]] ]
-// CHECK-LL-NEXT:  store %class.test1_A* [[v0]], %class.test1_A** [[bp]]
+// CHECK-LL-NEXT:  store %class.test1_A* bitcast (%class.test1_D* @test1_d to %class.test1_A*), %class.test1_A** [[bp]]
 // CHECK-LL-NEXT:  br i1 false, label %[[castnull2:.*]], label %[[castnotnull1:.*]]
 // CHECK-LL:       [[castnotnull1]]
 // CHECK-LL-NEXT:  [[vtable:%.*]] = load i8** bitcast (%class.test1_D* @test1_d to i8**)
@@ -333,23 +326,10 @@ void test1() {
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str1, i32 0, i32 0), i32 12)
 // CHECK-LL-NEXT:  br label %[[ifend113]]
 // CHECK-LL:       [[ifend113]]
-// CHECK-LL-NEXT:  br i1 false, label %[[castnull116:.*]], label %[[castnotnull115:.*]]
-// CHECK-LL:       [[castnotnull115]]
-// CHECK-LL-NEXT:  br label %[[castend117:.*]]
-// CHECK-LL:       [[castnull116]]
-// CHECK-LL-NEXT:  br label %[[castend117]]
-// CHECK-LL:       [[castend117]]
-// CHECK-LL-NEXT:  [[v62:%.*]] = phi %class.test1_E* [ bitcast (%class.test1_F* @test1_f to %class.test1_E*), %[[castnotnull115]] ], [ null, %[[castnull116]] ]
-// CHECK-LL-NEXT:  store %class.test1_E* [[v62]], %class.test1_E** [[ep]]
+// CHECK-LL-NEXT: store %class.test1_E* bitcast (%class.test1_F* @test1_f to %class.test1_E*), %class.test1_E** [[ep]]
 // CHECK-LL-NEXT:  [[tmp118:%.*]] = load %class.test1_E** [[ep]]
-// CHECK-LL-NEXT:  br i1 false, label %[[castnull120:.*]], label %[[castnotnull119:.*]]
-// CHECK-LL:       [[castnotnull119]]
-// CHECK-LL-NEXT:  br label %[[castend121:.*]]
-// CHECK-LL:       [[castnull120]]
-// CHECK-LL-NEXT:  br label %[[castend121]]
-// CHECK-LL:       [[castend121]]
-// CHECK-LL-NEXT:  [[v63:%.*]] = phi %class.test1_E* [ bitcast (%class.test1_F* @test1_f to %class.test1_E*), %[[castnotnull119]] ], [ null, %[[castnull120]] ]
-// CHECK-LL-NEXT:  [[cmp122:%.*]] = icmp eq %class.test1_E* [[tmp118]], [[v63]]
+// CHECK-LL-NEXT:  [[cmp122:%.*]] = icmp eq %class.test1_E* [[tmp118]], bitcast (%class.test1_F* @test1_f to %class.test1_E*) ; <i1> [#uses=1]
+
 // CHECK-LL-NEXT:  br i1 [[cmp122]], label %[[ifthen123:.*]], label %[[ifelse125:.*]]
 // CHECK-LL:       [[ifthen123]]
 // CHECK-LL-NEXT:  call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8]* @.str, i32 0, i32 0), i32 13)
