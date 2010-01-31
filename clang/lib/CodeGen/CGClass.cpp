@@ -224,6 +224,14 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
     return Builder.CreateBitCast(Value, DerivedPtrTy);
   }
 
+  llvm::Value *NonVirtualOffset =
+    CGM.GetNonVirtualBaseClassOffset(DerivedClass, Class);
+  
+  if (!NonVirtualOffset) {
+    // No offset, we can just cast back.
+    return Builder.CreateBitCast(Value, DerivedPtrTy);
+  }
+  
   llvm::BasicBlock *CastNull = 0;
   llvm::BasicBlock *CastNotNull = 0;
   llvm::BasicBlock *CastEnd = 0;
@@ -240,16 +248,13 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
     EmitBlock(CastNotNull);
   }
   
-  if (llvm::Value *NonVirtualOffset =
-      CGM.GetNonVirtualBaseClassOffset(DerivedClass, Class)) {
-    // Apply the offset.
-    Value = Builder.CreatePtrToInt(Value, NonVirtualOffset->getType());
-    Value = Builder.CreateSub(Value, NonVirtualOffset);
-    Value = Builder.CreateIntToPtr(Value, DerivedPtrTy);
-  } else {
-    // Just cast.
-    Value = Builder.CreateBitCast(Value, DerivedPtrTy);
-  }
+  // Apply the offset.
+  Value = Builder.CreatePtrToInt(Value, NonVirtualOffset->getType());
+  Value = Builder.CreateSub(Value, NonVirtualOffset);
+  Value = Builder.CreateIntToPtr(Value, DerivedPtrTy);
+
+  // Just cast.
+  Value = Builder.CreateBitCast(Value, DerivedPtrTy);
 
   if (NullCheckValue) {
     Builder.CreateBr(CastEnd);
