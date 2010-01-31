@@ -10,5 +10,5 @@
 #include "llvm/Target/TargetAsmLexer.h"
 using namespace llvm;
 
-TargetAsmLexer::TargetAsmLexer(const Target &T) : TheTarget(T) {}
+TargetAsmLexer::TargetAsmLexer(const Target &T) : TheTarget(T), Lexer(NULL) {}
 TargetAsmLexer::~TargetAsmLexer() {}

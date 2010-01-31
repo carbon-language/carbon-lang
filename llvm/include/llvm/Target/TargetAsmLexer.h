@@ -38,11 +38,21 @@ protected: // Can only create subclasses.
   
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
+  MCAsmLexer *Lexer;
   
 public:
   virtual ~TargetAsmLexer();
   
   const Target &getTarget() const { return TheTarget; }
+  
+  /// InstallLexer - Set the lexer to get tokens from lower-level lexer \arg L.
+  void InstallLexer(MCAsmLexer &L) {
+    Lexer = &L;
+  }
+  
+  MCAsmLexer *getLexer() {
+    return Lexer;
+  }
   
   /// Lex - Consume the next token from the input stream and return it.
   const AsmToken &Lex() {

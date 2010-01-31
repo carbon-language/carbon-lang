@@ -22,13 +22,12 @@ namespace {
   
 class X86AsmLexer : public TargetAsmLexer {
   const MCAsmInfo &AsmInfo;
-  MCAsmLexer *Lexer;
   
   bool tentativeIsValid;
   AsmToken tentativeToken;
   
   const AsmToken &lexTentative() {
-    tentativeToken = Lexer->Lex();
+    tentativeToken = getLexer()->Lex();
     tentativeIsValid = true;
     return tentativeToken;
   }
@@ -39,7 +38,7 @@ class X86AsmLexer : public TargetAsmLexer {
       return tentativeToken;
     }
     else {
-      return Lexer->Lex();
+      return getLexer()->Lex();
     }
   }
   
@@ -64,11 +63,7 @@ protected:
   }
 public:
   X86AsmLexer(const Target &T, const MCAsmInfo &MAI)
-    : TargetAsmLexer(T), AsmInfo(MAI), Lexer(NULL), tentativeIsValid(false) {
-  }
-  
-  void InstallLexer(MCAsmLexer &L) {
-    Lexer = &L;
+    : TargetAsmLexer(T), AsmInfo(MAI), tentativeIsValid(false) {
   }
 };
 
