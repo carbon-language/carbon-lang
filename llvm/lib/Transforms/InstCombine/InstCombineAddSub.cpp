@@ -121,42 +121,26 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
       uint32_t TySizeBits = I.getType()->getScalarSizeInBits();
       const APInt& RHSVal = cast<ConstantInt>(RHSC)->getValue();
-      
-      uint32_t Size = TySizeBits / 2;
-      APInt C0080Val(APInt(TySizeBits, 1ULL).shl(Size - 1));
-      APInt CFF80Val(-C0080Val);
-      do {
-        if (TySizeBits > Size) {
-          // If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
-          // If we have ADD(XOR(AND(X, 0xFF), 0xF..F80), 0x80), it's a sext.
-          if ((RHSVal == CFF80Val && XorRHS->getValue() == C0080Val) ||
-              (RHSVal == C0080Val && XorRHS->getValue() == CFF80Val)) {
-            // This is a sign extend if the top bits are known zero.
-            if (!MaskedValueIsZero(XorLHS, 
-                   APInt::getHighBitsSet(TySizeBits, TySizeBits - Size)))
-              Size = 0;  // Not a sign ext, but can't be any others either.
-            break;
-          }
-        }
-        Size >>= 1;
-        C0080Val = APIntOps::lshr(C0080Val, Size);
-        CFF80Val = APIntOps::ashr(CFF80Val, Size);
-      } while (Size >= 1);
-      
-      // FIXME: This shouldn't be necessary. When the backends can handle types
-      // with funny bit widths then this switch statement should be removed. It
-      // is just here to get the size of the "middle" type back up to something
-      // that the back ends can handle.
-      const Type *MiddleType = 0;
-      switch (Size) {
-        default: break;
-        case 32:
-        case 16:
-        case  8: MiddleType = IntegerType::get(I.getContext(), Size); break;
+      unsigned ExtendAmt = 0;
+      // If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
+      // If we have ADD(XOR(AND(X, 0xFF), 0xF..F80), 0x80), it's a sext.
+      if (XorRHS->getValue() == -RHSVal) {
+        if (RHSVal.isPowerOf2())
+          ExtendAmt = TySizeBits - RHSVal.logBase2() - 1;
+        else if (XorRHS->getValue().isPowerOf2())
+          ExtendAmt = TySizeBits - XorRHS->getValue().logBase2() - 1;
       }
-      if (MiddleType) {
-        Value *NewTrunc = Builder->CreateTrunc(XorLHS, MiddleType, "sext");
-        return new SExtInst(NewTrunc, I.getType(), I.getName());
+
+      if (ExtendAmt) {
+        APInt Mask = APInt::getHighBitsSet(TySizeBits, ExtendAmt);
+        if (!MaskedValueIsZero(XorLHS, Mask))
+          ExtendAmt = 0;
+      }
+
+      if (ExtendAmt) {
+        Constant *ShAmt = ConstantInt::get(I.getType(), ExtendAmt);
+        Value *NewShl = Builder->CreateShl(XorLHS, ShAmt, "sext");
+        return BinaryOperator::CreateAShr(NewShl, ShAmt);
       }
     }
   }
