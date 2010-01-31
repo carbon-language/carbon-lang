@@ -1241,11 +1241,14 @@ def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
 def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
                   "mvn", "\t$dst, $src",
                   [(set GPR:$dst, (not GPR:$src))]>, UnaryDP {
+  let Inst{25} = 0;
   let Inst{11-4} = 0b00000000;
 }
 def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
                   IIC_iMOVsr, "mvn", "\t$dst, $src",
-                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP;
+                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP {
+  let Inst{25} = 0;
+}
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm, 
                   IIC_iMOVi, "mvn", "\t$dst, $imm",
