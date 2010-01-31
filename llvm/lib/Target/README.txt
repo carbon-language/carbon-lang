@@ -1751,12 +1751,46 @@ from gcc.
 Missed instcombine transformation:
 define i32 @a(i32 %x) nounwind readnone {
 entry:
-  %shr = lshr i32 %x, 5                           ; <i32> [#uses=1]
-  %xor = xor i32 %shr, 67108864                   ; <i32> [#uses=1]
-  %sub = add i32 %xor, -67108864                  ; <i32> [#uses=1]
+  %rem = srem i32 %x, 32
+  %shl = shl i32 1, %rem
+  ret i32 %shl
+}
+
+The srem can be transformed to an and because if x is negative, the shift is
+undefined. Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
+
+Missed instcombine/dagcombine transformation:
+define i32 @a(i32 %x, i32 %y) nounwind readnone {
+entry:
+  %mul = mul i32 %y, -8
+  %sub = sub i32 %x, %mul
   ret i32 %sub
 }
 
-This function is equivalent to "ashr i32 %x, 5".  Testcase derived from gcc.
+Should compile to something like x+y*8, but currently compiles to an
+inefficient result.  Testcase derived from gcc.
+
+//===---------------------------------------------------------------------===//
+
+Missed instcombine/dagcombine transformation:
+define void @lshift_lt(i8 zeroext %a) nounwind {
+entry:
+  %conv = zext i8 %a to i32
+  %shl = shl i32 %conv, 3
+  %cmp = icmp ult i32 %shl, 33
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  ret void
+
+if.end:
+  ret void
+}
+declare void @bar() nounwind
+
+The shift should be eliminated.  Testcase derived from gcc.
 
 //===---------------------------------------------------------------------===//
