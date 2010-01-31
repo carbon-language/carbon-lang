@@ -1128,6 +1128,8 @@ def err_template_arg_no_ref_bind : Error<
 def err_template_arg_ref_bind_ignores_quals : Error<
   "reference binding of non-type template parameter of type %0 to template "
   "argument of type %1 ignores qualifiers">;
+def err_template_arg_not_decl_ref : Error<
+  "non-type template argument does not refer to any declaration">;
 def err_template_arg_not_object_or_func_form : Error<
   "non-type template argument does not directly refer to an object or "
   "function">;

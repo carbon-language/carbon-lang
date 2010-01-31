@@ -2307,7 +2307,17 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
   } else
     DRE = dyn_cast<DeclRefExpr>(Arg);
 
-  if (!DRE || !isa<ValueDecl>(DRE->getDecl()))
+  if (!DRE)
+    return Diag(Arg->getSourceRange().getBegin(),
+                diag::err_template_arg_not_decl_ref)
+      << Arg->getSourceRange();
+
+  // Stop checking the precise nature of the argument if it is value dependent,
+  // it should be checked when instantiated.
+  if (Arg->isValueDependent())
+    return false;
+
+  if (!isa<ValueDecl>(DRE->getDecl()))
     return Diag(Arg->getSourceRange().getBegin(),
                 diag::err_template_arg_not_object_or_func_form)
       << Arg->getSourceRange();
@@ -2658,9 +2668,13 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Entity)
-      Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
-    Converted = TemplateArgument(Entity);
+    if (Arg->isValueDependent()) {
+      Converted = TemplateArgument(Arg);
+    } else {
+      if (Entity)
+        Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
+      Converted = TemplateArgument(Entity);
+    }
     return false;
   }
 
@@ -2698,9 +2712,13 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    if (Entity)
-      Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
-    Converted = TemplateArgument(Entity);
+    if (Arg->isValueDependent()) {
+      Converted = TemplateArgument(Arg);
+    } else {
+      if (Entity)
+        Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
+      Converted = TemplateArgument(Entity);
+    }
     return false;
   }
 
@@ -2740,8 +2758,12 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     if (CheckTemplateArgumentAddressOfObjectOrFunction(Arg, Entity))
       return true;
 
-    Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
-    Converted = TemplateArgument(Entity);
+    if (Arg->isValueDependent()) {
+      Converted = TemplateArgument(Arg);
+    } else {
+      Entity = cast<NamedDecl>(Entity->getCanonicalDecl());
+      Converted = TemplateArgument(Entity);
+    }
     return false;
   }
 
