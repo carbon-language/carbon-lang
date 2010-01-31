@@ -1550,12 +1550,15 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
   SourceLocation ColonLoc = ConsumeToken();
 
   llvm::SmallVector<MemInitTy*, 4> MemInitializers;
-
+  bool AnyErrors = false;
+  
   do {
     MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
     if (!MemInit.isInvalid())
       MemInitializers.push_back(MemInit.get());
-
+    else
+      AnyErrors = true;
+    
     if (Tok.is(tok::comma))
       ConsumeToken();
     else if (Tok.is(tok::l_brace))
@@ -1569,7 +1572,8 @@ void Parser::ParseConstructorInitializer(DeclPtrTy ConstructorDecl) {
   } while (true);
 
   Actions.ActOnMemInitializers(ConstructorDecl, ColonLoc,
-                               MemInitializers.data(), MemInitializers.size());
+                               MemInitializers.data(), MemInitializers.size(),
+                               AnyErrors);
 }
 
 /// ParseMemInitializer - Parse a C++ member initializer, which is

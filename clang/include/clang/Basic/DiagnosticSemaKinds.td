@@ -588,6 +588,8 @@ def err_reference_var_requires_init : Error<
   "declaration of reference variable %0 requires an initializer">;
 def err_const_var_requires_init : Error<
   "declaration of const variable '%0' requires an initializer">;
+def err_reference_without_init : Error<
+  "reference to type %0 requires an initializer">;
 def err_reference_has_multiple_inits : Error<
   "reference cannot be initialized with multiple values">;
 def err_init_non_aggr_init_list : Error<
@@ -880,10 +882,7 @@ def err_uninitialized_member_for_assign : Error<
   "assignment operator">;
 def note_first_required_here : Note<
   "synthesized method is first required here">;
-def err_null_intialized_reference_member : Error<
-  "cannot initialize the member to null in default constructor because "
-  "reference member %0 cannot be null-initialized">;
-def err_unintialized_member_in_ctor : Error<
+def err_uninitialized_member_in_ctor : Error<
   "%select{|implicit default }0constructor for %1 must explicitly initialize "
   "the %select{reference|const}2 member %3">;
 
@@ -1949,7 +1948,8 @@ def err_new_paren_array_nonconst : Error<
 def err_array_size_not_integral : Error<
   "array size expression must have integral or enumerated type, not %0">;
 def err_default_init_const : Error<
-  "default initialization of an object of const type %0">;  
+  "default initialization of an object of const type %0"
+  "%select{| requires a user-provided default constructor}1">;
 def err_delete_operand : Error<"cannot delete expression of type %0">;
 def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
@@ -2252,8 +2252,6 @@ def error_multiple_base_initialization : Error <
 def err_mem_init_not_member_or_class : Error<
   "member initializer %0 does not name a non-static data member or base "
   "class">;
-def err_mem_initializer_mismatch : Error<
-  "Too many arguments for member initializer %0">;
 
 def warn_field_initialized : Warning<
   "member '%0' will be initialized after">,

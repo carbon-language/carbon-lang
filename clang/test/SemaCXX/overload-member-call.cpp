@@ -89,7 +89,7 @@ namespace test1 {
     A a;
     a.foo(4, "hello"); //expected-error {{no matching member function for call to 'foo'}}
 
-    const A b;
+    const A b = A();
     b.bar(0); //expected-error {{no matching member function for call to 'bar'}}
 
     a.baz(b); //expected-error {{no matching member function for call to 'baz'}}

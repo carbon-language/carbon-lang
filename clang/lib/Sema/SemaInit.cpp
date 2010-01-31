@@ -2562,7 +2562,18 @@ static void TryConstructorInitialization(Sema &S,
                                 Result);
     return;
   }
-  
+
+  // C++0x [dcl.init]p6:
+  //   If a program calls for the default initialization of an object
+  //   of a const-qualified type T, T shall be a class type with a
+  //   user-provided default constructor.
+  if (Kind.getKind() == InitializationKind::IK_Default &&
+      Entity.getType().isConstQualified() &&
+      cast<CXXConstructorDecl>(Best->Function)->isImplicit()) {
+    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
+    return;
+  }
+
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
   if (Kind.getKind() == InitializationKind::IK_Copy) {
@@ -2635,9 +2646,6 @@ static void TryDefaultInitialization(Sema &S,
   //       constructor for T is called (and the initialization is ill-formed if
   //       T has no accessible default constructor);
   if (DestType->isRecordType()) {
-    // FIXME: If a program calls for the default initialization of an object of
-    // a const-qualified type T, T shall be a class type with a user-provided 
-    // default constructor.
     return TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType,
                                         Sequence);
   }
@@ -3408,7 +3416,8 @@ InitializationSequence::Perform(Sema &S,
       CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                         Constructor, 
                                         move_arg(ConstructorArgs),
-                                        ConstructorInitRequiresZeroInit);
+                                        ConstructorInitRequiresZeroInit,
+                               Entity.getKind() == InitializedEntity::EK_Base);
       if (CurInit.isInvalid())
         return S.ExprError();
       
@@ -3488,8 +3497,13 @@ bool InitializationSequence::Diagnose(Sema &S,
   QualType DestType = Entity.getType();
   switch (Failure) {
   case FK_TooManyInitsForReference:
-    S.Diag(Kind.getLocation(), diag::err_reference_has_multiple_inits)
-      << SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
+    // FIXME: Customize for the initialized entity?
+    if (NumArgs == 0)
+      S.Diag(Kind.getLocation(), diag::err_reference_without_init)
+        << DestType.getNonReferenceType();
+    else  // FIXME: diagnostic below could be better!
+      S.Diag(Kind.getLocation(), diag::err_reference_has_multiple_inits)
+        << SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
     break;
     
   case FK_ArrayNeedsInitList:
@@ -3634,6 +3648,45 @@ bool InitializationSequence::Diagnose(Sema &S,
         break;
         
       case OR_No_Viable_Function:
+        if (Kind.getKind() == InitializationKind::IK_Default &&
+            (Entity.getKind() == InitializedEntity::EK_Base ||
+             Entity.getKind() == InitializedEntity::EK_Member) &&
+            isa<CXXConstructorDecl>(S.CurContext)) {
+          // This is implicit default initialization of a member or
+          // base within a constructor. If no viable function was
+          // found, notify the user that she needs to explicitly
+          // initialize this base/member.
+          CXXConstructorDecl *Constructor
+            = cast<CXXConstructorDecl>(S.CurContext);
+          if (Entity.getKind() == InitializedEntity::EK_Base) {
+            S.Diag(Kind.getLocation(), diag::err_missing_default_ctor)
+              << Constructor->isImplicit()
+              << S.Context.getTypeDeclType(Constructor->getParent())
+              << /*base=*/0
+              << Entity.getType();
+
+            RecordDecl *BaseDecl
+              = Entity.getBaseSpecifier()->getType()->getAs<RecordType>()
+                                                                  ->getDecl();
+            S.Diag(BaseDecl->getLocation(), diag::note_previous_decl)
+              << S.Context.getTagDeclType(BaseDecl);
+          } else {
+            S.Diag(Kind.getLocation(), diag::err_missing_default_ctor)
+              << Constructor->isImplicit()
+              << S.Context.getTypeDeclType(Constructor->getParent())
+              << /*member=*/1
+              << Entity.getName();
+            S.Diag(Entity.getDecl()->getLocation(), diag::note_field_decl);
+
+            if (const RecordType *Record
+                                 = Entity.getType()->getAs<RecordType>())
+              S.Diag(Record->getDecl()->getLocation(), 
+                     diag::note_previous_decl)
+                << S.Context.getTagDeclType(Record->getDecl());
+          }
+          break;
+        }
+
         S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
           << DestType << ArgsRange;
         S.PrintOverloadCandidates(FailedCandidateSet, Sema::OCD_AllCandidates,
@@ -3664,8 +3717,23 @@ bool InitializationSequence::Diagnose(Sema &S,
   }
       
   case FK_DefaultInitOfConst:
-    S.Diag(Kind.getLocation(), diag::err_default_init_const)
-      << DestType;
+    if (Entity.getKind() == InitializedEntity::EK_Member &&
+        isa<CXXConstructorDecl>(S.CurContext)) {
+      // This is implicit default-initialization of a const member in
+      // a constructor. Complain that it needs to be explicitly
+      // initialized.
+      CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(S.CurContext);
+      S.Diag(Kind.getLocation(), diag::err_uninitialized_member_in_ctor)
+        << Constructor->isImplicit()
+        << S.Context.getTypeDeclType(Constructor->getParent())
+        << /*const=*/1
+        << Entity.getName();
+      S.Diag(Entity.getDecl()->getLocation(), diag::note_previous_decl)
+        << Entity.getName();
+    } else {
+      S.Diag(Kind.getLocation(), diag::err_default_init_const)
+        << DestType << (bool)DestType->getAs<RecordType>();
+    }
     break;
   }
   

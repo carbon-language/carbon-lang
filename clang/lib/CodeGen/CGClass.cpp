@@ -811,11 +811,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   llvm::Value *V = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
   V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset/8);
   V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
-
-  CGF.EmitCXXConstructorCall(BaseInit->getConstructor(),
-                             Ctor_Base, V,
-                             BaseInit->const_arg_begin(),
-                             BaseInit->const_arg_end());
+  CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
 }
 
 static void EmitMemberInitializer(CodeGenFunction &CGF,
@@ -846,55 +842,34 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
 
   // We lose the constructor for anonymous union members, so handle them
   // explicitly.
-  // FIXME: This is somwhat ugly.
+  // FIXME: This is somwhat ugly, and doesn't seem necessary at all.
   if (MemberInit->getAnonUnionMember() && FieldType->getAs<RecordType>()) {
-    if (MemberInit->getNumArgs())
-      CGF.EmitAggExpr(*MemberInit->arg_begin(), LHS.getAddress(),
+    if (MemberInit->getInit())
+      CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
                       LHS.isVolatileQualified());
     else
       CGF.EmitAggregateClear(LHS.getAddress(), Field->getType());
     return;
   }
 
-  if (FieldType->getAs<RecordType>()) {
-    assert(MemberInit->getConstructor() &&
-           "EmitCtorPrologue - no constructor to initialize member");
-    if (Array) {
-      const llvm::Type *BasePtr = CGF.ConvertType(FieldType);
-      BasePtr = llvm::PointerType::getUnqual(BasePtr);
-      llvm::Value *BaseAddrPtr =
-        CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-      CGF.EmitCXXAggrConstructorCall(MemberInit->getConstructor(),
-                                     Array, BaseAddrPtr,
-                                     MemberInit->const_arg_begin(),
-                                     MemberInit->const_arg_end());
-    }
-    else
-      CGF.EmitCXXConstructorCall(MemberInit->getConstructor(),
-                                 Ctor_Complete, LHS.getAddress(),
-                                 MemberInit->const_arg_begin(),
-                                 MemberInit->const_arg_end());
-    return;
-  }
-
-  assert(MemberInit->getNumArgs() == 1 && "Initializer count must be 1 only");
-  Expr *RhsExpr = *MemberInit->arg_begin();
+  // FIXME: If there's no initializer and the CXXBaseOrMemberInitializer
+  // was implicitly generated, we shouldn't be zeroing memory.
   RValue RHS;
   if (FieldType->isReferenceType()) {
-    RHS = CGF.EmitReferenceBindingToExpr(RhsExpr, FieldType,
-                                    /*IsInitializer=*/true);
+    RHS = CGF.EmitReferenceBindingToExpr(MemberInit->getInit(), FieldType,
+                                         /*IsInitializer=*/true);
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
-  } else if (Array) {
+  } else if (Array && !MemberInit->getInit()) {
     CGF.EmitMemSetToZero(LHS.getAddress(), Field->getType());
-  } else if (!CGF.hasAggregateLLVMType(RhsExpr->getType())) {
-    RHS = RValue::get(CGF.EmitScalarExpr(RhsExpr, true));
+  } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
+    RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit(), true));
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
-  } else if (RhsExpr->getType()->isAnyComplexType()) {
-    CGF.EmitComplexExprIntoAddr(RhsExpr, LHS.getAddress(),
+  } else if (MemberInit->getInit()->getType()->isAnyComplexType()) {
+    CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), LHS.getAddress(),
                                 LHS.isVolatileQualified());
   } else {
-    // Handle member function pointers; other aggregates shouldn't get this far.
-    CGF.EmitAggExpr(RhsExpr, LHS.getAddress(), LHS.isVolatileQualified());
+    CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
+                    LHS.isVolatileQualified(), false, true);
   }
 }
 

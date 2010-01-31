@@ -1830,7 +1830,8 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                            const MultiLevelTemplateArgumentList &TemplateArgs) {
 
   llvm::SmallVector<MemInitTy*, 4> NewInits;
-
+  bool AnyErrors = false;
+  
   // Instantiate all the initializers.
   for (CXXConstructorDecl::init_const_iterator Inits = Tmpl->init_begin(),
                                             InitsEnd = Tmpl->init_end();
@@ -1838,26 +1839,38 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     CXXBaseOrMemberInitializer *Init = *Inits;
 
     ASTOwningVector<&ActionBase::DeleteExpr> NewArgs(*this);
+    llvm::SmallVector<SourceLocation, 4> CommaLocs;
 
     // Instantiate all the arguments.
-    for (ExprIterator Args = Init->arg_begin(), ArgsEnd = Init->arg_end();
-         Args != ArgsEnd; ++Args) {
-      OwningExprResult NewArg = SubstExpr(*Args, TemplateArgs);
-
-      if (NewArg.isInvalid())
-        New->setInvalidDecl();
-      else
-        NewArgs.push_back(NewArg.takeAs<Expr>());
+    Expr *InitE = Init->getInit();
+    if (!InitE) {
+      // Nothing to instantiate;
+    } else if (ParenListExpr *ParenList = dyn_cast<ParenListExpr>(InitE)) {
+      if (InstantiateInitializationArguments(*this, ParenList->getExprs(),
+                                             ParenList->getNumExprs(),
+                                             TemplateArgs, CommaLocs, 
+                                             NewArgs)) {
+        AnyErrors = true;
+        continue;
+      }
+    } else {
+      OwningExprResult InitArg = SubstExpr(InitE, TemplateArgs);
+      if (InitArg.isInvalid()) {
+        AnyErrors = true;
+        continue;
+      }
+      
+      NewArgs.push_back(InitArg.release());
     }
-
+    
     MemInitResult NewInit;
-
     if (Init->isBaseInitializer()) {
       TypeSourceInfo *BaseTInfo = SubstType(Init->getBaseClassInfo(), 
                                             TemplateArgs, 
                                             Init->getSourceLocation(), 
                                             New->getDeclName());
       if (!BaseTInfo) {
+        AnyErrors = true;
         New->setInvalidDecl();
         continue;
       }
@@ -1885,9 +1898,10 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                        Init->getRParenLoc());
     }
 
-    if (NewInit.isInvalid())
+    if (NewInit.isInvalid()) {
+      AnyErrors = true;
       New->setInvalidDecl();
-    else {
+    } else {
       // FIXME: It would be nice if ASTOwningVector had a release function.
       NewArgs.take();
 
@@ -1899,7 +1913,8 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
   ActOnMemInitializers(DeclPtrTy::make(New),
                        /*FIXME: ColonLoc */
                        SourceLocation(),
-                       NewInits.data(), NewInits.size());
+                       NewInits.data(), NewInits.size(),
+                       AnyErrors);
 }
 
 // TODO: this could be templated if the various decl types used the

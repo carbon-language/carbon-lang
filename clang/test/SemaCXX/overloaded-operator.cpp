@@ -344,7 +344,7 @@ namespace pr5900 {
     int operator[](unsigned); // expected-note {{candidate}}
   };
   int test1() {
-    const NonConstArray x;
+    const NonConstArray x = NonConstArray();
     return x[0]; // expected-error {{no viable overloaded operator[] for type}}
   }
 

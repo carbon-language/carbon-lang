@@ -613,6 +613,7 @@ class CXXConstructExpr : public Expr {
   SourceLocation Loc;
   bool Elidable : 1;
   bool ZeroInitialization : 1;
+  bool BaseInitialization : 1;
   Stmt **Args;
   unsigned NumArgs;
 
@@ -621,7 +622,8 @@ protected:
                    SourceLocation Loc,
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs,
-                   bool ZeroInitialization = false);
+                   bool ZeroInitialization = false,
+                   bool BaseInitialization = false);
   ~CXXConstructExpr() { }
 
   virtual void DoDestroy(ASTContext &C);
@@ -635,7 +637,8 @@ public:
                                   SourceLocation Loc,
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs,
-                                  bool ZeroInitialization = false);
+                                  bool ZeroInitialization = false,
+                                  bool BaseInitialization = false);
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
@@ -654,6 +657,11 @@ public:
   void setRequiresZeroInitialization(bool ZeroInit) {
     ZeroInitialization = ZeroInit;
   }
+  
+  /// \brief Determines whether this constructor is actually constructing
+  /// a base class (rather than a complete object).
+  bool isBaseInitialization() const { return BaseInitialization; }
+  void setBaseInitialization(bool BI) { BaseInitialization = BI; }
   
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;

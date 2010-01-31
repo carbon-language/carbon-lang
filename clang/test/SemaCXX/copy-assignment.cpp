@@ -47,22 +47,22 @@ struct ConvertibleToInt {
 
 void test() {
   A a, na;
-  const A constA;
+  const A constA = A();
   ConvertibleToA convertibleToA;
   ConvertibleToConstA convertibleToConstA;
 
   B b, nb;
-  const B constB;
+  const B constB = B();
   ConvertibleToB convertibleToB;
   ConvertibleToBref convertibleToBref;
   ConvertibleToConstB convertibleToConstB;
   ConvertibleToConstBref convertibleToConstBref;
 
   C c, nc;
-  const C constC;
+  const C constC = C();
 
   D d, nd;
-  const D constD;
+  const D constD = D();
 
   ConvertibleToInt convertibleToInt;
 

@@ -1654,9 +1654,12 @@ public:
   /// a well-formed program), ColonLoc is the location of the ':' that
   /// starts the constructor initializer, and MemInit/NumMemInits
   /// contains the individual member (and base) initializers.
+  /// AnyErrors will be true if there were any invalid member initializers
+  /// that are not represented in the list.
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                     SourceLocation ColonLoc,
-                                    MemInitTy **MemInits, unsigned NumMemInits){
+                                    MemInitTy **MemInits, unsigned NumMemInits,
+                                    bool AnyErrors){
   }
 
  virtual void ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {}

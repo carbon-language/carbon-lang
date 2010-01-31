@@ -339,7 +339,9 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   }
   else
     // Call the constructor.
-    EmitCXXConstructorCall(CD, Ctor_Complete, Dest,
+    EmitCXXConstructorCall(CD, 
+                           E->isBaseInitialization()? Ctor_Base : Ctor_Complete, 
+                           Dest,
                            E->arg_begin(), E->arg_end());
 }
 

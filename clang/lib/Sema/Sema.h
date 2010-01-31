@@ -1911,7 +1911,8 @@ public:
                                          QualType DeclInitType,
                                          CXXConstructorDecl *Constructor,
                                          MultiExprArg Exprs,
-                                         bool RequiresZeroInit = false);
+                                         bool RequiresZeroInit = false,
+                                         bool BaseInitialization = false);
 
   // FIXME: Can re remove this and have the above BuildCXXConstructExpr check if
   // the constructor can be elidable?
@@ -1920,7 +1921,8 @@ public:
                                          CXXConstructorDecl *Constructor,
                                          bool Elidable,
                                          MultiExprArg Exprs,
-                                         bool RequiresZeroInit = false);
+                                         bool RequiresZeroInit = false,
+                                         bool BaseInitialization = false);
 
   OwningExprResult BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
                                                QualType writtenTy,
@@ -2282,9 +2284,10 @@ public:
                                      CXXRecordDecl *ClassDecl);
 
   bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
-                              CXXBaseOrMemberInitializer **Initializers,
-                              unsigned NumInitializers,
-                              bool IsImplicitConstructor);
+                                   CXXBaseOrMemberInitializer **Initializers,
+                                   unsigned NumInitializers,
+                                   bool IsImplicitConstructor,
+                                   bool AnyErrors);
 
   /// MarkBaseAndMemberDestructorsReferenced - Given a destructor decl,
   /// mark all its non-trivial member and base destructor declarations
@@ -2316,7 +2319,8 @@ public:
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                                     SourceLocation ColonLoc,
-                                    MemInitTy **MemInits, unsigned NumMemInits);
+                                    MemInitTy **MemInits, unsigned NumMemInits,
+                                    bool AnyErrors);
 
   void CheckCompletedCXXClass(CXXRecordDecl *Record);
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,

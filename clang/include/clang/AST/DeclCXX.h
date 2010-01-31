@@ -941,9 +941,9 @@ class CXXBaseOrMemberInitializer {
   /// \brief The source location for the field name.
   SourceLocation MemberLocation;
   
-  /// Args - The arguments used to initialize the base or member.
-  Stmt **Args;
-  unsigned NumArgs;
+  /// \brief The argument used to initialize the base or member, which may
+  /// end up constructing an object (when multiple arguments are involved).
+  Stmt *Init;
 
   /// \brief Stores either the constructor to call to initialize this base or
   /// member (a CXXConstructorDecl pointer), or stores the anonymous union of
@@ -963,7 +963,7 @@ class CXXBaseOrMemberInitializer {
   /// @endcode
   /// In above example, BaseOrMember holds the field decl. for anonymous union
   /// and AnonUnionMember holds field decl for au_i1.
-  llvm::PointerUnion<CXXConstructorDecl *, FieldDecl *> CtorOrAnonUnion;
+  FieldDecl *AnonUnionMember;
 
   /// LParenLoc - Location of the left paren of the ctor-initializer.
   SourceLocation LParenLoc;
@@ -975,29 +975,21 @@ public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit
   CXXBaseOrMemberInitializer(ASTContext &Context,
-                             TypeSourceInfo *TInfo, CXXConstructorDecl *C,
+                             TypeSourceInfo *TInfo,
                              SourceLocation L, 
-                             Expr **Args, unsigned NumArgs,
+                             Expr *Init,
                              SourceLocation R);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit
   CXXBaseOrMemberInitializer(ASTContext &Context,
                              FieldDecl *Member, SourceLocation MemberLoc,
-                             CXXConstructorDecl *C, SourceLocation L,
-                             Expr **Args, unsigned NumArgs,
+                             SourceLocation L,
+                             Expr *Init,
                              SourceLocation R);
 
   /// \brief Destroy the base or member initializer.
   void Destroy(ASTContext &Context);
-
-  /// arg_iterator - Iterates through the member initialization
-  /// arguments.
-  typedef ExprIterator arg_iterator;
-
-  /// arg_const_iterator - Iterates through the member initialization
-  /// arguments.
-  typedef ConstExprIterator const_arg_iterator;
 
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
@@ -1048,32 +1040,16 @@ public:
   SourceRange getSourceRange() const;
   
   FieldDecl *getAnonUnionMember() const {
-    return CtorOrAnonUnion.dyn_cast<FieldDecl *>();
+    return AnonUnionMember;
   }
   void setAnonUnionMember(FieldDecl *anonMember) {
-    CtorOrAnonUnion = anonMember;
-  }
-
-  const CXXConstructorDecl *getConstructor() const {
-    return CtorOrAnonUnion.dyn_cast<CXXConstructorDecl *>();
+    AnonUnionMember = anonMember;
   }
 
   SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
-  /// arg_begin() - Retrieve an iterator to the first initializer argument.
-  arg_iterator       arg_begin()       { return Args; }
-  /// arg_begin() - Retrieve an iterator to the first initializer argument.
-  const_arg_iterator const_arg_begin() const { return Args; }
-
-  /// arg_end() - Retrieve an iterator past the last initializer argument.
-  arg_iterator       arg_end()       { return Args + NumArgs; }
-  /// arg_end() - Retrieve an iterator past the last initializer argument.
-  const_arg_iterator const_arg_end() const { return Args + NumArgs; }
-
-  /// getNumArgs - Determine the number of arguments used to
-  /// initialize the member or base.
-  unsigned getNumArgs() const { return NumArgs; }
+  Expr *getInit() { return static_cast<Expr *>(Init); }
 };
 
 /// CXXConstructorDecl - Represents a C++ constructor within a

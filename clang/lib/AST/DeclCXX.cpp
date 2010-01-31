@@ -673,42 +673,25 @@ bool CXXMethodDecl::hasInlineBody() const {
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
-                           TypeSourceInfo *TInfo, CXXConstructorDecl *C,
-                           SourceLocation L, 
-                           Expr **Args, unsigned NumArgs,
-                           SourceLocation R)
-  : BaseOrMember(TInfo), Args(0), NumArgs(0), CtorOrAnonUnion(C), 
+                           TypeSourceInfo *TInfo, 
+                           SourceLocation L, Expr *Init, SourceLocation R)
+  : BaseOrMember(TInfo), Init(Init), AnonUnionMember(0),
     LParenLoc(L), RParenLoc(R) 
 {
-  if (NumArgs > 0) {
-    this->NumArgs = NumArgs;
-    this->Args = new (Context) Stmt*[NumArgs];
-    for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
-      this->Args[Idx] = Args[Idx];
-  }
 }
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            FieldDecl *Member, SourceLocation MemberLoc,
-                           CXXConstructorDecl *C, SourceLocation L,
-                           Expr **Args, unsigned NumArgs,
-                           SourceLocation R)
-  : BaseOrMember(Member), MemberLocation(MemberLoc), Args(0), NumArgs(0), 
-    CtorOrAnonUnion(C), LParenLoc(L), RParenLoc(R) 
+                           SourceLocation L, Expr *Init, SourceLocation R)
+  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
+    AnonUnionMember(0), LParenLoc(L), RParenLoc(R) 
 {
-  if (NumArgs > 0) {
-    this->NumArgs = NumArgs;
-    this->Args = new (Context) Stmt*[NumArgs];
-    for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
-      this->Args[Idx] = Args[Idx];
-  }
 }
 
 void CXXBaseOrMemberInitializer::Destroy(ASTContext &Context) {
-  for (unsigned I = 0; I != NumArgs; ++I)
-    Args[I]->Destroy(Context);
-  Context.Deallocate(Args);
+  if (Init)
+    Init->Destroy(Context);
   this->~CXXBaseOrMemberInitializer();
 }
 

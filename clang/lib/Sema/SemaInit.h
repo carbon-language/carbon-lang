@@ -66,7 +66,6 @@ public:
     /// \brief The entity being initialized is an element of a vector.
     /// or vector.
     EK_VectorElement
-
   };
   
 private:
@@ -95,8 +94,8 @@ private:
     /// base class.
     CXXBaseSpecifier *Base;
 
-    /// \brief When Kind = EK_ArrayOrVectorElement, the index of the
-    /// array or vector element being initialized.
+    /// \brief When Kind = EK_ArrayElement or EK_VectorElement, the
+    /// index of the array or vector element being initialized.
     unsigned Index;
   };
 
@@ -200,6 +199,12 @@ public:
   /// \brief Retrieve the variable, parameter, or field being
   /// initialized.
   DeclaratorDecl *getDecl() const;
+
+  /// \brief Retrieve the base specifier.
+  CXXBaseSpecifier *getBaseSpecifier() const {
+    assert(getKind() == EK_Base && "Not a base specifier");
+    return Base;
+  }
 
   /// \brief Determine the location of the 'return' keyword when initializing
   /// the result of a function call.

@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -403,32 +404,51 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           CXXBaseOrMemberInitializer * BMInitializer = (*B);
           if (B != CDecl->init_begin())
             Out << ", ";
-          bool hasArguments = (BMInitializer->arg_begin() !=
-                               BMInitializer->arg_end());
           if (BMInitializer->isMemberInitializer()) {
             FieldDecl *FD = BMInitializer->getMember();
             Out <<  FD->getNameAsString();
+          } else {
+            Out << QualType(BMInitializer->getBaseClass(), 0).getAsString();
           }
-          else // FIXME. skip dependent types for now.
-            if (const RecordType *RT =
-                BMInitializer->getBaseClass()->getAs<RecordType>()) {
-              const CXXRecordDecl *BaseDecl =
-                cast<CXXRecordDecl>(RT->getDecl());
-              Out << BaseDecl->getNameAsString();
-          }
-          if (hasArguments) {
-            Out << "(";
-            for (CXXBaseOrMemberInitializer::const_arg_iterator BE =
-                 BMInitializer->const_arg_begin(),
-                 EE =  BMInitializer->const_arg_end(); BE != EE; ++BE) {
-              if (BE != BMInitializer->const_arg_begin())
-                Out<< ", ";
-              const Expr *Exp = (*BE);
-              Exp->printPretty(Out, Context, 0, Policy, Indentation);
+          
+          Out << "(";
+          if (!BMInitializer->getInit()) {
+            // Nothing to print
+          } else {
+            Expr *Init = BMInitializer->getInit();
+            if (CXXExprWithTemporaries *Tmp
+                  = dyn_cast<CXXExprWithTemporaries>(Init))
+              Init = Tmp->getSubExpr();
+            
+            Init = Init->IgnoreParens();
+            
+            Expr *SimpleInit = 0;
+            Expr **Args = 0;
+            unsigned NumArgs = 0;
+            if (ParenListExpr *ParenList = dyn_cast<ParenListExpr>(Init)) {
+              Args = ParenList->getExprs();
+              NumArgs = ParenList->getNumExprs();
+            } else if (CXXConstructExpr *Construct
+                                          = dyn_cast<CXXConstructExpr>(Init)) {
+              Args = Construct->getArgs();
+              NumArgs = Construct->getNumArgs();
+            } else
+              SimpleInit = Init;
+            
+            if (SimpleInit)
+              SimpleInit->printPretty(Out, Context, 0, Policy, Indentation);
+            else {
+              for (unsigned I = 0; I != NumArgs; ++I) {
+                if (isa<CXXDefaultArgExpr>(Args[I]))
+                  break;
+                
+                if (I)
+                  Out << ", ";
+                Args[I]->printPretty(Out, Context, 0, Policy, Indentation);
+              }
             }
-            Out << ")";
-          } else
-            Out << "()";
+          }
+          Out << ")";
         }
       }
     }

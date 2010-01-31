@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wall -verify %s
 
 template<typename T> struct A {
-  A() : a(1) { } // expected-error{{incompatible type passing 'int', expected 'void *'}}
+  A() : a(1) { } // expected-error{{cannot initialize a member subobject of type 'void *' with an rvalue of type 'int'}}
 
   T a;
 };

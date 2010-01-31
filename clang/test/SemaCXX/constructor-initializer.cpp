@@ -104,8 +104,8 @@ struct M {              // expected-note 2 {{candidate constructor (the implicit
 };
 
 struct N : M  {
-  N() : M(1),        // expected-error {{no matching constructor for initialization of 'M'}}
-        m1(100) {  } // expected-error {{no matching constructor for initialization of 'm1'}}
+  N() : M(1),        // expected-error {{no matching constructor for initialization of 'struct M'}}
+        m1(100) {  } // expected-error {{no matching constructor for initialization of 'struct M'}}
   M m1;
 };
 
@@ -116,8 +116,8 @@ struct P : M  {
 };
 
 struct Q {
-  Q() : f1(1,2),       // expected-error {{Too many arguments for member initializer 'f1'}}
-        pf(0.0)  { }   // expected-error {{incompatible type passing 'double', expected 'float *'}}
+  Q() : f1(1,2),       // expected-error {{excess elements in scalar initializer}}
+        pf(0.0)  { }   // expected-error {{cannot initialize a member subobject of type 'float *' with an rvalue of type 'double'}}
   float f1;
 
   float *pf;
