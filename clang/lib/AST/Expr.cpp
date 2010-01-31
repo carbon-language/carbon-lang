@@ -1977,6 +1977,25 @@ FieldDecl *Expr::getBitField() {
   return 0;
 }
 
+bool Expr::refersToVectorElement() const {
+  const Expr *E = this->IgnoreParens();
+  
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    if (ICE->isLvalueCast() && ICE->getCastKind() == CastExpr::CK_NoOp)
+      E = ICE->getSubExpr()->IgnoreParens();
+    else
+      break;
+  }
+  
+  if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E))
+    return ASE->getBase()->getType()->isVectorType();
+
+  if (isa<ExtVectorElementExpr>(E))
+    return true;
+
+  return false;
+}
+
 /// isArrow - Return true if the base expression is a pointer to vector,
 /// return false if the base expression is a vector.
 bool ExtVectorElementExpr::isArrow() const {

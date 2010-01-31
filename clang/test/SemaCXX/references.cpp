@@ -102,3 +102,16 @@ string getInput();
 void test9() {
   string &s = getInput(); // expected-error{{lvalue reference}}
 }
+
+void test10() {
+  __attribute((vector_size(16))) typedef int vec4;
+  typedef __attribute__(( ext_vector_type(4) )) int ext_vec4;
+  
+  vec4 v;
+  int &a = v[0]; // expected-error{{non-const reference cannot bind to vector element}}
+  const int &b = v[0];
+  
+  ext_vec4 ev;
+  int &c = ev.x; // expected-error{{non-const reference cannot bind to vector element}}
+  const int &d = ev.x;
+}

@@ -5968,8 +5968,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     Diag(OpLoc, diag::err_typecheck_address_of)
       << "bit-field" << op->getSourceRange();
         return QualType();
-  } else if (isa<ExtVectorElementExpr>(op) || (isa<ArraySubscriptExpr>(op) &&
-           cast<ArraySubscriptExpr>(op)->getBase()->getType()->isVectorType())){
+  } else if (op->refersToVectorElement()) {
     // The operand cannot be an element of a vector
     Diag(OpLoc, diag::err_typecheck_address_of)
       << "vector element" << op->getSourceRange();

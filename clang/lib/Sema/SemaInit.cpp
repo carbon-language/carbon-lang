@@ -2341,7 +2341,7 @@ static void TryReferenceInitialization(Sema &S,
       if (T1Quals != T2Quals)
         Sequence.AddQualificationConversionStep(cv1T1, /*IsLValue=*/true);
       bool BindingTemporary = T1Quals.hasConst() && !T1Quals.hasVolatile() &&
-           Initializer->getBitField();
+        (Initializer->getBitField() || Initializer->refersToVectorElement());
       Sequence.AddReferenceBindingStep(cv1T1, BindingTemporary);
       return;
     }
@@ -3284,6 +3284,14 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
       }
 
+      if (CurInitExpr->refersToVectorElement()) {
+        // Vector elements cannot bind to bit fields.
+        S.Diag(Kind.getLocation(), diag::err_reference_bind_to_vector_element)
+          << Entity.getType().isVolatileQualified()
+          << CurInitExpr->getSourceRange();
+        return S.ExprError();
+      }
+        
       // Reference binding does not have any corresponding ASTs.
 
       // Check exception specifications

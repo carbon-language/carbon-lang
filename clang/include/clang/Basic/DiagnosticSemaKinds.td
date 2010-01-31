@@ -584,6 +584,8 @@ def err_reference_init_drops_quals : Error<
   "qualifiers">;
 def err_reference_bind_to_bitfield : Error<
   "%select{non-const|volatile}0 reference cannot bind to bit-field %1">;
+def err_reference_bind_to_vector_element : Error<
+  "%select{non-const|volatile}0 reference cannot bind to vector element">;
 def err_reference_var_requires_init : Error<
   "declaration of reference variable %0 requires an initializer">;
 def err_const_var_requires_init : Error<
