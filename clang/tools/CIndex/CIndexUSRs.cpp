@@ -74,7 +74,7 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
   VisitDeclContext(D->getDeclContext());
   const std::string &s = D->getNameAsString();
-  assert(!s.empty());
+//  assert(!s.empty());
   Out << "@^" << s;
 }
 
