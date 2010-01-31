@@ -44,15 +44,15 @@ ComputeNonVirtualBaseClassOffset(ASTContext &Context, CXXBasePaths &Paths,
 }
 
 llvm::Constant *
-CodeGenModule::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                                     const CXXRecordDecl *BaseClassDecl) {
-  if (ClassDecl == BaseClassDecl)
+CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *Class,
+                                            const CXXRecordDecl *BaseClass) {
+  if (Class == BaseClass)
     return 0;
 
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
-  if (!const_cast<CXXRecordDecl *>(ClassDecl)->
-        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClassDecl), Paths)) {
+  if (!const_cast<CXXRecordDecl *>(Class)->
+        isDerivedFrom(const_cast<CXXRecordDecl *>(BaseClass), Paths)) {
     assert(false && "Class must be derived from the passed in base class!");
     return 0;
   }
@@ -67,10 +67,10 @@ CodeGenModule::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
   return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }
 
-static llvm::Value *GetCXXBaseClassOffset(CodeGenFunction &CGF,
-                                          llvm::Value *BaseValue,
-                                          const CXXRecordDecl *ClassDecl,
-                                          const CXXRecordDecl *BaseClassDecl) {
+static llvm::Value *GetBaseClassOffset(CodeGenFunction &CGF,
+                                       llvm::Value *BaseValue,
+                                       const CXXRecordDecl *ClassDecl,
+                                       const CXXRecordDecl *BaseClassDecl) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
   if (!const_cast<CXXRecordDecl *>(ClassDecl)->
@@ -94,7 +94,7 @@ static llvm::Value *GetCXXBaseClassOffset(CodeGenFunction &CGF,
   }
   if (VBase)
     VirtualOffset = 
-      CGF.GetVirtualCXXBaseClassOffset(BaseValue, ClassDecl, VBase);
+      CGF.GetVirtualBaseClassOffset(BaseValue, ClassDecl, VBase);
   
   uint64_t Offset = 
     ComputeNonVirtualBaseClassOffset(CGF.getContext(), Paths, Start);
@@ -150,15 +150,15 @@ CodeGenModule::ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
 
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
-                                       const CXXRecordDecl *ClassDecl,
-                                       const CXXRecordDecl *BaseClassDecl,
+                                       const CXXRecordDecl *Class,
+                                       const CXXRecordDecl *BaseClass,
                                        bool NullCheckValue) {
   QualType BTy =
     getContext().getCanonicalType(
-      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
+      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClass)));
   const llvm::Type *BasePtrTy = llvm::PointerType::getUnqual(ConvertType(BTy));
 
-  if (ClassDecl == BaseClassDecl) {
+  if (Class == BaseClass) {
     // Just cast back.
     return Builder.CreateBitCast(Value, BasePtrTy);
   }
@@ -181,8 +181,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
-  llvm::Value *Offset = 
-    GetCXXBaseClassOffset(*this, Value, ClassDecl, BaseClassDecl);
+  llvm::Value *Offset = GetBaseClassOffset(*this, Value, Class, BaseClass);
   
   if (Offset) {
     // Apply the offset.
@@ -212,15 +211,15 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
 llvm::Value *
 CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
-                                          const CXXRecordDecl *ClassDecl,
-                                          const CXXRecordDecl *DerivedClassDecl,
+                                          const CXXRecordDecl *Class,
+                                          const CXXRecordDecl *DerivedClass,
                                           bool NullCheckValue) {
   QualType DerivedTy =
     getContext().getCanonicalType(
-    getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(DerivedClassDecl)));
+    getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(DerivedClass)));
   const llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
   
-  if (ClassDecl == DerivedClassDecl) {
+  if (Class == DerivedClass) {
     // Just cast back.
     return Builder.CreateBitCast(Value, DerivedPtrTy);
   }
@@ -241,12 +240,11 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
     EmitBlock(CastNotNull);
   }
   
-  llvm::Value *Offset = GetCXXBaseClassOffset(*this, Value, DerivedClassDecl,
-                                              ClassDecl);
-  if (Offset) {
+  if (llvm::Value *NonVirtualOffset =
+      CGM.GetNonVirtualBaseClassOffset(DerivedClass, Class)) {
     // Apply the offset.
-    Value = Builder.CreatePtrToInt(Value, Offset->getType());
-    Value = Builder.CreateSub(Value, Offset);
+    Value = Builder.CreatePtrToInt(Value, NonVirtualOffset->getType());
+    Value = Builder.CreateSub(Value, NonVirtualOffset);
     Value = Builder.CreateIntToPtr(Value, DerivedPtrTy);
   } else {
     // Just cast.
@@ -1300,8 +1298,8 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
 }
 
 llvm::Value *
-CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
-                                              const CXXRecordDecl *ClassDecl,
+CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
+                                           const CXXRecordDecl *ClassDecl,
                                            const CXXRecordDecl *BaseClassDecl) {
   const llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8Ty(VMContext)->getPointerTo();

@@ -252,8 +252,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     if (E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
       std::swap(DerivedDecl, BaseDecl);
 
-    llvm::Constant *Adj = CGF.CGM.GetCXXBaseClassOffset(DerivedDecl, BaseDecl);
-    if (Adj) {
+    if (llvm::Constant *Adj = 
+          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl, BaseDecl)) {
       if (E->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
         SrcAdj = Builder.CreateSub(SrcAdj, Adj, "adj");
       else

@@ -534,8 +534,8 @@ public:
         llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
         
         // Check if we need to update the adjustment.
-        if (llvm::Constant *Offset = CGM.GetCXXBaseClassOffset(DerivedClass,
-                                                               BaseClass)) {
+        if (llvm::Constant *Offset = 
+              CGM.GetNonVirtualBaseClassOffset(DerivedClass, BaseClass)) {
           llvm::Constant *Values[2];
         
           Values[0] = CS->getOperand(0);

@@ -891,8 +891,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
       std::swap(DerivedDecl, BaseDecl);
 
-    llvm::Constant *Adj = CGF.CGM.GetCXXBaseClassOffset(DerivedDecl, BaseDecl);
-    if (Adj) {
+    if (llvm::Constant *Adj = 
+          CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl, BaseDecl)) {
       if (CE->getCastKind() == CastExpr::CK_DerivedToBaseMemberPointer)
         Src = Builder.CreateSub(Src, Adj, "adj");
       else

@@ -239,10 +239,11 @@ public:
   BuildCovariantThunk(const GlobalDecl &GD, bool Extern,
                       const CovariantThunkAdjustment &Adjustment);
 
-  /// GetCXXBaseClassOffset - Returns the offset from a derived class to its
-  /// base class. Returns null if the offset is 0.
-  llvm::Constant *GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                                        const CXXRecordDecl *BaseClassDecl);
+  /// GetNonVirtualBaseClassOffset - Returns the offset from a derived class to 
+  /// its base class. Returns null if the offset is 0. 
+  llvm::Constant *
+  GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                               const CXXRecordDecl *BaseClassDecl);
 
   /// ComputeThunkAdjustment - Returns the two parts required to compute the
   /// offset for an object.
