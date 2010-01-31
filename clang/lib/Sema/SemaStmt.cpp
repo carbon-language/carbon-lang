@@ -906,10 +906,10 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
   Expr* E = DestExp.takeAs<Expr>();
   if (!E->isTypeDependent()) {
     QualType ETy = E->getType();
+    QualType DestTy = Context.getPointerType(Context.VoidTy.withConst());
     AssignConvertType ConvTy =
-      CheckSingleAssignmentConstraints(Context.VoidPtrTy, E);
-    if (DiagnoseAssignmentResult(ConvTy, StarLoc, Context.VoidPtrTy, ETy,
-                                 E, AA_Passing))
+      CheckSingleAssignmentConstraints(DestTy, E);
+    if (DiagnoseAssignmentResult(ConvTy, StarLoc, DestTy, ETy, E, AA_Passing))
       return StmtError();
   }
   return Owned(new (Context) IndirectGotoStmt(GotoLoc, StarLoc, E));
