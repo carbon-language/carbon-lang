@@ -676,6 +676,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
               return BinaryOperator::CreateSDiv(Op1I->getOperand(0),
                                           ConstantExpr::getNeg(DivRHS));
 
+      // 0 - (C << X)  -> (-C << X)
+      if (Op1I->getOpcode() == Instruction::Shl)
+        if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
+          if (CSI->isZero())
+            if (Value *ShlLHSNeg = dyn_castNegVal(Op1I->getOperand(0)))
+              return BinaryOperator::CreateShl(ShlLHSNeg, Op1I->getOperand(1));
+
       // X - X*C --> X * (1-C)
       ConstantInt *C2 = 0;
       if (dyn_castFoldableMul(Op1I, C2) == Op0) {

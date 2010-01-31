@@ -272,4 +272,12 @@ define i64 @test25(i8* %P, i64 %A){
 ; CHECK-NEXT: ret i64 
 }
 
+define i32 @test26(i32 %x) {
+  %shl = shl i32 3, %x
+  %neg = sub i32 0, %shl
+  ret i32 %neg
+; CHECK: @test26
+; CHECK-NEXT: shl i32 -3
+; CHECK-NEXT: ret i32
+}
 
