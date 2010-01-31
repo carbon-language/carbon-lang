@@ -2270,7 +2270,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
   // If it's an indirect call, conversatively return false if the caller's
   // address is taken.
-  if (!isa<ExternalSymbolSDNode>(Callee) && CallerF->hasAddressTaken())
+  if (!CalleeF &&
+      !isa<ExternalSymbolSDNode>(Callee) && CallerF->hasAddressTaken())
     return false;
 
   // Look for obvious safe cases to perform tail call optimization.
