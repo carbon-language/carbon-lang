@@ -474,7 +474,7 @@ void AsmStmt::DoDestroy(ASTContext &C) {
   C.Deallocate(Exprs);
   C.Deallocate(Clobbers);
   
-  this->~Stmt();
+  this->~AsmStmt();
   C.Deallocate((void *)this);
 }
 
