@@ -65,3 +65,27 @@ entry:
   tail call void %x() nounwind
   ret void
 }
+
+define i32 @t6(i32 %x) nounwind ssp {
+entry:
+; 32: t6:
+; 32: call {{_?}}t6
+; 32: call {{_?}}bar
+
+; 64: t6:
+; 64: callq {{_?}}t6
+; 64: jmp {{_?}}bar
+  %0 = icmp slt i32 %x, 10
+  br i1 %0, label %bb, label %bb1
+
+bb:
+  %1 = add nsw i32 %x, -1
+  %2 = tail call i32 @t6(i32 %1) nounwind ssp
+  ret i32 %2
+
+bb1:
+  %3 = tail call i32 @bar(i32 %x) nounwind
+  ret i32 %3
+}
+
+declare i32 @bar(i32)
