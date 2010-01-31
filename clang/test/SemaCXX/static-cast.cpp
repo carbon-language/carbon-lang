@@ -178,3 +178,6 @@ struct X4 {
   
   const X2 *x2;
 };
+
+// PR5897 - accept static_cast from const void* to const int (*)[1].
+void PR5879() { (void)static_cast<const int(*)[1]>((const void*)0); }
