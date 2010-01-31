@@ -507,6 +507,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         
         Builder.CreateCall4(CGM.getMemCpyFn(), Loc, SrcPtr, SizeVal, AlignVal);
       }
+    } else if (const CXXBindReferenceExpr *BE = 
+                dyn_cast<CXXBindReferenceExpr>(Init)) {
+      llvm::Value *V = EmitCXXBindReferenceExpr(BE);
+      EmitStoreOfScalar(V, Loc, /*Volatile=*/false, Ty);
     } else if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, Ty, /*IsInitializer=*/true);
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);

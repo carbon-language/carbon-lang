@@ -3297,15 +3297,31 @@ InitializationSequence::Perform(Sema &S,
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
         return S.ExprError();
+      
+      // FIXME: We should do this for all types.
+      if (DestType->isAnyComplexType()) {
+        CurInit = 
+          S.Owned(CXXBindReferenceExpr::Create(S.Context, 
+                                               CurInit.takeAs<Expr>(), 
+                                               /*ExtendsLifetime=*/false,
+                                               /*RequiresTemporaryCopy=*/false));
+      }
+
       break;
-        
+
     case SK_BindReferenceToTemporary:
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
         return S.ExprError();
 
-      // FIXME: At present, we have no AST to describe when we need to make a
-      // temporary to bind a reference to. We should.
+      // FIXME: We should do this for all types.
+      if (DestType->isAnyComplexType()) {
+        CurInit = 
+          S.Owned(CXXBindReferenceExpr::Create(S.Context, 
+                                               CurInit.takeAs<Expr>(), 
+                                               /*ExtendsLifetime=*/false,
+                                               /*RequiresTemporaryCopy=*/true));
+      }
       break;
         
     case SK_UserConversion: {

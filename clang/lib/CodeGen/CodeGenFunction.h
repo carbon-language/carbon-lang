@@ -1116,6 +1116,8 @@ public:
   RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType,
                                     bool IsInitializer = false);
 
+  llvm::Value *EmitCXXBindReferenceExpr(const CXXBindReferenceExpr *E);
+
   //===--------------------------------------------------------------------===//
   //                           Expression Emission
   //===--------------------------------------------------------------------===//
