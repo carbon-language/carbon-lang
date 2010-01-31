@@ -213,7 +213,8 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
       TemplateArgs.push_back(TemplateArgument(ParamType));
     } else if (NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-      Expr *E = new (Context) DeclRefExpr(NTTP, NTTP->getType(),
+      Expr *E = new (Context) DeclRefExpr(NTTP,
+                                          NTTP->getType().getNonReferenceType(),
                                           NTTP->getLocation());
       TemplateArgs.push_back(TemplateArgument(E));
     } else {
