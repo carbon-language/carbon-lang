@@ -184,10 +184,11 @@ bool TailCallElim::runOnFunction(Function &F) {
   if (!FunctionContainsEscapingAllocas)
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          CI->setTailCall();
-          MadeChange = true;
-        }
+        if (CallInst *CI = dyn_cast<CallInst>(I))
+          if (!CI->doesNotReturn()) {
+            CI->setTailCall();
+            MadeChange = true;
+          }
 
   return MadeChange;
 }
