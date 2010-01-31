@@ -263,29 +263,18 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 
     if (NumExprs > 1 || !Record->hasTrivialConstructor() ||
         !Record->hasTrivialDestructor()) {
-      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
-      
-      CXXConstructorDecl *Constructor
-        = PerformInitializationByConstructor(Ty, move(exprs),
-                                             TypeRange.getBegin(),
-                                             SourceRange(TypeRange.getBegin(),
-                                                         RParenLoc),
-                                             DeclarationName(),
-                         InitializationKind::CreateDirect(TypeRange.getBegin(), 
-                                                          LParenLoc, 
-                                                          RParenLoc),
-                                             ConstructorArgs);
+      InitializedEntity Entity = InitializedEntity::InitializeTemporary(Ty);
+      InitializationKind Kind
+        = NumExprs ? InitializationKind::CreateDirect(TypeRange.getBegin(), 
+                                                      LParenLoc, RParenLoc)
+                   : InitializationKind::CreateValue(TypeRange.getBegin(), 
+                                                     LParenLoc, RParenLoc);
+      InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
+      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                                move(exprs));
 
-      if (!Constructor)
-        return ExprError();
-
-      OwningExprResult Result =
-        BuildCXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc,
-                                    move_arg(ConstructorArgs), RParenLoc);
-      if (Result.isInvalid())
-        return ExprError();
-
-      return MaybeBindToTemporary(Result.takeAs<Expr>());
+      // FIXME: Improve AST representation?
+      return move(Result);
     }
 
     // Fall through to value-initialize an object of class type that

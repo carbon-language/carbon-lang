@@ -1924,12 +1924,6 @@ public:
                                          bool RequiresZeroInit = false,
                                          bool BaseInitialization = false);
 
-  OwningExprResult BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Cons,
-                                               QualType writtenTy,
-                                               SourceLocation tyBeginLoc,
-                                               MultiExprArg Args,
-                                               SourceLocation rParenLoc);
-
   OwningExprResult BuildCXXCastArgument(SourceLocation CastLoc,
                                         QualType Ty,
                                         CastExpr::CastKind Kind,
@@ -1983,14 +1977,6 @@ public:
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation Loc,
                                  InitializationKind Kind);
-  
-  CXXConstructorDecl *
-  PerformInitializationByConstructor(QualType ClassType,
-                                     MultiExprArg ArgsPtr,
-                                     SourceLocation Loc, SourceRange Range,
-                                     DeclarationName InitEntity,
-                                     InitializationKind Kind,
-                       ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
 
   bool CompleteConstructorCall(CXXConstructorDecl *Constructor,
                                MultiExprArg ArgsPtr,

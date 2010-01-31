@@ -60,7 +60,7 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
   }
   
   // We can always devirtualize calls on temporary object expressions.
-  if (isa<CXXTemporaryObjectExpr>(Base))
+  if (isa<CXXConstructExpr>(Base))
     return true;
   
   // And calls on bound temporaries.

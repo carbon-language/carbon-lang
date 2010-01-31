@@ -3965,22 +3965,6 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                                         RequiresZeroInit, BaseInitialization));
 }
 
-Sema::OwningExprResult
-Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
-                                  QualType Ty,
-                                  SourceLocation TyBeginLoc,
-                                  MultiExprArg Args,
-                                  SourceLocation RParenLoc) {
-  unsigned NumExprs = Args.size();
-  Expr **Exprs = (Expr **)Args.release();
-
-  MarkDeclarationReferenced(TyBeginLoc, Constructor);
-  return Owned(new (Context) CXXTemporaryObjectExpr(Context, Constructor, Ty, 
-                                                    TyBeginLoc, Exprs,
-                                                    NumExprs, RParenLoc));
-}
-
-
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
                                         MultiExprArg Exprs) {
@@ -4216,92 +4200,6 @@ Sema::TryInitializationByConstructor(QualType ClassType,
   
   // Silence GCC warning
   return 0;
-}
-
-/// \brief Perform initialization by constructor (C++ [dcl.init]p14), which 
-/// may occur as part of direct-initialization or copy-initialization. 
-///
-/// \param ClassType the type of the object being initialized, which must have
-/// class type.
-///
-/// \param ArgsPtr the arguments provided to initialize the object
-///
-/// \param Loc the source location where the initialization occurs
-///
-/// \param Range the source range that covers the entire initialization
-///
-/// \param InitEntity the name of the entity being initialized, if known
-///
-/// \param Kind the type of initialization being performed
-///
-/// \param ConvertedArgs a vector that will be filled in with the 
-/// appropriately-converted arguments to the constructor (if initialization
-/// succeeded).
-///
-/// \returns the constructor used to initialize the object, if successful.
-/// Otherwise, emits a diagnostic and returns NULL.
-CXXConstructorDecl *
-Sema::PerformInitializationByConstructor(QualType ClassType,
-                                         MultiExprArg ArgsPtr,
-                                         SourceLocation Loc, SourceRange Range,
-                                         DeclarationName InitEntity,
-                                         InitializationKind Kind,
-                      ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs) {
-  
-  // Build the overload candidate set
-  Expr **Args = (Expr **)ArgsPtr.get();
-  unsigned NumArgs = ArgsPtr.size();
-  OverloadCandidateSet CandidateSet;
-  AddConstructorInitializationCandidates(*this, ClassType, Args, NumArgs, Kind,
-                                         CandidateSet);
-
-  OverloadCandidateSet::iterator Best;
-  switch (BestViableFunction(CandidateSet, Loc, Best)) {
-  case OR_Success:
-    // We found a constructor. Break out so that we can convert the arguments 
-    // appropriately.
-    break;
-
-  case OR_No_Viable_Function:
-    if (InitEntity)
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init)
-        << InitEntity << Range;
-    else
-      Diag(Loc, diag::err_ovl_no_viable_function_in_init)
-        << ClassType << Range;
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
-    return 0;
-
-  case OR_Ambiguous:
-    if (InitEntity)
-      Diag(Loc, diag::err_ovl_ambiguous_init) << InitEntity << Range;
-    else
-      Diag(Loc, diag::err_ovl_ambiguous_init) << ClassType << Range;
-    PrintOverloadCandidates(CandidateSet, OCD_ViableCandidates, Args, NumArgs);
-    return 0;
-
-  case OR_Deleted:
-    if (InitEntity)
-      Diag(Loc, diag::err_ovl_deleted_init)
-        << Best->Function->isDeleted()
-        << InitEntity << Range;
-    else {
-      const CXXRecordDecl *RD =
-          cast<CXXRecordDecl>(ClassType->getAs<RecordType>()->getDecl());
-      Diag(Loc, diag::err_ovl_deleted_init)
-        << Best->Function->isDeleted()
-        << RD->getDeclName() << Range;
-    }
-    PrintOverloadCandidates(CandidateSet, OCD_AllCandidates, Args, NumArgs);
-    return 0;
-  }
-
-  // Convert the arguments, fill in default arguments, etc.
-  CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
-  if (CompleteConstructorCall(Constructor, move(ArgsPtr), Loc, ConvertedArgs))
-    return 0;
-  
-  return Constructor;
 }
 
 /// \brief Given a constructor and the set of arguments provided for the
