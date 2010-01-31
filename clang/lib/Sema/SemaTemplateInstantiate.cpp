@@ -746,6 +746,22 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                                 move(RefExpr));
           }
         }
+        if (NTTP->getType()->isPointerType() &&
+            !VD->getType()->isPointerType()) {
+          // If the template argument is expected to be a pointer and value
+          // isn't inherently of pointer type, then it is specified with '&...'
+          // to indicate its address should be used. Build an expression to
+          // take the address of the argument.
+          OwningExprResult RefExpr
+            = SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                                       E->getLocation());
+          if (RefExpr.isInvalid())
+            return SemaRef.ExprError();
+
+          return SemaRef.CreateBuiltinUnaryOp(E->getLocation(),
+                                              UnaryOperator::AddrOf,
+                                              move(RefExpr));
+        }
 
         return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
                                         E->getLocation());
