@@ -834,24 +834,6 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     FieldType = Field->getType();
   }
 
-  // If the field is an array, branch based on the element type.
-  const ConstantArrayType *Array =
-    CGF.getContext().getAsConstantArrayType(FieldType);
-  if (Array)
-    FieldType = CGF.getContext().getBaseElementType(FieldType);
-
-  // We lose the constructor for anonymous union members, so handle them
-  // explicitly.
-  // FIXME: This is somwhat ugly, and doesn't seem necessary at all.
-  if (MemberInit->getAnonUnionMember() && FieldType->getAs<RecordType>()) {
-    if (MemberInit->getInit())
-      CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
-                      LHS.isVolatileQualified());
-    else
-      CGF.EmitAggregateClear(LHS.getAddress(), Field->getType());
-    return;
-  }
-
   // FIXME: If there's no initializer and the CXXBaseOrMemberInitializer
   // was implicitly generated, we shouldn't be zeroing memory.
   RValue RHS;
@@ -859,7 +841,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     RHS = CGF.EmitReferenceBindingToExpr(MemberInit->getInit(), FieldType,
                                          /*IsInitializer=*/true);
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
-  } else if (Array && !MemberInit->getInit()) {
+  } else if (FieldType->isArrayType() && !MemberInit->getInit()) {
     CGF.EmitMemSetToZero(LHS.getAddress(), Field->getType());
   } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
     RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit(), true));
