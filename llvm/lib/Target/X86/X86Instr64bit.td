@@ -187,7 +187,7 @@ def TCRETURNri64 : I<0, Pseudo, (outs), (ins GR64:$dst, i32imm:$offset,
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64:$dst),
+  def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64:$dst, variable_ops),
                    "jmp{q}\t{*}$dst  # TAILCALL",
                    []>;     
 

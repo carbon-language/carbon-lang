@@ -1242,14 +1242,19 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     }
 
     // Jump to label or value in register.
-    if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64)
+    if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPd)).
         addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                          JumpTarget.getTargetFlags());
-    else if (RetOpcode== X86::TCRETURNri64)
+    } else if (RetOpcode == X86::TCRETURNri64) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64), JumpTarget.getReg());
-    else
+    } else {
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr), JumpTarget.getReg());
+    }
+
+    MachineInstr *NewMI = prior(MBBI);
+    for (unsigned i = 2, e = MBBI->getNumOperands(); i != e; ++i)
+      NewMI->addOperand(MBBI->getOperand(i));
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);

@@ -762,14 +762,15 @@ def TCRETURNri : I<0, Pseudo, (outs),
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : IBr<0xE9, (ins i32imm_pcrel:$dst), "jmp\t$dst  # TAILCALL",
+  def TAILJMPd : IBr<0xE9, (ins i32imm_pcrel:$dst, variable_ops),
+                 "jmp\t$dst  # TAILCALL",
                  []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst), 
+  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst, variable_ops), 
                    "jmp{l}\t{*}$dst  # TAILCALL",
                  []>;     
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem:$dst),
+  def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem:$dst, variable_ops),
                    "jmp\t{*}$dst  # TAILCALL", []>;
 
 //===----------------------------------------------------------------------===//
