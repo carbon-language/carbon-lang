@@ -228,8 +228,7 @@ Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
 /// type, returns the elements of the vector in the specified smallvector.
 /// This handles breaking down a vector undef into undef elements, etc.  For
 /// constant exprs and other cases we can't handle, we return an empty vector.
-void Constant::getVectorElements(LLVMContext &Context,
-                                 SmallVectorImpl<Constant*> &Elts) const {
+void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
   assert(isa<VectorType>(getType()) && "Not a vector constant!");
   
   if (const ConstantVector *CV = dyn_cast<ConstantVector>(this)) {
@@ -1139,7 +1138,7 @@ static inline Constant *getFoldedCast(
   Instruction::CastOps opc, Constant *C, const Type *Ty) {
   assert(Ty->isFirstClassType() && "Cannot cast to an aggregate type!");
   // Fold a few common cases
-  if (Constant *FC = ConstantFoldCastInstruction(Ty->getContext(), opc, C, Ty))
+  if (Constant *FC = ConstantFoldCastInstruction(opc, C, Ty))
     return FC;
 
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
@@ -1373,8 +1372,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
          "Operand types in binary constant expression should match");
 
   if (ReqTy == C1->getType() || ReqTy == Type::getInt1Ty(ReqTy->getContext()))
-    if (Constant *FC = ConstantFoldBinaryInstruction(ReqTy->getContext(),
-                                                     Opcode, C1, C2))
+    if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
       return FC;          // Fold a few common cases...
 
   std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
@@ -1526,8 +1524,7 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
   assert(!SelectInst::areInvalidOperands(C, V1, V2)&&"Invalid select operands");
 
   if (ReqTy == V1->getType())
-    if (Constant *SC = ConstantFoldSelectInstruction(
-                                                ReqTy->getContext(), C, V1, V2))
+    if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
       return SC;        // Fold common cases
 
   std::vector<Constant*> argVec(3, C);
@@ -1547,9 +1544,8 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
          cast<PointerType>(ReqTy)->getElementType() &&
          "GEP indices invalid!");
 
-  if (Constant *FC = ConstantFoldGetElementPtr(
-                              ReqTy->getContext(), C, /*inBounds=*/false,
-                              (Constant**)Idxs, NumIdx))
+  if (Constant *FC = ConstantFoldGetElementPtr(C, /*inBounds=*/false,
+                                               (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
@@ -1575,9 +1571,8 @@ Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
          cast<PointerType>(ReqTy)->getElementType() &&
          "GEP indices invalid!");
 
-  if (Constant *FC = ConstantFoldGetElementPtr(
-                              ReqTy->getContext(), C, /*inBounds=*/true,
-                              (Constant**)Idxs, NumIdx))
+  if (Constant *FC = ConstantFoldGetElementPtr(C, /*inBounds=*/true,
+                                               (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
@@ -1633,8 +1628,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
          pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid ICmp Predicate");
 
-  if (Constant *FC = ConstantFoldCompareInstruction(
-                                             LHS->getContext(), pred, LHS, RHS))
+  if (Constant *FC = ConstantFoldCompareInstruction(pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1657,8 +1651,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   assert(LHS->getType() == RHS->getType());
   assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid FCmp Predicate");
 
-  if (Constant *FC = ConstantFoldCompareInstruction(
-                                            LHS->getContext(), pred, LHS, RHS))
+  if (Constant *FC = ConstantFoldCompareInstruction(pred, LHS, RHS))
     return FC;          // Fold a few common cases...
 
   // Look up the constant in the table first to ensure uniqueness
@@ -1678,8 +1671,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
                                             Constant *Idx) {
-  if (Constant *FC = ConstantFoldExtractElementInstruction(
-                                                ReqTy->getContext(), Val, Idx))
+  if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
     return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
@@ -1701,8 +1693,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
 
 Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
                                            Constant *Elt, Constant *Idx) {
-  if (Constant *FC = ConstantFoldInsertElementInstruction(
-                                            ReqTy->getContext(), Val, Elt, Idx))
+  if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))
     return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
@@ -1727,8 +1718,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
 
 Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
                                            Constant *V2, Constant *Mask) {
-  if (Constant *FC = ConstantFoldShuffleVectorInstruction(
-                                            ReqTy->getContext(), V1, V2, Mask))
+  if (Constant *FC = ConstantFoldShuffleVectorInstruction(V1, V2, Mask))
     return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, V1);
@@ -1761,8 +1751,7 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
          "insertvalue type invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant InsertValue expression");
-  Constant *FC = ConstantFoldInsertValueInstruction(
-                                  ReqTy->getContext(), Agg, Val, Idxs, NumIdx);
+  Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx);
   assert(FC && "InsertValue constant expr couldn't be folded!");
   return FC;
 }
@@ -1788,8 +1777,7 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
          "extractvalue indices invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
-  Constant *FC = ConstantFoldExtractValueInstruction(
-                                        ReqTy->getContext(), Agg, Idxs, NumIdx);
+  Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx);
   assert(FC && "ExtractValue constant expr couldn't be folded!");
   return FC;
 }

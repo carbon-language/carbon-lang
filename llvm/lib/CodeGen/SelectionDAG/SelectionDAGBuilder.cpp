@@ -2317,8 +2317,7 @@ void SelectionDAGBuilder::visitShuffleVector(User &I) {
   // Convert the ConstantVector mask operand into an array of ints, with -1
   // representing undef values.
   SmallVector<Constant*, 8> MaskElts;
-  cast<Constant>(I.getOperand(2))->getVectorElements(*DAG.getContext(),
-                                                     MaskElts);
+  cast<Constant>(I.getOperand(2))->getVectorElements(MaskElts);
   unsigned MaskNumElts = MaskElts.size();
   for (unsigned i = 0; i != MaskNumElts; ++i) {
     if (isa<UndefValue>(MaskElts[i]))

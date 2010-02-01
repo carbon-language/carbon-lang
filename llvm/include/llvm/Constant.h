@@ -104,8 +104,7 @@ public:
   /// type, returns the elements of the vector in the specified smallvector.
   /// This handles breaking down a vector undef into undef elements, etc.  For
   /// constant exprs and other cases we can't handle, we return an empty vector.
-  void getVectorElements(LLVMContext &Context, 
-                         SmallVectorImpl<Constant*> &Elts) const;
+  void getVectorElements(SmallVectorImpl<Constant*> &Elts) const;
 
   /// destroyConstant - Called if some element of this constant is no longer
   /// valid.  At this point only other constants may be on the use_list for this
