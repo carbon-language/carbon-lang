@@ -112,3 +112,12 @@ define i1 @test11(i32 %x) {
 ; CHECK: ret i1 true
 }
 
+; PR6195
+define i1 @test12(i1 %A) {
+  %S = select i1 %A, i64 -4294967295, i64 8589934591
+  %B = icmp ne i64 bitcast (<2 x i32> <i32 1, i32 -1> to i64), %S
+  ret i1 %B
+; CHECK: @test12
+; CHECK-NEXT: %B = select i1
+; CHECK-NEXT: ret i1 %B
+}
