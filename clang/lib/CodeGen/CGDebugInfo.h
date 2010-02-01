@@ -68,6 +68,7 @@ class CGDebugInfo {
   llvm::BumpPtrAllocator DebugInfoNames;
 
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
+  llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
 
   /// Helper functions for getOrCreateType.
   llvm::DIType CreateType(const BuiltinType *Ty, llvm::DICompileUnit U);
@@ -89,7 +90,9 @@ class CGDebugInfo {
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DICompileUnit Unit);
   llvm::DIType getOrCreateVTablePtrType(llvm::DICompileUnit Unit);
-  
+  llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N, 
+                                         llvm::DIDescriptor Unit);
+
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DICompileUnit U);

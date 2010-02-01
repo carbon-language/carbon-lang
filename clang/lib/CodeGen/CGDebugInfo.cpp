@@ -57,6 +57,8 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *D,
      I = RegionMap.find(Parent);
    if (I != RegionMap.end())
      return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(I->second));
+   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Parent))
+     return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
   }
   return CompileUnit;
 }
@@ -1801,4 +1803,27 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
+}
+
+/// getOrCreateNamesSpace - Return namespace descriptor for the given
+/// namespace decl.
+llvm::DINameSpace 
+CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl, 
+                                  llvm::DIDescriptor Unit) {
+  llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH>::iterator I = 
+    NameSpaceCache.find(NSDecl);
+  if (I != NameSpaceCache.end())
+    return llvm::DINameSpace(cast<llvm::MDNode>(I->second));
+  
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  PresumedLoc PLoc = SM.getPresumedLoc(NSDecl->getLocation());
+  unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
+
+  llvm::DIDescriptor Context = 
+    getContextDescriptor(NSDecl, Unit);
+  llvm::DINameSpace NS =
+    DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
+	llvm::DICompileUnit(Unit.getNode()), LineNo);
+  NameSpaceCache[NSDecl] = llvm::WeakVH(NS.getNode());
+  return NS;
 }
