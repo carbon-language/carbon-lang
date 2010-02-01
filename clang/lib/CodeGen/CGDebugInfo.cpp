@@ -59,7 +59,7 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
     I = RegionMap.find(Context);
   if (I != RegionMap.end())
     return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(I->second));
-  
+
   // Check namespace.
   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
     return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
@@ -789,8 +789,11 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // FIXME : Use RecordDecl's DeclContext's descriptor. As a temp. step
   // use type's name in FwdDecl.
   std::string STy = QualType(Ty, 0).getAsString();
+  llvm::DIDescriptor FDContext = 
+    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, STy.c_str(),
+    DebugFactory.CreateCompositeType(Tag, FDContext,
+                                     STy.c_str(),
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
 
@@ -832,8 +835,11 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
+  llvm::DIDescriptor RDContext =  
+    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
   llvm::DICompositeType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, Unit, RD->getName(),
+    DebugFactory.CreateCompositeType(Tag, RDContext,
+                                     RD->getName(),
                                      DefUnit, Line, Size, Align, 0, 0, 
                                      llvm::DIType(), Elements, 
                                      0, ContainingType);
