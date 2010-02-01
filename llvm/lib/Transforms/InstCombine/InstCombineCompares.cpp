@@ -1589,16 +1589,16 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
 Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   bool Changed = false;
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   
   /// Orders the operands of the compare so that they are listed from most
   /// complex to least complex.  This puts constants before unary operators,
   /// before binary operators.
-  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1))) {
+  if (getComplexity(Op0) < getComplexity(Op1)) {
     I.swapOperands();
+    std::swap(Op0, Op1);
     Changed = true;
   }
-  
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   
   if (Value *V = SimplifyICmpInst(I.getPredicate(), Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
@@ -1606,7 +1606,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   const Type *Ty = Op0->getType();
 
   // icmp's with boolean values can always be turned into bitwise operations
-  if (Ty == Type::getInt1Ty(I.getContext())) {
+  if (Ty->isInteger(1)) {
     switch (I.getPredicate()) {
     default: llvm_unreachable("Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
