@@ -3747,6 +3747,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
+    // FIXME: currently, we get here only if OptLevel != CodeGenOpt::None.
+    // The real handling of this intrinsic is in FastISel.
     if (OptLevel != CodeGenOpt::None)
       // FIXME: Variable debug info is not supported here.
       return 0;
@@ -3771,6 +3773,39 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0; // VLAs.
     int FI = SI->second;
 
+    if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
+      if (MDNode *Dbg = DI.getMetadata("dbg"))
+        MMI->setVariableDbgInfo(Variable, FI, Dbg);
+    return 0;
+  }
+  case Intrinsic::dbg_value: {
+    // FIXME: currently, we get here only if OptLevel != CodeGenOpt::None.
+    // The real handling of this intrinsic is in FastISel.
+    if (OptLevel != CodeGenOpt::None)
+      // FIXME: Variable debug info is not supported here.
+      return 0;
+    DwarfWriter *DW = DAG.getDwarfWriter();
+    if (!DW)
+      return 0;
+    DbgValueInst &DI = cast<DbgValueInst>(I);
+    if (!DIDescriptor::ValidDebugInfo(DI.getVariable(), CodeGenOpt::None))
+      return 0;
+
+    MDNode *Variable = DI.getVariable();
+    Value *V = DI.getValue();
+    if (!V)
+      return 0;
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
+      V = BCI->getOperand(0);
+    AllocaInst *AI = dyn_cast<AllocaInst>(V);
+    // Don't handle byval struct arguments or VLAs, for example.
+    if (!AI)
+      return 0;
+    DenseMap<const AllocaInst*, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(AI);
+    if (SI == FuncInfo.StaticAllocaMap.end())
+      return 0; // VLAs.
+    int FI = SI->second;
     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo())
       if (MDNode *Dbg = DI.getMetadata("dbg"))
         MMI->setVariableDbgInfo(Variable, FI, Dbg);
