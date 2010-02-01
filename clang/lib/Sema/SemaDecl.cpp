@@ -5632,6 +5632,45 @@ void Sema::ActOnFields(Scope* S,
     ProcessDeclAttributeList(S, Record, Attr);
 }
 
+/// \brief Determine whether the given integral value is representable within
+/// the given type T.
+static bool isRepresentableIntegerValue(ASTContext &Context,
+                                        llvm::APSInt &Value,
+                                        QualType T) {
+  assert(T->isIntegralType() && "Integral type required!");
+  unsigned BitWidth = Context.getTypeSize(T);
+  
+  if (Value.isUnsigned() || Value.isNonNegative())
+    return Value.getActiveBits() < BitWidth;
+  
+  return Value.getMinSignedBits() <= BitWidth;
+}
+
+// \brief Given an integral type, return the next larger integral type
+// (or a NULL type of no such type exists).
+static QualType getNextLargerIntegralType(ASTContext &Context, QualType T) {
+  // FIXME: Int128/UInt128 support, which also needs to be introduced into 
+  // enum checking below.
+  assert(T->isIntegralType() && "Integral type required!");
+  const unsigned NumTypes = 4;
+  QualType SignedIntegralTypes[NumTypes] = { 
+    Context.ShortTy, Context.IntTy, Context.LongTy, Context.LongLongTy
+  };
+  QualType UnsignedIntegralTypes[NumTypes] = { 
+    Context.UnsignedShortTy, Context.UnsignedIntTy, Context.UnsignedLongTy, 
+    Context.UnsignedLongLongTy
+  };
+  
+  unsigned BitWidth = Context.getTypeSize(T);
+  QualType *Types = T->isSignedIntegerType()? SignedIntegralTypes
+                                            : UnsignedIntegralTypes;
+  for (unsigned I = 0; I != NumTypes; ++I)
+    if (Context.getTypeSize(Types[I]) > BitWidth)
+      return Types[I];
+  
+  return QualType();
+}
+
 EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
                                           EnumConstantDecl *LastEnumConst,
                                           SourceLocation IdLoc,
@@ -5639,24 +5678,45 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
                                           ExprArg val) {
   Expr *Val = (Expr *)val.get();
 
-  llvm::APSInt EnumVal(32);
+  unsigned IntWidth = Context.Target.getIntWidth();
+  llvm::APSInt EnumVal(IntWidth);
   QualType EltTy;
   if (Val) {
     if (Enum->isDependentType())
       EltTy = Context.DependentTy;
     else {
-      // Make sure to promote the operand type to int.
-      UsualUnaryConversions(Val);
-      if (Val != val.get()) {
-        val.release();
-        val = Val;
-      }
-
       // C99 6.7.2.2p2: Make sure we have an integer constant expression.
       SourceLocation ExpLoc;
       if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
         Val = 0;
-      } else {
+      } else {        
+        if (!getLangOptions().CPlusPlus) {
+          // C99 6.7.2.2p2:
+          //   The expression that defines the value of an enumeration constant
+          //   shall be an integer constant expression that has a value 
+          //   representable as an int.
+          
+          // Complain if the value is not representable in an int.
+          if (!isRepresentableIntegerValue(Context, EnumVal, Context.IntTy))
+            Diag(IdLoc, diag::ext_enum_value_not_int)
+              << EnumVal.toString(10) << Val->getSourceRange()
+              << EnumVal.isNonNegative();
+          else if (!Context.hasSameType(Val->getType(), Context.IntTy)) {
+            // Force the type of the expression to 'int'.
+            ImpCastExprToType(Val, Context.IntTy, CastExpr::CK_IntegralCast);
+            
+            if (Val != val.get()) {
+              val.release();
+              val = Val;
+            }
+          }
+        }
+        
+        // C++0x [dcl.enum]p5:
+        //   If the underlying type is not fixed, the type of each enumerator
+        //   is the type of its initializing value:
+        //     - If an initializer is specified for an enumerator, the 
+        //       initializing value has the same type as the expression.
         EltTy = Val->getType();
       }
     }
@@ -5665,25 +5725,76 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   if (!Val) {
     if (Enum->isDependentType())
       EltTy = Context.DependentTy;
-    else if (LastEnumConst) {
+    else if (!LastEnumConst) {
+      // C++0x [dcl.enum]p5:
+      //   If the underlying type is not fixed, the type of each enumerator
+      //   is the type of its initializing value:
+      //     - If no initializer is specified for the first enumerator, the 
+      //       initializing value has an unspecified integral type.
+      //
+      // GCC uses 'int' for its unspecified integral type, as does 
+      // C99 6.7.2.2p3.
+      EltTy = Context.IntTy;
+    } else {
       // Assign the last value + 1.
       EnumVal = LastEnumConst->getInitVal();
       ++EnumVal;
+      EltTy = LastEnumConst->getType();
 
       // Check for overflow on increment.
-      if (EnumVal < LastEnumConst->getInitVal())
-        Diag(IdLoc, diag::warn_enum_value_overflow);
-
-      EltTy = LastEnumConst->getType();
-    } else {
-      // First value, set to zero.
-      EltTy = Context.IntTy;
-      EnumVal.zextOrTrunc(static_cast<uint32_t>(Context.getTypeSize(EltTy)));
-      EnumVal.setIsSigned(true);
+      if (EnumVal < LastEnumConst->getInitVal()) {
+        // C++0x [dcl.enum]p5:
+        //   If the underlying type is not fixed, the type of each enumerator
+        //   is the type of its initializing value:
+        //
+        //     - Otherwise the type of the initializing value is the same as
+        //       the type of the initializing value of the preceding enumerator
+        //       unless the incremented value is not representable in that type,
+        //       in which case the type is an unspecified integral type 
+        //       sufficient to contain the incremented value. If no such type
+        //       exists, the program is ill-formed.
+        QualType T = getNextLargerIntegralType(Context, EltTy);
+        if (T.isNull()) {
+          // There is no integral type larger enough to represent this 
+          // value. Complain, then allow the value to wrap around.
+          EnumVal = LastEnumConst->getInitVal();
+          EnumVal.zext(EnumVal.getBitWidth() * 2);
+          Diag(IdLoc, diag::warn_enumerator_too_large)
+            << EnumVal.toString(10);
+        } else {
+          EltTy = T;
+        }
+        
+        // Retrieve the last enumerator's value, extent that type to the
+        // type that is supposed to be large enough to represent the incremented
+        // value, then increment.
+        EnumVal = LastEnumConst->getInitVal();
+        EnumVal.setIsSigned(EltTy->isSignedIntegerType());
+        EnumVal.zextOrTrunc(Context.getTypeSize(EltTy));
+        ++EnumVal;        
+        
+        // If we're not in C++, diagnose the overflow of enumerator values,
+        // which in C99 means that the enumerator value is not representable in
+        // an int (C99 6.7.2.2p2). However, we support GCC's extension that
+        // permits enumerator values that are representable in some larger
+        // integral type.
+        if (!getLangOptions().CPlusPlus && !T.isNull())
+          Diag(IdLoc, diag::warn_enum_value_overflow);
+      } else if (!getLangOptions().CPlusPlus &&
+                 !isRepresentableIntegerValue(Context, EnumVal, EltTy)) {
+        // Enforce C99 6.7.2.2p2 even when we compute the next value.
+        Diag(IdLoc, diag::ext_enum_value_not_int)
+          << EnumVal.toString(10) << 1;
+      }
     }
   }
 
-  assert(!EltTy.isNull() && "Enum constant with NULL type");
+  if (!Enum->isDependentType()) {
+    // Make the enumerator value match the signedness and size of the 
+    // enumerator's type.
+    EnumVal.zextOrTrunc(Context.getTypeSize(EltTy));
+    EnumVal.setIsSigned(EltTy->isSignedIntegerType());
+  }
   
   val.release();
   return EnumConstantDecl::Create(Context, Enum, IdLoc, Id, EltTy,
@@ -5787,18 +5898,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       cast_or_null<EnumConstantDecl>(Elements[i].getAs<Decl>());
     if (!ECD) continue;  // Already issued a diagnostic.
 
-    // If the enum value doesn't fit in an int, emit an extension warning.
     const llvm::APSInt &InitVal = ECD->getInitVal();
-    assert(InitVal.getBitWidth() >= IntWidth &&
-           "Should have promoted value to int");
-    if (!getLangOptions().CPlusPlus && InitVal.getBitWidth() > IntWidth) {
-      llvm::APSInt V(InitVal);
-      V.trunc(IntWidth);
-      V.extend(InitVal.getBitWidth());
-      if (V != InitVal)
-        Diag(ECD->getLocation(), diag::ext_enum_value_not_int)
-          << InitVal.toString(10);
-    }
 
     // Keep track of the size of positive and negative values.
     if (InitVal.isUnsigned() || InitVal.isNonNegative())
@@ -5910,23 +6010,17 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     // enumerator value fits in an int, type it as an int, otherwise type it the
     // same as the enumerator decl itself.  This means that in "enum { X = 1U }"
     // that X has type 'int', not 'unsigned'.
-    if (!getLangOptions().CPlusPlus && ECD->getType() == Context.IntTy)
-      continue;
 
     // Determine whether the value fits into an int.
     llvm::APSInt InitVal = ECD->getInitVal();
-    bool FitsInInt;
-    if (InitVal.isUnsigned() || !InitVal.isNegative())
-      FitsInInt = InitVal.getActiveBits() < IntWidth;
-    else
-      FitsInInt = InitVal.getMinSignedBits() <= IntWidth;
 
     // If it fits into an integer type, force it.  Otherwise force it to match
     // the enum decl type.
     QualType NewTy;
     unsigned NewWidth;
     bool NewSign;
-    if (FitsInInt && !getLangOptions().CPlusPlus) {
+    if (!getLangOptions().CPlusPlus &&
+        isRepresentableIntegerValue(Context, InitVal, Context.IntTy)) {
       NewTy = Context.IntTy;
       NewWidth = IntWidth;
       NewSign = true;

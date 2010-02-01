@@ -1460,9 +1460,13 @@ def err_forward_ref_enum : Error<
 def err_redefinition_of_enumerator : Error<"redefinition of enumerator %0">;
 def err_duplicate_member : Error<"duplicate member %0">;
 def ext_enum_value_not_int : Extension<
-  "ISO C restricts enumerator values to range of 'int' (%0 is too large)">;
+  "ISO C restricts enumerator values to range of 'int' (%0 is too "
+  "%select{small|large}1)">;
 def warn_enum_too_large : Warning<
   "enumeration values exceed range of largest integer">;
+def warn_enumerator_too_large : Warning<
+  "enumerator value %0 is not representable in the largest integer type">;
+  
 def warn_illegal_constant_array_size : Extension<
   "size of static array must be an integer constant expression">;
 def err_vla_decl_in_file_scope : Error<

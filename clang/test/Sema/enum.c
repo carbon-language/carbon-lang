@@ -92,3 +92,7 @@ typedef enum {
 } an_enum;
 // FIXME: why is this only a warning?
 char * s = (an_enum) an_enumerator; // expected-warning {{incompatible integer to pointer conversion initializing 'an_enum', expected 'char *'}}
+
+// PR4515
+enum PR4515 {PR4515a=1u,PR4515b=(PR4515a-2)/2};
+int CheckPR4515[PR4515b==0?1:-1];
