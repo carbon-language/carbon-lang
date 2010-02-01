@@ -232,10 +232,10 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
   AWI = AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
 
   Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(&AWI, 1),
-					 Type::getInt8PtrTy(*Context),
-					 Type::getInt8PtrTy(*Context),
+					                               Type::getInt8PtrTy(*Context),
+					                               Type::getInt8PtrTy(*Context),
                                          Type::getInt32Ty(*Context),
-					 TD->getIntPtrType(*Context),
+					                               TD->getIntPtrType(*Context),
                                          NULL);
   CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
 
