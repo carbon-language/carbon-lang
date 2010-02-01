@@ -492,26 +492,31 @@ namespace llvm {
 
     /// bitsEq - Return true if this has the same number of bits as VT.
     bool bitsEq(EVT VT) const {
+      if (EVT::operator==(VT)) return true;
       return getSizeInBits() == VT.getSizeInBits();
     }
 
     /// bitsGT - Return true if this has more bits than VT.
     bool bitsGT(EVT VT) const {
+      if (EVT::operator==(VT)) return false;
       return getSizeInBits() > VT.getSizeInBits();
     }
 
     /// bitsGE - Return true if this has no less bits than VT.
     bool bitsGE(EVT VT) const {
+      if (EVT::operator==(VT)) return true;
       return getSizeInBits() >= VT.getSizeInBits();
     }
 
     /// bitsLT - Return true if this has less bits than VT.
     bool bitsLT(EVT VT) const {
+      if (EVT::operator==(VT)) return false;
       return getSizeInBits() < VT.getSizeInBits();
     }
 
     /// bitsLE - Return true if this has no more bits than VT.
     bool bitsLE(EVT VT) const {
+      if (EVT::operator==(VT)) return true;
       return getSizeInBits() <= VT.getSizeInBits();
     }
 
