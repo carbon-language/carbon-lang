@@ -60,6 +60,7 @@ STATISTIC(NumPRELoad,   "Number of loads PRE'd");
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
 static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
+static cl::opt<bool> EnableFullLoadPRE("enable-full-load-pre", cl::init(false));
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -1537,10 +1538,12 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // at least one of the values is LI.  Since this means that we won't be able
   // to eliminate LI even if we insert uses in the other predecessors, we will
   // end up increasing code size.  Reject this by scanning for LI.
-  for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-    if (ValuesPerBlock[i].isSimpleValue() &&
-        ValuesPerBlock[i].getSimpleValue() == LI)
-      return false;
+  if (!EnableFullLoadPRE) {
+    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
+      if (ValuesPerBlock[i].isSimpleValue() &&
+          ValuesPerBlock[i].getSimpleValue() == LI)
+        return false;
+  }
 
   // FIXME: It is extremely unclear what this loop is doing, other than
   // artificially restricting loadpre.
@@ -1564,13 +1567,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       return false;
   }
 
-  // Okay, we have some hope :).  Check to see if the loaded value is fully
-  // available in all but one predecessor.
-  // FIXME: If we could restructure the CFG, we could make a common pred with
-  // all the preds that don't have an available LI and insert a new load into
-  // that one block.
-  BasicBlock *UnavailablePred = 0;
-
+  // Check to see how many predecessors have the loaded value fully
+  // available.
+  DenseMap<BasicBlock*, Value*> PredLoads;
   DenseMap<BasicBlock*, char> FullyAvailableBlocks;
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
     FullyAvailableBlocks[ValuesPerBlock[i].BB] = true;
@@ -1579,81 +1578,93 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB);
        PI != E; ++PI) {
-    if (IsValueFullyAvailableInBlock(*PI, FullyAvailableBlocks))
+    BasicBlock *Pred = *PI;
+    if (IsValueFullyAvailableInBlock(Pred, FullyAvailableBlocks)) {
       continue;
-
-    // If this load is not available in multiple predecessors, reject it.
-    if (UnavailablePred && UnavailablePred != *PI)
+    }
+    PredLoads[Pred] = 0;
+    // We don't currently handle critical edges :(
+    if (Pred->getTerminator()->getNumSuccessors() != 1) {
+      DEBUG(dbgs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
+            << Pred->getName() << "': " << *LI << '\n');
       return false;
-    UnavailablePred = *PI;
+    }
   }
 
-  assert(UnavailablePred != 0 &&
+  // Decide whether PRE is profitable for this load.
+  unsigned NumUnavailablePreds = PredLoads.size();
+  assert(NumUnavailablePreds != 0 &&
          "Fully available value should be eliminated above!");
-
-  // We don't currently handle critical edges :(
-  if (UnavailablePred->getTerminator()->getNumSuccessors() != 1) {
-    DEBUG(dbgs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
-                 << UnavailablePred->getName() << "': " << *LI << '\n');
-    return false;
+  if (!EnableFullLoadPRE) {
+    // If this load is unavailable in multiple predecessors, reject it.
+    // FIXME: If we could restructure the CFG, we could make a common pred with
+    // all the preds that don't have an available LI and insert a new load into
+    // that one block.
+    if (NumUnavailablePreds != 1)
+      return false;
   }
-  
-  // Do PHI translation to get its value in the predecessor if necessary.  The
-  // returned pointer (if non-null) is guaranteed to dominate UnavailablePred.
-  //
+
+  // Check if the load can safely be moved to all the unavailable predecessors.
+  bool CanDoPRE = true;
   SmallVector<Instruction*, 8> NewInsts;
-  
-  // If all preds have a single successor, then we know it is safe to insert the
-  // load on the pred (?!?), so we can insert code to materialize the pointer if
-  // it is not available.
-  PHITransAddr Address(LI->getOperand(0), TD);
-  Value *LoadPtr = 0;
-  if (allSingleSucc) {
-    LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
-                                                *DT, NewInsts);
-  } else {
-    Address.PHITranslateValue(LoadBB, UnavailablePred);
-    LoadPtr = Address.getAddr();
+  for (DenseMap<BasicBlock*, Value*>::iterator I = PredLoads.begin(),
+         E = PredLoads.end(); I != E; ++I) {
+    BasicBlock *UnavailablePred = I->first;
+
+    // Do PHI translation to get its value in the predecessor if necessary.  The
+    // returned pointer (if non-null) is guaranteed to dominate UnavailablePred.
+
+    // If all preds have a single successor, then we know it is safe to insert
+    // the load on the pred (?!?), so we can insert code to materialize the
+    // pointer if it is not available.
+    PHITransAddr Address(LI->getOperand(0), TD);
+    Value *LoadPtr = 0;
+    if (allSingleSucc) {
+      LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
+                                                  *DT, NewInsts);
+    } else {
+      Address.PHITranslateValue(LoadBB, UnavailablePred);
+      LoadPtr = Address.getAddr();
     
-    // Make sure the value is live in the predecessor.
-    if (Instruction *Inst = dyn_cast_or_null<Instruction>(LoadPtr))
-      if (!DT->dominates(Inst->getParent(), UnavailablePred))
-        LoadPtr = 0;
+      // Make sure the value is live in the predecessor.
+      if (Instruction *Inst = dyn_cast_or_null<Instruction>(LoadPtr))
+        if (!DT->dominates(Inst->getParent(), UnavailablePred))
+          LoadPtr = 0;
+    }
+
+    // If we couldn't find or insert a computation of this phi translated value,
+    // we fail PRE.
+    if (LoadPtr == 0) {
+      DEBUG(dbgs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
+            << *LI->getOperand(0) << "\n");
+      CanDoPRE = false;
+      break;
+    }
+
+    // Make sure it is valid to move this load here.  We have to watch out for:
+    //  @1 = getelementptr (i8* p, ...
+    //  test p and branch if == 0
+    //  load @1
+    // It is valid to have the getelementptr before the test, even if p can be 0,
+    // as getelementptr only does address arithmetic.
+    // If we are not pushing the value through any multiple-successor blocks
+    // we do not have this case.  Otherwise, check that the load is safe to
+    // put anywhere; this can be improved, but should be conservatively safe.
+    if (!allSingleSucc &&
+        // FIXME: REEVALUTE THIS.
+        !isSafeToLoadUnconditionally(LoadPtr,
+                                     UnavailablePred->getTerminator(),
+                                     LI->getAlignment(), TD)) {
+      CanDoPRE = false;
+      break;
+    }
+
+    I->second = LoadPtr;
   }
 
-  // If we couldn't find or insert a computation of this phi translated value,
-  // we fail PRE.
-  if (LoadPtr == 0) {
-    assert(NewInsts.empty() && "Shouldn't insert insts on failure");
-    DEBUG(dbgs() << "COULDN'T INSERT PHI TRANSLATED VALUE OF: "
-                 << *LI->getOperand(0) << "\n");
-    return false;
-  }
-
-  // Assign value numbers to these new instructions.
-  for (unsigned i = 0, e = NewInsts.size(); i != e; ++i) {
-    // FIXME: We really _ought_ to insert these value numbers into their 
-    // parent's availability map.  However, in doing so, we risk getting into
-    // ordering issues.  If a block hasn't been processed yet, we would be
-    // marking a value as AVAIL-IN, which isn't what we intend.
-    VN.lookup_or_add(NewInsts[i]);
-  }
-  
-  // Make sure it is valid to move this load here.  We have to watch out for:
-  //  @1 = getelementptr (i8* p, ...
-  //  test p and branch if == 0
-  //  load @1
-  // It is valid to have the getelementptr before the test, even if p can be 0,
-  // as getelementptr only does address arithmetic.
-  // If we are not pushing the value through any multiple-successor blocks
-  // we do not have this case.  Otherwise, check that the load is safe to
-  // put anywhere; this can be improved, but should be conservatively safe.
-  if (!allSingleSucc &&
-      // FIXME: REEVALUTE THIS.
-      !isSafeToLoadUnconditionally(LoadPtr,
-                                   UnavailablePred->getTerminator(),
-                                   LI->getAlignment(), TD)) {
-    assert(NewInsts.empty() && "Should not have inserted instructions");
+  if (!CanDoPRE) {
+    while (!NewInsts.empty())
+      NewInsts.pop_back_val()->eraseFromParent();
     return false;
   }
 
@@ -1665,12 +1676,28 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
           dbgs() << "INSERTED " << NewInsts.size() << " INSTS: "
                  << *NewInsts.back() << '\n');
   
-  Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
-                                LI->getAlignment(),
-                                UnavailablePred->getTerminator());
+  // Assign value numbers to the new instructions.
+  for (unsigned i = 0, e = NewInsts.size(); i != e; ++i) {
+    // FIXME: We really _ought_ to insert these value numbers into their 
+    // parent's availability map.  However, in doing so, we risk getting into
+    // ordering issues.  If a block hasn't been processed yet, we would be
+    // marking a value as AVAIL-IN, which isn't what we intend.
+    VN.lookup_or_add(NewInsts[i]);
+  }
 
-  // Add the newly created load.
-  ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,NewLoad));
+  for (DenseMap<BasicBlock*, Value*>::iterator I = PredLoads.begin(),
+         E = PredLoads.end(); I != E; ++I) {
+    BasicBlock *UnavailablePred = I->first;
+    Value *LoadPtr = I->second;
+
+    Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
+                                  LI->getAlignment(),
+                                  UnavailablePred->getTerminator());
+
+    // Add the newly created load.
+    ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,
+                                                        NewLoad));
+  }
 
   // Perform PHI construction.
   Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
