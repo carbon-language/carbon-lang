@@ -153,10 +153,6 @@ public:
       this->TLSSupported = false;
     }
 
-  virtual const char *getUnicodeStringSection() const {
-    return "__TEXT,__ustring";
-  }
-
   virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
     // Let MCSectionMachO validate this.
     llvm::StringRef Segment, Section;

@@ -1480,11 +1480,9 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // String pointer.
   llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());
 
-  const char *Sect = 0;
   llvm::GlobalValue::LinkageTypes Linkage;
   bool isConstant;
   if (isUTF16) {
-    Sect = getContext().Target.getUnicodeStringSection();
     // FIXME: why do utf strings get "_" labels instead of "L" labels?
     Linkage = llvm::GlobalValue::InternalLinkage;
     // Note: -fwritable-strings doesn't make unicode CFStrings writable, but
@@ -1498,8 +1496,6 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(), C->getType(), isConstant, Linkage, C,
                              ".str");
-  if (Sect)
-    GV->setSection(Sect);
   if (isUTF16) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
     GV->setAlignment(Align.getQuantity());

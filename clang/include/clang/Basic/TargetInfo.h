@@ -320,12 +320,6 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
-  /// getUnicodeStringSection - Return the section to use for unicode
-  /// string literals, or 0 if no special section is used.
-  virtual const char *getUnicodeStringSection() const {
-    return 0;
-  }
-
   /// getCFStringSection - Return the section to use for CFString
   /// literals, or 0 if no special section is used.
   virtual const char *getCFStringSection() const {
