@@ -15,6 +15,7 @@
 
 #include "SemaOverload.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "clang/Parse/Action.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -449,7 +450,11 @@ public:
       /// \brief When Kind == SK_ResolvedOverloadedFunction or Kind ==
       /// SK_UserConversion, the function that the expression should be 
       /// resolved to or the conversion function to call, respectively.
-      FunctionDecl *Function;
+      ///
+      /// Always a FunctionDecl.
+      /// For conversion decls, the naming class is the source type.
+      /// For construct decls, the naming class is the target type.
+      DeclAccessPair Function;
       
       /// \brief When Kind = SK_ConversionSequence, the implicit conversion
       /// sequence 
@@ -616,7 +621,9 @@ public:
   
   /// \brief Add a new step invoking a conversion function, which is either
   /// a constructor or a conversion function.
-  void AddUserConversionStep(FunctionDecl *Function, QualType T);
+  void AddUserConversionStep(FunctionDecl *Function,
+                             AccessSpecifier Access,
+                             QualType T);
   
   /// \brief Add a new step that performs a qualification conversion to the
   /// given type.
@@ -631,6 +638,7 @@ public:
 
   /// \brief Add a constructor-initialization step.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
+                                        AccessSpecifier Access,
                                         QualType T);
 
   /// \brief Add a zero-initialization step.

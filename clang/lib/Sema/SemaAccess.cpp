@@ -306,7 +306,24 @@ bool Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
   return false;
 }
 
-/// Checks access to an overloaded member operator.
+/// Checks access to a constructor.
+bool Sema::CheckConstructorAccess(SourceLocation UseLoc,
+                                  CXXConstructorDecl *Constructor,
+                                  AccessSpecifier Access) {
+  if (!getLangOptions().AccessControl)
+    return false;
+
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(Constructor->getParent());
+
+  LookupResult R(*this, Constructor->getDeclName(), UseLoc, LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  R.setNamingClass(NamingClass);
+  return CheckAccess(R, Constructor, Access);
+}
+
+/// Checks access to an overloaded member operator, including
+/// conversion operators.
 bool Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
                                      Expr *ObjectExpr,
                                      NamedDecl *MemberOperator,

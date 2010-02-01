@@ -15,6 +15,8 @@
 //   to create and destroy a static data member is performed as if
 //   these calls appeared in the scope of the member's class.
 
+struct Public {}; struct Protected {}; struct Private {};
+
 namespace test0 {
   class A {
     typedef int type; // expected-note {{declared private here}}
@@ -23,4 +25,30 @@ namespace test0 {
 
   A::type foo() { } // expected-error {{access to private member}}
   A::type A::foo() { }
+}
+
+// conversion decls
+namespace test1 {
+  class A {
+  public:
+    A();
+    operator Public ();
+    A(Public);
+  protected:
+    operator Protected (); // expected-note {{declared protected here}}
+    A(Protected); // expected-note {{declared protected here}}
+  private:
+    operator Private (); // expected-note {{declared private here}}
+    A(Private); // expected-note {{declared private here}}
+  };
+
+  void test() {
+    A a;
+    Public pub = a;
+    Protected prot = a; // expected-error {{access to protected member}}
+    Private priv = a; // expected-error {{access to private member}}
+    A apub = pub;
+    A aprot = prot; // expected-error {{access to protected member}}
+    A apriv = priv; // expected-error {{access to private member}}
+  }
 }

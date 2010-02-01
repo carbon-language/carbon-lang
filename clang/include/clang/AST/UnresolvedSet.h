@@ -16,7 +16,6 @@
 #define LLVM_CLANG_AST_UNRESOLVEDSET_H
 
 #include <iterator>
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/Basic/Specifiers.h"
 
@@ -24,12 +23,58 @@ namespace clang {
 
 class NamedDecl;
 
+/// A POD class for pairing a NamedDecl* with an access specifier.
+/// Can be put into unions.
+class DeclAccessPair {
+  NamedDecl *Ptr; // we'd use llvm::PointerUnion, but it isn't trivial
+
+  enum { Mask = 0x3 };
+
+public:
+  static DeclAccessPair make(NamedDecl *D, AccessSpecifier AS) {
+    DeclAccessPair p;
+    p.set(D, AS);
+    return p;
+  }
+
+  NamedDecl *getDecl() const {
+    return (NamedDecl*) (~Mask & (uintptr_t) Ptr);
+  }
+  AccessSpecifier getAccess() const {
+    return AccessSpecifier(Mask & (uintptr_t) Ptr);
+  }
+
+  void setDecl(NamedDecl *D) {
+    set(D, getAccess());
+  }
+  void setAccess(AccessSpecifier AS) {
+    set(getDecl(), AS);
+  }
+  void set(NamedDecl *D, AccessSpecifier AS) {
+    Ptr = reinterpret_cast<NamedDecl*>(uintptr_t(AS) |
+                                       reinterpret_cast<uintptr_t>(D));
+  }
+
+  operator NamedDecl*() const { return getDecl(); }
+  NamedDecl *operator->() const { return getDecl(); }
+};
+}
+
+// Take a moment to tell SmallVector that this is POD.
+namespace llvm {
+template<typename> struct isPodLike;
+template<> struct isPodLike<clang::DeclAccessPair> {
+   static const bool value = true;
+};
+}
+
+namespace clang {
+
 /// The iterator over UnresolvedSets.  Serves as both the const and
 /// non-const iterator.
 class UnresolvedSetIterator {
-
-  typedef llvm::PointerIntPair<NamedDecl*, 2> DeclEntry;
-  typedef llvm::SmallVectorImpl<DeclEntry> DeclsTy;
+private:
+  typedef llvm::SmallVectorImpl<DeclAccessPair> DeclsTy;
   typedef DeclsTy::iterator IteratorTy;
 
   IteratorTy ir;
@@ -47,8 +92,8 @@ public:
   typedef NamedDecl *reference;
   typedef std::iterator_traits<IteratorTy>::iterator_category iterator_category;
 
-  NamedDecl *getDecl() const { return ir->getPointer(); }
-  AccessSpecifier getAccess() const { return AccessSpecifier(ir->getInt()); }
+  NamedDecl *getDecl() const { return ir->getDecl(); }
+  AccessSpecifier getAccess() const { return ir->getAccess(); }
 
   NamedDecl *operator*() const { return getDecl(); }
   
@@ -87,7 +132,6 @@ public:
 /// in a lot of places, but isn't really worth breaking into its own
 /// header right now.
 class UnresolvedSetImpl {
-  typedef UnresolvedSetIterator::DeclEntry DeclEntry;
   typedef UnresolvedSetIterator::DeclsTy DeclsTy;
 
   // Don't allow direct construction, and only permit subclassing by
@@ -114,7 +158,7 @@ public:
   }
 
   void addDecl(NamedDecl *D, AccessSpecifier AS) {
-    decls().push_back(DeclEntry(D, AS));
+    decls().push_back(DeclAccessPair::make(D, AS));
   }
 
   /// Replaces the given declaration with the new one, once.
@@ -122,19 +166,19 @@ public:
   /// \return true if the set changed
   bool replace(const NamedDecl* Old, NamedDecl *New) {
     for (DeclsTy::iterator I = decls().begin(), E = decls().end(); I != E; ++I)
-      if (I->getPointer() == Old)
-        return (I->setPointer(New), true);
+      if (I->getDecl() == Old)
+        return (I->setDecl(New), true);
     return false;
   }
 
   /// Replaces the declaration at the given iterator with the new one,
   /// preserving the original access bits.
   void replace(iterator I, NamedDecl *New) {
-    I.ir->setPointer(New);
+    I.ir->setDecl(New);
   }
 
   void replace(iterator I, NamedDecl *New, AccessSpecifier AS) {
-    *I.ir = DeclEntry(New, AS);
+    I.ir->set(New, AS);
   }
 
   void erase(unsigned I) {
@@ -148,7 +192,7 @@ public:
   }
 
   void setAccess(iterator I, AccessSpecifier AS) {
-    I.ir->setInt(AS);
+    I.ir->setAccess(AS);
   }
 
   void clear() { decls().clear(); }
@@ -161,41 +205,8 @@ public:
     decls().append(I.ir, E.ir);
   }
 
-  /// A proxy reference for implementing operator[].
-  class Proxy {
-    DeclEntry &Ref;
-
-    friend class UnresolvedSetImpl;
-    Proxy(DeclEntry &Ref) : Ref(Ref) {}
-
-  public:
-    NamedDecl *getDecl() const { return Ref.getPointer(); }
-    void setDecl(NamedDecl *D) { Ref.setPointer(D); }
-
-    AccessSpecifier getAccess() const { return AccessSpecifier(Ref.getInt()); }
-    void setAccess(AccessSpecifier AS) const { Ref.setInt(AS); }
-
-    NamedDecl* operator->() const { return getDecl(); }
-    operator NamedDecl*() const { return getDecl(); }
-    Proxy &operator=(const Proxy &D) { Ref = D.Ref; return *this; }
-  };
-  Proxy operator[](unsigned I) { return Proxy(decls()[I]); }
-
-  /// A proxy reference for implementing operator[] const.
-  class ConstProxy {
-    const DeclEntry &Ref;
-
-    friend class UnresolvedSetImpl;
-    ConstProxy(const DeclEntry &Ref) : Ref(Ref) {}
-
-  public:
-    NamedDecl *getDecl() const { return Ref.getPointer(); }
-    AccessSpecifier getAccess() const { return AccessSpecifier(Ref.getInt()); }
-
-    NamedDecl *operator->() const { return getDecl(); }
-    operator NamedDecl*() const { return getDecl(); }
-  };
-  ConstProxy operator[](unsigned I) const { return ConstProxy(decls()[I]); }
+  DeclAccessPair &operator[](unsigned I) { return decls()[I]; }
+  const DeclAccessPair &operator[](unsigned I) const { return decls()[I]; }
 
 private:
   // These work because the only permitted subclass is UnresolvedSetImpl
@@ -211,7 +222,7 @@ private:
 /// A set of unresolved declarations 
 template <unsigned InlineCapacity> class UnresolvedSet :
     public UnresolvedSetImpl {
-  llvm::SmallVector<UnresolvedSetImpl::DeclEntry, InlineCapacity> Decls;
+  llvm::SmallVector<DeclAccessPair, InlineCapacity> Decls;
 };
 
   

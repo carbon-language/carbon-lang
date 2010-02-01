@@ -1971,7 +1971,8 @@ void InitializationSequence::AddAddressOverloadResolutionStep(
   Step S;
   S.Kind = SK_ResolveAddressOfOverloadedFunction;
   S.Type = Function->getType();
-  S.Function = Function;
+  // Access is currently ignored for these.
+  S.Function = DeclAccessPair::make(Function, AccessSpecifier(0));
   Steps.push_back(S);
 }
 
@@ -1992,11 +1993,12 @@ void InitializationSequence::AddReferenceBindingStep(QualType T,
 }
 
 void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
+                                                   AccessSpecifier Access,
                                                    QualType T) {
   Step S;
   S.Kind = SK_UserConversion;
   S.Type = T;
-  S.Function = Function;
+  S.Function = DeclAccessPair::make(Function, Access);
   Steps.push_back(S);
 }
 
@@ -2029,11 +2031,12 @@ void InitializationSequence::AddListInitializationStep(QualType T) {
 void 
 InitializationSequence::AddConstructorInitializationStep(
                                               CXXConstructorDecl *Constructor,
+                                                       AccessSpecifier Access,
                                                          QualType T) {
   Step S;
   S.Kind = SK_ConstructorInitialization;
   S.Type = T;
-  S.Function = Constructor;
+  S.Function = DeclAccessPair::make(Constructor, Access);
   Steps.push_back(S);
 }
 
@@ -2246,7 +2249,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     T2 = cv1T1;
 
   // Add the user-defined conversion step.
-  Sequence.AddUserConversionStep(Function, T2.getNonReferenceType());
+  Sequence.AddUserConversionStep(Function, Best->getAccess(),
+                                 T2.getNonReferenceType());
 
   // Determine whether we need to perform derived-to-base or 
   // cv-qualification adjustments.
@@ -2577,10 +2581,11 @@ static void TryConstructorInitialization(Sema &S,
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
   if (Kind.getKind() == InitializationKind::IK_Copy) {
-    Sequence.AddUserConversionStep(Best->Function, DestType);
+    Sequence.AddUserConversionStep(Best->Function, Best->getAccess(), DestType);
   } else {
     Sequence.AddConstructorInitializationStep(
                                       cast<CXXConstructorDecl>(Best->Function), 
+                                      Best->getAccess(),
                                       DestType);
   }
 }
@@ -2778,13 +2783,13 @@ static void TryUserDefinedConversion(Sema &S,
   if (isa<CXXConstructorDecl>(Function)) {
     // Add the user-defined conversion step. Any cv-qualification conversion is
     // subsumed by the initialization.
-    Sequence.AddUserConversionStep(Function, DestType);
+    Sequence.AddUserConversionStep(Function, Best->getAccess(), DestType);
     return;
   }
 
   // Add the user-defined conversion step that calls the conversion function.
   QualType ConvType = Function->getResultType().getNonReferenceType();
-  Sequence.AddUserConversionStep(Function, ConvType);
+  Sequence.AddUserConversionStep(Function, Best->getAccess(), ConvType);
 
   // If the conversion following the call to the conversion function is 
   // interesting, add it as a separate step.
@@ -3250,7 +3255,9 @@ InitializationSequence::Perform(Sema &S,
     case SK_ResolveAddressOfOverloadedFunction:
       // Overload resolution determined which function invoke; update the 
       // initializer to reflect that choice.
-      CurInit = S.FixOverloadedFunctionReference(move(CurInit), Step->Function);
+      // Access control was done in overload resolution.
+      CurInit = S.FixOverloadedFunctionReference(move(CurInit),
+                              cast<FunctionDecl>(Step->Function.getDecl()));
       break;
         
     case SK_CastDerivedToBaseRValue:
@@ -3329,13 +3336,14 @@ InitializationSequence::Perform(Sema &S,
       // or a conversion function.
       CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
       bool IsCopy = false;
-      if (CXXConstructorDecl *Constructor
-                              = dyn_cast<CXXConstructorDecl>(Step->Function)) {
+      FunctionDecl *Fn = cast<FunctionDecl>(Step->Function.getDecl());
+      AccessSpecifier FnAccess = Step->Function.getAccess();
+      if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
         ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
         SourceLocation Loc = CurInitExpr->getLocStart();
         CurInit.release(); // Ownership transferred into MultiExprArg, below.
-        
+
         // Determine the arguments required to actually perform the constructor
         // call.
         if (S.CompleteConstructorCall(Constructor,
@@ -3350,6 +3358,8 @@ InitializationSequence::Perform(Sema &S,
                                           move_arg(ConstructorArgs));
         if (CurInit.isInvalid())
           return S.ExprError();
+
+        S.CheckConstructorAccess(Kind.getLocation(), Constructor, FnAccess);
         
         CastKind = CastExpr::CK_ConstructorConversion;
         QualType Class = S.Context.getTypeDeclType(Constructor->getParent());
@@ -3358,8 +3368,11 @@ InitializationSequence::Perform(Sema &S,
           IsCopy = true;
       } else {
         // Build a call to the conversion function.
-        CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Step->Function);
+        CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
 
+        S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr,
+                                    Conversion, FnAccess);
+        
         // FIXME: Should we move this initialization into a separate 
         // derived-to-base conversion? I believe the answer is "no", because
         // we don't want to turn off access control here for c-style casts.
@@ -3424,8 +3437,8 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_ConstructorInitialization: {
       CXXConstructorDecl *Constructor
-        = cast<CXXConstructorDecl>(Step->Function);
-      
+        = cast<CXXConstructorDecl>(Step->Function.getDecl());
+
       // Build a call to the selected constructor.
       ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
       SourceLocation Loc = Kind.getLocation();
@@ -3444,6 +3457,9 @@ InitializationSequence::Perform(Sema &S,
                                Entity.getKind() == InitializedEntity::EK_Base);
       if (CurInit.isInvalid())
         return S.ExprError();
+
+      // Only check access if all of that succeeded.
+      S.CheckConstructorAccess(Loc, Constructor, Step->Function.getAccess());
       
       bool Elidable 
         = cast<CXXConstructExpr>((Expr *)CurInit.get())->isElidable();
