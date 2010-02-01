@@ -5403,12 +5403,19 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   SDValue InVec = N->getOperand(0);
 
  if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-   // If the operand is wider than the vector element type then it is implicitly
-   // truncated.  Make that explicit here.
+   // Check if the result type doesn't match the inserted element type. A
+   // SCALAR_TO_VECTOR may truncate the inserted element and the
+   // EXTRACT_VECTOR_ELT may widen the extracted vector.
    EVT EltVT = InVec.getValueType().getVectorElementType();
    SDValue InOp = InVec.getOperand(0);
-   if (InOp.getValueType() != EltVT)
-     return DAG.getNode(ISD::TRUNCATE, InVec.getDebugLoc(), EltVT, InOp);
+   EVT NVT = N->getValueType(0);
+   if (InOp.getValueType() != NVT) {
+     assert(InOp.getValueType().isInteger() && NVT.isInteger());
+     if (NVT.getSizeInBits() > InOp.getValueType().getSizeInBits())
+       return DAG.getNode(ISD::SIGN_EXTEND, InVec.getDebugLoc(), NVT, InOp);
+     else
+       return DAG.getNode(ISD::TRUNCATE, InVec.getDebugLoc(), NVT, InOp);
+   }
    return InOp;
  }
 

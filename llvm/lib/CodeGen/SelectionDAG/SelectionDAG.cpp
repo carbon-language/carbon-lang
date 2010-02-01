@@ -2765,7 +2765,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     // operations are lowered to scalars.
     if (N1.getOpcode() == ISD::INSERT_VECTOR_ELT) {
       // If the indices are the same, return the inserted element.
-      if (N1.getOperand(2) == N2)
+      if (N1.getOperand(2) == N2 && VT == N1.getOperand(1).getValueType())
         return N1.getOperand(1);
       // If the indices are known different, extract the element from
       // the original vector.
