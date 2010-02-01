@@ -1506,15 +1506,16 @@ static FCmpInst::Predicate evaluateFCmpRelation(LLVMContext &Context,
 /// GlobalValues, followed by ConstantExpr's (the most complex).
 ///
 static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
-                                                Constant *V1, 
-                                                Constant *V2,
+                                                Constant *V1, Constant *V2,
                                                 bool isSigned) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare different types of values!");
   if (V1 == V2) return ICmpInst::ICMP_EQ;
 
-  if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
-    if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
+  if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1) &&
+      !isa<BlockAddress>(V1)) {
+    if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2) &&
+        !isa<BlockAddress>(V2)) {
       // We distilled this down to a simple case, use the standard constant
       // folder.
       ConstantInt *R = 0;
@@ -1541,32 +1542,59 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
     if (SwappedRelation != ICmpInst::BAD_ICMP_PREDICATE)
       return ICmpInst::getSwappedPredicate(SwappedRelation);
 
-  } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(V1)) {
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(V1)) {
     if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
       ICmpInst::Predicate SwappedRelation = 
         evaluateICmpRelation(Context, V2, V1, isSigned);
       if (SwappedRelation != ICmpInst::BAD_ICMP_PREDICATE)
         return ICmpInst::getSwappedPredicate(SwappedRelation);
-      else
-        return ICmpInst::BAD_ICMP_PREDICATE;
+      return ICmpInst::BAD_ICMP_PREDICATE;
     }
 
-    // Now we know that the RHS is a GlobalValue or simple constant,
-    // which (since the types must match) means that it's a ConstantPointerNull.
-    if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
+    // Now we know that the RHS is a GlobalValue, BlockAddress or simple
+    // constant (which, since the types must match, means that it's a
+    // ConstantPointerNull).
+    if (const GlobalValue *GV2 = dyn_cast<GlobalValue>(V2)) {
       // Don't try to decide equality of aliases.
-      if (!isa<GlobalAlias>(CPR1) && !isa<GlobalAlias>(CPR2))
-        if (!CPR1->hasExternalWeakLinkage() || !CPR2->hasExternalWeakLinkage())
+      if (!isa<GlobalAlias>(GV) && !isa<GlobalAlias>(GV2))
+        if (!GV->hasExternalWeakLinkage() || !GV2->hasExternalWeakLinkage())
           return ICmpInst::ICMP_NE;
+    } else if (isa<BlockAddress>(V2)) {
+      return ICmpInst::ICMP_NE; // Globals never equal labels.
     } else {
       assert(isa<ConstantPointerNull>(V2) && "Canonicalization guarantee!");
-      // GlobalVals can never be null.  Don't try to evaluate aliases.
-      if (!CPR1->hasExternalWeakLinkage() && !isa<GlobalAlias>(CPR1))
+      // GlobalVals can never be null unless they have external weak linkage.
+      // We don't try to evaluate aliases here.
+      if (!GV->hasExternalWeakLinkage() && !isa<GlobalAlias>(GV))
         return ICmpInst::ICMP_NE;
+    }
+  } else if (const BlockAddress *BA = dyn_cast<BlockAddress>(V1)) {
+    if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
+      ICmpInst::Predicate SwappedRelation = 
+        evaluateICmpRelation(Context, V2, V1, isSigned);
+      if (SwappedRelation != ICmpInst::BAD_ICMP_PREDICATE)
+        return ICmpInst::getSwappedPredicate(SwappedRelation);
+      return ICmpInst::BAD_ICMP_PREDICATE;
+    }
+    
+    // Now we know that the RHS is a GlobalValue, BlockAddress or simple
+    // constant (which, since the types must match, means that it is a
+    // ConstantPointerNull).
+    if (const BlockAddress *BA2 = dyn_cast<BlockAddress>(V2)) {
+      // Block address in another function can't equal this one, but block
+      // addresses in the current function might be the same if blocks are
+      // empty.
+      if (BA2->getFunction() != BA->getFunction())
+        return ICmpInst::ICMP_NE;
+    } else {
+      // Block addresses aren't null, don't equal the address of globals.
+      assert((isa<ConstantPointerNull>(V2) || isa<GlobalValue>(V2)) &&
+             "Canonicalization guarantee!");
+      return ICmpInst::ICMP_NE;
     }
   } else {
     // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
-    // constantexpr, a CPR, or a simple constant.
+    // constantexpr, a global, block address, or a simple constant.
     ConstantExpr *CE1 = cast<ConstantExpr>(V1);
     Constant *CE1Op0 = CE1->getOperand(0);
 
@@ -1621,9 +1649,9 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
           return ICmpInst::ICMP_EQ;
         }
         // Otherwise, we can't really say if the first operand is null or not.
-      } else if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
+      } else if (const GlobalValue *GV2 = dyn_cast<GlobalValue>(V2)) {
         if (isa<ConstantPointerNull>(CE1Op0)) {
-          if (CPR2->hasExternalWeakLinkage())
+          if (GV2->hasExternalWeakLinkage())
             // Weak linkage GVals could be zero or not. We're comparing it to
             // a null pointer, so its less-or-equal
             return isSigned ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE;
@@ -1631,8 +1659,8 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
             // If its not weak linkage, the GVal must have a non-zero address
             // so the result is less-than
             return isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
-        } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(CE1Op0)) {
-          if (CPR1 == CPR2) {
+        } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CE1Op0)) {
+          if (GV == GV2) {
             // If this is a getelementptr of the same global, then it must be
             // different.  Because the types must match, the getelementptr could
             // only have at most one index, and because we fold getelementptr's

@@ -19,3 +19,15 @@ BB3:
         ret i32 %Ret
 }
 
+
+; PR6197
+define i1 @test2(i8* %f) nounwind {
+entry:
+  %V = icmp ne i8* blockaddress(@test2, %bb), null
+  br label %bb
+bb:
+  ret i1 %V
+  
+; CHECK: @test2
+; CHECK: ret i1 true
+}
