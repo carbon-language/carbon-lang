@@ -34,7 +34,7 @@ ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
                          -avoid-version \
-                         -Wl,-exported_symbols_list -Wl,$(PROJ_SRC_DIR)/EnhancedDisassembly.exports \
+                         -Wl,-exported_symbols_list -Wl,EnhancedDisassembly.exports \
                          -Wl,-dead_strip \
                          -Wl,-seg1addr -Wl,0xE0000000 
 
@@ -55,11 +55,11 @@ EnhancedDisassembly.exports:	EnhancedDisassembly.exports.noblocks EnhancedDisass
 	$(Echo) "Copying exports file"
 ifeq ($(HOST_OS),Darwin)
 	$(Verb) if [ $(DARWIN_VERS) -ge 10 ] ; \
-	  then $(CP) -f EnhancedDisassembly.exports.blocks EnhancedDisassembly.exports ; \
-	  else $(CP) -f EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports ; \
+	  then $(CP) -f $(PROJ_SRC_DIR)/EnhancedDisassembly.exports.blocks EnhancedDisassembly.exports ; \
+	  else $(CP) -f $(PROJ_SRC_DIR)/EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports ; \
 	fi
 else
-	$(Verb) $(CP) -f EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports
+	$(Verb) $(CP) -f $(PROJ_SRC_DIR)/EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports
 endif
 
 clean::
