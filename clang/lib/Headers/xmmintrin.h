@@ -462,7 +462,7 @@ _mm_cvtss_f32(__m128 a)
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_loadh_pi(__m128 a, __m64 const *p)
+_mm_loadh_pi(__m128 a, const __m64 *p)
 {
   __m128 b;
   b[0] = *(float*)p;
@@ -471,7 +471,7 @@ _mm_loadh_pi(__m128 a, __m64 const *p)
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_loadl_pi(__m128 a, __m64 const *p)
+_mm_loadl_pi(__m128 a, const __m64 *p)
 {
   __m128 b;
   b[0] = *(float*)p;
@@ -480,13 +480,13 @@ _mm_loadl_pi(__m128 a, __m64 const *p)
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_load_ss(float *p)
+_mm_load_ss(const float *p)
 {
   return (__m128){ *p, 0, 0, 0 };
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_load1_ps(float *p)
+_mm_load1_ps(const float *p)
 {
   return (__m128){ *p, *p, *p, *p };
 }
@@ -494,19 +494,19 @@ _mm_load1_ps(float *p)
 #define        _mm_load_ps1(p) _mm_load1_ps(p)
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_load_ps(float *p)
+_mm_load_ps(const float *p)
 {
   return *(__m128*)p;
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_loadu_ps(float *p)
+_mm_loadu_ps(const float *p)
 {
   return __builtin_ia32_loadups(p);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_loadr_ps(float *p)
+_mm_loadr_ps(const float *p)
 {
   __m128 a = _mm_load_ps(p);
   return __builtin_shufflevector(a, a, 3, 2, 1, 0);
