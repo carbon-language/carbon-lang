@@ -581,25 +581,14 @@ public:
         continue;
       
       // We found a collision.  Perform a comparison of Contents('T')
-      // with Contents('L')+'V'+Contents('R').
+      // with Contents('TNew')
       typename TreeTy::iterator TI = T->begin(), TE = T->end();
       
-      // First compare Contents('L') with the (initial) contents of T.
-      if (!CompareTreeWithSection(TNew->getLeft(), TI, TE))
-        continue;
-      
-      // Now compare the new data element.
-      if (TI == TE || !TI->ElementEqual(TNew->getValue()))
-        continue;
-      
-      ++TI;
-      
-      // Now compare the remainder of 'T' with 'R'.
-      if (!CompareTreeWithSection(TNew->getRight(), TI, TE))
+      if (!CompareTreeWithSection(TNew, TI, TE))
         continue;
       
       if (TI != TE)
-        continue; // Contents('R') did not match suffix of 'T'.
+        continue; // T has more contents than TNew.
       
       // Trees did match!  Return 'T'.
       return T;
