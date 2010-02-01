@@ -20,18 +20,9 @@ namespace llvm {
   class ObjectCodeEmitter;
   class TargetMachine;
   class raw_ostream;
-  class formatted_raw_ostream;
-  class MachineFunctionPass;
-  class MCAsmInfo;
-  class MCCodeEmitter;
 
   ObjectCodeEmitter *AddELFWriter(PassManagerBase &FPM, raw_ostream &O,
                                   TargetMachine &TM);
-  MachineFunctionPass *createMachOWriter(formatted_raw_ostream &O,
-                                         TargetMachine &TM,
-                                         const MCAsmInfo *T, 
-                                         MCCodeEmitter *MCE);
-
 } // end llvm namespace
 
 #endif // LLVM_CODEGEN_FILEWRITERS_H

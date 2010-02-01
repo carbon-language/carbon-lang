@@ -471,14 +471,6 @@ public:
   bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
                           bool /* VerboseAsmDefault */,
                           formatted_raw_ostream &);
-
-  /// addObjectFileEmitter - Helper function which creates a target specific
-  /// object files emitter, if available.  This interface is temporary, for
-  /// bringing up MCAssembler-based object file emitters.
-  ///
-  /// \return Returns 'false' on success.
-  bool addObjectFileEmitter(PassManagerBase &, CodeGenOpt::Level,
-                            formatted_raw_ostream &);
 };
 
 } // End llvm namespace

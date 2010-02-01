@@ -115,10 +115,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
       return FileModel::Error;
     return FileModel::AsmFile;
   case TargetMachine::ObjectFile:
-    if (!addObjectFileEmitter(PM, OptLevel, Out))
-      return FileModel::MachOFile;
-    else if (getELFWriterInfo())
-      return FileModel::ElfFile; 
+    return FileModel::Error;
   }
   return FileModel::Error;
 }
@@ -133,17 +130,6 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
     return true;
 
   PM.add(Printer);
-  return false;
-}
-
-bool LLVMTargetMachine::addObjectFileEmitter(PassManagerBase &PM,
-                                             CodeGenOpt::Level OptLevel,
-                                             formatted_raw_ostream &Out) {
-  MCCodeEmitter *Emitter = getTarget().createCodeEmitter(*this);
-  if (!Emitter)
-    return true;
-  
-  PM.add(createMachOWriter(Out, *this, getMCAsmInfo(), Emitter));
   return false;
 }
 
@@ -194,8 +180,6 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   // Make sure the code model is set.
   setCodeModelForStatic();
   
-  if (OCE)
-    addSimpleCodeEmitter(PM, OptLevel, *OCE);
   if (PrintEmittedAsm)
     addAssemblyEmitter(PM, OptLevel, true, ferrs());
 

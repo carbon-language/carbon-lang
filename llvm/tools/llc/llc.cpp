@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
-#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/Config/config.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Support/CommandLine.h"
@@ -346,9 +345,6 @@ int main(int argc, char **argv) {
       Passes.add(createVerifierPass());
 #endif
 
-    // Ask the target to add backend passes as necessary.
-    ObjectCodeEmitter *OCE = 0;
-
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
 
@@ -364,14 +360,10 @@ int main(int argc, char **argv) {
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
     case FileModel::AsmFile:
-    case FileModel::MachOFile:
-      break;
-    case FileModel::ElfFile:
-      OCE = AddELFWriter(Passes, *Out, Target);
       break;
     }
 
-    if (Target.addPassesToEmitFileFinish(Passes, OCE, OLvl)) {
+    if (Target.addPassesToEmitFileFinish(Passes, (ObjectCodeEmitter *)0, OLvl)){
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       if (Out != &fouts()) delete Out;
