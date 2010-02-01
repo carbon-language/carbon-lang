@@ -170,6 +170,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (Opts.NoZeroInitializedInBSS)
     Res.push_back("-mno-zero-initialized-bss");
+  if (Opts.ObjCLegacyDispatch)
+    Res.push_back("-fobjc-legacy-dispatch");
   if (Opts.SoftFloat)
     Res.push_back("-msoft-float");
   if (Opts.UnwindTables)
@@ -772,6 +774,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.FloatABI = getLastArgValue(Args, OPT_mfloat_abi);
   Opts.LimitFloatPrecision = getLastArgValue(Args, OPT_mlimit_float_precision);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
+  Opts.ObjCLegacyDispatch = Args.hasArg(OPT_fobjc_legacy_dispatch);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");

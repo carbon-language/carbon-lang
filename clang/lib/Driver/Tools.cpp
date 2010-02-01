@@ -1024,9 +1024,21 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fobjc-nonfragile-abi=0 is default.
   if (types::isObjC(InputType)) {
     if (Args.hasArg(options::OPT_fobjc_nonfragile_abi) ||
-        getToolChain().IsObjCNonFragileABIDefault())
+        getToolChain().IsObjCNonFragileABIDefault()) {
       CmdArgs.push_back("-fobjc-nonfragile-abi");
+      
+      // -fobjc-legacy-dispatch is only relevant with the nonfragile-abi, and
+      // defaults to off.
+      if (Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
+                       options::OPT_fno_objc_legacy_dispatch,
+                       false))
+        CmdArgs.push_back("-fobjc-legacy-dispatch");
+    }
   }
+
+  if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
+                    options::OPT_fno_assume_sane_operator_new))
+    CmdArgs.push_back("-fno-assume-sane-operator-new");
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.

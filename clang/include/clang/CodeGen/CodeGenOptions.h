@@ -41,6 +41,8 @@ public:
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
+  unsigned ObjCLegacyDispatch: 1; /// Use legacy Objective-C dispatch, even with
+                                  /// 2.0 runtime.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
   unsigned OptimizeSize      : 1; /// If -Os is specified.
   unsigned SoftFloat         : 1; /// -soft-float.
@@ -90,12 +92,13 @@ public:
     NoCommon = 0;
     NoImplicitFloat = 0;
     NoZeroInitializedInBSS = 0;
+    ObjCLegacyDispatch = 0;
     OptimizationLevel = 0;
     OptimizeSize = 0;
-    UnrollLoops = 0;
     SoftFloat = 0;
     TimePasses = 0;
     UnitAtATime = 1;
+    UnrollLoops = 0;
     UnwindTables = 0;
     VerifyModule = 1;
 
