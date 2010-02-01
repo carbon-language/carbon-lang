@@ -138,3 +138,18 @@ _Complex int        f24(void) {}
 _Complex long long  f25(void) {}
 _Complex float      f26(void) {}
 _Complex double     f27(void) {}
+
+// APCS-GNU: define arm_apcscc i16 @f28()
+// AAPCS: define arm_aapcscc i16 @f28()
+struct s28 { _Complex char f0; };
+struct s28 f28() {}
+
+// APCS-GNU: define arm_apcscc i32 @f29()
+// AAPCS: define arm_aapcscc i32 @f29()
+struct s29 { _Complex short f0; };
+struct s29 f29() {}
+
+// APCS-GNU: define arm_apcscc void @f30({{.*}} noalias sret
+// AAPCS: define arm_aapcscc void @f30({{.*}} noalias sret
+struct s30 { _Complex int f0; };
+struct s30 f30() {}

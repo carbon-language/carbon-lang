@@ -1585,9 +1585,9 @@ static bool isIntegerLikeType(QualType Ty,
   if (Ty->getAs<BuiltinType>() || Ty->isPointerType())
     return true;
 
-  // Complex types "should" be ok by the definition above, but they are not.
-  if (Ty->isAnyComplexType())
-    return false;
+  // Small complex integer types are "integer like".
+  if (const ComplexType *CT = Ty->getAs<ComplexType>())
+    return isIntegerLikeType(CT->getElementType(), Context, VMContext);
 
   // Single element and zero sized arrays should be allowed, by the definition
   // above, but they are not.
