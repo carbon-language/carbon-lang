@@ -73,7 +73,7 @@ entry:
 ; 32: call {{_?}}bar
 
 ; 64: t6:
-; 64: callq {{_?}}t6
+; 64: jmp {{_?}}t6
 ; 64: jmp {{_?}}bar
   %0 = icmp slt i32 %x, 10
   br i1 %0, label %bb, label %bb1

@@ -2263,17 +2263,6 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isVarArg)
     return false;
 
-  // Don't tail call optimize recursive call.
-  GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-  const Function *CalleeF = G ? cast<Function>(G->getGlobal()) : 0;
-  if (CallerF == CalleeF)
-    return false;
-  // If it's an indirect call, conversatively return false if the caller's
-  // address is taken.
-  if (!CalleeF &&
-      !isa<ExternalSymbolSDNode>(Callee) && CallerF->hasAddressTaken())
-    return false;
-
   // Look for obvious safe cases to perform tail call optimization.
   // If the callee takes no arguments then go on to check the results of the
   // call.
@@ -2296,7 +2285,10 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return true;
 
   // If the return types match, then it's safe.
+  // Don't tail call optimize recursive call.
+  GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
   if (!G) return false;  // FIXME: common external symbols?
+  const Function *CalleeF = cast<Function>(G->getGlobal());
   const Type *CalleeRetTy = CalleeF->getReturnType();
   return CallerRetTy == CalleeRetTy;
 }
