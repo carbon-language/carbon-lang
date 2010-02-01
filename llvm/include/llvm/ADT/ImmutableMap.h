@@ -68,7 +68,7 @@ public:
   typedef typename ValInfo::data_type_ref   data_type_ref;
   typedef ImutAVLTree<ValInfo>              TreeTy;
 
-private:
+protected:
   TreeTy* Root;
 
 public:

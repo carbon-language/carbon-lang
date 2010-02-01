@@ -27,6 +27,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 template <typename ImutInfo> class ImutAVLFactory;
+template <typename ImutInfo> class ImutIntervalAVLFactory;
 template <typename ImutInfo> class ImutAVLTreeInOrderIterator;
 template <typename ImutInfo> class ImutAVLTreeGenericIterator;
 
@@ -39,6 +40,7 @@ public:
 
   typedef ImutAVLFactory<ImutInfo>          Factory;
   friend class ImutAVLFactory<ImutInfo>;
+  friend class ImutIntervalAVLFactory<ImutInfo>;
 
   friend class ImutAVLTreeGenericIterator<ImutInfo>;
   friend class FoldingSet<ImutAVLTree>;
@@ -389,7 +391,7 @@ public:
   // These have succinct names so that the balancing code
   // is as terse (and readable) as possible.
   //===--------------------------------------------------===//
-private:
+protected:
 
   bool           isEmpty(TreeTy* T) const { return !T; }
   unsigned Height(TreeTy* T) const { return T ? T->getHeight() : 0; }
