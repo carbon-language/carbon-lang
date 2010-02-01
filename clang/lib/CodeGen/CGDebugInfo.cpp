@@ -50,16 +50,20 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 }
 
 /// getContextDescriptor - Get context info for the decl.
-llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *D,
+llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
                                               llvm::DIDescriptor &CompileUnit) {
-  if (const Decl *Parent = dyn_cast<Decl>(D->getDeclContext())) {
-   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
-     I = RegionMap.find(Parent);
-   if (I != RegionMap.end())
-     return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(I->second));
-   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Parent))
-     return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
-  }
+  if (!Context)
+    return CompileUnit;
+
+  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
+    I = RegionMap.find(Context);
+  if (I != RegionMap.end())
+    return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(I->second));
+  
+  // Check namespace.
+  if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
+    return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
+  
   return CompileUnit;
 }
 
@@ -420,9 +424,12 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   PresumedLoc PLoc = SM.getPresumedLoc(Ty->getDecl()->getLocation());
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
+  llvm::DIDescriptor TyContext 
+    = getContextDescriptor(dyn_cast<Decl>(Ty->getDecl()->getDeclContext()),
+                           Unit);
   llvm::DIType DbgTy = 
     DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, 
-                                   getContextDescriptor(Ty->getDecl(), Unit), 
+                                   TyContext,
                                    Ty->getDecl()->getName(), Unit,
                                    Line, 0, 0, 0, 0, Src);
   return DbgTy;
@@ -1747,15 +1754,15 @@ void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
 
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
-                                     const VarDecl *Decl) {
-
+                                     const VarDecl *D) {
+  
   // Create global variable debug descriptor.
-  llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
+  llvm::DICompileUnit Unit = getOrCreateCompileUnit(D->getLocation());
   SourceManager &SM = CGM.getContext().getSourceManager();
-  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  PresumedLoc PLoc = SM.getPresumedLoc(D->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  QualType T = Decl->getType();
+  QualType T = D->getType();
   if (T->isIncompleteArrayType()) {
 
     // CodeGen turns int[] into int[1] so we'll do the same here.
@@ -1767,8 +1774,10 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
                                            ArrayType::Normal, 0);
   }
-  llvm::StringRef DeclName = Decl->getName();
-  DebugFactory.CreateGlobalVariable(getContextDescriptor(Decl, Unit), DeclName,
+  llvm::StringRef DeclName = D->getName();
+  llvm::DIDescriptor DContext = 
+    getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
+  DebugFactory.CreateGlobalVariable(DContext, DeclName,
                                     DeclName, llvm::StringRef(), Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
@@ -1820,7 +1829,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
   llvm::DIDescriptor Context = 
-    getContextDescriptor(NSDecl, Unit);
+    getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
   llvm::DINameSpace NS =
     DebugFactory.CreateNameSpace(Context, NSDecl->getName(), 
 	llvm::DICompileUnit(Unit.getNode()), LineNo);
