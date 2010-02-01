@@ -692,10 +692,14 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
 
   if (Function *CalleeF = dyn_cast<Function>(Callee))
-    if (CalleeF->getCallingConv() != CS.getCallingConv()) {
+    // If the call and callee calling conventions don't match, this call must
+    // be unreachable, as the call is undefined.
+    if (CalleeF->getCallingConv() != CS.getCallingConv() &&
+        // Only do this for calls to a function with a body.  A prototype may
+        // not actually end up matching the implementation's calling conv for a
+        // variety of reasons (e.g. it may be written in assembly).
+        !CalleeF->isDeclaration()) {
       Instruction *OldCall = CS.getInstruction();
-      // If the call and callee calling conventions don't match, this call must
-      // be unreachable, as the call is undefined.
       new StoreInst(ConstantInt::getTrue(Callee->getContext()),
                 UndefValue::get(Type::getInt1PtrTy(Callee->getContext())), 
                                   OldCall);

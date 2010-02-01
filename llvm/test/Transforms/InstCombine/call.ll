@@ -75,7 +75,7 @@ define i32 @test5() {
 declare i32 @test6a(i32)
 
 define i32 @test6() {
-        %X = call i32 bitcast (i32 (i32)* @test6a to i32 ()*)( )                ; <i32> [#uses=1]
+        %X = call i32 bitcast (i32 (i32)* @test6a to i32 ()*)( )
         ret i32 %X
 ; CHECK: %X1 = call i32 @test6a(i32 0)
 ; CHECK: ret i32 %X1
@@ -95,4 +95,24 @@ define void @test7() {
 ; CHECK: ret void
 }
 
+
+; rdar://7590304
+declare void @test8a()
+
+define i8* @test8() {
+  invoke arm_apcscc void @test8a()
+          to label %invoke.cont unwind label %try.handler
+
+invoke.cont:                                      ; preds = %entry
+  unreachable
+
+try.handler:                                      ; preds = %entry
+  ret i8* null
+}
+
+; Don't turn this into "unreachable": the callee and caller don't agree in
+; calling conv, but the implementation of test8a may actually end up using the
+; right calling conv.
+; CHECK: @test8() {
+; CHECK-NEXT: invoke arm_apcscc void @test8a()
 
