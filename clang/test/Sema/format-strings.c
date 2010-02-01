@@ -162,6 +162,11 @@ void test10(int x, float f, int i, long long lli) {
   printf("%.", x);  // expected-warning{{incomplete format specifier}}
   printf("%f", 4); // expected-warning{{conversion specifies type 'double' but the argument has type 'int'}}
   printf("%qd", lli);
+  printf("hhX %hhX", (unsigned char)10); // no-warning
+  printf("llX %llX", (long long) 10); // no-warning
+  // This is fine, because there is an implicit conversion to an int.
+  printf("%d", (unsigned char) 10); // no-warning
+  printf("%d", (long long) 10); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
 } 
 
 typedef struct __aslclient *aslclient;
