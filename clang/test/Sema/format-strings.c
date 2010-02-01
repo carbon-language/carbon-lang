@@ -167,6 +167,8 @@ void test10(int x, float f, int i, long long lli) {
   // This is fine, because there is an implicit conversion to an int.
   printf("%d", (unsigned char) 10); // no-warning
   printf("%d", (long long) 10); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
+  printf("%Lf\n", (long double) 1.0); // no-warning
+  printf("%f\n", (long double) 1.0); // expected-warning{{conversion specifies type 'double' but the argument has type 'long double'}}
 } 
 
 typedef struct __aslclient *aslclient;

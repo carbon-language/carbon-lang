@@ -311,8 +311,11 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
         return ArgTypeResult();
     }
   
-  if (CS.isDoubleArg())
+  if (CS.isDoubleArg()) {
+    if (LM == AsLongDouble)
+      return Ctx.LongDoubleTy;
     return Ctx.DoubleTy;
+  }
 
   // FIXME: Handle other cases.
   return ArgTypeResult();
