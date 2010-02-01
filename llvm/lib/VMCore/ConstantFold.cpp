@@ -2018,11 +2018,11 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
 
     // If the right hand side is a bitcast, try using its inverse to simplify
     // it by moving it to the left hand side.  We can't do this if it would turn
-    // a vector compare into scalar compare of visa versa.
+    // a vector compare into a scalar compare or visa versa.
     if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(C2)) {
       Constant *CE2Op0 = CE2->getOperand(0);
       if (CE2->getOpcode() == Instruction::BitCast &&
-          isa<VectorType>(CE2->getType()) ==isa<VectorType>(CE2Op0->getType())){
+          isa<VectorType>(CE2->getType())==isa<VectorType>(CE2Op0->getType())) {
         Constant *Inverse = ConstantExpr::getBitCast(C1, CE2Op0->getType());
         return ConstantExpr::getICmp(pred, Inverse, CE2Op0);
       }
