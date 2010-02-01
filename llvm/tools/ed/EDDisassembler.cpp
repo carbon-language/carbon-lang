@@ -411,14 +411,6 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
     ret = -1;
   }
   
-  SmallVectorImpl<MCParsedAsmOperand*>::iterator oi;
-  
-  for(oi = operands.begin(); oi != operands.end(); ++oi) {
-    printf("Operand start %p, end %p\n", 
-           (*oi)->getStartLoc().getPointer(),
-           (*oi)->getEndLoc().getPointer());
-  }
-  
   ParserMutex.acquire();
   
   if (!ret) {
