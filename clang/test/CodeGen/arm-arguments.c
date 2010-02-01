@@ -119,3 +119,22 @@ struct s20 f20(void) {}
 // AAPCS: define arm_aapcscc i32 @f21()
 struct s21 { struct {} f1; int f0 : 4; };
 struct s21 f21(void) {}
+
+// APCS-GNU: define arm_apcscc i16 @f22()
+// APCS-GNU: define arm_apcscc i32 @f23()
+// APCS-GNU: define arm_apcscc i64 @f24()
+// APCS-GNU: define arm_apcscc i128 @f25()
+// APCS-GNU: define arm_apcscc i64 @f26()
+// APCS-GNU: define arm_apcscc i128 @f27()
+// AAPCS: define arm_aapcscc i16 @f22()
+// AAPCS: define arm_aapcscc i32 @f23()
+// AAPCS: define arm_aapcscc void @f24({{.*}} noalias sret
+// AAPCS: define arm_aapcscc void @f25({{.*}} noalias sret
+// AAPCS: define arm_aapcscc void @f26({{.*}} noalias sret
+// AAPCS: define arm_aapcscc void @f27({{.*}} noalias sret
+_Complex char       f22(void) {}
+_Complex short      f23(void) {}
+_Complex int        f24(void) {}
+_Complex long long  f25(void) {}
+_Complex float      f26(void) {}
+_Complex double     f27(void) {}

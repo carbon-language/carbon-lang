@@ -1661,6 +1661,14 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
     if (isEmptyRecord(Context, RetTy, false))
       return ABIArgInfo::getIgnore();
 
+    // Complex types are all returned as packed integers.
+    //
+    // FIXME: Consider using 2 x vector types if the back end handles them
+    // correctly.
+    if (RetTy->isAnyComplexType())
+      return ABIArgInfo::getCoerce(llvm::IntegerType::get(
+                                     VMContext, Context.getTypeSize(RetTy)));
+
     // Integer like structures are returned in r0.
     if (isIntegerLikeType(RetTy, Context, VMContext)) {
       // Return in the smallest viable integer type.
