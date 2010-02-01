@@ -8,8 +8,8 @@
 define i64 @hammer_time(i64 %modulep, i64 %physfree) nounwind ssp noredzone noimplicitfloat {
 ; CHECK: hammer_time:
 ; CHECK: movq $Xrsvd, %rax
+; CHECK: movq $Xrsvd, %rsi
 ; CHECK: movq $Xrsvd, %rdi
-; CHECK: movq $Xrsvd, %r8
 entry:
   br i1 undef, label %if.then, label %if.end
 
