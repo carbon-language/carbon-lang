@@ -1493,16 +1493,21 @@ Constant* ConstantExpr::getAlignOf(const Type* Ty) {
 }
 
 Constant* ConstantExpr::getOffsetOf(const StructType* STy, unsigned FieldNo) {
+  return getOffsetOf(STy, ConstantInt::get(Type::getInt32Ty(STy->getContext()),
+                                           FieldNo));
+}
+
+Constant* ConstantExpr::getOffsetOf(const Type* Ty, Constant *FieldNo) {
   // offsetof is implemented as: (i64) gep (Ty*)null, 0, FieldNo
   // Note that a non-inbounds gep is used, as null isn't within any object.
   Constant *GEPIdx[] = {
-    ConstantInt::get(Type::getInt64Ty(STy->getContext()), 0),
-    ConstantInt::get(Type::getInt32Ty(STy->getContext()), FieldNo)
+    ConstantInt::get(Type::getInt64Ty(Ty->getContext()), 0),
+    FieldNo
   };
   Constant *GEP = getGetElementPtr(
-                Constant::getNullValue(PointerType::getUnqual(STy)), GEPIdx, 2);
+                Constant::getNullValue(PointerType::getUnqual(Ty)), GEPIdx, 2);
   return getCast(Instruction::PtrToInt, GEP,
-                 Type::getInt64Ty(STy->getContext()));
+                 Type::getInt64Ty(Ty->getContext()));
 }
 
 Constant *ConstantExpr::getCompare(unsigned short pred, 
