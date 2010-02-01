@@ -784,10 +784,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // uses of the forward declaration with the final definition.
 
   // A RD->getName() is not unique. However, the debug info descriptors 
-  // are uniqued. The debug info descriptor describing record's context is
-  // necessary to keep two Decl's descriptor unique if their name match.
-  // FIXME : Use RecordDecl's DeclContext's descriptor. As a temp. step
-  // use type's name in FwdDecl.
+  // are uniqued so use type name to ensure uniquness.
   std::string STy = QualType(Ty, 0).getAsString();
   llvm::DIDescriptor FDContext = 
     getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
