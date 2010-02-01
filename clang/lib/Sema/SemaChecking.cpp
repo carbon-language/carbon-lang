@@ -1286,19 +1286,16 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
       // Check if we didn't match because of an implicit cast from a 'char'
       // or 'short' to an 'int'.  This is done because printf is a varargs
       // function.
-      bool hasError = true;      
       if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
-        if (ICE->getType() == S.Context.IntTy) {
-          Ex = ICE->getSubExpr();
-          hasError = !MatchType(*T, Ex->getType(), true);
-        }
-      
-      if (hasError)            
-        S.Diag(getLocationOfByte(CS.getStart()),
-               diag::warn_printf_conversion_argument_type_mismatch)
-          << *T << Ex->getType()
-          << getFormatSpecifierRange(startSpecifier, specifierLen)
-          << Ex->getSourceRange();
+        if (ICE->getType() == S.Context.IntTy)
+          if (MatchType(*T, ICE->getSubExpr()->getType(), true))
+            return true;
+
+      S.Diag(getLocationOfByte(CS.getStart()),
+             diag::warn_printf_conversion_argument_type_mismatch)
+        << *T << Ex->getType()
+        << getFormatSpecifierRange(startSpecifier, specifierLen)
+        << Ex->getSourceRange();
     }
     return true;
   }
