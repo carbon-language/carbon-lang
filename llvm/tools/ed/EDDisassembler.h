@@ -1,0 +1,248 @@
+//===-EDDisassembler.h - LLVM Enhanced Disassembler -------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// This file defines the interface for the Enhanced Disassembly library's
+// disassembler class.  The disassembler is responsible for vending individual
+// instructions according to a given architecture and disassembly syntax.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef EDDisassembler_
+#define EDDisassembler_
+
+#include "EDInfo.inc"
+
+#include "llvm-c/EnhancedDisassembly.h"
+
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Mutex.h"
+
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
+
+namespace llvm {
+class AsmLexer;
+class AsmToken;
+class MCContext;
+class MCAsmInfo;
+class MCAsmLexer;
+class AsmParser;
+class TargetAsmLexer;
+class TargetAsmParser;
+class MCDisassembler;
+class MCInstPrinter;
+class MCInst;
+class MCParsedAsmOperand;
+class MCStreamer;
+template <typename T> class SmallVectorImpl;
+class SourceMgr;
+class Target;
+class TargetRegisterInfo;
+}
+
+/// EDDisassembler - Encapsulates a disassembler for a single architecture and
+///   disassembly syntax.  Also manages the static disassembler registry.
+struct EDDisassembler {
+  ////////////////////
+  // Static members //
+  ////////////////////
+  
+  /// CPUKey - Encapsulates the descriptor of an architecture/disassembly-syntax
+  ///   pair
+  struct CPUKey {
+    /// The architecture type
+    llvm::Triple::ArchType Arch;
+    
+    /// The assembly syntax
+    EDAssemblySyntax_t Syntax;
+    
+    /// operator== - Equality operator
+    bool operator==(const CPUKey &key) const {
+      return (Arch == key.Arch &&
+              Syntax == key.Syntax);
+    }
+    
+    /// operator< - Less-than operator
+    bool operator<(const CPUKey &key) const {
+      if(Arch > key.Arch)
+        return false;
+      if(Syntax >= key.Syntax)
+        return false;
+      return true;
+    }
+  };
+  
+  typedef std::map<CPUKey, EDDisassembler*> DisassemblerMap_t;
+  
+  /// True if the disassembler registry has been initialized; false if not
+  static bool sInitialized;
+  /// A map from disassembler specifications to disassemblers.  Populated
+  ///   lazily.
+  static DisassemblerMap_t sDisassemblers;
+
+  /// getDisassembler - Returns the specified disassemble, or NULL on failure
+  ///
+  /// @arg arch   - The desired architecture
+  /// @arg syntax - The desired disassembly syntax
+  static EDDisassembler *getDisassembler(llvm::Triple::ArchType arch,
+                                         EDAssemblySyntax_t syntax);
+  
+  /// getDisassembler - Returns the disassembler for a given combination of
+  ///   CPU type, CPU subtype, and assembly syntax, or NULL on failure
+  ///
+  /// @arg str    - The string representation of the architecture triple, e.g.,
+  ///               "x86_64-apple-darwin"
+  /// @arg syntax - The disassembly syntax for the required disassembler
+  static EDDisassembler *getDisassembler(llvm::StringRef str,
+                                         EDAssemblySyntax_t syntax);
+  
+  /// initialize - Initializes the disassembler registry and the LLVM backend
+  static void initialize();
+  
+  ////////////////////////
+  // Per-object members //
+  ////////////////////////
+  
+  /// True only if the object has been fully and successfully initialized
+  bool Valid;
+  
+  /// The string that stores disassembler errors from the backend
+  std::string ErrorString;
+  /// The stream that wraps the ErrorString
+  llvm::raw_string_ostream ErrorStream;
+
+  /// The architecture/syntax pair for the current architecture
+  CPUKey Key;
+  /// The LLVM target corresponding to the disassembler
+  const llvm::Target *Tgt;
+  /// The assembly information for the target architecture
+  llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
+  /// The disassembler for the target architecture
+  llvm::OwningPtr<const llvm::MCDisassembler> Disassembler;
+  /// The output string for the instruction printer; must be guarded with 
+  ///   PrinterMutex
+  llvm::OwningPtr<std::string> InstString;
+  /// The output stream for the disassembler; must be guarded with
+  ///   PrinterMutex
+  llvm::OwningPtr<llvm::raw_string_ostream> InstStream;
+  /// The instruction printer for the target architecture; must be guarded with
+  ///   PrinterMutex when printing
+  llvm::OwningPtr<llvm::MCInstPrinter> InstPrinter;
+  /// The mutex that guards the instruction printer's printing functions, which
+  ///   use a shared stream
+  llvm::sys::Mutex PrinterMutex;
+  /// The array of instruction information provided by the TableGen backend for
+  ///   the target architecture
+  const InstInfo *InstInfos;
+  /// The target-specific lexer for use in tokenizing strings, in
+  ///   target-independent and target-specific portions
+  llvm::OwningPtr<llvm::AsmLexer> GenericAsmLexer;
+  llvm::OwningPtr<llvm::TargetAsmLexer> SpecificAsmLexer;
+  /// The guard for the above
+  llvm::sys::Mutex ParserMutex;
+  /// The LLVM number used for the target disassembly syntax variant
+  int LLVMSyntaxVariant;
+    
+  typedef std::vector<std::string> regvec_t;
+  typedef std::map<std::string, unsigned> regrmap_t;
+  
+  /// A vector of registers for quick mapping from LLVM register IDs to names
+  regvec_t RegVec;
+  /// A map of registers for quick mapping from register names to LLVM IDs
+  regrmap_t RegRMap;
+  
+  /// A set of register IDs for aliases of the stack pointer for the current
+  ///   architecture
+  std::set<unsigned> stackPointers;
+  /// A set of register IDs for aliases of the program counter for the current
+  ///   architecture
+  std::set<unsigned> programCounters;
+  
+  /// Constructor - initializes a disassembler with all the necessary objects,
+  ///   which come pre-allocated from the registry accessor function
+  ///
+  /// @arg key                - the architecture and disassembly syntax for the 
+  ///                           disassembler
+  EDDisassembler(CPUKey& key);
+  
+  /// valid - reports whether there was a failure in the constructor.
+  bool valid() {
+    return Valid;
+  }
+  
+  ~EDDisassembler();
+  
+  /// createInst - creates and returns an instruction given a callback and
+  ///   memory address, or NULL on failure
+  ///
+  /// @arg byteReader - A callback function that provides machine code bytes
+  /// @arg address    - The address of the first byte of the instruction,
+  ///                   suitable for passing to byteReader
+  /// @arg arg        - An opaque argument for byteReader
+  EDInst *createInst(EDByteReaderCallback byteReader, 
+                     uint64_t address, 
+                     void *arg);
+
+  /// initMaps - initializes regVec and regRMap using the provided register
+  ///   info
+  ///
+  /// @arg registerInfo - the register information to use as a source
+  void initMaps(const llvm::TargetRegisterInfo &registerInfo);
+  /// nameWithRegisterID - Returns the name (owned by the EDDisassembler) of a 
+  ///   register for a given register ID, or NULL on failure
+  ///
+  /// @arg registerID - the ID of the register to be queried
+  const char *nameWithRegisterID(unsigned registerID) const;
+  /// registerIDWithName - Returns the ID of a register for a given register
+  ///   name, or (unsigned)-1 on failure
+  ///
+  /// @arg name - The name of the register
+  unsigned registerIDWithName(const char *name) const;
+  
+  /// registerIsStackPointer - reports whether a register ID is an alias for the
+  ///   stack pointer register
+  ///
+  /// @arg registerID - The LLVM register ID
+  bool registerIsStackPointer(unsigned registerID);
+  /// registerIsStackPointer - reports whether a register ID is an alias for the
+  ///   stack pointer register
+  ///
+  /// @arg registerID - The LLVM register ID
+  bool registerIsProgramCounter(unsigned registerID);
+  
+  /// printInst - prints an MCInst to a string, returning 0 on success, or -1
+  ///   otherwise
+  ///
+  /// @arg str  - A reference to a string which is filled in with the string
+  ///             representation of the instruction
+  /// @arg inst - A reference to the MCInst to be printed
+  int printInst(std::string& str,
+                llvm::MCInst& inst);
+  
+  /// parseInst - extracts operands and tokens from a string for use in
+  ///   tokenizing the string.  Returns 0 on success, or -1 otherwise.
+  ///
+  /// @arg operands - A reference to a vector that will be filled in with the
+  ///                 parsed operands
+  /// @arg tokens   - A reference to a vector that will be filled in with the
+  ///                 tokens
+  /// @arg str      - The string representation of the instruction
+  int parseInst(llvm::SmallVectorImpl<llvm::MCParsedAsmOperand*> &operands,
+                llvm::SmallVectorImpl<llvm::AsmToken> &tokens,
+                const std::string &str);
+  
+  /// llvmSyntaxVariant - returns the LLVM syntax variant for this disassembler
+  int llvmSyntaxVariant() const;  
+};
+
+#endif
