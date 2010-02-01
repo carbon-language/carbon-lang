@@ -95,13 +95,15 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
       BaseAlign = GV->getAlignment();
     }
   }
-  if (TD && BaseType && BaseAlign == 0)
-    BaseAlign = TD->getPrefTypeAlignment(BaseType);
 
-  if (BaseType && Align <= BaseAlign) {
-    if (!TD)
-      return true; // Loading directly from an alloca or global is OK.
-    if (BaseType->isSized()) {
+  if (BaseType && BaseType->isSized()) {
+    if (TD && BaseAlign == 0)
+      BaseAlign = TD->getPrefTypeAlignment(BaseType);
+
+    if (Align <= BaseAlign) {
+      if (!TD)
+        return true; // Loading directly from an alloca or global is OK.
+
       // Check if the load is within the bounds of the underlying object.
       const PointerType *AddrTy = cast<PointerType>(V->getType());
       uint64_t LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
