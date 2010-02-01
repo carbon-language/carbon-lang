@@ -10,7 +10,7 @@
 LEVEL = ../..
 LIBRARYNAME = EnhancedDisassembly
 
-BUILT_SOURCES = EDInfo.inc
+BUILT_SOURCES = EDInfo.inc EnhancedDisassembly.exports
 
 # Include this here so we can get the configuration of the targets
 # that have been configured for construction. We have to do this 
@@ -51,5 +51,17 @@ EDInfo.inc:	$(TBLGEN)
 	$(Echo) "Building semantic information header"
 	$(Verb) $(TableGen) -o $(call SYSPATH, $@) -gen-enhanced-disassembly-header /dev/null
 
+EnhancedDisassembly.exports:	EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports.blocks
+	$(Echo) "Copying exports file"
+ifeq ($(HOST_OS),Darwin)
+	$(Verb) if [ $(DARWIN_VERS) -ge 10 ] ; \
+	  then $(CP) -f EnhancedDisassembly.exports.blocks EnhancedDisassembly.exports ; \
+	  else $(CP) -f EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports ; \
+	fi
+else
+	$(Verb) $(CP) -f EnhancedDisassembly.exports.noblocks EnhancedDisassembly.exports
+endif
+
 clean::
 	-$(Verb) $(RM) -f EDInfo.inc
+	-$(Verb) $(RM) -f EnhancedDisassembly.exports
