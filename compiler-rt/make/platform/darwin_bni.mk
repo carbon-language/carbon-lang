@@ -48,6 +48,8 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 muldf3vfp mulsf3vfp \
                 nedf2vfp negdf2vfp negsf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
-                modsi3 umodsi3 udivsi3 divsi3 switch save_restore_d8_d15
+                modsi3 umodsi3 udivsi3 divsi3 \
+				switch8 switchu8 switch16 switch32 \
+				restore_vfp_d8_d15_regs save_vfp_d8_d15_regs
 
 VISIBILITY_HIDDEN := 0
