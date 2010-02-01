@@ -517,6 +517,42 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   return 0;
 }
 
+/// CastGEPIndices - If array indices are not pointer-sized integers,
+/// explicitly cast them so that they aren't implicitly casted by the
+/// getelementptr.
+static Constant *CastGEPIndices(Constant *const *Ops, unsigned NumOps,
+                                const Type *ResultTy,
+                                const TargetData *TD) {
+  if (!TD) return 0;
+  const Type *IntPtrTy = TD->getIntPtrType(ResultTy->getContext());
+
+  bool Any = false;
+  SmallVector<Constant*, 32> NewIdxs;
+  for (unsigned i = 1; i != NumOps; ++i) {
+    if ((i == 1 ||
+         !isa<StructType>(GetElementPtrInst::getIndexedType(Ops[0]->getType(),
+                                                            reinterpret_cast<Value *const *>(Ops+1),
+                                                            i-1))) &&
+        Ops[i]->getType() != IntPtrTy) {
+      Any = true;
+      NewIdxs.push_back(ConstantExpr::getCast(CastInst::getCastOpcode(Ops[i],
+                                                                      true,
+                                                                      IntPtrTy,
+                                                                      true),
+                                              Ops[i], IntPtrTy));
+    } else
+      NewIdxs.push_back(Ops[i]);
+  }
+  if (!Any) return 0;
+
+  Constant *C =
+    ConstantExpr::getGetElementPtr(Ops[0], &NewIdxs[0], NewIdxs.size());
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+      C = Folded;
+  return C;
+}
+
 /// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
 /// constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
@@ -810,6 +846,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
+    if (Constant *C = CastGEPIndices(Ops, NumOps, DestTy, TD))
+      return C;
     if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, DestTy, TD))
       return C;
     

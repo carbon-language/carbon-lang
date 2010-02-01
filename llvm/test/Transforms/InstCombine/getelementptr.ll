@@ -246,7 +246,7 @@ bc0:
         store i32 0, i32* %tmp53
         ret void
 ; CHECK: @test24
-; CHECK: store i32 0, i32* getelementptr (%"java/lang/StringBuffer"* null, i32 0, i32 1)
+; CHECK: store i32 0, i32* getelementptr (%"java/lang/StringBuffer"* null, i64 0, i32 1)
 }
 
 define void @test25() {

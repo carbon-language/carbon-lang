@@ -534,7 +534,7 @@ namespace llvm {
     /// where it isn't absolutely required for these to succeed.
     bool isSizeOf(const Type *&AllocTy) const;
     bool isAlignOf(const Type *&AllocTy) const;
-    bool isOffsetOf(const StructType *&STy, Constant *&FieldNo) const;
+    bool isOffsetOf(const Type *&STy, Constant *&FieldNo) const;
 
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {

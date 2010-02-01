@@ -323,6 +323,116 @@ static Constant *ExtractConstantBytes(Constant *C, unsigned ByteStart,
   }
 }
 
+/// getFoldedSizeOf - Return a ConstantExpr with type DestTy for sizeof
+/// on Ty, with any known factors factored out. If Folded is false,
+/// return null if no factoring was possible, to avoid endlessly
+/// bouncing an unfoldable expression back into the top-level folder.
+///
+static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
+                                 bool Folded) {
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    Constant *N = ConstantInt::get(DestTy, ATy->getNumElements());
+    Constant *E = getFoldedSizeOf(ATy->getElementType(), DestTy, true);
+    return ConstantExpr::getNUWMul(E, N);
+  }
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    Constant *N = ConstantInt::get(DestTy, VTy->getNumElements());
+    Constant *E = getFoldedSizeOf(VTy->getElementType(), DestTy, true);
+    return ConstantExpr::getNUWMul(E, N);
+  }
+  if (const StructType *STy = dyn_cast<StructType>(Ty))
+    if (!STy->isPacked()) {
+      unsigned NumElems = STy->getNumElements();
+      // An empty struct has size zero.
+      if (NumElems == 0)
+        return ConstantExpr::getNullValue(DestTy);
+      // Check for a struct with all members having the same type.
+      const Type *MemberTy = STy->getElementType(0);
+      bool AllSame = true;
+      for (unsigned i = 1; i != NumElems; ++i)
+        if (MemberTy != STy->getElementType(i)) {
+          AllSame = false;
+          break;
+        }
+      if (AllSame) {
+        Constant *N = ConstantInt::get(DestTy, NumElems);
+        Constant *E = getFoldedSizeOf(MemberTy, DestTy, true);
+        return ConstantExpr::getNUWMul(E, N);
+      }
+    }
+
+  // If there's no interesting folding happening, bail so that we don't create
+  // a constant that looks like it needs folding but really doesn't.
+  if (!Folded)
+    return 0;
+
+  // Base case: Get a regular sizeof expression.
+  Constant *C = ConstantExpr::getSizeOf(Ty);
+  C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                    DestTy, false),
+                            C, DestTy);
+  return C;
+}
+
+/// getFoldedOffsetOf - Return a ConstantExpr with type DestTy for offsetof
+/// on Ty and FieldNo, with any known factors factored out. If Folded is false,
+/// return null if no factoring was possible, to avoid endlessly
+/// bouncing an unfoldable expression back into the top-level folder.
+///
+static Constant *getFoldedOffsetOf(const Type *Ty, Constant *FieldNo,
+                                   const Type *DestTy,
+                                   bool Folded) {
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    Constant *N = ConstantExpr::getCast(CastInst::getCastOpcode(FieldNo, false,
+                                                                DestTy, false),
+                                        FieldNo, DestTy);
+    Constant *E = getFoldedSizeOf(ATy->getElementType(), DestTy, true);
+    return ConstantExpr::getNUWMul(E, N);
+  }
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    Constant *N = ConstantExpr::getCast(CastInst::getCastOpcode(FieldNo, false,
+                                                                DestTy, false),
+                                        FieldNo, DestTy);
+    Constant *E = getFoldedSizeOf(VTy->getElementType(), DestTy, true);
+    return ConstantExpr::getNUWMul(E, N);
+  }
+  if (const StructType *STy = dyn_cast<StructType>(Ty))
+    if (!STy->isPacked()) {
+      unsigned NumElems = STy->getNumElements();
+      // An empty struct has no members.
+      if (NumElems == 0)
+        return 0;
+      // Check for a struct with all members having the same type.
+      const Type *MemberTy = STy->getElementType(0);
+      bool AllSame = true;
+      for (unsigned i = 1; i != NumElems; ++i)
+        if (MemberTy != STy->getElementType(i)) {
+          AllSame = false;
+          break;
+        }
+      if (AllSame) {
+        Constant *N = ConstantExpr::getCast(CastInst::getCastOpcode(FieldNo,
+                                                                    false,
+                                                                    DestTy,
+                                                                    false),
+                                            FieldNo, DestTy);
+        Constant *E = getFoldedSizeOf(MemberTy, DestTy, true);
+        return ConstantExpr::getNUWMul(E, N);
+      }
+    }
+
+  // If there's no interesting folding happening, bail so that we don't create
+  // a constant that looks like it needs folding but really doesn't.
+  if (!Folded)
+    return 0;
+
+  // Base case: Get a regular offsetof expression.
+  Constant *C = ConstantExpr::getOffsetOf(Ty, FieldNo);
+  C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                    DestTy, false),
+                            C, DestTy);
+  return C;
+}
 
 Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context, 
                                             unsigned opc, Constant *V,
@@ -418,33 +528,59 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     // Is it a null pointer value?
     if (V->isNullValue())
       return ConstantInt::get(DestTy, 0);
-    // If this is a sizeof of an array or vector, pull out a multiplication
-    // by the element size to expose it to subsequent folding.
+    // If this is a sizeof-like expression, pull out multiplications by
+    // known factors to expose them to subsequent folding. If it's an
+    // alignof-like expression, factor out known factors.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::GetElementPtr &&
-          CE->getNumOperands() == 2 &&
-          CE->getOperand(0)->isNullValue())
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
-          if (CI->isOne()) {
-            const Type *Ty =
-              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
-            if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-              Constant *N = ConstantInt::get(DestTy, ATy->getNumElements());
-              Constant *E = ConstantExpr::getSizeOf(ATy->getElementType());
-              E = ConstantExpr::getCast(CastInst::getCastOpcode(E, false,
+          CE->getOperand(0)->isNullValue()) {
+        const Type *Ty =
+          cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+        if (CE->getNumOperands() == 2) {
+          // Handle a sizeof-like expression.
+          Constant *Idx = CE->getOperand(1);
+          bool isOne = isa<ConstantInt>(Idx) && cast<ConstantInt>(Idx)->isOne();
+          if (Constant *C = getFoldedSizeOf(Ty, DestTy, !isOne)) {
+            Idx = ConstantExpr::getCast(CastInst::getCastOpcode(Idx, true,
                                                                 DestTy, false),
-                                        E, DestTy);
-              return ConstantExpr::getMul(N, E);
-            }
-            if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-              Constant *N = ConstantInt::get(DestTy, VTy->getNumElements());
-              Constant *E = ConstantExpr::getSizeOf(VTy->getElementType());
-              E = ConstantExpr::getCast(CastInst::getCastOpcode(E, false,
-                                                                DestTy, false),
-                                        E, DestTy);
-              return ConstantExpr::getMul(N, E);
-            }
+                                        Idx, DestTy);
+            return ConstantExpr::getMul(C, Idx);
           }
+        } else if (CE->getNumOperands() == 3 &&
+                   CE->getOperand(1)->isNullValue()) {
+          // Handle an alignof-like expression.
+          if (const StructType *STy = dyn_cast<StructType>(Ty))
+            if (!STy->isPacked()) {
+              ConstantInt *CI = cast<ConstantInt>(CE->getOperand(2));
+              if (CI->isOne() &&
+                  STy->getNumElements() == 2 &&
+                  STy->getElementType(0)->isInteger(1)) {
+                // The alignment of an array is equal to the alignment of the
+                // array element. Note that this is not always true for vectors.
+                if (const ArrayType *ATy =
+                    dyn_cast<ArrayType>(STy->getElementType(1))) {
+                  Constant *C = ConstantExpr::getAlignOf(ATy->getElementType());
+                  C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                                    DestTy,
+                                                                    false),
+                                            C, DestTy);
+                  return C;
+                }
+                // Packed structs always have an alignment of 1.
+                if (const StructType *InnerSTy =
+                      dyn_cast<StructType>(STy->getElementType(1)))
+                  if (InnerSTy->isPacked())
+                    return ConstantInt::get(DestTy, 1);
+              }
+            }
+          // Handle an offsetof-like expression.
+          if (isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)){
+            if (Constant *C = getFoldedOffsetOf(Ty, CE->getOperand(2),
+                                                DestTy, false))
+              return C;
+          }
+        }
+      }
     // Other pointer types cannot be casted
     return 0;
   case Instruction::UIToFP:
@@ -1156,10 +1292,19 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
     }
   }
 
-  if (isa<ConstantExpr>(C1)) {
+  if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
     // There are many possible foldings we could do here.  We should probably
     // at least fold add of a pointer with an integer into the appropriate
     // getelementptr.  This will improve alias analysis a bit.
+
+    // Given ((a + b) + c), if (b + c) folds to something interesting, return
+    // (a + (b + c)).
+    if (Instruction::isAssociative(Opcode, C1->getType()) &&
+        CE1->getOpcode() == Opcode) {
+      Constant *T = ConstantExpr::get(Opcode, CE1->getOperand(1), C2);
+      if (!isa<ConstantExpr>(T) || cast<ConstantExpr>(T)->getOpcode() != Opcode)
+        return ConstantExpr::get(Opcode, CE1->getOperand(0), T);
+    }
   } else if (isa<ConstantExpr>(C2)) {
     // If C2 is a constant expr and C1 isn't, flop them around and fold the
     // other way if possible.
@@ -2004,7 +2149,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
     }
 
     // Implement folding of:
-    //    int* getelementptr ([2 x int]* cast ([3 x int]* %X to [2 x int]*),
+    //    int* getelementptr ([2 x int]* bitcast ([3 x int]* %X to [2 x int]*),
     //                        long 0, long 0)
     // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
     //

@@ -369,7 +369,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     // array indexing.
     SmallVector<const SCEV *, 8> ScaledOps;
     if (ElTy->isSized()) {
-      const SCEV *ElSize = SE.getAllocSizeExpr(ElTy);
+      const SCEV *ElSize = SE.getSizeOfExpr(ElTy);
       if (!ElSize->isZero()) {
         SmallVector<const SCEV *, 8> NewOps;
         for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -433,9 +433,9 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
         // appropriate struct type.
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Ops[i])) {
-            const StructType *StructTy;
+            const Type *CTy;
             Constant *FieldNo;
-            if (U->isOffsetOf(StructTy, FieldNo) && StructTy == STy) {
+            if (U->isOffsetOf(CTy, FieldNo) && CTy == STy) {
               GepIndices.push_back(FieldNo);
               ElTy =
                 STy->getTypeAtIndex(cast<ConstantInt>(FieldNo)->getZExtValue());

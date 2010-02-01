@@ -347,26 +347,6 @@ const Type *SCEVUnknown::getType() const {
   return V->getType();
 }
 
-bool SCEVUnknown::isOffsetOf(const StructType *&STy, Constant *&FieldNo) const {
-  if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
-    if (VCE->getOpcode() == Instruction::PtrToInt)
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
-        if (CE->getOpcode() == Instruction::GetElementPtr)
-          if (CE->getOperand(0)->isNullValue()) {
-            const Type *Ty =
-              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
-            if (const StructType *StructTy = dyn_cast<StructType>(Ty))
-              if (CE->getNumOperands() == 3 &&
-                  CE->getOperand(1)->isNullValue()) {
-                STy = StructTy;
-                FieldNo = CE->getOperand(2);
-                return true;
-              }
-          }
-
-  return false;
-}
-
 bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
     if (VCE->getOpcode() == Instruction::PtrToInt)
@@ -395,7 +375,8 @@ bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
             const Type *Ty =
               cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
             if (const StructType *STy = dyn_cast<StructType>(Ty))
-              if (CE->getNumOperands() == 3 &&
+              if (!STy->isPacked() &&
+                  CE->getNumOperands() == 3 &&
                   CE->getOperand(1)->isNullValue()) {
                 if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(2)))
                   if (CI->isOne() &&
@@ -406,6 +387,28 @@ bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
                   }
               }
           }
+
+  return false;
+}
+
+bool SCEVUnknown::isOffsetOf(const Type *&CTy, Constant *&FieldNo) const {
+  if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
+    if (VCE->getOpcode() == Instruction::PtrToInt)
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
+        if (CE->getOpcode() == Instruction::GetElementPtr &&
+            CE->getNumOperands() == 3 &&
+            CE->getOperand(0)->isNullValue() &&
+            CE->getOperand(1)->isNullValue()) {
+          const Type *Ty =
+            cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+          // Ignore vector types here so that ScalarEvolutionExpander doesn't
+          // emit getelementptrs that index into vectors.
+          if (isa<StructType>(Ty) || isa<ArrayType>(Ty)) {
+            CTy = Ty;
+            FieldNo = CE->getOperand(2);
+            return true;
+          }
+        }
 
   return false;
 }
@@ -421,10 +424,10 @@ void SCEVUnknown::print(raw_ostream &OS) const {
     return;
   }
 
-  const StructType *STy;
+  const Type *CTy;
   Constant *FieldNo;
-  if (isOffsetOf(STy, FieldNo)) {
-    OS << "offsetof(" << *STy << ", ";
+  if (isOffsetOf(CTy, FieldNo)) {
+    OS << "offsetof(" << *CTy << ", ";
     WriteAsOperand(OS, FieldNo, false);
     OS << ")";
     return;
@@ -2231,8 +2234,24 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
   return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
 
-const SCEV *ScalarEvolution::getFieldOffsetExpr(const StructType *STy,
-                                                unsigned FieldNo) {
+const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
+  Constant *C = ConstantExpr::getSizeOf(AllocTy);
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    C = ConstantFoldConstantExpression(CE, TD);
+  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  return getTruncateOrZeroExtend(getSCEV(C), Ty);
+}
+
+const SCEV *ScalarEvolution::getAlignOfExpr(const Type *AllocTy) {
+  Constant *C = ConstantExpr::getAlignOf(AllocTy);
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    C = ConstantFoldConstantExpression(CE, TD);
+  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  return getTruncateOrZeroExtend(getSCEV(C), Ty);
+}
+
+const SCEV *ScalarEvolution::getOffsetOfExpr(const StructType *STy,
+                                             unsigned FieldNo) {
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     C = ConstantFoldConstantExpression(CE, TD);
@@ -2240,11 +2259,12 @@ const SCEV *ScalarEvolution::getFieldOffsetExpr(const StructType *STy,
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
-const SCEV *ScalarEvolution::getAllocSizeExpr(const Type *AllocTy) {
-  Constant *C = ConstantExpr::getSizeOf(AllocTy);
+const SCEV *ScalarEvolution::getOffsetOfExpr(const Type *CTy,
+                                             Constant *FieldNo) {
+  Constant *C = ConstantExpr::getOffsetOf(CTy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     C = ConstantFoldConstantExpression(CE, TD);
-  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(CTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
@@ -2695,7 +2715,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
       // For a struct, add the member offset.
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       TotalOffset = getAddExpr(TotalOffset,
-                               getFieldOffsetExpr(STy, FieldNo),
+                               getOffsetOfExpr(STy, FieldNo),
                                /*HasNUW=*/false, /*HasNSW=*/InBounds);
     } else {
       // For an array, add the element offset, explicitly scaled.
@@ -2704,7 +2724,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
         // Getelementptr indicies are signed.
         LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
       // Lower "inbounds" GEPs to NSW arithmetic.
-      LocalOffset = getMulExpr(LocalOffset, getAllocSizeExpr(*GTI),
+      LocalOffset = getMulExpr(LocalOffset, getSizeOfExpr(*GTI),
                                /*HasNUW=*/false, /*HasNSW=*/InBounds);
       TotalOffset = getAddExpr(TotalOffset, LocalOffset,
                                /*HasNUW=*/false, /*HasNSW=*/InBounds);
@@ -3197,7 +3217,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   case Instruction::Shl:
     // Turn shift left of a constant amount into a multiply.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+      uint32_t BitWidth = cast<IntegerType>(U->getType())->getBitWidth();
       Constant *X = ConstantInt::get(getContext(),
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getMulExpr(getSCEV(U->getOperand(0)), getSCEV(X));
@@ -3207,7 +3227,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   case Instruction::LShr:
     // Turn logical shift right of a constant into a unsigned divide.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+      uint32_t BitWidth = cast<IntegerType>(U->getType())->getBitWidth();
       Constant *X = ConstantInt::get(getContext(),
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
@@ -3248,10 +3268,10 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       return getSCEV(U->getOperand(0));
     break;
 
-    // It's tempting to handle inttoptr and ptrtoint, however this can
-    // lead to pointer expressions which cannot be expanded to GEPs
-    // (because they may overflow). For now, the only pointer-typed
-    // expressions we handle are GEPs and address literals.
+  // It's tempting to handle inttoptr and ptrtoint as no-ops, however this can
+  // lead to pointer expressions which cannot safely be expanded to GEPs,
+  // because ScalarEvolution doesn't respect the GEP aliasing rules when
+  // simplifying integer expressions.
 
   case Instruction::GetElementPtr:
     return createNodeForGEP(cast<GEPOperator>(U));
