@@ -703,8 +703,13 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // This allows ValueHandlers and custom metadata to adjust itself.
       if (!OldCall->getType()->isVoidTy())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
-      if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
+      if (isa<CallInst>(OldCall))
         return EraseInstFromFunction(*OldCall);
+      
+      // We cannot remove an invoke, because it would change the CFG, just
+      // change the callee to a null pointer.
+      cast<InvokeInst>(OldCall)->setOperand(0,
+                                    Constant::getNullValue(CalleeF->getType()));
       return 0;
     }
 
