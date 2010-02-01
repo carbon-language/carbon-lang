@@ -21,6 +21,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/CodeGen/CodeGenOptions.h"
 
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
@@ -4224,6 +4225,9 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
 /// message dispatch call for all the rest.
 ///
 bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
+  if (CGM.getCodeGenOpts().ObjCLegacyDispatch)
+    return true;
+
   if (NonLegacyDispatchMethods.empty()) {
     NonLegacyDispatchMethods.insert(GetNullarySelector("alloc"));
     NonLegacyDispatchMethods.insert(GetNullarySelector("class"));
