@@ -1031,7 +1031,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // defaults to off.
       if (Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
                        options::OPT_fno_objc_legacy_dispatch,
-                       false))
+                       getToolChain().IsObjCLegacyDispatchDefault()))
         CmdArgs.push_back("-fobjc-legacy-dispatch");
     }
   }

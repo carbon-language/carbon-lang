@@ -161,6 +161,11 @@ public:
     // Non-fragile ABI default to on for iPhoneOS and x86-64.
     return isTargetIPhoneOS() || getTriple().getArch() == llvm::Triple::x86_64;
   }
+  virtual bool IsObjCLegacyDispatchDefault() const {
+    // This is only used with the non-fragile ABI.
+    return (getTriple().getArch() == llvm::Triple::arm ||
+            getTriple().getArch() == llvm::Triple::thumb);
+  }
   virtual bool IsUnwindTablesDefault() const;
   virtual unsigned GetDefaultStackProtectorLevel() const {
     // Stack protectors default to on for 10.6 and beyond.

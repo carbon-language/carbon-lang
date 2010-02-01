@@ -4,6 +4,9 @@
 // CHECK-NOT: ssp
 // CHECK: ) {
 // CHECK: @__f0_block_invoke
+// CHECK: void @f1
+// CHECK-NOT: msgSend_fixup_alloc
+// CHECK: OBJC_SELECTOR_REFERENCES
 
 int f0() {
   return ^(){ return 0; }();
@@ -16,3 +19,12 @@ int f0() {
 @implementation I0
 @synthesize p0 = __sythesized_p0;
 @end
+
+@interface I1
++(id) alloc;
+@end
+
+void f1() {
+  [I1 alloc];
+}
+

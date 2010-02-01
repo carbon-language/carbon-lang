@@ -94,6 +94,11 @@ public:
   /// -fobjc-nonfragile-abi by default.
   virtual bool IsObjCNonFragileABIDefault() const { return false; }
 
+  /// IsObjCLegacyDispatchDefault - Does this tool chain set
+  /// -fobjc-legacy-dispatch by default (this is only used with the non-fragile
+  /// ABI).
+  virtual bool IsObjCLegacyDispatchDefault() const { return false; }
+
   /// GetDefaultStackProtectorLevel - Get the default stack protector level for
   /// this tool chain (0=off, 1=on, 2=all).
   virtual unsigned GetDefaultStackProtectorLevel() const { return 0; }
