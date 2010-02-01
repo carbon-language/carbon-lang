@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -pedantic -fixit %s -o - | %clang_cc1 -fsyntax-only -pedantic -Werror -x c++ -
+// RUN: %clang_cc1 -pedantic -Wall -fixit %s -o - | %clang_cc1 -fsyntax-only -pedantic -Wall -Werror -x c++ -
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
@@ -28,11 +28,12 @@ struct CT<0> { }; // expected-error{{'template<>'}}
 
 template<> class CT<1> { }; // expected-error{{tag type}}
 
-// PR5444
-namespace PR5444 {
-  void foo(int x, int y = 0);
-  void foo(int x, int y = 0) { }
+// Access declarations
+class A {
+protected:
+  int foo();
+};
 
-  void foo(int  = 0);
-  void foo(int  = 0) { }
-}
+class B : public A {
+  A::foo; // expected-warning{{access declarations are deprecated}}
+};
