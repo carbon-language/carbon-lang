@@ -426,7 +426,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
       SDValue InFlag = SDValue(MulNode, 0);
 
-      if (MulOp == ISD::MUL)
+      if (Opcode == ISD::MUL)
         return CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32, InFlag);
       else
         return CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
