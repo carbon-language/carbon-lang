@@ -1015,7 +1015,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$dst, $src",
                  [(set GPR:$dst, imm0_65535:$src)]>,
-                 Requires<[IsARM, HasV6T2]> {
+                 Requires<[IsARM, HasV6T2]>, UnaryDP {
   let Inst{20} = 0;
   let Inst{25} = 1;
 }
