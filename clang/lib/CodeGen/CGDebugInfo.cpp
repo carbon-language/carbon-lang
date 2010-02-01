@@ -465,14 +465,13 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
 /// CollectRecordFields - A helper function to collect debug info for
 /// record fields. This is used while creating debug info entry for a Record.
 void CGDebugInfo::
-CollectRecordFields(const RecordDecl *Decl,
-                    llvm::DICompileUnit Unit,
+CollectRecordFields(const RecordDecl *RD, llvm::DICompileUnit Unit,
                     llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys) {
   unsigned FieldNo = 0;
   SourceManager &SM = CGM.getContext().getSourceManager();
-  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
-  for (RecordDecl::field_iterator I = Decl->field_begin(),
-                                  E = Decl->field_end();
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
+  for (RecordDecl::field_iterator I = RD->field_begin(),
+                                  E = RD->field_end();
        I != E; ++I, ++FieldNo) {
     FieldDecl *Field = *I;
     llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
@@ -632,12 +631,11 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
 /// C++ member functions.This is used while creating debug info entry for 
 /// a Record.
 void CGDebugInfo::
-CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
-                          llvm::DICompileUnit Unit,
+CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
                           llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
                           llvm::DICompositeType &RecordTy) {
-  for(CXXRecordDecl::method_iterator I = Decl->method_begin(),
-        E = Decl->method_end(); I != E; ++I) {
+  for(CXXRecordDecl::method_iterator I = RD->method_begin(),
+        E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *Method = *I;
     
     if (Method->isImplicit())
@@ -651,14 +649,13 @@ CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
 /// C++ base classes. This is used while creating debug info entry for 
 /// a Record.
 void CGDebugInfo::
-CollectCXXBases(const CXXRecordDecl *Decl,
-                llvm::DICompileUnit Unit,
+CollectCXXBases(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
                 llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
                 llvm::DICompositeType &RecordTy) {
 
-  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
-  for (CXXRecordDecl::base_class_const_iterator BI = Decl->bases_begin(),
-         BE = Decl->bases_end(); BI != BE; ++BI) {
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
+  for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
+         BE = RD->bases_end(); BI != BE; ++BI) {
     unsigned BFlags = 0;
     uint64_t BaseOffset;
     
@@ -718,9 +715,9 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DICompileUnit Unit) {
 }
 
 /// getVtableName - Get vtable name for the given Class.
-llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *Decl) {
+llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *RD) {
   // Otherwise construct gdb compatible name name.
-  std::string Name = "_vptr$" + Decl->getNameAsString();
+  std::string Name = "_vptr$" + RD->getNameAsString();
 
   // Copy this name on the side and use its reference.
   char *StrPtr = DebugInfoNames.Allocate<char>(Name.length());
@@ -732,23 +729,22 @@ llvm::StringRef CGDebugInfo::getVtableName(const CXXRecordDecl *Decl) {
 /// CollectVtableInfo - If the C++ class has vtable info then insert appropriate
 /// debug info entry in EltTys vector.
 void CGDebugInfo::
-CollectVtableInfo(const CXXRecordDecl *Decl,
-                  llvm::DICompileUnit Unit,
+CollectVtableInfo(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
                   llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys) {
-  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(Decl);
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
 
   // If there is a primary base then it will hold vtable info.
   if (RL.getPrimaryBase())
     return;
 
   // If this class is not dynamic then there is not any vtable info to collect.
-  if (!Decl->isDynamicClass())
+  if (!RD->isDynamicClass())
     return;
 
   unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
   llvm::DIType VPTR
     = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                     getVtableName(Decl), llvm::DICompileUnit(),
+                                     getVtableName(RD), llvm::DICompileUnit(),
                                      0, Size, 0, 0, 0, 
                                      getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
@@ -1360,7 +1356,7 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) {
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
-void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
+void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, CGBuilderTy &Builder) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
@@ -1371,10 +1367,10 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   if (CGO.OptimizationLevel)
     return;
 
-  llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
-  QualType Type = Decl->getType();
+  llvm::DICompileUnit Unit = getOrCreateCompileUnit(VD->getLocation());
+  QualType Type = VD->getType();
   llvm::DIType Ty = getOrCreateType(Type, Unit);
-  if (Decl->hasAttr<BlocksAttr>()) {
+  if (VD->hasAttr<BlocksAttr>()) {
     llvm::DICompileUnit DefUnit;
     unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
 
@@ -1460,7 +1456,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
       FieldOffset += FieldSize;
     }
     
-    CharUnits Align = CGM.getContext().getDeclAlign(Decl);
+    CharUnits Align = CGM.getContext().getDeclAlign(VD);
     if (Align > CharUnits::fromQuantity(
           CGM.getContext().Target.getPointerAlign(0) / 8)) {
       unsigned AlignedOffsetInBytes
@@ -1490,7 +1486,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FieldAlign = Align.getQuantity()*8;
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             Decl->getName(), DefUnit,
+                                             VD->getName(), DefUnit,
                                              0, FieldSize, FieldAlign,
                                              FieldOffset, 0, FieldTy);
     EltTys.push_back(FieldTy);
@@ -1508,7 +1504,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
 
   // Get location information.
   SourceManager &SM = CGM.getContext().getSourceManager();
-  PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
+  PresumedLoc PLoc = SM.getPresumedLoc(VD->getLocation());
   unsigned Line = 0;
   unsigned Column = 0;
   if (!PLoc.isInvalid()) {
@@ -1521,7 +1517,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DebugFactory.CreateVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                Decl->getName(),
+                                VD->getName(),
                                 Unit, Line, Ty);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call =
