@@ -85,6 +85,8 @@ def warn_unused_variable : Warning<"unused variable %0">,
   InGroup<UnusedVariable>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
+def err_array_star_in_function_definition : Error<
+  "variable length array must be bound in function definition">;
 
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,

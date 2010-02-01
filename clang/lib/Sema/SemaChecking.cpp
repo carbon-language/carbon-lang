@@ -2616,6 +2616,20 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
         !Param->isImplicit() &&
         !getLangOptions().CPlusPlus)
       Diag(Param->getLocation(), diag::err_parameter_name_omitted);
+
+    // C99 6.7.5.3p12:
+    //   If the function declarator is not part of a definition of that
+    //   function, parameters may have incomplete type and may use the [*]
+    //   notation in their sequences of declarator specifiers to specify
+    //   variable length array types.
+    QualType PType = Param->getOriginalType();
+    if (const ArrayType *AT = Context.getAsArrayType(PType)) {
+      if (AT->getSizeModifier() == ArrayType::Star) {
+        // FIXME: This diagnosic should point the the '[*]' if source-location
+        // information is added for it.
+        Diag(Param->getLocation(), diag::err_array_star_in_function_definition);
+      }
+    }
   }
 
   return HasInvalidParm;
