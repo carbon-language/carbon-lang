@@ -223,6 +223,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned RegSize = Subtarget.isGP32bit() ? 4 : 8;
+  bool HasGP = MipsFI->needGPSaveRestore();
 
   // Min and Max CSI FrameIndex.
   int MinCSFI = -1, MaxCSFI = -1; 
@@ -248,6 +250,9 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   for (unsigned i = 0, e = CSI.size(); i != e; ++i)
     CalleeSavedAreaSize += MFI->getObjectAlignment(CSI[i].getFrameIdx());
 
+  unsigned StackOffset = HasGP ? (MipsFI->getGPStackOffset()+RegSize)
+                : (Subtarget.isABI_O32() ? 16 : 0);
+
   // Adjust local variables. They should come on the stack right
   // after the arguments.
   int LastOffsetFI = -1;
@@ -256,7 +261,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
       continue;
     if (MFI->isDeadObjectIndex(i))
       continue;
-    unsigned Offset = MFI->getObjectOffset(i) - CalleeSavedAreaSize;
+    unsigned Offset = 
+      StackOffset + MFI->getObjectOffset(i) - CalleeSavedAreaSize;
     if (LastOffsetFI == -1)
       LastOffsetFI = i;
     if (Offset > MFI->getObjectOffset(LastOffsetFI))
@@ -265,11 +271,8 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
   }
 
   // Adjust CPU Callee Saved Registers Area. Registers RA and FP must
-  // be saved in this CPU Area there is the need. This whole Area must 
-  // be aligned to the default Stack Alignment requirements.
-  unsigned StackOffset = 0;
-  unsigned RegSize = Subtarget.isGP32bit() ? 4 : 8;
-
+  // be saved in this CPU Area. This whole area must be aligned to the 
+  // default Stack Alignment requirements.
   if (LastOffsetFI >= 0)
     StackOffset = MFI->getObjectOffset(LastOffsetFI)+ 
                   MFI->getObjectSize(LastOffsetFI);
@@ -283,21 +286,26 @@ void MipsRegisterInfo::adjustMipsStackFrame(MachineFunction &MF) const
     StackOffset += MFI->getObjectAlignment(CSI[i].getFrameIdx());
   }
 
-  if (hasFP(MF)) {
+  // Stack locations for FP and RA. If only one of them is used, 
+  // the space must be allocated for both, otherwise no space at all.
+  if (hasFP(MF) || MFI->hasCalls()) {
+    // FP stack location
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true), 
                          StackOffset);
     MipsFI->setFPStackOffset(StackOffset);
     TopCPUSavedRegOff = StackOffset;
     StackOffset += RegSize;
-  }
 
-  if (MFI->hasCalls()) {
+    // SP stack location
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
     MipsFI->setRAStackOffset(StackOffset);
-    TopCPUSavedRegOff = StackOffset;
     StackOffset += RegSize;
+
+    if (MFI->hasCalls())
+      TopCPUSavedRegOff += RegSize;
   }
+
   StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
   
   // Adjust FPU Callee Saved Registers Area. This Area must be 
