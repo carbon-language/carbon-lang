@@ -5411,10 +5411,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
    EVT NVT = N->getValueType(0);
    if (InOp.getValueType() != NVT) {
      assert(InOp.getValueType().isInteger() && NVT.isInteger());
-     if (NVT.getSizeInBits() > InOp.getValueType().getSizeInBits())
-       return DAG.getNode(ISD::SIGN_EXTEND, InVec.getDebugLoc(), NVT, InOp);
-     else
-       return DAG.getNode(ISD::TRUNCATE, InVec.getDebugLoc(), NVT, InOp);
+     return DAG.getSExtOrTrunc(InOp, InVec.getDebugLoc(), NVT);
    }
    return InOp;
  }
