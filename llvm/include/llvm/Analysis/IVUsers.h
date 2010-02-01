@@ -165,6 +165,11 @@ public:
   void removeUser(IVStrideUse *User) {
     Users.erase(User);
   }
+
+  void print(raw_ostream &OS) const;
+
+  /// dump - This method is used for debugging.
+  void dump() const;
 };
 
 class IVUsers : public LoopPass {

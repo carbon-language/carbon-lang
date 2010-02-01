@@ -386,3 +386,26 @@ void IVStrideUse::deleted() {
   Parent->Users.erase(this);
   // this now dangles!
 }
+
+void IVUsersOfOneStride::print(raw_ostream &OS) const {
+  OS << "IV Users of one stride:\n";
+
+  if (Stride)
+    OS << "    Stride: " << *Stride << '\n';
+
+  OS << "    Users:\n";
+
+  unsigned Count = 1;
+
+  for (ilist<IVStrideUse>::const_iterator
+         I = Users.begin(), E = Users.end(); I != E; ++I) {
+    const IVStrideUse &SU = *I;
+    OS << "      " << Count++ << '\n';
+    OS << "        Offset: " << *SU.getOffset() << '\n';
+    OS << "         Instr: " << *SU << '\n';
+  }
+}
+
+void IVUsersOfOneStride::dump() const {
+  print(dbgs());
+}
