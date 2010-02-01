@@ -699,6 +699,7 @@ public:
   static Constant *getNSWNeg(Constant *C);
   static Constant *getNSWAdd(Constant *C1, Constant *C2);
   static Constant *getNSWSub(Constant *C1, Constant *C2);
+  static Constant *getNUWMul(Constant *C1, Constant *C2);
   static Constant *getNSWMul(Constant *C1, Constant *C2);
   static Constant *getExactSDiv(Constant *C1, Constant *C2);
 
