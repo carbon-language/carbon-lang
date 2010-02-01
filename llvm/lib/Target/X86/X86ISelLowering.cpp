@@ -2288,9 +2288,11 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // Don't tail call optimize recursive call.
   GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
   if (!G) return false;  // FIXME: common external symbols?
-  const Function *CalleeF = cast<Function>(G->getGlobal());
-  const Type *CalleeRetTy = CalleeF->getReturnType();
-  return CallerRetTy == CalleeRetTy;
+  if (const Function *CalleeF = dyn_cast<Function>(G->getGlobal())) {
+    const Type *CalleeRetTy = CalleeF->getReturnType();
+    return CallerRetTy == CalleeRetTy;
+  }
+  return false;
 }
 
 FastISel *
