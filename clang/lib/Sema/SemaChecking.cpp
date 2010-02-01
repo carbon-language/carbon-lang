@@ -846,8 +846,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
       }
 
       if (isConstant) {
-        const VarDecl *Def = 0;
-        if (const Expr *Init = VD->getDefinition(Def))
+        if (const Expr *Init = VD->getAnyInitializer())
           return SemaCheckStringLiteral(Init, TheCall,
                                         HasVAListArg, format_idx, firstDataArg);
       }

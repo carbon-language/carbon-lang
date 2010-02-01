@@ -979,7 +979,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   QualType ASTTy = D->getType();
   bool NonConstInit = false;
 
-  const Expr *InitExpr = D->getDefinition();
+  const Expr *InitExpr = D->getAnyInitializer();
   
   if (!InitExpr) {
     // This is a tentative definition; tentative definitions are

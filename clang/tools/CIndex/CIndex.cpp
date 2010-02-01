@@ -1733,23 +1733,10 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   }
 
   case Decl::Var: {
-    VarDecl *Var = cast<VarDecl>(D);
-
-    // Variables with initializers have definitions.
-    const VarDecl *Def = 0;
-    if (Var->getDefinition(Def))
-      return MakeCXCursor(const_cast<VarDecl *>(Def), CXXUnit);
-
-    // extern and private_extern variables are not definitions.
-    if (Var->hasExternalStorage())
-      return clang_getNullCursor();
-
-    // In-line static data members do not have definitions.
-    if (Var->isStaticDataMember() && !Var->isOutOfLine())
-      return clang_getNullCursor();
-
-    // All other variables are themselves definitions.
-    return C;
+    // Ask the variable if it has a definition.
+    if (VarDecl *Def = cast<VarDecl>(D)->getDefinition())
+      return MakeCXCursor(Def, CXXUnit);
+    return clang_getNullCursor();
   }
    
   case Decl::FunctionTemplate: {

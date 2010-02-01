@@ -263,8 +263,7 @@ APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
     if (!VD->getType()->isReferenceType())
       return APValue(E);
     // FIXME: Check whether VD might be overridden!
-    const VarDecl *Def = 0;
-    if (const Expr *Init = VD->getDefinition(Def))
+    if (const Expr *Init = VD->getAnyInitializer())
       return Visit(const_cast<Expr *>(Init));
   }
 
@@ -880,8 +879,7 @@ bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   if (Info.Ctx.getCanonicalType(E->getType()).getCVRQualifiers() 
                                                         == Qualifiers::Const) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-      const VarDecl *Def = 0;
-      if (const Expr *Init = VD->getDefinition(Def)) {
+      if (const Expr *Init = VD->getAnyInitializer()) {
         if (APValue *V = VD->getEvaluatedValue()) {
           if (V->isInt())
             return Success(V->getInt(), E);

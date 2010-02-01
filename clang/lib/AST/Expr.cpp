@@ -99,8 +99,7 @@ void DeclRefExpr::computeDependence() {
   else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (Var->getType()->isIntegralType() &&
         Var->getType().getCVRQualifiers() == Qualifiers::Const) {
-      const VarDecl *Def = 0;
-      if (const Expr *Init = Var->getDefinition(Def))
+      if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent())
           ValueDependent = true;
     }
@@ -1654,15 +1653,14 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         if (Quals.hasVolatile() || !Quals.hasConst())
           return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
         
-        // Look for the definition of this variable, which will actually have
-        // an initializer.
-        const VarDecl *Def = 0;
-        const Expr *Init = Dcl->getDefinition(Def);
+        // Look for a declaration of this variable that has an initializer.
+        const VarDecl *ID = 0;
+        const Expr *Init = Dcl->getAnyInitializer(ID);
         if (Init) {
-          if (Def->isInitKnownICE()) {
+          if (ID->isInitKnownICE()) {
             // We have already checked whether this subexpression is an
             // integral constant expression.
-            if (Def->isInitICE())
+            if (ID->isInitICE())
               return NoDiag();
             else
               return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
@@ -1674,7 +1672,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
           //   specify a constant-initializer which shall be an integral 
           //   constant expression (5.19). In that case, the member can appear
           //   in integral constant expressions.
-          if (Def->isOutOfLine()) {
+          if (ID->isOutOfLine()) {
             Dcl->setInitKnownICE(false);
             return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
           }

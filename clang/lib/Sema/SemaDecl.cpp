@@ -2360,9 +2360,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // attributes declared post-definition are currently ignored
   if (Previous.isSingleResult()) {
-    const VarDecl *Def = 0;
-    VarDecl *PrevDecl = dyn_cast<VarDecl>(Previous.getFoundDecl());
-    if (PrevDecl && PrevDecl->getDefinition(Def) && D.hasAttributes()) {
+    VarDecl *Def = dyn_cast<VarDecl>(Previous.getFoundDecl());
+    if (Def && (Def = Def->getDefinition()) &&
+        Def != NewVD && D.hasAttributes()) {
       Diag(NewVD->getLocation(), diag::warn_attribute_precede_definition);
       Diag(Def->getLocation(), diag::note_previous_definition);
     }
@@ -3435,8 +3435,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
                              AbstractVariableType))
     VDecl->setInvalidDecl();
 
-  const VarDecl *Def = 0;
-  if (VDecl->getDefinition(Def)) {
+  const VarDecl *Def;
+  if ((Def = VDecl->getDefinition()) && Def != VDecl) {
     Diag(VDecl->getLocation(), diag::err_redefinition)
       << VDecl->getDeclName();
     Diag(Def->getLocation(), diag::note_previous_definition);

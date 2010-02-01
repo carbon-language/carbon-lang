@@ -522,10 +522,6 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
   return Definition;
 }
 
-const VarDecl *VarDecl::getActingDefinition() const {
-  return const_cast<VarDecl*>(this)->getActingDefinition();
-}
-
 VarDecl *VarDecl::getActingDefinition() {
   DefinitionKind Kind = isThisDeclarationADefinition();
   if (Kind != TentativeDefinition)
@@ -553,16 +549,24 @@ bool VarDecl::isTentativeDefinitionNow() const {
     if ((*I)->isThisDeclarationADefinition() == Definition)
       return false;
   }
-  return true;  
+  return true;
 }
 
-const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
+VarDecl *VarDecl::getDefinition() {
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if ((*I)->isThisDeclarationADefinition() == Definition)
+      return *I;
+  }
+  return 0;
+}
+
+const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
   redecl_iterator I = redecls_begin(), E = redecls_end();
   while (I != E && !I->getInit())
     ++I;
 
   if (I != E) {
-    Def = *I;
+    D = *I;
     return I->getInit();
   }
   return 0;

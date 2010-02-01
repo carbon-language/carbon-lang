@@ -560,22 +560,19 @@ public:
 
   /// \brief Get the tentative definition that acts as the real definition in
   /// a TU. Returns null if there is a proper definition available.
-  const VarDecl *getActingDefinition() const;
   VarDecl *getActingDefinition();
+  const VarDecl *getActingDefinition() const {
+    return const_cast<VarDecl*>(this)->getActingDefinition();
+  }
 
   /// \brief Determine whether this is a tentative definition of a
   /// variable in C.
   bool isTentativeDefinitionNow() const;
 
-  /// \brief Retrieve the definition of this variable, which may come
-  /// from a previous declaration. Def will be set to the VarDecl that
-  /// contains the initializer, and the result will be that
-  /// initializer.
-  const Expr *getDefinition(const VarDecl *&Def) const;
-
-  const Expr *getDefinition() const {
-    const VarDecl* Definition;
-    return getDefinition(Definition);
+  /// \brief Get the real (not just tentative) definition for this declaration.
+  VarDecl *getDefinition();
+  const VarDecl *getDefinition() const {
+    return const_cast<VarDecl*>(this)->getDefinition();
   }
 
   /// \brief Determine whether this is or was instantiated from an out-of-line 
@@ -599,6 +596,17 @@ public:
 
     return false;
   }
+
+  /// getAnyInitializer - Get the initializer for this variable, no matter which
+  /// declaration it is attached to.
+  const Expr *getAnyInitializer() const {
+    const VarDecl *D;
+    return getAnyInitializer(D);
+  }
+
+  /// getAnyInitializer - Get the initializer for this variable, no matter which
+  /// declaration it is attached to. Also get that declaration.
+  const Expr *getAnyInitializer(const VarDecl *&D) const;
 
   bool hasInit() const {
     return !Init.isNull();

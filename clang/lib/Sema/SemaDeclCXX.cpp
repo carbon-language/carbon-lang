@@ -4062,8 +4062,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                              AbstractVariableType))
     VDecl->setInvalidDecl();
 
-  const VarDecl *Def = 0;
-  if (VDecl->getDefinition(Def)) {
+  const VarDecl *Def;
+  if ((Def = VDecl->getDefinition()) && Def != VDecl) {
     Diag(VDecl->getLocation(), diag::err_redefinition)
     << VDecl->getDeclName();
     Diag(Def->getLocation(), diag::note_previous_definition);
