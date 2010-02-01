@@ -26,6 +26,3 @@ _EDRegisterTokenValue
 _EDNumOperands
 _EDGetOperand
 _EDEvaluateOperand
-_EDBlockCreateInsts
-_EDBlockEvaluateOperand
-_EDBlockVisitTokens
