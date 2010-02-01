@@ -925,6 +925,12 @@ def note_ovl_candidate : Note<"candidate "
     "is the implicit default constructor|"
     "is the implicit copy constructor|"
     "is the implicit copy assignment operator}0%1">;
+
+def note_ovl_candidate_bad_deduction : Note<
+    "candidate template ignored: failed template argument deduction">;
+def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
+    "couldn't infer template argument %0">;
+
 // Note that we don't treat templates differently for this diagnostic.
 def note_ovl_candidate_arity : Note<"candidate "
     "%select{function|function|constructor|function|function|constructor|"

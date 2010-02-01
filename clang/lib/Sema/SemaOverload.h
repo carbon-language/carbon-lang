@@ -465,11 +465,25 @@ namespace clang {
       return AccessSpecifier(Access);
     }
 
-    /// FinalConversion - For a conversion function (where Function is
-    /// a CXXConversionDecl), the standard conversion that occurs
-    /// after the call to the overload candidate to convert the result
-    /// of calling the conversion function to the required type.
-    StandardConversionSequence FinalConversion;
+    /// A structure used to record information about a failed
+    /// template argument deduction.
+    struct DeductionFailureInfo {
+      // A Sema::TemplateDeductionResult.
+      unsigned Result;
+
+      // A TemplateParameter.
+      void *TemplateParameter;
+    };
+
+    union {
+      DeductionFailureInfo DeductionFailure;
+      
+      /// FinalConversion - For a conversion function (where Function is
+      /// a CXXConversionDecl), the standard conversion that occurs
+      /// after the call to the overload candidate to convert the result
+      /// of calling the conversion function to the required type.
+      StandardConversionSequence FinalConversion;
+    };
 
     /// hasAmbiguousConversion - Returns whether this overload
     /// candidate requires an ambiguous conversion or not.

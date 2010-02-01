@@ -2742,10 +2742,6 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
                                   Args, NumArgs, Specialization, Info)) {
-    // FIXME: Record what happened with template argument deduction, so
-    // that we can give the user a beautiful diagnostic.
-    (void) Result;
-
     CandidateSet.push_back(OverloadCandidate());
     OverloadCandidate &Candidate = CandidateSet.back();
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
@@ -2754,6 +2750,10 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
+
+    // TODO: record more information about failed template arguments
+    Candidate.DeductionFailure.Result = Result;
+    Candidate.DeductionFailure.TemplateParameter = Info.Param.getOpaqueValue();
     return;
   }
 
@@ -4556,6 +4556,58 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
     << (unsigned) FnKind << Description << mode << modeCount << NumFormalArgs;
 }
 
+/// Diagnose a failed template-argument deduction.
+void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
+                          Expr **Args, unsigned NumArgs) {
+  FunctionDecl *Fn = Cand->Function; // pattern
+
+  TemplateParameter Param = TemplateParameter::getFromOpaqueValue(
+                                   Cand->DeductionFailure.TemplateParameter);
+
+  switch (Cand->DeductionFailure.Result) {
+  case Sema::TDK_Success:
+    llvm_unreachable("TDK_success while diagnosing bad deduction");
+
+  case Sema::TDK_Incomplete: {
+    NamedDecl *ParamD;
+    (ParamD = Param.dyn_cast<TemplateTypeParmDecl*>()) ||
+    (ParamD = Param.dyn_cast<NonTypeTemplateParmDecl*>()) ||
+    (ParamD = Param.dyn_cast<TemplateTemplateParmDecl*>());
+    assert(ParamD && "no parameter found for incomplete deduction result");
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_incomplete_deduction)
+      << ParamD->getDeclName();
+    return;
+  }
+
+  // TODO: diagnose these individually, then kill off
+  // note_ovl_candidate_bad_deduction, which is uselessly vague.
+  case Sema::TDK_InstantiationDepth:
+  case Sema::TDK_Inconsistent:
+  case Sema::TDK_InconsistentQuals:
+  case Sema::TDK_SubstitutionFailure:
+  case Sema::TDK_NonDeducedMismatch:
+  case Sema::TDK_TooManyArguments:
+  case Sema::TDK_TooFewArguments:
+  case Sema::TDK_InvalidExplicitArguments:
+  case Sema::TDK_FailedOverloadResolution:
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_deduction);
+    return;
+  }
+}
+
+/// Generates a 'note' diagnostic for an overload candidate.  We've
+/// already generated a primary error at the call site.
+///
+/// It really does need to be a single diagnostic with its caret
+/// pointed at the candidate declaration.  Yes, this creates some
+/// major challenges of technical writing.  Yes, this makes pointing
+/// out problems with specific arguments quite awkward.  It's still
+/// better than generating twenty screens of text for every failed
+/// overload.
+///
+/// It would be great to be able to express per-candidate problems
+/// more richly for those diagnostic clients that cared, but we'd
+/// still have to be just as careful with the default diagnostics.
 void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
                            Expr **Args, unsigned NumArgs) {
   FunctionDecl *Fn = Cand->Function;
@@ -4582,6 +4634,8 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     return DiagnoseArityMismatch(S, Cand, NumArgs);
 
   case ovl_fail_bad_deduction:
+    return DiagnoseBadDeduction(S, Cand, Args, NumArgs);
+
   case ovl_fail_trivial_conversion:
   case ovl_fail_bad_final_conversion:
     return S.NoteOverloadCandidate(Fn);

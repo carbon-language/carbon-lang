@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-template<class X, class Y, class Z> X f(Y,Z); // expected-note {{candidate function}}
+template<class X, class Y, class Z> X f(Y,Z); // expected-note {{candidate template ignored: couldn't infer template argument 'X'}}
 
 void g() {
   f<int,char*,double>("aa",3.0); 
