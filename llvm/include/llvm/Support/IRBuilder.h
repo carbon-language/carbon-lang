@@ -318,6 +318,12 @@ public:
         return Folder.CreateNSWAdd(LC, RC);
     return Insert(BinaryOperator::CreateNSWAdd(LHS, RHS), Name);
   }
+  Value *CreateNUWAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNUWAdd(LC, RC);
+    return Insert(BinaryOperator::CreateNUWAdd(LHS, RHS), Name);
+  }
   Value *CreateFAdd(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
@@ -336,6 +342,12 @@ public:
         return Folder.CreateNSWSub(LC, RC);
     return Insert(BinaryOperator::CreateNSWSub(LHS, RHS), Name);
   }
+  Value *CreateNUWSub(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNUWSub(LC, RC);
+    return Insert(BinaryOperator::CreateNUWSub(LHS, RHS), Name);
+  }
   Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
@@ -353,6 +365,12 @@ public:
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Folder.CreateNSWMul(LC, RC);
     return Insert(BinaryOperator::CreateNSWMul(LHS, RHS), Name);
+  }
+  Value *CreateNUWMul(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNUWMul(LC, RC);
+    return Insert(BinaryOperator::CreateNUWMul(LHS, RHS), Name);
   }
   Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
@@ -483,6 +501,11 @@ public:
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateNSWNeg(VC);
     return Insert(BinaryOperator::CreateNSWNeg(V), Name);
+  }
+  Value *CreateNUWNeg(Value *V, const Twine &Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return Folder.CreateNUWNeg(VC);
+    return Insert(BinaryOperator::CreateNUWNeg(V), Name);
   }
   Value *CreateFNeg(Value *V, const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))

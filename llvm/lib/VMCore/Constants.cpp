@@ -645,9 +645,20 @@ Constant* ConstantExpr::getNSWNeg(Constant* C) {
   return getNSWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
 
+Constant* ConstantExpr::getNUWNeg(Constant* C) {
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NEG a nonintegral value!");
+  return getNUWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
+}
+
 Constant* ConstantExpr::getNSWAdd(Constant* C1, Constant* C2) {
   return getTy(C1->getType(), Instruction::Add, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);
+}
+
+Constant* ConstantExpr::getNUWAdd(Constant* C1, Constant* C2) {
+  return getTy(C1->getType(), Instruction::Add, C1, C2,
+               OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
 Constant* ConstantExpr::getNSWSub(Constant* C1, Constant* C2) {
@@ -655,14 +666,19 @@ Constant* ConstantExpr::getNSWSub(Constant* C1, Constant* C2) {
                OverflowingBinaryOperator::NoSignedWrap);
 }
 
-Constant* ConstantExpr::getNUWMul(Constant* C1, Constant* C2) {
-  return getTy(C1->getType(), Instruction::Mul, C1, C2,
+Constant* ConstantExpr::getNUWSub(Constant* C1, Constant* C2) {
+  return getTy(C1->getType(), Instruction::Sub, C1, C2,
                OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
 Constant* ConstantExpr::getNSWMul(Constant* C1, Constant* C2) {
   return getTy(C1->getType(), Instruction::Mul, C1, C2,
                OverflowingBinaryOperator::NoSignedWrap);
+}
+
+Constant* ConstantExpr::getNUWMul(Constant* C1, Constant* C2) {
+  return getTy(C1->getType(), Instruction::Mul, C1, C2,
+               OverflowingBinaryOperator::NoUnsignedWrap);
 }
 
 Constant* ConstantExpr::getExactSDiv(Constant* C1, Constant* C2) {

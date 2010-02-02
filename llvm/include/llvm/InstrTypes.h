@@ -299,6 +299,27 @@ public:
     return BO;
   }
 
+  /// CreateNUWMul - Create a Mul operator with the NUW flag set.
+  ///
+  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
+                                      const Twine &Name = "") {
+    BinaryOperator *BO = CreateMul(V1, V2, Name);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
+                                      const Twine &Name, BasicBlock *BB) {
+    BinaryOperator *BO = CreateMul(V1, V2, Name, BB);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+  static BinaryOperator *CreateNUWMul(Value *V1, Value *V2,
+                                      const Twine &Name, Instruction *I) {
+    BinaryOperator *BO = CreateMul(V1, V2, Name, I);
+    BO->setHasNoUnsignedWrap(true);
+    return BO;
+  }
+
   /// CreateExactSDiv - Create an SDiv operator with the exact flag set.
   ///
   static BinaryOperator *CreateExactSDiv(Value *V1, Value *V2,
@@ -333,6 +354,10 @@ public:
   static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name = "",
                                       Instruction *InsertBefore = 0);
   static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name,
+                                      BasicBlock *InsertAtEnd);
+  static BinaryOperator *CreateNUWNeg(Value *Op, const Twine &Name = "",
+                                      Instruction *InsertBefore = 0);
+  static BinaryOperator *CreateNUWNeg(Value *Op, const Twine &Name,
                                       BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name = "",
                                     Instruction *InsertBefore = 0);

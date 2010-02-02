@@ -45,6 +45,9 @@ public:
   Value *CreateNSWAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWAdd(LHS, RHS);
   }
+  Value *CreateNUWAdd(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNUWAdd(LHS, RHS);
+  }
   Value *CreateFAdd(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFAdd(LHS, RHS);
   }
@@ -54,6 +57,9 @@ public:
   Value *CreateNSWSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWSub(LHS, RHS);
   }
+  Value *CreateNUWSub(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNUWSub(LHS, RHS);
+  }
   Value *CreateFSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFSub(LHS, RHS);
   }
@@ -62,6 +68,9 @@ public:
   }
   Value *CreateNSWMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateNSWMul(LHS, RHS);
+  }
+  Value *CreateNUWMul(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNUWMul(LHS, RHS);
   }
   Value *CreateFMul(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFMul(LHS, RHS);
@@ -120,6 +129,9 @@ public:
   }
   Value *CreateNSWNeg(Constant *C) const {
     return BinaryOperator::CreateNSWNeg(C);
+  }
+  Value *CreateNUWNeg(Constant *C) const {
+    return BinaryOperator::CreateNUWNeg(C);
   }
   Value *CreateNot(Constant *C) const {
     return BinaryOperator::CreateNot(C);
