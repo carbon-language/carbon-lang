@@ -36,7 +36,6 @@ class TargetRegisterInfo;
 class PassManagerBase;
 class PassManager;
 class Pass;
-class TargetMachOWriterInfo;
 class TargetELFWriterInfo;
 class formatted_raw_ostream;
 
@@ -162,11 +161,6 @@ public:
   virtual const InstrItineraryData getInstrItineraryData() const {  
     return InstrItineraryData();
   }
-
-  /// getMachOWriterInfo - If this target supports a Mach-O writer, return
-  /// information for it, otherwise return null.
-  /// 
-  virtual const TargetMachOWriterInfo *getMachOWriterInfo() const { return 0; }
 
   /// getELFWriterInfo - If this target supports an ELF writer, return
   /// information for it, otherwise return null.
