@@ -53,11 +53,7 @@ public:
   virtual bool addPreSched2(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
-                              MachineCodeEmitter &MCE);
-  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               JITCodeEmitter &MCE);
-  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
-                              ObjectCodeEmitter &OCE);
 };
 
 /// ARMTargetMachine - ARM target machine.

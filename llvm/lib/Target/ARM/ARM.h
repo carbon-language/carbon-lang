@@ -95,12 +95,8 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 
-FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
-                                       MachineCodeEmitter &MCE);
 FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
                                           JITCodeEmitter &JCE);
-FunctionPass *createARMObjectCodeEmitterPass(ARMBaseTargetMachine &TM,
-                                             ObjectCodeEmitter &OCE);
 
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMExpandPseudoPass();
