@@ -1471,13 +1471,17 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
   // changed with more analysis.
   // In case of tail call optimization mark all arguments mutable. Since they
   // could be overwritten by lowering of arguments in case of a tail call.
-  int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
-                                  VA.getLocMemOffset(), isImmutable, false);
-  SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-  if (Flags.isByVal())
-    return FIN;
-  return DAG.getLoad(ValVT, dl, Chain, FIN,
-                     PseudoSourceValue::getFixedStack(FI), 0);
+  if (Flags.isByVal()) {
+    int FI = MFI->CreateFixedObject(Flags.getByValSize(),
+                                    VA.getLocMemOffset(), isImmutable, false);
+    return DAG.getFrameIndex(FI, getPointerTy());
+  } else {
+    int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
+                                    VA.getLocMemOffset(), isImmutable, false);
+    SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+    return DAG.getLoad(ValVT, dl, Chain, FIN,
+                       PseudoSourceValue::getFixedStack(FI), 0);
+  }
 }
 
 SDValue
