@@ -152,7 +152,7 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
 
   Constant *StrLen =M->getOrInsertFunction("strlen", AttrListPtr::get(AWI, 2),
                                            TD->getIntPtrType(*Context),
-					   Type::getInt8PtrTy(*Context),
+                                           Type::getInt8PtrTy(*Context),
                                            NULL);
   CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
   if (const Function *F = dyn_cast<Function>(StrLen->stripPointerCasts()))
@@ -321,9 +321,9 @@ Value *LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
                                           Type::getInt32Ty(*Context), NULL);
   CallInst *CI = B.CreateCall(PutChar,
                               B.CreateIntCast(Char,
-					      Type::getInt32Ty(*Context),
-                                              /*isSigned*/true,
-					      "chari"),
+                              Type::getInt32Ty(*Context),
+                              /*isSigned*/true,
+                              "chari"),
                               "putchar");
 
   if (const Function *F = dyn_cast<Function>(PutChar->stripPointerCasts()))
@@ -341,7 +341,7 @@ void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
 
   Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
                                        Type::getInt32Ty(*Context),
-                                    Type::getInt8PtrTy(*Context),
+                                       Type::getInt8PtrTy(*Context),
                                        NULL);
   CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
   if (const Function *F = dyn_cast<Function>(PutS->stripPointerCasts()))
@@ -359,13 +359,13 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
   Constant *F;
   if (isa<PointerType>(File->getType()))
     F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2),
-			       Type::getInt32Ty(*Context),
+                               Type::getInt32Ty(*Context),
                                Type::getInt32Ty(*Context), File->getType(),
-			       NULL);
+                               NULL);
   else
     F = M->getOrInsertFunction("fputc",
-			       Type::getInt32Ty(*Context),
-			       Type::getInt32Ty(*Context),
+                               Type::getInt32Ty(*Context),
+                               Type::getInt32Ty(*Context),
                                File->getType(), NULL);
   Char = B.CreateIntCast(Char, Type::getInt32Ty(*Context), /*isSigned*/true,
                          "chari");
@@ -386,7 +386,7 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
   Constant *F;
   if (isa<PointerType>(File->getType()))
     F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 3),
-			       Type::getInt32Ty(*Context),
+                               Type::getInt32Ty(*Context),
                                Type::getInt8PtrTy(*Context),
                                File->getType(), NULL);
   else
@@ -414,13 +414,13 @@ void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                TD->getIntPtrType(*Context),
                                Type::getInt8PtrTy(*Context),
                                TD->getIntPtrType(*Context),
-			       TD->getIntPtrType(*Context),
+                               TD->getIntPtrType(*Context),
                                File->getType(), NULL);
   else
     F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(*Context),
                                Type::getInt8PtrTy(*Context),
                                TD->getIntPtrType(*Context),
-			       TD->getIntPtrType(*Context),
+                               TD->getIntPtrType(*Context),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
                         ConstantInt::get(TD->getIntPtrType(*Context), 1), File);
@@ -1327,7 +1327,7 @@ struct Exp2Opt : public LibCallOptimization {
       Module *M = Caller->getParent();
       Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
                                              Op->getType(),
-					     Type::getInt32Ty(*Context),NULL);
+                                             Type::getInt32Ty(*Context),NULL);
       CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
       if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
         CI->setCallingConv(F->getCallingConv());
