@@ -102,7 +102,7 @@ unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
 
   if (PrefAlign > Align)
     Align = EnforceKnownAlignment(V, Align, PrefAlign);
-  
+
     // We don't need to make any adjustment.
   return Align;
 }
@@ -114,30 +114,30 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   unsigned CopyAlign = MI->getAlignment();
 
   if (CopyAlign < MinAlign) {
-    MI->setAlignment(ConstantInt::get(MI->getAlignmentType(), 
+    MI->setAlignment(ConstantInt::get(MI->getAlignmentType(),
                                              MinAlign, false));
     return MI;
   }
-  
+
   // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
   // load/store.
   ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getOperand(3));
   if (MemOpLength == 0) return 0;
-  
+
   // Source and destination pointer types are always "i8*" for intrinsic.  See
   // if the size is something we can handle with a single primitive load/store.
   // A single load+store correctly handles overlapping memory in the memmove
   // case.
   unsigned Size = MemOpLength->getZExtValue();
   if (Size == 0) return MI;  // Delete this mem transfer.
-  
+
   if (Size > 8 || (Size&(Size-1)))
     return 0;  // If not 1/2/4/8 bytes, exit.
-  
+
   // Use an integer load+store unless we can find something better.
   Type *NewPtrTy =
             PointerType::getUnqual(IntegerType::get(MI->getContext(), Size<<3));
-  
+
   // Memcpy forces the use of i8* for the source and destination.  That means
   // that if you're using memcpy to move one double around, you'll get a cast
   // from double* to i8*.  We'd much rather use a double load+store rather than
@@ -165,18 +165,18 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
         } else
           break;
       }
-      
+
       if (SrcETy->isSingleValueType())
         NewPtrTy = PointerType::getUnqual(SrcETy);
     }
   }
-  
-  
+
+
   // If the memcpy/memmove provides better alignment info than we can
   // infer, use it.
   SrcAlign = std::max(SrcAlign, CopyAlign);
   DstAlign = std::max(DstAlign, CopyAlign);
-  
+
   Value *Src = Builder->CreateBitCast(MI->getOperand(2), NewPtrTy);
   Value *Dest = Builder->CreateBitCast(MI->getOperand(1), NewPtrTy);
   Instruction *L = new LoadInst(Src, "tmp", false, SrcAlign);
@@ -195,7 +195,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
                                              Alignment, false));
     return MI;
   }
-  
+
   // Extract the length and alignment and fill if they are constant.
   ConstantInt *LenC = dyn_cast<ConstantInt>(MI->getLength());
   ConstantInt *FillC = dyn_cast<ConstantInt>(MI->getValue());
@@ -203,25 +203,25 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
     return 0;
   uint64_t Len = LenC->getZExtValue();
   Alignment = MI->getAlignment();
-  
+
   // If the length is zero, this is a no-op
   if (Len == 0) return MI; // memset(d,c,0,a) -> noop
-  
+
   // memset(s,c,n) -> store s, c (for n=1,2,4,8)
   if (Len <= 8 && isPowerOf2_32((uint32_t)Len)) {
     const Type *ITy = IntegerType::get(MI->getContext(), Len*8);  // n=1 -> i8.
-    
+
     Value *Dest = MI->getDest();
     Dest = Builder->CreateBitCast(Dest, PointerType::getUnqual(ITy));
 
     // Alignment 0 is identity for alignment 1 for memset, but not store.
     if (Alignment == 0) Alignment = 1;
-    
+
     // Extract the fill value and store.
     uint64_t Fill = FillC->getZExtValue()*0x0101010101010101ULL;
     InsertNewInstBefore(new StoreInst(ConstantInt::get(ITy, Fill),
                                       Dest, false, Alignment), *MI);
-    
+
     // Set the size of the copy to 0, it will be deleted on the next iteration.
     MI->setLength(Constant::getNullValue(LenC->getType()));
     return MI;
@@ -231,7 +231,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 }
 
 
-/// visitCallInst - CallInst simplification.  This mostly only handles folding 
+/// visitCallInst - CallInst simplification.  This mostly only handles folding
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
 ///
@@ -246,10 +246,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     CI.setDoesNotThrow();
     return &CI;
   }
-  
+
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(&CI);
   if (!II) return visitCallSite(&CI);
-  
+
   // Intrinsics cannot occur in an invoke, so handle them here instead of in
   // visitCallSite.
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(II)) {
@@ -277,7 +277,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           Intrinsic::ID MemCpyID = Intrinsic::memcpy;
           const Type *Tys[1];
           Tys[0] = CI.getOperand(3)->getType();
-          CI.setOperand(0, 
+          CI.setOperand(0,
                         Intrinsic::getDeclaration(M, MemCpyID, Tys, 1));
           Changed = true;
         }
@@ -298,10 +298,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Instruction *I = SimplifyMemSet(MSI))
         return I;
     }
-          
+
     if (Changed) return II;
   }
-  
+
   switch (II->getIntrinsicID()) {
   default: break;
   case Intrinsic::bswap:
@@ -309,7 +309,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(II->getOperand(1)))
       if (Operand->getIntrinsicID() == Intrinsic::bswap)
         return ReplaceInstUsesWith(CI, Operand->getOperand(1));
-      
+
     // bswap(trunc(bswap(x))) -> trunc(lshr(x, c))
     if (TruncInst *TI = dyn_cast<TruncInst>(II->getOperand(1))) {
       if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(TI->getOperand(0)))
@@ -321,7 +321,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           return new TruncInst(V, TI->getType());
         }
     }
-      
+
     break;
   case Intrinsic::powi:
     if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getOperand(2))) {
@@ -351,7 +351,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if ((Mask & KnownZero) == Mask)
       return ReplaceInstUsesWith(CI, ConstantInt::get(IT,
                                  APInt(BitWidth, TrailingZeros)));
-    
+
     }
     break;
   case Intrinsic::ctlz: {
@@ -368,7 +368,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if ((Mask & KnownZero) == Mask)
       return ReplaceInstUsesWith(CI, ConstantInt::get(IT,
                                  APInt(BitWidth, LeadingZeros)));
-    
+
     }
     break;
   case Intrinsic::uadd_with_overflow: {
@@ -399,7 +399,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
         return InsertValueInst::Create(Struct, Add, 0);
       }
-      
+
       if (LHSKnownPositive && RHSKnownPositive) {
         // The sign bit is clear in both cases: this CANNOT overflow.
         // Create a simple add instruction, and insert it into the struct.
@@ -428,7 +428,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // X + undef -> undef
     if (isa<UndefValue>(II->getOperand(2)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
-      
+
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
       // X + 0 -> {X, false}
       if (RHS->isZero()) {
@@ -448,7 +448,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (isa<UndefValue>(II->getOperand(1)) ||
         isa<UndefValue>(II->getOperand(2)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
-      
+
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(II->getOperand(2))) {
       // X - 0 -> {X, false}
       if (RHS->isZero()) {
@@ -475,12 +475,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // X * undef -> undef
     if (isa<UndefValue>(II->getOperand(2)))
       return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
-      
+
     if (ConstantInt *RHSI = dyn_cast<ConstantInt>(II->getOperand(2))) {
       // X*0 -> {0, false}
       if (RHSI->isZero())
         return ReplaceInstUsesWith(CI, Constant::getNullValue(II->getType()));
-      
+
       // X * 1 -> {X, false}
       if (RHSI->equalsInt(1)) {
         Constant *V[] = {
@@ -509,7 +509,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ppc_altivec_stvxl:
     // Turn stvx -> store if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
-      const Type *OpPtrTy = 
+      const Type *OpPtrTy =
         PointerType::getUnqual(II->getOperand(1)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getOperand(2), OpPtrTy);
       return new StoreInst(II->getOperand(1), Ptr);
@@ -520,13 +520,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_storeu_dq:
     // Turn X86 storeu -> store if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
-      const Type *OpPtrTy = 
+      const Type *OpPtrTy =
         PointerType::getUnqual(II->getOperand(2)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getOperand(1), OpPtrTy);
       return new StoreInst(II->getOperand(2), Ptr);
     }
     break;
-    
+
   case Intrinsic::x86_sse_cvttss2si: {
     // These intrinsics only demands the 0th element of its input vector.  If
     // we can simplify the input based on that, do so now.
@@ -541,45 +541,45 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
   }
-    
+
   case Intrinsic::ppc_altivec_vperm:
     // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
     if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getOperand(3))) {
       assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
-      
+
       // Check that all of the elements are integer constants or undefs.
       bool AllEltsOk = true;
       for (unsigned i = 0; i != 16; ++i) {
-        if (!isa<ConstantInt>(Mask->getOperand(i)) && 
+        if (!isa<ConstantInt>(Mask->getOperand(i)) &&
             !isa<UndefValue>(Mask->getOperand(i))) {
           AllEltsOk = false;
           break;
         }
       }
-      
+
       if (AllEltsOk) {
         // Cast the input vectors to byte vectors.
         Value *Op0 = Builder->CreateBitCast(II->getOperand(1), Mask->getType());
         Value *Op1 = Builder->CreateBitCast(II->getOperand(2), Mask->getType());
         Value *Result = UndefValue::get(Op0->getType());
-        
+
         // Only extract each element once.
         Value *ExtractedElts[32];
         memset(ExtractedElts, 0, sizeof(ExtractedElts));
-        
+
         for (unsigned i = 0; i != 16; ++i) {
           if (isa<UndefValue>(Mask->getOperand(i)))
             continue;
           unsigned Idx=cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
           Idx &= 31;  // Match the hardware behavior.
-          
+
           if (ExtractedElts[Idx] == 0) {
-            ExtractedElts[Idx] = 
-              Builder->CreateExtractElement(Idx < 16 ? Op0 : Op1, 
+            ExtractedElts[Idx] =
+              Builder->CreateExtractElement(Idx < 16 ? Op0 : Op1,
                   ConstantInt::get(Type::getInt32Ty(II->getContext()),
                                    Idx&15, false), "tmp");
           }
-        
+
           // Insert this value into the result vector.
           Result = Builder->CreateInsertElement(Result, ExtractedElts[Idx],
                          ConstantInt::get(Type::getInt32Ty(II->getContext()),
@@ -600,7 +600,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           return EraseInstFromFunction(CI);
       }
     }
-    
+
     // Scan down this block to see if there is another stack restore in the
     // same block without an intervening call/alloca.
     BasicBlock::iterator BI = II;
@@ -625,7 +625,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         }
       }
     }
-    
+
     // If the stack restore is in a return/unwind block and if there are no
     // allocas or calls between the restore and the return, nuke the restore.
     if (!CannotRemove && (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)))
@@ -633,40 +633,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
   case Intrinsic::objectsize: {
-    const Type *ReturnTy = CI.getType();
-    Value *Op1 = II->getOperand(1);
+    ConstantInt *Const = cast<ConstantInt>(II->getOperand(2));
+    const Type *Ty = CI.getType();
 
-    // If we're a constant expr then we just return the number of bytes
-    // left in whatever we're indexing.  Since it's constant there's no
-    // need for maximum or minimum bytes.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
-          // If this isn't a GEP give up.
-      if (CE->getOpcode() != Instruction::GetElementPtr) return 0;
-
-      const PointerType *ObjTy = 
-        reinterpret_cast<const PointerType*>(CE->getOperand(0)->getType());
-
-      if (const ArrayType *AT = dyn_cast<ArrayType>(ObjTy->getElementType())) {
-
-            // Deal with multi-dimensional arrays
-        const ArrayType *SAT = AT;
-        while ((AT = dyn_cast<ArrayType>(AT->getElementType())))
-          SAT = AT;
-
-        size_t numElems = SAT->getNumElements();
-            // We return the remaining bytes, so grab the size of an element
-            // in bytes.
-        size_t sizeofElem = SAT->getElementType()->getPrimitiveSizeInBits() / 8;
-
-        ConstantInt *Const = 
-          cast<ConstantInt>(CE->getOperand(CE->getNumOperands() - 1));
-        size_t indx = Const->getZExtValue();
-        return ReplaceInstUsesWith(CI,
-          ConstantInt::get(ReturnTy,
-          ((numElems - indx) * sizeofElem)));
-      }
-    }    
-    // TODO: Add more types here.
+    // 0 is maximum number of bytes left, 1 is minimum number of bytes left.
+    // TODO: actually add these values, the current return values are "don't
+    // know".
+    if (Const->getZExtValue() == 0)
+      return ReplaceInstUsesWith(CI, Constant::getAllOnesValue(Ty));
+    else
+      return ReplaceInstUsesWith(CI, ConstantInt::get(Ty, 0));
   }
   }
 
@@ -679,7 +655,7 @@ Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
   return visitCallSite(&II);
 }
 
-/// isSafeToEliminateVarargsCast - If this cast does not affect the value 
+/// isSafeToEliminateVarargsCast - If this cast does not affect the value
 /// passed through the varargs area, we can eliminate the use of the cast.
 static bool isSafeToEliminateVarargsCast(const CallSite CS,
                                          const CastInst * const CI,
@@ -694,7 +670,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   if (!CS.paramHasAttr(ix, Attribute::ByVal))
     return true;
 
-  const Type* SrcTy = 
+  const Type* SrcTy =
             cast<PointerType>(CI->getOperand(0)->getType())->getElementType();
   const Type* DstTy = cast<PointerType>(CI->getType())->getElementType();
   if (!SrcTy->isSized() || !DstTy->isSized())
@@ -725,7 +701,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
         !CalleeF->isDeclaration()) {
       Instruction *OldCall = CS.getInstruction();
       new StoreInst(ConstantInt::getTrue(Callee->getContext()),
-                UndefValue::get(Type::getInt1PtrTy(Callee->getContext())), 
+                UndefValue::get(Type::getInt1PtrTy(Callee->getContext())),
                                   OldCall);
       // If OldCall dues not return void then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
@@ -733,7 +709,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))
         return EraseInstFromFunction(*OldCall);
-      
+
       // We cannot remove an invoke, because it would change the CFG, just
       // change the callee to a null pointer.
       cast<InvokeInst>(OldCall)->setOperand(0,
@@ -799,7 +775,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (!isa<ConstantExpr>(CS.getCalledValue())) return false;
   ConstantExpr *CE = cast<ConstantExpr>(CS.getCalledValue());
-  if (CE->getOpcode() != Instruction::BitCast || 
+  if (CE->getOpcode() != Instruction::BitCast ||
       !isa<Function>(CE->getOperand(0)))
     return false;
   Function *Callee = cast<Function>(CE->getOperand(0));
@@ -864,7 +840,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!CastInst::isCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
 
-    if (CallerPAL.getParamAttributes(i + 1) 
+    if (CallerPAL.getParamAttributes(i + 1)
         & Attribute::typeIncompatible(ParamTy))
       return false;   // Attribute not compatible with transformed value.
 
@@ -989,7 +965,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (!NV->getType()->isVoidTy()) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
+      Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false,
                                                             OldRetTy, false);
       NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
 
@@ -1011,7 +987,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   if (!Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
-  
+
   EraseInstFromFunction(*Caller);
   return true;
 }
@@ -1129,11 +1105,11 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
       // Replace the trampoline call with a direct call.  Let the generic
       // code sort out any function type mismatches.
-      FunctionType *NewFTy = FunctionType::get(FTy->getReturnType(), NewTypes, 
+      FunctionType *NewFTy = FunctionType::get(FTy->getReturnType(), NewTypes,
                                                 FTy->isVarArg());
       Constant *NewCallee =
         NestF->getType() == PointerType::getUnqual(NewFTy) ?
-        NestF : ConstantExpr::getBitCast(NestF, 
+        NestF : ConstantExpr::getBitCast(NestF,
                                          PointerType::getUnqual(NewFTy));
       const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),
                                                    NewAttrs.end());
@@ -1167,9 +1143,8 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   // parameter, there is no need to adjust the argument list.  Let the generic
   // code sort out any function type mismatches.
   Constant *NewCallee =
-    NestF->getType() == PTy ? NestF : 
+    NestF->getType() == PTy ? NestF :
                               ConstantExpr::getBitCast(NestF, PTy);
   CS.setCalledFunction(NewCallee);
   return CS.getInstruction();
 }
-
