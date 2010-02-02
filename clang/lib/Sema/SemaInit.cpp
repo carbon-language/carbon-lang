@@ -3292,7 +3292,7 @@ InitializationSequence::Perform(Sema &S,
       }
 
       if (CurInitExpr->refersToVectorElement()) {
-        // Vector elements cannot bind to bit fields.
+        // References cannot bind to vector elements.
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_vector_element)
           << Entity.getType().isVolatileQualified()
           << CurInitExpr->getSourceRange();
