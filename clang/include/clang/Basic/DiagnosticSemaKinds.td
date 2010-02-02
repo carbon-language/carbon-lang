@@ -957,6 +957,13 @@ def note_ovl_candidate_bad_conv_incomplete : Note<"candidate "
     "constructor (the implicit copy constructor)|"
     "function (the implicit copy assignment operator)}0%1 "
     "not viable: cannot convert argument of incomplete type %2 to %3">;
+def note_ovl_candidate_bad_overload : Note<"candidate "
+    "%select{function|function|constructor|"
+    "function |function |constructor |"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "function (the implicit copy assignment operator)}0%1"
+    " not viable: no overload of %3 matching %2 for %ordinal4 argument">;
 def note_ovl_candidate_bad_conv : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"

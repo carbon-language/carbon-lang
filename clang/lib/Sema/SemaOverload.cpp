@@ -4450,6 +4450,24 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   QualType FromTy = Conv.Bad.getFromType();
   QualType ToTy = Conv.Bad.getToType();
 
+  if (FromTy == S.Context.OverloadTy) {
+    assert(FromExpr);
+    Expr *E = FromExpr->IgnoreParens();
+    if (isa<UnaryOperator>(E))
+      E = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
+    DeclarationName Name;
+    if (isa<UnresolvedLookupExpr>(E))
+      Name = cast<UnresolvedLookupExpr>(E)->getName();
+    else
+      Name = cast<UnresolvedMemberExpr>(E)->getMemberName();
+
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_overload)
+      << (unsigned) FnKind << FnDesc
+      << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << ToTy << Name << I+1;
+    return;
+  }
+
   // Do some hand-waving analysis to see if the non-viability is due
   // to a qualifier mismatch.
   CanQualType CFromTy = S.Context.getCanonicalType(FromTy);

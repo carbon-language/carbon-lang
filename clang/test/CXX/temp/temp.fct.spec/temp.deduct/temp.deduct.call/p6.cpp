@@ -3,7 +3,7 @@
 namespace test0 {
   // FIXME: this second note is horrible.
   template<class T> void apply(T x, void (*f)(T)) { f(x); } // expected-note 2 {{failed template argument deduction}}\
-  // expected-note {{no known conversion from '<overloaded function type>' to 'void (*)(int)'}}
+  // expected-note {{no overload of 'temp2' matching 'void (*)(int)'}}
 
   template<class A> void temp(A);
   void test0() {
