@@ -388,8 +388,6 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   }
 
   if (SrcType->isMemberPointerType()) {
-    // FIXME: This is ABI specific.
-
     // Compare against -1.
     llvm::Value *NegativeOne = llvm::Constant::getAllOnesValue(Src->getType());
     return Builder.CreateICmpNE(Src, NegativeOne, "tobool");

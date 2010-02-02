@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin10 | FileCheck %s
 
-struct A { int a; };
+struct A { int a; int b; };
 struct B { int b; };
 struct C : B, A { };
 
@@ -17,23 +17,12 @@ namespace ZeroInit {
   
   // CHECK: @_ZN8ZeroInit1bE = global i64 -1,
   int A::* b = 0;
-  
-  void f() {
-    // CHECK: icmp ne i64 {{.*}}, -1
-    if (a) { }
+}
 
-    // CHECK: icmp ne i64 {{.*}}, -1
-    if (a != 0) { }
-    
-    // CHECK: icmp ne i64 -1, {{.*}}
-    if (0 != a) { }
-
-    // CHECK: icmp eq i64 {{.*}}, -1
-    if (a == 0) { }
-
-    // CHECK: icmp eq i64 -1, {{.*}}
-    if (0 == a) { }
-  }
+// PR5674
+namespace PR5674 {
+  // CHECK: @_ZN6PR56742pbE = global i64 4
+  int A::*pb = &A::b;
 }
 
 // Casts.
@@ -55,4 +44,26 @@ void f() {
   pa = static_cast<int A::*>(pc);
 }
 
+}
+
+// Comparisons
+namespace Comparisons {
+  void f() {
+    int A::*a;
+
+    // CHECK: icmp ne i64 {{.*}}, -1
+    if (a) { }
+
+    // CHECK: icmp ne i64 {{.*}}, -1
+    if (a != 0) { }
+    
+    // CHECK: icmp ne i64 -1, {{.*}}
+    if (0 != a) { }
+
+    // CHECK: icmp eq i64 {{.*}}, -1
+    if (a == 0) { }
+
+    // CHECK: icmp eq i64 -1, {{.*}}
+    if (0 == a) { }
+  }
 }

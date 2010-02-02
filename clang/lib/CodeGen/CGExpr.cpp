@@ -1093,9 +1093,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, FD);
   
+  // FIXME: the qualifier check does not seem sufficient here
   if (E->getQualifier()) {
-    // FIXME: the qualifier check does not seem sufficient here
-    return EmitPointerToDataMemberLValue(cast<FieldDecl>(ND));
+    const FieldDecl *FD = cast<FieldDecl>(ND);
+    llvm::Value *V = CGM.EmitPointerToDataMember(FD);
+
+    return LValue::MakeAddr(V, MakeQualifiers(FD->getType()));
   }
   
   assert(false && "Unhandled DeclRefExpr");
@@ -1871,20 +1874,6 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   RValue RV = EmitAnyExprToTemp(E);
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
-}
-
-
-LValue CodeGenFunction::EmitPointerToDataMemberLValue(const FieldDecl *Field) {
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Field->getDeclContext());
-  QualType NNSpecTy = 
-    getContext().getCanonicalType(
-      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(ClassDecl)));
-  NNSpecTy = getContext().getPointerType(NNSpecTy);
-  llvm::Value *V = llvm::Constant::getNullValue(ConvertType(NNSpecTy));
-  LValue MemExpLV = EmitLValueForField(V, Field, /*Qualifiers=*/0);
-  const llvm::Type *ResultType = ConvertType(getContext().getPointerDiffType());
-  V = Builder.CreatePtrToInt(MemExpLV.getAddress(), ResultType, "datamember");
-  return LValue::MakeAddr(V, MakeQualifiers(Field->getType()));
 }
 
 RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,

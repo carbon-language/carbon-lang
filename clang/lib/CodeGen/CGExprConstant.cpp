@@ -438,16 +438,16 @@ public:
     if (const MemberPointerType *MPT = 
         E->getType()->getAs<MemberPointerType>()) {
       QualType T = MPT->getPointeeType();
-      if (T->isFunctionProtoType()) {
-        DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
-        
-        return EmitMemberFunctionPointer(cast<CXXMethodDecl>(DRE->getDecl()));
-      }
+      DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
+
+      NamedDecl *ND = DRE->getDecl();
+      if (T->isFunctionProtoType())
+        return EmitMemberFunctionPointer(cast<CXXMethodDecl>(ND));
       
-      // FIXME: Should we handle other member pointer types here too,
-      // or should they be handled by Expr::Evaluate?
+      // We have a pointer to data member.
+      return CGM.EmitPointerToDataMember(cast<FieldDecl>(ND));
     }
-    
+
     return 0;
   }
     
@@ -958,4 +958,28 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     return llvm::Constant::getAllOnesValue(getTypes().ConvertTypeForMem(T));
 
   return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
+}
+
+llvm::Constant *
+CodeGenModule::EmitPointerToDataMember(const FieldDecl *FD) {
+
+  // Itanium C++ ABI 2.3:
+  //   A pointer to data member is an offset from the base address of the class
+  //   object containing it, represented as a ptrdiff_t
+
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(FD->getParent());
+  QualType ClassType = 
+    getContext().getTypeDeclType(const_cast<CXXRecordDecl *>(ClassDecl));
+  
+  const llvm::StructType *ClassLTy =
+    cast<llvm::StructType>(getTypes().ConvertType(ClassType));
+
+  unsigned FieldNo = getTypes().getLLVMFieldNo(FD);
+  uint64_t Offset = 
+    getTargetData().getStructLayout(ClassLTy)->getElementOffset(FieldNo);
+
+  const llvm::Type *PtrDiffTy = 
+    getTypes().ConvertType(getContext().getPointerDiffType());
+
+  return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }

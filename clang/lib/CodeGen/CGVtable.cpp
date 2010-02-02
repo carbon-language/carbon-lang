@@ -1231,13 +1231,13 @@ void VtableBuilder::AppendMethodsToVtable() {
 void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
   
   // Itanium C++ ABI 2.5.2:
-  // The order of the virtual function pointers in a virtual table is the 
-  // order of declaration of the corresponding member functions in the class.
+  //   The order of the virtual function pointers in a virtual table is the 
+  //   order of declaration of the corresponding member functions in the class.
   //
-  // There is an entry for any virtual function declared in a class, 
-  // whether it is a new function or overrides a base class function, 
-  // unless it overrides a function from the primary base, and conversion
-  // between their return types does not require an adjustment. 
+  //   There is an entry for any virtual function declared in a class, 
+  //   whether it is a new function or overrides a base class function, 
+  //   unless it overrides a function from the primary base, and conversion
+  //   between their return types does not require an adjustment. 
 
   int64_t CurrentIndex = 0;
   

@@ -1007,8 +1007,6 @@ public:
   LValue EmitCastLValue(const CastExpr *E);
   LValue EmitNullInitializationLValue(const CXXZeroInitValueExpr *E);
   
-  LValue EmitPointerToDataMemberLValue(const FieldDecl *Field);
-  
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, const FieldDecl* Field,
