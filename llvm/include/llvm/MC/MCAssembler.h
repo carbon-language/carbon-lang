@@ -348,7 +348,11 @@ private:
 
   /// Fixups - The list of fixups in this section.
   std::vector<Fixup> Fixups;
-  
+
+  /// HasInstructions - Whether this section has had instructions emitted into
+  /// it.
+  unsigned HasInstructions : 1;
+
   /// @}
 
 public:    
@@ -428,6 +432,9 @@ public:
     return FileSize;
   }
   void setFileSize(uint64_t Value) { FileSize = Value; }  
+
+  bool hasInstructions() const { return HasInstructions; }
+  void setHasInstructions(bool Value) { HasInstructions = Value; }
 
   /// @}
 };

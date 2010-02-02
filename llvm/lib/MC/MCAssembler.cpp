@@ -266,11 +266,15 @@ public:
     Write32(SD.getSize()); // size
     Write32(FileOffset);
 
+    unsigned Flags = Section.getTypeAndAttributes();
+    if (SD.hasInstructions())
+      Flags |= MCSectionMachO::S_ATTR_SOME_INSTRUCTIONS;
+
     assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
     Write32(Log2_32(SD.getAlignment()));
     Write32(NumRelocations ? RelocationsStart : 0);
     Write32(NumRelocations);
-    Write32(Section.getTypeAndAttributes());
+    Write32(Flags);
     Write32(0); // reserved1
     Write32(Section.getStubSize()); // reserved2
 
@@ -901,7 +905,8 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
     Address(~UINT64_C(0)),
     Size(~UINT64_C(0)),
     FileSize(~UINT64_C(0)),
-    LastFixupLookup(~0)
+    LastFixupLookup(~0),
+    HasInstructions(false)
 {
   if (A)
     A->getSectionList().push_back(this);
