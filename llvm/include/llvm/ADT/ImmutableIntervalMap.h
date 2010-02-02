@@ -156,28 +156,25 @@ private:
     // Current key overlaps with the inserted key.
     // Remove the current key.
     Changed = true;
-    TreeTy *OldNode = T;
+    data_type_ref OldData = ImutInfo::DataOfValue(Value(T));
     T = Remove_internal(CurrentK, T);
     // Add back the unoverlapped part of the current key.
     if (CurrentK.getStart() < K.getStart()) {
       if (CurrentK.getEnd() <= K.getEnd()) {
         Interval NewK(CurrentK.getStart(), K.getStart()-1);
-        return Add_internal(std::make_pair<key_type, data_type>(NewK, 
-                                     ImutInfo::DataOfValue(Value(OldNode))), T);
+        return Add_internal(std::make_pair(NewK, OldData), T);
       } else {
         Interval NewK1(CurrentK.getStart(), K.getStart()-1);
-        T = Add_internal(std::make_pair<key_type, data_type>(NewK1, 
-                                     ImutInfo::DataOfValue(Value(OldNode))), T);
+        T = Add_internal(std::make_pair(NewK1, OldData), T); 
+
 
         Interval NewK2(K.getEnd()+1, CurrentK.getEnd());
-        return Add_internal(std::make_pair<key_type, data_type>(NewK2,
-                                     ImutInfo::DataOfValue(Value(OldNode))), T);
+        return Add_internal(std::make_pair(NewK2, OldData), T);
       }
     } else {
       if (CurrentK.getEnd() > K.getEnd()) {
         Interval NewK(K.getEnd()+1, CurrentK.getEnd());
-        return Add_internal(std::make_pair<key_type, data_type>(NewK, 
-                                     ImutInfo::DataOfValue(Value(OldNode))), T);
+        return Add_internal(std::make_pair(NewK, OldData), T);
       }
     }
   }
