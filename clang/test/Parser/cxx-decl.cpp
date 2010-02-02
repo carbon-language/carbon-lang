@@ -52,3 +52,9 @@ void test(struct Type *P) {
               (y:b)  // expected-error {{unexpected ':' in nested name specifier}}
               4) : 5;
 }
+
+struct test4 {
+  int x  // expected-error {{expected ';' at end of declaration list}}
+  int y;
+  int z  // expected-error {{expected ';' at end of declaration list}}
+};

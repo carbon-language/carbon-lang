@@ -1189,8 +1189,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     if (Tok.is(tok::kw_namespace)) {
       Diag(UsingLoc, diag::err_using_namespace_in_class);
       SkipUntil(tok::semi, true, true);
-    }
-    else {
+    } else {
       SourceLocation DeclEnd;
       // Otherwise, it must be using-declaration.
       ParseUsingDeclaration(Declarator::MemberContext, UsingLoc, DeclEnd, AS);
@@ -1371,19 +1370,16 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       ParseDeclarator(DeclaratorInfo);
   }
 
-  if (Tok.is(tok::semi)) {
-    ConsumeToken();
-    Actions.FinalizeDeclaratorGroup(CurScope, DS, DeclsInGroup.data(),
-                                    DeclsInGroup.size());
+  if (ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list)) {
+    // Skip to end of block or statement.
+    SkipUntil(tok::r_brace, true, true);
+    // If we stopped at a ';', eat it.
+    if (Tok.is(tok::semi)) ConsumeToken();
     return;
   }
 
-  Diag(Tok, diag::err_expected_semi_decl_list);
-  // Skip to end of block or statement
-  SkipUntil(tok::r_brace, true, true);
-  if (Tok.is(tok::semi))
-    ConsumeToken();
-  return;
+  Actions.FinalizeDeclaratorGroup(CurScope, DS, DeclsInGroup.data(),
+                                  DeclsInGroup.size());
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.
