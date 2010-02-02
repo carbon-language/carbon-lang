@@ -8,6 +8,10 @@ Configs := Debug Release Profile
 # and the resulting lib will just have generic versions for anything unknown.
 UniversalArchs := $(RC_ARCHS)
 
+
+CFLAGS := -Wall -O3 -fomit-frame-pointer
+
+
 FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              clzdi2 clzsi2 cmpdi2 ctzdi2 ctzsi2 \
              divdc3 divdi3 divsc3 ffsdi2 \
