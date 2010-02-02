@@ -306,12 +306,12 @@ bool BackendConsumer::AddEmitPasses() {
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
     switch (TM->addPassesToEmitFile(*PM, FormattedOutStream,
-                                    TargetMachine::AssemblyFile, OptLevel)) {
+                                    TargetMachine::CGFT_AssemblyFile,
+                                    OptLevel)) {
     default:
-    case FileModel::Error:
       Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
-    case FileModel::AsmFile:
+    case TargetMachine::CGFT_AssemblyFile:
       break;
     }
   }
