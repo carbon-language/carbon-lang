@@ -281,7 +281,7 @@ macros that in simple ones.</p>
 <h2>Quality of Implementation and Attention to Detail</h2>
 
 <p>Finally, we have put a lot of work polishing the little things, because
-little things add up over time and contribute to a great user experience.  Two
+little things add up over time and contribute to a great user experience.  Three
 examples are:</p>
 
 <pre>
@@ -313,6 +313,33 @@ and caret diagnostics, because otherwise you don't get the important context.
 <p>This shows an example of much better error recovery.  The message coming out
 of GCC is completely useless for diagnosing the problem, Clang tries much harder
 and produces a much more useful diagnosis of the problem.</p>
+
+<pre>
+  $ <b>cat t.cc</b>
+  template&lt;class T&gt;
+  class a {}
+  class temp {};
+  a&lt;temp&gt; b;
+  struct b {
+  }
+  $ <b>gcc-4.2 t.cc</b>
+  t.cc:3: error: multiple types in one declaration
+  t.cc:4: error: non-template type 'a' used as a template
+  t.cc:4: error: invalid type in declaration before ';' token
+  t.cc:6: error: expected unqualified-id at end of input
+  $ <b>clang t.cc</b>
+  t.cc:2:11: <font color="red">error:</font> expected ';' after class
+  <font color="darkgreen">class a {}</font>
+  <font color="blue">          ^</font>
+  <font color="blue">          ;</font>
+  t.cc:6:2: <font color="red">error:</font> expected ';' after struct
+  <font color="darkgreen">}</font>
+  <font color="blue"> ^</font>
+  <font color="blue"> ;</font>
+</pre>
+
+<p>This shows that we recover from the simple case of forgetting a ; after
+a struct definition much better than GCC.</p>
 
 <p>While each of these details is minor, we feel that they all add up to provide
 a much more polished experience.</p>
