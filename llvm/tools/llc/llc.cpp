@@ -85,14 +85,14 @@ MAttrs("mattr",
   cl::value_desc("a1,+a2,-a3,..."));
 
 cl::opt<TargetMachine::CodeGenFileType>
-FileType("filetype", cl::init(TargetMachine::AssemblyFile),
+FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
   cl::desc("Choose a file type (not all types are supported by all targets):"),
   cl::values(
-       clEnumValN(TargetMachine::AssemblyFile, "asm",
+       clEnumValN(TargetMachine::CGFT_AssemblyFile, "asm",
                   "Emit an assembly ('.s') file"),
-       clEnumValN(TargetMachine::ObjectFile, "obj",
+       clEnumValN(TargetMachine::CGFT_ObjectFile, "obj",
                   "Emit a native object ('.o') file [experimental]"),
-       clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
+       clEnumValN(TargetMachine::CGFT_DynamicLibrary, "dynlib",
                   "Emit a native dynamic library ('.so') file"
                   " [experimental]"),
        clEnumValEnd));
@@ -162,7 +162,8 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
 
   bool Binary = false;
   switch (FileType) {
-  case TargetMachine::AssemblyFile:
+  default: assert(0 && "Unknown file type");
+  case TargetMachine::CGFT_AssemblyFile:
     if (TargetName[0] == 'c') {
       if (TargetName[1] == 0)
         OutputFilename += ".cbe.c";
@@ -173,11 +174,11 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     } else
       OutputFilename += ".s";
     break;
-  case TargetMachine::ObjectFile:
+  case TargetMachine::CGFT_ObjectFile:
     OutputFilename += ".o";
     Binary = true;
     break;
-  case TargetMachine::DynamicLibrary:
+  case TargetMachine::CGFT_DynamicLibrary:
     OutputFilename += LTDL_SHLIB_EXT;
     Binary = true;
     break;
@@ -352,14 +353,14 @@ int main(int argc, char **argv) {
     default:
       assert(0 && "Invalid file model!");
       return 1;
-    case FileModel::Error:
+    case TargetMachine::CGFT_ErrorOccurred:
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
-    case FileModel::AsmFile:
+    case TargetMachine::CGFT_AssemblyFile:
       break;
     }
 

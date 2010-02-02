@@ -60,16 +60,6 @@ namespace CodeModel {
   };
 }
 
-namespace FileModel {
-  enum Model {
-    Error,
-    None,
-    AsmFile,
-    MachOFile,
-    ElfFile
-  };
-}
-
 // Code generation optimization level.
 namespace CodeGenOpt {
   enum Level {
@@ -206,9 +196,13 @@ public:
   }
 
   /// CodeGenFileType - These enums are meant to be passed into
-  /// addPassesToEmitFile to indicate what type of file to emit.
+  /// addPassesToEmitFile to indicate what type of file to emit, and returned by
+  /// it to indicate what type of file could actually be made.
   enum CodeGenFileType {
-    AssemblyFile, ObjectFile, DynamicLibrary
+    CGFT_AssemblyFile,
+    CGFT_ObjectFile,
+    CGFT_DynamicLibrary,
+    CGFT_ErrorOccurred
   };
 
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
@@ -218,14 +212,14 @@ public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.
-  /// This method should return FileModel::Error if emission of this file type
+  /// This method should return InvalidFile if emission of this file type
   /// is not supported.
   ///
-  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &,
-                                               formatted_raw_ostream &,
-                                               CodeGenFileType,
-                                               CodeGenOpt::Level) {
-    return FileModel::None;
+  virtual CodeGenFileType addPassesToEmitFile(PassManagerBase &,
+                                              formatted_raw_ostream &,
+                                              CodeGenFileType Filetype,
+                                              CodeGenOpt::Level) {
+    return CGFT_ErrorOccurred;
   }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
@@ -271,19 +265,19 @@ public:
   
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.  If OptLevel is None, the code generator should emit code as fast
-  /// as possible, though the generated code may be less efficient.  This method
-  /// should return FileModel::Error if emission of this file type is not
-  /// supported.
+  /// generation.  If OptLevel is None, the code generator should emit code as
+  /// fast as possible, though the generated code may be less efficient.  This
+  /// method should return CGFT_ErrorOccurred if emission of this file type is
+  /// not supported.
   ///
   /// The default implementation of this method adds components from the
   /// LLVM retargetable code generator, invoking the methods below to get
   /// target-specific passes in standard locations.
   ///
-  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
-                                               formatted_raw_ostream &Out,
-                                               CodeGenFileType FileType,
-                                               CodeGenOpt::Level);
+  virtual CodeGenFileType addPassesToEmitFile(PassManagerBase &PM,
+                                              formatted_raw_ostream &Out,
+                                              CodeGenFileType FileType,
+                                              CodeGenOpt::Level);
   
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle

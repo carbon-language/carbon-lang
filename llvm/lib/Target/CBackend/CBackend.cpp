@@ -3706,7 +3706,7 @@ bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
                                               formatted_raw_ostream &o,
                                               CodeGenFileType FileType,
                                               CodeGenOpt::Level OptLevel) {
-  if (FileType != TargetMachine::AssemblyFile) return true;
+  if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
 
   PM.add(createGCLoweringPass());
   PM.add(createLowerInvokePass());

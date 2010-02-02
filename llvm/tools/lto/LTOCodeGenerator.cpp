@@ -396,9 +396,9 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
     codeGenPasses->add(new TargetData(*_target->getTargetData()));
 
     switch (_target->addPassesToEmitFile(*codeGenPasses, out,
-                                         TargetMachine::AssemblyFile,
+                                         TargetMachine::CGFT_AssemblyFile,
                                          CodeGenOpt::Aggressive)) {
-        case FileModel::AsmFile:
+        case TargetMachine::CGFT_AssemblyFile:
             break;
         default:
             errMsg = "target file type not supported";

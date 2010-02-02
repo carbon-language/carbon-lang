@@ -96,28 +96,25 @@ LLVMTargetMachine::setCodeModelForStatic() {
   setCodeModel(CodeModel::Small);
 }
 
-FileModel::Model
+TargetMachine::CodeGenFileType
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                        formatted_raw_ostream &Out,
                                        CodeGenFileType FileType,
                                        CodeGenOpt::Level OptLevel) {
   // Add common CodeGen passes.
   if (addCommonCodeGenPasses(PM, OptLevel))
-    return FileModel::Error;
+    return CGFT_ErrorOccurred;
 
-  FileModel::Model ResultTy;
   switch (FileType) {
   default:
-    return FileModel::Error;
-  case TargetMachine::ObjectFile:
-    return FileModel::Error;
-  case TargetMachine::AssemblyFile: {
+  case CGFT_ObjectFile:
+    return CGFT_ErrorOccurred;
+  case CGFT_AssemblyFile: {
     FunctionPass *Printer =
       getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(),
                                    getAsmVerbosityDefault());
-    if (Printer == 0) return FileModel::Error;
+    if (Printer == 0) return CGFT_ErrorOccurred;
     PM.add(Printer);
-    ResultTy = FileModel::AsmFile;
     break;
   }
   }
@@ -125,7 +122,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   // Make sure the code model is set.
   setCodeModelForStatic();
   PM.add(createGCInfoDeleter());
-  return ResultTy;
+  return FileType;
 }
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to

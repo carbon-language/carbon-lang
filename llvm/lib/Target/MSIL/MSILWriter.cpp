@@ -1690,7 +1690,7 @@ bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM,
                                           CodeGenFileType FileType,
                                           CodeGenOpt::Level OptLevel)
 {
-  if (FileType != TargetMachine::AssemblyFile) return true;
+  if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
   MSILWriter* Writer = new MSILWriter(o);
   PM.add(createGCLoweringPass());
   // FIXME: Handle switch through native IL instruction "switch"
