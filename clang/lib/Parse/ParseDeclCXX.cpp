@@ -924,6 +924,42 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (DS.SetTypeSpecType(TagType, TSTLoc, PrevSpec, DiagID,
                          Result, Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
+  
+  // At this point, we've successfully parsed a class-specifier in 'definition'
+  // form (e.g. "struct foo { int x; }".  While we could just return here, we're
+  // going to look at what comes after it to improve error recovery.  If an
+  // impossible token occurs next, we assume that the programmer forgot a ; at
+  // the end of the declaration and recover that way.
+  //
+  // This switch enumerates the valid "follow" set for definition.
+  if (TUK == Action::TUK_Definition) {
+    switch (Tok.getKind()) {
+    case tok::semi:               // struct foo {...} ;
+    case tok::star:               // struct foo {...} *       P;
+    case tok::amp:                // struct foo {...} &       R = ...
+    case tok::identifier:         // struct foo {...} V       ;
+    case tok::r_paren:            //(struct foo {...} )       {4}
+    case tok::annot_cxxscope:     // struct foo {...} a::     b;
+    case tok::annot_typename:     // struct foo {...} a       ::b;
+    case tok::annot_template_id:  // struct foo {...} a<int>  ::b;
+      break;
+        
+    case tok::r_brace:  // struct bar { struct foo {...} } 
+      // Missing ';' at end of struct is accepted as an extension in C mode.
+      if (!getLang().CPlusPlus) break;
+      // FALL THROUGH.
+    default:
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
+                       TagType == DeclSpec::TST_class ? "class"
+                       : TagType == DeclSpec::TST_struct? "struct" : "union");
+      // Push this token back into the preprocessor and change our current token
+      // to ';' so that the rest of the code recovers as though there were an
+      // ';' after the definition.
+      PP.EnterToken(Tok);
+      Tok.setKind(tok::semi);  
+      break;
+    }
+  }
 }
 
 /// ParseBaseClause - Parse the base-clause of a C++ class [C++ class.derived].
@@ -1168,7 +1204,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return ParseCXXClassMemberDeclaration(AS, TemplateInfo);
   }
 
-  // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
+  // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
+  // is a bitfield.
   ColonProtectionRAIIObject X(*this);
   
   CXX0XAttributeList AttrList;

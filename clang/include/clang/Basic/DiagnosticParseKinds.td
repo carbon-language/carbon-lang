@@ -305,6 +305,9 @@ def err_out_of_line_type_names_constructor : Error<
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;
+def err_expected_semi_after_tagdecl : Error<
+  "expected ';' after %0">;
+
 def err_typename_refers_to_non_type_template : Error<
   "typename specifier refers to a non-template">;
 def err_expected_type_name_after_typename : Error<

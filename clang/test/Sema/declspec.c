@@ -7,11 +7,10 @@ void foof(const char *, ...) __attribute__((__format__(__printf__, 1, 2))), barf
 
 int typedef validTypeDecl() { } // expected-error {{function definition declared 'typedef'}}
 
-struct _zend_module_entry { }
-typedef struct _zend_function_entry { } // expected-error {{cannot combine with previous 'struct' declaration specifier}}
-static void buggy(int *x) { } // expected-error {{function definition declared 'typedef'}} \
-                              // expected-error {{cannot combine with previous 'typedef' declaration specifier}} \
-                              // expected-error {{cannot combine with previous 'struct' declaration specifier}}
+struct _zend_module_entry { }    // expected-error {{expected ';' after struct}}
+typedef struct _zend_function_entry { } // expected-error {{expected ';' after struct}} \
+                                        // expected-error {{declaration does not declare anything}}
+static void buggy(int *x) { }
 
 // Type qualifiers.
 typedef int f(void); 
@@ -22,3 +21,10 @@ __restrict__ fptr v3; // expected-error {{pointer to function type 'f' (aka 'int
 f *__restrict__ v4;   // expected-error {{pointer to function type 'f' (aka 'int (void)') may not be 'restrict' qualified}}
 
 restrict struct hallo; // expected-error {{restrict requires a pointer or reference}}
+
+// PR6180
+struct test1 {
+} // expected-error {{expected ';' after struct}}
+
+void test2() {}
+
