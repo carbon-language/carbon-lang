@@ -41,8 +41,8 @@ public:
     return TheMap.count(V);
   }
 
-  void erase(const ValueT &V) {
-    TheMap.erase(V);
+  bool erase(const ValueT &V) {
+    return TheMap.erase(V);
   }
 
   DenseSet &operator=(const DenseSet &RHS) {
