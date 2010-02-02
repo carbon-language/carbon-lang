@@ -250,7 +250,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
 }
 
 SDValue
-SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,

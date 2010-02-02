@@ -219,7 +219,7 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
 #include "AlphaGenCallingConv.inc"
 
 SDValue
-AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,

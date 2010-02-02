@@ -116,7 +116,7 @@ namespace llvm {
                            SmallVectorImpl<SDValue> &InVals);
 
     virtual SDValue
-      LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+      LowerCall(SDValue Chain, SDValue Callee,
                 CallingConv::ID CallConv, bool isVarArg,
                 bool &isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,

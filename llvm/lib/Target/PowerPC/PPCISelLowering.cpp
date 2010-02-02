@@ -2674,7 +2674,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 }
 
 SDValue
-PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,

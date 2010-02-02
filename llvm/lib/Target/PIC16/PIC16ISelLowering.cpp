@@ -1353,7 +1353,7 @@ GetDataAddress(DebugLoc dl, SDValue Callee, SDValue &Chain,
 }
 
 SDValue
-PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+PIC16TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,

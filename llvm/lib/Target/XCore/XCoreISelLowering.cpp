@@ -609,7 +609,7 @@ SDValue XCoreTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
 
 /// XCore call implementation
 SDValue
-XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
+XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                CallingConv::ID CallConv, bool isVarArg,
                                bool &isTailCall,
                                const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -271,7 +271,7 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
 }
 
 SDValue
-MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,const Type *RetTy,
+MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                 CallingConv::ID CallConv, bool isVarArg,
                                 bool &isTailCall,
                                 const SmallVectorImpl<ISD::OutputArg> &Outs,
