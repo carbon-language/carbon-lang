@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -target-cpu pentium4 %s -print-stats
+// RUN: %clang -arch x86_64 %s -fsyntax-only -Xclang -print-stats 
 #ifdef __APPLE__
 #include <Cocoa/Cocoa.h>
 #endif
