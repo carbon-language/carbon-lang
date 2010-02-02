@@ -345,18 +345,19 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
       // An empty struct has size zero.
       if (NumElems == 0)
         return ConstantExpr::getNullValue(DestTy);
-      // Check for a struct with all members having the same type.
-      const Type *MemberTy = STy->getElementType(0);
+      // Check for a struct with all members having the same size.
+      Constant *MemberSize =
+        getFoldedSizeOf(STy->getElementType(0), DestTy, true);
       bool AllSame = true;
       for (unsigned i = 1; i != NumElems; ++i)
-        if (MemberTy != STy->getElementType(i)) {
+        if (MemberSize !=
+            getFoldedSizeOf(STy->getElementType(i), DestTy, true)) {
           AllSame = false;
           break;
         }
       if (AllSame) {
         Constant *N = ConstantInt::get(DestTy, NumElems);
-        Constant *E = getFoldedSizeOf(MemberTy, DestTy, true);
-        return ConstantExpr::getNUWMul(E, N);
+        return ConstantExpr::getNUWMul(MemberSize, N);
       }
     }
 
@@ -367,6 +368,62 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
 
   // Base case: Get a regular sizeof expression.
   Constant *C = ConstantExpr::getSizeOf(Ty);
+  C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                    DestTy, false),
+                            C, DestTy);
+  return C;
+}
+
+/// getFoldedAlignOf - Return a ConstantExpr with type DestTy for alignof
+/// on Ty, with any known factors factored out. If Folded is false,
+/// return null if no factoring was possible, to avoid endlessly
+/// bouncing an unfoldable expression back into the top-level folder.
+///
+static Constant *getFoldedAlignOf(const Type *Ty, const Type *DestTy,
+                                  bool Folded) {
+  // The alignment of an array is equal to the alignment of the
+  // array element. Note that this is not always true for vectors.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    Constant *C = ConstantExpr::getAlignOf(ATy->getElementType());
+    C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
+                                                      DestTy,
+                                                      false),
+                              C, DestTy);
+    return C;
+  }
+
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    // Packed structs always have an alignment of 1.
+    if (STy->isPacked())
+      return ConstantInt::get(DestTy, 1);
+
+    // Otherwise, struct alignment is the maximum alignment of any member.
+    // Without target data, we can't compare much, but we can check to see
+    // if all the members have the same alignment.
+    unsigned NumElems = STy->getNumElements();
+    // An empty struct has minimal alignment.
+    if (NumElems == 0)
+      return ConstantInt::get(DestTy, 1);
+    // Check for a struct with all members having the same alignment.
+    Constant *MemberAlign =
+      getFoldedAlignOf(STy->getElementType(0), DestTy, true);
+    bool AllSame = true;
+    for (unsigned i = 1; i != NumElems; ++i)
+      if (MemberAlign != getFoldedAlignOf(STy->getElementType(i), DestTy, true)) {
+        AllSame = false;
+        break;
+      }
+    if (AllSame)
+      return MemberAlign;
+  }
+
+  // If there's no interesting folding happening, bail so that we don't create
+  // a constant that looks like it needs folding but really doesn't.
+  if (!Folded)
+    return 0;
+
+  // Base case: Get a regular alignof expression.
+  Constant *C = ConstantExpr::getAlignOf(Ty);
   C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
                                                     DestTy, false),
                             C, DestTy);
@@ -401,11 +458,13 @@ static Constant *getFoldedOffsetOf(const Type *Ty, Constant *FieldNo,
       // An empty struct has no members.
       if (NumElems == 0)
         return 0;
-      // Check for a struct with all members having the same type.
-      const Type *MemberTy = STy->getElementType(0);
+      // Check for a struct with all members having the same size.
+      Constant *MemberSize =
+        getFoldedSizeOf(STy->getElementType(0), DestTy, true);
       bool AllSame = true;
       for (unsigned i = 1; i != NumElems; ++i)
-        if (MemberTy != STy->getElementType(i)) {
+        if (MemberSize !=
+            getFoldedSizeOf(STy->getElementType(i), DestTy, true)) {
           AllSame = false;
           break;
         }
@@ -415,8 +474,7 @@ static Constant *getFoldedOffsetOf(const Type *Ty, Constant *FieldNo,
                                                                     DestTy,
                                                                     false),
                                             FieldNo, DestTy);
-        Constant *E = getFoldedSizeOf(MemberTy, DestTy, true);
-        return ConstantExpr::getNUWMul(E, N);
+        return ConstantExpr::getNUWMul(MemberSize, N);
       }
     }
 
@@ -553,22 +611,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
               if (CI->isOne() &&
                   STy->getNumElements() == 2 &&
                   STy->getElementType(0)->isInteger(1)) {
-                // The alignment of an array is equal to the alignment of the
-                // array element. Note that this is not always true for vectors.
-                if (const ArrayType *ATy =
-                    dyn_cast<ArrayType>(STy->getElementType(1))) {
-                  Constant *C = ConstantExpr::getAlignOf(ATy->getElementType());
-                  C = ConstantExpr::getCast(CastInst::getCastOpcode(C, false,
-                                                                    DestTy,
-                                                                    false),
-                                            C, DestTy);
-                  return C;
-                }
-                // Packed structs always have an alignment of 1.
-                if (const StructType *InnerSTy =
-                      dyn_cast<StructType>(STy->getElementType(1)))
-                  if (InnerSTy->isPacked())
-                    return ConstantInt::get(DestTy, 1);
+                return getFoldedAlignOf(STy->getElementType(1), DestTy, false);
               }
             }
           // Handle an offsetof-like expression.
