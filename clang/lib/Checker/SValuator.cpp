@@ -66,6 +66,12 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
     if (C.hasSameUnqualifiedType(castTy, originalTy))
       return CastResult(state, val);
 
+  // Check for casts to real or complex numbers.  We don't handle these at all
+  // right now.
+  if (castTy->isFloatingType() || castTy->isAnyComplexType())
+    return CastResult(state, UnknownVal());
+  
+  // Check for casts from integers to integers.
   if (castTy->isIntegerType() && originalTy->isIntegerType())
     return CastResult(state, EvalCastNL(cast<NonLoc>(val), castTy));
 

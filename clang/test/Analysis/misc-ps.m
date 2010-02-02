@@ -851,3 +851,18 @@ int rdar_7593875(int n) {
   // Previously we got a false positive about 'v' being uninitialized.
   return v; // no-warning
 }
+
+//===----------------------------------------------------------------------===//
+// Handle casts from symbolic regions (packaged as integers) to doubles.
+// Previously this caused an assertion failure.
+//===----------------------------------------------------------------------===//
+
+void *foo_rev95119();
+void baz_rev95119(double x);
+void bar_rev95119() {
+  // foo_rev95119() returns a symbolic pointer.  It is then 
+  // cast to an int which is then cast to a double.
+  int value = (int) foo_rev95119();
+  baz_rev95119((double)value);
+}
+
