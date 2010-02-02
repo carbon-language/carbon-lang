@@ -54,6 +54,7 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 \
 				switch8 switchu8 switch16 switch32 \
-				restore_vfp_d8_d15_regs save_vfp_d8_d15_regs
+				restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
+				sync_synchronize 
 
 VISIBILITY_HIDDEN := 0
