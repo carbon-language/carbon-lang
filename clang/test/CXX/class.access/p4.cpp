@@ -83,3 +83,32 @@ namespace test1 {
     ca(priv); // expected-error {{access to private member}}
   }
 }
+
+// Implicit constructor calls.
+namespace test2 {
+  class A {
+  private:
+    A(); // expected-note {{declared private here}}
+
+    static A foo;
+  };
+
+  A a; // expected-error {{access to private member}}
+  A A::foo; // okay
+}
+
+// Implicit destructor calls.
+namespace test3 {
+  class A{
+  private:
+    ~A(); // expected-note 3 {{declared private here}}
+    static A foo;
+  };
+
+  A a; // expected-error {{access to private member}}
+  A A::foo;
+
+  void foo(A param) { // expected-error {{access to private member}}
+    A local; // expected-error {{access to private member}}
+  }
+}

@@ -2417,6 +2417,7 @@ public:
                                    AccessSpecifier Access);
   bool CheckConstructorAccess(SourceLocation Loc, CXXConstructorDecl *D,
                               AccessSpecifier Access);
+  bool CheckDestructorAccess(SourceLocation Loc, QualType T);
   bool CheckMemberOperatorAccess(SourceLocation Loc, Expr *ObjectExpr,
                                  NamedDecl *D, AccessSpecifier Access);
   bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);

@@ -306,6 +306,31 @@ bool Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
   return false;
 }
 
+bool Sema::CheckDestructorAccess(SourceLocation Loc,
+                                 QualType T) {
+  if (!getLangOptions().AccessControl)
+    return false;
+
+  const RecordType *Record = T->getAs<RecordType>();
+  if (!Record)
+    return false;
+
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(Record->getDecl());
+  CXXDestructorDecl *Dtor = NamingClass->getDestructor(Context);
+
+  AccessSpecifier Access = Dtor->getAccess();
+  if (Access == AS_public)
+    return false;
+
+  LookupResult R(*this, Dtor->getDeclName(), Loc, LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  R.setNamingClass(NamingClass);
+  return CheckAccess(R, Dtor, Access);
+
+  // FIXME: protected check
+}
+
 /// Checks access to a constructor.
 bool Sema::CheckConstructorAccess(SourceLocation UseLoc,
                                   CXXConstructorDecl *Constructor,

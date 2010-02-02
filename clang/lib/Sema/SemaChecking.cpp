@@ -2637,6 +2637,9 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
         Diag(Param->getLocation(), diag::err_array_star_in_function_definition);
       }
     }
+
+    if (getLangOptions().AccessControl)
+      CheckDestructorAccess(Param->getLocation(), Param->getType());
   }
 
   return HasInvalidParm;
