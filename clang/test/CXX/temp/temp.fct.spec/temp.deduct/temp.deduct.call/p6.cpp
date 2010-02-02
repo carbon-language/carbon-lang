@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 namespace test0 {
-  // FIXME: this second note is horrible.
   template<class T> void apply(T x, void (*f)(T)) { f(x); } // expected-note 2 {{failed template argument deduction}}\
   // expected-note {{no overload of 'temp2' matching 'void (*)(int)'}}
 
