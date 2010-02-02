@@ -71,3 +71,7 @@ struct test9 {
   int y;
   int z  // expected-warning {{expected ';' at end of declaration list}}
 };
+
+// PR6208
+struct test10 { int a; } static test10x;
+struct test11 { int a; } const test11x;

@@ -935,13 +935,24 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   if (TUK == Action::TUK_Definition) {
     switch (Tok.getKind()) {
     case tok::semi:               // struct foo {...} ;
-    case tok::star:               // struct foo {...} *       P;
-    case tok::amp:                // struct foo {...} &       R = ...
-    case tok::identifier:         // struct foo {...} V       ;
-    case tok::r_paren:            //(struct foo {...} )       {4}
-    case tok::annot_cxxscope:     // struct foo {...} a::     b;
-    case tok::annot_typename:     // struct foo {...} a       ::b;
-    case tok::annot_template_id:  // struct foo {...} a<int>  ::b;
+    case tok::star:               // struct foo {...} *         P;
+    case tok::amp:                // struct foo {...} &         R = ...
+    case tok::identifier:         // struct foo {...} V         ;
+    case tok::r_paren:            //(struct foo {...} )         {4}
+    case tok::annot_cxxscope:     // struct foo {...} a::       b;
+    case tok::annot_typename:     // struct foo {...} a         ::b;
+    case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
+    // Storage-class specifiers
+    case tok::kw_static:          // struct foo {...} static    x;
+    case tok::kw_extern:          // struct foo {...} extern    x;
+    case tok::kw_typedef:         // struct foo {...} typedef   x;
+    case tok::kw_register:        // struct foo {...} register  x;
+    case tok::kw_auto:            // struct foo {...} auto      x;
+    // Type qualifiers
+    case tok::kw_const:           // struct foo {...} const     x;
+    case tok::kw_volatile:        // struct foo {...} volatile  x;
+    case tok::kw_restrict:        // struct foo {...} restrict  x;
+    case tok::kw_inline:          // struct foo {...} inline    foo() {};
       break;
         
     case tok::r_brace:  // struct bar { struct foo {...} } 
