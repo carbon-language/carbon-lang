@@ -65,6 +65,13 @@ struct ImutIntervalInfo {
     }
   }
 
+  static bool isContainedIn(key_type_ref K, key_type_ref L) {
+    if (K.getStart() >= L.getStart() && K.getEnd() <= L.getEnd())
+      return true;
+    else
+      return false;
+  }
+
   static void Profile(FoldingSetNodeID &ID, value_type_ref V) {
     ID.AddInteger(V.first.getStart());
     ID.AddInteger(V.first.getEnd());
@@ -85,10 +92,24 @@ class ImutIntervalAVLFactory : public ImutAVLFactory<ImutInfo> {
   typedef typename ImutInfo::data_type_ref  data_type_ref;
 
 public:
-  TreeTy *Add(TreeTy* T, value_type_ref V) {
+  TreeTy *Add(TreeTy *T, value_type_ref V) {
     T = Add_internal(V,T);
     MarkImmutable(T);
     return T;
+  }
+
+  TreeTy *Find(TreeTy *T, key_type_ref K) {
+    if (!T)
+      return NULL;
+
+    key_type_ref CurrentKey = ImutInfo::KeyOfValue(Value(T));
+
+    if (ImutInfo::isContainedIn(K, CurrentKey))
+      return T;
+    else if (ImutInfo::isLess(K, CurrentKey))
+      return Find(Left(T), K);
+    else
+      return Find(Right(T), K);
   }
 
 private:
@@ -198,7 +219,21 @@ public:
       TreeTy *T = F.Remove(Old.Root, K);
       return ImmutableIntervalMap(F.GetCanonicalTree(T));
     }
+
+    data_type *Lookup(ImmutableIntervalMap M, key_type_ref K) {
+      TreeTy *T = F.Find(M.getRoot(), K);
+      if (T)
+        return &T->getValue().second;
+      else
+        return 0;
+    }
+
   };
+
+private:
+  // For ImmutableIntervalMap, the lookup operation has to be done by the 
+  // factory.
+  data_type* lookup(key_type_ref K) const;
 };
 
 } // end namespace llvm
