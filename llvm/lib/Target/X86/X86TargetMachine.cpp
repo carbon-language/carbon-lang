@@ -168,22 +168,6 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      MachineCodeEmitter &MCE) {
-  // FIXME: Move this to TargetJITInfo!
-  // On Darwin, do not override 64-bit setting made in X86TargetMachine().
-  if (DefRelocModel == Reloc::Default && 
-      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
-    setRelocationModel(Reloc::Static);
-    Subtarget.setPICStyle(PICStyles::None);
-  }
-  
-  PM.add(createX86CodeEmitterPass(*this, MCE));
-
-  return false;
-}
-
-bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                      CodeGenOpt::Level OptLevel,
                                       JITCodeEmitter &JCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
@@ -196,13 +180,6 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 
-  return false;
-}
-
-bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                      CodeGenOpt::Level OptLevel,
-                                      ObjectCodeEmitter &OCE) {
-  PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
   return false;
 }
 

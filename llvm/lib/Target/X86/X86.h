@@ -46,13 +46,8 @@ FunctionPass *createX87FPRegKillInserterPass();
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
-
-FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM, 
-                                       MachineCodeEmitter &MCE);
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
-FunctionPass *createX86ObjectCodeEmitterPass(X86TargetMachine &TM,
-                                             ObjectCodeEmitter &OCE);
 
 MCCodeEmitter *createX86MCCodeEmitter(const Target &, TargetMachine &TM);
 
