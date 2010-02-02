@@ -29,9 +29,7 @@ class TargetIntrinsicInfo;
 class TargetJITInfo;
 class TargetLowering;
 class TargetFrameInfo;
-class MachineCodeEmitter;
 class JITCodeEmitter;
-class ObjectCodeEmitter;
 class TargetRegisterInfo;
 class PassManagerBase;
 class PassManager;
@@ -223,7 +221,7 @@ public:
   }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+  /// get machine code emitted.  This uses a JITCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
   /// of functions.  This method returns true if machine code emission is
   /// not supported.
@@ -280,7 +278,7 @@ public:
                                               CodeGenOpt::Level);
   
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+  /// get machine code emitted.  This uses a JITCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
   /// of functions.  This method returns true if machine code emission is
   /// not supported.

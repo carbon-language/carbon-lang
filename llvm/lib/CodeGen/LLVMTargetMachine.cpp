@@ -17,7 +17,6 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetOptions.h"
@@ -126,7 +125,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 }
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-/// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+/// get machine code emitted.  This uses a JITCodeEmitter object to handle
 /// actually outputting the machine code and resolving things like the address
 /// of functions.  This method should returns true if machine code emission is
 /// not supported.

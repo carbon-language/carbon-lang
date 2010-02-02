@@ -20,7 +20,6 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/IRReader.h"
-#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Config/config.h"

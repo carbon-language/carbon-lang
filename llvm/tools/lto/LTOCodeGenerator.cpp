@@ -15,7 +15,6 @@
 #include "LTOModule.h"
 #include "LTOCodeGenerator.h"
 
-
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Linker.h"
@@ -28,7 +27,6 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"

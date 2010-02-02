@@ -59,15 +59,6 @@ using namespace llvm;
 
 char ELFWriter::ID = 0;
 
-/// AddELFWriter - Add the ELF writer to the function pass manager
-ObjectCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
-                                      raw_ostream &O,
-                                      TargetMachine &TM) {
-  ELFWriter *EW = new ELFWriter(O, TM);
-  PM.add(EW);
-  return EW->getObjectCodeEmitter();
-}
-
 //===----------------------------------------------------------------------===//
 //                          ELFWriter Implementation
 //===----------------------------------------------------------------------===//
