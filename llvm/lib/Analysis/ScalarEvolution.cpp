@@ -351,17 +351,15 @@ bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
     if (VCE->getOpcode() == Instruction::PtrToInt)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
-        if (CE->getOpcode() == Instruction::GetElementPtr)
-          if (CE->getOperand(0)->isNullValue()) {
-            const Type *Ty =
-              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
-            if (CE->getNumOperands() == 2)
-              if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
-                if (CI->isOne()) {
-                  AllocTy = Ty;
-                  return true;
-                }
-          }
+        if (CE->getOpcode() == Instruction::GetElementPtr &&
+            CE->getOperand(0)->isNullValue() &&
+            CE->getNumOperands() == 2)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
+            if (CI->isOne()) {
+              AllocTy = cast<PointerType>(CE->getOperand(0)->getType())
+                                 ->getElementType();
+              return true;
+            }
 
   return false;
 }
@@ -370,23 +368,23 @@ bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(V))
     if (VCE->getOpcode() == Instruction::PtrToInt)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
-        if (CE->getOpcode() == Instruction::GetElementPtr)
-          if (CE->getOperand(0)->isNullValue()) {
-            const Type *Ty =
-              cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
-            if (const StructType *STy = dyn_cast<StructType>(Ty))
-              if (!STy->isPacked() &&
-                  CE->getNumOperands() == 3 &&
-                  CE->getOperand(1)->isNullValue()) {
-                if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(2)))
-                  if (CI->isOne() &&
-                      STy->getNumElements() == 2 &&
-                      STy->getElementType(0)->isInteger(1)) {
-                    AllocTy = STy->getElementType(1);
-                    return true;
-                  }
-              }
-          }
+        if (CE->getOpcode() == Instruction::GetElementPtr &&
+            CE->getOperand(0)->isNullValue()) {
+          const Type *Ty =
+            cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
+          if (const StructType *STy = dyn_cast<StructType>(Ty))
+            if (!STy->isPacked() &&
+                CE->getNumOperands() == 3 &&
+                CE->getOperand(1)->isNullValue()) {
+              if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(2)))
+                if (CI->isOne() &&
+                    STy->getNumElements() == 2 &&
+                    STy->getElementType(0)->isInteger(1)) {
+                  AllocTy = STy->getElementType(1);
+                  return true;
+                }
+            }
+        }
 
   return false;
 }
@@ -2720,9 +2718,8 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
-      if (!isa<PointerType>(LocalOffset->getType()))
-        // Getelementptr indicies are signed.
-        LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
+      // Getelementptr indicies are signed.
+      LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
       // Lower "inbounds" GEPs to NSW arithmetic.
       LocalOffset = getMulExpr(LocalOffset, getSizeOfExpr(*GTI),
                                /*HasNUW=*/false, /*HasNSW=*/InBounds);
