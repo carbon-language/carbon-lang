@@ -1002,10 +1002,10 @@ public:
     unsigned Opcode = MI.getOpcode();
     unsigned NumOps = MI.getNumOperands();
     unsigned CurOp = 0;
-    if (NumOps > 1 && Desc.getOperandConstraint(1, TOI::TIED_TO) != -1) {
-      Instr->addOperand(MachineOperand::CreateReg(0, false));
-      ++CurOp;
-    } else if (NumOps > 2 && 
+    bool AddTied = false;
+    if (NumOps > 1 && Desc.getOperandConstraint(1, TOI::TIED_TO) != -1)
+      AddTied = true;
+    else if (NumOps > 2 && 
              Desc.getOperandConstraint(NumOps-1, TOI::TIED_TO)== 0)
       // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
       --NumOps;
@@ -1016,7 +1016,9 @@ public:
     case X86II::MRMSrcReg:
       // Matching doesn't fill this in completely, we have to choose operand 0
       // for a tied register.
-      OK &= AddRegToInstr(MI, Instr, 0); CurOp++;
+      OK &= AddRegToInstr(MI, Instr, CurOp++);
+      if (AddTied)
+        OK &= AddRegToInstr(MI, Instr, CurOp++ - 1);
       OK &= AddRegToInstr(MI, Instr, CurOp++);
       if (CurOp < NumOps)
         OK &= AddImmToInstr(MI, Instr, CurOp);
@@ -1035,7 +1037,11 @@ public:
       break;
 
     case X86II::AddRegFrm:
+      // Matching doesn't fill this in completely, we have to choose operand 0
+      // for a tied register.
       OK &= AddRegToInstr(MI, Instr, CurOp++);
+      if (AddTied)
+        OK &= AddRegToInstr(MI, Instr, CurOp++ - 1);
       if (CurOp < NumOps)
         OK &= AddImmToInstr(MI, Instr, CurOp);
       break;
@@ -1046,7 +1052,9 @@ public:
     case X86II::MRM6r: case X86II::MRM7r:
       // Matching doesn't fill this in completely, we have to choose operand 0
       // for a tied register.
-      OK &= AddRegToInstr(MI, Instr, 0); CurOp++;
+      OK &= AddRegToInstr(MI, Instr, CurOp++);
+      if (AddTied)
+        OK &= AddRegToInstr(MI, Instr, CurOp++ - 1);
       if (CurOp < NumOps)
         OK &= AddImmToInstr(MI, Instr, CurOp);
       break;
@@ -1061,7 +1069,11 @@ public:
       break;
 
     case X86II::MRMSrcMem:
+      // Matching doesn't fill this in completely, we have to choose operand 0
+      // for a tied register.
       OK &= AddRegToInstr(MI, Instr, CurOp++);
+      if (AddTied)
+        OK &= AddRegToInstr(MI, Instr, CurOp++ - 1);
       if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
           Opcode == X86::LEA16r || Opcode == X86::LEA32r)
         OK &= AddLMemToInstr(MI, Instr, CurOp);
