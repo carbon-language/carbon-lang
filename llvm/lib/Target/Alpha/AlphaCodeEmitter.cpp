@@ -59,6 +59,9 @@ namespace {
   };
 }
 
+char AlphaCodeEmitter::ID = 0;
+
+
 /// createAlphaCodeEmitterPass - Return a pass that emits the collected Alpha
 /// code to the specified MCE object.
 
