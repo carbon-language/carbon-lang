@@ -89,3 +89,16 @@ bb1:
 }
 
 declare i32 @bar(i32)
+
+define i32 @t7(i32 %a, i32 %b, i32 %c) nounwind ssp {
+entry:
+; 32: t7:
+; 32: jmp {{_?}}bar2
+
+; 64: t7:
+; 64: jmp {{_?}}bar2
+  %0 = tail call i32 @bar2(i32 %a, i32 %b, i32 %c) nounwind
+  ret i32 %0
+}
+
+declare i32 @bar2(i32, i32, i32)

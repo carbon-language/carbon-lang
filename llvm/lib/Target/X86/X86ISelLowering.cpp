@@ -1807,6 +1807,10 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   unsigned NumBytes = CCInfo.getNextStackOffset();
   if (FuncIsMadeTailCallSafe(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
+  else if (isTailCall && !PerformTailCallOpt)
+    // This is a sibcall. The memory operands are available in caller's
+    // own caller's stack.
+    NumBytes = 0;
 
   int FPDiff = 0;
   if (isTailCall) {
@@ -1976,9 +1980,11 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     int FI = 0;
     // Do not flag preceeding copytoreg stuff together with the following stuff.
     InFlag = SDValue();
-    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-      CCValAssign &VA = ArgLocs[i];
-      if (!VA.isRegLoc()) {
+    if (PerformTailCallOpt) {
+      for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+        CCValAssign &VA = ArgLocs[i];
+        if (VA.isRegLoc())
+          continue;
         assert(VA.isMemLoc());
         SDValue Arg = Outs[i].Val;
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
@@ -2259,11 +2265,14 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
   }
 
+
+  // Look for obvious safe cases to perform tail call optimization that does not
+  // requite ABI changes. This is what gcc calls sibcall.
+
   // Do not tail call optimize vararg calls for now.
   if (isVarArg)
     return false;
 
-  // Look for obvious safe cases to perform tail call optimization.
   // If the callee takes no arguments then go on to check the results of the
   // call.
   if (!Outs.empty()) {
@@ -2273,8 +2282,42 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
                    ArgLocs, *DAG.getContext());
     CCInfo.AnalyzeCallOperands(Outs, CCAssignFnForNode(CalleeCC));
-    if (CCInfo.getNextStackOffset())
-      return false;
+    if (CCInfo.getNextStackOffset()) {
+      MachineFunction &MF = DAG.getMachineFunction();
+      if (MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn())
+        return false;
+      if (Subtarget->isTargetWin64())
+        // Win64 ABI has additional complications.
+        return false;
+
+      // Check if the arguments are already laid out in the right way as
+      // the caller's fixed stack objects.
+      MachineFrameInfo *MFI = MF.getFrameInfo();
+      for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+        CCValAssign &VA = ArgLocs[i];
+        EVT RegVT = VA.getLocVT();
+        SDValue Arg = Outs[i].Val;
+        ISD::ArgFlagsTy Flags = Outs[i].Flags;
+        if (Flags.isByVal())
+          return false; // TODO
+        if (VA.getLocInfo() == CCValAssign::Indirect)
+          return false;
+        if (!VA.isRegLoc()) {
+          LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg);
+          if (!Ld)
+            return false;
+          SDValue Ptr = Ld->getBasePtr();
+          FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr);
+          if (!FINode)
+            return false;
+          int FI = FINode->getIndex();
+          if (!MFI->isFixedObjectIndex(FI))
+            return false;
+          if (VA.getLocMemOffset() != MFI->getObjectOffset(FI))
+            return false;
+        }
+      }
+    }
   }
 
   // If the caller does not return a value, then this is obviously safe.
