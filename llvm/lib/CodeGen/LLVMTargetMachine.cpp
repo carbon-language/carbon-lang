@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FormattedStream.h"
@@ -119,33 +120,34 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (addCommonCodeGenPasses(PM, OptLevel))
     return CGFT_ErrorOccurred;
 
+  OwningPtr<MCContext> Context(new MCContext());
+  OwningPtr<MCStreamer> AsmStreamer;
+
   switch (FileType) {
   default:
   case CGFT_ObjectFile:
     return CGFT_ErrorOccurred;
   case CGFT_AssemblyFile: {
-    MCContext *Context = new MCContext();
-    MCStreamer *AsmStreamer =
-      createAsmStreamer(*Context, Out, *getMCAsmInfo(),
-                        getTargetData()->isLittleEndian(),
-                        getVerboseAsm(),
-                        /*instprinter*/0,
-                        /*codeemitter*/0);
-    
-    // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
-    // if successful.
-    FunctionPass *Printer =
-      getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
-                                   getMCAsmInfo());
-    if (Printer == 0) {
-      delete AsmStreamer;
-      delete Context;
-      return CGFT_ErrorOccurred;
-    }
-    PM.add(Printer);
+    AsmStreamer.reset(createAsmStreamer(*Context, Out, *getMCAsmInfo(),
+                                        getTargetData()->isLittleEndian(),
+                                        getVerboseAsm(), /*instprinter*/0,
+                                        /*codeemitter*/0));
     break;
   }
   }
+  
+  // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
+  // if successful.
+  FunctionPass *Printer =
+  getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
+                               getMCAsmInfo());
+  if (Printer == 0)
+    return CGFT_ErrorOccurred;
+  
+  // If successful, createAsmPrinter took ownership of AsmStreamer and Context.
+  Context.take(); AsmStreamer.take();
+  
+  PM.add(Printer);
   
   // Make sure the code model is set.
   setCodeModelForStatic();
