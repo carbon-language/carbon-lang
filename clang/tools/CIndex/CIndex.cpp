@@ -1094,9 +1094,11 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   if (ATU)
     ATU->unlinkTemporaryFile();
   
-  ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
-                              num_unsaved_files, unsaved_files,
-                              ATU->getASTContext().getLangOptions());
+  // FIXME: Currently we don't report diagnostics on invalid ASTs.
+  if (ATU)
+    ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
+                                num_unsaved_files, unsaved_files,
+                                ATU->getASTContext().getLangOptions());
 
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
@@ -1306,6 +1308,18 @@ static Decl *getDeclFromExpr(Stmt *E) {
   return 0;
 }
 
+static SourceLocation getLocationFromExpr(Expr *E) {
+  if (ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E))
+    return /*FIXME:*/Msg->getLeftLoc();
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    return DRE->getLocation();
+  if (MemberExpr *Member = dyn_cast<MemberExpr>(E))
+    return Member->getMemberLoc();
+  if (ObjCIvarRefExpr *Ivar = dyn_cast<ObjCIvarRefExpr>(E))
+    return Ivar->getLocation();
+  return E->getLocStart();
+}
+
 extern "C" {
   
 unsigned clang_visitChildren(CXCursor parent, 
@@ -1502,18 +1516,6 @@ unsigned clang_isTranslationUnit(enum CXCursorKind K) {
 
 CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
-}
-
-static SourceLocation getLocationFromExpr(Expr *E) {
-  if (ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E))
-    return /*FIXME:*/Msg->getLeftLoc();
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    return DRE->getLocation();
-  if (MemberExpr *Member = dyn_cast<MemberExpr>(E))
-    return Member->getMemberLoc();
-  if (ObjCIvarRefExpr *Ivar = dyn_cast<ObjCIvarRefExpr>(E))
-    return Ivar->getLocation();
-  return E->getLocStart();
 }
 
 CXSourceLocation clang_getCursorLocation(CXCursor C) {
