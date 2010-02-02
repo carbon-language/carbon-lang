@@ -167,7 +167,6 @@ private:
         Interval NewK1(CurrentK.getStart(), K.getStart()-1);
         T = Add_internal(std::make_pair(NewK1, OldData), T); 
 
-
         Interval NewK2(K.getEnd()+1, CurrentK.getEnd());
         return Add_internal(std::make_pair(NewK2, OldData), T);
       }
@@ -175,7 +174,8 @@ private:
       if (CurrentK.getEnd() > K.getEnd()) {
         Interval NewK(K.getEnd()+1, CurrentK.getEnd());
         return Add_internal(std::make_pair(NewK, OldData), T);
-      }
+      } else
+        return T;
     }
   }
 };
@@ -224,7 +224,6 @@ public:
       else
         return 0;
     }
-
   };
 
 private:
