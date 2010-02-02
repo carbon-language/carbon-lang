@@ -309,7 +309,9 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
     const Expr *Arg = E->getArg(0);
     
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+    // FIXME: This 'while' statement should really be an 'if' statement, it's 
+    // added as a workaround for PR6199.
+    while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
       assert((ICE->getCastKind() == CastExpr::CK_NoOp ||
               ICE->getCastKind() == CastExpr::CK_ConstructorConversion ||
               ICE->getCastKind() == CastExpr::CK_UserDefinedConversion) &&
