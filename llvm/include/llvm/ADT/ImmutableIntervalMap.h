@@ -131,31 +131,31 @@ private:
 
   // Remove all overlaps from T.
   TreeTy *RemoveAllOverlaps(TreeTy *T, key_type_ref K) {
-    TreeTy *OldTree, *NewTree;
-    NewTree = T;
-
+    bool Changed;
     do {
-      OldTree = NewTree;
-      NewTree = RemoveOverlap(OldTree, K);
-    } while (NewTree != OldTree);
+      Changed = false;
+      T = RemoveOverlap(T, K, Changed);
+      MarkImmutable(T);
+    } while (Changed);
 
-    return NewTree;
+    return T;
   }
 
   // Remove one overlap from T.
-  TreeTy *RemoveOverlap(TreeTy *T, key_type_ref K) {
+  TreeTy *RemoveOverlap(TreeTy *T, key_type_ref K, bool &Changed) {
     if (!T)
       return NULL;
     Interval CurrentK = ImutInfo::KeyOfValue(Value(T));
 
     // If current key does not overlap the inserted key.
     if (CurrentK.getStart() > K.getEnd())
-      return RemoveOverlap(Left(T), K);
+      return Balance(RemoveOverlap(Left(T), K, Changed), Value(T), Right(T));
     else if (CurrentK.getEnd() < K.getStart())
-      return RemoveOverlap(Right(T), K);
+      return Balance(Left(T), Value(T), RemoveOverlap(Right(T), K, Changed));
 
     // Current key overlaps with the inserted key.
     // Remove the current key.
+    Changed = true;
     TreeTy *OldNode = T;
     T = Remove_internal(CurrentK, T);
     // Add back the unoverlapped part of the current key.
