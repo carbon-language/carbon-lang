@@ -108,6 +108,9 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     return true;
   }
 
+  // Check if we have a pointer to data member in this field.
+  CheckForPointerToDataMember(D->getType());
+  
   assert(FieldOffset % 8 == 0 && "FieldOffset is not on a byte boundary!");
   uint64_t FieldOffsetInBytes = FieldOffset / 8;
 
@@ -338,23 +341,34 @@ uint64_t CGRecordLayoutBuilder::getTypeSizeInBytes(const llvm::Type *Ty) const {
   return Types.getTargetData().getTypeAllocSize(Ty);
 }
 
-void CGRecordLayoutBuilder::CheckForMemberPointer(const FieldDecl *FD) {
+void CGRecordLayoutBuilder::CheckForPointerToDataMember(QualType T) {
   // This record already contains a member pointer.
-  if (ContainsMemberPointer)
+  if (ContainsPointerToDataMember)
     return;
 
   // Can only have member pointers if we're compiling C++.
   if (!Types.getContext().getLangOptions().CPlusPlus)
     return;
 
-  QualType Ty = FD->getType();
+  T = Types.getContext().getBaseElementType(T);
 
-  if (Ty->isMemberPointerType()) {
-    // We have a member pointer!
-    ContainsMemberPointer = true;
-    return;
-  }
-
+  if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
+    if (!MPT->getPointeeType()->isFunctionType()) {
+      // We have a pointer to data member.
+      ContainsPointerToDataMember = true;
+    }
+  } else if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    
+    // FIXME: It would be better if there was a way to explicitly compute the
+    // record layout instead of converting to a type.
+    Types.ConvertTagDeclType(RD);
+    
+    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
+    
+    if (Layout.containsPointerToDataMember())
+      ContainsPointerToDataMember = true;
+  }    
 }
 
 CGRecordLayout *
@@ -386,5 +400,5 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
     Types.addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
   }
 
-  return new CGRecordLayout(Ty, Builder.ContainsMemberPointer);
+  return new CGRecordLayout(Ty, Builder.ContainsPointerToDataMember);
 }

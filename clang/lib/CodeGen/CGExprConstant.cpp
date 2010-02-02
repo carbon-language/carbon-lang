@@ -911,7 +911,24 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   return C;
 }
 
-static inline bool isDataMemberPointerType(QualType T) {
+static bool containsPointerToDataMember(CodeGenTypes &Types, QualType T) {
+  // No need to check for member pointers when not compiling C++.
+  if (!Types.getContext().getLangOptions().CPlusPlus)
+    return false;
+  
+  T = Types.getContext().getBaseElementType(T);
+  
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    
+    // FIXME: It would be better if there was a way to explicitly compute the
+    // record layout instead of converting to a type.
+    Types.ConvertTagDeclType(RD);
+    
+    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
+    return Layout.containsPointerToDataMember();
+  }
+    
   if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
     return !MPT->getPointeeType()->isFunctionType();
   
@@ -919,45 +936,58 @@ static inline bool isDataMemberPointerType(QualType T) {
 }
 
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
-  // No need to check for member pointers when not compiling C++.
-  if (!getContext().getLangOptions().CPlusPlus)
+  if (!containsPointerToDataMember(getTypes(), T))
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
-
+    
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
 
     QualType ElementTy = CAT->getElementType();
 
-    // FIXME: Handle arrays of structs that contain member pointers.
-    if (isDataMemberPointerType(Context.getBaseElementType(ElementTy))) {
-      llvm::Constant *Element = EmitNullConstant(ElementTy);
-      uint64_t NumElements = CAT->getSize().getZExtValue();
-      std::vector<llvm::Constant *> Array(NumElements);
-      for (uint64_t i = 0; i != NumElements; ++i)
-        Array[i] = Element;
+    llvm::Constant *Element = EmitNullConstant(ElementTy);
+    unsigned NumElements = CAT->getSize().getZExtValue();
+    std::vector<llvm::Constant *> Array(NumElements);
+    for (unsigned i = 0; i != NumElements; ++i)
+      Array[i] = Element;
 
-      const llvm::ArrayType *ATy =
-        cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
-      return llvm::ConstantArray::get(ATy, Array);
-    }
+    const llvm::ArrayType *ATy =
+      cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
+    return llvm::ConstantArray::get(ATy, Array);
   }
 
   if (const RecordType *RT = T->getAs<RecordType>()) {
-    const RecordDecl *RD = RT->getDecl();
-    // FIXME: It would be better if there was a way to explicitly compute the
-    // record layout instead of converting to a type.
-    Types.ConvertTagDeclType(RD);
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    assert(!RD->getNumBases() && 
+           "FIXME: Handle zero-initializing structs with bases and "
+           "pointers to data members.");
+    const llvm::StructType *STy =
+      cast<llvm::StructType>(getTypes().ConvertTypeForMem(T));
+    unsigned NumElements = STy->getNumElements();
+    std::vector<llvm::Constant *> Elements(NumElements);
 
-    const CGRecordLayout &Layout = Types.getCGRecordLayout(RD);
-    if (Layout.containsMemberPointer()) {
-      assert(0 && "FIXME: No support for structs with member pointers yet!");
+    for (RecordDecl::field_iterator I = RD->field_begin(),
+         E = RD->field_end(); I != E; ++I) {
+      const FieldDecl *FD = *I;
+      
+      unsigned FieldNo = getTypes().getLLVMFieldNo(FD);
+      Elements[FieldNo] = EmitNullConstant(FD->getType());
     }
+    
+    // Now go through all other fields and zero them out.
+    for (unsigned i = 0; i != NumElements; ++i) {
+      if (!Elements[i])
+        Elements[i] = llvm::Constant::getNullValue(STy->getElementType(i));
+    }
+    
+    return llvm::ConstantStruct::get(STy, Elements);
   }
 
-  // FIXME: Handle structs that contain member pointers.
-  if (isDataMemberPointerType(T))
-    return llvm::Constant::getAllOnesValue(getTypes().ConvertTypeForMem(T));
-
-  return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
+  assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
+         "Should only see pointers to data members here!");
+  
+  // Itanium C++ ABI 2.3:
+  //   A NULL pointer is represented as -1.
+  return llvm::ConstantInt::get(getTypes().ConvertTypeForMem(T), -1, 
+                                /*isSigned=*/true);
 }
 
 llvm::Constant *

@@ -60,21 +60,24 @@ namespace CodeGen {
     /// LLVMType - The LLVMType corresponding to this record layout.
     const llvm::Type *LLVMType;
 
-    /// ContainsMemberPointer - Whether one of the fields in this record layout
-    /// is a member pointer, or a struct that contains a member pointer.
-    bool ContainsMemberPointer;
+    /// ContainsPointerToDataMember - Whether one of the fields in this record 
+    /// layout is a pointer to data member, or a struct that contains pointer to
+    /// data member.
+    bool ContainsPointerToDataMember;
 
   public:
-    CGRecordLayout(const llvm::Type *T, bool ContainsMemberPointer)
-      : LLVMType(T), ContainsMemberPointer(ContainsMemberPointer) { }
+    CGRecordLayout(const llvm::Type *T, bool ContainsPointerToDataMember)
+      : LLVMType(T), ContainsPointerToDataMember(ContainsPointerToDataMember) { }
 
     /// getLLVMType - Return llvm type associated with this record.
     const llvm::Type *getLLVMType() const {
       return LLVMType;
     }
 
-    bool containsMemberPointer() const {
-      return ContainsMemberPointer;
+    /// containsPointerToDataMember - Whether this struct contains pointers to
+    /// data members.
+    bool containsPointerToDataMember() const {
+      return ContainsPointerToDataMember;
     }
   };
 
