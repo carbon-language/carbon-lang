@@ -42,7 +42,8 @@ class TypePrinter:
                     print >>f, '#include "%s"\n'%(headerName,)
         
         if self.outputDriver:
-            print >>self.outputDriver, '#include <stdio.h>\n'
+            print >>self.outputDriver, '#include <stdio.h>'
+            print >>self.outputDriver, '#include <stdlib.h>\n'
             print >>self.outputDriver, 'int main(int argc, char **argv) {'
             print >>self.outputDriver, '  int index = -1;'
             print >>self.outputDriver, '  if (argc > 1) index = atoi(argv[1]);'
