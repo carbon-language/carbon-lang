@@ -37,7 +37,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/BinaryObject.h"
-#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
