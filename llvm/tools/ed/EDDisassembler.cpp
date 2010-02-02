@@ -149,59 +149,6 @@ EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
   return getDisassembler(triple.getArch(), syntax);
 }
 
-namespace {
-  class EDAsmParser : public MCAsmParser {
-    AsmLexer Lexer;
-    MCContext Context;
-    OwningPtr<MCStreamer> Streamer;
-  public:
-    // Mandatory functions
-    EDAsmParser(const MCAsmInfo &MAI) : Lexer(MAI) {
-      Streamer.reset(createNullStreamer(Context));
-    }
-    virtual ~EDAsmParser() { }
-    MCAsmLexer &getLexer() { return Lexer; }
-    MCContext &getContext() { return Context; }
-    MCStreamer &getStreamer() { return *Streamer; }
-    void Warning(SMLoc L, const Twine &Msg) { }
-    bool Error(SMLoc L, const Twine &Msg) { return true; }
-    const AsmToken &Lex() { return Lexer.Lex(); }
-    bool ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
-      AsmToken token = Lex();
-      if(token.isNot(AsmToken::Integer))
-        return true;
-      Res = MCConstantExpr::Create(token.getIntVal(), Context);
-      return false;
-    }
-    bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
-      assert(0 && "I can't ParseParenExpression()s!");
-    }
-    bool ParseAbsoluteExpression(int64_t &Res) {
-      assert(0 && "I can't ParseAbsoluteExpression()s!");
-    }
-    
-    /// setBuffer - loads a buffer into the parser
-    /// @arg buf  - The buffer to read tokens from
-    void setBuffer(const MemoryBuffer &buf) { Lexer.setBuffer(&buf); }
-    /// parseInstName - When the lexer is positioned befor an instruction
-    ///   name (with possible intervening whitespace), reads past the name,
-    ///   returning 0 on success and -1 on failure
-    /// @arg name - A reference to a string that is filled in with the
-    ///             instruction name
-    /// @arg loc  - A reference to a location that is filled in with the
-    ///             position of the instruction name
-    int parseInstName(StringRef &name, SMLoc &loc) {
-      AsmToken tok = Lexer.Lex();
-      if(tok.isNot(AsmToken::Identifier)) {
-        return -1;
-      }
-      name = tok.getString();
-      loc = tok.getLoc();
-      return 0;
-    }
-  };
-}
-
 EDDisassembler::EDDisassembler(CPUKey &key) : 
   Valid(false), ErrorString(), ErrorStream(ErrorString), Key(key) {
   const InfoMap *infoMap = infoFromArch(key.Arch);
@@ -261,6 +208,8 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   SpecificAsmLexer->InstallLexer(*GenericAsmLexer);
                           
   InstInfos = infoMap->Info;
+  
+  initMaps(*targetMachine->getRegisterInfo());
     
   Valid = true;
 }
