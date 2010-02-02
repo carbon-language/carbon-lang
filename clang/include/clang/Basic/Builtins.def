@@ -12,9 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// FIXME: this needs to be the full list supported by GCC.  Right now, I'm just
-// adding stuff on demand.
-//
 // FIXME: This should really be a .td file, but that requires modifying tblgen.
 // Perhaps tblgen should have plugins.
 
