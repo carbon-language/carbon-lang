@@ -430,12 +430,22 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     if (NOps==3) {
       // Register or immediate value. Register 0 means undef.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register ||
-             MI->getOperand(0).getType()==MachineOperand::MO_Immediate);
+             MI->getOperand(0).getType()==MachineOperand::MO_Immediate ||
+             MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate);
       if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
           MI->getOperand(0).getReg()==0) {
         // Suppress offset in this case, it is not meaningful.
         O << "undef";
         return;
+      } else if (MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate) {
+        // This is more naturally done in printOperand, but since the only use
+        // of such an operand is in this comment and that is temporary, we
+        // prefer to keep this mess localized.
+        SmallVectorImpl<char> Str(20);
+        APFloat APF = MI->getOperand(0).getFPImm()->getValueAPF();
+        APF.toString(Str, 0, 0);
+        for (unsigned i=0; i<Str.size()-1; i++)
+          O << Str[i];
       } else
         printOperand(MI, 0);
     } else {
