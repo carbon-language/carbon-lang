@@ -360,6 +360,7 @@ int main(int argc, char **argv) {
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
     case TargetMachine::CGFT_AssemblyFile:
+    case TargetMachine::CGFT_ObjectFile:
       break;
     }
 

@@ -124,14 +124,21 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   OwningPtr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
-  default:
-  case CGFT_ObjectFile:
-    return CGFT_ErrorOccurred;
-  case CGFT_AssemblyFile: {
+  default: return CGFT_ErrorOccurred;
+  case CGFT_AssemblyFile:
     AsmStreamer.reset(createAsmStreamer(*Context, Out, *getMCAsmInfo(),
                                         getTargetData()->isLittleEndian(),
                                         getVerboseAsm(), /*instprinter*/0,
                                         /*codeemitter*/0));
+    break;
+  case CGFT_ObjectFile: {
+    // Create the code emitter for the target if it exists.  If not, .o file
+    // emission fails.
+    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this);
+    if (MCE == 0)
+      return CGFT_ErrorOccurred;
+    
+    AsmStreamer.reset(createMachOStreamer(*Context, Out, MCE));
     break;
   }
   }
@@ -139,8 +146,8 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
   // if successful.
   FunctionPass *Printer =
-  getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
-                               getMCAsmInfo());
+    getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
+                                 getMCAsmInfo());
   if (Printer == 0)
     return CGFT_ErrorOccurred;
   
