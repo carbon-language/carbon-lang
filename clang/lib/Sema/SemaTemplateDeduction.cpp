@@ -1306,6 +1306,106 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   return TDK_Success;
 }
 
+static QualType GetTypeOfFunction(ASTContext &Context,
+                                  bool isAddressOfOperand,
+                                  FunctionDecl *Fn) {
+  if (!isAddressOfOperand) return Fn->getType();
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn))
+    if (Method->isInstance())
+      return Context.getMemberPointerType(Fn->getType(),
+               Context.getTypeDeclType(Method->getParent()).getTypePtr());
+  return Context.getPointerType(Fn->getType());
+}
+
+/// Apply the deduction rules for overload sets.
+///
+/// \return the null type if this argument should be treated as an
+/// undeduced context
+static QualType
+ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
+                            Expr *Arg, QualType ParamType) {
+  bool isAddressOfOperand = false;
+
+  Arg = Arg->IgnoreParens();
+  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
+    assert(UnOp->getOpcode() == UnaryOperator::AddrOf);
+    isAddressOfOperand = true;
+    Arg = UnOp->getSubExpr()->IgnoreParens();
+  }
+
+  const UnresolvedSetImpl *Decls;
+  bool HasExplicitArgs;
+  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Arg)) {
+    Decls = &ULE->getDecls();
+    HasExplicitArgs = ULE->hasExplicitTemplateArgs();
+  } else {
+    UnresolvedMemberExpr *UME = cast<UnresolvedMemberExpr>(Arg);
+    Decls = &UME->getDecls();
+    HasExplicitArgs = ULE->hasExplicitTemplateArgs();
+  }
+
+  // If there were explicit template arguments, we can only find
+  // something via C++ [temp.arg.explicit]p3, i.e. if the arguments
+  // unambiguously name a full specialization.
+  if (HasExplicitArgs) {
+    // But we can still look for an explicit specialization.
+    if (FunctionDecl *ExplicitSpec
+          = S.ResolveSingleFunctionTemplateSpecialization(Arg))
+      return GetTypeOfFunction(S.Context, isAddressOfOperand, ExplicitSpec);        
+    return QualType();
+  }
+
+  // C++0x [temp.deduct.call]p6:
+  //   When P is a function type, pointer to function type, or pointer
+  //   to member function type:
+
+  if (!ParamType->isFunctionType() &&
+      !ParamType->isFunctionPointerType() &&
+      !ParamType->isMemberFunctionPointerType())
+    return QualType();
+
+  QualType Match;
+  for (UnresolvedSetIterator I = Decls->begin(),
+         E = Decls->end(); I != E; ++I) {
+    NamedDecl *D = (*I)->getUnderlyingDecl();
+
+    //   - If the argument is an overload set containing one or more
+    //     function templates, the parameter is treated as a
+    //     non-deduced context.
+    if (isa<FunctionTemplateDecl>(D))
+      return QualType();
+
+    FunctionDecl *Fn = cast<FunctionDecl>(D);
+    QualType ArgType = GetTypeOfFunction(S.Context, isAddressOfOperand, Fn);
+
+    //   - If the argument is an overload set (not containing function
+    //     templates), trial argument deduction is attempted using each
+    //     of the members of the set. If deduction succeeds for only one
+    //     of the overload set members, that member is used as the
+    //     argument value for the deduction. If deduction succeeds for
+    //     more than one member of the overload set the parameter is
+    //     treated as a non-deduced context.
+
+    // We do all of this in a fresh context per C++0x [temp.deduct.type]p2:
+    //   Type deduction is done independently for each P/A pair, and
+    //   the deduced template argument values are then combined.
+    // So we do not reject deductions which were made elsewhere.
+    llvm::SmallVector<TemplateArgument, 8> Deduced(TemplateParams->size());
+    Sema::TemplateDeductionInfo Info(S.Context);
+    unsigned TDF = 0;
+
+    Sema::TemplateDeductionResult Result
+      = DeduceTemplateArguments(S.Context, TemplateParams,
+                                ParamType, ArgType,
+                                Info, Deduced, TDF);
+    if (Result) continue;
+    if (!Match.isNull()) return QualType();
+    Match = ArgType;
+  }
+
+  return Match;
+}
+
 /// \brief Perform template argument deduction from a function call
 /// (C++ [temp.deduct.call]).
 ///
@@ -1384,6 +1484,15 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     QualType ParamType = ParamTypes[I];
     QualType ArgType = Args[I]->getType();
 
+    // Overload sets usually make this parameter an undeduced
+    // context, but there are sometimes special circumstances.
+    if (ArgType == Context.OverloadTy) {
+      ArgType = ResolveOverloadForDeduction(*this, TemplateParams,
+                                            Args[I], ParamType);
+      if (ArgType.isNull())
+        continue;
+    }
+
     // C++ [temp.deduct.call]p2:
     //   If P is not a reference type:
     QualType CanonParamType = Context.getCanonicalType(ParamType);
@@ -1454,36 +1563,6 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               ParamType->getAs<PointerType>()->getPointeeType())))
       TDF |= TDF_DerivedClass;
 
-    // FIXME: C++0x [temp.deduct.call] paragraphs 6-9 deal with function
-    // pointer parameters.
-    
-    if (Context.hasSameUnqualifiedType(ArgType, Context.OverloadTy)) {
-      // We know that template argument deduction will fail if the argument is
-      // still an overloaded function. Check whether we can resolve this 
-      // argument as a single function template specialization per
-      // C++ [temp.arg.explicit]p3.
-      FunctionDecl *ExplicitSpec
-        = ResolveSingleFunctionTemplateSpecialization(Args[I]);
-      Expr *ResolvedArg = 0;
-      if (ExplicitSpec)
-        ResolvedArg = FixOverloadedFunctionReference(Args[I], ExplicitSpec);
-      if (!ExplicitSpec || !ResolvedArg) {
-        // Template argument deduction fails if we can't resolve the overloaded
-        // function.
-        return TDK_FailedOverloadResolution;
-      }
-      
-      // Get the type of the resolved argument, and adjust it per 
-      // C++0x [temp.deduct.call]p3.
-      ArgType = ResolvedArg->getType();
-      if (!ParamWasReference && ArgType->isFunctionType())
-        ArgType = Context.getPointerType(ArgType);
-      if (ArgType->isPointerType() || ArgType->isMemberPointerType())
-        TDF |= TDF_IgnoreQualifiers;
-      
-      ResolvedArg->Destroy(Context);
-    }
-    
     if (TemplateDeductionResult Result
         = ::DeduceTemplateArguments(Context, TemplateParams,
                                     ParamType, ArgType, Info, Deduced,
@@ -1548,9 +1627,10 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // Trap any errors that might occur.
   SFINAETrap Trap(*this);
 
+  Deduced.resize(TemplateParams->size());
+
   if (!ArgFunctionType.isNull()) {
     // Deduce template arguments from the function type.
-    Deduced.resize(TemplateParams->size());
     if (TemplateDeductionResult Result
           = ::DeduceTemplateArguments(Context, TemplateParams,
                                       FunctionType, ArgFunctionType, Info,
