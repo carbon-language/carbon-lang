@@ -861,6 +861,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
                                        CXXCtorType CtorType) {
   const CXXRecordDecl *ClassDecl = CD->getParent();
+
+  llvm::SmallVector<CXXBaseOrMemberInitializer *, 8> MemberInitializers;
   
   // FIXME: Add vbase initialization
   
@@ -875,14 +877,17 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     if (Member->isBaseInitializer())
       EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
     else
-      EmitMemberInitializer(*this, ClassDecl, Member);
-
-    // Pop any live temporaries that the initializers might have pushed.
-    while (!LiveTemporaries.empty())
-      PopCXXTemporary();
+      MemberInitializers.push_back(Member);
   }
 
   InitializeVtablePtrs(ClassDecl);
+
+  for (unsigned I = 0, E = MemberInitializers.size(); I != E; ++I) {
+    assert(LiveTemporaries.empty() &&
+           "Should not have any live temporaries at initializer start!");
+    
+    EmitMemberInitializer(*this, ClassDecl, MemberInitializers[I]);
+  }
 }
 
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's
