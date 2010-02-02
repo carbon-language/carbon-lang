@@ -837,3 +837,17 @@ void f(kwset_t *kws, char const *p, char const *q) {
   d = delta[c = (end+=d)[-1]]; // no-warning
   trie = next[c];
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7593875> When handling sizeof(VLA) it leads to a hole in
+// the ExplodedGraph (causing a false positive)
+//===----------------------------------------------------------------------===//
+
+int rdar_7593875_aux(int x);
+int rdar_7593875(int n) {
+  int z[n > 10 ? 10 : n]; // VLA.
+  int v;
+  v = rdar_7593875_aux(sizeof(z));
+  // Previously we got a false positive about 'v' being uninitialized.
+  return v; // no-warning
+}

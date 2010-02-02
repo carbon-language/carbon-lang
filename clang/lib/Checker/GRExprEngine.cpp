@@ -2461,12 +2461,14 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr* Ex,
     }
     else if (!T.getTypePtr()->isConstantSizeType()) {
       // FIXME: Add support for VLAs.
+      Dst.Add(Pred);
       return;
     }
     else if (T->isObjCInterfaceType()) {
       // Some code tries to take the sizeof an ObjCInterfaceType, relying that
       // the compiler has laid out its representation.  Just report Unknown
       // for these.
+      Dst.Add(Pred);
       return;
     }
     else {
