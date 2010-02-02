@@ -336,3 +336,17 @@ define i64 @test31(i64 %A) nounwind readnone ssp noredzone {
 ; CHECK-NEXT: %F = and i64 %bitfield, 4294941946
 ; CHECK-NEXT: ret i64 %F
 }
+
+define <4 x i32> @test32(<4 x i1> %and.i1352, <4 x i32> %vecinit6.i176, <4 x i32> %vecinit6.i191) {
+  %and.i135 = sext <4 x i1> %and.i1352 to <4 x i32> ; <<4 x i32>> [#uses=2]
+  %and.i129 = and <4 x i32> %vecinit6.i176, %and.i135 ; <<4 x i32>> [#uses=1]
+  %neg.i = xor <4 x i32> %and.i135, <i32 -1, i32 -1, i32 -1, i32 -1> ; <<4 x i32>> [#uses=1]
+  %and.i = and <4 x i32> %vecinit6.i191, %neg.i   ; <<4 x i32>> [#uses=1]
+  %or.i = or <4 x i32> %and.i, %and.i129          ; <<4 x i32>> [#uses=1]
+  ret <4 x i32> %or.i
+; Don't turn this into a vector select until codegen matures to handle them
+; better.
+; CHECK: @test32
+; CHECK: or <4 x i32> %and.i, %and.i129
+}
+

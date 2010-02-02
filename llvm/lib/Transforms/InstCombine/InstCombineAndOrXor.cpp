@@ -1591,15 +1591,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
     }
 
-    // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants
-    if (Instruction *Match = MatchSelectFromAndOr(A, B, C, D))
-      return Match;
-    if (Instruction *Match = MatchSelectFromAndOr(B, A, D, C))
-      return Match;
-    if (Instruction *Match = MatchSelectFromAndOr(C, B, A, D))
-      return Match;
-    if (Instruction *Match = MatchSelectFromAndOr(D, A, B, C))
-      return Match;
+    // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants.
+    // Don't do this for vector select idioms, the code generator doesn't handle
+    // them well yet.
+    if (!isa<VectorType>(I.getType())) {
+      if (Instruction *Match = MatchSelectFromAndOr(A, B, C, D))
+        return Match;
+      if (Instruction *Match = MatchSelectFromAndOr(B, A, D, C))
+        return Match;
+      if (Instruction *Match = MatchSelectFromAndOr(C, B, A, D))
+        return Match;
+      if (Instruction *Match = MatchSelectFromAndOr(D, A, B, C))
+        return Match;
+    }
 
     // ((A&~B)|(~A&B)) -> A^B
     if ((match(C, m_Not(m_Specific(D))) &&
