@@ -1413,9 +1413,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   AsmMatcherInfo Info(AsmParser);
   Info.BuildInfo(Target);
 
-  // Sort the instruction table using the partial order on classes.
-  std::sort(Info.Instructions.begin(), Info.Instructions.end(),
-            less_ptr<InstructionInfo>());
+  // Sort the instruction table using the partial order on classes. We use
+  // stable_sort to ensure that ambiguous instructions are still
+  // deterministically ordered.
+  std::stable_sort(Info.Instructions.begin(), Info.Instructions.end(),
+                   less_ptr<InstructionInfo>());
   
   DEBUG_WITH_TYPE("instruction_info", {
       for (std::vector<InstructionInfo*>::iterator 
