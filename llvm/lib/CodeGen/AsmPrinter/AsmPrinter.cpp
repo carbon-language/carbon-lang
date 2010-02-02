@@ -53,22 +53,9 @@ using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
-static cl::opt<cl::boolOrDefault>
-AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
-           cl::init(cl::BOU_UNSET));
-
-static bool getVerboseAsm(bool VDef) {
-  switch (AsmVerbose) {
-  default:
-  case cl::BOU_UNSET: return VDef;
-  case cl::BOU_TRUE:  return true;
-  case cl::BOU_FALSE: return false;
-  }      
-}
-
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                       const MCAsmInfo *T, bool VDef)
+                       const MCAsmInfo *T, bool VerboseAsm)
   : MachineFunctionPass(&ID), O(o),
     TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
 
@@ -76,11 +63,11 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     // FIXME: Pass instprinter to streamer.
     OutStreamer(*createAsmStreamer(OutContext, O, *T,
                                    TM.getTargetData()->isLittleEndian(),
-                                   getVerboseAsm(VDef), 0)),
+                                   VerboseAsm, 0)),
 
     LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
   DW = 0; MMI = 0;
-  VerboseAsm = getVerboseAsm(VDef);
+  this->VerboseAsm = VerboseAsm;
 }
 
 AsmPrinter::~AsmPrinter() {
