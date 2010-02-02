@@ -636,9 +636,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     const Type *ReturnTy = CI.getType();
     Value *Op1 = II->getOperand(1);
 
-        // If we're a constant expr then we just return the number of bytes
-        // left in whatever we're indexing.  Since it's constant there's no
-        // need for maximum or minimum bytes.
+    // If we're a constant expr then we just return the number of bytes
+    // left in whatever we're indexing.  Since it's constant there's no
+    // need for maximum or minimum bytes.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
           // If this isn't a GEP give up.
       if (CE->getOpcode() != Instruction::GetElementPtr) return 0;
@@ -665,7 +665,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           ConstantInt::get(ReturnTy,
           ((numElems - indx) * sizeofElem)));
       }
-    }
+    }    
     // TODO: Add more types here.
   }
   }
