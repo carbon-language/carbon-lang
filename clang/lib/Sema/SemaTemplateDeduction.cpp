@@ -1324,34 +1324,19 @@ static QualType GetTypeOfFunction(ASTContext &Context,
 static QualType
 ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
                             Expr *Arg, QualType ParamType) {
-  bool isAddressOfOperand = false;
+  llvm::PointerIntPair<OverloadExpr*,1> R = OverloadExpr::find(Arg);
 
-  Arg = Arg->IgnoreParens();
-  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
-    assert(UnOp->getOpcode() == UnaryOperator::AddrOf);
-    isAddressOfOperand = true;
-    Arg = UnOp->getSubExpr()->IgnoreParens();
-  }
-
-  const UnresolvedSetImpl *Decls;
-  bool HasExplicitArgs;
-  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Arg)) {
-    Decls = &ULE->getDecls();
-    HasExplicitArgs = ULE->hasExplicitTemplateArgs();
-  } else {
-    UnresolvedMemberExpr *UME = cast<UnresolvedMemberExpr>(Arg);
-    Decls = &UME->getDecls();
-    HasExplicitArgs = ULE->hasExplicitTemplateArgs();
-  }
+  bool isAddressOfOperand = bool(R.getInt());
+  OverloadExpr *Ovl = R.getPointer();
 
   // If there were explicit template arguments, we can only find
   // something via C++ [temp.arg.explicit]p3, i.e. if the arguments
   // unambiguously name a full specialization.
-  if (HasExplicitArgs) {
+  if (Ovl->hasExplicitTemplateArgs()) {
     // But we can still look for an explicit specialization.
     if (FunctionDecl *ExplicitSpec
-          = S.ResolveSingleFunctionTemplateSpecialization(Arg))
-      return GetTypeOfFunction(S.Context, isAddressOfOperand, ExplicitSpec);        
+          = S.ResolveSingleFunctionTemplateSpecialization(Ovl))
+      return GetTypeOfFunction(S.Context, isAddressOfOperand, ExplicitSpec);
     return QualType();
   }
 
@@ -1365,8 +1350,8 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     return QualType();
 
   QualType Match;
-  for (UnresolvedSetIterator I = Decls->begin(),
-         E = Decls->end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = Ovl->decls_begin(),
+         E = Ovl->decls_end(); I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
 
     //   - If the argument is an overload set containing one or more

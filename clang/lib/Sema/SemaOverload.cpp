@@ -4455,11 +4455,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     Expr *E = FromExpr->IgnoreParens();
     if (isa<UnaryOperator>(E))
       E = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
-    DeclarationName Name;
-    if (isa<UnresolvedLookupExpr>(E))
-      Name = cast<UnresolvedLookupExpr>(E)->getName();
-    else
-      Name = cast<UnresolvedMemberExpr>(E)->getMemberName();
+    DeclarationName Name = cast<OverloadExpr>(E)->getName();
 
     S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_overload)
       << (unsigned) FnKind << FnDesc
@@ -4950,7 +4946,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
   }
 }
 
-static bool CheckUnresolvedAccess(Sema &S, Expr *E, NamedDecl *D,
+static bool CheckUnresolvedAccess(Sema &S, OverloadExpr *E, NamedDecl *D,
                                   AccessSpecifier AS) {
   if (isa<UnresolvedLookupExpr>(E))
     return S.CheckUnresolvedLookupAccess(cast<UnresolvedLookupExpr>(E), D, AS);
@@ -4994,50 +4990,28 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     return 0;
 
   // Find the actual overloaded function declaration.
+  if (From->getType() != Context.OverloadTy)
+    return 0;
 
   // C++ [over.over]p1:
   //   [...] [Note: any redundant set of parentheses surrounding the
   //   overloaded function name is ignored (5.1). ]
-  Expr *OvlExpr = From->IgnoreParens();
-
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(OvlExpr)) {
-    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
-      OvlExpr = UnOp->getSubExpr()->IgnoreParens();
+  OverloadExpr *OvlExpr = OverloadExpr::find(From).getPointer();
+  TemplateArgumentListInfo ETABuffer, *ExplicitTemplateArgs = 0;
+  if (OvlExpr->hasExplicitTemplateArgs()) {
+    OvlExpr->getExplicitTemplateArgs().copyInto(ETABuffer);
+    ExplicitTemplateArgs = &ETABuffer;
   }
-
-  bool HasExplicitTemplateArgs = false;
-  TemplateArgumentListInfo ExplicitTemplateArgs;
-  const UnresolvedSetImpl *Fns;
-  
-  // Look into the overloaded expression.
-  if (UnresolvedLookupExpr *UL
-               = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
-    Fns = &UL->getDecls();
-    if (UL->hasExplicitTemplateArgs()) {
-      HasExplicitTemplateArgs = true;
-      UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-    }
-  } else if (UnresolvedMemberExpr *ME
-               = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
-    Fns = &ME->getDecls();
-    if (ME->hasExplicitTemplateArgs()) {
-      HasExplicitTemplateArgs = true;
-      ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-    }
-  } else return 0;
-
-  // If we didn't actually find anything, we're done.
-  if (Fns->empty())
-    return 0;
 
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   UnresolvedSet<4> Matches;  // contains only FunctionDecls
   bool FoundNonTemplateFunction = false;
-  for (UnresolvedSetIterator I = Fns->begin(), E = Fns->end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+         E = OvlExpr->decls_end(); I != E; ++I) {
     // Look through any using declarations to find the underlying function.
     NamedDecl *Fn = (*I)->getUnderlyingDecl();
 
@@ -5069,8 +5043,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context);
       if (TemplateDeductionResult Result
-            = DeduceTemplateArguments(FunctionTemplate,
-                       (HasExplicitTemplateArgs ? &ExplicitTemplateArgs : 0),
+            = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
                                       FunctionType, Specialization, Info)) {
         // FIXME: make a note of the failed deduction for diagnostics.
         (void)Result;
@@ -5093,7 +5066,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         continue;
       
       // If we have explicit template arguments, skip non-templates.
-      if (HasExplicitTemplateArgs)
+      if (OvlExpr->hasExplicitTemplateArgs())
         continue;
     } else if (IsMember)
       continue;
@@ -5192,45 +5165,27 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
   // C++ [over.over]p1:
   //   [...] [Note: any redundant set of parentheses surrounding the
   //   overloaded function name is ignored (5.1). ]
-  Expr *OvlExpr = From->IgnoreParens();
-  
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-  if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(OvlExpr)) {
-    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
-      OvlExpr = UnOp->getSubExpr()->IgnoreParens();
-  }
-  
-  bool HasExplicitTemplateArgs = false;
-  TemplateArgumentListInfo ExplicitTemplateArgs;
-  const UnresolvedSetImpl *Fns;
-  
-  // Look into the overloaded expression.
-  if (UnresolvedLookupExpr *UL
-      = dyn_cast<UnresolvedLookupExpr>(OvlExpr)) {
-    Fns = &UL->getDecls();
-    if (UL->hasExplicitTemplateArgs()) {
-      HasExplicitTemplateArgs = true;
-      UL->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-    }
-  } else if (UnresolvedMemberExpr *ME
-             = dyn_cast<UnresolvedMemberExpr>(OvlExpr)) {
-    Fns = &ME->getDecls();
-    if (ME->hasExplicitTemplateArgs()) {
-      HasExplicitTemplateArgs = true;
-      ME->copyTemplateArgumentsInto(ExplicitTemplateArgs);
-    }
-  } else return 0;
+
+  if (From->getType() != Context.OverloadTy)
+    return 0;
+
+  OverloadExpr *OvlExpr = OverloadExpr::find(From).getPointer();
   
   // If we didn't actually find any template-ids, we're done.
-  if (Fns->empty() || !HasExplicitTemplateArgs)
+  if (!OvlExpr->hasExplicitTemplateArgs())
     return 0;
+
+  TemplateArgumentListInfo ExplicitTemplateArgs;
+  OvlExpr->getExplicitTemplateArgs().copyInto(ExplicitTemplateArgs);
   
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   FunctionDecl *Matched = 0;
-  for (UnresolvedSetIterator I = Fns->begin(), E = Fns->end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+         E = OvlExpr->decls_end(); I != E; ++I) {
     // C++0x [temp.arg.explicit]p3:
     //   [...] In contexts where deduction is done and fails, or in contexts
     //   where deduction is not done, if a template argument list is 

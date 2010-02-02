@@ -137,10 +137,9 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
   return ULE;
 }
 
-bool UnresolvedLookupExpr::
-  ComputeDependence(UnresolvedSetImpl::const_iterator Begin,
-                    UnresolvedSetImpl::const_iterator End,
-                    const TemplateArgumentListInfo *Args) {
+bool OverloadExpr::ComputeDependence(UnresolvedSetIterator Begin,
+                                     UnresolvedSetIterator End,
+                                     const TemplateArgumentListInfo *Args) {
   for (UnresolvedSetImpl::const_iterator I = Begin; I != End; ++I)
     if ((*I)->getDeclContext()->isDependentContext())
       return true;
@@ -646,15 +645,13 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(QualType T, bool Dependent,
                                            DeclarationName MemberName,
                                            SourceLocation MemberLoc,
                                    const TemplateArgumentListInfo *TemplateArgs)
-  : Expr(UnresolvedMemberExprClass, T, Dependent, Dependent),
-    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
-    HasUnresolvedUsing(HasUnresolvedUsing),
-    HasExplicitTemplateArgs(TemplateArgs != 0),
-    OperatorLoc(OperatorLoc),
-    Qualifier(Qualifier), QualifierRange(QualifierRange),
-    MemberName(MemberName), MemberLoc(MemberLoc) {
+  : OverloadExpr(UnresolvedMemberExprClass, T, Dependent,
+                 Qualifier, QualifierRange, MemberName, MemberLoc,
+                 TemplateArgs != 0),
+    IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
+    Base(Base), BaseType(BaseType), OperatorLoc(OperatorLoc) {
   if (TemplateArgs)
-    getExplicitTemplateArgs()->initializeFrom(*TemplateArgs);
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 }
 
 UnresolvedMemberExpr *
@@ -686,8 +683,8 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
   // It can't be dependent: after all, we were actually able to do the
   // lookup.
   const RecordType *RT;
-  if (Qualifier) {
-    Type *T = Qualifier->getAsType();
+  if (getQualifier()) {
+    Type *T = getQualifier()->getAsType();
     assert(T && "qualifier in member expression does not name type");
     RT = T->getAs<RecordType>();
     assert(RT && "qualifier in member expression does not name record");

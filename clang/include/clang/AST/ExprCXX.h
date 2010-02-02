@@ -1129,6 +1129,112 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief A reference to an overloaded function set, either an
+/// \t UnresolvedLookupExpr or an \t UnresolvedMemberExpr.
+class OverloadExpr : public Expr {
+  /// The results.  These are undesugared, which is to say, they may
+  /// include UsingShadowDecls.  Access is relative to the naming
+  /// class.
+  UnresolvedSet<4> Results;
+
+  /// The common name of these declarations.
+  DeclarationName Name;
+
+  /// The scope specifier, if any.
+  NestedNameSpecifier *Qualifier;
+  
+  /// The source range of the scope specifier.
+  SourceRange QualifierRange;
+
+  /// The location of the name.
+  SourceLocation NameLoc;
+
+  /// True if the name was a template-id.
+  bool HasExplicitTemplateArgs;
+
+protected:
+  OverloadExpr(StmtClass K, QualType T, bool Dependent,
+               NestedNameSpecifier *Qualifier, SourceRange QRange,
+               DeclarationName Name, SourceLocation NameLoc,
+               bool HasTemplateArgs)
+    : Expr(K, T, Dependent, Dependent),
+      Name(Name), Qualifier(Qualifier), QualifierRange(QRange),
+      NameLoc(NameLoc), HasExplicitTemplateArgs(HasTemplateArgs)
+  {}
+
+public:
+  /// Computes whether an unresolved lookup on the given declarations
+  /// and optional template arguments is type- and value-dependent.
+  static bool ComputeDependence(UnresolvedSetIterator Begin,
+                                UnresolvedSetIterator End,
+                                const TemplateArgumentListInfo *Args);
+
+  /// Finds the overloaded expression in the given expression of
+  /// OverloadTy.
+  ///
+  /// \return the expression (which must be there) and true if it is
+  /// within an address-of operator.
+  static llvm::PointerIntPair<OverloadExpr*,1> find(Expr *E) {
+    assert(E->getType()->isSpecificBuiltinType(BuiltinType::Overload));
+
+    bool op = false;
+    E = E->IgnoreParens();
+    if (isa<UnaryOperator>(E))
+      op = true, E = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
+    return llvm::PointerIntPair<OverloadExpr*,1>(cast<OverloadExpr>(E), op);
+  }
+
+  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
+    Results.append(Begin, End);
+  }
+
+  typedef UnresolvedSetImpl::iterator decls_iterator;
+  decls_iterator decls_begin() const { return Results.begin(); }
+  decls_iterator decls_end() const { return Results.end(); }
+
+  /// Gets the decls as an unresolved set.
+  const UnresolvedSetImpl &getDecls() { return Results; }
+
+  /// Gets the number of declarations in the unresolved set.
+  unsigned getNumDecls() const { return Results.size(); }
+
+  /// Gets the name looked up.
+  DeclarationName getName() const { return Name; }
+  void setName(DeclarationName N) { Name = N; }
+
+  /// Gets the location of the name.
+  SourceLocation getNameLoc() const { return NameLoc; }
+  void setNameLoc(SourceLocation Loc) { NameLoc = Loc; }
+
+  /// Fetches the nested-name qualifier, if one was given.
+  NestedNameSpecifier *getQualifier() const { return Qualifier; }
+
+  /// Fetches the range of the nested-name qualifier.
+  SourceRange getQualifierRange() const { return QualifierRange; }
+
+  /// \brief Determines whether this expression had an explicit
+  /// template argument list, e.g. f<int>.
+  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
+
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs(); // defined far below
+
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    return const_cast<OverloadExpr*>(this)->getExplicitTemplateArgs();
+  }
+
+  ExplicitTemplateArgumentList *getOptionalExplicitTemplateArgs() {
+    if (hasExplicitTemplateArgs())
+      return &getExplicitTemplateArgs();
+    return 0;
+  }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == UnresolvedLookupExprClass ||
+           T->getStmtClass() == UnresolvedMemberExprClass;
+  }
+  static bool classof(const OverloadExpr *) { return true; }
+};
+
 /// \brief A reference to a name which we were able to look up during
 /// parsing but could not resolve to a specific declaration.  This
 /// arises in several ways:
@@ -1139,30 +1245,7 @@ public:
 /// These never include UnresolvedUsingValueDecls, which are always
 /// class members and therefore appear only in
 /// UnresolvedMemberLookupExprs.
-class UnresolvedLookupExpr : public Expr {
-  /// The results.  These are undesugared, which is to say, they may
-  /// include UsingShadowDecls.
-  UnresolvedSet<4> Results;
-
-  /// The name declared.
-  DeclarationName Name;
-
-  /// The naming class (C++ [class.access.base]p5) of the lookup, if
-  /// any.  This can generally be recalculated from the context chain,
-  /// but that can be fairly expensive for unqualified lookups.  If we
-  /// want to improve memory use here, this could go in a union
-  /// against the qualified-lookup bits.
-  CXXRecordDecl *NamingClass;
-
-  /// The qualifier given, if any.
-  NestedNameSpecifier *Qualifier;
-
-  /// The source range of the nested name specifier.
-  SourceRange QualifierRange;
-
-  /// The location of the name.
-  SourceLocation NameLoc;
-
+class UnresolvedLookupExpr : public OverloadExpr {
   /// True if these lookup results should be extended by
   /// argument-dependent lookup if this is the operand of a function
   /// call.
@@ -1172,19 +1255,20 @@ class UnresolvedLookupExpr : public Expr {
   /// trivially rederivable if we urgently need to kill this field.
   bool Overloaded;
 
-  /// True if the name looked up had explicit template arguments.
-  /// This requires all the results to be function templates.  
-  bool HasExplicitTemplateArgs;
+  /// The naming class (C++ [class.access.base]p5) of the lookup, if
+  /// any.  This can generally be recalculated from the context chain,
+  /// but that can be fairly expensive for unqualified lookups.  If we
+  /// want to improve memory use here, this could go in a union
+  /// against the qualified-lookup bits.
+  CXXRecordDecl *NamingClass;
 
   UnresolvedLookupExpr(QualType T, bool Dependent, CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        DeclarationName Name, SourceLocation NameLoc,
                        bool RequiresADL, bool Overloaded, bool HasTemplateArgs)
-    : Expr(UnresolvedLookupExprClass, T, Dependent, Dependent),
-      Name(Name), NamingClass(NamingClass),
-      Qualifier(Qualifier), QualifierRange(QRange),
-      NameLoc(NameLoc), RequiresADL(RequiresADL), Overloaded(Overloaded),
-      HasExplicitTemplateArgs(HasTemplateArgs)
+    : OverloadExpr(UnresolvedLookupExprClass, T, Dependent, Qualifier, QRange,
+                   Name, NameLoc, HasTemplateArgs),
+      RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
 public:
@@ -1212,23 +1296,6 @@ public:
                                       bool ADL,
                                       const TemplateArgumentListInfo &Args);
 
-  /// Computes whether an unresolved lookup on the given declarations
-  /// and optional template arguments is type- and value-dependent.
-  static bool ComputeDependence(UnresolvedSetImpl::const_iterator Begin,
-                                UnresolvedSetImpl::const_iterator End,
-                                const TemplateArgumentListInfo *Args);
-
-  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
-    Results.append(Begin, End);
-  }
-
-  typedef UnresolvedSetImpl::iterator decls_iterator;
-  decls_iterator decls_begin() const { return Results.begin(); }
-  decls_iterator decls_end() const { return Results.end(); }
-
-  /// Retrieves the decls as an unresolved set.
-  const UnresolvedSetImpl &getDecls() { return Results; }
-
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
@@ -1236,29 +1303,19 @@ public:
   /// True if this lookup is overloaded.
   bool isOverloaded() const { return Overloaded; }
 
-  /// Fetches the name looked up.
-  DeclarationName getName() const { return Name; }
-
-  /// Gets the location of the name.
-  SourceLocation getNameLoc() const { return NameLoc; }
-
   /// Gets the 'naming class' (in the sense of C++0x
   /// [class.access.base]p5) of the lookup.  This is the scope
   /// that was looked in to find these results.
   CXXRecordDecl *getNamingClass() const { return NamingClass; }
 
-  /// Fetches the nested-name qualifier, if one was given.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-
-  /// Fetches the range of the nested-name qualifier.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-
-  /// Determines whether this lookup had explicit template arguments.
-  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
-
   // Note that, inconsistently with the explicit-template-argument AST
   // nodes, users are *forbidden* from calling these methods on objects
   // without explicit template arguments.
+
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<ExplicitTemplateArgumentList*>(this + 1);
+  }
 
   /// Gets a reference to the explicit template argument list.
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
@@ -1289,8 +1346,8 @@ public:
   }
 
   virtual SourceRange getSourceRange() const {
-    SourceRange Range(NameLoc);
-    if (Qualifier) Range.setBegin(QualifierRange.getBegin());
+    SourceRange Range(getNameLoc());
+    if (getQualifier()) Range.setBegin(getQualifierRange().getBegin());
     if (hasExplicitTemplateArgs()) Range.setEnd(getRAngleLoc());
     return Range;
   }
@@ -1802,10 +1859,14 @@ public:
 /// In the final AST, an explicit access always becomes a MemberExpr.
 /// An implicit access may become either a MemberExpr or a
 /// DeclRefExpr, depending on whether the member is static.
-class UnresolvedMemberExpr : public Expr {
-  /// The results.  These are undesugared, which is to say, they may
-  /// include UsingShadowDecls.
-  UnresolvedSet<4> Results;
+class UnresolvedMemberExpr : public OverloadExpr {
+  /// \brief Whether this member expression used the '->' operator or
+  /// the '.' operator.
+  bool IsArrow : 1;
+
+  /// \brief Whether the lookup results contain an unresolved using
+  /// declaration.
+  bool HasUnresolvedUsing : 1;
 
   /// \brief The expression for the base pointer or class reference,
   /// e.g., the \c x in x.f.  This can be null if this is an 'unbased'
@@ -1815,46 +1876,8 @@ class UnresolvedMemberExpr : public Expr {
   /// \brief The type of the base expression;  never null.
   QualType BaseType;
 
-  /// \brief Whether this member expression used the '->' operator or
-  /// the '.' operator.
-  bool IsArrow : 1;
-
-  /// \brief Whether the lookup results contain an unresolved using
-  /// declaration.
-  bool HasUnresolvedUsing : 1;
-
-  /// \brief Whether this member expression has explicitly-specified template
-  /// arguments.
-  bool HasExplicitTemplateArgs : 1;
-
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
-
-  /// \brief The nested-name-specifier that precedes the member name, if any.
-  NestedNameSpecifier *Qualifier;
-
-  /// \brief The source range covering the nested name specifier.
-  SourceRange QualifierRange;
-
-  /// \brief The member to which this member expression refers, which
-  /// can be a name or an overloaded operator.
-  DeclarationName MemberName;
-
-  /// \brief The location of the member name.
-  SourceLocation MemberLoc;
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name.
-  ExplicitTemplateArgumentList *getExplicitTemplateArgs() {
-    assert(HasExplicitTemplateArgs);
-    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-  }
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  const ExplicitTemplateArgumentList *getExplicitTemplateArgs() const {
-    return const_cast<UnresolvedMemberExpr*>(this)->getExplicitTemplateArgs();
-  }
 
   UnresolvedMemberExpr(QualType T, bool Dependent,
                        bool HasUnresolvedUsing,
@@ -1876,22 +1899,6 @@ public:
          DeclarationName Member,
          SourceLocation MemberLoc,
          const TemplateArgumentListInfo *TemplateArgs);
-
-  /// Adds a declaration to the unresolved set.  By assumption, all of
-  /// these happen at initialization time and properties like
-  /// 'Dependent' and 'HasUnresolvedUsing' take them into account.
-  void addDecls(UnresolvedSetIterator Begin, UnresolvedSetIterator End) {
-    Results.append(Begin, End);
-  }
-
-  typedef UnresolvedSetImpl::iterator decls_iterator;
-  decls_iterator decls_begin() const { return Results.begin(); }
-  decls_iterator decls_end() const { return Results.end(); }
-
-  unsigned getNumDecls() const { return Results.size(); }
-
-  /// Retrieves the decls as an unresolved set.
-  const UnresolvedSetImpl &getDecls() { return Results; }
 
   /// \brief True if this is an implicit access, i.e. one in which the
   /// member being accessed was not written in the source.  The source
@@ -1917,60 +1924,60 @@ public:
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
   void setOperatorLoc(SourceLocation L) { OperatorLoc = L; }
 
-  /// \brief Retrieve the nested-name-specifier that qualifies the member
-  /// name.
-  NestedNameSpecifier *getQualifier() const { return Qualifier; }
-
-  /// \brief Retrieve the source range covering the nested-name-specifier
-  /// that qualifies the member name.
-  SourceRange getQualifierRange() const { return QualifierRange; }
-
   /// \brief Retrieves the naming class of this lookup.
   CXXRecordDecl *getNamingClass() const;
 
   /// \brief Retrieve the name of the member that this expression
   /// refers to.
-  DeclarationName getMemberName() const { return MemberName; }
-  void setMemberName(DeclarationName N) { MemberName = N; }
+  DeclarationName getMemberName() const { return getName(); }
+  void setMemberName(DeclarationName N) { setName(N); }
 
   // \brief Retrieve the location of the name of the member that this
   // expression refers to.
-  SourceLocation getMemberLoc() const { return MemberLoc; }
-  void setMemberLoc(SourceLocation L) { MemberLoc = L; }
+  SourceLocation getMemberLoc() const { return getNameLoc(); }
+  void setMemberLoc(SourceLocation L) { setNameLoc(L); }
 
-  /// \brief Determines whether this member expression actually had a C++
-  /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgs() const {
-    return HasExplicitTemplateArgs;
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name.
+  ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+  }
+
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
+    assert(hasExplicitTemplateArgs());
+    return *reinterpret_cast<const ExplicitTemplateArgumentList *>(this + 1);
   }
 
   /// \brief Copies the template arguments into the given structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    getExplicitTemplateArgs()->copyInto(List);
+    getExplicitTemplateArgs().copyInto(List);
   }
 
   /// \brief Retrieve the location of the left angle bracket following
   /// the member name ('<').
   SourceLocation getLAngleLoc() const {
-    return getExplicitTemplateArgs()->LAngleLoc;
+    return getExplicitTemplateArgs().LAngleLoc;
   }
 
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    return getExplicitTemplateArgs()->getTemplateArgs();
+    return getExplicitTemplateArgs().getTemplateArgs();
   }
 
   /// \brief Retrieve the number of template arguments provided as
   /// part of this template-id.
   unsigned getNumTemplateArgs() const {
-    return getExplicitTemplateArgs()->NumTemplateArgs;
+    return getExplicitTemplateArgs().NumTemplateArgs;
   }
 
   /// \brief Retrieve the location of the right angle bracket
   /// following the template arguments ('>').
   SourceLocation getRAngleLoc() const {
-    return getExplicitTemplateArgs()->RAngleLoc;
+    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   virtual SourceRange getSourceRange() const {
@@ -1980,12 +1987,12 @@ public:
     else if (getQualifier())
       Range.setBegin(getQualifierRange().getBegin());
     else
-      Range.setBegin(MemberLoc);
+      Range.setBegin(getMemberLoc());
 
     if (hasExplicitTemplateArgs())
       Range.setEnd(getRAngleLoc());
     else
-      Range.setEnd(MemberLoc);
+      Range.setEnd(getMemberLoc());
     return Range;
   }
 
@@ -1998,6 +2005,13 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
+
+inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
+  if (isa<UnresolvedLookupExpr>(this))
+    return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();
+  else
+    return cast<UnresolvedMemberExpr>(this)->getExplicitTemplateArgs();
+}
 
 }  // end namespace clang
 

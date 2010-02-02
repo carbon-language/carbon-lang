@@ -2546,7 +2546,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     bool Dependent =
       BaseExprType->isDependentType() ||
       R.isUnresolvableResult() ||
-      UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(), TemplateArgs);
+      OverloadExpr::ComputeDependence(R.begin(), R.end(), TemplateArgs);
 
     // Suppress any lookup-related diagnostics; we'll do these when we
     // pick a member.
