@@ -1145,16 +1145,22 @@ Instruction *InstCombiner::visitSIToFP(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
-  // If the source integer type is larger than the intptr_t type for
-  // this target, do a trunc to the intptr_t type, then inttoptr of it.  This
-  // allows the trunc to be exposed to other transforms.  Don't do this for
-  // extending inttoptr's, because we don't know if the target sign or zero
-  // extends to pointers.
-  if (TD && CI.getOperand(0)->getType()->getScalarSizeInBits() >
-      TD->getPointerSizeInBits()) {
-    Value *P = Builder->CreateTrunc(CI.getOperand(0),
-                                    TD->getIntPtrType(CI.getContext()), "tmp");
-    return new IntToPtrInst(P, CI.getType());
+  // If the source integer type is not the intptr_t type for this target, do a
+  // trunc or zext to the intptr_t type, then inttoptr of it.  This allows the
+  // cast to be exposed to other transforms.
+  if (TD) {
+    if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
+        TD->getPointerSizeInBits()) {
+      Value *P = Builder->CreateTrunc(CI.getOperand(0),
+                                      TD->getIntPtrType(CI.getContext()), "tmp");
+      return new IntToPtrInst(P, CI.getType());
+    }
+    if (CI.getOperand(0)->getType()->getScalarSizeInBits() <
+        TD->getPointerSizeInBits()) {
+      Value *P = Builder->CreateZExt(CI.getOperand(0),
+                                     TD->getIntPtrType(CI.getContext()), "tmp");
+      return new IntToPtrInst(P, CI.getType());
+    }
   }
   
   if (Instruction *I = commonCastTransforms(CI))
@@ -1216,17 +1222,22 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
-  // If the destination integer type is smaller than the intptr_t type for
-  // this target, do a ptrtoint to intptr_t then do a trunc.  This allows the
-  // trunc to be exposed to other transforms.  Don't do this for extending
-  // ptrtoint's, because we don't know if the target sign or zero extends its
-  // pointers.
-  if (TD &&
-      CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
-    Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
-                                       TD->getIntPtrType(CI.getContext()),
-                                       "tmp");
-    return new TruncInst(P, CI.getType());
+  // If the destination integer type is not the intptr_t type for this target,
+  // do a ptrtoint to intptr_t then do a trunc or zext.  This allows the cast
+  // to be exposed to other transforms.
+  if (TD) {
+    if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
+      Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
+                                         TD->getIntPtrType(CI.getContext()),
+                                         "tmp");
+      return new TruncInst(P, CI.getType());
+    }
+    if (CI.getType()->getScalarSizeInBits() > TD->getPointerSizeInBits()) {
+      Value *P = Builder->CreatePtrToInt(CI.getOperand(0),
+                                         TD->getIntPtrType(CI.getContext()),
+                                         "tmp");
+      return new ZExtInst(P, CI.getType());
+    }
   }
   
   return commonPointerCastTransforms(CI);
