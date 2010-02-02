@@ -1298,6 +1298,17 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     Diag(Old->getLocation(), diag::note_previous_definition);
   }
 
+  // C++ doesn't have tentative definitions, so go right ahead and check here.
+  const VarDecl *Def;
+  if (New->isThisDeclarationADefinition() == VarDecl::Definition &&
+      (Def = Old->getDefinition())) {
+    Diag(New->getLocation(), diag::err_redefinition)
+      << New->getDeclName();
+    Diag(Def->getLocation(), diag::note_previous_definition);
+    New->setInvalidDecl();
+    return;
+  }
+
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
 
