@@ -5,6 +5,8 @@
 
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
+// XFAIL: *
+
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
         	movb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
 
