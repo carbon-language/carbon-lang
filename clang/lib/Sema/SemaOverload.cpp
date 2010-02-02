@@ -768,7 +768,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   // int can represent all the values of the source type; otherwise,
   // the source rvalue can be converted to an rvalue of type unsigned
   // int (C++ 4.5p1).
-  if (FromType->isPromotableIntegerType() && !FromType->isBooleanType()) {
+  if (FromType->isPromotableIntegerType() && !FromType->isBooleanType() &&
+      !FromType->isEnumeralType()) {
     if (// We can promote any signed, promotable integer type to an int
         (FromType->isSignedIntegerType() ||
          // We can promote any unsigned integer type whose size is

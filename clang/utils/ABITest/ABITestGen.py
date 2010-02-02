@@ -207,6 +207,9 @@ class TypePrinter:
                 yield '(%s) 0'%(t.name,)
                 yield '(%s) -1'%(t.name,)
                 yield '(%s) 1'%(t.name,)
+        elif isinstance(t, EnumType):
+            for i in range(0, len(t.enumerators)):
+                yield 'enum%dval%d' % (t.index, i)
         elif isinstance(t, RecordType):
             nonPadding = [f for f in t.fields 
                           if not f.isPaddingBitField()]
@@ -273,6 +276,8 @@ class TypePrinter:
             else:
                 code = 'p'
             print >>output, '%*sprintf("%s: %s = %%%s\\n", %s);'%(indent, '', prefix, name, code, name) 
+        elif isinstance(t, EnumType):
+            print >>output, '%*sprintf("%s: %s = %%d\\n", %s);'%(indent, '', prefix, name, name)
         elif isinstance(t, RecordType):
             if not t.fields:
                 print >>output, '%*sprintf("%s: %s (empty)\\n");'%(indent, '', prefix, name) 
@@ -300,6 +305,8 @@ class TypePrinter:
         if output is None:
             output = self.output
         if isinstance(t, BuiltinType):
+            print >>output, '%*sassert(%s == %s);' % (indent, '', nameLHS, nameRHS)
+        elif isinstance(t, EnumType):
             print >>output, '%*sassert(%s == %s);' % (indent, '', nameLHS, nameRHS)
         elif isinstance(t, RecordType):
             for i,f in enumerate(t.fields):
@@ -401,6 +408,11 @@ def main():
                      action="store_false", default=True)
     group.add_option("", "--no-void-pointer", dest="useVoidPointer",
                      help="do not generate void* types",
+                     action="store_false", default=True)
+
+    # Enumerations
+    group.add_option("", "--no-enums", dest="useEnum",
+                     help="do not generate enum types",
                      action="store_false", default=True)
 
     # Derived types
@@ -530,6 +542,8 @@ def main():
                 vTypes.append(ArrayType(i, True, type, count * type.size))
                 
             atg.addGenerator(FixedTypeGenerator(vTypes))
+        if opts.useEnum:
+            atg.addGenerator(EnumTypeGenerator([None, '-1', '1', '1u'], 1, 4))
 
     if opts.recordMaxDepth is None: 
         # Fully recursive, just avoid top-level arrays.

@@ -720,6 +720,19 @@ bool Type::isPromotableIntegerType() const {
     default:
       return false;
     }
+
+  // Enumerated types are promotable to their compatible integer types
+  // (C99 6.3.1.1) a.k.a. its underlying type (C++ [conv.prom]p2).
+  if (const EnumType *ET = getAs<EnumType>()){
+    if (this->isDependentType() || ET->getDecl()->getPromotionType().isNull())
+      return false;
+    
+    const BuiltinType *BT
+      = ET->getDecl()->getPromotionType()->getAs<BuiltinType>();
+    return BT->getKind() == BuiltinType::Int
+           || BT->getKind() == BuiltinType::UInt;
+  }
+  
   return false;
 }
 

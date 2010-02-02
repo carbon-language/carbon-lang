@@ -5971,8 +5971,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     }
     BestPromotionType = (BestWidth <= IntWidth ? Context.IntTy : BestType);
   } else {
-    // If there is no negative value, figure out which of uint, ulong, ulonglong
-    // fits.
+    // If there is no negative value, figure out the smallest type that fits
+    // all of the enumerator values.
     // If it's packed, check also if it fits a char or a short.
     if (Packed && NumPositiveBits <= CharWidth) {
       BestType = Context.UnsignedCharTy;
@@ -5985,29 +5985,25 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     } else if (NumPositiveBits <= IntWidth) {
       BestType = Context.UnsignedIntTy;
       BestWidth = IntWidth;
-      BestPromotionType = (NumPositiveBits == BestWidth
-                           ? Context.UnsignedIntTy : Context.IntTy);
+      BestPromotionType
+        = (NumPositiveBits == BestWidth || !getLangOptions().CPlusPlus)
+                           ? Context.UnsignedIntTy : Context.IntTy;
     } else if (NumPositiveBits <=
                (BestWidth = Context.Target.getLongWidth())) {
       BestType = Context.UnsignedLongTy;
-      BestPromotionType = (NumPositiveBits == BestWidth
-                           ? Context.UnsignedLongTy : Context.LongTy);
+      BestPromotionType
+        = (NumPositiveBits == BestWidth || !getLangOptions().CPlusPlus)
+                           ? Context.UnsignedLongTy : Context.LongTy;
     } else {
       BestWidth = Context.Target.getLongLongWidth();
       assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;
-      BestPromotionType = (NumPositiveBits == BestWidth
-                           ? Context.UnsignedLongLongTy : Context.LongLongTy);
+      BestPromotionType
+        = (NumPositiveBits == BestWidth || !getLangOptions().CPlusPlus)
+                           ? Context.UnsignedLongLongTy : Context.LongLongTy;
     }
   }
-
-  // If we're in C and the promotion type is larger than an int, just
-  // use the underlying type, which is generally the unsigned integer
-  // type of the same rank as the promotion type.  This is how the gcc
-  // extension works.
-  if (!getLangOptions().CPlusPlus && BestPromotionType != Context.IntTy)
-    BestPromotionType = BestType;
 
   // Loop over all of the enumerator constants, changing their types to match
   // the type of the enum if needed.

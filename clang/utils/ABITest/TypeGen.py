@@ -46,6 +46,28 @@ class BuiltinType(Type):
     def __str__(self):
         return self.name
 
+class EnumType(Type):
+    def __init__(self, index, enumerators):
+        self.index = index
+        self.enumerators = enumerators
+
+    def getEnumerators(self):
+        result = ''
+        for i, init in enumerate(self.enumerators):
+            if i > 0:
+                result = result + ', '
+            result = result + 'enum%dval%d' % (self.index, i)
+            if init:
+                result = result + ' = %s' % (init)
+
+        return result
+
+    def __str__(self):
+        return 'enum { %s }' % (self.getEnumerators())
+
+    def getTypedefDef(self, name, printer):
+        return 'typedef enum %s { %s } %s;'%(name, self.getEnumerators(), name)
+
 class RecordType(Type):
     def __init__(self, index, isUnion, fields):
         self.index = index
@@ -187,6 +209,63 @@ class FixedTypeGenerator(TypeGenerator):
 
     def generateType(self, N):
         return self.types[N]
+
+# Factorial
+def fact(n):
+    result = 1
+    while n > 0:
+        result = result * n
+        n = n - 1
+    return result
+
+# Compute the number of combinations (n choose k)
+def num_combinations(n, k): 
+    return fact(n) / (fact(k) * fact(n - k))
+
+# Enumerate the combinations choosing k elements from the list of values
+def combinations(values, k):
+    # From ActiveState Recipe 190465: Generator for permutations,
+    # combinations, selections of a sequence
+    if k==0: yield []
+    else:
+        for i in xrange(len(values)-k+1):
+            for cc in combinations(values[i+1:],k-1):
+                yield [values[i]]+cc
+
+class EnumTypeGenerator(TypeGenerator):
+    def __init__(self, values, minEnumerators, maxEnumerators):
+        TypeGenerator.__init__(self)
+        self.values = values
+        self.minEnumerators = minEnumerators
+        self.maxEnumerators = maxEnumerators
+        self.setCardinality()
+
+    def setCardinality(self):
+        self.cardinality = 0
+        for num in range(self.minEnumerators, self.maxEnumerators + 1):
+            self.cardinality += num_combinations(len(self.values), num)
+
+    def generateType(self, n):
+        # Figure out the number of enumerators in this type
+        numEnumerators = self.minEnumerators
+        valuesCovered = 0
+        while numEnumerators < self.maxEnumerators:
+            comb = num_combinations(len(self.values), numEnumerators)
+            if valuesCovered + comb > n:
+                break
+            numEnumerators = numEnumerators + 1
+            valuesCovered += comb
+
+        # Find the requested combination of enumerators and build a
+        # type from it.
+        i = 0
+        for enumerators in combinations(self.values, numEnumerators):
+            if i == n - valuesCovered:
+                return EnumType(n, enumerators)
+                
+            i = i + 1
+
+        assert False
 
 class ComplexTypeGenerator(TypeGenerator):
     def __init__(self, typeGen):
@@ -363,10 +442,12 @@ def test():
 
     btg = FixedTypeGenerator([BuiltinType('char', 4),
                               BuiltinType('int',  4)])
-    
+    etg = EnumTypeGenerator([None, '-1', '1', '1u'], 0, 3)
+
     atg = AnyTypeGenerator()
     atg.addGenerator( btg )
     atg.addGenerator( RecordTypeGenerator(fields0, False, 4) )
+    atg.addGenerator( etg )
     print 'Cardinality:',atg.cardinality
     for i in range(100):
         if i == atg.cardinality:

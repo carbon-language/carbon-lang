@@ -179,3 +179,7 @@ void test_asl(aslclient asl) {
   asl_log(asl, 0, 3, "Error: %m"); // no-warning
   asl_log(asl, 0, 3, "Error: %W"); // expected-warning{{invalid conversion specifier 'W'}}
 }
+
+// <rdar://problem/7595366>
+typedef enum { A } int_t;
+void f0(int_t x) { printf("%d\n", x); }

@@ -271,6 +271,10 @@ ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getIndirect(0);
   } else {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
@@ -465,6 +469,10 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     return ABIArgInfo::getIndirect(0);
   } else {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
+      RetTy = EnumTy->getDecl()->getIntegerType();
+
     return (RetTy->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
@@ -511,6 +519,9 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 
     return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, Context));
   } else {
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
@@ -935,6 +946,11 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   if (CoerceTo == llvm::Type::getInt64Ty(CoerceTo->getContext())) {
     // Integer and pointer types will end up in a general purpose
     // register.
+
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
     if (Ty->isIntegralType() || Ty->hasPointerRepresentation())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
@@ -956,9 +972,14 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
                                             ASTContext &Context) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty))
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
 
   bool ByVal = !isRecordWithNonTrivialDestructorOrCopyConstructor(Ty);
 
@@ -1534,9 +1555,14 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
                                             ASTContext &Context,
                                           llvm::LLVMContext &VMContext) const {
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty))
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+      Ty = EnumTy->getDecl()->getIntegerType();
+
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
 
   // Ignore empty records.
   if (isEmptyRecord(Context, Ty, true))
@@ -1652,9 +1678,14 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
-  if (!CodeGenFunction::hasAggregateLLVMType(RetTy))
+  if (!CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
+      RetTy = EnumTy->getDecl()->getIntegerType();
+
     return (RetTy->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
 
   // Are we following APCS?
   if (getABIKind() == APCS) {
@@ -1737,6 +1768,10 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
     return ABIArgInfo::getIndirect(0);
   } else {
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
+      RetTy = EnumTy->getDecl()->getIntegerType();
+
     return (RetTy->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   }
