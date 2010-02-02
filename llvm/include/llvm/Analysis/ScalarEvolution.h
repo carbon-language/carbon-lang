@@ -459,15 +459,15 @@ namespace llvm {
     ///
     const SCEV *getSizeOfExpr(const Type *AllocTy);
 
-    /// getSizeOfExpr - Return an expression for alignof on the given type.
+    /// getAlignOfExpr - Return an expression for alignof on the given type.
     ///
     const SCEV *getAlignOfExpr(const Type *AllocTy);
 
-    /// getSizeOfExpr - Return an expression for offsetof on the given field.
+    /// getOffsetOfExpr - Return an expression for offsetof on the given field.
     ///
     const SCEV *getOffsetOfExpr(const StructType *STy, unsigned FieldNo);
 
-    /// getSizeOfExpr - Return an expression for offsetof on the given field.
+    /// getOffsetOfExpr - Return an expression for offsetof on the given field.
     ///
     const SCEV *getOffsetOfExpr(const Type *CTy, Constant *FieldNo);
 
