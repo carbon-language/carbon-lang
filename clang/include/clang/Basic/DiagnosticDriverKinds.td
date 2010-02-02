@@ -62,8 +62,6 @@ def err_drv_invalid_value : Error<"invalid value '%1' in '%0'">;
 def err_drv_invalid_int_value : Error<"invalid integral value '%1' in '%0'">;
 def err_drv_invalid_remap_file : Error<
     "invalid option '%0' not of the form <from-file>;<to-file>">;
-def err_drv_conflicting_deployment_targets : Error<
-    "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
@@ -87,5 +85,7 @@ def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
 def warn_drv_missing_resource_library : Warning<
   "missing resource library '%0', link may fail">;
+def warn_drv_conflicting_deployment_targets : Warning<
+    "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
 
 }

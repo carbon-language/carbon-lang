@@ -385,12 +385,21 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
     if (iPhoneOSTarget && iPhoneOSTarget[0] == '\0')
       iPhoneOSTarget = 0;
 
-    if (OSXTarget) {
-      // Diagnose conflicting deployment targets.
-      if (iPhoneOSTarget)
-        getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
-          << OSXTarget << iPhoneOSTarget;
+    // Diagnose conflicting deployment targets, and choose default platform
+    // based on the tool chain.
+    //
+    // FIXME: Don't hardcode default here.
+    if (OSXTarget && iPhoneOSTarget) {
+      // FIXME: We should see if we can get away with warning or erroring on
+      // this. Perhaps put under -pedantic?
+      if (getTriple().getArch() == llvm::Triple::arm ||
+          getTriple().getArch() == llvm::Triple::thumb)
+        OSXVersion = 0;
+      else
+        iPhoneVersion = 0;
+    }
 
+    if (OSXTarget) {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = DAL->MakeJoinedArg(0, O, OSXTarget);
       DAL->append(OSXVersion);
