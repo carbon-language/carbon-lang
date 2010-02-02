@@ -472,6 +472,8 @@ void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
 
 void StmtDumper::VisitCXXConstructExpr(CXXConstructExpr *Node) {
   DumpExpr(Node);
+  CXXConstructorDecl *Ctor = Node->getConstructor();
+  DumpType(Ctor->getType());
   if (Node->isElidable())
     OS << " elidable";
 }
