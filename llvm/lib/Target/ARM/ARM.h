@@ -23,9 +23,7 @@ namespace llvm {
 
 class ARMBaseTargetMachine;
 class FunctionPass;
-class MachineCodeEmitter;
 class JITCodeEmitter;
-class ObjectCodeEmitter;
 class formatted_raw_ostream;
 
 // Enums corresponding to ARM condition codes

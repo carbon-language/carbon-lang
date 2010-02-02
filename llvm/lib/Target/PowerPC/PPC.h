@@ -23,8 +23,6 @@
 namespace llvm {
   class PPCTargetMachine;
   class FunctionPass;
-  class MachineCodeEmitter;
-  class ObjectCodeEmitter;
   class formatted_raw_ostream;
   
 FunctionPass *createPPCBranchSelectionPass();
