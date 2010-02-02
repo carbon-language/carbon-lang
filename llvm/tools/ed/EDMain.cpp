@@ -248,4 +248,18 @@ int EDBlockVisitTokens(EDInstRef inst,
   return inst->visitTokens(visitor);
 }
 
+#else
+
+extern "C" unsigned int EDBlockCreateInsts() {
+  return 0;
+}
+
+extern "C" int EDBlockEvaluateOperand() {
+  return -1;
+}
+
+extern "C" int EDBlockVisitTokens() {
+  return -1;
+}
+
 #endif
