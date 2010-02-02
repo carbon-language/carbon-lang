@@ -314,12 +314,6 @@ bool BackendConsumer::AddEmitPasses() {
     case FileModel::AsmFile:
       break;
     }
-
-    if (TM->addPassesToEmitFileFinish(*CodeGenPasses, (MachineCodeEmitter *)0,
-                                      OptLevel)) {
-      Diags.Report(diag::err_fe_unable_to_interface_with_target);
-      return false;
-    }
   }
 
   return true;
