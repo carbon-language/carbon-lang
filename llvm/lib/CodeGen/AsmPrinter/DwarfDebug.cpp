@@ -2800,7 +2800,7 @@ void DwarfDebug::emitDebugPubTypes() {
     Asm->EmitInt32(Entity->getOffset()); EOL("DIE offset");
     
     if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("External Name");
-    Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)), 0);
+    Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
   }
 
   Asm->EmitInt32(0); EOL("End Mark");
