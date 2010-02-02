@@ -174,7 +174,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   bool isAbsMem() const {
     return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
-      !getMemIndexReg() && !getMemScale();
+      !getMemIndexReg() && getMemScale() == 1;
   }
 
   bool isNoSegMem() const {
@@ -248,7 +248,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = 0;
     Res->Mem.IndexReg = 0;
-    Res->Mem.Scale    = 0;
+    Res->Mem.Scale    = 1;
     return Res;
   }
 
