@@ -169,6 +169,10 @@ Pass *llvm::createLoopUnswitchPass(bool Os) {
 /// invariant in the loop, or has an invariant piece, return the invariant.
 /// Otherwise, return null.
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
+  // We can never unswitch on vector conditions.
+  if (isa<VectorType>(Cond->getType()))
+    return 0;
+
   // Constants should be folded, not unswitched on!
   if (isa<Constant>(Cond)) return 0;
 
@@ -401,7 +405,7 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
 /// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
-bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
+bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
 
   initLoopData();
 

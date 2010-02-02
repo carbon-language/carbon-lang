@@ -1,6 +1,6 @@
 ; RUN: opt < %s -loop-unswitch -disable-output
 
-define void @sort_Eq(i32* %S2) {
+define void @test1(i32* %S2) {
 entry:
 	br i1 false, label %list_Length.exit, label %cond_true.i
 cond_true.i:		; preds = %entry
@@ -30,3 +30,18 @@ return:		; preds = %return.loopexit, %list_Length.exit9
 	ret void
 }
 
+define void @test2(i32 %x1, i32 %y1, i32 %z1, i32 %r1) nounwind {
+entry:
+  br label %bb.nph
+
+bb.nph:                                           ; preds = %entry
+  %and.i13521 = and <4 x i1> undef, undef         ; <<4 x i1>> [#uses=1]
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %bb.nph
+  %or.i = select <4 x i1> %and.i13521, <4 x i32> undef, <4 x i32> undef ; <<4 x i32>> [#uses=0]
+  br i1 false, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
