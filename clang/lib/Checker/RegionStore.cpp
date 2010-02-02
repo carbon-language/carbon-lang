@@ -178,9 +178,11 @@ static bool IsAnyPointerOrIntptr(QualType ty, ASTContext &Ctx) {
 namespace {
 
 class RegionStoreSubRegionMap : public SubRegionMap {
-  typedef llvm::ImmutableSet<const MemRegion*> SetTy;
-  typedef llvm::DenseMap<const MemRegion*, SetTy> Map;
-  SetTy::Factory F;
+public:
+  typedef llvm::ImmutableSet<const MemRegion*> Set;
+  typedef llvm::DenseMap<const MemRegion*, Set> Map;
+private:
+  Set::Factory F;
   Map M;
 public:
   bool add(const MemRegion* Parent, const MemRegion* SubRegion) {
@@ -198,6 +200,11 @@ public:
   void process(llvm::SmallVectorImpl<const SubRegion*> &WL, const SubRegion *R);
 
   ~RegionStoreSubRegionMap() {}
+  
+  const Set *getSubRegions(const MemRegion *Parent) const {
+    Map::const_iterator I = M.find(Parent);
+    return I == M.end() ? NULL : &I->second;
+  }
 
   bool iterSubRegions(const MemRegion* Parent, Visitor& V) const {
     Map::const_iterator I = M.find(Parent);
@@ -205,22 +212,13 @@ public:
     if (I == M.end())
       return true;
 
-    llvm::ImmutableSet<const MemRegion*> S = I->second;
-    for (llvm::ImmutableSet<const MemRegion*>::iterator SI=S.begin(),SE=S.end();
-         SI != SE; ++SI) {
+    Set S = I->second;
+    for (Set::iterator SI=S.begin(),SE=S.end(); SI != SE; ++SI) {
       if (!V.Visit(Parent, *SI))
         return false;
     }
 
     return true;
-  }
-
-  typedef SetTy::iterator iterator;
-
-  std::pair<iterator, iterator> begin_end(const MemRegion *R) {
-    Map::iterator I = M.find(R);
-    SetTy S = I == M.end() ? F.GetEmptySet() : I->second;
-    return std::make_pair(S.begin(), S.end());
   }
 };
 
@@ -235,7 +233,7 @@ public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr),
       Features(f),
-      RBFactory(mgr.getAllocator()) {}
+      RBFactory(mgr.getAllocator(), 3) {}
 
   virtual ~RegionStoreManager() {
     for (SMCache::iterator I = SC.begin(), E = SC.end(); I != E; ++I)
@@ -508,13 +506,15 @@ SubRegionMap *RegionStoreManager::getSubRegionMap(const GRState *state) {
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
 
+
 void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
                                                  const MemRegion *R,
                                                  RegionStoreSubRegionMap &M) {
-  RegionStoreSubRegionMap::iterator I, E;
-
-  for (llvm::tie(I, E) = M.begin_end(R); I != E; ++I)
-    RemoveSubRegionBindings(B, *I, M);
+  
+  if (const RegionStoreSubRegionMap::Set *S = M.getSubRegions(R))
+    for (RegionStoreSubRegionMap::Set::iterator I = S->begin(), E = S->end();
+         I != E; ++I)
+      RemoveSubRegionBindings(B, *I, M);
   
   B = Remove(B, R);
 }
@@ -552,9 +552,10 @@ const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
     visited = 1;
 
     // Add subregions to work list.
-    RegionStoreSubRegionMap::iterator I, E;
-    for (llvm::tie(I, E) = SubRegions->begin_end(R); I!=E; ++I)
-      WorkList.push_back(*I);
+    if (const RegionStoreSubRegionMap::Set *S = SubRegions->getSubRegions(R))
+      for (RegionStoreSubRegionMap::Set::iterator I = S->begin(), E = S->end();
+           I != E; ++I)
+        WorkList.push_back(*I);
 
     // Get the old binding.  Is it a region?  If so, add it to the worklist.
     if (Optional<SVal> V = getDirectBinding(B, R)) {
@@ -1884,10 +1885,11 @@ tryAgain:
         SM = getRegionStoreSubRegionMap(state_N->getStore());
       M = SM;
     }
-    
-    RegionStoreSubRegionMap::iterator I, E;
-    for (llvm::tie(I, E) = M->begin_end(R); I != E; ++I)
-      WorkList.push_back(std::make_pair(state_N, *I));
+
+    if (const RegionStoreSubRegionMap::Set *S = M->getSubRegions(R))
+      for (RegionStoreSubRegionMap::Set::iterator I = S->begin(), E = S->end();
+           I != E; ++I)
+        WorkList.push_back(std::make_pair(state_N, *I));
 
     // Enqueue the super region.
     if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
