@@ -234,48 +234,6 @@ public:
     return FileModel::None;
   }
 
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &,
-                                         MachineCodeEmitter *,
-                                         CodeGenOpt::Level) {
-    return true;
-  }
- 
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &,
-                                         JITCodeEmitter *,
-                                         CodeGenOpt::Level) {
-    return true;
-  }
- 
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &,
-                                         ObjectCodeEmitter *,
-                                         CodeGenOpt::Level) {
-    return true;
-  }
- 
-  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-  /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method returns true if machine code emission is
-  /// not supported.
-  ///
-  virtual bool addPassesToEmitMachineCode(PassManagerBase &,
-                                          MachineCodeEmitter &,
-                                          CodeGenOpt::Level) {
-    return true;
-  }
-
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
@@ -312,9 +270,6 @@ protected: // Can only create subclasses.
   bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level);
 
 private:
-  // These routines are used by addPassesToEmitFileFinish and
-  // addPassesToEmitMachineCode to set the CodeModel if it's still marked
-  // as default.
   virtual void setCodeModelForJIT();
   virtual void setCodeModelForStatic();
   
@@ -335,40 +290,6 @@ public:
                                                formatted_raw_ostream &Out,
                                                CodeGenFileType FileType,
                                                CodeGenOpt::Level);
-  
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
-                                         MachineCodeEmitter *MCE,
-                                         CodeGenOpt::Level);
- 
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
-                                         JITCodeEmitter *JCE,
-                                         CodeGenOpt::Level);
- 
-  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
-  /// to be split up (e.g., to add an object writer pass), this method can be
-  /// used to finish up adding passes to emit the file, if necessary.
-  ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
-                                         ObjectCodeEmitter *OCE,
-                                         CodeGenOpt::Level);
- 
-  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-  /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method returns true if machine code emission is
-  /// not supported.
-  ///
-  virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
-                                          MachineCodeEmitter &MCE,
-                                          CodeGenOpt::Level);
   
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle

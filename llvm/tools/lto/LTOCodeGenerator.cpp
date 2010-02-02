@@ -405,12 +405,6 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
             return true;
     }
 
-    if (_target->addPassesToEmitFileFinish(*codeGenPasses,(ObjectCodeEmitter*)0,
-                                           CodeGenOpt::Aggressive)) {
-        errMsg = "target does not support generation of this file type";
-        return true;
-    }
-
     // Run our queue of passes all at once now, efficiently.
     passes.run(*mergedModule);
 

@@ -363,15 +363,6 @@ int main(int argc, char **argv) {
       break;
     }
 
-    if (Target.addPassesToEmitFileFinish(Passes, (ObjectCodeEmitter *)0, OLvl)){
-      errs() << argv[0] << ": target does not support generation of this"
-             << " file type!\n";
-      if (Out != &fouts()) delete Out;
-      // And the Out file is empty and useless, so remove it now.
-      sys::Path(OutputFilename).eraseFromDisk();
-      return 1;
-    }
-
     Passes.doInitialization();
 
     // Run our queue of passes all at once now, efficiently.

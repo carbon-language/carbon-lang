@@ -105,91 +105,27 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (addCommonCodeGenPasses(PM, OptLevel))
     return FileModel::Error;
 
+  FileModel::Model ResultTy;
   switch (FileType) {
   default:
-    break;
+    return FileModel::Error;
+  case TargetMachine::ObjectFile:
+    return FileModel::Error;
   case TargetMachine::AssemblyFile: {
     FunctionPass *Printer =
       getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(),
                                    getAsmVerbosityDefault());
-    if (Printer == 0) break;
+    if (Printer == 0) return FileModel::Error;
     PM.add(Printer);
-    return FileModel::AsmFile;
+    ResultTy = FileModel::AsmFile;
+    break;
   }
-  case TargetMachine::ObjectFile:
-    return FileModel::Error;
   }
-  return FileModel::Error;
-}
-
-/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
-/// be split up (e.g., to add an object writer pass), this method can be used to
-/// finish up adding passes to emit the file, if necessary.
-bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
-                                                  MachineCodeEmitter *MCE,
-                                                  CodeGenOpt::Level OptLevel) {
+  
   // Make sure the code model is set.
   setCodeModelForStatic();
-  
-  if (MCE)
-    addSimpleCodeEmitter(PM, OptLevel, *MCE);
-
   PM.add(createGCInfoDeleter());
-
-  return false; // success!
-}
-
-/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
-/// be split up (e.g., to add an object writer pass), this method can be used to
-/// finish up adding passes to emit the file, if necessary.
-bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
-                                                  JITCodeEmitter *JCE,
-                                                  CodeGenOpt::Level OptLevel) {
-  // Make sure the code model is set.
-  setCodeModelForJIT();
-  
-  if (JCE)
-    addSimpleCodeEmitter(PM, OptLevel, *JCE);
-
-  PM.add(createGCInfoDeleter());
-
-  return false; // success!
-}
-
-/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
-/// be split up (e.g., to add an object writer pass), this method can be used to
-/// finish up adding passes to emit the file, if necessary.
-bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
-                                                  ObjectCodeEmitter *OCE,
-                                                  CodeGenOpt::Level OptLevel) {
-  // Make sure the code model is set.
-  setCodeModelForStatic();
-  
-  PM.add(createGCInfoDeleter());
-
-  return false; // success!
-}
-
-/// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-/// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-/// actually outputting the machine code and resolving things like the address
-/// of functions.  This method should returns true if machine code emission is
-/// not supported.
-///
-bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
-                                                   MachineCodeEmitter &MCE,
-                                                   CodeGenOpt::Level OptLevel) {
-  // Make sure the code model is set.
-  setCodeModelForJIT();
-  
-  // Add common CodeGen passes.
-  if (addCommonCodeGenPasses(PM, OptLevel))
-    return true;
-
-  addCodeEmitter(PM, OptLevel, MCE);
-  PM.add(createGCInfoDeleter());
-
-  return false; // success!
+  return ResultTy;
 }
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
