@@ -1203,14 +1203,10 @@ struct MemMoveChkOpt : public LibCallOptimization {
 
 struct StrCpyChkOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
-    if (!TD) return 0;
-
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getParamType(2)))
+        !isa<PointerType>(FT->getParamType(1)))
       return 0;
 
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
