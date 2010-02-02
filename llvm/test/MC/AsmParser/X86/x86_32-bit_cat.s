@@ -3,8 +3,7 @@
 // will not yet encode correctly.  The subset that will encode correctly are in
 // the file x86_32-bit.s .
 
-// RUN: true
-// llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+// RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
         	movb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
@@ -1263,46 +1262,46 @@
 // CHECK: 	lcallw	*32493
         	lcallw	*0x7eed
 
-// CHECK: 	jmp	32493  # TAILCALL
+// CHECK: 	jmp	32493
         	jmp	0x7eed
 
-// CHECK: 	jmp	3133065982  # TAILCALL
+// CHECK: 	jmp	3133065982
         	jmp	0xbabecafe
 
-// CHECK: 	jmp	305419896  # TAILCALL
+// CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	-77129852792157442  # TAILCALL
+// CHECK: 	jmp	-77129852792157442
         	jmp	0xfeedfacebabecafe
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	jmp	32493  # TAILCALL
+// CHECK: 	jmp	32493
         	jmp	0x7eed
 
-// CHECK: 	jmp	3133065982  # TAILCALL
+// CHECK: 	jmp	3133065982
         	jmp	0xbabecafe
 
-// CHECK: 	jmp	305419896  # TAILCALL
+// CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374  # TAILCALL
+// CHECK: 	jmp	*3135175374
         	jmp	*0xbadeface
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
-// CHECK: 	jmp	32493  # TAILCALL
+// CHECK: 	jmp	32493
         	jmp	0x7eed
 
-// CHECK: 	jmp	3133065982  # TAILCALL
+// CHECK: 	jmp	3133065982
         	jmp	0xbabecafe
 
-// CHECK: 	jmp	305419896  # TAILCALL
+// CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374  # TAILCALL
+// CHECK: 	jmp	*3135175374
         	jmp	*0xbadeface
 
 // CHECK: 	ljmpl	*3735928559(%ebx,%ecx,8)
