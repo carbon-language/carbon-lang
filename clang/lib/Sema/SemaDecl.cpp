@@ -3575,8 +3575,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     QualType InitType = VDecl->getType();
     while (const ArrayType *Array = Context.getAsArrayType(InitType))
       InitType = Context.getBaseElementType(Array);
-    if (InitType->isRecordType())
-      FinalizeVarWithDestructor(VDecl, InitType);
+    if (const RecordType *Record = InitType->getAs<RecordType>())
+      FinalizeVarWithDestructor(VDecl, Record);
   }
 
   return;
@@ -3667,7 +3667,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           else {
             Var->setInit(Context, 
                        MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
-            FinalizeVarWithDestructor(Var, InitType);
+            FinalizeVarWithDestructor(Var, InitType->getAs<RecordType>());
           }
         } else {
           Var->setInvalidDecl();

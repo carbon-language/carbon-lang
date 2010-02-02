@@ -1932,7 +1932,7 @@ public:
 
   /// FinalizeVarWithDestructor - Prepare for calling destructor on the
   /// constructed variable.
-  void FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType);
+  void FinalizeVarWithDestructor(VarDecl *VD, const RecordType *DeclInitType);
 
   /// DefineImplicitDefaultConstructor - Checks for feasibility of
   /// defining this constructor as the default constructor.
@@ -2417,7 +2417,7 @@ public:
                                    AccessSpecifier Access);
   bool CheckConstructorAccess(SourceLocation Loc, CXXConstructorDecl *D,
                               AccessSpecifier Access);
-  bool CheckDestructorAccess(SourceLocation Loc, QualType T);
+  bool CheckDestructorAccess(SourceLocation Loc, const RecordType *Record);
   bool CheckMemberOperatorAccess(SourceLocation Loc, Expr *ObjectExpr,
                                  NamedDecl *D, AccessSpecifier Access);
   bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);

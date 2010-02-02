@@ -306,16 +306,11 @@ bool Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
   return false;
 }
 
-bool Sema::CheckDestructorAccess(SourceLocation Loc,
-                                 QualType T) {
+bool Sema::CheckDestructorAccess(SourceLocation Loc, const RecordType *RT) {
   if (!getLangOptions().AccessControl)
     return false;
 
-  const RecordType *Record = T->getAs<RecordType>();
-  if (!Record)
-    return false;
-
-  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(Record->getDecl());
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
   CXXDestructorDecl *Dtor = NamingClass->getDestructor(Context);
 
   AccessSpecifier Access = Dtor->getAccess();

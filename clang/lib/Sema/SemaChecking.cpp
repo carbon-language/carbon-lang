@@ -2638,8 +2638,9 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
       }
     }
 
-    if (getLangOptions().AccessControl)
-      CheckDestructorAccess(Param->getLocation(), Param->getType());
+    if (getLangOptions().CPlusPlus)
+      if (const RecordType *RT = Param->getType()->getAs<RecordType>())
+        FinalizeVarWithDestructor(Param, RT);
   }
 
   return HasInvalidParm;

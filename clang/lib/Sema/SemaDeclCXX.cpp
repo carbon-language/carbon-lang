@@ -3982,13 +3982,12 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
   return false;
 }
 
-void Sema::FinalizeVarWithDestructor(VarDecl *VD, QualType DeclInitType) {
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(
-                                  DeclInitType->getAs<RecordType>()->getDecl());
+void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Record->getDecl());
   if (!ClassDecl->hasTrivialDestructor()) {
     CXXDestructorDecl *Destructor = ClassDecl->getDestructor(Context);
     MarkDeclarationReferenced(VD->getLocation(), Destructor);
-    CheckDestructorAccess(VD->getLocation(), VD->getType());
+    CheckDestructorAccess(VD->getLocation(), Record);
   }
 }
 
@@ -4093,8 +4092,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   VDecl->setInit(Context, Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
-  if (VDecl->getType()->getAs<RecordType>())
-    FinalizeVarWithDestructor(VDecl, DeclInitType);
+  if (const RecordType *Record = VDecl->getType()->getAs<RecordType>())
+    FinalizeVarWithDestructor(VDecl, Record);
 }
 
 /// \brief Add the applicable constructor candidates for an initialization
