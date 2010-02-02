@@ -91,33 +91,6 @@ bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM,
 
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      MachineCodeEmitter &MCE) {
-  // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
-  // FIXME: This should be moved to TargetJITInfo!!
-  if (Subtarget.isPPC64()) {
-    // We use PIC codegen in ppc64 mode, because otherwise we'd have to use many
-    // instructions to materialize arbitrary global variable + function +
-    // constant pool addresses.
-    setRelocationModel(Reloc::PIC_);
-    // Temporary workaround for the inability of PPC64 JIT to handle jump
-    // tables.
-    DisableJumpTables = true;      
-  } else {
-    setRelocationModel(Reloc::Static);
-  }
-  
-  // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
-  // writing?
-  Subtarget.SetJITMode();
-  
-  // Machine code emitter pass for PowerPC.
-  PM.add(createPPCCodeEmitterPass(*this, MCE));
-
-  return false;
-}
-
-bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                      CodeGenOpt::Level OptLevel,
                                       JITCodeEmitter &JCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
@@ -139,33 +112,6 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-
-  return false;
-}
-
-bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                      CodeGenOpt::Level OptLevel,
-                                      ObjectCodeEmitter &OCE) {
-  // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
-  // FIXME: This should be moved to TargetJITInfo!!
-  if (Subtarget.isPPC64()) {
-    // We use PIC codegen in ppc64 mode, because otherwise we'd have to use many
-    // instructions to materialize arbitrary global variable + function +
-    // constant pool addresses.
-    setRelocationModel(Reloc::PIC_);
-    // Temporary workaround for the inability of PPC64 JIT to handle jump
-    // tables.
-    DisableJumpTables = true;      
-  } else {
-    setRelocationModel(Reloc::Static);
-  }
-  
-  // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
-  // writing?
-  Subtarget.SetJITMode();
-  
-  // Machine code emitter pass for PowerPC.
-  PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
 
   return false;
 }

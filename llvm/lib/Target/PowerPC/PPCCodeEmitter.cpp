@@ -91,20 +91,9 @@ namespace {
 
 /// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code
 /// to the specified MCE object.
-
-FunctionPass *llvm::createPPCCodeEmitterPass(PPCTargetMachine &TM,
-                                             MachineCodeEmitter &MCE) {
-  return new Emitter<MachineCodeEmitter>(TM, MCE);
-}
-
 FunctionPass *llvm::createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                                 JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
-}
-
-FunctionPass *llvm::createPPCObjectCodeEmitterPass(PPCTargetMachine &TM,
-                                                   ObjectCodeEmitter &OCE) {
-  return new Emitter<ObjectCodeEmitter>(TM, OCE);
 }
 
 template <class CodeEmitter>

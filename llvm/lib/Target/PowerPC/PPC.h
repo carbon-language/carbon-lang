@@ -29,12 +29,8 @@ namespace llvm {
   
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
-FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
-                                       MachineCodeEmitter &MCE);
 FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                           JITCodeEmitter &MCE);
-FunctionPass *createPPCObjectCodeEmitterPass(PPCTargetMachine &TM,
-                                             ObjectCodeEmitter &OCE);
 
 extern Target ThePPC32Target;
 extern Target ThePPC64Target;
