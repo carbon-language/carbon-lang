@@ -685,7 +685,7 @@ public:
       assert(CGM.getContext().hasSameUnqualifiedType(Ty, Arg->getType()) &&
              "argument to copy ctor is of wrong type");
 
-      return Visit(E->getArg(0));
+      return Visit(Arg);
     }
 
     return CGM.EmitNullConstant(Ty);
