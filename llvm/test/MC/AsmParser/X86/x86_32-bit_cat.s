@@ -3,9 +3,8 @@
 // will not yet encode correctly.  The subset that will encode correctly are in
 // the file x86_32-bit.s .
 
-// RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
-
-// XFAIL: *
+// RUN: true
+// llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
         	movb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
