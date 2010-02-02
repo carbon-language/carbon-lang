@@ -106,12 +106,9 @@ public:
     void operator=(const Factory& RHS); // DO NOT IMPLEMENT
   };
 
-  friend class Factory;
-
   bool contains(key_type_ref K) const {
     return Root ? Root->contains(K) : false;
   }
-
 
   bool operator==(ImmutableMap RHS) const {
     return Root && RHS.Root ? Root->isEqual(*RHS.Root) : Root == RHS.Root;
