@@ -668,6 +668,29 @@ public:
     return 0;
   }
 
+  llvm::Constant *VisitCXXConstructExpr(CXXConstructExpr *E) {
+    if (!E->getConstructor()->isTrivial())
+      return 0;
+
+    // Only copy and default constructors can be trivial.
+
+    QualType Ty = E->getType();
+
+    if (E->getNumArgs()) {
+      assert(E->getNumArgs() == 1 && "trivial ctor with > 1 argument");
+      assert(E->getConstructor()->isCopyConstructor() &&
+             "trivial ctor has argument but isn't a copy ctor");
+
+      Expr *Arg = E->getArg(0);
+      assert(CGM.getContext().hasSameUnqualifiedType(Ty, Arg->getType()) &&
+             "argument to copy ctor is of wrong type");
+
+      return Visit(E->getArg(0));
+    }
+
+    return CGM.EmitNullConstant(Ty);
+  }
+
   llvm::Constant *VisitStringLiteral(StringLiteral *E) {
     assert(!E->getType()->isPointerType() && "Strings are always arrays");
 
