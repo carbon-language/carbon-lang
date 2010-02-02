@@ -463,14 +463,6 @@ public:
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
   virtual bool getEnableTailMergeDefault() const { return true; }
-
-  /// addAssemblyEmitter - Helper function which creates a target specific
-  /// assembly printer, if available.
-  ///
-  /// \return Returns 'false' on success.
-  bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
-                          bool /* VerboseAsmDefault */,
-                          formatted_raw_ostream &);
 };
 
 } // End llvm namespace

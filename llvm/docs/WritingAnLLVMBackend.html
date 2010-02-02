@@ -354,8 +354,6 @@ public:
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &amp;PM, bool Fast);
   virtual bool addPreEmitPass(PassManagerBase &amp;PM, bool Fast);
-  virtual bool addAssemblyEmitter(PassManagerBase &amp;PM, bool Fast, 
-                                  std::ostream &amp;Out);
 };
 
 } // end namespace llvm

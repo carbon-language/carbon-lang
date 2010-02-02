@@ -57,8 +57,6 @@ static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
     cl::desc("Print LLVM IR input to isel pass"));
-static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
-    cl::desc("Dump emitter generated instructions as assembly"));
 static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
@@ -110,27 +108,18 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   switch (FileType) {
   default:
     break;
-  case TargetMachine::AssemblyFile:
-    if (addAssemblyEmitter(PM, OptLevel, getAsmVerbosityDefault(), Out))
-      return FileModel::Error;
+  case TargetMachine::AssemblyFile: {
+    FunctionPass *Printer =
+      getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(),
+                                   getAsmVerbosityDefault());
+    if (Printer == 0) break;
+    PM.add(Printer);
     return FileModel::AsmFile;
+  }
   case TargetMachine::ObjectFile:
     return FileModel::Error;
   }
   return FileModel::Error;
-}
-
-bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                           CodeGenOpt::Level OptLevel,
-                                           bool Verbose,
-                                           formatted_raw_ostream &Out) {
-  FunctionPass *Printer =
-    getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(), Verbose);
-  if (!Printer)
-    return true;
-
-  PM.add(Printer);
-  return false;
 }
 
 /// addPassesToEmitFileFinish - If the passes to emit the specified file had to
@@ -144,8 +133,6 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   
   if (MCE)
     addSimpleCodeEmitter(PM, OptLevel, *MCE);
-  if (PrintEmittedAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -163,8 +150,6 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   
   if (JCE)
     addSimpleCodeEmitter(PM, OptLevel, *JCE);
-  if (PrintEmittedAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -180,9 +165,6 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   // Make sure the code model is set.
   setCodeModelForStatic();
   
-  if (PrintEmittedAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   PM.add(createGCInfoDeleter());
 
   return false; // success!
@@ -205,9 +187,6 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     return true;
 
   addCodeEmitter(PM, OptLevel, MCE);
-  if (PrintEmittedAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   PM.add(createGCInfoDeleter());
 
   return false; // success!
@@ -230,9 +209,6 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     return true;
 
   addCodeEmitter(PM, OptLevel, JCE);
-  if (PrintEmittedAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   PM.add(createGCInfoDeleter());
 
   return false; // success!
