@@ -1750,14 +1750,14 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       ConsumeToken();
       if (!Tok.isObjCAtKeyword(tok::objc_defs)) {
         Diag(Tok, diag::err_unexpected_at);
-        SkipUntil(tok::semi, true, true);
+        SkipUntil(tok::semi, true);
         continue;
       }
       ConsumeToken();
       ExpectAndConsume(tok::l_paren, diag::err_expected_lparen);
       if (!Tok.is(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
-        SkipUntil(tok::semi, true, true);
+        SkipUntil(tok::semi, true);
         continue;
       }
       llvm::SmallVector<DeclPtrTy, 16> Fields;
@@ -1771,12 +1771,14 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else if (Tok.is(tok::r_brace)) {
-      Diag(Tok, diag::ext_expected_semi_decl_list);
+      ExpectAndConsume(tok::semi, diag::ext_expected_semi_decl_list);
       break;
     } else {
-      Diag(Tok, diag::err_expected_semi_decl_list);
-      // Skip to end of block or statement
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
+      // Skip to end of block or statement to avoid ext-warning on extra ';'.
       SkipUntil(tok::r_brace, true, true);
+      // If we stopped at a ';', eat it.
+      if (Tok.is(tok::semi)) ConsumeToken();
     }
   }
 

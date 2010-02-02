@@ -64,3 +64,10 @@ static f;      // expected-warning {{type specifier missing, defaults to 'int'}}
 static g = 4;  // expected-warning {{type specifier missing, defaults to 'int'}}
 static h        // expected-warning {{type specifier missing, defaults to 'int'}} 
       __asm__("foo");
+
+
+struct test9 {
+  int x  // expected-error {{expected ';' at end of declaration list}}
+  int y;
+  int z  // expected-warning {{expected ';' at end of declaration list}}
+};
