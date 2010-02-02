@@ -13,13 +13,13 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
 using namespace llvm;
@@ -203,9 +203,9 @@ public:
     Write32(Header_Magic32);
 
     // FIXME: Support cputype.
-    Write32(TargetMachOWriterInfo::HDR_CPU_TYPE_I386);
+    Write32(MachO::CPUTypeI386);
     // FIXME: Support cpusubtype.
-    Write32(TargetMachOWriterInfo::HDR_CPU_SUBTYPE_I386_ALL);
+    Write32(MachO::CPUSubType_I386_ALL);
     Write32(HFT_Object);
     Write32(NumLoadCommands);    // Object files have a single load command, the
                                  // segment.
