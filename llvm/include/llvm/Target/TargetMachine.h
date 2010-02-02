@@ -333,39 +333,7 @@ public:
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned.
   virtual bool addCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
-                              MachineCodeEmitter &) {
-    return true;
-  }
-
-  /// addCodeEmitter - This pass should be overridden by the target to add a
-  /// code emitter, if supported.  If this is not supported, 'true' should be
-  /// returned.
-  virtual bool addCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
                               JITCodeEmitter &) {
-    return true;
-  }
-
-  /// addSimpleCodeEmitter - This pass should be overridden by the target to add
-  /// a code emitter (without setting flags), if supported.  If this is not
-  /// supported, 'true' should be returned.
-  virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
-                                    MachineCodeEmitter &) {
-    return true;
-  }
-
-  /// addSimpleCodeEmitter - This pass should be overridden by the target to add
-  /// a code emitter (without setting flags), if supported.  If this is not
-  /// supported, 'true' should be returned.
-  virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
-                                    JITCodeEmitter &) {
-    return true;
-  }
-
-  /// addSimpleCodeEmitter - This pass should be overridden by the target to add
-  /// a code emitter (without setting flags), if supported.  If this is not
-  /// supported, 'true' should be returned.
-  virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
-                                    ObjectCodeEmitter &) {
     return true;
   }
 

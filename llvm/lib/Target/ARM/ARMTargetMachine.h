@@ -58,15 +58,6 @@ public:
                               JITCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               ObjectCodeEmitter &OCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
-                                    CodeGenOpt::Level OptLevel,
-                                    MachineCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
-                                    CodeGenOpt::Level OptLevel,
-                                    JITCodeEmitter &MCE);
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
-                                    CodeGenOpt::Level OptLevel,
-                                    ObjectCodeEmitter &OCE);
 };
 
 /// ARMTargetMachine - ARM target machine.

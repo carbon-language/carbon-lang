@@ -21,18 +21,12 @@ namespace llvm {
 
   class AlphaTargetMachine;
   class FunctionPass;
-  class MachineCodeEmitter;
-  class ObjectCodeEmitter;
   class formatted_raw_ostream;
 
   FunctionPass *createAlphaISelDag(AlphaTargetMachine &TM);
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
-  FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
-                                           MachineCodeEmitter &MCE);
   FunctionPass *createAlphaJITCodeEmitterPass(AlphaTargetMachine &TM,
                                               JITCodeEmitter &JCE);
-  FunctionPass *createAlphaObjectCodeEmitterPass(AlphaTargetMachine &TM,
-                                                 ObjectCodeEmitter &OCE);
   FunctionPass *createAlphaLLRPPass(AlphaTargetMachine &tm);
   FunctionPass *createAlphaBranchSelectionPass();
 

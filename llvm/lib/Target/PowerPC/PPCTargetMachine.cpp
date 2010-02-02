@@ -170,30 +170,6 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
-bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            MachineCodeEmitter &MCE) {
-  // Machine code emitter pass for PowerPC.
-  PM.add(createPPCCodeEmitterPass(*this, MCE));
-  return false;
-}
-
-bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            JITCodeEmitter &JCE) {
-  // Machine code emitter pass for PowerPC.
-  PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-  return false;
-}
-
-bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            ObjectCodeEmitter &OCE) {
-  // Machine code emitter pass for PowerPC.
-  PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
-  return false;
-}
-
 /// getLSDAEncoding - Returns the LSDA pointer encoding. The choices are 4-byte,
 /// 8-byte, and target default. The CIE is hard-coded to indicate that the LSDA
 /// pointer in the FDE section is an "sdata4", and should be encoded as a 4-byte

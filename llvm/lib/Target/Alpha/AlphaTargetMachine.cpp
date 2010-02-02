@@ -55,35 +55,7 @@ bool AlphaTargetMachine::addPreEmitPass(PassManagerBase &PM,
 }
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel,
-                                        MachineCodeEmitter &MCE) {
-  PM.add(createAlphaCodeEmitterPass(*this, MCE));
-  return false;
-}
-bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                        CodeGenOpt::Level OptLevel,
                                         JITCodeEmitter &JCE) {
   PM.add(createAlphaJITCodeEmitterPass(*this, JCE));
   return false;
 }
-bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                        CodeGenOpt::Level OptLevel,
-                                        ObjectCodeEmitter &OCE) {
-  PM.add(createAlphaObjectCodeEmitterPass(*this, OCE));
-  return false;
-}
-bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                              CodeGenOpt::Level OptLevel,
-                                              MachineCodeEmitter &MCE) {
-  return addCodeEmitter(PM, OptLevel, MCE);
-}
-bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                              CodeGenOpt::Level OptLevel,
-                                              JITCodeEmitter &JCE) {
-  return addCodeEmitter(PM, OptLevel, JCE);
-}
-bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                              CodeGenOpt::Level OptLevel,
-                                              ObjectCodeEmitter &OCE) {
-  return addCodeEmitter(PM, OptLevel, OCE);
-}
-

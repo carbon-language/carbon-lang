@@ -206,27 +206,6 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
-bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            MachineCodeEmitter &MCE) {
-  PM.add(createX86CodeEmitterPass(*this, MCE));
-  return false;
-}
-
-bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            JITCodeEmitter &JCE) {
-  PM.add(createX86JITCodeEmitterPass(*this, JCE));
-  return false;
-}
-
-bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            ObjectCodeEmitter &OCE) {
-  PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
-  return false;
-}
-
 void X86TargetMachine::setCodeModelForStatic() {
 
     if (getCodeModel() != CodeModel::Default) return;
