@@ -2781,7 +2781,8 @@ void DwarfDebug::emitDebugPubTypes() {
 
   EmitLabel("pubtypes_begin", ModuleCU->getID());
 
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF Version");
+  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DWARF Version");
+  Asm->EmitInt16(dwarf::DWARF_VERSION);
 
   EmitSectionOffset("info_begin", "section_info",
                     ModuleCU->getID(), 0, true, false);
@@ -2797,7 +2798,8 @@ void DwarfDebug::emitDebugPubTypes() {
     const char *Name = GI->getKeyData();
     DIE * Entity = GI->second;
 
-    Asm->EmitInt32(Entity->getOffset()); EOL("DIE offset");
+    if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DIE offset");
+    Asm->EmitInt32(Entity->getOffset());
     
     if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("External Name");
     Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
