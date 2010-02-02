@@ -1232,7 +1232,16 @@ def t2UBFX : T2I<(outs GPR:$dst), (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
   let Inst{15} = 0;
 }
 
-// FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
+// A8.6.18  BFI - Bitfield insert (Encoding T1)
+// Added for disassembler with the pattern field purposely left blank.
+// FIXME: Utilize this instruction in codgen.
+def t2BFI : T2I<(outs GPR:$dst), (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+                IIC_iALUi, "bfi", "\t$dst, $src, $lsb, $width", []> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25} = 1;
+  let Inst{24-20} = 0b10110;
+  let Inst{15} = 0;
+}
 
 defm t2ORN  : T2I_bin_irs<0b0011, "orn", BinOpFrag<(or  node:$LHS,
                           (not node:$RHS))>>;
