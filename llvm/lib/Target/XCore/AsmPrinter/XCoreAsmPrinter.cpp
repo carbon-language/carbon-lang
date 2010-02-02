@@ -52,8 +52,9 @@ namespace {
     const XCoreSubtarget &Subtarget;
   public:
     explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V),
+                             MCContext &Ctx, MCStreamer &Streamer,
+                             const MCAsmInfo *T)
+      : AsmPrinter(O, TM, Ctx, Streamer, T),
       Subtarget(TM.getSubtarget<XCoreSubtarget>()) {}
 
     virtual const char *getPassName() const {

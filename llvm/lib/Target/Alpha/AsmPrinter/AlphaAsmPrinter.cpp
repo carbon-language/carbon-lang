@@ -37,8 +37,9 @@ namespace {
     ///
 
     explicit AlphaAsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                             const MCAsmInfo *T, bool V)
-      : AsmPrinter(o, tm, T, V) {}
+                             MCContext &Ctx, MCStreamer &Streamer,
+                             const MCAsmInfo *T)
+      : AsmPrinter(o, tm, Ctx, Streamer, T) {}
 
     virtual const char *getPassName() const {
       return "Alpha Assembly Printer";

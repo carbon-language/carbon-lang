@@ -47,7 +47,6 @@ public:
 
   bool isLittleEndian() const { return IsLittleEndian; }
   
-  
   inline void EmitEOL() {
     // If we don't have any comments, just emit a \n.
     if (!IsVerboseAsm) {
@@ -57,6 +56,10 @@ public:
     EmitCommentsAndEOL();
   }
   void EmitCommentsAndEOL();
+
+  /// isVerboseAsm - Return true if this streamer supports verbose assembly at
+  /// all.
+  virtual bool isVerboseAsm() const { return IsVerboseAsm; }
   
   /// AddComment - Add a comment that can be emitted to the generated .s
   /// file if applicable as a QoI issue to make the output of the compiler

@@ -60,8 +60,9 @@ namespace {
     uint64_t LabelID;
   public:
     explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V),
+                           MCContext &Ctx, MCStreamer &Streamer,
+                           const MCAsmInfo *T)
+      : AsmPrinter(O, TM, Ctx, Streamer, T),
         Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
 
     virtual const char *getPassName() const {
@@ -322,8 +323,9 @@ namespace {
   class PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
     explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                const MCAsmInfo *T, bool V)
-      : PPCAsmPrinter(O, TM, T, V){}
+                                MCContext &Ctx, MCStreamer &Streamer,
+                                const MCAsmInfo *T)
+      : PPCAsmPrinter(O, TM, Ctx, Streamer, T) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -347,8 +349,9 @@ namespace {
     formatted_raw_ostream &OS;
   public:
     explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 const MCAsmInfo *T, bool V)
-      : PPCAsmPrinter(O, TM, T, V), OS(O) {}
+                                 MCContext &Ctx, MCStreamer &Streamer,
+                                 const MCAsmInfo *T)
+      : PPCAsmPrinter(O, TM, Ctx, Streamer, T), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -826,13 +829,13 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 static AsmPrinter *createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                            TargetMachine &tm,
-                                           const MCAsmInfo *tai,
-                                           bool verbose) {
+                                           MCContext &Ctx, MCStreamer &Streamer,
+                                           const MCAsmInfo *tai) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin())
-    return new PPCDarwinAsmPrinter(o, tm, tai, verbose);
-  return new PPCLinuxAsmPrinter(o, tm, tai, verbose);
+    return new PPCDarwinAsmPrinter(o, tm, Ctx, Streamer, tai);
+  return new PPCLinuxAsmPrinter(o, tm, Ctx, Streamer, tai);
 }
 
 // Force static initialization.

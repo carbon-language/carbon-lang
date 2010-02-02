@@ -50,8 +50,9 @@ namespace {
     const MipsSubtarget *Subtarget;
   public:
     explicit MipsAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM, 
-                            const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V) {
+                            MCContext &Ctx, MCStreamer &Streamer,
+                            const MCAsmInfo *T)
+      : AsmPrinter(O, TM, Ctx, Streamer, T) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
     }
 

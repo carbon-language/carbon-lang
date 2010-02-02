@@ -149,7 +149,8 @@ namespace llvm {
 
   protected:
     explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
-                        const MCAsmInfo *T, bool V);
+                        MCContext &Ctx, MCStreamer &Streamer,
+                        const MCAsmInfo *T);
     
   public:
     virtual ~AsmPrinter();

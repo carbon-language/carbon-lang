@@ -73,8 +73,9 @@ namespace {
 
   public:
     explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V), AFI(NULL), MCP(NULL) {
+                           MCContext &Ctx, MCStreamer &Streamer,
+                           const MCAsmInfo *T)
+      : AsmPrinter(O, TM, Ctx, Streamer, T), AFI(NULL), MCP(NULL) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 

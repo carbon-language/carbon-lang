@@ -21,6 +21,9 @@
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
@@ -121,10 +124,24 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile:
     return CGFT_ErrorOccurred;
   case CGFT_AssemblyFile: {
+    MCContext *Context = new MCContext();
+    MCStreamer *AsmStreamer =
+      createAsmStreamer(*Context, Out, *getMCAsmInfo(),
+                        getTargetData()->isLittleEndian(),
+                        getVerboseAsm(),
+                        /*instprinter*/0,
+                        /*codeemitter*/0);
+    
+    // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
+    // if successful.
     FunctionPass *Printer =
-      getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(),
-                                   getVerboseAsm());
-    if (Printer == 0) return CGFT_ErrorOccurred;
+      getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
+                                   getMCAsmInfo());
+    if (Printer == 0) {
+      delete AsmStreamer;
+      delete Context;
+      return CGFT_ErrorOccurred;
+    }
     PM.add(Printer);
     break;
   }

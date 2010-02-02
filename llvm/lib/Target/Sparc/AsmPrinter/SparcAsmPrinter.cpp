@@ -29,8 +29,9 @@ namespace {
   class SparcAsmPrinter : public AsmPrinter {
   public:
     explicit SparcAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V) {}
+                             MCContext &Ctx, MCStreamer &Streamer,
+                             const MCAsmInfo *T)
+      : AsmPrinter(O, TM, Ctx, Streamer, T) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";

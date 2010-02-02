@@ -55,19 +55,14 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                       const MCAsmInfo *T, bool VerboseAsm)
+                       MCContext &Ctx, MCStreamer &Streamer,
+                       const MCAsmInfo *T)
   : MachineFunctionPass(&ID), O(o),
     TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
-
-    OutContext(*new MCContext()),
-    // FIXME: Pass instprinter to streamer.
-    OutStreamer(*createAsmStreamer(OutContext, O, *T,
-                                   TM.getTargetData()->isLittleEndian(),
-                                   VerboseAsm, 0)),
-
+    OutContext(Ctx), OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
   DW = 0; MMI = 0;
-  this->VerboseAsm = VerboseAsm;
+  VerboseAsm = Streamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {

@@ -25,12 +25,14 @@
 
 namespace llvm {
   class AsmPrinter;
-  class MCAsmParser;
-  class MCCodeEmitter;
   class Module;
   class MCAsmInfo;
+  class MCAsmParser;
+  class MCCodeEmitter;
+  class MCContext;
   class MCDisassembler;
   class MCInstPrinter;
+  class MCStreamer;
   class TargetAsmLexer;
   class TargetAsmParser;
   class TargetMachine;
@@ -58,8 +60,9 @@ namespace llvm {
                                                   const std::string &Features);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
                                             TargetMachine &TM,
-                                            const MCAsmInfo *MAI,
-                                            bool VerboseAsm);
+                                            MCContext &Ctx,
+                                            MCStreamer &Streamer,
+                                            const MCAsmInfo *MAI);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
@@ -189,12 +192,14 @@ namespace llvm {
       return TargetMachineCtorFn(*this, Triple, Features);
     }
 
-    /// createAsmPrinter - Create a target specific assembly printer pass.
+    /// createAsmPrinter - Create a target specific assembly printer pass.  This
+    /// takes ownership of the MCContext and MCStreamer objects but not the MAI.
     AsmPrinter *createAsmPrinter(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const MCAsmInfo *MAI, bool Verbose) const {
+                                 MCContext &Ctx, MCStreamer &Streamer,
+                                 const MCAsmInfo *MAI) const {
       if (!AsmPrinterCtorFn)
         return 0;
-      return AsmPrinterCtorFn(OS, TM, MAI, Verbose);
+      return AsmPrinterCtorFn(OS, TM, Ctx, Streamer, MAI);
     }
 
     /// createAsmLexer - Create a target specific assembly lexer.
@@ -547,8 +552,9 @@ namespace llvm {
 
   private:
     static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 const MCAsmInfo *MAI, bool Verbose) {
-      return new AsmPrinterImpl(OS, TM, MAI, Verbose);
+                                 MCContext &Ctx, MCStreamer &Streamer,
+                                 const MCAsmInfo *MAI) {
+      return new AsmPrinterImpl(OS, TM, Ctx, Streamer, MAI);
     }
   };
 

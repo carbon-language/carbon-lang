@@ -38,8 +38,9 @@ namespace {
   class SPUAsmPrinter : public AsmPrinter {
   public:
     explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           const MCAsmInfo *T, bool V) :
-      AsmPrinter(O, TM, T, V) {}
+                           MCContext &Ctx, MCStreamer &Streamer,
+                           const MCAsmInfo *T) :
+      AsmPrinter(O, TM, Ctx, Streamer, T) {}
 
     virtual const char *getPassName() const {
       return "STI CBEA SPU Assembly Printer";

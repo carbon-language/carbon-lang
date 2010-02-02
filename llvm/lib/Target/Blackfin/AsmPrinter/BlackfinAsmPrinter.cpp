@@ -39,8 +39,9 @@ namespace {
   class BlackfinAsmPrinter : public AsmPrinter {
   public:
     BlackfinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                       const MCAsmInfo *MAI, bool V)
-      : AsmPrinter(O, TM, MAI, V) {}
+                       MCContext &Ctx, MCStreamer &Streamer,
+                       const MCAsmInfo *MAI)
+      : AsmPrinter(O, TM, Ctx, Streamer, MAI) {}
 
     virtual const char *getPassName() const {
       return "Blackfin Assembly Printer";

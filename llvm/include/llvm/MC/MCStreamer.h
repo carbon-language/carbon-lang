@@ -60,6 +60,10 @@ namespace llvm {
 
     /// @name Assembly File Formatting.
     /// @{
+    
+    /// isVerboseAsm - Return true if this streamer supports verbose assembly at
+    /// all.
+    virtual bool isVerboseAsm() const { return false; }
 
     /// AddComment - Add a comment that can be emitted to the generated .s
     /// file if applicable as a QoI issue to make the output of the compiler
