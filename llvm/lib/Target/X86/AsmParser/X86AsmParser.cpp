@@ -456,8 +456,14 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
 bool X86ATTAsmParser::
 ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-
-  Operands.push_back(X86Operand::CreateToken(Name, NameLoc));
+  // FIXME: Hack to recognize "sal..." for now. We need a way to represent
+  // alternative syntaxes in the .td file, without requiring instruction
+  // duplication.
+  if (Name.startswith("sal")) {
+    std::string Tmp = "shl" + Name.substr(3).str();
+    Operands.push_back(X86Operand::CreateToken(Tmp, NameLoc));
+  } else
+    Operands.push_back(X86Operand::CreateToken(Name, NameLoc));
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 

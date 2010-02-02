@@ -64,3 +64,9 @@
 // FIXME: Check that this matches the correct instruction.
 // CHECK: shldl %cl, %eax, %ebx
         shldl %cl, %eax, %ebx
+
+// CHECK: shll $2, %eax
+        shll $2, %eax
+
+// CHECK: shll $2, %eax
+        sall $2, %eax
