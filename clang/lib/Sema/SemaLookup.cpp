@@ -2348,9 +2348,16 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
 bool Sema::CorrectTypo(LookupResult &Res, Scope *S, const CXXScopeSpec *SS,
                        DeclContext *MemberContext, bool EnteringContext,
                        const ObjCObjectPointerType *OPT) {
-  
   if (Diags.hasFatalErrorOccurred())
     return false;
+
+  // Provide a stop gap for files that are just seriously broken.  Trying
+  // to correct all typos can turn into a HUGE performance penalty, causing
+  // some files to take minutes to get rejected by the parser.
+  // FIXME: Is this the right solution?
+  if (TyposCorrected == 20)
+    return false;
+  ++TyposCorrected;
   
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = Res.getLookupName().getAsIdentifierInfo();
