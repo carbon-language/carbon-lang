@@ -553,7 +553,9 @@ bool VarDecl::isTentativeDefinitionNow() const {
 }
 
 VarDecl *VarDecl::getDefinition() {
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+  VarDecl *First = getFirstDeclaration();
+  for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
+       I != E; ++I) {
     if ((*I)->isThisDeclarationADefinition() == Definition)
       return *I;
   }
