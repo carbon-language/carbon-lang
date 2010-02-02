@@ -66,12 +66,12 @@ static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
 
-static bool getVerboseAsm(bool VDef) {
+static bool getVerboseAsm() {
   switch (AsmVerbose) {
-    default:
-    case cl::BOU_UNSET: return VDef;
-    case cl::BOU_TRUE:  return true;
-    case cl::BOU_FALSE: return false;
+  default:
+  case cl::BOU_UNSET: return TargetMachine::getAsmVerbosityDefault();
+  case cl::BOU_TRUE:  return true;
+  case cl::BOU_FALSE: return false;
   }      
 }
 
@@ -123,7 +123,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_AssemblyFile: {
     FunctionPass *Printer =
       getTarget().createAsmPrinter(Out, *this, getMCAsmInfo(),
-                                   getVerboseAsm(getAsmVerbosityDefault()));
+                                   getVerboseAsm());
     if (Printer == 0) return CGFT_ErrorOccurred;
     PM.add(Printer);
     break;
