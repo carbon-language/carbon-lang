@@ -1,6 +1,4 @@
 ; RUN: llc < %s -march=x86 -mtriple=i386-apple-darwin9 -regalloc=local | FileCheck %s
-; RUN: llc -O0 < %s -march=x86 -mtriple=i386-apple-darwin9 -regalloc=local | FileCheck %s
-; CHECKed instructions should be the same with or without -O0.
 
 @.str = private constant [12 x i8] c"x + y = %i\0A\00", align 1 ; <[12 x i8]*> [#uses=1]
 

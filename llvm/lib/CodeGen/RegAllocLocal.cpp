@@ -764,11 +764,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Determine whether this is a copy instruction.  The cases where the
     // source or destination are phys regs are handled specially.
     unsigned SrcCopyReg, DstCopyReg, SrcCopySubReg, DstCopySubReg;
-    unsigned SrcCopyPhysReg = 0U;
     bool isCopy = TII->isMoveInstr(*MI, SrcCopyReg, DstCopyReg, 
                                    SrcCopySubReg, DstCopySubReg);
-    if (isCopy && TargetRegisterInfo::isVirtualRegister(SrcCopyReg))
-      SrcCopyPhysReg = getVirt2PhysRegMapSlot(SrcCopyReg);
 
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
@@ -980,23 +977,12 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
         // If DestVirtReg already has a value, use it.
         if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg))) {
-          // If this is a copy try to reuse the input as the output;
-          // that will make the copy go away.
           // If this is a copy, the source reg is a phys reg, and
           // that reg is available, use that phys reg for DestPhysReg.
-          // If this is a copy, the source reg is a virtual reg, and
-          // the phys reg that was assigned to that virtual reg is now
-          // available, use that phys reg for DestPhysReg.  (If it's now
-          // available that means this was the last use of the source.)
           if (isCopy &&
               TargetRegisterInfo::isPhysicalRegister(SrcCopyReg) &&
               isPhysRegAvailable(SrcCopyReg)) {
             DestPhysReg = SrcCopyReg;
-            assignVirtToPhysReg(DestVirtReg, DestPhysReg);
-          } else if (isCopy &&
-              TargetRegisterInfo::isVirtualRegister(SrcCopyReg) &&
-              SrcCopyPhysReg && isPhysRegAvailable(SrcCopyPhysReg)) {
-            DestPhysReg = SrcCopyPhysReg;
             assignVirtToPhysReg(DestVirtReg, DestPhysReg);
           } else
             DestPhysReg = getReg(MBB, MI, DestVirtReg);
