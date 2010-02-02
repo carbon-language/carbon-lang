@@ -45,7 +45,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
     Subtarget(TT, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
-    InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {
+    InstrItins(Subtarget.getInstrItineraryData()) {
 
   if (getRelocationModel() == Reloc::Default) {
     if (Subtarget.isDarwin())

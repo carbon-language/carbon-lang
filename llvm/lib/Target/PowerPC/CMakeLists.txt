@@ -19,7 +19,6 @@ add_llvm_target(PowerPCCodeGen
   PPCISelDAGToDAG.cpp
   PPCISelLowering.cpp
   PPCJITInfo.cpp
-  PPCMachOWriterInfo.cpp
   PPCMCAsmInfo.cpp
   PPCPredicates.cpp
   PPCRegisterInfo.cpp
