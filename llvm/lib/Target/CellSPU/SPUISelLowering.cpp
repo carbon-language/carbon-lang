@@ -1138,7 +1138,7 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
 }
 
 SDValue
-SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -124,7 +124,7 @@ namespace llvm {
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals);
     virtual SDValue
-      LowerCall(SDValue Chain, SDValue Callee,
+      LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                 CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,

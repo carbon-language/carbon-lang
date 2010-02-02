@@ -5735,7 +5735,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   }
 
   SmallVector<SDValue, 4> InVals;
-  Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
+  Chain = LowerCall(Chain, Callee, RetTy, CallConv, isVarArg, isTailCall,
                     Outs, Ins, dl, DAG, InVals);
 
   // Verify that the target's LowerCall behaved as expected.

@@ -1778,7 +1778,7 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
 }
 
 SDValue
-X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -1791,8 +1791,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   if (isTailCall)
     // Check if it's really possible to do a tail call.
-    isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
-                                                   Outs, Ins, DAG);
+    isTailCall = IsEligibleForTailCallOptimization(Callee, RetTy, CallConv,
+                                                   isVarArg, Outs, Ins, DAG);
 
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
@@ -2247,6 +2247,7 @@ unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
 /// optimization should implement this function.
 bool
 X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
+                                                     const Type *RetTy,
                                                      CallingConv::ID CalleeCC,
                                                      bool isVarArg,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -2328,14 +2329,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return true;
 
   // If the return types match, then it's safe.
-  // Don't tail call optimize recursive call.
-  GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-  if (!G) return false;  // FIXME: common external symbols?
-  if (const Function *CalleeF = dyn_cast<Function>(G->getGlobal())) {
-    const Type *CalleeRetTy = CalleeF->getReturnType();
-    return CallerRetTy == CalleeRetTy;
-  }
-  return false;
+  return CallerRetTy == RetTy;
 }
 
 FastISel *

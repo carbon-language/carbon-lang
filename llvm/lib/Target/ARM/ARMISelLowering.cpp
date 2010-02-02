@@ -895,7 +895,7 @@ void ARMTargetLowering::PassF64ArgInRegs(DebugLoc dl, SelectionDAG &DAG,
 /// ARMISD:CALL <- callseq_end chain. Also add input and output parameter
 /// nodes.
 SDValue
-ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                              CallingConv::ID CallConv, bool isVarArg,
                              bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -684,7 +684,7 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 /// TODO: isVarArg, isTailCall.
 SDValue
-MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                               CallingConv::ID CallConv, bool isVarArg,
                               bool &isTailCall,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,

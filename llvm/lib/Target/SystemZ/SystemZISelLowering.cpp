@@ -249,6 +249,7 @@ SystemZTargetLowering::LowerFormalArguments(SDValue Chain,
 
 SDValue
 SystemZTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+                                 const Type *RetTy,
                                  CallingConv::ID CallConv, bool isVarArg,
                                  bool &isTailCall,
                                  const SmallVectorImpl<ISD::OutputArg> &Outs,

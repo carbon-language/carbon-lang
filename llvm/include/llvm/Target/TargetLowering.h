@@ -1168,7 +1168,7 @@ public:
   /// InVals array with legal-type return values from the call, and return
   /// the resulting token chain value.
   virtual SDValue
-    LowerCall(SDValue Chain, SDValue Callee,
+    LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
               CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
               const SmallVectorImpl<ISD::OutputArg> &Outs,
               const SmallVectorImpl<ISD::InputArg> &Ins,

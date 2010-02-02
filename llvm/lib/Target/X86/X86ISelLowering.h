@@ -627,7 +627,7 @@ namespace llvm {
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
     /// optimization should implement this function.
-    bool IsEligibleForTailCallOptimization(SDValue Callee,
+    bool IsEligibleForTailCallOptimization(SDValue Callee, const Type *RetTy,
                                            CallingConv::ID CalleeCC,
                                            bool isVarArg,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -707,7 +707,7 @@ namespace llvm {
                            DebugLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals);
     virtual SDValue
-      LowerCall(SDValue Chain, SDValue Callee,
+      LowerCall(SDValue Chain, SDValue Callee, const Type *RetTy,
                 CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<ISD::InputArg> &Ins,
