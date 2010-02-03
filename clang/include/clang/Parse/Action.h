@@ -459,6 +459,8 @@ public:
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D) {
     return DeclPtrTy();
   }
+  virtual void ActOnObjCCatchParam(DeclPtrTy D) {
+  }
 
   /// AddInitializerToDecl - This action is called immediately after
   /// ActOnDeclarator (when an initializer is present). The code is factored

@@ -1482,6 +1482,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           // Inform the actions module about the parameter declarator, so it
           // gets added to the current scope.
           FirstPart = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
+          Actions.ActOnObjCCatchParam(FirstPart);
         } else
           ConsumeToken(); // consume '...'
 
