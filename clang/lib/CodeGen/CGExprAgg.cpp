@@ -514,6 +514,9 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
 void 
 AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
+  // FIXME: Remove this.
+  T = E->getType();
+
   // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?
   if (isa<ImplicitValueInitExpr>(E)) {
