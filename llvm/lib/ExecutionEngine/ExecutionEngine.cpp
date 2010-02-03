@@ -387,10 +387,6 @@ ExecutionEngine *ExecutionEngine::create(Module *M,
       .create();
 }
 
-ExecutionEngine *ExecutionEngine::create(Module *M) {
-  return EngineBuilder(M).create();
-}
-
 ExecutionEngine *EngineBuilder::create() {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.

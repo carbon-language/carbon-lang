@@ -157,11 +157,6 @@ public:
                                  // default freeMachineCodeForFunction works.
                                  bool GVsWithCode = true);
 
-  /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.  This takes ownership of the
-  /// module.
-  static ExecutionEngine *create(Module *M);
-
   /// createJIT - This is the factory method for creating a JIT for the current
   /// machine, it does not fall back to the interpreter.  This takes ownership
   /// of the Module and JITMemoryManager if successful.
