@@ -866,3 +866,16 @@ void bar_rev95119() {
   baz_rev95119((double)value);
 }
 
+//===----------------------------------------------------------------------===//
+// Handle loading a symbolic pointer from a symbolic region that was
+// invalidated by a call to an unknown function.
+//===----------------------------------------------------------------------===//
+
+void bar_rev95192(int **x);
+void foo_rev95192(int **x) {
+  *x = 0;
+  bar_rev95192(x);
+  // Not a null dereference.
+  **x = 1; // no-warning
+}
+
