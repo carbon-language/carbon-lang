@@ -132,20 +132,20 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       
-      const MCSymbol *&StubSym = 
+      MCSymbol *&StubSym = 
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
       if (StubSym == 0)
         StubSym = GetGlobalValueSymbol(GV);
       
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-      const MCSymbol *&StubSym =
+      MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
       if (StubSym == 0)
         StubSym = GetGlobalValueSymbol(GV);
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
-      const MCSymbol *&StubSym =
+      MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0)
         StubSym = GetGlobalValueSymbol(GV);
@@ -167,8 +167,8 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       TempNameStr += StringRef(MO.getSymbolName());
       TempNameStr += StringRef("$stub");
       
-      const MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
-      const MCSymbol *&StubSym =
+      MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
+      MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
         TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());

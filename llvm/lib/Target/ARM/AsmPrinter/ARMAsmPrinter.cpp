@@ -200,7 +200,7 @@ namespace {
           
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
-          const MCSymbol *&StubSym =
+          MCSymbol *&StubSym =
             GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
                                         MMIMachO.getGVStubEntry(Sym);
           if (StubSym == 0)

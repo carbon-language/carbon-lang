@@ -25,39 +25,38 @@ namespace llvm {
   class MachineModuleInfoMachO : public MachineModuleInfoImpl {
     /// FnStubs - Darwin '$stub' stubs.  The key is something like "Lfoo$stub",
     /// the value is something like "_foo".
-    DenseMap<const MCSymbol*, const MCSymbol*> FnStubs;
+    DenseMap<MCSymbol*, MCSymbol*> FnStubs;
     
     /// GVStubs - Darwin '$non_lazy_ptr' stubs.  The key is something like
     /// "Lfoo$non_lazy_ptr", the value is something like "_foo".
-    DenseMap<const MCSymbol*, const MCSymbol*> GVStubs;
+    DenseMap<MCSymbol*, MCSymbol*> GVStubs;
     
     /// HiddenGVStubs - Darwin '$non_lazy_ptr' stubs.  The key is something like
     /// "Lfoo$non_lazy_ptr", the value is something like "_foo".  Unlike GVStubs
     /// these are for things with hidden visibility.
-    DenseMap<const MCSymbol*, const MCSymbol*> HiddenGVStubs;
+    DenseMap<MCSymbol*, MCSymbol*> HiddenGVStubs;
     
     virtual void Anchor();  // Out of line virtual method.
   public:
     MachineModuleInfoMachO(const MachineModuleInfo &) {}
     
-    const MCSymbol *&getFnStubEntry(const MCSymbol *Sym) {
+    MCSymbol *&getFnStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return FnStubs[Sym];
     }
 
-    const MCSymbol *&getGVStubEntry(const MCSymbol *Sym) {
+    MCSymbol *&getGVStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return GVStubs[Sym];
     }
 
-    const MCSymbol *&getHiddenGVStubEntry(const MCSymbol *Sym) {
+    MCSymbol *&getHiddenGVStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return HiddenGVStubs[Sym];
     }
     
     /// Accessor methods to return the set of stubs in sorted order.
-    typedef std::vector<std::pair<const MCSymbol*, const MCSymbol*> >
-      SymbolListTy;
+    typedef std::vector<std::pair<MCSymbol*, MCSymbol*> > SymbolListTy;
     
     SymbolListTy GetFnStubList() const {
       return GetSortedStubs(FnStubs);
@@ -71,7 +70,7 @@ namespace llvm {
     
   private:
     static SymbolListTy
-    GetSortedStubs(const DenseMap<const MCSymbol*, const MCSymbol*> &Map);
+    GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map);
   };
   
 } // end namespace llvm

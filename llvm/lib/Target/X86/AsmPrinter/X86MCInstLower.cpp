@@ -82,7 +82,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
 
-    const MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
+    MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
     if (StubSym == 0)
       StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
@@ -90,7 +90,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    const MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
+    MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym == 0)
       StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
@@ -98,7 +98,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
+    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
     if (StubSym == 0)
       StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
@@ -139,7 +139,7 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
+    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
 
     if (StubSym == 0) {
       Name.erase(Name.end()-5, Name.end());

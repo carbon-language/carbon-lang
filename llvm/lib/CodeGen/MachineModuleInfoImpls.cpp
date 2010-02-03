@@ -26,17 +26,17 @@ void MachineModuleInfoMachO::Anchor() {}
 
 static int SortSymbolPair(const void *LHS, const void *RHS) {
   const MCSymbol *LHSS =
-    ((const std::pair<const MCSymbol*, const MCSymbol*>*)LHS)->first;
+    ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
   const MCSymbol *RHSS =
-    ((const std::pair<const MCSymbol*, const MCSymbol*>*)RHS)->first;
+    ((const std::pair<MCSymbol*, MCSymbol*>*)RHS)->first;
   return LHSS->getName().compare(RHSS->getName());
 }
 
 /// GetSortedStubs - Return the entries from a DenseMap in a deterministic
 /// sorted orer.
 MachineModuleInfoMachO::SymbolListTy
-MachineModuleInfoMachO::GetSortedStubs(const DenseMap<const MCSymbol*, 
-                                                      const MCSymbol*> &Map) {
+MachineModuleInfoMachO::GetSortedStubs(const DenseMap<MCSymbol*, 
+                                                      MCSymbol*> &Map) {
   MachineModuleInfoMachO::SymbolListTy List(Map.begin(), Map.end());
   if (!List.empty())
     qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);

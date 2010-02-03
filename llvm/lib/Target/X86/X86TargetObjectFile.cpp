@@ -35,7 +35,7 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
   // Add information about the stub reference to MachOMMI so that the stub gets
   // emitted by the asmprinter.
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
-  const MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
+  MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
   if (StubSym == 0) {
     Name.clear();
     Mang->getNameWithPrefix(Name, GV, false);
