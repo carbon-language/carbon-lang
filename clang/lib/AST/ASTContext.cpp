@@ -4244,6 +4244,9 @@ bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
 /// C99 6.2.7p1: Two types have compatible types if their types are the
 /// same. See 6.7.[2,3,5] for additional rules.
 bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
+  if (getLangOptions().CPlusPlus)
+    return hasSameType(LHS, RHS);
+  
   return !mergeTypes(LHS, RHS).isNull();
 }
 
@@ -4359,15 +4362,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // designates the object or function denoted by the reference, and the
   // expression is an lvalue unless the reference is an rvalue reference and
   // the expression is a function call (possibly inside parentheses).
-  // FIXME: C++ shouldn't be going through here!  The rules are different
-  // enough that they should be handled separately.
-  // FIXME: Merging of lvalue and rvalue references is incorrect. C++ *really*
-  // shouldn't be going through here!
-  if (const ReferenceType *RT = LHS->getAs<ReferenceType>())
-    LHS = RT->getPointeeType();
-  if (const ReferenceType *RT = RHS->getAs<ReferenceType>())
-    RHS = RT->getPointeeType();
-
+  assert(!LHS->getAs<ReferenceType>() && "LHS is a reference type?");
+  assert(!RHS->getAs<ReferenceType>() && "RHS is a reference type?");
+  
   QualType LHSCan = getCanonicalType(LHS),
            RHSCan = getCanonicalType(RHS);
 
