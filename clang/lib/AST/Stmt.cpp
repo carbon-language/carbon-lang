@@ -35,6 +35,7 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 
   // Intialize the table on the first use.
   Initialized = true;
+#define ABSTRACT_EXPR(CLASS, PARENT)
 #define STMT(CLASS, PARENT) \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Name = #CLASS;    \
   StmtClassInfo[(unsigned)Stmt::CLASS##Class].Size = sizeof(CLASS);

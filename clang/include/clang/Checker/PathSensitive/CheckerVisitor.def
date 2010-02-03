@@ -22,7 +22,6 @@
 PREVISIT(ArraySubscriptExpr, Stmt)
 PREVISIT(BinaryOperator, Stmt)
 PREVISIT(CallExpr, Stmt)
-PREVISIT(CastExpr, Stmt)
 PREVISIT(CXXOperatorCallExpr, CallExpr)
 PREVISIT(DeclStmt, Stmt)
 PREVISIT(ObjCMessageExpr, Stmt)

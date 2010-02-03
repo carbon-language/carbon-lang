@@ -1056,21 +1056,38 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 
 void CXXNameMangler::mangleExpression(const Expr *E) {
   // <expression> ::= <unary operator-name> <expression>
-	//              ::= <binary operator-name> <expression> <expression>
-	//              ::= <trinary operator-name> <expression> <expression> <expression>
-  //              ::= cl <expression>* E	        # call
+  //              ::= <binary operator-name> <expression> <expression>
+  //              ::= <trinary operator-name> <expression> <expression> <expression>
+  //              ::= cl <expression>* E	     # call
   //              ::= cv <type> expression           # conversion with one argument
   //              ::= cv <type> _ <expression>* E # conversion with a different number of arguments
-  //              ::= st <type>		        # sizeof (a type)
+  //              ::= st <type>		             # sizeof (a type)
   //              ::= at <type>                      # alignof (a type)
   //              ::= <template-param>
   //              ::= <function-param>
   //              ::= sr <type> <unqualified-name>                   # dependent name
   //              ::= sr <type> <unqualified-name> <template-args>   # dependent template-id
   //              ::= sZ <template-param>                            # size of a parameter pack
-	//              ::= <expr-primary>
+  //              ::= <expr-primary>
   switch (E->getStmtClass()) {
-  default: assert(false && "Unhandled expression kind!");
+  default:
+    llvm_unreachable("unexpected statement kind");
+    break;
+
+  case Expr::CallExprClass:
+    // FIXME: implement
+    llvm_unreachable("mangling not implemented for calls");
+    break;
+
+  case Expr::CXXConstructExprClass:
+    // FIXME: implement
+    llvm_unreachable("mangling not implemented for construct exprs");
+    break;    
+
+  case Expr::SizeOfAlignOfExprClass:
+    // FIXME: implement
+    llvm_unreachable("mangling not implemented for sizeof/alignof");
+    break;
 
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *UO = cast<UnaryOperator>(E);

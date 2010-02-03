@@ -42,7 +42,6 @@ public:
         return;
 
       case Stmt::ImplicitCastExprClass:
-      case Stmt::ExplicitCastExprClass:
       case Stmt::CStyleCastExprClass:
         static_cast<ImplClass*>(this)->PreVisitCastExpr(C,
                                                static_cast<const CastExpr*>(S));
@@ -82,16 +81,18 @@ break;
 
   void PreVisitStmt(CheckerContext &C, const Stmt *S) {}
   void PostVisitStmt(CheckerContext &C, const Stmt *S) {}
+
+  void PreVisitCastExpr(CheckerContext &C, const CastExpr *E) {
+    static_cast<ImplClass*>(this)->PreVisitStmt(C, E);
+  }
   
 #define PREVISIT(NAME, FALLBACK) \
 void PreVisit ## NAME(CheckerContext &C, const NAME* S) {\
-  PreVisit ## FALLBACK(C, S);\
+  static_cast<ImplClass*>(this)->PreVisit ## FALLBACK(C, S);\
 }
-#include "clang/Checker/PathSensitive/CheckerVisitor.def"
-      
 #define POSTVISIT(NAME, FALLBACK) \
 void PostVisit ## NAME(CheckerContext &C, const NAME* S) {\
-  PostVisit ## FALLBACK(C, S);\
+  static_cast<ImplClass*>(this)->PostVisit ## FALLBACK(C, S);\
 }
 #include "clang/Checker/PathSensitive/CheckerVisitor.def"
 };

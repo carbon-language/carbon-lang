@@ -115,7 +115,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
     K = CXCursor_UnexposedStmt;
     break;
       
-  case Stmt::ExprClass:
   case Stmt::PredefinedExprClass:        
   case Stmt::IntegerLiteralClass:        
   case Stmt::FloatingLiteralClass:       
@@ -126,12 +125,10 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, ASTUnit *TU) {
   case Stmt::UnaryOperatorClass:         
   case Stmt::SizeOfAlignOfExprClass:     
   case Stmt::ArraySubscriptExprClass:    
-  case Stmt::CastExprClass:              
   case Stmt::BinaryOperatorClass:        
   case Stmt::CompoundAssignOperatorClass:
   case Stmt::ConditionalOperatorClass:   
   case Stmt::ImplicitCastExprClass:
-  case Stmt::ExplicitCastExprClass:
   case Stmt::CStyleCastExprClass:
   case Stmt::CompoundLiteralExprClass:   
   case Stmt::ExtVectorElementExprClass:  

@@ -1616,7 +1616,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::BlockExprClass:
   case Expr::BlockDeclRefExprClass:
   case Expr::NoStmtClass:
-  case Expr::ExprClass:
     return ICEDiag(2, E->getLocStart());
 
   case Expr::GNUNullExprClass:
@@ -1812,9 +1811,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     }
     }
   }
-  case Expr::CastExprClass:
   case Expr::ImplicitCastExprClass:
-  case Expr::ExplicitCastExprClass:
   case Expr::CStyleCastExprClass:
   case Expr::CXXFunctionalCastExprClass:
   case Expr::CXXNamedCastExprClass:

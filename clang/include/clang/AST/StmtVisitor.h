@@ -105,6 +105,7 @@ public:
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (S->getStmtClass()) {
     default: assert(0 && "Unknown stmt kind!");
+#define ABSTRACT_EXPR(CLASS, PARENT)
 #define STMT(CLASS, PARENT)                              \
     case Stmt::CLASS ## Class: DISPATCH(CLASS, CLASS);
 #include "clang/AST/StmtNodes.def"

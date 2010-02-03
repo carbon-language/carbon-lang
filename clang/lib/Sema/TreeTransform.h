@@ -1684,6 +1684,7 @@ Sema::OwningStmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
 
   // Transform expressions by calling TransformExpr.
 #define STMT(Node, Parent)
+#define ABSTRACT_EXPR(Node, Parent)
 #define EXPR(Node, Parent) case Stmt::Node##Class:
 #include "clang/AST/StmtNodes.def"
     {
@@ -1707,6 +1708,7 @@ Sema::OwningExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
   switch (E->getStmtClass()) {
     case Stmt::NoStmtClass: break;
 #define STMT(Node, Parent) case Stmt::Node##Class: break;
+#define ABSTRACT_EXPR(Node, Parent)
 #define EXPR(Node, Parent)                                              \
     case Stmt::Node##Class: return getDerived().Transform##Node(cast<Node>(E));
 #include "clang/AST/StmtNodes.def"
@@ -3829,13 +3831,6 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
 
 template<typename Derived>
 Sema::OwningExprResult
-TreeTransform<Derived>::TransformCastExpr(CastExpr *E) {
-  assert(false && "Cannot transform abstract class");
-  return SemaRef.Owned(E->Retain());
-}
-
-template<typename Derived>
-Sema::OwningExprResult
 TreeTransform<Derived>::TransformBinaryOperator(BinaryOperator *E) {
   OwningExprResult LHS = getDerived().TransformExpr(E->getLHS());
   if (LHS.isInvalid())
@@ -3895,13 +3890,6 @@ TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
   // Implicit casts are eliminated during transformation, since they
   // will be recomputed by semantic analysis after transformation.
   return getDerived().TransformExpr(E->getSubExprAsWritten());
-}
-
-template<typename Derived>
-Sema::OwningExprResult
-TreeTransform<Derived>::TransformExplicitCastExpr(ExplicitCastExpr *E) {
-  assert(false && "Cannot transform abstract class");
-  return SemaRef.Owned(E->Retain());
 }
 
 template<typename Derived>
