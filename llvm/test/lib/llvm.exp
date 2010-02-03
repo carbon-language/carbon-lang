@@ -301,6 +301,16 @@ proc llvm_supports_target { tgtName } {
   return 0
 }
 
+proc llvm_supports_darwin_and_target { tgtName } {
+  global target_triplet
+  if { [ llvm_supports_target $tgtName ] } {
+    if { [regexp darwin $target_triplet match] } {
+      return 1
+    }
+  }
+  return 0
+}
+
 # This procedure provides an interface to check the BINDINGS_TO_BUILD makefile
 # variable to see if a particular binding has been configured to build.
 proc llvm_supports_binding { name } {
