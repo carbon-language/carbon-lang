@@ -2732,7 +2732,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     assert(ParamRefType->getPointeeType()->isObjectType() &&
            "Only object references allowed here");
 
-    if (!Context.hasSameUnqualifiedType(ParamRefType->getPointeeType(), ArgType)) {
+    QualType ReferredType = ParamRefType->getPointeeType();
+    if (!Context.hasSameUnqualifiedType(ReferredType, ArgType)) {
       Diag(Arg->getSourceRange().getBegin(),
            diag::err_template_arg_no_ref_bind)
         << InstantiatedParamType << Arg->getType()
@@ -2742,7 +2743,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     }
 
     unsigned ParamQuals
-      = Context.getCanonicalType(ParamType).getCVRQualifiers();
+      = Context.getCanonicalType(ReferredType).getCVRQualifiers();
     unsigned ArgQuals = Context.getCanonicalType(ArgType).getCVRQualifiers();
 
     if ((ParamQuals | ArgQuals) != ParamQuals) {
