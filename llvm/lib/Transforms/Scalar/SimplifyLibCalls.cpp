@@ -1213,8 +1213,13 @@ struct StrCpyChkOpt : public LibCallOptimization {
     if (!SizeCI)
       return 0;
     
-    // We don't have any length information, just lower to a plain strcpy.
-    if (SizeCI->isAllOnesValue())
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain strcpy. Otherwise we'll keep our
+    // strcpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2)))
       return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B);
 
     return 0;
