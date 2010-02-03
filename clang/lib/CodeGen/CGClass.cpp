@@ -838,7 +838,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   // was implicitly generated, we shouldn't be zeroing memory.
   RValue RHS;
   if (FieldType->isReferenceType()) {
-    RHS = CGF.EmitReferenceBindingToExpr(MemberInit->getInit(), FieldType,
+    RHS = CGF.EmitReferenceBindingToExpr(MemberInit->getInit(),
                                          /*IsInitializer=*/true);
     CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
   } else if (FieldType->isArrayType() && !MemberInit->getInit()) {

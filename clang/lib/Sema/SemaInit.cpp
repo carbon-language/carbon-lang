@@ -3304,31 +3304,16 @@ InitializationSequence::Perform(Sema &S,
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
         return S.ExprError();
-      
-      // FIXME: We should do this for all types.
-      if (DestType->isAnyComplexType()) {
-        CurInit = 
-          S.Owned(CXXBindReferenceExpr::Create(S.Context, 
-                                               CurInit.takeAs<Expr>(), 
-                                               /*ExtendsLifetime=*/false,
-                                               /*RequiresTemporaryCopy=*/false));
-      }
 
       break;
 
     case SK_BindReferenceToTemporary:
+      // Reference binding does not have any corresponding ASTs.
+
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
         return S.ExprError();
 
-      // FIXME: We should do this for all types.
-      if (DestType->isAnyComplexType()) {
-        CurInit = 
-          S.Owned(CXXBindReferenceExpr::Create(S.Context, 
-                                               CurInit.takeAs<Expr>(), 
-                                               /*ExtendsLifetime=*/false,
-                                               /*RequiresTemporaryCopy=*/true));
-      }
       break;
         
     case SK_UserConversion: {

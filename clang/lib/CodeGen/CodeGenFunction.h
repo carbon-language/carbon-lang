@@ -1111,10 +1111,7 @@ public:
 
   /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
   /// expression. Will emit a temporary variable if E is not an LValue.
-  RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType,
-                                    bool IsInitializer = false);
-
-  llvm::Value *EmitCXXBindReferenceExpr(const CXXBindReferenceExpr *E);
+  RValue EmitReferenceBindingToExpr(const Expr* E, bool IsInitializer = false);
 
   //===--------------------------------------------------------------------===//
   //                           Expression Emission

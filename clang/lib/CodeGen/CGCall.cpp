@@ -802,11 +802,8 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 }
 
 RValue CodeGenFunction::EmitCallArg(const Expr *E, QualType ArgType) {
-  if (const CXXBindReferenceExpr *BE = dyn_cast<CXXBindReferenceExpr>(E))
-    return RValue::get(EmitCXXBindReferenceExpr(BE));
-  
   if (ArgType->isReferenceType())
-    return EmitReferenceBindingToExpr(E, ArgType);
+    return EmitReferenceBindingToExpr(E);
 
   return EmitAnyExprToTemp(E);
 }

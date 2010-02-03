@@ -92,31 +92,8 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
                      IsInitializer);
 }
 
-llvm::Value * 
-CodeGenFunction::EmitCXXBindReferenceExpr(const CXXBindReferenceExpr *E) {
-  QualType T = E->getType();
-  assert(T->isAnyComplexType() && "FIXME: Unhandled bind expression!");
-  
-  const Expr *SubExpr = E->getSubExpr();
-
-  if (!E->requiresTemporaryCopy())
-    return EmitLValue(SubExpr).getAddress();
-
-  llvm::Value *Value = CreateTempAlloca(ConvertTypeForMem(T), "reftmp");
-    
-  if (T->isAnyComplexType()) 
-    EmitComplexExprIntoAddr(SubExpr, Value, /*DestIsVolatile=*/false);
-  else
-    assert(false && "Unhandled bind expression");
-    
-  return Value;
-}
-
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
-                                                   QualType DestType,
                                                    bool IsInitializer) {
-  assert(!E->getType()->isAnyComplexType() && 
-         "Should not use this function for complex types!");
   bool ShouldDestroyTemporaries = false;
   unsigned OldNumLiveTemporaries = 0;
 
@@ -478,8 +455,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
   case Expr::CXXBindTemporaryExprClass:
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
-  case Expr::CXXBindReferenceExprClass:
-    return EmitLValue(cast<CXXBindReferenceExpr>(E)->getSubExpr());
   case Expr::CXXExprWithTemporariesClass:
     return EmitCXXExprWithTemporariesLValue(cast<CXXExprWithTemporaries>(E));
   case Expr::CXXZeroInitValueExprClass:
