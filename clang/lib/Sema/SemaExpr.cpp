@@ -1668,6 +1668,8 @@ Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
     Ty = Context.IntTy;   // 'x' and L'x' -> int in C.
   else if (Literal.isWide())
     Ty = Context.WCharTy; // L'x' -> wchar_t in C++.
+  else if (Literal.isMultiChar())
+    Ty = Context.IntTy;   // 'wxyz' -> int in C++.
   else
     Ty = Context.CharTy;  // 'x' -> char in C++
 
