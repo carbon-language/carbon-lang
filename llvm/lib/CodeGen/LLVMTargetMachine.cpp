@@ -126,14 +126,18 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   formatted_raw_ostream *LegacyOutput;
   switch (FileType) {
   default: return CGFT_ErrorOccurred;
-  case CGFT_AssemblyFile:
-    AsmStreamer.reset(createAsmStreamer(*Context, Out, *getMCAsmInfo(),
+  case CGFT_AssemblyFile: {
+    const MCAsmInfo &MAI = *getMCAsmInfo();
+    MCInstPrinter *InstPrinter =
+      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, Out);
+    AsmStreamer.reset(createAsmStreamer(*Context, Out, MAI,
                                         getTargetData()->isLittleEndian(),
-                                        getVerboseAsm(), /*instprinter*/0,
+                                        getVerboseAsm(), InstPrinter,
                                         /*codeemitter*/0));
     // Set the AsmPrinter's "O" to the output file.
     LegacyOutput = &Out;
     break;
+  }
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
