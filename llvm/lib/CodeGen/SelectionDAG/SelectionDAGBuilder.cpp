@@ -4205,8 +4205,13 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
   const ReturnInst *Ret = dyn_cast<ReturnInst>(Term);
   const Function *F = ExitBB->getParent();
 
-  // The block must end in a return statement or an unreachable.
-  if (!Ret && !isa<UnreachableInst>(Term)) return false;
+  // The block must end in a return statement.
+  // FIXME: Disallow tailcall if the block ends in an unreachable for now.
+  // The way tailcall optimization is currently implemented means it will
+  // add an epilogue followed by a jump. That is not profitable. Also, if
+  // the callee is a special function (e.g. longjmp on x86), it can end up
+  // causing miscompilation that has not been fully understood.
+  if (!Ret) return false;
 
   // Unless we are explicitly forcing tailcall optimization do not tailcall if
   // the called function is bitcast'ed. The analysis may not be entirely

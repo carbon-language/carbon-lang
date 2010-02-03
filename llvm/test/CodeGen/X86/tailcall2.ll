@@ -127,3 +127,16 @@ entry:
   %1 = tail call signext i16 %0(i32 0) nounwind
   ret i16 %1
 }
+
+define void @t10() nounwind ssp {
+entry:
+; 32: t10:
+; 32: call
+
+; 64: t10:
+; 64: callq
+  %0 = tail call i32 @foo4() noreturn nounwind
+  unreachable
+}
+
+declare i32 @foo4()
