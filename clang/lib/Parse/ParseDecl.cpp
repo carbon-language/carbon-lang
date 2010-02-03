@@ -1398,7 +1398,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
                                         const char *&PrevSpec,
                                         unsigned &DiagID,
-                                      const ParsedTemplateInfo &TemplateInfo) {
+                                        const ParsedTemplateInfo &TemplateInfo,
+                                        bool SuppressDeclarations) {
   SourceLocation Loc = Tok.getLocation();
 
   switch (Tok.getKind()) {
@@ -1408,7 +1409,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-                                        TemplateInfo);
+                                        TemplateInfo, SuppressDeclarations);
     // Otherwise, not a type specifier.
     return false;
   case tok::coloncolon:   // ::foo::bar
@@ -1420,7 +1421,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return ParseOptionalTypeSpecifier(DS, isInvalid, PrevSpec, DiagID,
-                                        TemplateInfo);
+                                        TemplateInfo, SuppressDeclarations);
     // Otherwise, not a type specifier.
     return false;
 
@@ -1526,7 +1527,8 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw_union: {
     tok::TokenKind Kind = Tok.getKind();
     ConsumeToken();
-    ParseClassSpecifier(Kind, Loc, DS, TemplateInfo);
+    ParseClassSpecifier(Kind, Loc, DS, TemplateInfo, AS_none,
+                        SuppressDeclarations);
     return true;
   }
 

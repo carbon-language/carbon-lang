@@ -547,7 +547,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
 /// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
 /// until we reach the start of a definition or see a token that
-/// cannot start a definition.
+/// cannot start a definition. If SuppressDeclarations is true, we do know.
 ///
 ///       class-specifier: [C++ class]
 ///         class-head '{' member-specification[opt] '}'
@@ -587,7 +587,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
 void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  SourceLocation StartLoc, DeclSpec &DS,
                                  const ParsedTemplateInfo &TemplateInfo,
-                                 AccessSpecifier AS) {
+                                 AccessSpecifier AS, bool SuppressDeclarations){
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -733,8 +733,16 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // have to be treated differently.  If we have 'struct foo {...' or
   // 'struct foo :...' then this is a definition. Otherwise we have
   // something like 'struct foo xyz', a reference.
+  // However, in some contexts, things look like declarations but are just
+  // references, e.g.
+  // new struct s;
+  // or
+  // &T::operator struct s;
+  // For these, SuppressDeclarations is true.
   Action::TagUseKind TUK;
-  if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon))) {
+  if (SuppressDeclarations)
+    TUK = Action::TUK_Reference;
+  else if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon))){
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.

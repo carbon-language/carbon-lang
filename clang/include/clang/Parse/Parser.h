@@ -1065,7 +1065,8 @@ private:
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, bool &isInvalid,
                                   const char *&PrevSpec,
                                   unsigned &DiagID,
-               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
+               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
+                                  bool SuppressDeclarations = false);
 
   void ParseSpecifierQualifierList(DeclSpec &DS);
 
@@ -1311,7 +1312,8 @@ private:
   void ParseClassSpecifier(tok::TokenKind TagTokKind, SourceLocation TagLoc,
                            DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
-                           AccessSpecifier AS = AS_none);
+                           AccessSpecifier AS = AS_none,
+                           bool SuppressDeclarations = false);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    DeclPtrTy TagDecl);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
