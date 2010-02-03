@@ -70,3 +70,71 @@
 
 // CHECK: shll $2, %eax
         sall $2, %eax
+
+// CHECK: rep
+// CHECK: insb
+        rep;insb
+
+// CHECK: rep
+// CHECK: outsb
+        rep;outsb
+
+// CHECK: rep
+// CHECK: movsb
+        rep;movsb
+
+// CHECK: rep
+// CHECK: lodsb
+        rep;lodsb
+
+// CHECK: rep
+// CHECK: stosb
+        rep;stosb
+
+// NOTE: repz and repe have the same opcode as rep
+// CHECK: rep
+// CHECK: cmpsb
+        repz;cmpsb
+
+// NOTE: repnz has the same opcode as repne
+// CHECK: repne
+// CHECK: cmpsb
+        repnz;cmpsb
+
+// NOTE: repe and repz have the same opcode as rep
+// CHECK: rep
+// CHECK: scasb
+        repe;scasb
+
+// CHECK: repne
+// CHECK: scasb
+        repne;scasb
+
+// CHECK: lock
+// CHECK: cmpxchgb %al, 0(%ebx)
+        lock;cmpxchgb %al, 0(%ebx)
+
+// CHECK: cs
+// CHECK: movb 0(%eax), %al
+        cs;movb 0(%eax), %al
+
+// CHECK: ss
+// CHECK: movb 0(%eax), %al
+        ss;movb 0(%eax), %al
+
+// CHECK: ds
+// CHECK: movb 0(%eax), %al
+        ds;movb 0(%eax), %al
+
+// CHECK: es
+// CHECK: movb 0(%eax), %al
+        es;movb 0(%eax), %al
+
+// CHECK: fs
+// CHECK: movb 0(%eax), %al
+        fs;movb 0(%eax), %al
+
+// CHECK: gs
+// CHECK: movb 0(%eax), %al
+        gs;movb 0(%eax), %al
+

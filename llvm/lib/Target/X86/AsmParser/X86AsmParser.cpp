@@ -462,8 +462,18 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
   if (Name.startswith("sal")) {
     std::string Tmp = "shl" + Name.substr(3).str();
     Operands.push_back(X86Operand::CreateToken(Tmp, NameLoc));
-  } else
-    Operands.push_back(X86Operand::CreateToken(Name, NameLoc));
+  } else {
+    // FIXME: This is a hack.  We eventually want to add a general pattern
+    // mechanism to be used in the table gen file for these assembly names that
+    // use the same opcodes.  Also we should only allow the "alternate names"
+    // for rep and repne with the instructions they can only appear with.
+    StringRef PatchedName = Name;
+    if (Name == "repe" || Name == "repz")
+      PatchedName = "rep";
+    else if (Name == "repnz")
+      PatchedName = "repne";
+    Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
+  }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 

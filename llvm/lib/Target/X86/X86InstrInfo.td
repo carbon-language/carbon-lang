@@ -883,7 +883,7 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)]>, Requires<[In32BitMode]>;
 
-let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI] in {
+let Defs = [ECX,EDI,ESI], Uses = [ECX,EDI,ESI], isCodeGenOnly = 1 in {
 def REP_MOVSB : I<0xA4, RawFrm, (outs), (ins), "{rep;movsb|rep movsb}",
                   [(X86rep_movs i8)]>, REP;
 def REP_MOVSW : I<0xA5, RawFrm, (outs), (ins), "{rep;movsw|rep movsw}",
@@ -892,15 +892,30 @@ def REP_MOVSD : I<0xA5, RawFrm, (outs), (ins), "{rep;movsl|rep movsd}",
                   [(X86rep_movs i32)]>, REP;
 }
 
-let Defs = [ECX,EDI], Uses = [AL,ECX,EDI] in
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [EDI,ESI], Uses = [EDI,ESI,EFLAGS] in {
+def MOVSB : I<0xA4, RawFrm, (outs), (ins), "{movsb}", []>;
+def MOVSW : I<0xA5, RawFrm, (outs), (ins), "{movsw}", []>, OpSize;
+def MOVSD : I<0xA5, RawFrm, (outs), (ins), "{movsl|movsd}", []>;
+}
+
+let Defs = [ECX,EDI], Uses = [AL,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSB : I<0xAA, RawFrm, (outs), (ins), "{rep;stosb|rep stosb}",
                   [(X86rep_stos i8)]>, REP;
-let Defs = [ECX,EDI], Uses = [AX,ECX,EDI] in
+let Defs = [ECX,EDI], Uses = [AX,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSW : I<0xAB, RawFrm, (outs), (ins), "{rep;stosw|rep stosw}",
                   [(X86rep_stos i16)]>, REP, OpSize;
-let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI] in
+let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI], isCodeGenOnly = 1 in
 def REP_STOSD : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
                   [(X86rep_stos i32)]>, REP;
+
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [EDI], Uses = [AL,EDI,EFLAGS] in
+def STOSB : I<0xAA, RawFrm, (outs), (ins), "{stosb}", []>;
+let Defs = [EDI], Uses = [AX,EDI,EFLAGS] in
+def STOSW : I<0xAB, RawFrm, (outs), (ins), "{stosw}", []>, OpSize;
+let Defs = [EDI], Uses = [EAX,EDI,EFLAGS] in
+def STOSD : I<0xAB, RawFrm, (outs), (ins), "{stosl|stosd}", []>;
 
 def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scas{b}", []>;
 def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scas{w}", []>, OpSize;
@@ -1002,6 +1017,7 @@ def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, imm:$src)]>;
 }
+
 def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
                    [(store (i8 imm:$src), addr:$dst)]>;
@@ -4161,6 +4177,26 @@ def LLDT16r : I<0x00, MRM2r, (outs), (ins GR16:$src),
 def LLDT16m : I<0x00, MRM2m, (outs), (ins i16mem:$src),
                 "lldt{w}\t$src", []>, TB;
                 
+// Lock instruction prefix
+def LOCK_PREFIX : I<0xF0, RawFrm, (outs),  (ins), "lock", []>;
+
+// Repeat string operation instruction prefixes
+// These uses the DF flag in the EFLAGS register to inc or dec ECX
+let Defs = [ECX], Uses = [ECX,EFLAGS] in {
+// Repeat (used with INS, OUTS, MOVS, LODS and STOS)
+def REP_PREFIX : I<0xF3, RawFrm, (outs),  (ins), "rep", []>;
+// Repeat while not equal (used with CMPS and SCAS)
+def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
+}
+
+// Segment override instruction prefixes
+def CS_PREFIX : I<0x2E, RawFrm, (outs),  (ins), "cs", []>;
+def SS_PREFIX : I<0x36, RawFrm, (outs),  (ins), "ss", []>;
+def DS_PREFIX : I<0x3E, RawFrm, (outs),  (ins), "ds", []>;
+def ES_PREFIX : I<0x26, RawFrm, (outs),  (ins), "es", []>;
+def FS_PREFIX : I<0x64, RawFrm, (outs),  (ins), "fs", []>;
+def GS_PREFIX : I<0x65, RawFrm, (outs),  (ins), "gs", []>;
+
 // String manipulation instructions
 
 def LODSB : I<0xAC, RawFrm, (outs), (ins), "lodsb", []>;
