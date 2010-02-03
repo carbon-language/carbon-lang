@@ -20,3 +20,15 @@ int f() {
   return b.i;
 }
 
+// Test that we don't try to fold the default value of j when initializing i.
+// CHECK: define i32 @_Z9test_foldv() nounwind
+int test_fold() {
+  struct A {
+    A(const int j = 1) : i(j) { } 
+    int i;
+  };
+
+  // CHECK: ret i32 2
+  return A(2).i;
+}
+

@@ -878,6 +878,10 @@ bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   // In C, they can also be folded, although they are not ICEs.
   if (Info.Ctx.getCanonicalType(E->getType()).getCVRQualifiers() 
                                                         == Qualifiers::Const) {
+
+    if (isa<ParmVarDecl>(D))
+      return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
+
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (const Expr *Init = VD->getAnyInitializer()) {
         if (APValue *V = VD->getEvaluatedValue()) {
