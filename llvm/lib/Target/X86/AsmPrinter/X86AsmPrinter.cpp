@@ -45,13 +45,6 @@ using namespace llvm;
 // Primitive Helper Functions.
 //===----------------------------------------------------------------------===//
 
-void X86AsmPrinter::printMCInst(const MCInst *MI) {
-  if (MAI->getAssemblerDialect() == 0)
-    X86ATTInstPrinter(O, *MAI).printInstruction(MI);
-  else
-    X86IntelInstPrinter(O, *MAI).printInstruction(MI);
-}
-
 void X86AsmPrinter::PrintPICBaseSymbol() const {
   const TargetLowering *TLI = TM.getTargetLowering();
   O << *static_cast<const X86TargetLowering*>(TLI)->getPICBaseSymbol(MF,

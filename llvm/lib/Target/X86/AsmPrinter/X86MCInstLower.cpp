@@ -466,8 +466,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // lot of extra uniquing.
     TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(PICBase,
                                                                  OutContext)));
-    printMCInst(&TmpInst);
-    O << '\n';
+    OutStreamer.EmitInstruction(TmpInst);
     
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
@@ -475,8 +474,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // popl $reg
     TmpInst.setOpcode(X86::POP32r);
     TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
-    printMCInst(&TmpInst);
-    O << '\n';
+    OutStreamer.EmitInstruction(TmpInst);
     return;
   }
       
@@ -513,8 +511,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
     TmpInst.addOperand(MCOperand::CreateExpr(DotExpr));
-    printMCInst(&TmpInst);
-    O << '\n';
+    OutStreamer.EmitInstruction(TmpInst);
     return;
   }
   }
@@ -523,7 +520,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInstLowering.Lower(MI, TmpInst);
   
   
-  printMCInst(&TmpInst);
-  O << '\n';
+  OutStreamer.EmitInstruction(TmpInst);
 }
 
