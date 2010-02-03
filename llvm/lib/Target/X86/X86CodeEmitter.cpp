@@ -1100,7 +1100,7 @@ public:
 }
 
 // Ok, now you can look.
-MCCodeEmitter *llvm::createX86MCCodeEmitter(const Target &,
-                                            TargetMachine &TM) {
+MCCodeEmitter *llvm::createHeinousX86MCCodeEmitter(const Target &,
+                                                   TargetMachine &TM) {
   return new X86MCCodeEmitter(static_cast<X86TargetMachine&>(TM));
 }

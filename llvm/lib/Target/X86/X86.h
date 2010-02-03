@@ -49,7 +49,7 @@ FunctionPass *createX87FPRegKillInserterPass();
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
-MCCodeEmitter *createX86MCCodeEmitter(const Target &, TargetMachine &TM);
+MCCodeEmitter *createHeinousX86MCCodeEmitter(const Target &, TargetMachine &TM);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically
