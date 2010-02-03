@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/Linkage.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
@@ -974,6 +975,9 @@ public:
 
   const char *getTypeClassName() const;
 
+  /// \brief Determine the linkage of this type.
+  virtual Linkage getLinkage() const;
+
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
   static bool classof(const Type *) { return true; }
@@ -1062,6 +1066,8 @@ public:
     return TypeKind >= Float && TypeKind <= LongDouble;
   }
 
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
 };
@@ -1089,6 +1095,8 @@ public:
     ID.AddPointer(Element.getAsOpaquePtr());
   }
 
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
 };
@@ -1115,6 +1123,8 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
   }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
@@ -1145,6 +1155,8 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
       ID.AddPointer(Pointee.getAsOpaquePtr());
   }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == BlockPointer;
@@ -1202,6 +1214,8 @@ public:
     ID.AddPointer(Referencee.getAsOpaquePtr());
     ID.AddBoolean(SpelledAsLValue);
   }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == LValueReference ||
@@ -1277,6 +1291,8 @@ public:
     ID.AddPointer(Class);
   }
 
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == MemberPointer;
   }
@@ -1327,6 +1343,8 @@ public:
     return Qualifiers::fromCVRMask(IndexTypeQuals);
   }
   unsigned getIndexTypeCVRQualifiers() const { return IndexTypeQuals; }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
@@ -1611,6 +1629,9 @@ public:
     ID.AddInteger(NumElements);
     ID.AddInteger(TypeClass);
   }
+
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector;
   }
@@ -1753,6 +1774,8 @@ public:
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
 
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
   }
@@ -1855,6 +1878,8 @@ public:
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
@@ -2057,6 +2082,8 @@ public:
   /// defined.
   bool isBeingDefined() const { return decl.getInt(); }
   void setBeingDefined(bool Def) const { decl.setInt(Def? 1 : 0); }
+
+  virtual Linkage getLinkage() const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
@@ -2548,6 +2575,8 @@ public:
                       const ObjCInterfaceDecl *Decl,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
 
+  virtual Linkage getLinkage() const;
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCInterface;
   }
@@ -2627,6 +2656,8 @@ public:
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
+
+  virtual Linkage getLinkage() const;
 
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType T,

@@ -20,3 +20,17 @@ void fn(T t, const arg& arg) {
 void test() {
   fn(1, arg());
 }
+
+struct X0 { };
+
+struct X1 {
+  explicit X1(const X0 &x0 = X0());
+};
+
+template<typename T>
+void f0() {
+  X1 x1;
+}
+
+template void f0<int>();
+template void f0<float>();

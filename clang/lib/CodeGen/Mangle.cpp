@@ -178,8 +178,7 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
     if (isa<FunctionDecl>(DC) && D->hasLinkage())
       while (!DC->isNamespace() && !DC->isTranslationUnit())
         DC = DC->getParent();
-    if (DC->isTranslationUnit() &&
-        D->getLinkage() != NamedDecl::InternalLinkage)
+    if (DC->isTranslationUnit() && D->getLinkage() != InternalLinkage)
       return false;
   }
 
@@ -420,7 +419,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
       // We must avoid conflicts between internally- and externally-
       // linked names in the same TU. This naming convention is the
       // same as that followed by GCC, though it shouldn't actually matter.
-      if (ND->getLinkage() == NamedDecl::InternalLinkage &&
+      if (ND->getLinkage() == InternalLinkage &&
           ND->getDeclContext()->isFileContext())
         Out << 'L';
 

@@ -77,6 +77,7 @@ namespace clang {
     AS_private,
     AS_none
   };
-}
+
+} // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

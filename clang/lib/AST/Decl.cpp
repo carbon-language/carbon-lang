@@ -47,7 +47,72 @@ TypeLoc TypeSourceInfo::getTypeLoc() const {
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
-static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
+/// \brief Get the most restrictive linkage for the types in the given
+/// template parameter list.
+static Linkage 
+getLinkageForTemplateParameterList(const TemplateParameterList *Params) {
+  Linkage L = ExternalLinkage;
+  for (TemplateParameterList::const_iterator P = Params->begin(),
+                                          PEnd = Params->end();
+       P != PEnd; ++P) {
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P))
+      if (!NTTP->getType()->isDependentType()) {
+        L = minLinkage(L, NTTP->getType()->getLinkage());
+        continue;
+      }
+
+    if (TemplateTemplateParmDecl *TTP
+                                   = dyn_cast<TemplateTemplateParmDecl>(*P)) {
+      L = minLinkage(L, 
+            getLinkageForTemplateParameterList(TTP->getTemplateParameters()));
+    }
+  }
+
+  return L;
+}
+
+/// \brief Get the most restrictive linkage for the types and
+/// declarations in the given template argument list.
+static Linkage getLinkageForTemplateArgumentList(const TemplateArgument *Args,
+                                                 unsigned NumArgs) {
+  Linkage L = ExternalLinkage;
+
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    switch (Args[I].getKind()) {
+    case TemplateArgument::Null:
+    case TemplateArgument::Integral:
+    case TemplateArgument::Expression:
+      break;
+      
+    case TemplateArgument::Type:
+      L = minLinkage(L, Args[I].getAsType()->getLinkage());
+      break;
+
+    case TemplateArgument::Declaration:
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(Args[I].getAsDecl()))
+        L = minLinkage(L, ND->getLinkage());
+      if (ValueDecl *VD = dyn_cast<ValueDecl>(Args[I].getAsDecl()))
+        L = minLinkage(L, VD->getType()->getLinkage());
+      break;
+
+    case TemplateArgument::Template:
+      if (TemplateDecl *Template
+                                = Args[I].getAsTemplate().getAsTemplateDecl())
+        L = minLinkage(L, Template->getLinkage());
+      break;
+
+    case TemplateArgument::Pack:
+      L = minLinkage(L, 
+                     getLinkageForTemplateArgumentList(Args[I].pack_begin(),
+                                                       Args[I].pack_size()));
+      break;
+    }
+  }
+
+  return L;
+}
+
+static Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   assert(D->getDeclContext()->getLookupContext()->isFileContext() &&
          "Not a name having namespace scope");
   ASTContext &Context = D->getASTContext();
@@ -61,7 +126,7 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     // Explicitly declared static.
     if (Var->getStorageClass() == VarDecl::Static)
-      return NamedDecl::InternalLinkage;
+      return InternalLinkage;
 
     // - an object or reference that is explicitly declared const
     //   and neither explicitly declared extern nor previously
@@ -75,13 +140,16 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       for (const VarDecl *PrevVar = Var->getPreviousDeclaration();
            PrevVar && !FoundExtern; 
            PrevVar = PrevVar->getPreviousDeclaration())
-        if (PrevVar->getLinkage() == NamedDecl::ExternalLinkage)
+        if (isExternalLinkage(PrevVar->getLinkage()))
           FoundExtern = true;
       
       if (!FoundExtern)
-        return NamedDecl::InternalLinkage;
+        return InternalLinkage;
     }
   } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
+    // C++ [temp]p4:
+    //   A non-member function template can have internal linkage; any
+    //   other template name shall have external linkage.
     const FunctionDecl *Function = 0;
     if (const FunctionTemplateDecl *FunTmpl
                                         = dyn_cast<FunctionTemplateDecl>(D))
@@ -91,11 +159,11 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
 
     // Explicitly declared static.
     if (Function->getStorageClass() == FunctionDecl::Static)
-      return NamedDecl::InternalLinkage;
+      return InternalLinkage;
   } else if (const FieldDecl *Field = dyn_cast<FieldDecl>(D)) {
     //   - a data member of an anonymous union.
     if (cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion())
-      return NamedDecl::InternalLinkage;
+      return InternalLinkage;
   }
 
   // C++ [basic.link]p4:
@@ -118,7 +186,7 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
       if (const VarDecl *PrevVar = Var->getPreviousDeclaration()) {
-        if (NamedDecl::Linkage L = PrevVar->getLinkage())
+        if (Linkage L = PrevVar->getLinkage())
           return L;
       }
     }
@@ -127,7 +195,10 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
     //   If the declaration of an identifier for an object has file
     //   scope and no storage-class specifier, its linkage is
     //   external.
-    return NamedDecl::ExternalLinkage;
+    if (Var->isInAnonymousNamespace())
+      return UniqueExternalLinkage;
+
+    return ExternalLinkage;
   }
 
   //     - a function, unless it has internal linkage; or
@@ -151,12 +222,26 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
       if (const FunctionDecl *PrevFunc = Function->getPreviousDeclaration()) {
-        if (NamedDecl::Linkage L = PrevFunc->getLinkage())
+        if (Linkage L = PrevFunc->getLinkage())
           return L;
       }
     }
 
-    return NamedDecl::ExternalLinkage;
+    if (Function->isInAnonymousNamespace())
+      return UniqueExternalLinkage;
+
+    if (FunctionTemplateSpecializationInfo *SpecInfo
+                               = Function->getTemplateSpecializationInfo()) {
+      Linkage L = SpecInfo->getTemplate()->getLinkage();
+      const TemplateArgumentList &TemplateArgs = *SpecInfo->TemplateArguments;
+      L = minLinkage(L, 
+                     getLinkageForTemplateArgumentList(
+                                          TemplateArgs.getFlatArgumentList(), 
+                                          TemplateArgs.flat_size()));
+      return L;
+    }
+
+    return ExternalLinkage;
   }
 
   //     - a named class (Clause 9), or an unnamed class defined in a
@@ -166,29 +251,50 @@ static NamedDecl::Linkage getLinkageForNamespaceScopeDecl(const NamedDecl *D) {
   //       defined in a typedef declaration in which the enumeration
   //       has the typedef name for linkage purposes (7.1.3); or
   if (const TagDecl *Tag = dyn_cast<TagDecl>(D))
-    if (Tag->getDeclName() || Tag->getTypedefForAnonDecl())
-      return NamedDecl::ExternalLinkage;
+    if (Tag->getDeclName() || Tag->getTypedefForAnonDecl()) {
+      if (Tag->isInAnonymousNamespace())
+        return UniqueExternalLinkage;
+
+      // If this is a class template specialization, consider the
+      // linkage of the template and template arguments.
+      if (const ClassTemplateSpecializationDecl *Spec
+            = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
+        const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+        Linkage L = getLinkageForTemplateArgumentList(
+                                          TemplateArgs.getFlatArgumentList(),
+                                                 TemplateArgs.flat_size());
+        return minLinkage(L, Spec->getSpecializedTemplate()->getLinkage());
+      }
+
+      return ExternalLinkage;
+    }
 
   //     - an enumerator belonging to an enumeration with external linkage;
-  if (isa<EnumConstantDecl>(D))
-    if (cast<NamedDecl>(D->getDeclContext())->getLinkage() 
-                                                 == NamedDecl::ExternalLinkage)
-      return NamedDecl::ExternalLinkage;
+  if (isa<EnumConstantDecl>(D)) {
+    Linkage L = cast<NamedDecl>(D->getDeclContext())->getLinkage();
+    if (isExternalLinkage(L))
+      return L;
+  }
 
   //     - a template, unless it is a function template that has
   //       internal linkage (Clause 14);
-  if (isa<TemplateDecl>(D))
-    return NamedDecl::ExternalLinkage;
+  if (const TemplateDecl *Template = dyn_cast<TemplateDecl>(D)) {
+    if (D->isInAnonymousNamespace())
+      return UniqueExternalLinkage;
+
+    return getLinkageForTemplateParameterList(
+                                         Template->getTemplateParameters());
+  }
 
   //     - a namespace (7.3), unless it is declared within an unnamed
   //       namespace.
   if (isa<NamespaceDecl>(D) && !D->isInAnonymousNamespace())
-    return NamedDecl::ExternalLinkage;
+    return ExternalLinkage;
 
-  return NamedDecl::NoLinkage;
+  return NoLinkage;
 }
 
-NamedDecl::Linkage NamedDecl::getLinkage() const {
+Linkage NamedDecl::getLinkage() const {
   // Handle linkage for namespace-scope names.
   if (getDeclContext()->getLookupContext()->isFileContext())
     if (Linkage L = getLinkageForNamespaceScopeDecl(this))
@@ -204,9 +310,11 @@ NamedDecl::Linkage NamedDecl::getLinkage() const {
   if (getDeclContext()->isRecord() &&
       (isa<CXXMethodDecl>(this) || isa<VarDecl>(this) ||
        (isa<TagDecl>(this) &&
-        (getDeclName() || cast<TagDecl>(this)->getTypedefForAnonDecl()))) &&
-      cast<RecordDecl>(getDeclContext())->getLinkage() == ExternalLinkage)
-    return ExternalLinkage;
+        (getDeclName() || cast<TagDecl>(this)->getTypedefForAnonDecl())))) {
+    Linkage L = cast<RecordDecl>(getDeclContext())->getLinkage();
+    if (isExternalLinkage(L))
+      return L;
+  }
 
   // C++ [basic.link]p6:
   //   The name of a function declared in block scope and the name of
@@ -225,6 +333,9 @@ NamedDecl::Linkage NamedDecl::getLinkage() const {
         if (Linkage L = Function->getPreviousDeclaration()->getLinkage())
           return L;
 
+      if (Function->isInAnonymousNamespace())
+        return UniqueExternalLinkage;
+
       return ExternalLinkage;
     }
 
@@ -235,6 +346,9 @@ NamedDecl::Linkage NamedDecl::getLinkage() const {
           if (Linkage L = Var->getPreviousDeclaration()->getLinkage())
             return L;
 
+        if (Var->isInAnonymousNamespace())
+          return UniqueExternalLinkage;
+
         return ExternalLinkage;
       }
   }
@@ -242,7 +356,7 @@ NamedDecl::Linkage NamedDecl::getLinkage() const {
   // C++ [basic.link]p6:
   //   Names not covered by these rules have no linkage.
   return NoLinkage;
-}
+  }
 
 std::string NamedDecl::getQualifiedNameAsString() const {
   return getQualifiedNameAsString(getASTContext().getLangOptions());

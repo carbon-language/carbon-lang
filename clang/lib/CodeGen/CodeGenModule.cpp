@@ -255,34 +255,40 @@ void CodeGenModule::EmitAnnotations() {
 static CodeGenModule::GVALinkage
 GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
                       const LangOptions &Features) {
-  // Everything located semantically within an anonymous namespace is
-  // always internal.
-  if (FD->isInAnonymousNamespace())
-    return CodeGenModule::GVA_Internal;
-
-  // "static" functions get internal linkage.
-  if (FD->getStorageClass() == FunctionDecl::Static && !isa<CXXMethodDecl>(FD))
-    return CodeGenModule::GVA_Internal;
-  
-  // The kind of external linkage this function will have, if it is not
-  // inline or static.
   CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
-  if (Context.getLangOptions().CPlusPlus) {
-    TemplateSpecializationKind TSK = FD->getTemplateSpecializationKind();
+
+  Linkage L = FD->getLinkage();
+  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
+      FD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+  
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return CodeGenModule::GVA_Internal;
     
-    if (TSK == TSK_ExplicitInstantiationDefinition) {
-      // If a function has been explicitly instantiated, then it should
-      // always have strong external linkage.
+  case ExternalLinkage:
+    switch (FD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      External = CodeGenModule::GVA_StrongExternal;
+      break;
+
+    case TSK_ExplicitInstantiationDefinition:
+      // FIXME: explicit instantiation definitions should use weak linkage
       return CodeGenModule::GVA_StrongExternal;
-    } 
-    
-    if (TSK == TSK_ImplicitInstantiation)
+
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ImplicitInstantiation:
       External = CodeGenModule::GVA_TemplateInstantiation;
+      break;
+    }
   }
 
   if (!FD->isInlined())
     return External;
-
+    
   if (!Features.CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {
     // GNU or C99 inline semantics. Determine whether this symbol should be
     // externally visible.
@@ -581,13 +587,24 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
       
   // Static data may be deferred, but out-of-line static data members
   // cannot be.
-  if (VD->getLinkage() == VarDecl::InternalLinkage ||
-      VD->isInAnonymousNamespace()) {
+  Linkage L = VD->getLinkage();
+  if (L == ExternalLinkage && getContext().getLangOptions().CPlusPlus &&
+      VD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
     // Initializer has side effects?
     if (VD->getInit() && VD->getInit()->HasSideEffects(Context))
       return false;
     return !(VD->isStaticDataMember() && VD->isOutOfLine());
+
+  case ExternalLinkage:
+    break;
   }
+
   return false;
 }
 
@@ -941,16 +958,30 @@ CodeGenModule::getVtableLinkage(const CXXRecordDecl *RD) {
 
 static CodeGenModule::GVALinkage
 GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
-  // Everything located semantically within an anonymous namespace is
-  // always internal.
-  if (VD->isInAnonymousNamespace())
+  // If this is a static data member, compute the kind of template
+  // specialization. Otherwise, this variable is not part of a
+  // template.
+  TemplateSpecializationKind TSK = TSK_Undeclared;
+  if (VD->isStaticDataMember())
+    TSK = VD->getTemplateSpecializationKind();
+
+  Linkage L = VD->getLinkage();
+  if (L == ExternalLinkage && Context.getLangOptions().CPlusPlus &&
+      VD->getType()->getLinkage() == UniqueExternalLinkage)
+    L = UniqueExternalLinkage;
+
+  switch (L) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
     return CodeGenModule::GVA_Internal;
 
-  // Handle linkage for static data members.
-  if (VD->isStaticDataMember()) {
-    switch (VD->getTemplateSpecializationKind()) {
+  case ExternalLinkage:
+    switch (TSK) {
     case TSK_Undeclared:
     case TSK_ExplicitSpecialization:
+
+      // FIXME: ExplicitInstantiationDefinition should be weak!
     case TSK_ExplicitInstantiationDefinition:
       return CodeGenModule::GVA_StrongExternal;
       
@@ -959,12 +990,9 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
       // Fall through to treat this like any other instantiation.
         
     case TSK_ImplicitInstantiation:
-      return CodeGenModule::GVA_TemplateInstantiation;
+      return CodeGenModule::GVA_TemplateInstantiation;      
     }
   }
-
-  if (VD->getLinkage() == VarDecl::InternalLinkage)
-    return CodeGenModule::GVA_Internal;
 
   return CodeGenModule::GVA_StrongExternal;
 }

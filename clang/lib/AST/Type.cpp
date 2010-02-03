@@ -1049,3 +1049,79 @@ void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
   else
     Profile(ID, getDecl(), 0, 0);
 }
+
+Linkage Type::getLinkage() const { 
+  // C++ [basic.link]p8:
+  //   Names not covered by these rules have no linkage.
+  if (this != CanonicalType.getTypePtr())
+    return CanonicalType->getLinkage();
+
+  return NoLinkage; 
+}
+
+Linkage BuiltinType::getLinkage() const {
+  // C++ [basic.link]p8:
+  //   A type is said to have linkage if and only if:
+  //     - it is a fundamental type (3.9.1); or
+  return ExternalLinkage;
+}
+
+Linkage TagType::getLinkage() const {
+  // C++ [basic.link]p8:
+  //     - it is a class or enumeration type that is named (or has a name for
+  //       linkage purposes (7.1.3)) and the name has linkage; or
+  //     -  it is a specialization of a class template (14); or
+  return getDecl()->getLinkage();
+}
+
+// C++ [basic.link]p8:
+//   - it is a compound type (3.9.2) other than a class or enumeration, 
+//     compounded exclusively from types that have linkage; or
+Linkage ComplexType::getLinkage() const {
+  return ElementType->getLinkage();
+}
+
+Linkage PointerType::getLinkage() const {
+  return PointeeType->getLinkage();
+}
+
+Linkage BlockPointerType::getLinkage() const {
+  return PointeeType->getLinkage();
+}
+
+Linkage ReferenceType::getLinkage() const {
+  return PointeeType->getLinkage();
+}
+
+Linkage MemberPointerType::getLinkage() const {
+  return minLinkage(Class->getLinkage(), PointeeType->getLinkage());
+}
+
+Linkage ArrayType::getLinkage() const {
+  return ElementType->getLinkage();
+}
+
+Linkage VectorType::getLinkage() const {
+  return ElementType->getLinkage();
+}
+
+Linkage FunctionNoProtoType::getLinkage() const {
+  return getResultType()->getLinkage();
+}
+
+Linkage FunctionProtoType::getLinkage() const {
+  Linkage L = getResultType()->getLinkage();
+  for (arg_type_iterator A = arg_type_begin(), AEnd = arg_type_end();
+       A != AEnd; ++A)
+    L = minLinkage(L, (*A)->getLinkage());
+
+  return L;
+}
+
+Linkage ObjCInterfaceType::getLinkage() const {
+  return ExternalLinkage;
+}
+
+Linkage ObjCObjectPointerType::getLinkage() const {
+  return ExternalLinkage;
+}
