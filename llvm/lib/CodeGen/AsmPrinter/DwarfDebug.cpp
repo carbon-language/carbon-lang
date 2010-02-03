@@ -1123,7 +1123,26 @@ DIE *DwarfDebug::createMemberDIE(const DIDerivedType &DT) {
     // This is not a bitfield.
     addUInt(MemLocationDie, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits() >> 3);
 
-  addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
+  if (DT.getTag() == dwarf::DW_TAG_inheritance
+      && DT.isVirtual()) {
+
+    // For C++, virtual base classes are not at fixed offset. Use following
+    // expression to extract appropriate offset from vtable.
+    // BaseAddr = ObAddr + *((*ObAddr) - Offset)
+
+    DIEBlock *VBaseLocationDie = new DIEBlock();
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_udata, DT.getOffsetInBits());
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_minus);
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    addUInt(VBaseLocationDie, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
+
+    addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, 
+             VBaseLocationDie);
+  } else
+    addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
 
   if (DT.isProtected())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
