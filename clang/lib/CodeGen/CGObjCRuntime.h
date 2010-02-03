@@ -95,12 +95,6 @@ public:
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() = 0;
 
-  virtual llvm::Constant *GetConstantSelector(Selector Sel) = 0;
-
-  /// Get a typed selector.
-  virtual llvm::Constant *GetConstantTypedSelector(
-     const ObjCMethodDecl *Method) = 0;
-
   /// Get a selector for the specified name and type values. The
   /// return value should have the LLVM type for pointer-to
   /// ASTContext::getObjCSelType().

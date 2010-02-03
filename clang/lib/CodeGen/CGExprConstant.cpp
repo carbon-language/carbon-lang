@@ -701,14 +701,6 @@ public:
                                     CGM.GetStringForStringLiteral(E), false);
   }
 
-  llvm::Constant *VisitObjCSelectorExpr(const ObjCSelectorExpr *E) {
-    ObjCMethodDecl *OMD = E->getMethodDecl();
-    if (OMD)
-      return CGM.getObjCRuntime().GetConstantTypedSelector(OMD);
-    else 
-      return CGM.getObjCRuntime().GetConstantSelector(E->getSelector());
-  }
-
   llvm::Constant *VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
     // This must be an @encode initializing an array in a static initializer.
     // Don't emit it as the address of the string, emit the string data itself
