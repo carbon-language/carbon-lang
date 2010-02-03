@@ -118,7 +118,7 @@ public:
 
   void VisitVAArgExpr(VAArgExpr *E);
 
-  void EmitInitializationToLValue(Expr *E, LValue Address);
+  void EmitInitializationToLValue(Expr *E, LValue Address, QualType T);
   void EmitNullInitializationToLValue(LValue Address, QualType T);
   //  case Expr::ChooseExprClass:
   void VisitCXXThrowExpr(const CXXThrowExpr *E) { CGF.EmitCXXThrowExpr(E); }
@@ -188,7 +188,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
                                                  CGF.ConvertType(PtrTy));
     EmitInitializationToLValue(E->getSubExpr(),
-                               LValue::MakeAddr(CastPtr, Qualifiers()));
+                               LValue::MakeAddr(CastPtr, Qualifiers()), 
+                               E->getType());
     break;
   }
 
@@ -511,17 +512,18 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
   EmitNullInitializationToLValue(LV, E->getType());
 }
 
-void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
+void 
+AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
   // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?
   if (isa<ImplicitValueInitExpr>(E)) {
-    EmitNullInitializationToLValue(LV, E->getType());
-  } else if (E->getType()->isComplexType()) {
+    EmitNullInitializationToLValue(LV, T);
+  } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
-  } else if (CGF.hasAggregateLLVMType(E->getType())) {
+  } else if (CGF.hasAggregateLLVMType(T)) {
     CGF.EmitAnyExpr(E, LV.getAddress(), false);
   } else {
-    CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(E), LV, E->getType());
+    CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(E), LV, T);
   }
 }
 
@@ -590,7 +592,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       if (i < NumInitElements)
         EmitInitializationToLValue(E->getInit(i),
-                                   LValue::MakeAddr(NextVal, Quals));
+                                   LValue::MakeAddr(NextVal, Quals), 
+                                   ElementType);
       else
         EmitNullInitializationToLValue(LValue::MakeAddr(NextVal, Quals),
                                        ElementType);
@@ -631,7 +634,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     if (NumInitElements) {
       // Store the initializer into the field
-      EmitInitializationToLValue(E->getInit(0), FieldLoc);
+      EmitInitializationToLValue(E->getInit(0), FieldLoc, Field->getType());
     } else {
       // Default-initialize to null
       EmitNullInitializationToLValue(FieldLoc, Field->getType());
@@ -658,7 +661,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     LValue::SetObjCNonGC(FieldLoc, true);
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field
-      EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc);
+      EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc, 
+                                 Field->getType());
     } else {
       // We're out of initalizers; default-initialize to null
       EmitNullInitializationToLValue(FieldLoc, Field->getType());
