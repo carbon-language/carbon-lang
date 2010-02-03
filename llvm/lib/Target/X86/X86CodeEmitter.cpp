@@ -559,7 +559,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
     --NumOps;
 
-  unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
+  unsigned char BaseOpcode = X86InstrInfo::getBaseOpcodeFor(*Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
   default:
     llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");

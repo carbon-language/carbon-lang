@@ -640,11 +640,11 @@ public:
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified machine instruction.
   //
-  unsigned char getBaseOpcodeFor(const TargetInstrDesc *TID) const {
-    return TID->TSFlags >> X86II::OpcodeShift;
+  static unsigned char getBaseOpcodeFor(const TargetInstrDesc &TID) {
+    return TID.TSFlags >> X86II::OpcodeShift;
   }
   unsigned char getBaseOpcodeFor(unsigned Opcode) const {
-    return getBaseOpcodeFor(&get(Opcode));
+    return getBaseOpcodeFor(get(Opcode));
   }
   
   static bool isX86_64NonExtLowByteReg(unsigned reg) {
