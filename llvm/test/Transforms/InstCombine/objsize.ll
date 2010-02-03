@@ -27,4 +27,15 @@ cond.false:
   ret i8* %2;
 }
 
+@window = external global [0 x i8]
+
+define i1 @baz() nounwind {
+; CHECK: @baz
+; CHECK-NEXT: llvm.objectsize.i32
+  %1 = tail call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([0 x i8]* @window, i32 0, i32 0), i1 false)
+  %2 = icmp eq i32 %1, -1
+  ret i1 %2
+}
+
+
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly

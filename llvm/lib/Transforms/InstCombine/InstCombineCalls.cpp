@@ -648,14 +648,19 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
       if (const ArrayType *AT = dyn_cast<ArrayType>(ObjTy->getElementType())) {
 
-            // Deal with multi-dimensional arrays
+        // Deal with multi-dimensional arrays
         const ArrayType *SAT = AT;
         while ((AT = dyn_cast<ArrayType>(AT->getElementType())))
           SAT = AT;
 
         size_t numElems = SAT->getNumElements();
-            // We return the remaining bytes, so grab the size of an element
-            // in bytes.
+        
+        // If numElems is 0, we don't know how large the array is so we can't
+        // make any determinations yet.
+        if (numElems == 0) break;
+        
+        // We return the remaining bytes, so grab the size of an element
+        // in bytes.
         size_t sizeofElem = SAT->getElementType()->getPrimitiveSizeInBits() / 8;
 
         ConstantInt *Const = 
@@ -665,7 +670,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           ConstantInt::get(ReturnTy,
           ((numElems - indx) * sizeofElem)));
       }
-    }    
+    }
     // TODO: Add more types here.
   }
   }
