@@ -140,7 +140,20 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
     Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
 
   QualType Ty = Context.getObjCSelType();
-  return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
+  ObjCSelectorExpr *E = 
+      new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
+  // Make sure that we have seen this selector.  There are lots of checks we
+  // should be doing on this selector.  For example, when this is passed as the
+  // second argument to objc_msgSend() on the Mac runtime, or as the selector
+  // argument to the -performSelector:.  We can do these checks at run time
+  // with the GNU runtimes, but the Apple runtimes let you sneak stack
+  // corruption in easily by passing the wrong selector to these functions if
+  // there is no static checking.
+  //
+  // Only log a warning on the GNU runtime.
+  E->setMethodDecl(LookupInstanceMethodInGlobalPool(Sel, 
+      SourceRange(LParenLoc,  LParenLoc), !LangOpts.NeXTRuntime));
+  return E;
 }
 
 Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,

@@ -96,17 +96,21 @@ public:
 /// ObjCSelectorExpr used for @selector in Objective-C.
 class ObjCSelectorExpr : public Expr {
   Selector SelName;
+  ObjCMethodDecl *Method;
   SourceLocation AtLoc, RParenLoc;
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCSelectorExprClass, T, false, false), SelName(selInfo), AtLoc(at),
-    RParenLoc(rp){}
+  : Expr(ObjCSelectorExprClass, T, false, false), SelName(selInfo), Method(0),
+    AtLoc(at), RParenLoc(rp){}
   explicit ObjCSelectorExpr(EmptyShell Empty)
    : Expr(ObjCSelectorExprClass, Empty) {}
 
   Selector getSelector() const { return SelName; }
   void setSelector(Selector S) { SelName = S; }
+
+  ObjCMethodDecl *getMethodDecl() const { return Method; }
+  void setMethodDecl(ObjCMethodDecl *M) { Method = M; }
 
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }

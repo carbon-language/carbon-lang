@@ -1454,6 +1454,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   case StringLiteralClass:
   case ObjCStringLiteralClass:
   case ObjCEncodeExprClass:
+  case ObjCSelectorExprClass:
     return true;
   case CompoundLiteralExprClass: {
     // This handles gcc's extension that allows global initializers like

@@ -146,9 +146,17 @@ public:
                            const ObjCMethodDecl *Method);
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID);
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
-  virtual llvm::Value *GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
-      *Method);
+  virtual llvm::Constant *GetConstantSelector(Selector Sel);
+  virtual llvm::Constant *GetConstantTypedSelector(
+     const ObjCMethodDecl *Method);
+  llvm::Value *GetSelector(CGBuilderTy &Builder,
+                           Selector Sel) {
+    return cast<llvm::Constant>((GetConstantSelector(Sel)));
+  }
+  llvm::Value *GetSelector(CGBuilderTy &Builder,
+                           const ObjCMethodDecl *Method) {
+    return cast<llvm::Constant>(GetConstantTypedSelector(Method));
+  }
 
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
                                          const ObjCContainerDecl *CD);
@@ -287,18 +295,18 @@ llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
 
-llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel) {
+llvm::Constant *CGObjCGNU::GetConstantSelector(Selector Sel) {
   llvm::GlobalAlias *&US = UntypedSelectors[Sel.getAsString()];
   if (US == 0)
-    US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
+    US = new llvm::GlobalAlias(SelectorTy,
                                llvm::GlobalValue::PrivateLinkage,
                                ".objc_untyped_selector_alias"+Sel.getAsString(),
                                NULL, &TheModule);
 
-  return Builder.CreateLoad(US);
+  return US;
 }
 
-llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
+llvm::Constant *CGObjCGNU::GetConstantTypedSelector(const ObjCMethodDecl
     *Method) {
 
   std::string SelName = Method->getSelector().getAsString();
@@ -310,17 +318,17 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
 
   // If it's already cached, return it.
   if (TypedSelectors[Selector]) {
-    return Builder.CreateLoad(TypedSelectors[Selector]);
+    return TypedSelectors[Selector];
   }
 
   // If it isn't, cache it.
   llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
-          llvm::PointerType::getUnqual(SelectorTy),
+          SelectorTy,
           llvm::GlobalValue::PrivateLinkage, ".objc_selector_alias" + SelName,
           NULL, &TheModule);
   TypedSelectors[Selector] = Sel;
 
-  return Builder.CreateLoad(Sel);
+  return Sel;
 }
 
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
@@ -1461,40 +1469,43 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 
   // Now that all of the static selectors exist, create pointers to them.
   int index = 0;
+  llvm::SmallVector<std::pair<llvm::GlobalAlias*,llvm::Value*>, 16> selectors;
   for (std::map<TypedSelector, llvm::GlobalAlias*>::iterator
      iter=TypedSelectors.begin(), iterEnd =TypedSelectors.end();
      iter != iterEnd; ++iter) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
-    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-        true, llvm::GlobalValue::InternalLinkage,
-        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr");
+    llvm::Constant *SelPtr = 
+        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2);
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
-      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
-        llvm::PointerType::getUnqual(SelectorTy));
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,SelectorTy);
     }
-    (*iter).second->setAliasee(SelPtr);
+    selectors.push_back(
+        std::pair<llvm::GlobalAlias*,llvm::Value*>((*iter).second, SelPtr));
   }
   for (llvm::StringMap<llvm::GlobalAlias*>::iterator
       iter=UntypedSelectors.begin(), iterEnd = UntypedSelectors.end();
       iter != iterEnd; iter++) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), index++), Zeros[0]};
-    llvm::Constant *SelPtr = new llvm::GlobalVariable
-      (TheModule, SelStructPtrTy,
-       true, llvm::GlobalValue::InternalLinkage,
-       llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-       ".objc_sel_ptr");
+    llvm::Constant *SelPtr = 
+       llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2);
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
-      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
-        llvm::PointerType::getUnqual(SelectorTy));
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr, SelectorTy);
     }
-    (*iter).second->setAliasee(SelPtr);
+    selectors.push_back(
+        std::pair<llvm::GlobalAlias*,llvm::Value*>((*iter).second, SelPtr));
+  }
+  for (llvm::SmallVectorImpl<std::pair<
+            llvm::GlobalAlias*,llvm::Value*> >::iterator
+     iter=selectors.begin(), iterEnd =selectors.end();
+     iter != iterEnd; ++iter) {
+    iter->first->replaceAllUsesWith(iter->second);
+    iter->first->eraseFromParent();
   }
   // Number of classes defined.
   Elements.push_back(llvm::ConstantInt::get(llvm::Type::getInt16Ty(VMContext),

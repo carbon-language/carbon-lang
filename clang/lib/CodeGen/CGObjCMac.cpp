@@ -953,6 +953,14 @@ public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) :
     CGM(cgm), VMContext(cgm.getLLVMContext()) { }
 
+  virtual llvm::Constant *GetConstantSelector(Selector Sel) {
+    assert(0 && "Constant Selectors are not yet supported on the Mac runtimes");
+    return 0;
+  }
+  virtual llvm::Constant *GetConstantTypedSelector(
+     const ObjCMethodDecl *Method) {
+    return GetConstantSelector(Method->getSelector());
+  }
   virtual llvm::Constant *GenerateConstantString(const StringLiteral *SL);
 
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
