@@ -4808,6 +4808,12 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
+  // CXXConstructExprs are always implicit, so when we have a
+  // 1-argument construction we just transform that argument.
+  if (E->getNumArgs() == 1 ||
+      (E->getNumArgs() > 1 && getDerived().DropCallArgument(E->getArg(1))))
+    return getDerived().TransformExpr(E->getArg(0));
+
   TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
 
   QualType T = getDerived().TransformType(E->getType());
