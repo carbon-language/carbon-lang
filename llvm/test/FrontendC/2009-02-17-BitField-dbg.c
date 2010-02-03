@@ -6,9 +6,6 @@
 // RUN: gdb -q -batch -n -x %t2 2009-02-17-BitField-dbg.o | \
 // RUN:   tee 2009-02-17-BitField-dbg.out | grep "int a : 4"
 //
-// XFAIL: powerpc-apple-darwin
-// FIXME: This doesn't work for PPC Darwin because we turned off debugging on
-// that platform.
 
 struct {
   int  a:4;
