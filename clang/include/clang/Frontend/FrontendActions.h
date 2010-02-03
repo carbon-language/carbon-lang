@@ -154,6 +154,11 @@ public:
   EmitLLVMOnlyAction();
 };
 
+class EmitObjAction : public CodeGenAction {
+public:
+  EmitObjAction();
+};
+
 //===----------------------------------------------------------------------===//
 // Preprocessor Actions
 //===----------------------------------------------------------------------===//

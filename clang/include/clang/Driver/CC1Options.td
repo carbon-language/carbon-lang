@@ -281,6 +281,8 @@ def emit_llvm_bc : Flag<"-emit-llvm-bc">,
   HelpText<"Build ASTs then convert to LLVM, emit .bc file">;
 def emit_llvm_only : Flag<"-emit-llvm-only">,
   HelpText<"Build ASTs and convert to LLVM, discarding output">;
+def emit_obj : Flag<"-emit-obj">,
+  HelpText<"Emit native object files">;
 def rewrite_test : Flag<"-rewrite-test">,
   HelpText<"Rewriter playground">;
 def rewrite_objc : Flag<"-rewrite-objc">,

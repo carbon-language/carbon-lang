@@ -70,6 +70,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   case EmitHTML:               return new HTMLPrintAction();
   case EmitLLVM:               return new EmitLLVMAction();
   case EmitLLVMOnly:           return new EmitLLVMOnlyAction();
+  case EmitObj:                return new EmitObjAction();
   case FixIt:                  return new FixItAction();
   case GeneratePCH:            return new GeneratePCHAction();
   case GeneratePTH:            return new GeneratePTHAction();

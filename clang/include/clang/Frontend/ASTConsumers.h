@@ -73,10 +73,11 @@ ASTConsumer *CreateObjCRewriter(const std::string &InFile,
 // assembly. This runs optimizations depending on the CodeGenOptions
 // parameter. The output depends on the Action parameter.
 enum BackendAction {
-  Backend_EmitAssembly,  // Emit native assembly
-  Backend_EmitBC,        // Emit LLVM bitcode file
+  Backend_EmitAssembly,  // Emit native assembly files
+  Backend_EmitBC,        // Emit LLVM bitcode files
   Backend_EmitLL,        // Emit human-readable LLVM assembly
-  Backend_EmitNothing    // Don't emit anything (benchmarking mode)
+  Backend_EmitNothing,   // Don't emit anything (benchmarking mode)
+  Backend_EmitObj        // Emit native object files
 };
 ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    Diagnostic &Diags,

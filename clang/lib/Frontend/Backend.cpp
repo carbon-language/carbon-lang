@@ -303,16 +303,15 @@ bool BackendConsumer::AddEmitPasses() {
     case 3: OptLevel = CodeGenOpt::Aggressive; break;
     }
 
-    // Normal mode, emit a .s file by running the code generator.
-    // Note, this also adds codegenerator level optimization passes.
-    switch (TM->addPassesToEmitFile(*PM, FormattedOutStream,
-                                    TargetMachine::CGFT_AssemblyFile,
-                                    OptLevel)) {
-    default:
+    // Normal mode, emit a .s or .o file by running the code generator. Note,
+    // this also adds codegenerator level optimization passes.
+    TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
+    if (Action == Backend_EmitObj)
+      CGFT = TargetMachine::CGFT_ObjectFile;
+    if (TM->addPassesToEmitFile(*PM, FormattedOutStream,
+                                CGFT, OptLevel) != CGFT) {
       Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
-    case TargetMachine::CGFT_AssemblyFile:
-      break;
     }
   }
 

@@ -31,6 +31,7 @@ namespace frontend {
     EmitHTML,               ///< Translate input source into HTML.
     EmitLLVM,               ///< Emit a .ll file.
     EmitLLVMOnly,           ///< Generate LLVM IR, but do not
+    EmitObj,                ///< Emit a .o file.
     FixIt,                  ///< Parse and apply any fixits to the source.
     GeneratePCH,            ///< Generate pre-compiled header.
     GeneratePTH,            ///< Generate pre-tokenized header.

@@ -177,6 +177,9 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
     break;
   case Backend_EmitNothing:
     break;
+  case Backend_EmitObj:
+    OS.reset(CI.createDefaultOutputFile(true, InFile, "o"));
+    break;
   }
   if (BA != Backend_EmitNothing && !OS)
     return 0;
@@ -195,6 +198,8 @@ EmitBCAction::EmitBCAction() : CodeGenAction(Backend_EmitBC) {}
 EmitLLVMAction::EmitLLVMAction() : CodeGenAction(Backend_EmitLL) {}
 
 EmitLLVMOnlyAction::EmitLLVMOnlyAction() : CodeGenAction(Backend_EmitNothing) {}
+
+EmitObjAction::EmitObjAction() : CodeGenAction(Backend_EmitObj) {}
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Actions

@@ -280,6 +280,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::EmitHTML:               return "-emit-html";
   case frontend::EmitLLVM:               return "-emit-llvm";
   case frontend::EmitLLVMOnly:           return "-emit-llvm-only";
+  case frontend::EmitObj:                return "-emit-obj";
   case frontend::FixIt:                  return "-fixit";
   case frontend::GeneratePCH:            return "-emit-pch";
   case frontend::GeneratePTH:            return "-emit-pth";
@@ -858,6 +859,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
       Opts.ProgramAction = frontend::EmitLLVM; break;
     case OPT_emit_llvm_only:
       Opts.ProgramAction = frontend::EmitLLVMOnly; break;
+    case OPT_emit_obj:
+      Opts.ProgramAction = frontend::EmitObj; break;
     case OPT_fixit:
       Opts.ProgramAction = frontend::FixIt; break;
     case OPT_emit_pch:
