@@ -61,6 +61,7 @@ ANALYSIS(InlineCall, "inline-call",
 
 ANALYSIS_STORE(BasicStore, "basic", "Use basic analyzer store", CreateBasicStoreManager)
 ANALYSIS_STORE(RegionStore, "region", "Use region-based analyzer store", CreateRegionStoreManager)
+ANALYSIS_STORE(FlatStore, "flat", "Use flat analyzer store", CreateFlatStoreManager)
 
 #ifndef ANALYSIS_CONSTRAINTS
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN)

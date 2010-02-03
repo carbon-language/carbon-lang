@@ -214,7 +214,7 @@ public:
 StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
-
+StoreManager *CreateFlatStoreManager(GRStateManager &StMgr);
 } // end clang namespace
 
 #endif
