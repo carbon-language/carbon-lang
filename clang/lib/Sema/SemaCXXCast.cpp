@@ -204,7 +204,30 @@ bool UnwrapDissimilarPointerTypes(QualType& T1, QualType& T2) {
     T2 = T2PtrType->getPointeeType();
     return true;
   }
-
+  const ObjCObjectPointerType *T1ObjCPtrType = 
+                                            T1->getAs<ObjCObjectPointerType>(),
+                              *T2ObjCPtrType = 
+                                            T2->getAs<ObjCObjectPointerType>();
+  if (T1ObjCPtrType) {
+    if (T2ObjCPtrType) {
+      T1 = T1ObjCPtrType->getPointeeType();
+      T2 = T2ObjCPtrType->getPointeeType();
+      return true;
+    }
+    else if (T2PtrType) {
+      T1 = T1ObjCPtrType->getPointeeType();
+      T2 = T2PtrType->getPointeeType();
+      return true;
+    }
+  }
+  else if (T2ObjCPtrType) {
+    if (T1PtrType) {
+      T2 = T2ObjCPtrType->getPointeeType();
+      T1 = T1PtrType->getPointeeType();
+      return true;
+    }
+  }
+  
   const MemberPointerType *T1MPType = T1->getAs<MemberPointerType>(),
                           *T2MPType = T2->getAs<MemberPointerType>();
   if (T1MPType && T2MPType) {
@@ -225,9 +248,9 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   // C++ 4.4. We piggyback on Sema::IsQualificationConversion for this, since
   // the rules are non-trivial. So first we construct Tcv *...cv* as described
   // in C++ 5.2.11p8.
-  assert((SrcType->isPointerType() || SrcType->isMemberPointerType()) &&
+  assert((SrcType->isAnyPointerType() || SrcType->isMemberPointerType()) &&
          "Source type is not pointer or pointer to member.");
-  assert((DestType->isPointerType() || DestType->isMemberPointerType()) &&
+  assert((DestType->isAnyPointerType() || DestType->isMemberPointerType()) &&
          "Destination type is not pointer or pointer to member.");
 
   QualType UnwrappedSrcType = Self.Context.getCanonicalType(SrcType), 
@@ -1083,10 +1106,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     return TC_Failed;
   }
   
-  bool destIsPtr = 
-    CStyle? DestType->isAnyPointerType() : DestType->isPointerType();
-  bool srcIsPtr = 
-    CStyle ? SrcType->isAnyPointerType() : SrcType->isPointerType();
+  bool destIsPtr = DestType->isAnyPointerType();
+  bool srcIsPtr = SrcType->isAnyPointerType();
   if (!destIsPtr && !srcIsPtr) {
     // Except for std::nullptr_t->integer and lvalue->reference, which are
     // handled above, at least one of the two arguments must be a pointer.
