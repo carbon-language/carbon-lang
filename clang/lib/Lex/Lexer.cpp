@@ -985,10 +985,11 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     if (CurPtr == BufferEnd+1) { --CurPtr; break; }
   } while (C != '\n' && C != '\r');
 
-  // Found but did not consume the newline.
-  if (PP && PP->HandleComment(Result,
-                              SourceRange(getSourceLocation(BufferPtr),
-                                          getSourceLocation(CurPtr)))) {
+  // Found but did not consume the newline.  Notify comment handlers about the
+  // comment unless we're in a #if 0 block.
+  if (PP && !isLexingRawMode() &&
+      PP->HandleComment(Result, SourceRange(getSourceLocation(BufferPtr),
+                                            getSourceLocation(CurPtr)))) {
     BufferPtr = CurPtr;
     return true; // A token has to be returned.
   }
@@ -1235,9 +1236,10 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
     C = *CurPtr++;
   }
 
-  if (PP && PP->HandleComment(Result,
-                              SourceRange(getSourceLocation(BufferPtr),
-                                          getSourceLocation(CurPtr)))) {
+  // Notify comment handlers about the comment unless we're in a #if 0 block.
+  if (PP && !isLexingRawMode() &&
+      PP->HandleComment(Result, SourceRange(getSourceLocation(BufferPtr),
+                                            getSourceLocation(CurPtr)))) {
     BufferPtr = CurPtr;
     return true; // A token has to be returned.
   }
