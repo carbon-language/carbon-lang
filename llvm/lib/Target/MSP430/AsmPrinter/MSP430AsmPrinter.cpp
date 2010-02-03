@@ -181,27 +181,8 @@ bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MSP430MCInstLower MCInstLowering(OutContext, *Mang, *this);
 
-  switch (MI->getOpcode()) {
-  case TargetInstrInfo::DBG_LABEL:
-  case TargetInstrInfo::EH_LABEL:
-  case TargetInstrInfo::GC_LABEL:
-    printLabel(MI);
-    return;
-  case TargetInstrInfo::KILL:
-    printKill(MI);
-    return;
-  case TargetInstrInfo::INLINEASM:
-    printInlineAsm(MI);
-    return;
-  case TargetInstrInfo::IMPLICIT_DEF:
-    printImplicitDef(MI);
-    return;
-  default: break;
-  }
-
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-
   printMCInst(&TmpInst);
 }
 

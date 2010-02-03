@@ -346,8 +346,25 @@ void AsmPrinter::EmitFunctionBody() {
       // FIXME: Clean up processDebugLoc.
       processDebugLoc(II, true);
       
-      EmitInstruction(II);
-      
+      switch (II->getOpcode()) {
+      case TargetInstrInfo::DBG_LABEL:
+      case TargetInstrInfo::EH_LABEL:
+      case TargetInstrInfo::GC_LABEL:
+        printLabel(II);
+        break;
+      case TargetInstrInfo::INLINEASM:
+        printInlineAsm(II);
+        break;
+      case TargetInstrInfo::IMPLICIT_DEF:
+        printImplicitDef(II);
+        break;
+      case TargetInstrInfo::KILL:
+        printKill(II);
+        break;
+      default:
+        EmitInstruction(II);
+        break;
+      }
       if (VerboseAsm)
         EmitComments(*II);
       O << '\n';

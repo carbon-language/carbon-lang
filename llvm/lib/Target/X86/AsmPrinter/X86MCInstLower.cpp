@@ -411,11 +411,6 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
-  case TargetInstrInfo::DBG_LABEL:
-  case TargetInstrInfo::EH_LABEL:
-  case TargetInstrInfo::GC_LABEL:
-    printLabel(MI);
-    return;
   case TargetInstrInfo::DEBUG_VALUE: {
     // FIXME: if this is implemented for another target before it goes
     // away completely, the common part should be moved into AsmPrinter.
@@ -455,15 +450,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     printOperand(MI, NOps-2);
     return;
   }
-  case TargetInstrInfo::INLINEASM:
-    printInlineAsm(MI);
-    return;
-  case TargetInstrInfo::IMPLICIT_DEF:
-    printImplicitDef(MI);
-    return;
-  case TargetInstrInfo::KILL:
-    printKill(MI);
-    return;
   case X86::MOVPC32r: {
     MCInst TmpInst;
     // This is a pseudo op for a two instruction sequence with a label, which

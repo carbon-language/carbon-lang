@@ -24,7 +24,6 @@ using namespace llvm;
 // Include the auto-generated portion of the assembly writer.
 #define MachineInstr MCInst
 #define ARMAsmPrinter ARMInstPrinter  // FIXME: REMOVE.
-#define NO_ASM_WRITER_BOILERPLATE
 #include "ARMGenAsmWriter.inc"
 #undef MachineInstr
 #undef ARMAsmPrinter

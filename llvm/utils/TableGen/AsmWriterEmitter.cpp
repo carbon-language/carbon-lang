@@ -692,24 +692,6 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   StringTable.EmitString(O);
   O << ";\n\n";
 
-  O << "\n#ifndef NO_ASM_WRITER_BOILERPLATE\n";
-  
-  O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
-    << "    printInlineAsm(MI);\n"
-    << "    return;\n"
-    << "  } else if (MI->isLabel()) {\n"
-    << "    printLabel(MI);\n"
-    << "    return;\n"
-    << "  } else if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {\n"
-    << "    printImplicitDef(MI);\n"
-    << "    return;\n"
-    << "  } else if (MI->getOpcode() == TargetInstrInfo::KILL) {\n"
-    << "    printKill(MI);\n"
-    << "    return;\n"
-    << "  }\n\n";
-
-  O << "\n#endif\n";
-
   O << "  O << \"\\t\";\n\n";
 
   O << "  // Emit the opcode for the instruction.\n"

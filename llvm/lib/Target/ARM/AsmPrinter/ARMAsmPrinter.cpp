@@ -1154,20 +1154,6 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case ARM::t2MOVi32imm:
     assert(0 && "Should be lowered by thumb2it pass");
   default: break;
-  case TargetInstrInfo::DBG_LABEL:
-  case TargetInstrInfo::EH_LABEL:
-  case TargetInstrInfo::GC_LABEL:
-    printLabel(MI);
-    return;
-  case TargetInstrInfo::KILL:
-    printKill(MI);
-    return;
-  case TargetInstrInfo::INLINEASM:
-    printInlineAsm(MI);
-    return;
-  case TargetInstrInfo::IMPLICIT_DEF:
-    printImplicitDef(MI);
-    return;
   case ARM::PICADD: { // FIXME: Remove asm string from td file.
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:

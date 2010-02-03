@@ -25,7 +25,6 @@ using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
 #define MachineInstr MCInst
-#define NO_ASM_WRITER_BOILERPLATE
 #include "MSP430GenAsmWriter.inc"
 #undef MachineInstr
 
