@@ -32,81 +32,55 @@ using namespace clang;
 #define USE_EXPLICIT_COMPOUND 0
 
 //===----------------------------------------------------------------------===//
-// Representation of value bindings.
-//===----------------------------------------------------------------------===//
-
-namespace {
-class BindingVal {
-public:
-  enum BindingKind { Direct, Default };
-private:
-  SVal Value;
-  BindingKind Kind;
-
-public:
-  BindingVal(SVal V, BindingKind K) : Value(V), Kind(K) {}
-
-  bool isDefault() const { return Kind == Default; }
-
-  const SVal *getValue() const { return &Value; }
-
-  const SVal *getDirectValue() const { return isDefault() ? 0 : &Value; }
-
-  const SVal *getDefaultValue() const { return isDefault() ? &Value : 0; }
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    Value.Profile(ID);
-    ID.AddInteger(Kind);
-  }
-
-  inline bool operator==(const BindingVal& R) const {
-    return Value == R.Value && Kind == R.Kind;
-  }
-
-  inline bool operator!=(const BindingVal& R) const {
-    return !(*this == R);
-  }
-};
-}
-
-namespace llvm {
-static inline 
-llvm::raw_ostream& operator<<(llvm::raw_ostream& os, BindingVal V) {
-  if (V.isDefault())
-    os << "(default) ";
-  else
-    os << "(direct) ";
-  os << *V.getValue();
-  return os;
-}
-} // end llvm namespace
-
-//===----------------------------------------------------------------------===//
 // Representation of binding keys.
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class BindingKey : public std::pair<const MemRegion*, uint64_t> {
+class BindingKey {
 public:
-  explicit BindingKey(const MemRegion *r, uint64_t offset)
-    : std::pair<const MemRegion*,uint64_t>(r, offset) { assert(r); }
+  enum Kind { Direct = 0x0, Default = 0x1 };
+private:
+  llvm ::PointerIntPair<const MemRegion*, 1> P;
+  uint64_t Offset;  
   
-  const MemRegion *getRegion() const { return first; }
-  uint64_t getOffset() const { return second; }
+  explicit BindingKey(const MemRegion *r, uint64_t offset, Kind k)
+    : P(r, (unsigned) k), Offset(offset) {}
+public:
+  
+  bool isDefault() const { return P.getInt() == Default; }
+  bool isDirect() const { return P.getInt() == Direct; }
+  
+  const MemRegion *getRegion() const { return P.getPointer(); }
+  uint64_t getOffset() const { return Offset; }
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddPointer(getRegion());
-    ID.AddInteger(getOffset());
+    ID.AddPointer(P.getOpaqueValue());
+    ID.AddInteger(Offset);
   }
-    
-  static BindingKey Make(const MemRegion *R);
+  
+  static BindingKey Make(const MemRegion *R, Kind k);
+  
+  bool operator<(const BindingKey &X) const {
+    if (P.getOpaqueValue() < X.P.getOpaqueValue())
+      return true;
+    if (P.getOpaqueValue() > X.P.getOpaqueValue())
+      return false;
+    return Offset < X.Offset;
+  }
+  
+  bool operator==(const BindingKey &X) const {
+    return P.getOpaqueValue() == X.P.getOpaqueValue() &&
+           Offset == X.Offset;
+  }
 };    
 } // end anonymous namespace
 
 namespace llvm {
   static inline 
   llvm::raw_ostream& operator<<(llvm::raw_ostream& os, BindingKey K) {
-    os << '(' << K.getRegion() << ',' << K.getOffset() << ')';
+    os << '(' << K.getRegion() << ',' << K.getOffset()
+       << ',' << (K.isDirect() ? "direct" : "default")
+       << ')';
     return os;
   }
 } // end llvm namespace
@@ -115,7 +89,7 @@ namespace llvm {
 // Actual Store type.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableMap<BindingKey, BindingVal> RegionBindings;
+typedef llvm::ImmutableMap<BindingKey, SVal> RegionBindings;
 
 //===----------------------------------------------------------------------===//
 // Fine-grained control of RegionStoreManager.
@@ -222,6 +196,7 @@ public:
   }
 };
 
+  
 class RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindings::Factory RBFactory;
@@ -314,21 +289,31 @@ public:
                                    const Expr *E, unsigned Count,
                                    InvalidatedSymbols *IS);
 
-private:
+public:   // Made public for helper classes.
+  
   void RemoveSubRegionBindings(RegionBindings &B, const MemRegion *R,
                                RegionStoreSubRegionMap &M);
 
-  RegionBindings Add(RegionBindings B, BindingKey K, BindingVal V);
-  RegionBindings Add(RegionBindings B, const MemRegion *R, BindingVal V);
+  RegionBindings Add(RegionBindings B, BindingKey K, SVal V);
+
+  RegionBindings Add(RegionBindings B, const MemRegion *R,
+                     BindingKey::Kind k, SVal V);
   
-  const BindingVal *Lookup(RegionBindings B, BindingKey K);
-  const BindingVal *Lookup(RegionBindings B, const MemRegion *R);
+  const SVal *Lookup(RegionBindings B, BindingKey K);
+  const SVal *Lookup(RegionBindings B, const MemRegion *R, BindingKey::Kind k);
 
   RegionBindings Remove(RegionBindings B, BindingKey K);
-  RegionBindings Remove(RegionBindings B, const MemRegion *R);
+  RegionBindings Remove(RegionBindings B, const MemRegion *R,
+                        BindingKey::Kind k);
+  
+  RegionBindings Remove(RegionBindings B, const MemRegion *R) {
+    return Remove(Remove(B, R, BindingKey::Direct), R, BindingKey::Default);
+  }    
+
   Store Remove(Store store, BindingKey K);
 
-public:
+public: // Part of public interface to class.
+
   const GRState *Bind(const GRState *state, Loc LV, SVal V);
 
   const GRState *BindCompoundLiteral(const GRState *state,
@@ -519,133 +504,188 @@ void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
   B = Remove(B, R);
 }
 
-const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
-                                                     const MemRegion * const *I,
-                                                     const MemRegion * const *E,
-                                                     const Expr *Ex,
-                                                     unsigned Count,
-                                                     InvalidatedSymbols *IS) {
-  ASTContext& Ctx = StateMgr.getContext();
+namespace {
+class InvalidateRegionsWorker {
+  typedef BumpVector<const MemRegion *> RegionCluster;
+  typedef llvm::DenseMap<const MemRegion *, RegionCluster *> ClusterMap;
+  typedef llvm::SmallVector<RegionCluster*, 10> WorkList;
 
-  // Get the mapping of regions -> subregions.
-  llvm::OwningPtr<RegionStoreSubRegionMap>
-    SubRegions(getRegionStoreSubRegionMap(state->getStore()));
+  BumpVectorContext BVC;
+  ClusterMap ClusterM;
+  WorkList WL;  
+public:
+  const GRState *InvalidateRegions(RegionStoreManager &RM,
+                                   const GRState *state,
+                                   const MemRegion * const *I,
+                                   const MemRegion * const *E,
+                                   const Expr *Ex,
+                                   unsigned Count,
+                                   StoreManager::InvalidatedSymbols *IS);
   
-  RegionBindings B = GetRegionBindings(state->getStore());
+private:
+  void AddToWorkList(const MemRegion *R);
+  void AddToCluster(const MemRegion *R);
+  RegionCluster **getCluster(const MemRegion *R);
+};  
+}
 
-  llvm::DenseMap<const MemRegion *, unsigned> Visited;
-  llvm::SmallVector<const MemRegion *, 10> WorkList;
-  
-  for ( ; I != E; ++I) {
-    // Strip away casts.
-    WorkList.push_back((*I)->StripCasts());
+void InvalidateRegionsWorker::AddToCluster(const MemRegion *R) {
+  const MemRegion *baseR = R->getBaseRegion();
+  RegionCluster **CPtr = getCluster(baseR);
+  if (R != baseR) {
+    assert(*CPtr);
+    (*CPtr)->push_back(R, BVC);
+  }
+}
+
+void InvalidateRegionsWorker::AddToWorkList(const MemRegion *R) {
+  RegionCluster **CPtr = getCluster( R->getBaseRegion());
+  if (RegionCluster *C = *CPtr) {
+    WL.push_back(C);
+    *CPtr = NULL;
+  }
+}  
+
+InvalidateRegionsWorker::RegionCluster **
+InvalidateRegionsWorker::getCluster(const MemRegion *R) {
+  RegionCluster *&CRef = ClusterM[R];
+  if (!CRef) {
+    void *Mem = BVC.getAllocator().Allocate<RegionCluster>();
+    CRef = new (Mem) RegionCluster(BVC, 10);
+    CRef->push_back(R, BVC);
+  }
+  return &CRef;
+}
+
+const GRState *
+InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
+                                           const GRState *state,
+                                           const MemRegion * const *I,
+                                           const MemRegion * const *E,
+                                           const Expr *Ex, unsigned Count,
+                                           StoreManager::InvalidatedSymbols *IS)
+{
+  ASTContext &Ctx = state->getStateManager().getContext();
+  ValueManager &ValMgr = state->getStateManager().getValueManager();
+  RegionBindings B = RegionStoreManager::GetRegionBindings(state->getStore());
+
+  // Scan the entire store and make the region clusters.
+  for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI) {
+    AddToCluster(RI.getKey().getRegion());
+    if (const MemRegion *R = RI.getData().getAsRegion())
+      AddToCluster(R);
   }
   
-  while (!WorkList.empty()) {
-    const MemRegion *R = WorkList.back();
-    WorkList.pop_back();
+  // Add the cluster for I .. E to a worklist.
+  for ( ; I != E; ++I)
+    AddToWorkList(*I);
+
+  while (!WL.empty()) {
+    RegionCluster *C = WL.back();
+    WL.pop_back();
     
-    // Have we visited this region before?
-    unsigned &visited = Visited[R];
-    if (visited)
-      continue;
-    visited = 1;
-
-    // Add subregions to work list.
-    if (const RegionStoreSubRegionMap::Set *S = SubRegions->getSubRegions(R))
-      for (RegionStoreSubRegionMap::Set::iterator I = S->begin(), E = S->end();
-           I != E; ++I)
-        WorkList.push_back(*I);
-
-    // Get the old binding.  Is it a region?  If so, add it to the worklist.
-    if (Optional<SVal> V = getDirectBinding(B, R)) {
-      if (const MemRegion *RV = V->getAsRegion())
-        WorkList.push_back(RV);
+    for (RegionCluster::iterator I = C->begin(), E = C->end(); I != E; ++I) {
+      const MemRegion *R = *I;
       
-      // A symbol?  Mark it touched by the invalidation.
-      if (IS) {
-        if (SymbolRef Sym = V->getAsSymbol())
-          IS->insert(Sym);
-      }
-    }
-
-    // Symbolic region?  Mark that symbol touched by the invalidation.
-    if (IS) {
-      if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
-        IS->insert(SR->getSymbol());
-    }
+      // Get the old binding.  Is it a region?  If so, add it to the worklist.
+      if (Optional<SVal> V = RM.getDirectBinding(B, R)) {
+        if (const MemRegion *RV = V->getAsRegion())
+          AddToWorkList(RV);
     
-    // BlockDataRegion?  If so, invalidate captured variables that are passed
-    // by reference.
-    if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(R)) {
-      for (BlockDataRegion::referenced_vars_iterator
-            I = BR->referenced_vars_begin(), E = BR->referenced_vars_end() ;
-           I != E; ++I) {
-        const VarRegion *VR = *I;
-        if (VR->getDecl()->getAttr<BlocksAttr>())
-          WorkList.push_back(VR);
+        // A symbol?  Mark it touched by the invalidation.
+        if (IS)
+          if (SymbolRef Sym = V->getAsSymbol())
+            IS->insert(Sym);
       }
-      continue;
-    }
-
-    // Handle the region itself.
-    if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R)) {
-      // Invalidate the region by setting its default value to
-      // conjured symbol. The type of the symbol is irrelavant.
-      DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
-                                                           Count);
-      B = Add(B, R, BindingVal(V, BindingVal::Default));
-      continue;
-    }
-
-    if (!R->isBoundable())
-      continue;
-  
-    const TypedRegion *TR = cast<TypedRegion>(R);
-    QualType T = TR->getValueType(Ctx);
-  
-    if (const RecordType *RT = T->getAsStructureType()) {
-      const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
-    
-      // No record definition.  There is nothing we can do.
-      if (!RD)
+      
+      // Symbolic region?  Mark that symbol touched by the invalidation.
+      if (IS)
+        if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+          IS->insert(SR->getSymbol());
+      
+      // BlockDataRegion?  If so, invalidate captured variables that are passed
+      // by reference.
+      if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(R)) {
+        for (BlockDataRegion::referenced_vars_iterator
+             I = BR->referenced_vars_begin(), E = BR->referenced_vars_end() ;
+             I != E; ++I) {
+          const VarRegion *VR = *I;
+          if (VR->getDecl()->getAttr<BlocksAttr>())
+            AddToWorkList(VR);
+        }
         continue;
-    
-      // Invalidate the region by setting its default value to
-      // conjured symbol. The type of the symbol is irrelavant.
-      DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
-                                                           Count);
-      B = Add(B, R, BindingVal(V, BindingVal::Default));
-      continue;
-    }
-  
-    if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
-      // Set the default value of the array to conjured symbol.
-      DefinedOrUnknownSVal V =
-        ValMgr.getConjuredSymbolVal(R, Ex, AT->getElementType(), Count);
-      B = Add(B, R, BindingVal(V, BindingVal::Default));
-      continue;
-    }
+      }
+      
+      // Handle the region itself.
+      if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R)) {
+        // Invalidate the region by setting its default value to
+        // conjured symbol. The type of the symbol is irrelavant.
+        DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
+                                                             Count);
+        B = RM.Add(B, R, BindingKey::Default, V);
+        continue;
+      }
 
-    if ((isa<FieldRegion>(R)||isa<ElementRegion>(R)||isa<ObjCIvarRegion>(R))
-        && Visited[cast<SubRegion>(R)->getSuperRegion()]) {
-      // For fields and elements whose super region has also been invalidated,
-      // only remove the old binding.  The super region will get set with a
-      // default value from which we can lazily derive a new symbolic value.
-      B = Remove(B, R);
-      continue;
-    }
+      if (!R->isBoundable())
+        continue;      
+      
+      const TypedRegion *TR = cast<TypedRegion>(R);
+      QualType T = TR->getValueType(Ctx);
     
-    // Invalidate the binding.
-    DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, T, Count);
-    assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
-    B = Add(B, R, BindingVal(V, BindingVal::Direct));
+      // Invalidate the binding.      
+      if (const RecordType *RT = T->getAsStructureType()) {
+        const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);      
+        // No record definition.  There is nothing we can do.
+        if (!RD) {
+          B = RM.Remove(B, R);
+          continue;
+        }
+      
+        // Invalidate the region by setting its default value to
+        // conjured symbol. The type of the symbol is irrelavant.
+        DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
+                                                             Count);
+        B = RM.Add(B, R, BindingKey::Default, V);
+        continue;
+      }    
+      if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
+        // Set the default value of the array to conjured symbol.
+        DefinedOrUnknownSVal V =
+          ValMgr.getConjuredSymbolVal(R, Ex, AT->getElementType(), Count);
+        B = RM.Add(B, R, BindingKey::Default, V);
+        continue;
+      }
+      
+      // For fields and elements that aren't themselves structs or arrays, 
+      // just remove the binding.  Base regions will get default values from
+      // which the fields and elements will get lazily symbolicated.      
+      if (isa<FieldRegion>(R) || isa<ElementRegion>(R)) {
+        B = RM.Remove(B, R, BindingKey::Direct);
+        continue;
+      }
+      
+      
+      DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, T, Count);
+      assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
+      B = RM.Add(B, R, BindingKey::Direct, V);
+    }
   }
 
   // Create a new state with the updated bindings.
   return state->makeWithStore(B.getRoot());
 }
 
+const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
+                                                     const MemRegion * const *I,
+                                                     const MemRegion * const *E,
+                                                     const Expr *Ex,
+                                                     unsigned Count,
+                                                     InvalidatedSymbols *IS) {
+  InvalidateRegionsWorker W;
+  return W.InvalidateRegions(*this, state, I, E, Ex, Count, IS);
+}
+  
+ 
 //===----------------------------------------------------------------------===//
 // getLValueXXX methods.
 //===----------------------------------------------------------------------===//
@@ -990,33 +1030,33 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 //===----------------------------------------------------------------------===//
 
 Optional<SVal> RegionStoreManager::getDirectBinding(RegionBindings B, 
-                                                    const MemRegion *R) {
-  if (const BindingVal *BV = Lookup(B, R))
-    return Optional<SVal>::create(BV->getDirectValue());
-  
+                                                 const MemRegion *R) {
+  if (const SVal *V = Lookup(B, R, BindingKey::Direct))
+    return *V;  
+
   return Optional<SVal>();
 }
 
 Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
                                                      const MemRegion *R) {
-
   if (R->isBoundable())
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R))
       if (TR->getValueType(getContext())->isUnionType())
         return UnknownVal();
 
-  if (const BindingVal *V = Lookup(B, R))
-    return Optional<SVal>::create(V->getDefaultValue());
+  if (const SVal *V = Lookup(B, R, BindingKey::Default))
+    return *V;
 
   return Optional<SVal>();
 }
 
 Optional<SVal> RegionStoreManager::getBinding(RegionBindings B,
                                               const MemRegion *R) {
-  if (const BindingVal *BV = Lookup(B, R))
-    return Optional<SVal>::create(BV->getValue());
-
-  return Optional<SVal>();
+  
+  if (Optional<SVal> V = getDirectBinding(B, R))
+    return V;
+  
+  return getDefaultBinding(B, R);
 }
 
 static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
@@ -1160,12 +1200,11 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   }
 
   RegionBindings B = GetRegionBindings(state->getStore());
-  const BindingVal *V = Lookup(B, R);
+  const SVal *V = Lookup(B, R, BindingKey::Direct);
 
   // Check if the region has a binding.
   if (V)
-    if (SVal const *SV = V->getValue())
-      return SValuator::CastResult(state, *SV);
+      return SValuator::CastResult(state, *V);
 
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
@@ -1459,7 +1498,7 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
 Store RegionStoreManager::Remove(Store store, Loc L) {
   if (isa<loc::MemRegionVal>(L))
     if (const MemRegion* R = cast<loc::MemRegionVal>(L).getRegion())
-      return Remove(store, BindingKey::Make(R));
+      return Remove(GetRegionBindings(store), R).getRoot();
 
   return store;
 }
@@ -1518,8 +1557,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
 
   // Perform the binding.
   RegionBindings B = GetRegionBindings(state->getStore());
-  return state->makeWithStore(Add(B, R,
-                                  BindingVal(V, BindingVal::Direct)).getRoot());
+  return state->makeWithStore(Add(B, R, BindingKey::Direct, V).getRoot());
 }
 
 const GRState *RegionStoreManager::BindDecl(const GRState *ST,
@@ -1566,8 +1604,7 @@ const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
     return state;
   }
 
-  return state->makeWithStore(Add(B, R,
-                                  BindingVal(V, BindingVal::Default)).getRoot());  
+  return state->makeWithStore(Add(B, R, BindingKey::Default, V).getRoot());
 }
   
 const GRState *RegionStoreManager::BindArray(const GRState *state,
@@ -1699,7 +1736,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   if (FI != FE) {
     Store store = state->getStore();
     RegionBindings B = GetRegionBindings(store);
-    B = Add(B, R, BindingVal(ValMgr.makeIntVal(0, false), BindingVal::Default));
+    B = Add(B, R, BindingKey::Default, ValMgr.makeIntVal(0, false));
     state = state->makeWithStore(B.getRoot());
   }
 
@@ -1713,9 +1750,7 @@ Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R) {
   RemoveSubRegionBindings(B, R, *SubRegions);
 
   // Set the default value of the struct region to "unknown".
-  B = Add(B, R, BindingVal(UnknownVal(), BindingVal::Default));
-
-  return B.getRoot();
+  return Add(B, R, BindingKey::Default, UnknownVal()).getRoot();
 }
 
 const GRState*
@@ -1734,53 +1769,53 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 
   // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
   // results in a zero-copy algorithm.
-  return state->makeWithStore(Add(B, R,
-                                  BindingVal(V, BindingVal::Direct)).getRoot());
+  return state->makeWithStore(Add(B, R, BindingKey::Direct, V).getRoot());
 }
 
 //===----------------------------------------------------------------------===//
 // "Raw" retrievals and bindings.
 //===----------------------------------------------------------------------===//
 
-BindingKey BindingKey::Make(const MemRegion *R) {
+BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     const RegionRawOffset &O = ER->getAsRawOffset();
     
     if (O.getRegion())
-      return BindingKey(O.getRegion(), O.getByteOffset());
+      return BindingKey(O.getRegion(), O.getByteOffset(), k);
     
     // FIXME: There are some ElementRegions for which we cannot compute
     // raw offsets yet, including regions with symbolic offsets.
   }
   
-  return BindingKey(R, 0);
+  return BindingKey(R, 0, k);
 }
 
-RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K,
-                                       BindingVal V) {
+RegionBindings RegionStoreManager::Add(RegionBindings B, BindingKey K, SVal V) {
   return RBFactory.Add(B, K, V);
 }
 
 RegionBindings RegionStoreManager::Add(RegionBindings B, const MemRegion *R,
-                                       BindingVal V) {
-  return Add(B, BindingKey::Make(R), V);
+                                       BindingKey::Kind k, SVal V) {
+  return Add(B, BindingKey::Make(R, k), V);
 }
 
-const BindingVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
+const SVal *RegionStoreManager::Lookup(RegionBindings B, BindingKey K) {
   return B.lookup(K);
 }
 
-const BindingVal *RegionStoreManager::Lookup(RegionBindings B,
-                                             const MemRegion *R) {
-  return Lookup(B, BindingKey::Make(R));
+const SVal *RegionStoreManager::Lookup(RegionBindings B,
+                                       const MemRegion *R,
+                                       BindingKey::Kind k) {
+  return Lookup(B, BindingKey::Make(R, k));
 }
 
 RegionBindings RegionStoreManager::Remove(RegionBindings B, BindingKey K) {
   return RBFactory.Remove(B, K);
 }
 
-RegionBindings RegionStoreManager::Remove(RegionBindings B, const MemRegion *R){
-  return Remove(B, BindingKey::Make(R));
+RegionBindings RegionStoreManager::Remove(RegionBindings B, const MemRegion *R,
+                                          BindingKey::Kind k){
+  return Remove(B, BindingKey::Make(R, k));
 }
 
 Store RegionStoreManager::Remove(Store store, BindingKey K) {
@@ -1982,7 +2017,7 @@ tryAgain:
     if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
       SymReaper.maybeDead(SymR->getSymbol());
 
-    SVal X = *I.getData().getValue();
+    SVal X = I.getData();
     SVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
     for (; SI != SE; ++SI)
       SymReaper.maybeDead(*SI);
