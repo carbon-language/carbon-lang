@@ -241,6 +241,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     // Extract the initializer, skipping through any temporary-binding 
     // expressions and look at the subexpression as it was written.
     Expr *DInit = D->getInit();
+    if (CXXExprWithTemporaries *ExprTemp
+          = dyn_cast<CXXExprWithTemporaries>(DInit))
+      DInit = ExprTemp->getSubExpr();
     while (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(DInit))
       DInit = Binder->getSubExpr();
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(DInit))
