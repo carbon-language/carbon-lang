@@ -1099,8 +1099,19 @@ public:
 };
 }
 
+#include "llvm/Support/CommandLine.h"
+
+static cl::opt<bool> EnableNewEncoder("enable-new-x86-encoder",
+                                      cl::ReallyHidden);
+
+
 // Ok, now you can look.
-MCCodeEmitter *llvm::createHeinousX86MCCodeEmitter(const Target &,
+MCCodeEmitter *llvm::createHeinousX86MCCodeEmitter(const Target &T,
                                                    TargetMachine &TM) {
+  
+  // FIXME: Remove the heinous one when the new one works.
+  if (EnableNewEncoder)
+    return createX86MCCodeEmitter(T, TM);
+
   return new X86MCCodeEmitter(static_cast<X86TargetMachine&>(TM));
 }

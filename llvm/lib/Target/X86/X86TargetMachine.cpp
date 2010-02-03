@@ -48,6 +48,7 @@ extern "C" void LLVMInitializeX86Target() {
   RegisterAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
 
   // Register the code emitter.
+  // FIXME: Remove the heinous one when the new one works.
   TargetRegistry::RegisterCodeEmitter(TheX86_32Target,
                                       createHeinousX86MCCodeEmitter);
   TargetRegistry::RegisterCodeEmitter(TheX86_64Target,
