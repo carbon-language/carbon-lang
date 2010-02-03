@@ -27,7 +27,6 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -503,17 +502,14 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TheSection);
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$stub:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        //   .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
-        // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4 = -12.
-        const char HltInsts[] = { -12, -12, -12, -12, -12 };
-        OutStreamer.EmitBytes(StringRef(HltInsts, 5), 0/*addrspace*/);
+        O << *Stubs[i].first << ":\n";
+        // Get the MCSymbol without the $stub suffix.
+        O << "\t.indirect_symbol " << *Stubs[i].second;
+        O << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
       }
+      O << '\n';
       
       Stubs.clear();
-      OutStreamer.AddBlankLine();
     }
 
     // Output stubs for external and common global variables.
@@ -526,15 +522,10 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TheSection);
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$non_lazy_ptr:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        // .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
-        // .long 0
-        OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        O << *Stubs[i].first << ":\n\t.indirect_symbol " << *Stubs[i].second;
+        O << "\n\t.long\t0\n";
       }
       Stubs.clear();
-      OutStreamer.AddBlankLine();
     }
 
     Stubs = MMIMacho.GetHiddenGVStubList();
@@ -545,16 +536,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         O << *Stubs[i].first << ":\n" << MAI->getData32bitsDirective();
         O << *Stubs[i].second << '\n';
-        
-        // L_foo$non_lazy_ptr:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        // .long _foo
-        OutStreamer.EmitValue(MCSymbolRefExpr::Create(Stubs[i].second,
-                                                      OutContext),
-                              4/*size*/, 0/*addrspace*/);
       }
       Stubs.clear();
-      OutStreamer.AddBlankLine();
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
