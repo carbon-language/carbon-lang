@@ -184,6 +184,7 @@ void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
   printMCInst(&TmpInst);
+  O << '\n';
 }
 
 static MCInstPrinter *createMSP430MCInstPrinter(const Target &T,

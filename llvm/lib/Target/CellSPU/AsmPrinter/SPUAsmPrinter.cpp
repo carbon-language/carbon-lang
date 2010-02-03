@@ -58,6 +58,7 @@ namespace {
 
     void EmitInstruction(const MachineInstr *MI) {
       printInstruction(MI);
+      O << '\n';
     }
     void printOp(const MachineOperand &MO);
 

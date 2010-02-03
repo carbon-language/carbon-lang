@@ -448,6 +448,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     O << "+";
     printOperand(MI, NOps-2);
+    O << '\n';
     return;
   }
   case X86::MOVPC32r: {
@@ -475,6 +476,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.setOpcode(X86::POP32r);
     TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
     printMCInst(&TmpInst);
+    O << '\n';
     return;
   }
       
@@ -512,6 +514,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
     TmpInst.addOperand(MCOperand::CreateExpr(DotExpr));
     printMCInst(&TmpInst);
+    O << '\n';
     return;
   }
   }
@@ -521,5 +524,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   
   
   printMCInst(&TmpInst);
+  O << '\n';
 }
 

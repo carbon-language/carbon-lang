@@ -309,6 +309,7 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   printInstruction(MI);
+  O << '\n';
 }
 
 // Force static initialization.

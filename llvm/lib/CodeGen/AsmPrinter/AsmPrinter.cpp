@@ -351,15 +351,19 @@ void AsmPrinter::EmitFunctionBody() {
       case TargetInstrInfo::EH_LABEL:
       case TargetInstrInfo::GC_LABEL:
         printLabel(II);
+        O << '\n';
         break;
       case TargetInstrInfo::INLINEASM:
         printInlineAsm(II);
+        O << '\n';
         break;
       case TargetInstrInfo::IMPLICIT_DEF:
         printImplicitDef(II);
+        O << '\n';
         break;
       case TargetInstrInfo::KILL:
         printKill(II);
+        O << '\n';
         break;
       default:
         EmitInstruction(II);
@@ -367,7 +371,6 @@ void AsmPrinter::EmitFunctionBody() {
       }
       if (VerboseAsm)
         EmitComments(*II);
-      O << '\n';
       
       // FIXME: Clean up processDebugLoc.
       processDebugLoc(II, false);
@@ -1580,7 +1583,7 @@ static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
   }
 }
 
-/// EmitComments - Pretty-print comments for basic blocks.
+/// PrintBasicBlockLoopComments - Pretty-print comments for basic blocks.
 static void PrintBasicBlockLoopComments(const MachineBasicBlock &MBB,
                                         const MachineLoopInfo *LI,
                                         const AsmPrinter &AP) {
@@ -1716,8 +1719,6 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   if (!VerboseAsm)
     return;
 
-  bool Newline = false;
-
   if (!MI.getDebugLoc().isUnknown()) {
     DILocation DLT = MF->getDILocation(MI.getDebugLoc());
 
@@ -1733,7 +1734,7 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
     O << ':' << DLT.getLineNumber();
     if (DLT.getColumnNumber() != 0)
       O << ':' << DLT.getColumnNumber();
-    Newline = true;
+    O << '\n';
   }
 
   // Check for spills and reloads
@@ -1748,37 +1749,29 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   if (TM.getInstrInfo()->isLoadFromStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
-      if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Reload";
-      Newline = true;
+      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Reload\n";
     }
   }
   else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << ' '
-        << MMO->getSize() << "-byte Folded Reload";
-      Newline = true;
+        << MMO->getSize() << "-byte Folded Reload\n";
     }
   }
   else if (TM.getInstrInfo()->isStoreToStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
-      if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Spill";
-      Newline = true;
+      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Spill\n";
     }
   }
   else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
       O << MAI->getCommentString() << ' '
-        << MMO->getSize() << "-byte Folded Spill";
-      Newline = true;
+        << MMO->getSize() << "-byte Folded Spill\n";
     }
   }
 
@@ -1787,9 +1780,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
                                       SrcSubIdx, DstSubIdx)) {
     if (MI.getAsmPrinterFlag(ReloadReuse)) {
-      if (Newline) O << '\n';
       O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Reload Reuse";
+      O << MAI->getCommentString() << " Reload Reuse\n";
     }
   }
 }

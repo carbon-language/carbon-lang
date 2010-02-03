@@ -1034,6 +1034,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       EmitAlignment(2);
     
     printInstruction(MI);
+    O << '\n';
   }
 }
 
