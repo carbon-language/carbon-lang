@@ -651,6 +651,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-Eonly");
     else
       CmdArgs.push_back("-E");
+  } else if (isa<AssembleJobAction>(JA)) {
+    CmdArgs.push_back("-emit-obj");
   } else if (isa<PrecompileJobAction>(JA)) {
     // Use PCH if the user requested it, except for C++ (for now).
     bool UsePCH = D.CCCUsePCH;

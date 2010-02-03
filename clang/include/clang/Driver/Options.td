@@ -377,6 +377,7 @@ def image__base : Separate<"-image_base">;
 def include_ : JoinedOrSeparate<"-include">, Group<clang_i_Group>, EnumName<"include">;
 def init : Separate<"-init">;
 def install__name : Separate<"-install_name">;
+def integrated_as : Flag<"-integrated-as">, Flags<[DriverOption]>;
 def iprefix : JoinedOrSeparate<"-iprefix">, Group<clang_i_Group>;
 def iquote : JoinedOrSeparate<"-iquote">, Group<clang_i_Group>;
 def isysroot : JoinedOrSeparate<"-isysroot">, Group<clang_i_Group>;
@@ -444,6 +445,7 @@ def m_Joined : Joined<"-m">, Group<m_Group>;
 def no_canonical_prefixes : Flag<"-no-canonical-prefixes">, Flags<[DriverOption, HelpHidden]>,
   HelpText<"Use relative instead of canonical paths">;
 def no_cpp_precomp : Flag<"-no-cpp-precomp">;
+def no_integrated_as : Flag<"-no-integrated-as">, Flags<[DriverOption]>;
 def no_integrated_cpp : Flag<"-no-integrated-cpp">, Flags<[DriverOption]>;
 def no__dead__strip__inits__and__terms : Flag<"-no_dead_strip_inits_and_terms">;
 def nobuiltininc : Flag<"-nobuiltininc">;

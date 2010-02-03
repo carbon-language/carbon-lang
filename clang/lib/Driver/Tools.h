@@ -41,6 +41,7 @@ namespace tools {
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
+    virtual bool hasIntegratedAssembler() const { return true; }
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,

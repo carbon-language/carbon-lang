@@ -45,6 +45,7 @@ public:
 
   virtual bool acceptsPipedInput() const = 0;
   virtual bool canPipeOutput() const = 0;
+  virtual bool hasIntegratedAssembler() const { return false; }
   virtual bool hasIntegratedCPP() const = 0;
 
   /// ConstructJob - Construct jobs to perform the action \arg JA,

@@ -865,6 +865,44 @@ void Driver::BuildJobs(Compilation &C) const {
   }
 }
 
+static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
+                                    const JobAction *JA,
+                                    const ActionList *&Inputs) {
+  const Tool *ToolForJob = 0;
+
+  // See if we should look for a compiler with an integrated assembler. We match
+  // bottom up, so what we are actually looking for is an assembler job with a
+  // compiler input.
+  if (C.getArgs().hasArg(options::OPT_integrated_as,
+                         options::OPT_no_integrated_as,
+                         TC->IsIntegratedAssemblerDefault()) &&
+      !C.getArgs().hasArg(options::OPT_save_temps) &&
+      isa<AssembleJobAction>(JA) &&
+      Inputs->size() == 1 && isa<CompileJobAction>(*Inputs->begin())) {
+    const Tool &Compiler = TC->SelectTool(C,cast<JobAction>(**Inputs->begin()));
+    if (Compiler.hasIntegratedAssembler()) {
+      Inputs = &(*Inputs)[0]->getInputs();
+      ToolForJob = &Compiler;
+    }
+  }
+
+  // Otherwise use the tool for the current job.
+  if (!ToolForJob)
+    ToolForJob = &TC->SelectTool(C, *JA);
+
+  // See if we should use an integrated preprocessor. We do so when we have
+  // exactly one input, since this is the only use case we care about
+  // (irrelevant since we don't support combine yet).
+  if (Inputs->size() == 1 && isa<PreprocessJobAction>(*Inputs->begin()) &&
+      !C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
+      !C.getArgs().hasArg(options::OPT_traditional_cpp) &&
+      !C.getArgs().hasArg(options::OPT_save_temps) &&
+      ToolForJob->hasIntegratedCPP())
+    Inputs = &(*Inputs)[0]->getInputs();
+
+  return *ToolForJob;
+}
+
 void Driver::BuildJobsForAction(Compilation &C,
                                 const Action *A,
                                 const ToolChain *TC,
@@ -905,21 +943,10 @@ void Driver::BuildJobsForAction(Compilation &C,
     return;
   }
 
-  const JobAction *JA = cast<JobAction>(A);
-  const Tool &T = TC->SelectTool(C, *JA);
-
-  // See if we should use an integrated preprocessor. We do so when we have
-  // exactly one input, since this is the only use case we care about
-  // (irrelevant since we don't support combine yet).
   const ActionList *Inputs = &A->getInputs();
-  if (Inputs->size() == 1 && isa<PreprocessJobAction>(*Inputs->begin())) {
-    if (!C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
-        !C.getArgs().hasArg(options::OPT_traditional_cpp) &&
-        !C.getArgs().hasArg(options::OPT_save_temps) &&
-        T.hasIntegratedCPP()) {
-      Inputs = &(*Inputs)[0]->getInputs();
-    }
-  }
+
+  const JobAction *JA = cast<JobAction>(A);
+  const Tool &T = SelectToolForJob(C, TC, JA, Inputs);
 
   // Only use pipes when there is exactly one input.
   bool TryToUsePipeInput = Inputs->size() == 1 && T.acceptsPipedInput();
