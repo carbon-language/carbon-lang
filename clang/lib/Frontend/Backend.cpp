@@ -308,8 +308,7 @@ bool BackendConsumer::AddEmitPasses() {
     TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
     if (Action == Backend_EmitObj)
       CGFT = TargetMachine::CGFT_ObjectFile;
-    if (TM->addPassesToEmitFile(*PM, FormattedOutStream,
-                                CGFT, OptLevel) != CGFT) {
+    if (TM->addPassesToEmitFile(*PM, FormattedOutStream, CGFT, OptLevel)) {
       Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
     }
