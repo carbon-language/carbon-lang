@@ -2269,7 +2269,6 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
   }
 
-
   // Look for obvious safe cases to perform tail call optimization that does not
   // requite ABI changes. This is what gcc calls sibcall.
 
@@ -2324,22 +2323,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     }
   }
 
-  // If the caller does not return a value, then this is obviously safe.
-  // This is one case where it's safe to perform this optimization even
-  // if the return types do not match.
-  const Type *CallerRetTy = CallerF->getReturnType();
-  if (CallerRetTy->isVoidTy())
-    return true;
-
-  // If the return types match, then it's safe.
-  // Don't tail call optimize recursive call.
-  GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-  if (!G) return false;  // FIXME: common external symbols?
-  if (const Function *CalleeF = dyn_cast<Function>(G->getGlobal())) {
-    const Type *CalleeRetTy = CalleeF->getReturnType();
-    return CallerRetTy == CalleeRetTy;
-  }
-  return false;
+  return true;
 }
 
 FastISel *

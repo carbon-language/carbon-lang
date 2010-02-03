@@ -102,3 +102,28 @@ entry:
 }
 
 declare i32 @bar2(i32, i32, i32)
+
+define signext i16 @t8() nounwind ssp {
+entry:
+; 32: t8:
+; 32: jmp {{_?}}bar3
+
+; 64: t8:
+; 64: jmp {{_?}}bar3
+  %0 = tail call signext i16 @bar3() nounwind      ; <i16> [#uses=1]
+  ret i16 %0
+}
+
+declare signext i16 @bar3()
+
+define signext i16 @t9(i32 (i32)* nocapture %x) nounwind ssp {
+entry:
+; 32: t9:
+; 32: call *
+
+; 64: t9:
+; 64: callq *
+  %0 = bitcast i32 (i32)* %x to i16 (i32)*
+  %1 = tail call signext i16 %0(i32 0) nounwind
+  ret i16 %1
+}

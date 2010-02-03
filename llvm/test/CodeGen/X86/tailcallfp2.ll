@@ -2,7 +2,7 @@
 
 declare i32 @putchar(i32)
 
-define fastcc i32 @checktail(i32 %x, i32* %f, i32 %g) {
+define fastcc i32 @checktail(i32 %x, i32* %f, i32 %g) nounwind {
         %tmp1 = icmp sgt i32 %x, 0
         br i1 %tmp1, label %if-then, label %if-else
 
@@ -18,7 +18,7 @@ if-else:
 }
 
 
-define i32 @main() { 
+define i32 @main() nounwind { 
  %f   = bitcast i32 (i32, i32*, i32)* @checktail to i32*
  %res = tail call fastcc i32 @checktail( i32 10, i32* %f,i32 10)
  ret i32 %res

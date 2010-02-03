@@ -4197,8 +4197,9 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 ///
 /// This function only tests target-independent requirements.
 static bool
-isInTailCallPosition(const Instruction *I, Attributes CalleeRetAttr,
+isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
                      const TargetLowering &TLI) {
+  const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
   const ReturnInst *Ret = dyn_cast<ReturnInst>(Term);
@@ -4206,6 +4207,12 @@ isInTailCallPosition(const Instruction *I, Attributes CalleeRetAttr,
 
   // The block must end in a return statement or an unreachable.
   if (!Ret && !isa<UnreachableInst>(Term)) return false;
+
+  // Unless we are explicitly forcing tailcall optimization do not tailcall if
+  // the called function is bitcast'ed. The analysis may not be entirely
+  // accurate.
+  if (!PerformTailCallOpt && isa<BitCastInst>(CS.getCalledValue()))
+    return false;
 
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.
@@ -4348,9 +4355,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   // Check if target-independent constraints permit a tail call here.
   // Target-dependent constraints are checked within TLI.LowerCallTo.
   if (isTailCall &&
-      !isInTailCallPosition(CS.getInstruction(),
-                            CS.getAttributes().getRetAttributes(),
-                            TLI))
+      !isInTailCallPosition(CS, CS.getAttributes().getRetAttributes(), TLI))
     isTailCall = false;
 
   std::pair<SDValue,SDValue> Result =
