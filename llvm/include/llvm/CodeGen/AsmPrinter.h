@@ -307,7 +307,6 @@ namespace llvm {
 
     /// printLabel - This method prints a local label used by debug and
     /// exception handling tables.
-    void printLabel(const MachineInstr *MI) const;
     void printLabel(unsigned Id) const;
 
     /// printDeclare - This method prints a local variable declaration used by
@@ -366,10 +365,17 @@ namespace llvm {
     
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
+    /// printOffset - This is just convenient handler for printing offsets.
+    void printOffset(int64_t Offset) const;
+
+  private:
+
     /// processDebugLoc - Processes the debug information of each machine
     /// instruction's DebugLoc. 
     void processDebugLoc(const MachineInstr *MI, bool BeforePrintingInsn);
     
+    void printLabelInst(const MachineInstr *MI) const;
+
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.
     void printInlineAsm(const MachineInstr *MI) const;
@@ -381,10 +387,6 @@ namespace llvm {
     /// printKill - This method prints the specified kill machine instruction.
     void printKill(const MachineInstr *MI) const;
 
-    /// printOffset - This is just convenient handler for printing offsets.
-    void printOffset(int64_t Offset) const;
- 
-  private:
     /// EmitVisibility - This emits visibility information about symbol, if
     /// this is suported by the target.
     void EmitVisibility(MCSymbol *Sym, unsigned Visibility) const;

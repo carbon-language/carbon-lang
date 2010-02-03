@@ -350,20 +350,16 @@ void AsmPrinter::EmitFunctionBody() {
       case TargetInstrInfo::DBG_LABEL:
       case TargetInstrInfo::EH_LABEL:
       case TargetInstrInfo::GC_LABEL:
-        printLabel(II);
-        O << '\n';
+        printLabelInst(II);
         break;
       case TargetInstrInfo::INLINEASM:
         printInlineAsm(II);
-        O << '\n';
         break;
       case TargetInstrInfo::IMPLICIT_DEF:
         printImplicitDef(II);
-        O << '\n';
         break;
       case TargetInstrInfo::KILL:
         printKill(II);
-        O << '\n';
         break;
       default:
         EmitInstruction(II);
@@ -1429,7 +1425,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd();
+  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
 }
 
 /// printImplicitDef - This method prints the specified machine instruction
@@ -1438,7 +1434,7 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " implicit-def: "
-    << TRI->getName(MI->getOperand(0).getReg());
+    << TRI->getName(MI->getOperand(0).getReg()) << '\n';
 }
 
 void AsmPrinter::printKill(const MachineInstr *MI) const {
@@ -1450,12 +1446,14 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
     assert(op.isReg() && "KILL instruction must have only register operands");
     O << ' ' << TRI->getName(op.getReg()) << (op.isDef() ? "<def>" : "<kill>");
   }
+  O << '\n';
 }
 
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
-void AsmPrinter::printLabel(const MachineInstr *MI) const {
+void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
   printLabel(MI->getOperand(0).getImm());
+  O << '\n';
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
