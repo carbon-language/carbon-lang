@@ -375,6 +375,7 @@ namespace llvm {
     DICompositeType getContainingType() const {
       return getFieldAs<DICompositeType>(13);
     }
+    unsigned isArtificial() const    { return getUnsignedField(14); }
 
     StringRef getFilename() const    { return getCompileUnit().getFilename();}
     StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
@@ -595,7 +596,8 @@ namespace llvm {
                                   bool isDefinition,
                                   unsigned VK = 0,
                                   unsigned VIndex = 0,
-                                  DIType = DIType());
+                                  DIType = DIType(),
+                                  bool isArtificial = 0);
 
     /// CreateSubprogramDefinition - Create new subprogram descriptor for the
     /// given declaration. 

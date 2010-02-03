@@ -1201,6 +1201,9 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
       }
   }
 
+  if (SP.isArtificial())
+    addUInt(SPDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+
   // DW_TAG_inlined_subroutine may refer to this DIE.
   ModuleCU->insertDIE(SP.getNode(), SPDie);
   return SPDie;
