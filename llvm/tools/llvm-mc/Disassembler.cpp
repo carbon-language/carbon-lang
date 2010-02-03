@@ -47,32 +47,30 @@ public:
 };
 }
 
-static bool PrintInst(const llvm::MCDisassembler &DisAsm,
+static bool PrintInsts(const llvm::MCDisassembler &DisAsm,
                       llvm::MCInstPrinter &Printer, const ByteArrayTy &Bytes,
                       SourceMgr &SM) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
   
-  // Disassemble it to a string and get the size of the instruction.
-  MCInst Inst;
+  // Disassemble it to strings.
   uint64_t Size;
+  uint64_t Index;
   
-  if (!DisAsm.getInstruction(Inst, Size, memoryObject, 0, 
-                             /*REMOVE*/ nulls())) {
-    SM.PrintMessage(SMLoc::getFromPointer(Bytes[0].second),
-                    "invalid instruction encoding", "error");
-    return true;
-  }
-  
-  Printer.printInst(&Inst);
-  outs() << "\n";
-  
-  // If the disassembled instruction was smaller than the number of bytes we
-  // read, reject the excess bytes.
-  if (Bytes.size() != Size) {
-    SM.PrintMessage(SMLoc::getFromPointer(Bytes[Size].second),
-                    "excess data detected in input", "error");
-    return true;
+  for (Index = 0; Index < Bytes.size(); Index += Size) {
+    MCInst Inst;
+    
+    if (DisAsm.getInstruction(Inst, Size, memoryObject, Index, 
+                               /*REMOVE*/ nulls())) {
+      Printer.printInst(&Inst);
+      outs() << "\n";
+    }
+    else {
+      SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
+                      "invalid instruction encoding", "warning");
+      if (Size == 0)
+        Size = 1; // skip illegible bytes
+    }
   }
   
   return false;
@@ -117,15 +115,9 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
       continue;
     }
     
-    // If this is the end of a line or start of a comment, process the
-    // instruction we have so far.
+    // If this is the end of a line or start of a comment, remove the rest of
+    // the line.
     if (Str[0] == '\n' || Str[0] == '#') {
-      // If we have bytes to process, do so.
-      if (!ByteArray.empty()) {
-        ErrorOccurred |= PrintInst(*DisAsm, *InstPrinter, ByteArray, SM);
-        ByteArray.clear();
-      }
-      
       // Strip to the end of line if we already processed any bytes on this
       // line.  This strips the comment and/or the \n.
       if (Str[0] == '\n')
@@ -159,7 +151,7 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
   }
   
   if (!ByteArray.empty())
-    ErrorOccurred |= PrintInst(*DisAsm, *InstPrinter, ByteArray, SM);
+    ErrorOccurred |= PrintInsts(*DisAsm, *InstPrinter, ByteArray, SM);
     
   return ErrorOccurred;
 }
