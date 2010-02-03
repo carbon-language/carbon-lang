@@ -767,8 +767,23 @@ bool APInt::isPowerOf2() const {
 }
 
 unsigned APInt::countLeadingZerosSlowCase() const {
-  unsigned Count = 0;
-  for (unsigned i = getNumWords(); i > 0u; --i) {
+  // Treat the most significand word differently because it might have
+  // meaningless bits set beyond the precision.
+  unsigned BitsInMSW = BitWidth % APINT_BITS_PER_WORD;
+  integerPart MSWMask;
+  if (BitsInMSW) MSWMask = (integerPart(1) << BitsInMSW) - 1;
+  else {
+    MSWMask = ~integerPart(0);
+    BitsInMSW = APINT_BITS_PER_WORD;
+  }
+
+  unsigned i = getNumWords();
+  integerPart MSW = pVal[i-1] & MSWMask;
+  if (MSW)
+    return CountLeadingZeros_64(MSW) - (APINT_BITS_PER_WORD - BitsInMSW);
+
+  unsigned Count = BitsInMSW;
+  for (--i; i > 0u; --i) {
     if (pVal[i-1] == 0)
       Count += APINT_BITS_PER_WORD;
     else {
@@ -776,10 +791,7 @@ unsigned APInt::countLeadingZerosSlowCase() const {
       break;
     }
   }
-  unsigned remainder = BitWidth % APINT_BITS_PER_WORD;
-  if (remainder)
-    Count -= APINT_BITS_PER_WORD - remainder;
-  return std::min(Count, BitWidth);
+  return Count;
 }
 
 static unsigned countLeadingOnes_64(uint64_t V, unsigned skip) {

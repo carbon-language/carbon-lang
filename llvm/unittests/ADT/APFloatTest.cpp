@@ -333,6 +333,8 @@ TEST(APFloatTest, toString) {
   ASSERT_EQ("1.01E-2", convertToString(1.01E-2, 5, 1));
   ASSERT_EQ("0.7853981633974483", convertToString(0.78539816339744830961, 0, 3));
   ASSERT_EQ("4.940656458412465E-324", convertToString(4.9406564584124654e-324, 0, 3));
+  ASSERT_EQ("873.1834", convertToString(873.1834, 0, 1));
+  ASSERT_EQ("8.731834E+2", convertToString(873.1834, 0, 0));
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
