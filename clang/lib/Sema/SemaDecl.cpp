@@ -1300,7 +1300,8 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
   // C++ doesn't have tentative definitions, so go right ahead and check here.
   const VarDecl *Def;
-  if (New->isThisDeclarationADefinition() == VarDecl::Definition &&
+  if (getLangOptions().CPlusPlus &&
+      New->isThisDeclarationADefinition() == VarDecl::Definition &&
       (Def = Old->getDefinition())) {
     Diag(New->getLocation(), diag::err_redefinition)
       << New->getDeclName();
