@@ -391,6 +391,8 @@ void AsmPrinter::EmitFunctionBody() {
   
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo();
+  
+  OutStreamer.AddBlankLine();
 }
 
 

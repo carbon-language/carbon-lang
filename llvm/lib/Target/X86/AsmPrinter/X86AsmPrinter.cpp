@@ -55,7 +55,6 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
-  O << "\n\n";
   
   // COFF and Cygwin specific mangling stuff.  This should be moved out to the
   // mangler or handled some other way?
