@@ -75,3 +75,8 @@ struct test9 {
 // PR6208
 struct test10 { int a; } static test10x;
 struct test11 { int a; } const test11x;
+
+// PR6216
+void test12() {
+  (void)__builtin_offsetof(struct { char c; int i; }, i);
+}
