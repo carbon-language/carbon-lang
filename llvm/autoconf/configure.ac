@@ -49,7 +49,6 @@ AC_CONFIG_SRCDIR([lib/VMCore/Module.cpp])
 dnl Place all of the extra autoconf files into the config subdirectory. Tell
 dnl various tools where the m4 autoconf macros are.
 AC_CONFIG_AUX_DIR([autoconf])
-AC_CONFIG_MACRO_DIR([m4])
 
 dnl Quit if the source directory has already been configured.
 dnl NOTE: This relies upon undocumented autoconf behavior.
