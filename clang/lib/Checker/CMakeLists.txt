@@ -26,6 +26,7 @@ add_clang_library(clangChecker
   DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
+  FlatStore.cpp
   FixedAddressChecker.cpp
   GRBlockCounter.cpp
   GRCoreEngine.cpp
