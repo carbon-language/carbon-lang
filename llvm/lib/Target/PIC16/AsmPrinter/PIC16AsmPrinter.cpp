@@ -43,14 +43,9 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
   PTOF = (PIC16TargetObjectFile *)&PTLI->getObjFileLowering();
 }
 
-bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  processDebugLoc(MI, true);
+void PIC16AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   printInstruction(MI);
-  if (VerboseAsm)
-    EmitComments(*MI);
   O << '\n';
-  processDebugLoc(MI, false);
-  return true;
 }
 
 static int getFunctionColor(const Function *F) {
@@ -148,7 +143,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       }
         
       // Print the assembly for the instruction.
-      printMachineInstruction(II);
+      EmitInstruction(II);
     }
   }
   
