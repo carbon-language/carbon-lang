@@ -12,7 +12,7 @@
 //
 // Goal:
 //  The goal of this snippet is to create in the memory
-//  the LLVM module consisting of two functions as follow:
+//  the LLVM module consisting of two functions as follow: 
 //
 // int add1(int x) {
 //   return x+1;
