@@ -202,12 +202,18 @@ bool SROA::performPromotion(Function &F) {
   return Changed;
 }
 
-/// getNumSAElements - Return the number of elements in the specific struct or
-/// array.
-static uint64_t getNumSAElements(const Type *T) {
+/// ShouldAttemptScalarRepl - Decide if an alloca is a good candidate for
+/// SROA.  It must be a struct or array type with a small number of elements.
+static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
+  const Type *T = AI->getAllocatedType();
+  // Do not promote any struct into more than 32 separate vars.
   if (const StructType *ST = dyn_cast<StructType>(T))
-    return ST->getNumElements();
-  return cast<ArrayType>(T)->getNumElements();
+    return ST->getNumElements() <= 32;
+  // Arrays are much less likely to be safe for SROA; only consider
+  // them if they are very small.
+  if (const ArrayType *AT = dyn_cast<ArrayType>(T))
+    return AT->getNumElements() <= 8;
+  return false;
 }
 
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
@@ -266,21 +272,17 @@ bool SROA::performScalarRepl(Function &F) {
     // Do not promote [0 x %struct].
     if (AllocaSize == 0) continue;
 
+    // If the alloca looks like a good candidate for scalar replacement, and if
+    // all its users can be transformed, then split up the aggregate into its
+    // separate elements.
+    if (ShouldAttemptScalarRepl(AI) && isSafeAllocaToScalarRepl(AI)) {
+      DoScalarReplacement(AI, WorkList);
+      Changed = true;
+      continue;
+    }
+
     // Do not promote any struct whose size is too big.
     if (AllocaSize > SRThreshold) continue;
-
-    if ((isa<StructType>(AI->getAllocatedType()) ||
-         isa<ArrayType>(AI->getAllocatedType())) &&
-        // Do not promote any struct into more than "32" separate vars.
-        getNumSAElements(AI->getAllocatedType()) <= SRThreshold/4) {
-      // Check that all of the users of the allocation are capable of being
-      // transformed.
-      if (isSafeAllocaToScalarRepl(AI)) {
-        DoScalarReplacement(AI, WorkList);
-        Changed = true;
-        continue;
-      }
-    }
 
     // If we can turn this aggregate value (potentially with casts) into a
     // simple scalar value that can be mem2reg'd into a register value.
