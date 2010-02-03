@@ -1481,6 +1481,7 @@ Parser::OwningStmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 
           // Inform the actions module about the parameter declarator, so it
           // gets added to the current scope.
+          // FIXME. Probably can build a VarDecl and avoid setting DeclContext.
           FirstPart = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
           Actions.ActOnObjCCatchParam(FirstPart);
         } else

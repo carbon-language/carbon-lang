@@ -3936,15 +3936,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
 void Sema::ActOnObjCCatchParam(DeclPtrTy D) {
   ParmVarDecl *Param = cast<ParmVarDecl>(D.getAs<Decl>());
-  
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(CurContext))
-    Param->setDeclContext(Function);
-  else if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
-    Param->setDeclContext(MD);
-  else if (BlockDecl *BD = dyn_cast<BlockDecl>(CurContext))
-    Param->setDeclContext(BD);
-  // FIXME. Other contexts?
-  
+  Param->setDeclContext(CurContext);
 }
 
 void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
