@@ -123,6 +123,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   OwningPtr<MCContext> Context(new MCContext());
   OwningPtr<MCStreamer> AsmStreamer;
 
+  formatted_raw_ostream *LegacyOutput;
   switch (FileType) {
   default: return CGFT_ErrorOccurred;
   case CGFT_AssemblyFile:
@@ -130,6 +131,8 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                         getTargetData()->isLittleEndian(),
                                         getVerboseAsm(), /*instprinter*/0,
                                         /*codeemitter*/0));
+    // Set the AsmPrinter's "O" to the output file.
+    LegacyOutput = &Out;
     break;
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
@@ -139,6 +142,12 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
       return CGFT_ErrorOccurred;
     
     AsmStreamer.reset(createMachOStreamer(*Context, Out, MCE));
+    
+    // Any output to the asmprinter's "O" stream is bad and needs to be fixed,
+    // force it to come out stderr.
+    // FIXME: this is horrible and leaks, eventually remove the raw_ostream from
+    // asmprinter.
+    LegacyOutput = new formatted_raw_ostream(errs());
     break;
   }
   }
@@ -146,7 +155,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
   // if successful.
   FunctionPass *Printer =
-    getTarget().createAsmPrinter(Out, *this, *Context, *AsmStreamer,
+    getTarget().createAsmPrinter(*LegacyOutput, *this, *Context, *AsmStreamer,
                                  getMCAsmInfo());
   if (Printer == 0)
     return CGFT_ErrorOccurred;
