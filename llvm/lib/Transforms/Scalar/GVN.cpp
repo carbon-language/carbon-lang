@@ -2102,7 +2102,7 @@ bool GVN::performPRE(Function &F) {
       for (pred_iterator PI = pred_begin(CurrentBlock),
            PE = pred_end(CurrentBlock); PI != PE; ++PI) {
         // We're not interested in PRE where the block is its
-        // own predecessor, on in blocks with predecessors
+        // own predecessor, or in blocks with predecessors
         // that are not reachable.
         if (*PI == CurrentBlock) {
           NumWithout = 2;
@@ -2150,10 +2150,10 @@ bool GVN::performPRE(Function &F) {
         continue;
       }
 
-      // Instantiate the expression the in predecessor that lacked it.
+      // Instantiate the expression in the predecessor that lacked it.
       // Because we are going top-down through the block, all value numbers
       // will be available in the predecessor by the time we need them.  Any
-      // that weren't original present will have been instantiated earlier
+      // that weren't originally present will have been instantiated earlier
       // in this loop.
       Instruction *PREInstr = CurInst->clone();
       bool success = true;
