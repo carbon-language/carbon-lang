@@ -440,12 +440,9 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       } else if (MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate) {
         // This is more naturally done in printOperand, but since the only use
         // of such an operand is in this comment and that is temporary, we
-        // prefer to keep this mess localized.
-        SmallVectorImpl<char> Str(20);
-        APFloat APF = MI->getOperand(0).getFPImm()->getValueAPF();
-        APF.toString(Str, 0, 0);
-        for (unsigned i=0; i<Str.size()-1; i++)
-          O << Str[i];
+        // prefer to keep this localized.
+        O << '$';
+        MI->getOperand(0).print(O, &TM);
       } else
         printOperand(MI, 0);
     } else {
