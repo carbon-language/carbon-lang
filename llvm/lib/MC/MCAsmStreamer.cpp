@@ -29,20 +29,25 @@ namespace {
 class MCAsmStreamer : public MCStreamer {
   formatted_raw_ostream &OS;
   const MCAsmInfo &MAI;
-  bool IsLittleEndian, IsVerboseAsm;
   MCInstPrinter *InstPrinter;
   MCCodeEmitter *Emitter;
   
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
+
+  unsigned IsLittleEndian : 1;
+  unsigned IsVerboseAsm : 1;
+  unsigned ShowInst : 1;
+
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
-                MCCodeEmitter *emitter)
-    : MCStreamer(Context), OS(os), MAI(mai), IsLittleEndian(isLittleEndian),
-      IsVerboseAsm(isVerboseAsm), InstPrinter(printer), Emitter(emitter),
-      CommentStream(CommentToEmit) {}
+                MCCodeEmitter *emitter, bool showInst)
+    : MCStreamer(Context), OS(os), MAI(mai), InstPrinter(printer),
+      Emitter(emitter), CommentStream(CommentToEmit),
+      IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
+      ShowInst(showInst) {}
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -527,13 +532,21 @@ void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
+  // Show the MCInst if enabled.
+  if (ShowInst) {
+    raw_ostream &OS = GetCommentOS();
+    OS << "inst: ";
+    Inst.print(OS, &MAI);
+    OS << "\n";
+  }
+
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter) {
     SmallString<256> Code;
     raw_svector_ostream VecOS(Code);
     Emitter->EncodeInstruction(Inst, VecOS);
     VecOS.flush();
-    
+
     raw_ostream &OS = GetCommentOS();
     OS << "encoding: [";
     for (unsigned i = 0, e = Code.size(); i != e; ++i) {
@@ -543,29 +556,24 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     }
     OS << "]\n";
   }
-  
-  // If we have an AsmPrinter, use that to print.
-  if (InstPrinter) {
-    InstPrinter->printInst(&Inst);
-    EmitEOL();
-    return;
-  }
 
-  // Otherwise fall back to a structural printing for now. Eventually we should
-  // always have access to the target specific printer.
-  Inst.print(OS, &MAI);
+  // If we have an AsmPrinter, use that to print, otherwise dump the MCInst.
+  if (InstPrinter)
+    InstPrinter->printInst(&Inst);
+  else
+    Inst.print(OS, &MAI);
   EmitEOL();
 }
 
 void MCAsmStreamer::Finish() {
   OS.flush();
 }
-    
+
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     const MCAsmInfo &MAI, bool isLittleEndian,
                                     bool isVerboseAsm, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE) {
+                                    MCCodeEmitter *CE, bool ShowInst) {
   return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, isVerboseAsm,
-                           IP, CE);
+                           IP, CE, ShowInst);
 }

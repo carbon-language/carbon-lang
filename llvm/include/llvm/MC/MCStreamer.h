@@ -269,11 +269,21 @@ namespace llvm {
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
+  ///
+  /// \param InstPrint - If given, the instruction printer to use. If not given
+  /// the MCInst representation will be printed.
+  ///
+  /// \param CE - If given, a code emitter to use to show the instruction
+  /// encoding inline with the assembly.
+  ///
+  /// \param ShowInst - Whether to show the MCInst representation inline with
+  /// the assembly.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 const MCAsmInfo &MAI, bool isLittleEndian,
                                 bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,
-                                MCCodeEmitter *CE = 0);
+                                MCCodeEmitter *CE = 0,
+                                bool ShowInst = false);
 
   // FIXME: These two may end up getting rolled into a single
   // createObjectStreamer interface, which implements the assembler backend, and

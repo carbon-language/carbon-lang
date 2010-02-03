@@ -46,6 +46,9 @@ OutputFilename("o", cl::desc("Output filename"),
 static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
+static cl::opt<bool>
+ShowInst("show-inst", cl::desc("Show internal instruction representation"));
+
 static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
@@ -266,7 +269,8 @@ static int AssembleInput(const char *ProgName) {
       CE.reset(TheTarget->createCodeEmitter(*TM));
     Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
                                 TM->getTargetData()->isLittleEndian(),
-                                /*asmverbose*/true, IP.get(), CE.get()));
+                                /*asmverbose*/true, IP.get(), CE.get(),
+                                ShowInst));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));
