@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-apple-darwin10.0 -relocation-model=pic \
+; RUN: llc -mtriple=i386-apple-darwin10.0 -relocation-model=pic -asm-verbose=false \
 ; RUN:     -disable-fp-elim -mattr=-sse41,-sse3,+sse2 -post-RA-scheduler=false < %s | \
 ; RUN:   FileCheck %s
 ; rdar://6808032
