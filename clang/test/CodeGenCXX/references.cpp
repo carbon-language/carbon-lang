@@ -38,6 +38,8 @@ void test_bool() {
   
   bool_reference_return() = true;
   a = bool_reference_return();
+  
+  struct { const bool& b; } b = { true };
 }
 
 void test_scalar() {
@@ -54,6 +56,8 @@ void test_scalar() {
   
   int_reference_return() = 10;
   a = int_reference_return();
+  
+  struct { const int& a; } agg = { 10 };
 }
 
 void test_complex() {
@@ -64,6 +68,8 @@ void test_complex() {
   
   complex_int_reference_return() = 10i;
   a = complex_int_reference_return();
+  
+  struct { const _Complex int &a; } agg = { 10i };
 }
 
 void test_aggregate() {
@@ -74,6 +80,8 @@ void test_aggregate() {
   aggregate_reference_return().a = 10;
 
   c = aggregate_reference_return();
+  
+  struct { const C& a; } agg = { C() };
 }
 
 int& reference_return() {

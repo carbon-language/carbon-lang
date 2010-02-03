@@ -514,13 +514,13 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
 void 
 AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
-  // FIXME: Remove this.
-  T = E->getType();
-
   // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?
   if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV, T);
+  } else if (T->isReferenceType()) {
+    RValue RV = CGF.EmitReferenceBindingToExpr(E, /*IsInitializer=*/false);
+    CGF.EmitStoreThroughLValue(RV, LV, T);
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
   } else if (CGF.hasAggregateLLVMType(T)) {
@@ -633,7 +633,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     // FIXME: volatility
     FieldDecl *Field = E->getInitializedFieldInUnion();
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, Field, 0);
+    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, Field, 0);
 
     if (NumInitElements) {
       // Store the initializer into the field
@@ -659,7 +659,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       continue;
 
     // FIXME: volatility
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, *Field, 0);
+    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, *Field, 0);
     // We never generate write-barries for initialized fields.
     LValue::SetObjCNonGC(FieldLoc, true);
     if (CurInitVal < NumInitElements) {
