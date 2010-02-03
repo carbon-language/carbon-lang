@@ -79,8 +79,6 @@ struct ImutIntervalInfo {
   }
 };
 
-template <typename ImutInfo> class ImutIntervalAVLFactory;
-
 template <typename ImutInfo>
 class ImutIntervalAVLFactory : public ImutAVLFactory<ImutInfo> {
   typedef ImutAVLTree<ImutInfo> TreeTy;
