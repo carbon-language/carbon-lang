@@ -1421,7 +1421,7 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType) {
 
   // If FromType and ToType are the same type, this is not a
   // qualification conversion.
-  if (FromType == ToType)
+  if (FromType.getUnqualifiedType() == ToType.getUnqualifiedType())
     return false;
 
   // (C++ 4.4p4):
