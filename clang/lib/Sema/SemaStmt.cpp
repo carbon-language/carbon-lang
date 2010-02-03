@@ -1551,7 +1551,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
 
   CurFunctionNeedsScopeChecking = true;
   RawHandlers.release();
-  return Owned(new (Context) CXXTryStmt(Context, TryLoc,
-                                        static_cast<Stmt*>(TryBlock.release()),
-                                        Handlers, NumHandlers));
+  return Owned(CXXTryStmt::Create(Context, TryLoc,
+                                  static_cast<Stmt*>(TryBlock.release()),
+                                  Handlers, NumHandlers));
 }

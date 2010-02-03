@@ -407,10 +407,20 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
   RParenLoc = rparenloc;
 }
 
-CXXTryStmt::CXXTryStmt(ASTContext &C, SourceLocation tryLoc, Stmt *tryBlock,
+CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
+                               Stmt *tryBlock, Stmt **handlers, 
+                               unsigned numHandlers) {
+  std::size_t Size = sizeof(CXXTryStmt);
+  Size += ((numHandlers + 1) * sizeof(Stmt));
+
+  void *Mem = C.Allocate(Size, llvm::alignof<CXXTryStmt>());
+  return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers, numHandlers);
+}
+
+CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
                        Stmt **handlers, unsigned numHandlers)
   : Stmt(CXXTryStmtClass), TryLoc(tryLoc), NumHandlers(numHandlers) {
-  Stmts = new (C) Stmt*[NumHandlers + 1];
+  Stmt **Stmts = reinterpret_cast<Stmt **>(this + 1);
   Stmts[0] = tryBlock;
   std::copy(handlers, handlers + NumHandlers, Stmts + 1);
 }
@@ -490,14 +500,6 @@ void AsmStmt::DoDestroy(ASTContext &C) {
   C.Deallocate(Clobbers);
   
   this->~AsmStmt();
-  C.Deallocate((void *)this);
-}
-
-void CXXTryStmt::DoDestroy(ASTContext& C) {
-  DestroyChildren(C);
-  C.Deallocate(Stmts);
-
-  this->~CXXTryStmt();
   C.Deallocate((void *)this);
 }
 
@@ -664,5 +666,10 @@ Stmt::child_iterator CXXCatchStmt::child_end() {
 }
 
 // CXXTryStmt
-Stmt::child_iterator CXXTryStmt::child_begin() { return &Stmts[0]; }
-Stmt::child_iterator CXXTryStmt::child_end() { return &Stmts[0]+NumHandlers+1; }
+Stmt::child_iterator CXXTryStmt::child_begin() {
+  return reinterpret_cast<Stmt **>(this + 1);
+}
+
+Stmt::child_iterator CXXTryStmt::child_end() {
+  return reinterpret_cast<Stmt **>(this + 1) + NumHandlers + 1;
+}
