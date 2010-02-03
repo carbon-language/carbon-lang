@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -S -emit-llvm -o - | FileCheck %s
-// XFAIL: sparc,powerpc
+// XFAIL: sparc
 // rdar://7536390
 
 unsigned t(unsigned *ptr, unsigned val) {
