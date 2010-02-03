@@ -83,10 +83,6 @@ namespace {
       return "ARM Assembly Printer";
     }
     
-    void printMCInst(const MCInst *MI) {
-      ARMInstPrinter(O, *MAI, VerboseAsm).printInstruction(MI);
-    }
-    
     void printInstructionThroughMCStreamer(const MachineInstr *MI);
     
 
@@ -1176,7 +1172,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
     AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
-    printMCInst(&AddInst);
+    OutStreamer.EmitInstruction(AddInst);
     return;
   }
   case ARM::CONSTPOOL_ENTRY: { // FIXME: Remove asm string from td file.
@@ -1217,8 +1213,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
 
       TmpInst.addOperand(MCOperand::CreateReg(0));          // cc_out
-      printMCInst(&TmpInst);
-      O << '\n';
+      OutStreamer.EmitInstruction(TmpInst);
     }
 
     {
@@ -1232,7 +1227,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
       
       TmpInst.addOperand(MCOperand::CreateReg(0));          // cc_out
-      printMCInst(&TmpInst);
+      OutStreamer.EmitInstruction(TmpInst);
     }
     return; 
   }
@@ -1251,8 +1246,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
       
-      printMCInst(&TmpInst);
-      O << '\n';
+      OutStreamer.EmitInstruction(TmpInst);
     }
     
     {
@@ -1266,7 +1260,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
       
-      printMCInst(&TmpInst);
+      OutStreamer.EmitInstruction(TmpInst);
     }
     
     return;
@@ -1275,8 +1269,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  
-  printMCInst(&TmpInst);
+  OutStreamer.EmitInstruction(TmpInst);
 }
 
 //===----------------------------------------------------------------------===//
