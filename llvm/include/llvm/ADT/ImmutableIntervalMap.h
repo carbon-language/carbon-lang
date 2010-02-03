@@ -92,6 +92,9 @@ class ImutIntervalAVLFactory : public ImutAVLFactory<ImutInfo> {
   typedef typename ImutInfo::data_type_ref  data_type_ref;
 
 public:
+  ImutIntervalAVLFactory(BumpPtrAllocator &Alloc) 
+    : ImutAVLFactory<ImutInfo>(Alloc) {}
+
   TreeTy *Add(TreeTy *T, value_type_ref V) {
     T = Add_internal(V,T);
     MarkImmutable(T);
@@ -202,6 +205,8 @@ public:
     ImutIntervalAVLFactory<ImutIntervalInfo<ValT> > F;
 
   public:
+    Factory(BumpPtrAllocator& Alloc) : F(Alloc) {}
+
     ImmutableIntervalMap GetEmptyMap() { 
       return ImmutableIntervalMap(F.GetEmptyTree()); 
     }
