@@ -80,3 +80,6 @@ struct test11 { int a; } const test11x;
 void test12() {
   (void)__builtin_offsetof(struct { char c; int i; }, i);
 }
+
+// rdar://7608537
+struct test13 { int a; } (test13x);

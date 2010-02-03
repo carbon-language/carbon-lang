@@ -942,6 +942,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     case tok::annot_cxxscope:     // struct foo {...} a::       b;
     case tok::annot_typename:     // struct foo {...} a         ::b;
     case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
+    case tok::l_paren:            // struct foo {...} (         x);
     case tok::comma:              // __builtin_offsetof(struct foo{...} ,
     // Storage-class specifiers
     case tok::kw_static:          // struct foo {...} static    x;
