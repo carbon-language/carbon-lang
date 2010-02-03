@@ -527,28 +527,27 @@ void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
+  // Show the encoding in a comment if we have a code emitter.
+  if (Emitter) {
+    SmallString<256> Code;
+    raw_svector_ostream VecOS(Code);
+    Emitter->EncodeInstruction(Inst, VecOS);
+    VecOS.flush();
+    
+    raw_ostream &OS = GetCommentOS();
+    OS << "encoding: [";
+    for (unsigned i = 0, e = Code.size(); i != e; ++i) {
+      if (i)
+        OS << ',';
+      OS << format("%#04x", uint8_t(Code[i]));
+    }
+    OS << "]\n";
+  }
+  
   // If we have an AsmPrinter, use that to print.
   if (InstPrinter) {
     InstPrinter->printInst(&Inst);
     EmitEOL();
-
-    // Show the encoding if we have a code emitter.
-    if (Emitter) {
-      SmallString<256> Code;
-      raw_svector_ostream VecOS(Code);
-      Emitter->EncodeInstruction(Inst, VecOS);
-      VecOS.flush();
-  
-      OS.indent(20);
-      OS << " # encoding: [";
-      for (unsigned i = 0, e = Code.size(); i != e; ++i) {
-        if (i)
-          OS << ',';
-        OS << format("%#04x", uint8_t(Code[i]));
-      }
-      OS << "]\n";
-    }
-
     return;
   }
 
