@@ -59,12 +59,16 @@ public:
 ///
 class CXXTryStmt : public Stmt {
   SourceLocation TryLoc;
+
   // First place is the guarded CompoundStatement. Subsequent are the handlers.
-  // More than three handlers should be rare.
-  llvm::SmallVector<Stmt*, 4> Stmts;
+  Stmt **Stmts;
+  unsigned NumHandlers;
+
+protected:
+  virtual void DoDestroy(ASTContext &Ctx);
 
 public:
-  CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
+  CXXTryStmt(ASTContext &C, SourceLocation tryLoc, Stmt *tryBlock,
              Stmt **handlers, unsigned numHandlers);
 
   virtual SourceRange getSourceRange() const {
@@ -72,14 +76,14 @@ public:
   }
 
   SourceLocation getTryLoc() const { return TryLoc; }
-  SourceLocation getEndLoc() const { return Stmts.back()->getLocEnd(); }
+  SourceLocation getEndLoc() const { return Stmts[NumHandlers]->getLocEnd(); }
 
   CompoundStmt *getTryBlock() { return llvm::cast<CompoundStmt>(Stmts[0]); }
   const CompoundStmt *getTryBlock() const {
     return llvm::cast<CompoundStmt>(Stmts[0]);
   }
 
-  unsigned getNumHandlers() const { return Stmts.size() - 1; }
+  unsigned getNumHandlers() const { return NumHandlers; }
   CXXCatchStmt *getHandler(unsigned i) {
     return llvm::cast<CXXCatchStmt>(Stmts[i + 1]);
   }
