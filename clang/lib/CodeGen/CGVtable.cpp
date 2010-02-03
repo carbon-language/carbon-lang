@@ -181,64 +181,6 @@ private:
     return *ref;
   }
   
-#if 0
-  bool TemplateParameterListsAreEqual(TemplateParameterList *New,
-                                      TemplateParameterList *Old,
-                                      TemplateParameterListEqualKind Kind) {
-    assert(0 && "template in vtable");
-    if (Old->size() != New->size()) {
-      return false;
-    }
-
-    for (TemplateParameterList::iterator OldParm = Old->begin(),
-           OldParmEnd = Old->end(), NewParm = New->begin();
-         OldParm != OldParmEnd; ++OldParm, ++NewParm) {
-      if ((*OldParm)->getKind() != (*NewParm)->getKind()) {
-        return false;
-      }
-
-      if (isa<TemplateTypeParmDecl>(*OldParm)) {
-        // Okay; all template type parameters are equivalent (since we
-        // know we're at the same index).
-      } else if (NonTypeTemplateParmDecl *OldNTTP
-                 = dyn_cast<NonTypeTemplateParmDecl>(*OldParm)) {
-        // The types of non-type template parameters must agree.
-        NonTypeTemplateParmDecl *NewNTTP
-          = cast<NonTypeTemplateParmDecl>(*NewParm);
-      
-        // If we are matching a template template argument to a template
-        // template parameter and one of the non-type template parameter types
-        // is dependent, then we must wait until template instantiation time
-        // to actually compare the arguments.
-        if (Kind == TPL_TemplateTemplateArgumentMatch &&
-            (OldNTTP->getType()->isDependentType() ||
-             NewNTTP->getType()->isDependentType()))
-          continue;
-
-        if (Context.getCanonicalType(OldNTTP->getType()) !=
-            Context.getCanonicalType(NewNTTP->getType())) {
-          return false;
-        }
-      } else {
-        // The template parameter lists of template template
-        // parameters must agree.
-        assert(isa<TemplateTemplateParmDecl>(*OldParm) &&
-               "Only template template parameters handled here");
-        TemplateTemplateParmDecl *OldTTP
-          = cast<TemplateTemplateParmDecl>(*OldParm);
-        TemplateTemplateParmDecl *NewTTP
-          = cast<TemplateTemplateParmDecl>(*NewParm);
-        if (!TemplateParameterListsAreEqual(NewTTP->getTemplateParameters(),
-                                            OldTTP->getTemplateParameters(),
-             (Kind == TPL_TemplateMatch? TPL_TemplateTemplateParmMatch : Kind)))
-          return false;
-      }
-    }
-    
-    return true;
-  }
-#endif
-
   bool DclIsSame(const FunctionDecl *New, const FunctionDecl *Old) {
     FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
     FunctionTemplateDecl *NewTemplate = New->getDescribedFunctionTemplate();
