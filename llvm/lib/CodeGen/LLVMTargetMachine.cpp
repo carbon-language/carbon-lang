@@ -111,21 +111,20 @@ LLVMTargetMachine::setCodeModelForStatic() {
   setCodeModel(CodeModel::Small);
 }
 
-TargetMachine::CodeGenFileType
-LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                       formatted_raw_ostream &Out,
-                                       CodeGenFileType FileType,
-                                       CodeGenOpt::Level OptLevel) {
+bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
+                                            formatted_raw_ostream &Out,
+                                            CodeGenFileType FileType,
+                                            CodeGenOpt::Level OptLevel) {
   // Add common CodeGen passes.
   if (addCommonCodeGenPasses(PM, OptLevel))
-    return CGFT_ErrorOccurred;
+    return true;
 
   OwningPtr<MCContext> Context(new MCContext());
   OwningPtr<MCStreamer> AsmStreamer;
 
   formatted_raw_ostream *LegacyOutput;
   switch (FileType) {
-  default: return CGFT_ErrorOccurred;
+  default: return true;
   case CGFT_AssemblyFile: {
     const MCAsmInfo &MAI = *getMCAsmInfo();
     MCInstPrinter *InstPrinter =
@@ -143,7 +142,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // emission fails.
     MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this);
     if (MCE == 0)
-      return CGFT_ErrorOccurred;
+      return true;
     
     AsmStreamer.reset(createMachOStreamer(*Context, Out, MCE));
     
@@ -154,6 +153,16 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     LegacyOutput = new formatted_raw_ostream(errs());
     break;
   }
+  case CGFT_Null:
+    // The Null output is intended for use for performance analysis and testing,
+    // not real users.
+    AsmStreamer.reset(createNullStreamer(*Context));
+    // Any output to the asmprinter's "O" stream is bad and needs to be fixed,
+    // force it to come out stderr.
+    // FIXME: this is horrible and leaks, eventually remove the raw_ostream from
+    // asmprinter.
+    LegacyOutput = new formatted_raw_ostream(errs());
+    break;
   }
   
   // Create the AsmPrinter, which takes ownership of Context and AsmStreamer
@@ -162,7 +171,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     getTarget().createAsmPrinter(*LegacyOutput, *this, *Context, *AsmStreamer,
                                  getMCAsmInfo());
   if (Printer == 0)
-    return CGFT_ErrorOccurred;
+    return true;
   
   // If successful, createAsmPrinter took ownership of AsmStreamer and Context.
   Context.take(); AsmStreamer.take();
@@ -172,7 +181,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   // Make sure the code model is set.
   setCodeModelForStatic();
   PM.add(createGCInfoDeleter());
-  return FileType;
+  return false;
 }
 
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to

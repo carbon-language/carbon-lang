@@ -199,8 +199,7 @@ public:
   enum CodeGenFileType {
     CGFT_AssemblyFile,
     CGFT_ObjectFile,
-    CGFT_DynamicLibrary,
-    CGFT_ErrorOccurred
+    CGFT_Null         // Do not emit any output.
   };
 
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
@@ -209,15 +208,13 @@ public:
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
-  /// generation.
-  /// This method should return InvalidFile if emission of this file type
-  /// is not supported.
-  ///
-  virtual CodeGenFileType addPassesToEmitFile(PassManagerBase &,
-                                              formatted_raw_ostream &,
-                                              CodeGenFileType Filetype,
-                                              CodeGenOpt::Level) {
-    return CGFT_ErrorOccurred;
+  /// generation.  This method should return true if emission of this file type
+  /// is not supported, or false on success.
+  virtual bool addPassesToEmitFile(PassManagerBase &,
+                                   formatted_raw_ostream &,
+                                   CodeGenFileType Filetype,
+                                   CodeGenOpt::Level) {
+    return true;
   }
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
@@ -264,18 +261,11 @@ public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If OptLevel is None, the code generator should emit code as
-  /// fast as possible, though the generated code may be less efficient.  This
-  /// method should return CGFT_ErrorOccurred if emission of this file type is
-  /// not supported.
-  ///
-  /// The default implementation of this method adds components from the
-  /// LLVM retargetable code generator, invoking the methods below to get
-  /// target-specific passes in standard locations.
-  ///
-  virtual CodeGenFileType addPassesToEmitFile(PassManagerBase &PM,
-                                              formatted_raw_ostream &Out,
-                                              CodeGenFileType FileType,
-                                              CodeGenOpt::Level);
+  /// fast as possible, though the generated code may be less efficient.
+  virtual bool addPassesToEmitFile(PassManagerBase &PM,
+                                   formatted_raw_ostream &Out,
+                                   CodeGenFileType FileType,
+                                   CodeGenOpt::Level);
   
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a JITCodeEmitter object to handle

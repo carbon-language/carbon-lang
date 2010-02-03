@@ -393,14 +393,11 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
 
     codeGenPasses->add(new TargetData(*_target->getTargetData()));
 
-    switch (_target->addPassesToEmitFile(*codeGenPasses, out,
-                                         TargetMachine::CGFT_AssemblyFile,
-                                         CodeGenOpt::Aggressive)) {
-        case TargetMachine::CGFT_AssemblyFile:
-            break;
-        default:
-            errMsg = "target file type not supported";
-            return true;
+    if (_target->addPassesToEmitFile(*codeGenPasses, out,
+                                     TargetMachine::CGFT_AssemblyFile,
+                                     CodeGenOpt::Aggressive)) {
+      errMsg = "target file type not supported";
+      return true;
     }
 
     // Run our queue of passes all at once now, efficiently.

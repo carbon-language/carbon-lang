@@ -91,9 +91,8 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
                   "Emit an assembly ('.s') file"),
        clEnumValN(TargetMachine::CGFT_ObjectFile, "obj",
                   "Emit a native object ('.o') file [experimental]"),
-       clEnumValN(TargetMachine::CGFT_DynamicLibrary, "dynlib",
-                  "Emit a native dynamic library ('.so') file"
-                  " [experimental]"),
+       clEnumValN(TargetMachine::CGFT_Null, "null",
+                  "Emit nothing, for performance testing"),
        clEnumValEnd));
 
 cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
@@ -177,8 +176,8 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     OutputFilename += ".o";
     Binary = true;
     break;
-  case TargetMachine::CGFT_DynamicLibrary:
-    OutputFilename += LTDL_SHLIB_EXT;
+  case TargetMachine::CGFT_Null:
+    OutputFilename += ".null";
     Binary = true;
     break;
   }
@@ -348,20 +347,13 @@ int main(int argc, char **argv) {
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
 
-    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl)) {
-    default:
-      assert(0 && "Invalid file model!");
-      return 1;
-    case TargetMachine::CGFT_ErrorOccurred:
+    if (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
-    case TargetMachine::CGFT_AssemblyFile:
-    case TargetMachine::CGFT_ObjectFile:
-      break;
     }
 
     Passes.doInitialization();
