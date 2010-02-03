@@ -200,6 +200,28 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
 }
 
+void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
+  DefaultFunctionArrayConversion(E);
+  
+  QualType Ty = E->getType();
+  assert(!Ty.isNull() && "DefaultFunctionArrayLvalueConversion - missing type");
+  if (!Ty->isDependentType() && Ty.hasQualifiers() &&
+      (!getLangOptions().CPlusPlus || !Ty->isRecordType()) &&
+      E->isLvalue(Context) == Expr::LV_Valid) {
+    // C++ [conv.lval]p1:
+    //   [...] If T is a non-class type, the type of the rvalue is the
+    //   cv-unqualified version of T. Otherwise, the type of the
+    //   rvalue is T
+    //
+    // C99 6.3.2.1p2:
+    //   If the lvalue has qualified type, the value has the unqualified 
+    //   version of the type of the lvalue; otherwise, the value has the 
+    //   type of the lvalue.
+    ImpCastExprToType(E, Ty.getUnqualifiedType(), CastExpr::CK_NoOp);
+  }
+}
+
+
 /// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
@@ -233,7 +255,7 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
     return Expr;
   }
 
-  DefaultFunctionArrayConversion(Expr);
+  DefaultFunctionArrayLvalueConversion(Expr);
   return Expr;
 }
 
@@ -2033,8 +2055,9 @@ Sema::CreateBuiltinArraySubscriptExpr(ExprArg Base, SourceLocation LLoc,
   Expr *RHSExp = static_cast<Expr*>(Idx.get());
 
   // Perform default conversions.
-  DefaultFunctionArrayConversion(LHSExp);
-  DefaultFunctionArrayConversion(RHSExp);
+  if (!LHSExp->getType()->getAs<VectorType>())
+      DefaultFunctionArrayLvalueConversion(LHSExp);
+  DefaultFunctionArrayLvalueConversion(RHSExp);
 
   QualType LHSTy = LHSExp->getType(), RHSTy = RHSExp->getType();
 
@@ -2076,7 +2099,7 @@ Sema::CreateBuiltinArraySubscriptExpr(ExprArg Base, SourceLocation LLoc,
     ResultType = VTy->getElementType();
   } else if (LHSTy->isArrayType()) {
     // If we see an array that wasn't promoted by
-    // DefaultFunctionArrayConversion, it must be an array that
+    // DefaultFunctionArrayLvalueConversion, it must be an array that
     // wasn't promoted because of the C90 rule that doesn't
     // allow promoting non-lvalue arrays.  Warn, then
     // force the promotion here.
@@ -3777,7 +3800,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
     return CXXCheckCStyleCast(TyR, castType, castExpr, Kind, FunctionalStyle,
                               ConversionDecl);
 
-  DefaultFunctionArrayConversion(castExpr);
+  DefaultFunctionArrayLvalueConversion(castExpr);
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
@@ -4814,7 +4837,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   //
   // Suppress this for references: C++ 8.5.3p5.
   if (!lhsType->isReferenceType())
-    DefaultFunctionArrayConversion(rExpr);
+    DefaultFunctionArrayLvalueConversion(rExpr);
 
   Sema::AssignConvertType result =
     CheckAssignmentConstraints(lhsType, rExpr->getType());
@@ -5777,7 +5800,9 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 // C99 6.5.17
 QualType Sema::CheckCommaOperands(Expr *LHS, Expr *&RHS, SourceLocation Loc) {
   // Comma performs lvalue conversion (C99 6.3.2.1), but not unary conversions.
-  DefaultFunctionArrayConversion(RHS);
+  // C++ does not perform this conversion (C++ [expr.comma]p1).
+  if (!getLangOptions().CPlusPlus)
+    DefaultFunctionArrayLvalueConversion(RHS);
 
   // FIXME: Check that RHS type is complete in C mode (it's legal for it to be
   // incomplete in C++).
@@ -6383,7 +6408,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = CheckAddressOfOperand(Input, OpLoc);
     break;
   case UnaryOperator::Deref:
-    DefaultFunctionArrayConversion(Input);
+    DefaultFunctionArrayLvalueConversion(Input);
     resultType = CheckIndirectionOperand(Input, OpLoc);
     break;
   case UnaryOperator::Plus:
@@ -6420,7 +6445,7 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
-    DefaultFunctionArrayConversion(Input);
+    DefaultFunctionArrayLvalueConversion(Input);
     resultType = Input->getType();
     if (resultType->isDependentType())
       break;
@@ -6590,7 +6615,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 
         // Promote the array so it looks more like a normal array subscript
         // expression.
-        DefaultFunctionArrayConversion(Res);
+        DefaultFunctionArrayLvalueConversion(Res);
 
         // C99 6.5.2.1p1
         Expr *Idx = static_cast<Expr*>(OC.U.E);
@@ -6767,6 +6792,8 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
            diag::err_object_cannot_be_passed_returned_by_value) << 0 << RetTy;
       return;
     }
+
+    CurBlock->ReturnType = RetTy;
     return;
   }
 
@@ -7385,7 +7412,7 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
   DiagnoseAssignmentAsCondition(E);
 
   if (!E->isTypeDependent()) {
-    DefaultFunctionArrayConversion(E);
+    DefaultFunctionArrayLvalueConversion(E);
 
     QualType T = E->getType();
 

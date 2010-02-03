@@ -388,7 +388,7 @@ void
 CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                const SourceRange &OpRange, const SourceRange &DestRange) {
   if (!DestType->isLValueReferenceType())
-    Self.DefaultFunctionArrayConversion(SrcExpr);
+    Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
   if (TryConstCast(Self, SrcExpr, DestType, /*CStyle*/false, msg) != TC_Success
@@ -407,7 +407,7 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                      const SourceRange &OpRange, const SourceRange &DestRange,
                      CastExpr::CastKind &Kind) {
   if (!DestType->isLValueReferenceType())
-    Self.DefaultFunctionArrayConversion(SrcExpr);
+    Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
   if (TryReinterpretCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange,
@@ -434,7 +434,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   }
 
   if (!DestType->isLValueReferenceType() && !DestType->isRecordType())
-    Self.DefaultFunctionArrayConversion(SrcExpr);
+    Self.DefaultFunctionArrayLvalueConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, OpRange, msg,
@@ -1197,7 +1197,7 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
     return false;
 
   if (!CastTy->isLValueReferenceType() && !CastTy->isRecordType())
-    DefaultFunctionArrayConversion(CastExpr);
+    DefaultFunctionArrayLvalueConversion(CastExpr);
 
   // C++ [expr.cast]p5: The conversions performed by
   //   - a const_cast,

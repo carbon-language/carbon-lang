@@ -109,7 +109,7 @@ void foo6() {
 
 void foo7()
 {
- const int (^BB) (void) = ^{ const int i = 1; return i; }; // OK 
+ const int (^BB) (void) = ^{ const int i = 1; return i; }; // expected-error{{incompatible block pointer types initializing 'int (^)(void)', expected 'int const (^)(void)'}}
  const int (^CC) (void)  = ^const int{ const int i = 1; return i; }; // OK
 
   int i;
@@ -123,9 +123,8 @@ void foo7()
   __block const int k;
   const int cint = 100;
 
-  int (^MM) (void)  = ^{ return k; }; // expected-error {{incompatible block pointer types initializing 'int const (^)(void)', expected 'int (^)(void)'}}
-  int (^NN) (void)  = ^{ return cint; }; // expected-error {{incompatible block pointer types initializing 'int const (^)(void)', expected 'int (^)(void)'}}
-
+  int (^MM) (void)  = ^{ return k; };
+  int (^NN) (void)  = ^{ return cint; };
 }
 
 

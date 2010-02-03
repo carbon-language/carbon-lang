@@ -2978,7 +2978,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   
   // If necessary, apply function/array conversion to the receiver.
   // C99 6.7.5.3p[7,8].
-  DefaultFunctionArrayConversion(RecExpr);
+  DefaultFunctionArrayLvalueConversion(RecExpr);
   QualType ReceiverType = RecExpr->getType();
   
   if (ReceiverType->isObjCIdType() || ReceiverType->isBlockPointerType()) {

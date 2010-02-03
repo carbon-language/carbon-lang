@@ -1678,8 +1678,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LVoid || RVoid) {
     //   ... then the [l2r] conversions are performed on the second and third
     //   operands ...
-    DefaultFunctionArrayConversion(LHS);
-    DefaultFunctionArrayConversion(RHS);
+    DefaultFunctionArrayLvalueConversion(LHS);
+    DefaultFunctionArrayLvalueConversion(RHS);
     LTy = LHS->getType();
     RTy = RHS->getType();
 
@@ -1765,8 +1765,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C++0x 5.16p6
   //   LValue-to-rvalue, array-to-pointer, and function-to-pointer standard
   //   conversions are performed on the second and third operands.
-  DefaultFunctionArrayConversion(LHS);
-  DefaultFunctionArrayConversion(RHS);
+  DefaultFunctionArrayLvalueConversion(LHS);
+  DefaultFunctionArrayLvalueConversion(RHS);
   LTy = LHS->getType();
   RTy = RHS->getType();
 

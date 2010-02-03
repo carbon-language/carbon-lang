@@ -873,7 +873,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
           << FirstType << First->getSourceRange();
   }
   if (Second) {
-    DefaultFunctionArrayConversion(Second);
+    DefaultFunctionArrayLvalueConversion(Second);
     QualType SecondType = Second->getType();
     if (!SecondType->isObjCObjectPointerType())
       Diag(ForLoc, diag::err_collection_expr_type)
@@ -947,7 +947,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (RetValExp) {
       // Don't call UsualUnaryConversions(), since we don't want to do
       // integer promotions here.
-      DefaultFunctionArrayConversion(RetValExp);
+      DefaultFunctionArrayLvalueConversion(RetValExp);
       CurBlock->ReturnType = RetValExp->getType();
       if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
         // We have to remove a 'const' added to copied-in variable which was
@@ -1258,7 +1258,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       }
     }
 
-    DefaultFunctionArrayConversion(Exprs[i]);
+    DefaultFunctionArrayLvalueConversion(Exprs[i]);
 
     InputConstraintInfos.push_back(Info);
   }

@@ -492,7 +492,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
 
   // If necessary, apply function/array conversion to the receiver.
   // C99 6.7.5.3p[7,8].
-  DefaultFunctionArrayConversion(RExpr);
+  DefaultFunctionArrayLvalueConversion(RExpr);
 
   QualType returnType;
   QualType ReceiverCType =

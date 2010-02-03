@@ -47,7 +47,7 @@ void constness()
   // Invalid: T1 const* -> T2*
   (void)reinterpret_cast<int*>(icp); // expected-error {{reinterpret_cast from 'int const *' to 'int *' casts away constness}}
   // Invalid: T1*** -> T2 const* const**
-  int const *const **icpcpp = reinterpret_cast<int const* const**>(ipppc); // expected-error {{reinterpret_cast from 'int ***const' to 'int const *const **' casts away constness}}
+  int const *const **icpcpp = reinterpret_cast<int const* const**>(ipppc); // expected-error {{reinterpret_cast from 'int ***' to 'int const *const **' casts away constness}}
   // Valid: T1* -> T2*
   int *ip = reinterpret_cast<int*>(icpcpp);
   // Valid: T* -> T const*

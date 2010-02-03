@@ -67,3 +67,7 @@ namespace PR6061 {
     enum { id }; 
   };
 }
+
+namespace Conditional {
+  enum a { A }; a x(const enum a x) { return 1?x:A; }
+}

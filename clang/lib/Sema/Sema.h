@@ -3617,6 +3617,11 @@ public:
   // to their respective pointers (C99 6.3.2.1).
   void DefaultFunctionArrayConversion(Expr *&expr);
 
+  // DefaultFunctionArrayLvalueConversion - converts functions and
+  // arrays to their respective pointers and performs the
+  // lvalue-to-rvalue conversion.
+  void DefaultFunctionArrayLvalueConversion(Expr *&expr);
+
   // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
   // do not have a prototype. Integer promotions are performed on each
   // argument, and arguments that have type float are promoted to double.
