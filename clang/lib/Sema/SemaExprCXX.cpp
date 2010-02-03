@@ -630,14 +630,19 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
        Alloc != AllocEnd; ++Alloc) {
     // Even member operator new/delete are implicitly treated as
     // static, so don't use AddMemberCandidate.
-    if (FunctionDecl *Fn = 
-          dyn_cast<FunctionDecl>((*Alloc)->getUnderlyingDecl())) {
-      AddOverloadCandidate(Fn, Alloc.getAccess(), Args, NumArgs, Candidates,
-                           /*SuppressUserConversions=*/false);
+
+    if (FunctionTemplateDecl *FnTemplate = 
+          dyn_cast<FunctionTemplateDecl>((*Alloc)->getUnderlyingDecl())) {
+      AddTemplateOverloadCandidate(FnTemplate, Alloc.getAccess(),
+                                   /*ExplicitTemplateArgs=*/0, Args, NumArgs,
+                                   Candidates,
+                                   /*SuppressUserConversions=*/false);
       continue;
-    } 
-    
-    // FIXME: Handle function templates
+    }
+
+    FunctionDecl *Fn = cast<FunctionDecl>((*Alloc)->getUnderlyingDecl());
+    AddOverloadCandidate(Fn, Alloc.getAccess(), Args, NumArgs, Candidates,
+                         /*SuppressUserConversions=*/false);
   }
 
   // Do the resolution.
@@ -768,12 +773,16 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     DeclContext::lookup_iterator Alloc, AllocEnd;
     for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Name);
          Alloc != AllocEnd; ++Alloc) {
-      // FIXME: Do we need to check for default arguments here?
-      FunctionDecl *Func = cast<FunctionDecl>(*Alloc);
-      if (Func->getNumParams() == 1 &&
+      // Only look at non-template functions, as it is the predefined,
+      // non-templated allocation function we are trying to declare here.
+      if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*Alloc)) {
+        QualType InitialParamType =
           Context.getCanonicalType(
-            Func->getParamDecl(0)->getType().getUnqualifiedType()) == Argument)
-        return;
+            Func->getParamDecl(0)->getType().getUnqualifiedType());
+        // FIXME: Do we need to check for default arguments here?
+        if (Func->getNumParams() == 1 && InitialParamType == Argument)
+          return;
+      }
     }
   }
 

@@ -216,3 +216,10 @@ static void* f(void* g)
 {
     return new (g) X13();
 }
+
+namespace PR5918 { // Look for template operator new overloads.
+  struct S { template<typename T> static void* operator new(size_t, T); };
+  void test() {
+    (void)new(0) S;
+  }
+}
