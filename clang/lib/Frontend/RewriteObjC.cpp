@@ -1995,6 +1995,8 @@ static void scanToNextArgument(const char *&argRef) {
 }
 
 bool RewriteObjC::needToScanForQualifiers(QualType T) {
+  if (T->isObjCQualifiedIdType())
+    return true;
   if (const PointerType *PT = T->getAs<PointerType>()) {
     if (PT->getPointeeType()->isObjCQualifiedIdType())
       return true;
