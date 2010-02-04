@@ -1152,6 +1152,9 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
   }
 
   case Expr::UnresolvedLookupExprClass: {
+    // The ABI doesn't cover how to mangle overload sets, so we mangle
+    // using something as close as possible to the original lookup
+    // expression.
     const UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(E);
     mangleUnresolvedName(ULE->getQualifier(), ULE->getName(), UnknownArity);
     break;
