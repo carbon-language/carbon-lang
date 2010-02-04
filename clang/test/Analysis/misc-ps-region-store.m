@@ -758,3 +758,32 @@ const struct rdar_7515938_str *rdar_7515938_str() {
   static const struct rdar_7515938_str z = { 0, "hello" };
   return &z;
 }
+
+//===----------------------------------------------------------------------===//
+// Assorted test cases from PR 4172.
+//===----------------------------------------------------------------------===//
+
+struct PR4172A_s { int *a; };
+
+void PR4172A_f2(struct PR4172A_s *p);
+
+int PR4172A_f1(void) {
+    struct PR4172A_s m;
+    int b[4];
+    m.a = b;
+    PR4172A_f2(&m);
+    return b[3]; // no-warning
+}
+
+struct PR4172B_s { int *a; };
+
+void PR4172B_f2(struct PR4172B_s *p);
+
+int PR4172B_f1(void) {
+    struct PR4172B_s m;
+    int x;
+    m.a = &x;
+    PR4172B_f2(&m);
+    return x; // no-warning
+}
+
