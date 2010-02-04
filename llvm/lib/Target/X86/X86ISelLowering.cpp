@@ -1196,13 +1196,11 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                  RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Outs, RetCC_X86);
 
-  // If this is the first return lowered for this function, add the regs to the
-  // liveout set for the function.
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
-    for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
-  }
+  // Add the regs to the liveout set for the function.
+  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+  for (unsigned i = 0; i != RVLocs.size(); ++i)
+    if (RVLocs[i].isRegLoc() && !MRI.isLiveOut(RVLocs[i].getLocReg()))
+      MRI.addLiveOut(RVLocs[i].getLocReg());
 
   SDValue Flag;
 
@@ -1255,7 +1253,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
     unsigned Reg = FuncInfo->getSRetReturnReg();
     if (!Reg) {
-      Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
+      Reg = MRI.createVirtualRegister(getRegClassFor(MVT::i64));
       FuncInfo->setSRetReturnReg(Reg);
     }
     SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
@@ -1264,7 +1262,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     Flag = Chain.getValue(1);
 
     // RAX now acts like a return value.
-    MF.getRegInfo().addLiveOut(X86::RAX);
+    MRI.addLiveOut(X86::RAX);
   }
 
   RetOps[0] = Chain;  // Update chain.
@@ -2097,14 +2095,15 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   }
 
   if (isTailCall && !WasGlobalOrExternal) {
-    unsigned Opc = Is64Bit ? X86::R11 : X86::EAX;
-
+    // Force the address into a (call preserved) caller-saved register since
+    // tailcall must happen after callee-saved registers are poped.
+    // FIXME: Give it a special register class that contains caller-saved
+    // register instead?
+    unsigned TCReg = Is64Bit ? X86::R11 : X86::EAX;
     Chain = DAG.getCopyToReg(Chain,  dl,
-                             DAG.getRegister(Opc, getPointerTy()),
+                             DAG.getRegister(TCReg, getPointerTy()),
                              Callee,InFlag);
-    Callee = DAG.getRegister(Opc, getPointerTy());
-    // Add register as live out.
-    MF.getRegInfo().addLiveOut(Opc);
+    Callee = DAG.getRegister(TCReg, getPointerTy());
   }
 
   // Returns a chain & a flag for retval copy to use.
