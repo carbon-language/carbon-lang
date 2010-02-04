@@ -2,11 +2,12 @@
 
 namespace {
 
-static int counter;
+static int ctorcalls;
+static int dtorcalls;
   
 struct A {
-  A() : i(0) { counter++; }
-  ~A() { counter--; }
+  A() : i(0) { ctorcalls++; }
+  ~A() { dtorcalls++; }
   int i;
 };
 
@@ -29,8 +30,20 @@ Checker c;
 
 }
 
-// CHECK: define i32 @_Z10getCounterv()
-int getCounter() {
-  // CHECK: ret i32 0
-  return counter;
+// CHECK: define i32 @_Z12getCtorCallsv()
+int getCtorCalls() {
+  // CHECK: ret i32 3
+  return ctorcalls;
+}
+
+// CHECK: define i32 @_Z12getDtorCallsv()
+int getDtorCalls() {
+  // CHECK: ret i32 3
+  return dtorcalls;
+}
+
+// CHECK: define zeroext i1 @_Z7successv()
+bool success() {
+  // CHECK: ret i1 true
+  return ctorcalls == dtorcalls;
 }
