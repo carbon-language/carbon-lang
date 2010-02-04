@@ -38,13 +38,13 @@ Checker c;
 
 // CHECK: define i32 @_Z12getCtorCallsv()
 int getCtorCalls() {
-  // CHECK: ret i32 3
+  // CHECK: ret i32 5
   return ctorcalls;
 }
 
 // CHECK: define i32 @_Z12getDtorCallsv()
 int getDtorCalls() {
-  // CHECK: ret i32 3
+  // CHECK: ret i32 5
   return dtorcalls;
 }
 
