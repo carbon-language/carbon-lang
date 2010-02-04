@@ -241,7 +241,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_ELF_TypeCommon:      /// .type _foo, STT_COMMON  # aka @common
   case MCSA_ELF_TypeNoType:      /// .type _foo, STT_NOTYPE  # aka @notype
     assert(MAI.hasDotTypeDotSizeDirective() && "Symbol Attr not supported");
-    OS << "\t.type " << *Symbol << ','
+    OS << "\t.type\t" << *Symbol << ','
        << ((MAI.getCommentString()[0] != '@') ? '@' : '%');
     switch (Attribute) {
     default: assert(0 && "Unknown ELF .type");
