@@ -138,14 +138,15 @@ public:
   ///
   static MachineRelocation getExtSym(uintptr_t offset, unsigned RelocationType, 
                                      const char *ES, intptr_t cst = 0,
-                                     bool GOTrelative = 0) {
+                                     bool GOTrelative = 0,
+                                     bool NeedStub = true) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
     Result.Offset = offset;
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isExtSym;
-    Result.MayNeedFarStub = true;
+    Result.MayNeedFarStub = NeedStub;
     Result.GOTRelative = GOTrelative;
     Result.TargetResolve = false;
     Result.Target.ExtSym = ES;

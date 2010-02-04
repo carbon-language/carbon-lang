@@ -191,8 +191,15 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitExternalSymbolAddress(const char *ES,
                                                      unsigned Reloc) {
   intptr_t RelocCST = (Reloc == X86::reloc_picrel_word) ? PICBaseOffset : 0;
+
+  // X86 never needs stubs because instruction selection will always pick
+  // an instruction sequence that is large enough to hold any address
+  // to a symbol.
+  // (see X86ISelLowering.cpp, near 2039: X86TargetLowering::LowerCall)
+  bool NeedStub = false;
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
-                                                 Reloc, ES, RelocCST));
+                                                 Reloc, ES, RelocCST,
+                                                 0, NeedStub));
   if (Reloc == X86::reloc_absolute_dword)
     MCE.emitDWordLE(0);
   else
