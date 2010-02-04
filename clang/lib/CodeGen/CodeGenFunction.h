@@ -268,7 +268,7 @@ public:
   /// this behavior for branches?
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
 
-  /// StartConditionalBranch - Should be called before a conditional part of an
+  /// BeginConditionalBranch - Should be called before a conditional part of an
   /// expression is emitted. For example, before the RHS of the expression below
   /// is emitted:
   ///
@@ -276,13 +276,13 @@ public:
   ///
   /// This is used to make sure that any temporaries created in the conditional
   /// branch are only destroyed if the branch is taken.
-  void StartConditionalBranch() {
+  void BeginConditionalBranch() {
     ++ConditionalBranchLevel;
   }
 
-  /// FinishConditionalBranch - Should be called after a conditional part of an
+  /// EndConditionalBranch - Should be called after a conditional part of an
   /// expression has been emitted.
-  void FinishConditionalBranch() {
+  void EndConditionalBranch() {
     assert(ConditionalBranchLevel != 0 &&
            "Conditional branch mismatch!");
     

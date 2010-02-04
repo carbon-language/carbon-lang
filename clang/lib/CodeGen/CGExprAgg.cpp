@@ -413,21 +413,21 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
 
   CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
   CGF.EmitBlock(LHSBlock);
 
   // Handle the GNU extension for missing LHS.
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
   Visit(E->getLHS());
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
   CGF.EmitBranch(ContBlock);
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
   CGF.EmitBlock(RHSBlock);
 
   Visit(E->getRHS());
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
   CGF.EmitBranch(ContBlock);
 
   CGF.EmitBlock(ContBlock);

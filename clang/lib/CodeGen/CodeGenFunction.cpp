@@ -432,9 +432,9 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBlock(LHSTrue);
 
       // Any temporaries created here are conditional.
-      StartConditionalBranch();
+      BeginConditionalBranch();
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      FinishConditionalBranch();
+      EndConditionalBranch();
 
       return;
     } else if (CondBOp->getOpcode() == BinaryOperator::LOr) {
@@ -459,9 +459,9 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
       EmitBlock(LHSFalse);
 
       // Any temporaries created here are conditional.
-      StartConditionalBranch();
+      BeginConditionalBranch();
       EmitBranchOnBoolExpr(CondBOp->getRHS(), TrueBlock, FalseBlock);
-      FinishConditionalBranch();
+      EndConditionalBranch();
 
       return;
     }

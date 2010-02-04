@@ -1613,10 +1613,10 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getFalse(VMContext), *PI);
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
 
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
@@ -1663,13 +1663,13 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
        PI != PE; ++PI)
     PN->addIncoming(llvm::ConstantInt::getTrue(VMContext), *PI);
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
 
   // Emit the RHS condition as a bool value.
   CGF.EmitBlock(RHSBlock);
   Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
 
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
 
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
@@ -1783,7 +1783,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
     Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
   }
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
   CGF.EmitBlock(LHSBlock);
 
   // Handle the GNU extension for missing LHS.
@@ -1793,15 +1793,15 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   else    // Perform promotions, to handle cases like "short ?: int"
     LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
 
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
   LHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
 
-  CGF.StartConditionalBranch();
+  CGF.BeginConditionalBranch();
   CGF.EmitBlock(RHSBlock);
 
   Value *RHS = Visit(E->getRHS());
-  CGF.FinishConditionalBranch();
+  CGF.EndConditionalBranch();
   RHSBlock = Builder.GetInsertBlock();
   CGF.EmitBranch(ContBlock);
 
