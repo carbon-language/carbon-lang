@@ -4213,12 +4213,6 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
   // causing miscompilation that has not been fully understood.
   if (!Ret) return false;
 
-  // Unless we are explicitly forcing tailcall optimization do not tailcall if
-  // the called function is bitcast'ed. The analysis may not be entirely
-  // accurate.
-  if (!PerformTailCallOpt && isa<BitCastInst>(CS.getCalledValue()))
-    return false;
-
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.
   if (I->mayHaveSideEffects() || I->mayReadFromMemory() ||
@@ -4244,6 +4238,10 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
   // the return. Ignore noalias because it doesn't affect the call sequence.
   unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
   if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
+    return false;
+
+  // It's not safe to eliminate thee sign / zero extension of the return value.
+  if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
