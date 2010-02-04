@@ -112,14 +112,6 @@ enum LengthModifier {
  AsLongDouble // 'L'
 };
 
-enum Flags {
- LeftJustified = 0x1,
- PlusPrefix = 0x2,
- SpacePrefix = 0x4,
- AlternativeForm = 0x8,
- LeadingZeroes = 0x16
-};
-
 class OptionalAmount {
 public:
   enum HowSpecified { NotSpecified, Constant, Arg };
@@ -174,12 +166,19 @@ public:
 
 class FormatSpecifier {
   LengthModifier LM;
+  unsigned IsLeftJustified : 1;
+  unsigned HasPlusPrefix : 1;
+  unsigned HasSpacePrefix : 1;
+  unsigned HasAlternativeForm : 1;
+  unsigned HasLeadingZeroes : 1;
   unsigned flags : 5;
   ConversionSpecifier CS;
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
-  FormatSpecifier() : LM(None), flags(0) {}
+  FormatSpecifier() : LM(None),
+    IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
+    HasAlternativeForm(0), HasLeadingZeroes(0) {}
   
   static FormatSpecifier Parse(const char *beg, const char *end);
 
@@ -190,11 +189,11 @@ public:
   void setLengthModifier(LengthModifier lm) {
     LM = lm;
   }
-  void setIsLeftJustified() { flags |= LeftJustified; }
-  void setHasPlusPrefix() { flags |= PlusPrefix; }
-  void setHasSpacePrefix() { flags |= SpacePrefix; }
-  void setHasAlternativeForm() { flags |= AlternativeForm; }
-  void setHasLeadingZeros() { flags |= LeadingZeroes; }
+  void setIsLeftJustified() { IsLeftJustified = 1; }
+  void setHasPlusPrefix() { HasPlusPrefix = 1; }
+  void setHasSpacePrefix() { HasSpacePrefix = 1; }
+  void setHasAlternativeForm() { HasAlternativeForm = 1; }
+  void setHasLeadingZeros() { HasLeadingZeroes = 1; }
 
   // Methods for querying the format specifier.
 
@@ -229,10 +228,10 @@ public:
   /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
-  bool isLeftJustified() const { return flags & LeftJustified; }
-  bool hasPlusPrefix() const { return flags & PlusPrefix; }
-  bool hasAlternativeForm() const { return flags & AlternativeForm; }
-  bool hasLeadingZeros() const { return flags & LeadingZeroes; }  
+  bool isLeftJustified() const { return (bool) IsLeftJustified; }
+  bool hasPlusPrefix() const { return (bool) HasPlusPrefix; }
+  bool hasAlternativeForm() const { return (bool) HasAlternativeForm; }
+  bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }  
 };
 
 } // end printf namespace
