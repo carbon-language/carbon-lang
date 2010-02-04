@@ -264,8 +264,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         }
       }
       RUses.clear();
+      ModInsts.clear();
     }
-    ModInsts.clear();
     ImpDefRegs.clear();
     ImpDefMIs.clear();
   }
