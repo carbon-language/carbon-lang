@@ -936,3 +936,21 @@ Also, the 'ret's should be shared.  This is PR6032.
 
 //===---------------------------------------------------------------------===//
 
+These should compile into the same code (PR6214): Perhaps instcombine should
+canonicalize the former into the later?
+
+define float @foo(float %x) nounwind {
+  %t = bitcast float %x to i32
+  %s = and i32 %t, 2147483647
+  %d = bitcast i32 %s to float
+  ret float %d
+}
+
+declare float @fabsf(float %n)
+define float @bar(float %x) nounwind {
+  %d = call float @fabsf(float %x)
+  ret float %d
+}
+
+//===---------------------------------------------------------------------===//
+
