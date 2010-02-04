@@ -208,7 +208,7 @@ public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr),
       Features(f),
-      RBFactory(mgr.getAllocator(), 3) {}
+      RBFactory(mgr.getAllocator()) {}
 
   virtual ~RegionStoreManager() {
     for (SMCache::iterator I = SC.begin(), E = SC.end(); I != E; ++I)
