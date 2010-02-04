@@ -29,6 +29,7 @@ namespace llvm {
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 
   extern Target TheSparcTarget;
+  extern Target TheSparcV9Target;
 
 } // end namespace llvm;
 

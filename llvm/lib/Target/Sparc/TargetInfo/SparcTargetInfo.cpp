@@ -13,7 +13,9 @@
 using namespace llvm;
 
 Target llvm::TheSparcTarget;
+Target llvm::TheSparcV9Target;
 
 extern "C" void LLVMInitializeSparcTargetInfo() { 
   RegisterTarget<Triple::sparc> X(TheSparcTarget, "sparc", "Sparc");
+  RegisterTarget<Triple::sparcv9> Y(TheSparcV9Target, "sparcv9", "Sparc V9");
 }

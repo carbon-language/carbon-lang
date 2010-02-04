@@ -19,18 +19,22 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeSparcTarget() {
   // Register the target.
-  RegisterTargetMachine<SparcTargetMachine> X(TheSparcTarget);
-  RegisterAsmInfo<SparcELFMCAsmInfo> Y(TheSparcTarget);
+  RegisterTargetMachine<SparcV8TargetMachine> X(TheSparcTarget);
+  RegisterTargetMachine<SparcV9TargetMachine> Y(TheSparcV9Target);
+
+  RegisterAsmInfo<SparcELFMCAsmInfo> A(TheSparcTarget);
+  RegisterAsmInfo<SparcELFMCAsmInfo> B(TheSparcV9Target);
 
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
 SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT, 
-                                       const std::string &FS)
+                                       const std::string &FS, bool is64bit)
   : LLVMTargetMachine(T, TT),
-    DataLayout("E-p:32:32-f128:128:128-n32"),
-    Subtarget(TT, FS), TLInfo(*this), InstrInfo(Subtarget),
+    Subtarget(TT, FS, is64bit),
+    DataLayout(Subtarget.getDataLayout()),
+     TLInfo(*this), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 
@@ -48,4 +52,16 @@ bool SparcTargetMachine::addPreEmitPass(PassManagerBase &PM,
   PM.add(createSparcFPMoverPass(*this));
   PM.add(createSparcDelaySlotFillerPass(*this));
   return true;
+}
+
+SparcV8TargetMachine::SparcV8TargetMachine(const Target &T,
+                                           const std::string &TT, 
+                                           const std::string &FS)
+  : SparcTargetMachine(T, TT, FS, false) {
+}
+
+SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, 
+                                           const std::string &TT, 
+                                           const std::string &FS)
+  : SparcTargetMachine(T, TT, FS, true) {
 }

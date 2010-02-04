@@ -66,6 +66,7 @@ public:
     ppc,     // PPC: powerpc
     ppc64,   // PPC64: powerpc64, ppu
     sparc,   // Sparc: sparc
+    sparcv9, // Sparcv9: Sparcv9
     systemz, // SystemZ: s390x
     tce,     // TCE (http://tce.cs.tut.fi/): tce
     thumb,   // Thumb: thumb, thumbv.*
