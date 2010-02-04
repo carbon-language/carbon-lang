@@ -680,7 +680,8 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
   
   CXXRecordDecl *DerivedRD = cast<CXXRecordDecl>(DerivedRT->getDecl());
   CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
-  return DerivedRD->isDerivedFrom(BaseRD);
+  // FIXME: instantiate DerivedRD if necessary.  We need a PoI for this.
+  return DerivedRD->hasDefinition() && DerivedRD->isDerivedFrom(BaseRD);
 }
 
 /// \brief Determine whether the type \p Derived is a C++ class that is
@@ -1998,11 +1999,13 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (!RT)
     return false;
 
-  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
-  if (!RD)
-    return false;
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
   if (CurrentRD && CurrentRD != RD)
+    return false;
+
+  // FIXME: is this reasonable?  It matches current behavior, but....
+  if (!RD->getDefinition(Context))
     return false;
 
   if (!RD->isAbstract())

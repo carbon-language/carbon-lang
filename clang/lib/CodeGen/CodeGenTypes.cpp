@@ -399,18 +399,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 /// enum.
 const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 
-  // FIXME. This may have to move to a better place.
-  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD)) {
-    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-         e = RD->bases_end(); i != e; ++i) {
-      if (!i->isVirtual()) {
-        const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        ConvertTagDeclType(Base);
-      }
-    }
-  }
-
   // TagDecl's are not necessarily unique, instead use the (clang)
   // type connected to the decl.
   const Type *Key =
@@ -445,6 +433,18 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   TagDeclTypes.insert(std::make_pair(Key, ResultHolder));
 
   const RecordDecl *RD = cast<const RecordDecl>(TD);
+
+  // Force conversion of non-virtual base classes recursively.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD)) {    
+    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+         e = RD->bases_end(); i != e; ++i) {
+      if (!i->isVirtual()) {
+        const CXXRecordDecl *Base =
+          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+        ConvertTagDeclType(Base);
+      }
+    }
+  }
 
   // Layout fields.
   CGRecordLayout *Layout = CGRecordLayoutBuilder::ComputeLayout(*this, RD);

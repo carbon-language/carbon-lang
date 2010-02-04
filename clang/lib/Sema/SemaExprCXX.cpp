@@ -72,18 +72,17 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
       if (const RecordType *RecordT = T->getAs<RecordType>()) {
         CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
         // C++ [expr.typeid]p3:
+        //   [...] If the type of the expression is a class type, the class
+        //   shall be completely-defined.
+        if (RequireCompleteType(OpLoc, T, diag::err_incomplete_typeid))
+          return ExprError();
+
+        // C++ [expr.typeid]p3:
         //   When typeid is applied to an expression other than an lvalue of a
         //   polymorphic class type [...] [the] expression is an unevaluated
         //   operand. [...]
         if (RecordD->isPolymorphic() && E->isLvalue(Context) == Expr::LV_Valid)
           isUnevaluatedOperand = false;
-        else {
-          // C++ [expr.typeid]p3:
-          //   [...] If the type of the expression is a class type, the class
-          //   shall be completely-defined.
-          if (RequireCompleteType(OpLoc, T, diag::err_incomplete_typeid))
-            return ExprError();
-        }
       }
 
       // C++ [expr.typeid]p4:
@@ -1985,10 +1984,8 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!RT)
     return Owned(E);
 
-  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-  if (RD->hasTrivialDestructor())
-    return Owned(E);
-
+  // If this is the result of a call expression, our source might
+  // actually be a reference, in which case we shouldn't bind.
   if (CallExpr *CE = dyn_cast<CallExpr>(E)) {
     QualType Ty = CE->getCallee()->getType();
     if (const PointerType *PT = Ty->getAs<PointerType>())
@@ -1998,6 +1995,13 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
     if (FTy->getResultType()->isReferenceType())
       return Owned(E);
   }
+
+  // That should be enough to guarantee that this type is complete.
+  // If it has a trivial destructor, we can avoid the extra copy.
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  if (RD->hasTrivialDestructor())
+    return Owned(E);
+
   CXXTemporary *Temp = CXXTemporary::Create(Context,
                                             RD->getDestructor(Context));
   ExprTemporaries.push_back(Temp);

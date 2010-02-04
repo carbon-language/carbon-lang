@@ -1373,6 +1373,16 @@ void TagDecl::startDefinition() {
     TagT->decl.setPointer(this);
     TagT->decl.setInt(1);
   }
+
+  if (isa<CXXRecordDecl>(this)) {
+    CXXRecordDecl *D = cast<CXXRecordDecl>(this);
+    struct CXXRecordDecl::DefinitionData *Data = 
+      new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
+    do {
+      D->DefinitionData = Data;
+      D = cast_or_null<CXXRecordDecl>(D->getPreviousDeclaration());
+    } while (D);
+  }
 }
 
 void TagDecl::completeDefinition() {

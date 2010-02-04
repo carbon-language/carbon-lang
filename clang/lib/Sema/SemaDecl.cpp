@@ -510,9 +510,18 @@ static void RemoveUsingDecls(LookupResult &R) {
 }
 
 static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
+  if (D->isInvalidDecl())
+    return false;
+
   if (D->isUsed() || D->hasAttr<UnusedAttr>())
     return false;
-  
+
+  // White-list anything that isn't a local variable.
+  if (!isa<VarDecl>(D) || isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D) ||
+      !D->getDeclContext()->isFunctionOrMethod())
+    return false;
+
+  // Types of valid local variables should be complete, so this should succeed.
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
@@ -524,9 +533,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
     }
   }
   
-  return (isa<VarDecl>(D) && !isa<ParmVarDecl>(D) && 
-          !isa<ImplicitParamDecl>(D) && 
-          D->getDeclContext()->isFunctionOrMethod());
+  return true;
 }
 
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
@@ -1903,6 +1910,13 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     if (!DC->isDependentContext() && 
         RequireCompleteDeclContext(D.getCXXScopeSpec()))
       return DeclPtrTy();
+
+    if (isa<CXXRecordDecl>(DC) && !cast<CXXRecordDecl>(DC)->hasDefinition()) {
+      Diag(D.getIdentifierLoc(),
+           diag::err_member_def_undefined_record)
+        << Name << DC << D.getCXXScopeSpec().getRange();
+      D.setInvalidType();
+    }
     
     LookupQualifiedName(Previous, DC);
 
@@ -3020,7 +3034,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
     // Fake up an access specifier if it's supposed to be a class member.
-    if (isa<CXXRecordDecl>(NewFD->getDeclContext()))
+    if (!Redeclaration && isa<CXXRecordDecl>(NewFD->getDeclContext()))
       NewFD->setAccess(AS_public);
 
     // An out-of-line member function declaration must also be a
@@ -5212,7 +5226,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     NewFD->setInvalidDecl();
   }
 
-  if (getLangOptions().CPlusPlus) {
+  if (!InvalidDecl && getLangOptions().CPlusPlus) {
     CXXRecordDecl* CXXRecord = cast<CXXRecordDecl>(Record);
 
     if (!T->isPODType())

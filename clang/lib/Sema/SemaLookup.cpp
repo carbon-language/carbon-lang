@@ -1406,6 +1406,12 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
                                         AssociatedClasses);
   }
 
+  // Only recurse into base classes for complete types.
+  if (!Class->hasDefinition()) {
+    // FIXME: we might need to instantiate templates here
+    return;
+  }
+
   // Add direct and indirect base classes along with their associated
   // namespaces.
   llvm::SmallVector<CXXRecordDecl *, 32> Bases;
@@ -2058,6 +2064,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
 
   // Traverse the contexts of inherited C++ classes.
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
+    if (!Record->hasDefinition())
+      return;
+
     for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
                                          BEnd = Record->bases_end();
          B != BEnd; ++B) {

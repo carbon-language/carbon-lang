@@ -256,6 +256,9 @@ bool ShouldUseExternalRTTIDescriptor(QualType Ty) {
 
   if (const RecordType *RecordTy = dyn_cast<RecordType>(Ty)) {
     const CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
+    if (!RD->hasDefinition())
+      return false;
+
     if (!RD->isDynamicClass())
       return false;
 
@@ -469,7 +472,7 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
     
-    if (!RD->getNumBases()) {
+    if (!RD->hasDefinition() || !RD->getNumBases()) {
       // abi::__class_type_info.
       VtableName = "_ZTVN10__cxxabiv117__class_type_infoE";
     } else if (CanUseSingleInheritance(RD)) {
@@ -566,7 +569,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   case Type::Record: {
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(cast<RecordType>(Ty)->getDecl());
-    if (!RD->getNumBases()) {
+    if (!RD->hasDefinition() || !RD->getNumBases()) {
       // We don't need to emit any fields.
       break;
     }

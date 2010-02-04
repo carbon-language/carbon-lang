@@ -3408,6 +3408,9 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     }
     
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
+    if (!ClassDecl->hasDefinition())
+      return VRQuals;
+
     const UnresolvedSetImpl *Conversions =
       ClassDecl->getVisibleConversionFunctions();
     
