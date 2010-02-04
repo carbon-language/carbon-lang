@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
-struct A { int a; void f(); virtual void vf(); };
+struct A { int a; void f(); virtual void vf1(); virtual void vf2(); };
 struct B { int b; virtual void g(); };
 struct C : B, A { };
 
@@ -13,13 +13,16 @@ void (C::*pc)();
 void (A::*pa2)() = &A::f;
 
 // CHECK: @pa3 = global %0 { i64 1, i64 0 }, align 8
-void (A::*pa3)() = &A::vf;
+void (A::*pa3)() = &A::vf1;
+
+// CHECK: @pa4 = global %0 { i64 9, i64 0 }, align 8
+void (A::*pa4)() = &A::vf2;
 
 // CHECK: @pc2 = global %0 { i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64 16 }, align 8
 void (C::*pc2)() = &C::f;
 
 // CHECK: @pc3 = global %0 { i64 1, i64 0 }, align 8
-void (A::*pc3)() = &A::vf;
+void (A::*pc3)() = &A::vf1;
 
 void f() {
   // CHECK: store i64 0, i64* getelementptr inbounds (%0* @pa, i32 0, i32 0)
@@ -52,7 +55,13 @@ void f2() {
   // CHECK: store i64 1, i64* [[pa3ptr]]
   // CHECK: [[pa3adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa3, i32 0, i32 1
   // CHECK: store i64 0, i64* [[pa3adj]]
-  void (A::*pa3)() = &A::vf;
+  void (A::*pa3)() = &A::vf1;
+  
+  // CHECK: [[pa4ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 0 
+  // CHECK: store i64 9, i64* [[pa4ptr]]
+  // CHECK: [[pa4adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa4, i32 0, i32 1
+  // CHECK: store i64 0, i64* [[pa4adj]]
+  void (A::*pa4)() = &A::vf2;
 }
 
 void f3(A *a, A &ar) {

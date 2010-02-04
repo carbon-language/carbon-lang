@@ -418,8 +418,11 @@ public:
     // Get the function pointer (or index if this is a virtual function).
     if (MD->isVirtual()) {
       uint64_t Index = CGM.getVtableInfo().getMethodVtableIndex(MD);
-      
-      // The pointer is 1 + the virtual table offset in bytes.
+
+      // Itanium C++ ABI 2.3:
+      //   For a non-virtual function, this field is a simple function pointer. 
+      //   For a virtual function, it is 1 plus the virtual table offset 
+      //   (in bytes) of the function, represented as a ptrdiff_t. 
       Values[0] = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
     } else {
       llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD);

@@ -327,7 +327,11 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
     int64_t Index = 
       CGF.CGM.getVtableInfo().getMethodVtableIndex(MD);
     
-    FuncPtr = llvm::ConstantInt::get(PtrDiffTy, Index + 1);
+    // Itanium C++ ABI 2.3:
+    //   For a non-virtual function, this field is a simple function pointer. 
+    //   For a virtual function, it is 1 plus the virtual table offset 
+    //   (in bytes) of the function, represented as a ptrdiff_t. 
+    FuncPtr = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
   } else {
     FuncPtr = llvm::ConstantExpr::getPtrToInt(CGF.CGM.GetAddrOfFunction(MD), 
                                               PtrDiffTy);
