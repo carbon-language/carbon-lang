@@ -38,8 +38,8 @@ STATISTIC(NumDeleted, "Number of functions deleted because all callers found");
 STATISTIC(NumMergedAllocas, "Number of allocas merged together");
 
 static cl::opt<int>
-InlineLimit("inline-threshold", cl::Hidden, cl::init(200), cl::ZeroOrMore,
-        cl::desc("Control the amount of inlining to perform (default = 200)"));
+InlineLimit("inline-threshold", cl::Hidden, cl::init(225), cl::ZeroOrMore,
+        cl::desc("Control the amount of inlining to perform (default = 225)"));
 
 Inliner::Inliner(void *ID) 
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
@@ -176,7 +176,7 @@ unsigned Inliner::getInlineThreshold(Function* Caller) const {
   if (Caller && !Caller->isDeclaration() &&
       Caller->hasFnAttr(Attribute::OptimizeForSize) &&
       InlineLimit.getNumOccurrences() == 0)
-    return 50;
+    return 75;
   else
     return InlineThreshold;
 }
