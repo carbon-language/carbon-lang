@@ -1924,6 +1924,10 @@ public:
     assert(!isImplicitAccess());
     return cast<Expr>(Base);
   }
+  const Expr *getBase() const {
+    assert(!isImplicitAccess());
+    return cast<Expr>(Base);
+  }
   void setBase(Expr *E) { Base = E; }
 
   QualType getBaseType() const { return BaseType; }

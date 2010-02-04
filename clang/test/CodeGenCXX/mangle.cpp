@@ -356,4 +356,12 @@ namespace test0 {
     h<float>(buffer);
   }
   // CHECK: define linkonce_odr void @_ZN5test01hIfEEvRAszplcvT__ELd4014000000000000E_c(
+
+  template <class T> void j(char (&buffer)[sizeof(T().buffer)]) {}
+  struct A { double buffer[128]; };
+  void test4() {
+    char buffer[1024];
+    j<A>(buffer);
+  }
+  // CHECK: define linkonce_odr void @_ZN5test01jINS_1AEEEvRAszmecvT__E6buffer_c(
 }

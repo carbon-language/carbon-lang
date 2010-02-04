@@ -132,6 +132,10 @@ private:
                               bool MangleReturnType);
 
   void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
+  void mangleMemberExpr(const Expr *Base, bool IsArrow,
+                        NestedNameSpecifier *Qualifier,
+                        DeclarationName Name,
+                        unsigned KnownArity);
   void mangleCalledExpression(const Expr *E, unsigned KnownArity);
   void mangleExpression(const Expr *E);
   void mangleCXXCtorType(CXXCtorType T);
@@ -1108,14 +1112,41 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 void CXXNameMangler::mangleCalledExpression(const Expr *E, unsigned Arity) {
   if (E->getType() != getASTContext().OverloadTy)
     mangleExpression(E);
+  // propagate arity to dependent overloads?
 
   llvm::PointerIntPair<OverloadExpr*,1> R
     = OverloadExpr::find(const_cast<Expr*>(E));
   if (R.getInt())
     Out << "an"; // &
   const OverloadExpr *Ovl = R.getPointer();
+  if (const UnresolvedMemberExpr *ME = dyn_cast<UnresolvedMemberExpr>(Ovl)) {
+    mangleMemberExpr(ME->getBase(), ME->isArrow(), ME->getQualifier(),
+                     ME->getMemberName(), Arity);
+    return;
+  }
 
   mangleUnresolvedName(Ovl->getQualifier(), Ovl->getName(), Arity);
+}
+
+/// Mangles a member expression.  Implicit accesses are not handled,
+/// but that should be okay, because you shouldn't be able to
+/// make an implicit access in a function template declaration.
+///
+/// The standard ABI does not describe how member expressions should
+/// be mangled, so this is very unstandardized.  We mangle as if it
+/// were a binary operator, except that the RHS is mangled as an
+/// abstract name.
+///
+/// The standard ABI also does not assign a mangling to the dot
+/// operator, so we arbitrarily select 'me'.
+void CXXNameMangler::mangleMemberExpr(const Expr *Base,
+                                      bool IsArrow,
+                                      NestedNameSpecifier *Qualifier,
+                                      DeclarationName Member,
+                                      unsigned Arity) {
+  Out << (IsArrow ? "pt" : "me");
+  mangleExpression(Base);
+  mangleUnresolvedName(Qualifier, Member, Arity);
 }
 
 void CXXNameMangler::mangleExpression(const Expr *E) {
@@ -1148,6 +1179,31 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
       mangleExpression(CE->getArg(I));
     Out << "E";
+    break;
+  }
+
+  case Expr::MemberExprClass: {
+    const MemberExpr *ME = cast<MemberExpr>(E);
+    mangleMemberExpr(ME->getBase(), ME->isArrow(),
+                     ME->getQualifier(), ME->getMemberDecl()->getDeclName(),
+                     UnknownArity);
+    break;
+  }
+
+  case Expr::UnresolvedMemberExprClass: {
+    const UnresolvedMemberExpr *ME = cast<UnresolvedMemberExpr>(E);
+    mangleMemberExpr(ME->getBase(), ME->isArrow(),
+                     ME->getQualifier(), ME->getMemberName(),
+                     UnknownArity);
+    break;
+  }
+
+  case Expr::CXXDependentScopeMemberExprClass: {
+    const CXXDependentScopeMemberExpr *ME
+      = cast<CXXDependentScopeMemberExpr>(E);
+    mangleMemberExpr(ME->getBase(), ME->isArrow(),
+                     ME->getQualifier(), ME->getMember(),
+                     UnknownArity);
     break;
   }
 
@@ -1214,7 +1270,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     mangleExpression(BO->getLHS());
     mangleExpression(BO->getRHS());                     
     break;
-  }      
+  }
 
   case Expr::ConditionalOperatorClass: {
     const ConditionalOperator *CO = cast<ConditionalOperator>(E);
