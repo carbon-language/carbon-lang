@@ -901,6 +901,14 @@ static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
   return Sema::CXXCopyAssignment;
 }
 
+static const char* getCallConvName(CallingConv CC) {
+  switch (CC) {
+  default: return "cdecl";
+  case CC_X86StdCall: return "stdcall";
+  case CC_X86FastCall: return "fastcall";
+  }
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -955,6 +963,33 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     Diag(New->getLocation(), diag::err_static_non_static)
       << New;
     Diag(Old->getLocation(), PrevDiag);
+    return true;
+  }
+
+  // If a function is first declared with a calling convention, but is
+  // later declared or defined without one, the second decl assumes the
+  // calling convention of the first.
+  //
+  // For the new decl, we have to look at the NON-canonical type to tell the
+  // difference between a function that really doesn't have a calling
+  // convention and one that is declared cdecl. That's because in
+  // canonicalization (see ASTContext.cpp), cdecl is canonicalized away
+  // because it is the default calling convention.
+  //
+  // Note also that we DO NOT return at this point, because we still have
+  // other tests to run.
+  const FunctionType *OldType = OldQType->getAs<FunctionType>();
+  const FunctionType *NewType = New->getType()->getAs<FunctionType>();
+  if (OldType->getCallConv() != CC_Default &&
+      NewType->getCallConv() == CC_Default) {
+    NewQType = Context.getCallConvType(NewQType, OldType->getCallConv());
+    New->setType(NewQType);
+    NewQType = Context.getCanonicalType(NewQType);
+  } else if (OldType->getCallConv() != NewType->getCallConv()) {
+    // Calling conventions really aren't compatible, so complain.
+    Diag(New->getLocation(), diag::err_attributes_are_not_compatible)
+      << getCallConvName(NewType->getCallConv())
+      << getCallConvName(OldType->getCallConv());
     return true;
   }
 

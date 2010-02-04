@@ -271,6 +271,19 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   
   S += ")";
 
+  switch(T->getCallConv()) {
+  case CC_Default:
+  default: break;
+  case CC_C:
+    S += " __attribute__((cdecl))";
+    break;
+  case CC_X86StdCall:
+    S += " __attribute__((stdcall))";
+    break;
+  case CC_X86FastCall:
+    S += " __attribute__((fastcall))";
+    break;
+  }
   if (T->getNoReturnAttr())
     S += " __attribute__((noreturn))";
 

@@ -1716,7 +1716,7 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionNoProtoType::Profile(ID, ResultTy, NoReturn);
+  FunctionNoProtoType::Profile(ID, ResultTy, NoReturn, CallConv);
 
   void *InsertPos = 0;
   if (FunctionNoProtoType *FT =
@@ -1736,7 +1736,7 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
   }
 
   FunctionNoProtoType *New = new (*this, TypeAlignment)
-    FunctionNoProtoType(ResultTy, Canonical, NoReturn);
+    FunctionNoProtoType(ResultTy, Canonical, NoReturn, CallConv);
   Types.push_back(New);
   FunctionNoProtoTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -1755,7 +1755,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
   llvm::FoldingSetNodeID ID;
   FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
                              TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
-                             NumExs, ExArray, NoReturn);
+                             NumExs, ExArray, NoReturn, CallConv);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP =

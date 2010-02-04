@@ -1241,7 +1241,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
     // See if there are any attributes on this declarator chunk.
     if (const AttributeList *AL = DeclType.getAttrs())
-      ProcessTypeAttributeList(T, AL);
+      ProcessTypeAttributeList(T, AL, true);
   }
 
   if (getLangOptions().CPlusPlus && T->isFunctionType()) {
@@ -1274,7 +1274,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // If there were any type attributes applied to the decl itself (not the
   // type, apply the type attribute to the type!)
   if (const AttributeList *Attrs = D.getAttributes())
-    ProcessTypeAttributeList(T, Attrs);
+    ProcessTypeAttributeList(T, Attrs, true);
+  // Also look in the decl spec.
+  if (const AttributeList *Attrs = D.getDeclSpec().getAttributes())
+    ProcessTypeAttributeList(T, Attrs, true, true);
 
   if (TInfo) {
     if (D.isInvalidType())
@@ -1612,6 +1615,36 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
+/// HandleCDeclTypeAttribute - Process the cdecl attribute on the
+/// specified type.  The attribute contains 0 arguments.
+static void HandleCDeclTypeAttribute(QualType &Type,
+                                     const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0)
+    return;
+
+  // We only apply this to a pointer to function.
+  if (!Type->isFunctionPointerType()
+      && !Type->isFunctionType())
+    return;
+
+  Type = S.Context.getCallConvType(Type, CC_C);
+}
+
+/// HandleFastCallTypeAttribute - Process the fastcall attribute on the
+/// specified type.  The attribute contains 0 arguments.
+static void HandleFastCallTypeAttribute(QualType &Type,
+                                        const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0)
+    return;
+
+  // We only apply this to a pointer to function.
+  if (!Type->isFunctionPointerType()
+      && !Type->isFunctionType())
+    return;
+
+  Type = S.Context.getCallConvType(Type, CC_X86FastCall);
+}
+
 /// HandleObjCGCTypeAttribute - Process an objc's gc attribute on the
 /// specified type.  The attribute contains 1 argument, weak or strong.
 static void HandleObjCGCTypeAttribute(QualType &Type,
@@ -1661,6 +1694,21 @@ static void HandleNoReturnTypeAttribute(QualType &Type,
   Type = S.Context.getNoReturnType(Type);
 }
 
+/// HandleStdCallTypeAttribute - Process the stdcall attribute on the
+/// specified type.  The attribute contains 0 arguments.
+static void HandleStdCallTypeAttribute(QualType &Type,
+                                       const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0)
+    return;
+
+  // We only apply this to a pointer to function.
+  if (!Type->isFunctionPointerType()
+      && !Type->isFunctionType())
+    return;
+
+  Type = S.Context.getCallConvType(Type, CC_X86StdCall);
+}
+
 /// HandleVectorSizeAttribute - this attribute is only applicable to integral
 /// and float scalars, although arrays, pointers, and function return values are
 /// allowed in conjunction with this construct. Aggregates with this attribute
@@ -1708,7 +1756,12 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   CurType = S.Context.getVectorType(CurType, vectorSize/typeSize);
 }
 
-void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
+void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL,
+                                    bool HandleCallConvAttributes,
+                                    bool HandleOnlyCallConv) {
+  if(HandleOnlyCallConv)
+    assert(HandleCallConvAttributes && "Can't not handle call-conv attributes"
+           " while only handling them!");
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
   // type, but others can be present in the type specifiers even though they
@@ -1719,16 +1772,32 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
     switch (AL->getKind()) {
     default: break;
     case AttributeList::AT_address_space:
-      HandleAddressSpaceTypeAttribute(Result, *AL, *this);
+      if (!HandleOnlyCallConv)
+        HandleAddressSpaceTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_cdecl:
+      if (HandleCallConvAttributes)
+        HandleCDeclTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_fastcall:
+      if (HandleCallConvAttributes)
+        HandleFastCallTypeAttribute(Result, *AL, *this);
       break;
     case AttributeList::AT_objc_gc:
-      HandleObjCGCTypeAttribute(Result, *AL, *this);
+      if (!HandleOnlyCallConv)
+        HandleObjCGCTypeAttribute(Result, *AL, *this);
       break;
     case AttributeList::AT_noreturn:
-      HandleNoReturnTypeAttribute(Result, *AL, *this);
+      if (!HandleOnlyCallConv)
+        HandleNoReturnTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_stdcall:
+      if (HandleCallConvAttributes)
+        HandleStdCallTypeAttribute(Result, *AL, *this);
       break;
     case AttributeList::AT_vector_size:
-      HandleVectorSizeAttr(Result, *AL, *this);
+      if (!HandleOnlyCallConv)
+        HandleVectorSizeAttr(Result, *AL, *this);
       break;
     }
   }

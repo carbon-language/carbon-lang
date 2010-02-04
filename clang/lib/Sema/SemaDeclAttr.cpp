@@ -948,6 +948,12 @@ static void HandleCDeclAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions.
+  // If we try to apply it to a function pointer, don't warn, but don't
+  // do anything, either. All the function-pointer stuff is handled in
+  // SemaType.cpp.
+  ValueDecl *VD = dyn_cast<ValueDecl>(d);
+  if (VD && VD->getType()->isFunctionPointerType())
+    return;
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
@@ -980,6 +986,11 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions.
+  // If we try to apply it to a function pointer, don't warn, but don't
+  // do anything, either.
+  ValueDecl *VD = dyn_cast<ValueDecl>(d);
+  if (VD && VD->getType()->isFunctionPointerType())
+    return;
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
@@ -1019,6 +1030,11 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  // If we try to apply it to a function pointer, don't warn, but don't
+  // do anything, either.
+  ValueDecl *VD = dyn_cast<ValueDecl>(d);
+  if (VD && VD->getType()->isFunctionPointerType())
+    return;
   if (!isa<FunctionDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;

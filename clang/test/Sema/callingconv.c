@@ -21,3 +21,15 @@ void __attribute__((fastcall)) test2(int a, ...) { // expected-error {{variadic 
 void __attribute__((cdecl)) ctest0() {}
 
 void __attribute__((cdecl(1))) ctest1(float x) {} // expected-error {{attribute requires 0 argument(s)}}
+
+void (__attribute__((fastcall)) *pfoo)(float*) = foo;
+
+void (__attribute__((stdcall)) *pbar)(float*) = bar;
+
+void (__attribute__((cdecl)) *ptest1)(void) = test1; // expected-warning {{incompatible pointer types}}
+
+void (*pctest0)() = ctest0;
+
+void ctest2() {}
+void (__attribute__((cdecl)) *pctest2)() = ctest2;
+

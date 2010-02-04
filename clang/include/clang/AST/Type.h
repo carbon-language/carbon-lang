@@ -1766,10 +1766,11 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getResultType(), getNoReturnAttr());
+    Profile(ID, getResultType(), getNoReturnAttr(), getCallConv());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
-                      bool NoReturn) {
+                      bool NoReturn, CallingConv CallConv) {
+    ID.AddInteger(CallConv);
     ID.AddInteger(NoReturn);
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
@@ -1892,7 +1893,7 @@ public:
                       bool isVariadic, unsigned TypeQuals,
                       bool hasExceptionSpec, bool anyExceptionSpec,
                       unsigned NumExceptions, exception_iterator Exs,
-                      bool NoReturn);
+                      bool NoReturn, CallingConv CallConv);
 };
 
 
