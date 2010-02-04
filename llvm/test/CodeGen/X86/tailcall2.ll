@@ -1,6 +1,5 @@
 ; RUN: llc < %s -march=x86    -asm-verbose=false | FileCheck %s -check-prefix=32
 ; RUN: llc < %s -march=x86-64 -asm-verbose=false | FileCheck %s -check-prefix=64
-; XFAIL: *
 
 define void @t1(i32 %x) nounwind ssp {
 entry:
@@ -107,10 +106,10 @@ declare i32 @bar2(i32, i32, i32)
 define signext i16 @t8() nounwind ssp {
 entry:
 ; 32: t8:
-; 32: jmp {{_?}}bar3
+; 32: call {{_?}}bar3
 
 ; 64: t8:
-; 64: jmp {{_?}}bar3
+; 64: callq {{_?}}bar3
   %0 = tail call signext i16 @bar3() nounwind      ; <i16> [#uses=1]
   ret i16 %0
 }

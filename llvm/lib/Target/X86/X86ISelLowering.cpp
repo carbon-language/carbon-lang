@@ -52,7 +52,6 @@ using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
-static cl::opt<unsigned> TailCallLimit("tailcall-limit", cl::init(0));
 static cl::opt<bool>
 DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 
@@ -2271,8 +2270,6 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 
   // Look for obvious safe cases to perform tail call optimization that does not
   // requite ABI changes. This is what gcc calls sibcall.
-  if (NumTailCalls >= TailCallLimit)
-    return false;
 
   // Do not tail call optimize vararg calls for now.
   if (isVarArg)
