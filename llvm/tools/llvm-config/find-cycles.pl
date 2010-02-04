@@ -62,6 +62,11 @@ foreach my $cycle (@CYCLES) {
         print STDERR "find-cycles.pl: Circular dependency between *.a files:\n";
         print STDERR "find-cycles.pl:   ", join(' ', @archives), "\n";
         push @modules, @archives; # WORKAROUND: Duplicate *.a files. Ick.
+    } elsif (@modules > 1) {
+        $cycles_found = $cycles_found + 1;
+        print STDERR "find-cycles.pl: Circular dependency between *.o files:\n";
+        print STDERR "find-cycles.pl:   ", join(' ', @modules), "\n";
+        push @modules, @modules; # WORKAROUND: Duplicate *.o files. Ick.
     }
 
     # Add to our output.  (@modules is already as sorted as we need it to be.)
