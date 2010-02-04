@@ -1528,12 +1528,12 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
 
   void *InsertPos = 0;
   DependentSizedArrayType *Canon = 0;
+  llvm::FoldingSetNodeID ID;
 
   if (NumElts) {
     // Dependently-sized array types that do not have a specified
     // number of elements will have their sizes deduced from an
     // initializer.
-    llvm::FoldingSetNodeID ID;
     DependentSizedArrayType::Profile(ID, *this, getCanonicalType(EltTy), ASM,
                                      EltTypeQuals, NumElts);
 
@@ -1554,8 +1554,13 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
         DependentSizedArrayType(*this, EltTy, QualType(),
                                 NumElts, ASM, EltTypeQuals, Brackets);
 
-      if (NumElts)
+      if (NumElts) {
+        DependentSizedArrayType *CanonCheck
+          = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+        assert(!CanonCheck && "Dependent-sized canonical array type broken");
+        (void)CanonCheck;
         DependentSizedArrayTypes.InsertNode(New, InsertPos);
+      }
     } else {
       QualType Canon = getDependentSizedArrayType(CanonEltTy, NumElts,
                                                   ASM, EltTypeQuals,
@@ -1690,6 +1695,11 @@ QualType ASTContext::getDependentSizedExtVectorType(QualType vecType,
       New = new (*this, TypeAlignment)
         DependentSizedExtVectorType(*this, vecType, QualType(), SizeExpr,
                                     AttrLoc);
+
+      DependentSizedExtVectorType *CanonCheck
+        = DependentSizedExtVectorTypes.FindNodeOrInsertPos(ID, InsertPos);
+      assert(!CanonCheck && "Dependent-sized ext_vector canonical type broken");
+      (void)CanonCheck;
       DependentSizedExtVectorTypes.InsertNode(New, InsertPos);
     } else {
       QualType Canon = getDependentSizedExtVectorType(CanonVecTy, SizeExpr,
@@ -1892,6 +1902,11 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
     QualType Canon = getTemplateTypeParmType(Depth, Index, ParameterPack);
     TypeParm = new (*this, TypeAlignment)
       TemplateTypeParmType(Depth, Index, ParameterPack, Name, Canon);
+
+    TemplateTypeParmType *TypeCheck 
+      = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!TypeCheck && "Template type parameter canonical type broken");
+    (void)TypeCheck;
   } else
     TypeParm = new (*this, TypeAlignment)
       TemplateTypeParmType(Depth, Index, ParameterPack);
@@ -1985,8 +2000,16 @@ ASTContext::getQualifiedNameType(NestedNameSpecifier *NNS,
   if (T)
     return QualType(T, 0);
 
-  T = new (*this) QualifiedNameType(NNS, NamedType,
-                                    getCanonicalType(NamedType));
+  QualType Canon = NamedType;
+  if (!Canon.isCanonical()) {
+    Canon = getCanonicalType(NamedType);
+    QualifiedNameType *CheckT
+      = QualifiedNameTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckT && "Qualified name canonical type broken");
+    (void)CheckT;
+  }
+
+  T = new (*this) QualifiedNameType(NNS, NamedType, Canon);
   Types.push_back(T);
   QualifiedNameTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
@@ -2024,6 +2047,15 @@ ASTContext::getTypenameType(NestedNameSpecifier *NNS,
                             QualType Canon) {
   assert(NNS->isDependent() && "nested-name-specifier must be dependent");
 
+  llvm::FoldingSetNodeID ID;
+  TypenameType::Profile(ID, NNS, TemplateId);
+
+  void *InsertPos = 0;
+  TypenameType *T
+    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
   if (Canon.isNull()) {
     NestedNameSpecifier *CanonNNS = getCanonicalNestedNameSpecifier(NNS);
     QualType CanonType = getCanonicalType(QualType(TemplateId, 0));
@@ -2034,16 +2066,11 @@ ASTContext::getTypenameType(NestedNameSpecifier *NNS,
              "Canonical type must also be a template specialization type");
       Canon = getTypenameType(CanonNNS, CanonTemplateId);
     }
+
+    TypenameType *CheckT
+      = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckT && "Typename canonical type is broken"); (void)CheckT;
   }
-
-  llvm::FoldingSetNodeID ID;
-  TypenameType::Profile(ID, NNS, TemplateId);
-
-  void *InsertPos = 0;
-  TypenameType *T
-    = TypenameTypes.FindNodeOrInsertPos(ID, InsertPos);
-  if (T)
-    return QualType(T, 0);
 
   T = new (*this) TypenameType(NNS, TemplateId, Canon);
   Types.push_back(T);
@@ -2062,7 +2089,12 @@ ASTContext::getElaboratedType(QualType UnderlyingType,
   if (T)
     return QualType(T, 0);
 
-  QualType Canon = getCanonicalType(UnderlyingType);
+  QualType Canon = UnderlyingType;
+  if (!Canon.isCanonical()) {
+    Canon = getCanonicalType(Canon);
+    ElaboratedType *CheckT = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckT && "Elaborated canonical type is broken"); (void)CheckT;
+  }
 
   T = new (*this) ElaboratedType(UnderlyingType, Tag, Canon);
   Types.push_back(T);
@@ -3795,6 +3827,7 @@ TemplateName ASTContext::getOverloadedTemplateName(UnresolvedSetIterator Begin,
 TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
                                                   bool TemplateKeyword,
                                                   TemplateDecl *Template) {
+  // FIXME: Canonicalization?
   llvm::FoldingSetNodeID ID;
   QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);
 
@@ -3832,6 +3865,10 @@ TemplateName ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   } else {
     TemplateName Canon = getDependentTemplateName(CanonNNS, Name);
     QTN = new (*this,4) DependentTemplateName(NNS, Name, Canon);
+    DependentTemplateName *CheckQTN =
+      DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckQTN && "Dependent type name canonicalization broken");
+    (void)CheckQTN;
   }
 
   DependentTemplateNames.InsertNode(QTN, InsertPos);
@@ -3850,8 +3887,8 @@ ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   DependentTemplateName::Profile(ID, NNS, Operator);
   
   void *InsertPos = 0;
-  DependentTemplateName *QTN =
-  DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+  DependentTemplateName *QTN
+    = DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
   
   if (QTN)
     return TemplateName(QTN);
@@ -3862,6 +3899,11 @@ ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   } else {
     TemplateName Canon = getDependentTemplateName(CanonNNS, Operator);
     QTN = new (*this,4) DependentTemplateName(NNS, Operator, Canon);
+    
+    DependentTemplateName *CheckQTN
+      = DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckQTN && "Dependent template name canonicalization broken");
+    (void)CheckQTN;
   }
   
   DependentTemplateNames.InsertNode(QTN, InsertPos);
