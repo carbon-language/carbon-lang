@@ -4240,7 +4240,7 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
   if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
     return false;
 
-  // It's not safe to eliminate thee sign / zero extension of the return value.
+  // It's not safe to eliminate the sign / zero extension of the return value.
   if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
     return false;
 
