@@ -517,7 +517,7 @@ namespace llvm {
 
     /// getIntegerSCEV - Given a SCEVable type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
-    const SCEV *getIntegerSCEV(int Val, const Type *Ty);
+    const SCEV *getIntegerSCEV(int64_t Val, const Type *Ty);
 
     /// getUMaxFromMismatchedTypes - Promote the operands to the wider of
     /// the types using zero-extension, and then perform a umax operation

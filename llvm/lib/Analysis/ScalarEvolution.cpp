@@ -2351,7 +2351,7 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
 
 /// getIntegerSCEV - Given a SCEVable type, create a constant for the
 /// specified signed integer value and return a SCEV for the constant.
-const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
+const SCEV *ScalarEvolution::getIntegerSCEV(int64_t Val, const Type *Ty) {
   const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
   return getConstant(ConstantInt::get(ITy, Val));
 }
