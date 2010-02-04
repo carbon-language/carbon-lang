@@ -9,14 +9,20 @@ struct A {
   A() : i(0) { ctorcalls++; }
   ~A() { dtorcalls++; }
   int i;
+  
+  friend const A& operator<<(const A& a, int n) {
+    return a;
+  }
 };
 
 void g(int) { }
+void g(const A&) { }
 
 void f1(bool b) {
   g(b ? A().i : 0);
   g(b || A().i);
   g(b && A().i);
+  g(b ? A() << 1 : A() << 2);
 }
 
 struct Checker {

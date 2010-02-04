@@ -1538,9 +1538,12 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
     
     EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);
     
+    // Any temporaries created here are conditional.
+    BeginConditionalBranch();
     EmitBlock(LHSBlock);
-
     LValue LHS = EmitLValue(E->getLHS());
+    EndConditionalBranch();
+    
     if (!LHS.isSimple())
       return EmitUnsupportedLValue(E, "conditional operator");
 
@@ -1548,8 +1551,11 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
     Builder.CreateStore(LHS.getAddress(), Temp);
     EmitBranch(ContBlock);
     
+    // Any temporaries created here are conditional.
+    BeginConditionalBranch();
     EmitBlock(RHSBlock);
     LValue RHS = EmitLValue(E->getRHS());
+    EndConditionalBranch();
     if (!RHS.isSimple())
       return EmitUnsupportedLValue(E, "conditional operator");
 
