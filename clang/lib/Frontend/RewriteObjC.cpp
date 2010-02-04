@@ -4604,10 +4604,12 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   Name = ND->getNameAsString();
   ByrefType.clear();
   RewriteByRefString(ByrefType, Name, ND);
+  std::string ForwardingCastType("(");
+  ForwardingCastType += ByrefType + " *)";
   if (!hasInit) {
     ByrefType += " " + Name + " = {(void*)";
     ByrefType += utostr(isa);
-    ByrefType += ", &" + Name + ", ";
+    ByrefType += "," +  ForwardingCastType + "&" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(";
@@ -4636,7 +4638,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += " " + Name;
     ByrefType += " = {(void*)";
     ByrefType += utostr(isa);
-    ByrefType += ", &" + Name + ", ";
+    ByrefType += "," +  ForwardingCastType + "&" + Name + ", ";
     ByrefType += utostr(flags);
     ByrefType += ", ";
     ByrefType += "sizeof(";
@@ -4784,11 +4786,23 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
     // Output all "by ref" declarations.
     for (llvm::SmallPtrSet<ValueDecl*,8>::iterator I = BlockByRefDecls.begin(),
          E = BlockByRefDecls.end(); I != E; ++I) {
+      ValueDecl *ND = (*I);
+      std::string Name(ND->getNameAsString());
+      std::string RecName;
+      RewriteByRefString(RecName, Name, ND);
+      IdentifierInfo *II = &Context->Idents.get(RecName.c_str() 
+                                                + sizeof("struct"));
+      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
+                                          SourceLocation(), II);
+      assert(RD && "SynthBlockInitExpr(): Can't find RecordDecl");
+      QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
+      
       FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
       Exp = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
       Exp = new (Context) UnaryOperator(Exp, UnaryOperator::AddrOf,
                               Context->getPointerType(Exp->getType()),
                               SourceLocation());
+      Exp = NoTypeInfoCStyleCastExpr(Context, castT, CastExpr::CK_Unknown, Exp);
       InitExprs.push_back(Exp);
     }
   }
