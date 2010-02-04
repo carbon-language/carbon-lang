@@ -355,8 +355,7 @@ public: // Part of public interface to class.
   ///       return undefined
   ///     else
   ///       return symbolic
-  SValuator::CastResult Retrieve(const GRState *state, Loc L,
-                                 QualType T = QualType());
+  SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
 
   SVal RetrieveElement(const GRState *state, const ElementRegion *R);
 
@@ -1095,19 +1094,15 @@ RegionStoreManager::GetElementZeroRegion(const SymbolicRegion *SR, QualType T) {
   assert(!T.isNull());
   return MRMgr.getElementRegion(T, idx, SR, Ctx);
 }
-  
-  
 
-SValuator::CastResult
-RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
-
+SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
   
   // FIXME: Is this even possible?  Shouldn't this be treated as a null
   //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
-    return SValuator::CastResult(state, UndefinedVal());
+    return UndefinedVal();
   
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
@@ -1118,13 +1113,13 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // read(p);
   // c = *p;
   if (isa<AllocaRegion>(MR))
-    return SValuator::CastResult(state, UnknownVal());
+    return UnknownVal();
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
     MR = GetElementZeroRegion(SR, T);
 
   if (isa<CodeTextRegion>(MR))
-    return SValuator::CastResult(state, UnknownVal());
+    return UnknownVal();
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
@@ -1152,23 +1147,21 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 #endif
 
   if (RTy->isStructureType())
-    return SValuator::CastResult(state, RetrieveStruct(state, R));
+    return RetrieveStruct(state, R);
 
   // FIXME: Handle unions.
   if (RTy->isUnionType())
-    return SValuator::CastResult(state, UnknownVal());
+    return UnknownVal();
 
   if (RTy->isArrayType())
-    return SValuator::CastResult(state, RetrieveArray(state, R));
+    return RetrieveArray(state, R);
 
   // FIXME: handle Vector types.
   if (RTy->isVectorType())
-    return SValuator::CastResult(state, UnknownVal());
+    return UnknownVal();
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return SValuator::CastResult(state, 
-                                 CastRetrievedVal(RetrieveField(state, FR), FR,
-                                                  T, false));
+    return CastRetrievedVal(RetrieveField(state, FR), FR, T, false);
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
     // FIXME: Here we actually perform an implicit conversion from the loaded
@@ -1176,9 +1169,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // more intelligently.  For example, an 'element' can encompass multiple
     // bound regions (e.g., several bound bytes), or could be a subset of
     // a larger value.
-    return SValuator::CastResult(state,
-                                 CastRetrievedVal(RetrieveElement(state, ER),
-                                                  ER, T, false));
+    return CastRetrievedVal(RetrieveElement(state, ER), ER, T, false);
   }    
 
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
@@ -1188,9 +1179,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // reinterpretted, it is possible we stored a different value that could
     // fit within the ivar.  Either we need to cast these when storing them
     // or reinterpret them lazily (as we do here).
-    return SValuator::CastResult(state,
-                                 CastRetrievedVal(RetrieveObjCIvar(state, IVR),
-                                                  IVR, T, false));
+    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T, false);
   }
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
@@ -1200,9 +1189,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // variable is reinterpretted, it is possible we stored a different value
     // that could fit within the variable.  Either we need to cast these when
     // storing them or reinterpret them lazily (as we do here).    
-    return SValuator::CastResult(state,
-                                 CastRetrievedVal(RetrieveVar(state, VR), VR, T,
-                                                  false));
+    return CastRetrievedVal(RetrieveVar(state, VR), VR, T, false);
   }
 
   RegionBindings B = GetRegionBindings(state->getStore());
@@ -1210,7 +1197,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   // Check if the region has a binding.
   if (V)
-      return SValuator::CastResult(state, *V);
+    return *V;
 
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
@@ -1220,11 +1207,11 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // upon creation.  All heap allocated blocks are considered to
     // have undefined values as well unless they are explicitly bound
     // to specific values.
-    return SValuator::CastResult(state, UndefinedVal());
+    return UndefinedVal();
   }
 
   // All other values are symbolic.
-  return SValuator::CastResult(state, ValMgr.getRegionValueSymbolVal(R, RTy));
+  return ValMgr.getRegionValueSymbolVal(R, RTy);
 }
 
 std::pair<const GRState*, const MemRegion*>
