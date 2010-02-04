@@ -159,8 +159,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
                                    FPT->isVariadic());
 
-  const llvm::Type *Int8PtrTy = 
-    llvm::Type::getInt8Ty(VMContext)->getPointerTo();
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   // Get the member function pointer.
   llvm::Value *MemFnPtr = 
@@ -206,19 +205,20 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   Builder.CreateCondBr(IsVirtual, FnVirtual, FnNonVirtual);
   EmitBlock(FnVirtual);
   
-  const llvm::Type *VTableTy = 
-    FTy->getPointerTo()->getPointerTo()->getPointerTo();
+  const llvm::Type *VtableTy = 
+    FTy->getPointerTo()->getPointerTo();
 
-  llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy);
-  VTable = Builder.CreateLoad(VTable);
+  llvm::Value *Vtable = Builder.CreateBitCast(This, VtableTy->getPointerTo());
+  Vtable = Builder.CreateLoad(Vtable);
   
-  VTable = Builder.CreateGEP(VTable, FnAsInt, "fn");
+  Vtable = Builder.CreateBitCast(Vtable, Int8PtrTy);
+  llvm::Value *VtableOffset = 
+    Builder.CreateSub(FnAsInt, llvm::ConstantInt::get(PtrDiffTy, 1));
   
-  // Since the function pointer is 1 plus the virtual table offset, we
-  // subtract 1 by using a GEP.
-  VTable = Builder.CreateConstGEP1_64(VTable, (uint64_t)-1);
+  Vtable = Builder.CreateGEP(Vtable, VtableOffset, "fn");
+  Vtable = Builder.CreateBitCast(Vtable, VtableTy);
   
-  llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
+  llvm::Value *VirtualFn = Builder.CreateLoad(Vtable, "virtualfn");
   
   EmitBranch(FnEnd);
   EmitBlock(FnNonVirtual);
