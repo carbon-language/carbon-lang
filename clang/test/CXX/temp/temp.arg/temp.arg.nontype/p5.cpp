@@ -11,6 +11,43 @@
 //        qualification conversions (4.4) and the array-to-pointer conversion
 //        (4.2) are applied; if the template-argument is of type
 //        std::nullptr_t, the null pointer conversion (4.10) is applied.
+namespace pointer_to_object_parameters {
+  // PR6226
+  struct Str {
+    Str(const char *);
+  };
+
+  template<const char *s>
+  struct A {
+    Str get() { return s; }
+  };
+
+  char hello[6] = "Hello";
+  extern const char world[6];
+  const char world[6] = "world";
+  void test() {
+    (void)A<hello>().get();
+    (void)A<world>().get();
+  }
+
+  class X {
+  public:
+    X();
+    X(int, int);
+    operator int() const;
+  };
+  
+  template<X const *Ptr> struct A2;
+  
+  X *X_ptr;
+  X an_X;
+  X array_of_Xs[10];
+  A2<X_ptr> *a12;
+  A2<array_of_Xs> *a13;
+  A2<&an_X> *a13_2;
+  A2<(&an_X)> *a13_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
+}
+
 //     -- For a non-type template-parameter of type reference to object, no
 //        conversions apply. The type referred to by the reference may be more
 //        cv-qualified than the (otherwise identical) type of the

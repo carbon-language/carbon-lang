@@ -718,7 +718,8 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
         if (!VD)
           return SemaRef.ExprError();
 
-        if (VD->getDeclContext()->isRecord()) {
+        if (VD->getDeclContext()->isRecord() && 
+            (isa<CXXMethodDecl>(VD) || isa<FieldDecl>(VD))) {
           // If the value is a class member, we might have a pointer-to-member.
           // Determine whether the non-type template template parameter is of
           // pointer-to-member type. If so, we need to build an appropriate
@@ -746,21 +747,51 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                                 move(RefExpr));
           }
         }
-        if (NTTP->getType()->isPointerType() &&
-            !VD->getType()->isPointerType()) {
-          // If the template argument is expected to be a pointer and value
-          // isn't inherently of pointer type, then it is specified with '&...'
-          // to indicate its address should be used. Build an expression to
-          // take the address of the argument.
+        if (NTTP->getType()->isPointerType()) {
+          // If the template argument is expected to be a pointer
+          // type, we may have to decay array/pointer references, take
+          // the address of the argument, or perform cv-qualification
+          // adjustments to get the type of the rvalue right. Do so.
           OwningExprResult RefExpr
             = SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
                                        E->getLocation());
           if (RefExpr.isInvalid())
             return SemaRef.ExprError();
 
-          return SemaRef.CreateBuiltinUnaryOp(E->getLocation(),
-                                              UnaryOperator::AddrOf,
-                                              move(RefExpr));
+          // Decay functions and arrays.
+          Expr *RefE = (Expr *)RefExpr.get();
+          SemaRef.DefaultFunctionArrayConversion(RefE);
+          if (RefE != RefExpr.get()) {
+            RefExpr.release();
+            RefExpr = SemaRef.Owned(RefE);
+          }
+
+          // If the unqualified types are different and a a
+          // qualification conversion won't fix them types, we need to
+          // take the address.  FIXME: Should we encode these steps in
+          // the template argument, then replay them here, like a
+          // miniature InitializationSequence?
+          if (!SemaRef.Context.hasSameUnqualifiedType(RefE->getType(), 
+                                                      NTTP->getType()) &&
+              !SemaRef.IsQualificationConversion(RefE->getType(),
+                                                 NTTP->getType())) {
+            RefExpr = SemaRef.CreateBuiltinUnaryOp(E->getLocation(),
+                                                   UnaryOperator::AddrOf,
+                                                   move(RefExpr));
+            if (RefExpr.isInvalid())
+              return SemaRef.ExprError();
+
+            RefE = (Expr *)RefExpr.get();
+            assert(SemaRef.IsQualificationConversion(RefE->getType(),
+                                                     NTTP->getType()));
+          }
+
+          // Strip top-level cv-qualifiers off the type.
+          RefExpr.release();
+          SemaRef.ImpCastExprToType(RefE, 
+                                    NTTP->getType().getUnqualifiedType(),
+                                    CastExpr::CK_NoOp);
+          return SemaRef.Owned(RefE);
         }
 
         return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),

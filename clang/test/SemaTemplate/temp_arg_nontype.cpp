@@ -34,16 +34,6 @@ public:
 };
 A<X(17, 42)> *a11; // expected-error{{non-type template argument of type 'class X' must have an integral or enumeration type}}
 
-template<X const *Ptr> struct A2;
-
-X *X_ptr;
-X an_X;
-X array_of_Xs[10];
-A2<X_ptr> *a12;
-A2<array_of_Xs> *a13;
-A2<&an_X> *a13_2;
-A2<(&an_X)> *a13_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
-
 float f(float);
 
 float g(float);
@@ -67,6 +57,7 @@ struct Y { } y;
 
 volatile X * X_volatile_ptr;
 template<X const &AnX> struct A4; // expected-note 2{{template parameter is declared here}}
+X an_X;
 A4<an_X> *a15_1; // okay
 A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type template parameter of type 'class X const &' to template argument of type 'class X volatile' ignores qualifiers}}
 A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'class X const &' cannot bind to template argument of type 'struct Y'}} \
