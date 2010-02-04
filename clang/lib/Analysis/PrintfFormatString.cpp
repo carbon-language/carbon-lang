@@ -18,6 +18,7 @@
 using clang::analyze_printf::FormatSpecifier;
 using clang::analyze_printf::OptionalAmount;
 using clang::analyze_printf::ArgTypeResult;
+using clang::analyze_printf::FormatStringHandler;
 using namespace clang;
 
 namespace {
@@ -87,7 +88,8 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
 }
 
 static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
-                                                  const char *&Beg, const char *E) {
+                                                  const char *&Beg,
+                                                  const char *E) {
   
   using namespace clang::analyze_printf;
   
@@ -241,7 +243,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   return FormatSpecifierResult(Start, FS);
 }
 
-bool clang::ParseFormatString(FormatStringHandler &H,
+bool clang::analyze_printf::ParseFormatString(FormatStringHandler &H,
                        const char *I, const char *E) {
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {

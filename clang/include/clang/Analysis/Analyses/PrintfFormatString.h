@@ -234,8 +234,6 @@ public:
   bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }  
 };
 
-} // end printf namespace
-
 class FormatStringHandler {
 public:
   FormatStringHandler() {}
@@ -261,6 +259,6 @@ public:
 bool ParseFormatString(FormatStringHandler &H,
                        const char *beg, const char *end);
 
-
+} // end printf namespace
 } // end clang namespace
 #endif

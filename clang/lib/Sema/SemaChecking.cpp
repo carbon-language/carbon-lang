@@ -1033,7 +1033,7 @@ Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
 }
 
 namespace {
-class CheckPrintfHandler : public FormatStringHandler {
+class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
   Sema &S;
   const StringLiteral *FExpr;
   const Expr *OrigFormatExpr;
@@ -1061,9 +1061,10 @@ public:
   void HandleIncompleteFormatSpecifier(const char *startSpecifier,
                                        unsigned specifierLen);
   
-  void HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
-                                        const char *startSpecifier,
-                                        unsigned specifierLen);
+  void
+  HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
+                                   const char *startSpecifier,
+                                   unsigned specifierLen);
   
   void HandleNullChar(const char *nullCharacter);
   
@@ -1292,9 +1293,9 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
 
       S.Diag(getLocationOfByte(CS.getStart()),
              diag::warn_printf_conversion_argument_type_mismatch)
-        << *T << Ex->getType()
-        << getFormatSpecifierRange(startSpecifier, specifierLen)
-        << Ex->getSourceRange();
+      << *T << Ex->getType();
+//        << getFormatSpecifierRange(startSpecifier, specifierLen)
+//        << Ex->getSourceRange();
     }
     return true;
   }
@@ -1341,7 +1342,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
                        isa<ObjCStringLiteral>(OrigFormatExpr), Str,
                        HasVAListArg, TheCall, format_idx);
 
-  if (!ParseFormatString(H, Str, Str + StrLen))
+  if (!analyze_printf::ParseFormatString(H, Str, Str + StrLen))
     H.DoneProcessing();
 }
 
