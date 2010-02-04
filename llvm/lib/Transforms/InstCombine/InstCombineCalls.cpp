@@ -635,43 +635,69 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::objectsize: {
     const Type *ReturnTy = CI.getType();
     Value *Op1 = II->getOperand(1);
+    
+    // If we've got a GEP we're going to do some calculations
+    size_t GEPindex = 0;
 
-    // If we're a constant expr then we just return the number of bytes
-    // left in whatever we're indexing.  Since it's constant there's no
-    // need for maximum or minimum bytes.
+    // Strip any casts we see and continue processing.
+    Op1 = Op1->stripPointerCasts();
+    
+    // Make sure we can reliably know the size.
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1))
+      if (!GV->hasDefinitiveInitializer()) break;
+        
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
-          // If this isn't a GEP give up.
-      if (CE->getOpcode() != Instruction::GetElementPtr) return 0;
+      // If this isn't a GEP give up.
+      if (CE->getOpcode() != Instruction::GetElementPtr) break;
 
-      const PointerType *ObjTy = 
-        reinterpret_cast<const PointerType*>(CE->getOperand(0)->getType());
+      // If this isn't guaranteed to be inbounds, give up.
+      bool OOB = false;
+      GEPOperator *GEPO = cast<GEPOperator>(Op1);
+      if (!GEPO->isInBounds()) OOB = true;
+      
+      for (int i = GEPO->getNumIndices() - 1; i > 0; i--) {
+        if (Constant *C = dyn_cast<Constant>(GEPO->getOperand(i)))
+          if (C->isNullValue())
+            continue;
+          
+          OOB = true;
+      }
+      
+      // If we're guaranteed to be out of bounds just return that there's
+      // no room left.
+      if (OOB) return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, 0));
 
-      if (const ArrayType *AT = dyn_cast<ArrayType>(ObjTy->getElementType())) {
+      // Tell the later calculation that we have an offset and what
+      // it is.
+      Op1 = CE->getOperand(0);
+      ConstantInt *Const = 
+               cast<ConstantInt>(CE->getOperand(CE->getNumOperands() - 1));
+      GEPindex = Const->getZExtValue();
+    }
+
+    // This may be a pointer to an array.  If we have an index from earlier
+    // use that too.
+    if (const PointerType *PT = dyn_cast<PointerType>(Op1->getType())) {
+      if (const ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType())) {
 
         // Deal with multi-dimensional arrays
         const ArrayType *SAT = AT;
         while ((AT = dyn_cast<ArrayType>(AT->getElementType())))
           SAT = AT;
-
-        size_t numElems = SAT->getNumElements();
-        
-        // If numElems is 0, we don't know how large the array is so we can't
-        // make any determinations yet.
-        if (numElems == 0) break;
         
         // We return the remaining bytes, so grab the size of an element
-        // in bytes.
-        size_t sizeofElem = SAT->getElementType()->getPrimitiveSizeInBits() / 8;
+        // in bytes and the number of elements.
+        if (!SAT->isSized() || !TD) break;
 
-        ConstantInt *Const = 
-          cast<ConstantInt>(CE->getOperand(CE->getNumOperands() - 1));
-        size_t indx = Const->getZExtValue();
-        return ReplaceInstUsesWith(CI,
-          ConstantInt::get(ReturnTy,
-          ((numElems - indx) * sizeofElem)));
+        size_t sizeofElem = TD->getTypeAllocSize(SAT->getElementType());
+        size_t numElems = SAT->getNumElements();        
+        size_t remSize = (numElems - GEPindex) * sizeofElem;
+        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, remSize));
       }
     }
+    
     // TODO: Add more types here.
+    // TODO: Check for type isSized() here as well.
   }
   }
 
