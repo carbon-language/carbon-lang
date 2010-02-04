@@ -933,6 +933,15 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
         isa<VectorType>(BI->getType()))
       continue;  // Floating point ops are not associative.
 
+    // Do not reassociate boolean (i1) expressions.  We want to preserve the
+    // original order of evaluation for short-circuited comparisons that
+    // SimplifyCFG has folded to AND/OR expressions.  If the expression
+    // is not further optimized, it is likely to be transformed back to a
+    // short-circuited form for code gen, and the source order may have been
+    // optimized for the most likely conditions.
+    if (BI->getType()->isInteger(1))
+      continue;
+
     // If this is a subtract instruction which is not already in negate form,
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
