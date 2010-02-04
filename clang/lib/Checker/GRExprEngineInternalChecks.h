@@ -19,6 +19,7 @@ namespace clang {
 
 class GRExprEngine;
 
+void RegisterAdjustedReturnValueChecker(GRExprEngine &Eng);
 void RegisterAttrNonNullChecker(GRExprEngine &Eng);
 void RegisterDereferenceChecker(GRExprEngine &Eng);
 void RegisterDivZeroChecker(GRExprEngine &Eng);

@@ -301,6 +301,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   // their associated BugType will get registered with the BugReporter
   // automatically.  Note that the check itself is owned by the GRExprEngine
   // object.  
+  RegisterAdjustedReturnValueChecker(Eng);
   RegisterAttrNonNullChecker(Eng);
   RegisterCallAndMessageChecker(Eng);
   RegisterDereferenceChecker(Eng);

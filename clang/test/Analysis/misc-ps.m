@@ -879,3 +879,17 @@ void foo_rev95192(int **x) {
   **x = 1; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// Handle casts of a function to a function pointer with a different return
+// value.  We don't yet emit an error for such cases, but we now we at least
+// don't crash when the return value gets interpreted in a way that
+// violates our invariants.
+//===----------------------------------------------------------------------===//
+
+void *foo_rev95267();
+int bar_rev95267() {
+  char (*Callback_rev95267)(void) = (char (*)(void)) foo_rev95267;
+  if ((*Callback_rev95267)() == (char) 0)
+    return 1;
+  return 0;
+}

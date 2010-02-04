@@ -1,6 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangChecker
+  AdjustedReturnValueChecker.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicConstraintManager.cpp
@@ -26,8 +27,8 @@ add_clang_library(clangChecker
   DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
-  FlatStore.cpp
   FixedAddressChecker.cpp
+  FlatStore.cpp
   GRBlockCounter.cpp
   GRCoreEngine.cpp
   GRExprEngine.cpp
