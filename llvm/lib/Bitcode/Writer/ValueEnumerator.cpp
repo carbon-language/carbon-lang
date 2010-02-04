@@ -408,21 +408,25 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
 
   FirstInstID = Values.size();
 
+  SmallVector<MDNode *, 8> FunctionLocalMDs;
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
            OI != E; ++OI) {
         if (MDNode *MD = dyn_cast<MDNode>(*OI))
-          if (!MD->isFunctionLocal())
-              // These were already enumerated during ValueEnumerator creation.
-              continue;
-        EnumerateOperandType(*OI);
+          if (MD->isFunctionLocal())
+            // Enumerate metadata after the instructions they might refer to.
+            FunctionLocalMDs.push_back(MD);
       }
       if (!I->getType()->isVoidTy())
         EnumerateValue(I);
     }
   }
+
+  // Add all of the function-local metadata.
+  for (unsigned i = 0, e = FunctionLocalMDs.size(); i != e; ++i)
+    EnumerateOperandType(FunctionLocalMDs[i]);
 }
 
 void ValueEnumerator::purgeFunction() {

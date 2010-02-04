@@ -2,6 +2,8 @@
 
 define void @Foo(i32 %a, i32 %b) {
 entry:
+  call void @llvm.dbg.value(metadata !{ i32* %1 }, i64 16, metadata !"bar")
+; CHECK: call void @llvm.dbg.value(metadata !{i32* %1}, i64 16, metadata !"bar")
   %0 = add i32 %a, 1                              ; <i32> [#uses=1]
   %two = add i32 %b, %0                           ; <i32> [#uses=0]
   %1 = alloca i32                                 ; <i32*> [#uses=1]
