@@ -1523,9 +1523,8 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
 
         if (IsAnyPointerOrIntptr(superTy, Ctx) &&
             IsAnyPointerOrIntptr(erTy, Ctx)) {
-          SValuator::CastResult cr =
-            ValMgr.getSValuator().EvalCast(V, state, superTy, erTy);
-          return Bind(cr.getState(), loc::MemRegionVal(superR), cr.getSVal());
+          V = ValMgr.getSValuator().EvalCast(V, superTy, erTy);
+          return Bind(state, loc::MemRegionVal(superR), V);
         }
         // For now, just invalidate the fields of the struct/union/class.
         // FIXME: Precisely handle the fields of the record.

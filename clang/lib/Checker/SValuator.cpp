@@ -53,31 +53,29 @@ DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,
                                               ValMgr.getContext().IntTy));
 }
 
-SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
-                                          QualType castTy, QualType originalTy){
-
+SVal SValuator::EvalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
-    return CastResult(state, val);
+    return val;
 
   ASTContext &C = ValMgr.getContext();
 
   // For const casts, just propagate the value.
   if (!castTy->isVariableArrayType() && !originalTy->isVariableArrayType())
     if (C.hasSameUnqualifiedType(castTy, originalTy))
-      return CastResult(state, val);
+      return val;
 
   // Check for casts to real or complex numbers.  We don't handle these at all
   // right now.
   if (castTy->isFloatingType() || castTy->isAnyComplexType())
-    return CastResult(state, UnknownVal());
+    return UnknownVal();
   
   // Check for casts from integers to integers.
   if (castTy->isIntegerType() && originalTy->isIntegerType())
-    return CastResult(state, EvalCastNL(cast<NonLoc>(val), castTy));
+    return EvalCastNL(cast<NonLoc>(val), castTy);
 
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::IsLocType(originalTy))
-    return CastResult(state, EvalCastL(cast<Loc>(val), castTy));
+    return EvalCastL(cast<Loc>(val), castTy);
 
   // Check for casts from integers to pointers.
   if (Loc::IsLocType(castTy) && originalTy->isIntegerType()) {
@@ -85,10 +83,9 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
       if (const MemRegion *R = LV->getLoc().getAsRegion()) {
         StoreManager &storeMgr = ValMgr.getStateManager().getStoreManager();
         R = storeMgr.CastRegion(R, castTy);
-        return R ? CastResult(state, loc::MemRegionVal(R))
-                 : CastResult(state, UnknownVal());
+        return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
       }
-      return CastResult(state, LV->getLoc());
+      return LV->getLoc();
     }
     goto DispatchCast;
   }
@@ -96,7 +93,7 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
   // Just pass through function and block pointers.
   if (originalTy->isBlockPointerType() || originalTy->isFunctionPointerType()) {
     assert(Loc::IsLocType(castTy));
-    return CastResult(state, val);
+    return val;
   }
 
   // Check for casts from array type to another type.
@@ -107,7 +104,7 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
     // Are we casting from an array to a pointer?  If so just pass on
     // the decayed value.
     if (castTy->isPointerType())
-      return CastResult(state, val);
+      return val;
 
     // Are we casting from an array to an integer?  If so, cast the decayed
     // pointer value to an integer.
@@ -117,7 +114,7 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
     // need the original decayed type.
     //    QualType elemTy = cast<ArrayType>(originalTy)->getElementType();
     //    QualType pointerTy = C.getPointerType(elemTy);
-    return CastResult(state, EvalCastL(cast<Loc>(val), castTy));
+    return EvalCastL(cast<Loc>(val), castTy);
   }
 
   // Check for casts from a region to a specific type.
@@ -150,21 +147,11 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
     // different type.  If the MemRegion* returned is NULL, this expression
     // evaluates to UnknownVal.
     R = storeMgr.CastRegion(R, castTy);
-    return R ? CastResult(state, loc::MemRegionVal(R))
-             : CastResult(state, UnknownVal());
+    return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
   }
 
 DispatchCast:
   // All other cases.
-  return CastResult(state,
-                    isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
-                                  : EvalCastNL(cast<NonLoc>(val), castTy));
-}
-
-SValuator::DefinedOrUnknownCastResult
-SValuator::EvalCast(DefinedOrUnknownSVal V, const GRState *ST,
-                    QualType castTy, QualType originalType) {
-  SValuator::CastResult X = EvalCast((SVal) V, ST, castTy, originalType);
-  return DefinedOrUnknownCastResult(X.getState(),
-                                    cast<DefinedOrUnknownSVal>(X.getSVal()));
+  return isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
+                       : EvalCastNL(cast<NonLoc>(val), castTy);
 }

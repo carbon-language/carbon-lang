@@ -12,7 +12,6 @@
 //  functions and build the ExplodedGraph at the expression level.
 //
 //===----------------------------------------------------------------------===//
-
 #include "GRExprEngineInternalChecks.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
 #include "clang/Checker/PathSensitive/GRExprEngineBuilders.h"
@@ -2236,8 +2235,8 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
       ExplodedNode* N = *I;
       const GRState* state = GetState(N);
       SVal V = state->getSVal(Ex);
-      const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);
-      state = Res.getState()->BindExpr(CastE, Res.getSVal());
+      V = SVator.EvalCast(V, T, ExTy);
+      state = state->BindExpr(CastE, V);
       MakeNode(Dst, CastE, N, state);
     }
     return;
@@ -3007,13 +3006,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         QualType RTy = getContext().getCanonicalType(RHS->getType());
 
         // Promote LHS.
-        llvm::tie(state, V) = SVator.EvalCast(V, state, CLHSTy, LTy);
+        V = SVator.EvalCast(V, CLHSTy, LTy);
 
         // Compute the result of the operation.
-        SVal Result;
-        llvm::tie(state, Result) = SVator.EvalCast(EvalBinOp(state, Op, V,
-                                                             RightV, CTy),
-                                                   state, B->getType(), CTy);
+        SVal Result = SVator.EvalCast(EvalBinOp(state, Op, V, RightV, CTy),
+                                      B->getType(), CTy);
 
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
@@ -3033,12 +3030,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           LHSVal = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), LTy, Count);
 
           // However, we need to convert the symbol to the computation type.
-          llvm::tie(state, Result) = SVator.EvalCast(LHSVal, state, CTy, LTy);
+          Result = SVator.EvalCast(LHSVal, CTy, LTy);
         }
         else {
           // The left-hand side may bind to a different value then the
           // computation type.
-          llvm::tie(state, LHSVal) = SVator.EvalCast(Result, state, LTy, CTy);
+          LHSVal = SVator.EvalCast(Result, LTy, CTy);
         }
 
         EvalStore(Tmp3, B, LHS, *I4, state->BindExpr(B, Result),

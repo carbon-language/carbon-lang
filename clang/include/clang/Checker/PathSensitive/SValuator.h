@@ -38,33 +38,8 @@ public:
   SValuator(ValueManager &valMgr) : ValMgr(valMgr) {}
   virtual ~SValuator() {}
 
-  template <typename T>
-  class GenericCastResult : public std::pair<const GRState *, T> {
-  public:
-    const GRState *getState() const { return this->first; }
-    T getSVal() const { return this->second; }
-    GenericCastResult(const GRState *s, T v)
-      : std::pair<const GRState*,T>(s, v) {}
-  };
+  SVal EvalCast(SVal V, QualType castTy, QualType originalType);
   
-  class CastResult : public GenericCastResult<SVal> {
-  public:
-    CastResult(const GRState *s, SVal v) : GenericCastResult<SVal>(s, v) {}
-  };
-  
-  class DefinedOrUnknownCastResult :
-    public GenericCastResult<DefinedOrUnknownSVal> {
-  public:
-    DefinedOrUnknownCastResult(const GRState *s, DefinedOrUnknownSVal v)
-      : GenericCastResult<DefinedOrUnknownSVal>(s, v) {}
-  };
-
-  CastResult EvalCast(SVal V, const GRState *ST,
-                      QualType castTy, QualType originalType);
-  
-  DefinedOrUnknownCastResult EvalCast(DefinedOrUnknownSVal V, const GRState *ST,
-                                      QualType castTy, QualType originalType);
-
   virtual SVal EvalMinus(NonLoc val) = 0;
 
   virtual SVal EvalComplement(NonLoc val) = 0;

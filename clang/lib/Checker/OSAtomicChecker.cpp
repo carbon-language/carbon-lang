@@ -153,8 +153,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
       // Handle implicit value casts.
       if (const TypedRegion *R =
           dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        llvm::tie(state, val) = SVator.EvalCast(val, state,R->getValueType(Ctx),
-                                                newValueExpr->getType());
+        val = SVator.EvalCast(val,R->getValueType(Ctx),newValueExpr->getType());
       }
 
       Engine.EvalStore(TmpStore, NULL, const_cast<Expr *>(theValueExpr), N, 

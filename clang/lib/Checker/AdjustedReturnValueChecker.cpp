@@ -50,6 +50,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
   const GRState *state = C.getState();
 
   SVal V = state->getSVal(CE);
+  
   if (V.isUnknown())
     return;
   
@@ -91,7 +92,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
     // FIXME: Do more checking and actual emit an error. At least performing
     // the cast avoids some assertion failures elsewhere.
     SValuator &SVator = C.getSValuator();
-    const SValuator::CastResult &R = SVator.EvalCast(V, state, expectedResultTy, actualResultTy);
-    C.GenerateNode(R.getState()->BindExpr(CE, R.getSVal()));
+    V = SVator.EvalCast(V, expectedResultTy, actualResultTy);
+    C.GenerateNode(state->BindExpr(CE, V));
   }
 }
