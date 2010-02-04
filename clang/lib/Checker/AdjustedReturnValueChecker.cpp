@@ -43,12 +43,21 @@ void clang::RegisterAdjustedReturnValueChecker(GRExprEngine &Eng) {
 void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
                                                    const CallExpr *CE) {
   
+  // Get the result type of the call.
+  QualType expectedResultTy = CE->getType();
+
   // Fetch the signature of the called function.
   const GRState *state = C.getState();
 
   SVal V = state->getSVal(CE);
   if (V.isUnknown())
     return;
+  
+  // Casting to void?  Discard the value.
+  if (expectedResultTy->isVoidType()) {
+    C.GenerateNode(state->BindExpr(CE, UnknownVal()));
+    return;
+  }                   
 
   const MemRegion *callee = state->getSVal(CE->getCallee()).getAsRegion();
   if (!callee)
@@ -76,8 +85,6 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
   if (actualResultTy->getAs<ReferenceType>())
     return;
   
-  // Get the result type of the call.
-  QualType expectedResultTy = CE->getType();
 
   // Are they the same?
   if (expectedResultTy != actualResultTy) {

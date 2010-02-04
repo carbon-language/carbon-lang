@@ -893,3 +893,11 @@ int bar_rev95267() {
     return 1;
   return 0;
 }
+
+// Same as previous case, but handle casts to 'void'.
+int bar_rev95274() {
+  void (*Callback_rev95274)(void) = (void (*)(void)) foo_rev95267;
+  (*Callback_rev95274)();
+  return 0;
+}
+
