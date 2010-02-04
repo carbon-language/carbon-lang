@@ -2027,6 +2027,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
                                bool InBaseClass,
                                VisibleDeclConsumer &Consumer,
                                VisibleDeclsRecord &Visited) {
+  if (!Ctx)
+    return;
+
   // Make sure we don't visit the same context twice.
   if (Visited.visitedContext(Ctx->getPrimaryContext()))
     return;
@@ -2183,9 +2186,9 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
           // For instance methods, look for ivars in the method's interface.
           LookupResult IvarResult(Result.getSema(), Result.getLookupName(),
                                   Result.getNameLoc(), Sema::LookupMemberName);
-          ObjCInterfaceDecl *IFace = Method->getClassInterface();
-          LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false, 
-                             /*InBaseClass=*/false, Consumer, Visited);
+          if (ObjCInterfaceDecl *IFace = Method->getClassInterface())
+            LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false, 
+                               /*InBaseClass=*/false, Consumer, Visited);
         }
 
         // We've already performed all of the name lookup that we need

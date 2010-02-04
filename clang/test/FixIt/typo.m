@@ -86,5 +86,5 @@ void test2(Collide *a) {
 - (int)send:(void*)buffer bytes:(int)bytes;
 @end
 
-@interface IPv8 <Network_Socket> // expected-error{{cannot find protocol declaration for 'Network_Socket'; did you mean 'NetworkSocket'?}}
+@interface IPv6 <Network_Socket> // expected-error{{cannot find protocol declaration for 'Network_Socket'; did you mean 'NetworkSocket'?}}
 @end
