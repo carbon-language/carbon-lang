@@ -176,7 +176,7 @@ void EDReleaseInst(EDInstRef inst);
 /*!
  @function EDInstByteSize
  @param inst The instruction to be queried.
- @result The number of bytes consumed by the instruction.
+ @result The number of bytes in the instruction's machine-code representation.
  */
 int EDInstByteSize(EDInstRef inst);
 

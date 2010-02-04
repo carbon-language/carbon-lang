@@ -125,6 +125,26 @@ int EDOperand::evaluate(uint64_t &result,
   return -1;
 }
 
+int EDOperand::isRegister() {
+  return(Inst.ThisInstInfo->operandFlags[OpIndex] & kOperandFlagRegister);
+}
+
+unsigned EDOperand::regVal() {
+  return Inst.Inst->getOperand(MCOpIndex).getReg(); 
+}
+
+int EDOperand::isImmediate() {
+  return(Inst.ThisInstInfo->operandFlags[OpIndex] & kOperandFlagImmediate);
+}
+
+uint64_t EDOperand::immediateVal() {
+  return Inst.Inst->getOperand(MCOpIndex).getImm();
+}
+
+int EDOperand::isMemory() {
+  return(Inst.ThisInstInfo->operandFlags[OpIndex] & kOperandFlagMemory);
+}
+
 #ifdef __BLOCKS__
 struct RegisterReaderWrapper {
   EDRegisterBlock_t regBlock;

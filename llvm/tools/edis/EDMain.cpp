@@ -201,6 +201,34 @@ int EDGetOperand(EDOperandRef *operand,
   return inst->getOperand(*operand, index);
 }
 
+int EDOperandIsRegister(EDOperandRef operand) {
+  return operand->isRegister();
+}
+
+int EDOperandIsImmediate(EDOperandRef operand) {
+  return operand->isImmediate();
+}
+
+int EDOperandIsMemory(EDOperandRef operand) {
+  return operand->isMemory();
+}
+
+int EDRegisterOperandValue(unsigned *value, 
+                           EDOperandRef operand) {
+  if(!operand->isRegister())
+    return -1;
+  *value = operand->regVal();
+  return 0;
+}
+
+int EDImmedateOperandValue(uint64_t *value,
+                           EDOperandRef operand) {
+  if(!operand->isImmediate())
+    return -1;
+  *value = operand->immediateVal();
+  return 0;
+}
+
 int EDEvaluateOperand(uint64_t *result,
                       EDOperandRef operand,
                       EDRegisterReaderCallback regReader,

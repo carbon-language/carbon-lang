@@ -54,6 +54,19 @@ struct EDOperand {
   int evaluate(uint64_t &result,
                EDRegisterReaderCallback callback,
                void *arg);
+
+  /// isRegister - Returns 1 if the operand is a register or 0 otherwise
+  int isRegister();
+  /// regVal - Returns the register value.
+  unsigned regVal();
+  
+  /// isImmediate - Returns 1 if the operand is an immediate or 0 otherwise
+  int isImmediate();
+  /// immediateVal - Returns the immediate value.
+  uint64_t immediateVal();
+  
+  /// isMemory - Returns 1 if the operand is a memory location or 0 otherwise
+  int isMemory();
   
 #ifdef __BLOCKS__
   /// evaluate - Like evaluate for a callback, but uses a block instead
