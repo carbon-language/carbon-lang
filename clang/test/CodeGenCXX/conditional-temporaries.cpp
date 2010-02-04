@@ -1,28 +1,36 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -O3 | FileCheck %s
 
-struct I {
+namespace {
+
+static int counter;
+  
+struct A {
+  A() : i(0) { counter++; }
+  ~A() { counter--; }
   int i;
-  I();
-  ~I();
 };
 
-void g(int);
+void g(int) { }
 
-volatile int i;
+void f1(bool b) {
+  g(b ? A().i : 0);
+  g(b || A().i);
+  g(b && A().i);
+}
 
-void f1() {
-  // CHECK: call void @_ZN1IC1Ev
-  g(i ? I().i : 0);
-  // CHECK: call void @_Z1gi
-  // CHECK: call void @_ZN1ID1Ev
+struct Checker {
+  Checker() {
+    f1(true);
+    f1(false);
+  }
+};
 
-  // CHECK: call void @_ZN1IC1Ev
-  g(i || I().i);
-  // CHECK: call void @_Z1gi
-  // CHECK: call void @_ZN1ID1Ev
+Checker c;
 
-  // CHECK: call void @_ZN1IC1Ev
-  g(i && I().i);
-  // CHECK: call void @_Z1gi
-  // CHECK: call void @_ZN1ID1Ev
+}
+
+// CHECK: define i32 @_Z10getCounterv()
+int getCounter() {
+  // CHECK: ret i32 0
+  return counter;
 }
