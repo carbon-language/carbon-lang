@@ -25,6 +25,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 
@@ -430,14 +431,25 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
           MI->getOperand(0).getReg()==0) {
         // Suppress offset in this case, it is not meaningful.
-        O << "undef";
+        O << "undef\n";
         return;
       } else if (MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate) {
         // This is more naturally done in printOperand, but since the only use
-        // of such an operand is in this comment and that is temporary, we
-        // prefer to keep this localized.
-        O << '$';
-        MI->getOperand(0).print(O, &TM);
+        // of such an operand is in this comment and that is temporary (and it's
+        // ugly), we prefer to keep this localized.
+        // The include of Type.h may be removable when this code is.
+        if (MI->getOperand(0).getFPImm()->getType()->isFloatTy() ||
+            MI->getOperand(0).getFPImm()->getType()->isDoubleTy())
+          MI->getOperand(0).print(O, &TM);
+        else {
+          // There is no good way to print long double.  Convert a copy to
+          // double.  Ah well, it's only a comment.
+          bool ignored;
+          APFloat APF = APFloat(MI->getOperand(0).getFPImm()->getValueAPF());
+          APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
+                      &ignored);
+          O << "(long double) " << APF.convertToDouble();
+        }
       } else
         printOperand(MI, 0);
     } else {
