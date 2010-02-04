@@ -322,3 +322,38 @@ static int pr5966_i;
 void pr5966_bar() {
   pr5966_i = 0;
 }
+
+namespace test0 {
+  int ovl(int x);
+  char ovl(double x);
+
+  template <class T> void f(T, char (&buffer)[sizeof(ovl(T()))]) {}
+
+  void test0() {
+    char buffer[1];
+    f(0.0, buffer);
+  }
+  // CHECK: define void @_ZN5test05test0Ev()
+  // CHECK: define linkonce_odr void @_ZN5test01fIdEEvT_RAszcl3ovlcvS1__EE_c(
+
+  void test1() {
+    char buffer[sizeof(int)];
+    f(1, buffer);
+  }
+  // CHECK: define void @_ZN5test05test1Ev()
+  // CHECK: define linkonce_odr void @_ZN5test01fIiEEvT_RAszcl3ovlcvS1__EE_c(
+
+  template <class T> void g(char (&buffer)[sizeof(T() + 5.0f)]) {}
+  void test2() {
+    char buffer[sizeof(float)];
+    g<float>(buffer);
+  }
+  // CHECK: define linkonce_odr void @_ZN5test01gIfEEvRAszplcvT__ELf40A00000E_c(
+
+  template <class T> void h(char (&buffer)[sizeof(T() + 5.0)]) {}
+  void test3() {
+    char buffer[sizeof(double)];
+    h<float>(buffer);
+  }
+  // CHECK: define linkonce_odr void @_ZN5test01hIfEEvRAszplcvT__ELd4014000000000000E_c(
+}

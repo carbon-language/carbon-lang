@@ -1602,7 +1602,20 @@ public:
   arg_iterator arg_begin() { return reinterpret_cast<Expr**>(this + 1); }
   arg_iterator arg_end() { return arg_begin() + NumArgs; }
 
+  typedef const Expr* const * const_arg_iterator;
+  const_arg_iterator arg_begin() const {
+    return reinterpret_cast<const Expr* const *>(this + 1);
+  }
+  const_arg_iterator arg_end() const {
+    return arg_begin() + NumArgs;
+  }
+
   Expr *getArg(unsigned I) {
+    assert(I < NumArgs && "Argument index out-of-range");
+    return *(arg_begin() + I);
+  }
+
+  const Expr *getArg(unsigned I) const {
     assert(I < NumArgs && "Argument index out-of-range");
     return *(arg_begin() + I);
   }
