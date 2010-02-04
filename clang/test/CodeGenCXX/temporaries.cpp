@@ -267,3 +267,24 @@ namespace PR6199 {
   template A f2<int>(int);
   
 }
+
+namespace T12 {
+
+struct A { 
+  A(); 
+  ~A();
+  int f();
+};
+
+int& f(int);
+
+// CHECK: define void @_ZN3T121gEv
+void g() {
+  // CHECK: call void @_ZN3T121AC1Ev
+  // CHECK-NEXT: call i32 @_ZN3T121A1fEv(
+  // CHECK-NEXT: call i32* @_ZN3T121fEi(
+  // CHECK-NEXT: call void @_ZN3T121AD1Ev(
+  int& i = f(A().f());
+}
+
+}

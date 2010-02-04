@@ -113,8 +113,16 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
   if (E->isLvalue(getContext()) == Expr::LV_Valid) {
     // Emit the expr as an lvalue.
     LValue LV = EmitLValue(E);
-    if (LV.isSimple())
+    if (LV.isSimple()) {
+      if (ShouldDestroyTemporaries) {
+        // Pop temporaries.
+        while (LiveTemporaries.size() > OldNumLiveTemporaries)
+          PopCXXTemporary();
+      }
+      
       return RValue::get(LV.getAddress());
+    }
+    
     Val = EmitLoadOfLValue(LV, E->getType());
     
     if (ShouldDestroyTemporaries) {
