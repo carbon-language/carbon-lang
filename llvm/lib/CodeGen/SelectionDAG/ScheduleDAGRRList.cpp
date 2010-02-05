@@ -345,6 +345,15 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
   ++NumBacktracks;
 }
 
+static bool isOperandOf(const SUnit *SU, SDNode *N) {
+  for (const SDNode *SUNode = SU->getNode(); SUNode;
+       SUNode = SUNode->getFlaggedNode()) {
+    if (SUNode->isOperandOf(N))
+      return true;
+  }
+  return false;
+}
+
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
@@ -427,8 +436,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
          I != E; ++I) {
       if (I->isCtrl())
         ChainPreds.push_back(*I);
-      else if (I->getSUnit()->getNode() &&
-               I->getSUnit()->getNode()->isOperandOf(LoadNode))
+      else if (isOperandOf(I->getSUnit(), LoadNode))
         LoadPreds.push_back(*I);
       else
         NodePreds.push_back(*I);
