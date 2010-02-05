@@ -632,47 +632,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return EraseInstFromFunction(CI);
     break;
   }
-  case Intrinsic::objectsize: {
-    const Type *ReturnTy = CI.getType();
-    Value *Op1 = II->getOperand(1);
-
-    // If we're a constant expr then we just return the number of bytes
-    // left in whatever we're indexing.  Since it's constant there's no
-    // need for maximum or minimum bytes.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
-          // If this isn't a GEP give up.
-      if (CE->getOpcode() != Instruction::GetElementPtr) return 0;
-
-      const PointerType *ObjTy = 
-        reinterpret_cast<const PointerType*>(CE->getOperand(0)->getType());
-
-      if (const ArrayType *AT = dyn_cast<ArrayType>(ObjTy->getElementType())) {
-
-        // Deal with multi-dimensional arrays
-        const ArrayType *SAT = AT;
-        while ((AT = dyn_cast<ArrayType>(AT->getElementType())))
-          SAT = AT;
-
-        size_t numElems = SAT->getNumElements();
-        
-        // If numElems is 0, we don't know how large the array is so we can't
-        // make any determinations yet.
-        if (numElems == 0) break;
-        
-        // We return the remaining bytes, so grab the size of an element
-        // in bytes.
-        size_t sizeofElem = SAT->getElementType()->getPrimitiveSizeInBits() / 8;
-
-        ConstantInt *Const = 
-          cast<ConstantInt>(CE->getOperand(CE->getNumOperands() - 1));
-        size_t indx = Const->getZExtValue();
-        return ReplaceInstUsesWith(CI,
-          ConstantInt::get(ReturnTy,
-          ((numElems - indx) * sizeofElem)));
-      }
-    }
-    // TODO: Add more types here.
-  }
   }
 
   return visitCallSite(II);
