@@ -1864,6 +1864,14 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
 }
 
+static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
+  switch (CC) {
+  default: return llvm::CallingConv::C;
+  case CC_X86StdCall: return llvm::CallingConv::X86_StdCall;
+  case CC_X86FastCall: return llvm::CallingConv::X86_FastCall;
+  }
+}
+
 RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
                                  ReturnValueSlot ReturnValue,
                                  CallExpr::const_arg_iterator ArgBeg,
@@ -1882,12 +1890,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   CallArgList Args;
   EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
 
-  // FIXME: We should not need to do this, it should be part of the function
-  // type.
-  unsigned CallingConvention = 0;
-  if (const llvm::Function *F =
-      dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
-    CallingConvention = F->getCallingConv();
+  unsigned CallingConvention =
+    ClangCallConvToLLVMCallConv(FnType->getAs<FunctionType>()->getCallConv());
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
                                                  CallingConvention),
                   Callee, ReturnValue, Args, TargetDecl);
