@@ -34,3 +34,17 @@ Class Test(const void *inObject1) {
    return ((id)inObject1)->isa;
   return (id)0;
 }
+
+// rdar 7609722
+@interface Foo { 
+@public 
+  id isa; 
+} 
++(id)method;
+@end
+
+id Test2() {
+    if([Foo method]->isa)
+      return (*[Foo method]).isa;
+    return [Foo method]->isa;
+}

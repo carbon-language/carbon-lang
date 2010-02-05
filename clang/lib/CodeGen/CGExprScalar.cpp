@@ -1880,14 +1880,23 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
   llvm::Value *V;
   // object->isa or (*object).isa
   // Generate code as for: *(Class*)object
-  Expr *BaseExpr = E->getBase();
-  if (E->isArrow())
-    V = ScalarExprEmitter(*this).EmitLoadOfLValue(BaseExpr);
-  else
-    V  = EmitLValue(BaseExpr).getAddress();
-  
   // build Class* type
   const llvm::Type *ClassPtrTy = ConvertType(E->getType());
+
+  Expr *BaseExpr = E->getBase();
+  if (BaseExpr->isLvalue(getContext()) != Expr::LV_Valid) {
+    V = CreateTempAlloca(ClassPtrTy, "resval");
+    llvm::Value *Src = EmitScalarExpr(BaseExpr);
+    Builder.CreateStore(Src, V);
+  }
+  else {
+      if (E->isArrow())
+        V = ScalarExprEmitter(*this).EmitLoadOfLValue(BaseExpr);
+      else
+        V  = EmitLValue(BaseExpr).getAddress();
+  }
+  
+  // build Class* type
   ClassPtrTy = ClassPtrTy->getPointerTo();
   V = Builder.CreateBitCast(V, ClassPtrTy);
   LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
