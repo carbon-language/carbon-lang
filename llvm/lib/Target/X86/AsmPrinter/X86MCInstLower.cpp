@@ -302,6 +302,17 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   }
 }
 
+/// LowerMOVxX32 - Things like MOVZX16rr8 -> MOVZX32rr8.
+static void LowerMOVxX32(MCInst &OutMI, unsigned NewOpc) {
+  OutMI.setOpcode(NewOpc);
+  lower_subreg32(&OutMI, 0);
+}
+/// LowerSETB - R = setb   -> R = sbb R, R
+static void LowerSETB(MCInst &OutMI, unsigned NewOpc) {
+  OutMI.setOpcode(NewOpc);
+  OutMI.addOperand(OutMI.getOperand(0));
+  OutMI.addOperand(OutMI.getOperand(0));
+}
 
 
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
@@ -352,50 +363,17 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&OutMI, 1);
     break;
-  case X86::MOVZX16rr8:
-    OutMI.setOpcode(X86::MOVZX32rr8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX16rm8:
-    OutMI.setOpcode(X86::MOVZX32rm8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVSX16rr8:
-    OutMI.setOpcode(X86::MOVSX32rr8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVSX16rm8:
-    OutMI.setOpcode(X86::MOVSX32rm8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rr32:
-    OutMI.setOpcode(X86::MOV32rr);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rm32:
-    OutMI.setOpcode(X86::MOV32rm);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOV64ri64i32:
-    OutMI.setOpcode(X86::MOV32ri);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rr8:
-    OutMI.setOpcode(X86::MOVZX32rr8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rm8:
-    OutMI.setOpcode(X86::MOVZX32rm8);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rr16:
-    OutMI.setOpcode(X86::MOVZX32rr16);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOVZX64rm16:
-    OutMI.setOpcode(X86::MOVZX32rm16);
-    lower_subreg32(&OutMI, 0);
-    break;
+  case X86::MOVZX16rr8:   LowerMOVxX32(OutMI, X86::MOVZX32rr8); break;
+  case X86::MOVZX16rm8:   LowerMOVxX32(OutMI, X86::MOVZX32rm8); break;
+  case X86::MOVSX16rr8:   LowerMOVxX32(OutMI, X86::MOVSX32rr8); break;
+  case X86::MOVSX16rm8:   LowerMOVxX32(OutMI, X86::MOVSX32rm8); break;
+  case X86::MOVZX64rr32:  LowerMOVxX32(OutMI, X86::MOV32rr); break;
+  case X86::MOVZX64rm32:  LowerMOVxX32(OutMI, X86::MOV32rm); break;
+  case X86::MOV64ri64i32: LowerMOVxX32(OutMI, X86::MOV32ri); break;
+  case X86::MOVZX64rr8:   LowerMOVxX32(OutMI, X86::MOVZX32rr8); break;
+  case X86::MOVZX64rm8:   LowerMOVxX32(OutMI, X86::MOVZX32rm8); break;
+  case X86::MOVZX64rr16:  LowerMOVxX32(OutMI, X86::MOVZX32rr16); break;
+  case X86::MOVZX64rm16:  LowerMOVxX32(OutMI, X86::MOVZX32rm16); break;
   case X86::MOV16r0:
     OutMI.setOpcode(X86::MOV32r0);
     lower_subreg32(&OutMI, 0);
@@ -404,6 +382,10 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     OutMI.setOpcode(X86::MOV32r0);
     lower_subreg32(&OutMI, 0);
     break;
+  case X86::SETB_C8r:  LowerSETB(OutMI, X86::SBB8rr); break;
+  case X86::SETB_C16r: LowerSETB(OutMI, X86::SBB16rr); break;
+  case X86::SETB_C32r: LowerSETB(OutMI, X86::SBB32rr); break;
+  case X86::SETB_C64r: LowerSETB(OutMI, X86::SBB64rr); break;
   }
 }
 
