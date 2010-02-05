@@ -177,3 +177,10 @@ namespace PR5810 {
     X<float> x; // expected-note{{member function}}
   }
 }
+
+template<typename T> void f4(T, int = 17);
+template<> void f4<int>(int, int);
+
+void f4_test(int i) {
+  f4(i);
+}

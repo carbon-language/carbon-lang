@@ -33,9 +33,15 @@ using namespace clang;
 /// arguments.
 ///
 /// \param Innermost if non-NULL, the innermost template argument list.
+///
+/// \param RelativeToPrimary true if we should get the template
+/// arguments relative to the primary template, even when we're
+/// dealing with a specialization. This is only relevant for function
+/// template specializations.
 MultiLevelTemplateArgumentList
 Sema::getTemplateInstantiationArgs(NamedDecl *D, 
-                                   const TemplateArgumentList *Innermost) {
+                                   const TemplateArgumentList *Innermost,
+                                   bool RelativeToPrimary) {
   // Accumulate the set of template argument lists in this structure.
   MultiLevelTemplateArgumentList Result;
 
@@ -64,8 +70,9 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
     }
     // Add template arguments from a function template specialization.
     else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Ctx)) {
-      if (Function->getTemplateSpecializationKind() 
-            == TSK_ExplicitSpecialization)
+      if (!RelativeToPrimary &&
+          Function->getTemplateSpecializationKind() 
+                                                  == TSK_ExplicitSpecialization)
         break;
           
       if (const TemplateArgumentList *TemplateArgs
@@ -86,11 +93,13 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
       if (Function->getFriendObjectKind() &&
           Function->getDeclContext()->isFileContext()) {
         Ctx = Function->getLexicalDeclContext();
+        RelativeToPrimary = false;
         continue;
       }
     }
 
     Ctx = Ctx->getParent();
+    RelativeToPrimary = false;
   }
 
   return Result;

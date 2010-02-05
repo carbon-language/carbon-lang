@@ -3280,7 +3280,8 @@ Sema::OwningExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
 
       // Instantiate the expression.
-      MultiLevelTemplateArgumentList ArgList = getTemplateInstantiationArgs(FD);
+      MultiLevelTemplateArgumentList ArgList
+        = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);
 
       InstantiatingTemplate Inst(*this, CallLoc, Param,
                                  ArgList.getInnermost().getFlatArgumentList(),
