@@ -1790,11 +1790,15 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   MachineFunction &MF = DAG.getMachineFunction();
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsStructRet    = CallIsStructReturn(Outs);
+  bool IsSibcall      = false;
 
-  if (isTailCall)
+  if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
                                                    Outs, Ins, DAG);
+    if (!PerformTailCallOpt && isTailCall)
+      IsSibcall = true;
+  }
 
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
@@ -1809,7 +1813,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   unsigned NumBytes = CCInfo.getNextStackOffset();
   if (FuncIsMadeTailCallSafe(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
-  else if (isTailCall && !PerformTailCallOpt)
+  else if (IsSibcall)
     // This is a sibcall. The memory operands are available in caller's
     // own caller's stack.
     NumBytes = 0;
@@ -1884,15 +1888,12 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else {
-      if (!isTailCall || (isTailCall && isByVal)) {
-        assert(VA.isMemLoc());
-        if (StackPtr.getNode() == 0)
-          StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, getPointerTy());
-
-        MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
-                                               dl, DAG, VA, Flags));
-      }
+    } else if ((!isTailCall || isByVal) && !IsSibcall) {
+      assert(VA.isMemLoc());
+      if (StackPtr.getNode() == 0)
+        StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, getPointerTy());
+      MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
+                                             dl, DAG, VA, Flags));
     }
   }
 
@@ -2245,6 +2246,50 @@ unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
   return Offset;
 }
 
+/// MatchingStackOffset - Return true if the given stack call argument is
+/// already available in the same position (relatively) of the caller's
+/// incoming argument stack.
+static
+bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
+                         MachineFrameInfo *MFI, const MachineRegisterInfo *MRI,
+                         const X86InstrInfo *TII) {
+  int FI;
+  if (Arg.getOpcode() == ISD::CopyFromReg) {
+    unsigned VR = cast<RegisterSDNode>(Arg.getOperand(1))->getReg();
+    if (!VR || TargetRegisterInfo::isPhysicalRegister(VR))
+      return false;
+    MachineInstr *Def = MRI->getVRegDef(VR);
+    if (!Def)
+      return false;
+    if (!Flags.isByVal()) {
+      if (!TII->isLoadFromStackSlot(Def, FI))
+        return false;
+    } else {
+      unsigned Opcode = Def->getOpcode();
+      if ((Opcode == X86::LEA32r || Opcode == X86::LEA64r) &&
+          Def->getOperand(1).isFI()) {
+        FI = Def->getOperand(1).getIndex();
+        if (MFI->getObjectSize(FI) != Flags.getByValSize())
+          return false;
+      } else
+        return false;
+    }
+  } else {
+    LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg);
+    if (!Ld)
+      return false;
+    SDValue Ptr = Ld->getBasePtr();
+    FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr);
+    if (!FINode)
+      return false;
+    FI = FINode->getIndex();
+  }
+
+  if (!MFI->isFixedObjectIndex(FI))
+    return false;
+  return Offset == MFI->getObjectOffset(FI);
+}
+
 /// IsEligibleForTailCallOptimization - Check whether the call is eligible
 /// for tail call optimization. Targets which want to do tail call
 /// optimization should implement this function.
@@ -2295,27 +2340,19 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       // Check if the arguments are already laid out in the right way as
       // the caller's fixed stack objects.
       MachineFrameInfo *MFI = MF.getFrameInfo();
+      const MachineRegisterInfo *MRI = &MF.getRegInfo();
+      const X86InstrInfo *TII =
+        ((X86TargetMachine&)getTargetMachine()).getInstrInfo();
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
         EVT RegVT = VA.getLocVT();
         SDValue Arg = Outs[i].Val;
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
-        if (Flags.isByVal())
-          return false; // TODO
         if (VA.getLocInfo() == CCValAssign::Indirect)
           return false;
         if (!VA.isRegLoc()) {
-          LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg);
-          if (!Ld)
-            return false;
-          SDValue Ptr = Ld->getBasePtr();
-          FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr);
-          if (!FINode)
-            return false;
-          int FI = FINode->getIndex();
-          if (!MFI->isFixedObjectIndex(FI))
-            return false;
-          if (VA.getLocMemOffset() != MFI->getObjectOffset(FI))
+          if (!MatchingStackOffset(Arg, VA.getLocMemOffset(), Flags,
+                                   MFI, MRI, TII))
             return false;
         }
       }

@@ -70,7 +70,7 @@ define i32 @t6(i32 %x) nounwind ssp {
 entry:
 ; 32: t6:
 ; 32: call {{_?}}t6
-; 32: call {{_?}}bar
+; 32: jmp {{_?}}bar
 
 ; 64: t6:
 ; 64: jmp {{_?}}t6
@@ -140,3 +140,48 @@ entry:
 }
 
 declare i32 @foo4()
+
+define i32 @t11(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind ssp {
+; In 32-bit mode, it's emitting a bunch of dead loads that are not being
+; eliminated currently.
+
+; 32: t11:
+; 32: jmp {{_?}}foo5
+
+; 64: t11:
+; 64: jmp {{_?}}foo5
+entry:
+  %0 = icmp eq i32 %x, 0
+  br i1 %0, label %bb6, label %bb
+
+bb:
+  %1 = tail call i32 @foo5(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind
+  ret i32 %1
+
+bb6:
+  ret i32 0
+}
+
+declare i32 @foo5(i32, i32, i32, i32, i32)
+
+%struct.t = type { i32, i32, i32, i32, i32 }
+
+define i32 @t12(i32 %x, i32 %y, %struct.t* byval align 4 %z) nounwind ssp {
+; 32: t12:
+; 32: jmp {{_?}}foo6
+
+; 64: t12:
+; 64: jmp {{_?}}foo6
+entry:
+  %0 = icmp eq i32 %x, 0
+  br i1 %0, label %bb2, label %bb
+
+bb:
+  %1 = tail call i32 @foo6(i32 %x, i32 %y, %struct.t* byval align 4 %z) nounwind
+  ret i32 %1
+
+bb2:
+  ret i32 0
+}
+
+declare i32 @foo6(i32, i32, %struct.t* byval align 4)
