@@ -675,7 +675,8 @@ public:
     if (!E->getConstructor()->isTrivial())
       return 0;
 
-    QualType Ty = E->getType();
+    // FIXME: We should not have to call getBaseElementType here.
+    QualType Ty = CGM.getContext().getBaseElementType(E->getType());
 
     const CXXRecordDecl *RD = 
       cast<CXXRecordDecl>(Ty->getAs<RecordType>()->getDecl());
