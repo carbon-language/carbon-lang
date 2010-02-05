@@ -34,7 +34,7 @@ namespace llvm {
     /// NeverInline - True if this callee should never be inlined into a
     /// caller.
     bool NeverInline;
-    
+
     /// usesDynamicAlloca - True if this function calls alloca (in the C sense).
     bool usesDynamicAlloca;
 
@@ -42,17 +42,20 @@ namespace llvm {
     /// is used to estimate the code size cost of inlining it.
     unsigned NumInsts, NumBlocks;
 
+    /// NumCalls - Keep track of the number of calls to 'big' functions.
+    unsigned NumCalls;
+
     /// NumVectorInsts - Keep track of how many instructions produce vector
     /// values.  The inliner is being more aggressive with inlining vector
     /// kernels.
     unsigned NumVectorInsts;
-    
+
     /// NumRets - Keep track of how many Ret instructions the block contains.
     unsigned NumRets;
 
     CodeMetrics() : NeverInline(false), usesDynamicAlloca(false), NumInsts(0),
-                    NumBlocks(0), NumVectorInsts(0), NumRets(0) {}
-    
+                    NumBlocks(0), NumCalls(0), NumVectorInsts(0), NumRets(0) {}
+
     /// analyzeBasicBlock - Add information about the specified basic block
     /// to the current structure.
     void analyzeBasicBlock(const BasicBlock *BB);
@@ -66,7 +69,7 @@ namespace llvm {
     // Various magic constants used to adjust heuristics.
     const int InstrCost = 5;
     const int IndirectCallBonus = 500;
-    const int CallPenalty = 5;  // In instrs, so multiply by InstrCost.
+    const int CallPenalty = 25;
     const int LastCallToStaticBonus = -15000;
     const int ColdccPenalty = 2000;
     const int NoreturnPenalty = 10000;
@@ -121,18 +124,18 @@ namespace llvm {
       return getCost();
     }
   };
-  
+
   /// InlineCostAnalyzer - Cost analyzer used by inliner.
   class InlineCostAnalyzer {
     struct ArgInfo {
     public:
       unsigned ConstantWeight;
       unsigned AllocaWeight;
-      
+
       ArgInfo(unsigned CWeight, unsigned AWeight)
         : ConstantWeight(CWeight), AllocaWeight(AWeight) {}
     };
-    
+
     struct FunctionInfo {
       CodeMetrics Metrics;
 
@@ -141,12 +144,12 @@ namespace llvm {
       /// would reduce the code size.  If so, we add some value to the argument
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
-    
+
       /// CountCodeReductionForConstant - Figure out an approximation for how
       /// many instructions will be constant folded if the specified value is
       /// constant.
       unsigned CountCodeReductionForConstant(Value *V);
-    
+
       /// CountCodeReductionForAlloca - Figure out an approximation of how much
       /// smaller the function will be if it is inlined into a context where an
       /// argument becomes an alloca.

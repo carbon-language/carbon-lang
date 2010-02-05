@@ -163,10 +163,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
             (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           NeverInline = true;
 
-      // Each argument to a call takes on average one instruction to set up.
-      // Add an extra penalty because calls can take a long time to execute.
-      if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction()))
-        NumInsts += InlineConstants::CallPenalty + CS.arg_size();
+      if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
+        // Each argument to a call takes on average one instruction to set up.
+        NumInsts += CS.arg_size();
+        ++NumCalls;
+      }
     }
     
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
@@ -347,7 +348,10 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   
   // Now that we have considered all of the factors that make the call site more
   // likely to be inlined, look at factors that make us not want to inline it.
-  
+
+  // Calls usually take a long time, so they make the inlining gain smaller.
+  InlineCost += CalleeFI.Metrics.NumCalls * InlineConstants::CallPenalty;
+
   // Don't inline into something too big, which would make it bigger.
   // "size" here is the number of basic blocks, not instructions.
   //
