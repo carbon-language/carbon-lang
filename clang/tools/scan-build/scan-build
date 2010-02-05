@@ -82,18 +82,18 @@ sub DieDiag {
 
 # Find 'clang'
 my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
-my $ClangCXXSB;
 if (!defined $ClangSB || ! -x $ClangSB) {
   $ClangSB = Cwd::realpath("$RealBin/clang");
-  if (defined $ClangSB) { $ClangCXXSB = $ClangSB . "++"; }
 }
-my $Clang = $ClangSB;
-my $ClangCXX = $ClangCXXSB;
-# Default to looking for 'clang' in the path.
-if (!defined $Clang || ! -x $Clang) {
+my $Clang;
+if (!defined $ClangSB || ! -x $ClangSB) {
+  # Default to looking for 'clang' in the path.
   $Clang = "clang";
-  $ClangCXX = "clang++";
 }
+else {
+  $Clang = $ClangSB;
+}
+my $ClangCXX = $Clang . "++";
 
 my %AvailableAnalyses;
 
