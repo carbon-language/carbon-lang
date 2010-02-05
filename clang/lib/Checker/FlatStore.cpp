@@ -48,9 +48,10 @@ public:
   SVal getLValueField(const FieldDecl* D, SVal Base);
   SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
   SVal ArrayToPointer(Loc Array);
-  void RemoveDeadBindings(GRState &state, Stmt* Loc,
-                          SymbolReaper& SymReaper,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
+  Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
+                         llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
+    return store;
+  }
 
   Store BindDecl(Store store, const VarRegion *VR, SVal initVal);
 
@@ -114,11 +115,6 @@ SVal FlatStoreManager::getLValueElement(QualType elementType, SVal offset,
 
 SVal FlatStoreManager::ArrayToPointer(Loc Array) {
   return Array;
-}
-
-void FlatStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
-                                          SymbolReaper& SymReaper,
-                         llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) {
 }
 
 Store FlatStoreManager::BindDecl(Store store, const VarRegion *VR, 

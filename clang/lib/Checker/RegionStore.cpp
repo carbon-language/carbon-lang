@@ -389,7 +389,7 @@ public: // Part of public interface to class.
 
   /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  void RemoveDeadBindings(GRState &state, Stmt* Loc, SymbolReaper& SymReaper,
+  Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   const GRState *EnterStackFrame(const GRState *state,
@@ -1789,13 +1789,12 @@ Store RegionStoreManager::Remove(Store store, BindingKey K) {
 // State pruning.
 //===----------------------------------------------------------------------===//
   
-void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
-                                            SymbolReaper& SymReaper,
+Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   typedef std::pair<Store, const MemRegion *> RBDNode;
 
-  Store store = state.getStore();
   RegionBindings B = GetRegionBindings(store);
 
   // The backmap from regions to subregions.
@@ -1985,8 +1984,7 @@ tryAgain:
       SymReaper.maybeDead(*SI);
   }
 
-  // Write the store back.
-  state.setStore(new_store);
+  return new_store;
 }
 
 GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,

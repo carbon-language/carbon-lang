@@ -50,7 +50,8 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
                                            state, RegionRoots);
 
   // Clean up the store.
-  StoreMgr->RemoveDeadBindings(NewState, Loc, SymReaper, RegionRoots);
+  NewState.St = StoreMgr->RemoveDeadBindings(NewState.St, Loc, SymReaper, 
+                                             RegionRoots);
 
   return ConstraintMgr->RemoveDeadBindings(getPersistentState(NewState),
                                            SymReaper);

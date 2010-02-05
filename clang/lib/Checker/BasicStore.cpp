@@ -82,7 +82,7 @@ public:
 
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
-  void RemoveDeadBindings(GRState &state, Stmt* Loc, SymbolReaper& SymReaper,
+  Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
@@ -343,12 +343,10 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
   }
 }
 
-void
-BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
-                                      SymbolReaper& SymReaper,
+Store BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+                                            SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
-  Store store = state.getStore();
   BindingsTy B = GetBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
 
@@ -389,7 +387,7 @@ BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
           break;
 
         Marked.insert(MR);
-        SVal X = Retrieve(state.getStore(), loc::MemRegionVal(MR));
+        SVal X = Retrieve(store, loc::MemRegionVal(MR));
 
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)
@@ -422,8 +420,7 @@ BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
     }
   }
 
-  // Write the store back.
-  state.setStore(store);
+  return store;
 }
 
 Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
