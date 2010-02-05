@@ -1,5 +1,3 @@
-// FIXME: Switch back to FileCheck once we print actual instructions
-        
 // RUN: llvm-mc -triple x86_64-unknown-unknown %s | FileCheck %s
 
 // CHECK: subb %al, %al
