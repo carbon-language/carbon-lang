@@ -70,7 +70,7 @@ public:
   ~JIT();
 
   static void Register() {
-    JITCtor = create;
+    JITCtor = createJIT;
   }
   
   /// getJITInfo - Return the target JIT information structure.
@@ -164,14 +164,21 @@ public:
 
   /// selectTarget - Pick a target either via -march or by guessing the native
   /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(Module *M, std::string *Err);
+  static TargetMachine *selectTarget(Module *M,
+                                     StringRef MArch,
+                                     StringRef MCPU,
+                                     const SmallVectorImpl<std::string>& MAttrs,
+                                     std::string *Err);
 
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel,
                                     bool GVsWithCode,
-				    CodeModel::Model CMM);
+                                    CodeModel::Model CMM,
+                                    StringRef MArch,
+                                    StringRef MCPU,
+                                    const SmallVectorImpl<std::string>& MAttrs);
 
   // Run the JIT on F and return information about the generated code
   void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);

@@ -35,12 +35,16 @@ using namespace llvm;
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
 STATISTIC(NumGlobals  , "Number of global vars initialized");
 
-ExecutionEngine *(*ExecutionEngine::JITCtor)(Module *M,
-                                             std::string *ErrorStr,
-                                             JITMemoryManager *JMM,
-                                             CodeGenOpt::Level OptLevel,
-                                             bool GVsWithCode,
-					     CodeModel::Model CMM) = 0;
+ExecutionEngine *(*ExecutionEngine::JITCtor)(
+  Module *M,
+  std::string *ErrorStr,
+  JITMemoryManager *JMM,
+  CodeGenOpt::Level OptLevel,
+  bool GVsWithCode,
+  CodeModel::Model CMM,
+  StringRef MArch,
+  StringRef MCPU,
+  const SmallVectorImpl<std::string>& MAttrs) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
                                                 std::string *ErrorStr) = 0;
 ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
@@ -412,7 +416,8 @@ ExecutionEngine *EngineBuilder::create() {
     if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel,
-                                 AllocateGVsWithCode, CMModel);
+                                 AllocateGVsWithCode, CMModel,
+                                 MArch, MCPU, MAttrs);
       if (EE) return EE;
     }
   }

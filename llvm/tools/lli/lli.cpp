@@ -58,6 +58,22 @@ namespace {
   TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
   cl::opt<std::string>
+  MArch("march",
+        cl::desc("Architecture to generate assembly for (see --version)"));
+
+  cl::opt<std::string>
+  MCPU("mcpu",
+       cl::desc("Target a specific cpu type (-mcpu=help for details)"),
+       cl::value_desc("cpu-name"),
+       cl::init(""));
+
+  cl::list<std::string>
+  MAttrs("mattr",
+         cl::CommaSeparated,
+         cl::desc("Target specific attributes (-mattr=help for details)"),
+         cl::value_desc("a1,+a2,-a3,..."));
+
+  cl::opt<std::string>
   EntryFunc("entry-function",
             cl::desc("Specify the entry function (default = 'main') "
                      "of the executable"),
@@ -131,6 +147,9 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   EngineBuilder builder(Mod);
+  builder.setMArch(MArch);
+  builder.setMCPU(MCPU);
+  builder.setMAttrs(MAttrs);
   builder.setErrorStr(&ErrorMsg);
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter

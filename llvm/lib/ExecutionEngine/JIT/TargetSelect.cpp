@@ -24,25 +24,13 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<std::string>
-MArch("march",
-      cl::desc("Architecture to generate assembly for (see --version)"));
-
-static cl::opt<std::string>
-MCPU("mcpu",
-  cl::desc("Target a specific cpu type (-mcpu=help for details)"),
-  cl::value_desc("cpu-name"),
-  cl::init(""));
-
-static cl::list<std::string>
-MAttrs("mattr",
-  cl::CommaSeparated,
-  cl::desc("Target specific attributes (-mattr=help for details)"),
-  cl::value_desc("a1,+a2,-a3,..."));
-
 /// selectTarget - Pick a target either via -march or by guessing the native
 /// arch.  Add any CPU features specified via -mcpu or -mattr.
-TargetMachine *JIT::selectTarget(Module *Mod, std::string *ErrorStr) {
+TargetMachine *JIT::selectTarget(Module *Mod,
+                                 StringRef MArch,
+                                 StringRef MCPU,
+                                 const SmallVectorImpl<std::string>& MAttrs,
+                                 std::string *ErrorStr) {
   Triple TheTriple(Mod->getTargetTriple());
   if (TheTriple.getTriple().empty())
     TheTriple.setTriple(sys::getHostTriple());

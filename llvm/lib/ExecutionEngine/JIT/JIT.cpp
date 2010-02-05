@@ -198,8 +198,14 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
                                             JITMemoryManager *JMM,
                                             CodeGenOpt::Level OptLevel,
                                             bool GVsWithCode,
-					    CodeModel::Model CMM) {
-  return JIT::createJIT(M, ErrorStr, JMM, OptLevel, GVsWithCode, CMM);
+                                            CodeModel::Model CMM) {
+  // Use the defaults for extra parameters.  Users can use EngineBuilder to
+  // set them.
+  StringRef MArch = "";
+  StringRef MCPU = "";
+  SmallVector<std::string, 1> MAttrs;
+  return JIT::createJIT(M, ErrorStr, JMM, OptLevel, GVsWithCode, CMM,
+                        MArch, MCPU, MAttrs);
 }
 
 ExecutionEngine *JIT::createJIT(Module *M,
@@ -207,14 +213,17 @@ ExecutionEngine *JIT::createJIT(Module *M,
                                 JITMemoryManager *JMM,
                                 CodeGenOpt::Level OptLevel,
                                 bool GVsWithCode,
-                                CodeModel::Model CMM) {
+                                CodeModel::Model CMM,
+                                StringRef MArch,
+                                StringRef MCPU,
+                                const SmallVectorImpl<std::string>& MAttrs) {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
     return 0;
 
   // Pick a target either via -march or by guessing the native arch.
-  TargetMachine *TM = JIT::selectTarget(M, ErrorStr);
+  TargetMachine *TM = JIT::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
   TM->setCodeModel(CMM);
 

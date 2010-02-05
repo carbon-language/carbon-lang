@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/System/Mutex.h"
@@ -108,12 +109,16 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
-  static ExecutionEngine *(*JITCtor)(Module *M,
-                                     std::string *ErrorStr,
-                                     JITMemoryManager *JMM,
-                                     CodeGenOpt::Level OptLevel,
-                                     bool GVsWithCode,
-				     CodeModel::Model CMM);
+  static ExecutionEngine *(*JITCtor)(
+    Module *M,
+    std::string *ErrorStr,
+    JITMemoryManager *JMM,
+    CodeGenOpt::Level OptLevel,
+    bool GVsWithCode,
+    CodeModel::Model CMM,
+    StringRef MArch,
+    StringRef MCPU,
+    const SmallVectorImpl<std::string>& MAttrs);
   static ExecutionEngine *(*InterpCtor)(Module *M,
                                         std::string *ErrorStr);
 
@@ -416,6 +421,9 @@ class EngineBuilder {
   JITMemoryManager *JMM;
   bool AllocateGVsWithCode;
   CodeModel::Model CMModel;
+  std::string MArch;
+  std::string MCPU;
+  SmallVector<std::string, 4> MAttrs;
 
   /// InitEngine - Does the common initialization of default options.
   ///
@@ -481,6 +489,26 @@ class EngineBuilder {
   /// manager and free machine code.
   EngineBuilder &setAllocateGVsWithCode(bool a) {
     AllocateGVsWithCode = a;
+    return *this;
+  }
+
+  /// setMArch - Override the architecture set by the Module's triple.
+  EngineBuilder &setMArch(StringRef march) {
+    MArch.assign(march.begin(), march.end());
+    return *this;
+  }
+
+  /// setMCPU - Target a specific cpu type.
+  EngineBuilder &setMCPU(StringRef mcpu) {
+    MCPU.assign(mcpu.begin(), mcpu.end());
+    return *this;
+  }
+
+  /// setMAttrs - Set cpu-specific attributes.
+  template<typename StringSequence>
+  EngineBuilder &setMAttrs(const StringSequence &mattrs) {
+    MAttrs.clear();
+    MAttrs.append(mattrs.begin(), mattrs.end());
     return *this;
   }
 
