@@ -146,7 +146,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   if (Op3.isImm()) {
     DispVal = Op3.getImm();
   } else {
-    assert(0 && "Unknown operand");
+    assert(0 && "relocatable operand");
 #if 0
   if (Op3.isGlobal()) {
     DispForReloc = &Op3;
@@ -416,6 +416,41 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
       EmitConstant(MI.getOperand(CurOp++).getImm(),
                    X86InstrInfo::sizeOfImm(&Desc), OS);
     break;
+      
+  case X86II::MRMSrcReg:
+    EmitByte(BaseOpcode, OS);
+    EmitRegModRMByte(MI.getOperand(CurOp+1), GetX86RegNum(MI.getOperand(CurOp)),
+                     OS);
+    CurOp += 2;
+    if (CurOp != NumOps)
+      EmitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(&Desc), OS);
+    break;
+    
+  case X86II::MRMSrcMem: {
+    EmitByte(BaseOpcode, OS);
+
+    // FIXME: Maybe lea should have its own form?  This is a horrible hack.
+    int AddrOperands;
+    if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
+        Opcode == X86::LEA16r || Opcode == X86::LEA32r)
+      AddrOperands = X86AddrNumOperands - 1; // No segment register
+    else
+      AddrOperands = X86AddrNumOperands;
+    
+    // FIXME: What is this actually doing?
+    intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
+       X86InstrInfo::sizeOfImm(&Desc) : 0;
+    
+    EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
+                     PCAdj, OS);
+    CurOp += AddrOperands + 1;
+    if (CurOp != NumOps)
+      EmitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(&Desc), OS);
+    break;
+  }
+      
   }
   
 #ifndef NDEBUG
