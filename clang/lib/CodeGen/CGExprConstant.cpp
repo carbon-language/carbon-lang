@@ -675,9 +675,20 @@ public:
     if (!E->getConstructor()->isTrivial())
       return 0;
 
+    QualType Ty = E->getType();
+
+    // FIXME: We should not have to call getBaseElementType here.
+    const RecordType *RT = 
+      CGM.getContext().getBaseElementType(Ty)->getAs<RecordType>();
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    
+    // If the class doesn't have a trivial destructor, we can't emit it as a
+    // constant expr.
+    if (!RD->hasTrivialDestructor())
+      return 0;
+    
     // Only copy and default constructors can be trivial.
 
-    QualType Ty = E->getType();
 
     if (E->getNumArgs()) {
       assert(E->getNumArgs() == 1 && "trivial ctor with > 1 argument");
