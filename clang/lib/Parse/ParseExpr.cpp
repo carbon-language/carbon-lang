@@ -22,6 +22,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Parse/Template.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallVector.h"
@@ -806,9 +807,44 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParsePostfixExpressionSuffix(move(Res));
   }
 
-  case tok::annot_cxxscope: // [C++] id-expression: qualified-id
+  case tok::annot_cxxscope: { // [C++] id-expression: qualified-id
+    Token Next = NextToken();
+    if (Next.is(tok::annot_template_id)) {
+      TemplateIdAnnotation *TemplateId
+        = static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue());
+      if (TemplateId->Kind == TNK_Type_template) {
+        // We have a qualified template-id that we know refers to a
+        // type, translate it into a type and continue parsing as a
+        // cast expression.
+        CXXScopeSpec SS;
+        ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
+        AnnotateTemplateIdTokenAsType(&SS);
+        return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
+                                   NotCastExpr, TypeOfCast);
+      }
+    }
+
+    // Parse as an id-expression.
+    Res = ParseCXXIdExpression(isAddressOfOperand);
+    return ParsePostfixExpressionSuffix(move(Res));
+  }
+
+  case tok::annot_template_id: { // [C++]          template-id
+    TemplateIdAnnotation *TemplateId
+      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    if (TemplateId->Kind == TNK_Type_template) {
+      // We have a template-id that we know refers to a type,
+      // translate it into a type and continue parsing as a cast
+      // expression.
+      AnnotateTemplateIdTokenAsType();
+      return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
+                                 NotCastExpr, TypeOfCast);
+    }
+
+    // Fall through to treat the template-id as an id-expression.
+  }
+
   case tok::kw_operator: // [C++] id-expression: operator/conversion-function-id
-  case tok::annot_template_id: // [C++]          template-id
     Res = ParseCXXIdExpression(isAddressOfOperand);
     return ParsePostfixExpressionSuffix(move(Res));
 

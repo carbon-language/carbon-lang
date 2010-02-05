@@ -194,7 +194,9 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                 MultiExprArg exprs,
                                 SourceLocation *CommaLocs,
                                 SourceLocation RParenLoc) {
-  assert(TypeRep && "Missing type!");
+  if (!TypeRep)
+    return ExprError();
+
   TypeSourceInfo *TInfo;
   QualType Ty = GetTypeFromParser(TypeRep, &TInfo);
   if (!TInfo)
