@@ -411,7 +411,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     EmitMemModRMByte(MI, CurOp,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
                      0, OS);
-    CurOp +=  X86AddrNumOperands + 1;
+    CurOp += X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
                    X86II::getSizeOfImm(TSFlags), OS);
@@ -450,11 +450,116 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
                    X86II::getSizeOfImm(TSFlags), OS);
     break;
   }
-      
+
+  case X86II::MRM0r: case X86II::MRM1r:
+  case X86II::MRM2r: case X86II::MRM3r:
+  case X86II::MRM4r: case X86II::MRM5r:
+  case X86II::MRM6r: case X86II::MRM7r: {
+    EmitByte(BaseOpcode, OS);
+
+    // Special handling of lfence, mfence, monitor, and mwait.
+    // FIXME: This is terrible, they should get proper encoding bits in TSFlags.
+    if (Opcode == X86::LFENCE || Opcode == X86::MFENCE ||
+        Opcode == X86::MONITOR || Opcode == X86::MWAIT) {
+      EmitByte(ModRMByte(3, (TSFlags & X86II::FormMask)-X86II::MRM0r, 0), OS);
+
+      switch (Opcode) {
+      default: break;
+      case X86::MONITOR: EmitByte(0xC8, OS); break;
+      case X86::MWAIT:   EmitByte(0xC9, OS); break;
+      }
+    } else {
+      EmitRegModRMByte(MI.getOperand(CurOp++),
+                       (TSFlags & X86II::FormMask)-X86II::MRM0r,
+                       OS);
+    }
+
+    if (CurOp == NumOps)
+      break;
+    
+    const MCOperand &MO1 = MI.getOperand(CurOp++);
+    if (MO1.isImm()) {
+      EmitConstant(MO1.getImm(), X86II::getSizeOfImm(TSFlags), OS);
+      break;
+    }
+
+    assert(0 && "relo unimpl");
+#if 0
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    if (Opcode == X86::MOV64ri32)
+      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
+    if (MO1.isGlobal()) {
+      bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
+      emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
+                        Indirect);
+    } else if (MO1.isSymbol())
+      emitExternalSymbolAddress(MO1.getSymbolName(), rt);
+    else if (MO1.isCPI())
+      emitConstPoolAddress(MO1.getIndex(), rt);
+    else if (MO1.isJTI())
+      emitJumpTableAddress(MO1.getIndex(), rt);
+    break;
+#endif
+  }
+  case X86II::MRM0m: case X86II::MRM1m:
+  case X86II::MRM2m: case X86II::MRM3m:
+  case X86II::MRM4m: case X86II::MRM5m:
+  case X86II::MRM6m: case X86II::MRM7m: {
+    intptr_t PCAdj = 0;
+    if (CurOp + X86AddrNumOperands != NumOps) {
+      if (MI.getOperand(CurOp+X86AddrNumOperands).isImm())
+        PCAdj = X86II::getSizeOfImm(TSFlags);
+      else
+        PCAdj = 4;
+    }
+
+    EmitByte(BaseOpcode, OS);
+    EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
+                     PCAdj, OS);
+    CurOp += X86AddrNumOperands;
+    
+    if (CurOp == NumOps)
+      break;
+    
+    const MCOperand &MO = MI.getOperand(CurOp++);
+    if (MO.isImm()) {
+      EmitConstant(MO.getImm(), X86II::getSizeOfImm(TSFlags), OS);
+      break;
+    }
+    
+    assert(0 && "relo not handled");
+#if 0
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
+    : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
+    if (Opcode == X86::MOV64mi32)
+      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
+    if (MO.isGlobal()) {
+      bool Indirect = gvNeedsNonLazyPtr(MO, TM);
+      emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
+                        Indirect);
+    } else if (MO.isSymbol())
+      emitExternalSymbolAddress(MO.getSymbolName(), rt);
+    else if (MO.isCPI())
+      emitConstPoolAddress(MO.getIndex(), rt);
+    else if (MO.isJTI())
+      emitJumpTableAddress(MO.getIndex(), rt);
+#endif
+    break;
+  }
+    
+  case X86II::MRMInitReg:
+    EmitByte(BaseOpcode, OS);
+    // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
+    EmitRegModRMByte(MI.getOperand(CurOp),
+                     GetX86RegNum(MI.getOperand(CurOp)), OS);
+    ++CurOp;
+    break;
   }
   
 #ifndef NDEBUG
-  if (!Desc.isVariadic() && CurOp != NumOps) {
+  // FIXME: Verify.
+  if (/*!Desc.isVariadic() &&*/ CurOp != NumOps) {
     errs() << "Cannot encode all operands of: ";
     MI.dump();
     errs() << '\n';
