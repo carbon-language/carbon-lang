@@ -26,6 +26,13 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "CGVtable.h"
+
+#define MANGLE_CHECKER 0
+
+#if MANGLE_CHECKER
+#include <cxxabi.h>
+#endif
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -69,6 +76,17 @@ public:
                  const CXXDestructorDecl *D, CXXDtorType Type)
     : Context(C), Out(Res), Structor(getStructor(D)), StructorType(Type) { }
 
+#if MANGLE_CHECKER
+  ~CXXNameMangler() {
+    if (Out.str()[0] == '\01')
+      return;
+    
+    int status = 0;
+    char *result = abi::__cxa_demangle(Out.str().str().c_str(), 0, 0, &status);
+    assert(status == 0 && "Could not demangle mangled name!");
+    free(result);
+  }
+#endif
   llvm::raw_svector_ostream &getStream() { return Out; }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
