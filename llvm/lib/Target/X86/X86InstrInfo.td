@@ -3739,10 +3739,10 @@ let neverHasSideEffects = 1 in {
 
 // Alias instructions that map movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+// FIXME: Set encoding to pseudo.
 let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
     isCodeGenOnly = 1 in {
-def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
-                 "xor{b}\t$dst, $dst",
+def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
                  [(set GR8:$dst, 0)]>;
 
 // We want to rewrite MOV16r0 in terms of MOV32r0, because it's a smaller
@@ -3754,8 +3754,8 @@ def MOV16r0   : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
                  "",
                  [(set GR16:$dst, 0)]>, OpSize;
                  
-def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins),
-                 "xor{l}\t$dst, $dst",
+// FIXME: Set encoding to pseudo.
+def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
                  [(set GR32:$dst, 0)]>;
 }
 
