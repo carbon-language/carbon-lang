@@ -46,7 +46,6 @@ namespace clang {
     TST_decimal32,    // _Decimal32
     TST_decimal64,    // _Decimal64
     TST_decimal128,   // _Decimal128
-    TST_pixel,        // AltiVec
     TST_enum,
     TST_union,
     TST_struct,

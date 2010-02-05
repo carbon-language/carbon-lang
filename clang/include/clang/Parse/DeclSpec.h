@@ -113,7 +113,6 @@ public:
   static const TST TST_decimal32 = clang::TST_decimal32;
   static const TST TST_decimal64 = clang::TST_decimal64;
   static const TST TST_decimal128 = clang::TST_decimal128;
-  static const TST TST_pixel = clang::TST_pixel;
   static const TST TST_enum = clang::TST_enum;
   static const TST TST_union = clang::TST_union;
   static const TST TST_struct = clang::TST_struct;
