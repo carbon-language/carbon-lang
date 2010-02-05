@@ -398,7 +398,7 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   Eng.getBugReporter().FlushReports();
 }
 
-static void ActionCheckerCFRefAux(AnalysisConsumer &C, AnalysisManager& mgr,
+static void ActionObjCMemCheckerAux(AnalysisConsumer &C, AnalysisManager& mgr,
                                   Decl *D, bool GCEnabled) {
 
   GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
@@ -408,23 +408,23 @@ static void ActionCheckerCFRefAux(AnalysisConsumer &C, AnalysisManager& mgr,
   ActionGRExprEngine(C, mgr, D, TF);
 }
 
-static void ActionCheckerCFRef(AnalysisConsumer &C, AnalysisManager& mgr,
+static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
                                Decl *D) {
 
  switch (mgr.getLangOptions().getGCMode()) {
  default:
    assert (false && "Invalid GC mode.");
  case LangOptions::NonGC:
-   ActionCheckerCFRefAux(C, mgr, D, false);
+   ActionObjCMemCheckerAux(C, mgr, D, false);
    break;
 
  case LangOptions::GCOnly:
-   ActionCheckerCFRefAux(C, mgr, D, true);
+   ActionObjCMemCheckerAux(C, mgr, D, true);
    break;
 
  case LangOptions::HybridGC:
-   ActionCheckerCFRefAux(C, mgr, D, false);
-   ActionCheckerCFRefAux(C, mgr, D, true);
+   ActionObjCMemCheckerAux(C, mgr, D, false);
+   ActionObjCMemCheckerAux(C, mgr, D, true);
    break;
  }
 }

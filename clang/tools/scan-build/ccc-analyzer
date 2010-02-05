@@ -403,7 +403,7 @@ if ($Status) { exit($Status >> 8); }
 
 # Get the analysis options.
 my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
-if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
+if (!defined($Analyses)) { $Analyses = '-analyzer-check-objc-mem'; }
 
 # Get the store model.
 my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};

@@ -45,7 +45,7 @@ ANALYSIS(WarnObjCDealloc, "analyzer-check-objc-missing-dealloc",
 ANALYSIS(WarnObjCUnusedIvars, "analyzer-check-objc-unused-ivars",
   "Warn about private ivars that are never used", ObjCImplementation)
 
-ANALYSIS(CheckerCFRef, "checker-cfref",
+ANALYSIS(ObjCMemChecker, "analyzer-check-objc-mem",
          "Run the [Core] Foundation reference count checker", Code)
 
 ANALYSIS(WarnSizeofPointer, "warn-sizeof-pointer",

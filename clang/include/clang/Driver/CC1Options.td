@@ -50,7 +50,7 @@ def analysis_WarnObjCDealloc : Flag<"-analyzer-check-objc-missing-dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">;
 def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
   HelpText<"Warn about private ivars that are never used">;
-def analysis_CheckerCFRef : Flag<"-checker-cfref">,
+def analysis_ObjCMemChecker : Flag<"-analyzer-check-objc-mem">,
   HelpText<"Run the [Core] Foundation reference count checker">;
 def analysis_WarnSizeofPointer : Flag<"-warn-sizeof-pointer">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -checker-cfref -verify %s
+// RUN: %clang_cc1 -analyzer-check-objc-mem -verify %s
 typedef signed char BOOL;
 typedef int NSInteger;
 typedef unsigned int NSUInteger;

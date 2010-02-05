@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range %s -verify
 
 //===-- unions-region.m ---------------------------------------------------===//
 //
