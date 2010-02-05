@@ -302,13 +302,13 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   }
 }
 
-/// LowerMOVxX32 - Things like MOVZX16rr8 -> MOVZX32rr8.
-static void LowerMOVxX32(MCInst &OutMI, unsigned NewOpc) {
+/// LowerSubReg32_Op0 - Things like MOVZX16rr8 -> MOVZX32rr8.
+static void LowerSubReg32_Op0(MCInst &OutMI, unsigned NewOpc) {
   OutMI.setOpcode(NewOpc);
   lower_subreg32(&OutMI, 0);
 }
-/// LowerSETB - R = setb   -> R = sbb R, R
-static void LowerSETB(MCInst &OutMI, unsigned NewOpc) {
+/// LowerUnaryToTwoAddr - R = setb   -> R = sbb R, R
+static void LowerUnaryToTwoAddr(MCInst &OutMI, unsigned NewOpc) {
   OutMI.setOpcode(NewOpc);
   OutMI.addOperand(OutMI.getOperand(0));
   OutMI.addOperand(OutMI.getOperand(0));
@@ -363,29 +363,23 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&OutMI, 1);
     break;
-  case X86::MOVZX16rr8:   LowerMOVxX32(OutMI, X86::MOVZX32rr8); break;
-  case X86::MOVZX16rm8:   LowerMOVxX32(OutMI, X86::MOVZX32rm8); break;
-  case X86::MOVSX16rr8:   LowerMOVxX32(OutMI, X86::MOVSX32rr8); break;
-  case X86::MOVSX16rm8:   LowerMOVxX32(OutMI, X86::MOVSX32rm8); break;
-  case X86::MOVZX64rr32:  LowerMOVxX32(OutMI, X86::MOV32rr); break;
-  case X86::MOVZX64rm32:  LowerMOVxX32(OutMI, X86::MOV32rm); break;
-  case X86::MOV64ri64i32: LowerMOVxX32(OutMI, X86::MOV32ri); break;
-  case X86::MOVZX64rr8:   LowerMOVxX32(OutMI, X86::MOVZX32rr8); break;
-  case X86::MOVZX64rm8:   LowerMOVxX32(OutMI, X86::MOVZX32rm8); break;
-  case X86::MOVZX64rr16:  LowerMOVxX32(OutMI, X86::MOVZX32rr16); break;
-  case X86::MOVZX64rm16:  LowerMOVxX32(OutMI, X86::MOVZX32rm16); break;
-  case X86::MOV16r0:
-    OutMI.setOpcode(X86::MOV32r0);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::MOV64r0:
-    OutMI.setOpcode(X86::MOV32r0);
-    lower_subreg32(&OutMI, 0);
-    break;
-  case X86::SETB_C8r:  LowerSETB(OutMI, X86::SBB8rr); break;
-  case X86::SETB_C16r: LowerSETB(OutMI, X86::SBB16rr); break;
-  case X86::SETB_C32r: LowerSETB(OutMI, X86::SBB32rr); break;
-  case X86::SETB_C64r: LowerSETB(OutMI, X86::SBB64rr); break;
+  case X86::MOVZX16rr8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rr8); break;
+  case X86::MOVZX16rm8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rm8); break;
+  case X86::MOVSX16rr8:   LowerSubReg32_Op0(OutMI, X86::MOVSX32rr8); break;
+  case X86::MOVSX16rm8:   LowerSubReg32_Op0(OutMI, X86::MOVSX32rm8); break;
+  case X86::MOVZX64rr32:  LowerSubReg32_Op0(OutMI, X86::MOV32rr); break;
+  case X86::MOVZX64rm32:  LowerSubReg32_Op0(OutMI, X86::MOV32rm); break;
+  case X86::MOV64ri64i32: LowerSubReg32_Op0(OutMI, X86::MOV32ri); break;
+  case X86::MOVZX64rr8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rr8); break;
+  case X86::MOVZX64rm8:   LowerSubReg32_Op0(OutMI, X86::MOVZX32rm8); break;
+  case X86::MOVZX64rr16:  LowerSubReg32_Op0(OutMI, X86::MOVZX32rr16); break;
+  case X86::MOVZX64rm16:  LowerSubReg32_Op0(OutMI, X86::MOVZX32rm16); break;
+  case X86::MOV16r0:      LowerSubReg32_Op0(OutMI, X86::MOV32r0); break;
+  case X86::MOV64r0:      LowerSubReg32_Op0(OutMI, X86::MOV32r0); break;
+  case X86::SETB_C8r:     LowerUnaryToTwoAddr(OutMI, X86::SBB8rr); break;
+  case X86::SETB_C16r:    LowerUnaryToTwoAddr(OutMI, X86::SBB16rr); break;
+  case X86::SETB_C32r:    LowerUnaryToTwoAddr(OutMI, X86::SBB32rr); break;
+  case X86::SETB_C64r:    LowerUnaryToTwoAddr(OutMI, X86::SBB64rr); break;
   }
 }
 
