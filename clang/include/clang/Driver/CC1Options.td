@@ -38,7 +38,7 @@ def analysis_CFGView : Flag<"-cfg-view">,
   HelpText<"View Control-Flow Graphs using GraphViz">;
 def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
-def analysis_SecuritySyntacticChecks : Flag<"-warn-security-syntactic">,
+def analysis_SecuritySyntacticChecks : Flag<"-analyzer-check-security-syntactic">,
   HelpText<"Perform quick security checks that require no data flow">;
 def analysis_WarnDeadStores : Flag<"-warn-dead-stores">,
   HelpText<"Warn about stores to dead variables">;

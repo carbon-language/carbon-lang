@@ -24,7 +24,7 @@ ANALYSIS(CFGView, "cfg-view",
 ANALYSIS(DisplayLiveVariables, "dump-live-variables",
          "Print results of live variable analysis", Code)
 
-ANALYSIS(SecuritySyntacticChecks, "warn-security-syntactic",
+ANALYSIS(SecuritySyntacticChecks, "analyzer-check-security-syntactic",
          "Perform quick security checks that require no data flow",
          Code)
 
