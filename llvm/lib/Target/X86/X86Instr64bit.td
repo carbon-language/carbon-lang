@@ -1610,8 +1610,7 @@ def SLDT64m : RI<0x00, MRM0m, (outs i16mem:$dst), (ins),
 // when we have a better way to specify isel priority.
 let Defs = [EFLAGS],
     AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins),
-                 "",
+def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
                  [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero. This could theoretically

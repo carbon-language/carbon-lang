@@ -364,10 +364,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
     --NumOps;
   
-  // FIXME: Can we kill off MRMInitReg??
-  
   unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
   switch (TSFlags & X86II::FormMask) {
+  case X86II::MRMInitReg:
+    assert(0 && "FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
       assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
   case X86II::RawFrm: {
@@ -547,14 +547,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
 #endif
     break;
   }
-    
-  case X86II::MRMInitReg:
-    EmitByte(BaseOpcode, OS);
-    // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
-    EmitRegModRMByte(MI.getOperand(CurOp),
-                     GetX86RegNum(MI.getOperand(CurOp)), OS);
-    ++CurOp;
-    break;
   }
   
 #ifndef NDEBUG

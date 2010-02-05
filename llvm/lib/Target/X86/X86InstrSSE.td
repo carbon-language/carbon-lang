@@ -506,9 +506,9 @@ def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
     canFoldAsLoad = 1 in
   // FIXME: Set encoding to pseudo!
-def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins),
-                 "", [(set FR32:$dst, fp32imm0)]>,
-               Requires<[HasSSE1]>, TB, OpSize;
+def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                 [(set FR32:$dst, fp32imm0)]>,
+                 Requires<[HasSSE1]>, TB, OpSize;
 
 // Alias instruction to do FR32 reg-to-reg copy using movaps. Upper bits are
 // disregarded.
@@ -1270,8 +1270,8 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
 // Alias instructions that map fld0 to pxor for sse.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
     canFoldAsLoad = 1 in
-def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins),
-                 "pxor\t$dst, $dst", [(set FR64:$dst, fpimm0)]>,
+def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                 [(set FR64:$dst, fpimm0)]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
 // Alias instruction to do FR64 reg-to-reg copy using movapd. Upper bits are
