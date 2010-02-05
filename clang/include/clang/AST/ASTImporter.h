@@ -11,7 +11,7 @@
 //  context into another context.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_AST_ASTIM PORTER_H
+#ifndef LLVM_CLANG_AST_ASTIMPORTER_H
 #define LLVM_CLANG_AST_ASTIMPORTER_H
 
 #include "clang/AST/Type.h"
