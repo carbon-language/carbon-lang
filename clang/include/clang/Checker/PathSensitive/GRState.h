@@ -671,11 +671,11 @@ inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
 }
 
 inline SVal GRState::getSVal(Loc LV, QualType T) const {
-  return getStateManager().StoreMgr->Retrieve(this, LV, T);
+  return getStateManager().StoreMgr->Retrieve(St, LV, T);
 }
 
 inline SVal GRState::getSVal(const MemRegion* R) const {
-  return getStateManager().StoreMgr->Retrieve(this, loc::MemRegionVal(R));
+  return getStateManager().StoreMgr->Retrieve(St, loc::MemRegionVal(R));
 }
 
 inline BasicValueFactory &GRState::getBasicVals() const {

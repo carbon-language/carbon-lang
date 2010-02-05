@@ -355,17 +355,17 @@ public: // Part of public interface to class.
   ///       return undefined
   ///     else
   ///       return symbolic
-  SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
+  SVal Retrieve(Store store, Loc L, QualType T = QualType());
 
   SVal RetrieveElement(Store store, const ElementRegion *R);
 
   SVal RetrieveField(Store store, const FieldRegion *R);
 
-  SVal RetrieveObjCIvar(const GRState *state, const ObjCIvarRegion *R);
+  SVal RetrieveObjCIvar(Store store, const ObjCIvarRegion *R);
 
-  SVal RetrieveVar(const GRState *state, const VarRegion *R);
+  SVal RetrieveVar(Store store, const VarRegion *R);
 
-  SVal RetrieveLazySymbol(const GRState *state, const TypedRegion *R);
+  SVal RetrieveLazySymbol(const TypedRegion *R);
 
   SVal RetrieveFieldOrElementCommon(Store store, const TypedRegion *R,
                                     QualType Ty, const MemRegion *superR);
@@ -375,9 +375,9 @@ public: // Part of public interface to class.
   /// struct s x, y;
   /// x = y;
   /// y's value is retrieved by this method.
-  SVal RetrieveStruct(const GRState *St, const TypedRegion* R);
+  SVal RetrieveStruct(Store store, const TypedRegion* R);
 
-  SVal RetrieveArray(const GRState *St, const TypedRegion* R);
+  SVal RetrieveArray(Store store, const TypedRegion* R);
 
   /// Get the state and region whose binding this region R corresponds to.
   std::pair<Store, const MemRegion*>
@@ -1095,7 +1095,7 @@ RegionStoreManager::GetElementZeroRegion(const SymbolicRegion *SR, QualType T) {
   return MRMgr.getElementRegion(T, idx, SR, Ctx);
 }
 
-SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
+SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
   
@@ -1147,21 +1147,21 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 #endif
 
   if (RTy->isStructureType())
-    return RetrieveStruct(state, R);
+    return RetrieveStruct(store, R);
 
   // FIXME: Handle unions.
   if (RTy->isUnionType())
     return UnknownVal();
 
   if (RTy->isArrayType())
-    return RetrieveArray(state, R);
+    return RetrieveArray(store, R);
 
   // FIXME: handle Vector types.
   if (RTy->isVectorType())
     return UnknownVal();
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return CastRetrievedVal(RetrieveField(state->getStore(), FR), FR, T, false);
+    return CastRetrievedVal(RetrieveField(store, FR), FR, T, false);
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
     // FIXME: Here we actually perform an implicit conversion from the loaded
@@ -1169,7 +1169,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // more intelligently.  For example, an 'element' can encompass multiple
     // bound regions (e.g., several bound bytes), or could be a subset of
     // a larger value.
-    return CastRetrievedVal(RetrieveElement(state->getStore(), ER), ER, T, false);
+    return CastRetrievedVal(RetrieveElement(store, ER), ER, T, false);
   }    
 
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
@@ -1179,7 +1179,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // reinterpretted, it is possible we stored a different value that could
     // fit within the ivar.  Either we need to cast these when storing them
     // or reinterpret them lazily (as we do here).
-    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T, false);
+    return CastRetrievedVal(RetrieveObjCIvar(store, IVR), IVR, T, false);
   }
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
@@ -1189,10 +1189,10 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // variable is reinterpretted, it is possible we stored a different value
     // that could fit within the variable.  Either we need to cast these when
     // storing them or reinterpret them lazily (as we do here).    
-    return CastRetrievedVal(RetrieveVar(state, VR), VR, T, false);
+    return CastRetrievedVal(RetrieveVar(store, VR), VR, T, false);
   }
 
-  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(store);
   const SVal *V = Lookup(B, R, BindingKey::Direct);
 
   // Check if the region has a binding.
@@ -1378,11 +1378,10 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   return ValMgr.getRegionValueSymbolVal(R, Ty);
 }
 
-SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
-                                          const ObjCIvarRegion* R) {
+SVal RegionStoreManager::RetrieveObjCIvar(Store store, const ObjCIvarRegion* R){
 
     // Check if the region has a binding.
-  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(store);
 
   if (Optional<SVal> V = getDirectBinding(B, R))
     return *V;
@@ -1398,14 +1397,13 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
     return UnknownVal();
   }
 
-  return RetrieveLazySymbol(state, R);
+  return RetrieveLazySymbol(R);
 }
 
-SVal RegionStoreManager::RetrieveVar(const GRState *state,
-                                     const VarRegion *R) {
+SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 
   // Check if the region has a binding.
-  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(store);
 
   if (Optional<SVal> V = getDirectBinding(B, R))
     return *V;
@@ -1420,8 +1418,7 @@ SVal RegionStoreManager::RetrieveVar(const GRState *state,
   return UndefinedVal();
 }
 
-SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
-                                            const TypedRegion *R) {
+SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
 
   QualType valTy = R->getValueType(getContext());
 
@@ -1429,8 +1426,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
   return ValMgr.getRegionValueSymbolVal(R, valTy);
 }
 
-SVal RegionStoreManager::RetrieveStruct(const GRState *state,
-                                        const TypedRegion* R) {
+SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
@@ -1450,18 +1446,17 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
        Field != FieldEnd; ++Field) {
     FieldRegion* FR = MRMgr.getFieldRegion(*Field, R);
     QualType FTy = (*Field)->getType();
-    SVal FieldValue = Retrieve(state, loc::MemRegionVal(FR), FTy).getSVal();
+    SVal FieldValue = Retrieve(store, loc::MemRegionVal(FR), FTy).getSVal();
     StructVal = getBasicVals().consVals(FieldValue, StructVal);
   }
 
   return ValMgr.makeCompoundVal(T, StructVal);
 #else
-  return ValMgr.makeLazyCompoundVal(state->getStore(), R);
+  return ValMgr.makeLazyCompoundVal(store, R);
 #endif
 }
 
-SVal RegionStoreManager::RetrieveArray(const GRState *state,
-                                       const TypedRegion * R) {
+SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
 #if USE_EXPLICIT_COMPOUND
   QualType T = R->getValueType(getContext());
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
@@ -1473,14 +1468,14 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
     ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R,
                                                getContext());
     QualType ETy = ER->getElementType();
-    SVal ElementVal = Retrieve(state, loc::MemRegionVal(ER), ETy).getSVal();
+    SVal ElementVal = Retrieve(store, loc::MemRegionVal(ER), ETy).getSVal();
     ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
   }
 
   return ValMgr.makeCompoundVal(T, ArrayVal);
 #else
   assert(isa<ConstantArrayType>(R->getValueType(getContext())));
-  return ValMgr.makeLazyCompoundVal(state->getStore(), R);
+  return ValMgr.makeLazyCompoundVal(store, R);
 #endif
 }
 

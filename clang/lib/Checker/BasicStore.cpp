@@ -44,7 +44,7 @@ public:
     return new BasicStoreSubRegionMap();
   }
 
-  SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());
+  SVal Retrieve(Store store, Loc loc, QualType T = QualType());
 
   const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
                                   const Expr *E, unsigned Count,
@@ -249,7 +249,7 @@ static bool isHigherOrderRawPtr(QualType T, ASTContext &C) {
   }
 }
 
-SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
+SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
   if (isa<UnknownVal>(loc))
     return UnknownVal();
 
@@ -263,7 +263,7 @@ SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
         return UnknownVal();
 
-      BindingsTy B = GetBindings(state->getStore());
+      BindingsTy B = GetBindings(store);
       BindingsTy::data_type *Val = B.lookup(R);
 
       if (!Val)
@@ -394,7 +394,7 @@ BasicStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
           break;
 
         Marked.insert(MR);
-        SVal X = Retrieve(&state, loc::MemRegionVal(MR));
+        SVal X = Retrieve(state.getStore(), loc::MemRegionVal(MR));
 
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)

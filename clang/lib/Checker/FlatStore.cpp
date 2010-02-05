@@ -27,7 +27,7 @@ public:
       RBFactory(mgr.getAllocator()), 
       BVFactory(mgr.getAllocator()) {}
 
-  SVal Retrieve(const GRState *state, Loc loc, QualType T);
+  SVal Retrieve(Store store, Loc loc, QualType T);
   const GRState *Bind(const GRState *state, Loc loc, SVal val);
   Store Remove(Store St, Loc L);
   const GRState *BindCompoundLiteral(const GRState *state,
@@ -73,7 +73,7 @@ StoreManager *clang::CreateFlatStoreManager(GRStateManager &StMgr) {
   return new FlatStoreManager(StMgr);
 }
 
-SVal FlatStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
+SVal FlatStoreManager::Retrieve(Store store, Loc loc, QualType T) {
   return UnknownVal();
 }
 
