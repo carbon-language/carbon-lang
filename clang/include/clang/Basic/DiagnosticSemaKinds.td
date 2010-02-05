@@ -741,13 +741,18 @@ def err_attribute_wrong_decl_type : Error<
   "parameter or Objective-C method |function, method or block|"
   "virtual method or class|function, method, or parameter|class|virtual method"
   "|member}1 types">;
+def warn_function_attribute_wrong_type : Warning<
+  "%0 only applies to function types; type here is %1">;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
   " attribute ignored">;
+def err_cconv_change : Error<
+  "function declared '%0' here was previously declared "
+  "%select{'%2'|without calling convention}1">;
 def err_cconv_knr : Error<
-  "function with no prototype cannot use '%0' calling convention">;
+  "function with no prototype cannot use %0 calling convention">;
 def err_cconv_varargs : Error<
-  "variadic function cannot use '%0' calling convention">;
+  "variadic function cannot use %0 calling convention">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit cast turns vector to scalar: %0 to %1">,

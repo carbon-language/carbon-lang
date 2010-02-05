@@ -391,6 +391,11 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 }
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Don't apply as a decl attribute to ValueDecl.
+  // FIXME: probably ought to diagnose this.
+  if (isa<ValueDecl>(d))
+    return;
+
   if (HandleCommonNoReturnAttr(d, Attr, S))
     d->addAttr(::new (S.Context) NoReturnAttr());
 }
@@ -404,7 +409,7 @@ static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
 static void HandleDependencyAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!isFunctionOrMethod(d) && !isa<ParmVarDecl>(d)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-      << Attr.getName() << 8; /*function, method, or parameter*/
+      << Attr.getName() << 8 /*function, method, or parameter*/;
     return;
   }
   // FIXME: Actually store the attribute on the declaration
@@ -940,120 +945,6 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   D->addAttr(::new (S.Context) SectionAttr(SE->getString()));
 }
 
-static void HandleCDeclAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // Attribute has no arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  // Attribute can be applied only to functions.
-  // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either. All the function-pointer stuff is handled in
-  // SemaType.cpp.
-  ValueDecl *VD = dyn_cast<ValueDecl>(d);
-  if (VD && VD->getType()->isFunctionPointerType())
-    return;
-  if (!isa<FunctionDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 0 /*function*/;
-    return;
-  }
-
-  // cdecl and fastcall attributes are mutually incompatible.
-  if (d->getAttr<FastCallAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << "cdecl" << "fastcall";
-    return;
-  }
-
-  // cdecl and stdcall attributes are mutually incompatible.
-  if (d->getAttr<StdCallAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << "cdecl" << "stdcall";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) CDeclAttr());
-}
-
-
-static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // Attribute has no arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  // Attribute can be applied only to functions.
-  // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either. All the function-pointer stuff is handled in
-  // SemaType.cpp.
-  ValueDecl *VD = dyn_cast<ValueDecl>(d);
-  if (VD && VD->getType()->isFunctionPointerType())
-    return;
-  if (!isa<FunctionDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 0 /*function*/;
-    return;
-  }
-
-  // stdcall and fastcall attributes are mutually incompatible.
-  if (d->getAttr<FastCallAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << "stdcall" << "fastcall";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) StdCallAttr());
-}
-
-/// Diagnose the use of a non-standard calling convention on the given
-/// function.
-static void DiagnoseCConv(FunctionDecl *D, const char *CConv,
-                          SourceLocation Loc, Sema &S) {
-  if (!D->hasPrototype()) {
-    S.Diag(Loc, diag::err_cconv_knr) << CConv;
-    return;
-  }
-
-  const FunctionProtoType *T = D->getType()->getAs<FunctionProtoType>();
-  if (T->isVariadic()) {
-    S.Diag(Loc, diag::err_cconv_varargs) << CConv;
-    return;
-  }
-}
-
-static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // Attribute has no arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either. All the function-pointer stuff is handled in
-  // SemaType.cpp.
-  ValueDecl *VD = dyn_cast<ValueDecl>(d);
-  if (VD && VD->getType()->isFunctionPointerType())
-    return;
-  if (!isa<FunctionDecl>(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 0 /*function*/;
-    return;
-  }
-
-  DiagnoseCConv(cast<FunctionDecl>(d), "fastcall", Attr.getLoc(), S);
-
-  // stdcall and fastcall attributes are mutually incompatible.
-  if (d->getAttr<StdCallAttr>()) {
-    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
-      << "fastcall" << "stdcall";
-    return;
-  }
-
-  d->addAttr(::new (S.Context) FastCallAttr());
-}
 
 static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
@@ -1926,7 +1817,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_base_check:  HandleBaseCheckAttr   (D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
                                       HandleDependencyAttr  (D, Attr, S); break;
-  case AttributeList::AT_cdecl:       HandleCDeclAttr       (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
   case AttributeList::AT_destructor:  HandleDestructorAttr  (D, Attr, S); break;
@@ -1935,7 +1825,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
-  case AttributeList::AT_fastcall:    HandleFastCallAttr    (D, Attr, S); break;
   case AttributeList::AT_final:       HandleFinalAttr       (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr      (D, Attr, S); break;
   case AttributeList::AT_format_arg:  HandleFormatArgAttr   (D, Attr, S); break;
@@ -1958,7 +1847,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
 
   case AttributeList::AT_packed:      HandlePackedAttr      (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr     (D, Attr, S); break;
-  case AttributeList::AT_stdcall:     HandleStdCallAttr     (D, Attr, S); break;
   case AttributeList::AT_unavailable: HandleUnavailableAttr (D, Attr, S); break;
   case AttributeList::AT_unused:      HandleUnusedAttr      (D, Attr, S); break;
   case AttributeList::AT_used:        HandleUsedAttr        (D, Attr, S); break;
@@ -1986,6 +1874,11 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::IgnoredAttribute:
   case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
     // Just ignore
+    break;
+  case AttributeList::AT_stdcall:
+  case AttributeList::AT_cdecl:
+  case AttributeList::AT_fastcall:
+    // These are all treated as type attributes.
     break;
   default:
     // Ask target about the attribute.

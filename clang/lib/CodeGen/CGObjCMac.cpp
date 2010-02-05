@@ -305,7 +305,8 @@ public:
     Params.push_back(Ctx.LongTy);
     Params.push_back(Ctx.BoolTy);
     const llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.getFunctionInfo(IdType, Params), false);
+      Types.GetFunctionType(Types.getFunctionInfo(IdType, Params,
+                                                  CC_Default, false), false);
     return CGM.CreateRuntimeFunction(FTy, "objc_getProperty");
   }
 
@@ -323,7 +324,8 @@ public:
     Params.push_back(Ctx.BoolTy);
     Params.push_back(Ctx.BoolTy);
     const llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
+                                                  CC_Default, false), false);
     return CGM.CreateRuntimeFunction(FTy, "objc_setProperty");
   }
 
@@ -334,7 +336,8 @@ public:
     llvm::SmallVector<QualType,16> Params;
     Params.push_back(Ctx.getObjCIdType());
     const llvm::FunctionType *FTy =
-      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
+                                                  CC_Default, false), false);
     return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
   }
 
@@ -1554,7 +1557,8 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
+                                                       CC_Default, false);
   const llvm::FunctionType *FTy =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
@@ -5089,7 +5093,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   // FIXME. This is too much work to get the ABI-specific result type needed to
   // find the message name.
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType,
-                                                       llvm::SmallVector<QualType, 16>());
+                                                       llvm::SmallVector<QualType, 16>(),
+                                                       CC_Default, false);
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
@@ -5163,7 +5168,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   ActualArgs.push_back(std::make_pair(RValue::get(Arg1),
                                       ObjCTypes.MessageRefCPtrTy));
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs);
+  const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs,
+                                                        CC_Default, false);
   llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
   Callee = CGF.Builder.CreateLoad(Callee);
   const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, true);

@@ -559,10 +559,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
+
   QualType adjustParameterType(QualType T);
-  void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL,
-                                bool HandleCallConvAttributes = false,
-                                bool HandleOnlyCallConv = false);
   QualType BuildPointerType(QualType T, unsigned Quals,
                             SourceLocation Loc, DeclarationName Entity);
   QualType BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,

@@ -11,7 +11,7 @@ static void __attribute__((noreturn)) f0(void) {
 // On K&R
 int f1() __attribute__((noreturn));
 
-int g0 __attribute__((noreturn)); // expected-warning {{'noreturn' attribute only applies to function types}}
+int g0 __attribute__((noreturn)); // expected-warning {{'noreturn' only applies to function types; type here is 'int'}}
 
 int f2() __attribute__((noreturn(1, 2))); // expected-error {{attribute requires 0 argument(s)}}
 

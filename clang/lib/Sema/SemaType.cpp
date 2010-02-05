@@ -68,12 +68,41 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
   return false;
 }
 
+typedef std::pair<const AttributeList*,QualType> DelayedAttribute;
+typedef llvm::SmallVectorImpl<DelayedAttribute> DelayedAttributeSet;
+
+static void ProcessTypeAttributeList(Sema &S, QualType &Type,
+                                     const AttributeList *Attrs,
+                                     DelayedAttributeSet &DelayedFnAttrs);
+static bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr);
+
+static void ProcessDelayedFnAttrs(Sema &S, QualType &Type,
+                                  DelayedAttributeSet &Attrs) {
+  for (DelayedAttributeSet::iterator I = Attrs.begin(),
+         E = Attrs.end(); I != E; ++I)
+    if (ProcessFnAttr(S, Type, *I->first))
+      S.Diag(I->first->getLoc(), diag::warn_function_attribute_wrong_type)
+        << I->first->getName() << I->second;
+  Attrs.clear();
+}
+
+static void DiagnoseDelayedFnAttrs(Sema &S, DelayedAttributeSet &Attrs) {
+  for (DelayedAttributeSet::iterator I = Attrs.begin(),
+         E = Attrs.end(); I != E; ++I) {
+    S.Diag(I->first->getLoc(), diag::warn_function_attribute_wrong_type)
+      << I->first->getName() << I->second;
+  }
+  Attrs.clear();
+}
+
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
 /// \param D  the declarator containing the declaration specifier.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
-static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
+static QualType ConvertDeclSpecToType(Sema &TheSema,
+                                      Declarator &TheDeclarator,
+                                      DelayedAttributeSet &Delayed) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   const DeclSpec &DS = TheDeclarator.getDeclSpec();
@@ -356,7 +385,7 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
   if (const AttributeList *AL = DS.getAttributes())
-    TheSema.ProcessTypeAttributeList(Result, AL);
+    ProcessTypeAttributeList(TheSema, Result, AL, Delayed);
 
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
@@ -890,12 +919,14 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // have a type.
   QualType T;
 
+  llvm::SmallVector<DelayedAttribute,4> FnAttrsFromDeclSpec;
+
   switch (D.getName().getKind()) {
   case UnqualifiedId::IK_Identifier:
   case UnqualifiedId::IK_OperatorFunctionId:
   case UnqualifiedId::IK_LiteralOperatorId:
   case UnqualifiedId::IK_TemplateId:
-    T = ConvertDeclSpecToType(D, *this);
+    T = ConvertDeclSpecToType(*this, D, FnAttrsFromDeclSpec);
     
     if (!D.isInvalidType() && OwnedDecl && D.getDeclSpec().isTypeSpecOwned())
       *OwnedDecl = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
@@ -966,6 +997,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   DeclarationName Name;
   if (D.getIdentifier())
     Name = D.getIdentifier();
+
+  llvm::SmallVector<DelayedAttribute,4> FnAttrsFromPreviousChunk;
 
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
@@ -1186,6 +1219,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                     FTI.hasAnyExceptionSpec,
                                     Exceptions.size(), Exceptions.data());
       }
+
+      // For GCC compatibility, we allow attributes that apply only to
+      // function types to be placed on a function's return type
+      // instead (as long as that type doesn't happen to be function
+      // or function-pointer itself).
+      ProcessDelayedFnAttrs(*this, T, FnAttrsFromPreviousChunk);
+
       break;
     }
     case DeclaratorChunk::MemberPointer:
@@ -1244,9 +1284,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       T = Context.IntTy;
     }
 
+    DiagnoseDelayedFnAttrs(*this, FnAttrsFromPreviousChunk);
+
     // See if there are any attributes on this declarator chunk.
     if (const AttributeList *AL = DeclType.getAttrs())
-      ProcessTypeAttributeList(T, AL, true);
+      ProcessTypeAttributeList(*this, T, AL, FnAttrsFromPreviousChunk);
   }
 
   if (getLangOptions().CPlusPlus && T->isFunctionType()) {
@@ -1276,13 +1318,18 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     }
   }
 
-  // If there were any type attributes applied to the decl itself (not the
-  // type, apply the type attribute to the type!)
-  if (const AttributeList *Attrs = D.getAttributes())
-    ProcessTypeAttributeList(T, Attrs, true);
-  // Also look in the decl spec.
-  if (const AttributeList *Attrs = D.getDeclSpec().getAttributes())
-    ProcessTypeAttributeList(T, Attrs, true, true);
+  // Process any function attributes we might have delayed from the
+  // declaration-specifiers.
+  ProcessDelayedFnAttrs(*this, T, FnAttrsFromDeclSpec);
+
+  // If there were any type attributes applied to the decl itself, not
+  // the type, apply them to the result type.  But don't do this for
+  // block-literal expressions, which are parsed wierdly.
+  if (D.getContext() != Declarator::BlockLiteralContext)
+    if (const AttributeList *Attrs = D.getAttributes())
+      ProcessTypeAttributeList(*this, T, Attrs, FnAttrsFromPreviousChunk);
+
+  DiagnoseDelayedFnAttrs(*this, FnAttrsFromPreviousChunk);
 
   if (TInfo) {
     if (D.isInvalidType())
@@ -1620,36 +1667,6 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
-/// HandleCDeclTypeAttribute - Process the cdecl attribute on the
-/// specified type.  The attribute contains 0 arguments.
-static void HandleCDeclTypeAttribute(QualType &Type,
-                                     const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0)
-    return;
-
-  // We only apply this to a pointer to function.
-  if (!Type->isFunctionPointerType()
-      && !Type->isFunctionType())
-    return;
-
-  Type = S.Context.getCallConvType(Type, CC_C);
-}
-
-/// HandleFastCallTypeAttribute - Process the fastcall attribute on the
-/// specified type.  The attribute contains 0 arguments.
-static void HandleFastCallTypeAttribute(QualType &Type,
-                                        const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0)
-    return;
-
-  // We only apply this to a pointer to function.
-  if (!Type->isFunctionPointerType()
-      && !Type->isFunctionType())
-    return;
-
-  Type = S.Context.getCallConvType(Type, CC_X86FastCall);
-}
-
 /// HandleObjCGCTypeAttribute - Process an objc's gc attribute on the
 /// specified type.  The attribute contains 1 argument, weak or strong.
 static void HandleObjCGCTypeAttribute(QualType &Type,
@@ -1683,35 +1700,79 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
   Type = S.Context.getObjCGCQualType(Type, GCAttr);
 }
 
-/// HandleNoReturnTypeAttribute - Process the noreturn attribute on the
-/// specified type.  The attribute contains 0 arguments.
-static void HandleNoReturnTypeAttribute(QualType &Type,
-                                        const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0)
-    return;
+/// Process an individual function attribute.  Returns true if the
+/// attribute does not make sense to apply to this type.
+bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
+  if (Attr.getKind() == AttributeList::AT_noreturn) {
+    // Complain immediately if the arg count is wrong.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return false;
+    }
 
-  // We only apply this to a pointer to function or a pointer to block.
-  if (!Type->isFunctionPointerType()
-      && !Type->isBlockPointerType()
-      && !Type->isFunctionType())
-    return;
+    // Delay if this is not a function or pointer to block.
+    if (!Type->isFunctionPointerType()
+        && !Type->isBlockPointerType()
+        && !Type->isFunctionType())
+      return true;
 
-  Type = S.Context.getNoReturnType(Type);
-}
+    // Otherwise we can process right away.
+    Type = S.Context.getNoReturnType(Type);
+    return false;
+  }
 
-/// HandleStdCallTypeAttribute - Process the stdcall attribute on the
-/// specified type.  The attribute contains 0 arguments.
-static void HandleStdCallTypeAttribute(QualType &Type,
-                                       const AttributeList &Attr, Sema &S) {
-  if (Attr.getNumArgs() != 0)
-    return;
+  // Otherwise, a calling convention.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return false;
+  }
 
-  // We only apply this to a pointer to function.
-  if (!Type->isFunctionPointerType()
-      && !Type->isFunctionType())
-    return;
+  QualType T = Type;
+  if (const PointerType *PT = Type->getAs<PointerType>())
+    T = PT->getPointeeType();
+  const FunctionType *Fn = T->getAs<FunctionType>();
 
-  Type = S.Context.getCallConvType(Type, CC_X86StdCall);
+  // Delay if the type didn't work out to a function.
+  if (!Fn) return true;
+
+  // TODO: diagnose uses of these conventions on the wrong target.
+  CallingConv CC;
+  switch (Attr.getKind()) {
+  case AttributeList::AT_cdecl: CC = CC_C; break;
+  case AttributeList::AT_fastcall: CC = CC_X86FastCall; break;
+  case AttributeList::AT_stdcall: CC = CC_X86StdCall; break;
+  default: llvm_unreachable("unexpected attribute kind"); return false;
+  }
+
+  CallingConv CCOld = Fn->getCallConv();
+  if (CC == CCOld) return false;
+
+  if (CCOld != CC_Default) {
+    // Should we diagnose reapplications of the same convention?
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << FunctionType::getNameForCallConv(CC)
+      << FunctionType::getNameForCallConv(CCOld);
+    return false;
+  }
+
+  // Diagnose the use of X86 fastcall on varargs or unprototyped functions.
+  if (CC == CC_X86FastCall) {
+    if (isa<FunctionNoProtoType>(Fn)) {
+      S.Diag(Attr.getLoc(), diag::err_cconv_knr)
+        << FunctionType::getNameForCallConv(CC);
+      return false;
+    }
+
+    const FunctionProtoType *FnP = cast<FunctionProtoType>(Fn);
+    if (FnP->isVariadic()) {
+      S.Diag(Attr.getLoc(), diag::err_cconv_varargs)
+        << FunctionType::getNameForCallConv(CC);
+      return false;
+    }
+  }
+
+  Type = S.Context.getCallConvType(Type, CC);
+  return false;
 }
 
 /// HandleVectorSizeAttribute - this attribute is only applicable to integral
@@ -1761,12 +1822,9 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
   CurType = S.Context.getVectorType(CurType, vectorSize/typeSize, false, false);
 }
 
-void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL,
-                                    bool HandleCallConvAttributes,
-                                    bool HandleOnlyCallConv) {
-  if(HandleOnlyCallConv)
-    assert(HandleCallConvAttributes && "Can't not handle call-conv attributes"
-           " while only handling them!");
+void ProcessTypeAttributeList(Sema &S, QualType &Result,
+                              const AttributeList *AL,
+                              DelayedAttributeSet &FnAttrs) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
   // type, but others can be present in the type specifiers even though they
@@ -1776,33 +1834,23 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL,
     // the LeftOverAttrs list for rechaining.
     switch (AL->getKind()) {
     default: break;
+
     case AttributeList::AT_address_space:
-      if (!HandleOnlyCallConv)
-        HandleAddressSpaceTypeAttribute(Result, *AL, *this);
-      break;
-    case AttributeList::AT_cdecl:
-      if (HandleCallConvAttributes)
-        HandleCDeclTypeAttribute(Result, *AL, *this);
-      break;
-    case AttributeList::AT_fastcall:
-      if (HandleCallConvAttributes)
-        HandleFastCallTypeAttribute(Result, *AL, *this);
+      HandleAddressSpaceTypeAttribute(Result, *AL, S);
       break;
     case AttributeList::AT_objc_gc:
-      if (!HandleOnlyCallConv)
-        HandleObjCGCTypeAttribute(Result, *AL, *this);
-      break;
-    case AttributeList::AT_noreturn:
-      if (!HandleOnlyCallConv)
-        HandleNoReturnTypeAttribute(Result, *AL, *this);
-      break;
-    case AttributeList::AT_stdcall:
-      if (HandleCallConvAttributes)
-        HandleStdCallTypeAttribute(Result, *AL, *this);
+      HandleObjCGCTypeAttribute(Result, *AL, S);
       break;
     case AttributeList::AT_vector_size:
-      if (!HandleOnlyCallConv)
-        HandleVectorSizeAttr(Result, *AL, *this);
+      HandleVectorSizeAttr(Result, *AL, S);
+      break;
+
+    case AttributeList::AT_noreturn:
+    case AttributeList::AT_cdecl:
+    case AttributeList::AT_fastcall:
+    case AttributeList::AT_stdcall:
+      if (ProcessFnAttr(S, Result, *AL))
+        FnAttrs.push_back(DelayedAttribute(AL, Result));
       break;
     }
   }

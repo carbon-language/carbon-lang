@@ -1761,6 +1761,8 @@ public:
   bool getNoReturnAttr() const { return NoReturn; }
   CallingConv getCallConv() const { return (CallingConv)CallConv; }
 
+  static llvm::StringRef getNameForCallConv(CallingConv CC);
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto ||
            T->getTypeClass() == FunctionProto;

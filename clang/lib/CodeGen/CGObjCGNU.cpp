@@ -464,7 +464,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
+                                                       CC_Default, false);
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
@@ -571,7 +572,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
+  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
+                                                       CC_Default, false);
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
@@ -1686,7 +1688,8 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
   llvm::SmallVector<QualType,16> Params;
   Params.push_back(ASTIdTy);
   const llvm::FunctionType *FTy =
-    Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+    Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
+                                                CC_Default, false), false);
   return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
 }
 

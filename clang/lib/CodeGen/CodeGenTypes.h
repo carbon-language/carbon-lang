@@ -198,6 +198,12 @@ public:
   const CGFunctionInfo &getFunctionInfo(const CXXDestructorDecl *D,
                                         CXXDtorType Type);
 
+  const CGFunctionInfo &getFunctionInfo(const CallArgList &Args,
+                                        const FunctionType *Ty) {
+    return getFunctionInfo(Ty->getResultType(), Args,
+                           Ty->getCallConv(), Ty->getNoReturnAttr());
+  }
+
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
                                         const FunctionProtoType *FTP);
@@ -207,13 +213,16 @@ public:
   /// specified, the "C" calling convention will be used.
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
                                         const CallArgList &Args,
-                                        unsigned CallingConvention = 0);
+                                        CallingConv CC,
+                                        bool NoReturn);
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
                                         const FunctionArgList &Args,
-                                        unsigned CallingConvention = 0);
+                                        CallingConv CC,
+                                        bool NoReturn);
   const CGFunctionInfo &getFunctionInfo(QualType RetTy,
                                   const llvm::SmallVector<QualType, 16> &ArgTys,
-                                        unsigned CallingConvention = 0);
+                                        CallingConv CC,
+                                        bool NoReturn);
 
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.

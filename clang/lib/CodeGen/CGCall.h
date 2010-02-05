@@ -69,6 +69,9 @@ namespace CodeGen {
     /// depend on the ABI.
     unsigned EffectiveCallingConvention;
 
+    /// Whether this function is noreturn.
+    bool NoReturn;
+
     unsigned NumArgs;
     ArgInfo *Args;
 
@@ -77,6 +80,7 @@ namespace CodeGen {
     typedef ArgInfo *arg_iterator;
 
     CGFunctionInfo(unsigned CallingConvention,
+                   bool NoReturn,
                    QualType ResTy,
                    const llvm::SmallVector<QualType, 16> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
@@ -87,6 +91,8 @@ namespace CodeGen {
     arg_iterator arg_end() { return Args + 1 + NumArgs; }
 
     unsigned  arg_size() const { return NumArgs; }
+
+    bool isNoReturn() const { return NoReturn; }
 
     /// getCallingConvention - Return the user specified calling
     /// convention.
@@ -108,6 +114,7 @@ namespace CodeGen {
 
     void Profile(llvm::FoldingSetNodeID &ID) {
       ID.AddInteger(getCallingConvention());
+      ID.AddBoolean(NoReturn);
       getReturnType().Profile(ID);
       for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
         it->type.Profile(ID);
@@ -115,10 +122,12 @@ namespace CodeGen {
     template<class Iterator>
     static void Profile(llvm::FoldingSetNodeID &ID,
                         unsigned CallingConvention,
+                        bool NoReturn,
                         QualType ResTy,
                         Iterator begin,
                         Iterator end) {
       ID.AddInteger(CallingConvention);
+      ID.AddBoolean(NoReturn);
       ResTy.Profile(ID);
       for (; begin != end; ++begin)
         begin->Profile(ID);

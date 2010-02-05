@@ -24,10 +24,10 @@ int main(void) {
     // CHECK: call x86_fastcallcc void @f3()
     // CHECK: call x86_stdcallcc void @f4()
     pf1(); pf2(); pf3(); pf4();
-    // CHECK: call x86_fastcallcc void %tmp()
-    // CHECK: call x86_stdcallcc void %tmp1()
-    // CHECK: call x86_fastcallcc void %tmp2()
-    // CHECK: call x86_stdcallcc void %tmp3()
+    // CHECK: call x86_fastcallcc void %{{.*}}()
+    // CHECK: call x86_stdcallcc void %{{.*}}()
+    // CHECK: call x86_fastcallcc void %{{.*}}()
+    // CHECK: call x86_stdcallcc void %{{.*}}()
     return 0;
 }
 

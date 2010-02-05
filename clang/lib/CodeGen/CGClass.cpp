@@ -327,9 +327,9 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                      BaseCopyCtor->getParamDecl(0)->getType()));
-    QualType ResultType =
-      BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
-    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+    const FunctionProtoType *FPT
+      = BaseCopyCtor->getType()->getAs<FunctionProtoType>();
+    EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
              Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
   }
   EmitBlock(ContinueBlock);
@@ -412,8 +412,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
     RValue SrcValue = SrcTy->isReferenceType() ? RValue::get(Src) :
                                                  RValue::getAggregate(Src);
     CallArgs.push_back(std::make_pair(SrcValue, SrcTy));
-    QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
-    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+    EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
              Callee, ReturnValueSlot(), CallArgs, MD);
   }
   EmitBlock(ContinueBlock);
@@ -503,9 +502,9 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                        BaseCopyCtor->getParamDecl(0)->getType()));
-    QualType ResultType =
-    BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
-    EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+    const FunctionProtoType *FPT =
+      BaseCopyCtor->getType()->getAs<FunctionProtoType>();
+    EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
              Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
   }
 }
@@ -550,9 +549,7 @@ void CodeGenFunction::EmitClassCopyAssignment(
   RValue SrcValue = SrcTy->isReferenceType() ? RValue::get(Src) :
                                                RValue::getAggregate(Src);
   CallArgs.push_back(std::make_pair(SrcValue, SrcTy));
-  QualType ResultType =
-    MD->getType()->getAs<FunctionType>()->getResultType();
-  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+  EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
            Callee, ReturnValueSlot(), CallArgs, MD);
 }
 
@@ -1197,7 +1194,8 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   llvm::SmallString<16> Name;
   llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
   QualType R = getContext().VoidTy;
-  const CGFunctionInfo &FI = CGM.getTypes().getFunctionInfo(R, Args);
+  const CGFunctionInfo &FI
+    = CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,

@@ -908,14 +908,6 @@ static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
   return Sema::CXXCopyAssignment;
 }
 
-static const char* getCallConvName(CallingConv CC) {
-  switch (CC) {
-  default: return "cdecl";
-  case CC_X86StdCall: return "stdcall";
-  case CC_X86FastCall: return "fastcall";
-  }
-}
-
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -992,12 +984,23 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     NewQType = Context.getCallConvType(NewQType, OldType->getCallConv());
     New->setType(NewQType);
     NewQType = Context.getCanonicalType(NewQType);
-  } else if (OldType->getCallConv() != NewType->getCallConv()) {
+  } else if (!Context.isSameCallConv(OldType->getCallConv(),
+                                     NewType->getCallConv())) {
     // Calling conventions really aren't compatible, so complain.
-    Diag(New->getLocation(), diag::err_attributes_are_not_compatible)
-      << getCallConvName(NewType->getCallConv())
-      << getCallConvName(OldType->getCallConv());
+    Diag(New->getLocation(), diag::err_cconv_change)
+      << FunctionType::getNameForCallConv(NewType->getCallConv())
+      << (OldType->getCallConv() == CC_Default)
+      << (OldType->getCallConv() == CC_Default ? "" :
+          FunctionType::getNameForCallConv(OldType->getCallConv()));
+    Diag(Old->getLocation(), diag::note_previous_declaration);
     return true;
+  }
+
+  // FIXME: diagnose the other way around?
+  if (OldType->getNoReturnAttr() && !NewType->getNoReturnAttr()) {
+    NewQType = Context.getNoReturnType(NewQType);
+    New->setType(NewQType);
+    assert(NewQType.isCanonical());
   }
 
   if (getLangOptions().CPlusPlus) {
@@ -4383,7 +4386,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     }
 
     if (Context.BuiltinInfo.isNoReturn(BuiltinID))
-      FD->addAttr(::new (Context) NoReturnAttr());
+      FD->setType(Context.getNoReturnType(FD->getType()));
     if (Context.BuiltinInfo.isNoThrow(BuiltinID))
       FD->addAttr(::new (Context) NoThrowAttr());
     if (Context.BuiltinInfo.isConst(BuiltinID))

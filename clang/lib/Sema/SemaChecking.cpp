@@ -2500,7 +2500,8 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body,
       return;
     if (FD->getResultType()->isVoidType())
       ReturnsVoid = true;
-    if (FD->hasAttr<NoReturnAttr>())
+    if (FD->hasAttr<NoReturnAttr>() ||
+        FD->getType()->getAs<FunctionType>()->getNoReturnAttr())
       HasNoReturn = true;
   } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (MD->getResultType()->isVoidType())

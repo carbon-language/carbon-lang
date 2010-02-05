@@ -1716,12 +1716,6 @@ QualType ASTContext::getDependentSizedExtVectorType(QualType vecType,
   return QualType(New, 0);
 }
 
-static CallingConv getCanonicalCallingConv(CallingConv CC) {
-  if (CC == CC_C)
-    return CC_Default;
-  return CC;
-}
-
 /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
 ///
 QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
@@ -1738,9 +1732,9 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
 
   QualType Canonical;
   if (!ResultTy.isCanonical() ||
-      getCanonicalCallingConv(CallConv) != CallConv) {
+      getCanonicalCallConv(CallConv) != CallConv) {
     Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy), NoReturn,
-                                       getCanonicalCallingConv(CallConv));
+                                       getCanonicalCallConv(CallConv));
 
     // Get the new insert position for the node we care about.
     FunctionNoProtoType *NewIP =
@@ -1784,7 +1778,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
   // If this type isn't canonical, get the canonical version of it.
   // The exception spec is not part of the canonical type.
   QualType Canonical;
-  if (!isCanonical || getCanonicalCallingConv(CallConv) != CallConv) {
+  if (!isCanonical || getCanonicalCallConv(CallConv) != CallConv) {
     llvm::SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -1794,7 +1788,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                 CanonicalArgs.data(), NumArgs,
                                 isVariadic, TypeQuals, false,
                                 false, 0, 0, NoReturn,
-                                getCanonicalCallingConv(CallConv));
+                                getCanonicalCallConv(CallConv));
 
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
@@ -4300,10 +4294,6 @@ bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
   return !mergeTypes(LHS, RHS).isNull();
 }
 
-static bool isSameCallingConvention(CallingConv lcc, CallingConv rcc) {
-  return (getCanonicalCallingConv(lcc) == getCanonicalCallingConv(rcc));
-}
-
 QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   const FunctionType *lbase = lhs->getAs<FunctionType>();
   const FunctionType *rbase = rhs->getAs<FunctionType>();
@@ -4328,7 +4318,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   CallingConv lcc = lbase->getCallConv();
   CallingConv rcc = rbase->getCallConv();
   // Compatible functions must have compatible calling conventions
-  if (!isSameCallingConvention(lcc, rcc))
+  if (!isSameCallConv(lcc, rcc))
     return QualType();
 
   if (lproto && rproto) { // two C99 style function prototypes

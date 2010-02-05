@@ -74,3 +74,10 @@ int t19(void) {
 void t20(void) {
   __builtin_abort();
 }
+
+void (__attribute__((fastcall)) *fptr)(int);
+void t21(void) {
+  fptr(10);
+}
+// CHECK: [[FPTRVAR:%[a-z0-9]+]] = load void (i32)** @fptr
+// CHECK-NEXT: call x86_fastcallcc void [[FPTRVAR]](i32 10)

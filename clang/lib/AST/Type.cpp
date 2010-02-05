@@ -810,6 +810,17 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   }
 }
 
+llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
+  switch (CC) {
+  case CC_Default: llvm_unreachable("no name for default cc");
+  default: return "";
+
+  case CC_C: return "cdecl";
+  case CC_X86StdCall: return "stdcall";
+  case CC_X86FastCall: return "fastcall";
+  }
+}
+
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 arg_type_iterator ArgTys,
                                 unsigned NumArgs, bool isVariadic,

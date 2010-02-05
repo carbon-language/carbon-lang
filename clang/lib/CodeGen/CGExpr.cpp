@@ -1853,14 +1853,6 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
 }
 
-static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
-  switch (CC) {
-  default: return llvm::CallingConv::C;
-  case CC_X86StdCall: return llvm::CallingConv::X86_StdCall;
-  case CC_X86FastCall: return llvm::CallingConv::X86_FastCall;
-  }
-}
-
 RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
                                  ReturnValueSlot ReturnValue,
                                  CallExpr::const_arg_iterator ArgBeg,
@@ -1873,16 +1865,14 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 
   CalleeType = getContext().getCanonicalType(CalleeType);
 
-  QualType FnType = cast<PointerType>(CalleeType)->getPointeeType();
-  QualType ResultType = cast<FunctionType>(FnType)->getResultType();
+  const FunctionType *FnType
+    = cast<FunctionType>(cast<PointerType>(CalleeType)->getPointeeType());
+  QualType ResultType = FnType->getResultType();
 
   CallArgList Args;
   EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
 
-  unsigned CallingConvention =
-    ClangCallConvToLLVMCallConv(FnType->getAs<FunctionType>()->getCallConv());
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
-                                                 CallingConvention),
+  return EmitCall(CGM.getTypes().getFunctionInfo(Args, FnType),
                   Callee, ReturnValue, Args, TargetDecl);
 }
 

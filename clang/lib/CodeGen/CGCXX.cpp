@@ -165,7 +165,8 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
                                    GlobalDecl GD, bool Extern,
                                    const CovariantThunkAdjustment &Adjustment) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  QualType ResultType = FPT->getResultType();
 
   FunctionArgList Args;
   ImplicitParamDecl *ThisDecl =
@@ -190,7 +191,6 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
   StartFunction(FD, ResultType, Fn, Args, SourceLocation());
 
   // generate body
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
@@ -232,7 +232,9 @@ CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
     CallArgs.push_back(std::make_pair(EmitCallArg(Arg, ArgType), ArgType));
   }
 
-  RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+  RValue RV = EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs,
+                                                      FPT->getCallConv(),
+                                                      FPT->getNoReturnAttr()),
                        Callee, ReturnValueSlot(), CallArgs, MD);
   if (ShouldAdjustReturnPointer && !Adjustment.ReturnAdjustment.isEmpty()) {
     bool CanBeZero = !(ResultType->isReferenceType()

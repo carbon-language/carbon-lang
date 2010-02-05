@@ -971,6 +971,20 @@ public:
   NestedNameSpecifier *
   getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS);
 
+  /// \brief Retrieves the canonical representation of the given
+  /// calling convention.
+  CallingConv getCanonicalCallConv(CallingConv CC) {
+    if (CC == CC_C)
+      return CC_Default;
+    return CC;
+  }
+
+  /// \brief Determines whether two calling conventions name the same
+  /// calling convention.
+  bool isSameCallConv(CallingConv lcc, CallingConv rcc) {
+    return (getCanonicalCallConv(lcc) == getCanonicalCallConv(rcc));
+  }
+
   /// \brief Retrieves the "canonical" template name that refers to a
   /// given template.
   ///

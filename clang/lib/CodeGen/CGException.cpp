@@ -194,9 +194,9 @@ static void CopyObject(CodeGenFunction &CGF, const Expr *E,
       // Push the Src ptr.
       CallArgs.push_back(std::make_pair(RValue::get(Src),
                                         CopyCtor->getParamDecl(0)->getType()));
-      QualType ResultType =
-        CopyCtor->getType()->getAs<FunctionType>()->getResultType();
-      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+      const FunctionProtoType *FPT
+        = CopyCtor->getType()->getAs<FunctionProtoType>();
+      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
                    Callee, ReturnValueSlot(), CallArgs, CopyCtor);
       CGF.setInvokeDest(PrevLandingPad);
     } else
@@ -244,9 +244,10 @@ static void CopyObject(CodeGenFunction &CGF, QualType ObjectType,
       // Push the Src ptr.
       CallArgs.push_back(std::make_pair(RValue::get(Src),
                                         CopyCtor->getParamDecl(0)->getType()));
-      QualType ResultType =
-        CopyCtor->getType()->getAs<FunctionType>()->getResultType();
-      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
+
+      const FunctionProtoType *FPT
+        = CopyCtor->getType()->getAs<FunctionProtoType>();
+      CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
                    Callee, ReturnValueSlot(), CallArgs, CopyCtor);
     } else
       llvm_unreachable("uncopyable object");
