@@ -40,7 +40,7 @@ public:
 
   ~BasicStoreManager() {}
 
-  SubRegionMap *getSubRegionMap(const GRState *state) {
+  SubRegionMap *getSubRegionMap(Store store) {
     return new BasicStoreSubRegionMap();
   }
 

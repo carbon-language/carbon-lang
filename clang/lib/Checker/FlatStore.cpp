@@ -37,7 +37,9 @@ public:
     return RBFactory.GetEmptyMap().getRoot();
   }
 
-  SubRegionMap *getSubRegionMap(const GRState *state);
+  SubRegionMap *getSubRegionMap(Store store) {
+    return 0;
+  }
 
   SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
 
@@ -86,11 +88,6 @@ Store FlatStoreManager::BindCompoundLiteral(Store store,
                                             const LocationContext *LC,
                                             SVal v) {
   return store;
-}
-
-
-SubRegionMap *FlatStoreManager::getSubRegionMap(const GRState *state) {
-  return 0;
 }
 
 SVal FlatStoreManager::getLValueVar(const VarDecl *VD, 

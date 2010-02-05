@@ -86,7 +86,7 @@ public:
   /// getSubRegionMap - Returns an opaque map object that clients can query
   ///  to get the subregions of a given MemRegion object.  It is the
   //   caller's responsibility to 'delete' the returned map.
-  virtual SubRegionMap *getSubRegionMap(const GRState *state) = 0;
+  virtual SubRegionMap *getSubRegionMap(Store store) = 0;
 
   virtual SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) = 0;
 

@@ -215,7 +215,9 @@ public:
       delete (*I).second;
   }
 
-  SubRegionMap *getSubRegionMap(const GRState *state);
+  SubRegionMap *getSubRegionMap(Store store) {
+    return getRegionStoreSubRegionMap(store);
+  }
 
   RegionStoreSubRegionMap *getRegionStoreSubRegionMap(Store store);
 
@@ -474,14 +476,9 @@ RegionStoreManager::getRegionStoreSubRegionMap(Store store) {
   return M;
 }
 
-SubRegionMap *RegionStoreManager::getSubRegionMap(const GRState *state) {
-  return getRegionStoreSubRegionMap(state->getStore());
-}
-
 //===----------------------------------------------------------------------===//
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
-
 
 void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
                                                  const MemRegion *R,
