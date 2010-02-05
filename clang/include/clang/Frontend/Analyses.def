@@ -38,7 +38,7 @@ ANALYSIS(WarnObjCMethSigs, "analyzer-check-objc-methodsigs",
  "Warn about Objective-C method signatures with type incompatibilities",
  ObjCImplementation)
 
-ANALYSIS(WarnObjCDealloc, "warn-objc-missing-dealloc",
+ANALYSIS(WarnObjCDealloc, "analyzer-check-objc-missing-dealloc",
  "Warn about Objective-C classes that lack a correct implementation of -dealloc",
  ObjCImplementation)
  

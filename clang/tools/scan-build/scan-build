@@ -125,7 +125,7 @@ my %AnalysesDefaultEnabled = (
   '-checker-cfref' => 1,
   '-analyzer-check-objc-methodsigs' => 1,
   # Do not enable the missing -dealloc check by default.
-  #  '-warn-objc-missing-dealloc' => 1,
+  #  '-analyzer-check-objc-missing-dealloc' => 1,
   '-analyzer-check-objc-unused-ivars' => 1,
   '-analyzer-check-security-syntactic' => 1
 );

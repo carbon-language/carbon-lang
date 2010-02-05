@@ -46,7 +46,7 @@ def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;
 def analysis_WarnObjCMethSigs : Flag<"-analyzer-check-objc-methodsigs">,
   HelpText<"Warn about Objective-C method signatures with type incompatibilities">;
-def analysis_WarnObjCDealloc : Flag<"-warn-objc-missing-dealloc">,
+def analysis_WarnObjCDealloc : Flag<"-analyzer-check-objc-missing-dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">;
 def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
   HelpText<"Warn about private ivars that are never used">;
