@@ -552,7 +552,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     for (unsigned i = 0, e = Code.size(); i != e; ++i) {
       if (i)
         OS << ',';
-      OS << format("%#04x", uint8_t(Code[i]));
+      OS << format("0x%02x", uint8_t(Code[i]));
     }
     OS << "]\n";
   }
