@@ -25,6 +25,29 @@ void __CFAssignWithWriteBarrier(void **location, void *value) {
         objc_assign_strongCast((id)value);
 }
 
+// radar 7607605
+@interface RealClass {
+        @public
+        int f;
+}
+@end
+
+@implementation RealClass
+@end
+
+@interface Foo {
+        id reserved;
+}
+@end
+
+@implementation Foo
+- (void)bar {
+        ((RealClass*)reserved)->f = 99;
+}
+@end
+
 // CHECK-LP: ((struct G_IMPL *)arg)->ivar
 
 // CHECK-LP: objc_assign_strongCast((id)value)
+
+// CHECK-LP: ((struct RealClass_IMPL *)((RealClass *)((struct Foo_IMPL *)self)->reserved))->f

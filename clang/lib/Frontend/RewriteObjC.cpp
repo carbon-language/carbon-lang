@@ -278,7 +278,9 @@ namespace {
     ParentMap *PropParentMap; // created lazily.
 
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
-    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
+    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart,
+                                 bool &replaced);
+    Stmt *RewriteObjCNestedIvarRefExpr(Stmt *S, bool &replaced);
     Stmt *RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr);
     Stmt *RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
                                 SourceRange SrcRange);
@@ -1209,7 +1211,8 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
 }
 
 Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
-                                          SourceLocation OrigStart) {
+                                          SourceLocation OrigStart,
+                                          bool &replaced) {
   ObjCIvarDecl *D = IV->getDecl();
   const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
@@ -1238,21 +1241,16 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
                                                IV->getBase()->getLocEnd(),
                                                castExpr);
+      replaced = true;
       if (IV->isFreeIvar() &&
           CurMethodDef->getClassInterface() == iFaceDecl->getDecl()) {
         MemberExpr *ME = new (Context) MemberExpr(PE, true, D,
                                                    IV->getLocation(),
                                                    D->getType());
-        ReplaceStmt(IV, ME);
         // delete IV; leak for now, see RewritePropertySetter() usage for more info.
         return ME;
       }
-      // Get the old text, only to get its size.
-      std::string SStr;
-      llvm::raw_string_ostream S(SStr);
-      IV->getBase()->printPretty(S, *Context, 0, PrintingPolicy(LangOpts));
       // Get the new text
-      ReplaceStmt(IV->getBase(), PE, S.str().size());
       // Cannot delete IV->getBase(), since PE points to it.
       // Replace the old base with the cast. This is important when doing
       // embedded rewrites. For example, [newInv->_container addObject:0].
@@ -1287,7 +1285,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
                                     IV->getBase()->getLocEnd(), castExpr);
-      ReplaceStmt(IV->getBase(), PE);
+      replaced = true;
       // Cannot delete IV->getBase(), since PE points to it.
       // Replace the old base with the cast. This is important when doing
       // embedded rewrites. For example, [newInv->_container addObject:0].
@@ -1296,6 +1294,24 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
     }
   }
   return IV;
+}
+
+Stmt *RewriteObjC::RewriteObjCNestedIvarRefExpr(Stmt *S, bool &replaced) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI) {
+    if (*CI) {
+      Stmt *newStmt = RewriteObjCNestedIvarRefExpr(*CI, replaced);
+      if (newStmt)
+        *CI = newStmt;
+    }
+  }
+  if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S)) {
+    SourceRange OrigStmtRange = S->getSourceRange();
+    Stmt *newStmt = RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin(),
+                                           replaced);
+    return newStmt;
+  }  
+  return S;
 }
 
 /// SynthCountByEnumWithState - To print:
@@ -4869,7 +4885,21 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
-      Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
+      Stmt *newStmt;
+      Stmt *S = (*CI);
+      if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S)) {
+        Expr *OldBase = IvarRefExpr->getBase();
+        bool replaced = false;
+        newStmt = RewriteObjCNestedIvarRefExpr(S, replaced);
+        if (replaced) {
+          if (ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(newStmt))
+            ReplaceStmt(OldBase, IRE->getBase());
+          else
+            ReplaceStmt(S, newStmt);
+        }
+      }
+      else
+        newStmt = RewriteFunctionBodyOrGlobalInitializer(S);
       if (newStmt)
         *CI = newStmt;
     }
@@ -4890,9 +4920,6 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
-
-  if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
-    return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
 
   if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(S)) {
     BinaryOperator *BinOp = PropSetters[PropRefExpr];
