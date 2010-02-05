@@ -96,3 +96,13 @@ void f2() {
 
 // PR3844
 template <> struct S<int> { }; // expected-error{{explicit specialization of non-template struct 'S'}}
+
+namespace PR6184 {
+  namespace N {
+    template <typename T>
+    void bar(typename T::x);
+  }
+  
+  template <typename T>
+  void N::bar(typename T::x) { }
+}

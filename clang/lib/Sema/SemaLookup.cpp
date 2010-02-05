@@ -649,11 +649,8 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
 
   for (; S; S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
-    if (!Ctx || Ctx->isTransparentContext())
+    if (Ctx && Ctx->isTransparentContext())
       continue;
-
-    assert(Ctx && Ctx->isFileContext() &&
-           "We should have been looking only at file context here already.");
 
     // Check whether the IdResolver has anything in this scope.
     bool Found = false;
@@ -668,16 +665,21 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       }
     }
 
-    // Look into context considering using-directives.
-    if (CppNamespaceLookup(R, Context, Ctx, UDirs))
-      Found = true;
+    if (Ctx) {
+      assert(Ctx->isFileContext() &&
+             "We should have been looking only at file context here already.");
+
+      // Look into context considering using-directives.
+      if (CppNamespaceLookup(R, Context, Ctx, UDirs))
+        Found = true;
+    }
 
     if (Found) {
       R.resolveKind();
       return true;
     }
 
-    if (R.isForRedeclaration() && !Ctx->isTransparentContext())
+    if (R.isForRedeclaration() && Ctx && !Ctx->isTransparentContext())
       return false;
   }
 
