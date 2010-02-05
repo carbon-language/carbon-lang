@@ -590,6 +590,19 @@ int blocks_2(int *p, int z) {
   return z;
 }
 
+// Test that the value of 'x' is considered invalidated after the block
+// is passed as an argument to the message expression.
+typedef void (^RDar7582031CB)(void);
+@interface RDar7582031
+- rdar7582031:RDar7582031CB;
+@end
+
+unsigned rdar7582031(RDar7582031 *o) {
+  __block unsigned x;
+  [o rdar7582031:^{ x = 1; }];
+  return x; // no-warning
+}
+
 //===----------------------------------------------------------------------===//
 // <rdar://problem/7462324> - Test that variables passed using __blocks
 //  are not treated as being uninitialized.
