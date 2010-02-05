@@ -1310,7 +1310,11 @@ Stmt *RewriteObjC::RewriteObjCNestedIvarRefExpr(Stmt *S, bool &replaced) {
     Stmt *newStmt = RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin(),
                                            replaced);
     return newStmt;
-  }  
+  } 
+  if (ObjCMessageExpr *MsgRefExpr = dyn_cast<ObjCMessageExpr>(S)) {
+    Stmt *newStmt = SynthMessageExpr(MsgRefExpr);
+    return newStmt;
+  }
   return S;
 }
 
