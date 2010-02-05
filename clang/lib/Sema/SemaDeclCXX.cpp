@@ -433,7 +433,7 @@ bool Sema::isCurrentClassName(const IdentifierInfo &II, Scope *,
   } else
     CurDecl = dyn_cast_or_null<CXXRecordDecl>(CurContext);
 
-  if (CurDecl)
+  if (CurDecl && CurDecl->getIdentifier())
     return &II == CurDecl->getIdentifier();
   else
     return false;

@@ -2737,7 +2737,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // (The parser checks for a return type and makes the declarator a
     // constructor if it has no return type).
     // must have an invalid constructor that has a return type
-    if (Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
+    if (Name.getAsIdentifierInfo() &&
+        Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
       Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
         << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
         << SourceRange(D.getIdentifierLoc());

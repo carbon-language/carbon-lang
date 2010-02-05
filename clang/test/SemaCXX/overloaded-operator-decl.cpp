@@ -37,3 +37,9 @@ Y operator++(Y&, INT);
 X operator++(X&, FLOAT); // expected-error{{parameter of overloaded post-increment operator must have type 'int' (not 'FLOAT' (aka 'float'))}}
 
 int operator+; // expected-error{{'operator+' cannot be the name of a variable or data member}}
+
+namespace PR6238 {
+  static struct {
+    void operator()();
+  } plus;
+}
