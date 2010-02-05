@@ -266,6 +266,101 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     EmitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel, OS);
 }
 
+/// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
+/// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
+/// size, and 3) use of X86-64 extended registers.
+static unsigned DetermineREXPrefix(const MCInst &MI, unsigned TSFlags,
+                                   const TargetInstrDesc &Desc) {
+  unsigned REX = 0;
+  
+  // Pseudo instructions do not need REX prefix byte.
+  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
+    return 0;
+  if (TSFlags & X86II::REX_W)
+    REX |= 1 << 3;
+  
+  if (MI.getNumOperands() == 0) return REX;
+  
+  unsigned NumOps = MI.getNumOperands();
+  // FIXME: MCInst should explicitize the two-addrness.
+  bool isTwoAddr = NumOps > 1 &&
+                      Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
+  
+  // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
+  unsigned i = isTwoAddr ? 1 : 0;
+  for (; i != NumOps; ++i) {
+    const MCOperand &MO = MI.getOperand(i);
+    if (!MO.isReg()) continue;
+    unsigned Reg = MO.getReg();
+    if (!X86InstrInfo::isX86_64NonExtLowByteReg(Reg)) continue;
+    REX |= 0x40;
+    break;
+  }
+  
+  switch (TSFlags & X86II::FormMask) {
+  case X86II::MRMInitReg: assert(0 && "FIXME: Remove this!");
+  case X86II::MRMSrcReg:
+    if (MI.getOperand(0).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+      REX |= 1 << 2;
+    i = isTwoAddr ? 2 : 1;
+    for (; i != NumOps; ++i) {
+      const MCOperand &MO = MI.getOperand(i);
+      if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+        REX |= 1 << 0;
+    }
+    break;
+  case X86II::MRMSrcMem: {
+    if (MI.getOperand(0).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+      REX |= 1 << 2;
+    unsigned Bit = 0;
+    i = isTwoAddr ? 2 : 1;
+    for (; i != NumOps; ++i) {
+      const MCOperand &MO = MI.getOperand(i);
+      if (MO.isReg()) {
+        if (X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+          REX |= 1 << Bit;
+        Bit++;
+      }
+    }
+    break;
+  }
+  case X86II::MRM0m: case X86II::MRM1m:
+  case X86II::MRM2m: case X86II::MRM3m:
+  case X86II::MRM4m: case X86II::MRM5m:
+  case X86II::MRM6m: case X86II::MRM7m:
+  case X86II::MRMDestMem: {
+    unsigned e = (isTwoAddr ? X86AddrNumOperands+1 : X86AddrNumOperands);
+    i = isTwoAddr ? 1 : 0;
+    if (NumOps > e && MI.getOperand(e).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(e).getReg()))
+      REX |= 1 << 2;
+    unsigned Bit = 0;
+    for (; i != e; ++i) {
+      const MCOperand &MO = MI.getOperand(i);
+      if (MO.isReg()) {
+        if (X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+          REX |= 1 << Bit;
+        Bit++;
+      }
+    }
+    break;
+  }
+  default:
+    if (MI.getOperand(0).isReg() &&
+        X86InstrInfo::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+      REX |= 1 << 0;
+    i = isTwoAddr ? 2 : 1;
+    for (unsigned e = NumOps; i != e; ++i) {
+      const MCOperand &MO = MI.getOperand(i);
+      if (MO.isReg() && X86InstrInfo::isX86_64ExtendedReg(MO.getReg()))
+        REX |= 1 << 2;
+    }
+    break;
+  }
+  return REX;
+}
 
 void X86MCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
@@ -337,12 +432,11 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
   }
   
   // Handle REX prefix.
-#if 0 // FIXME: Add in, also, can this come before F2 etc to simplify emission?
+  // FIXME: Can this come before F2 etc to simplify emission?
   if (Is64BitMode) {
-    if (unsigned REX = X86InstrInfo::determineREX(MI))
+    if (unsigned REX = DetermineREXPrefix(MI, TSFlags, Desc))
       EmitByte(0x40 | REX, OS);
   }
-#endif
   
   // 0x0F escape code must be emitted just before the opcode.
   if (Need0FPrefix)

@@ -18,7 +18,6 @@
 #include "X86.h"
 #include "X86RegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
   class X86RegisterInfo;
@@ -661,8 +660,15 @@ public:
           reg == X86::SIL || reg == X86::DIL);
   }
   
-  static bool isX86_64ExtendedReg(const MachineOperand &MO);
+  static bool isX86_64ExtendedReg(const MachineOperand &MO) {
+    if (!MO.isReg()) return false;
+    return isX86_64ExtendedReg(MO.getReg());
+  }
   static unsigned determineREX(const MachineInstr &MI);
+
+  /// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended (r8 or
+  /// higher) register?  e.g. r8, xmm8, xmm13, etc.
+  static bool isX86_64ExtendedReg(unsigned RegNo);
 
   /// GetInstSize - Returns the size of the specified MachineInstr.
   ///
