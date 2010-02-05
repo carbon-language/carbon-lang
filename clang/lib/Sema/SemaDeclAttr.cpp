@@ -987,7 +987,8 @@ static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // Attribute can be applied only to functions.
   // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either.
+  // do anything, either. All the function-pointer stuff is handled in
+  // SemaType.cpp.
   ValueDecl *VD = dyn_cast<ValueDecl>(d);
   if (VD && VD->getType()->isFunctionPointerType())
     return;
@@ -1031,7 +1032,8 @@ static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either.
+  // do anything, either. All the function-pointer stuff is handled in
+  // SemaType.cpp.
   ValueDecl *VD = dyn_cast<ValueDecl>(d);
   if (VD && VD->getType()->isFunctionPointerType())
     return;
