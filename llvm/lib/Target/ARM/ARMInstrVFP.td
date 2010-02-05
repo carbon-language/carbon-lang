@@ -248,7 +248,9 @@ def VMOVSR : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
 def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
                       (outs GPR:$wb, GPR:$dst2), (ins DPR:$src),
                  IIC_VMOVDI, "vmov", "\t$wb, $dst2, $src",
-                 [/* FIXME: Can't write pattern for multiple result instr*/]>;
+                 [/* FIXME: Can't write pattern for multiple result instr*/]> {
+  let Inst{7-6} = 0b00;
+}
 
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
@@ -256,7 +258,9 @@ def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
 def VMOVDRR : AVConv5I<0b11000100, 0b1011,
                      (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
                 IIC_VMOVID, "vmov", "\t$dst, $src1, $src2",
-                [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
+                [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]> {
+  let Inst{7-6} = 0b00;
+}
 
 // FMRDH: SPR -> GPR
 // FMRDL: SPR -> GPR
