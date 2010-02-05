@@ -640,11 +640,11 @@ public:
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified machine instruction.
   //
-  static unsigned char getBaseOpcodeFor(const TargetInstrDesc &TID) {
-    return TID.TSFlags >> X86II::OpcodeShift;
+  static unsigned char getBaseOpcodeFor(unsigned TSFlags) {
+    return TSFlags >> X86II::OpcodeShift;
   }
-  unsigned char getBaseOpcodeFor(unsigned Opcode) const {
-    return getBaseOpcodeFor(get(Opcode));
+  unsigned char getBaseOpcodeForOpcode(unsigned Opcode) const {
+    return getBaseOpcodeFor(get(Opcode).TSFlags);
   }
   
   static bool isX86_64NonExtLowByteReg(unsigned reg) {
@@ -652,7 +652,15 @@ public:
           reg == X86::SIL || reg == X86::DIL);
   }
   
-  static unsigned sizeOfImm(const TargetInstrDesc *Desc);
+  static unsigned getSizeOfImm(unsigned TSFlags) {
+    switch (TSFlags & X86II::ImmMask) {
+    default: assert(0 && "Unknown immediate size");
+    case X86II::Imm8:   return 1;
+    case X86II::Imm16:  return 2;
+    case X86II::Imm32:  return 4;
+    case X86II::Imm64:  return 8;
+    }
+  }    
   static bool isX86_64ExtendedReg(const MachineOperand &MO);
   static unsigned determineREX(const MachineInstr &MI);
 

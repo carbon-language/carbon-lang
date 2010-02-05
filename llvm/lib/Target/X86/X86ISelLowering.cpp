@@ -7033,8 +7033,8 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
 
     // Large code-model.
 
-    const unsigned char JMP64r  = TII->getBaseOpcodeFor(X86::JMP64r);
-    const unsigned char MOV64ri = TII->getBaseOpcodeFor(X86::MOV64ri);
+    const unsigned char JMP64r  = TII->getBaseOpcodeForOpcode(X86::JMP64r);
+    const unsigned char MOV64ri = TII->getBaseOpcodeForOpcode(X86::MOV64ri);
 
     const unsigned char N86R10 = RegInfo->getX86RegNum(X86::R10);
     const unsigned char N86R11 = RegInfo->getX86RegNum(X86::R11);
@@ -7129,7 +7129,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
                        DAG.getConstant(10, MVT::i32));
     Disp = DAG.getNode(ISD::SUB, dl, MVT::i32, FPtr, Addr);
 
-    const unsigned char MOV32ri = TII->getBaseOpcodeFor(X86::MOV32ri);
+    const unsigned char MOV32ri = TII->getBaseOpcodeForOpcode(X86::MOV32ri);
     const unsigned char N86Reg = RegInfo->getX86RegNum(NestReg);
     OutChains[0] = DAG.getStore(Root, dl,
                                 DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
@@ -7139,7 +7139,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
                        DAG.getConstant(1, MVT::i32));
     OutChains[1] = DAG.getStore(Root, dl, Nest, Addr, TrmpAddr, 1, false, 1);
 
-    const unsigned char JMP = TII->getBaseOpcodeFor(X86::JMP);
+    const unsigned char JMP = TII->getBaseOpcodeForOpcode(X86::JMP);
     Addr = DAG.getNode(ISD::ADD, dl, MVT::i32, Trmp,
                        DAG.getConstant(5, MVT::i32));
     OutChains[2] = DAG.getStore(Root, dl, DAG.getConstant(JMP, MVT::i8), Addr,

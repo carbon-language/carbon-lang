@@ -3014,16 +3014,6 @@ isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
            RC == &X86::RFP64RegClass || RC == &X86::RFP80RegClass);
 }
 
-unsigned X86InstrInfo::sizeOfImm(const TargetInstrDesc *Desc) {
-  switch (Desc->TSFlags & X86II::ImmMask) {
-  case X86II::Imm8:   return 1;
-  case X86II::Imm16:  return 2;
-  case X86II::Imm32:  return 4;
-  case X86II::Imm64:  return 8;
-  default: llvm_unreachable("Immediate size not set!");
-    return 0;
-  }
-}
 
 /// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended register?
 /// e.g. r8, xmm8, etc.
@@ -3400,7 +3390,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       ++FinalSize;
-      FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+      FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
       break;
     }
     }
@@ -3418,7 +3408,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       } else if (MO.isSymbol()) {
         FinalSize += sizeExternalSymbolAddress(false);
       } else if (MO.isImm()) {
-        FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+        FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
       } else {
         llvm_unreachable("Unknown RawFrm operand!");
       }
@@ -3431,7 +3421,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
       if (MO1.isImm())
         FinalSize += sizeConstant(Size);
       else {
@@ -3456,7 +3446,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     CurOp += 2;
     if (CurOp != NumOps) {
       ++CurOp;
-      FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+      FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
     }
     break;
   }
@@ -3466,7 +3456,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     CurOp +=  X86AddrNumOperands + 1;
     if (CurOp != NumOps) {
       ++CurOp;
-      FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+      FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
     }
     break;
   }
@@ -3477,7 +3467,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     CurOp += 2;
     if (CurOp != NumOps) {
       ++CurOp;
-      FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+      FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
     }
     break;
 
@@ -3494,7 +3484,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps) {
       ++CurOp;
-      FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+      FinalSize += sizeConstant(X86InstrInfo::getSizeOfImm(Desc->TSFlags));
     }
     break;
   }
@@ -3519,7 +3509,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
       if (MO1.isImm())
         FinalSize += sizeConstant(Size);
       else {
@@ -3549,7 +3539,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
-      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
       if (MO.isImm())
         FinalSize += sizeConstant(Size);
       else {
