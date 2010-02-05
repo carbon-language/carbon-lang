@@ -76,11 +76,12 @@ static RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 Pass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
-static unsigned ApproximateLoopSize(const Loop *L) {
+static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
   CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
     Metrics.analyzeBasicBlock(*I);
+  NumCalls = Metrics.NumCalls;
   return Metrics.NumInsts;
 }
 
@@ -110,8 +111,13 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Enforce the threshold.
   if (UnrollThreshold != NoThreshold) {
-    unsigned LoopSize = ApproximateLoopSize(L);
+    unsigned NumCalls;
+    unsigned LoopSize = ApproximateLoopSize(L, NumCalls);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
+    if (NumCalls != 0) {
+      DEBUG(dbgs() << "  Not unrolling loop with function calls.\n");
+      return false;
+    }
     uint64_t Size = (uint64_t)LoopSize*Count;
     if (TripCount != 1 && Size > UnrollThreshold) {
       DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
