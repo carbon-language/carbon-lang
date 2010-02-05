@@ -27,10 +27,9 @@ class X86MCCodeEmitter : public MCCodeEmitter {
   const TargetInstrInfo &TII;
   bool Is64BitMode;
 public:
-  X86MCCodeEmitter(TargetMachine &tm) 
+  X86MCCodeEmitter(TargetMachine &tm, bool is64Bit) 
     : TM(tm), TII(*TM.getInstrInfo()) {
-    // FIXME: Get this from the right place.
-    Is64BitMode = false;
+    Is64BitMode = is64Bit;
   }
 
   ~X86MCCodeEmitter() {}
@@ -83,9 +82,14 @@ public:
 } // end anonymous namespace
 
 
-MCCodeEmitter *llvm::createX86MCCodeEmitter(const Target &,
-                                            TargetMachine &TM) {
-  return new X86MCCodeEmitter(TM);
+MCCodeEmitter *llvm::createX86_32MCCodeEmitter(const Target &,
+                                               TargetMachine &TM) {
+  return new X86MCCodeEmitter(TM, false);
+}
+
+MCCodeEmitter *llvm::createX86_64MCCodeEmitter(const Target &,
+                                               TargetMachine &TM) {
+  return new X86MCCodeEmitter(TM, true);
 }
 
 

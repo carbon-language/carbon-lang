@@ -1117,8 +1117,11 @@ MCCodeEmitter *llvm::createHeinousX86MCCodeEmitter(const Target &T,
                                                    TargetMachine &TM) {
   
   // FIXME: Remove the heinous one when the new one works.
-  if (EnableNewEncoder)
-    return createX86MCCodeEmitter(T, TM);
+  if (EnableNewEncoder) {
+    if (TM.getTargetData()->getPointerSize() == 4)
+      return createX86_32MCCodeEmitter(T, TM);
+    return createX86_64MCCodeEmitter(T, TM);
+  }
 
   return new X86MCCodeEmitter(static_cast<X86TargetMachine&>(TM));
 }
