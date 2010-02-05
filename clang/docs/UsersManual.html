@@ -789,14 +789,12 @@ definition.</li>
 <h2 id="cxx">C++ Language Features</h2>
 <!-- ======================================================================= -->
 
-<p>At this point, Clang C++ is not generally useful.  However, Clang C++ support
+<p>At this point, Clang C++ is not production-quality and is not recommended for use beyond experimentation.  However, Clang C++ support
 is under active development and is progressing rapidly.  Please see the <a
 href="http://clang.llvm.org/cxx_status.html">C++ Status</a> page for details or
 ask on the mailing list about how you can help.</p>
 
-<p>Note that the clang driver will refuse to even try to use clang to compile
-C++ code unless you pass the <tt>-ccc-clang-cxx</tt> option to the driver.  If
-you really want to play with Clang's C++ support, please pass that flag. </p>
+<p>Note that released Clang compilers will refuse to even try to use clang to compile C++ code unless you pass the <tt>-ccc-clang-cxx</tt> option to the driver. To turn on Clang's C++ support, please pass that flag. Clang compilers built from the Subversion trunk enable C++ support by default, and do not require the <tt>-ccc-clang-cxx</tt> flag.</p>
  
 <!-- ======================================================================= -->
 <h2 id="objcxx">Objective C++ Language Features</h2>

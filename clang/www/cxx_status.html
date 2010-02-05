@@ -26,9 +26,75 @@
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
-<p>
-This page tracks the status of C++ support in Clang.<br>
-Clang implements the majority of C++ features, although there are many bugs  remaining and Clang is not yet generally useful as a C++ compiler. If you are looking to <a href="get_involved.html">get involved with Clang development</a> to help work on support for C++, please also look at our <a href="OpenProjects.html">Open Projects</a> page and the <a href="http://llvm.org/bugs/">LLVM bug tracker</a> for some specific ideas.</p>
+<h1>Clang C++ Status</h1>
+
+  <ul>
+    <li><a href="#projects">Projects Building with Clang</a></li>
+    <li><a href="#specification">Implementation Status by Section</a></li>
+    <li><a href="#cxx0x">C++0x Status</a></li>
+  </ul>
+  
+<p>Clang currently implements nearly all of the ISO C++ 1998 standard
+(including the defects addressed in the ISO C++ 2003 standard), with
+the few notable exceptions listed below. However, the implementation
+of Clang C++ is still quite immature, with many remaining bugs that
+are likely to cause compiler crashes, erroneous errors and warnings,
+and miscompiled code. The <a href="http://llvm.org/bugs/">LLVM bug
+tracker</a> contains a Clang C++ component that tracks known Clang C++
+bugs.</p>
+
+<p>Clang is currently missing implementations of the following C++98/03 features and common extensions:</p>
+  <ul>
+    
+    <li>Access control: Clang does not perform access-control checking
+    at this time, so it will fail to diagnose invalid accesses. Work
+    is underway to implement this feature.</li>
+
+    <li>Friends and friend templates: Clang parses friends and friend
+    templates for the most part, but they are not used in access
+    control and there are a number of problems with friend templates
+    and friends within class templates.</li>
+
+    <li>GNU <a href="http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Strong-Using.html">strong using</a> extension.</li>
+
+    <li>Qualified member accesses that disambiguate the base class in a diamond-shaped inheritance hierarchy.</li>
+    
+  </ul>
+  
+  <h2 id="projects">Projects Building with Clang</h2>
+
+  <p>Clang is now capable of compiling some language C++ projects, or
+large pieces of such projects. The following table describes various
+projects that we have attempted to compile with Clang along with the results of that attempt.</p>
+
+  <p> At this point in time, each new C++ project typically uncovers
+new bugs. We keep track of these in the <a
+ href="http://llvm.org/bugs/">LLVM bug tracker</a> via tracking bugs,
+which are used to relate all of the bugs known to affect that
+particular project. Introducing a new project in this list typically requires a liason familiar with LLVM or Clang development, who is able to provide detailed bug reports and track progress for the particular project.</p>
+
+<table width="689" border="1" cellspacing="0">
+  <tr>
+    <th>Project</th>
+    <th>Status</th>
+    <th>Last Tested</th>
+    <th>Tracking Bug</th>
+  </tr>
+  <tr>
+    <td><a href="http://clang.llvm.org">Clang</a> and <a href="http://llvm.org">LLVM</a></td>
+    <td>Successful self-hosting achieved</td>
+    <td>Continually</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><a href="http://www.boost.org">Boost</a></td>
+    <td>Some libraries (e.g., Boost.MPL) successfully build and pass regression tests, the majority still fail.</td>
+    <td>February 5, 2010</td>
+    <td><a href="http://llvm.org/bugs/show_bug.cgi?id=6023">PR6023</a></td>
+  </tr>
+</table>
+  
+  <h2 id="specification">Implementation Status by Section</h2>
 
 
 <!-- Within this table: The colors we're using to color-code our level
@@ -2297,6 +2363,12 @@ welcome!</p>
 <tr><td>&nbsp;&nbsp;D.5 [depr.c.headers]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>E [extendid]</td><td></td><td></td><td></td><td></td><td></td></tr>
 <tr>
+</table>
+
+  <h2 id="cxx0x">C++0x Implementation status</h2>
+<p>Clang's development effort is focused primarily on supporting the current ISO C++ standard (1998/2003). This section tracks the status of various C++0x features. In general, the implementations of these features are far less developed than C++98/03 features.</p>
+
+<table width="689" border="1" cellspacing="0">
   <td colspan="6" align="center" bgcolor="#ffffcc">C++0x Features</td>
 </tr>
 <tr>
