@@ -3028,8 +3028,8 @@ let isTwoAddress = 0 in {
   def SBB32mr  : I<0x19, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
                    [(store (sube (load addr:$dst), GR32:$src2), addr:$dst)]>;
-  def SBB8mi  : Ii32<0x80, MRM3m, (outs), (ins i8mem:$dst, i8imm:$src2), 
-                      "sbb{b}\t{$src2, $dst|$dst, $src2}",
+  def SBB8mi  : Ii8<0x80, MRM3m, (outs), (ins i8mem:$dst, i8imm:$src2), 
+                    "sbb{b}\t{$src2, $dst|$dst, $src2}",
                    [(store (sube (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def SBB16mi  : Ii16<0x81, MRM3m, (outs), (ins i16mem:$dst, i16imm:$src2), 
                       "sbb{w}\t{$src2, $dst|$dst, $src2}",
