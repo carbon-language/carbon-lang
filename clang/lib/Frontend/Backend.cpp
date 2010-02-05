@@ -343,11 +343,11 @@ void BackendConsumer::CreatePasses() {
     // Set the inline threshold following llvm-gcc.
     //
     // FIXME: Derive these constants in a principled fashion.
-    unsigned Threshold = 200;
+    unsigned Threshold = 225;
     if (CodeGenOpts.OptimizeSize)
-      Threshold = 50;
+      Threshold = 75;
     else if (OptLevel > 2)
-      Threshold = 250;
+      Threshold = 275;
     InliningPass = createFunctionInliningPass(Threshold);
     break;
   }
