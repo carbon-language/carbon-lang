@@ -505,8 +505,9 @@ def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
 // Alias instructions that map fld0 to pxor for sse.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
     canFoldAsLoad = 1 in
+  // FIXME: Set encoding to pseudo!
 def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins),
-                 "pxor\t$dst, $dst", [(set FR32:$dst, fp32imm0)]>,
+                 "", [(set FR32:$dst, fp32imm0)]>,
                Requires<[HasSSE1]>, TB, OpSize;
 
 // Alias instruction to do FR32 reg-to-reg copy using movaps. Upper bits are
@@ -1025,10 +1026,10 @@ def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-zeros value if folding it would be beneficial.
+// FIXME: Change encoding to pseudo!
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1 in
-def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins),
-                 "xorps\t$dst, $dst",
+def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 
 let Predicates = [HasSSE1] in {
@@ -2329,8 +2330,8 @@ def : Pat<(membarrier (i8 imm:$ll), (i8 imm:$ls), (i8 imm:$sl), (i8 imm:$ss),
 // load of an all-ones value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1 in
-  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins),
-                         "pcmpeqd\t$dst, $dst",
+  // FIXME: Change encoding to pseudo.
+  def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 // FR64 to 128-bit vector conversion.
