@@ -643,9 +643,6 @@ public:
   static unsigned char getBaseOpcodeFor(unsigned TSFlags) {
     return TSFlags >> X86II::OpcodeShift;
   }
-  unsigned char getBaseOpcodeForOpcode(unsigned Opcode) const {
-    return getBaseOpcodeFor(get(Opcode).TSFlags);
-  }
   
   static bool isX86_64NonExtLowByteReg(unsigned reg) {
     return (reg == X86::SPL || reg == X86::BPL ||
