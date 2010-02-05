@@ -1,9 +1,9 @@
-; RUN: llc < %s -march=x86 -disable-fp-elim | grep subl | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -disable-fp-elim | grep subl | count 1
 
         %struct.decode_t = type { i8, i8, i8, i8, i16, i8, i8, %struct.range_t** }
         %struct.range_t = type { float, float, i32, i32, i32, [0 x i8] }
 
-define i32 @decode_byte(%struct.decode_t* %decode) {
+define i32 @decode_byte(%struct.decode_t* %decode) nounwind {
 entry:
         %tmp2 = getelementptr %struct.decode_t* %decode, i32 0, i32 4           ; <i16*> [#uses=1]
         %tmp23 = bitcast i16* %tmp2 to i32*             ; <i32*> [#uses=1]
