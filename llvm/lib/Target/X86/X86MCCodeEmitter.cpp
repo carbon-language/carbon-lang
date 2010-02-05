@@ -32,9 +32,33 @@ public:
 
   ~X86MCCodeEmitter() {}
   
+  static unsigned GetX86RegNum(const MCOperand &MO) {
+    return X86RegisterInfo::getX86RegNum(MO.getReg());
+  }
+  
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
   }
+  
+  void EmitConstant(uint64_t Val, unsigned Size, raw_ostream &OS) const {
+    // Output the constant in little endian byte order.
+    for (unsigned i = 0; i != Size; ++i) {
+      EmitByte(Val & 255, OS);
+      Val >>= 8;
+    }
+  }
+  
+  inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
+                                        unsigned RM) {
+    assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
+    return RM | (RegOpcode << 3) | (Mod << 6);
+  }
+  
+  void EmitRegModRMByte(const MCOperand &ModRMReg, unsigned RegOpcodeFld,
+                        raw_ostream &OS) const {
+    EmitByte(ModRMByte(3, RegOpcodeFld, GetX86RegNum(ModRMReg)), OS);
+  }
+  
   
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS) const;
   
@@ -160,42 +184,43 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     if (CurOp == NumOps)
       break;
     
-    assert(0 && "Unimpl");
-#if 0
-    const MachineOperand &MO = MI.getOperand(CurOp++);
-    
-    DEBUG(dbgs() << "RawFrm CurOp " << CurOp << "\n");
-    DEBUG(dbgs() << "isMBB " << MO.isMBB() << "\n");
-    DEBUG(dbgs() << "isGlobal " << MO.isGlobal() << "\n");
-    DEBUG(dbgs() << "isSymbol " << MO.isSymbol() << "\n");
-    DEBUG(dbgs() << "isImm " << MO.isImm() << "\n");
-    
-    if (MO.isMBB()) {
-      emitPCRelativeBlockAddress(MO.getMBB());
-      break;
-    }
-    
-    if (MO.isGlobal()) {
-      emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
-                        MO.getOffset(), 0);
-      break;
-    }
-    
-    if (MO.isSymbol()) {
-      emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
-      break;
-    }
-    
-    assert(MO.isImm() && "Unknown RawFrm operand!");
-    if (Opcode == X86::CALLpcrel32 || Opcode == X86::CALL64pcrel32) {
-      // Fix up immediate operand for pc relative calls.
-      intptr_t Imm = (intptr_t)MO.getImm();
-      Imm = Imm - MCE.getCurrentPCValue() - 4;
-      emitConstant(Imm, X86InstrInfo::sizeOfImm(Desc));
-    } else
-      emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
+    assert(0 && "Unimpl RawFrm expr");
     break;
-#endif      
   }
+      
+  case X86II::AddRegFrm: {
+    EmitByte(BaseOpcode + GetX86RegNum(MI.getOperand(CurOp++)),OS);
+    if (CurOp == NumOps)
+      break;
+
+    const MCOperand &MO1 = MI.getOperand(CurOp++);
+    if (MO1.isImm()) {
+      unsigned Size = X86InstrInfo::sizeOfImm(&Desc);
+      EmitConstant(MO1.getImm(), Size, OS);
+      break;
+    }
+
+    assert(0 && "Unimpl AddRegFrm expr");
+    break;
   }
+      
+  case X86II::MRMDestReg:
+    EmitByte(BaseOpcode, OS);
+    EmitRegModRMByte(MI.getOperand(CurOp),
+                     GetX86RegNum(MI.getOperand(CurOp+1)), OS);
+    CurOp += 2;
+    if (CurOp != NumOps)
+      EmitConstant(MI.getOperand(CurOp++).getImm(),
+                   X86InstrInfo::sizeOfImm(&Desc), OS);
+    break;
+  }
+  
+#ifndef NDEBUG
+  if (!Desc.isVariadic() && CurOp != NumOps) {
+    errs() << "Cannot encode all operands of: ";
+    MI.dump();
+    errs() << '\n';
+    abort();
+  }
+#endif
 }

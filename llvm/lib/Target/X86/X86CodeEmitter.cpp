@@ -249,7 +249,7 @@ void Emitter<CodeEmitter>::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
 
 template<class CodeEmitter>
 unsigned Emitter<CodeEmitter>::getX86RegNum(unsigned RegNo) const {
-  return II->getRegisterInfo().getX86RegNum(RegNo);
+  return X86RegisterInfo::getX86RegNum(RegNo);
 }
 
 inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
