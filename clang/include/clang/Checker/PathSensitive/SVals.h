@@ -388,7 +388,7 @@ public:
   const LazyCompoundValData *getCVData() const {
     return static_cast<const LazyCompoundValData*>(Data);
   }
-  const GRState *getState() const;
+  const void *getStore() const;
   const TypedRegion *getRegion() const;
 
   static bool classof(const SVal *V) {

@@ -46,19 +46,19 @@ public:
 };
 
 class LazyCompoundValData : public llvm::FoldingSetNode {
-  const GRState *state;
+  const void *store;
   const TypedRegion *region;
 public:
-  LazyCompoundValData(const GRState *st, const TypedRegion *r)
-    : state(st), region(r) {}
+  LazyCompoundValData(const void *st, const TypedRegion *r)
+    : store(st), region(r) {}
 
-  const GRState *getState() const { return state; }
+  const void *getStore() const { return store; }
   const TypedRegion *getRegion() const { return region; }
 
-  static void Profile(llvm::FoldingSetNodeID& ID, const GRState *state,
+  static void Profile(llvm::FoldingSetNodeID& ID, const void *store,
                       const TypedRegion *region);
 
-  void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, state, region); }
+  void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, store, region); }
 };
 
 class BasicValueFactory {
@@ -169,7 +169,7 @@ public:
   const CompoundValData *getCompoundValData(QualType T,
                                             llvm::ImmutableList<SVal> Vals);
 
-  const LazyCompoundValData *getLazyCompoundValData(const GRState *state,
+  const LazyCompoundValData *getLazyCompoundValData(const void *store,
                                                     const TypedRegion *region);
 
   llvm::ImmutableList<SVal> getEmptySValList() {

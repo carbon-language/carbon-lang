@@ -115,8 +115,8 @@ public:
     return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
   }
 
-  NonLoc makeLazyCompoundVal(const GRState *state, const TypedRegion *R) {
-    return nonloc::LazyCompoundVal(BasicVals.getLazyCompoundValData(state, R));
+  NonLoc makeLazyCompoundVal(const void *store, const TypedRegion *R) {
+    return nonloc::LazyCompoundVal(BasicVals.getLazyCompoundValData(store, R));
   }
 
   NonLoc makeZeroArrayIndex() {

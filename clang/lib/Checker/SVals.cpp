@@ -153,8 +153,8 @@ void SVal::symbol_iterator::expand() {
   assert(false && "unhandled expansion case");
 }
 
-const GRState *nonloc::LazyCompoundVal::getState() const {
-  return static_cast<const LazyCompoundValData*>(Data)->getState();
+const void *nonloc::LazyCompoundVal::getStore() const {
+  return static_cast<const LazyCompoundValData*>(Data)->getStore();
 }
 
 const TypedRegion *nonloc::LazyCompoundVal::getRegion() const {
@@ -299,7 +299,7 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
     }
     case nonloc::LazyCompoundValKind: {
       const nonloc::LazyCompoundVal &C = *cast<nonloc::LazyCompoundVal>(this);
-      os << "lazyCompoundVal{" << (void*) C.getState() << ',' << C.getRegion()
+      os << "lazyCompoundVal{" << (void*) C.getStore() << ',' << C.getRegion()
          << '}';
       break;
     }
