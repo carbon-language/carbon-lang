@@ -40,7 +40,7 @@ def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
 def analysis_SecuritySyntacticChecks : Flag<"-analyzer-check-security-syntactic">,
   HelpText<"Perform quick security checks that require no data flow">;
-def analysis_WarnDeadStores : Flag<"-warn-dead-stores">,
+def analysis_WarnDeadStores : Flag<"-analyzer-check-dead-stores">,
   HelpText<"Warn about stores to dead variables">;
 def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;

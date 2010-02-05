@@ -121,7 +121,7 @@ while(<PIPE>) {
 close (PIPE);
 
 my %AnalysesDefaultEnabled = (
-  '-warn-dead-stores' => 1,
+  '-analyzer-check-dead-stores' => 1,
   '-checker-cfref' => 1,
   '-warn-objc-methodsigs' => 1,
   # Do not enable the missing -dealloc check by default.

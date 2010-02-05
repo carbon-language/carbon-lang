@@ -28,7 +28,7 @@ ANALYSIS(SecuritySyntacticChecks, "analyzer-check-security-syntactic",
          "Perform quick security checks that require no data flow",
          Code)
 
-ANALYSIS(WarnDeadStores, "warn-dead-stores",
+ANALYSIS(WarnDeadStores, "analyzer-check-dead-stores",
          "Warn about stores to dead variables", Code)
 
 ANALYSIS(WarnUninitVals, "warn-uninit-values",
