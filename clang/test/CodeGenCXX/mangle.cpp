@@ -365,3 +365,10 @@ namespace test0 {
   }
   // CHECK: define linkonce_odr void @_ZN5test01jINS_1AEEEvRAszmecvT__E6buffer_c(
 }
+
+namespace test1 {
+  template<typename T> struct X { };
+  template<template<class> class Y, typename T> void f(Y<T>) { }
+  // CHECK: define void @_ZN5test11fINS_1XEiEEvT_IT0_E
+  template void f(X<int>);
+}

@@ -400,6 +400,13 @@ void CXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *ND) {
   if (mangleSubstitution(ND))
     return;
 
+  // <template-template-param> ::= <template-param>
+  if (const TemplateTemplateParmDecl *TTP
+                                     = dyn_cast<TemplateTemplateParmDecl>(ND)) {
+    mangleTemplateParameter(TTP->getIndex());
+    return;
+  } 
+
   mangleUnscopedName(ND->getTemplatedDecl());
   addSubstitution(ND);
 }
@@ -674,15 +681,21 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
   // <template-prefix> ::= <prefix> <template unqualified-name>
   //                   ::= <template-param>
   //                   ::= <substitution>
+  // <template-template-param> ::= <template-param>
+  //                               <substitution>
 
   if (mangleSubstitution(ND))
     return;
 
-  // FIXME: <template-param>
+  // <template-template-param> ::= <template-param>
+  if (const TemplateTemplateParmDecl *TTP
+                                     = dyn_cast<TemplateTemplateParmDecl>(ND)) {
+    mangleTemplateParameter(TTP->getIndex());
+    return;
+  } 
 
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND->getTemplatedDecl());
-
   addSubstitution(ND);
 }
 
