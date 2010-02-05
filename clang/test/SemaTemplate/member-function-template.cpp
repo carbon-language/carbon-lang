@@ -73,3 +73,15 @@ void test_incomplete_access(X1<int> *x1, X2<int> *x2) {
   float &fr = x1->get<float>();
   (void)x2->get<float>(); // expected-error{{implicit instantiation of undefined template}}
 }
+
+// Instantiation of template template parameters in a member function
+// template.
+namespace TTP {
+  template<int Dim> struct X {
+    template<template<class> class M, class T> void f(const M<T>&);
+  };
+
+  template<typename T> struct Y { };
+
+  void test_f(X<3> x, Y<int> y) { x.f(y); }
+}
