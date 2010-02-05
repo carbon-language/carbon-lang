@@ -98,25 +98,14 @@ if (!defined $Clang || ! -x $Clang) {
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-open(PIPE, "-|", $Clang, "-cc1", "--help") or
+open(PIPE, "-|", $Clang, "-cc1", "-help") or
   DieDiag("Cannot execute '$Clang'\n");
 
-my $FoundAnalysis = 0;
-
 while(<PIPE>) {
-  if ($FoundAnalysis == 0) {
-    if (/Checks and Analyses/) {
-      $FoundAnalysis = 1;
-    }
-    next;
-  }
-  if (/^\s\s\s\s([^\s]+)\s(.+)$/) {
-    next if ($1 =~ /-dump/ or $1 =~ /-view/ 
-             or $1 =~ /-warn-uninit/);             
-    $AvailableAnalyses{$1} = $2;
+  if (/(-analyzer-check-[^\s]+)/) {
+    $AvailableAnalyses{$1} = 1;
     next;
   }  
-  last;
 }
 close (PIPE);
 
@@ -951,7 +940,7 @@ ENDTEXT
       print "    ";
     }
     
-    print " $Analysis  $AvailableAnalyses{$Analysis}\n";
+    print " $Analysis\n";
   }
   
 print <<ENDTEXT
