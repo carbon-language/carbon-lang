@@ -1120,6 +1120,7 @@ static void EmitGlobalConstantLargeInt(const ConstantInt *CI,
 void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
   if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV)) {
     uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+    if (Size == 0) Size = 1; // An empty "_foo:" followed by a section is undef.
     return OutStreamer.EmitZeros(Size, AddrSpace);
   }
 
