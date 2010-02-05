@@ -241,6 +241,10 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
 
   DeclContext *DC = computeDeclContext(SS, true);
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
+    // If this is a dependent type, then we consider it complete.
+    if (Tag->isDependentContext())
+      return false;
+
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.
     const TagType *TagT = Context.getTypeDeclType(Tag)->getAs<TagType>();
