@@ -63,6 +63,10 @@ namespace {
       AU.addPreserved<ProfileInfo>();
     }
 
+    virtual void releaseMemory() {
+      BackEdges.clear();
+    }
+
   private:
     bool EliminateMostlyEmptyBlocks(Function &F);
     bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
