@@ -708,7 +708,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-warn-objc-methodsigs");
       // Do not enable the missing -dealloc check.
       // '-warn-objc-missing-dealloc',
-      CmdArgs.push_back("-warn-objc-unused-ivars");
+      CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
     }
 
     // Set the output format. The default is plist, for (lame) historical

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -analyze -warn-objc-unused-ivars %s -verify
+// RUN: %clang_cc1 -fblocks -analyze -analyzer-check-objc-unused-ivars %s -verify
 
 //===--- BEGIN: Delta-debugging reduced headers. --------------------------===//
 

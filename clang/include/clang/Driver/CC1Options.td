@@ -48,7 +48,7 @@ def analysis_WarnObjCMethSigs : Flag<"-warn-objc-methodsigs">,
   HelpText<"Warn about Objective-C method signatures with type incompatibilities">;
 def analysis_WarnObjCDealloc : Flag<"-warn-objc-missing-dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">;
-def analysis_WarnObjCUnusedIvars : Flag<"-warn-objc-unused-ivars">,
+def analysis_WarnObjCUnusedIvars : Flag<"-analyzer-check-objc-unused-ivars">,
   HelpText<"Warn about private ivars that are never used">;
 def analysis_CheckerCFRef : Flag<"-checker-cfref">,
   HelpText<"Run the [Core] Foundation reference count checker">;

@@ -42,7 +42,7 @@ ANALYSIS(WarnObjCDealloc, "warn-objc-missing-dealloc",
  "Warn about Objective-C classes that lack a correct implementation of -dealloc",
  ObjCImplementation)
  
-ANALYSIS(WarnObjCUnusedIvars, "warn-objc-unused-ivars",
+ANALYSIS(WarnObjCUnusedIvars, "analyzer-check-objc-unused-ivars",
   "Warn about private ivars that are never used", ObjCImplementation)
 
 ANALYSIS(CheckerCFRef, "checker-cfref",
