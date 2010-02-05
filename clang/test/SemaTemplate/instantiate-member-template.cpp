@@ -131,3 +131,28 @@ namespace N0 {
     x1.f(x0l);
   }  
 }
+
+namespace PR6239 {
+  template <typename T>  
+  struct X0 {  
+    class type {
+      typedef T E;    
+      template <E e>  // subsitute T for E and bug goes away
+      struct sfinae {  };  
+      
+      template <class U>  
+      typename sfinae<&U::operator=>::type test(int);  
+    };
+  };
+
+  template <typename T>  
+  struct X1 {  
+    typedef T E;    
+    template <E e>  // subsitute T for E and bug goes away
+    struct sfinae {  };  
+    
+    template <class U>  
+    typename sfinae<&U::operator=>::type test(int);  
+  };
+
+}

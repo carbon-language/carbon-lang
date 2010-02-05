@@ -2170,10 +2170,11 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
     if (!Record->isDependentContext())
       return D;
     
-    // If the RecordDecl is actually the injected-class-name or a "templated"
-    // declaration for a class template or class template partial 
-    // specialization, substitute into the injected-class-name of the
-    // class template or partial specialization to find the new DeclContext.
+    // If the RecordDecl is actually the injected-class-name or a
+    // "templated" declaration for a class template, class template
+    // partial specialization, or a member class of a class template,
+    // substitute into the injected-class-name of the class template
+    // or partial specialization to find the new DeclContext.
     QualType T;
     ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate();
     
@@ -2183,15 +2184,18 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
                  = dyn_cast<ClassTemplatePartialSpecializationDecl>(Record)) {
       T = Context.getTypeDeclType(Record);
       ClassTemplate = PartialSpec->getSpecializedTemplate();
-    }
+    } 
     
     if (!T.isNull()) {
-      // Substitute into the injected-class-name to get the type corresponding
-      // to the instantiation we want. This substitution should never fail,
-      // since we know we can instantiate the injected-class-name or we wouldn't
-      // have gotten to the injected-class-name!
-      // FIXME: Can we use the CurrentInstantiationScope to avoid this extra
-      // instantiation in the common case?
+      // Substitute into the injected-class-name to get the type
+      // corresponding to the instantiation we want, which may also be
+      // the current instantiation (if we're in a template
+      // definition). This substitution should never fail, since we
+      // know we can instantiate the injected-class-name or we
+      // wouldn't have gotten to the injected-class-name!  
+
+      // FIXME: Can we use the CurrentInstantiationScope to avoid this
+      // extra instantiation in the common case?
       T = SubstType(T, TemplateArgs, SourceLocation(), DeclarationName());
       assert(!T.isNull() && "Instantiation of injected-class-name cannot fail.");
     
@@ -2200,26 +2204,37 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
         return T->getAs<RecordType>()->getDecl();
       }
     
-      // We are performing "partial" template instantiation to create the 
-      // member declarations for the members of a class template 
-      // specialization. Therefore, D is actually referring to something in 
-      // the current instantiation. Look through the current context,
-      // which contains actual instantiations, to find the instantiation of 
-      // the "current instantiation" that D refers to.
+      // We are performing "partial" template instantiation to create
+      // the member declarations for the members of a class template
+      // specialization. Therefore, D is actually referring to something
+      // in the current instantiation. Look through the current
+      // context, which contains actual instantiations, to find the
+      // instantiation of the "current instantiation" that D refers
+      // to.
+      bool SawNonDependentContext = false;
       for (DeclContext *DC = CurContext; !DC->isFileContext();
            DC = DC->getParent()) {
         if (ClassTemplateSpecializationDecl *Spec
-              = dyn_cast<ClassTemplateSpecializationDecl>(DC))
+                          = dyn_cast<ClassTemplateSpecializationDecl>(DC))
           if (isInstantiationOf(ClassTemplate, 
                                 Spec->getSpecializedTemplate()))
             return Spec;
+
+        if (!DC->isDependentContext())
+          SawNonDependentContext = true;
       }
 
-      assert(false &&
+      // We're performing "instantiation" of a member of the current
+      // instantiation while we are type-checking the
+      // definition. Compute the declaration context and return that.
+      assert(!SawNonDependentContext && 
+             "No dependent context while instantiating record");
+      DeclContext *DC = computeDeclContext(T);
+      assert(DC && 
              "Unable to find declaration for the current instantiation");
-      return Record;
+      return cast<CXXRecordDecl>(DC);
     }
-    
+
     // Fall through to deal with other dependent record types (e.g.,
     // anonymous unions in class templates).
   }
