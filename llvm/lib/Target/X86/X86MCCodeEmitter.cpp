@@ -366,7 +366,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
   
   // FIXME: Can we kill off MRMInitReg??
   
-  unsigned char BaseOpcode = X86InstrInfo::getBaseOpcodeFor(TSFlags);
+  unsigned char BaseOpcode = X86II::getBaseOpcodeFor(TSFlags);
   switch (TSFlags & X86II::FormMask) {
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
       assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
@@ -387,7 +387,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
 
     const MCOperand &MO1 = MI.getOperand(CurOp++);
     if (MO1.isImm()) {
-      unsigned Size = X86InstrInfo::getSizeOfImm(TSFlags);
+      unsigned Size = X86II::getSizeOfImm(TSFlags);
       EmitConstant(MO1.getImm(), Size, OS);
       break;
     }
@@ -403,7 +403,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     CurOp += 2;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(TSFlags), OS);
+                   X86II::getSizeOfImm(TSFlags), OS);
     break;
   
   case X86II::MRMDestMem:
@@ -414,7 +414,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     CurOp +=  X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(TSFlags), OS);
+                   X86II::getSizeOfImm(TSFlags), OS);
     break;
       
   case X86II::MRMSrcReg:
@@ -424,7 +424,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     CurOp += 2;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(TSFlags), OS);
+                   X86II::getSizeOfImm(TSFlags), OS);
     break;
     
   case X86II::MRMSrcMem: {
@@ -440,14 +440,14 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
     
     // FIXME: What is this actually doing?
     intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
-       X86InstrInfo::getSizeOfImm(TSFlags) : 0;
+       X86II::getSizeOfImm(TSFlags) : 0;
     
     EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
                      PCAdj, OS);
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(TSFlags), OS);
+                   X86II::getSizeOfImm(TSFlags), OS);
     break;
   }
       

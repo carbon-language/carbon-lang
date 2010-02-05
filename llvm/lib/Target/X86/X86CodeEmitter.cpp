@@ -566,7 +566,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
     --NumOps;
 
-  unsigned char BaseOpcode = X86InstrInfo::getBaseOpcodeFor(Desc->TSFlags);
+  unsigned char BaseOpcode = X86II::getBaseOpcodeFor(Desc->TSFlags);
   switch (Desc->TSFlags & X86II::FormMask) {
   default:
     llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");
@@ -596,7 +596,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);
-      emitConstant(0, X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+      emitConstant(0, X86II::getSizeOfImm(Desc->TSFlags));
       // Remember PIC base.
       PICBaseOffset = (intptr_t) MCE.getCurrentPCOffset();
       X86JITInfo *JTI = TM.getJITInfo();
@@ -641,9 +641,9 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       // Fix up immediate operand for pc relative calls.
       intptr_t Imm = (intptr_t)MO.getImm();
       Imm = Imm - MCE.getCurrentPCValue() - 4;
-      emitConstant(Imm, X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+      emitConstant(Imm, X86II::getSizeOfImm(Desc->TSFlags));
     } else
-      emitConstant(MO.getImm(), X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+      emitConstant(MO.getImm(), X86II::getSizeOfImm(Desc->TSFlags));
     break;
   }
       
@@ -654,7 +654,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       break;
       
     const MachineOperand &MO1 = MI.getOperand(CurOp++);
-    unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
+    unsigned Size = X86II::getSizeOfImm(Desc->TSFlags);
     if (MO1.isImm()) {
       emitConstant(MO1.getImm(), Size);
       break;
@@ -687,7 +687,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     CurOp += 2;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+                   X86II::getSizeOfImm(Desc->TSFlags));
     break;
   }
   case X86II::MRMDestMem: {
@@ -698,7 +698,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     CurOp +=  X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+                   X86II::getSizeOfImm(Desc->TSFlags));
     break;
   }
 
@@ -709,7 +709,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     CurOp += 2;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+                   X86II::getSizeOfImm(Desc->TSFlags));
     break;
 
   case X86II::MRMSrcMem: {
@@ -722,7 +722,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       AddrOperands = X86AddrNumOperands;
 
     intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
-      X86InstrInfo::getSizeOfImm(Desc->TSFlags) : 0;
+      X86II::getSizeOfImm(Desc->TSFlags) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
@@ -730,7 +730,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86InstrInfo::getSizeOfImm(Desc->TSFlags));
+                   X86II::getSizeOfImm(Desc->TSFlags));
     break;
   }
 
@@ -765,7 +765,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       break;
     
     const MachineOperand &MO1 = MI.getOperand(CurOp++);
-    unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
+    unsigned Size = X86II::getSizeOfImm(Desc->TSFlags);
     if (MO1.isImm()) {
       emitConstant(MO1.getImm(), Size);
       break;
@@ -794,7 +794,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
   case X86II::MRM6m: case X86II::MRM7m: {
     intptr_t PCAdj = (CurOp + X86AddrNumOperands != NumOps) ?
       (MI.getOperand(CurOp+X86AddrNumOperands).isImm() ? 
-          X86InstrInfo::getSizeOfImm(Desc->TSFlags) : 4) : 0;
+          X86II::getSizeOfImm(Desc->TSFlags) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
@@ -805,7 +805,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       break;
     
     const MachineOperand &MO = MI.getOperand(CurOp++);
-    unsigned Size = X86InstrInfo::getSizeOfImm(Desc->TSFlags);
+    unsigned Size = X86II::getSizeOfImm(Desc->TSFlags);
     if (MO.isImm()) {
       emitConstant(MO.getImm(), Size);
       break;

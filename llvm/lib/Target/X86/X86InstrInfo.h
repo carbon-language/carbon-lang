@@ -389,6 +389,25 @@ namespace X86II {
     OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
   };
+  
+  // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
+  // specified machine instruction.
+  //
+  static inline unsigned char getBaseOpcodeFor(unsigned TSFlags) {
+    return TSFlags >> X86II::OpcodeShift;
+  }
+  
+  /// getSizeOfImm - Decode the "size of immediate" field from the TSFlags field
+  /// of the specified instruction.
+  static inline unsigned getSizeOfImm(unsigned TSFlags) {
+    switch (TSFlags & X86II::ImmMask) {
+    default: assert(0 && "Unknown immediate size");
+    case X86II::Imm8:   return 1;
+    case X86II::Imm16:  return 2;
+    case X86II::Imm32:  return 4;
+    case X86II::Imm64:  return 8;
+    }
+  }    
 }
 
 const int X86AddrNumOperands = 5;
@@ -637,27 +656,11 @@ public:
   /// instruction that defines the specified register class.
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
 
-  // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
-  // specified machine instruction.
-  //
-  static unsigned char getBaseOpcodeFor(unsigned TSFlags) {
-    return TSFlags >> X86II::OpcodeShift;
-  }
-  
   static bool isX86_64NonExtLowByteReg(unsigned reg) {
     return (reg == X86::SPL || reg == X86::BPL ||
           reg == X86::SIL || reg == X86::DIL);
   }
   
-  static unsigned getSizeOfImm(unsigned TSFlags) {
-    switch (TSFlags & X86II::ImmMask) {
-    default: assert(0 && "Unknown immediate size");
-    case X86II::Imm8:   return 1;
-    case X86II::Imm16:  return 2;
-    case X86II::Imm32:  return 4;
-    case X86II::Imm64:  return 8;
-    }
-  }    
   static bool isX86_64ExtendedReg(const MachineOperand &MO);
   static unsigned determineREX(const MachineInstr &MI);
 
