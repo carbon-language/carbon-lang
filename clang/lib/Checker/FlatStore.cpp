@@ -28,12 +28,10 @@ public:
       BVFactory(mgr.getAllocator()) {}
 
   SVal Retrieve(Store store, Loc loc, QualType T);
-  const GRState *Bind(const GRState *state, Loc loc, SVal val);
+  Store Bind(Store store, Loc loc, SVal val);
   Store Remove(Store St, Loc L);
-  const GRState *BindCompoundLiteral(const GRState *state,
-                                     const CompoundLiteralExpr* cl,
-                                     const LocationContext *LC,
-                                     SVal v);
+  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* cl,
+                            const LocationContext *LC, SVal v);
 
   Store getInitialStore(const LocationContext *InitLoc) {
     return RBFactory.GetEmptyMap().getRoot();
@@ -52,16 +50,14 @@ public:
                           SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
-  const GRState *BindDecl(const GRState *ST, const VarRegion *VR, SVal initVal);
+  Store BindDecl(Store store, const VarRegion *VR, SVal initVal);
 
-  const GRState *BindDeclWithNoInit(const GRState *ST, const VarRegion *VR);
+  Store BindDeclWithNoInit(Store store, const VarRegion *VR);
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
-  const GRState *InvalidateRegion(const GRState *state,
-                                  const MemRegion *R,
-                                  const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS);
+  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
+                         unsigned Count, InvalidatedSymbols *IS);
 
   void print(Store store, llvm::raw_ostream& Out, const char* nl, 
              const char *sep);
@@ -77,19 +73,19 @@ SVal FlatStoreManager::Retrieve(Store store, Loc loc, QualType T) {
   return UnknownVal();
 }
 
-const GRState *FlatStoreManager::Bind(const GRState *state, Loc loc, SVal val) {
-  return state;
+Store FlatStoreManager::Bind(Store store, Loc loc, SVal val) {
+  return store;
 }
 
 Store FlatStoreManager::Remove(Store store, Loc L) {
   return store;
 }
 
-const GRState *FlatStoreManager::BindCompoundLiteral(const GRState *state,
-                                     const CompoundLiteralExpr* cl,
-                                     const LocationContext *LC,
-                                     SVal v) {
-  return state;
+Store FlatStoreManager::BindCompoundLiteral(Store store,
+                                            const CompoundLiteralExpr* cl,
+                                            const LocationContext *LC,
+                                            SVal v) {
+  return store;
 }
 
 
@@ -128,21 +124,19 @@ void FlatStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) {
 }
 
-const GRState *FlatStoreManager::BindDecl(const GRState *state, 
-                                          const VarRegion *VR, SVal initVal) {
-  return state;
+Store FlatStoreManager::BindDecl(Store store, const VarRegion *VR, 
+                                 SVal initVal) {
+  return store;
 }
 
-const GRState *FlatStoreManager::BindDeclWithNoInit(const GRState *state,
-                                                    const VarRegion *VR) {
-  return state;
+Store FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR) {
+  return store;
 }
 
-const GRState *FlatStoreManager::InvalidateRegion(const GRState *state,
-                                  const MemRegion *R,
-                                  const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS) {
-  return state;
+Store FlatStoreManager::InvalidateRegion(Store store, const MemRegion *R,
+                                         const Expr *E, unsigned Count,
+                                         InvalidatedSymbols *IS) {
+  return store;
 }
 
 void FlatStoreManager::print(Store store, llvm::raw_ostream& Out, 

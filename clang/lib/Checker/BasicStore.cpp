@@ -46,12 +46,11 @@ public:
 
   SVal Retrieve(Store store, Loc loc, QualType T = QualType());
 
-  const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
-                                  const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS);
+  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
+                         unsigned Count, InvalidatedSymbols *IS);
 
-  const GRState *Bind(const GRState *state, Loc L, SVal V) {
-    return state->makeWithStore(BindInternal(state->getStore(), L, V));
+  Store Bind(Store store, Loc L, SVal V) {
+    return BindInternal(store, L, V);
   }
 
   Store scanForIvars(Stmt *B, const Decl* SelfDecl,
@@ -66,11 +65,9 @@ public:
     return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
   }
 
-  const GRState *BindCompoundLiteral(const GRState *state,
-                                     const CompoundLiteralExpr*,
-                                     const LocationContext*,
-                                     SVal val) {
-    return state;
+  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr*,
+                            const LocationContext*, SVal val) {
+    return store;
   }
 
   SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
@@ -90,14 +87,12 @@ public:
 
   void iterBindings(Store store, BindingsHandler& f);
 
-  const GRState *BindDecl(const GRState *state, const VarRegion *VR,
-                          SVal InitVal) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(), VR,
-                                                 &InitVal));
+  Store BindDecl(Store store, const VarRegion *VR, SVal InitVal) {
+    return BindDeclInternal(store, VR, &InitVal);
   }
 
-  const GRState *BindDeclWithNoInit(const GRState *state, const VarRegion *VR) {
-    return state->makeWithStore(BindDeclInternal(state->getStore(), VR, 0));
+  Store BindDeclWithNoInit(Store store, const VarRegion *VR) {
+    return BindDeclInternal(store, VR, 0);
   }
 
   Store BindDeclInternal(Store store, const VarRegion *VR, SVal *InitVal);
@@ -596,18 +591,18 @@ StoreManager::BindingsHandler::~BindingsHandler() {}
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
 
-const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
-                                                   const MemRegion *R,
-                                                   const Expr *E,
-                                                   unsigned Count,
-                                                   InvalidatedSymbols *IS) {
+Store BasicStoreManager::InvalidateRegion(Store store,
+                                          const MemRegion *R,
+                                          const Expr *E,
+                                          unsigned Count,
+                                          InvalidatedSymbols *IS) {
   R = R->StripCasts();
 
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
-      return state;
+      return store;
 
   if (IS) {
-    BindingsTy B = GetBindings(state->getStore());
+    BindingsTy B = GetBindings(store);
     if (BindingsTy::data_type *Val = B.lookup(R)) {
       if (SymbolRef Sym = Val->getAsSymbol())
         IS->insert(Sym);
@@ -616,6 +611,6 @@ const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
 
   QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
   SVal V = ValMgr.getConjuredSymbolVal(R, E, T, Count);
-  return Bind(state, loc::MemRegionVal(R), V);
+  return Bind(store, loc::MemRegionVal(R), V);
 }
 

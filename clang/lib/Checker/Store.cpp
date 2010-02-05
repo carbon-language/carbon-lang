@@ -224,16 +224,15 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
   return V;
 }
 
-const GRState *StoreManager::InvalidateRegions(const GRState *state,
-                                               const MemRegion * const *I,
-                                               const MemRegion * const *End,
-                                               const Expr *E,
-                                               unsigned Count,
-                                               InvalidatedSymbols *IS) {
+Store StoreManager::InvalidateRegions(Store store,
+                                      const MemRegion * const *I,
+                                      const MemRegion * const *End,
+                                      const Expr *E, unsigned Count,
+                                      InvalidatedSymbols *IS) {
   for ( ; I != End ; ++I)
-    state = InvalidateRegion(state, *I, E, Count, IS);
+    store = InvalidateRegion(store, *I, E, Count, IS);
   
-  return state;
+  return store;
 }
 
 //===----------------------------------------------------------------------===//

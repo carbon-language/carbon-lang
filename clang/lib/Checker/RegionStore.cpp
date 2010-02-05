@@ -228,9 +228,7 @@ public:
   /// setImplicitDefaultValue - Set the default binding for the provided
   ///  MemRegion to the value implicitly defined for compound literals when
   ///  the value is not specified.  
-  const GRState *setImplicitDefaultValue(const GRState *state,
-                                         const MemRegion *R,
-                                         QualType T);
+  Store setImplicitDefaultValue(Store store, const MemRegion *R, QualType T);
 
   /// getLValueString - Returns an SVal representing the lvalue of a
   ///  StringLiteral.  Within RegionStore a StringLiteral has an
@@ -277,17 +275,16 @@ public:
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
 
-  const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
-                                  const Expr *E, unsigned Count,
-                                  InvalidatedSymbols *IS) {
-    return RegionStoreManager::InvalidateRegions(state, &R, &R+1, E, Count, IS);
+  Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
+                         unsigned Count, InvalidatedSymbols *IS) {
+    return RegionStoreManager::InvalidateRegions(store, &R, &R+1, E, Count, IS);
   }
   
-  const GRState *InvalidateRegions(const GRState *state,
-                                   const MemRegion * const *Begin,
-                                   const MemRegion * const *End,
-                                   const Expr *E, unsigned Count,
-                                   InvalidatedSymbols *IS);
+  Store InvalidateRegions(Store store,
+                          const MemRegion * const *Begin,
+                          const MemRegion * const *End,
+                          const Expr *E, unsigned Count,
+                          InvalidatedSymbols *IS);
 
 public:   // Made public for helper classes.
   
@@ -314,25 +311,21 @@ public:   // Made public for helper classes.
 
 public: // Part of public interface to class.
 
-  const GRState *Bind(const GRState *state, Loc LV, SVal V);
+  Store Bind(Store store, Loc LV, SVal V);
 
-  const GRState *BindCompoundLiteral(const GRState *state,
-                                     const CompoundLiteralExpr* CL,
-                                     const LocationContext *LC,
-                                     SVal V);
+  Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
+                            const LocationContext *LC, SVal V);
 
-  const GRState *BindDecl(const GRState *ST, const VarRegion *VR,
-                          SVal InitVal);
+  Store BindDecl(Store store, const VarRegion *VR, SVal InitVal);
 
-  const GRState *BindDeclWithNoInit(const GRState *state, 
-                                    const VarRegion *) {
-    return state;
+  Store BindDeclWithNoInit(Store store, const VarRegion *) {
+    return store;
   }
 
   /// BindStruct - Bind a compound value to a structure.
-  const GRState *BindStruct(const GRState *, const TypedRegion* R, SVal V);
+  Store BindStruct(Store store, const TypedRegion* R, SVal V);
 
-  const GRState *BindArray(const GRState *state, const TypedRegion* R, SVal V);
+  Store BindArray(Store store, const TypedRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown.
   Store KillStruct(Store store, const TypedRegion* R);
@@ -383,9 +376,8 @@ public: // Part of public interface to class.
   std::pair<Store, const MemRegion*>
   GetLazyBinding(RegionBindings B, const MemRegion *R);
 
-  const GRState* CopyLazyBindings(nonloc::LazyCompoundVal V,
-                                  const GRState *state,
-                                  const TypedRegion *R);
+  Store CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
+                         const TypedRegion *R);
 
   const ElementRegion *GetElementZeroRegion(const SymbolicRegion *SR,
                                             QualType T);
@@ -514,13 +506,11 @@ class InvalidateRegionsWorker {
   ClusterMap ClusterM;
   WorkList WL;  
 public:
-  const GRState *InvalidateRegions(RegionStoreManager &RM,
-                                   const GRState *state,
-                                   const MemRegion * const *I,
-                                   const MemRegion * const *E,
-                                   const Expr *Ex,
-                                   unsigned Count,
-                                   StoreManager::InvalidatedSymbols *IS);
+  Store InvalidateRegions(RegionStoreManager &RM, Store store,
+                          const MemRegion * const *I,const MemRegion * const *E,
+                          const Expr *Ex, unsigned Count,
+                          StoreManager::InvalidatedSymbols *IS,
+                          ASTContext &Ctx, ValueManager &ValMgr);
   
 private:
   void AddToWorkList(BindingKey K);
@@ -561,17 +551,15 @@ InvalidateRegionsWorker::getCluster(const MemRegion *R) {
   return &CRef;
 }
 
-const GRState *
-InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
-                                           const GRState *state,
-                                           const MemRegion * const *I,
-                                           const MemRegion * const *E,
-                                           const Expr *Ex, unsigned Count,
-                                           StoreManager::InvalidatedSymbols *IS)
-{
-  ASTContext &Ctx = state->getStateManager().getContext();
-  ValueManager &ValMgr = state->getStateManager().getValueManager();
-  RegionBindings B = RegionStoreManager::GetRegionBindings(state->getStore());
+Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
+                                                 Store store,
+                                                 const MemRegion * const *I,
+                                                 const MemRegion * const *E,
+                                                 const Expr *Ex, unsigned Count,
+                                           StoreManager::InvalidatedSymbols *IS,
+                                                 ASTContext &Ctx,
+                                                 ValueManager &ValMgr) {
+  RegionBindings B = RegionStoreManager::GetRegionBindings(store);
 
   // Scan the entire store and make the region clusters.
   for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI) {
@@ -677,17 +665,17 @@ InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
   }
 
   // Create a new state with the updated bindings.
-  return state->makeWithStore(B.getRoot());
+  return B.getRoot();
 }
 
-const GRState *RegionStoreManager::InvalidateRegions(const GRState *state,
-                                                     const MemRegion * const *I,
-                                                     const MemRegion * const *E,
-                                                     const Expr *Ex,
-                                                     unsigned Count,
-                                                     InvalidatedSymbols *IS) {
+Store RegionStoreManager::InvalidateRegions(Store store,
+                                            const MemRegion * const *I,
+                                            const MemRegion * const *E,
+                                            const Expr *Ex, unsigned Count,
+                                            InvalidatedSymbols *IS) {
   InvalidateRegionsWorker W;
-  return W.InvalidateRegions(*this, state, I, E, Ex, Count, IS);
+  return W.InvalidateRegions(*this, store, I, E, Ex, Count, IS, getContext(),
+                             StateMgr.getValueManager());
 }
   
  
@@ -1491,9 +1479,9 @@ Store RegionStoreManager::Remove(Store store, Loc L) {
   return store;
 }
 
-const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
+Store RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   if (isa<loc::ConcreteInt>(L))
-    return state;
+    return store;
 
   // If we get here, the location should be a region.
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
@@ -1501,7 +1489,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   // Check if the region is a struct region.
   if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
     if (TR->getValueType(getContext())->isStructureType())
-      return BindStruct(state, TR, V);
+      return BindStruct(store, TR, V);
 
   // Special case: the current region represents a cast and it and the super
   // region both have pointer types or intptr_t types.  If so, perform the
@@ -1519,12 +1507,12 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
         if (IsAnyPointerOrIntptr(superTy, Ctx) &&
             IsAnyPointerOrIntptr(erTy, Ctx)) {
           V = ValMgr.getSValuator().EvalCast(V, superTy, erTy);
-          return Bind(state, loc::MemRegionVal(superR), V);
+          return Bind(store, loc::MemRegionVal(superR), V);
         }
         // For now, just invalidate the fields of the struct/union/class.
         // FIXME: Precisely handle the fields of the record.
         if (superTy->isRecordType())
-          return InvalidateRegion(state, superR, NULL, 0, NULL);
+          return InvalidateRegion(store, superR, NULL, 0, NULL);
       }
     }
   }
@@ -1543,38 +1531,35 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
   }
 
   // Perform the binding.
-  RegionBindings B = GetRegionBindings(state->getStore());
-  return state->makeWithStore(Add(B, R, BindingKey::Direct, V).getRoot());
+  RegionBindings B = GetRegionBindings(store);
+  return Add(B, R, BindingKey::Direct, V).getRoot();
 }
 
-const GRState *RegionStoreManager::BindDecl(const GRState *ST,
-                                            const VarRegion *VR, 
-                                            SVal InitVal) {
+Store RegionStoreManager::BindDecl(Store store, const VarRegion *VR, 
+                                   SVal InitVal) {
 
   QualType T = VR->getDecl()->getType();
 
   if (T->isArrayType())
-    return BindArray(ST, VR, InitVal);
+    return BindArray(store, VR, InitVal);
   if (T->isStructureType())
-    return BindStruct(ST, VR, InitVal);
+    return BindStruct(store, VR, InitVal);
 
-  return Bind(ST, ValMgr.makeLoc(VR), InitVal);
+  return Bind(store, ValMgr.makeLoc(VR), InitVal);
 }
 
 // FIXME: this method should be merged into Bind().
-const GRState *
-RegionStoreManager::BindCompoundLiteral(const GRState *state,
-                                        const CompoundLiteralExpr *CL,
-                                        const LocationContext *LC,
-                                        SVal V) {
-  return Bind(state, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
+Store RegionStoreManager::BindCompoundLiteral(Store store,
+                                              const CompoundLiteralExpr *CL,
+                                              const LocationContext *LC,
+                                              SVal V) {
+  return Bind(store, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)),
               V);
 }
 
-const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
-                                                           const MemRegion *R,
-                                                           QualType T) {
-  Store store = state->getStore();
+Store RegionStoreManager::setImplicitDefaultValue(Store store,
+                                                  const MemRegion *R,
+                                                  QualType T) {
   RegionBindings B = GetRegionBindings(store);
   SVal V;
 
@@ -1588,15 +1573,14 @@ const GRState *RegionStoreManager::setImplicitDefaultValue(const GRState *state,
     V = ValMgr.makeZeroVal(ValMgr.getContext().IntTy);
   }
   else {
-    return state;
+    return store;
   }
 
-  return state->makeWithStore(Add(B, R, BindingKey::Default, V).getRoot());
+  return Add(B, R, BindingKey::Default, V).getRoot();
 }
   
-const GRState *RegionStoreManager::BindArray(const GRState *state,
-                                             const TypedRegion* R,
-                                             SVal Init) {
+Store RegionStoreManager::BindArray(Store store, const TypedRegion* R, 
+                                    SVal Init) {
   
   ASTContext &Ctx = getContext();
   const ArrayType *AT =
@@ -1632,20 +1616,20 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
                                                        getContext());
 
       SVal V = ValMgr.makeIntVal(str[j], sizeof(char)*8, true);
-      state = Bind(state, loc::MemRegionVal(ER), V);
+      store = Bind(store, loc::MemRegionVal(ER), V);
     }
 
-    return state;
+    return store;
   }
 
   // Handle lazy compound values.
   if (nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&Init))
-    return CopyLazyBindings(*LCV, state, R);
+    return CopyLazyBindings(*LCV, store, R);
 
   // Remaining case: explicit compound values.
   
   if (Init.isUnknown())
-    return setImplicitDefaultValue(state, R, ElementTy);    
+    return setImplicitDefaultValue(store, R, ElementTy);    
   
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
@@ -1660,25 +1644,24 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
     if (ElementTy->isStructureType())
-      state = BindStruct(state, ER, *VI);
+      store = BindStruct(store, ER, *VI);
     else
-      state = Bind(state, ValMgr.makeLoc(ER), *VI);
+      store = Bind(store, ValMgr.makeLoc(ER), *VI);
   }
 
   // If the init list is shorter than the array length, set the
   // array default value.
   if (Size.hasValue() && i < Size.getValue())
-    state = setImplicitDefaultValue(state, R, ElementTy);
+    store = setImplicitDefaultValue(store, R, ElementTy);
 
-  return state;
+  return store;
 }
 
-const GRState *
-RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
-                               SVal V) {
+Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
+                                     SVal V) {
 
   if (!Features.supportsFields())
-    return state;
+    return store;
 
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
@@ -1687,16 +1670,16 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition())
-    return state;
+    return store;
 
   // Handle lazy compound values.
   if (const nonloc::LazyCompoundVal *LCV=dyn_cast<nonloc::LazyCompoundVal>(&V))
-    return CopyLazyBindings(*LCV, state, R);
+    return CopyLazyBindings(*LCV, store, R);
 
   // We may get non-CompoundVal accidentally due to imprecise cast logic.
   // Ignore them and kill the field values.
   if (V.isUnknown() || !isa<nonloc::CompoundVal>(V))
-    return state->makeWithStore(KillStruct(state->getStore(), R));
+    return KillStruct(store, R);
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
@@ -1712,22 +1695,21 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
     const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
 
     if (FTy->isArrayType())
-      state = BindArray(state, FR, *VI);
+      store = BindArray(store, FR, *VI);
     else if (FTy->isStructureType())
-      state = BindStruct(state, FR, *VI);
+      store = BindStruct(store, FR, *VI);
     else
-      state = Bind(state, ValMgr.makeLoc(FR), *VI);
+      store = Bind(store, ValMgr.makeLoc(FR), *VI);
   }
 
   // There may be fewer values in the initialize list than the fields of struct.
   if (FI != FE) {
-    Store store = state->getStore();
     RegionBindings B = GetRegionBindings(store);
     B = Add(B, R, BindingKey::Default, ValMgr.makeIntVal(0, false));
-    state = state->makeWithStore(B.getRoot());
+    store = B.getRoot();
   }
 
-  return state;
+  return store;
 }
 
 Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R) {
@@ -1740,23 +1722,21 @@ Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R) {
   return Add(B, R, BindingKey::Default, UnknownVal()).getRoot();
 }
 
-const GRState*
-RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
-                                     const GRState *state,
-                                     const TypedRegion *R) {
+Store RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
+                                           Store store, const TypedRegion *R) {
 
   // Nuke the old bindings stemming from R.
-  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionBindings B = GetRegionBindings(store);
 
   llvm::OwningPtr<RegionStoreSubRegionMap>
-    SubRegions(getRegionStoreSubRegionMap(state->getStore()));
+    SubRegions(getRegionStoreSubRegionMap(store));
 
   // B and DVM are updated after the call to RemoveSubRegionBindings.
   RemoveSubRegionBindings(B, R, *SubRegions.get());
 
   // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
   // results in a zero-copy algorithm.
-  return state->makeWithStore(Add(B, R, BindingKey::Direct, V).getRoot());
+  return Add(B, R, BindingKey::Direct, V).getRoot();
 }
 
 //===----------------------------------------------------------------------===//
@@ -2024,12 +2004,13 @@ GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
   CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
 
   // Copy the arg expression value to the arg variables.
+  Store store = state->getStore();
   for (; AI != AE; ++AI, ++PI) {
     SVal ArgVal = state->getSVal(*AI);
-    state = Bind(state, ValMgr.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
+    store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
   }
 
-  return state;
+  return state->makeWithStore(store);
 }
 
 //===----------------------------------------------------------------------===//

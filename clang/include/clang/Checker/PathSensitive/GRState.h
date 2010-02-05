@@ -216,7 +216,7 @@ public:
   ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
+  const GRState *bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                      const LocationContext *LC,
                                      SVal V) const;
 
@@ -607,19 +607,24 @@ inline const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
 inline const GRState *
 GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
                              const LocationContext *LC, SVal V) const {
-  return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, LC, V);
+  Store new_store = 
+    getStateManager().StoreMgr->BindCompoundLiteral(St, CL, LC, V);
+  return makeWithStore(new_store);
 }
 
 inline const GRState *GRState::bindDecl(const VarRegion* VR, SVal IVal) const {
-  return getStateManager().StoreMgr->BindDecl(this, VR, IVal);
+  Store new_store = getStateManager().StoreMgr->BindDecl(St, VR, IVal);
+  return makeWithStore(new_store);
 }
 
 inline const GRState *GRState::bindDeclWithNoInit(const VarRegion* VR) const {
-  return getStateManager().StoreMgr->BindDeclWithNoInit(this, VR);
+  Store new_store = getStateManager().StoreMgr->BindDeclWithNoInit(St, VR);
+  return makeWithStore(new_store);
 }
 
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
-  return getStateManager().StoreMgr->Bind(this, LV, V);
+  Store new_store = getStateManager().StoreMgr->Bind(St, LV, V);
+  return makeWithStore(new_store);
 }
 
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {

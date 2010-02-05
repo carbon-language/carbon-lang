@@ -2683,10 +2683,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
     
     StoreManager::InvalidatedSymbols IS;
-    state = StoreMgr.InvalidateRegions(state, RegionsToInvalidate.data(),
+    Store store = state->getStore();
+    store = StoreMgr.InvalidateRegions(store, RegionsToInvalidate.data(),
                                        RegionsToInvalidate.data() +
                                        RegionsToInvalidate.size(),
                                        Ex, Count, &IS);
+    state = state->makeWithStore(store);
     for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
          E = IS.end(); I!=E; ++I) {
         // Remove any existing reference-count binding.

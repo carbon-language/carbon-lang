@@ -63,7 +63,7 @@ public:
   /// \return A pointer to a GRState object that contains the same bindings as
   ///   \c state with the addition of having the value specified by \c val bound
   ///   to the location given for \c loc.
-  virtual const GRState *Bind(const GRState *state, Loc loc, SVal val) = 0;
+  virtual Store Bind(Store store, Loc loc, SVal val) = 0;
 
   virtual Store Remove(Store St, Loc L) = 0;
 
@@ -71,10 +71,9 @@ public:
   ///  in 'store' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
-  virtual const GRState *BindCompoundLiteral(const GRState *state,
-                                             const CompoundLiteralExpr* cl,
-                                             const LocationContext *LC,
-                                             SVal v) = 0;
+  virtual Store BindCompoundLiteral(Store store,
+                                    const CompoundLiteralExpr* cl,
+                                    const LocationContext *LC, SVal v) = 0;
 
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
@@ -137,24 +136,22 @@ public:
                                   SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
-  virtual const GRState *BindDecl(const GRState *ST, const VarRegion *VR,
-                                  SVal initVal) = 0;
+  virtual Store BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
 
-  virtual const GRState *BindDeclWithNoInit(const GRState *ST,
-                                            const VarRegion *VR) = 0;
+  virtual Store BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   
-  virtual const GRState *InvalidateRegion(const GRState *state,
-                                          const MemRegion *R,
-                                          const Expr *E, unsigned Count,
-                                          InvalidatedSymbols *IS) = 0;
+  virtual Store InvalidateRegion(Store store,
+                                 const MemRegion *R,
+                                 const Expr *E, unsigned Count,
+                                 InvalidatedSymbols *IS) = 0;
   
-  virtual const GRState *InvalidateRegions(const GRState *state,
-                                           const MemRegion * const *Begin,
-                                           const MemRegion * const *End,
-                                           const Expr *E, unsigned Count,
-                                           InvalidatedSymbols *IS);  
+  virtual Store InvalidateRegions(Store store,
+                                  const MemRegion * const *Begin,
+                                  const MemRegion * const *End,
+                                  const Expr *E, unsigned Count,
+                                  InvalidatedSymbols *IS);  
 
   // FIXME: Make out-of-line.
   virtual const GRState *setExtent(const GRState *state,
