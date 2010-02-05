@@ -176,8 +176,9 @@ ReprocessLoop:
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
     
-  SetVector<BasicBlock*> ExitBlockSet(ExitBlocks.begin(), ExitBlocks.end());
-  for (SetVector<BasicBlock*>::iterator I = ExitBlockSet.begin(),
+  SmallSetVector<BasicBlock *, 8> ExitBlockSet(ExitBlocks.begin(),
+                                               ExitBlocks.end());
+  for (SmallSetVector<BasicBlock *, 8>::iterator I = ExitBlockSet.begin(),
          E = ExitBlockSet.end(); I != E; ++I) {
     BasicBlock *ExitBlock = *I;
     for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
