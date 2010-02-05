@@ -62,7 +62,7 @@ namespace llvm {
 
     /// CommentColumn - This indicates the comment num (zero-based) at
     /// which asm comments should be printed.
-    unsigned CommentColumn;                  // Defaults to 60
+    unsigned CommentColumn;                  // Defaults to 40
 
     /// CommentString - This indicates the comment character used by the
     /// assembler.

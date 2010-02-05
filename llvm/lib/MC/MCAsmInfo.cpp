@@ -25,7 +25,7 @@ MCAsmInfo::MCAsmInfo() {
   MaxInstLength = 4;
   PCSymbol = "$";
   SeparatorChar = ';';
-  CommentColumn = 60;
+  CommentColumn = 40;
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
