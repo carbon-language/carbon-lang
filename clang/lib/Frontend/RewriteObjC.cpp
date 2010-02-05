@@ -634,6 +634,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
 //===----------------------------------------------------------------------===//
 
 void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
+  if (Diags.hasErrorOccurred())
+    return;
+
   // Two cases: either the decl could be in the main file, or it could be in a
   // #included file.  If the former, rewrite it now.  If the later, check to see
   // if we rewrote the #include/#import.
@@ -5248,11 +5251,6 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
 }
 
 void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
-  // Get the top-level buffer that this corresponds to.
-
-  // Rewrite tabs if we care.
-  //RewriteTabs();
-
   if (Diags.hasErrorOccurred())
     return;
 
