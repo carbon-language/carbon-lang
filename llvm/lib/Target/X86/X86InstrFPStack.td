@@ -339,7 +339,6 @@ def FICOMP32m: FPI<0xDA, MRM3m, (outs), (ins i32mem:$src), "ficomp{l}\t$src">;
 def FCOM64m  : FPI<0xDC, MRM2m, (outs), (ins f64mem:$src), "fcom{ll}\t$src">;
 def FCOMP64m : FPI<0xDC, MRM3m, (outs), (ins f64mem:$src), "fcomp{ll}\t$src">;
 
-def FISTTP32m: FPI<0xDD, MRM1m, (outs i32mem:$dst), (ins), "fisttp{l}\t$dst">;
 def FRSTORm  : FPI<0xDD, MRM4m, (outs f32mem:$dst), (ins), "frstor\t$dst">;
 def FSAVEm   : FPI<0xDD, MRM6m, (outs f32mem:$dst), (ins), "fnsave\t$dst">;
 def FNSTSWm  : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fnstsw\t$dst">;
