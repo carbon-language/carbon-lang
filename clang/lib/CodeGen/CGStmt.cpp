@@ -861,14 +861,13 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
                                            std::string &ConstraintStr) {
   llvm::Value *Arg;
   if (Info.allowsRegister() || !Info.allowsMemory()) {
-    const llvm::Type *Ty = ConvertType(InputExpr->getType());
-
-    if (Ty->isSingleValueType()) {
+    if (!CodeGenFunction::hasAggregateLLVMType(InputExpr->getType())) {
       Arg = EmitScalarExpr(InputExpr);
     } else {
       InputExpr = InputExpr->IgnoreParenNoopCasts(getContext());
       LValue Dest = EmitLValue(InputExpr);
 
+      const llvm::Type *Ty = ConvertType(InputExpr->getType());
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
       if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
         Ty = llvm::IntegerType::get(VMContext, Size);

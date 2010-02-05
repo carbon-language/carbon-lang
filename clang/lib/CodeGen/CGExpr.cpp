@@ -549,14 +549,13 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   if (LV.isSimple()) {
     llvm::Value *Ptr = LV.getAddress();
-    const llvm::Type *EltTy =
-      cast<llvm::PointerType>(Ptr->getType())->getElementType();
 
     // Simple scalar l-value.
-    if (EltTy->isSingleValueType())
+    if (!CodeGenFunction::hasAggregateLLVMType(ExprType))
       return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
                                           ExprType));
 
+    // FIXME: This case shouldn't be necessary?
     assert(ExprType->isFunctionType() && "Unknown scalar value");
     return RValue::get(Ptr);
   }
