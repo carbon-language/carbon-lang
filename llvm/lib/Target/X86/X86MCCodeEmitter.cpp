@@ -293,6 +293,8 @@ static unsigned DetermineREXPrefix(const MCInst &MI, unsigned TSFlags,
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
     if (!X86InstrInfo::isX86_64NonExtLowByteReg(Reg)) continue;
+    // FIXME: The caller of DetermineREXPrefix slaps this prefix onto anything
+    // that returns non-zero.
     REX |= 0x40;
     break;
   }
