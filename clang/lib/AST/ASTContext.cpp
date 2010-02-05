@@ -2902,6 +2902,7 @@ QualType ASTContext::getCFConstantStringType() {
     CFConstantStringTypeDecl =
       CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                        &Idents.get("NSConstantString"));
+    CFConstantStringTypeDecl->startDefinition();
 
     QualType FieldTypes[4];
 
@@ -2941,6 +2942,7 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
     ObjCFastEnumerationStateTypeDecl =
       CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                        &Idents.get("__objcFastEnumerationState"));
+    ObjCFastEnumerationStateTypeDecl->startDefinition();
 
     QualType FieldTypes[] = {
       UnsignedLongTy,
@@ -2974,6 +2976,7 @@ QualType ASTContext::getBlockDescriptorType() {
   // FIXME: Needs the FlagAppleBlock bit.
   T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                        &Idents.get("__block_descriptor"));
+  T->startDefinition();
   
   QualType FieldTypes[] = {
     UnsignedLongTy,
@@ -3017,6 +3020,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() {
   // FIXME: Needs the FlagAppleBlock bit.
   T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                        &Idents.get("__block_descriptor_withcopydispose"));
+  T->startDefinition();
   
   QualType FieldTypes[] = {
     UnsignedLongTy,
@@ -3137,6 +3141,7 @@ QualType ASTContext::getBlockParmType(
   RecordDecl *T;
   T = CreateRecordDecl(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                        &Idents.get(Name.str()));
+  T->startDefinition();
   QualType FieldTypes[] = {
     getPointerType(VoidPtrTy),
     IntTy,

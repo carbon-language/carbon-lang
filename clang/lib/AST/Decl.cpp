@@ -1386,6 +1386,10 @@ void TagDecl::startDefinition() {
 }
 
 void TagDecl::completeDefinition() {
+  assert((!isa<CXXRecordDecl>(this) ||
+          cast<CXXRecordDecl>(this)->hasDefinition()) &&
+         "definition completed but not started");
+
   IsDefinition = true;
   if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
     assert(TagT->decl.getPointer() == this &&

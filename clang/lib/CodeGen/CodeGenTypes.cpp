@@ -410,8 +410,8 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   if (TDTI != TagDeclTypes.end())
     return TDTI->second;
 
-  // If this is still a forward definition, just define an opaque type to use
-  // for this tagged decl.
+  // If this is still a forward declaration, just define an opaque
+  // type to use for this tagged decl.
   if (!TD->isDefinition()) {
     llvm::Type *ResultType = llvm::OpaqueType::get(getLLVMContext());
     TagDeclTypes.insert(std::make_pair(Key, ResultType));
