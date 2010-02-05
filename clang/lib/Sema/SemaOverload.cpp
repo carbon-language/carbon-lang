@@ -5528,7 +5528,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
   // Add candidates from ADL.
   AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
-                                       Args, 1,
+                                       Args, NumArgs,
                                        /*ExplicitTemplateArgs*/ 0,
                                        CandidateSet);
 

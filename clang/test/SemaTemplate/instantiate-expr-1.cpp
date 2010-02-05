@@ -87,6 +87,18 @@ void add(const T &x) {
   (void)(x + x);
 }
 
+namespace PR6237 {
+  template <typename T>
+  void f(T t) {
+    t++;
+  }
+
+  struct B { };
+  B operator++(B &, int);
+
+  template void f(B);
+}
+
 struct Addable {
   Addable operator+(const Addable&) const;
 };
