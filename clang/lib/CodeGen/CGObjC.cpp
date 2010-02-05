@@ -450,8 +450,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Fast enumeration state.
   QualType StateTy = getContext().getObjCFastEnumerationStateType();
-  llvm::AllocaInst *StatePtr = CreateTempAlloca(ConvertType(StateTy),
-                                                "state.ptr");
+  llvm::AllocaInst *StatePtr = CreateTempAlloca(ConvertTypeForMem(
+                                                  StateTy), "state.ptr");
   StatePtr->setAlignment(getContext().getTypeAlign(StateTy) >> 3);
   EmitMemSetToZero(StatePtr, StateTy);
 
@@ -470,7 +470,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     getContext().getConstantArrayType(getContext().getObjCIdType(),
                                       llvm::APInt(32, NumItems),
                                       ArrayType::Normal, 0);
-  llvm::Value *ItemsPtr = CreateTempAlloca(ConvertType(ItemsTy), "items.ptr");
+  llvm::Value *ItemsPtr = CreateTempAlloca(ConvertTypeForMem(
+                                             ItemsTy), "items.ptr");
 
   llvm::Value *Collection = EmitScalarExpr(S.getCollection());
 

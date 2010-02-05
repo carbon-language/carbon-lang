@@ -1359,7 +1359,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     llvm::Value *Vec = EmitScalarExpr(E->getBase());
     
     // Store the vector to memory (because LValue wants an address).
-    llvm::Value *VecMem =CreateTempAlloca(ConvertType(E->getBase()->getType()));
+    llvm::Value *VecMem = CreateTempAlloca(ConvertTypeForMem(
+                                             E->getBase()->getType()));
     Builder.CreateStore(Vec, VecMem);
     Base = LValue::MakeAddr(VecMem, Qualifiers());
   }
