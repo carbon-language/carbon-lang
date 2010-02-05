@@ -87,7 +87,7 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
 
   if (hasAggregateLLVMType(E->getType()) &&
       !E->getType()->isAnyComplexType())
-    AggLoc = CreateTempAlloca(ConvertType(E->getType()), "agg.tmp");
+    AggLoc = CreateTempAlloca(ConvertTypeForMem(E->getType()), "agg.tmp");
   return EmitAnyExpr(E, AggLoc, IsAggLocVolatile, /*IgnoreResult=*/false,
                      IsInitializer);
 }
@@ -1512,8 +1512,8 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue,
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
-  const llvm::Type *LTy = ConvertType(E->getType());
-  llvm::Value *DeclPtr = CreateTempAlloca(LTy, ".compoundliteral");
+  llvm::Value *DeclPtr = CreateTempAlloca(ConvertTypeForMem(E->getType()),
+                                          ".compoundliteral");
 
   const Expr* InitExpr = E->getInitializer();
   LValue Result = LValue::MakeAddr(DeclPtr, MakeQualifiers(E->getType()));
@@ -1628,12 +1628,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     return LValue::MakeAddr(Base, MakeQualifiers(E->getType()));
   }
-  case CastExpr::CK_ToUnion: {
-    llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-    EmitAnyExpr(E->getSubExpr(), Temp, false);
-
-    return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
-  }
+  case CastExpr::CK_ToUnion:
+    return EmitAggExprToLValue(E);
   case CastExpr::CK_BaseToDerived: {
     const RecordType *BaseClassTy = 
       E->getSubExpr()->getType()->getAs<RecordType>();
@@ -1668,8 +1664,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 LValue CodeGenFunction::EmitNullInitializationLValue(
                                               const CXXZeroInitValueExpr *E) {
   QualType Ty = E->getType();
-  const llvm::Type *LTy = ConvertTypeForMem(Ty);
-  llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
+  llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty));
   CharUnits Align = getContext().getTypeAlignInChars(Ty);
   Alloc->setAlignment(Align.getQuantity());
   LValue lvalue = LValue::MakeAddr(Alloc, Qualifiers());
