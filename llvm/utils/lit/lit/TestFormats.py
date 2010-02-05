@@ -9,13 +9,19 @@ class GoogleTest(object):
         self.test_sub_dir = str(test_sub_dir)
         self.test_suffix = str(test_suffix)
 
-    def getGTestTests(self, path, litConfig):
+    def getGTestTests(self, path, litConfig, localConfig):
         """getGTestTests(path) - [name]
-        
-        Return the tests available in gtest executable."""
+
+        Return the tests available in gtest executable.
+
+        Args:
+          path: String path to a gtest executable
+          litConfig: LitConfig instance
+          localConfig: TestingConfig instance"""
 
         try:
-            lines = Util.capture([path, '--gtest_list_tests']).split('\n')
+            lines = Util.capture([path, '--gtest_list_tests'],
+                                 env=localConfig.environment).split('\n')
         except:
             litConfig.error("unable to discover google-tests in %r" % path)
             raise StopIteration
@@ -52,7 +58,8 @@ class GoogleTest(object):
                     execpath = os.path.join(filepath, subfilename)
 
                     # Discover the tests in this executable.
-                    for name in self.getGTestTests(execpath, litConfig):
+                    for name in self.getGTestTests(execpath, litConfig,
+                                                   localConfig):
                         testPath = path_in_suite + (filename, subfilename, name)
                         yield Test.Test(testSuite, testPath, localConfig)
 
@@ -65,7 +72,8 @@ class GoogleTest(object):
             testName = os.path.join(namePrefix, testName)
 
         cmd = [testPath, '--gtest_filter=' + testName]
-        out, err, exitCode = TestRunner.executeCommand(cmd)
+        out, err, exitCode = TestRunner.executeCommand(
+            cmd, env=test.config.environment)
             
         if not exitCode:
             return Test.PASS,''

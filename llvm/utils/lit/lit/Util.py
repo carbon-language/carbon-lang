@@ -39,11 +39,12 @@ def mkdir_p(path):
         if e.errno != errno.EEXIST:
             raise
 
-def capture(args):
+def capture(args, env=None):
     import subprocess
     """capture(command) - Run the given command (or argv list) in a shell and
     return the standard output."""
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         env=env)
     out,_ = p.communicate()
     return out
 
