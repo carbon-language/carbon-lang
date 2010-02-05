@@ -1880,18 +1880,20 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
 
   case pch::TYPE_VECTOR: {
-    if (Record.size() != 2) {
+    if (Record.size() != 4) {
       Error("incorrect encoding of vector type in PCH file");
       return QualType();
     }
 
     QualType ElementType = GetType(Record[0]);
     unsigned NumElements = Record[1];
-    return Context->getVectorType(ElementType, NumElements);
+    bool AltiVec = Record[2];
+    bool Pixel = Record[3];
+    return Context->getVectorType(ElementType, NumElements, AltiVec, Pixel);
   }
 
   case pch::TYPE_EXT_VECTOR: {
-    if (Record.size() != 2) {
+    if (Record.size() != 4) {
       Error("incorrect encoding of extended vector type in PCH file");
       return QualType();
     }

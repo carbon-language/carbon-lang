@@ -672,6 +672,11 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
+    // Check for need to substitute AltiVec __vector keyword
+    // for "vector" identifier.
+    if (TryAltiVecVectorToken())
+      return TPResult::True();
+    // Fall through.
   case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
@@ -749,6 +754,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___w64:
   case tok::kw___ptr64:
   case tok::kw___forceinline:
+    return TPResult::True();
+  
+    // AltiVec
+  case tok::kw___vector:
     return TPResult::True();
 
   case tok::annot_cxxscope: // foo::bar or ::foo::bar, but already parsed

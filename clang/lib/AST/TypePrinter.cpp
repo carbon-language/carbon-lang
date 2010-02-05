@@ -225,15 +225,24 @@ void TypePrinter::PrintDependentSizedExtVector(
 }
 
 void TypePrinter::PrintVector(const VectorType *T, std::string &S) { 
-  // FIXME: We prefer to print the size directly here, but have no way
-  // to get the size of the type.
-  Print(T->getElementType(), S);
-  std::string V = "__attribute__((__vector_size__(";
-  V += llvm::utostr_32(T->getNumElements()); // convert back to bytes.
-  std::string ET;
-  Print(T->getElementType(), ET);
-  V += " * sizeof(" + ET + ")))) ";
-  S = V + S;
+  if (T->isAltiVec()) {
+    if (T->isPixel())
+      S = "__vector __pixel " + S;
+    else {
+      Print(T->getElementType(), S);
+      S = "__vector " + S;
+    }
+  } else {
+    // FIXME: We prefer to print the size directly here, but have no way
+    // to get the size of the type.
+    Print(T->getElementType(), S);
+    std::string V = "__attribute__((__vector_size__(";
+    V += llvm::utostr_32(T->getNumElements()); // convert back to bytes.
+    std::string ET;
+    Print(T->getElementType(), ET);
+    V += " * sizeof(" + ET + ")))) ";
+    S = V + S;
+  }
 }
 
 void TypePrinter::PrintExtVector(const ExtVectorType *T, std::string &S) { 

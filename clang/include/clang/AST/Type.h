@@ -1594,7 +1594,8 @@ public:
 
 /// VectorType - GCC generic vector type. This type is created using
 /// __attribute__((vector_size(n)), where "n" specifies the vector size in
-/// bytes. Since the constructor takes the number of vector elements, the
+/// bytes; or from an Altivec __vector or vector declaration.
+/// Since the constructor takes the number of vector elements, the
 /// client is responsible for converting the size into the number of elements.
 class VectorType : public Type, public llvm::FoldingSetNode {
 protected:
@@ -1604,13 +1605,21 @@ protected:
   /// NumElements - The number of elements in the vector.
   unsigned NumElements;
 
-  VectorType(QualType vecType, unsigned nElements, QualType canonType) :
+  /// AltiVec - True if this is for an Altivec vector.
+  bool AltiVec;
+
+  /// Pixel - True if this is for an Altivec vector pixel.
+  bool Pixel;
+
+  VectorType(QualType vecType, unsigned nElements, QualType canonType,
+      bool isAltiVec, bool isPixel) :
     Type(Vector, canonType, vecType->isDependentType()),
-    ElementType(vecType), NumElements(nElements) {}
+    ElementType(vecType), NumElements(nElements),
+    AltiVec(isAltiVec), Pixel(isPixel) {}
   VectorType(TypeClass tc, QualType vecType, unsigned nElements,
-             QualType canonType)
+             QualType canonType, bool isAltiVec, bool isPixel)
     : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType),
-      NumElements(nElements) {}
+      NumElements(nElements), AltiVec(isAltiVec), Pixel(isPixel) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
 
@@ -1620,14 +1629,22 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  bool isAltiVec() const { return AltiVec; }
+  
+  bool isPixel() const { return Pixel; }
+  
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType(), getNumElements(), getTypeClass());
+    Profile(ID, getElementType(), getNumElements(), getTypeClass(),
+      AltiVec, Pixel);
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ElementType,
-                      unsigned NumElements, TypeClass TypeClass) {
+                      unsigned NumElements, TypeClass TypeClass,
+                      bool isAltiVec, bool isPixel) {
     ID.AddPointer(ElementType.getAsOpaquePtr());
     ID.AddInteger(NumElements);
     ID.AddInteger(TypeClass);
+    ID.AddBoolean(isAltiVec);
+    ID.AddBoolean(isPixel);
   }
 
   virtual Linkage getLinkage() const;
@@ -1645,7 +1662,7 @@ public:
 /// points, colors, and textures (modeled after OpenGL Shading Language).
 class ExtVectorType : public VectorType {
   ExtVectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    VectorType(ExtVector, vecType, nElements, canonType) {}
+    VectorType(ExtVector, vecType, nElements, canonType, false, false) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   static int getPointAccessorIdx(char c) {

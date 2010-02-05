@@ -128,6 +128,8 @@ void PCHTypeWriter::VisitVariableArrayType(const VariableArrayType *T) {
 void PCHTypeWriter::VisitVectorType(const VectorType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getNumElements());
+  Record.push_back(T->isAltiVec());
+  Record.push_back(T->isPixel());
   Code = pch::TYPE_VECTOR;
 }
 

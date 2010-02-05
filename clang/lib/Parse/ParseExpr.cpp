@@ -780,6 +780,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_void:
   case tok::kw_typename:
   case tok::kw_typeof:
+  case tok::kw___vector:
   case tok::annot_typename: {
     if (!getLang().CPlusPlus) {
       Diag(Tok, diag::err_expected_expression);

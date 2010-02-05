@@ -346,6 +346,11 @@ void Parser::Initialize() {
   }
 
   Ident_super = &PP.getIdentifierTable().get("super");
+
+  if (getLang().AltiVec) {
+    Ident_vector = &PP.getIdentifierTable().get("vector");
+    Ident_pixel = &PP.getIdentifierTable().get("pixel");
+  }
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the

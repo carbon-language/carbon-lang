@@ -192,6 +192,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_decimal32:   return "_Decimal32";
   case DeclSpec::TST_decimal64:   return "_Decimal64";
   case DeclSpec::TST_decimal128:  return "_Decimal128";
+  case DeclSpec::TST_pixel:       return "__pixel";
   case DeclSpec::TST_enum:        return "enum";
   case DeclSpec::TST_class:       return "class";
   case DeclSpec::TST_union:       return "union";
@@ -253,6 +254,11 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
     return BadSpecifier(W, (TSW)TypeSpecWidth, PrevSpec, DiagID);
   TypeSpecWidth = W;
   TSWLoc = Loc;
+  if (TypeAltiVecVector && ((TypeSpecWidth == TSW_long) || (TypeSpecWidth == TSW_longlong))) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::warn_vector_long_decl_spec_combination;
+    return true;
+  }
   return false;
 }
 
@@ -289,6 +295,38 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   TypeRep = Rep;
   TSTLoc = Loc;
   TypeSpecOwned = Owned;
+  if (TypeAltiVecVector && (TypeSpecType == TST_double)) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_vector_double_decl_spec_combination;
+    return true;
+  }
+  return false;
+}
+
+bool DeclSpec::SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
+                          const char *&PrevSpec, unsigned &DiagID) {
+  if (TypeSpecType != TST_unspecified) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_vector_decl_spec_combination;
+    return true;
+  }
+  TypeAltiVecVector = isAltiVecVector;
+  AltiVecLoc = Loc;
+  return false;
+}
+
+bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
+                          const char *&PrevSpec, unsigned &DiagID) {
+  if (!TypeAltiVecVector || (TypeSpecType != TST_unspecified)) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_pixel_decl_spec_combination;
+    return true;
+  }
+  TypeSpecType = TST_int;
+  TypeSpecSign = TSS_unsigned;
+  TypeSpecWidth = TSW_short;
+  TypeAltiVecPixel = isAltiVecPixel;
+  TSTLoc = Loc;
   return false;
 }
 

@@ -81,6 +81,11 @@ class Parser {
   /// Ident_super - IdentifierInfo for "super", to support fast
   /// comparison.
   IdentifierInfo *Ident_super;
+  /// Ident_vector and Ident_pixel - cached IdentifierInfo's for
+  /// "vector" and "pixel" fast comparison.  Only present if
+  /// AltiVec enabled.
+  IdentifierInfo *Ident_vector;
+  IdentifierInfo *Ident_pixel;
 
   llvm::OwningPtr<PragmaHandler> PackHandler;
   llvm::OwningPtr<PragmaHandler> UnusedHandler;
@@ -319,6 +324,81 @@ private:
   /// annotates C++ scope specifiers.  This returns true if the token was
   /// annotated.
   bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
+
+  /// TryAltiVecToken - Check for context-sensitive AltiVec identifier tokens,
+  /// replacing them with the non-context-sensitive keywords.  This returns
+  /// true if the token was replaced.
+  bool TryAltiVecToken(DeclSpec &DS, SourceLocation Loc,
+      const char *&PrevSpec, unsigned &DiagID, bool &isInvalid) {
+    if (getLang().AltiVec) {
+      if (Tok.getIdentifierInfo() == Ident_vector) {
+        const Token nextToken = NextToken();
+        switch (nextToken.getKind()) {
+          case tok::kw_short:
+          case tok::kw_long:
+          case tok::kw_signed:
+          case tok::kw_unsigned:
+          case tok::kw_void:
+          case tok::kw_char:
+          case tok::kw_int:
+          case tok::kw_float:
+          case tok::kw_double:
+          case tok::kw_bool:
+          case tok::kw___pixel:
+            isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+            return true;
+          case tok::identifier:
+            if (nextToken.getIdentifierInfo() == Ident_pixel) {
+              isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+              return true;
+            }
+            break;
+          default:
+            break;
+        }
+      } else if ((Tok.getIdentifierInfo() == Ident_pixel) &&
+          DS.isTypeAltiVecVector()) {
+        isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// TryAltiVecVectorToken - Check for context-sensitive AltiVec vector
+  /// identifier token, replacing it with the non-context-sensitive __vector.
+  /// This returns true if the token was replaced.
+  bool TryAltiVecVectorToken() {
+    if (getLang().AltiVec) {
+      if (Tok.getIdentifierInfo() == Ident_vector) {
+        const Token nextToken = NextToken();
+        switch (nextToken.getKind()) {
+          case tok::kw_short:
+          case tok::kw_long:
+          case tok::kw_signed:
+          case tok::kw_unsigned:
+          case tok::kw_void:
+          case tok::kw_char:
+          case tok::kw_int:
+          case tok::kw_float:
+          case tok::kw_double:
+          case tok::kw_bool:
+          case tok::kw___pixel:
+            Tok.setKind(tok::kw___vector);
+            return true;
+          case tok::identifier:
+            if (nextToken.getIdentifierInfo() == Ident_pixel) {
+              Tok.setKind(tok::kw___vector);
+              return true;
+            }
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    return false;
+  }
 
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and

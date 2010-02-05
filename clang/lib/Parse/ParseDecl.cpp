@@ -1029,6 +1029,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (DS.hasTypeSpecifier())
         goto DoneWithDeclSpec;
 
+      // Check for need to substitute AltiVec keyword tokens.
+      if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
+        break;
+
       // It has to be available as a typedef too!
       TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(),
                                             Tok.getLocation(), CurScope);
@@ -1270,6 +1274,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec,
                                      DiagID);
       break;
+    case tok::kw___vector:
+      isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+      break;
+    case tok::kw___pixel:
+      isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
+      break;
 
     // class-specifier:
     case tok::kw_class:
@@ -1395,6 +1405,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
 /// [C++0x] 'decltype' ( expression )
+/// [AltiVec] '__vector'
 bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
                                         const char *&PrevSpec,
                                         unsigned &DiagID,
@@ -1404,6 +1415,10 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
 
   switch (Tok.getKind()) {
   case tok::identifier:   // foo::bar
+    // Check for need to substitute AltiVec keyword tokens.
+    if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
+      break;
+    // Fall through.
   case tok::kw_typename:  // typename foo::bar
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
@@ -1520,7 +1535,13 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec,
                                    DiagID);
     break;
-
+  case tok::kw___vector:
+    isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+    break;
+  case tok::kw___pixel:
+    isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
+    break;
+  
   // class-specifier:
   case tok::kw_class:
   case tok::kw_struct:
@@ -1987,6 +2008,9 @@ bool Parser::isTypeSpecifierQualifier() {
   default: return false;
 
   case tok::identifier:   // foo::bar
+    if (TryAltiVecVectorToken())
+      return true;
+    // Fall through.
   case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
@@ -2032,6 +2056,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
+  case tok::kw___vector:
 
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
@@ -2072,7 +2097,9 @@ bool Parser::isDeclarationSpecifier() {
     // Unfortunate hack to support "Class.factoryMethod" notation.
     if (getLang().ObjC1 && NextToken().is(tok::period))
       return false;
-    // Fall through
+    if (TryAltiVecVectorToken())
+      return true;
+    // Fall through.
 
   case tok::kw_typename: // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
@@ -2123,6 +2150,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
+  case tok::kw___vector:
 
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
@@ -2768,7 +2796,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
   // Alternatively, this parameter list may be an identifier list form for a
   // K&R-style function:  void foo(a,b,c)
-  if (!getLang().CPlusPlus && Tok.is(tok::identifier)) {
+  if (!getLang().CPlusPlus && Tok.is(tok::identifier)
+      && !TryAltiVecVectorToken()) {
     if (!TryAnnotateTypeOrScopeToken()) {
       // K&R identifier lists can't have typedefs as identifiers, per
       // C99 6.7.5.3p11.

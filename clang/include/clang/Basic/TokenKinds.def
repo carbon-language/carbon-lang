@@ -227,7 +227,7 @@ KEYWORD(__func__                    , KEYALL)
 
 // C++ 2.11p1: Keywords.
 KEYWORD(asm                         , KEYCXX|KEYGNU)
-KEYWORD(bool                        , BOOLSUPPORT)
+KEYWORD(bool                        , BOOLSUPPORT|KEYALTIVEC)
 KEYWORD(catch                       , KEYCXX)
 KEYWORD(class                       , KEYCXX)
 KEYWORD(const_cast                  , KEYCXX)
@@ -235,7 +235,7 @@ KEYWORD(delete                      , KEYCXX)
 KEYWORD(dynamic_cast                , KEYCXX)
 KEYWORD(explicit                    , KEYCXX)
 KEYWORD(export                      , KEYCXX)
-KEYWORD(false                       , BOOLSUPPORT)
+KEYWORD(false                       , BOOLSUPPORT|KEYALTIVEC)
 KEYWORD(friend                      , KEYCXX)
 KEYWORD(mutable                     , KEYCXX)
 KEYWORD(namespace                   , KEYCXX)
@@ -249,7 +249,7 @@ KEYWORD(static_cast                 , KEYCXX)
 KEYWORD(template                    , KEYCXX)
 KEYWORD(this                        , KEYCXX)
 KEYWORD(throw                       , KEYCXX)
-KEYWORD(true                        , BOOLSUPPORT)
+KEYWORD(true                        , BOOLSUPPORT|KEYALTIVEC)
 KEYWORD(try                         , KEYCXX)
 KEYWORD(typename                    , KEYCXX)
 KEYWORD(typeid                      , KEYCXX)
@@ -339,6 +339,10 @@ KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__ptr64                     , KEYALL)
 KEYWORD(__w64                       , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
+
+// Altivec Extension.
+KEYWORD(__vector                    , KEYALTIVEC)
+KEYWORD(__pixel                     , KEYALTIVEC)
 
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.

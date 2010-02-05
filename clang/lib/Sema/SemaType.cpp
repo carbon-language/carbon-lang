@@ -343,6 +343,11 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
     if (TheSema.getLangOptions().Freestanding)
       TheSema.Diag(DS.getTypeSpecComplexLoc(), diag::ext_freestanding_complex);
     Result = Context.getComplexType(Result);
+  } else if (DS.isTypeAltiVecVector()) {
+    unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(Result));
+    assert(typeSize > 0 && "type size for vector must be greater than 0 bits");
+    Result = Context.getVectorType(Result, 128/typeSize, true,
+      DS.isTypeAltiVecPixel());
   }
 
   assert(DS.getTypeSpecComplex() != DeclSpec::TSC_imaginary &&
@@ -1753,7 +1758,7 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr, S
 
   // Success! Instantiate the vector type, the number of elements is > 0, and
   // not required to be a power of 2, unlike GCC.
-  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize);
+  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize, false, false);
 }
 
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL,

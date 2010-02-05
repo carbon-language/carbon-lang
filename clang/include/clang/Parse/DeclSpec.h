@@ -113,6 +113,7 @@ public:
   static const TST TST_decimal32 = clang::TST_decimal32;
   static const TST TST_decimal64 = clang::TST_decimal64;
   static const TST TST_decimal128 = clang::TST_decimal128;
+  static const TST TST_pixel = clang::TST_pixel;
   static const TST TST_enum = clang::TST_enum;
   static const TST TST_union = clang::TST_union;
   static const TST TST_struct = clang::TST_struct;
@@ -153,6 +154,8 @@ private:
   /*TSC*/unsigned TypeSpecComplex : 2;
   /*TSS*/unsigned TypeSpecSign : 2;
   /*TST*/unsigned TypeSpecType : 5;
+  bool TypeAltiVecVector : 1;
+  bool TypeAltiVecPixel : 1;
   bool TypeSpecOwned : 1;
 
   // type-qualifiers
@@ -193,7 +196,7 @@ private:
   SourceRange Range;
 
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
-  SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc;
+  SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc, AltiVecLoc;
   SourceRange TypeofParensRange;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
@@ -213,6 +216,8 @@ public:
       TypeSpecComplex(TSC_unspecified),
       TypeSpecSign(TSS_unspecified),
       TypeSpecType(TST_unspecified),
+      TypeAltiVecVector(false),
+      TypeAltiVecPixel(false),
       TypeSpecOwned(false),
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
@@ -250,6 +255,8 @@ public:
   TSC getTypeSpecComplex() const { return (TSC)TypeSpecComplex; }
   TSS getTypeSpecSign() const { return (TSS)TypeSpecSign; }
   TST getTypeSpecType() const { return (TST)TypeSpecType; }
+  bool isTypeAltiVecVector() const { return TypeAltiVecVector; }
+  bool isTypeAltiVecPixel() const { return TypeAltiVecPixel; }
   bool isTypeSpecOwned() const { return TypeSpecOwned; }
   void *getTypeRep() const { return TypeRep; }
   CXXScopeSpec &getTypeSpecScope() { return TypeScope; }
@@ -260,6 +267,7 @@ public:
   SourceLocation getTypeSpecComplexLoc() const { return TSCLoc; }
   SourceLocation getTypeSpecSignLoc() const { return TSSLoc; }
   SourceLocation getTypeSpecTypeLoc() const { return TSTLoc; }
+  SourceLocation getAltiVecLoc() const { return AltiVecLoc; }
 
   SourceRange getTypeofParensRange() const { return TypeofParensRange; }
   void setTypeofParensRange(SourceRange range) { TypeofParensRange = range; }
@@ -344,6 +352,10 @@ public:
                        unsigned &DiagID);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
                        unsigned &DiagID, void *Rep = 0, bool Owned = false);
+  bool SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,
+                       const char *&PrevSpec, unsigned &DiagID);
+  bool SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
+                       const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeSpecError();
   void UpdateTypeRep(void *Rep) { TypeRep = Rep; }
 
