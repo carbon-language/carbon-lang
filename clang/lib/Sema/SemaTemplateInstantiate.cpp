@@ -791,7 +791,9 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
               return SemaRef.ExprError();
 
             RefE = (Expr *)RefExpr.get();
-            assert(SemaRef.IsQualificationConversion(RefE->getType(),
+            assert(SemaRef.Context.hasSameUnqualifiedType(RefE->getType(),
+                                                          NTTP->getType()) ||
+                   SemaRef.IsQualificationConversion(RefE->getType(),
                                                      NTTP->getType()));
           }
 

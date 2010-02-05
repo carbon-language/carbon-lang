@@ -46,6 +46,12 @@ namespace pointer_to_object_parameters {
   A2<array_of_Xs> *a13;
   A2<&an_X> *a13_2;
   A2<(&an_X)> *a13_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
+
+  // PR6244
+  struct X1 {} X1v;
+  template <X1*> struct X2 { };
+  template <X1* Value> struct X3 : X2<Value> { };
+  struct X4 : X3<&X1v> { };
 }
 
 //     -- For a non-type template-parameter of type reference to object, no
