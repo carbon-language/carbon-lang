@@ -685,6 +685,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// type.  The result is computed into DestPtr.  Note that if DestPtr is null,
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
+//
+// FIXME: Take Qualifiers object.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
                                   bool VolatileDest, bool IgnoreResult,
                                   bool IsInitializer,
@@ -697,6 +699,14 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
   AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult, IsInitializer,
                  RequiresGCollection)
     .Visit(const_cast<Expr*>(E));
+}
+
+LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
+  assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
+  Qualifiers Q = MakeQualifiers(E->getType());
+  llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()));
+  EmitAggExpr(E, Temp, Q.hasVolatile());
+  return LValue::MakeAddr(Temp, Q);
 }
 
 void CodeGenFunction::EmitAggregateClear(llvm::Value *DestPtr, QualType Ty) {

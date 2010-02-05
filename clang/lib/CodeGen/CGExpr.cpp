@@ -41,11 +41,11 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   QualType BoolTy = getContext().BoolTy;
   if (E->getType()->isMemberFunctionPointerType()) {
-    llvm::Value *Ptr = CreateTempAlloca(ConvertType(E->getType()));
-    EmitAggExpr(E, Ptr, /*VolatileDest=*/false);
+    LValue LV = EmitAggExprToLValue(E);
 
     // Get the pointer.
-    llvm::Value *FuncPtr = Builder.CreateStructGEP(Ptr, 0, "src.ptr");
+    llvm::Value *FuncPtr = Builder.CreateStructGEP(LV.getAddress(), 0,
+                                                   "src.ptr");
     FuncPtr = Builder.CreateLoad(FuncPtr);
 
     llvm::Value *IsNotNull = 
@@ -1581,10 +1581,7 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
           !E->getType()->isAnyComplexType()) &&
          "Unexpected conditional operator!");
 
-  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-  EmitAggExpr(E, Temp, false);
-
-  return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
+  return EmitAggExprToLValue(E);
 }
 
 /// EmitCastLValue - Casts are never lvalues unless that cast is a dynamic_cast.
@@ -1750,10 +1747,7 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
     return LV;
   }
   
-  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-  EmitAggExpr(E, Temp, false);
-  // FIXME: Are these qualifiers correct?
-  return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
+  return EmitAggExprToLValue(E);
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -1771,9 +1765,7 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
 
 LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
   // FIXME: This shouldn't require another copy.
-  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-  EmitAggExpr(E, Temp, false);
-  return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
+  return EmitAggExprToLValue(E);
 }
 
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {

@@ -1142,6 +1142,10 @@ public:
                    bool IgnoreResult = false, bool IsInitializer = false,
                    bool RequiresGCollection = false);
 
+  /// EmitAggExprToLValue - Emit the computation of the specified expression of
+  /// aggregate type into a temporary LValue.
+  LValue EmitAggExprToLValue(const Expr *E);
+
   /// EmitGCMemmoveCollectable - Emit special API for structs with object
   /// pointers.
   void EmitGCMemmoveCollectable(llvm::Value *DestPtr, llvm::Value *SrcPtr,
