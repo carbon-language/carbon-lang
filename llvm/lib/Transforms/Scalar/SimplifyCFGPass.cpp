@@ -30,6 +30,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -261,7 +262,7 @@ static bool MergeEmptyReturnBlocks(Function &F) {
 
 /// IterativeSimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
-static bool IterativeSimplifyCFG(Function &F) {
+static bool IterativeSimplifyCFG(Function &F, const TargetData *TD) {
   bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
@@ -271,7 +272,7 @@ static bool IterativeSimplifyCFG(Function &F) {
     // if they are unneeded...
     //
     for (Function::iterator BBIt = ++F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++)) {
+      if (SimplifyCFG(BBIt++, TD)) {
         LocalChange = true;
         ++NumSimpl;
       }
@@ -285,10 +286,11 @@ static bool IterativeSimplifyCFG(Function &F) {
 // simplify the CFG.
 //
 bool CFGSimplifyPass::runOnFunction(Function &F) {
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
   bool EverChanged = RemoveUnreachableBlocksFromFn(F);
   EverChanged |= MergeEmptyReturnBlocks(F);
-  EverChanged |= IterativeSimplifyCFG(F);
-  
+  EverChanged |= IterativeSimplifyCFG(F, TD);
+
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
 
@@ -299,11 +301,11 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
   // RemoveUnreachableBlocksFromFn doesn't do anything.
   if (!RemoveUnreachableBlocksFromFn(F))
     return true;
-  
+
   do {
-    EverChanged = IterativeSimplifyCFG(F);
+    EverChanged = IterativeSimplifyCFG(F, TD);
     EverChanged |= RemoveUnreachableBlocksFromFn(F);
   } while (EverChanged);
-  
+
   return true;
 }

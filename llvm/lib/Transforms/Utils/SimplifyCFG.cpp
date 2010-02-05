@@ -23,6 +23,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -35,6 +36,28 @@
 using namespace llvm;
 
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
+
+namespace {
+class SimplifyCFGOpt {
+  const TargetData *const TD;
+
+  ConstantInt *GetConstantInt(Value *V);
+  Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values);
+  Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values);
+  bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
+                              std::vector<ConstantInt*> &Values);
+  Value *isValueEqualityComparison(TerminatorInst *TI);
+  BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
+    std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases);
+  bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
+                                                     BasicBlock *Pred);
+  bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI);
+
+public:
+  explicit SimplifyCFGOpt(const TargetData *td) : TD(td) {}
+  bool run(BasicBlock *BB);
+};
+}
 
 /// SafeToMergeTerminators - Return true if it is safe to merge these two
 /// terminator instructions together.
@@ -243,17 +266,48 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   return true;
 }
 
+/// GetConstantInt - Extract ConstantInt from value, looking through IntToPtr
+/// and PointerNullValue. Return NULL if value is not a constant int.
+ConstantInt *SimplifyCFGOpt::GetConstantInt(Value *V) {
+  // Normal constant int.
+  ConstantInt *CI = dyn_cast<ConstantInt>(V);
+  if (CI || !TD || !isa<Constant>(V) || !isa<PointerType>(V->getType()))
+    return CI;
+
+  // This is some kind of pointer constant. Turn it into a pointer-sized
+  // ConstantInt if possible.
+  const IntegerType *PtrTy = TD->getIntPtrType(V->getContext());
+
+  // Null pointer means 0, see SelectionDAGBuilder::getValue(const Value*).
+  if (isa<ConstantPointerNull>(V))
+    return ConstantInt::get(PtrTy, 0);
+
+  // IntToPtr const int.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::IntToPtr)
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(0))) {
+        // The constant is very likely to have the right type already.
+        if (CI->getType() == PtrTy)
+          return CI;
+        else
+          return cast<ConstantInt>
+            (ConstantExpr::getIntegerCast(CI, PtrTy, /*isSigned=*/false));
+      }
+  return 0;
+}
+
 /// GatherConstantSetEQs - Given a potentially 'or'd together collection of
 /// icmp_eq instructions that compare a value against a constant, return the
 /// value being compared, and stick the constant into the Values vector.
-static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
+Value *SimplifyCFGOpt::
+GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values) {
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
         cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_EQ) {
-      if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
+      if (ConstantInt *C = GetConstantInt(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
-      } else if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(0))) {
+      } else if (ConstantInt *C = GetConstantInt(Inst->getOperand(0))) {
         Values.push_back(C);
         return Inst->getOperand(1);
       }
@@ -270,14 +324,15 @@ static Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values){
 /// GatherConstantSetNEs - Given a potentially 'and'd together collection of
 /// setne instructions that compare a value against a constant, return the value
 /// being compared, and stick the constant into the Values vector.
-static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
+Value *SimplifyCFGOpt::
+GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values) {
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
     if (Inst->getOpcode() == Instruction::ICmp &&
                cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
-      if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(1))) {
+      if (ConstantInt *C = GetConstantInt(Inst->getOperand(1))) {
         Values.push_back(C);
         return Inst->getOperand(0);
-      } else if (ConstantInt *C = dyn_cast<ConstantInt>(Inst->getOperand(0))) {
+      } else if (ConstantInt *C = GetConstantInt(Inst->getOperand(0))) {
         Values.push_back(C);
         return Inst->getOperand(1);
       }
@@ -294,8 +349,8 @@ static Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values){
 /// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
 /// bunch of comparisons of one value against constants, return the value and
 /// the constants being compared.
-static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
-                                   std::vector<ConstantInt*> &Values) {
+bool SimplifyCFGOpt::GatherValueComparisons(Instruction *Cond, Value *&CompVal,
+                                            std::vector<ConstantInt*> &Values) {
   if (Cond->getOpcode() == Instruction::Or) {
     CompVal = GatherConstantSetEQs(Cond, Values);
 
@@ -327,29 +382,32 @@ static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
 
 /// isValueEqualityComparison - Return true if the specified terminator checks
 /// to see if a value is equal to constant integer value.
-static Value *isValueEqualityComparison(TerminatorInst *TI) {
+Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
+  Value *CV = 0;
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     // Do not permit merging of large switch instructions into their
     // predecessors unless there is only one predecessor.
-    if (SI->getNumSuccessors() * std::distance(pred_begin(SI->getParent()),
-                                               pred_end(SI->getParent())) > 128)
-      return 0;
-
-    return SI->getCondition();
-  }
-  if (BranchInst *BI = dyn_cast<BranchInst>(TI))
+    if (SI->getNumSuccessors()*std::distance(pred_begin(SI->getParent()),
+                                             pred_end(SI->getParent())) <= 128)
+      CV = SI->getCondition();
+  } else if (BranchInst *BI = dyn_cast<BranchInst>(TI))
     if (BI->isConditional() && BI->getCondition()->hasOneUse())
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
         if ((ICI->getPredicate() == ICmpInst::ICMP_EQ ||
              ICI->getPredicate() == ICmpInst::ICMP_NE) &&
-            isa<ConstantInt>(ICI->getOperand(1)))
-          return ICI->getOperand(0);
-  return 0;
+            GetConstantInt(ICI->getOperand(1)))
+          CV = ICI->getOperand(0);
+
+  // Unwrap any lossless ptrtoint cast.
+  if (TD && CV && CV->getType() == TD->getIntPtrType(CV->getContext()))
+    if (PtrToIntInst *PTII = dyn_cast<PtrToIntInst>(CV))
+      CV = PTII->getOperand(0);
+  return CV;
 }
 
 /// GetValueEqualityComparisonCases - Given a value comparison instruction,
 /// decode all of the 'cases' that it represents and return the 'default' block.
-static BasicBlock *
+BasicBlock *SimplifyCFGOpt::
 GetValueEqualityComparisonCases(TerminatorInst *TI,
                                 std::vector<std::pair<ConstantInt*,
                                                       BasicBlock*> > &Cases) {
@@ -362,7 +420,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 
   BranchInst *BI = cast<BranchInst>(TI);
   ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
-  Cases.push_back(std::make_pair(cast<ConstantInt>(ICI->getOperand(1)),
+  Cases.push_back(std::make_pair(GetConstantInt(ICI->getOperand(1)),
                                  BI->getSuccessor(ICI->getPredicate() ==
                                                   ICmpInst::ICMP_NE)));
   return BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_EQ);
@@ -421,8 +479,9 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
 /// comparison with the same value, and if that comparison determines the
 /// outcome of this comparison.  If so, simplify TI.  This does a very limited
 /// form of jump threading.
-static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
-                                                          BasicBlock *Pred) {
+bool SimplifyCFGOpt::
+SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
+                                              BasicBlock *Pred) {
   Value *PredVal = isValueEqualityComparison(Pred->getTerminator());
   if (!PredVal) return false;  // Not a value comparison in predecessor.
 
@@ -548,7 +607,7 @@ namespace {
 /// equality comparison instruction (either a switch or a branch on "X == c").
 /// See if any of the predecessors of the terminator block are value comparisons
 /// on the same value.  If so, and if safe to do so, fold them together.
-static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
+bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   BasicBlock *BB = TI->getParent();
   Value *CV = isValueEqualityComparison(TI);  // CondVal
   assert(CV && "Not a comparison?");
@@ -640,6 +699,13 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       // successors.
       for (unsigned i = 0, e = NewSuccessors.size(); i != e; ++i)
         AddPredecessorToBlock(NewSuccessors[i], Pred, BB);
+
+      // Convert pointer to int before we switch.
+      if (isa<PointerType>(CV->getType())) {
+        assert(TD && "Cannot switch on pointer without TargetData");
+        CV = new PtrToIntInst(CV, TD->getIntPtrType(CV->getContext()),
+                              "magicptr", PTI);
+      }
 
       // Now that the successors are updated, create the new Switch instruction.
       SwitchInst *NewSI = SwitchInst::Create(CV, PredDefault,
@@ -1589,14 +1655,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   return true;
 }
 
-/// SimplifyCFG - This function is used to do simplification of a CFG.  For
-/// example, it adjusts branches to branches to eliminate the extra hop, it
-/// eliminates unreachable basic blocks, and does other "peephole" optimization
-/// of the CFG.  It returns true if a modification was made.
-///
-/// WARNING:  The entry node of a function may not be simplified.
-///
-bool llvm::SimplifyCFG(BasicBlock *BB) {
+bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
   Function *M = BB->getParent();
 
@@ -1997,7 +2056,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         Value *CompVal = 0;
         std::vector<ConstantInt*> Values;
         bool TrueWhenEqual = GatherValueComparisons(Cond, CompVal, Values);
-        if (CompVal && CompVal->getType()->isInteger()) {
+        if (CompVal) {
           // There might be duplicate constants in the list, which the switch
           // instruction can't handle, remove them now.
           std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
@@ -2007,6 +2066,14 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           BasicBlock *DefaultBB = BI->getSuccessor(1);
           BasicBlock *EdgeBB    = BI->getSuccessor(0);
           if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
+
+          // Convert pointer to int before we switch.
+          if (isa<PointerType>(CompVal->getType())) {
+            assert(TD && "Cannot switch on pointer without TargetData");
+            CompVal = new PtrToIntInst(CompVal,
+                                       TD->getIntPtrType(CompVal->getContext()),
+                                       "magicptr", BI);
+          }
 
           // Create the new switch instruction now.
           SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB,
@@ -2034,4 +2101,15 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       }
 
   return Changed;
+}
+
+/// SimplifyCFG - This function is used to do simplification of a CFG.  For
+/// example, it adjusts branches to branches to eliminate the extra hop, it
+/// eliminates unreachable basic blocks, and does other "peephole" optimization
+/// of the CFG.  It returns true if a modification was made.
+///
+/// WARNING:  The entry node of a function may not be simplified.
+///
+bool llvm::SimplifyCFG(BasicBlock *BB, const TargetData *TD) {
+  return SimplifyCFGOpt(TD).run(BB);
 }
