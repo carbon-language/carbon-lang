@@ -1327,7 +1327,13 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
  DIE *SPDie = ModuleCU->getDIE(SPNode);
  assert (SPDie && "Unable to find subprogram DIE!");
  DISubprogram SP(SPNode);
- if (SP.isDefinition() && !SP.getContext().isCompileUnit()) {
+ // There is not any need to generate specification DIE for a function
+ // defined at compile unit level. If a function is defined inside another
+ // function then gdb prefers the definition at top level and but does not
+ // expect specification DIE in parent function. So avoid creating 
+ // specification DIE for a function defined inside a function.
+ if (SP.isDefinition() && !SP.getContext().isCompileUnit()
+     && !SP.getContext().isSubprogram()) {
    addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
   // Add arguments. 
    DICompositeType SPTy = SP.getType();
