@@ -34,7 +34,7 @@ ANALYSIS(WarnDeadStores, "analyzer-check-dead-stores",
 ANALYSIS(WarnUninitVals, "warn-uninit-values",
          "Warn about uses of uninitialized variables", Code)
 
-ANALYSIS(WarnObjCMethSigs, "warn-objc-methodsigs",
+ANALYSIS(WarnObjCMethSigs, "analyzer-check-objc-methodsigs",
  "Warn about Objective-C method signatures with type incompatibilities",
  ObjCImplementation)
 

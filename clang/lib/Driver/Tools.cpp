@@ -705,7 +705,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-analyzer-check-security-syntactic");
       CmdArgs.push_back("-checker-cfref");
       CmdArgs.push_back("-analyzer-eagerly-assume");
-      CmdArgs.push_back("-warn-objc-methodsigs");
+      CmdArgs.push_back("-analyzer-check-objc-methodsigs");
       // Do not enable the missing -dealloc check.
       // '-warn-objc-missing-dealloc',
       CmdArgs.push_back("-analyzer-check-objc-unused-ivars");

@@ -44,7 +44,7 @@ def analysis_WarnDeadStores : Flag<"-analyzer-check-dead-stores">,
   HelpText<"Warn about stores to dead variables">;
 def analysis_WarnUninitVals : Flag<"-warn-uninit-values">,
   HelpText<"Warn about uses of uninitialized variables">;
-def analysis_WarnObjCMethSigs : Flag<"-warn-objc-methodsigs">,
+def analysis_WarnObjCMethSigs : Flag<"-analyzer-check-objc-methodsigs">,
   HelpText<"Warn about Objective-C method signatures with type incompatibilities">;
 def analysis_WarnObjCDealloc : Flag<"-warn-objc-missing-dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">;
