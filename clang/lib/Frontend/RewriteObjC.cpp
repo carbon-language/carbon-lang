@@ -167,7 +167,7 @@ namespace {
 
     virtual void HandleTranslationUnit(ASTContext &C);
 
-    void ReplaceStmt(Stmt *Old, Stmt *New, int Size=0) {
+    void ReplaceStmt(Stmt *Old, Stmt *New) {
       Stmt *ReplacingStmt = ReplacedNodes[Old];
 
       if (ReplacingStmt)
@@ -177,7 +177,7 @@ namespace {
         return; // Used when rewriting the assignment of a property setter.
 
       // If replacement succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceStmt(Old, New, Size)) {
+      if (!Rewrite.ReplaceStmt(Old, New)) {
         ReplacedNodes[Old] = New;
         return;
       }
