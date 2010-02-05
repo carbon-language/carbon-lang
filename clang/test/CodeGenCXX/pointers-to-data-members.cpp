@@ -23,7 +23,8 @@ namespace ZeroInit {
     int A::*a;
   } sa;
   
-  // CHECK: @_ZN8ZeroInit3ssaE = global [2 x %0] [%0 { [2 x i64] [i64 -1, i64 -1] }
+  // CHECK: @_ZN8ZeroInit3ssaE = 
+  // CHECK: [2 x i64] [i64 -1, i64 -1]
   struct {
     int A::*aa[2];
   } ssa[2];
