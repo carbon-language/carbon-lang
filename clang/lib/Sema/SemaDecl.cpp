@@ -3727,7 +3727,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           if (Init.isInvalid())
             Var->setInvalidDecl();
           else {
-            Var->setInit(Context, 
+            if (Init.get())
+              Var->setInit(Context, 
                        MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
             FinalizeVarWithDestructor(Var, InitType->getAs<RecordType>());
           }

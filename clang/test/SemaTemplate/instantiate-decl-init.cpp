@@ -34,3 +34,13 @@ void f0() {
 
 template void f0<int>();
 template void f0<float>();
+
+struct NonTrivial {
+  NonTrivial();
+  ~NonTrivial();
+};
+
+template<int N> void f1() {
+  NonTrivial array[N];
+}
+template<> void f1<2>();

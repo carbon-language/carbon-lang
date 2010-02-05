@@ -3190,6 +3190,9 @@ InitializationSequence::Perform(Sema &S,
     if (Kind.getKind() == InitializationKind::IK_Copy || Kind.isExplicitCast())
       return Sema::OwningExprResult(S, Args.release()[0]);
 
+    if (Args.size() == 0)
+      return S.Owned((Expr *)0);
+
     unsigned NumArgs = Args.size();
     return S.Owned(new (S.Context) ParenListExpr(S.Context,
                                                  SourceLocation(),
