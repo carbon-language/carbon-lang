@@ -2,8 +2,6 @@
 // RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
 // radar 7617047
 
-#include <objc/objc.h>
-
 @interface Baz
 - (id)y;
 + (id)z;
