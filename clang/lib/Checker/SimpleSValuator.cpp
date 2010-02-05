@@ -423,6 +423,6 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
   }
 
   // Delegate pointer arithmetic to the StoreManager.
-  return state->getStateManager().getStoreManager().EvalBinOp(state, op, lhs,
+  return state->getStateManager().getStoreManager().EvalBinOp(op, lhs,
                                                               rhs, resultTy);
 }

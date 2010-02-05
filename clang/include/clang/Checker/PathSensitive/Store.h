@@ -127,7 +127,7 @@ public:
   const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
-  virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal EvalBinOp(BinaryOperator::Opcode Op,
                          Loc lhs, NonLoc rhs, QualType resultTy) {
     return UnknownVal();
   }

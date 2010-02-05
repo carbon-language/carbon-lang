@@ -266,8 +266,7 @@ public:
   ///  casts from arrays to pointers.
   SVal ArrayToPointer(Loc Array);
 
-  SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,Loc L,
-                 NonLoc R, QualType resultTy);
+  SVal EvalBinOp(BinaryOperator::Opcode Op,Loc L, NonLoc R, QualType resultTy);
 
   Store getInitialStore(const LocationContext *InitLoc) {
     return RBFactory.GetEmptyMap().getRoot();
@@ -916,8 +915,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
 // Pointer arithmetic.
 //===----------------------------------------------------------------------===//
 
-SVal RegionStoreManager::EvalBinOp(const GRState *state,
-                                   BinaryOperator::Opcode Op, Loc L, NonLoc R,
+SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
                                    QualType resultTy) {
   // Assume the base location is MemRegionVal.
   if (!isa<loc::MemRegionVal>(L))
