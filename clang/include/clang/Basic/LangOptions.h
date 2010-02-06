@@ -136,8 +136,7 @@ public:
 
     SymbolVisibility = (unsigned) Default;
 
-    // FIXME: The default should be 1.
-    ThreadsafeStatics = 0;
+    ThreadsafeStatics = 1;
     POSIXThreads = 0;
     Blocks = 0;
     BlockIntrospection = 0;

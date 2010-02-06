@@ -115,6 +115,8 @@ def no_implicit_float : Flag<"-no-implicit-float">,
   HelpText<"Don't generate implicit floating point instructions (x86-only)">;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">,
   HelpText<"Disallow merging of constants.">;
+def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">,
+  HelpText<"Do not emit code to make initialization of local statics thread safe">;
 def masm_verbose : Flag<"-masm-verbose">,
   HelpText<"Generate verbose assembly output">;
 def mcode_model : Separate<"-mcode-model">,

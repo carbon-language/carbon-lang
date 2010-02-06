@@ -480,8 +480,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fno-builtin");
   if (!Opts.AssumeSaneOperatorNew)
     Res.push_back("-fno-assume-sane-operator-new");
-  if (Opts.ThreadsafeStatics)
-    llvm::llvm_report_error("FIXME: Not yet implemented!");
+  if (!Opts.ThreadsafeStatics)
+    Res.push_back("-fno-threadsafe-statics");
   if (Opts.POSIXThreads)
     Res.push_back("-pthread");
   if (Opts.Blocks)
@@ -1155,7 +1155,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
   if (Args.hasArg(OPT_fno_lax_vector_conversions))
-      Opts.LaxVectorConversions = 0;
+    Opts.LaxVectorConversions = 0;
+  if (Args.hasArg(OPT_fno_threadsafe_statics))
+    Opts.ThreadsafeStatics = 0;  
   Opts.Exceptions = Args.hasArg(OPT_fexceptions);
   Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
   Opts.Blocks = Args.hasArg(OPT_fblocks);

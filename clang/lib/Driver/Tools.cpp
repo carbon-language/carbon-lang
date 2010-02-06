@@ -1013,6 +1013,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     isSignedCharDefault(getToolChain().getTriple())))
     CmdArgs.push_back("-fno-signed-char");
 
+  // -fthreadsafe-static is default.
+  if (!Args.hasFlag(options::OPT_fthreadsafe_statics, 
+                    options::OPT_fno_threadsafe_statics))
+    CmdArgs.push_back("-fno-threadsafe-statics");
+
   // -fms-extensions=0 is default.
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))

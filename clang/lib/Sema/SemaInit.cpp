@@ -3005,7 +3005,6 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
                                   bool IsCopy) {
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
-  case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_Member:
     return !IsCopy;
@@ -3014,6 +3013,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity,
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
   case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_Exception:
     return false;
     
   case InitializedEntity::EK_Parameter:
