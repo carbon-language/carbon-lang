@@ -48,9 +48,8 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// ReturnAddrIndex - FrameIndex for return slot.
   int ReturnAddrIndex;
 
-  /// TailCallReturnAddrDelta - Delta the ReturnAddr stack slot is moved
-  /// Used for creating an area before the register spill area on the stack
-  /// the returnaddr can be savely move to this area
+  /// TailCallReturnAddrDelta - The number of bytes by which return address
+  /// stack slot is moved as the result of tail call optimization.
   int TailCallReturnAddrDelta;
 
   /// SRetReturnReg - Some subtargets require that sret lowering includes

@@ -146,9 +146,13 @@ define i32 @t11(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind ssp {
 ; eliminated currently.
 
 ; 32: t11:
+; 32-NOT: subl ${{[0-9]+}}, %esp
+; 32-NOT: addl ${{[0-9]+}}, %esp
 ; 32: jmp {{_?}}foo5
 
 ; 64: t11:
+; 64-NOT: subq ${{[0-9]+}}, %esp
+; 64-NOT: addq ${{[0-9]+}}, %esp
 ; 64: jmp {{_?}}foo5
 entry:
   %0 = icmp eq i32 %x, 0
@@ -168,9 +172,13 @@ declare i32 @foo5(i32, i32, i32, i32, i32)
 
 define i32 @t12(i32 %x, i32 %y, %struct.t* byval align 4 %z) nounwind ssp {
 ; 32: t12:
+; 32-NOT: subl ${{[0-9]+}}, %esp
+; 32-NOT: addl ${{[0-9]+}}, %esp
 ; 32: jmp {{_?}}foo6
 
 ; 64: t12:
+; 64-NOT: subq ${{[0-9]+}}, %esp
+; 64-NOT: addq ${{[0-9]+}}, %esp
 ; 64: jmp {{_?}}foo6
 entry:
   %0 = icmp eq i32 %x, 0

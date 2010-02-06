@@ -1749,8 +1749,6 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
                                            SDValue &OutRetAddr, SDValue Chain,
                                            bool IsTailCall, bool Is64Bit,
                                            int FPDiff, DebugLoc dl) {
-  if (!IsTailCall || FPDiff==0) return Chain;
-
   // Adjust the Return address stack slot.
   EVT VT = getPointerTy();
   OutRetAddr = getReturnAddressFrameIndex(DAG);
@@ -1796,8 +1794,14 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
                                                    Outs, Ins, DAG);
+
+    // Sibcalls are automatically detected tailcalls which do not require
+    // ABI changes.
     if (!PerformTailCallOpt && isTailCall)
       IsSibcall = true;
+
+    if (isTailCall)
+      ++NumTailCalls;
   }
 
   assert(!(isVarArg && CallConv == CallingConv::Fast) &&
@@ -1811,17 +1815,15 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
-  if (FuncIsMadeTailCallSafe(CallConv))
-    NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
-  else if (IsSibcall)
+  if (IsSibcall)
     // This is a sibcall. The memory operands are available in caller's
     // own caller's stack.
     NumBytes = 0;
+  else if (PerformTailCallOpt && CallConv == CallingConv::Fast)
+    NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
-  if (isTailCall) {
-    ++NumTailCalls;
-
+  if (isTailCall && !IsSibcall) {
     // Lower arguments at fp - stackoffset + fpdiff.
     unsigned NumBytesCallerPushed =
       MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn();
@@ -1833,12 +1835,14 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       MF.getInfo<X86MachineFunctionInfo>()->setTCReturnAddrDelta(FPDiff);
   }
 
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
+  if (!IsSibcall)
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
   SDValue RetAddrFrIdx;
   // Load return adress for tail calls.
-  Chain = EmitTailCallLoadRetAddr(DAG, RetAddrFrIdx, Chain, isTailCall, Is64Bit,
-                                  FPDiff, dl);
+  if (isTailCall && FPDiff)
+    Chain = EmitTailCallLoadRetAddr(DAG, RetAddrFrIdx, Chain, isTailCall,
+                                    Is64Bit, FPDiff, dl);
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
@@ -1888,7 +1892,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else if ((!isTailCall || isByVal) && !IsSibcall) {
+    } else if (!IsSibcall && (!isTailCall || isByVal)) {
       assert(VA.isMemLoc());
       if (StackPtr.getNode() == 0)
         StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, getPointerTy());
@@ -1912,7 +1916,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
-
 
   if (Subtarget->isPICStyleGOT()) {
     // ELF / PIC requires GOT in the EBX register before function calls via PLT
@@ -2110,7 +2113,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SmallVector<SDValue, 8> Ops;
 
-  if (isTailCall) {
+  if (!IsSibcall && isTailCall) {
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
                            DAG.getIntPtrConstant(0, true), InFlag);
     InFlag = Chain.getValue(1);
@@ -2179,12 +2182,14 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     NumBytesForCalleeToPush = 0;  // Callee pops nothing.
 
   // Returns a flag for retval copy to use.
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getIntPtrConstant(NumBytes, true),
-                             DAG.getIntPtrConstant(NumBytesForCalleeToPush,
-                                                   true),
-                             InFlag);
-  InFlag = Chain.getValue(1);
+  if (!IsSibcall) {
+    Chain = DAG.getCALLSEQ_END(Chain,
+                               DAG.getIntPtrConstant(NumBytes, true),
+                               DAG.getIntPtrConstant(NumBytesForCalleeToPush,
+                                                     true),
+                               InFlag);
+    InFlag = Chain.getValue(1);
+  }
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.

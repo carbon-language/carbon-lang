@@ -1,9 +1,14 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -disable-fp-elim | grep subl | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -disable-fp-elim | FileCheck %s
 
         %struct.decode_t = type { i8, i8, i8, i8, i16, i8, i8, %struct.range_t** }
         %struct.range_t = type { float, float, i32, i32, i32, [0 x i8] }
 
 define i32 @decode_byte(%struct.decode_t* %decode) nounwind {
+; CHECK: decode_byte:
+; CHECK: pushl
+; CHECK: popl
+; CHECK: popl
+; CHECK: jmp
 entry:
         %tmp2 = getelementptr %struct.decode_t* %decode, i32 0, i32 4           ; <i16*> [#uses=1]
         %tmp23 = bitcast i16* %tmp2 to i32*             ; <i32*> [#uses=1]
