@@ -203,4 +203,14 @@ define i32 @test14(i32 %X1, i32 %X2) {
 ; CHECK-NEXT: ret i32
 }
 
+; Do not reassociate expressions of type i1
+define i32 @test15(i32 %X1, i32 %X2, i32 %X3) {
+  %A = icmp ne i32 %X1, 0
+  %B = icmp slt i32 %X2, %X3
+  %C = and i1 %A, %B
+  %D = select i1 %C, i32 %X1, i32 0
+  ret i32 %D
+; CHECK: @test15
+; CHECK: and i1 %A, %B
+}
 
