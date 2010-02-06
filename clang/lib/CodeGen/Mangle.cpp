@@ -1104,7 +1104,7 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
         dyn_cast<TemplateSpecializationType>(QTy)) {
     if (!mangleSubstitution(QualType(TST, 0))) {
       TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
-
+      assert(TD && "FIXME: Support dependent template names");
       mangleTemplatePrefix(TD);
       mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
       addSubstitution(QualType(TST, 0));
@@ -1467,6 +1467,8 @@ void CXXNameMangler::mangleTemplateArg(const TemplateArgument &A) {
     mangleType(A.getAsType());
     break;
   case TemplateArgument::Template:
+    assert(A.getAsTemplate().getAsTemplateDecl() &&
+           "FIXME: Support dependent template names");
     mangleName(A.getAsTemplate().getAsTemplateDecl());
     break;      
   case TemplateArgument::Expression:
