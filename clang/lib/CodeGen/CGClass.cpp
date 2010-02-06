@@ -809,6 +809,19 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset/8);
   V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
   CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
+  
+  if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor()) {
+    // FIXME: Is this OK for C++0x delegating constructors?
+    CodeGenFunction::EHCleanupBlock Cleanup(CGF);
+
+    llvm::Value *ThisPtr = CGF.LoadCXXThis();
+    llvm::Value *V = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
+    V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset / 8);
+    V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
+    
+    CXXDestructorDecl *DD = BaseClassDecl->getDestructor(CGF.getContext());
+    CGF.EmitCXXDestructorCall(DD, Dtor_Base, V);
+  }
 }
 
 static void EmitMemberInitializer(CodeGenFunction &CGF,
