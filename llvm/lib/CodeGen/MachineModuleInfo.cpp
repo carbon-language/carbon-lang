@@ -40,6 +40,7 @@ MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 MachineModuleInfo::MachineModuleInfo()
 : ImmutablePass(&ID)
 , ObjFileMMI(0)
+, CurCallSite(0)
 , CallsEHReturn(0)
 , CallsUnwindInit(0)
 , DbgInfoAvailable(false) {
