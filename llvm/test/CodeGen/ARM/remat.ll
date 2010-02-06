@@ -1,119 +1,65 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin 
-; RUN: llc < %s -mtriple=arm-apple-darwin -stats -info-output-file - | grep "Number of re-materialization" | grep 3
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -stats -info-output-file - | grep "Number of re-materialization"
 
-	%struct.CONTENTBOX = type { i32, i32, i32, i32, i32 }
-	%struct.LOCBOX = type { i32, i32, i32, i32 }
-	%struct.SIDEBOX = type { i32, i32 }
-	%struct.UNCOMBOX = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
-	%struct.cellbox = type { i8*, i32, i32, i32, [9 x i32], i32, i32, i32, i32, i32, i32, i32, double, double, double, double, double, i32, i32, %struct.CONTENTBOX*, %struct.UNCOMBOX*, [8 x %struct.tilebox*], %struct.SIDEBOX* }
-	%struct.termbox = type { %struct.termbox*, i32, i32, i32, i32, i32 }
-	%struct.tilebox = type { %struct.tilebox*, double, double, double, double, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, %struct.termbox*, %struct.LOCBOX* }
-@numcells = external global i32		; <i32*> [#uses=1]
-@cellarray = external global %struct.cellbox**		; <%struct.cellbox***> [#uses=1]
-@numBinsY = external global i32		; <i32*> [#uses=1]
-
-define fastcc void @fixpenal() {
+define arm_apcscc i32 @main(i32 %argc, i8** nocapture %argv, double %d1, double %d2) nounwind {
 entry:
-	%tmp491 = load i32* @numcells, align 4		; <i32> [#uses=1]
-	%tmp9 = load %struct.cellbox*** @cellarray, align 4		; <%struct.cellbox**> [#uses=1]
-	%tmp77.i = load i32* @numBinsY, align 4		; <i32> [#uses=2]
-	br label %bb490
+  br i1 undef, label %smvp.exit, label %bb.i3
 
-bb8:		; preds = %bb490, %cond_false428
-  %foo3 = phi i1 [ 0, %bb490 ], [ 1, %cond_false428 ]
-	br i1 %foo3, label %cond_false58.i, label %cond_false.i
+bb.i3:                                            ; preds = %bb.i3, %bb134
+  br i1 undef, label %smvp.exit, label %bb.i3
 
-cond_false.i:		; preds = %bb8
-	ret void
+smvp.exit:                                        ; preds = %bb.i3
+  %0 = fmul double %d1, 2.400000e-03            ; <double> [#uses=2]
+  br i1 undef, label %bb138.preheader, label %bb159
 
-cond_false58.i:		; preds = %bb8
-	%highBinX.0.i = select i1 false, i32 1, i32 0		; <i32> [#uses=2]
-	br i1 %foo3, label %cond_next85.i, label %cond_false76.i
+bb138.preheader:                                  ; preds = %smvp.exit
+  br label %bb138
 
-cond_false76.i:		; preds = %cond_false58.i
-	ret void
+bb138:                                            ; preds = %bb138, %bb138.preheader
+  br i1 undef, label %bb138, label %bb145.loopexit
 
-cond_next85.i:		; preds = %cond_false58.i
-	br i1 %foo3, label %cond_next105.i, label %cond_false98.i
+bb142:                                            ; preds = %bb.nph218.bb.nph218.split_crit_edge, %phi0.exit
+  %1 = fmul double %d1, -1.200000e-03           ; <double> [#uses=1]
+  %2 = fadd double %d2, %1                      ; <double> [#uses=1]
+  %3 = fmul double %2, %d2                      ; <double> [#uses=1]
+  %4 = fsub double 0.000000e+00, %3               ; <double> [#uses=1]
+  br i1 %14, label %phi1.exit, label %bb.i35
 
-cond_false98.i:		; preds = %cond_next85.i
-	ret void
+bb.i35:                                           ; preds = %bb142
+  %5 = call arm_apcscc  double @sin(double %15) nounwind readonly ; <double> [#uses=1]
+  %6 = fmul double %5, 0x4031740AFA84AD8A         ; <double> [#uses=1]
+  %7 = fsub double 1.000000e+00, undef            ; <double> [#uses=1]
+  %8 = fdiv double %7, 6.000000e-01               ; <double> [#uses=1]
+  br label %phi1.exit
 
-cond_next105.i:		; preds = %cond_next85.i
-	%tmp108.i = icmp eq i32 1, %highBinX.0.i		; <i1> [#uses=1]
-	%tmp115.i = icmp eq i32 1, %tmp77.i		; <i1> [#uses=1]
-	%bothcond.i = and i1 %tmp115.i, %tmp108.i		; <i1> [#uses=1]
-	%storemerge.i = select i1 %bothcond.i, i32 1, i32 0		; <i32> [#uses=2]
-	br i1 %bothcond.i, label %whoOverlaps.exit, label %bb503.preheader.i
+phi1.exit:                                        ; preds = %bb.i35, %bb142
+  %.pn = phi double [ %6, %bb.i35 ], [ 0.000000e+00, %bb142 ] ; <double> [#uses=0]
+  %9 = phi double [ %8, %bb.i35 ], [ 0.000000e+00, %bb142 ] ; <double> [#uses=1]
+  %10 = fmul double undef, %9                     ; <double> [#uses=0]
+  br i1 %14, label %phi0.exit, label %bb.i
 
-bb503.preheader.i:		; preds = %bb513.i, %cond_next105.i
-	%i.022.0.i = phi i32 [ %tmp512.i, %bb513.i ], [ 0, %cond_next105.i ]		; <i32> [#uses=2]
-	%tmp165.i = getelementptr i32*** null, i32 %i.022.0.i		; <i32***> [#uses=0]
-	br label %bb503.i
+bb.i:                                             ; preds = %phi1.exit
+  unreachable
 
-bb137.i:		; preds = %bb503.i
-	br i1 %tmp506.i, label %bb162.i, label %bb148.i
+phi0.exit:                                        ; preds = %phi1.exit
+  %11 = fsub double %4, undef                     ; <double> [#uses=1]
+  %12 = fadd double 0.000000e+00, %11             ; <double> [#uses=1]
+  store double %12, double* undef, align 4
+  br label %bb142
 
-bb148.i:		; preds = %bb137.i
-	ret void
+bb145.loopexit:                                   ; preds = %bb138
+  br i1 undef, label %bb.nph218.bb.nph218.split_crit_edge, label %bb159
 
-bb162.i:		; preds = %bb137.i
-	%tmp49435.i = load i32* null		; <i32> [#uses=1]
-	br label %bb170.i
+bb.nph218.bb.nph218.split_crit_edge:              ; preds = %bb145.loopexit
+  %13 = fmul double %0, 0x401921FB54442D18        ; <double> [#uses=1]
+  %14 = fcmp ugt double %0, 6.000000e-01          ; <i1> [#uses=2]
+  %15 = fdiv double %13, 6.000000e-01             ; <double> [#uses=1]
+  br label %bb142
 
-bb170.i:		; preds = %bb491.i, %bb162.i
-	%indvar.i = phi i32 [ %k.032.0.i, %bb491.i ], [ 0, %bb162.i ]		; <i32> [#uses=2]
-	%k.032.0.i = add i32 %indvar.i, 1		; <i32> [#uses=2]
-	%tmp173.i = getelementptr i32* null, i32 %k.032.0.i		; <i32*> [#uses=1]
-	%tmp174.i = load i32* %tmp173.i		; <i32> [#uses=4]
-	%tmp177.i = icmp eq i32 %tmp174.i, %cell.1		; <i1> [#uses=1]
-	%tmp184.i = icmp sgt i32 %tmp174.i, %tmp491		; <i1> [#uses=1]
-	%bothcond = or i1 %tmp177.i, %tmp184.i		; <i1> [#uses=1]
-	br i1 %bothcond, label %bb491.i, label %cond_next188.i
+bb159:                                            ; preds = %bb145.loopexit, %smvp.exit, %bb134
+  unreachable
 
-cond_next188.i:		; preds = %bb170.i
-	%tmp191.i = getelementptr %struct.cellbox** %tmp9, i32 %tmp174.i		; <%struct.cellbox**> [#uses=1]
-	%tmp192.i = load %struct.cellbox** %tmp191.i		; <%struct.cellbox*> [#uses=1]
-	%tmp195.i = icmp eq i32 %tmp174.i, 0		; <i1> [#uses=1]
-	br i1 %tmp195.i, label %bb491.i, label %cond_true198.i
-
-cond_true198.i:		; preds = %cond_next188.i
-	%tmp210.i = getelementptr %struct.cellbox* %tmp192.i, i32 0, i32 3		; <i32*> [#uses=0]
-	ret void
-
-bb491.i:		; preds = %cond_next188.i, %bb170.i
-	%tmp490.i = add i32 %indvar.i, 2		; <i32> [#uses=1]
-	%tmp496.i = icmp slt i32 %tmp49435.i, %tmp490.i		; <i1> [#uses=1]
-	br i1 %tmp496.i, label %bb500.i, label %bb170.i
-
-bb500.i:		; preds = %bb491.i
-	%indvar.next82.i = add i32 %j.0.i, 1		; <i32> [#uses=1]
-	br label %bb503.i
-
-bb503.i:		; preds = %bb500.i, %bb503.preheader.i
-	%j.0.i = phi i32 [ 0, %bb503.preheader.i ], [ %indvar.next82.i, %bb500.i ]		; <i32> [#uses=2]
-	%tmp506.i = icmp sgt i32 %j.0.i, %tmp77.i		; <i1> [#uses=1]
-	br i1 %tmp506.i, label %bb513.i, label %bb137.i
-
-bb513.i:		; preds = %bb503.i
-	%tmp512.i = add i32 %i.022.0.i, 1		; <i32> [#uses=2]
-	%tmp516.i = icmp sgt i32 %tmp512.i, %highBinX.0.i		; <i1> [#uses=1]
-	br i1 %tmp516.i, label %whoOverlaps.exit, label %bb503.preheader.i
-
-whoOverlaps.exit:		; preds = %bb513.i, %cond_next105.i
-  %foo = phi i1 [ 1, %bb513.i], [0, %cond_next105.i]
-	br i1 %foo, label %cond_false428, label %bb490
-
-cond_false428:		; preds = %whoOverlaps.exit
-	br i1 %foo, label %bb497, label %bb8
-
-bb490:		; preds = %whoOverlaps.exit, %entry
-	%binY.tmp.2 = phi i32 [ 0, %entry ], [ %storemerge.i, %whoOverlaps.exit ]		; <i32> [#uses=1]
-	%cell.1 = phi i32 [ 1, %entry ], [ 0, %whoOverlaps.exit ]		; <i32> [#uses=1]
-	%foo2 = phi i1 [ 1, %entry], [0, %whoOverlaps.exit]
-	br i1 %foo2, label %bb497, label %bb8
-
-bb497:		; preds = %bb490, %cond_false428
-	%binY.tmp.3 = phi i32 [ %binY.tmp.2, %bb490 ], [ %storemerge.i, %cond_false428 ]		; <i32> [#uses=0]
-	ret void
+bb166:                                            ; preds = %bb127
+  unreachable
 }
+
+declare arm_apcscc double @sin(double) nounwind readonly

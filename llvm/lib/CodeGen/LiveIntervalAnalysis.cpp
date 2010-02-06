@@ -671,6 +671,9 @@ void LiveIntervals::computeIntervals() {
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
+    if (MBB->empty())
+      continue;
+
     // Track the index of the current machine instr.
     SlotIndex MIIndex = getMBBStartIdx(MBB);
     DEBUG(dbgs() << MBB->getName() << ":\n");

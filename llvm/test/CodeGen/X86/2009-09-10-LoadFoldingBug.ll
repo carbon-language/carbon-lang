@@ -13,7 +13,6 @@ define i32 @t(i32 %clientPort, i32 %pluginID, i32 %requestID, i32 %objectID, i64
 entry:
 ; CHECK: _t:
 ; CHECK: movl 16(%rbp),
-; CHECK: movl 16(%rbp), %edx
   %0 = zext i32 %argumentsLength to i64           ; <i64> [#uses=1]
   %1 = zext i32 %clientPort to i64                ; <i64> [#uses=1]
   %2 = inttoptr i64 %1 to %struct.ComplexType*    ; <%struct.ComplexType*> [#uses=1]

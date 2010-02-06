@@ -291,6 +291,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   printAndVerify(PM, "After Instruction Selection",
                  /* allowDoubleDefs= */ true);
 
+
+  // Delete dead machine instructions regardless of optimization level.
+  PM.add(createDeadMachineInstructionElimPass());
+  printAndVerify(PM, "After codegen DCE pass",
+                 /* allowDoubleDefs= */ true);
+
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createOptimizeExtsPass());
     if (!DisableMachineLICM)

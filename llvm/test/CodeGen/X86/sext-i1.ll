@@ -44,9 +44,9 @@ entry:
 
 ; 64: t3:
 ; 64: cmpl $1
-; 64: sbbl
-; 64: cmpl
 ; 64: sbbq
+; 64: cmpq
+; 64: xorl
   %not.tobool = icmp eq i32 undef, 0              ; <i1> [#uses=2]
   %cond = sext i1 %not.tobool to i32              ; <i32> [#uses=1]
   %conv = sext i1 %not.tobool to i64              ; <i64> [#uses=1]

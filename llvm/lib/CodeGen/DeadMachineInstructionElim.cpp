@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "codegen-dce"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -19,7 +20,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 
 namespace {
   class DeadMachineInstructionElim : public MachineFunctionPass {
@@ -126,6 +130,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
         DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
         AnyChanges = true;
         MI->eraseFromParent();
+        ++NumDeletes;
         MIE = MBB->rend();
         // MII is now pointing to the next instruction to process,
         // so don't increment it.

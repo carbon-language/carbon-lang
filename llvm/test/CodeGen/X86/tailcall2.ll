@@ -147,6 +147,8 @@ define i32 @t11(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind ssp {
 
 ; 32: t11:
 ; 32-NOT: subl ${{[0-9]+}}, %esp
+; 32: jne
+; 32-NOT: movl
 ; 32-NOT: addl ${{[0-9]+}}, %esp
 ; 32: jmp {{_?}}foo5
 

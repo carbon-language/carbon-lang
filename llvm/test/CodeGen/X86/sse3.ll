@@ -63,10 +63,10 @@ define <8 x i16> @t4(<8 x i16> %A, <8 x i16> %B) nounwind {
 	ret <8 x i16> %tmp
 ; X64: t4:
 ; X64: 	pextrw	$7, %xmm0, %eax
-; X64: 	pshufhw	$100, %xmm0, %xmm1
-; X64: 	pinsrw	$1, %eax, %xmm1
+; X64: 	pshufhw	$100, %xmm0, %xmm2
+; X64: 	pinsrw	$1, %eax, %xmm2
 ; X64: 	pextrw	$1, %xmm0, %eax
-; X64: 	movaps	%xmm1, %xmm0
+; X64: 	movaps	%xmm2, %xmm0
 ; X64: 	pinsrw	$4, %eax, %xmm0
 ; X64: 	ret
 }
