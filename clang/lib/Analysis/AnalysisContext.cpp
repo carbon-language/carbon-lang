@@ -194,6 +194,7 @@ namespace {
 class FindBlockDeclRefExprsVals : public StmtVisitor<FindBlockDeclRefExprsVals>{
   BumpVector<const VarDecl*> &BEVals;
   BumpVectorContext &BC;
+  llvm::DenseMap<const VarDecl*, unsigned> Visited;
 public:
   FindBlockDeclRefExprsVals(BumpVector<const VarDecl*> &bevals,
                             BumpVectorContext &bc)
@@ -204,10 +205,27 @@ public:
       if (Stmt *child = *I)
         Visit(child);
   }
+
+  void VisitDeclRefExpr(const DeclRefExpr *DR) {
+    // Non-local variables are also directly modified.
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+      if (!VD->hasLocalStorage()) {
+        unsigned &flag = Visited[VD];
+        if (!flag) {
+          flag = 1;
+          BEVals.push_back(VD, BC);
+        }
+      }
+  }
   
   void VisitBlockDeclRefExpr(BlockDeclRefExpr *DR) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
-      BEVals.push_back(VD, BC);
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+      unsigned &flag = Visited[VD];
+      if (!flag) {
+        flag = 1;
+        BEVals.push_back(VD, BC);
+      }
+    }
   }
 };  
 } // end anonymous namespace

@@ -606,10 +606,11 @@ Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
     // by reference.
     if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(baseR)) {
       for (BlockDataRegion::referenced_vars_iterator
-           I = BR->referenced_vars_begin(), E = BR->referenced_vars_end() ;
-           I != E; ++I) {
-        const VarRegion *VR = *I;
-        if (VR->getDecl()->getAttr<BlocksAttr>())
+           BI = BR->referenced_vars_begin(), BE = BR->referenced_vars_end() ;
+           BI != BE; ++BI) {
+        const VarRegion *VR = *BI;
+        const VarDecl *VD = VR->getDecl();
+        if (VD->getAttr<BlocksAttr>() || !VD->hasLocalStorage())
           AddToWorkList(VR);
       }
       continue;

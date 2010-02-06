@@ -759,7 +759,7 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
     const VarDecl *VD = *I;
     const VarRegion *VR = 0;
     
-    if (!VD->getAttr<BlocksAttr>())
+    if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage())
       VR = MemMgr.getVarRegion(VD, this);
     else {
       if (LC)

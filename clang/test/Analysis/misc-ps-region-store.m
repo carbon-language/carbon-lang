@@ -595,9 +595,45 @@ int blocks_2(int *p, int z) {
 typedef void (^RDar7582031CB)(void);
 @interface RDar7582031
 - rdar7582031:RDar7582031CB;
+- rdar7582031_b:RDar7582031CB;
 @end
 
+// Test with one block.
 unsigned rdar7582031(RDar7582031 *o) {
+  __block unsigned x;
+  [o rdar7582031:^{ x = 1; }];
+  return x; // no-warning
+}
+
+// Test with two blocks.
+unsigned long rdar7582031_b(RDar7582031 *o) {
+  __block unsigned y;
+  __block unsigned long x;
+  [o rdar7582031:^{ y = 1; }];
+  [o rdar7582031_b:^{ x = 1LL; }];
+  return x + (unsigned long) y; // no-warning
+}
+
+// Show we get an error when 'o' is null because the message
+// expression has no effect.
+unsigned long rdar7582031_b2(RDar7582031 *o) {
+  __block unsigned y;
+  __block unsigned long x;
+  if (o)
+    return 1;
+  [o rdar7582031:^{ y = 1; }];
+  [o rdar7582031_b:^{ x = 1LL; }];
+  return x + (unsigned long) y; // expected-warning{{The left operand of '+' is a garbage value}}
+}
+
+// Show that we handle static variables also getting invalidated.
+void rdar7582031_aux(void (^)(void));
+RDar7582031 *rdar7582031_aux_2();
+
+unsigned rdar7582031_static() {  
+  static RDar7582031 *o = 0;
+  rdar7582031_aux(^{ o = rdar7582031_aux_2(); });
+  
   __block unsigned x;
   [o rdar7582031:^{ x = 1; }];
   return x; // no-warning
