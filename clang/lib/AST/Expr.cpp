@@ -1665,16 +1665,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
               return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
           }
 
-          // C++ [class.static.data]p4:
-          //   If a static data member is of const integral or const 
-          //   enumeration type, its declaration in the class definition can
-          //   specify a constant-initializer which shall be an integral 
-          //   constant expression (5.19). In that case, the member can appear
-          //   in integral constant expressions.
-          if (ID->isOutOfLine()) {
-            Dcl->setInitKnownICE(false);
-            return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
-          }
+          // It's an ICE whether or not the definition we found is
+          // out-of-line.  See DR 721 and the discussion in Clang PR
+          // 6206 for details.
 
           if (Dcl->isCheckingICE()) {
             return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());

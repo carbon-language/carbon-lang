@@ -21,3 +21,19 @@ int a() {
     case t:; // expected-error {{not an integer constant expression}}
   }
 }
+
+// PR6206:  out-of-line definitions are legit
+namespace pr6206 {
+  class Foo {
+  public:
+    static const int kBar;
+  };
+
+  const int Foo::kBar = 20;
+  
+  char Test() {
+    char str[Foo::kBar];
+    str[0] = '0';
+    return str[0];
+  }
+}
