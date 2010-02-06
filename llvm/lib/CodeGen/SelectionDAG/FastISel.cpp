@@ -332,6 +332,8 @@ bool FastISel::SelectCall(User *I) {
       return true;
 
     Value *Address = DI->getAddress();
+    if (!Address)
+      return true;
     AllocaInst *AI = dyn_cast<AllocaInst>(Address);
     // Don't handle byval struct arguments or VLAs, for example.
     if (!AI) break;
