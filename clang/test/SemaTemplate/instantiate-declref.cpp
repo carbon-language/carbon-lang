@@ -87,3 +87,11 @@ struct smart_ptr {
 void test_smart_ptr(smart_ptr<int> p) {
   if (p) { }
 }
+
+// PR5517
+namespace test0 {
+  template <int K> struct X {
+    X() { extern void x(); }
+  };
+  void g() { X<2>(); }
+}

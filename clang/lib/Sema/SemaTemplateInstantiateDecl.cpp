@@ -738,9 +738,14 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (T.isNull())
     return 0;
 
-  // Build the instantiated method declaration.
-  DeclContext *DC = SemaRef.FindInstantiatedContext(D->getDeclContext(),
-                                                    TemplateArgs);
+  // If we're instantiating a local function declaration, put the result
+  // in the owner;  otherwise we need to find the instantiated context.
+  DeclContext *DC;
+  if (D->getDeclContext()->isFunctionOrMethod())
+    DC = Owner;
+  else
+    DC = SemaRef.FindInstantiatedContext(D->getDeclContext(), TemplateArgs);
+
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
                            D->getDeclName(), T, D->getTypeSourceInfo(),
