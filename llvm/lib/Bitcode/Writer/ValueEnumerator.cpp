@@ -93,7 +93,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
              OI != E; ++OI) {
           if (MDNode *MD = dyn_cast<MDNode>(*OI))
-            if (MD->isFunctionLocal())
+            if (MD->isFunctionLocal() && MD->getFunction())
               // These will get enumerated during function-incorporation.
               continue;
           EnumerateOperandType(*OI);
@@ -415,7 +415,7 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
       for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
            OI != E; ++OI) {
         if (MDNode *MD = dyn_cast<MDNode>(*OI))
-          if (MD->isFunctionLocal())
+          if (MD->isFunctionLocal() && MD->getFunction())
             // Enumerate metadata after the instructions they might refer to.
             FunctionLocalMDs.push_back(MD);
       }
