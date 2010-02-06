@@ -901,3 +901,10 @@ int bar_rev95274() {
   return 0;
 }
 
+void rdar7582031_test_static_init_zero() {
+  static unsigned x;
+  if (x == 0)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF;
+}

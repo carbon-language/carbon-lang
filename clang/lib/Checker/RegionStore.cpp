@@ -1394,11 +1394,23 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 
   // Lazily derive a value for the VarRegion.
   const VarDecl *VD = R->getDecl();
+  QualType T = VD->getType();
+  const MemSpaceRegion *MS = R->getMemorySpace();
+  
+  if (isa<UnknownSpaceRegion>(MS) || 
+      isa<StackArgumentsSpaceRegion>(MS))
+    return ValMgr.getRegionValueSymbolVal(R, T);
 
-  if (R->hasGlobalsOrParametersStorage() ||
-      isa<UnknownSpaceRegion>(R->getMemorySpace()))
-    return ValMgr.getRegionValueSymbolVal(R, VD->getType());
+  if (isa<GlobalsSpaceRegion>(MS)) {
+    if (VD->isFileVarDecl())
+      return ValMgr.getRegionValueSymbolVal(R, T);
 
+    if (T->isIntegerType())
+      return ValMgr.makeIntVal(0, T);
+    
+    return UnknownVal();    
+  }
+    
   return UndefinedVal();
 }
 
