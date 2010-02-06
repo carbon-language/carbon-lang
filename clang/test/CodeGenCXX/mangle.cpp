@@ -372,3 +372,7 @@ namespace test1 {
   // CHECK: define void @_ZN5test11fINS_1XEiEEvT_IT0_E
   template void f(X<int>);
 }
+
+// CHECK: define internal void @_Z27functionWithInternalLinkagev()
+static void functionWithInternalLinkage() {  }
+void g() { functionWithInternalLinkage(); }
