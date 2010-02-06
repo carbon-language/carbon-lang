@@ -1227,20 +1227,22 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
-  if (D->isCopyConstructor()) {
-    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D->getDeclContext());
-    if (ClassDecl->hasTrivialCopyConstructor()) {
-      assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
-             "EmitCXXConstructorCall - user declared copy constructor");
-      const Expr *E = (*ArgBeg);
-      QualType Ty = E->getType();
-      llvm::Value *Src = EmitLValue(E).getAddress();
-      EmitAggregateCopy(This, Src, Ty);
+  if (D->isTrivial()) {
+    if (ArgBeg == ArgEnd) {
+      // Trivial default constructor, no codegen required.
+      assert(D->isDefaultConstructor() &&
+             "trivial 0-arg ctor not a default ctor");
       return;
     }
-  } else if (D->isTrivial()) {
-    // FIXME: Track down why we're trying to generate calls to the trivial
-    // default constructor!
+
+    assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
+    assert(D->isCopyConstructor() && "trivial 1-arg ctor not a copy ctor");
+
+    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D->getDeclContext());
+    const Expr *E = (*ArgBeg);
+    QualType Ty = E->getType();
+    llvm::Value *Src = EmitLValue(E).getAddress();
+    EmitAggregateCopy(This, Src, Ty);
     return;
   }
 
