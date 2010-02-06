@@ -382,8 +382,8 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     MI.getOperand(FrameRegIdx+1).ChangeToImmediate(ThisImmVal);
   } else {
 
-    // AddrMode4 cannot handle any offset.
-    if (AddrMode == ARMII::AddrMode4)
+    // AddrMode4 and AddrMode6 cannot handle any offset.
+    if (AddrMode == ARMII::AddrMode4 || AddrMode == ARMII::AddrMode6)
       return false;
 
     // AddrModeT2_so cannot handle any offset. If there is no offset
@@ -418,15 +418,12 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         NewOpc = positiveOffsetOpcode(Opcode);
         NumBits = 12;
       }
-    } else {
-      // VFP and NEON address modes.
-      int InstrOffs = 0;
-      if (AddrMode == ARMII::AddrMode5) {
-        const MachineOperand &OffOp = MI.getOperand(FrameRegIdx+1);
-        InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
-        if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
-          InstrOffs *= -1;
-      }
+    } else if (AddrMode == ARMII::AddrMode5) {
+      // VFP address mode.
+      const MachineOperand &OffOp = MI.getOperand(FrameRegIdx+1);
+      int InstrOffs = ARM_AM::getAM5Offset(OffOp.getImm());
+      if (ARM_AM::getAM5Op(OffOp.getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
       NumBits = 8;
       Scale = 4;
       Offset += InstrOffs * 4;
@@ -435,6 +432,8 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         Offset = -Offset;
         isSub = true;
       }
+    } else {
+      llvm_unreachable("Unsupported addressing mode!");
     }
 
     if (NewOpc != Opcode)

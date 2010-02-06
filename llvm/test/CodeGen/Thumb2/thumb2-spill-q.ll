@@ -12,8 +12,8 @@ declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*) nounwind readonly
 define arm_apcscc void @aaa(%quuz* %this, i8* %block) {
 ; CHECK: aaa:
 ; CHECK: bic r4, r4, #15
-; CHECK: vst1.64 {{.*}}sp, :128
-; CHECK: vld1.64 {{.*}}sp, :128
+; CHECK: vst1.64 {{.*}}[r{{.*}}, :128]
+; CHECK: vld1.64 {{.*}}[r{{.*}}, :128]
 entry:
   %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef) nounwind ; <<4 x float>> [#uses=1]
   store float 6.300000e+01, float* undef, align 4
