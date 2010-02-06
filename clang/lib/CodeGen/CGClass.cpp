@@ -1238,7 +1238,6 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     assert(ArgBeg + 1 == ArgEnd && "unexpected argcount for trivial ctor");
     assert(D->isCopyConstructor() && "trivial 1-arg ctor not a copy ctor");
 
-    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D->getDeclContext());
     const Expr *E = (*ArgBeg);
     QualType Ty = E->getType();
     llvm::Value *Src = EmitLValue(E).getAddress();
