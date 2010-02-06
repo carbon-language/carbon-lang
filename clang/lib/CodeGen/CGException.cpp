@@ -317,6 +317,9 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 }
 
 void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
+  if (!Exceptions)
+    return;
+  
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
   if (FD == 0)
     return;
@@ -411,6 +414,9 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
+  if (!Exceptions)
+    return;
+  
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
   if (FD == 0)
     return;
