@@ -143,6 +143,7 @@ module Attribute : sig
   | Noredzone
   | Noimplicitfloat
   | Naked
+  | Inlinehint
 end
 
 (** The predicate for an integer comparison ([icmp]) instruction.

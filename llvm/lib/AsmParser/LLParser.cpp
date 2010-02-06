@@ -947,6 +947,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_noinline:        Attrs |= Attribute::NoInline; break;
     case lltok::kw_readnone:        Attrs |= Attribute::ReadNone; break;
     case lltok::kw_readonly:        Attrs |= Attribute::ReadOnly; break;
+    case lltok::kw_inlinehint:      Attrs |= Attribute::InlineHint; break;
     case lltok::kw_alwaysinline:    Attrs |= Attribute::AlwaysInline; break;
     case lltok::kw_optsize:         Attrs |= Attribute::OptimizeForSize; break;
     case lltok::kw_ssp:             Attrs |= Attribute::StackProtect; break;

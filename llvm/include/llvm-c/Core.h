@@ -118,7 +118,8 @@ typedef enum {
     LLVMNoCaptureAttribute  = 1<<21,
     LLVMNoRedZoneAttribute  = 1<<22,
     LLVMNoImplicitFloatAttribute = 1<<23,
-    LLVMNakedAttribute      = 1<<24
+    LLVMNakedAttribute      = 1<<24,
+    LLVMInlineHintAttribute = 1<<25
 } LLVMAttribute;
 
 typedef enum {

@@ -93,6 +93,7 @@ module Attribute = struct
   | Noredzone
   | Noimplicitfloat
   | Naked
+  | Inlinehint
 end
 
 module Icmp = struct

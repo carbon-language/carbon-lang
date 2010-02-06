@@ -41,6 +41,16 @@ static cl::opt<int>
 InlineLimit("inline-threshold", cl::Hidden, cl::init(225), cl::ZeroOrMore,
         cl::desc("Control the amount of inlining to perform (default = 225)"));
 
+static cl::opt<bool>
+RespectHint("respect-inlinehint", cl::Hidden,
+            cl::desc("Respect the inlinehint attribute"));
+
+// Threshold to use when inlinehint is given.
+const int HintThreshold = 300;
+
+// Threshold to use when optsize is specified (and there is no -inline-limit).
+const int OptSizeThreshold = 75;
+
 Inliner::Inliner(void *ID) 
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
 
@@ -172,13 +182,21 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   return true;
 }
 
-unsigned Inliner::getInlineThreshold(Function* Caller) const {
+unsigned Inliner::getInlineThreshold(CallSite CS) const {
+  // Listen to inlinehint when -respect-inlinehint is given.
+  Function *Callee = CS.getCalledFunction();
+  if (RespectHint && Callee && !Callee->isDeclaration() &&
+      Callee->hasFnAttr(Attribute::InlineHint))
+    return HintThreshold;
+
+  // Listen to optsize when -inline-limit is not given.
+  Function *Caller = CS.getCaller();
   if (Caller && !Caller->isDeclaration() &&
       Caller->hasFnAttr(Attribute::OptimizeForSize) &&
       InlineLimit.getNumOccurrences() == 0)
-    return 75;
-  else
-    return InlineThreshold;
+      return OptSizeThreshold;
+
+  return InlineThreshold;
 }
 
 /// shouldInline - Return true if the inliner should attempt to inline
@@ -200,7 +218,7 @@ bool Inliner::shouldInline(CallSite CS) {
   
   int Cost = IC.getValue();
   Function *Caller = CS.getCaller();
-  int CurrentThreshold = getInlineThreshold(Caller);
+  int CurrentThreshold = getInlineThreshold(CS);
   float FudgeFactor = getInlineFudgeFactor(CS);
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
     DEBUG(dbgs() << "    NOT Inlining: cost=" << Cost
@@ -236,8 +254,7 @@ bool Inliner::shouldInline(CallSite CS) {
 
       outerCallsFound = true;
       int Cost2 = IC2.getValue();
-      Function *Caller2 = CS2.getCaller();
-      int CurrentThreshold2 = getInlineThreshold(Caller2);
+      int CurrentThreshold2 = getInlineThreshold(CS2);
       float FudgeFactor2 = getInlineFudgeFactor(CS2);
 
       if (Cost2 >= (int)(CurrentThreshold2 * FudgeFactor2))
