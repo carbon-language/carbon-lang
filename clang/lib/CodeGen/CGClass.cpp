@@ -849,6 +849,25 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   } else {
     CGF.EmitAggExpr(MemberInit->getInit(), LHS.getAddress(), 
                     LHS.isVolatileQualified(), false, true);
+    
+    if (!CGF.Exceptions)
+      return;
+
+    const RecordType *RT = FieldType->getAs<RecordType>();
+    if (!RT)
+      return;
+    
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    if (!RD->hasTrivialDestructor()) {
+      // FIXME: Is this OK for C++0x delegating constructors?
+      CodeGenFunction::EHCleanupBlock Cleanup(CGF);
+      
+      llvm::Value *ThisPtr = CGF.LoadCXXThis();
+      LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
+
+      CXXDestructorDecl *DD = RD->getDestructor(CGF.getContext());
+      CGF.EmitCXXDestructorCall(DD, Dtor_Complete, LHS.getAddress());
+    }
   }
 }
 
