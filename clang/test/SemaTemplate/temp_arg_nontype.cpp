@@ -161,3 +161,13 @@ struct X1 {
 void test_X0_X1() {
   X0<X1::pfunc> x01;
 }
+
+// PR6249
+namespace pr6249 {
+  template<typename T, T (*func)()> T f() {
+    return func();
+  }
+
+  int h();
+  template int f<int, h>();
+}
