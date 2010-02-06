@@ -908,3 +908,10 @@ void rdar7582031_test_static_init_zero() {
   int *p = 0;
   *p = 0xDEADBEEF;
 }
+void rdar7582031_test_static_init_zero_b() {
+  static void* x;
+  if (x == 0)
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF;
+}

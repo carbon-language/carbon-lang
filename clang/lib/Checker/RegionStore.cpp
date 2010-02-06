@@ -1407,7 +1407,9 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 
     if (T->isIntegerType())
       return ValMgr.makeIntVal(0, T);
-    
+    if (T->isPointerType())
+      return ValMgr.makeNull();
+
     return UnknownVal();    
   }
     
