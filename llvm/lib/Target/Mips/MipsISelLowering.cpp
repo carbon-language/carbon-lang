@@ -97,6 +97,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
   setOperationAction(ISD::FP_TO_SINT,         MVT::i32,   Custom);
+  setOperationAction(ISD::VASTART,            MVT::Other, Custom);
+
 
   // We custom lower AND/OR to handle the case where the DAG contain 'ands/ors' 
   // with operands comming from setcc fp comparions. This is necessary since 
@@ -179,6 +181,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::OR:                 return LowerANDOR(Op, DAG);
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
     case ISD::SETCC:              return LowerSETCC(Op, DAG);
+    case ISD::VASTART:            return LowerVASTART(Op, DAG);
   }
   return SDValue();
 }
@@ -591,6 +594,16 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   return ResNode;
 }
 
+SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue FI = DAG.getFrameIndex(VarArgsFrameIndex, getPointerTy());
+
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), dl, FI, Op.getOperand(1), SV, 0);
+}
+
 //===----------------------------------------------------------------------===//
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//
@@ -984,6 +997,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
+  VarArgsFrameIndex = 0;
 
   // Used with vargs to acumulate store chains.
   std::vector<SDValue> OutChains;
@@ -1119,6 +1133,11 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       MipsFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
       SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0));
+
+      // Record the frame index of the first variable argument
+      // which is a value necessary to VASTART.
+      if (!VarArgsFrameIndex)
+        VarArgsFrameIndex = FI;
     }
   }
 

@@ -68,6 +68,8 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   
   class MipsTargetLowering : public TargetLowering  {
+    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
+
   public:
 
     explicit MipsTargetLowering(MipsTargetMachine &TM);
@@ -107,6 +109,7 @@ namespace llvm {
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG);
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
