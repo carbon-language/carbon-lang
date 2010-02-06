@@ -5002,9 +5002,16 @@ RecordDynamicClassesWithNoKeyFunction(Sema &S, CXXRecordDecl *Record,
   if (Record->isDependentContext() || !Record->isDefinition())
     return;
   
-  if (Record->isDynamicClass() && !S.Context.getKeyFunction(Record))
-    S.ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record, Loc));
+  if (Record->isDynamicClass()) {
+    const CXXMethodDecl *KeyFunction = S.Context.getKeyFunction(Record);
   
+    if (!KeyFunction)
+      S.ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Record, Loc));
+  
+    if ((!KeyFunction || KeyFunction->getBody() && KeyFunction->isInlined()) && 
+        Record->getLinkage() == ExternalLinkage)
+      S.Diag(Record->getLocation(), diag::warn_weak_vtable) << Record;
+  }
   for (DeclContext::decl_iterator D = Record->decls_begin(), 
                                DEnd = Record->decls_end();
        D != DEnd; ++D) {

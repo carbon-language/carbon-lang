@@ -390,6 +390,11 @@ def err_deleted_non_function : Error<
 def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
+def warn_weak_vtable : Warning<
+  "%0 has no out-of-line virtual method definitions; its vtable will be "
+  "emitted in every translation unit">,
+  InGroup<DiagGroup<"weak-vtables">>, DefaultIgnore;
+
 // C++ exception specifications
 def err_exception_spec_in_typedef : Error<
   "exception specifications are not allowed in typedefs">;
