@@ -451,7 +451,7 @@ private:
 
   /// SetFunctionAttributes - Set function attributes for a function
   /// declaration.
-  void SetFunctionAttributes(const FunctionDecl *FD,
+  void SetFunctionAttributes(GlobalDecl GD,
                              llvm::Function *F,
                              bool IsIncompleteFunction);
 

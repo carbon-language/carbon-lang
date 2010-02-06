@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "CGCall.h"
-#include "CGCXX.h"
+#include "GlobalDecl.h"
 
 namespace llvm {
   class FunctionType;
@@ -190,6 +190,8 @@ private:
 
 public:
   /// getFunctionInfo - Get the function info for the specified function decl.
+  const CGFunctionInfo &getFunctionInfo(GlobalDecl GD);
+  
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);

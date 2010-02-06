@@ -167,6 +167,19 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
                          /*NoReturn*/ false);
 }
 
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(GlobalDecl GD) {
+  // FIXME: Do we need to handle ObjCMethodDecl?
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+                                              
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
+    return getFunctionInfo(CD, GD.getCtorType());
+
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
+    return getFunctionInfo(DD, GD.getDtorType());
+  
+  return getFunctionInfo(FD);
+}
+
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                                     const CallArgList &Args,
                                                     CallingConv CC,

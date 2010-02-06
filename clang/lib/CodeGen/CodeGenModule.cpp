@@ -409,11 +409,13 @@ void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
   SetCommonAttributes(D, F);
 }
 
-void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
+void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
                                           llvm::Function *F,
                                           bool IsIncompleteFunction) {
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+
   if (!IsIncompleteFunction)
-    SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(FD), F);
+    SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(GD), F);
 
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
@@ -732,8 +734,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
                                              "", &getModule());
   F->setName(MangledName);
   if (D.getDecl())
-    SetFunctionAttributes(cast<FunctionDecl>(D.getDecl()), F,
-                          IsIncompleteFunction);
+    SetFunctionAttributes(D, F, IsIncompleteFunction);
   Entry = F;
 
   // This is the first use or definition of a mangled name.  If there is a

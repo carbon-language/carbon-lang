@@ -15,3 +15,11 @@ struct B : virtual A {
 // CHECK: define void @_ZN1BC1Ev(%struct.B* %this)
 // CHECK: define void @_ZN1BC2Ev(%struct.B* %this, i8** %vtt)
 B::B() { }
+
+struct C : virtual A {
+  C(bool);
+};
+
+// CHECK: define void @_ZN1CC1Eb(%struct.B* %this, i1 zeroext)
+// CHECK: define void @_ZN1CC2Eb(%struct.B* %this, i8** %vtt, i1 zeroext)
+C::C(bool) { }
