@@ -676,13 +676,76 @@ static bool CC_MipsO32(unsigned ValNo, EVT ValVT,
   return false; // CC must always match
 }
 
+static bool CC_MipsO32_VarArgs(unsigned ValNo, EVT ValVT,
+                       EVT LocVT, CCValAssign::LocInfo LocInfo,
+                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
+
+  static const unsigned IntRegsSize=4;
+
+  static const unsigned IntRegs[] = {
+      Mips::A0, Mips::A1, Mips::A2, Mips::A3
+  };
+
+  // Promote i8 and i16
+  if (LocVT == MVT::i8 || LocVT == MVT::i16) {
+    LocVT = MVT::i32;
+    if (ArgFlags.isSExt())
+      LocInfo = CCValAssign::SExt;
+    else if (ArgFlags.isZExt())
+      LocInfo = CCValAssign::ZExt;
+    else
+      LocInfo = CCValAssign::AExt;
+  }
+
+  if (ValVT == MVT::i32 || ValVT == MVT::f32) {
+    if (unsigned Reg = State.AllocateReg(IntRegs, IntRegsSize)) {
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
+      return false;
+    }
+    unsigned Off = State.AllocateStack(4, 4);
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Off, LocVT, LocInfo));
+    return false;
+  }
+
+  unsigned UnallocIntReg = State.getFirstUnallocated(IntRegs, IntRegsSize);
+  if (ValVT == MVT::f64) {
+    if (IntRegs[UnallocIntReg] == (unsigned (Mips::A1))) {
+      // A1 can't be used anymore, because 64 bit arguments
+      // must be aligned when copied back to the caller stack
+      State.AllocateReg(IntRegs, IntRegsSize);
+      UnallocIntReg++;
+    }
+
+    if (IntRegs[UnallocIntReg] == (unsigned (Mips::A0)) ||
+        IntRegs[UnallocIntReg] == (unsigned (Mips::A2))) {
+      unsigned Reg = State.AllocateReg(IntRegs, IntRegsSize);
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, MVT::i32, LocInfo));
+      // Shadow the next register so it can be used 
+      // later to get the other 32bit part.
+      State.AllocateReg(IntRegs, IntRegsSize);
+      return false;
+    }
+
+    // Register is shadowed to preserve alignment, and the
+    // argument goes to a stack location.
+    if (UnallocIntReg != IntRegsSize)
+      State.AllocateReg(IntRegs, IntRegsSize);
+
+    unsigned Off = State.AllocateStack(8, 8);
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Off, LocVT, LocInfo));
+    return false;
+  }
+
+  return true; // CC didn't match
+}
+
 //===----------------------------------------------------------------------===//
 //                  Call Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
-/// TODO: isVarArg, isTailCall.
+/// TODO: isTailCall.
 SDValue
 MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                               CallingConv::ID CallConv, bool isVarArg,
@@ -708,7 +771,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (Subtarget->isABI_O32()) {
     int VTsize = EVT(MVT::i32).getSizeInBits()/8;
     MFI->CreateFixedObject(VTsize, (VTsize*3), true, false);
-    CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
+    CCInfo.AnalyzeCallOperands(Outs, 
+                     isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);
   } else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
   
@@ -905,17 +969,15 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 //             Formal Arguments Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-/// LowerFormalArguments - transform physical registers into
-/// virtual registers and generate load operations for
-/// arguments places on the stack.
-/// TODO: isVarArg
+/// LowerFormalArguments - transform physical registers into virtual registers 
+/// and generate load operations for arguments places on the stack.
 SDValue
 MipsTargetLowering::LowerFormalArguments(SDValue Chain,
-                                         CallingConv::ID CallConv, bool isVarArg,
-                                         const SmallVectorImpl<ISD::InputArg>
-                                           &Ins,
-                                         DebugLoc dl, SelectionDAG &DAG,
-                                         SmallVectorImpl<SDValue> &InVals) {
+                                        CallingConv::ID CallConv, bool isVarArg,
+                                        const SmallVectorImpl<ISD::InputArg>
+                                        &Ins,
+                                        DebugLoc dl, SelectionDAG &DAG,
+                                        SmallVectorImpl<SDValue> &InVals) {
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -923,13 +985,20 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
+  // Used with vargs to acumulate store chains.
+  std::vector<SDValue> OutChains;
+
+  // Keep track of the last register used for arguments
+  unsigned ArgRegEnd = 0;
+
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  ArgLocs, *DAG.getContext());
 
   if (Subtarget->isABI_O32())
-    CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
+    CCInfo.AnalyzeFormalArguments(Ins, 
+                        isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
@@ -943,6 +1012,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     // Arguments stored on registers
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
+      ArgRegEnd = VA.getLocReg();
       TargetRegisterClass *RC = 0;
 
       if (RegVT == MVT::i32)
@@ -953,11 +1023,11 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         if (!Subtarget->isSingleFloat()) 
           RC = Mips::AFGR64RegisterClass;
       } else  
-        llvm_unreachable("RegVT not supported by LowerFormalArguments Lowering");
+        llvm_unreachable("RegVT not supported by FormalArguments Lowering");
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it has been passed promoted 
@@ -990,34 +1060,13 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       }
 
       InVals.push_back(ArgValue);
-
-      // To meet ABI, when VARARGS are passed on registers, the registers
-      // must have their values written to the caller stack frame. 
-      if ((isVarArg) && (Subtarget->isABI_O32())) {
-        if (StackPtr.getNode() == 0)
-          StackPtr = DAG.getRegister(StackReg, getPointerTy());
-     
-        // The stack pointer offset is relative to the caller stack frame. 
-        // Since the real stack size is unknown here, a negative SPOffset 
-        // is used so there's a way to adjust these offsets when the stack
-        // size get known (on EliminateFrameIndex). A dummy SPOffset is 
-        // used instead of a direct negative address (which is recorded to
-        // be used on emitPrologue) to avoid mis-calc of the first stack 
-        // offset on PEI::calculateFrameObjectOffsets.
-        // Arguments are always 32-bit.
-        int FI = MFI->CreateFixedObject(4, 0, true, false);
-        MipsFI->recordStoreVarArgsFI(FI, -(4+(i*4)));
-        SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
-      
-        // emit ISD::STORE whichs stores the 
-        // parameter value to a stack Location
-        InVals.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0));
-      }
-
     } else { // VA.isRegLoc()
 
       // sanity check
       assert(VA.isMemLoc());
+
+      // The last argument is not a register anymore
+      ArgRegEnd = 0;
       
       // The stack pointer offset is relative to the caller stack frame. 
       // Since the real stack size is unknown here, a negative SPOffset 
@@ -1049,6 +1098,36 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     }
     SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), dl, Reg, InVals[0]);
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
+  }
+
+  // To meet ABI, when VARARGS are passed on registers, the registers
+  // must have their values written to the caller stack frame. If the last
+  // argument was placed in the stack, there's no need to save any register. 
+  if ((isVarArg) && (Subtarget->isABI_O32() && ArgRegEnd)) {
+    if (StackPtr.getNode() == 0)
+      StackPtr = DAG.getRegister(StackReg, getPointerTy());
+  
+    // The last register argument that must be saved is Mips::A3
+    TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
+    unsigned StackLoc = ArgLocs.size()-1;
+
+    for (++ArgRegEnd; ArgRegEnd <= Mips::A3; ++ArgRegEnd, ++StackLoc) {
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
+
+      int FI = MFI->CreateFixedObject(4, 0, true, false);
+      MipsFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
+      SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
+      OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff, NULL, 0));
+    }
+  }
+
+  // All stores are grouped in one node to allow the matching between 
+  // the size of Ins and InVals. This only happens when on varg functions
+  if (!OutChains.empty()) {
+    OutChains.push_back(Chain);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                        &OutChains[0], OutChains.size());
   }
 
   return Chain;
