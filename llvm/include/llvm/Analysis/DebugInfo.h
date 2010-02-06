@@ -193,7 +193,9 @@ namespace llvm {
       FlagFwdDecl          = 1 << 2,
       FlagAppleBlock       = 1 << 3,
       FlagBlockByrefStruct = 1 << 4,
-      FlagVirtual          = 1 << 5
+      FlagVirtual          = 1 << 5,
+      FlagArtificial       = 1 << 6  // To identify artificial arguments in
+                                     // a subroutine type. e.g. "this" in c++.
     };
 
   protected:
@@ -240,6 +242,9 @@ namespace llvm {
     }
     bool isVirtual() const {
       return (getFlags() & FlagVirtual) != 0;
+    }
+    bool isArtificial() const {
+      return (getFlags() & FlagArtificial) != 0;
     }
 
     /// dump - print type.
@@ -573,6 +578,9 @@ namespace llvm {
                                         DIArray Elements,
                                         unsigned RunTimeLang = 0,
                                         MDNode *ContainingType = 0);
+
+    /// CreateArtificialType - Create a new DIType with "artificial" flag set.
+    DIType CreateArtificialType(DIType Ty);
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,

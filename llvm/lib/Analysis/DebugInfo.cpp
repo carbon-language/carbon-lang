@@ -725,6 +725,29 @@ DIBasicType DIFactory::CreateBasicTypeEx(DIDescriptor Context,
   return DIBasicType(MDNode::get(VMContext, &Elts[0], 10));
 }
 
+/// CreateArtificialType - Create a new DIType with "artificial" flag set.
+DIType DIFactory::CreateArtificialType(DIType Ty) {
+  if (Ty.isArtificial())
+    return Ty;
+
+  SmallVector<Value *, 9> Elts;
+  MDNode *N = Ty.getNode();
+  assert (N && "Unexpected input DIType!");
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    if (Value *V = N->getOperand(i))
+      Elts.push_back(V);
+    else
+      Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext)));
+  }
+
+  unsigned CurFlags = Ty.getFlags();
+  CurFlags = CurFlags | DIType::FlagArtificial;
+
+  // Flags are stored at this slot.
+  Elts[8] =  ConstantInt::get(Type::getInt32Ty(VMContext), CurFlags);
+
+  return DIType(MDNode::get(VMContext, Elts.data(), Elts.size()));
+}
 
 /// CreateDerivedType - Create a derived type like const qualified type,
 /// pointer, typedef, etc.

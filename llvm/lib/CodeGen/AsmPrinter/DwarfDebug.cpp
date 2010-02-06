@@ -1214,8 +1214,10 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     if (SPTag == dwarf::DW_TAG_subroutine_type)
       for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
         DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        addType(Arg, DIType(Args.getElement(i).getNode()));
-        addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
+        DIType ATy = DIType(DIType(Args.getElement(i).getNode()));
+        addType(Arg, ATy);
+        if (ATy.isArtificial())
+          addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
         SPDie->addChild(Arg);
       }
   }
@@ -1342,8 +1344,10 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
    if (SPTag == dwarf::DW_TAG_subroutine_type)
      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-       addType(Arg, DIType(Args.getElement(i).getNode()));
-       addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1); // ??
+       DIType ATy = DIType(DIType(Args.getElement(i).getNode()));
+       addType(Arg, ATy);
+       if (ATy.isArtificial())
+         addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
        SPDie->addChild(Arg);
      }
    DIE *SPDeclDie = SPDie;
@@ -1352,7 +1356,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
                SPDeclDie);
    ModuleCU->addDie(SPDie);
  }
-   
+
  addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
           DWLabel("func_begin", SubprogramCount));
  addLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
@@ -1515,6 +1519,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     else
       addAddress(VariableDie, dwarf::DW_AT_location, Location);
   }
+
+  if (Tag == dwarf::DW_TAG_formal_parameter && VD.getType().isArtificial())
+    addUInt(VariableDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
   DV->setDIE(VariableDie);
   return VariableDie;
 
