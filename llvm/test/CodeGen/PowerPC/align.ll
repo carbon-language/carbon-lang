@@ -1,11 +1,42 @@
-; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
-; RUN:   grep align.4 | count 1
-; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
-; RUN:   grep align.2 | count 1
-; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | \
-; RUN:   grep align.3 | count 1
+; RUN: llc < %s -mtriple=powerpc-linux-gnu | FileCheck %s -check-prefix=ELF
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | FileCheck %s -check-prefix=DARWIN
 
-@A = global <4 x i32> < i32 10, i32 20, i32 30, i32 40 >                ; <<4 x i32>*> [#uses=0]
-@B = global float 1.000000e+02          ; <float*> [#uses=0]
-@C = global double 2.000000e+03         ; <double*> [#uses=0]
+@a = global i1 true
+; no alignment
 
+@b = global i8 1
+; no alignment
+
+@c = global i16 2
+;ELF: .align 1
+;ELF: c:
+;DARWIN: .align 1
+;DARWIN: _c:
+
+@d = global i32 3
+;ELF: .align 2
+;ELF: d:
+;DARWIN: .align 2
+;DARWIN: _d:
+
+@e = global i64 4
+;ELF: .align 3
+;ELF: e
+;DARWIN: .align 3
+;DARWIN: _e:
+
+@f = global float 5.0
+;ELF: .align 2
+;ELF: f:
+;DARWIN: .align 2
+;DARWIN: _f:
+
+@g = global double 6.0
+;ELF: .align 3
+;ELF: g:
+;DARWIN: .align 3
+;DARWIN: _g:
+
+@bar = common global [75 x i8] zeroinitializer, align 128
+;ELF: .comm bar,75,128
+;DARWIN: .comm _bar,75,7

@@ -26,6 +26,9 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
 }
 
 PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
+  // ".comm align is in bytes but .align is pow-2."
+  AlignmentIsInBytes = false;
+
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".L";
