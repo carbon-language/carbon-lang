@@ -216,7 +216,6 @@ protected:
   ///
   std::multimap<unsigned, PATypeHolder> TypesByHash;
 
-public:
   ~TypeMapBase() {
     // PATypeHolder won't destroy non-abstract types.
     // We can't destroy them by simply iterating, because
@@ -236,6 +235,7 @@ public:
     }
   }
 
+public:
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
     std::multimap<unsigned, PATypeHolder>::iterator I =
       TypesByHash.lower_bound(Hash);
@@ -281,7 +281,6 @@ class TypeMap : public TypeMapBase {
   std::map<ValType, PATypeHolder> Map;
 public:
   typedef typename std::map<ValType, PATypeHolder>::iterator iterator;
-  ~TypeMap() { print("ON EXIT"); }
 
   inline TypeClass *get(const ValType &V) {
     iterator I = Map.find(V);
