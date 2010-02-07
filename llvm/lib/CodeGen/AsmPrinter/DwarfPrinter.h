@@ -33,6 +33,8 @@ class Twine;
 
 class DwarfPrinter {
 protected:
+  ~DwarfPrinter() {}
+
   //===-------------------------------------------------------------==---===//
   // Core attributes used by the DWARF printer.
   //
