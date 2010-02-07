@@ -191,6 +191,8 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
                                                    SourceLocation());
   }
 
+  DS.abort();
+
   if (Attr.HasAttr)
     Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
       << Attr.Range;

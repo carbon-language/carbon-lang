@@ -593,7 +593,6 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
   if (Tok.is(tok::string_literal) && getLang().CPlusPlus &&
       DS.getStorageClassSpec() == DeclSpec::SCS_extern &&
       DS.getParsedSpecifiers() == DeclSpec::PQ_StorageClassSpecifier) {
-    DS.abort();
     DeclPtrTy TheDecl = ParseLinkage(DS, Declarator::FileContext);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }

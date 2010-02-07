@@ -10,4 +10,7 @@ extern int b;
 // RUN: grep "@_ZN3foo1cE = global i32" %t | count 1
 int c = 5;
 
+// RUN: not grep "@_ZN3foo1dE" %t
+extern "C" struct d;
+
 }
