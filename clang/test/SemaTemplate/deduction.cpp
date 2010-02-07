@@ -86,3 +86,15 @@ int array4[is_same<Replace<vector<int, _2>, double, float>::type, vector<int, fl
 template <typename T, int N> void f(const T (&a)[N]);
 int iarr[] = { 1 };
 void test_PR5911() { f(iarr); }
+
+// Must not examine base classes of incomplete type during template argument
+// deduction.
+namespace PR6257 {
+  template <typename T> struct X {
+    template <typename U> X(const X<U>& u);
+  };
+  struct A;
+  void f(A& a);
+  void f(const X<A>& a);
+  void test(A& a) { (void)f(a); }
+}
