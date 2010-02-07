@@ -132,6 +132,10 @@ CodeGenModule::getDeclVisibilityMode(const Decl *D) const {
     }
   }
 
+  // This decl should have the same visibility as its parent.
+  if (const DeclContext *DC = D->getDeclContext()) 
+    return getDeclVisibilityMode(cast<Decl>(DC));
+
   return getLangOptions().getVisibilityMode();
 }
 
