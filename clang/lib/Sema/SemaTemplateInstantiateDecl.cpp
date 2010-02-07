@@ -411,9 +411,17 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     Decl *NewND;
 
     // Hack to make this work almost well pending a rewrite.
-    if (ND->getDeclContext()->isRecord())
-      NewND = SemaRef.FindInstantiatedDecl(ND, TemplateArgs);
-    else if (D->wasSpecialization()) {
+    if (ND->getDeclContext()->isRecord()) {
+      if (!ND->getDeclContext()->isDependentContext()) {
+        NewND = SemaRef.FindInstantiatedDecl(ND, TemplateArgs);
+      } else {
+        // FIXME: Hack to avoid crashing when incorrectly trying to instantiate
+        // templated friend declarations. This doesn't produce a correct AST;
+        // however this is sufficient for some AST analysis. The real solution
+        // must be put in place during the pending rewrite. See PR5848.
+        return 0;
+      }
+    } else if (D->wasSpecialization()) {
       // Totally egregious hack to work around PR5866
       return 0;
     } else
