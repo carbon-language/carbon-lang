@@ -473,6 +473,7 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
       llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
       PushCleanupBlock(DtorEpilogue);
 
+      InitializeVtablePtrs(DD->getParent());
       EmitStmt(S.getTryBlock());
 
       CleanupBlockInfo Info = PopCleanupBlock();

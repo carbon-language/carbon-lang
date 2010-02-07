@@ -283,6 +283,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
       llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
       PushCleanupBlock(DtorEpilogue);
 
+      InitializeVtablePtrs(DD->getParent());
+
       EmitStmt(S);
       
       CleanupBlockInfo Info = PopCleanupBlock();

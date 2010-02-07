@@ -1043,7 +1043,7 @@ void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
 
   StartFunction(GlobalDecl(Dtor, DtorType), Dtor->getResultType(), Fn, Args, 
                 SourceLocation());
-
+  InitializeVtablePtrs(Dtor->getParent());
   EmitDtorEpilogue(Dtor, DtorType);
   FinishFunction();
 }
