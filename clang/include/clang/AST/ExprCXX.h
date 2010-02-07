@@ -241,9 +241,16 @@ public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
     Expr(CXXBoolLiteralExprClass, Ty, false, false), Value(val), Loc(l) {}
 
+  explicit CXXBoolLiteralExpr(EmptyShell Empty)
+    : Expr(CXXBoolLiteralExprClass, Empty) { }
+
   bool getValue() const { return Value; }
+  void setValue(bool V) { Value = V; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXBoolLiteralExprClass;
@@ -262,7 +269,13 @@ public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
     Expr(CXXNullPtrLiteralExprClass, Ty, false, false), Loc(l) {}
 
+  explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
+    : Expr(CXXNullPtrLiteralExprClass, Empty) { }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXNullPtrLiteralExprClass;

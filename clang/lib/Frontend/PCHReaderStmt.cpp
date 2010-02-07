@@ -123,6 +123,8 @@ namespace {
     unsigned VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
     unsigned VisitCXXConstCastExpr(CXXConstCastExpr *E);
     unsigned VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
+    unsigned VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
+    unsigned VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
   };
 }
 
@@ -906,6 +908,19 @@ unsigned PCHStmtReader::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
   return num;
 }
 
+unsigned PCHStmtReader::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
+  VisitExpr(E);
+  E->setValue(Record[Idx++]);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
+unsigned PCHStmtReader::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
+  VisitExpr(E);
+  E->setLocation(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  return 0;
+}
+
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
 // expression they are stored in. To evaluate expressions, we
@@ -1235,7 +1250,13 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       S = new (Context) CXXFunctionalCastExpr(Empty);
       break;
 
+    case pch::EXPR_CXX_BOOL_LITERAL:
+      S = new (Context) CXXBoolLiteralExpr(Empty);
+      break;
 
+    case pch::EXPR_CXX_NULL_PTR_LITERAL:
+      S = new (Context) CXXNullPtrLiteralExpr(Empty);
+      break;
     }
 
     // We hit a STMT_STOP, so we're done with this expression.
