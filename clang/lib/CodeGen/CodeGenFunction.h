@@ -845,7 +845,8 @@ public:
   /// This function can be called with a null (unreachable) insert point.
   void EmitLocalBlockVarDecl(const VarDecl &D);
 
-  void EmitStaticBlockVarDecl(const VarDecl &D);
+  void EmitStaticBlockVarDecl(const VarDecl &D,
+                              llvm::GlobalValue::LinkageTypes Linkage);
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.
   void EmitParmDecl(const VarDecl &D, llvm::Value *Arg);

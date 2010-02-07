@@ -76,8 +76,21 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   case VarDecl::Auto:
   case VarDecl::Register:
     return EmitLocalBlockVarDecl(D);
-  case VarDecl::Static:
-    return EmitStaticBlockVarDecl(D);
+  case VarDecl::Static: {
+    llvm::GlobalValue::LinkageTypes Linkage = 
+      llvm::GlobalValue::InternalLinkage;
+
+    // If this is a static declaration inside an inline function, it must have
+    // weak linkage so that the linker will merge multiple definitions of it.
+    if (getContext().getLangOptions().CPlusPlus) {
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+        if (FD->isInlined())
+          Linkage = llvm::GlobalValue::WeakAnyLinkage;
+      }
+    }
+    
+    return EmitStaticBlockVarDecl(D, Linkage);
+  }
   case VarDecl::Extern:
   case VarDecl::PrivateExtern:
     // Don't emit it now, allow it to be emitted lazily on its first use.
@@ -177,12 +190,12 @@ CodeGenFunction::AddInitializerToGlobalBlockVarDecl(const VarDecl &D,
   return GV;
 }
 
-void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
+void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
+                                      llvm::GlobalValue::LinkageTypes Linkage) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
 
-  llvm::GlobalVariable *GV =
-    CreateStaticBlockVarDecl(D, ".", llvm::GlobalValue::InternalLinkage);
+  llvm::GlobalVariable *GV = CreateStaticBlockVarDecl(D, ".", Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
@@ -355,7 +368,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         // If this variable is marked 'const', emit the value as a global.
         if (CGM.getCodeGenOpts().MergeAllConstants &&
             Ty.isConstant(getContext())) {
-          EmitStaticBlockVarDecl(D);
+          EmitStaticBlockVarDecl(D, llvm::GlobalValue::InternalLinkage);
           return;
         }
         
