@@ -118,6 +118,8 @@ namespace {
     void VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
     void VisitCXXConstCastExpr(CXXConstCastExpr *E);
     void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
+    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
+    void VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
   };
 }
 
@@ -832,6 +834,19 @@ void PCHStmtWriter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E) {
   Writer.AddSourceLocation(E->getTypeBeginLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = pch::EXPR_CXX_FUNCTIONAL_CAST;
+}
+
+void PCHStmtWriter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getValue());
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Code = pch::EXPR_CXX_BOOL_LITERAL;
+}
+
+void PCHStmtWriter::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getLocation(), Record);
+  Code = pch::EXPR_CXX_NULL_PTR_LITERAL;
 }
 
 //===----------------------------------------------------------------------===//

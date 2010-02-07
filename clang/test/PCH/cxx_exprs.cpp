@@ -1,13 +1,14 @@
 // Test this without pch.
-// RUN: %clang_cc1 -include %S/cxx_exprs.h -fsyntax-only -verify %s
+// RUN: %clang_cc1 -include %S/cxx_exprs.h -std=c++0x -fsyntax-only -verify %s
 
 // Test with pch.
-// RUN: %clang_cc1 -x c++-header -emit-pch -o %t %S/cxx_exprs.h
-// RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -x c++-header -std=c++0x -emit-pch -o %t %S/cxx_exprs.h
+// RUN: %clang_cc1 -std=c++0x -include-pch %t -fsyntax-only -verify %s 
 
 int integer;
 double floating;
 char character;
+bool boolean;
 
 // CXXStaticCastExpr
 static_cast_result void_ptr = &integer;
@@ -24,3 +25,11 @@ const_cast_result char_ptr = &character;
 
 // CXXFunctionalCastExpr
 functional_cast_result *double_ptr = &floating;
+
+// CXXBoolLiteralExpr
+bool_literal_result *bool_ptr = &boolean;
+static_assert(true_value, "true_value is true");
+static_assert(!false_value, "false_value is false");
+
+// CXXNullPtrLiteralExpr
+cxx_null_ptr_result null_ptr = nullptr;
