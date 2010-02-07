@@ -1829,7 +1829,8 @@ public:
   // Act on C++ namespaces
   virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                            IdentifierInfo *Ident,
-                                           SourceLocation LBrace);
+                                           SourceLocation LBrace,
+                                           AttributeList *AttrList);
   virtual void ActOnFinishNamespaceDef(DeclPtrTy Dcl, SourceLocation RBrace);
 
   virtual DeclPtrTy ActOnUsingDirective(Scope *CurScope,

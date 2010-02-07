@@ -684,7 +684,8 @@ namespace {
 
     virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                              IdentifierInfo *Ident,
-                                             SourceLocation LBrace) {
+                                             SourceLocation LBrace,
+                                             AttributeList *AttrList) {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }

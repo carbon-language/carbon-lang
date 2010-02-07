@@ -1277,7 +1277,8 @@ public:
   /// definition.
   virtual DeclPtrTy ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
                                            IdentifierInfo *Ident,
-                                           SourceLocation LBrace) {
+                                           SourceLocation LBrace,
+                                           AttributeList *AttrList) {
     return DeclPtrTy();
   }
 

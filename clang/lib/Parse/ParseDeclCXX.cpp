@@ -64,7 +64,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   }
 
   // Read label attributes, if present.
-  Action::AttrTy *AttrList = 0;
+  AttributeList *AttrList = 0;
   if (Tok.is(tok::kw___attribute)) {
     attrTok = Tok;
 
@@ -91,7 +91,7 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
   DeclPtrTy NamespcDecl =
-    Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
+    Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace, AttrList);
 
   PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
                                         PP.getSourceManager(),

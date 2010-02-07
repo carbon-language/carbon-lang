@@ -2821,12 +2821,15 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
 Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
                                              SourceLocation IdentLoc,
                                              IdentifierInfo *II,
-                                             SourceLocation LBrace) {
+                                             SourceLocation LBrace,
+                                             AttributeList *AttrList) {
   NamespaceDecl *Namespc =
       NamespaceDecl::Create(Context, CurContext, IdentLoc, II);
   Namespc->setLBracLoc(LBrace);
 
   Scope *DeclRegionScope = NamespcScope->getParent();
+
+  ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
   if (II) {
     // C++ [namespace.def]p2:
