@@ -333,8 +333,12 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
     //   (in bytes) of the function, represented as a ptrdiff_t. 
     FuncPtr = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
   } else {
-    FuncPtr = llvm::ConstantExpr::getPtrToInt(CGF.CGM.GetAddrOfFunction(MD), 
-                                              PtrDiffTy);
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+    const llvm::Type *Ty =
+      CGF.CGM.getTypes().GetFunctionType(CGF.CGM.getTypes().getFunctionInfo(MD),
+                                         FPT->isVariadic());
+    llvm::Constant *Fn = CGF.CGM.GetAddrOfFunction(MD, Ty);
+    FuncPtr = llvm::ConstantExpr::getPtrToInt(Fn, PtrDiffTy);
   }
   Builder.CreateStore(FuncPtr, DstPtr, VolatileDest);
 

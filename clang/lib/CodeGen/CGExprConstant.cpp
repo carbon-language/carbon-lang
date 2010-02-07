@@ -425,8 +425,12 @@ public:
       //   (in bytes) of the function, represented as a ptrdiff_t. 
       Values[0] = llvm::ConstantInt::get(PtrDiffTy, (Index * 8) + 1);
     } else {
-      llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD);
+      const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+      const llvm::Type *Ty =
+        CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                       FPT->isVariadic());
 
+      llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD, Ty);
       Values[0] = llvm::ConstantExpr::getPtrToInt(FuncPtr, PtrDiffTy);
     } 
     

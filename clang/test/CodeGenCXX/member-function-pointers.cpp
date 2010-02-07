@@ -9,7 +9,7 @@ void (A::*volatile vpa)();
 void (B::*pb)();
 void (C::*pc)();
 
-// CHECK: @pa2 = global %0 { i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64 0 }, align 8
+// CHECK: @pa2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
 void (A::*pa2)() = &A::f;
 
 // CHECK: @pa3 = global %0 { i64 1, i64 0 }, align 8
@@ -18,7 +18,7 @@ void (A::*pa3)() = &A::vf1;
 // CHECK: @pa4 = global %0 { i64 9, i64 0 }, align 8
 void (A::*pa4)() = &A::vf2;
 
-// CHECK: @pc2 = global %0 { i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64 16 }, align 8
+// CHECK: @pc2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
 void (C::*pc2)() = &C::f;
 
 // CHECK: @pc3 = global %0 { i64 1, i64 0 }, align 8
@@ -46,7 +46,7 @@ void f() {
 
 void f2() {
   // CHECK: [[pa2ptr:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa2, i32 0, i32 0 
-  // CHECK: store i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64* [[pa2ptr]]
+  // CHECK: store i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64* [[pa2ptr]]
   // CHECK: [[pa2adj:%[a-zA-Z0-9\.]+]] = getelementptr inbounds %0* %pa2, i32 0, i32 1
   // CHECK: store i64 0, i64* [[pa2adj]]
   void (A::*pa2)() = &A::f;
@@ -157,5 +157,19 @@ namespace MemberPointerImpCast {
   };
   void f(B* obj, void (A::*method)()) {
     (obj->*method)();
+  }
+}
+
+// PR6258
+namespace PR6258 {
+
+  struct A {
+    void f(bool);
+  };
+
+  void (A::*pf)(bool) = &A::f;
+
+  void f() {
+    void (A::*pf)(bool) = &A::f;
   }
 }
