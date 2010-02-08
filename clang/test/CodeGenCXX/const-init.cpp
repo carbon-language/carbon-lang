@@ -2,11 +2,11 @@
 
 // CHECK: @a = global i32 10
 int a = 10;
-// CHECK: @ar = global i32* @a
+// CHECK: @ar = constant i32* @a
 int &ar = a;
 
 void f();
-// CHECK: @fr = global void ()* @_Z1fv
+// CHECK: @fr = constant void ()* @_Z1fv
 void (&fr)() = f;
 
 struct S { int& a; };

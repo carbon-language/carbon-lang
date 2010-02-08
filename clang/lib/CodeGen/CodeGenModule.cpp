@@ -783,7 +783,7 @@ CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
 }
 
 static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
-  if (!D->getType().isConstant(Context))
+  if (!D->getType().isConstant(Context) && !D->getType()->isReferenceType())
     return false;
   if (Context.getLangOptions().CPlusPlus &&
       Context.getBaseElementType(D->getType())->getAs<RecordType>()) {
