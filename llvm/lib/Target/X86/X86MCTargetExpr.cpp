@@ -23,11 +23,16 @@ void X86MCTargetExpr::PrintImpl(raw_ostream &OS) const {
   OS << *Sym;
   
   switch (Kind) {
-  case Invalid:  OS << "@<invalid>"; break;
-  case GOT:      OS << "@GOT"; break;
-  case PLT:      OS << "@PLT"; break;
-  case GOTPCREL: OS << "@GOTPCREL"; break;
-  case GOTOFF:   OS << "@GOTOFF"; break;
+  case Invalid:   OS << "@<invalid>"; break;
+  case GOT:       OS << "@GOT"; break;
+  case GOTOFF:    OS << "@GOTOFF"; break;
+  case GOTPCREL:  OS << "@GOTPCREL"; break;
+  case GOTTPOFF:  OS << "@GOTTPOFF"; break;
+  case INDNTPOFF: OS << "@INDNTPOFF"; break;
+  case NTPOFF:    OS << "@NTPOFF"; break;
+  case PLT:       OS << "@PLT"; break;
+  case TLSGD:     OS << "@TLSGD"; break;
+  case TPOFF:     OS << "@TPOFF"; break;
   }
 }
 

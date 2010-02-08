@@ -20,9 +20,14 @@ public:
   enum VariantKind {
     Invalid,
     GOT,
-    PLT,
+    GOTOFF,
     GOTPCREL,
-    GOTOFF
+    GOTTPOFF,
+    INDNTPOFF,
+    NTPOFF,
+    PLT,
+    TLSGD,
+    TPOFF
   };
 private:
   /// Sym - The symbol being referenced.

@@ -68,12 +68,19 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
   }
   
-  //X86MCTargetExpr::VariantKind Kind = X86MCTargetExpr::Invalid;
-  
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:                // No flag.
-  case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
+  case X86II::MO_NO_FLAG:                // These don't modify the symbol name.
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_TLSGD:
+  case X86II::MO_GOTTPOFF:
+  case X86II::MO_INDNTPOFF:
+  case X86II::MO_TPOFF:
+  case X86II::MO_NTPOFF:
+  case X86II::MO_GOTPCREL:
+  case X86II::MO_GOT:
+  case X86II::MO_GOTOFF:
+  case X86II::MO_PLT:
     break;
   case X86II::MO_DLLIMPORT: {
     // Handle dllimport linkage.
@@ -107,16 +114,6 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
       StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
     return Sym;
   }
-  // FIXME: These probably should be a modifier on the symbol or something??
-  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
-  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
-  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
-  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
-  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
-  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
-  case X86II::MO_GOT:       Name += "@GOT";       break;
-  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
-  case X86II::MO_PLT:       Name += "@PLT";       break;
   }
 
   return Ctx.GetOrCreateSymbol(Name.str());
@@ -130,9 +127,18 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:                // No flag.
+  case X86II::MO_NO_FLAG:                // These don't modify the symbol name.
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
-  case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
+  case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_TLSGD:
+  case X86II::MO_GOTTPOFF:
+  case X86II::MO_INDNTPOFF:
+  case X86II::MO_TPOFF:
+  case X86II::MO_NTPOFF:
+  case X86II::MO_GOTPCREL:
+  case X86II::MO_GOT:
+  case X86II::MO_GOTOFF:
+  case X86II::MO_PLT:
     break;
   case X86II::MO_DLLIMPORT: {
     // Handle dllimport linkage.
@@ -151,130 +157,52 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
     }
     return Sym;
   }
-  // FIXME: These probably should be a modifier on the symbol or something??
-  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
-  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
-  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
-  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
-  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
-  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
-  case X86II::MO_GOT:       Name += "@GOT";       break;
-  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
-  case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
   return Ctx.GetOrCreateSymbol(Name.str());
-}
-
-MCSymbol *X86MCInstLower::GetJumpTableSymbol(const MachineOperand &MO) const {
-  SmallString<256> Name;
-  // FIXME: Use AsmPrinter.GetJTISymbol.  @TLSGD shouldn't be part of the symbol
-  // name!
-  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "JTI"
-    << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
-  
-  switch (MO.getTargetFlags()) {
-  default:
-    llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:    // No flag.
-  case X86II::MO_PIC_BASE_OFFSET:
-  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-    break;
-    // FIXME: These probably should be a modifier on the symbol or something??
-  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
-  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
-  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
-  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
-  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
-  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
-  case X86II::MO_GOT:       Name += "@GOT";       break;
-  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
-  case X86II::MO_PLT:       Name += "@PLT";       break;
-  }
-  
-  // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
-}
-
-
-MCSymbol *X86MCInstLower::
-GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
-  SmallString<256> Name;
-  // FIXME: USe AsmPrinter.GetCPISymbol.  @TLSGD shouldn't be part of the symbol
-  // name!
-  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "CPI"
-    << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
-  
-  switch (MO.getTargetFlags()) {
-  default:
-    llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:    // No flag.
-  case X86II::MO_PIC_BASE_OFFSET:
-  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-    break;
-    // FIXME: These probably should be a modifier on the symbol or something??
-  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
-  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
-  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
-  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
-  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
-  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
-  case X86II::MO_GOT:       Name += "@GOT";       break;
-  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
-  case X86II::MO_PLT:       Name += "@PLT";       break;
-  }
-  
-  // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
-}
-
-MCSymbol *X86MCInstLower::
-GetBlockAddressSymbol(const MachineOperand &MO) const {
-  const char *Suffix = "";
-  switch (MO.getTargetFlags()) {
-  default: llvm_unreachable("Unknown target flag on BA operand");
-  case X86II::MO_NO_FLAG:         break; // No flag.
-  case X86II::MO_PIC_BASE_OFFSET: break; // Doesn't modify symbol name.
-  case X86II::MO_GOTOFF: Suffix = "@GOTOFF"; break;
-  }
-
-  return AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress(), Suffix);
 }
 
 MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                              MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+  const MCExpr *Expr = 0;
+  X86MCTargetExpr::VariantKind RefKind = X86MCTargetExpr::Invalid;
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
-      
   // These affect the name of the symbol, not any suffix.
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
-  case X86II::MO_TLSGD:
-  case X86II::MO_GOTTPOFF:
-  case X86II::MO_INDNTPOFF:
-  case X86II::MO_TPOFF:
-  case X86II::MO_NTPOFF:
-  case X86II::MO_GOTPCREL:
-  case X86II::MO_GOT:
-  case X86II::MO_GOTOFF:
-  case X86II::MO_PLT:
     break;
+      
+  case X86II::MO_TLSGD:     RefKind = X86MCTargetExpr::TLSGD; break;
+  case X86II::MO_GOTTPOFF:  RefKind = X86MCTargetExpr::GOTTPOFF; break;
+  case X86II::MO_INDNTPOFF: RefKind = X86MCTargetExpr::INDNTPOFF; break;
+  case X86II::MO_TPOFF:     RefKind = X86MCTargetExpr::TPOFF; break;
+  case X86II::MO_NTPOFF:    RefKind = X86MCTargetExpr::NTPOFF; break;
+  case X86II::MO_GOTPCREL:  RefKind = X86MCTargetExpr::GOTPCREL; break;
+  case X86II::MO_GOT:       RefKind = X86MCTargetExpr::GOT; break;
+  case X86II::MO_GOTOFF:    RefKind = X86MCTargetExpr::GOTOFF; break;
+  case X86II::MO_PLT:       RefKind = X86MCTargetExpr::PLT; break;
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+    Expr = MCSymbolRefExpr::Create(Sym, Ctx);
     // Subtract the pic base.
     Expr = MCBinaryExpr::CreateSub(Expr, 
                                MCSymbolRefExpr::Create(GetPICBaseSymbol(), Ctx),
                                    Ctx);
     break;
+  }
+  
+  if (Expr == 0) {
+    if (RefKind == X86MCTargetExpr::Invalid)
+      Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+    else
+      Expr = X86MCTargetExpr::Create(Sym, RefKind, Ctx);
   }
   
   if (!MO.isJTI() && MO.getOffset())
@@ -348,13 +276,14 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
+      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
+      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()));
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, GetBlockAddressSymbol(MO));
+      MCOp = LowerSymbolOperand(MO,
+                        AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
       break;
     }
     
