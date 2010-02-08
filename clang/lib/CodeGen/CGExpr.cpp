@@ -553,6 +553,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
 
     // Simple scalar l-value.
+    //
+    // FIXME: We shouldn't have to use isSingleValueType here.
     if (EltTy->isSingleValueType())
       return RValue::get(EmitLoadOfScalar(Ptr, LV.isVolatileQualified(),
                                           ExprType));

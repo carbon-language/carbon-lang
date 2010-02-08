@@ -703,25 +703,19 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   CanQualType CTy = getContext().getCanonicalType(Ty);
 
   llvm::Value *DeclPtr;
-  if (!Ty->isConstantSizeType()) {
-    // Variable sized values always are passed by-reference.
+  // If this is an aggregate or variable sized value, reuse the input pointer.
+  if (!Ty->isConstantSizeType() ||
+      CodeGenFunction::hasAggregateLLVMType(Ty)) {
     DeclPtr = Arg;
   } else {
-    // A fixed sized single-value variable becomes an alloca in the entry block.
-    const llvm::Type *LTy = ConvertTypeForMem(Ty);
-    if (LTy->isSingleValueType()) {
-      // TODO: Alignment
-      DeclPtr = CreateTempAlloca(LTy);
-      DeclPtr->setName(D.getNameAsString() + llvm::StringRef(".addr"));
+    // Otherwise, create a temporary to hold the value.
+    DeclPtr = CreateTempAlloca(ConvertTypeForMem(Ty));
+    DeclPtr->setName(D.getName() + ".addr");
 
-      // Store the initial value into the alloca.
-      EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);
-    } else {
-      // Otherwise, if this is an aggregate, just use the input pointer.
-      DeclPtr = Arg;
-    }
-    Arg->setName(D.getNameAsString());
+    // Store the initial value into the alloca.
+    EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);
   }
+  Arg->setName(D.getName());
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
