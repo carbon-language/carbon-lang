@@ -944,9 +944,10 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       return false;
     }
 
+    SourceLocation EndLoc = Tok.getLastLoc();
     Tok.setKind(tok::annot_typename);
     Tok.setAnnotationValue(Ty.isInvalid()? 0 : Ty.get());
-    Tok.setAnnotationEndLoc(Tok.getLocation());
+    Tok.setAnnotationEndLoc(EndLoc);
     Tok.setLocation(TypenameLoc);
     PP.AnnotateCachedTokens(Tok);
     return true;

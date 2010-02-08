@@ -124,6 +124,10 @@ public:
     UintData = L.getRawEncoding();
   }
 
+  SourceLocation getLastLoc() const {
+    return isAnnotation() ? getAnnotationEndLoc() : getLocation();
+  }
+
   /// getAnnotationRange - SourceRange of the group of tokens that this
   /// annotation token represents.
   SourceRange getAnnotationRange() const {
