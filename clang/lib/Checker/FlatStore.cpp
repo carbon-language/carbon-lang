@@ -9,6 +9,7 @@
 
 #include "clang/Checker/PathSensitive/GRState.h"
 #include "llvm/ADT/ImmutableIntervalMap.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 using llvm::Interval;
@@ -159,6 +160,7 @@ Interval FlatStoreManager::RegionToInterval(const MemRegion *R) {
     return Interval(0, Size-1);
   }
   default:
-    assert(0 && "Region kind unhandled.");
+    llvm_unreachable("Region kind unhandled.");
+    return Interval(0, 0);
   }
 }
