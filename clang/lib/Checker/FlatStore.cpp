@@ -11,6 +11,7 @@
 #include "llvm/ADT/ImmutableIntervalMap.h"
 
 using namespace clang;
+using llvm::Interval;
 
 // The actual store type.
 typedef llvm::ImmutableIntervalMap<SVal> BindingVal;
@@ -27,8 +28,8 @@ public:
       RBFactory(mgr.getAllocator()), 
       BVFactory(mgr.getAllocator()) {}
 
-  SVal Retrieve(Store store, Loc loc, QualType T);
-  Store Bind(Store store, Loc loc, SVal val);
+  SVal Retrieve(Store store, Loc L, QualType T);
+  Store Bind(Store store, Loc L, SVal val);
   Store Remove(Store St, Loc L);
   Store BindCompoundLiteral(Store store, const CompoundLiteralExpr* cl,
                             const LocationContext *LC, SVal v);
@@ -41,7 +42,9 @@ public:
     return 0;
   }
 
-  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
+  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) {
+    return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
+  }
 
   SVal getLValueString(const StringLiteral* sl);
   SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base);
@@ -65,6 +68,15 @@ public:
   void print(Store store, llvm::raw_ostream& Out, const char* nl, 
              const char *sep);
   void iterBindings(Store store, BindingsHandler& f);
+
+private:
+  static RegionBindings getRegionBindings(Store store) {
+    return RegionBindings(static_cast<const RegionBindings::TreeTy*>(store));
+  }
+
+  Interval RegionToInterval(const MemRegion *R);
+
+  SVal RetrieveRegionWithNoBinding(const MemRegion *R, QualType T);
 };
 } // end anonymous namespace
 
@@ -72,12 +84,42 @@ StoreManager *clang::CreateFlatStoreManager(GRStateManager &StMgr) {
   return new FlatStoreManager(StMgr);
 }
 
-SVal FlatStoreManager::Retrieve(Store store, Loc loc, QualType T) {
-  return UnknownVal();
+SVal FlatStoreManager::Retrieve(Store store, Loc L, QualType T) {
+  const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
+  Interval I = RegionToInterval(R);
+  RegionBindings B = getRegionBindings(store);
+  const BindingVal *BV = B.lookup(R);
+  if (BV) {
+    const SVal *V = BVFactory.Lookup(*BV, I);
+    if (V)
+      return *V;
+    else
+      return RetrieveRegionWithNoBinding(R, T);
+  }
+  return RetrieveRegionWithNoBinding(R, T);
 }
 
-Store FlatStoreManager::Bind(Store store, Loc loc, SVal val) {
-  return store;
+SVal FlatStoreManager::RetrieveRegionWithNoBinding(const MemRegion *R,
+                                                   QualType T) {
+  if (R->hasStackNonParametersStorage())
+    return UndefinedVal();
+  else
+    return ValMgr.getRegionValueSymbolVal(R, T);
+}
+
+Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
+  const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
+  RegionBindings B = getRegionBindings(store);
+  const BindingVal *V = B.lookup(R);
+
+  BindingVal BV = BVFactory.GetEmptyMap();
+  if (V)
+    BV = *V;
+
+  Interval I = RegionToInterval(R);
+  BV = BVFactory.Add(BV, I, val);
+  B = RBFactory.Add(B, R, BV);
+  return B.getRoot();
 }
 
 Store FlatStoreManager::Remove(Store store, Loc L) {
@@ -89,11 +131,6 @@ Store FlatStoreManager::BindCompoundLiteral(Store store,
                                             const LocationContext *LC,
                                             SVal v) {
   return store;
-}
-
-SVal FlatStoreManager::getLValueVar(const VarDecl *VD, 
-                                    const LocationContext *LC) {
-  return UnknownVal();
 }
 
 SVal FlatStoreManager::getLValueString(const StringLiteral* sl) {
@@ -137,4 +174,16 @@ void FlatStoreManager::print(Store store, llvm::raw_ostream& Out,
 }
 
 void FlatStoreManager::iterBindings(Store store, BindingsHandler& f) {
+}
+
+Interval FlatStoreManager::RegionToInterval(const MemRegion *R) { 
+  switch (R->getKind()) {
+  case MemRegion::VarRegionKind: {
+    QualType T = cast<VarRegion>(R)->getValueType(StateMgr.getContext());
+    uint64_t Size = StateMgr.getContext().getTypeSize(T);
+    return Interval(0, Size-1);
+  }
+  default:
+    assert(0 && "Region kind unhandled.");
+  }
 }
