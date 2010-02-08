@@ -72,7 +72,7 @@ public:
 static unsigned MatchRegisterName(const StringRef &Name);
 
 AsmToken X86AsmLexer::LexTokenATT() {
-  const AsmToken &lexedToken = lexDefinite();
+  const AsmToken lexedToken = lexDefinite();
   
   switch (lexedToken.getKind()) {
   default:
