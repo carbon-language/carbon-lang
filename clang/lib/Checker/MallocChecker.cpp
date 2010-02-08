@@ -103,7 +103,7 @@ void *MallocChecker::getTag() {
 bool MallocChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getExprVal(Callee);
+  SVal L = state->getSVal(Callee);
 
   const FunctionDecl *FD = L.getAsFunctionDecl();
   if (!FD)
@@ -149,7 +149,7 @@ const GRState *MallocChecker::MallocMemAux(CheckerContext &C,
 
   SVal RetVal = ValMgr.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
 
-  SVal Size = state->getExprVal(SizeEx);
+  SVal Size = state->getSVal(SizeEx);
 
   state = C.getEngine().getStoreManager().setExtent(state, RetVal.getAsRegion(),
                                                     Size);
@@ -171,7 +171,7 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 
 const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
                                          const GRState *state) {
-  SVal ArgVal = state->getExprVal(CE->getArg(0));
+  SVal ArgVal = state->getSVal(CE->getArg(0));
   SymbolRef Sym = ArgVal.getAsLocSymbol();
   assert(Sym);
 
@@ -205,8 +205,7 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
 void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Arg0 = CE->getArg(0);
-  DefinedOrUnknownSVal Arg0Val =
-    cast<DefinedOrUnknownSVal>(state->getExprVal(Arg0));
+  DefinedOrUnknownSVal Arg0Val=cast<DefinedOrUnknownSVal>(state->getSVal(Arg0));
 
   ValueManager &ValMgr = C.getValueManager();
   SValuator &SVator = C.getSValuator();
@@ -230,7 +229,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
   if (const GRState *stateNotEqual = state->Assume(PtrEQ, false)) {
     const Expr *Arg1 = CE->getArg(1);
     DefinedOrUnknownSVal Arg1Val = 
-      cast<DefinedOrUnknownSVal>(stateNotEqual->getExprVal(Arg1));
+      cast<DefinedOrUnknownSVal>(stateNotEqual->getSVal(Arg1));
     DefinedOrUnknownSVal SizeZero = SVator.EvalEQ(stateNotEqual, Arg1Val,
                                       ValMgr.makeIntValWithPtrWidth(0, false));
 
@@ -305,7 +304,7 @@ void MallocChecker::PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S) {
 
   const GRState *state = C.getState();
 
-  SymbolRef Sym = state->getExprVal(RetE).getAsSymbol();
+  SymbolRef Sym = state->getSVal(RetE).getAsSymbol();
 
   if (!Sym)
     return;

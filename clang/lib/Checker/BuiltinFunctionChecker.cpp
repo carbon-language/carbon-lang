@@ -35,7 +35,7 @@ void clang::RegisterBuiltinFunctionChecker(GRExprEngine &Eng) {
 bool BuiltinFunctionChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE){
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getExprVal(Callee);
+  SVal L = state->getSVal(Callee);
   const FunctionDecl *FD = L.getAsFunctionDecl();
 
   if (!FD)
@@ -50,7 +50,7 @@ bool BuiltinFunctionChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE){
   case Builtin::BI__builtin_expect: {
     // For __builtin_expect, just return the value of the subexpression.
     assert (CE->arg_begin() != CE->arg_end());
-    SVal X = state->getExprVal(*(CE->arg_begin()));
+    SVal X = state->getSVal(*(CE->arg_begin()));
     C.GenerateNode(state->BindExpr(CE, X));
     return true;
   }
@@ -65,7 +65,7 @@ bool BuiltinFunctionChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE){
     // Set the extent of the region in bytes. This enables us to use the
     // SVal of the argument directly. If we save the extent in bits, we
     // cannot represent values like symbol*8.
-    SVal Extent = state->getExprVal(*(CE->arg_begin()));
+    SVal Extent = state->getSVal(*(CE->arg_begin()));
     state = C.getStoreManager().setExtent(state, R, Extent);
     C.GenerateNode(state->BindExpr(CE, loc::MemRegionVal(R)));
     return true;

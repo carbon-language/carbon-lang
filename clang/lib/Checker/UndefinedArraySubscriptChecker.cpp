@@ -40,7 +40,7 @@ void clang::RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng) {
 void 
 UndefinedArraySubscriptChecker::PreVisitArraySubscriptExpr(CheckerContext &C, 
                                                 const ArraySubscriptExpr *A) {
-  if (C.getState()->getExprVal(A->getIdx()).isUndef()) {
+  if (C.getState()->getSVal(A->getIdx()).isUndef()) {
     if (ExplodedNode *N = C.GenerateSink()) {
       if (!BT)
         BT = new BuiltinBug("Array subscript is undefined");

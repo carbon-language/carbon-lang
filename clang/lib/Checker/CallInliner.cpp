@@ -37,7 +37,7 @@ void clang::RegisterCallInliner(GRExprEngine &Eng) {
 bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getExprVal(Callee);
+  SVal L = state->getSVal(Callee);
   
   const FunctionDecl *FD = L.getAsFunctionDecl();
   if (!FD)

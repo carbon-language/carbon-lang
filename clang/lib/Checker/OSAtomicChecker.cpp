@@ -38,7 +38,7 @@ void clang::RegisterOSAtomicChecker(GRExprEngine &Eng) {
 bool OSAtomicChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getExprVal(Callee);
+  SVal L = state->getSVal(Callee);
 
   const FunctionDecl* FD = L.getAsFunctionDecl();
   if (!FD)
@@ -100,7 +100,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
   GRExprEngine &Engine = C.getEngine();
   const GRState *state = C.getState();
   ExplodedNodeSet Tmp;
-  SVal location = state->getExprVal(theValueExpr);
+  SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type.
   QualType LoadTy;
   if (const TypedRegion *TR =
@@ -124,8 +124,8 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
 
     ExplodedNode *N = *I;
     const GRState *stateLoad = N->getState();
-    SVal theValueVal_untested = stateLoad->getExprVal(theValueExpr);
-    SVal oldValueVal_untested = stateLoad->getExprVal(oldValueExpr);
+    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr);
+    SVal oldValueVal_untested = stateLoad->getSVal(oldValueExpr);
 
     // FIXME: Issue an error.
     if (theValueVal_untested.isUndef() || oldValueVal_untested.isUndef()) {
@@ -148,7 +148,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
     if (stateEqual) {
       // Perform the store.
       ExplodedNodeSet TmpStore;
-      SVal val = stateEqual->getExprVal(newValueExpr);
+      SVal val = stateEqual->getSVal(newValueExpr);
 
       // Handle implicit value casts.
       if (const TypedRegion *R =

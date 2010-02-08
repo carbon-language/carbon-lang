@@ -1859,7 +1859,7 @@ GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
   // Copy the arg expression value to the arg variables.
   Store store = state->getStore();
   for (; AI != AE; ++AI, ++PI) {
-    SVal ArgVal = state->getExprVal(*AI);
+    SVal ArgVal = state->getSVal(*AI);
     store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
   }
 

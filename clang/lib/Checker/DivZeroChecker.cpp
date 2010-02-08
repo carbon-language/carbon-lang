@@ -49,7 +49,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
       !B->getRHS()->getType()->isScalarType())
     return;
 
-  SVal Denom = C.getState()->getExprVal(B->getRHS());
+  SVal Denom = C.getState()->getSVal(B->getRHS());
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&Denom);
 
   // Divide-by-undefined handled in the generic checking for uses of

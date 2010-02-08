@@ -199,7 +199,7 @@ void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
   SVal ParamL = rootState->getLValue(Param, LC);
   const MemRegion* ParamR = cast<loc::MemRegionVal>(ParamL).getRegionAs<VarRegion>();
   assert (ParamR && "Parameters always have VarRegions.");
-  SVal ParamSVal = rootState->Load(ParamR);
+  SVal ParamSVal = rootState->getSVal(ParamR);
 
   // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.
@@ -212,8 +212,7 @@ void NSErrorChecker::CheckParamDeref(const VarDecl *Param,
   llvm::tie(I, E) = GetImplicitNullDereferences(Eng);
   for ( ; I != E; ++I) {
     const GRState *state = (*I)->getState();
-    SVal location =
-      state->getExprVal((*I)->getLocationAs<StmtPoint>()->getStmt());
+    SVal location = state->getSVal((*I)->getLocationAs<StmtPoint>()->getStmt());
     if (location.getAsSymbol() != ParamSym)
       continue;
 

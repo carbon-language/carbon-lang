@@ -112,7 +112,7 @@ void ReturnStackAddressChecker::PreVisitReturnStmt(CheckerContext &C,
   if (!RetE)
     return;
  
-  SVal V = C.getState()->getExprVal(RetE);
+  SVal V = C.getState()->getSVal(RetE);
   const MemRegion *R = V.getAsRegion();
 
   if (!R || !R->hasStackStorage())

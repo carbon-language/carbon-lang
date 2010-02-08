@@ -41,7 +41,7 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
   const GRState *state = C.getState();
 
   // Check if the callee has a 'nonnull' attribute.
-  SVal X = state->getExprVal(CE->getCallee());
+  SVal X = state->getSVal(CE->getCallee());
 
   const FunctionDecl* FD = X.getAsFunctionDecl();
   if (!FD)
@@ -60,7 +60,7 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
     if (!Att->isNonNull(idx))
       continue;
 
-    const SVal &V = state->getExprVal(*I);
+    const SVal &V = state->getSVal(*I);
     const DefinedSVal *DV = dyn_cast<DefinedSVal>(&V);
 
     if (!DV)

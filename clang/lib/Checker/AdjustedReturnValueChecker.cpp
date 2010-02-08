@@ -49,7 +49,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
   // Fetch the signature of the called function.
   const GRState *state = C.getState();
 
-  SVal V = state->getExprVal(CE);
+  SVal V = state->getSVal(CE);
   
   if (V.isUnknown())
     return;
@@ -60,7 +60,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
     return;
   }                   
 
-  const MemRegion *callee = state->getExprVal(CE->getCallee()).getAsRegion();
+  const MemRegion *callee = state->getSVal(CE->getCallee()).getAsRegion();
   if (!callee)
     return;
 

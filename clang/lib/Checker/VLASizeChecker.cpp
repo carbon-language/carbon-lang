@@ -51,7 +51,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   // FIXME: Handle multi-dimensional VLAs.
   const Expr* SE = VLA->getSizeExpr();
   const GRState *state = C.getState();
-  SVal sizeV = state->getExprVal(SE);
+  SVal sizeV = state->getSVal(SE);
 
   if (sizeV.isUndef()) {
     // Generate an error node.

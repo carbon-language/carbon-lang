@@ -46,7 +46,7 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
   if (!RetE)
     return;
  
-  SVal V = state->getExprVal(RetE);
+  SVal V = state->getSVal(RetE);
   const MemRegion *R = V.getAsRegion();
   if (!R)
     return;
