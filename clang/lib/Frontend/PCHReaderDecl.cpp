@@ -117,6 +117,7 @@ void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
                         cast_or_null<TagDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setDefinition(Record[Idx++]);
+  TD->setDefinedInDeclarator(Record[Idx++]);
   TD->setTypedefForAnonDecl(
                     cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -1512,6 +1512,10 @@ private:
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 
+  /// IsDefinedInDeclarator - True if this tag declaration is
+  /// syntactically defined in a declarator.
+  bool IsDefinedInDeclarator : 1;
+
   /// TypedefForAnonDecl - If a TagDecl is anonymous and part of a typedef,
   /// this points to the TypedefDecl. Used for mangling.
   TypedefDecl *TypedefForAnonDecl;
@@ -1528,6 +1532,7 @@ protected:
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
+    IsDefinedInDeclarator = false;
     setPreviousDeclaration(PrevDecl);
   }
 
@@ -1559,6 +1564,13 @@ public:
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {
     return IsDefinition;
+  }
+
+  bool isDefinedInDeclarator() const {
+    return IsDefinedInDeclarator;
+  }
+  void setDefinedInDeclarator(bool isInDeclarator) {
+    IsDefinedInDeclarator = isInDeclarator;
   }
 
   /// \brief Whether this declaration declares a type that is

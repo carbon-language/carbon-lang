@@ -928,8 +928,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   case UnqualifiedId::IK_TemplateId:
     T = ConvertDeclSpecToType(*this, D, FnAttrsFromDeclSpec);
     
-    if (!D.isInvalidType() && OwnedDecl && D.getDeclSpec().isTypeSpecOwned())
-      *OwnedDecl = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
+    if (!D.isInvalidType() && D.getDeclSpec().isTypeSpecOwned()) {
+      TagDecl* Owned = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
+      Owned->setDefinedInDeclarator(Owned->isDefinition());
+      if (OwnedDecl) *OwnedDecl = Owned;
+    }
     break;
 
   case UnqualifiedId::IK_ConstructorName:
