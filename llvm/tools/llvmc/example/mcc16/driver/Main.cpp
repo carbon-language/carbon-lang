@@ -46,8 +46,6 @@ int main(int argc, char** argv) {
 
   // We are creating a temp dir in current dir, with the cached name.
   //  But before that remove if one already exists with that name..
-
-  llvm::sys::Path tempDir;
   tempDir = TempDirname;
   tempDir.eraseFromDisk(true);
 
