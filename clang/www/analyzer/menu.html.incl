@@ -1,5 +1,5 @@
 <div id="nav">
-  <ul class="menubar">
+  <ul class="menubar" style="width:100%">
     <li>
       <a href="/index.html">About</a>
       <ul>
