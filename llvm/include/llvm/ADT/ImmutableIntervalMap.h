@@ -95,7 +95,7 @@ public:
 
   TreeTy *Add(TreeTy *T, value_type_ref V) {
     T = Add_internal(V,T);
-    MarkImmutable(T);
+    this->MarkImmutable(T);
     return T;
   }
 
@@ -103,31 +103,31 @@ public:
     if (!T)
       return NULL;
 
-    key_type_ref CurrentKey = ImutInfo::KeyOfValue(Value(T));
+    key_type_ref CurrentKey = ImutInfo::KeyOfValue(this->Value(T));
 
     if (ImutInfo::isContainedIn(K, CurrentKey))
       return T;
     else if (ImutInfo::isLess(K, CurrentKey))
-      return Find(Left(T), K);
+      return Find(this->Left(T), K);
     else
-      return Find(Right(T), K);
+      return Find(this->Right(T), K);
   }
 
 private:
   TreeTy *Add_internal(value_type_ref V, TreeTy *T) {
     key_type_ref K = ImutInfo::KeyOfValue(V);
     T = RemoveAllOverlaps(T, K);
-    if (isEmpty(T))
-      return CreateNode(NULL, V, NULL);
+    if (this->isEmpty(T))
+      return this->CreateNode(NULL, V, NULL);
 
     assert(!T->isMutable());
 
-    key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
+    key_type_ref KCurrent = ImutInfo::KeyOfValue(this->Value(T));
 
     if (ImutInfo::isLess(K, KCurrent))
-      return Balance(Add_internal(V, Left(T)), Value(T), Right(T));
+      return this->Balance(Add_internal(V, this->Left(T)), this->Value(T), this->Right(T));
     else
-      return Balance(Left(T), Value(T), Add_internal(V, Right(T)));
+      return this->Balance(this->Left(T), this->Value(T), Add_internal(V, this->Right(T)));
   }
 
   // Remove all overlaps from T.
@@ -136,7 +136,7 @@ private:
     do {
       Changed = false;
       T = RemoveOverlap(T, K, Changed);
-      MarkImmutable(T);
+      this->MarkImmutable(T);
     } while (Changed);
 
     return T;
@@ -146,19 +146,19 @@ private:
   TreeTy *RemoveOverlap(TreeTy *T, key_type_ref K, bool &Changed) {
     if (!T)
       return NULL;
-    Interval CurrentK = ImutInfo::KeyOfValue(Value(T));
+    Interval CurrentK = ImutInfo::KeyOfValue(this->Value(T));
 
     // If current key does not overlap the inserted key.
     if (CurrentK.getStart() > K.getEnd())
-      return Balance(RemoveOverlap(Left(T), K, Changed), Value(T), Right(T));
+      return this->Balance(RemoveOverlap(this->Left(T), K, Changed), this->Value(T), this->Right(T));
     else if (CurrentK.getEnd() < K.getStart())
-      return Balance(Left(T), Value(T), RemoveOverlap(Right(T), K, Changed));
+      return this->Balance(this->Left(T), this->Value(T), RemoveOverlap(this->Right(T), K, Changed));
 
     // Current key overlaps with the inserted key.
     // Remove the current key.
     Changed = true;
-    data_type_ref OldData = ImutInfo::DataOfValue(Value(T));
-    T = Remove_internal(CurrentK, T);
+    data_type_ref OldData = ImutInfo::DataOfValue(this->Value(T));
+    T = this->Remove_internal(CurrentK, T);
     // Add back the unoverlapped part of the current key.
     if (CurrentK.getStart() < K.getStart()) {
       if (CurrentK.getEnd() <= K.getEnd()) {
