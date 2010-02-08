@@ -89,12 +89,18 @@ public:
   //   caller's responsibility to 'delete' the returned map.
   virtual SubRegionMap *getSubRegionMap(Store store) = 0;
 
-  virtual SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) = 0;
+  virtual SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) {
+    return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
+  }
 
-  virtual SVal getLValueString(const StringLiteral* sl) = 0;
+  virtual SVal getLValueString(const StringLiteral* S) {
+    return ValMgr.makeLoc(MRMgr.getStringRegion(S));
+  }
 
-  SVal getLValueCompoundLiteral(const CompoundLiteralExpr* cl,
-                                const LocationContext *LC);
+  SVal getLValueCompoundLiteral(const CompoundLiteralExpr* CL,
+                                const LocationContext *LC) {
+    return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
+  }
 
   virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) = 0;
 

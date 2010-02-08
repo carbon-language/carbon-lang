@@ -232,23 +232,6 @@ public:
   ///  the value is not specified.  
   Store setImplicitDefaultValue(Store store, const MemRegion *R, QualType T);
 
-  /// getLValueString - Returns an SVal representing the lvalue of a
-  ///  StringLiteral.  Within RegionStore a StringLiteral has an
-  ///  associated StringRegion, and the lvalue of a StringLiteral is
-  ///  the lvalue of that region.
-  SVal getLValueString(const StringLiteral* S);
-
-  /// getLValueCompoundLiteral - Returns an SVal representing the
-  ///   lvalue of a compound literal.  Within RegionStore a compound
-  ///   literal has an associated region, and the lvalue of the
-  ///   compound literal is the lvalue of that region.
-  SVal getLValueCompoundLiteral(const CompoundLiteralExpr*);
-
-  /// getLValueVar - Returns an SVal that represents the lvalue of a
-  ///  variable.  Within RegionStore a variable has an associated
-  ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
-
   SVal getLValueIvar(const ObjCIvarDecl* D, SVal Base);
 
   SVal getLValueField(const FieldDecl* D, SVal Base);
@@ -679,22 +662,6 @@ Store RegionStoreManager::InvalidateRegions(Store store,
 //===----------------------------------------------------------------------===//
 // getLValueXXX methods.
 //===----------------------------------------------------------------------===//
-
-/// getLValueString - Returns an SVal representing the lvalue of a
-///  StringLiteral.  Within RegionStore a StringLiteral has an
-///  associated StringRegion, and the lvalue of a StringLiteral is the
-///  lvalue of that region.
-SVal RegionStoreManager::getLValueString(const StringLiteral* S) {
-  return loc::MemRegionVal(MRMgr.getStringRegion(S));
-}
-
-/// getLValueVar - Returns an SVal that represents the lvalue of a
-///  variable.  Within RegionStore a variable has an associated
-///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-SVal RegionStoreManager::getLValueVar(const VarDecl *VD, 
-                                      const LocationContext *LC) {
-  return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
-}
 
 SVal RegionStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
   return getLValueFieldOrIvar(D, Base);

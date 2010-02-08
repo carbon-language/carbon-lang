@@ -234,16 +234,3 @@ Store StoreManager::InvalidateRegions(Store store,
   
   return store;
 }
-
-//===----------------------------------------------------------------------===//
-// Common getLValueXXX methods.
-//===----------------------------------------------------------------------===//
-
-/// getLValueCompoundLiteral - Returns an SVal representing the lvalue
-///   of a compound literal.  Within RegionStore a compound literal
-///   has an associated region, and the lvalue of the compound literal
-///   is the lvalue of that region.
-SVal StoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL,
-                                            const LocationContext *LC) {
-  return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
-}
