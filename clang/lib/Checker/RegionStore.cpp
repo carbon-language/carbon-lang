@@ -232,12 +232,6 @@ public:
   ///  the value is not specified.  
   Store setImplicitDefaultValue(Store store, const MemRegion *R, QualType T);
 
-  SVal getLValueIvar(const ObjCIvarDecl* D, SVal Base);
-
-  SVal getLValueField(const FieldDecl* D, SVal Base);
-
-  SVal getLValueFieldOrIvar(const Decl* D, SVal Base);
-
   SVal getLValueElement(QualType elementType, SVal Offset, SVal Base);
 
 
@@ -658,55 +652,6 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                              StateMgr.getValueManager());
 }
   
- 
-//===----------------------------------------------------------------------===//
-// getLValueXXX methods.
-//===----------------------------------------------------------------------===//
-
-SVal RegionStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
-  return getLValueFieldOrIvar(D, Base);
-}
-
-SVal RegionStoreManager::getLValueField(const FieldDecl* D, SVal Base) {
-  return getLValueFieldOrIvar(D, Base);
-}
-
-SVal RegionStoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {
-  if (Base.isUnknownOrUndef())
-    return Base;
-
-  Loc BaseL = cast<Loc>(Base);
-  const MemRegion* BaseR = 0;
-
-  switch (BaseL.getSubKind()) {
-  case loc::MemRegionKind:
-    BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
-    break;
-
-  case loc::GotoLabelKind:
-    // These are anormal cases. Flag an undefined value.
-    return UndefinedVal();
-
-  case loc::ConcreteIntKind:
-    // While these seem funny, this can happen through casts.
-    // FIXME: What we should return is the field offset.  For example,
-    //  add the field offset to the integer value.  That way funny things
-    //  like this work properly:  &(((struct foo *) 0xa)->f)
-    return Base;
-
-  default:
-    assert(0 && "Unhandled Base.");
-    return Base;
-  }
-
-  // NOTE: We must have this check first because ObjCIvarDecl is a subclass
-  // of FieldDecl.
-  if (const ObjCIvarDecl *ID = dyn_cast<ObjCIvarDecl>(D))
-    return loc::MemRegionVal(MRMgr.getObjCIvarRegion(ID, BaseR));
-
-  return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
-}
-
 SVal RegionStoreManager::getLValueElement(QualType elementType, SVal Offset, 
                                           SVal Base) {
 

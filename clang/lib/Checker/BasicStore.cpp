@@ -70,8 +70,6 @@ public:
     return store;
   }
 
-  SVal getLValueIvar(const ObjCIvarDecl* D, SVal Base);
-  SVal getLValueField(const FieldDecl *D, SVal Base);
   SVal getLValueElement(QualType elementType, SVal Offset, SVal Base);
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
@@ -111,52 +109,6 @@ private:
 
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
-}
-
-SVal BasicStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
-
-  if (Base.isUnknownOrUndef())
-    return Base;
-
-  Loc BaseL = cast<Loc>(Base);
-
-  if (isa<loc::MemRegionVal>(BaseL)) {
-    const MemRegion *BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
-    return ValMgr.makeLoc(MRMgr.getObjCIvarRegion(D, BaseR));
-  }
-
-  return UnknownVal();
-}
-
-SVal BasicStoreManager::getLValueField(const FieldDecl* D, SVal Base) {
-
-  if (Base.isUnknownOrUndef())
-    return Base;
-
-  Loc BaseL = cast<Loc>(Base);
-  const MemRegion* BaseR = 0;
-
-  switch(BaseL.getSubKind()) {
-    case loc::GotoLabelKind:
-      return UndefinedVal();
-
-    case loc::MemRegionKind:
-      BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
-      break;
-
-    case loc::ConcreteIntKind:
-      // While these seem funny, this can happen through casts.
-      // FIXME: What we should return is the field offset.  For example,
-      //  add the field offset to the integer value.  That way funny things
-      //  like this work properly:  &(((struct foo *) 0xa)->f)
-      return Base;
-
-    default:
-      assert ("Unhandled Base.");
-      return Base;
-  }
-
-  return ValMgr.makeLoc(MRMgr.getFieldRegion(D, BaseR));
 }
 
 SVal BasicStoreManager::getLValueElement(QualType elementType,

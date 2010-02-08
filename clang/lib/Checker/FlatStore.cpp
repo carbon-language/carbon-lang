@@ -42,13 +42,6 @@ public:
     return 0;
   }
 
-  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) {
-    return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
-  }
-
-  SVal getLValueString(const StringLiteral* sl);
-  SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base);
-  SVal getLValueField(const FieldDecl* D, SVal Base);
   SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
   SVal ArrayToPointer(Loc Array);
   Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
@@ -131,18 +124,6 @@ Store FlatStoreManager::BindCompoundLiteral(Store store,
                                             const LocationContext *LC,
                                             SVal v) {
   return store;
-}
-
-SVal FlatStoreManager::getLValueString(const StringLiteral* sl) {
-  return UnknownVal();
-}
-
-SVal FlatStoreManager::getLValueIvar(const ObjCIvarDecl* decl, SVal base) {
-  return UnknownVal();
-}
-
-SVal FlatStoreManager::getLValueField(const FieldDecl* D, SVal Base) {
-  return UnknownVal();
 }
 
 SVal FlatStoreManager::getLValueElement(QualType elementType, SVal offset, 

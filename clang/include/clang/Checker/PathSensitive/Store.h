@@ -102,9 +102,13 @@ public:
     return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
   }
 
-  virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) = 0;
+  virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) {
+    return getLValueFieldOrIvar(decl, base);
+  }
 
-  virtual SVal getLValueField(const FieldDecl* D, SVal Base) = 0;
+  virtual SVal getLValueField(const FieldDecl* D, SVal Base) {
+    return getLValueFieldOrIvar(D, Base);
+  }
 
   virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base)=0;
 
@@ -195,6 +199,9 @@ protected:
   ///  as another region.
   SVal CastRetrievedVal(SVal val, const TypedRegion *R, QualType castTy,
                         bool performTestOnly = true);
+
+private:
+  SVal getLValueFieldOrIvar(const Decl* D, SVal Base);
 };
 
 // FIXME: Do we still need this?

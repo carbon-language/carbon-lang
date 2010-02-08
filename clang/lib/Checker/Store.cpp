@@ -234,3 +234,39 @@ Store StoreManager::InvalidateRegions(Store store,
   
   return store;
 }
+
+SVal StoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {
+  if (Base.isUnknownOrUndef())
+    return Base;
+
+  Loc BaseL = cast<Loc>(Base);
+  const MemRegion* BaseR = 0;
+
+  switch (BaseL.getSubKind()) {
+  case loc::MemRegionKind:
+    BaseR = cast<loc::MemRegionVal>(BaseL).getRegion();
+    break;
+
+  case loc::GotoLabelKind:
+    // These are anormal cases. Flag an undefined value.
+    return UndefinedVal();
+
+  case loc::ConcreteIntKind:
+    // While these seem funny, this can happen through casts.
+    // FIXME: What we should return is the field offset.  For example,
+    //  add the field offset to the integer value.  That way funny things
+    //  like this work properly:  &(((struct foo *) 0xa)->f)
+    return Base;
+
+  default:
+    assert(0 && "Unhandled Base.");
+    return Base;
+  }
+
+  // NOTE: We must have this check first because ObjCIvarDecl is a subclass
+  // of FieldDecl.
+  if (const ObjCIvarDecl *ID = dyn_cast<ObjCIvarDecl>(D))
+    return loc::MemRegionVal(MRMgr.getObjCIvarRegion(ID, BaseR));
+
+  return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
+}
