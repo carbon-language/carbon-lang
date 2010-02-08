@@ -370,6 +370,22 @@ static bool CmpCaseVals(const std::pair<llvm::APSInt, CaseStmt*>& lhs,
   return false;
 }
 
+/// CmpEnumVals - Comparison predicate for sorting enumeration values.
+///
+static bool CmpEnumVals(const std::pair<llvm::APSInt, EnumConstantDecl*>& lhs,
+                        const std::pair<llvm::APSInt, EnumConstantDecl*>& rhs)
+{
+  return lhs.first < rhs.first;
+}
+
+/// EqEnumVals - Comparison preficate for uniqing enumeration values.
+///
+static bool EqEnumVals(const std::pair<llvm::APSInt, EnumConstantDecl*>& lhs,
+                       const std::pair<llvm::APSInt, EnumConstantDecl*>& rhs)
+{
+  return lhs.first == rhs.first;
+}
+
 /// GetTypeBeforeIntegralPromotion - Returns the pre-promotion type of
 /// potentially integral-promoted expression @p expr.
 static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
@@ -560,7 +576,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   CaseValsTy CaseVals;
 
   // Keep track of any GNU case ranges we see.  The APSInt is the low value.
-  std::vector<std::pair<llvm::APSInt, CaseStmt*> > CaseRanges;
+  typedef std::vector<std::pair<llvm::APSInt, CaseStmt*> > CaseRangesTy;
+  CaseRangesTy CaseRanges;
 
   DefaultStmt *TheDefaultStmt = 0;
 
@@ -721,6 +738,75 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           // substmt, but we have no way to do this right now.
           CaseListIsErroneous = true;
         }
+      }
+    }
+
+    // Check to see if switch is over an Enum and handles all of its 
+    // values  
+    const EnumType* ET = dyn_cast<EnumType>(CondTypeBeforePromotion);
+    // If switch has default case, then ignore it.
+    if (!CaseListIsErroneous && !TheDefaultStmt && ET) {
+      const EnumDecl *ED = ET->getDecl();
+      typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64> EnumValsTy;
+      EnumValsTy EnumVals;
+
+      // Gather all enum values, set their type and sort them, allowing easier comparison 
+      // with CaseVals.
+      for (EnumDecl::enumerator_iterator EDI = ED->enumerator_begin(); EDI != ED->enumerator_end(); EDI++) {
+        llvm::APSInt Val = (*EDI)->getInitVal();
+        if(Val.getBitWidth() < CondWidth)
+          Val.extend(CondWidth);
+        Val.setIsSigned(CondIsSigned);
+        EnumVals.push_back(std::make_pair(Val, (*EDI)));
+      }
+      std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
+      EnumValsTy::iterator EIend = std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
+      // See which case values aren't in enum 
+      EnumValsTy::const_iterator EI = EnumVals.begin();
+      for (CaseValsTy::const_iterator CI = CaseVals.begin(); CI != CaseVals.end(); CI++) {
+        while (EI != EIend && EI->first < CI->first)
+          EI++;
+        if (EI == EIend || EI->first > CI->first)
+            Diag(CI->second->getLHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+      }
+      // See which of case ranges aren't in enum
+      EI = EnumVals.begin();
+      for (CaseRangesTy::const_iterator RI = CaseRanges.begin(); RI != CaseRanges.end() && EI != EIend; RI++) {
+        while (EI != EIend && EI->first < RI->first)
+          EI++;
+        
+        if (EI == EIend || EI->first != RI->first) {
+          Diag(RI->second->getLHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+        }
+
+        llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+        while (EI != EIend && EI->first < Hi)
+          EI++;
+        if (EI == EIend || EI->first != Hi)
+          Diag(RI->second->getRHS()->getExprLoc(), diag::not_in_enum) << ED->getDeclName();
+      }
+      //Check which enum vals aren't in switch
+      CaseValsTy::const_iterator CI = CaseVals.begin();
+      CaseRangesTy::const_iterator RI = CaseRanges.begin();
+      EI = EnumVals.begin();
+      for (; EI != EIend; EI++) {
+        //Drop unneeded case values
+        llvm::APSInt CIVal;
+        while (CI != CaseVals.end() && CI->first < EI->first)
+          CI++;
+        
+        if (CI != CaseVals.end() && CI->first == EI->first)
+          continue;
+
+        //Drop unneeded case ranges
+        for (; RI != CaseRanges.end(); RI++) {
+          llvm::APSInt Hi = RI->second->getRHS()->EvaluateAsInt(Context);
+          if (EI->first <= Hi)
+            break;
+        }
+
+        if (RI == CaseRanges.end() || EI->first < RI->first)
+          Diag(CondExpr->getExprLoc(), diag::warn_missing_cases) << EI->second->getDeclName();
       }
     }
   }

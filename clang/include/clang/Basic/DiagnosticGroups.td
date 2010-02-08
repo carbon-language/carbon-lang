@@ -96,7 +96,8 @@ def : DiagGroup<"strict-overflow">;
 def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
 def : DiagGroup<"strict-prototypes">;
 def : DiagGroup<"strict-selector-match">;
-def Switch         : DiagGroup<"switch">;
+def SwitchEnum     : DiagGroup<"switch-enum">;
+def Switch         : DiagGroup<"switch", [SwitchEnum]>;
 def Trigraphs : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;

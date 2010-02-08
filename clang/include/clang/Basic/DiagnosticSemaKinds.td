@@ -2556,6 +2556,10 @@ def warn_case_value_overflow : Warning<
   "overflow converting case value to switch condition type (%0 to %1)">;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
 def warn_case_empty_range : Warning<"empty case range specified">;
+def warn_missing_cases : Warning<"enumeration value %0 not handled in switch">,
+  InGroup<DiagGroup<"switch-enum"> >;
+def not_in_enum : Warning<"case value not in enumerated type %0">,
+  InGroup<DiagGroup<"switch-enum"> >; 
 def err_typecheck_statement_requires_scalar : Error<
   "statement requires expression of scalar type (%0 invalid)">;
 def err_typecheck_statement_requires_integer : Error<
