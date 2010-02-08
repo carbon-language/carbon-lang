@@ -705,7 +705,7 @@ public:
 
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);
-  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, const char* FName);
+  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, StringRef FName);
 
   RetainSummary* getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
@@ -923,14 +923,12 @@ RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
 // Summary creation for functions (largely uses of Core Foundation).
 //===----------------------------------------------------------------------===//
 
-static bool isRetain(FunctionDecl* FD, const char* FName) {
-  const char* loc = strstr(FName, "Retain");
-  return loc && loc[sizeof("Retain")-1] == '\0';
+static bool isRetain(FunctionDecl* FD, StringRef FName) {
+  return FName.endswith("Retain");
 }
 
-static bool isRelease(FunctionDecl* FD, const char* FName) {
-  const char* loc = strstr(FName, "Release");
-  return loc && loc[sizeof("Release")-1] == '\0';
+static bool isRelease(FunctionDecl* FD, StringRef FName) {
+  return FName.endswith("Release");
 }
 
 RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
@@ -955,12 +953,12 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     const IdentifierInfo *II = FD->getIdentifier();
     if (!II)
       break;
-    
-    const char* FName = II->getNameStart();
+
+    StringRef FName = II->getName();
 
     // Strip away preceding '_'.  Doing this here will effect all the checks
     // down below.
-    while (*FName == '_') ++FName;
+    FName = FName.substr(FName.find_first_not_of('_'));
 
     // Inspect the result type.
     QualType RetTy = FT->getResultType();
@@ -968,133 +966,63 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
     assert(ScratchArgs.isEmpty());
-    
-    switch (strlen(FName)) {
-      default: break;
-      case 14:
-        if (!memcmp(FName, "pthread_create", 14)) {
-          // Part of: <rdar://problem/7299394>.  This will be addressed
-          // better with IPA.
-          S = getPersistentStopSummary();
-        }
-        break;
 
-      case 17:
-        // Handle: id NSMakeCollectable(CFTypeRef)
-        if (!memcmp(FName, "NSMakeCollectable", 17)) {
-          S = (RetTy->isObjCIdType())
-              ? getUnarySummary(FT, cfmakecollectable)
-              : getPersistentStopSummary();
-        }
-        else if (!memcmp(FName, "IOBSDNameMatching", 17) ||
-                 !memcmp(FName, "IOServiceMatching", 17)) {
-          // Part of <rdar://problem/6961230>. (IOKit)
-          // This should be addressed using a API table.
-          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
-                                   DoNothing, DoNothing);
-        }
-        break;
-
-      case 21:
-        if (!memcmp(FName, "IOServiceNameMatching", 21)) {
-          // Part of <rdar://problem/6961230>. (IOKit)
-          // This should be addressed using a API table.
-          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
-                                   DoNothing, DoNothing);
-        }
-        break;
-
-      case 24:
-        if (!memcmp(FName, "IOServiceAddNotification", 24)) {
-          // Part of <rdar://problem/6961230>. (IOKit)
-          // This should be addressed using a API table.
-          ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,DoNothing);
-        }
-        break;
-
-      case 25:
-        if (!memcmp(FName, "IORegistryEntryIDMatching", 25)) {
-          // Part of <rdar://problem/6961230>. (IOKit)
-          // This should be addressed using a API table.
-          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
-                                   DoNothing, DoNothing);
-        }
-        break;
-
-      case 26:
-        if (!memcmp(FName, "IOOpenFirmwarePathMatching", 26)) {
-          // Part of <rdar://problem/6961230>. (IOKit)
-          // This should be addressed using a API table.
-          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
-                                   DoNothing, DoNothing);
-        }
-        break;
-
-      case 27:
-        if (!memcmp(FName, "IOServiceGetMatchingService", 27)) {
-          // Part of <rdar://problem/6961230>.
-          // This should be addressed using a API table.
-          ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-        }
-        break;
-
-      case 28:
-        if (!memcmp(FName, "IOServiceGetMatchingServices", 28)) {
-          // FIXES: <rdar://problem/6326900>
-          // This should be addressed using a API table.  This strcmp is also
-          // a little gross, but there is no need to super optimize here.
-          ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
-                                   DoNothing);
-        }
-        else if (!memcmp(FName, "CVPixelBufferCreateWithBytes", 28)) {
-          // FIXES: <rdar://problem/7283567>
-          // Eventually this can be improved by recognizing that the pixel
-          // buffer passed to CVPixelBufferCreateWithBytes is released via
-          // a callback and doing full IPA to make sure this is done correctly.
-          // FIXME: This function has an out parameter that returns an
-          // allocated object.
-          ScratchArgs = AF.Add(ScratchArgs, 7, StopTracking);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
-                                   DoNothing);
-        }
-        break;
-        
-      case 29:
-        if (!memcmp(FName, "CGBitmapContextCreateWithData", 29)) {
-          // FIXES: <rdar://problem/7358899>
-          // Eventually this can be improved by recognizing that 'releaseInfo'
-          // passed to CGBitmapContextCreateWithData is released via
-          // a callback and doing full IPA to make sure this is done correctly.
-          ScratchArgs = AF.Add(ScratchArgs, 8, StopTracking);
-          S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
-                                   DoNothing,DoNothing);          
-        }
-        break;
-
-      case 32:
-        if (!memcmp(FName, "IOServiceAddMatchingNotification", 32)) {
-          // Part of <rdar://problem/6961230>.
-          // This should be addressed using a API table.
-          ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-        }
-        break;
-        
-      case 34:
-        if (!memcmp(FName, "CVPixelBufferCreateWithPlanarBytes", 34)) {
-          // FIXES: <rdar://problem/7283567>
-          // Eventually this can be improved by recognizing that the pixel
-          // buffer passed to CVPixelBufferCreateWithPlanarBytes is released
-          // via a callback and doing full IPA to make sure this is done
-          // correctly.
-          ScratchArgs = AF.Add(ScratchArgs, 12, StopTracking);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
-                                   DoNothing);
-        }
-        break;
+    if (FName == "pthread_create") {
+      // Part of: <rdar://problem/7299394>.  This will be addressed
+      // better with IPA.
+      S = getPersistentStopSummary();
+    } else if (FName == "NSMakeCollectable") {
+      // Handle: id NSMakeCollectable(CFTypeRef)
+      S = (RetTy->isObjCIdType())
+          ? getUnarySummary(FT, cfmakecollectable)
+          : getPersistentStopSummary();
+    } else if (FName == "IOBSDNameMatching" ||
+               FName == "IOServiceMatching" ||
+               FName == "IOServiceNameMatching" ||
+               FName == "IORegistryEntryIDMatching" ||
+               FName == "IOOpenFirmwarePathMatching") {
+      // Part of <rdar://problem/6961230>. (IOKit)
+      // This should be addressed using a API table.
+      S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                               DoNothing, DoNothing);
+    } else if (FName == "IOServiceGetMatchingService" ||
+               FName == "IOServiceGetMatchingServices") {
+      // FIXES: <rdar://problem/6326900>
+      // This should be addressed using a API table.  This strcmp is also
+      // a little gross, but there is no need to super optimize here.
+      ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+    } else if (FName == "IOServiceAddNotification" ||
+               FName == "IOServiceAddMatchingNotification") {
+      // Part of <rdar://problem/6961230>. (IOKit)
+      // This should be addressed using a API table.
+      ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+    } else if (FName == "CVPixelBufferCreateWithBytes") {
+      // FIXES: <rdar://problem/7283567>
+      // Eventually this can be improved by recognizing that the pixel
+      // buffer passed to CVPixelBufferCreateWithBytes is released via
+      // a callback and doing full IPA to make sure this is done correctly.
+      // FIXME: This function has an out parameter that returns an
+      // allocated object.
+      ScratchArgs = AF.Add(ScratchArgs, 7, StopTracking);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+    } else if (FName == "CGBitmapContextCreateWithData") {
+      // FIXES: <rdar://problem/7358899>
+      // Eventually this can be improved by recognizing that 'releaseInfo'
+      // passed to CGBitmapContextCreateWithData is released via
+      // a callback and doing full IPA to make sure this is done correctly.
+      ScratchArgs = AF.Add(ScratchArgs, 8, StopTracking);
+      S = getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true),
+                               DoNothing, DoNothing);
+    } else if (FName == "CVPixelBufferCreateWithPlanarBytes") {
+      // FIXES: <rdar://problem/7283567>
+      // Eventually this can be improved by recognizing that the pixel
+      // buffer passed to CVPixelBufferCreateWithPlanarBytes is released
+      // via a callback and doing full IPA to make sure this is done
+      // correctly.
+      ScratchArgs = AF.Add(ScratchArgs, 12, StopTracking);
+      S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
     }
 
     // Did we get a summary?
@@ -1118,7 +1046,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       if (cocoa::isRefType(RetTy, "CF", FName)) {
         if (isRetain(FD, FName))
           S = getUnarySummary(FT, cfretain);
-        else if (strstr(FName, "MakeCollectable"))
+        else if (FName.find("MakeCollectable") != StringRef::npos)
           S = getUnarySummary(FT, cfmakecollectable);
         else
           S = getCFCreateGetRuleSummary(FD, FName);
@@ -1151,10 +1079,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     // about that don't return a pointer type.
     if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G')) {
       // Test for 'CGCF'.
-      if (FName[1] == 'G' && FName[2] == 'C' && FName[3] == 'F')
-        FName += 4;
-      else
-        FName += 2;
+      FName = FName.substr(FName.startswith("CGCF") ? 4 : 2);
 
       if (isRelease(FD, FName))
         S = getUnarySummary(FT, cfrelease);
@@ -1201,12 +1126,13 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
 RetainSummary*
 RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
-                                                const char* FName) {
+                                                StringRef FName) {
 
-  if (strstr(FName, "Create") || strstr(FName, "Copy"))
+  if (FName.find("Create") != StringRef::npos ||
+      FName.find("Copy") != StringRef::npos)
     return getCFSummaryCreateRule(FD);
 
-  if (strstr(FName, "Get"))
+  if (FName.find("Get") != StringRef::npos)
     return getCFSummaryGetRule(FD);
 
   return getDefaultSummary();

@@ -131,19 +131,18 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
   return C;
 }
 
-bool cocoa::isRefType(QualType RetTy, const char* prefix,
-                      const char* name) {
-  
+bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,
+                      llvm::StringRef Name) {
   // Recursively walk the typedef stack, allowing typedefs of reference types.
   while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
     llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getName();
-    if (TDName.startswith(prefix) && TDName.endswith("Ref"))
+    if (TDName.startswith(Prefix) && TDName.endswith("Ref"))
       return true;
     
     RetTy = TD->getDecl()->getUnderlyingType();
   }
   
-  if (!name)
+  if (Name.empty())
     return false;
   
   // Is the type void*?
@@ -152,7 +151,7 @@ bool cocoa::isRefType(QualType RetTy, const char* prefix,
     return false;
   
   // Does the name start with the prefix?
-  return llvm::StringRef(name).startswith(prefix);
+  return Name.startswith(Prefix);
 }
 
 bool cocoa::isCFObjectRef(QualType T) {
