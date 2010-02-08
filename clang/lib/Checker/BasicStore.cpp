@@ -49,14 +49,10 @@ public:
   Store InvalidateRegion(Store store, const MemRegion *R, const Expr *E, 
                          unsigned Count, InvalidatedSymbols *IS);
 
-  Store Bind(Store store, Loc L, SVal V) {
-    return BindInternal(store, L, V);
-  }
-
   Store scanForIvars(Stmt *B, const Decl* SelfDecl,
                      const MemRegion *SelfRegion, Store St);
 
-  Store BindInternal(Store St, Loc loc, SVal V);
+  Store Bind(Store St, Loc loc, SVal V);
   Store Remove(Store St, Loc loc);
   Store getInitialStore(const LocationContext *InitLoc);
 
@@ -167,7 +163,7 @@ SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
   return UnknownVal();
 }
 
-Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {
+Store BasicStoreManager::Bind(Store store, Loc loc, SVal V) {
   if (isa<loc::ConcreteInt>(loc))
     return store;
 
@@ -326,7 +322,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
           const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
                                                          SelfRegion);
           SVal X = ValMgr.getRegionValueSymbolVal(IVR);
-          St = BindInternal(St, ValMgr.makeLoc(IVR), X);
+          St = Bind(St, ValMgr.makeLoc(IVR), X);
         }
       }
     }
@@ -359,8 +355,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
           const MemRegion *SelfRegion =
             ValMgr.getRegionValueSymbolVal(VR).getAsRegion();          
           assert(SelfRegion);          
-          St = BindInternal(St, ValMgr.makeLoc(VR),
-                            loc::MemRegionVal(SelfRegion));
+          St = Bind(St, ValMgr.makeLoc(VR), loc::MemRegionVal(SelfRegion));
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
           St = scanForIvars(MD->getBody(), PD, SelfRegion, St);
@@ -379,7 +374,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
       if (R->hasGlobalsOrParametersStorage())
         X = ValMgr.getRegionValueSymbolVal(R);
 
-      St = BindInternal(St, ValMgr.makeLoc(R), X);
+      St = Bind(St, ValMgr.makeLoc(R), X);
     }
   }
   return St;
@@ -417,16 +412,16 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
       if (!InitVal) {
         QualType T = VD->getType();
         if (Loc::IsLocType(T))
-          store = BindInternal(store, loc::MemRegionVal(VR),
+          store = Bind(store, loc::MemRegionVal(VR),
                        loc::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
-          store = BindInternal(store, loc::MemRegionVal(VR),
+          store = Bind(store, loc::MemRegionVal(VR),
                        nonloc::ConcreteInt(BasicVals.getValue(0, T)));
         else {
           // assert(0 && "ignore other types of variables");
         }
       } else {
-        store = BindInternal(store, loc::MemRegionVal(VR), *InitVal);
+        store = Bind(store, loc::MemRegionVal(VR), *InitVal);
       }
     }
   } else {
@@ -434,7 +429,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
     QualType T = VD->getType();
     if (ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
-      store = BindInternal(store, loc::MemRegionVal(VR), V);
+      store = Bind(store, loc::MemRegionVal(VR), V);
     }
   }
 
