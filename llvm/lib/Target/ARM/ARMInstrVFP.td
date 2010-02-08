@@ -252,6 +252,13 @@ def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
   let Inst{7-6} = 0b00;
 }
 
+def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
+                      (outs GPR:$wb, GPR:$dst2), (ins SPR:$src1, SPR:$src2),
+                 IIC_VMOVDI, "vmov", "\t$wb, $dst2, $src1, $src2",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{7-6} = 0b00;
+}
+
 // FMDHR: GPR -> SPR
 // FMDLR: GPR -> SPR
 
@@ -259,6 +266,13 @@ def VMOVDRR : AVConv5I<0b11000100, 0b1011,
                      (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
                 IIC_VMOVID, "vmov", "\t$dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]> {
+  let Inst{7-6} = 0b00;
+}
+
+def VMOVSRR : AVConv5I<0b11000100, 0b1010,
+                     (outs SPR:$dst1, SPR:$dst2), (ins GPR:$src1, GPR:$src2),
+                IIC_VMOVID, "vmov", "\t$dst1, $dst2, $src1, $src2",
+                [/* For disassembly only; pattern left blank */]> {
   let Inst{7-6} = 0b00;
 }
 
