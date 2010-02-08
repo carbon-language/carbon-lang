@@ -37,10 +37,16 @@ int main(int argc, char** argv) {
   DryRun.setHiddenFlag(llvm::cl::Hidden);
 
   llvm::cl::SetVersionPrinter(PIC16VersionPrinter); 
-  
-  TempDirname = "tmp-objs";
 
-  // Remove the temp dir if already exists.
+  // Ask for a standard temp dir, but just cache its basename., and delete it.
+  llvm::sys::Path tempDir;
+  tempDir = llvm::sys::Path::GetTemporaryDirectory();
+  TempDirname = tempDir.getBasename();
+  tempDir.eraseFromDisk(true);
+
+  // We are creating a temp dir in current dir, with the cached name.
+  //  But before that remove if one already exists with that name..
+
   llvm::sys::Path tempDir;
   tempDir = TempDirname;
   tempDir.eraseFromDisk(true);
