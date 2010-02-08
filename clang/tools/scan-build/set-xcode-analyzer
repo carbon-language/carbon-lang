@@ -14,7 +14,6 @@ def FindClangSpecs(path):
         yield os.path.join(root, f)
 
 def ModifySpec(path, pathToChecker):
-  print "Updating:", path
   t = tempfile.NamedTemporaryFile(delete=False)
   foundAnalyzer = False
   with open(path) as f:
@@ -28,8 +27,14 @@ def ModifySpec(path, pathToChecker):
           line = "".join([m.group(0), pathToChecker, '";\n'])
       t.write(line)
   t.close()
-  shutil.copy(t.name, path)
-  os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+  print "(+)", path
+  try:
+    shutil.copy(t.name, path)
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+  except IOError, why:
+    print "\n    Cannot update file:", why, "\n"
+  except OSError, why:
+    print "\n    Cannot update file:", why, "\n"
   os.unlink(t.name)
 
 def main():
@@ -57,6 +62,7 @@ def main():
     print "Using the Clang bundled with Xcode"
     path = options.default
 
+  print ""
   for x in FindClangSpecs('/Developer'):
     ModifySpec(x, path)
 
