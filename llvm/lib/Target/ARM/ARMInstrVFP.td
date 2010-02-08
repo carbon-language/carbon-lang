@@ -128,9 +128,17 @@ def VCMPED : ADuI<0b11101, 0b11, 0b0100, 0b11, 0, (outs), (ins DPR:$a, DPR:$b),
                  IIC_fpCMP64, "vcmpe", ".f64\t$a, $b",
                  [(arm_cmpfp DPR:$a, DPR:$b)]>;
 
+def VCMPD  : ADuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins DPR:$a, DPR:$b),
+                 IIC_fpCMP64, "vcmp", ".f64\t$a, $b",
+                 [/* For disassembly only; pattern left blank */]>;
+
 def VCMPES : ASuI<0b11101, 0b11, 0b0100, 0b11, 0, (outs), (ins SPR:$a, SPR:$b),
                  IIC_fpCMP32, "vcmpe", ".f32\t$a, $b",
                  [(arm_cmpfp SPR:$a, SPR:$b)]>;
+
+def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins SPR:$a, SPR:$b),
+                 IIC_fpCMP32, "vcmp", ".f32\t$a, $b",
+                 [/* For disassembly only; pattern left blank */]>;
 }
 
 def VDIVD  : ADbI<0b11101, 0b00, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
@@ -189,9 +197,17 @@ def VCMPEZD : ADuI<0b11101, 0b11, 0b0101, 0b11, 0, (outs), (ins DPR:$a),
                   IIC_fpCMP64, "vcmpe", ".f64\t$a, #0",
                   [(arm_cmpfp0 DPR:$a)]>;
 
+def VCMPZD  : ADuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins DPR:$a),
+                  IIC_fpCMP64, "vcmp", ".f64\t$a, #0",
+                  [/* For disassembly only; pattern left blank */]>;
+
 def VCMPEZS : ASuI<0b11101, 0b11, 0b0101, 0b11, 0, (outs), (ins SPR:$a),
                   IIC_fpCMP32, "vcmpe", ".f32\t$a, #0",
                   [(arm_cmpfp0 SPR:$a)]>;
+
+def VCMPZS  : ASuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins SPR:$a),
+                  IIC_fpCMP32, "vcmp", ".f32\t$a, #0",
+                  [/* For disassembly only; pattern left blank */]>;
 }
 
 def VCVTDS : ASuI<0b11101, 0b11, 0b0111, 0b11, 0, (outs DPR:$dst), (ins SPR:$a),
