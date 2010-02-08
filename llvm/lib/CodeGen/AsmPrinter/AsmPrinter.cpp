@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -887,15 +888,16 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
   
   switch (CE->getOpcode()) {
-  case Instruction::ZExt:
-  case Instruction::SExt:
-  case Instruction::FPTrunc:
-  case Instruction::FPExt:
-  case Instruction::UIToFP:
-  case Instruction::SIToFP:
-  case Instruction::FPToUI:
-  case Instruction::FPToSI:
-  default: llvm_unreachable("FIXME: Don't support this constant cast expr");
+  default:
+    // If the code isn't optimized, there may be outstanding folding
+    // opportunities. Attempt to fold the expression using TargetData as a
+    // last resort before giving up.
+    if (Constant *C = ConstantFoldConstantExpression(CE, AP.TM.getTargetData()))
+      return LowerConstant(C, AP);
+#ifndef NDEBUG
+    CE->dump();
+#endif
+    llvm_unreachable("FIXME: Don't support this constant expr");
   case Instruction::GetElementPtr: {
     const TargetData &TD = *AP.TM.getTargetData();
     // Generate a symbolic expression for the byte address
