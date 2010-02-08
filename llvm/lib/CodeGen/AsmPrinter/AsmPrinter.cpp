@@ -892,8 +892,10 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
     // If the code isn't optimized, there may be outstanding folding
     // opportunities. Attempt to fold the expression using TargetData as a
     // last resort before giving up.
-    if (Constant *C = ConstantFoldConstantExpression(CE, AP.TM.getTargetData()))
-      return LowerConstant(C, AP);
+    if (Constant *C =
+          ConstantFoldConstantExpression(CE, AP.TM.getTargetData()))
+      if (C != CE)
+        return LowerConstant(C, AP);
 #ifndef NDEBUG
     CE->dump();
 #endif
