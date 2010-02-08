@@ -39,7 +39,7 @@ declare void @__gxx_personality_v0()
 declare void @__cxa_end_catch()
 
 ; X64: Leh_frame_common_begin:
-; X64: .long	___gxx_personality_v0@GOTPCREL+4
+; X64: .long	(___gxx_personality_v0@GOTPCREL)+4
 
 ; X32: Leh_frame_common_begin:
 ; X32: .long	L___gxx_personality_v0$non_lazy_ptr-
