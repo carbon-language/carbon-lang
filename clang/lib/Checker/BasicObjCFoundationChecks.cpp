@@ -163,61 +163,22 @@ bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
   // FIXME: This is going to be really slow doing these checks with
   //  lexical comparisons.
 
-  std::string name = S.getAsString();
-  assert (!name.empty());
-  const char* cstr = &name[0];
-  unsigned len = name.size();
+  std::string NameStr = S.getAsString();
+  llvm::StringRef Name(NameStr);
+  assert(!Name.empty());
 
-  switch (len) {
-    default:
-      break;
-    case 8:
-      if (!strcmp(cstr, "compare:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 15:
-      // FIXME: Checking for initWithFormat: will not work in most cases
-      //  yet because [NSString alloc] returns id, not NSString*.  We will
-      //  need support for tracking expected-type information in the analyzer
-      //  to find these errors.
-      if (!strcmp(cstr, "initWithFormat:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 16:
-      if (!strcmp(cstr, "compare:options:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 22:
-      if (!strcmp(cstr, "compare:options:range:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 23:
-
-      if (!strcmp(cstr, "caseInsensitiveCompare:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 29:
-      if (!strcmp(cstr, "compare:options:range:locale:"))
-        return CheckNilArg(N, 0);
-
-      break;
-
-    case 37:
-    if (!strcmp(cstr, "componentsSeparatedByCharactersInSet:"))
-      return CheckNilArg(N, 0);
-
-    break;
-  }
+  // FIXME: Checking for initWithFormat: will not work in most cases
+  //  yet because [NSString alloc] returns id, not NSString*.  We will
+  //  need support for tracking expected-type information in the analyzer
+  //  to find these errors.
+  if (Name == "caseInsensitiveCompare:" ||
+      Name == "compare:" ||
+      Name == "compare:options:" ||
+      Name == "compare:options:range:" ||
+      Name == "compare:options:range:locale:" ||
+      Name == "componentsSeparatedByCharactersInSet:" ||
+      Name == "initWithFormat:")
+    return CheckNilArg(N, 0);
 
   return false;
 }
