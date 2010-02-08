@@ -49,13 +49,13 @@ Show the B<lit> help message.
 
 =item B<-j> I<N>, B<--threads>=I<N>
 
-Run I<N> tests in parallel. By default, this is automatically chose to match the
-number of detected available CPUs.
+Run I<N> tests in parallel. By default, this is automatically chosen to match
+the number of detected available CPUs.
 
 =item B<--config-prefix>=I<NAME>
 
 Search for I<NAME.cfg> and I<NAME.site.cfg> when searching for test suites,
-instead I<lit.cfg> and I<lit.site.cfg>.
+instead of I<lit.cfg> and I<lit.site.cfg>.
 
 =item B<--param> I<NAME>, B<--param> I<NAME>=I<VALUE>
 
@@ -237,7 +237,7 @@ creating a new B<lit> testing implementation, or extending an existing one.
 
 B<lit> proper is primarily an infrastructure for discovering and running
 arbitrary tests, and to expose a single convenient interface to these
-tests. B<lit> itself doesn't contain know how to run tests, rather this logic is
+tests. B<lit> itself doesn't know how to run tests, rather this logic is
 defined by I<test suites>.
 
 =head2 TEST SUITES
