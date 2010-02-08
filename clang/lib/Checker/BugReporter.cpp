@@ -350,7 +350,7 @@ GetMostRecentVarDeclBinding(const ExplodedNode* N,
     if (!DR)
       continue;
 
-    SVal Y = N->getState()->getSVal(DR);
+    SVal Y = N->getState()->getExprVal(DR);
 
     if (X != Y)
       continue;
@@ -394,7 +394,7 @@ public:
       return true;
 
     // Check if the previous state has this binding.
-    SVal X = PrevSt->getSVal(loc::MemRegionVal(R));
+    SVal X = PrevSt->Load(loc::MemRegionVal(R));
 
     if (X == V) // Same binding?
       return true;

@@ -41,7 +41,7 @@ class UndefBranchChecker : public Checker {
       return Ex;
     }
 
-    bool MatchesCriteria(Expr* Ex) { return St->getSVal(Ex).isUndef(); }
+    bool MatchesCriteria(Expr* Ex) { return St->getExprVal(Ex).isUndef(); }
   };
 
 public:
@@ -66,7 +66,7 @@ void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder,
                                               GRExprEngine &Eng,
                                               Stmt *Condition, void *tag) {
   const GRState *state = Builder.getState();
-  SVal X = state->getSVal(Condition);
+  SVal X = state->getExprVal(Condition);
   if (X.isUndef()) {
     ExplodedNode *N = Builder.generateNode(state, true);
     if (N) {

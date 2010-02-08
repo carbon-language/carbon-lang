@@ -42,8 +42,8 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
     return;
 
   const GRState *state = C.getState();
-  SVal LV = state->getSVal(B->getLHS());
-  SVal RV = state->getSVal(B->getRHS());
+  SVal LV = state->getExprVal(B->getLHS());
+  SVal RV = state->getExprVal(B->getRHS());
 
   const MemRegion *LR = LV.getAsRegion();
   const MemRegion *RR = RV.getAsRegion();

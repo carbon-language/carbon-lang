@@ -36,7 +36,7 @@ bool NoReturnFunctionChecker::EvalCallExpr(CheckerContext &C,
                                            const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
+  SVal L = state->getExprVal(Callee);
   const FunctionDecl *FD = L.getAsFunctionDecl();
   if (!FD)
     return false;

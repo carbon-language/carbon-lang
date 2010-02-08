@@ -252,15 +252,15 @@ public:
 
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
-  SVal getSVal(const Stmt* Ex) const;
+  SVal getExprVal(const Stmt* Ex) const;
 
-  SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
+  SVal getExprValAsScalarOrLoc(const Stmt *Ex) const;
 
-  SVal getSVal(Loc LV, QualType T = QualType()) const;
+  SVal Load(Loc LV, QualType T = QualType()) const;
 
-  SVal getSVal(const MemRegion* R) const;
+  SVal Load(const MemRegion* R) const;
 
-  SVal getSValAsScalarOrLoc(const MemRegion *R) const;
+  SVal LoadAsScalarOrLoc(const MemRegion *R) const;
   
   const llvm::APSInt *getSymVal(SymbolRef sym);
 
@@ -661,25 +661,25 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
   return getStateManager().getSymVal(this, sym);
 }
 
-inline SVal GRState::getSVal(const Stmt* Ex) const {
+inline SVal GRState::getExprVal(const Stmt* Ex) const {
   return Env.GetSVal(Ex, getStateManager().ValueMgr);
 }
 
-inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
+inline SVal GRState::getExprValAsScalarOrLoc(const Stmt *S) const {
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
     QualType T = Ex->getType();
     if (Loc::IsLocType(T) || T->isIntegerType())
-      return getSVal(S);
+      return getExprVal(S);
   }
 
   return UnknownVal();
 }
 
-inline SVal GRState::getSVal(Loc LV, QualType T) const {
+inline SVal GRState::Load(Loc LV, QualType T) const {
   return getStateManager().StoreMgr->Retrieve(St, LV, T);
 }
 
-inline SVal GRState::getSVal(const MemRegion* R) const {
+inline SVal GRState::Load(const MemRegion* R) const {
   return getStateManager().StoreMgr->Retrieve(St, loc::MemRegionVal(R));
 }
 

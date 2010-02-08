@@ -60,7 +60,7 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   const FunctionTextRegion *R =
-    dyn_cast_or_null<FunctionTextRegion>(state->getSVal(Callee).getAsRegion());
+  dyn_cast_or_null<FunctionTextRegion>(state->getExprVal(Callee).getAsRegion());
   
   if (!R)
     return;
@@ -70,17 +70,17 @@ void PthreadLockChecker::PostVisitCallExpr(CheckerContext &C,
   if (FName == "pthread_mutex_lock") {
     if (CE->getNumArgs() != 1)
       return;
-    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), false);
+    AcquireLock(C, CE, state->getExprVal(CE->getArg(0)), false);
   }
   else if (FName == "pthread_mutex_trylock") {
     if (CE->getNumArgs() != 1)
       return;
-    AcquireLock(C, CE, state->getSVal(CE->getArg(0)), true);
+    AcquireLock(C, CE, state->getExprVal(CE->getArg(0)), true);
   }  
   else if (FName == "pthread_mutex_unlock") {
     if (CE->getNumArgs() != 1)
       return;
-    ReleaseLock(C, CE, state->getSVal(CE->getArg(0)));
+    ReleaseLock(C, CE, state->getExprVal(CE->getArg(0)));
   }
 }
 
@@ -93,7 +93,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   
   const GRState *state = C.getState();
   
-  SVal X = state->getSVal(CE);
+  SVal X = state->getExprVal(CE);
   if (X.isUnknownOrUndef())
     return;
   

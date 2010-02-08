@@ -1399,7 +1399,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
 
   // FIXME: Is this really working as expected?  There are cases where
   //  we just use the 'ID' from the message expression.
-  SVal receiverV = state->getSValAsScalarOrLoc(Receiver);
+  SVal receiverV = state->getExprValAsScalarOrLoc(Receiver);
   
   // FIXME: Eventually replace the use of state->get<RefBindings> with
   // a generic API for reasoning about the Objective-C types of symbolic
@@ -1428,7 +1428,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageExpr *ME,
     if (const loc::MemRegionVal *L = dyn_cast<loc::MemRegionVal>(&receiverV)) {
       // Get the region associated with 'self'.
       if (const ImplicitParamDecl *SelfDecl = LC->getSelfDecl()) {
-        SVal SelfVal = state->getSVal(state->getRegion(SelfDecl, LC));
+        SVal SelfVal = state->Load(state->getRegion(SelfDecl, LC));
         if (L->StripCasts() == SelfVal.getAsRegion()) {
           // Update the summary to make the default argument effect
           // 'StopTracking'.
@@ -2140,7 +2140,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
 
     if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
-      SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee());
+      SVal X = CurrSt->getExprValAsScalarOrLoc(CE->getCallee());
       if (const FunctionDecl* FD = X.getAsFunctionDecl())
         os << "Call to function '" << FD->getNameAsString() <<'\'';
       else
@@ -2197,7 +2197,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
 
         // Retrieve the value of the argument.  Is it the symbol
         // we are interested in?
-        if (CurrSt->getSValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
+        if (CurrSt->getExprValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
           continue;
 
         // We have an argument.  Get the effect!
@@ -2206,7 +2206,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
     }
     else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {
       if (const Expr *receiver = ME->getReceiver())
-        if (CurrSt->getSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
+        if (CurrSt->getExprValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
           // The symbol we are tracking is the receiver.
           AEffects.push_back(Summ->getReceiverEffect());
         }
@@ -2234,7 +2234,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
     if (contains(AEffects, MakeCollectable)) {
       // Get the name of the function.
       const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-      SVal X = CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
+      SVal X = CurrSt->getExprValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
       const FunctionDecl* FD = X.getAsFunctionDecl();
       const std::string& FName = FD->getNameAsString();
 
@@ -2346,7 +2346,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I!=E; ++I)
     if (const Expr* Exp = dyn_cast_or_null<Expr>(*I))
-      if (CurrSt->getSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
+      if (CurrSt->getExprValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
         P->addRange(Exp->getSourceRange());
         break;
       }
@@ -2597,7 +2597,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
   llvm::SmallVector<const MemRegion*, 10> RegionsToInvalidate;
   
   for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
-    SVal V = state->getSValAsScalarOrLoc(*I);
+    SVal V = state->getExprValAsScalarOrLoc(*I);
     SymbolRef Sym = V.getAsLocSymbol();
 
     if (Sym)
@@ -2698,7 +2698,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   // Evaluate the effect on the message receiver.
   if (!ErrorExpr && Receiver) {
-    SymbolRef Sym = state->getSValAsScalarOrLoc(Receiver).getAsLocSymbol();
+    SymbolRef Sym = state->getExprValAsScalarOrLoc(Receiver).getAsLocSymbol();
     if (Sym) {
       if (const RefVal* T = state->get<RefBindings>(Sym)) {
         state = Update(state, Sym, *T, Summ.getReceiverEffect(), hasErr);
@@ -2722,7 +2722,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 
   if (RE.getKind() == RetEffect::OwnedWhenTrackedReceiver) {
     assert(Receiver);
-    SVal V = state->getSValAsScalarOrLoc(Receiver);
+    SVal V = state->getExprValAsScalarOrLoc(Receiver);
     bool found = false;
     if (SymbolRef Sym = V.getAsLocSymbol())
       if (state->get<RefBindings>(Sym)) {
@@ -2751,7 +2751,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       // For CallExpr, use the result type to know if it returns a reference.
       if (const CallExpr *CE = dyn_cast<CallExpr>(Ex)) {
         const Expr *Callee = CE->getCallee();
-        if (const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl())
+        if (const FunctionDecl *FD = 
+                                 state->getExprVal(Callee).getAsFunctionDecl())
           T = FD->getResultType();
       }
       else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(Ex)) {
@@ -2773,14 +2774,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       unsigned idx = RE.getIndex();
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
-      SVal V = state->getSValAsScalarOrLoc(*(arg_beg+idx));
+      SVal V = state->getExprValAsScalarOrLoc(*(arg_beg+idx));
       state = state->BindExpr(Ex, V, false);
       break;
     }
 
     case RetEffect::ReceiverAlias: {
       assert (Receiver);
-      SVal V = state->getSValAsScalarOrLoc(Receiver);
+      SVal V = state->getExprValAsScalarOrLoc(Receiver);
       state = state->BindExpr(Ex, V, false);
       break;
     }
@@ -2937,7 +2938,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
     return;
 
   const GRState *state = Builder.GetState(Pred);
-  SymbolRef Sym = state->getSValAsScalarOrLoc(RetE).getAsLocSymbol();
+  SymbolRef Sym = state->getExprValAsScalarOrLoc(RetE).getAsLocSymbol();
 
   if (!Sym)
     return;
@@ -3492,7 +3493,7 @@ void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
   
   const GRState *state = C.getState();
   const BlockDataRegion *R =
-    cast<BlockDataRegion>(state->getSVal(BE).getAsRegion());
+    cast<BlockDataRegion>(state->getExprVal(BE).getAsRegion());
   
   BlockDataRegion::referenced_vars_iterator I = R->referenced_vars_begin(),
                                             E = R->referenced_vars_end();

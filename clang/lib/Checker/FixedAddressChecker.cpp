@@ -48,7 +48,7 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
 
   const GRState *state = C.getState();
 
-  SVal RV = state->getSVal(B->getRHS());
+  SVal RV = state->getExprVal(B->getRHS());
 
   if (!RV.isConstant() || RV.isZeroConstant())
     return;

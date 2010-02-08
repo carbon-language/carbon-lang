@@ -39,7 +39,7 @@ void clang::RegisterUndefResultChecker(GRExprEngine &Eng) {
 void UndefResultChecker::PostVisitBinaryOperator(CheckerContext &C, 
                                                  const BinaryOperator *B) {
   const GRState *state = C.getState();
-  if (state->getSVal(B).isUndef()) {
+  if (state->getExprVal(B).isUndef()) {
     // Generate an error node.
     ExplodedNode *N = C.GenerateSink();
     if (!N)
@@ -53,11 +53,11 @@ void UndefResultChecker::PostVisitBinaryOperator(CheckerContext &C,
     const Expr *Ex = NULL;
     bool isLeft = true;
     
-    if (state->getSVal(B->getLHS()).isUndef()) {
+    if (state->getExprVal(B->getLHS()).isUndef()) {
       Ex = B->getLHS()->IgnoreParenCasts();
       isLeft = true;
     }
-    else if (state->getSVal(B->getRHS()).isUndef()) {
+    else if (state->getExprVal(B->getRHS()).isUndef()) {
       Ex = B->getRHS()->IgnoreParenCasts();
       isLeft = false;
     }

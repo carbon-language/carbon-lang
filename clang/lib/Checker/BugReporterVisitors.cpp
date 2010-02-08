@@ -113,7 +113,7 @@ public:
               }
         }
 
-        if (Node->getState()->getSVal(R) != V)
+        if (Node->getState()->Load(R) != V)
           break;
       }
 
@@ -319,7 +319,7 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
       StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
       // What did we load?
-      SVal V = state->getSVal(S);
+      SVal V = state->getExprVal(S);
 
       if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)
           || V.isUndef()) {
@@ -328,7 +328,7 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
     }
   }
 
-  SVal V = state->getSValAsScalarOrLoc(S);
+  SVal V = state->getExprValAsScalarOrLoc(S);
 
   // Uncomment this to find cases where we aren't properly getting the
   // base value that was dereferenced.

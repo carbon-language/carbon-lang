@@ -47,7 +47,7 @@ void ReturnUndefChecker::PreVisitReturnStmt(CheckerContext &C,
   if (!RetE)
     return;
   
-  if (!C.getState()->getSVal(RetE).isUndef())
+  if (!C.getState()->getExprVal(RetE).isUndef())
     return;
   
   ExplodedNode *N = C.GenerateSink();

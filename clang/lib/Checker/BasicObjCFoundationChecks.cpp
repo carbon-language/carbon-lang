@@ -135,7 +135,7 @@ bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
 
   const Expr * E = ME->getArg(Arg);
 
-  if (isNil(N->getState()->getSVal(E))) {
+  if (isNil(N->getState()->getExprVal(E))) {
     WarnNilArg(N, ME, Arg);
     return true;
   }
@@ -349,14 +349,14 @@ bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   const CallExpr* CE =
     cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   const Expr* Callee = CE->getCallee();
-  SVal CallV = N->getState()->getSVal(Callee);
+  SVal CallV = N->getState()->getExprVal(Callee);
   const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
   if (!FD || FD->getIdentifier() != II || CE->getNumArgs()!=3)
     return false;
 
   // Get the value of the "theType" argument.
-  SVal TheTypeVal = N->getState()->getSVal(CE->getArg(1));
+  SVal TheTypeVal = N->getState()->getExprVal(CE->getArg(1));
 
     // FIXME: We really should allow ranges of valid theType values, and
     //   bifurcate the state appropriately.
@@ -375,7 +375,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  SVal TheValueExpr = N->getState()->getSVal(CE->getArg(2));
+  SVal TheValueExpr = N->getState()->getExprVal(CE->getArg(2));
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
@@ -482,7 +482,7 @@ bool AuditCFRetainRelease::Audit(ExplodedNode* N, GRStateManager&) {
 
   // Check if we called CFRetain/CFRelease.
   const GRState* state = N->getState();
-  SVal X = state->getSVal(CE->getCallee());
+  SVal X = state->getExprVal(CE->getCallee());
   const FunctionDecl* FD = X.getAsFunctionDecl();
 
   if (!FD)

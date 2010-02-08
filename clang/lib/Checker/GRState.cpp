@@ -69,7 +69,7 @@ const GRState *GRState::unbindLoc(Loc LV) const {
   return getStateManager().getPersistentState(NewSt);
 }
 
-SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
+SVal GRState::LoadAsScalarOrLoc(const MemRegion *R) const {
   // We only want to do fetches from regions that we can actually bind
   // values.  For example, SymbolicRegions of type 'id<...>' cannot
   // have direct bindings (but their can be bindings on their subregions).
@@ -79,7 +79,7 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
   if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
     QualType T = TR->getValueType(getStateManager().getContext());
     if (Loc::IsLocType(T) || T->isIntegerType())
-      return getSVal(R);
+      return Load(R);
   }
 
   return UnknownVal();
@@ -297,7 +297,7 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
       return false;
 
   // Now look at the binding to this region (if any).
-  if (!scan(state->getSValAsScalarOrLoc(R)))
+  if (!scan(state->LoadAsScalarOrLoc(R)))
     return false;
 
   // Now look at the subregions.
@@ -341,7 +341,7 @@ bool GRState::scanReachableSymbols(const MemRegion * const *I,
 bool GRStateManager::isEqual(const GRState* state, const Expr* Ex,
                              const llvm::APSInt& Y) {
 
-  SVal V = state->getSVal(Ex);
+  SVal V = state->getExprVal(Ex);
 
   if (loc::ConcreteInt* X = dyn_cast<loc::ConcreteInt>(&V))
     return X->getValue() == Y;

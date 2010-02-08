@@ -73,7 +73,7 @@ void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
                                              const CallExpr *CE){
   
   const Expr *Callee = CE->getCallee()->IgnoreParens();
-  SVal L = C.getState()->getSVal(Callee);
+  SVal L = C.getState()->getExprVal(Callee);
   
   if (L.isUndef()) {
     if (!BT_call_undef)
@@ -92,7 +92,7 @@ void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
   
   for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
        I != E; ++I) {
-    if (C.getState()->getSVal(*I).isUndef()) {
+    if (C.getState()->getExprVal(*I).isUndef()) {
       if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_call_arg)
           BT_call_arg = new BuiltinBug("Pass-by-value argument in function call"
@@ -115,7 +115,7 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   const GRState *state = C.getState();
 
   if (const Expr *receiver = ME->getReceiver())
-    if (state->getSVal(receiver).isUndef()) {
+    if (state->getExprVal(receiver).isUndef()) {
       if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_msg_undef)
           BT_msg_undef =
@@ -133,7 +133,7 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   // Check for any arguments that are uninitialized/undefined.
   for (ObjCMessageExpr::const_arg_iterator I = ME->arg_begin(),
          E = ME->arg_end(); I != E; ++I) {
-    if (state->getSVal(*I).isUndef()) {
+    if (state->getExprVal(*I).isUndef()) {
       if (ExplodedNode *N = C.GenerateSink()) {
         if (!BT_msg_arg)
           BT_msg_arg =
