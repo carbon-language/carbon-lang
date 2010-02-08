@@ -363,6 +363,37 @@ def VTOUIZS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
   let Inst{7} = 1; // Z bit
 }
 
+// And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
+// For disassembly only.
+
+def VTOSIRD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
+                       (outs SPR:$dst), (ins DPR:$a),
+                 IIC_fpCVTDI, "vcvtr", ".s32.f64\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{7} = 0; // Z bit
+}
+
+def VTOSIRS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
+                        (outs SPR:$dst), (ins SPR:$a),
+                 IIC_fpCVTSI, "vcvtr", ".s32.f32\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{7} = 0; // Z bit
+}
+
+def VTOUIRD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
+                       (outs SPR:$dst), (ins DPR:$a),
+                 IIC_fpCVTDI, "vcvtr", ".u32.f64\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{7} = 0; // Z bit
+}
+
+def VTOUIRS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
+                        (outs SPR:$dst), (ins SPR:$a),
+                 IIC_fpCVTSI, "vcvtr", ".u32.f32\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{7} = 0; // Z bit
+}
+
 //===----------------------------------------------------------------------===//
 // FP FMA Operations.
 //
