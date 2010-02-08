@@ -44,7 +44,8 @@ def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisPtrTy<1>, SDTCisVT<2, i32>]>;
 
 def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
-def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>;
+def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisPtrTy<1>,
+                                                 SDTCisInt<2>]>;
 
 def SDT_ARMMEMBARRIERV7  : SDTypeProfile<0, 0, []>;
 def SDT_ARMSYNCBARRIERV7 : SDTypeProfile<0, 0, []>;
@@ -1800,21 +1801,22 @@ let isCall = 1,
 //   except for our own input by listing the relevant registers in Defs. By
 //   doing so, we also cause the prologue/epilogue code to actively preserve
 //   all of the callee-saved resgisters, which is exactly what we want.
-let Defs = 
+//   A constant value is passed in $val, and we use the location as a scratch.
+let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR,  D0,
     D1,  D2,  D3,  D4,  D5,  D6,  D7,  D8,  D9,  D10, D11, D12, D13, D14, D15,
     D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30,
     D31 ] in {
-  def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src),
+  def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src, GPR:$val),
                                AddrModeNone, SizeSpecial, IndexModeNone,
                                Pseudo, NoItinerary,
                                "str\tsp, [$src, #+8] @ eh_setjmp begin\n\t"
-                               "add\tr12, pc, #8\n\t"
-                               "str\tr12, [$src, #+4]\n\t"
+                               "add\t$val, pc, #8\n\t"
+                               "str\t$val, [$src, #+4]\n\t"
                                "mov\tr0, #0\n\t"
                                "add\tpc, pc, #0\n\t"
                                "mov\tr0, #1 @ eh_setjmp end", "",
-                               [(set R0, (ARMeh_sjlj_setjmp GPR:$src))]>;
+                         [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>;
 }
 
 //===----------------------------------------------------------------------===//
