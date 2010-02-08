@@ -4510,7 +4510,7 @@ TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   if (!Param)
     return SemaRef.ExprError();
 
-  if (getDerived().AlwaysRebuild() &&
+  if (!getDerived().AlwaysRebuild() &&
       Param == E->getParam())
     return SemaRef.Owned(E->Retain());
 
