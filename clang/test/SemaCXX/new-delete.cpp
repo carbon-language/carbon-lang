@@ -217,6 +217,14 @@ static void* f(void* g)
     return new (g) X13();
 }
 
+class X14 {
+  static void operator delete(void*, const size_t);
+};
+
+void f(X14 *x14a, X14 *x14b) {
+  delete x14a;
+}
+
 namespace PR5918 { // Look for template operator new overloads.
   struct S { template<typename T> static void* operator new(size_t, T); };
   void test() {

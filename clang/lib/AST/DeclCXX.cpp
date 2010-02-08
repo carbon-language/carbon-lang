@@ -587,7 +587,8 @@ bool CXXMethodDecl::isUsualDeallocationFunction() const {
   //   then this function is a usual deallocation function.
   ASTContext &Context = getASTContext();
   if (getNumParams() != 2 ||
-      !Context.hasSameType(getParamDecl(1)->getType(), Context.getSizeType()))
+      !Context.hasSameUnqualifiedType(getParamDecl(1)->getType(),
+                                      Context.getSizeType()))
     return false;
                  
   // This function is a usual deallocation function if there are no 
