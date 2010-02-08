@@ -252,8 +252,8 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
     }
 
     // FIXME: We need target hooks for the evaluation. It may be limited in
-    // width, and gas defines the result of comparisons differently from Apple
-    // as (the result is sign extended).
+    // width, and gas defines the result of comparisons and right shifts
+    // differently from Apple as.
     int64_t LHS = LHSValue.getConstant(), RHS = RHSValue.getConstant();
     int64_t Result = 0;
     switch (ABE->getOpcode()) {

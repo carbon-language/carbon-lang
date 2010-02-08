@@ -202,20 +202,24 @@ public:
   enum Opcode {
     Add,  ///< Addition.
     And,  ///< Bitwise and.
-    Div,  ///< Division.
+    Div,  ///< Signed division.
     EQ,   ///< Equality comparison.
-    GT,   ///< Greater than comparison.
-    GTE,  ///< Greater than or equal comparison.
+    GT,   ///< Signed greater than comparison (result is either 0 or some
+          ///< target-specific non-zero value)
+    GTE,  ///< Signed greater than or equal comparison (result is either 0 or
+          ///< some target-specific non-zero value).
     LAnd, ///< Logical and.
     LOr,  ///< Logical or.
-    LT,   ///< Less than comparison.
-    LTE,  ///< Less than or equal comparison.
-    Mod,  ///< Modulus.
+    LT,   ///< Signed less than comparison (result is either 0 or
+          ///< some target-specific non-zero value).
+    LTE,  ///< Signed less than or equal comparison (result is either 0 or
+          ///< some target-specific non-zero value).
+    Mod,  ///< Signed remainder.
     Mul,  ///< Multiplication.
     NE,   ///< Inequality comparison.
     Or,   ///< Bitwise or.
-    Shl,  ///< Bitwise shift left.
-    Shr,  ///< Bitwise shift right.
+    Shl,  ///< Shift left.
+    Shr,  ///< Shift right (arithmetic or logical, depending on target)
     Sub,  ///< Subtraction.
     Xor   ///< Bitwise exclusive or.
   };
